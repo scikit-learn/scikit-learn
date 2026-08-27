@@ -1529,8 +1529,8 @@ class MetadataRequester:
 
     Custom :term:`consumers <consumer>` that are not estimators can inherit from this
     Mixin to participate in metadata routing (e.g. custom scorers or wrappers). See the
-    :ref:`metadata routing developing guide 
-    <customise_metadata_requests_in_consumers>` for examples on how to use it.
+    :ref:`metadata routing developing guide <customise_metadata_requests_in_consumers>`
+    for examples on how to use it.
 
     .. versionadded:: 1.3
     .. versionchanged:: 1.10
@@ -1767,7 +1767,8 @@ class MetadataRequester:
         See Also
         --------
         _get_metadata_request : Return the effective request for this instance.
-        get_declared_metadata_request_values : Get declared metadata request values per consuming method.
+        get_declared_metadata_request_values : Get declared metadata request values per
+        consuming method.
         """
         requests = MetadataRequest(owner=self)
         for method_name in SIMPLE_METHODS:
