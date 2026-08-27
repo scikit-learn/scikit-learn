@@ -683,7 +683,9 @@ def test_fetch_file_rejects_path_as_local_filename(monkeypatch, tmpdir, local_fi
     monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
 
     expected_error_msg = re.escape(
-        f"local_filename should be a filename, not a path; got {local_filename!r}."
+        "`local_filename` should be a filename, not a path, got"
+        f" {local_filename!r}. Use the `folder` argument to control the"
+        " output folder."
     )
     with pytest.raises(ValueError, match=expected_error_msg):
         fetch_file(

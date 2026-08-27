@@ -1632,7 +1632,9 @@ def fetch_file(
         "..",
     ):
         raise ValueError(
-            f"local_filename should be a filename, not a path; got {local_filename!r}."
+            "`local_filename` should be a filename, not a path, got"
+            f" {local_filename!r}. Use the `folder` argument to control the"
+            " output folder."
         )
 
     if folder is None:
