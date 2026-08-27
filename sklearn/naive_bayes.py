@@ -1699,3 +1699,4 @@ class GammaNB(_BaseNB):
             else:
                 y_pred.append(0)
         return y_pred
+
