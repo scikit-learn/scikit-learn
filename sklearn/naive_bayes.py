@@ -1569,3 +1569,133 @@ class CategoricalNB(_BaseDiscreteNB):
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
+
+
+
+# ---- added
+class GammaNB(_BaseNB):
+    """ [Input]
+    p_min: number between 0 and 1, standing for p_min * min_of_X + (1-p_min) * median_of_X, an estimator of calculating maximum liklihood
+    X: feature matrix in DataFrame form 
+    y: labels vector in DataFrame form 
+
+    [output] y_pred:
+    the predict of labels.
+    ----------------------------- 
+    """
+    def __init__(self,p_min):
+        self._X=[]
+        self._Y=[]
+        # --- based on DataFrame, and used for training
+        self.feat0=[]
+        self.feat1=[]
+        self.fnames=[]
+        self.yname=''
+        self.p1=0
+        self.p0=0
+        self.p_min=p_min  # decide the estimator in maximum liklihood function 
+
+    
+    def __df(self):
+        if len(self._X)>0:
+            self._X = pd.DataFrame( self._X )
+            m, n = self._X.shape
+            tmp_ind = [i for i in range(n)]
+            tmp_col = dict( zip(tmp_ind, self.fnames) )
+            self._X = self._X.rename( columns=tmp_col )
+            self._Y = self._Y.rename( columns={0:'y1'} )  # unifying the varName
+
+    
+    def fit(self, X_in, y_in, sample_weight=None):
+        self._X = X_in.reset_index(drop=True)
+        self._Y = y_in.reset_index(drop=True)
+        self.fnames = X_in.columns.tolist()
+        self.yname = y_in.columns.tolist()[0]
+
+        # split
+        tmp_ind0 = (y_in[self.yname]<0.5 )
+        tmp_ind1 = (y_in[self.yname]>=0.5 )    
+        tmp_x0 = self._X[tmp_ind0].reset_index(drop=True)
+        tmp_y0 = self._Y[tmp_ind0].reset_index(drop=True) 
+        tmp_x1 = self._X[tmp_ind1].reset_index(drop=True)
+        tmp_y1 = self._Y[tmp_ind1].reset_index(drop=True) 
+        self.p0 = len( tmp_y0 )/len( self._Y )  # the according prob. 
+        self.p1 = len( tmp_y1 )/len( self._Y )
+
+        # record the features
+        feat_0 = []; feat_1 = []
+        for i in range(len( self.fnames )):
+            tmp_v = self.fnames[i]
+            tmp_min_0 = np.min(  tmp_x0[tmp_v] )
+            tmp_avg_0 = np.median( tmp_x0[tmp_v] )
+            feat_0.append([0, tmp_v, tmp_min_0, tmp_avg_0 ])
+
+            tmp_min_1 = np.min(  tmp_x1[tmp_v] )
+            tmp_avg_1 = np.median( tmp_x1[tmp_v] )
+            feat_1.append([1, tmp_v, tmp_min_1, tmp_avg_1 ])
+        feat_0=pd.DataFrame(feat_0).rename(columns={0:'cate', 1:'vname', 2:'min', 3:'avg'})
+        feat_1=pd.DataFrame(feat_1).rename(columns={0:'cate', 1:'vname', 2:'min', 3:'avg'})
+        self.feat0 = feat_0
+        self.feat1 = feat_1
+        
+
+    def predict(self, X):
+        slack_var = 1e-10
+        y_pred=[]
+        p=self.p_min
+        for j in range( len(X) ):
+            tmp_x = X[j:j+1].reset_index(drop=True)
+            tmp_p0=0
+            tmp_p1=0
+            for i  in range( len(self.fnames) ):
+                tmp_v = self.fnames[i]
+                # ---------- p0
+                x_curr = tmp_x[tmp_v][0]  # value
+                if x_curr < -9999:   x_curr = -9999
+                elif x_curr > 9999:  x_curr = 9999
+
+                x_record = self.feat0[self.feat0['vname']==tmp_v]['min'][i]
+                if x_record<-9999:  x_record = -9999
+                elif x_record>9999: x_record = 9999
+                tmp_delta_1 = abs(x_curr-x_record) # not necessary
+                tmp_delta_1 = float( tmp_delta_1 )
+                
+                x_record_1 = self.feat0[self.feat1['vname']==tmp_v]['avg'][i]
+                if x_record_1<-9999:  x_record_1 = -9999
+                elif x_record_1>9999: x_record_1 = 9999
+                tmp_delta_2 = abs(x_curr-x_record_1)
+                tmp_delta_2 = float( tmp_delta_2 )  
+
+                tmp_linear_delta = p*tmp_delta_1 + (1-p)*tmp_delta_2
+                tmp_exp_priori = -3.39 - np.log(tmp_linear_delta + slack_var)
+                tmp_poi_priori = tmp_linear_delta * np.log(self.p0+slack_var) + (tmp_delta_2 - tmp_linear_delta)*np.log(self.p1+slack_var)
+                tmp_p0 += -0.13-np.log( tmp_linear_delta + slack_var ) + tmp_poi_priori
+
+                # ---------- p1
+                x_record_2 = self.feat1[self.feat1['vname']==tmp_v]['min'][i]
+                if x_record_2 <-9999: x_record_2 = -9999
+                elif x_record_2>9999: x_record_2 = 9999
+                tmp_delta_3 = abs(x_curr - x_record_2 )
+                tmp_delta_3 = float( tmp_delta_3 )
+                
+                x_record_3 = self.feat1[self.feat1['vname']==tmp_v]['avg'][i]
+                if x_record_3 <-9999: x_record_3 = -9999
+                elif x_record_3>9999: x_record_3 = 9999
+                tmp_delta_4 = abs(x_curr - x_record_3)
+                tmp_delta_4 = float( tmp_delta_4 )
+                 
+                tmp_linear_delta_1 = p*tmp_delta_3 + (1-p)*tmp_delta_4
+                tmp_exp_priori_1 = -3.39-np.log(tmp_linear_delta_1+slack_var)
+                tmp_poi_priori_1 = tmp_linear_delta_1 * np.log(self.p0+slack_var) + (tmp_delta_4-tmp_linear_delta_1)*np.log(self.p1+slack_var)
+                tmp_p1 += -0.13-np.log( tmp_linear_delta_1 + slack_var ) + tmp_poi_priori_1
+
+            # plus pri-prob
+            tmp_p0 += np.log( self.p0 + slack_var ) 
+            tmp_p1 += np.log( self.p1 + slack_var )
+
+            # predict
+            if tmp_p1 > tmp_p0:
+                y_pred.append(1)
+            else:
+                y_pred.append(0)
+        return y_pred
