@@ -1,5 +1,0 @@
-- :func:`metrics.confusion_matrix_at_thresholds` now accumulates weighted
-  counts with a fixed-point integer cumulative sum on float32-only Array API
-  devices, avoiding float32 cumsum saturation when the effective positive
-  weight exceeds ``2**24``.
-  By :user:`Olivier Grisel <ogrisel>`.
