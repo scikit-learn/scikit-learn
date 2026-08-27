@@ -181,7 +181,7 @@ def _auto_requests_enabled():
     enabled : bool
         Whether auto-requesting metadata is enabled.
     """
-    return get_config().get("metadata_request_policy", "empty") == "auto"
+    return get_config().get("metadata_request_policy", "class-level") == "auto"
 
 
 def _raise_for_params(params, owner, method, allow=None):

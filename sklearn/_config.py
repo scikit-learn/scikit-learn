@@ -19,7 +19,7 @@ _global_config = {
     "array_api_dispatch": False,
     "transform_output": "default",
     "enable_metadata_routing": False,
-    "metadata_request_policy": "empty",
+    "metadata_request_policy": "class-level",
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
 }
@@ -189,14 +189,14 @@ def set_config(
     metadata_request_policy : str, default=None
         Configure the metadata request policy.
 
-        This flag controls instance `add_auto_request` flags. Class-level request
-        defaults and `set_*_request` always apply.
+        This flag controls instance `add_auto_request` flags. Class-level requests
+        always apply.
 
-        - `"empty"`: do not apply auto-requests
+        - `"class-level"`: do not apply auto-requests
         - `"auto"`: apply requests for metadata flagged with `add_auto_request`
         - `None`: configuration is unchanged
 
-        Refer to :ref:`metadata routing user guide <metadata_routing>` for more details.
+        Refer to :ref:`metadata_routing_auto_request` for more details.
 
         .. versionadded:: 1.10
 
@@ -387,14 +387,14 @@ def config_context(
     metadata_request_policy : str, default=None
         Configure the metadata request policy.
 
-        This flag controls instance `add_auto_request` flags. Class-level request
-        defaults and `set_*_request` always apply.
+        This flag controls instance `add_auto_request` flags. Class-level requests
+        always apply.
 
-        - `"empty"`: do not apply auto-requests
+        - `"class-level"`: do not apply auto-requests
         - `"auto"`: apply requests for metadata flagged with `add_auto_request`
         - `None`: configuration is unchanged
 
-        Refer to :ref:`metadata routing user guide <metadata_routing>` for more details.
+        Refer to :ref:`metadata_routing_auto_request` for more details.
 
         .. versionadded:: 1.10
 

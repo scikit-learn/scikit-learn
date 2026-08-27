@@ -1194,7 +1194,7 @@ def test_unbound_set_methods_work():
     "metadata_request_policy, default_routing",
     [
         ("auto", True),
-        ("empty", False),
+        ("class-level", False),
     ],
 )
 def test_auto_requests_disabled(metadata_request_policy, default_routing):
