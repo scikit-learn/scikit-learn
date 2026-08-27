@@ -1026,6 +1026,8 @@ def confusion_matrix_at_thresholds(
     )
     # accumulate the true positives with decreasing threshold
     if sample_weight is None:
+        # Accumulate the counts using an integer datatype to avoid
+        # rounding errors on devices that do not support float64.
         y_true_int = xp.astype(y_true, xp.int64)
         tps_int = xp.cumulative_sum(y_true_int, dtype=xp.int64)[threshold_idxs]
         fps_int = (xp.astype(threshold_idxs, xp.int64) + 1) - tps_int

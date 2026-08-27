@@ -949,7 +949,6 @@ def test_confusion_matrix_at_thresholds(global_random_seed):
     assert_allclose(tns + fps + fns + tps, n_samples)
 
 
-@skip_if_array_api_compat_not_configured
 def test_confusion_matrix_at_thresholds_float32_only_unweighted_large_n():
     """Unweighted counts stay exact on float32-only devices for n_pos > 2**24.
 
@@ -957,8 +956,6 @@ def test_confusion_matrix_at_thresholds_float32_only_unweighted_large_n():
     previously made ``confusion_matrix_at_thresholds`` (and ROC-AUC) wrong on
     devices without float64. See #34813.
     """
-    pytest.importorskip("array_api_strict")
-
     xp, device = _array_api_for_tests("array_api_strict", "no_float64", "float32")
 
     rng = np.random.RandomState(0)
