@@ -242,22 +242,6 @@ def test_get_response_error(estimator, X, y, err_msg, params):
         _get_response_values_binary(estimator, X, **params)
 
 
-def test_get_response_no_pos_label_validation_for_multiclass():
-    X, y = make_classification(
-        n_samples=10, n_classes=3, n_informative=3, random_state=0
-    )
-    classifier = DecisionTreeClassifier().fit(X, y)
-    y_pred, pos_label = _get_response_values(
-        classifier,
-        X,
-        response_method="predict_proba",
-        # pos_label should be ignored even if invalid for multiclass problems.
-        pos_label="invalid",
-    )
-    assert y_pred.shape == (X.shape[0], len(classifier.classes_))
-    assert pos_label == "invalid"  # does not matter.
-
-
 @pytest.mark.parametrize("return_response_method_used", [True, False])
 def test_get_response_predict_proba(return_response_method_used):
     """Check the behaviour of `_get_response_values_binary` using `predict_proba`."""
@@ -324,7 +308,9 @@ def test_get_response_decision_function(return_response_method_used):
 )
 def test_get_response_values_multiclass(estimator, response_method):
     """Check that we can call `_get_response_values` with a multiclass estimator.
-    It should return the predictions untouched.
+
+    Predictions should be returned untouched. `pos_label` is ignored for
+    multiclass problems, including when it is not a valid class label.
     """
     estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
     predictions, pos_label = _get_response_values(
@@ -337,6 +323,16 @@ def test_get_response_values_multiclass(estimator, response_method):
         assert np.logical_and(predictions >= 0, predictions <= 1).all()
     elif response_method == "predict_log_proba":
         assert (predictions <= 0.0).all()
+
+    predictions_invalid, pos_label_invalid = _get_response_values(
+        estimator,
+        X,
+        response_method=response_method,
+        pos_label="invalid",
+    )
+    assert pos_label_invalid == "invalid"
+    assert predictions_invalid.shape == (X.shape[0], len(estimator.classes_))
+    assert_allclose(predictions_invalid, predictions)
 
 
 def test_get_response_values_with_response_list():
