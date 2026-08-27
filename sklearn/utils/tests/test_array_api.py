@@ -1139,18 +1139,32 @@ def test_cross_validate_array_api_pipeline(
         expected_device = array_device(X_xp)
         expected_dtype = X_xp.dtype
 
-    for est_xp in cv_results_xp["estimator"]:
+    for est_xp, est_np in zip(
+        cv_results_xp["estimator"], cv_results_np["estimator"], strict=True
+    ):
         # Ensure that the estimators returned can predict when fed with the
         # same kind of array API inputs they were trained on and that their
-        # predictions are consistent.
+        # predictions are consistent with the NumPy baseline.
+        preds_np = est_np.predict(X_np)
         with config_context(array_api_dispatch=True):
             if is_classifier(est_xp):
                 preds_xp = est_xp.predict(X_np)
-                # XXX: which namespace, dtype and device is expected for
-                # preds_xp? If we use string labels, this will be numpy arrays
-                # of object dtype and CPU device. But what about integer
-                # classes? Should this be the namespace/device of X_train or
-                # y_train?
+                # Classifier `predict` returns class labels. String labels
+                # cannot be represented by array API namespaces, so they stay
+                # as NumPy arrays on CPU (namespace/device of `y`, typically
+                # unicode or object dtype). Integer class ids follow `X`
+                # (same library and device).
+                if target_dtype is str:
+                    assert _is_numpy_namespace(get_namespace(preds_xp)[0])
+                    assert array_device(preds_xp) == array_device(y_np)
+                    assert preds_xp.dtype.kind in ("U", "S", "O")
+                else:
+                    assert (
+                        get_namespace(preds_xp)[0].__name__
+                        == get_namespace(X_xp)[0].__name__
+                    )
+                    assert array_device(preds_xp) == expected_device
+                assert_array_equal(move_to(preds_xp, xp=numpy, device="cpu"), preds_np)
 
                 if hasattr(est_xp, "predict_proba"):
                     proba_xp = est_xp.predict_proba(X_np)
@@ -1166,6 +1180,12 @@ def test_cross_validate_array_api_pipeline(
                 preds_xp = est_xp.predict(X_np)
                 assert preds_xp.dtype == expected_dtype
                 assert array_device(preds_xp) == expected_device
+                assert_allclose(
+                    move_to(preds_xp, xp=numpy, device="cpu"),
+                    preds_np,
+                    rtol=1e-4 if dtype_name == "float32" else 1e-6,
+                    atol=_atol_for_type(dtype_name),
+                )
 
     for score_name in cv_params["scoring"]:
         for key in [f"test_{score_name}", f"train_{score_name}"]:
