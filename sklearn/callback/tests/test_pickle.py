@@ -145,24 +145,20 @@ def test_callbacks_refit_after_load_in_fresh_process(tmp_path, capsys):
 
 
 class _TraversalRecorder(pickle.Pickler):
-    """A pickler that records which of the `watched` objects it walks through.
+    """A pickler that records the id of every object it walks through.
 
     `persistent_id` is called for every object the pickler encounters, so an object is
-    detected whichever path leads to it, not only when it is a direct attribute of the
+    recorded whichever path leads to it, not only when it is a direct attribute of the
     object being pickled,
     see https://docs.python.org/3/library/pickle.html#pickle.Pickler.persistent_id.
     """
 
-    def __init__(self, watched):
+    def __init__(self):
         super().__init__(io.BytesIO(), protocol=pickle.HIGHEST_PROTOCOL)
-        # Keyed by id because a watched container need not be hashable and because a
-        # match must mean "this very object", not "an object that compares equal to it".
-        self._watched = {id(obj): obj for obj in watched}
         self.walked_through = set()
 
     def persistent_id(self, obj):
-        if id(obj) in self._watched:
-            self.walked_through.add(obj.__class__.__name__)
+        self.walked_through.add(id(obj))
         return None  # pickle `obj` as usual
 
 
@@ -180,20 +176,20 @@ def _checked(hook):
     # preserve the signature of the hook because callbacks are validated against it
     @functools.wraps(hook)
     def checked_hook(self, *args, **kwargs):
-        watched = []
-        for consumer in list(_message_consumers.values()):
-            target = getattr(consumer, "__self__", None)
-            if target is not None:
-                watched.append(target)
+        # snapshot because another thread may register a listener concurrently
+        consumers = list(_message_consumers.values())
+        # the containers are held, not just their ids, which could be reused once freed
+        watched = [c.__self__ for c in consumers if hasattr(c, "__self__")]
 
-        recorder = _TraversalRecorder(watched)
+        recorder = _TraversalRecorder()
         recorder.dump(self)
 
-        assert not recorder.walked_through, (
-            f"Pickling {self.__class__.__name__} walks through "
-            f"{recorder.walked_through}, which a listener thread mutates "
-            "concurrently. Exclude it in the callback's `__getstate__`, e.g. by "
-            "replacing it with a copy or an empty container."
+        offenders = recorder.walked_through & {id(container) for container in watched}
+        assert not offenders, (
+            f"Pickling {self.__class__.__name__} walks through a container that a"
+            " listener thread mutates concurrently. Keep it away from the pickler,"
+            " either by handing over a copy of it in the callback's `__getstate__`, or"
+            " by storing it outside of the callback instance."
         )
 
         return hook(self, *args, **kwargs)
@@ -203,12 +199,21 @@ def _checked(hook):
 
 @pytest.mark.parametrize("factory", CALLBACK_FACTORIES)
 def test_listener_state_is_not_walked_by_the_pickler(factory, monkeypatch):
-    """Check that pickling a callback never traverses state its listener mutates."""
+    """Check that pickling a callback never traverses state its listener mutates.
+
+    An estimator carrying a callback can be pickled by a background thread, e.g. loky's
+    queue feeder dispatching a task to a worker, while the listener thread of that same
+    callback mutates the callback's state as messages come in. Pickling a container that
+    another thread mutates breaks the dump, which joblib reports as "Could not pickle
+    the task to send it to the workers".
+
+    The check runs from a hook, i.e. while the listeners are up, which is when such a
+    dispatch would happen.
+    """
     callback = factory()
-    X, y = make_regression(n_samples=30, n_features=2, random_state=0)
 
     for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
         hook = getattr(callback.__class__, hook_name)
         monkeypatch.setattr(callback.__class__, hook_name, _checked(hook))
 
-    MaxIterEstimator(max_iter=3).set_callbacks(callback).fit(X=X, y=y)
+    MaxIterEstimator(max_iter=3).set_callbacks(callback).fit()
