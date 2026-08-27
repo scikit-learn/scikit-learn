@@ -588,6 +588,8 @@ pipe.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 
 #
 # %%
+# .. _customise_metadata_requests_in_consumers:
+#
 # Customise Metadata Requests in Consumers
 # ----------------------------------------
 # Most :term:`consumers <consumer>` inherit from :class:`~base.BaseEstimator` and use
@@ -601,7 +603,7 @@ pipe.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 #
 # Custom implementations should follow the same pattern as the default: build a
 # :class:`~utils.metadata_routing.MetadataRequest` using
-# `get_declared_metadata_request_values`:
+# `get_declared_metadata_request_values`.
 
 # %%
 # These imports are only required for the examples in this section.
@@ -653,11 +655,13 @@ pprint(consumer.__sklearn_build_declared_metadata_request__()._serialize())
 # %%
 # When metadata is consumed by a different callable than the routed method name, pass
 # it as `method` to `get_declared_metadata_request_values`. (This is the same pattern
-# as internally used in :class:`~metrics._scorer._BaseScorer`.)
+# as internally used in :class:`~metrics._scorer._BaseScorer`.) In the example below,
+# the metadata for `fit` is actually consumed by `consuming_function`.
 #
 # Be aware that for the callable passed as `method`, the first parameter is always
 # treated as data and excluded from metadata discovery (e.g. `self` for an
-# unbound method, or `y` / `y_true` for a scoring function).
+# unbound method, or `y_true` for a scoring function), as well as parameter names like
+# `X, y, Y, Xt, yt` that have a special meaning in sklearn.
 
 
 def consuming_function(y, metadata1):
@@ -668,8 +672,8 @@ class CustomFunctionConsumer(MetadataRequester):
     def __init__(self, func):
         self.func = func
 
-    def fit(self, metadata1, metadata2):
-        self.func(y=None, metadata1=metadata1)
+    def fit(self, X, y, metadata1, metadata2):
+        self.func(None, X, y, metadata1=metadata1)
         return self
 
     def __sklearn_build_declared_metadata_request__(self):

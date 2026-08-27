@@ -335,7 +335,7 @@ class MethodMetadataRequest:
     This class can be used inside the `__sklearn_build_declared_metadata_request__`
     method of :class:`~utils.metadata_routing.MetadataRequester` to override how
     class-level requests are build. See the :ref:`metadata routing developing guide
-    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for examples on how
+    <customise_metadata_requests_in_consumers>` for examples on how
     to use it.
 
     .. versionadded:: 1.3
@@ -1529,9 +1529,8 @@ class MetadataRequester:
 
     Custom :term:`consumers <consumer>` that are not estimators can inherit from this
     Mixin to participate in metadata routing (e.g. custom scorers or wrappers). See the
-    :ref:`metadata routing developing guide
-    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for examples on how
-    to use it.
+    :ref:`metadata routing developing guide 
+    <customise_metadata_requests_in_consumers>` for examples on how to use it.
 
     .. versionadded:: 1.3
     .. versionchanged:: 1.10
@@ -1756,8 +1755,7 @@ class MetadataRequester:
         when metadata is consumed by another callable.
 
         Read more on developing custom consumers in the :ref:`Metadata Routing
-        Developing Guide
-        <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
+        Developing Guide <customise_metadata_requests_in_consumers>`
 
         .. versionadded:: 1.10
 
@@ -1769,7 +1767,7 @@ class MetadataRequester:
         See Also
         --------
         _get_metadata_request : Return the effective request for this instance.
-        get_declared_metadata_request_values : Get class-level requests.
+        get_declared_metadata_request_values : Get declared metadata request values per consuming method.
         """
         requests = MetadataRequest(owner=self)
         for method_name in SIMPLE_METHODS:
@@ -1962,8 +1960,7 @@ def get_declared_metadata_request_values(
     This method can be used inside the `__sklearn_build_declared_metadata_request__`
     method of :class:`~utils.metadata_routing.MetadataRequester` to override how
     class-level requests are build. See the :ref:`metadata routing developing guide
-    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>` for examples on how
-    to use it.
+    <customise_metadata_requests_in_consumers>` for examples on how to use it.
 
     .. versionadded:: 1.10
 
