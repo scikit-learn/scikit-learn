@@ -423,10 +423,13 @@ cdef inline double_pair cgrad_hess_huber_loss(
     gh.val2 = raw_prediction - y_true               # used as temporary
     if fabs(gh.val2) <= delta:
         gh.val1 = gh.val2                           # gradient
-        gh.val2 = 1                                 # hessian
     else:
         gh.val1 = delta if gh.val2 >=0 else -delta  # gradient
-        gh.val2 = 0                                 # hessian
+    # The exact hessian is 1 inside the quadratic region and 0 outside of it.
+    # Optimization routines like HGBT, however, need a hessian > 0. Therefore,
+    # we use the constant approximation 1 everywhere, which is an upper bound
+    # of the exact hessian.
+    gh.val2 = 1                                     # hessian
     return gh
 
 

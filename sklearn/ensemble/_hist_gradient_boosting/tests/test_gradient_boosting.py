@@ -242,6 +242,117 @@ def test_absolute_error_sample_weight():
     gbdt.fit(X, y, sample_weight=sample_weight)
 
 
+def test_huber():
+    # For coverage and basic fit quality.
+    X, y = make_regression(n_samples=500, random_state=0)
+    gbdt = HistGradientBoostingRegressor(loss="huber", random_state=0)
+    gbdt.fit(X, y)
+    assert gbdt.score(X, y) > 0.9
+
+
+@pytest.mark.parametrize("quantile", [None, 0.1, 0.5, 0.9])
+def test_huber_quantile_values(quantile):
+    # The huber loss works for all allowed values of the quantile parameter.
+    X, y = make_regression(n_samples=200, random_state=0)
+    gbdt = HistGradientBoostingRegressor(
+        loss="huber", quantile=quantile, max_iter=10, random_state=0
+    )
+    gbdt.fit(X, y)
+    assert np.all(np.isfinite(gbdt.predict(X)))
+
+
+def test_huber_default_quantile():
+    # The quantile parameter of the huber loss defaults to 0.9.
+    gbdt = HistGradientBoostingRegressor(loss="huber", max_iter=2, random_state=0)
+    gbdt.fit(X_regression, y_regression)
+    assert gbdt._loss.quantile == 0.9
+
+
+def test_huber_sample_weight():
+    # Make sure no error is thrown during fit of
+    # HistGradientBoostingRegressor with huber loss function
+    # and passing sample_weight
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.uniform(-1, 1, size=(n_samples, 2))
+    y = rng.uniform(-1, 1, size=n_samples)
+    sample_weight = rng.uniform(0, 1, size=n_samples)
+    gbdt = HistGradientBoostingRegressor(loss="huber")
+    gbdt.fit(X, y, sample_weight=sample_weight)
+
+
+def test_huber_delta_updated_each_iteration(monkeypatch):
+    # The breakpoint delta of the huber loss must be recomputed as the
+    # quantile of the absolute residuals once before the first tree (for the
+    # baseline prediction) and then at each iteration, see algo 4 in
+    # Friedman (2001).
+    max_iter = 3
+    quantile = 0.8
+    deltas = []
+    set_huber_delta_orig = hgb_module.set_huber_delta
+
+    def set_huber_delta_spy(loss, y_true, raw_prediction, sample_weight=None):
+        set_huber_delta_orig(loss, y_true, raw_prediction, sample_weight)
+        deltas.append(loss.closs.delta)
+
+    monkeypatch.setattr(hgb_module, "set_huber_delta", set_huber_delta_spy)
+
+    X, y = make_regression(n_samples=200, noise=10, random_state=0)
+    gbdt = HistGradientBoostingRegressor(
+        loss="huber", quantile=quantile, max_iter=max_iter, random_state=0
+    )
+    gbdt.fit(X, y)
+
+    # one call for the baseline prediction, then one call per iteration
+    assert len(deltas) == 1 + max_iter
+
+    # the first delta is computed on the residuals w.r.t. the median of y
+    expected_first = np.percentile(np.abs(y - np.median(y)), 100 * quantile)
+    assert_allclose(deltas[0], expected_first)
+
+    # residuals shrink during boosting, hence delta decreases
+    assert deltas[-1] < deltas[0]
+
+
+@pytest.mark.parametrize(
+    "quantile, err_msg",
+    [
+        (0, "quantile == 0, must be > 0."),
+        (1, "quantile == 1, must be < 1."),
+    ],
+)
+def test_huber_invalid_quantile(quantile, err_msg):
+    gbdt = HistGradientBoostingRegressor(loss="huber", quantile=quantile)
+    with pytest.raises(ValueError, match=err_msg):
+        gbdt.fit(X_regression, y_regression)
+
+
+def test_huber_outlier_robustness():
+    # The huber loss should be less affected by outliers in y than the
+    # squared error.
+    rng = np.random.RandomState(42)
+    n_samples = 2000
+    X = rng.uniform(-1, 1, size=(n_samples, 2))
+    y = X[:, 0] + 2 * X[:, 1] + rng.normal(scale=0.1, size=n_samples)
+    # contaminate 5% of the targets with large outliers
+    outlier_idx = rng.choice(n_samples, size=n_samples // 20, replace=False)
+    y[outlier_idx] += rng.choice([-50, 50], size=outlier_idx.size)
+
+    huber = HistGradientBoostingRegressor(loss="huber", random_state=0).fit(X, y)
+    squared_error = HistGradientBoostingRegressor(
+        loss="squared_error", random_state=0
+    ).fit(X, y)
+
+    # compare robust median absolute errors on the non-contaminated samples
+    clean_mask = np.ones(n_samples, dtype=bool)
+    clean_mask[outlier_idx] = False
+    err_huber = np.median(np.abs(huber.predict(X[clean_mask]) - y[clean_mask]))
+    err_squared_error = np.median(
+        np.abs(squared_error.predict(X[clean_mask]) - y[clean_mask])
+    )
+    assert err_huber < err_squared_error
+
+
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 1.0, 2.0])])
 def test_gamma_y_positive(y):
     # Test that ValueError is raised if any y_i <= 0.

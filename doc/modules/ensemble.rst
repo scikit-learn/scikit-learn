@@ -102,6 +102,8 @@ Available losses for **regression** are:
 
 - 'squared_error', which is the default loss;
 - 'absolute_error', which is less sensitive to outliers than the squared error;
+- 'huber', which combines the squared error for small residuals and the
+  absolute error for large residuals, making it robust to outliers;
 - 'gamma', which is well suited to model strictly positive outcomes;
 - 'poisson', which is well suited to model counts and frequencies;
 - 'quantile', which allows for estimating a conditional quantile that can later
@@ -132,8 +134,8 @@ in [XGBoost]_):
 .. dropdown:: Details on l2 regularization
 
   It is important to notice that the loss term :math:`l(\hat{y}_i, y_i)` describes
-  only half of the actual loss function except for the pinball loss and absolute
-  error.
+  only half of the actual loss function except for the pinball loss, the absolute
+  error and the huber loss.
 
   The index :math:`k` refers to the k-th tree in the ensemble of trees. In the
   case of regression and binary classification, gradient boosting models grow one
