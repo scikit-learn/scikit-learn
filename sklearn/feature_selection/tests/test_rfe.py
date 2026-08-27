@@ -811,4 +811,3 @@ def test_rfe_dataframe_preservation(dataframe_format, rfe):
 
     preds = rfe.predict(X)
     assert len(preds) == len(iris.data)
-
