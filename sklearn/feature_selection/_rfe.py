@@ -7,7 +7,6 @@ import warnings
 from copy import deepcopy
 from numbers import Integral
 
-import narwhals.stable.v2 as nw
 import numpy as np
 from joblib import effective_n_jobs
 
@@ -282,17 +281,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # step_score is not exposed to users and is used when implementing RFECV
         # self.step_scores_ will not be calculated when calling _fit through fit
 
-        preserve_X = nw.dependencies.is_pandas_dataframe(X)
-
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse="csc",
-            ensure_min_features=2,
-            ensure_all_finite=False,
             multi_output=True,
-            skip_check_array=preserve_X,
+            skip_check_array=True,
         )
 
         # Initialization
@@ -382,15 +377,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     def _transform_for_estimator(self, X):
         """Transform X to the selected features, preserving the DataFrame."""
-        preserve_X = nw.dependencies.is_pandas_dataframe(X)
         X = validate_data(
             self,
             X,
-            dtype=None,
             accept_sparse="csr",
-            ensure_all_finite=not get_tags(self).input_tags.allow_nan,
-            skip_check_array=preserve_X,
             reset=False,
+            skip_check_array=True,
         )
         return self._transform(X)
 
@@ -846,16 +838,13 @@ class RFECV(RFE):
             Fitted estimator.
         """
         _raise_for_params(params, self, "fit", allow=["groups"])
-        preserve_X = nw.dependencies.is_pandas_dataframe(X)
         X, y = validate_data(
             self,
             X,
             y,
             accept_sparse="csr",
-            ensure_min_features=2,
-            ensure_all_finite=False,
             multi_output=True,
-            skip_check_array=preserve_X,
+            skip_check_array=True,
         )
 
         if _routing_enabled():
