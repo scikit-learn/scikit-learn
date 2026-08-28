@@ -171,15 +171,9 @@ _MIN_SCIPY_VERSION = "1.14.0"
 
 @lru_cache(maxsize=None)
 def _scipy_is_too_old(scipy_version):
-    """Whether `scipy_version` predates the oldest SciPy we can dispatch with.
-
-    `_check_array_api_dispatch` runs on every `get_namespace` call, and the two
-    version parses it used to do inline accounted for ~6us of the ~6.4us it
-    spent. They are cached on the version string rather than resolved once at
-    import, so that `scipy.__version__` is still read on every call. Tests such
-    as `test_config_array_api_dispatch_error_scipy` monkeypatch that attribute
-    and expect the check to notice.
-    """
+    """Whether `scipy_version` predates the oldest SciPy we can dispatch with."""
+    # Cached to save time on the many `get_namespace` et al. calls
+    # Parametrized so tests can fake other SciPy versions.
     return parse_version(scipy_version) < parse_version(_MIN_SCIPY_VERSION)
 
 
@@ -310,14 +304,9 @@ _inspect_dtypes_cached = lru_cache(maxsize=None)(_inspect_dtypes)
 def _info_dtypes(xp, device=None, kind=None):
     """Data types `xp` supports on `device`, as a read-only mapping.
 
-    Wraps `xp.__array_namespace_info__().dtypes()`, which is not cheap: it
-    probes the device by allocating an array for each candidate dtype, costing
-    ~27us on torch MPS and 2-4us on CUDA. Since the answer depends only on the
-    namespace, device and kind, it is cached here.
-
-    array-api-compat used to memoize this itself, but the cache keyed on an
-    object that callers construct anew on every call, so it never hit; it was
-    removed in https://github.com/data-apis/array-api-compat/pull/472
+    Wraps `xp.__array_namespace_info__().dtypes()`, which is not cheap.
+    Since the answer depends only on the namespace, device and kind,
+    it is cached here.
 
     The mapping is read-only because a cached `dict` would otherwise be shared
     with every caller, so one caller mutating it would corrupt the next.
@@ -578,7 +567,6 @@ def get_namespace_and_device(
     # Checked before the config on purpose: a supplied `xp` short-circuits with
     # is_array_api=True even when dispatch is off, which is what this function
     # has always done. `get_namespace` disagrees and returns False in that case.
-    # See agents/plans/2026-08-28-get-namespace-dispatch-asymmetry.md
     if xp is not None:
         return xp, True, arrays_device
 
