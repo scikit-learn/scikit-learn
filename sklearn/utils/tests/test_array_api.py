@@ -1145,7 +1145,8 @@ def test_cross_validate_array_api_pipeline(
         # Ensure that the estimators returned can predict when fed with the
         # same kind of array API inputs they were trained on and that their
         # predictions are consistent with the NumPy baseline.
-        preds_np = est_np.predict(X_np)
+        with config_context(array_api_dispatch=False):
+            preds_np = est_np.predict(X_np)
         with config_context(array_api_dispatch=True):
             if is_classifier(est_xp):
                 preds_xp = est_xp.predict(X_np)
