@@ -1834,7 +1834,7 @@ def test_regression_scorer_array_api_compliance(
     """
     estimator = clone(estimator)
     scorer = check_scoring(estimator=estimator, scoring=scoring)
-    xp, device_ = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name)
 
     # Check compliance of the scorer API for regression tasks.
     X_np, y_np = make_regression(
@@ -1845,10 +1845,10 @@ def test_regression_scorer_array_api_compliance(
         random_state=0,
     )
     X_np = X_np.astype(dtype_name)
-    X_xp = xp.asarray(X_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
 
     if target_namespace_dtype == "xp_float32":
-        y = xp.asarray(y_np, device=device_, dtype=xp.float32)
+        y = xp.asarray(y_np, device=device, dtype=xp.float32)
     else:  # np_float64
         y = y_np
 
