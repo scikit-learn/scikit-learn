@@ -1,0 +1,6 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now document that
+  `min_samples_leaf` is applied to the unweighted sample count, so the
+  :term:`sample_weight` / sample-repetition equivalence only holds when
+  `min_samples_leaf=1`.
+  By :user:`Antoine Baker <antoinebaker>`.
