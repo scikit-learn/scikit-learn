@@ -1575,7 +1575,7 @@ class CategoricalNB(_BaseDiscreteNB):
 # ---- added
 class GammaNB(_BaseNB):
     """ [Input]
-    p_min: number between 0 and 1, standing for p_min * min_of_X + (1-p_min) * median_of_X, an estimator of calculating maximum liklihood
+    p_min: number between 0 and 1, standing for p_min * min_of_X + (1-p_min) * median_of_X, an estimator of calculating maximum likelihood
     X: feature matrix in DataFrame form 
     y: labels vector in DataFrame form 
 
@@ -1593,7 +1593,7 @@ class GammaNB(_BaseNB):
         self.yname=''
         self.p1=0
         self.p0=0
-        self.p_min=p_min  # decide the estimator in maximum liklihood function 
+        self.p_min=p_min  # decide the estimator in maximum likelihood function 
 
     
     def __df(self):
@@ -1603,7 +1603,8 @@ class GammaNB(_BaseNB):
             tmp_ind = [i for i in range(n)]
             tmp_col = dict( zip(tmp_ind, self.fnames) )
             self._X = self._X.rename( columns=tmp_col )
-            self._Y = self._Y.rename( columns={0:'y1'} )  # unifying the varName
+            self._Y = self._Y.rename( columns={0:'y1'} )  
+                # unifying the varName
 
     
     def fit(self, X_in, y_in, sample_weight=None):
