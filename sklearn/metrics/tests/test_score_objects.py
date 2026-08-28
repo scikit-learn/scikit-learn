@@ -1852,7 +1852,8 @@ def test_regression_scorer_array_api_compliance(
     else:  # np_float64
         y = y_np
 
-    score_np = scorer(estimator.fit(X_np, y_np), X_np, y_np)
+    with config_context(array_api_dispatch=False):
+        score_np = scorer(estimator.fit(X_np, y_np), X_np, y_np)
     with config_context(array_api_dispatch=True):
         score_xp = scorer(estimator.fit(X_xp, y), X_xp, y)
 
