@@ -1573,6 +1573,8 @@ class CategoricalNB(_BaseDiscreteNB):
 
 class GammaNB:
     """
+    Parameters
+    -----------------------------
     [Input]
     p_min: float,
             between 0 and 1,
@@ -1588,6 +1590,8 @@ class GammaNB:
 
     def __init__(self, p_min):
         """
+        Parameters
+        -----------------------------
         Initialize parameters when created.
         p_min: float,
             between 0 and 1,
@@ -1609,6 +1613,8 @@ class GammaNB:
 
     def out_split_array(self, data_in, ind_vec_in):
         """
+        Parameters
+        -----------------------------
         [Input]
         data_in: array-like of shape (n_samples, n_features),
         ind_vec_in: array-like of shape (k_samples, ),
@@ -1624,6 +1630,8 @@ class GammaNB:
 
     def fit(self, X, y, sample_weight=None):
         """
+        Parameters
+        -----------------------------
         Record the pattern of X and y
         [Input]
         X: array-like of shape (n_samples, n_features),\
@@ -1671,6 +1679,8 @@ class GammaNB:
 
     def predict(self, X):
         """
+        Parameters
+        -----------------------------
         [Input]
         X: array-like of shape (n_samples, n_features),\
             feature matrix in array
