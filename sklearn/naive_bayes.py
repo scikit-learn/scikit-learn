@@ -1574,11 +1574,13 @@ class CategoricalNB(_BaseDiscreteNB):
 class GammaNB:
     """
     [Input]
-    p_min: number between 0 and 1,
-            standing for p_min * min_of_X + (1-p_min) * median_of_X,
-            which is an estimator of calculating maximum likelihood.
-    X: feature matrix in array
-    y: labels vector in array
+    p_min: float,
+            between 0 and 1,
+            deciding the percentage between min_x and median_x.
+    X: array-like of shape (n_samples, n_features),\
+        feature matrix in array
+    y: array-like of shape (n_samples, ),\
+        labels vector in array
     [output]
     y_pred: the predict of labels.
     -----------------------------
@@ -1587,6 +1589,9 @@ class GammaNB:
     def __init__(self, p_min):
         """
         Initialize parameters when created.
+        p_min: float,
+            between 0 and 1,
+            deciding the percentage between min_x and median_x.
         """
         self._X = []
         self._Y = []
@@ -1605,10 +1610,10 @@ class GammaNB:
     def out_split_array(self, data_in, ind_vec_in):
         """
         [Input]
-            1.ind_vec_in: list
-            2.data_in: list/array/dataFrame
+        data_in: array-like of shape (n_samples, n_features),
+        ind_vec_in: array-like of shape (k_samples, ),
         [Output]
-            subset of data_in, array
+        subset of data_in, array
         """
         tmp_array = np.array(data_in)
         out_array = []
@@ -1621,7 +1626,12 @@ class GammaNB:
         """
         Record the pattern of X and y
         [Input]
-            X (features), y(labels)
+        X: array-like of shape (n_samples, n_features),\
+            feature matrix in array
+        y: array-like of shape (n_samples, ),\
+            labels vector in array
+        sample_weight: float,\
+            weight of samples
         """
         n, m = X.shape
         self._X = np.array(X)
@@ -1662,9 +1672,11 @@ class GammaNB:
     def predict(self, X):
         """
         [Input]
-            X (features)
+        X: array-like of shape (n_samples, n_features),\
+            feature matrix in array
         [Output]
-            y (labels)
+        y: array-like of shape (n_samples, ),\
+            labels vector in array
         """
         y_pred = []
         p = self.p_min
