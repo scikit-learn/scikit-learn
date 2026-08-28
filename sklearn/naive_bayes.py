@@ -1574,15 +1574,16 @@ class CategoricalNB(_BaseDiscreteNB):
 
 # ---- added
 class GammaNB:
-    """ [Input]
+    """ 
+    [Input]
     p_min: number between 0 and 1, 
             standing for p_min * min_of_X + (1-p_min) * median_of_X, 
             which is an estimator of calculating maximum likelihood.
     X: feature matrix in DataFrame form 
     y: labels vector in DataFrame form 
 
-    [output] y_pred:
-    the predict of labels.
+    [output]
+    y_pred: the predict of labels.
     ----------------------------- 
     """
 
