@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import gc
+
 import numpy as np
 import pytest
 
@@ -415,6 +417,10 @@ def test_scoring_monitor_listener_closed_on_gc():
     assert listener_address in _listeners
     assert listener_address in _message_consumers
 
+    MaxIterEstimator().set_callbacks(callback).fit()
+
     del callback
+    gc.collect()
+
     assert listener_address not in _listeners
     assert listener_address not in _message_consumers
