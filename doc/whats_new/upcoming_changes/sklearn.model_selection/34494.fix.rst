@@ -1,0 +1,5 @@
+- :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.ParameterSampler` now sample each sub-grid uniformly
+  when ``param_distributions`` is a list of dicts whose values are all lists,
+  instead of over-sampling the sub-grids that contain more combinations.
+  By :user:`Pranav Achar <PranavAchar01>`.
