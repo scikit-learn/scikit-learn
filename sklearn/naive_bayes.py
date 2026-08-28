@@ -1572,7 +1572,7 @@ class CategoricalNB(_BaseDiscreteNB):
 
 
 class GammaNB:
-    """
+    """A Gamma kernel with different priori distributions
     Parameters
     -----------------------------
     [Input]
@@ -1589,7 +1589,7 @@ class GammaNB:
     """
 
     def __init__(self, p_min):
-        """
+        """Initialize the parameters.
         Parameters
         -----------------------------
         Initialize parameters when created.
@@ -1612,7 +1612,7 @@ class GammaNB:
             m, n = self._X.shape
 
     def out_split_array(self, data_in, ind_vec_in):
-        """
+        """Split the feature set according to labels, namely 0 or 1.
         Parameters
         -----------------------------
         [Input]
@@ -1629,10 +1629,9 @@ class GammaNB:
         return np.array(out_array)
 
     def fit(self, X, y, sample_weight=None):
-        """
+        """ Fit the pattern between X and y.
         Parameters
         -----------------------------
-        Record the pattern of X and y
         [Input]
         X: array-like of shape (n_samples, n_features),\
             feature matrix in array
@@ -1678,7 +1677,7 @@ class GammaNB:
         self.feat1 = feat_1
 
     def predict(self, X):
-        """
+        """ Predict the labels of the input X.
         Parameters
         -----------------------------
         [Input]
@@ -1729,7 +1728,7 @@ class GammaNB:
                 # 1)+0 uniform distr.;
                 # 2)+tmp_exp_priori Exponential distr.;
                 # 3)+tmp_poi_priori Poisson distr.;
-                # based on different priori distribution
+                # based on different priori distributions
 
                 # --- p1
                 # Feat1: minimum value of one feat.
@@ -1759,7 +1758,7 @@ class GammaNB:
                 # 1)+0 uniform distr.;
                 # 2)+tmp_exp_priori Exponential distr.;
                 # 3)+tmp_poi_priori Poisson distr.;
-                # based on different priori distribution
+                # based on different priori distributions
 
             # Priori-prob.
             tmp_p0 += np.log(self.p0 + tmp_slack)
