@@ -1571,167 +1571,163 @@ class CategoricalNB(_BaseDiscreteNB):
         return total_ll
 
 
-
-# ---- added
 class GammaNB:
-    """ 
+    """
     [Input]
-    p_min: number between 0 and 1, 
-            standing for p_min * min_of_X + (1-p_min) * median_of_X, 
+    p_min: number between 0 and 1,
+            standing for p_min * min_of_X + (1-p_min) * median_of_X,
             which is an estimator of calculating maximum likelihood.
-    X: feature matrix in DataFrame form 
-    y: labels vector in DataFrame form 
-
+    X: feature matrix in array
+    y: labels vector in array
     [output]
     y_pred: the predict of labels.
-    ----------------------------- 
+    -----------------------------
     """
 
     def __init__(self, p_min):
-        self._X=[]
-        self._Y=[]
-        self.fnames=[]
-        self.yname=''
-        self.p0=0
-        self.p1=0
-        self.feat0=[]
-        self.feat1=[]
-        self.p_min=p_min
+        self._X = []
+        self._Y = []
+        self.fnames = []
+        self.yname = ""
+        self.p0 = 0
+        self.p1 = 0
+        self.feat0 = []
+        self.feat1 = []
+        self.p_min = p_min
         self.n_samples = 0
-        
+
     def __df(self):
-        if len(self._X)>0:
-            self._X = np.array( self._X )
+        if len(self._X) > 0:
+            self._X = np.array(self._X)
             m, n = self._X.shape
             tmp_ind = [i for i in range(n)]
-            tmp_col = dict( zip(tmp_ind, self.fnames) )
+            tmp_col = dict(zip(tmp_ind, self.fnames))
 
-    def out_split_array( self, data_in, ind_vec_in ):
+    def out_split_array(self, data_in, ind_vec_in):
         # ind_vec_in: list
-        # data_in: list/array/dataFrame 
-        tmp_array = np.array( data_in )
+        # data_in: list/array/dataFrame
+        tmp_array = np.array(data_in)
         out_array = []
         for i in range(len(ind_vec_in)):
             tmp_ind = ind_vec_in[i]
-            out_array.append( tmp_array[tmp_ind].tolist() )
-        return np.array( out_array )
-    
+            out_array.append(tmp_array[tmp_ind].tolist())
+        return np.array(out_array)
+
     def fit(self, X, y, sample_weight=None):
         # --- Split according y=0 OR 1
         self._X = np.array(X)
         self._Y = np.array(y)
         self.n_samples = len(X)
-        n,m = X.shape
-        self.fnames = ["v"+str(i) for i in range(m)]  # nomial
-        self.yname = 'y1'  # nomial
-        tmp_ind0=[]
-        tmp_ind1=[]
+        n, m = X.shape
+        self.fnames = ["v" + str(i) for i in range(m)]  # nomial
+        self.yname = "y1"  # nomial
+        tmp_ind0 = []
+        tmp_ind1 = []
         for i in range(len(self._Y)):
             if self._Y[i] < 0.5:
                 tmp_ind0.append(i)
             else:
                 tmp_ind1.append(i)
-        tmp_x0 = self.out_split_array( self._X, tmp_ind0 )
-        tmp_y0 = self.out_split_array( self._Y, tmp_ind0 )
-        tmp_x1 = self.out_split_array( self._X, tmp_ind1 )
-        tmp_y1 = self.out_split_array( self._Y, tmp_ind1 )  
-        self.p0 = len(tmp_y0)/len(y)
-        self.p1 = len(tmp_y1)/len(y)
-
+        tmp_x0 = self.out_split_array(self._X, tmp_ind0)
+        tmp_y0 = self.out_split_array(self._Y, tmp_ind0)
+        tmp_x1 = self.out_split_array(self._X, tmp_ind1)
+        tmp_y1 = self.out_split_array(self._Y, tmp_ind1)
+        self.p0 = len(tmp_y0) / len(y)
+        self.p1 = len(tmp_y1) / len(y)
         # record according to Feat.
         feat_0 = []
         feat_1 = []
-        for i in range(len( self.fnames )):   
-            tmp_min_0 = np.min(  tmp_x0[:,i] )
-            tmp_avg_0 = np.median( tmp_x0[:,i] )  
-            feat_0.append([0, 'tmp_v', float(tmp_min_0), float(tmp_avg_0) ])
-            
+        for i in range(len(self.fnames)):
+            tmp_min_0 = np.min(tmp_x0[:, i])
+            tmp_avg_0 = np.median(tmp_x0[:, i])
+            feat_0.append([0, "vn", float(tmp_min_0), float(tmp_avg_0)])
             # --- Min && Max
-            tmp_min_1 = np.min( tmp_x1[:,i] )
-            tmp_avg_1 = np.median( tmp_x1[:,i] )  
-            feat_1.append([1, 'vname', float(tmp_min_1), float(tmp_avg_1) ])
-            
+            tmp_min_1 = np.min(tmp_x1[:, i])
+            tmp_avg_1 = np.median(tmp_x1[:, i])
+            feat_1.append([1, "vn", float(tmp_min_1), float(tmp_avg_1)])
         # array and vname: {0:'cate', 1:'vname', 2:'min', 3:'avg'}
-        feat_0 = np.array( feat_0 ) 
-        feat_1 = np.array( feat_1 ) 
+        feat_0 = np.array(feat_0)
+        feat_1 = np.array(feat_1)
         self.feat0 = feat_0
         self.feat1 = feat_1
-        
 
     def predict(self, X):
-        y_pred=[]
-        p=self.p_min
+        y_pred = []
+        p = self.p_min
         tmp_slack = 1e-10
-        
-        for j in range( len(X) ):
+        for j in range(len(X)):
             X = np.array(X)
             tmp_x = X[j].tolist()  # one line
-            
-            tmp_p0=0
-            tmp_p1=0
-            for i  in range( len(self.fnames) ):
+            tmp_p0 = 0
+            tmp_p1 = 0
+            for i in range(len(self.fnames)):
                 # --- p0
                 x_curr = tmp_x[i]
                 if x_curr < -9999:
                     x_curr = -9999
                 elif x_curr > 9999:
                     x_curr = 9999
-
                 # FEAT0: min. value of one feat.
                 x_record = float(self.feat0[i][2])  # min-val
-                if x_record<-9999:
+                if x_record < -9999:
                     x_record = -9999
-                elif x_record>9999:
+                elif x_record > 9999:
                     x_record = 9999
-                tmp_delta_1 = abs(x_curr-x_record) # not necessary
-                tmp_delta_1 = float( tmp_delta_1 )
-
+                tmp_delta_1 = abs(x_curr - x_record)  # not necessary
+                tmp_delta_1 = float(tmp_delta_1)
                 # FEAT0: average value of one Feat.
                 # {0:'cate', 1:'vname', 2:'min', 3:'avg'}
                 x_record_1 = float(self.feat0[i][3])  # avg-val
-                if x_record_1<-9999:
+                if x_record_1 < -9999:
                     x_record_1 = -9999
-                elif x_record_1>9999:
+                elif x_record_1 > 9999:
                     x_record_1 = 9999
-                tmp_delta_2 = abs(x_curr-x_record_1)
-                tmp_delta_2 = float( tmp_delta_2 )  
-
-                tmp_linear_delta = p*tmp_delta_1 + (1-p)*tmp_delta_2
-                tmp_exp_priori = -3.39 - np.log( tmp_linear_delta+tmp_slack )
-                tmp_poi_priori = tmp_linear_delta * np.log(self.p0+tmp_slack) + (tmp_delta_2-tmp_linear_delta) * np.log(self.p1+tmp_slack) 
-                tmp_p0 += -0.13 - np.log( tmp_linear_delta+tmp_slack ) + 0
-                # 1)+0 uniform distr.; 2)+tmp_exp_priori Exponential distr.; 3)+tmp_poi_priori Poisson distr.;
+                tmp_delta_2 = abs(x_curr - x_record_1)
+                tmp_delta_2 = float(tmp_delta_2)
+                tmp_linear_delta = p * tmp_delta_1 + (1 - p) * tmp_delta_2
+                tmp_exp_priori = -3.39 - np.log(tmp_linear_delta + tmp_slack)
+                tmp_poi_priori = tmp_linear_delta * np.log(self.p0 + tmp_slack) + (
+                    tmp_delta_2 - tmp_linear_delta
+                ) * np.log(self.p1 + tmp_slack)
+                tmp_p0 += -0.13 - np.log(tmp_linear_delta + tmp_slack) + 0
+                # 1)+0 uniform distr.;
+                # 2)+tmp_exp_priori Exponential distr.;
+                # 3)+tmp_poi_priori Poisson distr.;
                 # based on different priori distribution
 
                 # --- p1
                 # Feat1: minimum value of one feat.
                 x_record_2 = float(self.feat1[i][2])  # min-val
-                if x_record_2 <-9999:
+                if x_record_2 < -9999:
                     x_record_2 = -9999
-                elif x_record_2>9999:
+                elif x_record_2 > 9999:
                     x_record_2 = 9999
-                tmp_delta_3 = abs(x_curr - x_record_2 )
-                tmp_delta_3 = float( tmp_delta_3 )
+                tmp_delta_3 = abs(x_curr - x_record_2)
+                tmp_delta_3 = float(tmp_delta_3)
 
                 # FEAT1: average value of one feat.
                 x_record_3 = float(self.feat1[i][3])  # avg-val
-                if x_record_3 <-9999:
+                if x_record_3 < -9999:
                     x_record_3 = -9999
-                elif x_record_3>9999:
+                elif x_record_3 > 9999:
                     x_record_3 = 9999
                 tmp_delta_4 = abs(x_curr - x_record_3)
-                tmp_delta_4 = float( tmp_delta_4 )
+                tmp_delta_4 = float(tmp_delta_4)
 
-                tmp_linear_delta_1 = p*tmp_delta_3 + (1-p)*tmp_delta_4
-                tmp_exp_priori_1 = -3.39 - np.log( tmp_linear_delta_1+tmp_slack )
-                tmp_poi_priori_1 = tmp_linear_delta_1 * np.log(self.p0+tmp_slack) +(tmp_delta_4-tmp_linear_delta_1) * np.log(self.p1+tmp_slack) 
-                tmp_p1 += -0.13 - np.log( tmp_linear_delta_1+tmp_slack ) + 0
-                # 1)+0 uniform distr.; 2)+tmp_exp_priori Exponential distr.; 3)+tmp_poi_priori Poisson distr.;
+                tmp_linear_delta_1 = p * tmp_delta_3 + (1 - p) * tmp_delta_4
+                tmp_exp_priori_1 = -3.39 - np.log(tmp_linear_delta_1 + tmp_slack)
+                tmp_poi_priori_1 = tmp_linear_delta_1 * np.log(self.p0 + tmp_slack) + (
+                    tmp_delta_4 - tmp_linear_delta_1
+                ) * np.log(self.p1 + tmp_slack)
+                tmp_p1 += -0.13 - np.log(tmp_linear_delta_1 + tmp_slack) + 0
+                # 1)+0 uniform distr.;
+                # 2)+tmp_exp_priori Exponential distr.;
+                # 3)+tmp_poi_priori Poisson distr.;
                 # based on different priori distribution
-                
+
             # Priori-prob.
-            tmp_p0 += np.log( self.p0 + tmp_slack)
-            tmp_p1 += np.log( self.p1 + tmp_slack )
+            tmp_p0 += np.log(self.p0 + tmp_slack)
+            tmp_p1 += np.log(self.p1 + tmp_slack)
             # predict
             if tmp_p1 > tmp_p0:
                 y_pred.append(1)
