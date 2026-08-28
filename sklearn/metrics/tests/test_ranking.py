@@ -948,26 +948,44 @@ def test_confusion_matrix_at_thresholds(global_random_seed):
     assert_allclose(tns + fps + fns + tps, n_samples)
 
 
-@pytest.mark.parametrize("weight_kind", ["uniform", "variable"])
+@pytest.mark.parametrize(
+    "weight_kind",
+    ["uniform", "variable", "normalized", "tiny"],
+)
 def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kind):
-    """Weighted counts stay stable on float32-only devices for n_pos > 2**24.
+    """Weighted counts stay stable on float32-only devices for large n.
 
     Float32 cumulative sums of unit weights saturate past 2**24. Weight
     normalization alone is not enough at this scale; a fixed-point integer
-    cumsum is used instead. See #34813.
+    cumsum is used instead. The scale is chosen from the mean weight so that
+    pre-normalized (sum≈1) or uniformly tiny weights do not round to zero —
+    the failure mode of a fixed ``round(w * 1e6)`` scheme. See #34813.
     """
     xp, device = _array_api_for_tests("array_api_strict", "no_float64", "float32")
 
     rng = np.random.RandomState(0)
+    # Large enough that fixed scale=1e6 zeros out pre-normalized U(0,1) weights
+    # (mean ~1/n < 5e-7) while also covering n_pos > 2**24 for O(1) weights.
     n_samples = 20_000_000
     y_true_np = (rng.random(n_samples) < 0.9).astype(np.int32)
     y_score_np = (rng.random(n_samples) + y_true_np * 0.01).astype(np.float32)
     if weight_kind == "uniform":
         sample_weight_np = np.ones(n_samples, dtype=np.float32)
-    else:
+    elif weight_kind == "variable":
         sample_weight_np = rng.uniform(0.5, 1.5, size=n_samples).astype(np.float32)
+    elif weight_kind == "normalized":
+        raw = rng.uniform(0.0, 1.0, size=n_samples).astype(np.float64)
+        sample_weight_np = (raw / raw.sum()).astype(np.float32)
+    else:  # tiny: same shape as O(1) weights but scaled by 1e-8
+        sample_weight_np = (rng.uniform(0.5, 1.5, size=n_samples) * 1e-8).astype(
+            np.float32
+        )
     n_pos = int(y_true_np.sum())
     assert n_pos > 2**24
+    # Document the fixed-scale failure mode that adaptive scaling must avoid.
+    if weight_kind in {"normalized", "tiny"}:
+        fixed_scale = 1_000_000
+        assert np.round(sample_weight_np * fixed_scale).astype(np.int64).sum() == 0
 
     _, _, _, tps_ref, _ = confusion_matrix_at_thresholds(
         y_true_np,
@@ -975,6 +993,7 @@ def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kin
         sample_weight=sample_weight_np.astype(np.float64),
     )
     expected_pos_weight = float(np.dot(y_true_np, sample_weight_np.astype(np.float64)))
+    expected_total_weight = float(sample_weight_np.astype(np.float64).sum())
 
     y_true = xp.asarray(y_true_np, device=device)
     y_score = xp.asarray(y_score_np, dtype=xp.float32, device=device)
@@ -986,12 +1005,13 @@ def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kin
 
     tps_np = move_to(tps, xp=np, device="cpu")
     fps_np = move_to(fps, xp=np, device="cpu")
-    # Allow float32 rounding of large integer-valued counts (ulp of 2 above 2**24)
-    # plus fixed-point quantization at 1e-6 relative resolution.
-    assert_allclose(tps_np[-1], expected_pos_weight, rtol=1e-5, atol=1)
-    assert_allclose(tps_np, tps_ref, rtol=1e-5, atol=1)
+    # Large O(1) counts: allow float32 ulp (~2 above 2**24) plus quantization.
+    # Normalized / tiny totals are O(1) or smaller: use a tight absolute floor.
+    atol = 1.0 if expected_pos_weight >= 1e3 else 1e-5
+    assert_allclose(tps_np[-1], expected_pos_weight, rtol=1e-5, atol=atol)
+    assert_allclose(tps_np, tps_ref, rtol=1e-5, atol=atol)
     assert_allclose(
-        fps_np[-1] + tps_np[-1], float(sample_weight_np.sum()), rtol=1e-5, atol=1
+        fps_np[-1] + tps_np[-1], expected_total_weight, rtol=1e-5, atol=atol
     )
 
 
