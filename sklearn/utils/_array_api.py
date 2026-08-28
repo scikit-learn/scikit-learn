@@ -8,7 +8,8 @@ import itertools
 import math
 import os
 from collections import namedtuple
-from functools import partial
+from functools import lru_cache, partial
+from types import MappingProxyType
 
 import numpy
 import scipy
@@ -165,6 +166,23 @@ def yield_mixed_namespace_input_permutations():
     )
 
 
+_MIN_SCIPY_VERSION = "1.14.0"
+
+
+@lru_cache(maxsize=None)
+def _scipy_is_too_old(scipy_version):
+    """Whether `scipy_version` predates the oldest SciPy we can dispatch with.
+
+    `_check_array_api_dispatch` runs on every `get_namespace` call, and the two
+    version parses it used to do inline accounted for ~6us of the ~6.4us it
+    spent. They are cached on the version string rather than resolved once at
+    import, so that `scipy.__version__` is still read on every call. Tests such
+    as `test_config_array_api_dispatch_error_scipy` monkeypatch that attribute
+    and expect the check to notice.
+    """
+    return parse_version(scipy_version) < parse_version(_MIN_SCIPY_VERSION)
+
+
 def _check_array_api_dispatch(array_api_dispatch):
     """Checks that array API support is functional.
 
@@ -174,12 +192,10 @@ def _check_array_api_dispatch(array_api_dispatch):
     if not array_api_dispatch:
         return
 
-    scipy_version = parse_version(scipy.__version__)
-    min_scipy_version = "1.14.0"
-    if scipy_version < parse_version(min_scipy_version):
+    if _scipy_is_too_old(scipy.__version__):
         raise ImportError(
-            f"SciPy must be {min_scipy_version} or newer"
-            " (found {scipy.__version__}) to dispatch array using"
+            f"SciPy must be {_MIN_SCIPY_VERSION} or newer"
+            f" (found {scipy.__version__}) to dispatch array using"
             " the array API specification"
         )
 
@@ -229,10 +245,19 @@ def array_device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAUL
     out : device
         `device` object (see the "Device Support" section of the array API spec).
     """
-    array_list = _remove_non_arrays(
-        *array_list, remove_none=remove_none, remove_types=remove_types
+    return _device_of(
+        _remove_non_arrays(
+            *array_list, remove_none=remove_none, remove_types=remove_types
+        )
     )
 
+
+def _device_of(array_list):
+    """Common device of an already filtered list of arrays, None if empty.
+
+    Split out of `array_device` so that callers which have already filtered
+    their inputs, `get_namespace_and_device` in particular, do not filter twice.
+    """
     if not array_list:
         return None
 
@@ -273,6 +298,38 @@ def _is_numpy_namespace(xp):
     return xp.__name__ in _NUMPY_NAMESPACE_NAMES
 
 
+def _inspect_dtypes(xp, device, kind):
+    return MappingProxyType(
+        xp.__array_namespace_info__().dtypes(kind=kind, device=device)
+    )
+
+
+_inspect_dtypes_cached = lru_cache(maxsize=None)(_inspect_dtypes)
+
+
+def _info_dtypes(xp, device=None, kind=None):
+    """Data types `xp` supports on `device`, as a read-only mapping.
+
+    Wraps `xp.__array_namespace_info__().dtypes()`, which is not cheap: it
+    probes the device by allocating an array for each candidate dtype, costing
+    ~27us on torch MPS and 2-4us on CUDA. Since the answer depends only on the
+    namespace, device and kind, it is cached here.
+
+    array-api-compat used to memoize this itself, but the cache keyed on an
+    object that callers construct anew on every call, so it never hit; it was
+    removed in https://github.com/data-apis/array-api-compat/pull/472
+
+    The mapping is read-only because a cached `dict` would otherwise be shared
+    with every caller, so one caller mutating it would corrupt the next.
+    """
+    if type(device).__hash__ is None:
+        # Not all Array API device objects are hashable, so they cannot all be
+        # used as a cache key. CuPy devices are not, as also noted in
+        # `array_device` above.
+        return _inspect_dtypes(xp, device, kind)
+    return _inspect_dtypes_cached(xp, device, kind)
+
+
 def supported_float_dtypes(xp, device=None):
     """Supported floating point types for the namespace.
 
@@ -306,9 +363,7 @@ def supported_float_dtypes(xp, device=None):
 
     https://data-apis.org/array-api/latest/API_specification/data_types.html
     """
-    dtypes_dict = xp.__array_namespace_info__().dtypes(
-        kind="real floating", device=device
-    )
+    dtypes_dict = _info_dtypes(xp, device=device, kind="real floating")
     valid_float_dtypes = []
     for dtype_key in ("float64", "float32"):
         if dtype_key in dtypes_dict:
@@ -449,6 +504,16 @@ def get_namespace(
         remove_types=remove_types,
     )
 
+    return _namespace_of(arrays, array_api_dispatch)
+
+
+def _namespace_of(arrays, array_api_dispatch):
+    """Namespace of an already filtered list of arrays.
+
+    Split out of `get_namespace` so that callers which have already filtered
+    their inputs, `get_namespace_and_device` in particular, do not filter twice.
+    Assumes `array_api_dispatch` is on and no precomputed `xp` was supplied.
+    """
     # get_namespace can be called by helper functions that are used both in
     # array API compatible code and non-array API Cython related code. To
     # support the latter on NumPy inputs without raising a TypeError, we
@@ -500,24 +565,29 @@ def get_namespace_and_device(
     device : device
         `device` object (see the "Device Support" section of the array API spec).
     """
-    skip_remove_kwargs = dict(remove_none=False, remove_types=[])
-
     array_list = _remove_non_arrays(
         *array_list,
         remove_none=remove_none,
         remove_types=remove_types,
     )
-    arrays_device = array_device(*array_list, **skip_remove_kwargs)
 
-    if xp is None:
-        xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
-    else:
-        xp, is_array_api = xp, True
+    # `_device_of` and `_namespace_of` take the already filtered list, so the
+    # inputs are inspected once here rather than once more in each of them.
+    arrays_device = _device_of(array_list)
 
-    if is_array_api:
-        return xp, is_array_api, arrays_device
-    else:
-        return xp, False, arrays_device
+    # Checked before the config on purpose: a supplied `xp` short-circuits with
+    # is_array_api=True even when dispatch is off, which is what this function
+    # has always done. `get_namespace` disagrees and returns False in that case.
+    # See agents/plans/2026-08-28-get-namespace-dispatch-asymmetry.md
+    if xp is not None:
+        return xp, True, arrays_device
+
+    array_api_dispatch = get_config()["array_api_dispatch"]
+    if not array_api_dispatch:
+        return np_compat, False, arrays_device
+
+    xp, is_array_api = _namespace_of(array_list, array_api_dispatch)
+    return xp, is_array_api, arrays_device
 
 
 def move_to(*arrays, xp, device):
@@ -780,9 +850,7 @@ def _max_precision_float_dtype(xp, device):
         # not implement __array_namespace_info__.
         return xp.float64
 
-    floating_dtypes = xp.__array_namespace_info__().dtypes(
-        kind="real floating", device=device
-    )
+    floating_dtypes = _info_dtypes(xp, device=device, kind="real floating")
     if "float64" in floating_dtypes:
         return xp.float64
 
@@ -1371,10 +1439,10 @@ def _matching_numpy_dtype(X, xp=None):
     if _is_numpy_namespace(xp):
         return X.dtype
 
-    dtypes_dict = xp.__array_namespace_info__().dtypes(device=device)
+    dtypes_dict = _info_dtypes(xp, device=device)
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
-    return np_compat.__array_namespace_info__().dtypes()[dtype_name]
+    return _info_dtypes(np_compat)[dtype_name]
 
 
 def _swapaxes(array, axis1, axis2, /, xp=None):
