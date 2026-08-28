@@ -17,6 +17,7 @@ from unittest.mock import patch
 import joblib
 import numpy as np
 import pytest
+import scipy.sparse
 from scipy.special import comb
 
 import sklearn
@@ -1932,3 +1933,139 @@ def test_missing_value_is_predictive(Forest, criterion, global_random_seed):
 def test_friedman_mse_deprecation(Forest):
     with pytest.warns(FutureWarning, match="friedman_mse"):
         _ = Forest(criterion="friedman_mse")
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.parametrize(
+    "X, raw_categories",
+    [
+        (
+            np.array([["a"], ["a"], ["b"], ["b"]], dtype=object),
+            np.array(["a", "b"], dtype=object),
+        ),
+    ],
+)
+def test_fit_categorical_raw_labels_are_reencoded(name, X, raw_categories):
+    """Check raw categorical labels are re-encoded for fitting and prediction."""
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+    y = np.array([0, 0, 1, 1])
+    est = Forest(categorical_features=[0], n_estimators=5, random_state=0).fit(X, y)
+
+    assert_array_equal(est.is_categorical_, [True])
+    assert_array_equal(est._categorical_encoder.categories_[0], raw_categories)
+    assert_array_equal(est._categorical_encoder.transform(X).ravel(), [0, 0, 1, 1])
+    assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_no_sparse_with_categorical(name):
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 50, 5
+    X = np.hstack(
+        [
+            rng.randn(n_samples, 3),
+            rng.randint(0, 3, size=(n_samples, 2)).astype(np.float64),
+        ]
+    )
+    y = rng.randint(0, 2, size=n_samples)
+    X_sparse = scipy.sparse.csc_array(X)
+
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
+        Forest(categorical_features=[3, 4], n_estimators=5, random_state=0).fit(
+            X_sparse, y
+        )
+
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
+        Forest(
+            categorical_features=[3, 4], n_estimators=5, random_state=0
+        ).fit(X, y).predict(X_sparse)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
+@pytest.mark.parametrize(
+    "X, X_missing",
+    [
+        (
+            np.array([["a"], ["a"], ["b"], ["b"], [np.nan], [np.nan]], dtype=object),
+            np.array([[np.nan]], dtype=object),
+        ),
+    ],
+)
+def test_fit_categorical_missing_values(name, X, X_missing):
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+    y = np.array([0, 0, 0, 0, 1, 1])
+    est = Forest(
+        categorical_features=[0], max_depth=2, n_estimators=5, random_state=0
+    ).fit(X, y)
+
+    non_missing_prediction = est.predict(X[:1])
+    missing_prediction = est.predict(X_missing)
+    assert_array_equal(non_missing_prediction, [0])
+    assert missing_prediction[0] != non_missing_prediction[0]
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.parametrize(
+    "categorical_features, match",
+    [
+        ([0.5, 1.5], "must be an array-like of bool, int or str"),
+        ([False, False, False], "boolean mask must have shape"),
+        ([5], "must be in \\[0, n_features - 1\\]"),
+        ([-3], "must be in \\[0, n_features - 1\\]"),
+    ],
+)
+def test_invalid_categorical(name, categorical_features, match):
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+    X_array = np.asarray(X)
+    with pytest.raises(ValueError, match=match):
+        Forest(categorical_features=categorical_features, random_state=0).fit(
+            X_array, y
+        )
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_categorical_features_passed_to_estimators(name):
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+    X_cat = np.array([["a"], ["b"], ["a"], ["b"]], dtype=object)
+    y_cat = np.array([0, 1, 0, 1])
+    est = Forest(categorical_features=[0], n_estimators=3, random_state=0).fit(
+        X_cat, y_cat
+    )
+
+    assert_array_equal(est.is_categorical_, [True])
+    assert_array_equal(est.estimators_[0].is_categorical_, [True])
+
+
+def test_categorical_absolute_error_unsupported():
+    X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
+    y = np.array([0.0, 1.0, 0.0, 1.0])
+
+    with pytest.raises(
+        ValueError,
+        match="Categorical features are not supported with criterion='absolute_error'",
+    ):
+        RandomForestRegressor(
+            categorical_features=[0], criterion="absolute_error", random_state=0
+        ).fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "Forest",
+    [ExtraTreesClassifier, ExtraTreesRegressor],
+)
+def test_extratrees_high_cardinality_categorical(Forest):
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    categories = np.arange(300, dtype=np.int32)
+    X = rng.choice(categories, size=n_samples).reshape(-1, 1)
+    y = rng.randint(0, 2, size=n_samples)
+
+    est = Forest(categorical_features=[0], n_estimators=5, random_state=0)
+    est.fit(X, y)
+    assert est.predict(X[:5]).shape == (5,)

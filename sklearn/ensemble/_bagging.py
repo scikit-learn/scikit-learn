@@ -159,6 +159,12 @@ def _parallel_build_estimators(
             sample_weight,
         )
 
+        if requires_feature_indexing and getattr(ensemble, "is_categorical_", None) is not None:
+            cat_subset = ensemble.is_categorical_[features]
+            estimator.set_params(
+                categorical_features=None if not np.any(cat_subset) else cat_subset
+            )
+
         fit_params_ = fit_params.copy()
 
         # Note: Row sampling can be achieved either through setting sample_weight or
