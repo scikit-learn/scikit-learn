@@ -1585,6 +1585,9 @@ class GammaNB:
     """
 
     def __init__(self, p_min):
+        """
+        Initialize parameters when created.
+        """
         self._X = []
         self._Y = []
         self.fnames = []
@@ -1595,17 +1598,18 @@ class GammaNB:
         self.feat1 = []
         self.p_min = p_min
         self.n_samples = 0
-
-    def __df(self):
         if len(self._X) > 0:
             self._X = np.array(self._X)
             m, n = self._X.shape
-            tmp_ind = [i for i in range(n)]
-            tmp_col = dict(zip(tmp_ind, self.fnames))
 
     def out_split_array(self, data_in, ind_vec_in):
-        # ind_vec_in: list
-        # data_in: list/array/dataFrame
+        """
+        [Input]
+            1.ind_vec_in: list
+            2.data_in: list/array/dataFrame
+        [Output]
+            subset of data_in, array
+        """
         tmp_array = np.array(data_in)
         out_array = []
         for i in range(len(ind_vec_in)):
@@ -1614,11 +1618,15 @@ class GammaNB:
         return np.array(out_array)
 
     def fit(self, X, y, sample_weight=None):
-        # --- Split according y=0 OR 1
+        """
+        Record the pattern of X and y
+        [Input]
+            X (features), y(labels)
+        """
+        n, m = X.shape
         self._X = np.array(X)
         self._Y = np.array(y)
-        self.n_samples = len(X)
-        n, m = X.shape
+        self.n_samples = n
         self.fnames = ["v" + str(i) for i in range(m)]  # nomial
         self.yname = "y1"  # nomial
         tmp_ind0 = []
@@ -1652,6 +1660,12 @@ class GammaNB:
         self.feat1 = feat_1
 
     def predict(self, X):
+        """
+        [Input]
+            X (features)
+        [Output]
+            y (labels)
+        """
         y_pred = []
         p = self.p_min
         tmp_slack = 1e-10
