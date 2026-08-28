@@ -1766,7 +1766,7 @@ def test_classification_scorer_array_api_compliance(
     """
     estimator = clone(estimator)
     scorer = check_scoring(estimator=estimator, scoring=scoring)
-    xp, device_ = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name)
 
     # Check compliance of the scorer API for binary classification tasks.
     X_np, y_np = make_classification(
@@ -1777,7 +1777,7 @@ def test_classification_scorer_array_api_compliance(
         random_state=0,
     )
     X_np = X_np.astype(dtype_name)
-    X_xp = xp.asarray(X_np, device=device_)
+    X_xp = xp.asarray(X_np, device=device)
 
     if target_namespace_dtype == "np_str_object":
         y_np = np.array(
@@ -1793,7 +1793,7 @@ def test_classification_scorer_array_api_compliance(
     else:
         y_np = y_np.astype("int32")
         if target_namespace_dtype == "xp_int32":
-            y = xp.asarray(y_np, device=device_)
+            y = xp.asarray(y_np, device=device)
         else:  # np_int32
             y = y_np
 
