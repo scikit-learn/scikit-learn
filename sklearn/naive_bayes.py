@@ -1711,7 +1711,7 @@ class GammaNB(_BaseNB):
         self.feat0 = feat_0
         self.feat1 = feat_1
 
-    def predict(self, X, p_min=0.5):
+    def predict(self, X, p_min=0.5, priori_distr="Uniform"):
         """Predict the labels of the input X.
 
         This method is used to predict the labels of an input feature set
@@ -1741,17 +1741,37 @@ class GammaNB(_BaseNB):
             between 0 and 1,
             deciding the percentage between min_x and median_x.
 
+        priori_distr : String, default='Uniform',
+            with another two optional values, namely 'Exponential' and 'Poisson'.
+            The value of priori_distr is 'Uniform', suggesting that the
+            gamma-distributed feature has Uniform priori distribution. The value
+            of priori_distr is 'Exponential', suggesting that the gamma-distributed
+            feature has Exponential priori distribution. The value of priori_distr
+            is 'Poisson', suggesting that the gamma-distributed feature has Poisson
+            priori distribution.
+
         Returns
         -------
         y : Array-like of shape (n_samples,),
             including n_samples, the number of samples,
             referring to a vector of labels in array form.
         """
-        y_pred = []
-        tmp_slack = 1e-10
         X = np.array(X)
         X = self._check_X(X)
+        tmp_log_prob = self._joint_log_likelihood(X, p_min, priori_distr)
+        # predict
+        y_pred = []
+        for i in range(len(tmp_log_prob)):
+            if tmp_log_prob[i][1] > tmp_log_prob[i][0]:
+                y_pred.append(1)
+            else:
+                y_pred.append(0)
+        return np.array(y_pred)
+
+    def _joint_log_likelihood(self, X, p_min=0.5, priori_distr="Uniform"):
+        tmp_slack = 1e-10
         n, m = X.shape
+        tmp_mat = [[], []]
         for j in range(n):
             tmp_x = X[j].tolist()  # one line
             tmp_p0 = 0
@@ -1778,14 +1798,25 @@ class GammaNB(_BaseNB):
                     x_record_1 = -9999
                 elif x_record_1 > 9999:
                     x_record_1 = 9999
-                tmp_delta_2 = abs(x_curr - x_record_1)
-                tmp_delta_2 = float(tmp_delta_2)
+                tmp_delta_2 = float(abs(x_curr - x_record_1))
                 tmp_linear_delta = p_min * tmp_delta_1 + (1 - p_min) * tmp_delta_2
-                tmp_exp_priori = -3.39 - np.log(tmp_linear_delta + tmp_slack)
-                tmp_poi_priori = tmp_linear_delta * np.log(self.p0 + tmp_slack) + (
-                    tmp_delta_2 - tmp_linear_delta
-                ) * np.log(self.p1 + tmp_slack)
-                tmp_p0 += -0.13 - np.log(tmp_linear_delta + tmp_slack) + 0
+                if priori_distr == "Uniform":
+                    tmp_p0 += -0.13 - np.log(tmp_linear_delta + tmp_slack) + 0
+                elif priori_distr == "Exponential":
+                    tmp_exp_priori = -3.39 - np.log(tmp_linear_delta + tmp_slack)
+                    tmp_p0 += (
+                        -0.13 - np.log(tmp_linear_delta + tmp_slack) + tmp_exp_priori
+                    )
+                elif priori_distr == "Poisson":
+                    tmp_poi_priori = tmp_linear_delta * np.log(self.p0 + tmp_slack) + (
+                        tmp_delta_2 - tmp_linear_delta
+                    ) * np.log(self.p1 + tmp_slack)
+                    tmp_p0 += (
+                        -0.13 - np.log(tmp_linear_delta + tmp_slack) + tmp_poi_priori
+                    )
+                else:
+                    print("Priori Distribution Wrong.")
+                    break
                 # --- p1
                 # Feat1: minimum value of one feat.
                 x_record_2 = float(self.feat1[i][2])  # min-val
@@ -1793,8 +1824,7 @@ class GammaNB(_BaseNB):
                     x_record_2 = -9999
                 elif x_record_2 > 9999:
                     x_record_2 = 9999
-                tmp_delta_3 = abs(x_curr - x_record_2)
-                tmp_delta_3 = float(tmp_delta_3)
+                tmp_delta_3 = float(abs(x_curr - x_record_2))
                 # FEAT1: average value of one feat.
                 x_record_3 = float(self.feat1[i][3])  # avg-val
                 if x_record_3 < -9999:
@@ -1804,17 +1834,32 @@ class GammaNB(_BaseNB):
                 tmp_delta_4 = abs(x_curr - x_record_3)
                 tmp_delta_4 = float(tmp_delta_4)
                 tmp_linear_delta_1 = p_min * tmp_delta_3 + (1 - p_min) * tmp_delta_4
-                tmp_exp_priori_1 = -3.39 - np.log(tmp_linear_delta_1 + tmp_slack)
-                tmp_poi_priori_1 = tmp_linear_delta_1 * np.log(self.p0 + tmp_slack) + (
-                    tmp_delta_4 - tmp_linear_delta_1
-                ) * np.log(self.p1 + tmp_slack)
-                tmp_p1 += -0.13 - np.log(tmp_linear_delta_1 + tmp_slack) + 0
+                if priori_distr == "Uniform":
+                    tmp_p1 += -0.13 - np.log(tmp_linear_delta_1 + tmp_slack) + 0
+                elif priori_distr == "Exponential":
+                    tmp_exp_priori_1 = -3.39 - np.log(tmp_linear_delta_1 + tmp_slack)
+                    tmp_p1 += (
+                        -0.13
+                        - np.log(tmp_linear_delta_1 + tmp_slack)
+                        + tmp_exp_priori_1
+                    )
+                elif priori_distr == "Poisson":
+                    tmp_poi_priori_1 = tmp_linear_delta_1 * np.log(
+                        self.p0 + tmp_slack
+                    ) + (tmp_delta_4 - tmp_linear_delta_1) * np.log(self.p1 + tmp_slack)
+                    tmp_p1 += (
+                        -0.13
+                        - np.log(tmp_linear_delta_1 + tmp_slack)
+                        + tmp_poi_priori_1
+                    )
+                else:
+                    print("Priori Distribution Wrong.")
+                    break
             # Priori-prob.
             tmp_p0 += np.log(self.p0 + tmp_slack)
             tmp_p1 += np.log(self.p1 + tmp_slack)
-            # predict
-            if tmp_p1 > tmp_p0:
-                y_pred.append(1)
-            else:
-                y_pred.append(0)
-        return y_pred
+            tmp_mat[0].append(tmp_p0)
+            tmp_mat[1].append(tmp_p1)
+        tmp_mat = np.array(tmp_mat)
+        tmp_mat_1 = tmp_mat.T  # n_samples * 2
+        return tmp_mat_1
