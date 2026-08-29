@@ -1577,52 +1577,49 @@ class GammaNB:
     The Gamma Naive Bayes classifier is suitable for classification with
     features that have Gamma distribution.
 
-    Parameters
+    Attributes
     ----------
-    p_min : float, default=0.5
+    p0 : float, default=0
         between 0 and 1,
-        deciding the percentage between min_x and median_x.
+        a percentage of samples labeled as 0 in all samples.
 
-    X : array-like of shape (n_samples, n_features),
-        including n_samples, the number of samples, and
-        n_features, the number of features.
+    p1 : float, default=0
+        between 0 and 1,
+        a percentage of samples labeled as 1 in all samples.
 
-    y : array-like of shape (n_samples,),
-        including n_samples, the number of samples.
+    feat0 : array-like of shape (n0_samples, n_features),
+        including n0_samples, the number of samples with label of 0,
+        and n_features, the number of features.
 
-    Returns
-    -------
-    y_pred : array-like of shape (n_samples,),
-        referring to the predict of labels.
+    feat1 : array-like of shape (n1_samples, n_features),
+        including n1_samples, the number of samples with label of 1,
+        and n_features, the number of features.
+
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    ComplementNB : Complement Naive Bayes classifier.
+    GaussianNB : Gaussian Naive Bayes.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> from sklearn.naive_bayes import GammaNB
+    >>> clf = GammaNB()
+    >>> clf.fit(X, y)
+    GammaNB()
+    >>> print(clf.predict(X[2:3], p_min=1))  # using median of X
     """
 
-    def __init__(self, p_min=0.5):
-        """Initialize the parameters when the class is created.
-
-        This method is used to initialize all parameters in the class.
-
-        Parameters
-        ----------
-        p_min : float, default=0.5
-            between 0 and 1,
-            deciding the percentage between min_x and median_x.
-
-        Returns
-        -------
-        """
-        self._X = []
-        self._Y = []
-        self.fnames = []
-        self.yname = ""
+    def __init__(self):
         self.p0 = 0
         self.p1 = 0
         self.feat0 = []
         self.feat1 = []
-        self.p_min = p_min
-        self.n_samples = 0
-        if len(self._X) > 0:
-            self._X = np.array(self._X)
-            m, n = self._X.shape
 
     def out_split_array(self, data_in, ind_vec_in):
         """Split the feature set according to labels, namely 0 or 1.
@@ -1671,16 +1668,10 @@ class GammaNB:
 
         sample_weight : float, default=None
             referring to the weights of samples.
-
-        Returns
-        -------
         """
         n, m = X.shape
-        self._X = np.array(X)
-        self._Y = np.array(y)
-        self.n_samples = n
-        self.fnames = ["v" + str(i) for i in range(m)]  # nomial
-        self.yname = "y1"  # nomial
+        X = np.array(X)
+        Y = np.array(y)
         tmp_ind0 = []
         tmp_ind1 = []
         for i in range(len(self._Y)):
@@ -1688,16 +1679,16 @@ class GammaNB:
                 tmp_ind0.append(i)
             else:
                 tmp_ind1.append(i)
-        tmp_x0 = self.out_split_array(self._X, tmp_ind0)
-        tmp_y0 = self.out_split_array(self._Y, tmp_ind0)
-        tmp_x1 = self.out_split_array(self._X, tmp_ind1)
-        tmp_y1 = self.out_split_array(self._Y, tmp_ind1)
+        tmp_x0 = self.out_split_array(X, tmp_ind0)
+        tmp_y0 = self.out_split_array(Y, tmp_ind0)
+        tmp_x1 = self.out_split_array(X, tmp_ind1)
+        tmp_y1 = self.out_split_array(Y, tmp_ind1)
         self.p0 = len(tmp_y0) / len(y)
         self.p1 = len(tmp_y1) / len(y)
         # record according to Feat.
         feat_0 = []
         feat_1 = []
-        for i in range(len(self.fnames)):
+        for i in range(m):
             tmp_min_0 = np.min(tmp_x0[:, i])
             tmp_avg_0 = np.median(tmp_x0[:, i])
             feat_0.append([0, "vn", float(tmp_min_0), float(tmp_avg_0)])
@@ -1711,7 +1702,7 @@ class GammaNB:
         self.feat0 = feat_0
         self.feat1 = feat_1
 
-    def predict(self, X):
+    def predict(self, X, p_min=0.5):
         """Predict the labels of the input X.
 
         This method is used to predict the labels of an input feature set
@@ -1723,19 +1714,23 @@ class GammaNB:
         probability and a log form of priori probability.
 
         The variable tmp_p0 refers to the posterior probability. If tmp_p0
-        refers to only posterior probability, the scenario is that
-        gamma-distributed features has uniform priori distribution. If
+        refers to only posterior probability, the scenario is that the
+        gamma-distributed feature has uniform priori distribution. If
         tmp_p0 refers to both posterior probability and Exponential priori
-        distribution, the scenario is that gamma-distributed features has
+        distribution, the scenario is that the gamma-distributed feature has
         Exponential priori distribution. If tmp_p0 refers to both posterior
         probability and Poisson priori distribution, the scenario is that
-        gamma-distributed features has Poisson distribution.
+        the gamma-distributed feature has Poisson distribution.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features),
             including n_samples, the number of samples, and n_features,
             the number of features.
+
+        p_min : float, default=0.5
+            between 0 and 1,
+            deciding the percentage between min_x and median_x.
 
         Returns
         -------
@@ -1744,14 +1739,14 @@ class GammaNB:
             referring to a vector of labels in array form.
         """
         y_pred = []
-        p = self.p_min
         tmp_slack = 1e-10
-        for j in range(len(X)):
-            X = np.array(X)
+        X = np.array(X)
+        n, m = X.shape
+        for j in range(n):
             tmp_x = X[j].tolist()  # one line
             tmp_p0 = 0
             tmp_p1 = 0
-            for i in range(len(self.fnames)):
+            for i in range(m):
                 # --- p0
                 x_curr = tmp_x[i]
                 if x_curr < -9999:
@@ -1775,7 +1770,7 @@ class GammaNB:
                     x_record_1 = 9999
                 tmp_delta_2 = abs(x_curr - x_record_1)
                 tmp_delta_2 = float(tmp_delta_2)
-                tmp_linear_delta = p * tmp_delta_1 + (1 - p) * tmp_delta_2
+                tmp_linear_delta = p_min * tmp_delta_1 + (1 - p_min) * tmp_delta_2
                 tmp_exp_priori = -3.39 - np.log(tmp_linear_delta + tmp_slack)
                 tmp_poi_priori = tmp_linear_delta * np.log(self.p0 + tmp_slack) + (
                     tmp_delta_2 - tmp_linear_delta
@@ -1798,7 +1793,7 @@ class GammaNB:
                     x_record_3 = 9999
                 tmp_delta_4 = abs(x_curr - x_record_3)
                 tmp_delta_4 = float(tmp_delta_4)
-                tmp_linear_delta_1 = p * tmp_delta_3 + (1 - p) * tmp_delta_4
+                tmp_linear_delta_1 = p_min * tmp_delta_3 + (1 - p_min) * tmp_delta_4
                 tmp_exp_priori_1 = -3.39 - np.log(tmp_linear_delta_1 + tmp_slack)
                 tmp_poi_priori_1 = tmp_linear_delta_1 * np.log(self.p0 + tmp_slack) + (
                     tmp_delta_4 - tmp_linear_delta_1
