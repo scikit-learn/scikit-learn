@@ -1625,6 +1625,7 @@ class GammaNB:
     >>> clf = GammaNB()
     >>> clf.fit(X, y)
     >>> print(clf.predict(X[2:3], p_min=1, priori_distr='Exponential'))
+    [0]
     """
 
     def __init__(self):
