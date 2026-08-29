@@ -1717,10 +1717,22 @@ class GammaNB:
                 tmp_ind0.append(i)
             else:
                 tmp_ind1.append(i)
-        tmp_x0 = self._out_split_array(X, tmp_ind0)
-        tmp_y0 = self._out_split_array(Y, tmp_ind0)
-        tmp_x1 = self._out_split_array(X, tmp_ind1)
-        tmp_y1 = self._out_split_array(Y, tmp_ind1)
+        if len(tmp_ind0) > 0:
+            tmp_x0 = self._out_split_array(X, tmp_ind0)
+            tmp_y0 = self._out_split_array(Y, tmp_ind0)
+        else:
+            print(
+                "Wrong label: Label should be 0 or 1,\
+                and the number of label 0 is 0."
+            )
+        if len(tmp_ind1) > 0:
+            tmp_x1 = self._out_split_array(X, tmp_ind1)
+            tmp_y1 = self._out_split_array(Y, tmp_ind1)
+        else:
+            print(
+                "Wrong label: Label should be 0 or 1,\
+                and the number of label 1 is 0."
+            )
         self.p0 = len(tmp_y0) / len(y)
         self.p1 = len(tmp_y1) / len(y)
         # record according to Feat.
