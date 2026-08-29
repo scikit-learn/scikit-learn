@@ -1621,6 +1621,11 @@ class GammaNB(_BaseDiscreteNB):
         self.feat0 = []
         self.feat1 = []
 
+    def _check_X(self, X):
+        """Validate X, used only in predict* methods."""
+        X = super()._check_X(X)
+        return X
+
     def _check_X_y(self, X, y, reset=True):
         X, y = super()._check_X_y(X, y, reset=reset)
         return X, y
@@ -1676,6 +1681,7 @@ class GammaNB(_BaseDiscreteNB):
         n, m = X.shape
         X = np.array(X)
         Y = np.array(y)
+        X, y = self._check_X_y(X, y)
         tmp_ind0 = []
         tmp_ind1 = []
         for i in range(n):
@@ -1745,6 +1751,7 @@ class GammaNB(_BaseDiscreteNB):
         y_pred = []
         tmp_slack = 1e-10
         X = np.array(X)
+        X = self._check_X(X)
         n, m = X.shape
         for j in range(n):
             tmp_x = X[j].tolist()  # one line
@@ -1812,12 +1819,3 @@ class GammaNB(_BaseDiscreteNB):
             else:
                 y_pred.append(0)
         return y_pred
-
-    def _count(self, X, Y):
-        pass
-
-    def _joint_log_likelihood(self, X):
-        pass
-
-    def _update_feature_log_prob(self, alpha):
-        pass
