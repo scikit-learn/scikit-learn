@@ -1620,7 +1620,7 @@ class GammaNB:
     >>> import numpy as np
     >>> rng = np.random.RandomState(1)
     >>> X = rng.randint(5, size=(6, 100))
-    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> y = np.array([0, 1, 0, 0, 1, 0])
     >>> from sklearn.naive_bayes import GammaNB
     >>> clf = GammaNB()
     >>> clf.fit(X, y)
@@ -1740,21 +1740,24 @@ class GammaNB:
         self.p0 = len(tmp_y0) / len(y)
         self.p1 = len(tmp_y1) / len(y)
         # record according to Feat.
-        feat_0 = []
-        feat_1 = []
-        for i in range(m):
-            tmp_min_0 = np.min(tmp_x0[:, i])
-            tmp_avg_0 = np.median(tmp_x0[:, i])
-            feat_0.append([0, "vn", float(tmp_min_0), float(tmp_avg_0)])
-            # --- Min && Max
-            tmp_min_1 = np.min(tmp_x1[:, i])
-            tmp_avg_1 = np.median(tmp_x1[:, i])
-            feat_1.append([1, "vn", float(tmp_min_1), float(tmp_avg_1)])
-        # array and vname: {0:'cate', 1:'vname', 2:'min', 3:'avg'}
-        feat_0 = np.array(feat_0)
-        feat_1 = np.array(feat_1)
-        self.feat0 = feat_0
-        self.feat1 = feat_1
+        if self.p0 > 0 and self.p1 > 0:
+            feat_0 = []
+            feat_1 = []
+            for i in range(m):
+                tmp_min_0 = np.min(tmp_x0[:, i])
+                tmp_avg_0 = np.median(tmp_x0[:, i])
+                feat_0.append([0, "vn", float(tmp_min_0), float(tmp_avg_0)])
+                # --- Min && Max
+                tmp_min_1 = np.min(tmp_x1[:, i])
+                tmp_avg_1 = np.median(tmp_x1[:, i])
+                feat_1.append([1, "vn", float(tmp_min_1), float(tmp_avg_1)])
+            # array and vname: {0:'cate', 1:'vname', 2:'min', 3:'avg'}
+            feat_0 = np.array(feat_0)
+            feat_1 = np.array(feat_1)
+            self.feat0 = feat_0
+            self.feat1 = feat_1
+        else:
+            print("The number of label 0 is 0 or of label 1 is 0.")
 
     def predict(self, X, p_min=0.5, priori_distr="Uniform"):
         """Predict the labels of the input X.
