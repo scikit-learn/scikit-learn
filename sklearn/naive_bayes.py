@@ -1579,20 +1579,20 @@ class GammaNB:
 
     Parameters
     ----------
-    p_min: float, default=0.5
+    p_min : float, default=0.5
         between 0 and 1,
         deciding the percentage between min_x and median_x.
 
-    X: array-like of shape (n_samples, n_features),
+    X : array-like of shape (n_samples, n_features),
         including n_samples, the number of samples, and
         n_features, the number of features.
 
-    y: array-like of shape (n_samples,),
+    y : array-like of shape (n_samples,),
         including n_samples, the number of samples.
 
     Returns
     -------
-    y_pred: array-like of shape (n_samples,),
+    y_pred : array-like of shape (n_samples,),
         referring to the predict of labels.
     """
 
@@ -1603,7 +1603,7 @@ class GammaNB:
 
         Parameters
         ----------
-        p_min: float, default=0.5
+        p_min : float, default=0.5
             between 0 and 1,
             deciding the percentage between min_x and median_x.
 
@@ -1633,16 +1633,16 @@ class GammaNB:
 
         Parameters
         ----------
-        data_in: array-like of shape (n_samples, n_features),
+        data_in : array-like of shape (n_samples, n_features),
             including n_samples, number of all samples, and n_features,
             the number of features.
 
-        ind_vec_in: array-like of shape (k_samples,),
+        ind_vec_in : array-like of shape (k_samples,),
             including k_samples, the number of the subset of all samples.
 
         Returns
         -------
-        out_array: array-like of shape (k_samples, n_features),
+        out_array : array-like of shape (k_samples, n_features),
             including k_samples, the number of the subset of all samples,
             and n_features, the number of features.
         """
@@ -1661,15 +1661,15 @@ class GammaNB:
 
         Parameters
         ----------
-        X: array-like of shape (n_samples, n_features),
+        X : array-like of shape (n_samples, n_features),
             including n_samples, the number of samples, and n_features,
             the number of features.
 
-        y: array-like of shape (n_samples,),
+        y : array-like of shape (n_samples,),
             including n_samples, the number of samples,
             referring to a vector of labels in array form.
 
-        sample_weight: float,
+        sample_weight : float, default=None
             referring to the weights of samples.
 
         Returns
@@ -1733,13 +1733,13 @@ class GammaNB:
 
         Parameters
         ----------
-        X: array-like of shape (n_samples, n_features),
+        X : array-like of shape (n_samples, n_features),
             including n_samples, the number of samples, and n_features,
             the number of features.
 
         Returns
         -------
-        y: array-like of shape (n_samples,),
+        y : array-like of shape (n_samples,),
             including n_samples, the number of samples,
             referring to a vector of labels in array form.
         """
