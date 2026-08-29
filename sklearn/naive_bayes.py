@@ -1674,8 +1674,8 @@ class GammaNB:
         Y = np.array(y)
         tmp_ind0 = []
         tmp_ind1 = []
-        for i in range(len(self._Y)):
-            if self._Y[i] < 0.5:
+        for i in range(n):
+            if Y[i] < 0.5:
                 tmp_ind0.append(i)
             else:
                 tmp_ind1.append(i)
