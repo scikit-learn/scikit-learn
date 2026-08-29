@@ -163,6 +163,95 @@ plt.suptitle("Gaussian mixture clusters").set_y(0.95)
 plt.show()
 
 # %%
+# Anisotropy severe enough to affect GaussianMixture too
+# --------------------------------------------------------
+#
+# :class:`~sklearn.mixture.GaussianMixture` fixes the anisotropic case above
+# by fitting a full covariance per component instead of assuming spherical
+# clusters. But it is still initialized from a k-means-style partition of the
+# raw data, and EM only ever *refines* that starting partition -- it does not
+# search over every possible partition from scratch. If the anisotropy is
+# severe enough, the initial partition can already be so wrong that no amount
+# of iteration recovers the true clusters, even with unconstrained
+# covariances.
+#
+# To see this clearly, we build two isotropic blobs separated only along the
+# x-axis, then apply a diagonal ``transformation`` that compresses that
+# separating axis and stretches the other, uninformative one -- two
+# elongated, parallel clusters. Euclidean distance, and any k-means-style
+# initialization built on it, is dominated by the high-variance direction and
+# cannot tell the classes apart.
+
+from sklearn.metrics import adjusted_rand_score
+
+X_latent, y_cigars = make_blobs(
+    n_samples=n_samples, centers=[[-2, 0], [2, 0]], random_state=random_state
+)
+cigars_transformation = [[0.1, 0], [0, 8]]
+X_cigars = np.dot(X_latent, cigars_transformation)
+
+y_pred = GaussianMixture(n_components=2, random_state=random_state).fit_predict(X_cigars)
+ari = adjusted_rand_score(y_cigars, y_pred)
+
+plt.scatter(X_cigars[:, 0], X_cigars[:, 1], c=y_pred)
+plt.title(f"GaussianMixture on parallel cigars\n(ARI={ari:.2f} against ground truth)")
+plt.show()
+
+# %%
+# The fix is not a different clustering algorithm: it is whitening the data
+# first, with :class:`~sklearn.decomposition.PCA`'s ``whiten=True`` option.
+# Whitening rescales onto the principal axes so that every direction has unit
+# variance, which is exactly what makes the informative direction visible to
+# a k-means-style initialization again.
+
+from sklearn.decomposition import PCA
+
+X_cigars_white = PCA(n_components=2, whiten=True).fit_transform(X_cigars)
+
+y_pred = GaussianMixture(n_components=2, random_state=random_state).fit_predict(
+    X_cigars_white
+)
+ari = adjusted_rand_score(y_cigars, y_pred)
+
+plt.scatter(X_cigars_white[:, 0], X_cigars_white[:, 1], c=y_pred)
+plt.title(f"GaussianMixture on whitened data\n(ARI={ari:.2f} against ground truth)")
+plt.show()
+
+# %%
+# A caveat: whitening degrades in high dimensions
+# --------------------------------------------------
+#
+# In high dimensions, e.g. ``d=30``, whitening fails too.
+
+d = 30
+compress = 0.1
+half_sep = np.sqrt(1 - compress**2)  # makes the informative dimension's own
+# total variance exactly 1 too, matching the noise dimensions
+
+rng = np.random.RandomState(random_state)
+n1 = n_samples // 2
+n2 = n_samples - n1
+informative = np.concatenate(
+    [rng.randn(n1) * compress - half_sep, rng.randn(n2) * compress + half_sep]
+)
+y_cigars_d = np.array([0] * n1 + [1] * n2)
+X_cigars_d = np.empty((n_samples, d))
+X_cigars_d[:, 0] = informative
+X_cigars_d[:, 1:] = rng.randn(n_samples, d - 1)
+
+print("overall mean (first 3 dims):", X_cigars_d.mean(axis=0)[:3].round(3))
+print(
+    "overall covariance (top-left 3x3):\n",
+    np.cov(X_cigars_d, rowvar=False)[:3, :3].round(3),
+)
+
+y_pred = GaussianMixture(n_components=2, random_state=random_state).fit_predict(
+    X_cigars_d
+)
+print(f"ARI at d={d} (whitening this data changes nothing): "
+      f"{adjusted_rand_score(y_cigars_d, y_pred):.2f}")
+
+# %%
 # Final remarks
 # -------------
 #
