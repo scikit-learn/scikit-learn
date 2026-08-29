@@ -1579,19 +1579,19 @@ class GammaNB(_BaseDiscreteNB):
 
     Attributes
     ----------
-    p0 : float, default=0
+    p0 : Float, default=0
         between 0 and 1,
         a percentage of samples labeled as 0 in all samples.
 
-    p1 : float, default=0
+    p1 : Float, default=0
         between 0 and 1,
         a percentage of samples labeled as 1 in all samples.
 
-    feat0 : array-like of shape (n0_samples, n_features),
+    feat0 : Array-like of shape (n0_samples, n_features),
         including n0_samples, the number of samples with label of 0,
         and n_features, the number of features.
 
-    feat1 : array-like of shape (n1_samples, n_features),
+    feat1 : Array-like of shape (n1_samples, n_features),
         including n1_samples, the number of samples with label of 1,
         and n_features, the number of features.
 
@@ -1639,16 +1639,16 @@ class GammaNB(_BaseDiscreteNB):
 
         Parameters
         ----------
-        data_in : array-like of shape (n_samples, n_features),
+        data_in : Array-like of shape (n_samples, n_features),
             including n_samples, number of all samples, and n_features,
             the number of features.
 
-        ind_vec_in : array-like of shape (k_samples,),
+        ind_vec_in : Array-like of shape (k_samples,),
             including k_samples, the number of the subset of all samples.
 
         Returns
         -------
-        out_array : array-like of shape (k_samples, n_features),
+        out_array : Array-like of shape (k_samples, n_features),
             including k_samples, the number of the subset of all samples,
             and n_features, the number of features.
         """
@@ -1667,15 +1667,15 @@ class GammaNB(_BaseDiscreteNB):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features),
+        X : Array-like of shape (n_samples, n_features),
             including n_samples, the number of samples, and n_features,
             the number of features.
 
-        y : array-like of shape (n_samples,),
+        y : Array-like of shape (n_samples,),
             including n_samples, the number of samples,
             referring to a vector of labels in array form.
 
-        sample_weight : float, default=None
+        sample_weight : Float, default=None
             referring to the weights of samples.
         """
         n, m = X.shape
@@ -1734,17 +1734,17 @@ class GammaNB(_BaseDiscreteNB):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features),
+        X : Array-like of shape (n_samples, n_features),
             including n_samples, the number of samples, and n_features,
             the number of features.
 
-        p_min : float, default=0.5
+        p_min : Float, default=0.5
             between 0 and 1,
             deciding the percentage between min_x and median_x.
 
         Returns
         -------
-        y : array-like of shape (n_samples,),
+        y : Array-like of shape (n_samples,),
             including n_samples, the number of samples,
             referring to a vector of labels in array form.
         """
