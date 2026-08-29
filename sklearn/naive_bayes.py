@@ -1624,7 +1624,6 @@ class GammaNB:
     >>> from sklearn.naive_bayes import GammaNB
     >>> clf = GammaNB()
     >>> clf.fit(X, y)
-    GammaNB()
     >>> print(clf.predict(X[2:3], p_min=1, priori_distr='Exponential'))
     """
 
