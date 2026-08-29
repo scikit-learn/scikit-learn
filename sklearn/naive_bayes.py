@@ -1595,6 +1595,19 @@ class GammaNB:
         including n1_samples, the number of samples with label of 1,
         and n_features, the number of features.
 
+    p_min : Float, default=0.5
+        between 0 and 1,
+        deciding the percentage between min_x and median_x.
+
+    priori_distr : String, default='Uniform',
+        with another two optional values, namely 'Exponential' and 'Poisson'.
+        The value of priori_distr is 'Uniform', suggesting that the
+        gamma-distributed feature has Uniform priori distribution. The value
+        of priori_distr is 'Exponential', suggesting that the gamma-distributed
+        feature has Exponential priori distribution. The value of priori_distr
+        is 'Poisson', suggesting that the gamma-distributed feature has Poisson
+        priori distribution.
+
     See Also
     --------
     BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
@@ -1612,7 +1625,7 @@ class GammaNB:
     >>> clf = GammaNB()
     >>> clf.fit(X, y)
     GammaNB()
-    >>> print(clf.predict(X[2:3], p_min=1))  # using median of X
+    >>> print(clf.predict(X[2:3], p_min=1, priori_distr='Exponential'))
     """
 
     def __init__(self):
@@ -1620,9 +1633,26 @@ class GammaNB:
         self.p1 = 0
         self.feat0 = []
         self.feat1 = []
+        self.p_min = 0.5
+        self.priori_distr = "Uniform"
 
     def _check_features(self, X):
-        """Validate X, used only in predict* methods."""
+        """Validate and fix the shape of X
+
+        This method is used in fit and predict function.
+
+        Parameters
+        ----------
+        X : Array-like of shape (n_samples, n_features),
+            including n_samples, the number of samples, and n_features,
+            the number of features. When the shape looks like (n_samples,),
+            it should be changed.
+
+        Returns
+        -------
+        X : Array-like of shape (n_samples, n_features),
+            returning (n_samples, 1) when the shape looks like (n_samples,).
+        """
         if X.ndim == 1:
             n = X.shape
             X = X.reshape(n, 1)
@@ -1721,14 +1751,10 @@ class GammaNB:
         likelihood probability, consisting of a log form of posterior
         probability and a log form of priori probability.
 
-        The variable tmp_p0 refers to the posterior probability. If tmp_p0
-        refers to only posterior probability, the scenario is that the
-        gamma-distributed feature has uniform priori distribution. If
-        tmp_p0 refers to both posterior probability and Exponential priori
-        distribution, the scenario is that the gamma-distributed feature has
-        Exponential priori distribution. If tmp_p0 refers to both posterior
-        probability and Poisson priori distribution, the scenario is that
-        the gamma-distributed feature has Poisson distribution.
+        Firstly, with different input of p_min, there should be different
+        estimator of log likelihood. Secondly, with different input of
+        priori_distr, there should be different calculation of log
+        likelihood.
 
         Parameters
         ----------
@@ -1755,9 +1781,11 @@ class GammaNB:
             including n_samples, the number of samples,
             referring to a vector of labels in array form.
         """
+        self.p_min = p_min
+        self.priori_distr = priori_distr
         X = np.array(X)
         X = self._check_features(X)
-        tmp_log_prob = self._log_likelihood(X, p_min, priori_distr)
+        tmp_log_prob = self._log_likelihood(X)
         if isinstance(tmp_log_prob, int):
             print("Joint log likelihood wrong.")
             return -1
@@ -1770,7 +1798,7 @@ class GammaNB:
                 y_pred.append(0)
         return np.array(y_pred)
 
-    def _log_likelihood(self, X, p_min=0.5, priori_distr="Uniform"):
+    def _log_likelihood(self, X):
         """Calculate the log likelihood.
 
         This method is to calculate the log likelihood of label 0 and label 1
@@ -1781,19 +1809,6 @@ class GammaNB:
         X : Array-like of shape (n_samples, n_features),
             including n_samples, the number of samples, and n_features,
             the number of features.
-
-        p_min : Float, default=0.5
-            between 0 and 1,
-            deciding the percentage between min_x and median_x.
-
-        priori_distr : String, default='Uniform',
-            with another two optional values, namely 'Exponential' and 'Poisson'.
-            The value of priori_distr is 'Uniform', suggesting that the
-            gamma-distributed feature has Uniform priori distribution. The value
-            of priori_distr is 'Exponential', suggesting that the gamma-distributed
-            feature has Exponential priori distribution. The value of priori_distr
-            is 'Poisson', suggesting that the gamma-distributed feature has Poisson
-            priori distribution.
 
         Returns
         -------
@@ -1831,15 +1846,17 @@ class GammaNB:
                 elif x_record_1 > 9999:
                     x_record_1 = 9999
                 tmp_delta_2 = float(abs(x_curr - x_record_1))
-                tmp_linear_delta = p_min * tmp_delta_1 + (1 - p_min) * tmp_delta_2
-                if priori_distr == "Uniform":
+                tmp_linear_delta = (
+                    self.p_min * tmp_delta_1 + (1 - self.p_min) * tmp_delta_2
+                )
+                if self.priori_distr == "Uniform":
                     tmp_p0 += -0.13 - np.log(tmp_linear_delta + tmp_slack) + 0
-                elif priori_distr == "Exponential":
+                elif self.priori_distr == "Exponential":
                     tmp_exp_priori = -3.39 - np.log(tmp_linear_delta + tmp_slack)
                     tmp_p0 += (
                         -0.13 - np.log(tmp_linear_delta + tmp_slack) + tmp_exp_priori
                     )
-                elif priori_distr == "Poisson":
+                elif self.priori_distr == "Poisson":
                     tmp_poi_priori = tmp_linear_delta * np.log(self.p0 + tmp_slack) + (
                         tmp_delta_2 - tmp_linear_delta
                     ) * np.log(self.p1 + tmp_slack)
@@ -1865,17 +1882,19 @@ class GammaNB:
                     x_record_3 = 9999
                 tmp_delta_4 = abs(x_curr - x_record_3)
                 tmp_delta_4 = float(tmp_delta_4)
-                tmp_linear_delta_1 = p_min * tmp_delta_3 + (1 - p_min) * tmp_delta_4
-                if priori_distr == "Uniform":
+                tmp_linear_delta_1 = (
+                    self.p_min * tmp_delta_3 + (1 - self.p_min) * tmp_delta_4
+                )
+                if self.priori_distr == "Uniform":
                     tmp_p1 += -0.13 - np.log(tmp_linear_delta_1 + tmp_slack) + 0
-                elif priori_distr == "Exponential":
+                elif self.priori_distr == "Exponential":
                     tmp_exp_priori_1 = -3.39 - np.log(tmp_linear_delta_1 + tmp_slack)
                     tmp_p1 += (
                         -0.13
                         - np.log(tmp_linear_delta_1 + tmp_slack)
                         + tmp_exp_priori_1
                     )
-                elif priori_distr == "Poisson":
+                elif self.priori_distr == "Poisson":
                     tmp_poi_priori_1 = tmp_linear_delta_1 * np.log(
                         self.p0 + tmp_slack
                     ) + (tmp_delta_4 - tmp_linear_delta_1) * np.log(self.p1 + tmp_slack)
