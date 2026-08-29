@@ -1721,6 +1721,8 @@ class GammaNB:
             tmp_x0 = self._out_split_array(X, tmp_ind0)
             tmp_y0 = self._out_split_array(Y, tmp_ind0)
         else:
+            tmp_x0 = []
+            tmp_y0 = []
             print(
                 "Wrong label: Label should be 0 or 1,\
                 and the number of label 0 is 0."
@@ -1729,6 +1731,8 @@ class GammaNB:
             tmp_x1 = self._out_split_array(X, tmp_ind1)
             tmp_y1 = self._out_split_array(Y, tmp_ind1)
         else:
+            tmp_x1 = []
+            tmp_y1 = []
             print(
                 "Wrong label: Label should be 0 or 1,\
                 and the number of label 1 is 0."
