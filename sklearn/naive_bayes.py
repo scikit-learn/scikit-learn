@@ -1622,13 +1622,24 @@ class GammaNB(_BaseDiscreteNB):
         self.feat1 = []
 
     def _check_X(self, X):
-        """Validate X, used only in predict* methods."""
         X = super()._check_X(X)
         return X
 
     def _check_X_y(self, X, y, reset=True):
         X, y = super()._check_X_y(X, y, reset=reset)
         return X, y
+
+    @abstractmethod
+    def _count(self, X, Y):
+        pass
+
+    @abstractmethod
+    def _joint_log_likelihood(self, X):
+        pass
+
+    @abstractmethod
+    def _update_feature_log_prob(self, alpha):
+        pass
 
     def _out_split_array(self, data_in, ind_vec_in):
         """Split the feature set according to labels, namely 0 or 1.
