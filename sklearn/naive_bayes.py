@@ -1572,30 +1572,43 @@ class CategoricalNB(_BaseDiscreteNB):
 
 
 class GammaNB:
-    """A Gamma kernel with different priori distributions
+    """A Gamma kernel with different priori distributions.
+
+    The Gamma Naive Bayes classifier is suitable for classification with
+    features that have Gamma distribution.
+
     Parameters
-    -----------------------------
-    [Input]
-    p_min: float,
-            between 0 and 1,
-            deciding the percentage between min_x and median_x.
-    X: array-like of shape (n_samples, n_features),\
-        feature matrix in array
-    y: array-like of shape (n_samples, ),\
-        labels vector in array
-    [output]
-    y_pred: the predict of labels.
-    -----------------------------
+    ----------
+    p_min: float, default=0.5
+        between 0 and 1,
+        deciding the percentage between min_x and median_x.
+
+    X: array-like of shape (n_samples, n_features),
+        including n_samples, the number of samples, and
+        n_features, the number of features.
+
+    y: array-like of shape (n_samples,),
+        including n_samples, the number of samples.
+
+    Returns
+    -------
+    y_pred: array-like of shape (n_samples,),
+        referring to the predict of labels.
     """
 
-    def __init__(self, p_min):
-        """Initialize the parameters.
+    def __init__(self, p_min=0.5):
+        """Initialize the parameters when the class is created.
+
+        This method is used to initialize all parameters in the class.
+
         Parameters
-        -----------------------------
-        Initialize parameters when created.
-        p_min: float,
+        ----------
+        p_min: float, default=0.5
             between 0 and 1,
             deciding the percentage between min_x and median_x.
+
+        Returns
+        -------
         """
         self._X = []
         self._Y = []
@@ -1613,13 +1626,25 @@ class GammaNB:
 
     def out_split_array(self, data_in, ind_vec_in):
         """Split the feature set according to labels, namely 0 or 1.
+
+        This method is used to split the whole feature set X according to
+        different labels, generating two subsets that one has the label
+        of 0 and the other has the label of 1.
+
         Parameters
-        -----------------------------
-        [Input]
+        ----------
         data_in: array-like of shape (n_samples, n_features),
-        ind_vec_in: array-like of shape (k_samples, ),
-        [Output]
-        subset of data_in, array
+            including n_samples, number of all samples, and n_features,
+            the number of features.
+
+        ind_vec_in: array-like of shape (k_samples,),
+            including k_samples, the number of the subset of all samples.
+
+        Returns
+        -------
+        out_array: array-like of shape (k_samples, n_features),
+            including k_samples, the number of the subset of all samples,
+            and n_features, the number of features.
         """
         tmp_array = np.array(data_in)
         out_array = []
@@ -1629,16 +1654,26 @@ class GammaNB:
         return np.array(out_array)
 
     def fit(self, X, y, sample_weight=None):
-        """ Fit the pattern between X and y.
+        """Fit the pattern of linkage between X and y.
+
+        This method is used to learn the pattern of linkage between
+        X and y.
+
         Parameters
-        -----------------------------
-        [Input]
-        X: array-like of shape (n_samples, n_features),\
-            feature matrix in array
-        y: array-like of shape (n_samples, ),\
-            labels vector in array
-        sample_weight: float,\
-            weight of samples
+        ----------
+        X: array-like of shape (n_samples, n_features),
+            including n_samples, the number of samples, and n_features,
+            the number of features.
+
+        y: array-like of shape (n_samples,),
+            including n_samples, the number of samples,
+            referring to a vector of labels in array form.
+
+        sample_weight: float,
+            referring to the weights of samples.
+
+        Returns
+        -------
         """
         n, m = X.shape
         self._X = np.array(X)
@@ -1677,15 +1712,36 @@ class GammaNB:
         self.feat1 = feat_1
 
     def predict(self, X):
-        """ Predict the labels of the input X.
+        """Predict the labels of the input X.
+
+        This method is used to predict the labels of an input feature set
+        X. For a specific sample, it is need to calculate the probability
+        of the event that the sample equals to 0.
+
+        During the calculation process, we need to calculate maximum
+        likelihood probability, consisting of a log form of posterior
+        probability and a log form of priori probability.
+
+        The variable tmp_p0 refers to the posterior probability. If tmp_p0
+        refers to only posterior probability, the scenario is that
+        gamma-distributed features has uniform priori distribution. If
+        tmp_p0 refers to both posterior probability and Exponential priori
+        distribution, the scenario is that gamma-distributed features has
+        Exponential priori distribution. If tmp_p0 refers to both posterior
+        probability and Poisson priori distribution, the scenario is that
+        gamma-distributed features has Poisson distribution.
+
         Parameters
-        -----------------------------
-        [Input]
-        X: array-like of shape (n_samples, n_features),\
-            feature matrix in array
-        [Output]
-        y: array-like of shape (n_samples, ),\
-            labels vector in array
+        ----------
+        X: array-like of shape (n_samples, n_features),
+            including n_samples, the number of samples, and n_features,
+            the number of features.
+
+        Returns
+        -------
+        y: array-like of shape (n_samples,),
+            including n_samples, the number of samples,
+            referring to a vector of labels in array form.
         """
         y_pred = []
         p = self.p_min
@@ -1725,11 +1781,6 @@ class GammaNB:
                     tmp_delta_2 - tmp_linear_delta
                 ) * np.log(self.p1 + tmp_slack)
                 tmp_p0 += -0.13 - np.log(tmp_linear_delta + tmp_slack) + 0
-                # 1)+0 uniform distr.;
-                # 2)+tmp_exp_priori Exponential distr.;
-                # 3)+tmp_poi_priori Poisson distr.;
-                # based on different priori distributions
-
                 # --- p1
                 # Feat1: minimum value of one feat.
                 x_record_2 = float(self.feat1[i][2])  # min-val
@@ -1739,7 +1790,6 @@ class GammaNB:
                     x_record_2 = 9999
                 tmp_delta_3 = abs(x_curr - x_record_2)
                 tmp_delta_3 = float(tmp_delta_3)
-
                 # FEAT1: average value of one feat.
                 x_record_3 = float(self.feat1[i][3])  # avg-val
                 if x_record_3 < -9999:
@@ -1748,18 +1798,12 @@ class GammaNB:
                     x_record_3 = 9999
                 tmp_delta_4 = abs(x_curr - x_record_3)
                 tmp_delta_4 = float(tmp_delta_4)
-
                 tmp_linear_delta_1 = p * tmp_delta_3 + (1 - p) * tmp_delta_4
                 tmp_exp_priori_1 = -3.39 - np.log(tmp_linear_delta_1 + tmp_slack)
                 tmp_poi_priori_1 = tmp_linear_delta_1 * np.log(self.p0 + tmp_slack) + (
                     tmp_delta_4 - tmp_linear_delta_1
                 ) * np.log(self.p1 + tmp_slack)
                 tmp_p1 += -0.13 - np.log(tmp_linear_delta_1 + tmp_slack) + 0
-                # 1)+0 uniform distr.;
-                # 2)+tmp_exp_priori Exponential distr.;
-                # 3)+tmp_poi_priori Poisson distr.;
-                # based on different priori distributions
-
             # Priori-prob.
             tmp_p0 += np.log(self.p0 + tmp_slack)
             tmp_p1 += np.log(self.p1 + tmp_slack)
