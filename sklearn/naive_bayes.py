@@ -1571,7 +1571,7 @@ class CategoricalNB(_BaseDiscreteNB):
         return total_ll
 
 
-class GammaNB:
+class GammaNB(_BaseDiscreteNB):
     """A Gamma kernel with different priori distributions.
 
     The Gamma Naive Bayes classifier is suitable for classification with
@@ -1621,7 +1621,11 @@ class GammaNB:
         self.feat0 = []
         self.feat1 = []
 
-    def out_split_array(self, data_in, ind_vec_in):
+    def _check_X_y(self, X, y, reset=True):
+        X, y = super()._check_X_y(X, y, reset=reset)
+        return X, y
+
+    def _out_split_array(self, data_in, ind_vec_in):
         """Split the feature set according to labels, namely 0 or 1.
 
         This method is used to split the whole feature set X according to
@@ -1679,10 +1683,10 @@ class GammaNB:
                 tmp_ind0.append(i)
             else:
                 tmp_ind1.append(i)
-        tmp_x0 = self.out_split_array(X, tmp_ind0)
-        tmp_y0 = self.out_split_array(Y, tmp_ind0)
-        tmp_x1 = self.out_split_array(X, tmp_ind1)
-        tmp_y1 = self.out_split_array(Y, tmp_ind1)
+        tmp_x0 = self._out_split_array(X, tmp_ind0)
+        tmp_y0 = self._out_split_array(Y, tmp_ind0)
+        tmp_x1 = self._out_split_array(X, tmp_ind1)
+        tmp_y1 = self._out_split_array(Y, tmp_ind1)
         self.p0 = len(tmp_y0) / len(y)
         self.p1 = len(tmp_y1) / len(y)
         # record according to Feat.
@@ -1808,3 +1812,12 @@ class GammaNB:
             else:
                 y_pred.append(0)
         return y_pred
+
+    def _count(self, X, Y):
+        pass
+
+    def _joint_log_likelihood(self, X):
+        pass
+
+    def _update_feature_log_prob(self, alpha):
+        pass
