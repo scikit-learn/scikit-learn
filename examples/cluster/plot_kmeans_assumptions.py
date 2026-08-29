@@ -218,38 +218,10 @@ plt.title(f"GaussianMixture on whitened data\n(ARI={ari:.2f} against ground trut
 plt.show()
 
 # %%
-# A caveat: whitening degrades in high dimensions
-# --------------------------------------------------
-#
-# In high dimensions, e.g. ``d=30``, whitening fails too.
-
-d = 30
-compress = 0.1
-half_sep = np.sqrt(1 - compress**2)  # makes the informative dimension's own
-# total variance exactly 1 too, matching the noise dimensions
-
-rng = np.random.RandomState(random_state)
-n1 = n_samples // 2
-n2 = n_samples - n1
-informative = np.concatenate(
-    [rng.randn(n1) * compress - half_sep, rng.randn(n2) * compress + half_sep]
-)
-y_cigars_d = np.array([0] * n1 + [1] * n2)
-X_cigars_d = np.empty((n_samples, d))
-X_cigars_d[:, 0] = informative
-X_cigars_d[:, 1:] = rng.randn(n_samples, d - 1)
-
-print("overall mean (first 3 dims):", X_cigars_d.mean(axis=0)[:3].round(3))
-print(
-    "overall covariance (top-left 3x3):\n",
-    np.cov(X_cigars_d, rowvar=False)[:3, :3].round(3),
-)
-
-y_pred = GaussianMixture(n_components=2, random_state=random_state).fit_predict(
-    X_cigars_d
-)
-print(f"ARI at d={d} (whitening this data changes nothing): "
-      f"{adjusted_rand_score(y_cigars_d, y_pred):.2f}")
+# This whitening fix does not scale to high dimensions: the same
+# construction lifted to ``d=30`` (one informative dimension plus 29 pure
+# noise dimensions, positioned so the overall data already has mean 0 and
+# identity covariance) gives ARI :math:`\approx` 0 again.
 
 # %%
 # Final remarks
