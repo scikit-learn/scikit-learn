@@ -1571,7 +1571,7 @@ class CategoricalNB(_BaseDiscreteNB):
         return total_ll
 
 
-class GammaNB(_BaseNB):
+class GammaNB:
     """A Gamma kernel with different priori distributions.
 
     The Gamma Naive Bayes classifier is suitable for classification with
@@ -1621,13 +1621,12 @@ class GammaNB(_BaseNB):
         self.feat0 = []
         self.feat1 = []
 
-    def _check_X(self, X):
+    def _check_features(self, X):
         """Validate X, used only in predict* methods."""
-        return validate_data(self, X, accept_sparse="csr", reset=False)
-
-    def _check_X_y(self, X, y, reset=True):
-        """Validate X and y in fit methods."""
-        return validate_data(self, X, y, accept_sparse="csr", reset=reset)
+        if X.ndim == 1:
+            n = X.shape
+            X = X.reshape(n, 1)
+        return X
 
     def _out_split_array(self, data_in, ind_vec_in):
         """Split the feature set according to labels, namely 0 or 1.
@@ -1680,7 +1679,7 @@ class GammaNB(_BaseNB):
         n, m = X.shape
         X = np.array(X)
         Y = np.array(y)
-        X, y = self._check_X_y(X, y)
+        X = self._check_features(X)
         tmp_ind0 = []
         tmp_ind1 = []
         for i in range(n):
@@ -1752,13 +1751,16 @@ class GammaNB(_BaseNB):
 
         Returns
         -------
-        y : Array-like of shape (n_samples,),
+        y_pred : Array-like of shape (n_samples,),
             including n_samples, the number of samples,
             referring to a vector of labels in array form.
         """
         X = np.array(X)
-        X = self._check_X(X)
-        tmp_log_prob = self._joint_log_likelihood(X, p_min, priori_distr)
+        X = self._check_features(X)
+        tmp_log_prob = self._log_likelihood(X, p_min, priori_distr)
+        if isinstance(tmp_log_prob, int):
+            print("Joint log likelihood wrong.")
+            return -1
         # predict
         y_pred = []
         for i in range(len(tmp_log_prob)):
@@ -1768,7 +1770,37 @@ class GammaNB(_BaseNB):
                 y_pred.append(0)
         return np.array(y_pred)
 
-    def _joint_log_likelihood(self, X, p_min=0.5, priori_distr="Uniform"):
+    def _log_likelihood(self, X, p_min=0.5, priori_distr="Uniform"):
+        """Calculate the log likelihood.
+
+        This method is to calculate the log likelihood of label 0 and label 1
+        respectively.
+
+        Parameters
+        ----------
+        X : Array-like of shape (n_samples, n_features),
+            including n_samples, the number of samples, and n_features,
+            the number of features.
+
+        p_min : Float, default=0.5
+            between 0 and 1,
+            deciding the percentage between min_x and median_x.
+
+        priori_distr : String, default='Uniform',
+            with another two optional values, namely 'Exponential' and 'Poisson'.
+            The value of priori_distr is 'Uniform', suggesting that the
+            gamma-distributed feature has Uniform priori distribution. The value
+            of priori_distr is 'Exponential', suggesting that the gamma-distributed
+            feature has Exponential priori distribution. The value of priori_distr
+            is 'Poisson', suggesting that the gamma-distributed feature has Poisson
+            priori distribution.
+
+        Returns
+        -------
+        tmp_mat_1 : Array-like of shape (n_samples, 2).
+            The first column is the probability of label 0, while the second one is
+            the probability of label 1.
+        """
         tmp_slack = 1e-10
         n, m = X.shape
         tmp_mat = [[], []]
@@ -1816,7 +1848,7 @@ class GammaNB(_BaseNB):
                     )
                 else:
                     print("Priori Distribution Wrong.")
-                    break
+                    return -1
                 # --- p1
                 # Feat1: minimum value of one feat.
                 x_record_2 = float(self.feat1[i][2])  # min-val
@@ -1854,7 +1886,7 @@ class GammaNB(_BaseNB):
                     )
                 else:
                     print("Priori Distribution Wrong.")
-                    break
+                    return -1
             # Priori-prob.
             tmp_p0 += np.log(self.p0 + tmp_slack)
             tmp_p1 += np.log(self.p1 + tmp_slack)
