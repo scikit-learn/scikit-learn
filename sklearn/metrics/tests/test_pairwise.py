@@ -896,8 +896,23 @@ def test_pairwise_distances_chunked_diagonal(metric, global_dtype):
 def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     rng = np.random.RandomState(0)
     X = rng.normal(size=(1000, 10), scale=1e10).astype(global_dtype, copy=False)
+
+    # Test with n_jobs=2 to explicitly exercise the generator-based _parallel_pairwise
     distances = pairwise_distances(X, metric=metric, n_jobs=2)
+
+    # Verify diagonal is zero
     assert_allclose(np.diag(distances), 0, atol=1e-10)
+
+    # Verify consistency with n_jobs=1
+    distances_single = pairwise_distances(X, metric=metric, n_jobs=1)
+    assert_allclose(distances, distances_single)
+
+    # Verify the result is a proper distance matrix
+    assert distances.shape == (X.shape[0], X.shape[0])
+    assert distances.dtype == global_dtype
+
+    # Verify symmetry (distance matrix should be symmetric for Y=None case)
+    assert_allclose(distances, distances.T)
 
 
 def test_parallel_pairwise_distances_y_norm_squared():
