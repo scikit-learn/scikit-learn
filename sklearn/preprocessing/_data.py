@@ -2825,19 +2825,22 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         references = self.references_ * 100
         self.n_quantiles_ = self.n_quantiles
 
-        # Identify rows with any NaN values
-        valid_mask = ~np.isnan(X).any(axis=1)
+        if self.subsample is not None and self.subsample < n_samples:
+            if sample_weight is None:
+                # Take an unweighted subsample of rows.
+                X = resample(
+                    X,
+                    replace=False,
+                    n_samples=self.subsample,
+                    random_state=random_state,
+                )
+            else:
+                # Weighted subsampling should ignore rows containing NaN values.
+                valid_mask = ~np.isnan(X).any(axis=1)
+                n_valid_samples = np.sum(valid_mask)
 
-        if self.subsample is not None:
-            # Only consider valid samples for subsampling
-            n_valid_samples = np.sum(valid_mask)
-
-            if self.subsample < n_valid_samples:
-                # Subsample only from valid rows
-                valid_indices = np.where(valid_mask)[0]
-
-                if sample_weight is not None:
-                    # Subsample with weights, but only valid rows
+                if self.subsample < n_valid_samples:
+                    valid_indices = np.where(valid_mask)[0]
                     valid_weights = sample_weight[valid_indices]
                     subsample_indices = resample(
                         valid_indices,
@@ -2850,14 +2853,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                     # As we do not want to double count the sample weights, we set
                     # sample weights to None if they are used for subsampling
                     sample_weight = None
-                else:
-                    subsample_indices = resample(
-                        valid_indices,
-                        replace=False,
-                        n_samples=self.subsample,
-                        random_state=random_state,
-                    )
-                    X = X[subsample_indices]
 
         if sample_weight is not None:
             self.quantiles_ = _weighted_percentile(
@@ -2912,8 +2907,10 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 self.quantiles_.append([0] * len(self.references_))
             else:
                 self.quantiles_.append(
-                    np.nanquantile(
-                        column_data, self.references_, method="averaged_inverted_cdf"
+                    np.nanpercentile(
+                        column_data,
+                        self.references_ * 100,
+                        method="averaged_inverted_cdf",
                     )
                 )
         self.quantiles_ = np.transpose(self.quantiles_)
