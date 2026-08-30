@@ -2000,8 +2000,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     chunk_generator = Parallel(
         backend="threading", n_jobs=n_jobs, return_as="generator_unordered"
     )(
-        fd(func, s, X, Y[s, ...], **_slice_kwds(s))
-        for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
+        fd(func, s, X[s, ...], Y, **kwds)
+        for s in gen_even_slices(_num_samples(X), effective_n_jobs(n_jobs))
     )
     for slice_, chunk in chunk_generator:
         ret[slice_, ...] = chunk
