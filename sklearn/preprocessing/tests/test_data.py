@@ -1682,7 +1682,7 @@ def test_quantile_transformer_subsample_nan_ignore_sample_weight():
     sample_weight_nan_zero = np.array([1, 1, 1, 1, 1, 1, 0, 0], dtype=float)
     sample_weight_ones = np.ones(X.shape[0], dtype=float)
 
-    params = dict(n_quantiles=5, subsample=4, random_state=0)
+    params = dict(n_quantiles=4, subsample=4, random_state=0)
 
     qt_nan_heavy = QuantileTransformer(**params).fit(
         X, sample_weight=sample_weight_nan_heavy

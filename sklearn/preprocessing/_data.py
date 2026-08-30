@@ -2824,6 +2824,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         n_samples, n_features = X.shape
         references = self.references_ * 100
         self.n_quantiles_ = self.n_quantiles
+
         # Identify rows with any NaN values
         valid_mask = ~np.isnan(X).any(axis=1)
 
@@ -2846,6 +2847,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                         sample_weight=valid_weights,
                     )
                     X = X[subsample_indices]
+                    # As we do not want to double count the sample weights, we set
+                    # sample weights to None if they are used for subsampling
                     sample_weight = None
                 else:
                     subsample_indices = resample(
