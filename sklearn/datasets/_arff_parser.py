@@ -133,7 +133,7 @@ def _liac_arff_parser(
         - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
           pandas Series or DataFrame.
 
-    columns_info : dict
+    openml_columns_info : dict
         The information provided by OpenML regarding the columns of the ARFF
         file.
 

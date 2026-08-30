@@ -478,7 +478,7 @@ def _make_indexable(iterable):
         # Even if dataframe has __getitem__, semantics are quite different, examples:
         # pandas: df[0] -> KeyError if 0 is not a column name
         # polars: df[0] -> returns the 0th row
-        return nw.from_native(iterable, allow_series=True)
+        return iterable
     elif hasattr(iterable, "__getitem__"):
         return iterable
     elif iterable is None:
