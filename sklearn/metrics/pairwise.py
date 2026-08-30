@@ -1989,7 +1989,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     # https://github.com/data-apis/array-api/issues/571 for details.
     # We assume that currently (April 2025) all array API compatible namespaces
     # allocate 2D arrays using the C-contiguity convention by default.
-    ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
+    ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float)
 
     def _slice_kwds(s):
         return {
