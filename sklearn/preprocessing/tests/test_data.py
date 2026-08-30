@@ -11,10 +11,7 @@ from scipy import sparse, stats
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
-from sklearn.callback.tests._utils import (
-    RecordingCallback,
-    skip_callback_test_if_wasm,
-)
+from sklearn.callback.tests._common.callbacks import RecordingCallback
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
@@ -55,6 +52,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
+    skip_callback_test_if_wasm,
     skip_if_32bit,
 )
 from sklearn.utils.estimator_checks import (
@@ -1192,7 +1190,7 @@ def test_scale_input_finiteness_validation():
 
 
 def test_robust_scaler_error_sparse():
-    X_sparse = sparse.rand(1000, 10)
+    X_sparse = _sparse_random_array((1000, 10))
     scaler = RobustScaler(with_centering=True)
     err_msg = "Cannot center sparse matrices"
     with pytest.raises(ValueError, match=err_msg):
@@ -1201,7 +1199,9 @@ def test_robust_scaler_error_sparse():
 
 @pytest.mark.parametrize("with_centering", [True, False])
 @pytest.mark.parametrize("with_scaling", [True, False])
-@pytest.mark.parametrize("X", [np.random.randn(10, 3), sparse.rand(10, 3, density=0.5)])
+@pytest.mark.parametrize(
+    "X", [np.random.randn(10, 3), _sparse_random_array((10, 3), density=0.5)]
+)
 def test_robust_scaler_attributes(X, with_centering, with_scaling):
     # check consistent type of attributes
     if with_centering and sparse.issparse(X):
@@ -1253,7 +1253,7 @@ def test_robust_scaler_2d_arrays():
 @pytest.mark.parametrize("strictly_signed", ["positive", "negative", "zeros", None])
 def test_robust_scaler_equivalence_dense_sparse(density, strictly_signed):
     # Check the equivalence of the fitting with dense and sparse matrices
-    X_sparse = sparse.rand(1000, 5, density=density).tocsc()
+    X_sparse = _sparse_random_array((1000, 5), density=density).tocsc()
     if strictly_signed == "positive":
         X_sparse.data = np.abs(X_sparse.data)
     elif strictly_signed == "negative":
@@ -1509,7 +1509,7 @@ def test_quantile_transform_subsampling():
 
     # sparse support
 
-    X = sparse.rand(n_samples, 1, density=0.99, format="csc", random_state=0)
+    X = _sparse_random_array((n_samples, 1), density=0.99, format="csc", random_state=0)
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(
