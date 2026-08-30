@@ -2699,9 +2699,10 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         Number of quantiles to be computed. It corresponds to the number of
         landmarks used to discretize the cumulative distribution function.
 
-        .. versionchanged:: 1.10 n_quantiles are no longer capped according
-        to the number of samples. The number of quantiles is now always equal
-        to the value of n_quantiles.
+          .. versionchanged:: 1.10
+              `n_quantiles` is no longer capped according to the number of
+              samples. The number of quantiles is now always equal to the value
+              of `n_quantiles`.
 
     output_distribution : {'uniform', 'normal'}, default='uniform'
         Marginal distribution for the transformed data. The choices are
