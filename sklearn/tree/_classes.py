@@ -588,31 +588,40 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def _make_feature_preprocessor(self, is_categorical_):
-        """Build an unfitted ColumnTransformer for categorical and numerical columns."""
-        ordinal_encoder = OrdinalEncoder(
-            dtype=np.float32,
-            categories="auto",
-            handle_unknown="use_encoded_value",
-            unknown_value=np.nan,
-            encoded_missing_value=np.nan,
-        )
-        transformers = [
-            ("categorical", ordinal_encoder, is_categorical_),
-        ]
-        if np.any(~is_categorical_):
-            numerical_transformer = FunctionTransformer(
-                check_array,
-                kw_args={"dtype": np.float32, "ensure_all_finite": False},
+    def _preprocess_X(self, X, *, reset):
+        """Encode categorical features and cast numerical features to float32."""
+        if reset:
+            ordinal_encoder = OrdinalEncoder(
+                dtype=np.float32,
+                categories="auto",
+                handle_unknown="use_encoded_value",
+                unknown_value=np.nan,
+                encoded_missing_value=np.nan,
             )
-            transformers.append(("numerical", numerical_transformer, ~is_categorical_))
+            transformers = [
+                ("categorical", ordinal_encoder, self.is_categorical_),
+            ]
+            if np.any(~self.is_categorical_):
+                numerical_transformer = FunctionTransformer(
+                    check_array,
+                    kw_args={"dtype": np.float32, "ensure_all_finite": False},
+                )
+                transformers.append(
+                    ("numerical", numerical_transformer, ~self.is_categorical_)
+                )
 
-        preprocessor = ColumnTransformer(transformers, sparse_threshold=0)
-        preprocessor.set_output(transform="default")
-        return preprocessor
+            self._preprocessor = ColumnTransformer(transformers, sparse_threshold=0)
+            self._preprocessor.set_output(transform="default")
+            self._preprocessor.fit(X)
+            self._categorical_encoder = self._preprocessor.named_transformers_[
+                "categorical"
+            ]
+            X_transformed = self._preprocessor.transform(X)
+        else:
+            X_transformed = self._preprocessor.transform(X)
 
-    def _restore_input_column_order(self, X_transformed):
-        """Map ColumnTransformer output back to the original feature column order."""
+        # ColumnTransformer outputs categorical columns first. Remap back to the
+        # original input order so tree_.feature indices match user column order.
         n_samples = X_transformed.shape[0]
         n_features = self.is_categorical_.shape[0]
         X_out = np.empty((n_samples, n_features), dtype=np.float32)
@@ -625,20 +634,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             X_out[:, ~self.is_categorical_] = X_transformed[:, num_idx]
 
         return X_out
-
-    def _preprocess_X(self, X, *, reset):
-        """Encode categorical features and cast numerical features to float32."""
-        if reset:
-            self._preprocessor = self._make_feature_preprocessor(self.is_categorical_)
-            self._preprocessor.fit(X)
-            self._categorical_encoder = self._preprocessor.named_transformers_[
-                "categorical"
-            ]
-            X_transformed = self._preprocessor.transform(X)
-        else:
-            X_transformed = self._preprocessor.transform(X)
-
-        return self._restore_input_column_order(X_transformed)
 
     def _validate_X_predict(self, X, check_input):
         """Validate X for predict/predict_proba/apply."""
