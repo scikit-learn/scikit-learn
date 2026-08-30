@@ -690,7 +690,7 @@ if sp_base_version < parse_version("1.17"):  # pragma: no cover
 if sp_base_version < parse_version("1.11"):  # pragma: no cover
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     _VALID_METRICS += ["kulsinski"]
-if sp_base_version < parse_version("1.9"):
+if sp_base_version < parse_version("1.9"):  # pragma: no cover
     # Deprecated in SciPy 1.0 and removed in SciPy 1.9
     _VALID_METRICS += ["matching"]
 
@@ -1989,14 +1989,14 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
     def _slice_kwds(s):
         return {
-            k: v[s] if k == "Y_norm_squared" and v is not None else v
+            k: v[s] if k == "X_norm_squared" and v is not None else v
             for k, v in kwds.items()
         }
 
     chunk_generator = Parallel(
         backend="threading", n_jobs=n_jobs, return_as="generator_unordered"
     )(
-        fd(func, s, X[s, ...], Y, **kwds)
+        fd(func, s, X[s, ...], Y, **_slice_kwds(s))
         for s in gen_even_slices(_num_samples(X), effective_n_jobs(n_jobs))
     )
     for slice_, chunk in chunk_generator:
@@ -2508,7 +2508,7 @@ if sp_base_version < parse_version("1.17"):
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
-if sp_base_version < parse_version("1.9"):
+if sp_base_version < parse_version("1.9"):  # pragma: no cover
     # Deprecated in SciPy 1.0 and removed in SciPy 1.9
     PAIRWISE_BOOLEAN_FUNCTIONS += ["matching"]
 

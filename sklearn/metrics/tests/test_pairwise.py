@@ -29,6 +29,7 @@ from sklearn.metrics.pairwise import (
     chi2_kernel,
     cosine_distances,
     cosine_similarity,
+    distance_metrics,
     euclidean_distances,
     haversine_distances,
     laplacian_kernel,
@@ -421,6 +422,34 @@ def test_parallel_pairwise_generator_return():
 
     assert_allclose(result, expected)
     assert result.shape == (X.shape[0], Y.shape[0])
+
+
+def test_parallel_pairwise_with_x_norm_squared_kwd():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((11, 4))
+    Y = rng.random_sample((7, 4))
+    X_norm_squared = np.sum(X**2, axis=1)
+
+    expected = _parallel_pairwise(
+        X,
+        Y,
+        euclidean_distances,
+        n_jobs=1,
+        X_norm_squared=X_norm_squared,
+    )
+    result = _parallel_pairwise(
+        X,
+        Y,
+        euclidean_distances,
+        n_jobs=2,
+        X_norm_squared=X_norm_squared,
+    )
+
+    assert_allclose(result, expected)
+
+
+def test_distance_metrics_returns_pairwise_mapping():
+    assert distance_metrics() is PAIRWISE_DISTANCE_FUNCTIONS
 
 
 @pytest.mark.parametrize(
