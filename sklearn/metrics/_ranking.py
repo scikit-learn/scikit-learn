@@ -1037,25 +1037,22 @@ def confusion_matrix_at_thresholds(
     # n around 2**24, so the normalized cumsum still drifts.
     max_float_dtype = _max_precision_float_dtype(xp, device)
     if sample_weight is not None and max_float_dtype == xp.float32:
-        # Adaptive fixed-point integer cumsum (#34813). Aim for ~1e6 integer
-        # units per average weight so O(1) weights keep micro-unit resolution
-        # while pre-normalized / tiny weights (mean ~1/n) do not round to 0
-        # under a fixed scale. Cap by int64 headroom using n * max(weight) as
-        # a safe upper bound on the total weight. int64 is assumed available on
-        # float32-only devices of interest (e.g. torch MPS).
-        target_units = 1_000_000
+        # Maximize fixed-point resolution under int64 headroom (#34813).
+        # A fixed scale (e.g. 1e6) or a mean-based scale (≈1e6 / mean(weight))
+        # still rounds minority tiny weights to 0 when most weights are O(1).
+        # Using the largest scale such that n * max(weight) * scale fits in
+        # int64 preserves those tails. Clip scale itself to int64 max when
+        # n * max(weight) < 1 (uniformly tiny / pre-normalized weights).
+        # int64 is assumed available on float32-only devices of interest
+        # (e.g. torch MPS).
         n_samples = size(weight)
-        weight_sum = float(move_to(xp.sum(weight), xp=np, device="cpu"))
         weight_max = float(move_to(xp.max(weight), xp=np, device="cpu"))
-        if weight_sum > 0 and weight_max > 0:
-            scale_res = target_units * n_samples / weight_sum
-            # Conservative overflow guard: even if every weight equaled
-            # weight_max, the scaled total must fit in int64.
-            max_scaled_total = 0.9 * (2**63 - 1)
-            scale_max = max_scaled_total / (n_samples * weight_max)
-            scale = max(int(round(min(scale_res, scale_max))), 1)
+        int64_max = 2**63 - 1
+        if weight_max > 0:
+            scale = int(0.9 * int64_max / (n_samples * weight_max))
+            scale = max(min(scale, int64_max), 1)
         else:
-            scale = target_units
+            scale = 1_000_000
         y_true_i = xp.astype(y_true, xp.int64)
         w_scaled = xp.astype(xp.round(weight * scale), xp.int64)
         tps_i = xp.cumulative_sum(y_true_i * w_scaled)[threshold_idxs]

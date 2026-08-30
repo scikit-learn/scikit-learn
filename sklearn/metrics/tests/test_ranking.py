@@ -950,23 +950,29 @@ def test_confusion_matrix_at_thresholds(global_random_seed):
 
 @pytest.mark.parametrize(
     "weight_kind",
-    ["uniform", "variable", "normalized", "tiny"],
+    ["uniform", "variable", "normalized", "tiny", "skewed_tiny_top"],
 )
 def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kind):
     """Weighted counts stay stable on float32-only devices for large n.
 
     Float32 cumulative sums of unit weights saturate past 2**24. Weight
     normalization alone is not enough at this scale; a fixed-point integer
-    cumsum is used instead. The scale is chosen from the mean weight so that
-    pre-normalized (sum≈1) or uniformly tiny weights do not round to zero —
-    the failure mode of a fixed ``round(w * 1e6)`` scheme. See #34813.
+    cumsum is used instead. The scale uses the full int64 headroom based on
+    ``n * max(weight)`` so that:
+
+    - pre-normalized (sum≈1) or uniformly tiny weights do not round to zero
+      under a fixed ``round(w * 1e6)`` scheme;
+    - minority tiny weights among mostly O(1) weights (mean-based scale still
+      zeros them) survive quantization along the high-score part of the curve.
+
+    See #34813.
     """
     xp, device = _array_api_for_tests("array_api_strict", "no_float64", "float32")
 
     rng = np.random.RandomState(0)
     # Large enough that fixed scale=1e6 zeros out pre-normalized U(0,1) weights
     # (mean ~1/n < 5e-7) while also covering n_pos > 2**24 for O(1) weights.
-    n_samples = 20_000_000
+    n_samples = 20_000_000 if weight_kind != "skewed_tiny_top" else 10_000_000
     y_true_np = (rng.random(n_samples) < 0.9).astype(np.int32)
     y_score_np = (rng.random(n_samples) + y_true_np * 0.01).astype(np.float32)
     if weight_kind == "uniform":
@@ -976,16 +982,30 @@ def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kin
     elif weight_kind == "normalized":
         raw = rng.uniform(0.0, 1.0, size=n_samples).astype(np.float64)
         sample_weight_np = (raw / raw.sum()).astype(np.float32)
-    else:  # tiny: same shape as O(1) weights but scaled by 1e-8
+    elif weight_kind == "tiny":
         sample_weight_np = (rng.uniform(0.5, 1.5, size=n_samples) * 1e-8).astype(
             np.float32
         )
-    n_pos = int(y_true_np.sum())
-    assert n_pos > 2**24
-    # Document the fixed-scale failure mode that adaptive scaling must avoid.
+    else:
+        # Top 10% by score get weight 1e-8; the rest get 1.0. Mean-based
+        # scale ≈ 1e6 stays O(1e6) and zeros the tiny top weights.
+        sample_weight_np = np.ones(n_samples, dtype=np.float32)
+        top = np.argsort(-y_score_np)[: n_samples // 10]
+        sample_weight_np[top] = np.float32(1e-8)
+
+    if weight_kind != "skewed_tiny_top":
+        n_pos = int(y_true_np.sum())
+        assert n_pos > 2**24
+
+    # Document failure modes that the int64-headroom scale must avoid.
     if weight_kind in {"normalized", "tiny"}:
         fixed_scale = 1_000_000
         assert np.round(sample_weight_np * fixed_scale).astype(np.int64).sum() == 0
+    if weight_kind == "skewed_tiny_top":
+        weight_sum = float(sample_weight_np.astype(np.float64).sum())
+        mean_based_scale = max(round(1_000_000 * n_samples / weight_sum), 1)
+        # Tiny top weights vanish under mean-based scaling (the previous scheme).
+        assert np.round(np.float32(1e-8) * mean_based_scale) == 0
 
     _, _, _, tps_ref, _ = confusion_matrix_at_thresholds(
         y_true_np,
@@ -1013,6 +1033,13 @@ def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kin
     assert_allclose(
         fps_np[-1] + tps_np[-1], expected_total_weight, rtol=1e-5, atol=atol
     )
+    # Skewed case: early curve mass is O(1e-3) from tiny top weights only;
+    # a mean-based scale yields exact zeros here while totals still look fine.
+    if weight_kind == "skewed_tiny_top":
+        small = tps_ref < 1.0
+        assert np.any(small)
+        assert_allclose(tps_np[small], tps_ref[small], rtol=1e-4, atol=1e-5)
+        assert np.all(tps_np[small] > 0)
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
