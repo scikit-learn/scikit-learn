@@ -849,7 +849,7 @@ clusters from Bisecting K-Means are well ordered and create quite a visible hier
   * `"A Comparison of Document Clustering Techniques"
     <https://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
     Steinbach, George Karypis and Vipin Kumar, Department of Computer Science and
-    Egineering, University of Minnesota (June 2000)
+    Engineering, University of Minnesota (June 2000)
   * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog
     Data"
     <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_

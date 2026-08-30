@@ -159,10 +159,12 @@ Estimators
 ----------
 
 - :class:`covariance.LedoitWolf` (see :ref:`device_support_for_float64`)
+- :class:`covariance.OAS` (see :ref:`device_support_for_float64`)
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`kernel_approximation.Nystroem`
 - :class:`linear_model.LogisticRegression` (with `solver="lbfgs"` and `solver="newton-cg"`)
+- :class:`linear_model.LogisticRegressionCV` (with `solver="lbfgs"` and `solver="newton-cg"`)
 - :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`linear_model.RidgeCV` (see :ref:`device_support_for_float64`)
@@ -203,6 +205,7 @@ Metrics
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
 - :func:`sklearn.metrics.calinski_harabasz_score`
+- :func:`sklearn.metrics.cluster.contingency_matrix`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_absolute_error_score`
@@ -217,6 +220,7 @@ Metrics
 - :func:`sklearn.metrics.hamming_loss`
 - :func:`sklearn.metrics.jaccard_score`
 - :func:`sklearn.metrics.log_loss`
+- :func:`sklearn.metrics.matthews_corrcoef` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.max_error`
 - :func:`sklearn.metrics.mean_absolute_error`
 - :func:`sklearn.metrics.mean_absolute_percentage_error`
