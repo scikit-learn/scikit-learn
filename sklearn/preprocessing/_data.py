@@ -2864,7 +2864,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             it will be converted into a SciPy sparse CSC matrix.
         """
         n_samples, n_features = X.shape
-        references = self.references_ * 100
 
         self.quantiles_ = []
         for feature_idx in range(n_features):
@@ -2888,11 +2887,11 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             if not column_data.size:
                 # if no nnz, an error will be raised for computing the
                 # quantiles. Force the quantiles to be zeros.
-                self.quantiles_.append([0] * len(references))
+                self.quantiles_.append([0] * len(self.references_))
             else:
                 self.quantiles_.append(
                     np.nanquantile(
-                        column_data, references / 100, method="averaged_inverted_cdf"
+                        column_data, self.references_, method="averaged_inverted_cdf"
                     )
                 )
         self.quantiles_ = np.transpose(self.quantiles_)

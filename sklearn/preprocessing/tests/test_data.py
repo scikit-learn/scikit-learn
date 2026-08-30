@@ -1669,6 +1669,35 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     assert all(np.diff(quantiles) >= 0)
 
 
+def test_quantile_transformer_subsample_nan_ignore_sample_weight():
+    # NaN rows should be ignored during fit, regardless of their sample_weight.
+    # To test this, we add a large a large weight of 1000 and negligible weight
+    # of 0 to the NaN rows and check that the quantiles are the same as one
+    # another. We further test that NaNs weighted as 0 return the same result
+    # as NaNs weighted as 1, which is the default behavior of QuantileTransformer.
+
+    X = np.array([[0.0], [1.0], [2.0], [3.0], [4.0], [5.0], [np.nan], [np.nan]])
+
+    sample_weight_nan_heavy = np.array([1, 1, 1, 1, 1, 1, 1_000, 1_000], dtype=float)
+    sample_weight_nan_zero = np.array([1, 1, 1, 1, 1, 1, 0, 0], dtype=float)
+    sample_weight_ones = np.ones(X.shape[0], dtype=float)
+
+    params = dict(n_quantiles=5, subsample=4, random_state=0)
+
+    qt_nan_heavy = QuantileTransformer(**params).fit(
+        X, sample_weight=sample_weight_nan_heavy
+    )
+    qt_nan_zero = QuantileTransformer(**params).fit(
+        X, sample_weight=sample_weight_nan_zero
+    )
+    qt_ones = QuantileTransformer(**params).fit(X, sample_weight=sample_weight_ones)
+
+    # NaN rows should not contribute, regardless of their positive weight.
+    assert_allclose(qt_nan_heavy.quantiles_, qt_nan_zero.quantiles_)
+    # Same result as the all-ones weighted fit if NaN rows are ignored consistently.
+    assert_allclose(qt_nan_zero.quantiles_, qt_ones.quantiles_)
+
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),
