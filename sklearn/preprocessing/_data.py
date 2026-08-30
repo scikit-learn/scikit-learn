@@ -2824,18 +2824,37 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         n_samples, n_features = X.shape
         references = self.references_ * 100
         self.n_quantiles_ = self.n_quantiles
-        if self.subsample is not None and self.subsample < n_samples:
-            # Take a subsample of `X`
-            X = resample(
-                X,
-                replace=False if sample_weight is None else True,
-                n_samples=self.subsample,
-                random_state=random_state,
-                sample_weight=sample_weight,
-            )
-            # As we do not want to double count the sample weights, we set
-            # sample weights to None if they are used for subsampling
-            sample_weight = None
+        # Identify rows with any NaN values
+        valid_mask = ~np.isnan(X).any(axis=1)
+
+        if self.subsample is not None:
+            # Only consider valid samples for subsampling
+            n_valid_samples = np.sum(valid_mask)
+
+            if self.subsample < n_valid_samples:
+                # Subsample only from valid rows
+                valid_indices = np.where(valid_mask)[0]
+
+                if sample_weight is not None:
+                    # Subsample with weights, but only valid rows
+                    valid_weights = sample_weight[valid_indices]
+                    subsample_indices = resample(
+                        valid_indices,
+                        replace=True,
+                        n_samples=self.subsample,
+                        random_state=random_state,
+                        sample_weight=valid_weights,
+                    )
+                    X = X[subsample_indices]
+                    sample_weight = None
+                else:
+                    subsample_indices = resample(
+                        valid_indices,
+                        replace=False,
+                        n_samples=self.subsample,
+                        random_state=random_state,
+                    )
+                    X = X[subsample_indices]
 
         if sample_weight is not None:
             self.quantiles_ = _weighted_percentile(
@@ -2937,6 +2956,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 "sample_weight is not supported for sparse input."
             )
         self.n_quantiles_ = self.n_quantiles
+
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
