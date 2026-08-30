@@ -1965,9 +1965,9 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
-def _transposed_dist_wrapper(dist_func, slice_, *args, **kwargs):
+def _dist_wrapper(dist_func, slice_, *args, **kwargs):
     """Write to a slice of a distance matrix."""
-    return slice_, dist_func(*args, **kwargs).T
+    return slice_, dist_func(*args, **kwargs)
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1983,12 +1983,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         return func(X, Y, **kwds)
 
     # enforce a threading backend to prevent data communication overhead
-    fd = delayed(_transposed_dist_wrapper)
-    # Transpose `ret` such that a given thread writes its output to a contiguous chunk.
-    # Note `order` (i.e. F/C-contiguous) is not included in array API standard, see
-    # https://github.com/data-apis/array-api/issues/571 for details.
-    # We assume that currently (April 2025) all array API compatible namespaces
-    # allocate 2D arrays using the C-contiguity convention by default.
+    fd = delayed(_dist_wrapper)
+    # Write each computed block directly into the matching slice in output.
     ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float)
 
     def _slice_kwds(s):
@@ -2011,8 +2007,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         # TODO: do it also for other norms.
         _fill_diagonal(ret, 0, xp=xp)
 
-    # Transform output back
-    return ret.T
+    return ret
 
 
 def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
