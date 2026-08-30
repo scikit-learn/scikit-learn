@@ -1966,7 +1966,7 @@ def distance_metrics():
 
 
 def _transposed_dist_wrapper(dist_func, slice_, *args, **kwargs):
-    """Write in-place to a slice of a distance matrix."""
+    """Write to a slice of a distance matrix."""
     return slice_, dist_func(*args, **kwargs).T
 
 
