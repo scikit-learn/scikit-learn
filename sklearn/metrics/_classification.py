@@ -417,7 +417,6 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """
     xp, _, device = get_namespace_and_device(y_pred)
     # Compute accuracy for each possible representation
-    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight, xp=xp, device=device
     )
@@ -986,7 +985,7 @@ def cohen_kappa_score(
             raise ValueError(msg) from e
         raise
 
-    xp, _, device = get_namespace_and_device(y1, y2)
+    xp, _, device = get_namespace_and_device(confusion)
     n_classes = confusion.shape[0]
     # array_api_strict only supports floating point dtypes for __truediv__
     # which is used below to compute `expected` as well as `k`. Therefore
@@ -1134,9 +1133,9 @@ def jaccard_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", {0.0, 1.0}, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division, i.e. when there
-        there are no negative values in predictions and labels. If set to
+        are no negative values in predictions and labels. If set to
         "warn", this acts like 0, but a warning is also raised.
 
         .. versionadded:: 0.24
@@ -1213,7 +1212,8 @@ def jaccard_score(
     numerator = MCM[:, 1, 1]
     denominator = MCM[:, 1, 1] + MCM[:, 0, 1] + MCM[:, 1, 0]
 
-    xp, _, device = get_namespace_and_device(y_true, y_pred)
+    xp, _, device = get_namespace_and_device(MCM)
+    sample_weight = move_to(sample_weight, xp=xp, device=device)
     if average == "micro":
         numerator = xp.asarray(xp.sum(numerator, keepdims=True), device=device)
         denominator = xp.asarray(xp.sum(denominator, keepdims=True), device=device)
@@ -1312,7 +1312,6 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33
     """
-    y_true, y_pred = attach_unique(y_true, y_pred)
     y_type, _, y_true, y_pred, sample_weight = _check_targets(
         y_true, y_pred, sample_weight
     )
@@ -1422,7 +1421,6 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
-    xp, _ = get_namespace(y_true, y_pred)
     score = accuracy_score(
         y_true, y_pred, normalize=normalize, sample_weight=sample_weight
     )
@@ -1431,7 +1429,11 @@ def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
         return 1 - score
     else:
         if sample_weight is not None:
-            n_samples = xp.sum(sample_weight)
+            xp, _ = get_namespace(sample_weight)
+            # Required for NumPy conversion of array-like inputs supported by NumPy's
+            # `asarray`, when array API dispatch is off.
+            sample_weight = check_array(sample_weight, ensure_2d=False)
+            n_samples = float(xp.sum(sample_weight))
         else:
             n_samples = _num_samples(y_true)
         return n_samples - score
@@ -2233,7 +2235,7 @@ def precision_recall_fscore_support(
     if average == "weighted":
         weights = true_sum
     elif average == "samples":
-        weights = sample_weight
+        weights = move_to(sample_weight, xp=xp, device=device)
     else:
         weights = None
 
@@ -2949,7 +2951,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     0.625
     """
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    xp, _, device = get_namespace_and_device(y_pred, y_true)
+    xp, _, device = get_namespace_and_device(C)
     if _is_xp_namespace(xp, "array_api_strict"):
         # array_api_strict only supports floating point dtypes for __truediv__
         # which is used below to compute `per_class`.
