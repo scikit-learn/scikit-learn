@@ -958,7 +958,7 @@ def test_confusion_matrix_at_thresholds_float32_only_unweighted_large_n():
     xp, device = _array_api_for_tests("array_api_strict", "no_float64", "float32")
 
     rng = np.random.RandomState(0)
-    # Enough positives to exceed the float32 integer precision limit.
+    # Data with enough positives to exceed the float32 integer precision limit.
     n_samples = 20_000_000
     y_true_np = (rng.random(n_samples) < 0.9).astype(np.int32)
     y_score_np = (rng.random(n_samples) + y_true_np * 0.01).astype(np.float32)
@@ -977,7 +977,8 @@ def test_confusion_matrix_at_thresholds_float32_only_unweighted_large_n():
     tps_np = move_to(tps, xp=np, device="cpu")
     fps_np = move_to(fps, xp=np, device="cpu")
     # Exact integer counts before the final float cast; allow float32 rounding
-    # of integers above 2**24 (ulp of 2).
+    # of integers above 2**24, after which too consecutive float32 numbers are
+    # spaced by more than 2.
     assert_allclose(tps_np[-1], n_pos, atol=1)
     assert_allclose(fps_np[-1], n_samples - n_pos, atol=1)
     assert_allclose(tps_np, tps_ref, atol=1)
