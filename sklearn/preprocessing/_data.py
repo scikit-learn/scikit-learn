@@ -2840,6 +2840,18 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             The data used to scale along the features axis. The sparse matrix
             needs to be nonnegative. If a sparse matrix is provided,
             it will be converted into a SciPy sparse CSC matrix.
+
+        Notes
+        -----
+        - If `ignore_implicit_zeros=True`, zeros are excluded from the data:
+          quantiles are computed from the column's non-zero entries only, and
+          subsampling (if any) draws from those non-zero entries alone.
+        - If `ignore_implicit_zeros=False`, zeros are treated as real data:
+          subsampling preserves the column's original proportion of zeros
+          to non-zero values.
+
+        Columns with fewer non-zero entries than `subsample` are not subsampled:
+        when `ignore_implicit_zeros=False`, this materializes a `n_samples` array.
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
