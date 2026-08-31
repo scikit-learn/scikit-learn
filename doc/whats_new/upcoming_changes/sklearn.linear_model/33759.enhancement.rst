@@ -1,5 +1,5 @@
 - :class:`linear_model.PoissonRegressor`, :class:`linear_model.GammaRegressor` and
-  :func:`linear_model.TweedieRegressor` got a new solver: `solver="newton-cg"`.
+  :class:`linear_model.TweedieRegressor` got a new solver: `solver="newton-cg"`.
   This is the same Newton conjugate gradient solver, a.k.a. truncated Newton, that is
   already available with :class:`linear_model.LogisticRegression`.
   By :user:`Christian Lorentzen <lorentzenchr>`.
