@@ -2667,6 +2667,45 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
+def _sparse_column_quantile(column_nnz_data, n_zeros, quantiles):
+    """
+    Compute quantiles of a sparse column without densifying it.
+
+    Calculations/Implementation are meant to match np.nanquantile(, method="linear")
+    """
+    quantiles = np.asarray(quantiles, dtype=float)
+
+    nan_mask = np.isnan(column_nnz_data)
+    if nan_mask.any():
+        column_nnz_data = column_nnz_data[~nan_mask]
+
+    n_total = n_zeros + column_nnz_data.size
+
+    if n_total == 0:
+        # all-NaN column (no zeros, no valid non-zero values):
+        # nanquantile returns nan in this case
+        return np.full(quantiles.shape, np.nan)
+
+    sorted_nnz = np.sort(column_nnz_data)
+
+    idx = quantiles * (n_total - 1)
+    lo = np.floor(idx).astype(int)
+    hi = np.ceil(idx).astype(int)
+    frac = idx - lo
+
+    def value_at_rank(ranks):
+        ranks = np.clip(ranks, 0, n_total - 1)
+        ranks -= n_zeros
+        out = np.zeros(ranks.shape, dtype=float)
+        mask = ranks >= 0
+        out[mask] = sorted_nnz[ranks[mask]]
+        return out
+
+    v_lo = value_at_rank(lo)
+    v_hi = value_at_rank(hi)
+    return v_lo + frac * (v_hi - v_lo)
+
+
 class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features using quantiles information.
 
@@ -2858,26 +2897,14 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.quantiles_ = []
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
-            if not self.ignore_implicit_zeros:
-                # In this case:
-                # - the matrix is nonnegative (=> column_nnz_data is positive)
-                # - we scale references so we only need to compute quantiles on
-                #   column_nnz_data
-                n_pos = column_nnz_data.size
-                n_zeros = n_samples - n_pos
-                numerator = references * (n_samples - 1) - n_zeros
-                if n_pos > 1:
-                    column_references = numerator / (n_pos - 1)
-                else:
-                    # Avoid a 0/0 division:
-                    column_references = np.where(references == 1.0, 1, -1)
-            else:
-                column_references = references
+            n_zeros = n_samples - len(column_nnz_data)
 
             if self.subsample is not None and len(column_nnz_data) > self.subsample:
                 column_data = random_state.choice(
                     column_nnz_data, size=self.subsample, replace=False
                 )
+                # subsample zeros too:
+                n_zeros = round(n_zeros * self.subsample / len(column_nnz_data))
             else:
                 column_data = column_nnz_data
 
@@ -2885,13 +2912,13 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 # if no nnz, an error will be raised for computing the
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
+            elif self.ignore_implicit_zeros:
+                self.quantiles_.append(np.nanquantile(column_data, references))
             else:
-                quantiles = np.zeros(references.size)
-                pos_quantile = column_references >= 0
-                quantiles[pos_quantile] = np.nanquantile(
-                    column_data, column_references[pos_quantile]
+                self.quantiles_.append(
+                    _sparse_column_quantile(column_data, n_zeros, references)
                 )
-                self.quantiles_.append(quantiles)
+
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
