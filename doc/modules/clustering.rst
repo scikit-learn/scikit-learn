@@ -223,7 +223,10 @@ centroids move less than the tolerance.
 Given enough time, K-means will always converge, however this may be to a local
 minimum. This is highly dependent on the initialization of the centroids.
 As a result, the computation is often done several times, with different
-initializations of the centroids. One method to help address this issue is the
+initializations of the centroids. In scikit-learn, empty clusters are
+reassigned to the samples farthest from their assigned centroids, which is a
+specific implementation detail not always present in textbook descriptions of
+Lloyd's or Elkan's algorithms. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to probably better results than
