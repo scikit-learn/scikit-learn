@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
@@ -37,7 +37,9 @@ from sklearn.metrics._ranking import (
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._array_api import move_to
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_almost_equal,
@@ -944,6 +946,42 @@ def test_confusion_matrix_at_thresholds(global_random_seed):
     assert_allclose(tps + fns, n_pos)
     assert_allclose(tns + fps, n_neg)
     assert_allclose(tns + fps + fns + tps, n_samples)
+
+
+def test_confusion_matrix_at_thresholds_float32_only_unweighted_large_n():
+    """Unweighted counts stay exact on float32-only devices for n_pos > 2**24.
+
+    Float32 cumulative sums saturate once the running total exceeds 2**24, which
+    previously made ``confusion_matrix_at_thresholds`` (and ROC-AUC) wrong on
+    devices without float64. See #34813.
+    """
+    xp, device = _array_api_for_tests("array_api_strict", "no_float64", "float32")
+
+    rng = np.random.RandomState(0)
+    # Data with enough positives to exceed the float32 integer precision limit.
+    n_samples = 20_000_000
+    y_true_np = (rng.random(n_samples) < 0.9).astype(np.int32)
+    y_score_np = (rng.random(n_samples) + y_true_np * 0.01).astype(np.float32)
+    n_pos = int(y_true_np.sum())
+    assert n_pos > 2**24
+
+    _, _, _, tps_ref, _ = confusion_matrix_at_thresholds(
+        y_true_np, y_score_np.astype(np.float64)
+    )
+
+    y_true = xp.asarray(y_true_np, device=device)
+    y_score = xp.asarray(y_score_np, dtype=xp.float32, device=device)
+    with config_context(array_api_dispatch=True):
+        _, fps, _, tps, _ = confusion_matrix_at_thresholds(y_true, y_score)
+
+    tps_np = move_to(tps, xp=np, device="cpu")
+    fps_np = move_to(fps, xp=np, device="cpu")
+    # Exact integer counts before the final float cast; allow float32 rounding
+    # of integers above 2**24, after which two consecutive float32 numbers are
+    # spaced by more than 2.
+    assert_allclose(tps_np[-1], n_pos, atol=1)
+    assert_allclose(fps_np[-1], n_samples - n_pos, atol=1)
+    assert_allclose(tps_np, tps_ref, atol=1)
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
