@@ -258,7 +258,7 @@ def sag_solver(
 
     # initialization
     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-    # As in SGD, the alpha is scaled by n_samples.
+    # Note that alpha is scaled by sample_weight.sum()
     alpha_scaled = float(alpha) / sample_weight.sum()
     beta_scaled = float(beta) / sample_weight.sum()
 
