@@ -89,6 +89,12 @@ default_package_constraints = {
     # TODO: remove once when we're using the new way to enable coverage in subprocess
     # introduced in 7.0.0, see https://github.com/pytest-dev/pytest-cov?tab=readme-ov-file#upgrading-from-pytest-cov-63
     "pytest-cov": "<=6.3.0",
+    # Cython 3.2.6 to 3.2.9 break pickling of cyfunctions (e.g.
+    # KDTree.query) across joblib/loky workers on Python 3.14. 3.2.5 works and a fix is
+    # expected in a later release, so only these versions are excluded instead of using
+    # <= 3.2.5 as constraint.
+    # See https://github.com/scikit-learn/scikit-learn/pull/34419
+    "cython": "!=3.2.6,!=3.2.7,!=3.2.8,!=3.2.9",
 }
 
 
@@ -318,10 +324,21 @@ build_metadata_list = [
         + [
             "wheel",
             "pip",
+            # Listed explicitly (it is otherwise a transitive dependency of blas) so
+            # that the constraint below is applied.
+            # Remove when the constraint on libopenblas is removed.
+            "libopenblas",
         ],
         "package_constraints": {
             "python": "3.11",
             "blas": "[build=openblas]",
+            # OpenBLAS 0.3.34 makes the Windows test runs segfault intermittently
+            # ("Windows fatal exception: access violation" inside gemm and LAPACK calls,
+            # crashing xdist workers). 0.3.33 is unaffected. Only 0.3.34 is excluded so
+            # that a later release is picked up automatically.
+            # See https://github.com/scikit-learn/scikit-learn/issues/34717
+            # TODO: remove once a fixed OpenBLAS is available.
+            "libopenblas": "!=0.3.34",
         },
     },
     {
@@ -354,7 +371,6 @@ build_metadata_list = [
             "towncrier",
         ],
         "pip_dependencies": [
-            "sphinxcontrib-sass",
             # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
             # supported version
             "pandas",
@@ -378,7 +394,6 @@ build_metadata_list = [
             "pooch": "min",
             "pyamg": "min",
             "sphinx-design": "min",
-            "sphinxcontrib-sass": "min",
             "sphinx-remove-toctrees": "min",
             "pydata-sphinx-theme": "min",
             "towncrier": "min",
@@ -413,9 +428,6 @@ build_metadata_list = [
             "towncrier",
             "jupyterlite-sphinx",
             "jupyterlite-pyodide-kernel",
-        ],
-        "pip_dependencies": [
-            "sphinxcontrib-sass",
         ],
         "package_constraints": {
             "python": "3.14",
@@ -481,6 +493,37 @@ build_metadata_list = [
             "cython": "min",
         },
         "python_version": "3.12.3",
+    },
+    {
+        "name": "lint",
+        "type": "pip",
+        "tag": "lint",
+        "folder": "build_tools/github",
+        "pip_dependencies": [
+            "pytest",
+            "ruff",
+            "pyrefly",
+            "cython-lint",
+            "sphinx-lint",
+            "codespell",
+        ],
+        "package_constraints": {
+            # We set `pytest` to an arbitrary recent version to keep it consistent with
+            # the settings in `.pre-commit-config.yml`. They should be updated from
+            # time to time in both places.
+            "pytest": "9.1.0",
+            # We fix the version of the linters to some arbitrary version to
+            # avoid changing linting conventions too often.
+            # The meaning of the "min" values is set in `_min_dependencies.py`
+            # and should be updated from time to time when we feel the need
+            # for it.
+            "ruff": "min",
+            "pyrefly": "min",
+            "cython-lint": "min",
+            "sphinx-lint": "min",
+            "codespell": "min",
+        },
+        "python_version": "3.11",
     },
 ]
 
