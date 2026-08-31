@@ -1964,9 +1964,9 @@ def get_declared_metadata_request_values(
 ):
     """Get declared metadata request values per consuming method.
 
-    This method can be used inside the `__sklearn_build_declared_metadata_request__`
+    This function can be used inside the `__sklearn_build_declared_metadata_request__`
     method of :class:`~utils.metadata_routing.MetadataRequester` to override how
-    class-level requests are build. See the :ref:`metadata routing developing guide
+    class-level requests are built. See the :ref:`metadata routing developing guide
     <customise_metadata_requests_in_consumers>` for examples on how to use it.
 
     .. versionadded:: 1.10

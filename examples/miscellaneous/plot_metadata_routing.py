@@ -594,16 +594,12 @@ pipe.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 # ----------------------------------------
 # Most :term:`consumers <consumer>` inherit from :class:`~base.BaseEstimator` and use
 # the class-level default metadata requests inferred from method signatures and
-# `__metadata_request__*` class attributes. Developers can instead inherit directly from
-# :class:`~utils.metadata_routing.MetadataRequester` and override its
+# `__metadata_request__*` class attributes. Developers can instead also inherit directly
+# from :class:`~utils.metadata_routing.MetadataRequester` and override its
 # `__sklearn_build_declared_metadata_request__` method. This is useful when consumers
 # are not :term:`estimators <estimator>` or require a more nuanced control over which
 # parameters to treat as data or as metadata respectively, or when metadata is forwarded
 # to another callable.
-#
-# Custom implementations should follow the same pattern as the default: build a
-# :class:`~utils.metadata_routing.MetadataRequest` using
-# `get_declared_metadata_request_values`.
 
 # %%
 # These imports are only required for the examples in this section.
@@ -616,9 +612,9 @@ from sklearn.utils.metadata_routing import (
 )
 
 # %%
-# Developers can exclude parameters from class-level metadata requests with
-# `ignore_params`. Here `y_true` and `y_pred` are arguments of `score` and should not be
-# treated as metadata.
+# Use `get_declared_metadata_request_values` with `ignore_params` to exclude
+# parameters from class-level metadata requests. Here `y_true` and `y_pred`
+# should not be treated as metadata.
 
 
 class CustomRequestConsumer(MetadataRequester):
