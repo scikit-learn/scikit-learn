@@ -4,4 +4,4 @@
   that large effective positive weight (above :math:`2^{24}`) does not saturate
   and pre-normalized, uniformly tiny, or minority-tiny sample weights do not
   round to zero.
-  By :user:`Olivier Grisel <ogrisel>`.
+  By :user:`Olivier Grisel <ogrisel>` and :user:`Kiyarash Fazeli <Fazel94>`.
