@@ -1730,12 +1730,17 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     column_nnz_data = X.data[
                         X.indptr[feature_idx] : X.indptr[feature_idx + 1]
                     ]
-                    column_data = np.zeros(shape=X.shape[0], dtype=X.dtype)
-                    column_data[: len(column_nnz_data)] = column_nnz_data
+                    n_zeros = X.shape[0] - len(column_nnz_data)
+                    quantiles.append(
+                        _sparse_column_quantile(
+                            column_nnz_data,
+                            n_zeros,
+                            np.asarray(self.quantile_range) / 100,
+                        )
+                    )
                 else:
                     column_data = X[:, feature_idx]
-
-                quantiles.append(np.nanpercentile(column_data, self.quantile_range))
+                    quantiles.append(np.nanpercentile(column_data, self.quantile_range))
 
             quantiles = np.transpose(quantiles)
 
@@ -2671,7 +2676,10 @@ def _sparse_column_quantile(column_nnz_data, n_zeros, quantiles):
     """
     Compute quantiles of a sparse column without densifying it.
 
-    Calculations/Implementation are meant to match np.nanquantile(, method="linear")
+    ``column_nnz_data`` holds the explicitly stored (non-implicit-zero)
+    entries of the column, which may be of any sign; ``n_zeros`` implicit
+    zeros complete the column. Calculations/Implementation are meant to
+    match np.nanquantile(, method="linear").
     """
     quantiles = np.asarray(quantiles, dtype=float)
 
@@ -2687,6 +2695,9 @@ def _sparse_column_quantile(column_nnz_data, n_zeros, quantiles):
         return np.full(quantiles.shape, np.nan)
 
     sorted_nnz = np.sort(column_nnz_data)
+    # Position where the block of `n_zeros` implicit zeros is merged into
+    # the sorted non-zero values (i.e. the number of stored values < 0).
+    zero_insert_pos = np.searchsorted(sorted_nnz, 0)
 
     idx = quantiles * (n_total - 1)
     lo = np.floor(idx).astype(int)
@@ -2695,10 +2706,14 @@ def _sparse_column_quantile(column_nnz_data, n_zeros, quantiles):
 
     def value_at_rank(ranks):
         ranks = np.clip(ranks, 0, n_total - 1)
-        ranks -= n_zeros
-        out = np.zeros(ranks.shape, dtype=float)
-        mask = ranks >= 0
-        out[mask] = sorted_nnz[ranks[mask]]
+        out = np.empty(ranks.shape, dtype=float)
+
+        before_zeros = ranks < zero_insert_pos
+        after_zeros = ranks >= zero_insert_pos + n_zeros
+
+        out[before_zeros] = sorted_nnz[ranks[before_zeros]]
+        out[~before_zeros & ~after_zeros] = 0.0
+        out[after_zeros] = sorted_nnz[ranks[after_zeros] - n_zeros]
         return out
 
     v_lo = value_at_rank(lo)
