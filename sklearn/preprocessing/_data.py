@@ -2762,8 +2762,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If False,
-        these entries are treated as zeros.
+        matrix are discarded to compute the quantile statistics, including
+        when subsampling. If False, these entries are treated as zeros.
 
     subsample : int or None, default=10_000
         Maximum number of samples used to estimate the quantiles for
@@ -2896,15 +2896,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         Notes
         -----
-        - If `ignore_implicit_zeros=True`, zeros are excluded from the data:
-          quantiles are computed from the column's non-zero entries only, and
-          subsampling (if any) draws from those non-zero entries alone.
-        - If `ignore_implicit_zeros=False`, zeros are treated as real data:
-          subsampling preserves the column's original proportion of zeros
-          to non-zero values.
-
-        Columns with fewer non-zero entries than `subsample` are not subsampled:
-        when `ignore_implicit_zeros=False`, this materializes a `n_samples` array.
+        Columns with fewer non-zero entries than `subsample` are not
+        subsampled: when `ignore_implicit_zeros=False`, this materializes a
+        `n_samples` array.
         """
         n_samples, n_features = X.shape
         references = self.references_
@@ -3228,8 +3222,8 @@ def quantile_transform(
 
     ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If False,
-        these entries are treated as zeros.
+        matrix are discarded to compute the quantile statistics, including
+        when subsampling. If False, these entries are treated as zeros.
 
     subsample : int or None, default=1e5
         Maximum number of samples used to estimate the quantiles for
