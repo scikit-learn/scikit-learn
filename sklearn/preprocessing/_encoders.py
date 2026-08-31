@@ -5,6 +5,7 @@ import numbers
 import warnings
 from numbers import Integral
 
+import narwhals.stable.v2 as nw
 import numpy as np
 from scipy import sparse
 
@@ -14,8 +15,10 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
-from sklearn.utils import _align_api_if_sparse, _safe_indexing, check_array
+from sklearn.utils import _align_api_if_sparse, check_array
+from sklearn.utils._dataframe import is_df_or_series
 from sklearn.utils._encode import _encode, _get_counts, _unique
+from sklearn.utils._indexing import _safe_indexing
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -37,40 +40,39 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_X(self, X, ensure_all_finite=True):
+    def _check_X(self, X):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
-        - check for missing values for object dtype data (check_array does
-          not do that)
+        - only check for non-finite values in numerical columns
         - return list of features (arrays): this list of features is
           constructed feature by feature to preserve the data types
           of pandas DataFrame columns, as otherwise information is lost
           and cannot be used, e.g. for the `categories_` attribute.
-
         """
-        if not (hasattr(X, "iloc") and getattr(X, "ndim", 0) == 2):
-            # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None, ensure_all_finite=ensure_all_finite)
-            if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
-                X = check_array(X, dtype=object, ensure_all_finite=ensure_all_finite)
-            else:
-                X = X_temp
-            needs_validation = False
-        else:
-            # pandas dataframe, do validation later column by column, in order
-            # to keep the dtype information to be used in the encoder.
-            needs_validation = ensure_all_finite
-
-        n_samples, n_features = X.shape
         X_columns = []
 
-        for i in range(n_features):
-            Xi = _safe_indexing(X, indices=i, axis=1)
-            Xi = check_array(
-                Xi, ensure_2d=False, dtype=None, ensure_all_finite=needs_validation
-            )
-            X_columns.append(Xi)
+        if is_df_or_series(X):
+            try:
+                X = nw.from_native(X)
+            except TypeError:
+                msg = f"Expected a 2-dimensional container but got {type(X)} instead."
+                raise ValueError(msg)
+            n_samples, n_features = X.shape
+            for i in range(n_features):
+                Xi = X[:, i]
+                if Xi.dtype.is_numeric():
+                    Xi = check_array(Xi, ensure_2d=False, ensure_all_finite="allow-nan")
+                X_columns.append(Xi)
+        else:
+            X_temp = check_array(X, dtype=None, ensure_all_finite="allow-nan")
+            if not hasattr(X, "dtype") and np.issubdtype(X_temp.dtype, np.str_):
+                X = check_array(X, dtype=object, ensure_all_finite=False)
+            else:
+                X = X_temp
+            n_samples, n_features = X.shape
+            for Xi in X.T:
+                X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
 
@@ -78,15 +80,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self,
         X,
         handle_unknown="error",
-        ensure_all_finite=True,
         return_counts=False,
         return_and_ignore_missing_for_infrequent=False,
     ):
         self._check_infrequent_enabled()
         validate_data(self, X=X, reset=True, skip_check_array=True)
-        X_list, n_samples, n_features = self._check_X(
-            X, ensure_all_finite=ensure_all_finite
-        )
+        X_list, n_samples, n_features = self._check_X(X)
         self.n_features_in_ = n_features
 
         if self.categories != "auto":
@@ -111,7 +110,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 else:
                     cats = result
             else:
-                if np.issubdtype(Xi.dtype, np.str_):
+                # narwhals Series columns (non-numeric dataframe columns, see
+                # `_check_X`) don't carry a numpy dtype, but are always
+                # non-numeric, so they are treated like object/string columns.
+                Xi_is_series = isinstance(Xi, nw.Series)
+
+                if Xi_is_series or np.issubdtype(Xi.dtype, np.str_):
                     # Always convert string categories to objects to avoid
                     # unexpected string truncation for longer category labels
                     # passed in the constructor.
@@ -123,6 +127,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 if (
                     cats.dtype == object
                     and isinstance(cats[0], bytes)
+                    and not Xi_is_series
                     and Xi.dtype.kind != "S"
                 ):
                     msg = (
@@ -148,7 +153,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
-                if Xi.dtype.kind not in "OUS":
+                if not Xi_is_series and Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
                         "Unsorted categories are not supported for numerical categories"
@@ -195,13 +200,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self,
         X,
         handle_unknown="error",
-        ensure_all_finite=True,
         warn_on_unknown=False,
         ignore_category_indices=None,
     ):
-        X_list, n_samples, n_features = self._check_X(
-            X, ensure_all_finite=ensure_all_finite
-        )
+        X_list, n_samples, n_features = self._check_X(X)
         validate_data(self, X=X, reset=False, skip_check_array=True)
 
         X_int = np.zeros((n_samples, n_features), dtype=int, order="F")
@@ -215,7 +217,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             if not np.all(X_mask[:, i]):
                 if handle_unknown == "error":
-                    diff = _unique(Xi[~X_mask[:, i]])
+                    diff = _unique(_safe_indexing(Xi, ~X_mask[:, i]))
                     msg = (
                         "Found unknown categories {0} in column {1}"
                         " during transform".format(diff, i)
@@ -979,7 +981,6 @@ class OneHotEncoder(_BaseEncoder):
         self._fit(
             X,
             handle_unknown=self.handle_unknown,
-            ensure_all_finite="allow-nan",
         )
         self._set_drop_idx()
         self._n_features_outs = self._compute_n_features_outs()
@@ -1030,7 +1031,6 @@ class OneHotEncoder(_BaseEncoder):
         X_int, X_mask = self._transform(
             X,
             handle_unknown=handle_unknown,
-            ensure_all_finite="allow-nan",
             warn_on_unknown=warn_on_unknown,
         )
 
@@ -1496,7 +1496,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
-            ensure_all_finite="allow-nan",
             return_and_ignore_missing_for_infrequent=True,
         )
         self._missing_indices = fit_results["missing_indices"]
@@ -1578,7 +1577,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
-            ensure_all_finite="allow-nan",
             ignore_category_indices=self._missing_indices,
         )
         X_trans = X_int.astype(self.dtype, copy=False)

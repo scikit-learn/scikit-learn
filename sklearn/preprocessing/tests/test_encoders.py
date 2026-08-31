@@ -541,6 +541,59 @@ def test_one_hot_encoder_unsorted_categories():
         enc.fit_transform(X)
 
 
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
+def test_encoder_specified_categories_dataframe(dataframe_lib):
+    """Explicit `categories` must work with dataframe input for non-numeric
+    columns.
+
+    Non-regression test for a narwhals-Series compatibility bug in `_fit`,
+    which assumed `Xi.dtype` was a numpy dtype for every column.
+    """
+    df = _convert_container([["a"], ["b"], ["c"]], dataframe_lib, column_names=["col"])
+
+    enc = OneHotEncoder(categories=[["a", "b", "c"]], handle_unknown="ignore")
+    enc.fit(df)
+    assert_array_equal(enc.categories_[0], ["a", "b", "c"])
+
+    enc = OrdinalEncoder(
+        categories=[["a", "b", "c"]],
+        handle_unknown="use_encoded_value",
+        unknown_value=-1,
+    )
+    enc.fit(df)
+    assert_array_equal(enc.categories_[0], ["a", "b", "c"])
+
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars", "pyarrow"])
+def test_encoder_unknown_category_dataframe(Encoder, dataframe_lib):
+    """`handle_unknown="error"` (the default for both encoders) must raise a
+    `ValueError` naming the unseen categories, not crash, for dataframe input
+    -- both at fit time (explicit `categories`) and at transform time
+    (`categories="auto"`).
+
+    Non-regression test for a bug where the unknown-category diff computation
+    indexed a narwhals Series with a raw numpy boolean mask, which narwhals
+    itself, and some backends (e.g. pyarrow), reject.
+    """
+
+    def make_df(values):
+        return _convert_container(
+            [[v] for v in values], dataframe_lib, column_names=["col"]
+        )
+
+    # unknown category found while fitting explicit categories
+    enc = Encoder(categories=[["a", "b"]], handle_unknown="error")
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        enc.fit(make_df(["a", "b", "z"]))
+
+    # unknown category found at transform time, categories="auto"
+    enc = Encoder(handle_unknown="error")
+    enc.fit(make_df(["a", "b", "c"]))
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        enc.transform(make_df(["a", "b", "z"]))
+
+
 @pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
 def test_encoder_nan_ending_specified_categories(Encoder):
     """Test encoder for specified categories that nan is at the end.

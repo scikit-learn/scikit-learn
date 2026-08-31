@@ -5,6 +5,7 @@ import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn.utils._encode import _encode, _encode_labels, _get_counts, _unique
+from sklearn.utils._testing import _convert_container
 
 
 @pytest.mark.parametrize(
@@ -59,6 +60,30 @@ def test_encode_unknown_values():
 
     uniques = np.array(["a", "b", "c"], dtype=object)
     values = np.array(["a", "b", "c", "d"], dtype=object)
+
+    encoded, diff = _encode(values, uniques=uniques, return_diff=True)
+    assert_array_equal(encoded, [0, 1, 2, -1])
+    assert_array_equal(diff, ["d"])
+
+
+@pytest.mark.parametrize("dataframe_lib", ["pandas", "polars", "pyarrow"])
+def test_encode_unknown_values_series(dataframe_lib):
+    """`_encode(..., return_diff=True)` must work when `values` is a narwhals
+    Series (non-numeric dataframe column), not just an ndarray.
+
+    Non-regression test for a bug where the internal diff computation indexed
+    the narwhals Series with a raw numpy boolean mask, which several narwhals
+    backends (e.g. pyarrow) or narwhals itself (Series.__getitem__) reject.
+    """
+    import narwhals.stable.v2 as nw
+
+    # A single-column dataframe (rather than a bare Series) so the column is
+    # named, matching how `_check_X` derives dataframe columns in production.
+    df = _convert_container(
+        [["a"], ["b"], ["c"], ["d"]], dataframe_lib, column_names=["col"]
+    )
+    values = nw.from_native(df, allow_series=False)[:, 0]
+    uniques = np.array(["a", "b", "c"], dtype=object)
 
     encoded, diff = _encode(values, uniques=uniques, return_diff=True)
     assert_array_equal(encoded, [0, 1, 2, -1])
