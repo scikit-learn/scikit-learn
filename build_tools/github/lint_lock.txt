@@ -6,7 +6,7 @@
 #
 codespell==2.4.1
     # via -r build_tools/github/lint_requirements.txt
-cython==3.2.9
+cython==3.3.0
     # via cython-lint
 cython-lint==0.21.0
     # via -r build_tools/github/lint_requirements.txt
@@ -26,7 +26,7 @@ pyrefly==1.2.0
     # via -r build_tools/github/lint_requirements.txt
 pytest==9.1.0
     # via -r build_tools/github/lint_requirements.txt
-regex==2026.7.19
+regex==2026.8.31
     # via sphinx-lint
 ruff==0.12.2
     # via -r build_tools/github/lint_requirements.txt
