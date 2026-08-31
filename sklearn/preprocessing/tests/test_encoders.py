@@ -2455,4 +2455,3 @@ def test_ohe_unknown_category_warning_mixed_infrequent():
     msg = str(caught[0].message)
     assert "columns [1] will be encoded as the infrequent category" in msg
     assert "columns [0] will be encoded as all zeros" in msg
-
