@@ -1,35 +1,21 @@
-"""Public API Functions."""
+"""Tools for lazy backends."""
 
-from __future__ import annotations
-
+import functools
 import math
+import typing
 from collections.abc import Callable, Sequence
-from functools import partial, wraps
-from typing import TYPE_CHECKING, Any, ParamSpec, TypeAlias, cast, overload
+from typing import Any, ParamSpec
 
-from ._funcs import broadcast_shapes
-from ._utils import _compat
-from ._utils._compat import (
-    array_namespace,
-    is_dask_namespace,
-    is_jax_namespace,
-)
-from ._utils._helpers import is_python_scalar
-from ._utils._typing import Array, ArrayNamespace, DType
-
-if TYPE_CHECKING:  # pragma: no cover
-    import numpy as np
-    from numpy.typing import ArrayLike
-
-    NumPyObject: TypeAlias = np.ndarray[Any, Any] | np.generic
-else:
-    # Sphinx hack
-    NumPyObject = Any
+from . import _agnostic
+from ._lib import _compat, _helpers
+from ._lib._typing import Array, ArrayLike, ArrayNamespace, DType
 
 P = ParamSpec("P")
 
+__all__ = ["lazy_apply"]
 
-@overload  # pyrefly: ignore[invalid-param-spec]
+
+@typing.overload  # pyrefly: ignore[invalid-param-spec]
 def lazy_apply(  # type: ignore[valid-type]
     func: Callable[P, Array | ArrayLike],
     *args: Array | complex | None,
@@ -41,7 +27,7 @@ def lazy_apply(  # type: ignore[valid-type]
 ) -> Array: ...  # numpydoc ignore=GL08
 
 
-@overload  # pyrefly: ignore[invalid-param-spec]
+@typing.overload  # pyrefly: ignore[invalid-param-spec]
 def lazy_apply(  # type: ignore[valid-type]
     func: Callable[P, Sequence[Array | ArrayLike]],
     *args: Array | complex | None,
@@ -192,12 +178,12 @@ def lazy_apply(  # type: ignore[valid-type]  # pyrefly: ignore[invalid-param-spe
     dask.array.blockwise
     """
     args_not_none = [arg for arg in args if arg is not None]
-    array_args = [arg for arg in args_not_none if not is_python_scalar(arg)]
+    array_args = [arg for arg in args_not_none if not _helpers.is_python_scalar(arg)]
     if not array_args:
         msg = "Must have at least one argument array"
         raise ValueError(msg)
     if xp is None:
-        xp = array_namespace(*args)
+        xp = _compat.array_namespace(*args)
 
     # Normalize and validate shape and dtype
     shapes: list[tuple[int | None, ...]]
@@ -205,11 +191,13 @@ def lazy_apply(  # type: ignore[valid-type]  # pyrefly: ignore[invalid-param-spe
     multi_output = False
 
     if shape is None:
-        shapes = [broadcast_shapes(*(arg.shape for arg in array_args))]
+        shapes = [
+            _agnostic._manipulation.broadcast_shapes(*(arg.shape for arg in array_args))
+        ]
     elif all(isinstance(s, int | None) for s in shape):
         # Do not test for shape to be a tuple
         # https://github.com/data-apis/array-api/issues/891#issuecomment-2637430522
-        shapes = [cast(tuple[int | None, ...], shape)]
+        shapes = [typing.cast(tuple[int | None, ...], shape)]
     else:
         shapes = list(shape)  # type: ignore[arg-type]  # pyright: ignore[reportAssignmentType]
         multi_output = True
@@ -236,11 +224,11 @@ def lazy_apply(  # type: ignore[valid-type]  # pyrefly: ignore[invalid-param-spe
     # End of shape and dtype parsing
 
     # Backend-specific branches
-    if is_dask_namespace(xp):
+    if _compat.is_dask_namespace(xp):
         import dask
 
         metas: list[Array] = [arg._meta for arg in array_args]  # pylint: disable=protected-access # pyright: ignore[reportAttributeAccessIssue] # pyrefly: ignore[missing-attribute]
-        meta_xp = array_namespace(*metas)
+        meta_xp = _compat.array_namespace(*metas)
 
         wrapped = dask.delayed(  # type: ignore[attr-defined]  # pyright: ignore[reportPrivateImportUsage]
             _lazy_apply_wrapper(func, as_numpy, multi_output, meta_xp),
@@ -262,7 +250,7 @@ def lazy_apply(  # type: ignore[valid-type]  # pyrefly: ignore[invalid-param-spe
             for i, (shape, dtype) in enumerate(zip(shapes, dtypes, strict=True))
         )
 
-    elif is_jax_namespace(xp) and _is_jax_jit_enabled(xp):
+    elif _compat.is_jax_namespace(xp) and _helpers.is_jax_jit_enabled(xp):
         # Delay calling func with jax.pure_callback, which will forward to func eager
         # JAX arrays. Do not use jax.pure_callback when running outside of the JIT,
         # as it does not support raising exceptions:
@@ -277,11 +265,11 @@ def lazy_apply(  # type: ignore[valid-type]  # pyrefly: ignore[invalid-param-spe
         # jax.pure_callback calls jax.jit under the hood, but without the chance of
         # passing static_argnames / static_argnums.
         wrapped = _lazy_apply_wrapper(
-            partial(func, **kwargs), as_numpy, multi_output, xp
+            functools.partial(func, **kwargs), as_numpy, multi_output, xp
         )
 
         # suppress unused-ignore to run mypy in -e lint as well as -e dev
-        out = cast(  # type: ignore[bad-cast,unused-ignore]
+        out = typing.cast(  # type: ignore[bad-cast,unused-ignore]
             tuple[Array, ...],
             jax.pure_callback(
                 wrapped,
@@ -301,17 +289,6 @@ def lazy_apply(  # type: ignore[valid-type]  # pyrefly: ignore[invalid-param-spe
     return out if multi_output else out[0]
 
 
-def _is_jax_jit_enabled(xp: ArrayNamespace) -> bool:  # numpydoc ignore=PR01,RT01
-    """Return True if this function is being called inside ``jax.jit``."""
-    import jax  # pylint: disable=import-outside-toplevel
-
-    x = xp.asarray(False)
-    try:
-        return bool(x)
-    except jax.errors.TracerBoolConversionError:
-        return True
-
-
 def _lazy_apply_wrapper(  # numpydoc ignore=PR01,RT01
     func: Callable[..., Array | ArrayLike | Sequence[Array | ArrayLike]],
     as_numpy: bool,
@@ -328,21 +305,22 @@ def _lazy_apply_wrapper(  # numpydoc ignore=PR01,RT01
     Any keyword arguments are passed through verbatim to the wrapped function.
     """
 
-    # On Dask, @wraps causes the graph key to contain the wrapped function's name
-    @wraps(func)
+    # On Dask,
+    # @functool.wraps causes the graph key to contain the wrapped function's name
+    @functools.wraps(func)
     def wrapper(
         *args: Array | complex | None, **kwargs: Any
     ) -> tuple[Array, ...]:  # numpydoc ignore=GL08
         args_list = []
         device = None
         for arg in args:
-            if arg is not None and not is_python_scalar(arg):
+            if arg is not None and not _helpers.is_python_scalar(arg):
                 if device is None:
                     device = _compat.device(arg)
                 if as_numpy:
                     import numpy as np
 
-                    arg = cast(Array, np.asarray(arg))  # pyright: ignore[reportInvalidCast] # noqa: PLW2901
+                    arg = typing.cast(Array, np.asarray(arg))  # pyright: ignore[reportInvalidCast] # noqa: PLW2901
             args_list.append(arg)
         assert device is not None
 
