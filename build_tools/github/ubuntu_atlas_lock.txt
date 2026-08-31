@@ -18,7 +18,7 @@ meson-python==0.20.0
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
 narwhals==2.0.1
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
-ninja==1.13.0
+ninja==1.13.2
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
 packaging==26.3
     # via
