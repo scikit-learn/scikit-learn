@@ -2433,3 +2433,26 @@ def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
         result_warn = encoder_warn.transform(test_data)
 
     assert_allclose(result_warn[2], result_infreq[2])
+
+
+def test_ohe_unknown_category_warning_mixed_infrequent():
+    """Test that OneHotEncoder warns accurately when some columns have infrequent
+    categories and others do not."""
+    X = [["a", "x"], ["a", "x"], ["b", "x"], ["b", "y"]]
+    encoder = OneHotEncoder(
+        drop="first",
+        sparse_output=False,
+        handle_unknown="infrequent_if_exist",
+        min_frequency=2,
+    ).fit(X)
+
+    # Column 0 has no infrequent category, column 1 has an infrequent category ('y')
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        encoder.transform([["c", "z"]])
+
+    assert len(caught) == 1
+    msg = str(caught[0].message)
+    assert "columns [1] will be encoded as the infrequent category" in msg
+    assert "columns [0] will be encoded as all zeros" in msg
+
