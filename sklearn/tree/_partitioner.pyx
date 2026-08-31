@@ -43,7 +43,7 @@ cdef class DensePartitioner:
         const float32_t[:, :] X,
         const float64_t[:, :] y,
         const float64_t[::1] sample_weight,
-        intp_t[::1] samples,
+        int32_t[::1] samples,
         float32_t[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
         const intp_t[::1] n_categories,
@@ -100,7 +100,6 @@ cdef class DensePartitioner:
             intp_t i, current_end, end_non_missing
             const float32_t[:, :] X = self.X
             intp_t n_missing = 0
-            const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
 
         # Sort samples along that feature; by copying the values into an array and
         # sorting the array in a manner which utilizes the cache more effectively.
@@ -108,7 +107,10 @@ cdef class DensePartitioner:
         # Final layout puts missing values to the right side of the array.
         # samples[start : end - n_missing]     -> all NON-MISSING values
         # samples[end - n_missing : end]       -> all MISSING values (NaNs)
-        if missing_values_in_feature_mask is not None and missing_values_in_feature_mask[current_feature]:
+        if (
+            self.missing_values_in_feature_mask is not None
+            and self.missing_values_in_feature_mask[current_feature]
+        ):
             i, current_end = self.start, self.end - 1
             # Missing values are placed at the end and do not participate in the sorting.
             while i <= current_end:
@@ -194,7 +196,7 @@ cdef class DensePartitioner:
             intp_t* sorted_cat = &self.sorted_cat[0]
             intp_t* offsets = &self.offsets[0]
             float32_t* feature_values = &self.feature_values[0]
-            intp_t* samples = &self.samples[0]
+            int32_t* samples = &self.samples[0]
             intp_t c, r, p, new_p
             intp_t end_non_missing = self.end - self.n_missing
             float64_t w = 1.
@@ -274,7 +276,7 @@ cdef class DensePartitioner:
         cdef:
             intp_t p
             float32_t current_feature_value
-            intp_t[::1] samples = self.samples
+            int32_t[::1] samples = self.samples
             float32_t min_feature_value = INFINITY
             float32_t max_feature_value = -INFINITY
             float32_t[::1] feature_values = self.feature_values
@@ -376,7 +378,7 @@ cdef class DensePartitioner:
             # Local invariance: start <= partition_start <= partition_end <= end
             intp_t partition_start = self.start
             intp_t partition_end = self.end
-            intp_t* samples = &self.samples[0]
+            int32_t* samples = &self.samples[0]
             float32_t* feature_values = &self.feature_values[0]
             bint go_to_left
 
@@ -409,7 +411,7 @@ cdef class DensePartitioner:
             # Local invariance: start <= partition_start <= partition_end <= end
             intp_t partition_start = self.start
             intp_t partition_end = self.end
-            intp_t* samples = &self.samples[0]
+            int32_t* samples = &self.samples[0]
             intp_t best_feature = best_split[0].feature
             bint best_missing_go_to_left = best_split[0].missing_go_to_left
             float32_t current_value
@@ -470,7 +472,7 @@ cdef class SparsePartitioner:
     def __init__(
         self,
         object X,
-        intp_t[::1] samples,
+        int32_t[::1] samples,
         intp_t n_samples,
         float32_t[::1] feature_values,
         const uint8_t[::1] missing_values_in_feature_mask,
@@ -491,8 +493,8 @@ cdef class SparsePartitioner:
         self.n_total_samples = n_total_samples
 
         # Initialize auxiliary array used to perform split
-        self.index_to_samples = np.full(n_total_samples, fill_value=-1, dtype=np.intp)
-        self.sorted_samples = np.empty(n_samples, dtype=np.intp)
+        self.index_to_samples = np.full(n_total_samples, fill_value=-1, dtype=np.int32)
+        self.sorted_samples = np.empty(n_samples, dtype=np.int32)
 
         cdef intp_t p
         for p in range(n_samples):
@@ -654,9 +656,9 @@ cdef class SparsePartitioner:
         """
         cdef:
             intp_t p, partition_end
-            intp_t[::1] index_to_samples = self.index_to_samples
+            int32_t[::1] index_to_samples = self.index_to_samples
             float32_t[::1] feature_values = self.feature_values
-            intp_t[::1] samples = self.samples
+            int32_t[::1] samples = self.samples
 
         if threshold < 0.:
             p = self.start
@@ -741,13 +743,13 @@ cdef class SparsePartitioner:
                                          &self.end_negative, &self.start_positive)
 
 
-cdef int compare_SIZE_t(const void* a, const void* b) noexcept nogil:
+cdef int compare_int32(const void* a, const void* b) noexcept nogil:
     """Comparison function for sort.
 
     This must return an `int` as it is used by stdlib's qsort, which expects
     an `int` return value.
     """
-    return <int>((<intp_t*>a)[0] - (<intp_t*>b)[0])
+    return <int>((<int32_t*>a)[0] - (<int32_t*>b)[0])
 
 
 cdef inline void binary_search(const int32_t[::1] sorted_array,
@@ -779,10 +781,10 @@ cdef inline void extract_nnz_index_to_samples(const int32_t[::1] X_indices,
                                               const float32_t[::1] X_data,
                                               int32_t indptr_start,
                                               int32_t indptr_end,
-                                              intp_t[::1] samples,
+                                              int32_t[::1] samples,
                                               intp_t start,
                                               intp_t end,
-                                              intp_t[::1] index_to_samples,
+                                              int32_t[::1] index_to_samples,
                                               float32_t[::1] feature_values,
                                               intp_t* end_negative,
                                               intp_t* start_positive) noexcept nogil:
@@ -818,14 +820,14 @@ cdef inline void extract_nnz_binary_search(const int32_t[::1] X_indices,
                                            const float32_t[::1] X_data,
                                            int32_t indptr_start,
                                            int32_t indptr_end,
-                                           intp_t[::1] samples,
+                                           int32_t[::1] samples,
                                            intp_t start,
                                            intp_t end,
-                                           intp_t[::1] index_to_samples,
+                                           int32_t[::1] index_to_samples,
                                            float32_t[::1] feature_values,
                                            intp_t* end_negative,
                                            intp_t* start_positive,
-                                           intp_t[::1] sorted_samples,
+                                           int32_t[::1] sorted_samples,
                                            bint* is_samples_sorted) noexcept nogil:
     """Extract and partition values for a given feature using binary search.
 
@@ -840,9 +842,9 @@ cdef inline void extract_nnz_binary_search(const int32_t[::1] X_indices,
     if not is_samples_sorted[0]:
         n_samples = end - start
         memcpy(&sorted_samples[start], &samples[start],
-               n_samples * sizeof(intp_t))
-        qsort(&sorted_samples[start], n_samples, sizeof(intp_t),
-              compare_SIZE_t)
+               n_samples * sizeof(int32_t))
+        qsort(&sorted_samples[start], n_samples, sizeof(int32_t),
+              compare_int32)
         is_samples_sorted[0] = 1
 
     while (indptr_start < indptr_end and
@@ -885,7 +887,7 @@ cdef inline void extract_nnz_binary_search(const int32_t[::1] X_indices,
     start_positive[0] = start_positive_
 
 
-cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
+cdef inline void sparse_swap(int32_t[::1] index_to_samples, int32_t[::1] samples,
                              intp_t pos_1, intp_t pos_2) noexcept nogil:
     """Swap sample pos_1 and pos_2 preserving sparse invariant."""
     samples[pos_1], samples[pos_2] = samples[pos_2], samples[pos_1]
@@ -893,7 +895,7 @@ cdef inline void sparse_swap(intp_t[::1] index_to_samples, intp_t[::1] samples,
     index_to_samples[samples[pos_2]] = pos_2
 
 
-cdef inline void swap(float32_t* feature_values, intp_t* samples,
+cdef inline void swap(float32_t* feature_values, int32_t* samples,
                       intp_t i, intp_t j) noexcept nogil:
     feature_values[i], feature_values[j] = feature_values[j], feature_values[i]
     samples[i], samples[j] = samples[j], samples[i]

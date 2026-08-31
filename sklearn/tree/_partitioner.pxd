@@ -107,7 +107,7 @@ cdef class DensePartitioner:
     cdef const float32_t[:, :] X
     cdef const float64_t[:, :] y  # only for sorting of categoricals
     cdef const float64_t[::1] sample_weight
-    cdef intp_t[::1] samples
+    cdef int32_t[::1] samples
     cdef float32_t[::1] feature_values
     cdef intp_t start
     cdef intp_t end
@@ -176,13 +176,13 @@ cdef class SparsePartitioner:
     cdef const int32_t[::1] X_indices
     cdef const int32_t[::1] X_indptr
     cdef intp_t n_total_samples
-    cdef intp_t[::1] index_to_samples
-    cdef intp_t[::1] sorted_samples
+    cdef int32_t[::1] index_to_samples
+    cdef int32_t[::1] sorted_samples
     cdef intp_t start_positive
     cdef intp_t end_negative
     cdef bint is_samples_sorted
 
-    cdef intp_t[::1] samples
+    cdef int32_t[::1] samples
     cdef float32_t[::1] feature_values
     cdef intp_t start
     cdef intp_t end
@@ -249,4 +249,5 @@ cdef class SparsePartitioner:
 
 ctypedef fused array_data_type:
     intp_t
+    int32_t
     float32_t

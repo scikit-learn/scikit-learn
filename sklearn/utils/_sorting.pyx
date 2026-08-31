@@ -4,10 +4,40 @@ from cython cimport floating
 
 from sklearn.utils._typedefs cimport intp_t
 
+include "sklearn/utils/_simd_sort_available.pxi"
+
+# EXPERIMENTAL: dispatch to x86-simd-sort (vendored from
+# https://github.com/numpy/x86-simd-sort as a meson subproject, see
+# sklearn/utils/meson.build) for the sort itself, above this many elements.
+# HAVE_XSS_SIMD_SORT is a Cython compile-time constant set by meson depending
+# on whether the subproject is available (x86_64 only) -- on any other
+# architecture none of this code is even emitted, and simultaneous_sort is
+# plain introsort.
+IF HAVE_XSS_SIMD_SORT:
+    from libc.stdint cimport int32_t
+
+    cdef intp_t SIMD_SORT_THRESHOLD = 3000
+
+    # int32_t is used as the SIMD-sort index type since it packs twice as many
+    # (key, index) pairs per SIMD lane as intp_t (int64) does, which matters
+    # more than the sort itself for float32 keys. When `index_t` is already
+    # int32_t (e.g. tree sample indices), the SIMD sort runs directly on it,
+    # no copy needed -- see simultaneous_sort below, which only takes this
+    # path when index_t is int32_t.
+    cdef extern from *:
+        """
+        #include <stdint.h>
+        #include <stddef.h>
+        void xss_keyvalue_sort_f64_i32(double *keys, int32_t *vals, size_t n);
+        void xss_keyvalue_sort_f32_i32(float *keys, int32_t *vals, size_t n);
+        """
+        void xss_keyvalue_sort_f64_i32(double *keys, int32_t *vals, size_t n) noexcept nogil
+        void xss_keyvalue_sort_f32_i32(float *keys, int32_t *vals, size_t n) noexcept nogil
+
 
 cdef void simultaneous_sort(
     floating* values,
-    intp_t* indices,
+    index_t* indices,
     intp_t n,
     bint use_three_way_partition=False,
 ) noexcept nogil:
@@ -42,6 +72,12 @@ cdef void simultaneous_sort(
     """
     if n == 0:
         return
+
+    IF HAVE_XSS_SIMD_SORT:
+        if n > SIMD_SORT_THRESHOLD and index_t is int32_t:
+            _simd_keyvalue_sort(values, <int32_t*>indices, n)
+            return
+
     cdef intp_t maxd = 2 * <intp_t>log2(n)
     if use_three_way_partition:
         introsort_3way(values, indices, n, maxd)
@@ -49,9 +85,21 @@ cdef void simultaneous_sort(
         introsort_2way(values, indices, n, maxd)
 
 
+IF HAVE_XSS_SIMD_SORT:
+    cdef inline void _simd_keyvalue_sort(
+        floating* values, int32_t* indices, intp_t n
+    ) noexcept nogil:
+
+        # index_t is already int32_t: sort in place, no copy needed.
+        if floating is float:
+            xss_keyvalue_sort_f32_i32(values, indices, n)
+        else:
+            xss_keyvalue_sort_f64_i32(values, indices, n)
+
+
 def _py_simultaneous_sort(
     floating[::1] values,
-    intp_t[::1] indices,
+    index_t[::1] indices,
     intp_t n,
     *,
     bint use_three_way_partition,
@@ -62,7 +110,7 @@ def _py_simultaneous_sort(
 
 cdef void introsort_2way(
     floating* values,
-    intp_t* indices,
+    index_t* indices,
     intp_t n,
     intp_t maxd,
 ) noexcept nogil:
@@ -109,7 +157,7 @@ cdef void introsort_2way(
 
 
 cdef void introsort_3way(
-    floating* values, intp_t *indices,
+    floating* values, index_t *indices,
     intp_t n, intp_t maxd
 ) noexcept nogil:
     """
@@ -158,7 +206,7 @@ cdef void introsort_3way(
 
 # ------------ HEAP SORT -------------
 
-cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept nogil:
+cdef void heapsort(floating* feature_values, index_t* samples, intp_t n) noexcept nogil:
     cdef intp_t start, end
 
     # heapify
@@ -178,7 +226,7 @@ cdef void heapsort(floating* feature_values, intp_t* samples, intp_t n) noexcept
         end = end - 1
 
 
-cdef inline void sift_down(floating* feature_values, intp_t* samples,
+cdef inline void sift_down(floating* feature_values, index_t* samples,
                            intp_t start, intp_t end) noexcept nogil:
     # Restore heap order in feature_values[start:end] by moving the max element to start.
     cdef intp_t child, maxind, root
@@ -203,7 +251,7 @@ cdef inline void sift_down(floating* feature_values, intp_t* samples,
 
 # ------------ HELPERS -------------
 
-cdef inline floating inplace_median3(floating* values, intp_t* indices, intp_t n) noexcept nogil:
+cdef inline floating inplace_median3(floating* values, index_t* indices, intp_t n) noexcept nogil:
     # # Median of three pivot selection
     # The smallest of the three is moved to the beginning of the array,
     # the middle (the pivot value) is moved to the end, and the largest
@@ -238,7 +286,7 @@ cdef inline floating median3(floating* feature_values, intp_t n) noexcept nogil:
         return b
 
 
-cdef inline void swap(floating* values, intp_t* indices,
+cdef inline void swap(floating* values, index_t* indices,
                       intp_t i, intp_t j) noexcept nogil:
     # Helper for sort
     values[i], values[j] = values[j], values[i]
@@ -246,9 +294,10 @@ cdef inline void swap(floating* values, intp_t* indices,
 
 
 cdef inline void insertion_sort(
-    floating* values, intp_t *indices, intp_t n
+    floating* values, index_t *indices, intp_t n
 ) noexcept nogil:
-    cdef intp_t i, j, temp_idx
+    cdef intp_t i, j
+    cdef index_t temp_idx
     cdef floating temp_val
 
     for i in range(1, n):
