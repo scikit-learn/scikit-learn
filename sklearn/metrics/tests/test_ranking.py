@@ -977,7 +977,7 @@ def test_confusion_matrix_at_thresholds_float32_only_unweighted_large_n():
     tps_np = move_to(tps, xp=np, device="cpu")
     fps_np = move_to(fps, xp=np, device="cpu")
     # Exact integer counts before the final float cast; allow float32 rounding
-    # of integers above 2**24, after which too consecutive float32 numbers are
+    # of integers above 2**24, after which two consecutive float32 numbers are
     # spaced by more than 2.
     assert_allclose(tps_np[-1], n_pos, atol=1)
     assert_allclose(fps_np[-1], n_samples - n_pos, atol=1)
