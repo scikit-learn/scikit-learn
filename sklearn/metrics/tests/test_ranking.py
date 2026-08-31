@@ -972,7 +972,7 @@ def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kin
     rng = np.random.RandomState(0)
     # Large enough that fixed scale=1e6 zeros out pre-normalized U(0,1) weights
     # (mean ~1/n < 5e-7) while also covering n_pos > 2**24 for O(1) weights.
-    n_samples = 20_000_000 if weight_kind != "skewed_tiny_top" else 10_000_000
+    n_samples = 20_000_000
     y_true_np = (rng.random(n_samples) < 0.9).astype(np.int32)
     y_score_np = (rng.random(n_samples) + y_true_np * 0.01).astype(np.float32)
     if weight_kind == "uniform":
@@ -993,9 +993,8 @@ def test_confusion_matrix_at_thresholds_float32_only_weighted_large_n(weight_kin
         top = np.argsort(-y_score_np)[: n_samples // 10]
         sample_weight_np[top] = np.float32(1e-8)
 
-    if weight_kind != "skewed_tiny_top":
-        n_pos = int(y_true_np.sum())
-        assert n_pos > 2**24
+    n_pos = int(y_true_np.sum())
+    assert n_pos > 2**24
 
     # Document failure modes that the int64-headroom scale must avoid.
     if weight_kind in {"normalized", "tiny"}:
