@@ -2836,10 +2836,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         Parameters
         ----------
-        X : sparse matrix of shape (n_samples, n_features)
+        X : sparse CSC matrix of shape (n_samples, n_features)
             The data used to scale along the features axis. The sparse matrix
-            needs to be nonnegative. If a sparse matrix is provided,
-            it will be converted into a SciPy sparse CSC matrix.
+            needs to be nonnegative if `ignore_implicit_zeros` is False.
 
         Notes
         -----
@@ -2854,34 +2853,45 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         when `ignore_implicit_zeros=False`, this materializes a `n_samples` array.
         """
         n_samples, n_features = X.shape
-        references = self.references_ * 100
+        references = self.references_
 
         self.quantiles_ = []
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
+            if not self.ignore_implicit_zeros:
+                # In this case:
+                # - the matrix is nonnegative (=> column_nnz_data is positive)
+                # - we scale references so we only need to compute quantiles on
+                #   column_nnz_data
+                n_pos = column_nnz_data.size
+                n_zeros = n_samples - n_pos
+                numerator = references * (n_samples - 1) - n_zeros
+                if n_pos > 1:
+                    column_references = numerator / (n_pos - 1)
+                else:
+                    # Avoid a 0/0 division:
+                    column_references = np.where(references == 1.0, 1, -1)
+            else:
+                column_references = references
+
             if self.subsample is not None and len(column_nnz_data) > self.subsample:
-                column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
-                column_subsample = (
-                    self.subsample
-                    if self.ignore_implicit_zeros
-                    else self.subsample * len(column_nnz_data) // n_samples
-                )
-                column_data[:column_subsample] = random_state.choice(
-                    column_nnz_data, size=column_subsample, replace=False
+                column_data = random_state.choice(
+                    column_nnz_data, size=self.subsample, replace=False
                 )
             else:
-                if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=len(column_nnz_data), dtype=X.dtype)
-                else:
-                    column_data = np.zeros(shape=n_samples, dtype=X.dtype)
-                column_data[: len(column_nnz_data)] = column_nnz_data
+                column_data = column_nnz_data
 
             if not column_data.size:
                 # if no nnz, an error will be raised for computing the
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
             else:
-                self.quantiles_.append(np.nanpercentile(column_data, references))
+                quantiles = np.zeros(references.size)
+                pos_quantile = column_references >= 0
+                quantiles[pos_quantile] = np.nanquantile(
+                    column_data, column_references[pos_quantile]
+                )
+                self.quantiles_.append(quantiles)
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
