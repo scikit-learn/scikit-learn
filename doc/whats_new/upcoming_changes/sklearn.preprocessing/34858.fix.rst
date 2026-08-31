@@ -1,0 +1,9 @@
+- Fixed a bug in :class:`preprocessing.QuantileTransformer` and
+  :class:`preprocessing.RobustScaler` where fitting on sparse data could
+  needlessly densify a column into an array of size `n_samples` to compute
+  its quantiles/percentiles, causing slowdowns or out-of-memory errors for
+  very sparse matrices. Also fixed the subsampling of very sparse columns in
+  :class:`preprocessing.QuantileTransformer`, which previously could retain
+  only a handful of non-zero values regardless of `subsample`, degrading the
+  estimated quantiles.
+  By :user:`Arthur Lacote <cakedev0>` and :user:`Saad Shabbir <Stag51>`.
