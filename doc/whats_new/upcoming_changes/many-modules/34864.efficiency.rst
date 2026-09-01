@@ -1,0 +1,9 @@
+- Cython extensions in :mod:`sklearn.tree`, :mod:`sklearn.ensemble` (histogram
+  gradient boosting) and :mod:`sklearn.metrics` (pairwise distances reduction)
+  are now reliably compiled with `-O3`, fixing a build configuration issue
+  where distributions injecting their own optimization flags (e.g.
+  conda-forge's default `-O2`) would silently override scikit-learn's
+  intended optimization level for these performance-critical, branch-heavy
+  loops, most noticeably affecting :class:`ensemble.ExtraTreesClassifier` and
+  :class:`ensemble.ExtraTreesRegressor`.
+  By :user:`Arthur Lacote <cakedev0>`.
