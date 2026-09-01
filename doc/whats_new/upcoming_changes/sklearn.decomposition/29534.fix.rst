@@ -1,0 +1,8 @@
+- Fixed a bug in :class:`decomposition.PCA` (and other estimators inheriting
+  from its base class) where ``whiten=True`` could produce arbitrarily large,
+  spurious values for numerically rank-deficient components. Such components
+  now have their variance floored relative to the largest component (as
+  `numpy.linalg.pinv` does for its default `rcond`) instead of an absolute
+  `eps`, so whitening zeroes out unresolvable directions instead of
+  amplifying floating-point noise.
+  By :user:`Ammar Hashmi <ammar-iitm>`.
