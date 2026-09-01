@@ -207,7 +207,7 @@ Alternatively an already fitted classifier can be calibrated by using a
 :class:`~sklearn.frozen.FrozenEstimator` as
 ``CalibratedClassifierCV(estimator=FrozenEstimator(estimator))``.
 It is up to the user to make sure that the data used for fitting the classifier
-is disjoint from the data used for fitting the regressor.
+is disjoint from the data used for fitting the calibrator.
 
 :class:`CalibratedClassifierCV` supports the use of three regression techniques for
 calibration via the `method` parameter: `"sigmoid"`, `"isotonic"` and `"temperature"`.
