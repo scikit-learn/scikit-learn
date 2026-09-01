@@ -170,6 +170,12 @@ class ScoringMonitor:
 
         send(self._listener_handle, (run_id, run_info, task_info_path, scores))
 
+    def __getstate__(self):
+        # `_log` is grown by the listener thread, which can run while this callback is
+        # being pickled by another thread, e.g. loky's queue feeder when a task is
+        # dispatched to a worker. The pickler must therefore never walk the live list.
+        return {**self.__dict__, "_log": list(self._log)}
+
     def __setstate__(self, state):
         """Restore state, opening a fresh listener if the inherited one is unusable."""
         self.__dict__.update(state)
