@@ -1086,6 +1086,7 @@ def test_confusion_matrix_at_thresholds_multiclass_error(curve_func):
     with pytest.raises(ValueError, match=msg):
         curve_func(y_true, y_pred)
 
+
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
 def test_confusion_matrix_at_thresholds_implicit_pos_label(curve_func):
     # Check that using string class labels raises an informative

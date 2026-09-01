@@ -1091,6 +1091,7 @@ def confusion_matrix_at_thresholds(
     fns = tps[-1] - tps
     return tns, fps, fns, tps, y_score[threshold_idxs]
 
+
 @validate_params(
     {
         "y_true": ["array-like"],
