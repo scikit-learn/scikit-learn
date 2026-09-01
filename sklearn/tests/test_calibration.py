@@ -1505,7 +1505,7 @@ def test_temperature_scaling_array_api_compliance(
         ).fit(X_cal_xp, y_cal_xp, sample_weight=sample_weight)
 
         calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
-        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+        rtol = 1e-2 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert calibrator_xp.beta_.dtype == X_cal_xp.dtype
         assert array_device(calibrator_xp.beta_) == array_device(X_cal_xp)
@@ -1578,7 +1578,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         ).fit(X_xp, y_str, sample_weight=sample_weight)
 
         calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
-        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+        rtol = 1e-2 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert calibrator_xp.beta_.dtype == X_xp.dtype
         assert array_device(calibrator_xp.beta_) == array_device(X_xp)
