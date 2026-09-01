@@ -20,6 +20,14 @@ foreach ext_name, ext_dict : hist_gradient_boosting_extension_metadata
     ext_name,
     [ext_dict.get('sources'), hist_gradient_boosting_cython_tree],
     dependencies: ext_dict.get('dependencies', []),
+    override_options : ['optimization=3'],
+    # See sklearn/tree/meson.build for why c_args is needed on top of
+    # override_options: environments such as conda-forge inject their own
+    # `-O2` through CFLAGS, which is appended after Meson's optimization
+    # flag and silently wins. c_args is added after environment flags, so
+    # it is what actually guarantees -O3 for these histogram/splitting hot
+    # loops. See https://github.com/mesonbuild/meson/issues/15055.
+    c_args: ['-O3'],
     subdir: 'sklearn/ensemble/_hist_gradient_boosting',
     install: true
   )
