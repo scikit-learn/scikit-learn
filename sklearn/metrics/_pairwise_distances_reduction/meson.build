@@ -72,7 +72,6 @@ _base = py.extension_module(
   '_base',
   cython_gen_cpp.process(_base_pyx),
   dependencies: [np_dep, openmp_dep],
-  # See _datasets_pair above for why this is needed.
   cpp_args: ['-O3'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
@@ -100,7 +99,6 @@ _middle_term_computer = py.extension_module(
   '_middle_term_computer',
   cython_gen_cpp.process(_middle_term_computer_pyx),
   dependencies: [np_dep],
-  # See _datasets_pair above for why this is needed.
   cpp_args: ['-O3'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
@@ -128,7 +126,6 @@ _argkmin = py.extension_module(
     '_argkmin',
     cython_gen_cpp.process(_argkmin_pyx),
     dependencies: [np_dep, openmp_dep],
-    # See _datasets_pair above for why this is needed.
     cpp_args: ['-O3'],
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
@@ -156,7 +153,6 @@ _radius_neighbors = py.extension_module(
     '_radius_neighbors',
     cython_gen_cpp.process(_radius_neighbors_pyx),
     dependencies: [np_dep, openmp_dep],
-    # See _datasets_pair above for why this is needed.
     cpp_args: ['-O3'],
     subdir: 'sklearn/metrics/_pairwise_distances_reduction',
     install: true
@@ -181,7 +177,6 @@ _argkmin_classmode = py.extension_module(
   # XXX: for some reason -fno-sized-deallocation is needed otherwise there is
   # an error with undefined symbol _ZdlPv at import time in manylinux wheels.
   # See https://github.com/scikit-learn/scikit-learn/issues/28596 for more details.
-  # -O3 is added on top for the same reason as _datasets_pair above.
   cpp_args: ['-fno-sized-deallocation', '-O3'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
@@ -204,7 +199,6 @@ _radius_neighbors_classmode = py.extension_module(
   '_radius_neighbors_classmode',
   cython_gen_cpp.process(_radius_neighbors_classmode_pyx),
   dependencies: [np_dep, openmp_dep],
-  # See _datasets_pair above for why this is needed.
   cpp_args: ['-O3'],
   subdir: 'sklearn/metrics/_pairwise_distances_reduction',
   install: true
