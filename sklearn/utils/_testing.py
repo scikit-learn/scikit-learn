@@ -42,9 +42,7 @@ from sklearn.externals.array_api_compat import (
     is_array_api_obj,
     is_numpy_namespace,
 )
-from sklearn.externals.array_api_extra.testing import assert_close as xp_assert_close
-from sklearn.externals.array_api_extra.testing import assert_equal as xp_assert_equal
-from sklearn.externals.array_api_extra.testing import assert_less as xp_assert_less
+from sklearn.externals.array_api_extra import testing as xpt
 from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
