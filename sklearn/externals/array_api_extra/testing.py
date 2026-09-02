@@ -31,7 +31,14 @@ from ._lib._utils._compat import (
 from ._lib._utils._helpers import jax_autojit, pickle_flatten, pickle_unflatten
 from ._lib._utils._typing import Array, Device
 
-__all__ = ["lazy_xp_function", "patch_lazy_xp_functions"]
+__all__ = [
+    "assert_close",
+    "assert_close_nulp",
+    "assert_equal",
+    "assert_less",
+    "lazy_xp_function",
+    "patch_lazy_xp_functions",
+]
 
 if TYPE_CHECKING:  # pragma: no cover
     # TODO import override from typing (requires Python >=3.12)
@@ -467,7 +474,7 @@ def patch_lazy_xp_functions(
     return revert_on_exit()
 
 
-class CountingDaskScheduler(SchedulerGetCallable):
+class _CountingDaskScheduler(SchedulerGetCallable):
     """
     Dask scheduler that counts how many times `dask.compute` is called.
 
@@ -527,7 +534,7 @@ def _dask_wrap(
 
     @wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:  # numpydoc ignore=GL08
-        scheduler = CountingDaskScheduler(n, msg)
+        scheduler = _CountingDaskScheduler(n, msg)
         with dask.config.set({"scheduler": scheduler}):  # pyright: ignore[reportPrivateImportUsage]
             out = func(*args, **kwargs)
 
@@ -541,7 +548,7 @@ def _dask_wrap(
     return wrapper
 
 
-def require_numpy() -> ModuleType:  # numpydoc ignore=RT01
+def _require_numpy() -> ModuleType:  # numpydoc ignore=RT01
     """
     Import and return `numpy` if it is available, otherwise raise informative error.
     """
@@ -588,7 +595,7 @@ def _check_ns_shape_dtype(
     -------
     Actual array, desired array, their array namespace, the numpy module.
     """
-    np = require_numpy()
+    np = _require_numpy()
 
     actual_xp = array_namespace(actual)  # Raises on Python scalars and lists
     desired_xp = array_namespace(desired)
@@ -631,7 +638,7 @@ def _check_ns_shape_dtype(
             desired_shape = cast(tuple[float, ...], desired.shape)
 
     if check_shape:
-        msg = f"shapes do not match: {actual_shape} != f{desired_shape}"
+        msg = f"shapes do not match: {actual_shape} != {desired_shape}"
         assert actual_shape == desired_shape, msg
     elif desired.ndim > 0:
         # Ignore shape, but check flattened size. This is normally done by
@@ -640,7 +647,7 @@ def _check_ns_shape_dtype(
         # This check excludes 0d arrays as they are special-cased in NumPy.
         actual_size = math.prod(actual_shape)
         desired_size = math.prod(desired_shape)
-        msg = f"sizes do not match: {actual_size} != f{desired_size}"
+        msg = f"sizes do not match: {actual_size} != {desired_size}"
         assert actual_size == desired_size, msg
 
     if check_dtype:
@@ -665,7 +672,7 @@ def _as_numpy_array(  # numpydoc ignore=PR01,RT01
     """
     Convert array to NumPy, bypassing GPU-CPU transfer guards and densification guards.
     """
-    np = require_numpy()
+    np = _require_numpy()
     if is_cupy_namespace(xp):
         return xp.asnumpy(array)
     if is_pydata_sparse_namespace(xp):
@@ -708,7 +715,7 @@ def assert_close(
     xp: ModuleType | None = None,
 ) -> None:
     """
-    Check that two arrays are close, up to a tolerance.
+    Check that two arrays are close, up to tolerance ``atol + rtol * abs(desired)``.
 
     This is an interface to :func:`numpy.testing.assert_allclose` which accepts
     any standard-compatible array and performs additional array namespace,
@@ -742,6 +749,9 @@ def assert_close(
 
     Raises
     ------
+    AssertionError
+        If `actual` and `desired` are not equal up to the defined tolerance.
+
     ImportError
         If :mod:`numpy` is not importable in the Python environment.
 
@@ -755,9 +765,12 @@ def assert_close(
     -----
     The default `atol` and `rtol` differ from ``xp.all(xpx.isclose(a, b))``.
     For inexact dtypes, the default `rtol` is
-    ``xp.finfo(actual.dtype).eps ** 0.5 * 4``, which is roughly halfway between
-    :math:`\\sqrt{\\epsilon}` and the default for :func:`numpy.testing.assert_allclose`,
-    ``1e-7``. For other dtypes, the default ``1e-7`` is used.
+    ``xp.finfo(actual.dtype).eps ** 0.5 * 4``, which for ``float64`` is roughly halfway
+    between :math:`\\sqrt{\\epsilon}` and the default for
+    :func:`numpy.testing.assert_allclose`, ``1e-7``.
+    This gives a more reasonable default for lower precision dtypes,
+    for example approximately ``1e-3`` for ``float32``.
+    For exact dtypes, the default ``1e-7`` is used.
 
     Array arguments to `atol` and `rtol` must be valid input to :class:`float`.
     """
@@ -833,6 +846,9 @@ def assert_equal(
 
     Raises
     ------
+    AssertionError
+        If `actual` and `desired` are not equal.
+
     ImportError
         If :mod:`numpy` is not importable in the Python environment.
 
@@ -880,17 +896,20 @@ def assert_less(
     verbose : bool, default: True
         Whether to include the conflicting arrays in the error message on failure.
     check_dtype : bool, default: True
-        Whether to check agreement between actual and desired dtypes.
+        Whether to check agreement between the dtypes of `x` and `y`.
     check_shape : bool, default: True
-        Whether to check agreement between actual and desired shapes.
+        Whether to check agreement between the shapes of `x` and `y`.
     check_scalar : bool, default: False
         NumPy only: whether to check agreement between actual and desired types —
         0-D :class:`numpy.ndarray` vs scalar (e.g. :class:`numpy.double`).
     xp : array_namespace, optional
-        A standard-compatible namespace which `actual` and `desired` must match.
+        A standard-compatible namespace which `x` and `y` must match.
 
     Raises
     ------
+    AssertionError
+        If `x` is not strictly smaller than `y`, elementwise.
+
     ImportError
         If :mod:`numpy` is not importable in the Python environment.
 
@@ -907,3 +926,76 @@ def assert_less(
     x_np = _as_numpy_array(x, xp=xp)
     y_np = _as_numpy_array(y, xp=xp)
     np.testing.assert_array_less(x_np, y_np, err_msg=err_msg, verbose=verbose)
+
+
+def assert_close_nulp(
+    actual: Array,
+    desired: Array,
+    *,
+    nulp: int = 1,
+    check_dtype: bool = True,
+    check_shape: bool = True,
+    check_scalar: bool = False,
+    xp: ModuleType | None = None,
+) -> None:
+    """
+    Compare two arrays relatively to their spacing.
+
+    This is an interface to :func:`numpy.testing.assert_array_almost_equal_nulp`
+    which accepts any standard-compatible array and performs
+    additional array namespace, shape, and dtype checks.
+
+    Parameters
+    ----------
+    actual : Array
+        The array produced by the tested function.
+    desired : Array
+        The expected array (typically hardcoded).
+    nulp : int, optional
+        The maximum number of units in the last place
+        for the tolerance check. Default: ``1``.
+    check_dtype : bool, default: True
+        Whether to check agreement between actual and desired dtypes.
+    check_shape : bool, default: True
+        Whether to check agreement between actual and desired shapes.
+    check_scalar : bool, default: False
+        NumPy only: whether to check agreement between actual and desired types —
+        0-D :class:`numpy.ndarray` vs scalar (e.g. :class:`numpy.double`).
+    xp : array_namespace, optional
+        A standard-compatible namespace which `actual` and `desired` must match.
+
+    Raises
+    ------
+    AssertionError
+        If the spacing between `actual` and `desired` for one or more elements is \
+        larger than `nulp`.
+
+    ImportError
+        If :mod:`numpy` is not importable in the Python environment.
+
+    See Also
+    --------
+    assert_close : Similar function for inexact equality checks.
+    numpy.spacing : Spacing calculation for NumPy arrays.
+    numpy.testing.assert_array_almost_equal_nulp : Similar function for NumPy arrays.
+
+    Notes
+    -----
+    This is a relatively robust method to compare two arrays whose amplitude is
+    variable.
+
+    An assertion is raised if the following condition is not met::
+
+        abs(actual - desired) <= nulp * spacing(maximum(abs(actual), abs(desired)))
+
+    where ``spacing(x)`` is the distance between ``x`` and the nearest adjacent number
+    representable by in the data type of ``x``.
+    """
+    actual, desired, xp, np = _check_ns_shape_dtype(
+        actual, desired, check_dtype, check_shape, check_scalar, xp
+    )
+    if not _is_materializable(actual):
+        return
+    actual_np = _as_numpy_array(actual, xp=xp)
+    desired_np = _as_numpy_array(desired, xp=xp)
+    np.testing.assert_array_almost_equal_nulp(actual_np, desired_np, nulp=nulp)
