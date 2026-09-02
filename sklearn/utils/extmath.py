@@ -1179,7 +1179,6 @@ def _incremental_mean_and_var(
     last_sample_count = xp.asarray(
         last_sample_count, dtype=max_float_dtype, device=X_device
     )
-    last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
         sum_op = xpx.nansum
@@ -1207,13 +1206,38 @@ def _incremental_mean_and_var(
 
     updated_sample_count = last_sample_count + new_sample_count
 
-    updated_mean = (last_sum + new_sum) / updated_sample_count
+    # There is no errstate equivalent for warning/error management in array API
+    if _is_numpy_namespace(xp):
+        context_manager = partial(
+            np.errstate, divide="ignore", invalid="ignore", over="ignore"
+        )
+    else:
+        context_manager = nullcontext
+
+    with context_manager():
+        new_mean = new_sum / new_sample_count
+    # new_sample_count is 0 for features holding only NaN values in this
+    # batch: mask their meaningless batch mean so that the fallback updates
+    # below stay free of spurious non-finite values.
+    new_mean = xp.where(new_sample_count == 0, xp.zeros_like(new_mean), new_mean)
+    delta_mean = new_mean - last_mean
+
+    # The mean update based on the accumulated sum is the most accurate, but
+    # the sum of a long stream (or of very large values) can exceed the
+    # floating point range while the mean cannot, as it is bounded by the
+    # largest absolute value observed. Where the accumulated sum overflows,
+    # fall back to an algebraically equivalent update expressed with the
+    # bounded batch means, following Chan et al.
+    with context_manager():
+        last_sum = last_mean * last_sample_count
+        sum_mean = (last_sum + new_sum) / updated_sample_count
+        shift_mean = last_mean + delta_mean * (new_sample_count / updated_sample_count)
+    updated_mean = xp.where(xp.isfinite(sum_mean), sum_mean, shift_mean)
 
     if last_variance is None:
         updated_variance = None
     else:
-        T = new_sum / new_sample_count
-        temp = X - T
+        temp = X - new_mean
         if sample_weight is not None:
             # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
             # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
@@ -1240,23 +1264,36 @@ def _incremental_mean_and_var(
 
         last_unnormalized_variance = last_variance * last_sample_count
 
-        # There is no errstate equivalent for warning/error management in array API
-        context_manager = (
-            np.errstate(divide="ignore", invalid="ignore")
-            if _is_numpy_namespace(xp)
-            else nullcontext()
-        )
-        with context_manager:
+        zeros = last_sample_count == 0
+        with context_manager():
+            # Correction term of the corrected 2 pass algorithm of Chan et
+            # al. in its most accurate form, based on the accumulated sum.
             last_over_new_count = last_sample_count / new_sample_count
-            updated_unnormalized_variance = (
-                last_unnormalized_variance
-                + new_unnormalized_variance
-                + last_over_new_count
+            sum_correction_term = (
+                last_over_new_count
                 / updated_sample_count
                 * (last_sum / last_over_new_count - new_sum) ** 2
             )
+            # The same term expressed with the bounded batch means, used as
+            # a fallback where the accumulated sum overflows (see the mean
+            # update above). delta_mean is masked where last_sample_count
+            # is 0: the term is 0 there but squaring an unmasked delta_mean
+            # could overflow.
+            delta_var = xp.where(zeros, xp.zeros_like(delta_mean), delta_mean)
+            shift_correction_term = (
+                delta_var**2
+                * last_sample_count
+                * (new_sample_count / updated_sample_count)
+            )
+            correction_term = xp.where(
+                xp.isfinite(sum_correction_term),
+                sum_correction_term,
+                shift_correction_term,
+            )
+            updated_unnormalized_variance = (
+                last_unnormalized_variance + new_unnormalized_variance + correction_term
+            )
 
-        zeros = last_sample_count == 0
         updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
         updated_variance = updated_unnormalized_variance / updated_sample_count
 

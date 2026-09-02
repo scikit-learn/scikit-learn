@@ -1,0 +1,5 @@
+- :func:`preprocessing.StandardScaler.partial_fit` no longer overflows when
+  the accumulated sum exceeds the float64 range for features with large values
+  or long streams, by falling back to a delta-based update (Chan, Golub &
+  LeVeque 1979) where the sum-based result is not finite.
+  By :user:`Shamik Basu <ShamikOfficial>`.
