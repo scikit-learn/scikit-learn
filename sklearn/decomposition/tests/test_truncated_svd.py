@@ -98,7 +98,7 @@ def test_explained_variance(X_sparse, kind, n_components, solver):
     X_tr = svd.fit_transform(X)
     # Assert that all the values are greater than 0
     assert_array_less(
-        np.zeros(svd.explained_variance_ratio_.shape), svd.explained_variance_ratio_
+        np.zeros_like(svd.explained_variance_ratio_), svd.explained_variance_ratio_
     )
 
     # Assert that total explained variance is less than 1
