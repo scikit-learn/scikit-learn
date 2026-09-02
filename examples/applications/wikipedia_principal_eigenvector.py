@@ -220,7 +220,8 @@ print("Computing principal eigenvector score using a power iteration method")
 t0 = time()
 scores, errors = centrality_scores(X, max_iter=100)
 print("done in %0.3fs" % (time() - t0))
-pprint([names[i] for i in np.abs(scores).argsort()[-10:]])
+top_abs_score_indices = np.abs(scores).argsort()[-5:]
+pprint([names[i] for i in top_abs_score_indices])
 
 # %%
 # Plot results
@@ -234,9 +235,8 @@ ax.set_title("PageRank power-iteration convergence")
 plt.show()
 
 # %%
-top = np.abs(scores).argsort()[-10:]
 fig, ax = plt.subplots()
-ax.barh([names[i] for i in top], scores[top])
+ax.barh([names[i] for i in top_abs_score_indices], scores[top_abs_score_indices])
 ax.set_xlabel("PageRank score")
 ax.set_title("Wikipedia pages with the highest eigenvector centrality")
 plt.show()
