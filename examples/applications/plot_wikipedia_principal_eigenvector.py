@@ -3,8 +3,6 @@
 Wikipedia principal eigenvector
 ===============================
 
-TODO remove
-
 A classical way to assert the relative importance of vertices in a
 graph is to compute the principal eigenvector of the adjacency matrix
 so as to assign to each vertex the values of the components of the first
@@ -43,8 +41,8 @@ from sklearn.datasets import fetch_file
 from sklearn.decomposition import randomized_svd
 
 # %%
-# Download data, if not already on disk
-# -------------------------------------
+# Download data
+# -------------
 redirects_url = "https://downloads.dbpedia.org/3.5.1/en/redirects_en.nt.bz2"
 redirects_filename = fetch_file(redirects_url)
 
