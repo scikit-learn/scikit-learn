@@ -29,25 +29,25 @@ from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import validate_data
 
 
-def _ledoit_wolf(X, *, assume_centered, block_size, weights=None):
+def _ledoit_wolf(X, *, assume_centered, block_size, sample_weight=None):
     """Estimate the shrunk Ledoit-Wolf covariance matrix."""
-    if weights is None:
-        weights = np.ones( X.shape[0] )
+    if sample_weight is None:
+        sample_weight = np.ones( X.shape[0] )
 
     xp, _ = get_namespace(X)
 
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
-            X = X - xp.sum( np.multiply( weights.reshape(-1,1), X ), axis=0) / float( weights.sum() )
+            X = X - xp.sum( np.multiply( sample_weight.reshape(-1,1), X ), axis=0) / float( sample_weight.sum() )
         return xp.reshape(xp.mean(X**2), (1, 1)), 0.0
     n_features = X.shape[1]
 
     # get Ledoit-Wolf shrinkage
     shrinkage = ledoit_wolf_shrinkage(
-        X, assume_centered=assume_centered, block_size=block_size, weights=weights
+        X, assume_centered=assume_centered, block_size=block_size, sample_weight=sample_weight
     )
-    emp_cov = empirical_covariance(X, assume_centered=assume_centered, weights=weights)
+    emp_cov = empirical_covariance(X, assume_centered=assume_centered, sample_weight=sample_weight)
     mu = float(xp.linalg.trace(emp_cov)) / n_features
     shrunk_cov = (1.0 - shrinkage) * emp_cov
     _add_to_diagonal(shrunk_cov, shrinkage * mu, xp)
@@ -306,7 +306,7 @@ class ShrunkCovariance(EmpiricalCovariance):
     },
     prefer_skip_nested_validation=True,
 )
-def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000, weights=None):
+def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000, sample_weight=None):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
@@ -325,8 +325,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000, weights=Non
     block_size : int, default=1000
         Size of blocks into which the covariance matrix will be split.
 
-    weights : array-like of shape (n_samples,)
-              Non-negative weights for weighing the training data
+    sample_weight : array-like of shape (n_samples,)
+        Non-negative weights for weighing the training data
 
     Returns
     -------
@@ -353,8 +353,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000, weights=Non
     >>> shrinkage_coefficient
     np.float64(0.23)
     """
-    if weights is None:
-        weights = np.ones( X.shape[0] )
+    if sample_weight is None:
+        sample_weight = np.ones( X.shape[0] )
 
     X = check_array(X)
     xp, _ = get_namespace(X)
@@ -370,19 +370,19 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000, weights=Non
             "Only one sample available. You may want to reshape your data array"
         )
     n_samples, n_features = X.shape
-    n_eff = weights.sum()
+    n_eff = sample_weight.sum()
 
     # optionally center data
     if not assume_centered:
-        X = X - xp.sum( np.multiply( weights.reshape(-1,1), X ), axis=0)
+        X = X - xp.sum( np.multiply( sample_weight.reshape(-1,1), X ), axis=0)
 
     X2 = X**2
-    emp_cov_trace = xp.sum( np.multiply( weights.reshape(-1,1), X2 ), axis=0) / n_eff
+    emp_cov_trace = xp.sum( np.multiply( sample_weight.reshape(-1,1), X2 ), axis=0) / n_eff
     mu = float(xp.sum(emp_cov_trace)) / n_features
     
     # set X to include sqrt( weights ) for calculations below
-    X = np.multiply( np.sqrt( weights ).reshape(-1,1), X )
-    X2 = np.multiply( np.sqrt( weights ).reshape(-1,1), X2 )
+    X = np.multiply( np.sqrt( sample_weight ).reshape(-1,1), X )
+    X2 = np.multiply( np.sqrt( sample_weight ).reshape(-1,1), X2 )
 
     # TODO: gh-33986 discusses the idea of automatically determining the best
     # chunk size instead of having this branching.
@@ -619,7 +619,7 @@ class LedoitWolf(EmpiricalCovariance):
         return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None, *, weights=None):
+    def fit(self, X, y=None, *, sample_weight=None):
         """Fit the Ledoit-Wolf shrunk covariance model to X.
 
         Parameters
@@ -629,8 +629,8 @@ class LedoitWolf(EmpiricalCovariance):
             and `n_features` is the number of features.
         y : Ignored
             Not used, present for API consistency by convention.
-        weights : array-like of shape (n_samples,)
-                  Non-negative weights for weighing the training data
+        sample_weight : array-like of shape (n_samples,)
+            Non-negative weights for weighing the training data
 
         Returns
         -------
@@ -642,15 +642,15 @@ class LedoitWolf(EmpiricalCovariance):
         xp, _, device = get_namespace_and_device(X)
         X = validate_data(self, X, dtype=supported_float_dtypes(xp, device))
 
-        if weights is None:
-            weights = np.ones( X.shape[0] )
+        if sample_weight is None:
+            sample_weight = np.ones( X.shape[0] )
 
         if self.assume_centered:
             self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device)
         else:
-            self.location_ = xp.sum( np.multiply( weights.reshape(-1,1), X ), axis=0) / float( weights.sum() )
+            self.location_ = xp.sum( np.multiply( sample_weight.reshape(-1,1), X ), axis=0) / float( sample_weight.sum() )
         covariance, shrinkage = _ledoit_wolf(
-            X - self.location_, assume_centered=True, block_size=self.block_size, weights=weights
+            X - self.location_, assume_centered=True, block_size=self.block_size, sample_weight=sample_weight
         )
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)

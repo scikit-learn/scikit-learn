@@ -73,7 +73,7 @@ def log_likelihood(emp_cov, precision):
     },
     prefer_skip_nested_validation=True,
 )
-def empirical_covariance(X, *, assume_centered=False, weights=None):
+def empirical_covariance(X, *, assume_centered=False, sample_weight=None):
     """Compute the Maximum likelihood covariance estimator.
 
     Parameters
@@ -87,7 +87,7 @@ def empirical_covariance(X, *, assume_centered=False, weights=None):
         zero.
         If `False`, data will be centered before computation.
 
-    weights : array-like of shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,)
         Non-negative weights for weighing the training data
 
     Returns
@@ -115,23 +115,23 @@ def empirical_covariance(X, *, assume_centered=False, weights=None):
         warnings.warn(
             "Only one sample available. You may want to reshape your data array"
         )
-    if weights is None:
-        weights = np.ones( X.shape[0] )
+    if sample_weight is None:
+        sample_weight = np.ones( X.shape[0] )
 
-    if len( weights.shape ) > 1:
-        if weights.shape[1] != 1:
+    if len( sample_weight.shape ) > 1:
+        if sample_weight.shape[1] != 1:
             raise ValueError("weights can only be 1-D")
         else:
-            weights = weights.flatten()
+            sample_weight = sample_weight.flatten()
 
     if assume_centered:
-        X = np.multiply( np.sqrt( weights ).reshape(-1,1), X )
-        covariance = X.T @ X / weights.sum()
+        X = np.multiply( np.sqrt( sample_weight ).reshape(-1,1), X )
+        covariance = X.T @ X / sample_weight.sum()
     elif _is_numpy_namespace(xp):
         # Preserve numpy path, because `np.cov` always returns float64
         # and callers like GraphicalLasso and GraphicalLassoCV rely on
         # this behavior.
-        covariance = np.cov(X.T, bias=1, aweights=weights/weights.sum())
+        covariance = np.cov(X.T, bias=1, aweights=sample_weight/sample_weight.sum())
     else:
         # need to add weights to here
         covariance = _cov(X, xp=xp)
