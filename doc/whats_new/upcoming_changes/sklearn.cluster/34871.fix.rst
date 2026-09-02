@@ -1,0 +1,7 @@
+- :class:`cluster.SpectralBiclustering` with `method="bistochastic"` now returns the
+  same result for sparse and dense input. The convergence check of the underlying
+  bistochastic normalization compared the current iterate against the original
+  input rather than against the newly scaled matrix, so for sparse input the
+  distance was zero on the first pass and the loop always stopped after a single
+  scaling pass.
+  By :user:`Dylan Pulver <dylanpulver>`.
