@@ -125,7 +125,7 @@ def empirical_covariance(X, *, assume_centered=False, sample_weight=None):
             sample_weight = sample_weight.flatten()
 
     if assume_centered:
-        X = np.multiply(np.sqrt(sample_weight).reshape(-1,1), X)
+        X = np.multiply(np.sqrt(sample_weight).reshape(-1, 1), X)
         covariance = X.T @ X / sample_weight.sum()
     elif _is_numpy_namespace(xp):
         # Preserve numpy path, because `np.cov` always returns float64

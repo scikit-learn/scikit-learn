@@ -39,8 +39,8 @@ def _ledoit_wolf(X, *, assume_centered, block_size, sample_weight=None):
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
-            X = X - xp.sum( 
-                np.multiply(sample_weight.reshape(-1,1), X), axis=0
+            X = X - xp.sum(
+                np.multiply(sample_weight.reshape(-1, 1), X), axis=0
             ) / float(sample_weight.sum())
         return xp.reshape(xp.mean(X**2), (1, 1)), 0.0
     n_features = X.shape[1]
@@ -385,17 +385,17 @@ def ledoit_wolf_shrinkage(
 
     # optionally center data
     if not assume_centered:
-        X = X - xp.sum(np.multiply(sample_weight.reshape(-1,1), X), axis=0)
+        X = X - xp.sum(np.multiply(sample_weight.reshape(-1, 1), X), axis=0)
 
     X2 = X**2
     emp_cov_trace = (
-        xp.sum(np.multiply(sample_weight.reshape(-1,1), X2), axis=0) / n_eff
+        xp.sum(np.multiply(sample_weight.reshape(-1, 1), X2), axis=0) / n_eff
     )
     mu = float(xp.sum(emp_cov_trace)) / n_features
-    
+
     # set X to include sqrt( weights ) for calculations below
-    X = np.multiply(np.sqrt(sample_weight).reshape(-1,1), X)
-    X2 = np.multiply(np.sqrt(sample_weight).reshape(-1,1), X2)
+    X = np.multiply(np.sqrt(sample_weight).reshape(-1, 1), X)
+    X2 = np.multiply(np.sqrt(sample_weight).reshape(-1, 1), X2)
 
     # TODO: gh-33986 discusses the idea of automatically determining the best
     # chunk size instead of having this branching.
@@ -661,8 +661,8 @@ class LedoitWolf(EmpiricalCovariance):
         if self.assume_centered:
             self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device)
         else:
-            self.location_ = xp.sum( 
-                np.multiply(sample_weight.reshape(-1,1), X), axis=0
+            self.location_ = xp.sum(
+                np.multiply(sample_weight.reshape(-1, 1), X), axis=0
             ) / float(sample_weight.sum())
         covariance, shrinkage = _ledoit_wolf(
             X - self.location_,
