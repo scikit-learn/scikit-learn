@@ -1,0 +1,3 @@
+- Fixed a leak of file descriptors and background threads by
+  :class:`callback.ScoringMonitor` and :class:`callback.ProgressBar`.
+  By :user:`Jérémie du Boisberranger <jeremiedbb>` :pr:`34856`,
