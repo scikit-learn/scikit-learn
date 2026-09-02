@@ -337,7 +337,7 @@ of a :class:`Sum` kernel, where it modifies the mean of the Gaussian process.
 It depends on a parameter :math:`constant\_value`. It is defined as:
 
 .. math::
-   k(x_i, x_j) = constant\_value \;\forall\; x_1, x_2
+   k(x_i, x_j) = constant\_value \;\forall\; x_i, x_j
 
 The main use-case of the :class:`WhiteKernel` kernel is as part of a
 sum-kernel where it explains the noise-component of the signal. Tuning its
@@ -414,7 +414,7 @@ the smoothness of the resulting function. It is parameterized by a length-scale 
    and :math:`\nu = 5/2`:
 
    .. math::
-      k(x_i, x_j) = \Bigg(1 + \frac{\sqrt{5}}{l} d(x_i , x_j ) +\frac{5}{3l} d(x_i , x_j )^2 \Bigg) \exp \Bigg(-\frac{\sqrt{5}}{l} d(x_i , x_j ) \Bigg) \quad \quad \nu= \tfrac{5}{2}
+      k(x_i, x_j) = \Bigg(1 + \frac{\sqrt{5}}{l} d(x_i , x_j ) +\frac{5}{3l^2} d(x_i , x_j )^2 \Bigg) \exp \Bigg(-\frac{\sqrt{5}}{l} d(x_i , x_j ) \Bigg) \quad \quad \nu= \tfrac{5}{2}
 
    are popular choices for learning functions that are not infinitely
    differentiable (as assumed by the RBF kernel) but at least once (:math:`\nu =

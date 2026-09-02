@@ -1,0 +1,3 @@
+- :meth:`neighbors.KNeighborsRegressor.predict` is now faster for regression with
+  many output targets.
+  By :user:`Roman Yurchak <rth>`.

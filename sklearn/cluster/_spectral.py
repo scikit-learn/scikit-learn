@@ -8,16 +8,16 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.linalg import LinAlgError, qr, svd
-from scipy.sparse import csc_matrix
+from scipy.sparse import csc_array
 
-from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..manifold._spectral_embedding import _spectral_embedding
-from ..metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
-from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils import as_float_array, check_random_state
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.validation import validate_data
-from ._kmeans import k_means
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.cluster._kmeans import k_means
+from sklearn.manifold._spectral_embedding import _spectral_embedding
+from sklearn.metrics.pairwise import KERNEL_PARAMS, pairwise_kernels
+from sklearn.neighbors import NearestNeighbors, kneighbors_graph
+from sklearn.utils import as_float_array, check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.validation import validate_data
 
 
 def cluster_qr(vectors):
@@ -70,7 +70,7 @@ def discretize(
     max_svd_restarts : int, default=30
         Maximum number of attempts to restart SVD if convergence fails
 
-    n_iter_max : int, default=30
+    n_iter_max : int, default=20
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
@@ -160,7 +160,7 @@ def discretize(
             t_discrete = np.dot(vectors, rotation)
 
             labels = t_discrete.argmax(axis=1)
-            vectors_discrete = csc_matrix(
+            vectors_discrete = csc_array(
                 (np.ones(len(labels)), (np.arange(0, n_samples), labels)),
                 shape=(n_samples, n_components),
             )
@@ -227,11 +227,12 @@ def spectral_clustering(
           - heat kernel of the pairwise distance matrix of the samples,
           - symmetric k-nearest neighbours connectivity matrix of the samples.
 
-    n_clusters : int, default=None
+    n_clusters : int, default=8
         Number of clusters to extract.
 
-    n_components : int, default=n_clusters
-        Number of eigenvectors to use for the spectral embedding.
+    n_components : int, default=None
+        Number of eigenvectors to use for the spectral embedding. If None,
+        defaults to `n_clusters`.
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition method. If None then ``'arpack'`` is used.
@@ -404,7 +405,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     Parameters
     ----------
     n_clusters : int, default=8
-        The dimension of the projection subspace.
+        Number of clusters to extract.
 
     eigen_solver : {'arpack', 'lobpcg', 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg

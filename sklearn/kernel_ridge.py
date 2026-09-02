@@ -7,11 +7,15 @@ from numbers import Real
 
 import numpy as np
 
-from .base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context
-from .linear_model._ridge import _solve_cholesky_kernel
-from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
-from .utils._param_validation import Interval, StrOptions
-from .utils.validation import _check_sample_weight, check_is_fitted, validate_data
+from sklearn.base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.linear_model._ridge import _solve_cholesky_kernel
+from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):

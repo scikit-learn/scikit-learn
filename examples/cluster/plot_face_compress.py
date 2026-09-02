@@ -18,13 +18,7 @@ to perform vector quantization on a set of toy image, the raccoon face.
 # a couple of information regarding the image, such as the shape and data type used
 # to store the image.
 #
-# Note that depending of the SciPy version, we have to adapt the import since the
-# function returning the image is not located in the same module. Also, SciPy >= 1.10
-# requires the package `pooch` to be installed.
-try:  # Scipy >= 1.10
-    from scipy.datasets import face
-except ImportError:
-    from scipy.misc import face
+from scipy.datasets import face
 
 raccoon_face = face(gray=True)
 
@@ -34,7 +28,7 @@ print(f"The number of bytes taken in RAM is {raccoon_face.nbytes}")
 
 # %%
 # Thus the image is a 2D array of 768 pixels in height and 1024 pixels in width. Each
-# value is a 8-bit unsigned integer, which means that the image is encoded using 8
+# value is an 8-bit unsigned integer, which means that the image is encoded using 8
 # bits per pixel. The total memory usage of the image is 786 kilobytes (1 byte equals
 # 8 bits).
 #

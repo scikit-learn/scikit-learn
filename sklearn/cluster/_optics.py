@@ -13,21 +13,21 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.sparse import SparseEfficiencyWarning, issparse
 
-from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..exceptions import DataConversionWarning
-from ..metrics import pairwise_distances
-from ..metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
-from ..neighbors import NearestNeighbors
-from ..utils import gen_batches
-from ..utils._chunking import get_chunk_n_rows
-from ..utils._param_validation import (
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics import pairwise_distances
+from sklearn.metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import gen_batches
+from sklearn.utils._chunking import get_chunk_n_rows
+from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
     RealNotInt,
     StrOptions,
     validate_params,
 )
-from ..utils.validation import check_memory, validate_data
+from sklearn.utils.validation import check_memory, validate_data
 
 
 class OPTICS(ClusterMixin, BaseEstimator):

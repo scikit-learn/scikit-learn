@@ -11,10 +11,10 @@ from inspect import signature
 from numbers import Integral, Real
 
 import numpy as np
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_array, issparse
 
-from .._config import config_context, get_config
-from .validation import _is_arraylike_not_scalar
+from sklearn._config import config_context, get_config
+from sklearn.utils.validation import _is_arraylike_not_scalar
 
 
 class InvalidParameterError(ValueError, TypeError):
@@ -541,7 +541,7 @@ class _SparseMatrices(_Constraint):
         return issparse(val)
 
     def __str__(self):
-        return "a sparse matrix"
+        return "a sparse array or matrix"
 
 
 class _Callables(_Constraint):
@@ -844,7 +844,7 @@ def generate_valid_param(constraint):
         return np.array([1, 2, 3])
 
     if isinstance(constraint, _SparseMatrices):
-        return csr_matrix([[0, 1], [1, 0]])
+        return csr_array([[0, 1], [1, 0]])
 
     if isinstance(constraint, _RandomStates):
         return np.random.RandomState(42)

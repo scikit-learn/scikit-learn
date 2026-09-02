@@ -356,7 +356,7 @@ lead to wrong conclusions.
 Estimators
 ..........
 
-**Different `random_state` types lead to different cross-validation
+**Different** `random_state` **types lead to different cross-validation
 procedures**
 
 Depending on the type of the `random_state` parameter, estimators will behave

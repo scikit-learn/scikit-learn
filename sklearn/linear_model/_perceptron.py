@@ -3,8 +3,8 @@
 
 from numbers import Real
 
-from ..utils._param_validation import Interval, StrOptions
-from ._stochastic_gradient import BaseSGDClassifier
+from sklearn.linear_model._stochastic_gradient import BaseSGDClassifier
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 class Perceptron(BaseSGDClassifier):
@@ -179,7 +179,7 @@ class Perceptron(BaseSGDClassifier):
             "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
             "alpha": [Interval(Real, 0, None, closed="left")],
             "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-            "eta0": [Interval(Real, 0, None, closed="left")],
+            "eta0": [Interval(Real, 0, None, closed="neither")],
         }
     )
 

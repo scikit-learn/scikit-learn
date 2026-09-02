@@ -3,17 +3,29 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import inspect
 import warnings
+from contextlib import nullcontext
 from functools import partial
 from numbers import Integral
 
 import numpy as np
 from scipy import linalg, sparse
 
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ._array_api import _average, _is_numpy_namespace, _nanmean, device, get_namespace
-from .sparsefuncs_fast import csr_row_norms
-from .validation import check_array, check_random_state
+from sklearn.utils._array_api import (
+    _average,
+    _is_numpy_namespace,
+    _max_precision_float_dtype,
+    array_device,
+    get_namespace,
+    get_namespace_and_device,
+    xpx,
+)
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.deprecation import deprecated
+from sklearn.utils.sparsefuncs import sparse_matmul_to_dense
+from sklearn.utils.sparsefuncs_fast import csr_row_norms
+from sklearn.utils.validation import check_array, check_random_state
 
 
 def squared_norm(x):
@@ -32,8 +44,8 @@ def squared_norm(x):
         The Euclidean norm when x is a vector, the Frobenius norm when x
         is a matrix (2-d array).
     """
-    x = np.ravel(x, order="K")
-    if np.issubdtype(x.dtype, np.integer):
+    xp, _ = get_namespace(x)
+    if _is_numpy_namespace(xp) and np.issubdtype(x.dtype, np.integer):
         warnings.warn(
             (
                 "Array type is integer, np.dot may overflow. "
@@ -41,7 +53,7 @@ def squared_norm(x):
             ),
             UserWarning,
         )
-    return np.dot(x, x)
+    return xp.tensordot(x, x, axes=x.ndim)
 
 
 def row_norms(X, squared=False):
@@ -139,7 +151,7 @@ def density(w):
     --------
     >>> from scipy import sparse
     >>> from sklearn.utils.extmath import density
-    >>> X = sparse.random(10, 10, density=0.25, random_state=0)
+    >>> X = sparse.random_array((10, 10), density=0.25, rng=0)
     >>> density(X)
     0.25
     """
@@ -156,7 +168,9 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     Parameters
     ----------
     a : {ndarray, sparse matrix}
+        First operand of the dot product.
     b : {ndarray, sparse matrix}
+        Second operand of the dot product.
     dense_output : bool, default=False
         When False, ``a`` and ``b`` both being sparse will yield sparse output.
         When True, output will always be a dense array.
@@ -168,9 +182,9 @@ def safe_sparse_dot(a, b, *, dense_output=False):
 
     Examples
     --------
-    >>> from scipy.sparse import csr_matrix
+    >>> from scipy.sparse import csr_array
     >>> from sklearn.utils.extmath import safe_sparse_dot
-    >>> X = csr_matrix([[1, 2], [3, 4], [5, 6]])
+    >>> X = csr_array([[1, 2], [3, 4], [5, 6]])
     >>> dot_product = safe_sparse_dot(X, X.T)
     >>> dot_product.toarray()
     array([[ 5, 11, 17],
@@ -199,6 +213,17 @@ def safe_sparse_dot(a, b, *, dense_output=False):
             # if b is >= 2-dim then the second to last axis is taken.
             b_axis = -1 if b.ndim == 1 else -2
             ret = xp.tensordot(a, b, axes=[-1, b_axis])
+    elif (
+        dense_output
+        and a.ndim == 2
+        and b.ndim == 2
+        and (sparse.issparse(a) and a.format in ("csc", "csr"))
+        and (sparse.issparse(b) and b.format in ("csc", "csr"))
+        and a.dtype in (np.float32, np.float64)
+        and b.dtype in (np.float32, np.float64)
+    ):
+        # Use dedicated fast method for dense_C = sparse_A @ sparse_B
+        return sparse_matmul_to_dense(a, b)
     else:
         ret = a @ b
 
@@ -294,21 +319,23 @@ def _randomized_range_finder(
     # Generating normal random vectors with shape: (A.shape[1], size)
     # XXX: generate random number directly from xp if it's possible
     # one day.
-    Q = xp.asarray(random_state.normal(size=(A.shape[1], size)))
-    if hasattr(A, "dtype") and xp.isdtype(A.dtype, kind="real floating"):
-        # Use float32 computation and components if A has a float32 dtype.
-        Q = xp.astype(Q, A.dtype, copy=False)
+    Q = random_state.normal(size=(A.shape[1], size))
+    if A.dtype == xp.float32 or (
+        is_array_api_compliant
+        and _max_precision_float_dtype(xp, device=array_device(A)) == xp.float32
+    ):
+        # Use float32 computation and components if A has a float32 dtype
+        # or if A has integer dtype and device doesn't not support float64.
 
-    # Move Q to device if needed only after converting to float32 if needed to
-    # avoid allocating unnecessary memory on the device.
+        # Downcast while Q is still a NumPy array to avoid allocating float64
+        # on devices that do not support it. The Array API does not require
+        # xp.asarray(..., dtype=..., device=device) to accept such a downcast.
+        Q = Q.astype(np.float32, copy=False)
 
-    # Note: we cannot combine the astype and to_device operations in one go
-    # using xp.asarray(..., dtype=dtype, device=device) because downcasting
-    # from float64 to float32 in asarray might not always be accepted as only
-    # casts following type promotion rules are guarateed to work.
-    # https://github.com/data-apis/array-api/issues/647
     if is_array_api_compliant:
-        Q = xp.asarray(Q, device=device(A))
+        Q = xp.asarray(Q, device=array_device(A))
+    else:
+        Q = xp.asarray(Q)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == "auto":
@@ -452,7 +479,7 @@ def randomized_svd(
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, default='warn'
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when
         shuffling the data, i.e. getting the random vectors to initialize
         the algorithm. Pass an int for reproducible results across multiple
@@ -497,11 +524,12 @@ def randomized_svd(
       <0909.4061>`
       Halko, et al. (2009)
 
-    .. [2] A randomized algorithm for the decomposition of matrices
-      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
+    .. [2] `"A randomized algorithm for the decomposition of matrices"
+      <https://doi.org/10.1016/j.acha.2010.02.003>`_
+      Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert (2011)
 
-    .. [3] An implementation of a randomized algorithm for principal component
-      analysis A. Szlam et al. 2014
+    .. [3] :arxiv:`"An implementation of a randomized algorithm for principal
+      component analysis" <1412.3510>` A. Szlam et al. (2014)
 
     Examples
     --------
@@ -546,7 +574,7 @@ def _randomized_svd(
     if sparse.issparse(M) and M.format in ("lil", "dok"):
         warnings.warn(
             "Calculating SVD of a {} is expensive. "
-            "csr_matrix is more efficient.".format(type(M).__name__),
+            "CSR format is more efficient.".format(type(M).__name__),
             sparse.SparseEfficiencyWarning,
         )
 
@@ -935,7 +963,7 @@ def svd_flip(u, v, u_based_decision=True):
     if u_based_decision:
         # columns of u, rows of v, or equivalently rows of u.T and v
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
-        shift = xp.arange(u.T.shape[0], device=device(u))
+        shift = xp.arange(u.T.shape[0], device=array_device(u))
         indices = max_abs_u_cols + shift * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
         u *= signs[np.newaxis, :]
@@ -944,7 +972,7 @@ def svd_flip(u, v, u_based_decision=True):
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
-        shift = xp.arange(v.shape[0], device=device(v))
+        shift = xp.arange(v.shape[0], device=array_device(v))
         indices = max_abs_v_rows + shift * v.shape[1]
         signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices, axis=0))
         if u is not None:
@@ -1033,16 +1061,16 @@ def make_nonnegative(X, min_value=0):
 # as it is in case the float overflows
 def _safe_accumulator_op(op, x, *args, **kwargs):
     """
-    This function provides numpy accumulator functions with a float64 dtype
-    when used on a floating point input. This prevents accumulator overflow on
-    smaller floating point dtypes.
+    This function provides array accumulator functions with a maximum floating
+    precision dtype, usually float64, when used on a floating point input. This
+    prevents accumulator overflow on smaller floating point dtypes.
 
     Parameters
     ----------
     op : function
-        A numpy accumulator function such as np.mean or np.sum.
-    x : ndarray
-        A numpy array to apply the accumulator function.
+        An array accumulator function such as np.mean or np.sum.
+    x : array
+        An array to which the accumulator function is applied.
     *args : positional arguments
         Positional arguments passed to the accumulator function after the
         input x.
@@ -1053,12 +1081,37 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     -------
     result
         The output of the accumulator function passed to this function.
+
+    Notes
+    -----
+    When using array-api support, the accumulator function will upcast floating-point
+    arguments to the maximum precision possible for the array namespace and device.
+    This is usually float64, but may be float32 for some namespace/device pairs.
     """
-    if np.issubdtype(x.dtype, np.floating) and x.dtype.itemsize < 8:
-        result = op(x, *args, **kwargs, dtype=np.float64)
-    else:
-        result = op(x, *args, **kwargs)
-    return result
+    xp, _, x_device = get_namespace_and_device(x)
+    max_float_dtype = _max_precision_float_dtype(xp, device=x_device)
+    if (
+        xp.isdtype(x.dtype, "real floating")
+        and xp.finfo(x.dtype).bits < xp.finfo(max_float_dtype).bits
+    ):
+        # We need to upcast. Some ops support this natively; others don't.
+        target_dtype = _max_precision_float_dtype(xp, device=x_device)
+
+        def convert_dtype(arr):
+            return xp.astype(arr, target_dtype, copy=False)
+
+        if "dtype" in inspect.signature(op).parameters:
+            return op(x, *args, **kwargs, dtype=target_dtype)
+        else:
+            # This op doesn't support a dtype kwarg, it seems. Rely on manual
+            # type promotion, at the cost of memory allocations.
+            # xp.matmul is the most commonly used op that lacks a dtype kwarg at
+            # the time of writing.
+            x = convert_dtype(x)
+            args = [
+                (convert_dtype(arg) if hasattr(arg, "dtype") else arg) for arg in args
+            ]
+    return op(x, *args, **kwargs)
 
 
 def _incremental_mean_and_var(
@@ -1119,25 +1172,38 @@ def _incremental_mean_and_var(
     # old = stats until now
     # new = the current increment
     # updated = the aggregated stats
+    xp, _, X_device = get_namespace_and_device(X)
+    max_float_dtype = _max_precision_float_dtype(xp, device=X_device)
+    # Promoting int -> float is not guaranteed by the array-api, so we cast manually.
+    # (Also, last_sample_count may be a python scalar)
+    last_sample_count = xp.asarray(
+        last_sample_count, dtype=max_float_dtype, device=X_device
+    )
     last_sum = last_mean * last_sample_count
-    X_nan_mask = np.isnan(X)
-    if np.any(X_nan_mask):
-        sum_op = np.nansum
+    X_nan_mask = xp.isnan(X)
+    if xp.any(X_nan_mask):
+        sum_op = xpx.nansum
     else:
-        sum_op = np.sum
+        sum_op = xp.sum
     if sample_weight is not None:
         # equivalent to np.nansum(X * sample_weight, axis=0)
         # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
         new_sum = _safe_accumulator_op(
-            np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
+            xp.matmul,
+            sample_weight,
+            xp.where(X_nan_mask, 0, X),
         )
         new_sample_count = _safe_accumulator_op(
-            np.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
+            xp.sum,
+            sample_weight[:, None] * xp.astype(~X_nan_mask, sample_weight.dtype),
+            axis=0,
         )
     else:
         new_sum = _safe_accumulator_op(sum_op, X, axis=0)
         n_samples = X.shape[0]
-        new_sample_count = n_samples - np.sum(X_nan_mask, axis=0)
+        new_sample_count = n_samples - _safe_accumulator_op(
+            sum_op, xp.astype(X_nan_mask, X.dtype), axis=0
+        )
 
     updated_sample_count = last_sample_count + new_sample_count
 
@@ -1152,11 +1218,15 @@ def _incremental_mean_and_var(
             # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
             # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
             correction = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+                xp.matmul,
+                sample_weight,
+                xp.where(X_nan_mask, 0, temp),
             )
             temp **= 2
             new_unnormalized_variance = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+                xp.matmul,
+                sample_weight,
+                xp.where(X_nan_mask, 0, temp),
             )
         else:
             correction = _safe_accumulator_op(sum_op, temp, axis=0)
@@ -1170,7 +1240,13 @@ def _incremental_mean_and_var(
 
         last_unnormalized_variance = last_variance * last_sample_count
 
-        with np.errstate(divide="ignore", invalid="ignore"):
+        # There is no errstate equivalent for warning/error management in array API
+        context_manager = (
+            np.errstate(divide="ignore", invalid="ignore")
+            if _is_numpy_namespace(xp)
+            else nullcontext()
+        )
+        with context_manager:
             last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
                 last_unnormalized_variance
@@ -1209,8 +1285,18 @@ def _deterministic_vector_sign_flip(u):
     return u
 
 
+# TODO(1.10): Remove
+@deprecated(
+    "`sklearn.utils.extmath.stable_cumsum` is deprecated in version 1.8 and "
+    "will be removed in 1.10. Use `np.cumulative_sum` with the desired dtype "
+    "directly instead."
+)
 def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     """Use high precision for cumsum and check that final value matches sum.
+
+    .. deprecated:: 1.8
+        This function is deprecated in version 1.8 and will be removed in 1.10.
+        Use `np.cumulative_sum` with the desired dtype directly instead.
 
     Warns if the final cumulative sum does not match the sum (up to the chosen
     tolerance).
@@ -1280,7 +1366,7 @@ def _nanaverage(a, weights=None):
         return xp.nan
 
     if weights is None:
-        return _nanmean(a, xp=xp)
+        return xpx.nanmean(a, xp=xp)
 
     weights = xp.asarray(weights)
     a, weights = a[~mask], weights[~mask]

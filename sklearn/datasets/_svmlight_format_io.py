@@ -20,13 +20,19 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
-from .. import __version__
-from ..utils import check_array
-from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
-from ._svmlight_format_fast import (
+from sklearn import __version__
+from sklearn.datasets._svmlight_format_fast import (
     _dump_svmlight_file,
     _load_svmlight_file,
 )
+from sklearn.utils import check_array
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils._sparse import _align_api_if_sparse
 
 
 @validate_params(
@@ -404,9 +410,9 @@ def load_svmlight_files(
     result = []
     for data, indices, indptr, y, query_values in r:
         shape = (indptr.shape[0] - 1, n_features)
-        X = sp.csr_matrix((data, indices, indptr), shape)
+        X = sp.csr_array((data, indices, indptr), shape)
         X.sort_indices()
-        result += X, y
+        result += _align_api_if_sparse(X), y
         if query_id:
             result.append(query_values)
 

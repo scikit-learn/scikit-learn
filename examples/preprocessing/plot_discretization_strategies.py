@@ -7,7 +7,7 @@ This example presents the different strategies implemented in KBinsDiscretizer:
 
 - 'uniform': The discretization is uniform in each feature, which means that
   the bin widths are constant in each dimension.
-- quantile': The discretization is done on the quantiled values, which means
+- 'quantile': The discretization is done on the quantiled values, which means
   that each bin has approximately the same number of samples.
 - 'kmeans': The discretization is based on the centroids of a KMeans clustering
   procedure.

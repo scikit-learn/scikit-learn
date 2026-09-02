@@ -1,8 +1,7 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # Basic unittests to test functioning of module's top-level
-
-
-__author__ = "Yaroslav Halchenko"
-__license__ = "BSD"
 
 
 try:

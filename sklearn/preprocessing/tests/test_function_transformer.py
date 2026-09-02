@@ -192,7 +192,7 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
     dtype = "object"
 
     data = ["one", "two", "three", "one", "one", 5, 6]
-    data = _convert_container(data, X_type, columns_name=["value"], dtype=dtype)
+    data = _convert_container(data, X_type, column_names=["value"], dtype=dtype)
 
     def func(X):
         return np.array([mapping[X[i]] for i in range(X.size)], dtype=object)
@@ -201,7 +201,7 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
         return _convert_container(
             [inverse_mapping[x] for x in X],
             X_type,
-            columns_name=["value"],
+            column_names=["value"],
             dtype=dtype,
         )
 
@@ -214,7 +214,7 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
         transformer.fit(data)
 
 
-def test_function_transformer_support_all_nummerical_dataframes_check_inverse_True():
+def test_function_transformer_support_all_numerical_dataframes_check_inverse_True():
     """Check support for dataframes with only numerical values."""
     pd = pytest.importorskip("pandas")
 
@@ -231,7 +231,7 @@ def test_function_transformer_support_all_nummerical_dataframes_check_inverse_Tr
 def test_function_transformer_with_dataframe_and_check_inverse_True():
     """Check error is raised when check_inverse=True.
 
-    Non-regresion test for gh-25261.
+    Non-regression test for gh-25261.
     """
     pd = pytest.importorskip("pandas")
     transformer = FunctionTransformer(
@@ -468,7 +468,7 @@ def test_set_output_func():
     assert isinstance(X_trans, pd.DataFrame)
     assert_array_equal(X_trans.columns, ["a", "b"])
 
-    # Warning is raised when func returns a ndarray
+    # Warning is raised when func returns an ndarray
     ft_np = FunctionTransformer(lambda x: np.asarray(x))
 
     for transform in ("pandas", "polars"):

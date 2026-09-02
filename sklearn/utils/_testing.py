@@ -37,7 +37,7 @@ from numpy.testing import (
     assert_array_less,
 )
 
-import sklearn
+from sklearn import __file__ as sklearn_path
 from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
@@ -45,18 +45,18 @@ from sklearn.utils import (
     TargetTags,
     TransformerTags,
 )
-from sklearn.utils._array_api import _check_array_api_dispatch
+from sklearn.utils._array_api import (
+    _check_array_api_dispatch,
+    _max_precision_float_dtype,
+)
 from sklearn.utils.fixes import (
     _IS_32BIT,
+    _IS_WASM,
     VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import (
-    check_array,
-    check_is_fitted,
-    check_X_y,
-)
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 __all__ = [
     "SkipTest",
@@ -359,6 +359,9 @@ try:
     skip_if_no_numpydoc = pytest.mark.skipif(
         not _is_numpydoc(),
         reason="numpydoc is required to test the docstrings",
+    )
+    skip_callback_test_if_wasm = pytest.mark.skipif(
+        _IS_WASM, reason="callback tests are skipped on WASM/Pyodide"
     )
 except ImportError:
     pass
@@ -700,7 +703,7 @@ def _check_consistency_items(
 
     Parameters
     ----------
-    items_doc : dict of dict of str
+    items_docs : dict of dict of str
         Dictionary where the key is the string type or description, value is
         a dictionary where the key is "type description" or "description"
         and the value is a list of object names with the same string type or
@@ -927,7 +930,7 @@ def assert_run_python_script_without_output(source_code, pattern=".+", timeout=6
         with open(source_file, "wb") as f:
             f.write(source_code.encode("utf-8"))
         cmd = [sys.executable, source_file]
-        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), ".."))
+        cwd = op.normpath(op.join(op.dirname(sklearn_path), ".."))
         env = os.environ.copy()
         try:
             env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
@@ -968,7 +971,7 @@ def assert_run_python_script_without_output(source_code, pattern=".+", timeout=6
 def _convert_container(
     container,
     constructor_name,
-    columns_name=None,
+    column_names=None,
     dtype=None,
     minversion=None,
     categorical_feature_names=None,
@@ -979,13 +982,13 @@ def _convert_container(
     ----------
     container : array-like
         The container to convert.
-    constructor_name : {"list", "tuple", "array", "sparse", "dataframe", \
-            "series", "index", "slice", "sparse_csr", "sparse_csc", \
+    constructor_name : {"list", "tuple", "array", "sparse", \
+            "pandas", "series", "index", "slice", "sparse_csr", "sparse_csc", \
             "sparse_csr_array", "sparse_csc_array", "pyarrow", "polars", \
             "polars_series"}
         The type of the returned container.
-    columns_name : index or array-like, default=None
-        For pandas container supporting `columns_names`, it will affect
+    column_names : index or array-like, default=None
+        For pandas/polars container supporting `column_names`, it will affect
         specific names.
     dtype : dtype, default=None
         Force the dtype of the container. Does not apply to `"slice"`
@@ -1011,9 +1014,9 @@ def _convert_container(
             return tuple(np.asarray(container, dtype=dtype).tolist())
     elif constructor_name == "array":
         return np.asarray(container, dtype=dtype)
-    elif constructor_name in ("pandas", "dataframe"):
+    elif constructor_name == "pandas":
         pd = pytest.importorskip("pandas", minversion=minversion)
-        result = pd.DataFrame(container, columns=columns_name, dtype=dtype, copy=False)
+        result = pd.DataFrame(container, columns=column_names, dtype=dtype, copy=False)
         if categorical_feature_names is not None:
             for col_name in categorical_feature_names:
                 result[col_name] = result[col_name].astype("category")
@@ -1022,9 +1025,9 @@ def _convert_container(
         pa = pytest.importorskip("pyarrow", minversion=minversion)
         array = np.asarray(container)
         array = array[:, None] if array.ndim == 1 else array
-        if columns_name is None:
-            columns_name = [f"col{i}" for i in range(array.shape[1])]
-        data = {name: array[:, i] for i, name in enumerate(columns_name)}
+        if column_names is None:
+            column_names = [f"col{i}" for i in range(array.shape[1])]
+        data = {name: array[:, i] for i, name in enumerate(column_names)}
         result = pa.Table.from_pydict(data)
         if categorical_feature_names is not None:
             for col_idx, col_name in enumerate(result.column_names):
@@ -1035,7 +1038,7 @@ def _convert_container(
         return result
     elif constructor_name == "polars":
         pl = pytest.importorskip("polars", minversion=minversion)
-        result = pl.DataFrame(container, schema=columns_name, orient="row")
+        result = pl.DataFrame(container, schema=column_names, orient="row")
         if categorical_feature_names is not None:
             for col_name in categorical_feature_names:
                 result = result.with_columns(pl.col(col_name).cast(pl.Categorical))
@@ -1085,7 +1088,7 @@ def raises(expected_exc_type, match=None, may_pass=False, err_msg=None):
 
     Parameters
     ----------
-    excepted_exc_type : Exception or list of Exception
+    expected_exc_type : Exception or list of Exception
         The exception that should be raised by the block. If a list, the block
         should raise one of the exceptions.
     match : str or list of str, default=None
@@ -1306,7 +1309,28 @@ class MinimalTransformer:
         )
 
 
-def _array_api_for_tests(array_namespace, device):
+def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
+    """Return (xp, device) for array API testing.
+
+    Parameters
+    ----------
+    array_namespace : str
+        The importable name of the array namespace module.
+    device_name : str or None, default=None
+        The device name for array allocation. Can be None for default device.
+    dtype_name : str or None, default=None
+        The name of the data type. If passed, used to skip the test if
+        dtype not supported for a specific namespace and device.
+
+    Returns
+    -------
+    xp : module
+        The module object for the requested array namespace.
+    device : object, str or None
+        The library specific device object that can be passed to
+        xp.asarray(..., device=device). This might be a string and not
+        a library specific device object.
+    """
     try:
         array_mod = importlib.import_module(array_namespace)
     except (ModuleNotFoundError, ImportError):
@@ -1323,14 +1347,26 @@ def _array_api_for_tests(array_namespace, device):
     # corresponding (compatibility wrapped) array namespace based on it.
     # This is because `cupy` is not the same as the compatibility wrapped
     # namespace of a CuPy array.
+    device = None
     xp = get_namespace(array_mod.asarray(1))
     if (
         array_namespace == "torch"
-        and device == "cuda"
+        and device_name == "cuda"
         and not xp.backends.cuda.is_built()
     ):
         raise SkipTest("PyTorch test requires cuda, which is not available")
-    elif array_namespace == "torch" and device == "mps":
+    elif array_namespace == "dpnp":  # pragma: nocover
+        dpctl = pytest.importorskip("dpctl")
+        if device_name is None:
+            available_devices = dpctl.get_devices()
+            if not available_devices:
+                raise SkipTest("Skipping dpnp test because no SYCL devices found")
+            else:
+                device = available_devices[0]
+        elif not dpctl.get_devices(device_type=device_name):
+            raise SkipTest(f"Skipping dpnp test because no {device_name} device found")
+
+    elif array_namespace == "torch" and device_name == "mps":
         if os.getenv("PYTORCH_ENABLE_MPS_FALLBACK") != "1":
             # For now we need PYTORCH_ENABLE_MPS_FALLBACK=1 for all estimators to work
             # when using the MPS device.
@@ -1343,20 +1379,49 @@ def _array_api_for_tests(array_namespace, device):
                 "MPS is not available because the current PyTorch install was not "
                 "built with MPS enabled."
             )
+    elif array_namespace == "torch" and device_name == "xpu":  # pragma: nocover
+        if not hasattr(xp, "xpu"):
+            # skip xpu testing for PyTorch <2.4
+            raise SkipTest(
+                "XPU is not available because the current PyTorch install was not "
+                "built with XPU support."
+            )
+        if not xp.xpu.is_available():
+            raise SkipTest(
+                "Skipping XPU device test because no XPU device is available"
+            )
     elif array_namespace == "cupy":  # pragma: nocover
         import cupy
 
         if cupy.cuda.runtime.getDeviceCount() == 0:
             raise SkipTest("CuPy test requires cuda, which is not available")
-    return xp
+    elif array_namespace == "array_api_strict":
+        # device_name can be a string ("CPU_DEVICE", "device1") or a Device object
+        # from yield_mixed_namespace_input_permutations
+        if device_name is not None:
+            device = xp.Device(device_name)
+
+    # Right now only array_api_strict uses a library specific device
+    # object. For all other libraries we return a string or `None`.
+    # This works because strings are accepted as arguments to
+    # xp.asarray(..., device=) in those libraries.
+    device = device_name if device is None else device
+
+    if (
+        dtype_name == "float64" and _max_precision_float_dtype(xp, device) != xp.float64
+    ):  # pragma: nocover
+        skip_msg = f"{array_namespace} does not support float64 on device {device}"
+        raise SkipTest(skip_msg)
+
+    return xp, device
 
 
 def _get_warnings_filters_info_list():
     @dataclass
     class WarningInfo:
-        action: "warnings._ActionKind"  # type: ignore[annotation-unchecked]
-        message: str = ""  # type: ignore[annotation-unchecked]
-        category: type[Warning] = Warning  # type: ignore[annotation-unchecked]
+        action: "warnings._ActionKind"
+        message: str = ""
+        category: type[Warning] = Warning
 
         def to_filterwarning_str(self):
             if self.category.__module__ == "builtins":
@@ -1416,6 +1481,16 @@ def _get_warnings_filters_info_list():
         WarningInfo(
             "ignore", message="Attribute n is deprecated", category=DeprecationWarning
         ),
+        # numpy 2.5 DeprecationWarning in joblib, see
+        # https://github.com/joblib/joblib/issues/1772
+        WarningInfo(
+            "ignore",
+            message=(
+                "Setting the shape on a NumPy array has been deprecated"
+                r" in NumPy 2.5"
+            ),
+            category=DeprecationWarning,
+        ),
         # Python 3.12 warnings from sphinx-gallery fixed in master but not
         # released yet, see
         # https://github.com/sphinx-gallery/sphinx-gallery/pull/1242
@@ -1425,12 +1500,43 @@ def _get_warnings_filters_info_list():
         WarningInfo(
             "ignore", message="Attribute s is deprecated", category=DeprecationWarning
         ),
+        # sphinx-gallery uses codecs.open(); deprecated in Python 3.14. Remove once
+        # a sphinx-gallery release includes
+        # https://github.com/sphinx-gallery/sphinx-gallery/pull/1594
+        WarningInfo(
+            "ignore",
+            message=r"codecs\.open\(\) is deprecated",
+            category=DeprecationWarning,
+        ),
         # Plotly deprecated something which we're not using, but internally it's used
         # and needs to be fixed on their side.
         # https://github.com/plotly/plotly.py/issues/4997
         WarningInfo(
             "ignore",
             message=".+scattermapbox.+deprecated.+scattermap.+instead",
+            category=DeprecationWarning,
+        ),
+        # seaborn <=0.13.2 passes the deprecated `vert` argument to matplotlib's
+        # Axes.bxp internally (e.g. via sns.boxplot).
+        # TODO: remove once a fixed seaborn release is our minimum.
+        WarningInfo(
+            "ignore",
+            # Use `.` below instead of `:` to avoid string being split incorrectly
+            message="vert. bool was deprecated in Matplotlib",
+            category=DeprecationWarning,
+        ),
+        # TODO(1.10): remove PassiveAggressive
+        WarningInfo(
+            "ignore",
+            message="Class PassiveAggressive.+is deprecated",
+            category=FutureWarning,
+        ),
+        # TODO: remove once the version where scipy has removed all the sparse matrix
+        # classes is our min version; note that scipy did not yet announce when this
+        # will happen, only that it won't be earlier than v2.2.
+        WarningInfo(
+            "ignore",
+            message=r"(?s).*All sparse matrix classes.+deprecated",
             category=DeprecationWarning,
         ),
     ]

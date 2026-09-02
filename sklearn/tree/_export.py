@@ -11,11 +11,37 @@ from numbers import Integral
 
 import numpy as np
 
-from ..base import is_classifier
-from ..utils._param_validation import HasMethods, Interval, StrOptions, validate_params
-from ..utils.validation import check_array, check_is_fitted
-from . import DecisionTreeClassifier, DecisionTreeRegressor, _criterion, _tree
-from ._reingold_tilford import Tree, buchheim
+from sklearn.base import is_classifier
+from sklearn.tree import (
+    DecisionTreeClassifier,
+    DecisionTreeRegressor,
+    _criterion,
+    _tree,
+)
+from sklearn.tree._reingold_tilford import Tree, buchheim
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.validation import check_array, check_is_fitted
+
+
+def _matplotlib_to_rgb(color):
+    """Convert any valid matplotlib color to rgb in range [0, 255].
+
+    The graphviz DOT language expects RGB colors expressed in that range.
+    """
+    from matplotlib.colors import to_rgb
+
+    return [int(channel * 255) for channel in to_rgb(color)]
+
+
+def _rgb_to_hexstring(rgb):
+    """Convert 8bit integer rgb color to html hexstring"""
+    return "#{:02x}{:02x}{:02x}".format(*rgb)  # pylint: disable=consider-using-f-string
 
 
 def _color_brew(n):
@@ -83,6 +109,7 @@ SENTINEL = Sentinel()
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "ax": "no_validation",  # delegate validation to matplotlib
         "fontsize": [Interval(Integral, 0, None, closed="left"), None],
+        "fill_colors": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -101,6 +128,7 @@ def plot_tree(
     precision=3,
     ax=None,
     fontsize=None,
+    fill_colors=None,
 ):
     """Plot a decision tree.
 
@@ -168,6 +196,13 @@ def plot_tree(
     fontsize : int, default=None
         Size of text font. If None, determined automatically to fit figure.
 
+    fill_colors : list, default=None
+        A list of length ``decision_tree.n_classes[0]`` to be used as colors
+        to fill the tree nodes. Each element can be any valid matplotlib color
+        specification (e.g. a color name, a hex string, or an RGB tuple).
+        If None, colors with equally spaced hues are generated automatically.
+        Ignored if ``filled=False``.
+
     Returns
     -------
     annotations : list of artists
@@ -187,6 +222,8 @@ def plot_tree(
     [...]
     """
 
+    check_matplotlib_support("plot_tree")
+
     check_is_fitted(decision_tree)
 
     exporter = _MPLTreeExporter(
@@ -201,6 +238,7 @@ def plot_tree(
         rounded=rounded,
         precision=precision,
         fontsize=fontsize,
+        fill_colors=fill_colors,
     )
     return exporter.export(decision_tree, ax=ax)
 
@@ -219,6 +257,7 @@ class _BaseTreeExporter:
         rounded=False,
         precision=3,
         fontsize=None,
+        fill_colors=None,
     ):
         self.max_depth = max_depth
         self.feature_names = feature_names
@@ -231,6 +270,8 @@ class _BaseTreeExporter:
         self.rounded = rounded
         self.precision = precision
         self.fontsize = fontsize
+        self.colors = {"bounds": None}
+        self.fill_colors = fill_colors
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -251,13 +292,22 @@ class _BaseTreeExporter:
         # compute the color as alpha against white
         color = [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
         # Return html color code in #RRGGBB format
-        return "#%2x%2x%2x" % tuple(color)
+        return _rgb_to_hexstring(color)
 
     def get_fill_color(self, tree, node_id):
         # Fetch appropriate color for node
         if "rgb" not in self.colors:
             # Initialize colors and bounds if required
-            self.colors["rgb"] = _color_brew(tree.n_classes[0])
+            if self.fill_colors is not None:
+                if len(self.fill_colors) != tree.n_classes[0]:
+                    raise ValueError(
+                        f"fill_colors has {len(self.fill_colors)} elements "
+                        f"but tree has {tree.n_classes[0]} classes"
+                    )
+                self.colors["rgb"] = [_matplotlib_to_rgb(c) for c in self.fill_colors]
+            else:
+                self.colors["rgb"] = _color_brew(tree.n_classes[0])
+
             if tree.n_outputs != 1:
                 # Find max and min impurities for multi-output
                 # The next line uses -max(impurity) instead of min(-impurity)
@@ -324,9 +374,7 @@ class _BaseTreeExporter:
 
         # Write impurity
         if self.impurity:
-            if isinstance(criterion, _criterion.FriedmanMSE):
-                criterion = "friedman_mse"
-            elif isinstance(criterion, _criterion.MSE) or criterion == "squared_error":
+            if isinstance(criterion, _criterion.MSE) or criterion == "squared_error":
                 criterion = "squared_error"
             elif not isinstance(criterion, str):
                 criterion = "impurity"
@@ -421,6 +469,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         special_characters=False,
         precision=3,
         fontname="helvetica",
+        fill_colors=None,
     ):
         super().__init__(
             max_depth=max_depth,
@@ -433,6 +482,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
             proportion=proportion,
             rounded=rounded,
             precision=precision,
+            fill_colors=fill_colors,
         )
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
@@ -595,6 +645,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         rounded=False,
         precision=3,
         fontsize=None,
+        fill_colors=None,
     ):
         super().__init__(
             max_depth=max_depth,
@@ -607,6 +658,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             proportion=proportion,
             rounded=rounded,
             precision=precision,
+            fill_colors=fill_colors,
         )
         self.fontsize = fontsize
 
@@ -776,6 +828,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         "special_characters": ["boolean"],
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "fontname": [str],
+        "fill_colors": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -797,6 +850,7 @@ def export_graphviz(
     special_characters=False,
     precision=3,
     fontname="helvetica",
+    fill_colors=None,
 ):
     """Export a decision tree in DOT format.
 
@@ -877,6 +931,13 @@ def export_graphviz(
     fontname : str, default='helvetica'
         Name of font used to render text.
 
+    fill_colors : list, default=None
+        A list of length ``decision_tree.n_classes[0]`` to be used as colors
+        to fill the tree nodes. Each element can be any valid matplotlib color
+        specification (e.g. a color name, a hex string, or an RGB tuple).
+        If None, colors with equally spaced hues are generated automatically.
+        Ignored if ``filled=False``.
+
     Returns
     -------
     dot_data : str
@@ -898,6 +959,8 @@ def export_graphviz(
     'digraph Tree {...
     """
     if feature_names is not None:
+        if any((not isinstance(name, str) for name in feature_names)):
+            raise ValueError("All feature names must be strings.")
         feature_names = check_array(
             feature_names, ensure_2d=False, dtype=None, ensure_min_samples=0
         )
@@ -905,6 +968,9 @@ def export_graphviz(
         class_names = check_array(
             class_names, ensure_2d=False, dtype=None, ensure_min_samples=0
         )
+
+    if fill_colors is not None:
+        check_matplotlib_support(f"export_graphviz(..., {fill_colors=})")
 
     check_is_fitted(decision_tree)
     own_file = False
@@ -934,6 +1000,7 @@ def export_graphviz(
             special_characters=special_characters,
             precision=precision,
             fontname=fontname,
+            fill_colors=fill_colors,
         )
         exporter.export(decision_tree)
 
@@ -1103,7 +1170,7 @@ def export_text(
     else:
         feature_names_ = ["feature_{}".format(i) for i in tree_.feature]
 
-    export_text.report = ""
+    report = StringIO()
 
     def _add_leaf(value, weighted_n_node_samples, class_name, indent):
         val = ""
@@ -1119,9 +1186,9 @@ def export_text(
         else:
             val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
             val = "[" + "".join(val)[:-2] + "]"
-        export_text.report += value_fmt.format(indent, "", val)
+        report.write(value_fmt.format(indent, "", val))
 
-    def print_tree_recurse(node, depth):
+    def print_tree_recurse(report, node, depth):
         indent = ("|" + (" " * spacing)) * depth
         indent = indent[:-spacing] + "-" * spacing
 
@@ -1146,13 +1213,13 @@ def export_text(
                 name = feature_names_[node]
                 threshold = tree_.threshold[node]
                 threshold = "{1:.{0}f}".format(decimals, threshold)
-                export_text.report += right_child_fmt.format(indent, name, threshold)
-                export_text.report += info_fmt_left
-                print_tree_recurse(tree_.children_left[node], depth + 1)
+                report.write(right_child_fmt.format(indent, name, threshold))
+                report.write(info_fmt_left)
+                print_tree_recurse(report, tree_.children_left[node], depth + 1)
 
-                export_text.report += left_child_fmt.format(indent, name, threshold)
-                export_text.report += info_fmt_right
-                print_tree_recurse(tree_.children_right[node], depth + 1)
+                report.write(left_child_fmt.format(indent, name, threshold))
+                report.write(info_fmt_right)
+                print_tree_recurse(report, tree_.children_right[node], depth + 1)
             else:  # leaf
                 _add_leaf(value, weighted_n_node_samples, class_name, indent)
         else:
@@ -1161,7 +1228,7 @@ def export_text(
                 _add_leaf(value, weighted_n_node_samples, class_name, indent)
             else:
                 trunc_report = "truncated branch of depth %d" % subtree_depth
-                export_text.report += truncation_fmt.format(indent, trunc_report)
+                report.write(truncation_fmt.format(indent, trunc_report))
 
-    print_tree_recurse(0, 1)
-    return export_text.report
+    print_tree_recurse(report, 0, 1)
+    return report.getvalue()

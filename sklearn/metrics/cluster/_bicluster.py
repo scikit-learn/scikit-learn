@@ -4,8 +4,8 @@
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
-from ...utils._param_validation import StrOptions, validate_params
-from ...utils.validation import check_array, check_consistent_length
+from sklearn.utils._param_validation import StrOptions, validate_params
+from sklearn.utils.validation import check_array, check_consistent_length
 
 __all__ = ["consensus_score"]
 

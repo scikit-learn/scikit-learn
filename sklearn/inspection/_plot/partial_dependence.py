@@ -9,19 +9,14 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
-from ...base import is_regressor
-from ...utils import (
-    Bunch,
-    _safe_indexing,
-    check_array,
-    check_random_state,
-)
-from ...utils._encode import _unique
-from ...utils._optional_dependencies import check_matplotlib_support
-from ...utils._plotting import _validate_style_kwargs
-from ...utils.parallel import Parallel, delayed
-from .. import partial_dependence
-from .._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.base import is_regressor
+from sklearn.inspection import partial_dependence
+from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.utils import Bunch, _safe_indexing, check_array, check_random_state
+from sklearn.utils._encode import _unique
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._plotting import _validate_style_kwargs
+from sklearn.utils.parallel import Parallel, delayed
 
 
 class PartialDependenceDisplay:
@@ -38,7 +33,7 @@ class PartialDependenceDisplay:
     :ref:`Inspection Guide <partial_dependence>`.
 
     For an example on how to use this class, see the following example:
-    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`.
+    :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence_visualization_api.py`.
 
     .. versionadded:: 0.22
 

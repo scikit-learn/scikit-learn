@@ -146,7 +146,7 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     assert len(right_right_node.sample_indices) > 0.2 * n_samples
     assert len(right_right_node.sample_indices) < 0.4 * n_samples
 
-    # All the leafs are pure, it is not possible to split any further:
+    # All the leaves are pure, it is not possible to split any further:
     assert not grower.splittable_nodes
 
     grower._apply_shrinkage()

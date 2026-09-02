@@ -1,13 +1,13 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from .validation import check_random_state
+from sklearn.utils.validation import check_random_state
 
 
 def _init_arpack_v0(size, random_state):
     """Initialize the starting vector for iteration in ARPACK functions.
 
-    Initialize a ndarray with values sampled from the uniform distribution on
+    Initialize an ndarray with values sampled from the uniform distribution on
     [-1, 1]. This initialization model has been chosen to be consistent with
     the ARPACK one as another initialization can lead to convergence issues.
 

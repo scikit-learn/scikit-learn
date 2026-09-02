@@ -183,7 +183,7 @@ from sklearn.discriminant_analysis import (
 fig, axs = plt.subplots(nrows=3, ncols=2, sharex="row", sharey="row", figsize=(8, 12))
 
 lda = LinearDiscriminantAnalysis(solver="svd", store_covariance=True)
-qda = QuadraticDiscriminantAnalysis(store_covariance=True)
+qda = QuadraticDiscriminantAnalysis(solver="svd", store_covariance=True)
 
 for ax_row, X, y in zip(
     axs,

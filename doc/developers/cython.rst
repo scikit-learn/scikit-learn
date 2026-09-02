@@ -66,7 +66,7 @@ Tips to ease development
       # This generates `source.c` as if you had recompiled scikit-learn entirely.
       cythonX --annotate source.pyx
 
-* Using the ``--annotate`` option with this flag allows generating a HTML report of code annotation.
+* Using the ``--annotate`` option with this flag allows generating an HTML report of code annotation.
   This report indicates interactions with the CPython interpreter on a line-by-line basis.
   Interactions with the CPython interpreter must be avoided as much as possible in
   the computationally intensive sections of the algorithms.
@@ -74,7 +74,7 @@ Tips to ease development
 
   .. code-block::
 
-      # This generates a HTML report (`source.html`) for `source.c`.
+      # This generates an HTML report (`source.html`) for `source.c`.
       cythonX --annotate source.pyx
 
 Tips for performance
@@ -146,7 +146,7 @@ Types
 Cython code requires to use explicit types. This is one of the reasons you get a
 performance boost. In order to avoid code duplication, we have a central place
 for the most used types in
-`sklearn/utils/_typedefs.pyd <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_typedefs.pyd>`_.
+`sklearn/utils/_typedefs.pxd <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_typedefs.pxd>`_.
 Ideally you start by having a look there and `cimport` types you need, for example
 
 .. code-block:: cython

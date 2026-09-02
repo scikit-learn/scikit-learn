@@ -30,6 +30,10 @@ labeled points and a large amount of unlabeled points.
    <https://en.wikipedia.org/wiki/Semi-supervised_learning#Assumptions>`_
    for more details.
 
+.. rubric:: Examples
+
+* :ref:`sphx_glr_auto_examples_semi_supervised_plot_semi_supervised_newsgroups.py`
+
 .. _self_training:
 
 Self Training

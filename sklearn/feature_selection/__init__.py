@@ -7,12 +7,15 @@ algorithm.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._base import SelectorMixin
-from ._from_model import SelectFromModel
-from ._mutual_info import mutual_info_classif, mutual_info_regression
-from ._rfe import RFE, RFECV
-from ._sequential import SequentialFeatureSelector
-from ._univariate_selection import (
+from sklearn.feature_selection._base import SelectorMixin
+from sklearn.feature_selection._from_model import SelectFromModel
+from sklearn.feature_selection._mutual_info import (
+    mutual_info_classif,
+    mutual_info_regression,
+)
+from sklearn.feature_selection._rfe import RFE, RFECV
+from sklearn.feature_selection._sequential import SequentialFeatureSelector
+from sklearn.feature_selection._univariate_selection import (
     GenericUnivariateSelect,
     SelectFdr,
     SelectFpr,
@@ -25,7 +28,7 @@ from ._univariate_selection import (
     f_regression,
     r_regression,
 )
-from ._variance_threshold import VarianceThreshold
+from sklearn.feature_selection._variance_threshold import VarianceThreshold
 
 __all__ = [
     "RFE",

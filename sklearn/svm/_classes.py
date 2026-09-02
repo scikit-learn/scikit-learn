@@ -5,12 +5,21 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
-from ..linear_model._base import LinearClassifierMixin, LinearModel, SparseCoefMixin
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _num_samples, validate_data
-from ._base import BaseLibSVM, BaseSVC, _fit_liblinear, _get_liblinear_solver_type
+from sklearn.base import BaseEstimator, OutlierMixin, RegressorMixin, _fit_context
+from sklearn.linear_model._base import (
+    LinearClassifierMixin,
+    LinearModel,
+    SparseCoefMixin,
+)
+from sklearn.svm._base import (
+    BaseLibSVM,
+    BaseSVC,
+    _fit_liblinear,
+    _get_liblinear_solver_type,
+)
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.validation import _num_samples, validate_data
 
 
 def _validate_dual_parameter(dual, loss, penalty, multi_class, X):
@@ -681,6 +690,11 @@ class SVC(BaseSVC):
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
+        ..deprecated:: 1.9
+          The `probability` parameter is deprecated and will be removed in 1.11.
+          Use `CalibratedClassifierCV(SVC(), ensemble=False)` instead of
+          `SVC(probability=True)`.
+
     tol : float, default=1e-3
         Tolerance for stopping criterion.
 
@@ -747,14 +761,15 @@ class SVC(BaseSVC):
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
-    coef_ : ndarray of shape (n_classes * (n_classes - 1) / 2, n_features)
+    coef_ : ndarray or sparse array/matrix \
+            of shape (n_classes * (n_classes - 1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is a readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (n_classes -1, n_SV)
+    dual_coef_ : ndarray or sparse array/matrix of shape (n_classes -1, n_SV)
         Dual coefficients of the support vector in the decision
         function (see :ref:`sgd_mathematical_formulation`), multiplied by
         their targets.
@@ -762,6 +777,7 @@ class SVC(BaseSVC):
         The layout of the coefficients in the multiclass case is somewhat
         non-trivial. See the :ref:`multi-class section of the User Guide
         <svm_multi_class>` for details.
+        If `X` is sparse, these will also be sparse.
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
@@ -790,22 +806,30 @@ class SVC(BaseSVC):
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
+    support_vectors_ : ndarray or sparse array/matrix of shape (n_SV, n_features)
         Support vectors. An empty array if kernel is precomputed.
+        If `X` is sparse, these will also be sparse.
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
     probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
-    probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
         If `probability=False`, it's an empty array. Platt scaling uses the
         logistic function
+
+    probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
+        If `probability=True`, it corresponds to the parameters learned in
+        Platt scaling. Platt scaling uses the logistic function
         ``1 / (1 + exp(decision_value * probA_ + probB_))``
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
+
+        .. deprecated:: 1.9
+            The attributes `probA_` and `probB_` are deprecated in version 1.9 and will
+            be removed in 1.11.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -858,7 +882,7 @@ class SVC(BaseSVC):
         gamma="scale",
         coef0=0.0,
         shrinking=True,
-        probability=False,
+        probability="deprecated",
         tol=1e-3,
         cache_size=200,
         class_weight=None,
@@ -942,6 +966,11 @@ class NuSVC(BaseSVC):
         5-fold cross-validation, and `predict_proba` may be inconsistent with
         `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
+        ..deprecated:: 1.9
+          The `probability` parameter is deprecated and will be removed in version 1.11.
+          Use `CalibratedClassifierCV(NuSVC(), ensemble=False)`
+          instead of `NuSVC(probability=True)`.
+
     tol : float, default=1e-3
         Tolerance for stopping criterion.
 
@@ -1006,14 +1035,15 @@ class NuSVC(BaseSVC):
     classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
-    coef_ : ndarray of shape (n_classes * (n_classes -1) / 2, n_features)
+    coef_ : ndarray or sparse array/matrix \
+            of shape (n_classes * (n_classes -1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (n_classes - 1, n_SV)
+    dual_coef_ : ndarray or sparse array/matrix of shape (n_classes - 1, n_SV)
         Dual coefficients of the support vector in the decision
         function (see :ref:`sgd_mathematical_formulation`), multiplied by
         their targets.
@@ -1021,6 +1051,7 @@ class NuSVC(BaseSVC):
         The layout of the coefficients in the multiclass case is somewhat
         non-trivial. See the :ref:`multi-class section of the User Guide
         <svm_multi_class>` for details.
+        If `X` is sparse, these will also be sparse.
 
     fit_status_ : int
         0 if correctly fitted, 1 if the algorithm did not converge.
@@ -1049,8 +1080,8 @@ class NuSVC(BaseSVC):
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+    support_vectors_ : ndarray or sparse array/matrix of shape (n_SV, n_features)
+        Support vectors. If `X` is sparse, these will also be sparse.
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -1059,6 +1090,7 @@ class NuSVC(BaseSVC):
         0 if correctly fitted, 1 if the algorithm did not converge.
 
     probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
+        If `probability=True`, parameters learned in Platt scaling.
 
     probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
@@ -1069,6 +1101,10 @@ class NuSVC(BaseSVC):
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
+
+        .. deprecated:: 1.9
+            The attributes `probA_` and `probB_` are deprecated in version 1.9 and will
+            be removed in 1.11.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1121,7 +1157,7 @@ class NuSVC(BaseSVC):
         gamma="scale",
         coef0=0.0,
         shrinking=True,
-        probability=False,
+        probability="deprecated",
         tol=1e-3,
         cache_size=200,
         class_weight=None,
@@ -1228,15 +1264,16 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features)
+    coef_ : ndarray or sparse array/matrix of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (1, n_SV)
+    dual_coef_ : ndarray or sparse array/matrix of shape (1, n_SV)
         Coefficients of the support vector in the decision function.
+        If `X` is sparse, these will also be sparse.
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
@@ -1269,8 +1306,8 @@ class SVR(RegressorMixin, BaseLibSVM):
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+    support_vectors_ : ndarray or sparse array/matrix of shape (n_SV, n_features)
+        Support vectors. If `X` is sparse, these will also be sparse.
 
     See Also
     --------
@@ -1415,15 +1452,16 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features)
+    coef_ : ndarray or sparse array/matrix of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (1, n_SV)
+    dual_coef_ : ndarray or sparse array/matrix of shape (1, n_SV)
         Coefficients of the support vector in the decision function.
+        If `X` is sparse, these will also be sparse.
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
@@ -1456,8 +1494,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
+    support_vectors_ : ndarray or sparse array/matrix of shape (n_SV, n_features)
+        Support vectors. If `X` is sparse, these will also be sparse.
 
     See Also
     --------
@@ -1594,15 +1632,16 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features)
+    coef_ : ndarray or sparse array/matrix of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (1, n_SV)
+    dual_coef_ : ndarray or sparse array/matrix of shape (1, n_SV)
         Coefficients of the support vectors in the decision function.
+        If `X` is sparse, these will also be sparse.
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
@@ -1643,8 +1682,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
-    support_vectors_ : ndarray of shape (n_SV, n_features)
+    support_vectors_ : ndarray or sparse array/matrix of shape (n_SV, n_features)
         Support vectors.
+        If `X` is sparse, these will also be sparse.
 
     See Also
     --------
