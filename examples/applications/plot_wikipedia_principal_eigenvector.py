@@ -3,6 +3,8 @@
 Wikipedia principal eigenvector
 ===============================
 
+TODO remove
+
 A classical way to assert the relative importance of vertices in a
 graph is to compute the principal eigenvector of the adjacency matrix
 so as to assign to each vertex the values of the components of the first
