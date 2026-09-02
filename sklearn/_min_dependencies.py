@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import argparse
-from collections import defaultdict
 
 # scipy and cython should by in sync with pyproject.toml
 NUMPY_MIN_VERSION = "1.24.1"
@@ -16,9 +15,10 @@ PYTEST_MIN_VERSION = "7.1.2"
 CYTHON_MIN_VERSION = "3.1.2"
 
 
-# 'build' and 'install' is included to have structured metadata for CI.
-# It will NOT be included in setup's extras_require
-# The values are (version_spec, comma separated tags)
+# The values are (version_spec, comma separated tags). The tags are used to
+# generate the minimum dependency table in the docs and to cross-check
+# pyproject.toml's build and install dependencies in
+# sklearn/tests/test_min_dependencies_readme.py.
 dependent_packages = {
     "numpy": (NUMPY_MIN_VERSION, "build, install"),
     "scipy": (SCIPY_MIN_VERSION, "build, install"),
@@ -35,8 +35,13 @@ dependent_packages = {
     "memory_profiler": ("0.57.0", "benchmark, docs"),
     "pytest": (PYTEST_MIN_VERSION, "tests"),
     "pytest-cov": ("2.9.0", "tests"),
+    # NOTE if you update ruff, pyrefly, cython-lint, sphinx-lint or codespell
+    # here, remember to update .pre-commit-config.yaml as well
     "ruff": ("0.12.2", "tests"),
-    "mypy": ("1.15", "tests"),
+    "pyrefly": ("1.2.0", "tests"),
+    "cython-lint": ("0.21", "tests"),
+    "sphinx-lint": ("1.0.2", "tests"),
+    "codespell": ("2.4.1", "tests"),
     "pyamg": ("5.0.0", "tests"),
     "polars": ("0.20.30", "docs, tests"),
     "pyarrow": ("13.0.0", "tests"),
@@ -49,7 +54,6 @@ dependent_packages = {
     "sphinx-prompt": ("1.4.0", "docs"),
     "sphinxext-opengraph": ("0.9.1", "docs"),
     "plotly": ("5.22.0", "docs, examples"),
-    "sphinxcontrib-sass": ("0.3.4", "docs"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
     "sphinx-design": ("0.6.0", "docs"),
     "pydata-sphinx-theme": ("0.15.3", "docs"),
@@ -58,13 +62,6 @@ dependent_packages = {
     # from time to time)
     "conda-lock": ("3.0.1", "maintenance"),
 }
-
-
-# create inverse mapping for setuptools
-tag_to_packages: dict = defaultdict(list)
-for package, (min_version, extras) in dependent_packages.items():
-    for extra in extras.split(", "):
-        tag_to_packages[extra].append("{}>={}".format(package, min_version))
 
 
 # Used by CI to get the min dependencies
