@@ -182,7 +182,7 @@ class _IgnoreWarnings:
 # these types are allow-listed for automatic conversion
 # with `np.asanyarray` in the assertion functions
 # TODO: it may be more robust to replace some of the
-# string conversion based on conditional type inrospection
+# string comparison with conditional type introspection
 # when optional dependencies are installed.
 _AUTOCONVERT_TYPE_NAMES = {
     "ArrowStringArray",
