@@ -32,22 +32,29 @@ from sklearn.utils.validation import validate_data
 def _ledoit_wolf(X, *, assume_centered, block_size, sample_weight=None):
     """Estimate the shrunk Ledoit-Wolf covariance matrix."""
     if sample_weight is None:
-        sample_weight = np.ones( X.shape[0] )
+        sample_weight = np.ones(X.shape[0])
 
     xp, _ = get_namespace(X)
 
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
-            X = X - xp.sum( np.multiply( sample_weight.reshape(-1,1), X ), axis=0) / float( sample_weight.sum() )
+            X = X - xp.sum( 
+                np.multiply(sample_weight.reshape(-1,1), X), axis=0
+            ) / float(sample_weight.sum())
         return xp.reshape(xp.mean(X**2), (1, 1)), 0.0
     n_features = X.shape[1]
 
     # get Ledoit-Wolf shrinkage
     shrinkage = ledoit_wolf_shrinkage(
-        X, assume_centered=assume_centered, block_size=block_size, sample_weight=sample_weight
+        X,
+        assume_centered=assume_centered,
+        block_size=block_size,
+        sample_weight=sample_weight,
     )
-    emp_cov = empirical_covariance(X, assume_centered=assume_centered, sample_weight=sample_weight)
+    emp_cov = empirical_covariance(
+        X, assume_centered=assume_centered, sample_weight=sample_weight
+    )
     mu = float(xp.linalg.trace(emp_cov)) / n_features
     shrunk_cov = (1.0 - shrinkage) * emp_cov
     _add_to_diagonal(shrunk_cov, shrinkage * mu, xp)
@@ -308,7 +315,9 @@ class ShrunkCovariance(EmpiricalCovariance):
     },
     prefer_skip_nested_validation=True,
 )
-def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000, sample_weight=None):
+def ledoit_wolf_shrinkage(
+    X, assume_centered=False, block_size=1000, sample_weight=None
+):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
@@ -356,7 +365,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000, sample_weig
     np.float64(0.23)
     """
     if sample_weight is None:
-        sample_weight = np.ones( X.shape[0] )
+        sample_weight = np.ones(X.shape[0])
 
     X = check_array(X)
     xp, _ = get_namespace(X)
@@ -376,15 +385,17 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000, sample_weig
 
     # optionally center data
     if not assume_centered:
-        X = X - xp.sum( np.multiply( sample_weight.reshape(-1,1), X ), axis=0)
+        X = X - xp.sum(np.multiply(sample_weight.reshape(-1,1), X), axis=0)
 
     X2 = X**2
-    emp_cov_trace = xp.sum( np.multiply( sample_weight.reshape(-1,1), X2 ), axis=0) / n_eff
+    emp_cov_trace = (
+        xp.sum(np.multiply(sample_weight.reshape(-1,1), X2), axis=0) / n_eff
+    )
     mu = float(xp.sum(emp_cov_trace)) / n_features
     
     # set X to include sqrt( weights ) for calculations below
-    X = np.multiply( np.sqrt( sample_weight ).reshape(-1,1), X )
-    X2 = np.multiply( np.sqrt( sample_weight ).reshape(-1,1), X2 )
+    X = np.multiply(np.sqrt(sample_weight).reshape(-1,1), X)
+    X2 = np.multiply(np.sqrt(sample_weight).reshape(-1,1), X2)
 
     # TODO: gh-33986 discusses the idea of automatically determining the best
     # chunk size instead of having this branching.
@@ -645,14 +656,19 @@ class LedoitWolf(EmpiricalCovariance):
         X = validate_data(self, X, dtype=supported_float_dtypes(xp, device))
 
         if sample_weight is None:
-            sample_weight = np.ones( X.shape[0] )
+            sample_weight = np.ones(X.shape[0])
 
         if self.assume_centered:
             self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device)
         else:
-            self.location_ = xp.sum( np.multiply( sample_weight.reshape(-1,1), X ), axis=0) / float( sample_weight.sum() )
+            self.location_ = xp.sum( 
+                np.multiply(sample_weight.reshape(-1,1), X), axis=0
+            ) / float(sample_weight.sum())
         covariance, shrinkage = _ledoit_wolf(
-            X - self.location_, assume_centered=True, block_size=self.block_size, sample_weight=sample_weight
+            X - self.location_,
+            assume_centered=True,
+            block_size=self.block_size,
+            sample_weight=sample_weight,
         )
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)

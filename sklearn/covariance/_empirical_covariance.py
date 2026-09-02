@@ -116,22 +116,22 @@ def empirical_covariance(X, *, assume_centered=False, sample_weight=None):
             "Only one sample available. You may want to reshape your data array"
         )
     if sample_weight is None:
-        sample_weight = np.ones( X.shape[0] )
+        sample_weight = np.ones(X.shape[0])
 
-    if len( sample_weight.shape ) > 1:
+    if len(sample_weight.shape) > 1:
         if sample_weight.shape[1] != 1:
             raise ValueError("weights can only be 1-D")
         else:
             sample_weight = sample_weight.flatten()
 
     if assume_centered:
-        X = np.multiply( np.sqrt( sample_weight ).reshape(-1,1), X )
+        X = np.multiply(np.sqrt(sample_weight).reshape(-1,1), X)
         covariance = X.T @ X / sample_weight.sum()
     elif _is_numpy_namespace(xp):
         # Preserve numpy path, because `np.cov` always returns float64
         # and callers like GraphicalLasso and GraphicalLassoCV rely on
         # this behavior.
-        covariance = np.cov(X.T, bias=1, aweights=sample_weight/sample_weight.sum())
+        covariance = np.cov(X.T, bias=1, aweights=sample_weight / sample_weight.sum())
     else:
         # need to add weights to here
         covariance = _cov(X, xp=xp)
