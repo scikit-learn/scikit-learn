@@ -337,7 +337,7 @@ def ledoit_wolf_shrinkage(
         Size of blocks into which the covariance matrix will be split.
 
     sample_weight : array-like of shape (n_samples,)
-        Non-negative weights for weighing the training data
+        Non-negative weights for weighing the training data.
 
     Returns
     -------
@@ -643,7 +643,7 @@ class LedoitWolf(EmpiricalCovariance):
         y : Ignored
             Not used, present for API consistency by convention.
         sample_weight : array-like of shape (n_samples,)
-            Non-negative weights for weighing the training data
+            Non-negative weights for weighing the training data.
 
         Returns
         -------
