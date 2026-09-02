@@ -29,9 +29,9 @@ from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.validation import validate_data
 
 
-def _ledoit_wolf(X, *, assume_centered, block_size, sample_weight=None):
+def _ledoit_wolf(X, *, assume_centered, block_size, sample_weight=np.ones(0)):
     """Estimate the shrunk Ledoit-Wolf covariance matrix."""
-    if sample_weight is None:
+    if not len(sample_weight):
         sample_weight = np.ones(X.shape[0])
 
     xp, _ = get_namespace(X)
@@ -316,7 +316,7 @@ class ShrunkCovariance(EmpiricalCovariance):
     prefer_skip_nested_validation=True,
 )
 def ledoit_wolf_shrinkage(
-    X, assume_centered=False, block_size=1000, sample_weight=None
+    X, assume_centered=False, block_size=1000, sample_weight=np.ones(0)
 ):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
@@ -364,7 +364,7 @@ def ledoit_wolf_shrinkage(
     >>> shrinkage_coefficient
     np.float64(0.23)
     """
-    if sample_weight is None:
+    if not len(sample_weight):
         sample_weight = np.ones(X.shape[0])
 
     X = check_array(X)
@@ -632,7 +632,7 @@ class LedoitWolf(EmpiricalCovariance):
         return tags
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None, *, sample_weight=None):
+    def fit(self, X, y=None, *, sample_weight=np.ones(0)):
         """Fit the Ledoit-Wolf shrunk covariance model to X.
 
         Parameters
@@ -655,7 +655,7 @@ class LedoitWolf(EmpiricalCovariance):
         xp, _, device = get_namespace_and_device(X)
         X = validate_data(self, X, dtype=supported_float_dtypes(xp, device))
 
-        if sample_weight is None:
+        if not len(sample_weight):
             sample_weight = np.ones(X.shape[0])
 
         if self.assume_centered:

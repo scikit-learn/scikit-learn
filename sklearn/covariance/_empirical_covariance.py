@@ -73,7 +73,7 @@ def log_likelihood(emp_cov, precision):
     },
     prefer_skip_nested_validation=True,
 )
-def empirical_covariance(X, *, assume_centered=False, sample_weight=None):
+def empirical_covariance(X, *, assume_centered=False, sample_weight=np.ones(0)):
     """Compute the Maximum likelihood covariance estimator.
 
     Parameters
@@ -115,7 +115,7 @@ def empirical_covariance(X, *, assume_centered=False, sample_weight=None):
         warnings.warn(
             "Only one sample available. You may want to reshape your data array"
         )
-    if sample_weight is None:
+    if not len(sample_weight):
         sample_weight = np.ones(X.shape[0])
 
     if len(sample_weight.shape) > 1:
