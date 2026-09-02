@@ -2,7 +2,6 @@ from math import ceil
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn.base import clone
 from sklearn.calibration import CalibratedClassifierCV
@@ -17,6 +16,7 @@ from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.svm import SVC
 from sklearn.tests.test_pipeline import SimpleEstimator
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils._testing import assert_array_equal
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause

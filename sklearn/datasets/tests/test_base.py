@@ -40,6 +40,7 @@ from sklearn.datasets._base import (
 from sklearn.datasets.tests.test_common import check_as_frame
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 
 class _DummyPath:
@@ -178,7 +179,7 @@ def test_load_csv_data(
     assert actual_data.shape[0] == expected_n_samples
     assert actual_data.shape[1] == expected_n_features
     assert actual_target.shape[0] == expected_n_samples
-    np.testing.assert_array_equal(actual_target_names, expected_target_names)
+    assert_array_equal(actual_target_names, expected_target_names)
 
 
 def test_load_csv_data_with_descr():
@@ -192,9 +193,9 @@ def test_load_csv_data_with_descr():
     assert len(res_with_descr) == 4
     assert len(res_without_descr) == 3
 
-    np.testing.assert_array_equal(res_with_descr[0], res_without_descr[0])
-    np.testing.assert_array_equal(res_with_descr[1], res_without_descr[1])
-    np.testing.assert_array_equal(res_with_descr[2], res_without_descr[2])
+    assert_array_equal(res_with_descr[0], res_without_descr[0])
+    assert_array_equal(res_with_descr[1], res_without_descr[1])
+    assert_array_equal(res_with_descr[2], res_without_descr[2])
 
     assert res_with_descr[-1].startswith(".. _iris_dataset:")
 
@@ -222,7 +223,7 @@ def test_load_gzip_compressed_csv_data_with_descr():
         descr_file_name=descr_file_name,
     )
 
-    np.testing.assert_array_equal(actual_data, expected_data)
+    assert_array_equal(actual_data, expected_data)
     assert descr.startswith(".. _diabetes_dataset:")
 
 
@@ -262,7 +263,7 @@ def test_load_diabetes_raw():
 
     diabetes_default = load_diabetes()
 
-    np.testing.assert_allclose(
+    assert_allclose(
         scale(diabetes_raw.data) / (442**0.5), diabetes_default.data, atol=1e-04
     )
 

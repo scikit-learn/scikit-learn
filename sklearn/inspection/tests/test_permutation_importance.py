@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 from joblib import parallel_backend
-from numpy.testing import assert_allclose
 
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (
@@ -23,7 +22,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder, StandardScaler, scale
-from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import _convert_container, assert_allclose
 from sklearn.utils.estimator_checks import _NotAnArray
 
 

@@ -3,7 +3,6 @@ import warnings
 import numpy as np
 import pytest
 import scipy.sparse as sp
-from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
 from sklearn.base import config_context
 from sklearn.metrics.cluster import (
@@ -33,7 +32,10 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
+    assert_allclose,
     assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
     skip_if_array_api_compat_not_configured,
 )
 
