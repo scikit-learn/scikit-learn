@@ -19,7 +19,9 @@ from sklearn.utils._array_api import (
 from sklearn.utils.multiclass import type_of_target, unique_labels
 
 
-def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight=None):
+def _average_binary_score(
+    binary_metric, y_true_encoded, y_score, average, sample_weight=None
+):
     """Average a binary metric for multilabel classification.
 
     Parameters
@@ -27,7 +29,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
     binary_metric : callable, returns shape [n_classes]
         The binary metric function to use.
 
-    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+    y_true_encoded : array, shape = [n_samples] or [n_samples, n_classes]
         True binary labels in binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
@@ -68,15 +70,15 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
     if average not in average_options:
         raise ValueError("average has to be one of {0}".format(average_options))
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true_encoded)
     if y_type not in ("binary", "multilabel-indicator"):
         raise ValueError("{0} format is not supported".format(y_type))
 
     if y_type == "binary":
-        return binary_metric(y_true, y_score, sample_weight=sample_weight)
+        return binary_metric(y_true_encoded, y_score, sample_weight=sample_weight)
 
-    check_consistent_length(y_true, y_score, sample_weight)
-    y_true = check_array(y_true)
+    check_consistent_length(y_true_encoded, y_score, sample_weight)
+    y_true = check_array(y_true_encoded)
     y_score = check_array(y_score)
     y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
@@ -139,7 +141,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         return score
 
 
-def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro"):
+def _average_multiclass_ovo_score(
+    binary_metric, y_true_encoded, y_score, average="macro"
+):
     """Average one-versus-one scores for multiclass classification.
 
     Uses the binary metric for one-vs-one multiclass classification,
@@ -179,10 +183,10 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
     score : float
         Average of the pairwise binary metric scores.
     """
-    check_consistent_length(y_true, y_score)
+    check_consistent_length(y_true_encoded, y_score)
 
     xp, _, device = get_namespace_and_device(y_score)
-    y_true = move_to(y_true, xp=xp, device=device)
+    y_true = move_to(y_true_encoded, xp=xp, device=device)
 
     y_true_unique = unique_labels(y_true)
     n_classes = y_true_unique.shape[0]
