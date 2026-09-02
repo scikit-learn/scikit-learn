@@ -1,0 +1,4 @@
+- Single-linkage clustering (including :class:`cluster.AgglomerativeClustering`
+  with ``linkage="single"`` and HDBSCAN) is now faster on large datasets by
+  restoring path compression in the internal ``UnionFind`` structure.
+  By :user:`Shamik Basu <ShamikOfficial>`.
