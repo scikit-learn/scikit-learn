@@ -705,7 +705,9 @@ def test_shuffle_dont_convert_to_array(csc_container):
     assert c_s == [3, 2, 1]
     assert type(c_s) == list
 
-    assert_array_equal(d_s, np.array([["c", 2], ["b", 1], ["a", 0]], dtype=object))
+    assert_array_equal(
+        np.asarray(d_s), np.array([["c", 2], ["b", 1], ["a", 0]], dtype=object)
+    )
     assert type(d_s) == MockDataFrame
 
     assert_array_equal(e_s.toarray(), np.array([[4, 5], [2, 3], [0, 1]]))
