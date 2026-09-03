@@ -70,6 +70,7 @@ def log_likelihood(emp_cov, precision):
     {
         "X": ["array-like"],
         "assume_centered": ["boolean"],
+        "sample_weight": ["array-like"],
     },
     prefer_skip_nested_validation=True,
 )
