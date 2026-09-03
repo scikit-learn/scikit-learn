@@ -743,6 +743,9 @@ def roc_auc_score(
         )
         if isinstance(multiclass_roc_auc_score, float):
             return multiclass_roc_auc_score
+        # Convert 0d-array to native Python scalar
+        if multiclass_roc_auc_score.ndim == 0:
+            return float(multiclass_roc_auc_score)
         return move_to(multiclass_roc_auc_score, xp=xp, device=device)
     elif y_type == "binary":
         xp_y_true, _ = get_namespace(y_true)

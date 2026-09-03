@@ -184,7 +184,7 @@ def _average_multiclass_ovo_score(
 
     Returns
     -------
-    score : float
+    score : array-like
         Average of the pairwise binary metric scores.
     """
     check_consistent_length(y_true_encoded, y_score)
