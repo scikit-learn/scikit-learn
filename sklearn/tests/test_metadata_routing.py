@@ -265,13 +265,13 @@ def test_custom_consumers_return_declared_metadata_requests():
 
     class CustomRequestConsumer(MetadataRequester):
         # consumer with custom class-level requests that in- and exclude certain params
-        __metadata_request__fit = {"my_param": True}
+        __metadata_request__fit = {"metadata1": True}
 
-        def fit(self, metadata1):
+        def fit(self, X, y, metadata1, metadata2):
             return self  # pragma: no cover
 
-        def score(self, y_true, y_pred, metadata2):
-            return metadata2 + 100  # pragma: no cover
+        def score(self, y_true, y_pred, metadata1):
+            return np.sum(y_true / y_pred) / len(y_true)  # pragma: no cover
 
         def __sklearn_build_declared_metadata_request__(self):
             requests = MetadataRequest(owner=self)
@@ -296,18 +296,18 @@ def test_custom_consumers_return_declared_metadata_requests():
 
     consumer = CustomRequestConsumer()
     assert consumer.__sklearn_build_declared_metadata_request__()._serialize() == {
-        "fit": {"metadata1": None, "my_param": True},
-        "score": {"metadata2": None},
+        "fit": {"metadata1": True, "metadata2": None},
+        "score": {"metadata1": None},
     }
 
     class CustomMethodConsumer(MetadataRequester):
         # consumer that can route metadata to another method
 
-        def fit(self, metadata1, metadata2):
+        def fit(self, X, y, metadata1, metadata2):
             self.consuming_method(metadata1)  # pragma: no cover
             return self  # pragma: no cover
 
-        def consuming_method(self, y, metadata1):
+        def consuming_method(self, X, y, metadata1):
             return self  # pragma: no cover
 
         def __sklearn_build_declared_metadata_request__(self):
@@ -341,7 +341,7 @@ def test_custom_consumers_return_declared_metadata_requests():
         def __init__(self, func):
             self.func = func
 
-        def fit(self, metadata1, metadata2):
+        def fit(self, X, y, metadata1, metadata2):
             self.func(metadata1)  # pragma: no cover
             return self  # pragma: no cover
 

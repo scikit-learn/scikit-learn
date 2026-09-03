@@ -615,20 +615,30 @@ from sklearn.utils.metadata_routing import (
 # Use `get_declared_metadata_request_values` with `ignore_params` to exclude
 # parameters from class-level metadata requests. Here `y_true` and `y_pred`
 # should not be treated as metadata.
+# Note that __metadata_request__* class attributes override requests present
 
 
 class CustomRequestConsumer(MetadataRequester):
-    __metadata_request__fit = {"my_param": True}
+    __metadata_request__fit = {"metadata1": True}
+    # Note that a declaration like `__metadata_request__score = {"y_true": True}` would
+    # override the requests derived by signature sniffing, even when `y_true` is in
+    # `ignore_params`.
 
-    def fit(self, metadata1):
+    def fit(self, X, y, metadata1, metadata2):
         return self
 
-    def score(self, y_true, y_pred, metadata2):
-        return metadata2 + 100
+    def score(self, y_true, y_pred, metadata1):
+        # here we deviate from the usual (X, y) inputs and chose `y_true` and `y_pred`
+        # as inputs instead
+        return np.sum(y_true / y_pred) / len(y_true)
+
+    # we cannot discover metadata in this method, but we should?
+    def my_method(self, metadata1, y_true, y_pred):
+        return np.sum(y_true / y_pred) / len(y_true)
 
     def __sklearn_build_declared_metadata_request__(self):
         requests = MetadataRequest(owner=self)
-        for method_name in ["fit", "score", "predict"]:
+        for method_name in ["fit", "score", "my_method"]:
             setattr(
                 requests,
                 method_name,
@@ -638,6 +648,8 @@ class CustomRequestConsumer(MetadataRequester):
                     requests=get_declared_metadata_request_values(
                         self,
                         method_name,
+                        # We do not wish to treat `y_true` and `y_pred` as metadata, so
+                        # we exclude it from the discovery mechanism:
                         ignore_params={"y_true", "y_pred"},
                     ),
                 ),
