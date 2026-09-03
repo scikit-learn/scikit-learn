@@ -1,35 +1,32 @@
-"""
-Public testing utilities.
-
-See also _lib._testing for additional private testing utilities.
-"""
+"""Implementation of `array_api_extra.testing`."""
 
 from __future__ import annotations
 
 import contextlib
 import enum
+import functools
+import inspect
 import math
+import typing
 import warnings
 from collections.abc import Callable, Generator, Iterator, Sequence
-from functools import update_wrapper, wraps
-from inspect import getattr_static
 from types import FunctionType, ModuleType
-from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, cast
+from typing import Any, ParamSpec, TypeVar
 
-from ._lib._utils._compat import (
-    array_namespace,
-    is_array_api_strict_namespace,
-    is_cupy_namespace,
-    is_dask_namespace,
-    is_jax_namespace,
-    is_numpy_namespace,
-    is_pydata_sparse_namespace,
-    is_torch_array,
-    is_torch_namespace,
-    to_device,
+from .._lib import _compat, _helpers
+from .._lib._typing import (
+    Array,
+    ArrayNamespace,
+    Device,
+    Graph,
+    Key,
+    SchedulerGetCallable,
+    override,
 )
-from ._lib._utils._helpers import jax_autojit, pickle_flatten, pickle_unflatten
-from ._lib._utils._typing import Array, Device
+
+if typing.TYPE_CHECKING:
+    import numpy as np
+    import pytest
 
 __all__ = [
     "assert_close",
@@ -40,19 +37,15 @@ __all__ = [
     "patch_lazy_xp_functions",
 ]
 
-if TYPE_CHECKING:  # pragma: no cover
-    # TODO import override from typing (requires Python >=3.12)
-    import numpy as np
-    import pytest
-    from dask.typing import Graph, Key, SchedulerGetCallable
-    from typing_extensions import override
 
-else:
-    # Sphinx hacks
-    SchedulerGetCallable = object
-
-    def override(func):
-        return func
+__all__ = [
+    "assert_close",
+    "assert_close_nulp",
+    "assert_equal",
+    "assert_less",
+    "lazy_xp_function",
+    "patch_lazy_xp_functions",
+]
 
 
 P = ParamSpec("P")
@@ -61,13 +54,13 @@ T = TypeVar("T")
 _ufuncs_tags: dict[object, dict[str, Any]] = {}
 
 
-class Deprecated(enum.Enum):
+class _Deprecated(enum.Enum):
     """Unique type for deprecated parameters."""
 
     DEPRECATED = 1
 
 
-DEPRECATED = Deprecated.DEPRECATED
+DEPRECATED = _Deprecated.DEPRECATED
 
 
 def _clone_function(  # numpydoc ignore=PR01,RT01
@@ -82,7 +75,7 @@ def _clone_function(  # numpydoc ignore=PR01,RT01
         closure=f.__closure__,
     )
     f_new.__kwdefaults__ = f.__kwdefaults__
-    return update_wrapper(f_new, f)
+    return functools.update_wrapper(f_new, f)
 
 
 def lazy_xp_function(
@@ -90,8 +83,8 @@ def lazy_xp_function(
     *,
     allow_dask_compute: bool | int = False,
     jax_jit: bool = True,
-    static_argnums: Deprecated = DEPRECATED,
-    static_argnames: Deprecated = DEPRECATED,
+    static_argnums: _Deprecated = DEPRECATED,
+    static_argnames: _Deprecated = DEPRECATED,
 ) -> None:  # numpydoc ignore=GL07
     """
     Tag a function to be tested on lazy backends.
@@ -146,11 +139,11 @@ def lazy_xp_function(
 
         In other words, the pattern that is being tested is::
 
-            >>> @jax.jit
-            ... def user_func(x):
-            ...     y = user_prepares_inputs(x)
-            ...     z = func(y, some_static_arg=True)
-            ...     return user_consumes(z)
+            @jax.jit
+            def user_func(x):
+                y = user_prepares_inputs(x)
+                z = func(y, some_static_arg=True)
+                return user_consumes(z)
 
         Default: True.
     static_argnums : Deprecated
@@ -258,7 +251,7 @@ def lazy_xp_function(
         cls, method_name = func
         # The method might be a staticmethod or classmethod so we need to do a dance
         # to ensure that this is preserved.
-        raw_attr = getattr_static(cls, method_name)
+        raw_attr = inspect.getattr_static(cls, method_name)
         method = getattr(cls, method_name)
         if isinstance(raw_attr, classmethod):
             method = method.__func__
@@ -291,7 +284,7 @@ def patch_lazy_xp_functions(
     request: pytest.FixtureRequest,
     monkeypatch: pytest.MonkeyPatch | None = None,
     *,
-    xp: ModuleType,
+    xp: ArrayNamespace,
 ) -> contextlib.AbstractContextManager[None]:
     """
     Test lazy execution of functions tagged with :func:`lazy_xp_function`.
@@ -348,10 +341,10 @@ def patch_lazy_xp_functions(
     you should mark these backends with ``@pytest.mark.thread_unsafe``, as shown in
     the example above.
     """
-    mod = cast(ModuleType, request.module)
+    mod = typing.cast(ModuleType, request.module)
     search_targets: list[ModuleType | type] = [
         mod,
-        *cast(list[ModuleType], getattr(mod, "lazy_xp_modules", [])),
+        *typing.cast(list[ModuleType], getattr(mod, "lazy_xp_modules", [])),
     ]
     # Also search for classes within the above modules which have had lazy_xp_function
     # applied to methods through ``lazy_xp_function((cls, method_name))`` syntax.
@@ -376,9 +369,9 @@ def patch_lazy_xp_functions(
         parameters of a test so that pytest-run-parallel can run on the remainder.
         """
         assert hasattr(target, name)
-        # Need getattr_static because the attr could be a staticmethod or other
+        # Need inspect.getattr_static because the attr could be a staticmethod or other
         # descriptor and we don't want that to be stripped away.
-        original = getattr_static(target, name)
+        original = inspect.getattr_static(target, name)
         to_revert.append((target, name, original))
         setattr(target, name, func)
 
@@ -432,7 +425,7 @@ def patch_lazy_xp_functions(
                     yield target, name, attr, func, tags
 
     wrapped: Any
-    if is_dask_namespace(xp):
+    if _compat.is_dask_namespace(xp):
         for target, name, attr, func, tags in iter_tagged():
             n = tags["allow_dask_compute"]
             if n is True:
@@ -448,10 +441,10 @@ def patch_lazy_xp_functions(
                 wrapped = classmethod(wrapped)
             temp_setattr(target, name, wrapped)
 
-    elif is_jax_namespace(xp):
+    elif _compat.is_jax_namespace(xp):
         for target, name, attr, func, tags in iter_tagged():
             if tags["jax_jit"]:
-                wrapped = jax_autojit(func)
+                wrapped = _helpers.jax_autojit(func)
                 # If we're dealing with a staticmethod or classmethod, make
                 # sure things stay that way.
                 if isinstance(attr, staticmethod):
@@ -532,7 +525,7 @@ def _dask_wrap(
         "to allow for more (but note that this will harm performance). "
     )
 
-    @wraps(func)
+    @functools.wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:  # numpydoc ignore=GL08
         scheduler = _CountingDaskScheduler(n, msg)
         with dask.config.set({"scheduler": scheduler}):  # pyright: ignore[reportPrivateImportUsage]
@@ -541,14 +534,14 @@ def _dask_wrap(
         # Block until the graph materializes and reraise exceptions. This allows
         # `pytest.raises` and `pytest.warns` to work as expected. Note that this would
         # not work on scheduler='distributed', as it would not block.
-        arrays, rest = pickle_flatten(out, da.Array)
+        arrays, rest = _helpers.pickle_flatten(out, da.Array)
         arrays = dask.persist(arrays, scheduler="threads")[0]  # type: ignore[attr-defined,no-untyped-call]  # pyright: ignore[reportPrivateImportUsage]
-        return pickle_unflatten(arrays, rest)  # pyright: ignore[reportUnknownArgumentType]
+        return _helpers.pickle_unflatten(arrays, rest)  # pyright: ignore[reportUnknownArgumentType]
 
     return wrapper
 
 
-def _require_numpy() -> ModuleType:  # numpydoc ignore=RT01
+def _require_numpy() -> ArrayNamespace:  # numpydoc ignore=RT01
     """
     Import and return `numpy` if it is available, otherwise raise informative error.
     """
@@ -564,14 +557,15 @@ def _require_numpy() -> ModuleType:  # numpydoc ignore=RT01
     return np
 
 
-def _check_ns_shape_dtype(
+def _check_ns_shape_dtype_device(
     actual: Array,
     desired: Array,
     check_dtype: bool,
     check_shape: bool,
     check_scalar: bool,
-    xp: ModuleType | None = None,
-) -> tuple[Array, Array, ModuleType, ModuleType]:  # numpydoc ignore=RT03
+    check_device: bool,
+    xp: ArrayNamespace | None = None,
+) -> tuple[Array, Array, ArrayNamespace, ArrayNamespace]:  # numpydoc ignore=RT03
     """
     Assert that namespace, shape and dtype of the two arrays match.
 
@@ -588,6 +582,8 @@ def _check_ns_shape_dtype(
     check_scalar : bool, default: False
         NumPy only: whether to check agreement between actual and desired types -
         0d array vs scalar.
+    check_device : bool, default: True
+        Whether to check agreement between actual and desired devices.
     xp : array_namespace, optional
         A standard-compatible namespace which `actual` and `desired` must match.
 
@@ -597,25 +593,26 @@ def _check_ns_shape_dtype(
     """
     np = _require_numpy()
 
-    actual_xp = array_namespace(actual)  # Raises on Python scalars and lists
-    desired_xp = array_namespace(desired)
+    actual_xp = _compat.array_namespace(actual)  # Raises on Python scalars and lists
 
     if xp is not None:
         _msg = (
-            "Namespace of desired array does not match the `xp` argument.\n"
-            f"Desired array's namespace: {desired_xp.__name__}\n"
+            "Namespace of actual array does not match the `xp` argument.\n"
+            f"Actual array's namespace: {actual_xp.__name__}\n"
             f"Expected namespace: {xp.__name__}."
         )
-        assert desired_xp == xp, _msg
+        assert actual_xp == xp, _msg
+        desired_xp = xp
+    else:
+        desired_xp = _compat.array_namespace(desired)
+        _msg = (
+            "Namespaces of actual and desired arrays do not match.\n"
+            f"Actual: {actual_xp.__name__}\n"
+            f"Desired: {desired_xp.__name__}."
+        )
+        assert actual_xp == desired_xp, _msg
 
-    _msg = (
-        "Namespaces of actual and desired arrays do not match.\n"
-        f"Actual: {actual_xp.__name__}\n"
-        f"Desired: {desired_xp.__name__}."
-    )
-    assert actual_xp == desired_xp, _msg
-
-    if is_numpy_namespace(actual_xp) and check_scalar:
+    if _compat.is_numpy_namespace(actual_xp) and check_scalar:
         # only NumPy distinguishes between scalars and arrays; we do if check_scalar.
         _msg = (
             "array-ness does not match:\n Actual: "
@@ -624,18 +621,18 @@ def _check_ns_shape_dtype(
         assert np.isscalar(actual) == np.isscalar(desired), _msg
 
     # Dask uses nan instead of None for unknown shapes
-    actual_shape = cast(tuple[float, ...], actual.shape)
-    desired_shape = cast(tuple[float, ...], desired.shape)
+    actual_shape = typing.cast(tuple[float, ...], actual.shape)
+    desired_shape = typing.cast(tuple[float, ...], desired.shape)
     assert None not in actual_shape  # Requires explicit support
     assert None not in desired_shape
 
-    if is_dask_namespace(desired_xp):
+    if _compat.is_dask_namespace(desired_xp):
         if any(math.isnan(i) for i in actual_shape):
             actual.compute_chunk_sizes()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
-            actual_shape = cast(tuple[float, ...], actual.shape)
+            actual_shape = typing.cast(tuple[float, ...], actual.shape)
         if any(math.isnan(i) for i in desired_shape):
             desired.compute_chunk_sizes()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
-            desired_shape = cast(tuple[float, ...], desired.shape)
+            desired_shape = typing.cast(tuple[float, ...], desired.shape)
 
     if check_shape:
         msg = f"shapes do not match: {actual_shape} != {desired_shape}"
@@ -650,9 +647,16 @@ def _check_ns_shape_dtype(
         msg = f"sizes do not match: {actual_size} != {desired_size}"
         assert actual_size == desired_size, msg
 
+    desired = desired_xp.asarray(desired)
     if check_dtype:
         msg = f"dtypes do not match: {actual.dtype} != {desired.dtype}"
         assert actual.dtype == desired.dtype, msg
+    if check_device:
+        msg = (
+            f"Devices do not match.\nActual: {_compat.device(actual)}\n"
+            f"Desired: {_compat.device(desired)}"
+        )
+        assert _compat.device(actual) == _compat.device(desired), msg
     desired = desired_xp.broadcast_to(desired, actual_shape)
     return actual, desired, desired_xp, np
 
@@ -663,33 +667,33 @@ def _is_materializable(x: Array) -> bool:  # numpydoc ignore=PR01,RT01
     """
     # Important: here we assume that we're not tracing -
     # e.g. we're not inside `jax.jit`` nor `cupy.cuda.Stream.begin_capture`.
-    return not is_torch_array(x) or x.device.type != "meta"  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+    return not _compat.is_torch_array(x) or x.device.type != "meta"  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def _as_numpy_array(  # numpydoc ignore=PR01,RT01
-    array: Array, *, xp: ModuleType
+    array: Array, *, xp: ArrayNamespace
 ) -> np.typing.NDArray[Any]:
     """
     Convert array to NumPy, bypassing GPU-CPU transfer guards and densification guards.
     """
     np = _require_numpy()
-    if is_cupy_namespace(xp):
+    if _compat.is_cupy_namespace(xp):
         return xp.asnumpy(array)
-    if is_pydata_sparse_namespace(xp):
+    if _compat.is_pydata_sparse_namespace(xp):
         return array.todense()  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
 
-    if is_torch_namespace(xp):
-        array = cast(Array, array.resolve_conj())  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
-        array = to_device(array, "cpu")
-    if is_array_api_strict_namespace(xp):
+    if _compat.is_torch_namespace(xp):
+        array = typing.cast(Array, array.resolve_conj())  # type: ignore[attr-defined]  # pyright: ignore[reportAttributeAccessIssue]
+        array = _compat.to_device(array, "cpu")
+    if _compat.is_array_api_strict_namespace(xp):
         cpu: Device = xp.Device("CPU_DEVICE")
-        array = to_device(array, cpu)
-    if is_jax_namespace(xp):
+        array = _compat.to_device(array, cpu)
+    if _compat.is_jax_namespace(xp):
         import jax
 
         # Note: only needed if the transfer guard is enabled
-        cpu = cast(Device, jax.devices("cpu")[0])
-        array = to_device(array, cpu)
+        cpu = typing.cast(Device, jax.devices("cpu")[0])
+        array = _compat.to_device(array, cpu)
 
     if hasattr(array, "__dlpack__"):
         try:
@@ -712,7 +716,8 @@ def assert_close(
     check_dtype: bool = True,
     check_shape: bool = True,
     check_scalar: bool = False,
-    xp: ModuleType | None = None,
+    check_device: bool = True,
+    xp: ArrayNamespace | None = None,
 ) -> None:
     """
     Check that two arrays are close, up to tolerance ``atol + rtol * abs(desired)``.
@@ -744,6 +749,8 @@ def assert_close(
     check_scalar : bool, default: False
         NumPy only: whether to check agreement between actual and desired types —
         0-D :class:`numpy.ndarray` vs scalar (e.g. :class:`numpy.double`).
+    check_device : bool, default: True
+        Whether to check agreement between actual and desired devices.
     xp : array_namespace, optional
         A standard-compatible namespace which `actual` and `desired` must match.
 
@@ -774,8 +781,9 @@ def assert_close(
 
     Array arguments to `atol` and `rtol` must be valid input to :class:`float`.
     """
-    actual, desired, xp, np = _check_ns_shape_dtype(
-        actual, desired, check_dtype, check_shape, check_scalar, xp
+    __tracebackhide__ = True
+    actual, desired, xp, np = _check_ns_shape_dtype_device(
+        actual, desired, check_dtype, check_shape, check_scalar, check_device, xp
     )
     if not _is_materializable(actual):
         return
@@ -815,7 +823,8 @@ def assert_equal(
     check_dtype: bool = True,
     check_shape: bool = True,
     check_scalar: bool = False,
-    xp: ModuleType | None = None,
+    check_device: bool = True,
+    xp: ArrayNamespace | None = None,
 ) -> None:
     """
     Check that two arrays are equal.
@@ -841,6 +850,8 @@ def assert_equal(
     check_scalar : bool, default: False
         NumPy only: whether to check agreement between actual and desired types —
         0-D :class:`numpy.ndarray` vs scalar (e.g. :class:`numpy.double`).
+    check_device : bool, default: True
+        Whether to check agreement between actual and desired devices.
     xp : array_namespace, optional
         A standard-compatible namespace which `actual` and `desired` must match.
 
@@ -857,8 +868,9 @@ def assert_equal(
     assert_close : Similar function for inexact equality checks.
     numpy.testing.assert_array_equal : Similar function for NumPy arrays.
     """
-    actual, desired, xp, np = _check_ns_shape_dtype(
-        actual, desired, check_dtype, check_shape, check_scalar, xp
+    __tracebackhide__ = True
+    actual, desired, xp, np = _check_ns_shape_dtype_device(
+        actual, desired, check_dtype, check_shape, check_scalar, check_device, xp
     )
     if not _is_materializable(actual):
         return
@@ -878,7 +890,8 @@ def assert_less(
     check_dtype: bool = True,
     check_shape: bool = True,
     check_scalar: bool = False,
-    xp: ModuleType | None = None,
+    check_device: bool = True,
+    xp: ArrayNamespace | None = None,
 ) -> None:
     """
     Check that two arrays are ordered by less than.
@@ -902,6 +915,8 @@ def assert_less(
     check_scalar : bool, default: False
         NumPy only: whether to check agreement between actual and desired types —
         0-D :class:`numpy.ndarray` vs scalar (e.g. :class:`numpy.double`).
+    check_device : bool, default: True
+        Whether to check agreement between actual and desired devices.
     xp : array_namespace, optional
         A standard-compatible namespace which `x` and `y` must match.
 
@@ -918,8 +933,9 @@ def assert_less(
     assert_close : Similar function for inexact equality checks.
     numpy.testing.assert_array_less : Similar function for NumPy arrays.
     """
-    x, y, xp, np = _check_ns_shape_dtype(
-        x, y, check_dtype, check_shape, check_scalar, xp
+    __tracebackhide__ = True
+    x, y, xp, np = _check_ns_shape_dtype_device(
+        x, y, check_dtype, check_shape, check_scalar, check_device, xp
     )
     if not _is_materializable(x):
         return
@@ -936,7 +952,8 @@ def assert_close_nulp(
     check_dtype: bool = True,
     check_shape: bool = True,
     check_scalar: bool = False,
-    xp: ModuleType | None = None,
+    check_device: bool = True,
+    xp: ArrayNamespace | None = None,
 ) -> None:
     """
     Compare two arrays relatively to their spacing.
@@ -961,6 +978,8 @@ def assert_close_nulp(
     check_scalar : bool, default: False
         NumPy only: whether to check agreement between actual and desired types —
         0-D :class:`numpy.ndarray` vs scalar (e.g. :class:`numpy.double`).
+    check_device : bool, default: True
+        Whether to check agreement between actual and desired devices.
     xp : array_namespace, optional
         A standard-compatible namespace which `actual` and `desired` must match.
 
@@ -991,8 +1010,8 @@ def assert_close_nulp(
     where ``spacing(x)`` is the distance between ``x`` and the nearest adjacent number
     representable by in the data type of ``x``.
     """
-    actual, desired, xp, np = _check_ns_shape_dtype(
-        actual, desired, check_dtype, check_shape, check_scalar, xp
+    actual, desired, xp, np = _check_ns_shape_dtype_device(
+        actual, desired, check_dtype, check_shape, check_scalar, check_device, xp
     )
     if not _is_materializable(actual):
         return

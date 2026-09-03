@@ -164,14 +164,16 @@ ban-relative-imports = "all"
 "sklearn/__init__.py"=["F822"]
 "sklearn/utils/_metadata_requests.py"=["CPY001"]
 
-[tool.mypy]
-ignore_missing_imports = true
-allow_redefinition = true
-exclude = "^sklearn/externals"
+[tool.pyrefly]
+project-includes = ["sklearn", "build_tools", "maint_tools"]
+project-excludes = ["**/sklearn/externals*"]
+preset = "legacy"
+ignore-missing-imports = [
+    "*",
+]
 
-[[tool.mypy.overrides]]
-module = ["joblib.*", "sklearn.externals.*"]
-follow_imports = "skip"
+[tool.pyrefly.errors]
+bad-override = false
 
 [tool.cython-lint]
 # Ignore the same error codes as ruff

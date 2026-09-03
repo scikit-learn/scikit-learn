@@ -12,22 +12,22 @@ iniconfig==2.3.0
     # via pytest
 joblib==1.4.0
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
-meson==1.11.2
+meson==1.12.0
     # via meson-python
 meson-python==0.20.0
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
 narwhals==2.0.1
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
-ninja==1.13.0
+ninja==1.13.2
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
-packaging==26.2
+packaging==26.3
     # via
     #   meson-python
     #   pyproject-metadata
     #   pytest
 pluggy==1.6.0
     # via pytest
-pygments==2.20.0
+pygments==2.21.0
     # via pytest
 pyproject-metadata==0.12.1
     # via meson-python
