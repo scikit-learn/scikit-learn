@@ -1605,8 +1605,9 @@ def fetch_file(
         scikit-learn data home folder.
 
     local_filename : str, default=None
-        Name of the file to save. If None, the filename is inferred from the
-        URL.
+        Name of the file to save. It must be a plain filename. A value holding
+        a directory separator or a relative reference such as `".."`, raises
+        `ValueError`. If None, the filename is inferred from the URL.
 
     sha256 : str, default=None
         SHA256 checksum of the file. If None, no checksum is verified.
@@ -1626,6 +1627,15 @@ def fetch_file(
 
     if local_filename is None:
         local_filename = filename_from_url
+    elif Path(local_filename).name != local_filename or local_filename in (
+        "",
+        "..",
+    ):
+        raise ValueError(
+            "`local_filename` should be a filename, not a path, got"
+            f" {local_filename!r}. Use the `folder` argument to control the"
+            " output folder."
+        )
 
     if folder is None:
         folder = Path(get_data_home()) / folder_from_url

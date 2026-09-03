@@ -16,11 +16,10 @@ from sklearn.utils._array_api import (
     _average,
     _is_numpy_namespace,
     _max_precision_float_dtype,
-    _nanmean,
-    _nansum,
     array_device,
     get_namespace,
     get_namespace_and_device,
+    xpx,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.deprecation import deprecated
@@ -1183,7 +1182,7 @@ def _incremental_mean_and_var(
     last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
-        sum_op = _nansum
+        sum_op = xpx.nansum
     else:
         sum_op = xp.sum
     if sample_weight is not None:
@@ -1367,7 +1366,7 @@ def _nanaverage(a, weights=None):
         return xp.nan
 
     if weights is None:
-        return _nanmean(a, xp=xp)
+        return xpx.nanmean(a, xp=xp)
 
     weights = xp.asarray(weights)
     a, weights = a[~mask], weights[~mask]

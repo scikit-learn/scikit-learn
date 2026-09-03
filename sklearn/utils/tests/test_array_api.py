@@ -1,5 +1,4 @@
 import os
-from functools import partial
 
 import numpy
 import pytest
@@ -27,9 +26,6 @@ from sklearn.utils._array_api import (
     _matching_numpy_dtype,
     _max_precision_float_dtype,
     _median,
-    _nanmax,
-    _nanmean,
-    _nanmin,
     _ravel,
     _swapaxes,
     _validate_diagonal_args,
@@ -406,66 +402,6 @@ def test_device_inspection():
         assert array1.device == array_device(array1)
         assert array1.device == array_device(array1, array2)
         assert array1.device == array_device(array1, array1, array2)
-
-
-# TODO: add cupy to the list of libraries once the following upstream issue
-# has been fixed:
-# https://github.com/cupy/cupy/issues/8180
-@skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("library", ["numpy", "array_api_strict", "torch"])
-@pytest.mark.parametrize(
-    "X,reduction,expected",
-    [
-        ([1, 2, numpy.nan], _nanmin, 1),
-        ([1, -2, -numpy.nan], _nanmin, -2),
-        ([numpy.inf, numpy.inf], _nanmin, numpy.inf),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmin, axis=0),
-            [1.0, 2.0, 3.0],
-        ),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmin, axis=1),
-            [1.0, numpy.nan, 4.0],
-        ),
-        ([1, 2, numpy.nan], _nanmax, 2),
-        ([1, 2, numpy.nan], _nanmax, 2),
-        ([-numpy.inf, -numpy.inf], _nanmax, -numpy.inf),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmax, axis=0),
-            [4.0, 5.0, 6.0],
-        ),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmax, axis=1),
-            [3.0, numpy.nan, 6.0],
-        ),
-        ([1, 2, numpy.nan], _nanmean, 1.5),
-        ([1, -2, -numpy.nan], _nanmean, -0.5),
-        ([-numpy.inf, -numpy.inf], _nanmean, -numpy.inf),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmean, axis=0),
-            [2.5, 3.5, 4.5],
-        ),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmean, axis=1),
-            [2.0, numpy.nan, 5.0],
-        ),
-    ],
-)
-def test_nan_reductions(library, X, reduction, expected):
-    """Check NaN reductions like _nanmin and _nanmax"""
-    xp = pytest.importorskip(library)
-
-    with config_context(array_api_dispatch=True):
-        result = reduction(xp.asarray(X))
-
-    result = move_to(result, xp=numpy, device="cpu")
-    assert_allclose(result, expected)
 
 
 @pytest.mark.parametrize(
