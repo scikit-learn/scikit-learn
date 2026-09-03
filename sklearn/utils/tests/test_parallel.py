@@ -17,7 +17,12 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.fixes import _IS_WASM
-from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import (
+    Parallel,
+    _get_threadpool_controller,
+    _RefcountedBLASLimit,
+    delayed,
+)
 
 
 def get_working_memory():
@@ -195,3 +200,41 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
             joblib.delayed(warnings.warn)("Convergence warning", ConvergenceWarning)
             for _ in range(10)
         )
+
+
+def test_refcounted_blas_limit():
+    """Check that _RefcountedBLASLimit correctly reference-counts entries."""
+    controller = _get_threadpool_controller()
+    ref_limit = _RefcountedBLASLimit(limits=1)
+
+    # Initial state
+    assert ref_limit._count == 0
+    assert ref_limit._cm is None
+
+    # Nested / concurrent enters
+    with ref_limit:
+        assert ref_limit._count == 1
+        assert ref_limit._cm is not None
+
+        with ref_limit:
+            assert ref_limit._count == 2
+
+        assert ref_limit._count == 1
+
+    # Final restore
+    assert ref_limit._count == 0
+    assert ref_limit._cm is None
+
+
+def test_refcounted_blas_limit_exception_safety():
+    """Check that _RefcountedBLASLimit cleans up after exceptions."""
+    ref_limit = _RefcountedBLASLimit(limits=1)
+
+    try:
+        with ref_limit:
+            raise RuntimeError("Testing exception unwind")
+    except RuntimeError:
+        pass
+
+    assert ref_limit._count == 0
+    assert ref_limit._cm is None

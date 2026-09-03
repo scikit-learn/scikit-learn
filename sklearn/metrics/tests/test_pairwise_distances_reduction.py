@@ -16,13 +16,14 @@ from sklearn.metrics._pairwise_distances_reduction import (
     RadiusNeighborsClassMode,
     sqeuclidean_row_norms,
 )
+from sklearn.metrics._pairwise_distances_reduction._argkmin import ArgKmin64
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
     create_memmap_backed_data,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
-from sklearn.utils.parallel import _get_threadpool_controller
+from sklearn.utils.parallel import Parallel, _get_threadpool_controller, delayed
 
 # Common supported metric between scipy.spatial.distance.cdist
 # and BaseDistanceReductionDispatcher.
@@ -1641,3 +1642,32 @@ def test_radius_neighbors_classmode_strategy_consistent(outlier_label):
         strategy="parallel_on_Y",
     )
     assert_allclose(results_X, results_Y)
+
+
+def test_argkmin_multithreaded_reentrancy():
+    """Non-regression test for OpenBLAS/OpenMP GEMM race condition.
+
+    Concurrent calls to ArgKmin64.compute from multiple Python threads
+    must produce identical results to a single-threaded reference,
+    even when linked against OpenBLAS compiled with the OpenMP threading
+    layer.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.randn(97, 100)
+    Y = rng.randn(111, 100)
+
+    kwargs = {
+        "k": 1,
+        "metric": "euclidean",
+        "strategy": "parallel_on_X",
+        "return_distance": True,
+    }
+    ref_dists, ref_indices = ArgKmin64.compute(X, Y, **kwargs)
+
+    results = Parallel(n_jobs=4, backend="threading")(
+        delayed(ArgKmin64.compute)(X, Y, **kwargs) for _ in range(40)
+    )
+
+    for dists, indices in results:
+        assert_allclose(dists, ref_dists)
+        assert_array_equal(indices, ref_indices)
