@@ -750,6 +750,11 @@ def roc_auc_score(
     elif y_type == "binary":
         xp_y_true, _ = get_namespace(y_true)
         labels = xp_y_true.unique_values(y_true)
+        if labels.shape[0] != 2:
+            raise ValueError(
+                "Only one class is present in y_true. ROC AUC score "
+                "is not defined in that case."
+            )
         y_true = label_binarize(y_true, classes=labels)[:, 0]
         return _average_binary_score(
             partial(_binary_roc_auc_score, max_fpr=max_fpr),
