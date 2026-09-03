@@ -326,7 +326,8 @@ class CallbackContext:
                 kwargs["metadata"].get(f"callback_{i}", {}).get(hook_name, {})
             )
 
-            signature = _cached_signature(getattr(callback, hook_name))
+            hook = getattr(callback, hook_name)
+            signature = _cached_signature(getattr(hook, "__func__", hook))
             kwarg_names = {
                 p.name
                 for p in signature.parameters.values()
@@ -353,9 +354,7 @@ class CallbackContext:
 
                 args_to_pass[param_name] = evaluated_args[param_name]
 
-            result |= bool(
-                getattr(callback, hook_name)(estimator, self, **args_to_pass)
-            )
+            result |= bool(hook(estimator, self, **args_to_pass))
 
         return result
 

@@ -145,7 +145,7 @@ try:
 
         def render(self, task):
             if self.elapsed_when_finished and task.finished:
-                seconds = task.elapsed
+                seconds = task.finished_time
             else:
                 seconds = task.time_remaining
 

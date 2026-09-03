@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import gc
 import re
 
 import numpy as np
@@ -10,6 +11,7 @@ from sklearn import config_context, set_config
 from sklearn.base import clone
 from sklearn.callback import ScoringMonitor
 from sklearn.callback._scoring_monitor import ScoringMonitorLog
+from sklearn.callback._transport import _listeners, _message_consumers
 from sklearn.callback.tests._common.estimators import (
     MaxIterEstimator,
     MetaEstimator,
@@ -541,14 +543,16 @@ def test_scoring_monitor_no_callback_support(backend):
 
 def test_scoring_monitor_listener_closed_on_gc():
     """Check that listener is closed when callback is garbage collected."""
-    from sklearn.callback._transport import _listeners, _message_consumers
-
     callback = ScoringMonitor(scoring_train="r2")
     listener_address = callback._listener_handle.address
     assert listener_address in _listeners
     assert listener_address in _message_consumers
 
+    MaxIterEstimator().set_callbacks(callback).fit()
+
     del callback
+    gc.collect()
+
     assert listener_address not in _listeners
     assert listener_address not in _message_consumers
 

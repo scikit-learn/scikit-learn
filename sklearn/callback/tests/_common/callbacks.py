@@ -22,6 +22,12 @@ class RecordingCallback(FitCallback):
         self.record = []
         self._listener_handle = open_listener(self.record.append, owner=self)
 
+    def __getstate__(self):
+        # We never access the record from a worker so there's no need to ship it.
+        # Emptying it avoids nesting the record, callback and context in each other
+        # which would grow the pickle size exponentially.
+        return {**self.__dict__, "record": []}
+
     def setup(self, estimator, context):
         send(
             self._listener_handle,
