@@ -71,7 +71,7 @@ cdef void _map_col_to_bins(
     for i in prange(data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
         if (
-            data[i] != data[i] or  # isnan(data[i]), always inlined, see gh-34869
+            data[i] != data[i] or  # equivalent to isnan(data[i]), but always inlined
             # To follow LightGBM's conventions, negative values for
             # categorical features are considered as missing values.
             (is_categorical and data[i] < 0)

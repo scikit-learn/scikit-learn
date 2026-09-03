@@ -67,8 +67,7 @@ cdef inline bint goes_left(
     int8_t split_kind,
     float32_t value,
 ) noexcept nogil:
-    # Equivalent to isnan(value), but always inlined (unlike isnan() on some
-    # platforms/libc versions). See gh-34869.
+    # Equivalent to isnan(value), but always inlined
     if value != value:
         return missing_go_to_left
     elif split_kind == SPLIT_NUMERIC:

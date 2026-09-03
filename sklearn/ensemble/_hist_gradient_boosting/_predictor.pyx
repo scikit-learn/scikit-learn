@@ -54,7 +54,7 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
 
         data_val = numeric_data[row, node.feature_idx]
 
-        if data_val != data_val:  # isnan(data_val), always inlined, see gh-34869
+        if data_val != data_val:  # equivalent to isnan(data_val), but always inlined
             if node.missing_go_to_left:
                 node_idx = node.left
             else:
