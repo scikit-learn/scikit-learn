@@ -467,7 +467,7 @@ that are imported must be in a submodule/subpackage of the public subpackage, e.
 needed so that pickles still work in the future when the features aren't experimental
 anymore.
 
-To avoid type checker (e.g. `mypy`) errors a direct import of experimental estimators
+To avoid type checker (e.g. `pyrefly`) errors a direct import of experimental estimators
 should be done in the parent module, protected by the `if typing.TYPE_CHECKING` check.
 See `sklearn/ensemble/__init__.py
 <https://github.com/scikit-learn/scikit-learn/blob/c9c89cfc85dd8dfefd7921c16c87327d03140a06/sklearn/ensemble/__init__.py>`__,

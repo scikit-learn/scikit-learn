@@ -13,14 +13,14 @@ must remain in each estimator's own test file.
 """
 
 import pytest
-from sklearn.base import clone
-from sklearn.exceptions import ConvergenceWarning
 
+from sklearn.base import clone
 from sklearn.callback.tests._utils import (
     RecordingCallback,
     skip_callback_test_if_wasm,
 )
 from sklearn.datasets import make_classification
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
     _tested_estimators,
@@ -247,10 +247,7 @@ def _has_callback_support(estimator):
     if type(estimator).__name__ in _NO_CALLBACK_SUPPORT:
         return False
     # LogisticRegression only supports callbacks with the lbfgs solver.
-    if (
-        type(estimator).__name__ == "LogisticRegression"
-        and estimator.solver != "lbfgs"
-    ):
+    if type(estimator).__name__ == "LogisticRegression" and estimator.solver != "lbfgs":
         return False
     return True
 
@@ -286,7 +283,9 @@ def check_callback_setup_teardown_called_once(estimator, X, y):
     msg = f"{name}: expected setup to be called once, got {cb.count_hooks('setup')}"
     assert cb.count_hooks("setup") == 1, msg
 
-    msg = f"{name}: expected teardown to be called once, got {cb.count_hooks('teardown')}"
+    msg = (
+        f"{name}: expected teardown to be called once, got {cb.count_hooks('teardown')}"
+    )
     assert cb.count_hooks("teardown") == 1, msg
 
     hook_names = [entry["name"] for entry in cb.record]
@@ -328,7 +327,9 @@ def check_callback_begin_end_balanced(estimator, X, y):
                     f"multiple top-level tasks detected"
                 )
                 assert i == len(task_events) - 1, msg
-    msg = f"{name}: {balance} on_fit_task_begin call(s) have no matching on_fit_task_end"
+    msg = (
+        f"{name}: {balance} on_fit_task_begin call(s) have no matching on_fit_task_end"
+    )
     assert balance == 0, msg
 
 
@@ -360,10 +361,10 @@ _CHECKS = [
 ]
 
 
-
-
 @pytest.mark.parametrize("check", _CHECKS, ids=lambda fn: fn.__name__)
-@pytest.mark.parametrize("estimator", _CALLBACK_ESTIMATORS, ids=_get_check_estimator_ids)
+@pytest.mark.parametrize(
+    "estimator", _CALLBACK_ESTIMATORS, ids=_get_check_estimator_ids
+)
 @skip_callback_test_if_wasm
 def test_callback(estimator, check):
     X, y = _make_data(estimator)

@@ -21,12 +21,11 @@ from sklearn.base import (
     is_classifier,
     is_regressor,
 )
-from sklearn.callback.tests._utils import (
-    MaxIterEstimator,
+from sklearn.callback.tests._common.callbacks import (
     RecordingAutoPropagatedCallback,
     RecordingCallback,
-    skip_callback_test_if_wasm,
 )
+from sklearn.callback.tests._common.estimators import MaxIterEstimator
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD
@@ -76,6 +75,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_callback_test_if_wasm,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import _check_feature_names, check_is_fitted

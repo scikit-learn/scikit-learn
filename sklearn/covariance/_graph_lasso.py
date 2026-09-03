@@ -17,9 +17,7 @@ from scipy import linalg
 from sklearn.base import _fit_context
 from sklearn.covariance import EmpiricalCovariance, empirical_covariance, log_likelihood
 from sklearn.exceptions import ConvergenceWarning
-
-# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model import _cd_fast as cd_fast
 from sklearn.linear_model import lars_path_gram
 from sklearn.model_selection import check_cv, cross_val_score
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params

@@ -29,7 +29,7 @@ from sklearn.linear_model import (
     lars_path,
     lasso_path,
 )
-from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model import _cd_fast as cd_fast
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.model_selection import (
     GridSearchCV,
