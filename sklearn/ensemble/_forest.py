@@ -1245,7 +1245,9 @@ class RandomForestClassifier(ForestClassifier):
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
-        equal weight when sample_weight is not provided.
+        equal weight when sample_weight is not provided. If ``bootstrap=True``,
+        the weights are those of the bootstrap sample of each tree, i.e. the
+        number of times each sample was drawn, rather than ``sample_weight``.
 
     max_features : {"sqrt", "log2", None}, int or float, default="sqrt"
         The number of features to consider when looking for the best split:
@@ -1284,9 +1286,16 @@ class RandomForestClassifier(ForestClassifier):
         left child, and ``N_t_R`` is the number of samples in the right child.
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        if ``sample_weight`` is passed and ``bootstrap=False``. If
+        ``bootstrap=True``, ``sample_weight`` is instead used to draw the
+        bootstrap sample of each tree, and these quantities refer to the number
+        of times each sample was drawn for that tree.
 
         .. versionadded:: 0.19
+
+        .. versionchanged:: 1.9
+            When ``bootstrap=True``, ``sample_weight`` is used for the weighted
+            bootstrap instead of being passed to the underlying tree.
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
@@ -1660,7 +1669,9 @@ class RandomForestRegressor(ForestRegressor):
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
-        equal weight when sample_weight is not provided.
+        equal weight when sample_weight is not provided. If ``bootstrap=True``,
+        the weights are those of the bootstrap sample of each tree, i.e. the
+        number of times each sample was drawn, rather than ``sample_weight``.
 
     max_features : {"sqrt", "log2", None}, int or float, default=1.0
         The number of features to consider when looking for the best split:
@@ -1703,9 +1714,16 @@ class RandomForestRegressor(ForestRegressor):
         left child, and ``N_t_R`` is the number of samples in the right child.
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        if ``sample_weight`` is passed and ``bootstrap=False``. If
+        ``bootstrap=True``, ``sample_weight`` is instead used to draw the
+        bootstrap sample of each tree, and these quantities refer to the number
+        of times each sample was drawn for that tree.
 
         .. versionadded:: 0.19
+
+        .. versionchanged:: 1.9
+            When ``bootstrap=True``, ``sample_weight`` is used for the weighted
+            bootstrap instead of being passed to the underlying tree.
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
@@ -2028,7 +2046,9 @@ class ExtraTreesClassifier(ForestClassifier):
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
-        equal weight when sample_weight is not provided.
+        equal weight when sample_weight is not provided. If ``bootstrap=True``,
+        the weights are those of the bootstrap sample of each tree, i.e. the
+        number of times each sample was drawn, rather than ``sample_weight``.
 
     max_features : {"sqrt", "log2", None}, int or float, default="sqrt"
         The number of features to consider when looking for the best split:
@@ -2067,9 +2087,16 @@ class ExtraTreesClassifier(ForestClassifier):
         left child, and ``N_t_R`` is the number of samples in the right child.
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        if ``sample_weight`` is passed and ``bootstrap=False``. If
+        ``bootstrap=True``, ``sample_weight`` is instead used to draw the
+        bootstrap sample of each tree, and these quantities refer to the number
+        of times each sample was drawn for that tree.
 
         .. versionadded:: 0.19
+
+        .. versionchanged:: 1.9
+            When ``bootstrap=True``, ``sample_weight`` is used for the weighted
+            bootstrap instead of being passed to the underlying tree.
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
@@ -2427,7 +2454,9 @@ class ExtraTreesRegressor(ForestRegressor):
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
-        equal weight when sample_weight is not provided.
+        equal weight when sample_weight is not provided. If ``bootstrap=True``,
+        the weights are those of the bootstrap sample of each tree, i.e. the
+        number of times each sample was drawn, rather than ``sample_weight``.
 
     max_features : {"sqrt", "log2", None}, int or float, default=1.0
         The number of features to consider when looking for the best split:
@@ -2470,9 +2499,16 @@ class ExtraTreesRegressor(ForestRegressor):
         left child, and ``N_t_R`` is the number of samples in the right child.
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        if ``sample_weight`` is passed and ``bootstrap=False``. If
+        ``bootstrap=True``, ``sample_weight`` is instead used to draw the
+        bootstrap sample of each tree, and these quantities refer to the number
+        of times each sample was drawn for that tree.
 
         .. versionadded:: 0.19
+
+        .. versionchanged:: 1.9
+            When ``bootstrap=True``, ``sample_weight`` is used for the weighted
+            bootstrap instead of being passed to the underlying tree.
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
@@ -2779,7 +2815,9 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
-        equal weight when sample_weight is not provided.
+        equal weight when sample_weight is not provided. If ``bootstrap=True``,
+        the weights are those of the bootstrap sample of each tree, i.e. the
+        number of times each sample was drawn, rather than ``sample_weight``.
 
     max_leaf_nodes : int, default=None
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
@@ -2800,9 +2838,16 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         left child, and ``N_t_R`` is the number of samples in the right child.
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
-        if ``sample_weight`` is passed.
+        if ``sample_weight`` is passed and ``bootstrap=False``. If
+        ``bootstrap=True``, ``sample_weight`` is instead used to draw the
+        bootstrap sample of each tree, and these quantities refer to the number
+        of times each sample was drawn for that tree.
 
         .. versionadded:: 0.19
+
+        .. versionchanged:: 1.9
+            When ``bootstrap=True``, ``sample_weight`` is used for the weighted
+            bootstrap instead of being passed to the underlying tree.
 
     sparse_output : bool, default=True
         Whether or not to return a sparse CSR matrix, as default behavior,
