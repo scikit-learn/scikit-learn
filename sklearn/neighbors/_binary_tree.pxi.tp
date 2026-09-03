@@ -957,10 +957,10 @@ cdef class BinaryTree{{name_suffix}}:
                 int(self.leaf_size),
                 int(self.n_levels),
                 int(self.n_nodes),
-                int(self.n_trims),
-                int(self.n_leaves),
-                int(self.n_splits),
-                int(self.n_calls),
+                0,
+                0,
+                0,
+                0,
                 self.dist_metric,
                 sample_weight)
 

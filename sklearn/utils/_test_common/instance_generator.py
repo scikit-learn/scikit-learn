@@ -739,6 +739,9 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dictionary=rng.normal(size=(5, 5))
         ),
         "check_fit_idempotent": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_estimator_internal_state_unchanged_by_inference": dict(
+            dictionary=rng.normal(size=(5, 2))
+        ),
         "check_transformer_preserve_dtypes": dict(
             dictionary=rng.normal(size=(5, 3)).astype(np.float32)
         ),
