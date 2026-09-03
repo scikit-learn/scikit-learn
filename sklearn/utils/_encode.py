@@ -187,7 +187,7 @@ def _unique_python(values, *, return_inverse, return_counts):
     try:
         if return_counts:
             counter = Counter(values)
-            uniques_set = set(counter)
+            uniques_set = counter.keys()
         else:
             uniques_set = set(values)
         uniques_set, missing_values = _extract_missing(uniques_set)
