@@ -18,18 +18,11 @@ from libc.string cimport memcpy
 
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C
 from sklearn.utils._bitset cimport in_bitset, init_bitset, set_bitset
-from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
-from sklearn.utils._openmp_helpers import _min_instructions_per_thread
 from sklearn.utils._typedefs cimport uint8_t
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
 from sklearn.ensemble._hist_gradient_boosting.common cimport MonotonicConstraint
-
-
-# Read once at import time rather than on every call; see
-# _min_instructions_per_thread's docstring for the env var it honors.
-cdef long long MIN_INSTRUCTIONS_PER_THREAD = _min_instructions_per_thread()
 
 
 cdef struct split_info_struct:
@@ -324,11 +317,11 @@ cdef class Splitter:
             BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = split_info.left_cat_bitset
             BITSET_DTYPE_C left_cat_bitset
             int n_threads = self.n_threads
-            # Each sample costs ~5 simple ops to classify/copy below.
-            # but chunking cost extra work, so we reduce to 3
-            bint use_threads = _use_threads_for_workload(
-                n_threads, n_samples, 3, MIN_INSTRUCTIONS_PER_THREAD
+
+            bint use_threads = (n_threads != 1) and (
+                n_threads * 1000 < n_samples
             )
+
             # Probably always bad to parallelize for <1k samples
 
             int right_child_position
@@ -549,13 +542,7 @@ cdef class Splitter:
             # https://github.com/numpy/numpy/issues/18273
             subsample_mask = subsample_mask_arr
 
-        # Each feature costs about 15 simple ops per bin scanned below.
-        use_threads = _use_threads_for_workload(
-            n_threads, <long long> n_subsampled_features * histograms.shape[1], 15,
-            MIN_INSTRUCTIONS_PER_THREAD,
-        )
-        # Much slower than single threaded for: n_threads=128, n_subsampled_features=50
-        # => 128 x 2000 is greater than 50 x 256 x 15
+        use_threads = n_threads > 1
 
         with nogil:
 

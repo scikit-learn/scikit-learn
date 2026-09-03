@@ -6,13 +6,6 @@ import numpy as np
 
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
-from sklearn.utils._openmp_helpers cimport _use_threads_for_workload
-from sklearn.utils._openmp_helpers import _min_instructions_per_thread
-
-
-# Read once at import time rather than on every call; see
-# _min_instructions_per_thread's docstring for the env var it honors.
-cdef long long MIN_INSTRUCTIONS_PER_THREAD = _min_instructions_per_thread()
 
 
 def _update_raw_predictions(
@@ -59,12 +52,7 @@ cdef inline void _update_raw_predictions_helper(
         unsigned int position
         int leaf_idx
         int n_leaves = starts.shape[0]
-        int n_samples = raw_predictions.shape[0]
-        # Across all leaves, exactly n_samples positions are visited, each
-        # costing ~3 simple ops (indirect index, add, store) below.
-        bint use_threads = _use_threads_for_workload(
-            n_threads, n_samples, 3, MIN_INSTRUCTIONS_PER_THREAD
-        )
+        bint use_threads = n_threads > 1
 
     for leaf_idx in prange(n_leaves, schedule='static', nogil=True,
                            num_threads=n_threads, use_threads_if=use_threads):
