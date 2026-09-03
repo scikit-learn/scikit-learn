@@ -1105,7 +1105,10 @@ def test_interp(x, xp, fp, left, right, namespace, device_name, dtype_name):
         actual = _interp(x, xp_xp, fp_xp, left, right)
         actual = move_to(actual, xp=numpy, device="cpu")
 
-    desired = numpy.interp(x, xp, fp, left, right).astype(dtype_name)
+    desired = numpy.interp(x, xp, fp, left, right)
+
+    if dtype_name:
+        desired = desired.astype(dtype_name)
 
     assert_allclose(actual, desired, atol=_atol_for_type(dtype_name))
 
