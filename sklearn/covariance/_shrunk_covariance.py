@@ -312,6 +312,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         "X": ["array-like"],
         "assume_centered": ["boolean"],
         "block_size": [Interval(Integral, 1, None, closed="left")],
+        "sample_weight": ["array-like"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -448,9 +449,10 @@ def ledoit_wolf_shrinkage(
 
 @validate_params(
     {"X": ["array-like"]},
+    {"sample_weight": ["array-like"]},
     prefer_skip_nested_validation=False,
 )
-def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
+def ledoit_wolf(X, *, assume_centered=False, block_size=1000, sample_weight=np.ones(0)):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
@@ -469,6 +471,9 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     block_size : int, default=1000
         Size of blocks into which the covariance matrix will be split.
         This is purely a memory optimization and does not affect results.
+
+    sample_weight : array-like of shape (n_samples,)
+        Non-negative weights for weighing the training data.
 
     Returns
     -------
@@ -505,7 +510,7 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
         assume_centered=assume_centered,
         block_size=block_size,
         store_precision=False,
-    ).fit(X)
+    ).fit(X, sample_weight=sample_weight)
 
     return estimator.covariance_, estimator.shrinkage_
 
