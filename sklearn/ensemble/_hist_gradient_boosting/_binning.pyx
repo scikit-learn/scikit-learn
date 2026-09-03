@@ -4,7 +4,6 @@
 from math import log2, ceil
 
 from cython.parallel import prange
-from libc.math cimport isnan
 
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 from sklearn.utils._typedefs cimport uint8_t
@@ -72,7 +71,7 @@ cdef void _map_col_to_bins(
     for i in prange(data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
         if (
-            isnan(data[i]) or
+            data[i] != data[i] or  # isnan(data[i]), always inlined, see gh-34869
             # To follow LightGBM's conventions, negative values for
             # categorical features are considered as missing values.
             (is_categorical and data[i] < 0)

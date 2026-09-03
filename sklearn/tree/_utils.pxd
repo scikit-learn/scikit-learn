@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # See _utils.pyx for details.
-from libc.math cimport isnan
 from libc.math cimport log as ln
 from libc.stdlib cimport realloc
 
@@ -68,7 +67,9 @@ cdef inline bint goes_left(
     int8_t split_kind,
     float32_t value,
 ) noexcept nogil:
-    if isnan(value):
+    # Equivalent to isnan(value), but always inlined (unlike isnan() on some
+    # platforms/libc versions). See gh-34869.
+    if value != value:
         return missing_go_to_left
     elif split_kind == SPLIT_NUMERIC:
         return value <= threshold

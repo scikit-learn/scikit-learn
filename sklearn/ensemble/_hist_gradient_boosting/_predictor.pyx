@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cython.parallel import prange
-from libc.math cimport isnan
 import numpy as np
 
 from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset_2d_memoryview
@@ -55,7 +54,7 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
 
         data_val = numeric_data[row, node.feature_idx]
 
-        if isnan(data_val):
+        if data_val != data_val:  # isnan(data_val), always inlined, see gh-34869
             if node.missing_go_to_left:
                 node_idx = node.left
             else:

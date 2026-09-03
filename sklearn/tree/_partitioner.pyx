@@ -11,7 +11,7 @@ and sparse data stored in a Compressed Sparse Column (CSC) format.
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport final
-from libc.math cimport INFINITY, isnan, log2
+from libc.math cimport INFINITY, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy, memset, memmove
 
@@ -101,6 +101,7 @@ cdef class DensePartitioner:
             const float32_t[:, :] X = self.X
             intp_t n_missing = 0
             const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
+            float32_t current_end_value, i_value
 
         # Sort samples along that feature; by copying the values into an array and
         # sorting the array in a manner which utilizes the cache more effectively.
@@ -114,13 +115,18 @@ cdef class DensePartitioner:
             while i <= current_end:
                 # Finds the right-most value that is not missing so that
                 # it can be swapped with missing values at its left.
-                if isnan(X[self.samples[current_end], current_feature]):
+                # (`value != value` is equivalent to isnan(value), but always
+                # inlined, unlike isnan() on some platforms/libc versions,
+                # see gh-34869)
+                current_end_value = X[self.samples[current_end], current_feature]
+                if current_end_value != current_end_value:
                     n_missing += 1
                     current_end -= 1
                     continue
 
                 # X[samples[current_end], current_feature] is a non-missing value
-                if isnan(X[self.samples[i], current_feature]):
+                i_value = X[self.samples[i], current_feature]
+                if i_value != i_value:
                     self.samples[i], self.samples[current_end] = self.samples[current_end], self.samples[i]
                     n_missing += 1
                     current_end -= 1
@@ -285,7 +291,7 @@ cdef class DensePartitioner:
             current_feature_value = self.X[samples[p], current_feature]
             feature_values[p] = current_feature_value
 
-            if isnan(current_feature_value):
+            if current_feature_value != current_feature_value:  # isnan, see gh-34869
                 n_missing += 1
             elif not seen_non_missing:
                 min_feature_value = current_feature_value
