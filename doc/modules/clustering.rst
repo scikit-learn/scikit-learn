@@ -165,7 +165,7 @@ although they live in the same space.
 The K-means algorithm aims to choose centroids that minimise the **inertia**,
 or **within-cluster sum-of-squares criterion**:
 
-.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
+.. math:: \sum_{i=0}^{N-1}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
 Inertia can be recognized as a measure of how internally coherent clusters are.
 It suffers from various drawbacks:
@@ -849,7 +849,7 @@ clusters from Bisecting K-Means are well ordered and create quite a visible hier
   * `"A Comparison of Document Clustering Techniques"
     <https://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
     Steinbach, George Karypis and Vipin Kumar, Department of Computer Science and
-    Egineering, University of Minnesota (June 2000)
+    Engineering, University of Minnesota (June 2000)
   * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog
     Data"
     <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
