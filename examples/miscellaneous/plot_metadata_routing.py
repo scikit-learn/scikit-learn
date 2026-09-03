@@ -672,7 +672,7 @@ pprint(consumer.__sklearn_build_declared_metadata_request__()._serialize())
 # `X, y, Y, Xt, yt` that have a special meaning in sklearn.
 
 
-def consuming_function(y, metadata1):
+def consuming_function(first_arg, X, y, metadata1):
     return 1
 
 
