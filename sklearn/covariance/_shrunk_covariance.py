@@ -448,8 +448,10 @@ def ledoit_wolf_shrinkage(
 
 
 @validate_params(
-    {"X": ["array-like"]},
-    {"sample_weight": ["array-like"]},
+    {
+        "X": ["array-like"],
+        "sample_weight": ["array-like"],
+    },
     prefer_skip_nested_validation=False,
 )
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000, sample_weight=np.ones(0)):
