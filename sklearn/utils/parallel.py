@@ -268,5 +268,5 @@ def _is_gil_enabled() -> bool:
     bool
         Whether the GIL is enabled.
     """
-    _is_gil_enabled = getattr(sys, "_is_gil_enabled", lambda: False)
+    _is_gil_enabled = getattr(sys, "_is_gil_enabled", lambda: True)
     return _is_gil_enabled()
