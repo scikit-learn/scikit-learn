@@ -212,13 +212,23 @@ def _solve_lsqr(
     return coefs, n_iter
 
 
-def _solve_cholesky(X, y, alpha):
+def _solve_cholesky(X, y, alpha, X_offset=None):
     # w = inv(X^t X + alpha*Id) * X.T y
+    #
+    # If X_offset is given, X is assumed to *not* be centered (unlike y, which
+    # is always assumed centered) and the Gram matrix is corrected
+    # algebraically instead of materializing a centered copy of X:
+    #   Xc.T @ Xc = X.T @ X - n_samples * outer(X_offset, X_offset)
+    # Xy needs no such correction: Xc.T @ yc = X.T @ yc - X_offset * yc.sum(0),
+    # and yc.sum(0) is 0 because yc is centered.
     n_features = X.shape[1]
     n_targets = y.shape[1]
 
     A = safe_sparse_dot(X.T, X, dense_output=True)
     Xy = safe_sparse_dot(X.T, y, dense_output=True)
+
+    if X_offset is not None:
+        A -= X.shape[0] * np.outer(X_offset, X_offset)
 
     one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
 
@@ -379,9 +389,14 @@ def _solve_lbfgs(
     return coefs
 
 
-def _get_valid_accept_sparse(is_X_sparse, solver):
+def _get_valid_accept_sparse(is_X_sparse, solver, fit_intercept=False):
     if is_X_sparse and solver in ["auto", "sag", "saga"]:
+        # sag/saga's Cython solver needs actual CSR structure to run.
         return "csr"
+    elif is_X_sparse and fit_intercept:
+        # when `fit_intercept=True`, `mean_variance_axis` will be called on X
+        # and it requires csr/csc format
+        return ["csr", "csc"]
     else:
         return ["csr", "csc", "coo"]
 
@@ -624,7 +639,6 @@ def _ridge_regression(
     random_state=None,
     return_n_iter=False,
     return_intercept=False,
-    return_solver=False,
     X_scale=None,
     X_offset=None,
     check_input=True,
@@ -755,8 +769,12 @@ def _ridge_regression(
                 solver = "svd"
         else:
             try:
-                coef = _solve_cholesky(X, y, alpha)
+                coef = _solve_cholesky(X, y, alpha, X_offset=X_offset)
             except linalg.LinAlgError:
+                if X_offset is not None:
+                    # X was left uncentered to avoid materializing a copy on
+                    # the svd fallback needs centered X:
+                    X = X - X_offset
                 # use SVD solver if matrix is singular
                 solver = "svd"
 
@@ -829,7 +847,7 @@ def _ridge_regression(
     else:
         res = coef
 
-    return (*res, solver) if return_solver else res
+    return res
 
 
 def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
@@ -960,18 +978,40 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        # when X is sparse we only remove offset from y
+        X_is_sparse = sparse.issparse(X)
+        self.solver_ = resolve_solver(
+            solver, self.positive, return_intercept=False, is_sparse=X_is_sparse, xp=xp
+        )
+
+        # X with n_features <= n_samples, no sample weights, and a
+        # resolved "cholesky" solver hits _solve_cholesky's primal branch,
+        # which can apply an algebraically-centering optimization.
+        use_no_center_cholesky = (
+            self.fit_intercept
+            and sample_weight is None
+            and self.solver_ == "cholesky"
+            and X.shape[0] >= X.shape[1]
+        )
+
         X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
-            copy=self.copy_X,
+            copy=(
+                self.copy_X
+                # If `use_no_center_cholesky` or X is sparse,
+                # X is never mutated
+                and not use_no_center_cholesky
+                and not X_is_sparse
+            ),
+            check_input=False,
             sample_weight=sample_weight,
             rescale_with_sw=False,
+            center_X=not use_no_center_cholesky,
         )
 
-        if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
-            self.coef_, self.n_iter_, self.intercept_, self.solver_ = _ridge_regression(
+        if solver == "sag" and X_is_sparse and self.fit_intercept:
+            self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
                 X,
                 y,
                 alpha=self.alpha,
@@ -983,33 +1023,35 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=True,
-                return_solver=True,
                 check_input=False,
             )
             # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
 
         else:
-            if sparse.issparse(X) and self.fit_intercept:
+            if X_is_sparse and self.fit_intercept:
                 # required to fit intercept with sparse_cg and lbfgs solver
                 params = {"X_offset": X_offset, "X_scale": X_scale}
+            elif use_no_center_cholesky:
+                # X was left uncentered; _solve_cholesky applies the
+                # correction algebraically from X_offset.
+                params = {"X_offset": X_offset}
             else:
                 # for dense matrices or when intercept is set to 0
                 params = {}
 
-            self.coef_, self.n_iter_, self.solver_ = _ridge_regression(
+            self.coef_, self.n_iter_ = _ridge_regression(
                 X,
                 y,
                 alpha=self.alpha,
                 sample_weight=sample_weight,
                 max_iter=self.max_iter,
                 tol=self.tol,
-                solver=solver,
+                solver=self.solver_,
                 positive=self.positive,
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=False,
-                return_solver=True,
                 check_input=False,
                 fit_intercept=self.fit_intercept,
                 **params,
@@ -1246,7 +1288,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
-        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
+        _accept_sparse = _get_valid_accept_sparse(
+            sparse.issparse(X), self.solver, self.fit_intercept
+        )
         xp, _, device = get_namespace_and_device(X)
         y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
 
@@ -1320,7 +1364,9 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
         Y : ndarray of shape (n_samples, n_classes)
             The binarized version of `y`.
         """
-        accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
+        accept_sparse = _get_valid_accept_sparse(
+            sparse.issparse(X), solver, self.fit_intercept
+        )
         xp, _, device = get_namespace_and_device(X)
         sample_weight = move_to(sample_weight, xp=xp, device=device)
         X, y = validate_data(
@@ -1328,6 +1374,11 @@ class _RidgeClassifierMixin(LinearClassifierMixin):
             X,
             y,
             accept_sparse=accept_sparse,
+            # X (not y: dtype here only ever applies to X, never to the
+            # class labels) needs to already be a supported float dtype by
+            # the time it reaches `_BaseRidge.fit`, which trusts this
+            # validation and skips its own for dense X.
+            dtype=[xp.float64, xp.float32],
             multi_output=True,
             y_numeric=False,
             force_writeable=True,
