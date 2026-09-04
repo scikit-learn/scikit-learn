@@ -1731,12 +1731,17 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     column_nnz_data = X.data[
                         X.indptr[feature_idx] : X.indptr[feature_idx + 1]
                     ]
-                    column_data = np.zeros(shape=X.shape[0], dtype=X.dtype)
-                    column_data[: len(column_nnz_data)] = column_nnz_data
+                    n_zeros = X.shape[0] - len(column_nnz_data)
+                    quantiles.append(
+                        _sparse_column_quantile(
+                            column_nnz_data,
+                            n_zeros,
+                            np.asarray(self.quantile_range) / 100,
+                        )
+                    )
                 else:
                     column_data = X[:, feature_idx]
-
-                quantiles.append(np.nanpercentile(column_data, self.quantile_range))
+                    quantiles.append(np.nanpercentile(column_data, self.quantile_range))
 
             quantiles = np.transpose(quantiles)
 
@@ -2668,6 +2673,55 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
+def _sparse_column_quantile(column_nnz_data, n_zeros, quantiles):
+    """
+    Compute quantiles of a sparse column without densifying it.
+
+    ``column_nnz_data`` holds the explicitly stored (non-implicit-zero)
+    entries of the column, which may be of any sign; ``n_zeros`` implicit
+    zeros complete the column. Calculations/Implementation are meant to
+    match np.nanquantile(, method="linear").
+    """
+    quantiles = np.asarray(quantiles, dtype=float)
+
+    nan_mask = np.isnan(column_nnz_data)
+    if nan_mask.any():
+        column_nnz_data = column_nnz_data[~nan_mask]
+
+    n_total = n_zeros + column_nnz_data.size
+
+    if n_total == 0:
+        # all-NaN column (no zeros, no valid non-zero values):
+        # nanquantile returns nan in this case
+        return np.full(quantiles.shape, np.nan)
+
+    sorted_nnz = np.sort(column_nnz_data)
+    # Position where the block of `n_zeros` implicit zeros is merged into
+    # the sorted non-zero values (i.e. the number of stored values < 0).
+    zero_insert_pos = np.searchsorted(sorted_nnz, 0)
+
+    idx = quantiles * (n_total - 1)
+    lo = np.floor(idx).astype(int)
+    hi = np.ceil(idx).astype(int)
+    frac = idx - lo
+
+    def value_at_rank(ranks):
+        ranks = np.clip(ranks, 0, n_total - 1)
+        out = np.empty(ranks.shape, dtype=float)
+
+        before_zeros = ranks < zero_insert_pos
+        after_zeros = ranks >= zero_insert_pos + n_zeros
+
+        out[before_zeros] = sorted_nnz[ranks[before_zeros]]
+        out[~before_zeros & ~after_zeros] = 0.0
+        out[after_zeros] = sorted_nnz[ranks[after_zeros] - n_zeros]
+        return out
+
+    v_lo = value_at_rank(lo)
+    v_hi = value_at_rank(hi)
+    return v_lo + frac * (v_hi - v_lo)
+
+
 class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features using quantiles information.
 
@@ -2709,8 +2763,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If False,
-        these entries are treated as zeros.
+        matrix are discarded to compute the quantile statistics, including
+        when subsampling. If False, these entries are treated as zeros.
 
     subsample : int or None, default=10_000
         Maximum number of samples used to estimate the quantiles for
@@ -2837,39 +2891,44 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         Parameters
         ----------
-        X : sparse matrix of shape (n_samples, n_features)
+        X : sparse CSC matrix of shape (n_samples, n_features)
             The data used to scale along the features axis. The sparse matrix
-            needs to be nonnegative. If a sparse matrix is provided,
-            it will be converted into a SciPy sparse CSC matrix.
+            needs to be nonnegative if `ignore_implicit_zeros` is False.
+
+        Notes
+        -----
+        Columns with fewer non-zero entries than `subsample` are not
+        subsampled: when `ignore_implicit_zeros=False`, this materializes a
+        `n_samples` array.
         """
         n_samples, n_features = X.shape
-        references = self.references_ * 100
+        references = self.references_
 
         self.quantiles_ = []
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
+            n_zeros = n_samples - len(column_nnz_data)
+
             if self.subsample is not None and len(column_nnz_data) > self.subsample:
-                column_subsample = self.subsample * len(column_nnz_data) // n_samples
-                if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=column_subsample, dtype=X.dtype)
-                else:
-                    column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
-                column_data[:column_subsample] = random_state.choice(
-                    column_nnz_data, size=column_subsample, replace=False
+                column_data = random_state.choice(
+                    column_nnz_data, size=self.subsample, replace=False
                 )
+                # subsample zeros too:
+                n_zeros = round(n_zeros * self.subsample / len(column_nnz_data))
             else:
-                if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=len(column_nnz_data), dtype=X.dtype)
-                else:
-                    column_data = np.zeros(shape=n_samples, dtype=X.dtype)
-                column_data[: len(column_nnz_data)] = column_nnz_data
+                column_data = column_nnz_data
 
             if not column_data.size:
                 # if no nnz, an error will be raised for computing the
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
+            elif self.ignore_implicit_zeros:
+                self.quantiles_.append(np.nanquantile(column_data, references))
             else:
-                self.quantiles_.append(np.nanpercentile(column_data, references))
+                self.quantiles_.append(
+                    _sparse_column_quantile(column_data, n_zeros, references)
+                )
+
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
@@ -3164,8 +3223,8 @@ def quantile_transform(
 
     ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If False,
-        these entries are treated as zeros.
+        matrix are discarded to compute the quantile statistics, including
+        when subsampling. If False, these entries are treated as zeros.
 
     subsample : int or None, default=1e5
         Maximum number of samples used to estimate the quantiles for

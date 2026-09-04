@@ -1,0 +1,4 @@
+- Fixed a bug in :class:`preprocessing.QuantileTransformer` where fitting on
+  sparse data with `ignore_implicit_zeros=True` and subsampling could compute
+  degenerate quantiles for some features.
+  By :user:`Arthur Lacote <cakedev0>`.
