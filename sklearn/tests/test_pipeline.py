@@ -21,11 +21,11 @@ from sklearn.base import (
     is_classifier,
     is_regressor,
 )
-from sklearn.callback.tests._common.callbacks import (
+from sklearn.callback._testing.callbacks import (
     RecordingAutoPropagatedCallback,
     RecordingCallback,
 )
-from sklearn.callback.tests._common.estimators import MaxIterEstimator
+from sklearn.callback._testing.estimators import MaxIterEstimator
 from sklearn.cluster import KMeans
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA, TruncatedSVD

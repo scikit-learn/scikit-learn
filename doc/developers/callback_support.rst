@@ -243,16 +243,3 @@ Here is a typical implementation of callback support in a custom estimator:
 For a more detailed example of how to make a custom estimator or meta-estimator
 compatible with scikit-learn's callback API, you can refer to this example :
 :ref:`sphx_glr_auto_examples_callbacks_plot_callback_support.py`.
-
-Testing callback support
-------------------------
-
-scikit-learn ships common checks for callback support in
-:mod:`sklearn.callback.tests.test_common`, run automatically against all
-scikit-learn estimators that support callbacks. Third-party estimators can run
-the full suite using :func:`sklearn.callback.check_callback_estimator`::
-
-    from sklearn.callback import check_callback_estimator
-
-    def test_my_estimator_callbacks():
-        check_callback_estimator(MyEstimator())

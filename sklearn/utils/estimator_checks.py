@@ -39,6 +39,7 @@ from sklearn.base import (
     is_outlier_detector,
     is_regressor,
 )
+from sklearn.callback._testing.callbacks import RecordingCallback
 from sklearn.datasets import (
     load_iris,
     make_blobs,
@@ -47,6 +48,7 @@ from sklearn.datasets import (
     make_regression,
 )
 from sklearn.exceptions import (
+    ConvergenceWarning,
     DataConversionWarning,
     EstimatorCheckFailedWarning,
     NotFittedError,
@@ -106,6 +108,7 @@ from sklearn.utils._testing import (
     raises,
     set_random_state,
 )
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -211,6 +214,8 @@ def _yield_checks(estimator):
         yield check
 
     yield check_f_contiguous_array_estimator
+
+    yield from _yield_callback_checks(estimator)
 
 
 def _yield_classifier_checks(classifier):
@@ -5704,6 +5709,131 @@ def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
 
         # Also do does not raise
         est.set_params(**new_params)
+
+
+def _estimator_has_callback_support(estimator):
+    """Return True if callback checks should run for this estimator instance."""
+    if not hasattr(estimator, "set_callbacks"):
+        return False
+    name = type(estimator).__name__
+    # Inherits set_callbacks from LogisticRegression but does not implement
+    # callback support in fit.
+    if name == "LogisticRegressionCV":
+        return False
+    # LogisticRegression only supports callbacks with the lbfgs solver.
+    if name == "LogisticRegression" and estimator.solver != "lbfgs":
+        return False
+    return True
+
+
+def _yield_callback_checks(estimator):
+    if not _estimator_has_callback_support(estimator):
+        return
+    yield check_callback_setup_teardown_called_once
+    yield check_callback_begin_end_balanced
+    yield check_callback_estimator_is_self
+
+
+def _fit_estimator_with_recording_callback(estimator_orig):
+    if _IS_WASM:
+        raise SkipTest("callback tests are skipped on WASM/Pyodide")
+
+    # make_classification guarantees class balance, which is necessary for
+    # HalvingSearch whose first rounds use very few samples.
+    X, y = make_classification(
+        n_samples=200, n_features=4, n_informative=4, n_redundant=0, random_state=0
+    )
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    callback = RecordingCallback()
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    estimator.set_callbacks(callback).fit(X, y)
+    return estimator, callback
+
+
+@ignore_warnings(category=(ConvergenceWarning, UserWarning))
+def check_callback_setup_teardown_called_once(name, estimator_orig):
+    """setup and teardown are each called exactly once per fit, in that order.
+
+    This verifies that the estimator correctly wraps its fit method with
+    `@with_callbacks` or `callback_management_context`, which guarantees the
+    lifecycle hooks are called exactly once regardless of what happens inside
+    fit.
+    """
+    _, callback = _fit_estimator_with_recording_callback(estimator_orig)
+
+    n_setup = callback.count_hooks("setup")
+    msg = f"{name}: expected setup to be called once, got {n_setup}"
+    assert n_setup == 1, msg
+
+    msg = (
+        f"{name}: expected teardown to be called once, "
+        f"got {callback.count_hooks('teardown')}"
+    )
+    assert callback.count_hooks("teardown") == 1, msg
+
+    hook_names = [entry["name"] for entry in callback.record]
+    msg = f"{name}: teardown was recorded before setup"
+    assert hook_names.index("setup") < hook_names.index("teardown"), msg
+
+
+@ignore_warnings(category=(ConvergenceWarning, UserWarning))
+def check_callback_begin_end_balanced(name, estimator_orig):
+    """on_fit_task_begin / on_fit_task_end form a single-rooted Dyck sequence.
+
+    Because a single `fit` call corresponds to exactly one root task, the
+    sequence of task events must be a *primitive* Dyck word: the running
+    balance (n_begin - n_end so far) must stay ≥ 1 for every event except the
+    last, and be 0 only at the very end. This rules out both unmatched ends
+    (balance goes negative) and multiple sibling root tasks, e.g. `()()`.
+    """
+    _, callback = _fit_estimator_with_recording_callback(estimator_orig)
+
+    task_events = [
+        entry
+        for entry in callback.record
+        if entry["name"] in ("on_fit_task_begin", "on_fit_task_end")
+    ]
+
+    balance = 0
+    for i, entry in enumerate(task_events):
+        if entry["name"] == "on_fit_task_begin":
+            balance += 1
+        else:
+            balance -= 1
+            msg = f"{name}: on_fit_task_end called without a matching on_fit_task_begin"
+            assert balance >= 0, msg
+            if balance == 0:
+                msg = (
+                    f"{name}: balance returned to 0 before the last task event; "
+                    f"multiple top-level tasks detected"
+                )
+                assert i == len(task_events) - 1, msg
+    msg = (
+        f"{name}: {balance} on_fit_task_begin call(s) have no matching on_fit_task_end"
+    )
+    assert balance == 0, msg
+
+
+@ignore_warnings(category=(ConvergenceWarning, UserWarning))
+def check_callback_estimator_is_self(name, estimator_orig):
+    """Every hook receives the estimator instance that fit was called on.
+
+    Each call to setup, on_fit_task_begin, on_fit_task_end, and teardown must
+    pass the estimator that owns the fit (i.e. `self`), not a clone, not a
+    sub-estimator.
+    """
+    estimator, callback = _fit_estimator_with_recording_callback(estimator_orig)
+
+    for entry in callback.record:
+        msg = (
+            f"{name}: hook '{entry['name']}' received "
+            f"{entry['estimator']!r} as estimator, expected the fitted instance "
+            f"{estimator!r}"
+        )
+        assert entry["estimator"] is estimator, msg
 
 
 def check_classifier_not_supporting_multiclass(name, estimator_orig):
