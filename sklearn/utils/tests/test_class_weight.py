@@ -91,6 +91,19 @@ def test_compute_class_weight_dict():
     assert_allclose([4.0, 2.0, 3.0], cw)
 
 
+def test_compute_class_weight_dict_numeric_string_labels():
+    """Non-regression test for #34883.
+
+    String labels that parse as integers (e.g. "1", "2") must not be
+    coerced to int during the dict lookup.
+    """
+    classes = np.array(["1", "2"])
+    class_weights = {"1": 0.5, "2": 2.0}
+    y = np.array(["1", "1", "2"])
+    cw = compute_class_weight(class_weights, classes=classes, y=y)
+    assert_allclose(cw, [0.5, 2.0])
+
+
 def test_compute_class_weight_invariance():
     # Test that results with class_weight="balanced" is invariant wrt
     # class imbalance if the number of samples is identical.
