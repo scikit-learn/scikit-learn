@@ -393,3 +393,18 @@ def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
 
     # assert the same results as non-parallel
     assert_array_equal(pred, pred_parallel)
+
+
+def test_iforest_zero_sample_weight_without_bootstrap():
+    # Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/34673
+    # Zero weights are the documented way to exclude samples from the fit, and
+    # `IsolationForest` uses `bootstrap=False` by default: a single zero weight
+    # must not raise "Fewer non-zero entries in p than size".
+    X = iris.data
+    sample_weight = np.ones(X.shape[0])
+    sample_weight[0] = 0.0
+
+    model = IsolationForest(random_state=0)
+    model.fit(X, sample_weight=sample_weight)
+
+    assert model.score_samples(X).shape[0] == X.shape[0]
