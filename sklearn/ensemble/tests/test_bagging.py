@@ -743,6 +743,42 @@ def test_invalid_sample_weight_max_samples_bootstrap_combinations():
             clf.fit(X, y, sample_weight=sample_weight)
 
 
+def test_zero_sample_weight_without_bootstrap():
+    # Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/34673
+    # Sampling without replacement must not raise when the number of
+    # non-zero-weighted samples is below `max_samples`; zero-weighted samples
+    # are excluded from the fit.
+    X, y = iris.data, iris.target
+    sample_weight = np.ones(X.shape[0])
+    sample_weight[:30] = 0.0
+    n_nonzero = X.shape[0] - 30
+    non_zero_indices = np.flatnonzero(sample_weight)
+
+    # Integer `max_samples` above the number of non-zero weights: the draw is
+    # capped at the number of non-zero-weighted samples instead of raising.
+    clf = BaggingClassifier(
+        DecisionTreeClassifier(),
+        n_estimators=2,
+        bootstrap=False,
+        max_samples=n_nonzero + 20,
+        random_state=0,
+    )
+    clf.fit(X, y, sample_weight=sample_weight)
+    for samples in clf.estimators_samples_:
+        assert samples.shape[0] == n_nonzero
+        assert np.isin(samples, non_zero_indices).all()
+
+    # Default `max_samples=1.0` is interpreted against the sum of the weights,
+    # hence exactly the non-zero-weighted samples are drawn in every estimator.
+    clf = BaggingClassifier(
+        DecisionTreeClassifier(), n_estimators=2, bootstrap=False, random_state=0
+    )
+    clf.fit(X, y, sample_weight=sample_weight)
+    for samples in clf.estimators_samples_:
+        assert samples.shape[0] == n_nonzero
+        assert np.isin(samples, non_zero_indices).all()
+
+
 class EstimatorAcceptingSampleWeight(BaseEstimator):
     """Fake estimator accepting sample_weight"""
 
