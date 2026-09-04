@@ -1657,3 +1657,47 @@ def test_hashing_vectorizer_transform_without_fit():
     corpus = ["This is test", "Another test"]
     result = vectorizer.transform(corpus)
     assert result.shape == (2, 10)
+
+
+def _newsgroups_raw_data(fetch_20newsgroups_fxt):
+    categories = [
+        "alt.atheism",
+        "comp.graphics",
+        "comp.sys.ibm.pc.hardware",
+        "misc.forsale",
+        "rec.autos",
+        "sci.space",
+        "talk.religion.misc",
+    ]
+    raw_data, _ = fetch_20newsgroups_fxt(
+        subset="train", categories=categories, return_X_y=True
+    )
+    return raw_data
+
+
+def test_hashing_vectorizer_parallelism(fetch_20newsgroups_fxt):
+    """Parallelism doesn't affect the result of HashingVectorizer."""
+    raw_data = _newsgroups_raw_data(fetch_20newsgroups_fxt)
+    results = []
+    for n_jobs in [1, -1]:
+        vectorizer = HashingVectorizer(n_features=2**18, n_jobs=n_jobs)
+        results.append(vectorizer.fit_transform(raw_data))
+    first = results[0]
+    for other in results[1:]:
+        assert (
+            np.all(first.indices == other.indices)
+            and np.all(first.indptr == other.indptr)
+            and np.array_equal(first.data, other.data)
+        )
+
+
+def test_count_vectorizer_parallelism(fetch_20newsgroups_fxt):
+    """Parallelism doesn't affect the result of CountVectorizer."""
+    raw_data = _newsgroups_raw_data(fetch_20newsgroups_fxt)
+    results = []
+    for n_jobs in [1, -1]:
+        vectorizer = CountVectorizer(n_jobs=n_jobs)
+        results.append(vectorizer.fit(raw_data))
+    first = results[0]
+    for other in results[1:]:
+        assert first.vocabulary_ == other.vocabulary_
