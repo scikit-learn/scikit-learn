@@ -70,7 +70,7 @@ from sklearn.utils.metadata_routing import (
 )
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.optimize import _check_optimize_result, _newton_cg
-from sklearn.utils.parallel import Parallel, delayed, is_free_threaded
+from sklearn.utils.parallel import Parallel, _is_gil_enabled, delayed
 from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
@@ -2355,7 +2355,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         # If this Python has a GIL, the SAG solver releases the GIL so it's
         # more efficient to use threads. If there is no GIL, threads are more
         # efficient in general.
-        if is_free_threaded() or self.solver in ["sag", "saga"]:
+        if not _is_gil_enabled() or self.solver in ["sag", "saga"]:
             prefer = "threads"
         else:
             prefer = "processes"

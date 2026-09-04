@@ -215,15 +215,13 @@ def _threadpool_controller_decorator(limits=1, user_api="blas"):
     return decorator
 
 
-def is_free_threaded() -> bool:
-    """Return whether the current Python has no GIL.
-
-    .. versionadded:: 1.10
+def _is_gil_enabled() -> bool:
+    """Return whether Python has the GIL enabled.
 
     Returns
     -------
     bool
-        Whether the Python interpreter is free-threaded, i.e. has no GIL.
+        Whether the GIL is enabled.
     """
-    is_gil_enabled = getattr(sys, "_is_gil_enabled", lambda: True)
-    return not is_gil_enabled()
+    _is_gil_enabled = getattr(sys, "_is_gil_enabled", lambda: False)
+    return _is_gil_enabled()
