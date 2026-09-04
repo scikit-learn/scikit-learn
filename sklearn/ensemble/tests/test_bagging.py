@@ -779,6 +779,51 @@ def test_zero_sample_weight_without_bootstrap():
         assert np.isin(samples, non_zero_indices).all()
 
 
+def test_zero_sample_weight_fractional_max_samples_without_bootstrap():
+    # Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/34673
+    # Fractional `max_samples` is interpreted against the sum of the weights,
+    # which can exceed the number of non-zero weights when weights are greater
+    # than one; the draw must be capped at the non-zero count.
+    X, y = iris.data, iris.target
+    sample_weight = np.zeros(X.shape[0])
+    sample_weight[:10] = 3.0  # sum of weights = 30, 0.8 * 30 = 24 > 10 non-zero
+
+    clf = BaggingClassifier(
+        DecisionTreeClassifier(),
+        n_estimators=2,
+        bootstrap=False,
+        max_samples=0.8,
+        random_state=0,
+    )
+    clf.fit(X, y, sample_weight=sample_weight)
+    for samples in clf.estimators_samples_:
+        assert samples.shape[0] == 10
+        assert np.isin(samples, np.arange(10)).all()
+
+
+def test_zero_sample_weight_without_bootstrap_regressor():
+    # Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/34673
+    # `BaggingRegressor` shares the sampling path with `BaggingClassifier`;
+    # zero-weighted samples must be excluded there as well.
+    X, y = diabetes.data, diabetes.target
+    sample_weight = np.ones(X.shape[0])
+    sample_weight[:30] = 0.0
+    n_nonzero = X.shape[0] - 30
+    non_zero_indices = np.flatnonzero(sample_weight)
+
+    reg = BaggingRegressor(
+        DecisionTreeRegressor(),
+        n_estimators=2,
+        bootstrap=False,
+        max_samples=n_nonzero + 10,
+        random_state=0,
+    )
+    reg.fit(X, y, sample_weight=sample_weight)
+    for samples in reg.estimators_samples_:
+        assert samples.shape[0] == n_nonzero
+        assert np.isin(samples, non_zero_indices).all()
+
+
 class EstimatorAcceptingSampleWeight(BaseEstimator):
     """Fake estimator accepting sample_weight"""
 
