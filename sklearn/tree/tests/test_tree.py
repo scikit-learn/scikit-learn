@@ -3268,6 +3268,43 @@ def test_predict_categorical_list_input(Tree):
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_categorical_preprocessor_preserves_feature_order(Tree):
+    X = np.array(
+        [
+            [0.0, "a"],
+            [1.0, "a"],
+            [2.0, "a"],
+            [3.0, "a"],
+        ],
+        dtype=object,
+    )
+    y = np.array([0, 0, 1, 1])
+
+    est = Tree(categorical_features=[1], random_state=0).fit(X, y)
+
+    assert est.tree_.feature[0] == 0
+    assert_array_equal(est.tree_._n_categories, [-1, 1])
+    assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_categorical_preprocessor_nullable_numerical_feature(Tree):
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(
+        {
+            "f_num": pd.Series([0, 1, pd.NA, 3], dtype="Int64"),
+            "f_cat": pd.Categorical(["a", "a", "b", "b"]),
+        }
+    )
+    y = np.array([0, 0, 1, 1])
+
+    est = Tree(categorical_features="from_dtype", random_state=0).fit(X, y)
+
+    assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
 @pytest.mark.parametrize(
     "constructor_name, categorical_features",
     [
