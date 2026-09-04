@@ -217,6 +217,9 @@ class TreeGrower:
         to determine the effective number of threads use, which takes cgroups CPU
         quotes into account. See the docstring of `_openmp_effective_n_threads`
         for details.
+    sample_weight : ndarray of shape (n_samples,), dtype=float64, default=None
+        Optional sample weights. Zero-weight samples are excluded from the
+        splitter partition so they never enter a leaf.
 
     Attributes
     ----------
@@ -262,6 +265,7 @@ class TreeGrower:
         rng=np.random.default_rng(),
         shrinkage=1.0,
         n_threads=None,
+        sample_weight=None,
     ):
         self._validate_parameters(
             X_binned,
@@ -329,6 +333,7 @@ class TreeGrower:
             feature_fraction_per_split=feature_fraction_per_split,
             rng=rng,
             n_threads=n_threads,
+            sample_weight=sample_weight,
         )
         self.X_binned = X_binned
         self.max_leaf_nodes = max_leaf_nodes
@@ -423,7 +428,8 @@ class TreeGrower:
         self.total_compute_hist_time += time() - tic
 
         tic = time()
-        n_samples = self.X_binned.shape[0]
+        # Use the splitter partition length (positively weighted samples only).
+        n_samples = self.splitter.partition.shape[0]
         depth = 0
         histogram_array = np.asarray(histograms[arbitrary_feature])
         sum_gradients = histogram_array["sum_gradients"].sum()

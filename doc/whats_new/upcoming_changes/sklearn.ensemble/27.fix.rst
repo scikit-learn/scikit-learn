@@ -1,0 +1,9 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now exclude zero-weight
+  samples from the tree grower partition so they do not inflate unweighted
+  histogram counts and cannot form a zero-weight leaf. As a consequence, the
+  repeated/weighted equivalence described in :term:`sample_weight` holds when
+  fitting with ``min_samples_leaf=1``. In particular, weight 0 matches removing
+  the sample even for deep trees. Furthermore, fitting on a dataset with many
+  zero-weight samples is now faster.
+  By :user:`Antoine Baker <antoinebaker>` and :user:`Olivier Grisel <ogrisel>`.
