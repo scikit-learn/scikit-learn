@@ -155,20 +155,20 @@ def _extract_missing(values):
 
 
 class _nandict(dict):
-    """Dictionary with support for nans.
+    """Map each of the given unique values to its index, with support for nans.
 
-    Accessing missing keys always return the -1 value instead of raising KeyError.
+    Accessing a key that is not one of the unique values returns -1 instead
+    of raising KeyError.
     """
 
-    def __init__(self, mapping):
-        super().__init__(mapping)
-        for key, value in mapping.items():
-            if is_scalar_nan(key):
-                self.nan_value = value
-                break
+    def __init__(self, uniques):
+        super().__init__(zip(uniques, range(len(uniques))))
+        self.has_nan = is_scalar_nan(uniques[-1])
+        if self.has_nan:
+            self.nan_value = len(uniques) - 1
 
     def __missing__(self, key):
-        if hasattr(self, "nan_value") and is_scalar_nan(key):
+        if self.has_nan and is_scalar_nan(key):
             return self.nan_value
         return -1
 
@@ -179,32 +179,36 @@ def _map_to_integer(values, uniques):
     Values not present in `uniques` are encoded as -1.
     """
     xp, _ = get_namespace(values, uniques)
-    table = _nandict({val: i for i, val in enumerate(uniques)})
+    table = _nandict(uniques)
     return xp.asarray([table[v] for v in values], device=array_device(values))
 
 
 def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_unique`, see docstring there for details
     try:
-        uniques_set = set(values)
+        if return_counts:
+            counter = Counter(values)
+            uniques_set = counter.keys()
+        else:
+            uniques_set = set(values)
         uniques_set, missing_values = _extract_missing(uniques_set)
-
         uniques = sorted(uniques_set)
-        uniques.extend(missing_values.to_list())
-        uniques = np.array(uniques, dtype=values.dtype)
     except TypeError:
         types = sorted(t.__qualname__ for t in set(type(v) for v in values))
         raise TypeError(
             "Encoders require their input argument must be uniformly "
             f"strings or numbers. Got {types}"
         )
+
+    uniques.extend(missing_values.to_list())
+    uniques = np.array(uniques, dtype=values.dtype)
     ret = (uniques,)
 
     if return_inverse:
         ret += (_map_to_integer(values, uniques),)
 
     if return_counts:
-        ret += (_get_counts(values, uniques, missing_values.all_nans),)
+        ret += (_get_counts(values, uniques, missing_values.all_nans, counter),)
 
     return ret[0] if len(ret) == 1 else ret
 
@@ -302,7 +306,7 @@ def _encode(values, *, uniques, return_diff=False):
     return encoded
 
 
-def _get_counts(values, uniques, nan_values=(np.nan,)):
+def _get_counts(values, uniques, nan_values=(np.nan,), counter=None):
     """Get the count of each of the `uniques` in `values`.
 
     The counts will use the order passed in by `uniques`.  `np.nan` is assumed
@@ -310,7 +314,7 @@ def _get_counts(values, uniques, nan_values=(np.nan,)):
     non-object dtypes, `uniques` is assumed to be sorted.
     """
     if values.dtype.kind in "OU":
-        counter = Counter(values)
+        counter = counter or Counter(values)
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
             output[i] = counter[item]
