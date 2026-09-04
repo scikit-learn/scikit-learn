@@ -141,9 +141,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features) if n_classes == 2 else \
-            (n_classes, n_features)
+    coef_ : ndarray or CSR array/matrix of shape (1, n_features) if n_classes == 2 \
+        else (n_classes, n_features)
         Weights assigned to the features.
+
+        By default, it will be created as a dense array, but can be turned to
+        sparse (CSR format) through :meth:`sparsify`, and back to
+        dense through :meth:`densify`.
 
     intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
