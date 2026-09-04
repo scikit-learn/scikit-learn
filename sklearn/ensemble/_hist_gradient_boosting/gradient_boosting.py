@@ -837,6 +837,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     rng=self._feature_subsample_rng,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
+                    sample_weight=sample_weight_train,
                 )
                 grower.grow()
 
@@ -1422,6 +1423,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
+
+        This constraint is applied to the unweighted sample count, not the
+        sum of sample weights. Therefore the repeated/weighted equivalence
+        described in :term:`sample_weight` only holds when
+        ``min_samples_leaf=1``.
     l2_regularization : float, default=0
         The L2 regularization parameter penalizing leaves with small hessians.
         Use ``0`` for no regularization (default).
@@ -1814,6 +1820,11 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
+
+        This constraint is applied to the unweighted sample count, not the
+        sum of sample weights. Therefore the repeated/weighted equivalence
+        described in :term:`sample_weight` only holds when
+        ``min_samples_leaf=1``.
     l2_regularization : float, default=0
         The L2 regularization parameter penalizing leaves with small hessians.
         Use ``0`` for no regularization (default).

@@ -247,9 +247,14 @@ As you can see, the `[1, 0]` is comfortably classified as `1` since the first
 two samples are ignored due to their sample weights.
 
 Implementation detail: taking sample weights into account amounts to
-multiplying the gradients (and the hessians) by the sample weights. Note that
-the binning stage (specifically the quantiles computation) does not take the
-weights into account.
+multiplying the gradients (and the hessians) by the sample weights.
+Furthermore, the tree grower excludes splits that would lead to a zero-weight
+leaf (consistently to what is done in
+:class:`~sklearn.tree.DecisionTreeClassifier`).
+
+``min_samples_leaf`` is applied to the unweighted sample count, so the
+repeated/weighted equivalence described in :term:`sample_weight` only holds
+when ``min_samples_leaf=1``.
 
 .. _categorical_support_gbdt:
 

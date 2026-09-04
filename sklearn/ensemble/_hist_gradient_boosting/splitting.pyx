@@ -162,6 +162,13 @@ cdef class Splitter:
     rng : Generator
     n_threads : int, default=1
         Number of OpenMP threads to use.
+    sample_weight : ndarray of shape (n_samples,), dtype=float64, default=None
+        Optional sample weights. Zero-weight samples are excluded from
+        ``partition`` so they never enter a leaf (same approach as
+        :class:`~sklearn.tree.DecisionTreeClassifier`). That prevents
+        unweighted histogram ``count`` / ``min_samples_leaf`` from being
+        inflated by ignored rows, and avoids splits that would create a
+        zero-weight leaf.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
@@ -198,7 +205,8 @@ cdef class Splitter:
                  uint8_t hessians_are_constant=False,
                  Y_DTYPE_C feature_fraction_per_split=1.0,
                  rng=np.random.RandomState(),
-                 unsigned int n_threads=1):
+                 unsigned int n_threads=1,
+                 sample_weight=None):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -219,13 +227,21 @@ cdef class Splitter:
         # The partition array maps each sample index into the leaves of the
         # tree (a leaf in this context is a node that isn't split yet, not
         # necessarily a 'finalized' leaf). Initially, the root contains all
-        # the indices, e.g.:
+        # positively weighted indices, e.g.:
         # partition = [abcdefghijkl]
         # After a call to split_indices, it may look e.g. like this:
         # partition = [cef|abdghijkl]
         # we have 2 leaves, the left one is at position 0 and the second one at
         # position 3. The order of the samples is irrelevant.
-        self.partition = np.arange(X_binned.shape[0], dtype=np.uint32)
+        #
+        # Zero-weight samples are omitted so they do not inflate hist.count /
+        # min_samples_leaf and cannot form a leaf alone.
+        if sample_weight is None:
+            self.partition = np.arange(X_binned.shape[0], dtype=np.uint32)
+        else:
+            self.partition = np.flatnonzero(sample_weight).astype(
+                np.uint32, copy=False
+            )
         # buffers used in split_indices to support parallel splitting.
         self.left_indices_buffer = np.empty_like(self.partition)
         self.right_indices_buffer = np.empty_like(self.partition)
