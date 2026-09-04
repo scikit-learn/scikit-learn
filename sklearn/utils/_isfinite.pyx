@@ -1,8 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from libc.math cimport isnan, isinf
+from libc.math cimport isinf
 from cython cimport floating
+
+from sklearn.utils._typedefs cimport isnan
 
 
 cpdef enum FiniteStatus:
