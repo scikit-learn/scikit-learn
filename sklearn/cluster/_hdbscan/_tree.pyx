@@ -585,14 +585,14 @@ cdef cnp.intp_t traverse_upwards(
     cdef cnp.float64_t parent_eps
 
     root = cluster_tree['parent'].min()
-    parent = cluster_tree[cluster_tree['child'] == leaf]['parent']
+    parent = cluster_tree[cluster_tree['child'] == leaf]['parent'][0]
     if parent == root:
         if allow_single_cluster:
             return parent
         else:
             return leaf  # return node closest to root
 
-    parent_eps = 1 / cluster_tree[cluster_tree['child'] == parent]['value']
+    parent_eps = 1 / cluster_tree[cluster_tree['child'] == parent]['value'][0]
     if parent_eps > cluster_selection_epsilon:
         return parent
     else:

@@ -1,0 +1,5 @@
+- :class:`cluster.HDBSCAN` no longer raises a ``TypeError`` when fitting with a
+  non-zero ``cluster_selection_epsilon`` on NumPy 2.x. Epsilon-based cluster
+  selection implicitly converted a size-1 array to a scalar, which NumPy 2.x no
+  longer allows.
+  By :user:`Marcus Kornmann <CptK>`.
