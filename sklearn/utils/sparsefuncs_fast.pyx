@@ -3,13 +3,13 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from libc.math cimport fabs, sqrt, isnan
+from libc.math cimport fabs, sqrt
 from libc.stdint cimport intptr_t
 
 import numpy as np
 from cython cimport floating
 from sklearn.utils.fixes import _ensure_sparse_index_int32
-from sklearn.utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
+from sklearn.utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, isnan, uint64_t
 
 
 ctypedef fused integral:

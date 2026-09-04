@@ -1,4 +1,3 @@
-from libc.math cimport isnan
 from libcpp.vector cimport vector
 
 from sklearn.utils._typedefs cimport (
@@ -7,6 +6,7 @@ from sklearn.utils._typedefs cimport (
     int32_t,
     int64_t,
     intp_t,
+    isnan,
 )
 
 import numpy as np

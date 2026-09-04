@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cython.parallel import prange
-from libc.math cimport isnan
 import numpy as np
 
 from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset_2d_memoryview
-from sklearn.utils._typedefs cimport intp_t, uint8_t
+from sklearn.utils._typedefs cimport intp_t, uint8_t, isnan
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE

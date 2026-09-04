@@ -11,7 +11,7 @@ and sparse data stored in a Compressed Sparse Column (CSC) format.
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cython cimport final
-from libc.math cimport INFINITY, isnan, log2
+from libc.math cimport INFINITY, log2
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy, memset, memmove
 
