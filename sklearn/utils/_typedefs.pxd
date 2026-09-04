@@ -1,3 +1,5 @@
+from libc.string cimport memcpy
+
 # Commonly used types
 # These are redefinitions of the ones defined by numpy in
 # https://github.com/numpy/numpy/blob/main/numpy/__init__.pxd.
@@ -52,4 +54,11 @@ cdef inline bint isnan(float32_or_float64_t x) noexcept nogil:
     which some compilers/libc fail to inline, this is guaranteed to be
     inlined. See https://github.com/scikit-learn/scikit-learn/issues/34869.
     """
-    return x != x
+    cdef uint32_t bits32
+    cdef uint64_t bits64
+    if float32_or_float64_t is float32_t:
+        memcpy(&bits32, &x, sizeof(bits32))
+        return (bits32 & 0x7fffffff) > 0x7f800000
+    else:
+        memcpy(&bits64, &x, sizeof(bits64))
+        return (bits64 & <uint64_t>0x7fffffffffffffff) > <uint64_t>0x7ff0000000000000

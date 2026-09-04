@@ -21,3 +21,7 @@ ctypedef fused testing_type_t:
 def testing_make_array_from_typed_val(testing_type_t val):
     cdef testing_type_t[:] val_view = <testing_type_t[:1]>&val
     return np.asarray(val_view)
+
+
+def testing_isnan(float32_or_float64_t val):
+    return isnan(val)
