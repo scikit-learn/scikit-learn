@@ -307,7 +307,8 @@ def _estimate_mi(
         )
 
     if not discrete_target:
-        y = scale(y, with_mean=False)
+        y = y.astype(np.float64, copy=copy)
+        y = scale(y, with_mean=False, copy=False)
         y += (
             1e-10
             * np.maximum(1, np.mean(np.abs(y)))
