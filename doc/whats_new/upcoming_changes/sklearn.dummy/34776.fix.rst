@@ -1,0 +1,7 @@
+- :class:`dummy.DummyRegressor` with `strategy="median"` or
+  `strategy="quantile"` now uses the `averaged_inverted_cdf` percentile when
+  `sample_weight` is passed. Previously the weighted path used
+  `inverted_cdf` while the unweighted path used `np.median` / `np.percentile`,
+  so passing unit weights could return a different constant than passing no
+  weights at all.
+  By :user:`Selim <CodingSelim>`.
