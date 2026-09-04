@@ -6,7 +6,7 @@
 from libc.math cimport INFINITY
 
 from sklearn.utils._typedefs cimport (
-    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t
+    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t, uint64_t, isnan
 )
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, init_bitset, set_bitset
 from sklearn.tree._splitter cimport SplitRecord

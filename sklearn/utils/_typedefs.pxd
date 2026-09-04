@@ -39,3 +39,17 @@ ctypedef double float64_t
 ctypedef signed char int8_t
 ctypedef signed int int32_t
 ctypedef signed long long int64_t
+
+ctypedef fused float32_or_float64_t:
+    float32_t
+    float64_t
+
+
+cdef inline bint isnan(float32_or_float64_t x) noexcept nogil:
+    """Check whether x is NaN.
+
+    Prefer this over libc.math.isnan in hot loops: unlike that libm call,
+    which some compilers/libc fail to inline, this is guaranteed to be
+    inlined. See https://github.com/scikit-learn/scikit-learn/issues/34869.
+    """
+    return x != x

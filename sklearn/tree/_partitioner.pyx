@@ -115,16 +115,15 @@ cdef class DensePartitioner:
             while i <= current_end:
                 # Finds the right-most value that is not missing so that
                 # it can be swapped with missing values at its left.
-                # Equivalent to isnan(value), but always inlined
                 current_end_value = X[self.samples[current_end], current_feature]
-                if current_end_value != current_end_value:
+                if isnan(current_end_value):
                     n_missing += 1
                     current_end -= 1
                     continue
 
                 # X[samples[current_end], current_feature] is a non-missing value
                 i_value = X[self.samples[i], current_feature]
-                if i_value != i_value:
+                if isnan(i_value):
                     self.samples[i], self.samples[current_end] = self.samples[current_end], self.samples[i]
                     n_missing += 1
                     current_end -= 1
@@ -289,8 +288,7 @@ cdef class DensePartitioner:
             current_feature_value = self.X[samples[p], current_feature]
             feature_values[p] = current_feature_value
 
-            # Equivalent to isnan(value), but always inlined
-            if current_feature_value != current_feature_value:
+            if isnan(current_feature_value):
                 n_missing += 1
             elif not seen_non_missing:
                 min_feature_value = current_feature_value

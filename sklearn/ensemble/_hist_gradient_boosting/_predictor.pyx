@@ -5,7 +5,7 @@ from cython.parallel import prange
 import numpy as np
 
 from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset_2d_memoryview
-from sklearn.utils._typedefs cimport intp_t, uint8_t
+from sklearn.utils._typedefs cimport intp_t, uint8_t, isnan
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
@@ -54,7 +54,7 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
 
         data_val = numeric_data[row, node.feature_idx]
 
-        if data_val != data_val:  # equivalent to isnan(data_val), but always inlined
+        if isnan(data_val):
             if node.missing_go_to_left:
                 node_idx = node.left
             else:
