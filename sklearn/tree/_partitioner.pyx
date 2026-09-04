@@ -101,7 +101,6 @@ cdef class DensePartitioner:
             const float32_t[:, :] X = self.X
             intp_t n_missing = 0
             const uint8_t[::1] missing_values_in_feature_mask = self.missing_values_in_feature_mask
-            float32_t current_end_value, i_value
 
         # Sort samples along that feature; by copying the values into an array and
         # sorting the array in a manner which utilizes the cache more effectively.
@@ -115,15 +114,13 @@ cdef class DensePartitioner:
             while i <= current_end:
                 # Finds the right-most value that is not missing so that
                 # it can be swapped with missing values at its left.
-                current_end_value = X[self.samples[current_end], current_feature]
-                if isnan(current_end_value):
+                if isnan(X[self.samples[current_end], current_feature]):
                     n_missing += 1
                     current_end -= 1
                     continue
 
                 # X[samples[current_end], current_feature] is a non-missing value
-                i_value = X[self.samples[i], current_feature]
-                if isnan(i_value):
+                if isnan(X[self.samples[i], current_feature]):
                     self.samples[i], self.samples[current_end] = self.samples[current_end], self.samples[i]
                     n_missing += 1
                     current_end -= 1
