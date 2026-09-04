@@ -174,3 +174,94 @@ plt.title(
 )
 plt.axis("equal")
 plt.show()
+
+# %%
+# BIC Selection on Anisotropic Data
+# ---------------------------------
+#
+# A known issue with the default `init_params="kmeans"` in
+# :class:`~sklearn.mixture.GaussianMixture` is that it can fail to find the
+# optimal components for highly anisotropic data (e.g., parallel
+# cigar-shaped clusters). KMeans initialization assumes spherical clusters,
+# which can split a single elongated cluster into multiple spherical
+# components, trapping the GMM in a poor local minimum.
+#
+# We demonstrate this by creating a dataset of two parallel "cigar-shaped"
+# clusters. We will show that default initialization selects too many
+# components (e.g., 3 instead of 2), while using a whitened initialization
+# solves the issue.
+
+from sklearn.cluster import KMeans
+from sklearn.datasets import make_blobs
+from sklearn.decomposition import PCA
+
+# Generate parallel cigar-shaped clusters
+X_cigars, y_cigars = make_blobs(
+    n_samples=500, centers=2, cluster_std=0.5, random_state=42
+)
+transformation = np.array([[10.0, -1.0], [-1.0, 1.0]])
+X_cigars = np.dot(X_cigars, transformation)
+
+plt.scatter(X_cigars[:, 0], X_cigars[:, 1], s=0.8, c=y_cigars, cmap="tab10")
+plt.title("Parallel Cigar-Shaped Clusters")
+plt.axis("equal")
+plt.show()
+
+# %%
+# First, let's use the default initialization (`init_params="kmeans"`).
+# We search for the best model using BIC.
+
+param_grid_cigars = {
+    "n_components": range(1, 7),
+    "covariance_type": ["full"],
+}
+grid_search_default = GridSearchCV(
+    GaussianMixture(random_state=42),
+    param_grid=param_grid_cigars,
+    scoring=gmm_bic_score,
+)
+grid_search_default.fit(X_cigars)
+
+print(
+    "Default init selected "
+    f"{grid_search_default.best_params_['n_components']} components."
+)
+
+# %%
+# The default initialization often selects more than 2 components because
+# the initial k-means centers poorly match the true data distribution.
+#
+# To fix this, we can apply `PCA(whiten=True)` to the data before
+# initialization. This transforms the anisotropic data into a spherical
+# space where k-means performs better. It is important to note that PCA
+# whitening is ONLY used to obtain better initial weights, means, and
+# covariances. The actual GMM is still fitted and scored on the original
+# raw data, making the BIC scores completely valid and comparable.
+
+# 1. Whiten the data
+pca = PCA(whiten=True, random_state=42)
+X_whitened = pca.fit_transform(X_cigars)
+
+# 2. Run KMeans on the whitened data
+n_components_cigars = 2
+kmeans = KMeans(n_clusters=n_components_cigars, random_state=42, n_init=10)
+kmeans.fit(X_whitened)
+
+# 3. Transform the KMeans centers back to the original space
+centers_original = pca.inverse_transform(kmeans.cluster_centers_)
+
+# 4. Initialize GMM with these centers
+gmm_whitened = GaussianMixture(
+    n_components=n_components_cigars,
+    covariance_type="full",
+    means_init=centers_original,
+    random_state=42,
+)
+gmm_whitened.fit(X_cigars)
+
+# Compare BIC scores
+bic_default = -grid_search_default.best_score_
+bic_whitened = gmm_whitened.bic(X_cigars)
+
+print(f"BIC with default init:  {bic_default:.2f}")
+print(f"BIC with whitened init: {bic_whitened:.2f}")
