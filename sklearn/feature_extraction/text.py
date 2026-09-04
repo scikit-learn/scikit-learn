@@ -30,7 +30,7 @@ from sklearn.utils import metadata_routing
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.fixes import _IS_32BIT, SCIPY_VERSION_BELOW_1_12
-from sklearn.utils.parallel import is_free_threaded, parallel_thread_map
+from sklearn.utils.parallel import _is_gil_enabled, parallel_thread_map
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     check_array,
@@ -900,7 +900,7 @@ class HashingVectorizer(
         analyzer = self.build_analyzer()
         # The analyze() callable doesn't release the GIL, so there's no point
         # in using parallelism if there's a GIL.
-        n_jobs = self.n_jobs if is_free_threaded() else 1
+        n_jobs = 1 if _is_gil_enabled() else self.n_jobs
         X = self._get_hasher().transform(parallel_thread_map(n_jobs, analyzer, X))
         if self.binary:
             X.data.fill(1)
@@ -1299,7 +1299,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         indptr.append(0)
         # The analyze() callable doesn't release the GIL, so there's no point
         # in using parallelism if there's a GIL.
-        n_jobs = self.n_jobs if is_free_threaded() else 1
+        n_jobs = 1 if _is_gil_enabled() else self.n_jobs
         for doc in parallel_thread_map(n_jobs, analyze, raw_documents):
             feature_counter = {}
             for feature in doc:
