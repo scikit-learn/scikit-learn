@@ -628,7 +628,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
         axis = 1
     elif axis == -2:
         axis = 0
-    elif X.format != "csr":
+    if X.format != "csr":
         raise TypeError("Expected CSR sparse format, got {0}".format(X.format))
 
     # We rely here on the fact that np.diff(Y.indptr) for a CSR
