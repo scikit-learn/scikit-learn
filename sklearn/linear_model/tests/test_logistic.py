@@ -1173,7 +1173,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         COMPARED_SOLVERS.remove("liblinear")
         # 'newton-cg' does not support multiclass classification with class weights
         # TODO(1.12): remove this when multiclass support is added through PR #34681
-        COMPARED_SOLVERS.remove("newton-cg")
+        COMPARED_SOLVERS.remove("newton-cd")
 
     for solver in COMPARED_SOLVERS:
         clf = LogisticRegressionCV(
