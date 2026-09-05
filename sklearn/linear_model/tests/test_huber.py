@@ -6,6 +6,7 @@ import pytest
 from scipy import optimize
 
 from sklearn.datasets import make_regression
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, LinearRegression, Ridge, SGDRegressor
 from sklearn.linear_model._huber import _huber_loss_and_gradient
 from sklearn.utils._testing import (
@@ -214,3 +215,28 @@ def test_huber_bool():
     X, y = make_regression(n_samples=200, n_features=2, noise=4.0, random_state=0)
     X_bool = X > 0
     HuberRegressor().fit(X_bool, y)
+
+
+def test_huber_lbfgs_line_search_failure_warns(monkeypatch):
+    # Non-regression for #27777: L-BFGS-B status=2 should warn, not raise, and
+    # still expose the last-iteration parameters. Force status via monkeypatch
+    # because natural reproducers are platform-sensitive (#27888).
+    X, y = make_regression_with_outliers()
+
+    minimize = optimize.minimize
+
+    def minimize_with_line_search_failure(*args, **kwargs):
+        opt_res = minimize(*args, **kwargs)
+        opt_res.status = 2
+        opt_res.message = "ABNORMAL_TERMINATION_IN_LNSRCH"
+        return opt_res
+
+    monkeypatch.setattr(optimize, "minimize", minimize_with_line_search_failure)
+
+    huber = HuberRegressor()
+    with pytest.warns(ConvergenceWarning, match="ABNORMAL_TERMINATION_IN_LNSRCH"):
+        huber.fit(X, y)
+
+    assert huber.coef_.shape == (X.shape[1],)
+    assert hasattr(huber, "intercept_")
+    assert hasattr(huber, "scale_")
