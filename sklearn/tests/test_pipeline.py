@@ -1481,7 +1481,7 @@ def test_step_name_validation():
 def test_set_params_nested_pipeline():
     estimator = Pipeline([("a", Pipeline([("b", DummyRegressor())]))])
     estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
-    estimator.set_params(a__steps=[("b", LogisticRegression())], a__b__C=5)
+    estimator.set_params(a__steps=[("b", LogisticRegression())], a__b__alpha=0.2)
 
 
 def test_pipeline_memory():
