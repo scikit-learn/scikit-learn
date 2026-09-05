@@ -4,7 +4,6 @@
 from libc.math cimport fabs, sqrt
 from libc.stdlib cimport free, malloc
 from libc.string cimport memset
-# from libc.time cimport time, time_t
 import numpy as np
 
 from cython cimport floating
@@ -2579,13 +2578,6 @@ def enet_coordinate_descent_multinomial(
         Number of coordinate descent iterations.
     """
     dtype = X.dtype
-    # cdef time_t time_total = time(NULL)
-    # cdef time_t time_pre = 0
-    # cdef time_t time_gap = 0
-    # cdef time_t time_screen = 0
-    # cdef time_t time_w = 0
-    # cdef time_t time_r = 0
-    # cdef time_t tic = time(NULL)
 
     # get the data information into easy vars
     cdef unsigned int n_samples = X.shape[0]
@@ -2726,7 +2718,6 @@ def enet_coordinate_descent_multinomial(
     # b = A w - (L sqrt(D))^-1 g
     b = sqrt_D_Lt_raw + R  # shape (n_samples, n_classes)
 
-    # tol = tol * linalg.norm(Y, ord='fro') ** 2
     tol = tol * np.linalg.norm(b, ord="fro") ** 2
 
     # Rotated residual: L sqrt(D) R sqrt(sw)
@@ -2772,9 +2763,6 @@ def enet_coordinate_descent_multinomial(
     else:
         X_ = X
 
-    # time_pre += time(NULL) - tic
-    # tic = time(NULL)
-
     # Check convergence before entering the main loop.
     gap, dual_norm_XtA = gap_enet_multinomial(
         w=W_,
@@ -2800,9 +2788,6 @@ def enet_coordinate_descent_multinomial(
                 f"  <= tol={float(tol)}"
             )
         return np.asarray(W), gap, tol, 0
-
-    # time_gap += time(NULL) - tic
-    # tic = time(NULL)
 
     # Compute squared norms of the columns of X.
     # Same as norm2_cols_X = np.square(X).sum(axis=0)
@@ -2836,9 +2821,6 @@ def enet_coordinate_descent_multinomial(
         )
         # Guarantee norm2_cols_X >= 0:
         norm2_cols_X[norm2_cols_X < 0] = 0
-
-    # time_pre += time(NULL) - tic
-    # tic = time(NULL)
 
     # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
     if do_screening:
@@ -2881,24 +2863,19 @@ def enet_coordinate_descent_multinomial(
                     active_set[k, j] = j
                     excluded_set[k, j] = 0
 
-    # time_screen += time(NULL) - tic
-
     with nogil:
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
             for k in range(n_classes):  # Loop over classes
-                # tic = time(NULL)
                 at_least_one_feature_updated = False
                 # t_k[:] = 0
                 memset(&t_k_[0], 0, n_samples * sizeof(float64_t))
                 if fit_intercept:
                     # tt[:, :] = 0
                     memset(&tt_[0, 0], 0, n_samples * n_classes * sizeof(float64_t))
-                # time_r += time(NULL) - tic
 
                 for j in range(n_active[k]):  # Loop over coordinates
-                    # tic = time(NULL)
                     if do_screening:
                         j = active_set[k, j]
 
@@ -2931,8 +2908,6 @@ def enet_coordinate_descent_multinomial(
                         fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
                         / (norm2_cols_X_[k, j] + beta)
                     )
-                    # time_w += time(NULL) - tic
-                    # tic = time(NULL)
 
                     if W_[k, j] != w_kj:
                         at_least_one_feature_updated = True
@@ -3058,14 +3033,10 @@ def enet_coordinate_descent_multinomial(
                                 t_k_[i] += x_k_[i]
                             # Postpone updates of LD_R for classes != k.
 
-                    # time_r += time(NULL) - tic
-
                     # update the maximum absolute coefficient update
                     d_w_j = fabs(W_[k, j] - w_kj)
                     d_w_max = fmax(d_w_max, d_w_j)
                     w_max = fmax(w_max, fabs(W_[k, j]))
-
-                # tic = time(NULL)
 
                 # Postponed updates of LD_R for classes != k .
                 if at_least_one_feature_updated:
@@ -3086,8 +3057,6 @@ def enet_coordinate_descent_multinomial(
                 # time_r += time(NULL) - tic
 
             if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
-                # tic = time(NULL)
-
                 # The biggest coordinate update of this iteration was smaller than the
                 # tolerance: check the duality gap as ultimate stopping criterion.
                 for k in range(n_classes):
@@ -3118,8 +3087,6 @@ def enet_coordinate_descent_multinomial(
                             f"  inner coordinate descent solver at iter {n_iter} "
                             f"checks for gap={float(gap)} <= tol={float(tol)} ? {gap <= tol}"
                         )
-                # time_gap += time(NULL) - tic
-                # tic = time(NULL)
                 if gap <= tol:
                     # return if we reached desired tolerance
                     break
@@ -3153,16 +3120,15 @@ def enet_coordinate_descent_multinomial(
                                 W_[k, j] = 0
                                 excluded_set[k, j] = 1
 
-                # time_screen += time(NULL) - tic
         else:
+            # for/else, runs if for doesn't end with a `break`
             with gil:
-                # for/else, runs if for doesn't end with a `break`
                 message = (
-                    "Objective did not converge. You might want to increase "
-                    "the number of iterations, check the scale of the "
-                    "features or consider increasing regularisation."
+                    message_conv +
                     f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
                 )
+                if alpha < np.finfo(np.float64).eps:
+                    message += "\n" + message_ridge
                 warnings.warn(message, ConvergenceWarning)
 
     if fit_intercept:
@@ -3170,9 +3136,4 @@ def enet_coordinate_descent_multinomial(
         W0[:n_classes - 1] = H00_pinv @ (q0 - H0 @ W.ravel(order="F"))
         # W0[-1] = 0  # was already set at the beginning.
 
-    # time_total = time(NULL) - time_total
-    # print(
-    #     f"{time_pre=:6.4f} {time_gap=:6.4f} {time_screen=:6.4f}\n"
-    #     f"{time_w=:6.4f} {time_r=:6.4f} {time_total=:6.4f}"
-    # )
     return np.asarray(W_original), gap, tol, n_iter + 1
