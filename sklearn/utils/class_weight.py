@@ -102,10 +102,15 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         weight = xp.ones(size(classes), device=device)
         unweighted_classes = []
         for i, c in enumerate(classes):
-            try:
-                c = int(c)
-            except ValueError:  # `classes` contains strings
-                c = str(c)
+            # Normalize array scalars to Python scalars for dict lookup, but
+            # do not coerce strings that happen to parse as integers: the
+            # class_weight dict may be keyed by those strings (e.g. produced
+            # by _validate_y_class_weight round-tripping "balanced").
+            if not isinstance(c, (str, int, float, bool, type(None))):
+                try:
+                    c = int(c)
+                except (ValueError, TypeError):
+                    c = str(c)
             if c in class_weight:
                 weight[i] = class_weight[c]
             else:

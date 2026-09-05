@@ -4,6 +4,7 @@ from numpy.testing import assert_allclose
 
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._testing import assert_almost_equal, assert_array_almost_equal
 from sklearn.utils.class_weight import compute_class_weight, compute_sample_weight
@@ -332,3 +333,31 @@ def test_compute_sample_weight_sparse(csc_container):
     y = csc_container(np.asarray([[0], [1], [1]]))
     sample_weight = compute_sample_weight("balanced", y)
     assert_allclose(sample_weight, [1.5, 0.75, 0.75])
+
+def test_compute_class_weight_dict_string_integer_labels():
+    """Check that string class labels that parse as integers are not coerced.
+
+    Non-regression test for #34883: the array-API normalization in the
+    dictionary branch called int(c) on every class, so string labels like
+    "1"/"2" were silently converted to integers and the dict lookup with
+    string keys failed. The forest ensemble's "balanced" round-trip produces
+    exactly this shape.
+    """
+    # Direct compute_class_weight with string keys and string classes
+    weight = compute_class_weight(
+        {"1": 2.0, "2": 1.0}, classes=np.array(["1", "2"]), y=np.array(["1", "2", "1"])
+    )
+    assert_allclose(weight, [2.0, 1.0])
+
+    # Integer keys and integer classes still work
+    weight = compute_class_weight(
+        {1: 2.0, 2: 1.0}, classes=np.array([1, 2]), y=np.array([1, 2, 1])
+    )
+    assert_allclose(weight, [2.0, 1.0])
+
+    # RandomForestClassifier with class_weight="balanced" and string labels
+    # that happen to parse as integers
+    X = np.random.RandomState(0).rand(20, 5)
+    y = np.array(["1"] * 10 + ["2"] * 10)
+    clf = RandomForestClassifier(n_estimators=5, class_weight="balanced").fit(X, y)
+    assert clf.classes_.tolist() == ["1", "2"]
