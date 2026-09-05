@@ -24,17 +24,24 @@ Metadata Routing
 
 This guide demonstrates how :term:`metadata` can be routed and passed between objects in
 scikit-learn. If you are developing a scikit-learn compatible estimator or
-meta-estimator, you can check our related developer guide:
-:ref:`sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py`.
+meta-estimator, check our related developer guide:
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py`. For a narrative
+introduction to metadata routing, see `Scikit-learn's Metadata Routing API
+<https://blog.probabl.ai/update-on-scikit-learn-metadata-routing-api>`__.
+
 
 Metadata is data that an estimator, scorer, or CV splitter takes into account if the
 user explicitly passes it as a parameter. For instance, :class:`~cluster.KMeans` accepts
 `sample_weight` in its `fit()` method and considers it to calculate its centroids.
 `classes` are consumed by some classifiers and `groups` are used in some splitters, but
 any data that is passed into an object's methods apart from X and y can be considered as
-metadata. Prior to scikit-learn version 1.3, there was no single API for passing
-metadata like that if these objects were used in conjunction with other objects, e.g. a
-scorer accepting `sample_weight` inside a :class:`~model_selection.GridSearchCV`.
+metadata. The most used metadata in scikit-learn is `sample_weight`. If you are new to
+it and want to understand when ``sample_weight`` is useful, see `Improving models via
+subsets <https://www.youtube.com/watch?v=REIg5NH2SNc>`__.
+
+Prior to scikit-learn version 1.3, there was no single API for passing metadata even if
+these were used in conjunction with other objects, e.g. a scorer accepting
+`sample_weight` inside a :class:`~model_selection.GridSearchCV`.
 
 With the Metadata Routing API, we can transfer metadata to estimators, scorers, and CV
 splitters using :term:`meta-estimators` (such as :class:`~pipeline.Pipeline` or
@@ -45,11 +52,9 @@ must *request* it. This is done via `set_{method}_request()` methods, where `{me
 is substituted by the name of the method that requests the metadata. For instance,
 estimators that use the metadata in their `fit()` method would use `set_fit_request()`,
 and scorers would use `set_score_request()`. These methods allow us to specify which
-metadata to request, for instance `set_fit_request(sample_weight=True)`.
-
-For grouped splitters such as :class:`~model_selection.GroupKFold`, a
-``groups`` parameter is requested by default. This is best demonstrated by the
-following examples.
+metadata to request, for instance `set_fit_request(sample_weight=True)`. For grouped
+splitters such as :class:`~model_selection.GroupKFold`, a ``groups`` parameter is
+requested by default.
 
 Usage Examples
 **************
