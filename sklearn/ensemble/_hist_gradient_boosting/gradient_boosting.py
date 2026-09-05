@@ -1242,6 +1242,27 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
                 raw_predictions[:, k] += predict(X)
 
+    def __setstate__(self, state):
+        super().__setstate__(state)
+
+        # The cython traversal dereferences each split node's `feature_idx` as
+        # a column index into `X` without any bounds check. Loading a
+        # malicious persisted model would therefore trigger out-of-bounds
+        # native memory reads and a segfault at prediction time. `feature_idx`
+        # is bounded by the number of features seen during fit, which is
+        # available here (and only here, not on the individual
+        # `TreePredictor`). The `left` / `right` node indices and the
+        # `bitset_idx` are validated in `TreePredictor.__setstate__`.
+        #
+        # A fitted model always has `_n_features`; read it directly so a missing
+        # attribute fails loudly instead of skipping the check.
+        predictors = getattr(self, "_predictors", [])
+        if predictors:
+            n_features = self._n_features
+            for predictors_of_ith_iteration in predictors:
+                for predictor in predictors_of_ith_iteration:
+                    predictor._check_feature_idx_bounds(n_features)
+
     def _staged_raw_predict(self, X):
         """Compute raw predictions of ``X`` for each iteration.
 
