@@ -1,0 +1,4 @@
+- Fix catastrophic cancellation in :func:`feature_selection.r_regression` when
+  computing centered feature norms for constant or near-constant columns under
+  floating-point precision.
+  By :user:`FinalSunFlower <FinalSunFlower>`.
