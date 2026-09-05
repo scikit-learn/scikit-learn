@@ -141,12 +141,12 @@ FEATURE_NAMES_HTML = """
                         <div class="features">
                             <details>
                                 <summary>
-                                    <div class="image-container">
+                                    <span class="image-container">
                                         <button type="button" class="copy-paste-icon"
                                             title="Copy output features (max 100)"
                                             aria-label="Copy output features (max 100)">
                                         </button>
-                                    </div>
+                                    </span>
                                 </summary>
                                 <div class="features-container">
                                     <table class="features-table">

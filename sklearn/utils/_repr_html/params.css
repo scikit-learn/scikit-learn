@@ -42,10 +42,19 @@
 /*
     `table td`is set in notebook with right text-align.
     We need to overwrite it.
+    Padding added here so params without a doc link are
+    look like params with a link.
 */
 .estimator-table table td.param {
     text-align: left;
     position: relative;
+    padding: .5em;
+}
+
+/*
+    When the cell holds a link, the link brings its own padding
+*/
+.estimator-table table td.param:has(a.param-doc-link) {
     padding: 0;
 }
 
@@ -64,11 +73,6 @@
     text-align: left !important;
 }
 
-.user-set td i,
-.default td i {
-    color: black;
-}
-
 td.fitted-att-type {
     white-space: preserve nowrap;
 }
@@ -85,14 +89,6 @@ a.param-doc-link:visited {
     color: inherit;
     display: block;
     padding: .5em;
-}
-
-@supports(anchor-name: --doc-link) {
-    a.param-doc-link,
-    a.param-doc-link:link,
-    a.param-doc-link:visited {
-    anchor-name: --doc-link;
-    }
 }
 
 /* "hack" to make the entire area of the cell containing the link clickable */
@@ -136,7 +132,9 @@ a.param-doc-link::before {
     border: thin solid var(--sklearn-color-fitted-level-3);
 }
 
-.param-doc-link:hover .param-doc-description {
+/* The tooltip is shown on hover and when the link takes keyboard focus. */
+.param-doc-link:hover .param-doc-description,
+.param-doc-link:focus .param-doc-description {
     display: block;
 }
 
@@ -152,9 +150,4 @@ a.param-doc-link::before {
     border: none;
     padding: 0;
     background-color: transparent;
-}
-
-.copy-paste-icon:focus-visible {
-    outline: 1px solid currentColor;
-    outline-offset: 1px;
 }
