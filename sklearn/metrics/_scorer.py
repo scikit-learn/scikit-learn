@@ -77,10 +77,10 @@ from sklearn.utils._param_validation import (
 from sklearn.utils._response import _get_response_values
 from sklearn.utils.metadata_routing import (
     MetadataRequest,
+    MetadataRequester,
     MetadataRouter,
     MethodMapping,
     _manual_routing,
-    _MetadataRequester,
     _raise_for_params,
     _routing_enabled,
     get_routing_for_object,
@@ -233,7 +233,7 @@ class _MultimetricScorer:
         )
 
 
-class _BaseScorer(_MetadataRequester):
+class _BaseScorer(MetadataRequester):
     """Base scorer that is used as `scorer(estimator, X, y_true)`.
 
     Parameters
@@ -387,7 +387,7 @@ class _BaseScorer(_MetadataRequester):
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
         if hasattr(self, "_metadata_request"):
-            requests = get_routing_for_object(self._metadata_request)
+            requests = self._metadata_request.__sklearn_clone__()
         else:
             requests = MetadataRequest(owner=self)
             setattr(
@@ -396,7 +396,7 @@ class _BaseScorer(_MetadataRequester):
                 MethodMetadataRequest(
                     owner=self,
                     method="score",
-                    requests=self._get_class_level_metadata_request_values(
+                    requests=self._get_declared_metadata_request_values(
                         method_name="score",
                         method=self._score_func,
                         ignore_params={
@@ -525,7 +525,7 @@ def get_scorer(scoring):
     return scorer
 
 
-class _PassthroughScorer(_MetadataRequester):
+class _PassthroughScorer(MetadataRequester):
     # Passes scoring of estimator's `score` method back to estimator if scoring
     # is `None`.
 
