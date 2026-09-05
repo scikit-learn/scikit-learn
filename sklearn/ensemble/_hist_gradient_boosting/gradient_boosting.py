@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
+import math
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, nullcontext, suppress
 from functools import partial
@@ -41,7 +42,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from sklearn.utils import check_random_state, compute_sample_weight, resample
 from sklearn.utils._missing import is_scalar_nan
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (
+    _openmp_effective_n_threads,
+    _optimal_n_threads_for_workload,
+)
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
@@ -523,7 +527,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # `_openmp_effective_n_threads` is used to take cgroups CPU quotes
         # into account when determine the maximum number of threads to use.
-        n_threads = _openmp_effective_n_threads()
+        max_n_threads = _openmp_effective_n_threads()
 
         if isinstance(self.loss, str):
             self._loss = self._get_loss(sample_weight=sample_weight)
@@ -598,7 +602,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             is_categorical=self._is_categorical_remapped,
             known_categories=known_categories,
             random_state=self._random_seed,
-            n_threads=n_threads,
+            max_n_threads=max_n_threads,
         )
         X_binned_train = self._bin_data(
             X_train, sample_weight_train, is_training_data=True
@@ -610,6 +614,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         else:
             X_binned_val = None
 
+        n_samples, n_features = X_binned_train.shape
+
+        n_threads = self._get_heuristic_optimal_n_threads(
+            max_n_threads, n_samples, n_features
+        )
+
         # Uses binned data to check for missing values
         has_missing_values = (
             (X_binned_train == self._bin_mapper.missing_values_bin_idx_)
@@ -620,7 +630,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.verbose:
             print("Fitting gradient boosted rounds:")
 
-        n_samples = X_binned_train.shape[0]
         scoring_is_predefined_string = self.scoring in _SCORERS
         need_raw_predictions_val = X_binned_val is not None and (
             scoring_is_predefined_string or self.scoring == "loss"
@@ -954,6 +963,48 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.validation_score_ = np.asarray(self.validation_score_)
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
+
+    def _get_heuristic_optimal_n_threads(self, max_n_threads, n_samples, n_features):
+        """Heuristic for the number of threads to use throughout a fit.
+
+        Using the maximum number of available threads regardless of the size
+        of the workload can be counter-productive: thread dispatch overhead
+        can end up outweighing the actual work. This balances
+        ``max_n_threads`` against the size of the training set
+        (``n_samples``, ``n_features``) to avoid that.
+        """
+
+        # This is called once per fit, with the full training set's shape,
+        # and the resulting n_threads is then reused for every node of every tree
+        # even though the actual per-node workload shrinks as nodes get deeper/smaller.
+        # To account for that we use smaller per-item costs than what is returned by
+        # benchmarks/calibrate_hgb_ops_per_item.py
+        features_parallel_work = max(n_samples, self.max_bins * 3) * n_features
+        samples_parallel_work = n_samples / 2
+        n_features_threads = _optimal_n_threads_for_workload(
+            features_parallel_work, max_n_threads
+        )
+
+        # Compute the per-thread chunk size first, then derive how many threads
+        # are actually needed to cover n_features with that chunk size: this can
+        # be lower than n_features_threads, avoiding threads with little to no work.
+        # Note: this enforces n_threads <= n_features
+        n_features_per_thread = math.ceil(n_features / n_features_threads)
+        n_threads = math.ceil(n_features / n_features_per_thread)
+
+        # Handle cases where n_features is small, but the dataset is big
+        # and might benefit from more threads than n_features.
+        # This is delicate as it can quickly be detrimental for features-wise
+        # parallelization
+        n_samples_threads = _optimal_n_threads_for_workload(
+            samples_parallel_work, max_n_threads
+        )
+        if n_features == 1:
+            n_threads = n_samples_threads
+        elif n_features <= n_samples_threads:
+            n_threads = min(n_samples_threads, max(n_features * 2, 16))
+
+        return n_threads
 
     def _is_fitted(self):
         return len(getattr(self, "_predictors", [])) > 0

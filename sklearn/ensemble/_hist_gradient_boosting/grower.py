@@ -23,7 +23,6 @@ from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
 from sklearn.utils._bitset import set_raw_bitset_from_binned_bitset
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 
 class TreeNode:
@@ -212,11 +211,12 @@ class TreeGrower:
     shrinkage : float, default=1.
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
-    n_threads : int, default=None
-        Number of OpenMP threads to use. `_openmp_effective_n_threads` is called
-        to determine the effective number of threads use, which takes cgroups CPU
-        quotes into account. See the docstring of `_openmp_effective_n_threads`
-        for details.
+    n_threads : int
+        Number of OpenMP threads to use. Callers are responsible for resolving
+        this to an actual thread count (e.g. via `_openmp_effective_n_threads`)
+        and for sizing it down to avoid parallelizing workloads that are too
+        small to benefit from it (e.g. few features or samples) before calling
+        this class.
 
     Attributes
     ----------
@@ -261,14 +261,14 @@ class TreeGrower:
         feature_fraction_per_split=1.0,
         rng=np.random.default_rng(),
         shrinkage=1.0,
-        n_threads=None,
+        *,
+        n_threads,
     ):
         self._validate_parameters(
             X_binned,
             min_gain_to_split,
             min_hessian_to_split,
         )
-        n_threads = _openmp_effective_n_threads(n_threads)
 
         if n_bins_non_missing is None:
             n_bins_non_missing = n_bins - 1
