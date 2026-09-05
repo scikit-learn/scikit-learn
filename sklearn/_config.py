@@ -19,6 +19,7 @@ _global_config = {
     "array_api_dispatch": False,
     "transform_output": "default",
     "enable_metadata_routing": False,
+    "metadata_request_policy": "class-level",
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
 }
@@ -71,6 +72,7 @@ def set_config(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
+    metadata_request_policy=None,
     skip_parameter_validation=None,
     sparse_interface=None,
 ):
@@ -184,6 +186,22 @@ def set_config(
 
         .. versionadded:: 1.3
 
+    metadata_request_policy : str, default=None
+        Configure the metadata request policy.
+
+        This flag controls instance `add_auto_request` flags. Class-level requests
+        always apply.
+
+        - `"class-level"`: do not apply auto-requests
+        - `"auto"`: apply requests for metadata flagged with `add_auto_request`
+        - `None`: configuration is unchanged
+
+        Global default: `"class-level"`.
+
+        Refer to :ref:`metadata_routing_auto_request` for more details.
+
+        .. versionadded:: 1.10
+
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
         the fit method of estimators and for arguments passed to public helper
@@ -239,6 +257,8 @@ def set_config(
         local_config["transform_output"] = transform_output
     if enable_metadata_routing is not None:
         local_config["enable_metadata_routing"] = enable_metadata_routing
+    if metadata_request_policy is not None:
+        local_config["metadata_request_policy"] = metadata_request_policy
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
     if sparse_interface is not None:
@@ -257,6 +277,7 @@ def config_context(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
+    metadata_request_policy=None,
     skip_parameter_validation=None,
     sparse_interface=None,
 ):
@@ -365,6 +386,22 @@ def config_context(
 
         .. versionadded:: 1.3
 
+    metadata_request_policy : str, default=None
+        Configure the metadata request policy.
+
+        This flag controls instance `add_auto_request` flags. Class-level requests
+        always apply.
+
+        - `"class-level"`: do not apply auto-requests
+        - `"auto"`: apply requests for metadata flagged with `add_auto_request`
+        - `None`: configuration is unchanged
+
+        Global default: `"class-level"`.
+
+        Refer to :ref:`metadata_routing_auto_request` for more details.
+
+        .. versionadded:: 1.10
+
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
         the fit method of estimators and for arguments passed to public helper
@@ -425,6 +462,7 @@ def config_context(
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
         enable_metadata_routing=enable_metadata_routing,
+        metadata_request_policy=metadata_request_policy,
         skip_parameter_validation=skip_parameter_validation,
         sparse_interface=sparse_interface,
     )
