@@ -2709,8 +2709,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If False,
-        these entries are treated as zeros.
+        matrix are discarded to compute the quantile statistics, including
+        when subsampling. If False, these entries are treated as zeros.
 
     subsample : int or None, default=10_000
         Maximum number of samples used to estimate the quantiles for
@@ -2841,6 +2841,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             The data used to scale along the features axis. The sparse matrix
             needs to be nonnegative. If a sparse matrix is provided,
             it will be converted into a SciPy sparse CSC matrix.
+
+        Notes
+        -----
+        Columns with fewer non-zero entries than `subsample` are not
+        subsampled: when `ignore_implicit_zeros=False`, this materializes a
+        `n_samples` array.
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
@@ -2849,11 +2855,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
             if self.subsample is not None and len(column_nnz_data) > self.subsample:
-                column_subsample = self.subsample * len(column_nnz_data) // n_samples
-                if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=column_subsample, dtype=X.dtype)
-                else:
-                    column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
+                column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
+                column_subsample = (
+                    self.subsample
+                    if self.ignore_implicit_zeros
+                    else self.subsample * len(column_nnz_data) // n_samples
+                )
                 column_data[:column_subsample] = random_state.choice(
                     column_nnz_data, size=column_subsample, replace=False
                 )
@@ -3164,8 +3171,8 @@ def quantile_transform(
 
     ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If False,
-        these entries are treated as zeros.
+        matrix are discarded to compute the quantile statistics, including
+        when subsampling. If False, these entries are treated as zeros.
 
     subsample : int or None, default=1e5
         Maximum number of samples used to estimate the quantiles for
