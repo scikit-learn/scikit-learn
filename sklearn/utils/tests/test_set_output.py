@@ -3,7 +3,6 @@ from collections import namedtuple
 
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn._config import config_context, get_config
 from sklearn.preprocessing import StandardScaler
@@ -17,6 +16,7 @@ from sklearn.utils._set_output import (
     _wrap_data_with_container,
     check_library_installed,
 )
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 

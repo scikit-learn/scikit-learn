@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn.base import clone
 from sklearn.datasets import make_classification, make_regression
@@ -9,6 +8,7 @@ from sklearn.ensemble import (
     HistGradientBoostingRegressor,
 )
 from sklearn.metrics import check_scoring
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 X_classification, y_classification = make_classification(random_state=0)
 X_regression, y_regression = make_regression(random_state=0)

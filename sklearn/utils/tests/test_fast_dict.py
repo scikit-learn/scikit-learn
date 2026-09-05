@@ -1,9 +1,9 @@
 """Test fast_dict."""
 
 import numpy as np
-from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn.utils._fast_dict import IntFloatDict, argmin
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 
 def test_int_float_dict():

@@ -573,7 +573,7 @@ def test_kbinsdiscretizer_subsample_default():
     for bin_kbd_default, bin_kbd_with_subsampling in zip(
         kbd_default.bin_edges_[0], kbd_without_subsampling.bin_edges_[0]
     ):
-        np.testing.assert_allclose(bin_kbd_default, bin_kbd_with_subsampling)
+        assert_allclose(bin_kbd_default, bin_kbd_with_subsampling)
     assert kbd_default.bin_edges_.shape == kbd_without_subsampling.bin_edges_.shape
 
 

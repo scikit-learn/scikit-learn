@@ -29,15 +29,20 @@ from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 import joblib
 import numpy as np
 import scipy as sp
-from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import (
     assert_almost_equal,
     assert_array_almost_equal,
-    assert_array_equal,
-    assert_array_less,
+    # assert_array_equal,
+    # assert_array_less,
 )
 
 from sklearn import __file__ as sklearn_path
+from sklearn.externals.array_api_compat import (
+    get_namespace,
+    is_array_api_obj,
+    is_numpy_namespace,
+)
+from sklearn.externals.array_api_extra import testing as xpt
 from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
@@ -172,69 +177,109 @@ class _IgnoreWarnings:
         self.log[:] = []
 
 
-def assert_allclose(
-    actual, desired, rtol=None, atol=0.0, equal_nan=True, err_msg="", verbose=True
-):
-    """dtype-aware variant of numpy.testing.assert_allclose
+# these types are allow-listed for automatic conversion
+# with `np.asanyarray` in the assertion functions
+# TODO: it may be more robust to replace some of the
+# string comparison with conditional type introspection
+# when optional dependencies are installed.
+_AUTOCONVERT_TYPE_NAMES = {
+    "ArrowStringArray",
+    "ChunkedArray",
+    "DataFrame",
+    "Index",
+    "Int64Array",
+    "RangeIndex",
+    "Series",
+    "Table",
+    "flatiter",
+    "_memoryviewslice",
+}
 
-    This variant introspects the least precise floating point dtype
-    in the input argument and automatically sets the relative tolerance
-    parameter to 1e-4 float32 and use 1e-7 otherwise (typically float64
-    in scikit-learn).
+
+def _convert_to_array(x, xp):
+    __tracebackhide__ = True  # Hide traceback for py.test
+
+    if isinstance(x, (list, tuple)) or type(x) in (
+        int,
+        float,
+        complex,
+        bool,
+    ):
+        return xp.asarray(x)
+
+    if is_numpy_namespace(xp) and type(x).__name__ in _AUTOCONVERT_TYPE_NAMES:
+        return np.asanyarray(x)
+
+    return x
+
+
+def assert_array_less(x, y, err_msg="", check_shape=False, check_dtype=False):
+    if is_array_api_obj(x):
+        xp = get_namespace(x)
+    elif is_array_api_obj(y):
+        xp = get_namespace(y)
+    else:
+        xp = np
+
+    x = _convert_to_array(x, xp)
+    y = _convert_to_array(y, xp)
+
+    xp_assert_less(
+        x, y, err_msg=err_msg, check_shape=check_shape, check_dtype=check_dtype
+    )
+
+
+def assert_array_equal(
+    actual, desired, err_msg="", check_shape=False, check_dtype=False
+):
+    xp = get_namespace(desired) if is_array_api_obj(desired) else np
+
+    actual = _convert_to_array(actual, xp)
+    desired = _convert_to_array(desired, xp)
+
+    xp_assert_equal(
+        actual,
+        desired,
+        err_msg=err_msg,
+        check_shape=check_shape,
+        check_dtype=check_dtype,
+    )
+
+
+def assert_allclose(
+    actual,
+    desired,
+    rtol=None,
+    atol=0.0,
+    equal_nan=True,
+    err_msg="",
+    verbose=True,
+    check_shape: bool = False,
+    check_dtype: bool = False,
+):
+    """
+    This variant automatically loosens `rtol` to `1e-4` for single (or lower)
+    precision floating dtypes, and to `1e-7` otherwise.
 
     `atol` is always left to 0. by default. It should be adjusted manually
     to an assertion-specific value in case there are null values expected
     in `desired`.
-
-    The aggregate tolerance is `atol + rtol * abs(desired)`.
-
-    Parameters
-    ----------
-    actual : array_like
-        Array obtained.
-    desired : array_like
-        Array desired.
-    rtol : float, optional, default=None
-        Relative tolerance.
-        If None, it is set based on the provided arrays' dtypes.
-    atol : float, optional, default=0.
-        Absolute tolerance.
-    equal_nan : bool, optional, default=True
-        If True, NaNs will compare equal.
-    err_msg : str, optional, default=''
-        The error message to be printed in case of failure.
-    verbose : bool, optional, default=True
-        If True, the conflicting values are appended to the error message.
-
-    Raises
-    ------
-    AssertionError
-        If actual and desired are not equal up to specified precision.
-
-    See Also
-    --------
-    numpy.testing.assert_allclose
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.utils._testing import assert_allclose
-    >>> x = [1e-5, 1e-3, 1e-1]
-    >>> y = np.arccos(np.cos(x))
-    >>> assert_allclose(x, y, rtol=1e-5, atol=0)
-    >>> a = np.full(shape=10, fill_value=1e-5, dtype=np.float32)
-    >>> assert_allclose(a, 1e-5)
     """
-    dtypes = []
+    xp = get_namespace(desired) if is_array_api_obj(desired) else np
 
-    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    actual = _convert_to_array(actual, xp)
+    desired = _convert_to_array(desired, xp)
+
     dtypes = [actual.dtype, desired.dtype]
-
+    rtols = []
     if rtol is None:
-        rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
-        rtol = max(rtols)
+        for dtype in dtypes:
+            if xp.isdtype(dtype, ("real floating", "complex floating")):
+                rtols.append(1e-4 if xp.finfo(dtype).eps > 1e-8 else 1e-7)
+        if rtols != []:
+            rtol = max(rtols)
 
-    np_assert_allclose(
+    xp_assert_close(
         actual,
         desired,
         rtol=rtol,
@@ -242,6 +287,8 @@ def assert_allclose(
         equal_nan=equal_nan,
         err_msg=err_msg,
         verbose=verbose,
+        check_shape=check_shape,
+        check_dtype=check_dtype,
     )
 
 
@@ -275,9 +322,11 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=""):
         y = y.tocsr()
         x.sum_duplicates()
         y.sum_duplicates()
-        assert_array_equal(x.indices, y.indices, err_msg=err_msg)
-        assert_array_equal(x.indptr, y.indptr, err_msg=err_msg)
-        assert_allclose(x.data, y.data, rtol=rtol, atol=atol, err_msg=err_msg)
+        assert_array_equal(x.indices, y.indices, err_msg=err_msg, check_shape=False)
+        assert_array_equal(x.indptr, y.indptr, err_msg=err_msg, check_shape=False)
+        assert_allclose(
+            x.data, y.data, rtol=rtol, atol=atol, err_msg=err_msg, check_shape=False
+        )
     elif not sp.sparse.issparse(x) and not sp.sparse.issparse(y):
         # both dense
         assert_allclose(x, y, rtol=rtol, atol=atol, err_msg=err_msg)

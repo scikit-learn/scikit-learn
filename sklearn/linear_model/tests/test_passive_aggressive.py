@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 from scipy.sparse import issparse
 
 from sklearn.base import ClassifierMixin
@@ -15,6 +14,7 @@ from sklearn.linear_model._base import SPARSE_INTERCEPT_DECAY
 from sklearn.linear_model._stochastic_gradient import DEFAULT_EPSILON
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
+    assert_allclose,
     assert_almost_equal,
     assert_array_equal,
 )

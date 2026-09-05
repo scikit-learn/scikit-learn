@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 from scipy.integrate import trapezoid
 
 from sklearn import clone
@@ -17,6 +16,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import _safe_indexing
 from sklearn.utils._response import _get_response_values_binary
+from sklearn.utils._testing import assert_allclose
 
 
 @pytest.fixture(scope="module")

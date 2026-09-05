@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 from scipy import sparse
 
 from sklearn.datasets import load_iris
@@ -9,7 +8,7 @@ from sklearn.utils._mocking import (
     CheckingClassifier,
     _MockEstimatorOnOffPrediction,
 )
-from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import _convert_container, assert_array_equal
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
