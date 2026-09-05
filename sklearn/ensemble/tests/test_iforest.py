@@ -393,3 +393,31 @@ def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
 
     # assert the same results as non-parallel
     assert_array_equal(pred, pred_parallel)
+
+
+def test_iforest_categorical_fit_predict(global_random_seed):
+    X = np.array([["a"], ["b"], ["a"], ["b"], ["c"], ["c"]], dtype=object)
+    clf = IsolationForest(
+        n_estimators=10, random_state=global_random_seed, categorical_features=[0]
+    )
+    clf.fit(X)
+    assert clf.predict(X).shape == (X.shape[0],)
+    assert clf.score_samples(X).shape == (X.shape[0],)
+
+
+def test_iforest_categorical_feature_subsampling(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
+    X = np.column_stack(
+        [
+            rng.randn(50),
+            rng.choice(["a", "b", "c"], size=50),
+        ]
+    )
+    clf = IsolationForest(
+        n_estimators=10,
+        max_features=0.5,
+        random_state=global_random_seed,
+        categorical_features=[1],
+    )
+    clf.fit(X)
+    assert clf.score_samples(X).shape == (X.shape[0],)

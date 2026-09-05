@@ -11,14 +11,17 @@ from scipy.sparse import issparse
 
 from sklearn.base import OutlierMixin, _fit_context
 from sklearn.ensemble._bagging import BaseBagging
-from sklearn.tree import ExtraTreeRegressor
+from sklearn.tree import BaseDecisionTree, ExtraTreeRegressor
 from sklearn.utils import check_array, check_random_state, gen_batches
 from sklearn.utils._chunking import get_chunk_n_rows
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
+    _check_categorical_features,
+    _check_n_features,
     _check_sample_weight,
     _num_samples,
+    check_array,
     check_is_fitted,
     validate_data,
 )
@@ -140,6 +143,28 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         .. versionadded:: 0.21
 
+    categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
+        (n_categorical_features,), or "from_dtype", default=None
+        Indicates which features are treated as categorical.
+
+        - None : no feature will be considered categorical.
+        - boolean array-like : boolean mask indicating categorical features.
+        - integer array-like : integer indices indicating categorical
+          features.
+        - str array-like: names of categorical features (assuming the training
+          data has feature names).
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
+          considered to be categorical features. The input must be a dataframe that
+          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
+          work. This is the case, for instance, for pandas and polars DataFrames.
+
+        For each categorical feature, about 16 million unique categories are
+        supported. Missing values for categorical features should be represented
+        by ``np.nan``; unknown categories at prediction time are also treated as
+        missing values.
+
+        .. versionadded:: 1.11
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
@@ -184,6 +209,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    is_categorical_ : ndarray of shape (n_features,) or None
+        Boolean mask indicating which features are treated as categorical.
+        ``None`` if no categorical features are used.
+
+        .. versionadded:: 1.11
 
     See Also
     --------
@@ -245,7 +276,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
         "random_state": ["random_state"],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
+        **BaseDecisionTree._parameter_constraints,
     }
+    for param in ("splitter", "monotonic_cst", "ccp_alpha"):
+        _parameter_constraints.pop(param)
 
     def __init__(
         self,
@@ -259,6 +293,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         random_state=None,
         verbose=0,
         warm_start=False,
+        categorical_features=None,
     ):
         super().__init__(
             estimator=None,
@@ -275,6 +310,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         )
 
         self.contamination = contamination
+        self.categorical_features = categorical_features
 
     def _get_estimator(self):
         return ExtraTreeRegressor(
@@ -282,7 +318,54 @@ class IsolationForest(OutlierMixin, BaseBagging):
             max_features=1,
             splitter="random",
             random_state=self.random_state,
+            categorical_features=self.categorical_features,
         )
+
+    def _init_categorical_encoding(self, X):
+        """Fit the categorical encoder and return encoded X."""
+        tree_template = ExtraTreeRegressor(categorical_features=self.categorical_features)
+        tree_template.is_categorical_ = _check_categorical_features(
+            X, self.categorical_features
+        )
+        tree_template._fit_categorical_features(X)
+        self.is_categorical_ = tree_template.is_categorical_
+        self._categorical_encoder = tree_template._categorical_encoder
+        return tree_template._transform_categorical_features(X)
+
+    def _transform_categorical_features(self, X):
+        tree_template = ExtraTreeRegressor(categorical_features=self.categorical_features)
+        tree_template.is_categorical_ = self.is_categorical_
+        tree_template._categorical_encoder = self._categorical_encoder
+        return tree_template._transform_categorical_features(X)
+
+    def _validate_X_predict(self, X):
+        check_is_fitted(self)
+        if getattr(self, "is_categorical_", None) is not None:
+            if issparse(X):
+                raise NotImplementedError(
+                    "Categorical features not supported with sparse inputs"
+                )
+            validate_data(self, X, reset=False, skip_check_array=True)
+            X = self._transform_categorical_features(X)
+            X = check_array(
+                X,
+                input_name="X",
+                estimator=self,
+                dtype=np.float32,
+                accept_sparse="csr",
+                ensure_all_finite="allow-nan",
+            )
+            _check_n_features(self, X, reset=False)
+        else:
+            X = validate_data(
+                self,
+                X,
+                accept_sparse="csr",
+                dtype=np.float32,
+                reset=False,
+                ensure_all_finite=False,
+            )
+        return X
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
@@ -317,9 +400,32 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        X = validate_data(
-            self, X, accept_sparse=["csc"], dtype=np.float32, ensure_all_finite=False
-        )
+        has_categorical = self.categorical_features is not None
+        if has_categorical:
+            is_categorical_ = _check_categorical_features(X, self.categorical_features)
+            has_categorical = is_categorical_ is not None
+
+        if has_categorical:
+            if issparse(X):
+                raise NotImplementedError(
+                    "Categorical features not supported with sparse inputs"
+                )
+            validate_data(self, X, reset=True, skip_check_array=True)
+            X = self._init_categorical_encoding(X)
+            X = validate_data(
+                self,
+                X,
+                accept_sparse=["csc"],
+                dtype=np.float32,
+                ensure_all_finite=False,
+                reset=False,
+            )
+        else:
+            self.is_categorical_ = None
+            self._categorical_encoder = None
+            X = validate_data(
+                self, X, accept_sparse=["csc"], dtype=np.float32, ensure_all_finite=False
+            )
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
@@ -523,14 +629,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 model.score(X)
         """
         # Check data
-        X = validate_data(
-            self,
-            X,
-            accept_sparse="csr",
-            dtype=np.float32,
-            reset=False,
-            ensure_all_finite=False,
-        )
+        X = self._validate_X_predict(X)
 
         return self._score_samples(X)
 
