@@ -5,8 +5,37 @@ import functools
 import inspect
 from contextlib import contextmanager
 
+from sklearn import get_config
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
+
+
+def _callbacks_by_default():
+    """Return the callbacks to attach by default to compatible estimators.
+
+    Returns
+    -------
+    callbacks : list of callbacks
+        A list with the callbacks to attach by default to estimators, it
+        defaults to an empty list.
+    """
+    from sklearn.callback import ProgressBar
+
+    callbacks = []
+
+    for cb in get_config().get("default_callbacks", []):
+        if cb == "progressbar":
+            callbacks.append(
+                ProgressBar(show="interactive_only", min_duration=1),
+            )
+        else:
+            # If default callbacks are callback instances, these will be shared by all
+            # estimators they will be registered on. To have clones of these instances
+            # registered instead, the `_skl_default_callbacks` attribute will need to be
+            # made public.
+            callbacks.append(cb)
+
+    return callbacks
 
 
 def validate_callbacks(callbacks):
@@ -61,6 +90,12 @@ class CallbackSupportMixin:
     .. automethod:: _init_callback_context
     """
 
+    def __new__(cls, *args, **kwargs):
+        instance = super().__new__(cls)
+        if default_callbacks := _callbacks_by_default():
+            instance._skl_default_callbacks = default_callbacks
+        return instance
+
     def set_callbacks(self, *callbacks):
         """Set callbacks for the estimator.
 
@@ -80,6 +115,7 @@ class CallbackSupportMixin:
     def _set_callbacks(self, callbacks):
         """set_callbacks without validation."""
         if callbacks:
+            self.__dict__.pop("_skl_default_callbacks", None)
             self._skl_callbacks = list(callbacks)
         else:
             self.__dict__.pop("_skl_callbacks", None)
@@ -118,6 +154,7 @@ class CallbackSupportMixin:
         callback_fit_ctx : CallbackContext
             The root callback context for the estimator.
         """
+
         self._callback_fit_ctx = CallbackContext._from_estimator(
             estimator=self,
             task_name=task_name,
@@ -129,13 +166,23 @@ class CallbackSupportMixin:
         # Setup callbacks. We store callbacks for which setup has started in order to
         # only tear those down after fit.
         self._skl_callbacks_to_teardown = []
-        for callback in getattr(self, "_skl_callbacks", []):
+
+        callbacks = getattr(self, "_skl_callbacks", [])
+        default_callbacks = getattr(self, "_skl_default_callbacks", [])
+        if hasattr(self, "_parent_callback_ctx"):
+            default_callbacks = [
+                cb
+                for cb in default_callbacks
+                if not isinstance(cb, AutoPropagatedCallback)
+            ]
+        callbacks += default_callbacks
+        for callback in callbacks:
             # Only call the setup hook of callbacks that are not propagated from a
-            # meta-estimator.
+            # meta-estimator and are not deactivated.
             if not (
                 isinstance(callback, AutoPropagatedCallback)
                 and hasattr(self, "_parent_callback_ctx")
-            ):
+            ) and not getattr(callback, "_deactivated", False):
                 self._skl_callbacks_to_teardown.append(callback)
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 
