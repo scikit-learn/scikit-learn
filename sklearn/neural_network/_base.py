@@ -184,9 +184,13 @@ def squared_loss(y_true, y_pred, sample_weight=None):
     loss : float
         The degree to which the samples are correctly predicted.
     """
-    return (
-        0.5 * np.average((y_true - y_pred) ** 2, weights=sample_weight, axis=0).mean()
-    )
+    # The average is taken over samples and the result summed over outputs, so
+    # that the returned loss matches the gradient computed in `_backprop`, where
+    # `deltas[last] = activations[-1] - y` is the canonical loss-link derivative
+    # of a per-sample squared error summed over outputs. Using `.mean()` here
+    # would divide the loss, but not the gradient, by `n_outputs`. This also
+    # matches the reduction used by the other loss functions below.
+    return 0.5 * np.average((y_true - y_pred) ** 2, weights=sample_weight, axis=0).sum()
 
 
 def poisson_loss(y_true, y_pred, sample_weight=None):
