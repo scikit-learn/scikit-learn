@@ -696,7 +696,6 @@ METRICS_NOT_SUPPORTING_ARRAY_API = {
     "dcg_score",
     "distance_metrics",
     "haversine_distances",
-    "hinge_loss",
     "kernel_metrics",
     "label_ranking_average_precision_score",
     "label_ranking_loss",
