@@ -344,7 +344,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # will raise an error if the underlying tree base estimator can't handle missing
         # values. Only the criterion is required to determine if the tree supports
         # missing values.
-        estimator = type(self.estimator)(criterion=self.criterion)
+        estimator_kwargs = {"criterion": self.criterion}
+        if self.criterion == "quantile":
+            estimator_kwargs["quantile"] = self.quantile
+        estimator = type(self.estimator)(**estimator_kwargs)
         missing_values_in_feature_mask = (
             estimator._compute_missing_values_in_feature_mask(
                 X, estimator_name=self.__class__.__name__
@@ -696,7 +699,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         tags = super().__sklearn_tags__()
         # Only the criterion is required to determine if the tree supports
         # missing values
-        estimator = type(self.estimator)(criterion=self.criterion)
+        estimator_kwargs = {"criterion": self.criterion}
+        if self.criterion == "quantile":
+            estimator_kwargs["quantile"] = self.quantile
+        estimator = type(self.estimator)(**estimator_kwargs)
         tags.input_tags.allow_nan = get_tags(estimator).input_tags.allow_nan
         return tags
 
@@ -1608,14 +1614,16 @@ class RandomForestRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "quantile", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, and "poisson" which uses reduction in Poisson deviance to find splits,
-        also using the mean of each terminal node.
+        node, "quantile" which minimizes the pinball loss using the quantile of each
+        terminal node (controlled by ``quantile``), and "poisson" which uses reduction
+        in Poisson deviance to find splits, also using the mean of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
@@ -1625,6 +1633,9 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
+
+        .. versionadded:: 1.10
+           Quantile/Pinball loss criterion
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1784,6 +1795,17 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 1.4
 
+    quantile : float, default=0.5
+        The quantile to predict when ``criterion="quantile"``. It must be strictly
+        between 0 and 1.
+
+        Calibration of the predicted quantile is sensitive to the
+        tree-growth parameters (``max_depth``, ``min_samples_leaf``, etc.),
+        especially for quantiles far from 0.5; see
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+        for a discussion and tune these by cross-validation on the pinball
+        loss for the target quantile level.
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
@@ -1912,6 +1934,7 @@ class RandomForestRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        quantile=0.5,
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -1928,6 +1951,7 @@ class RandomForestRegressor(ForestRegressor):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "quantile",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -1958,6 +1982,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.quantile = quantile
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -2378,20 +2403,25 @@ class ExtraTreesRegressor(ForestRegressor):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "quantile", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, and "poisson" which uses reduction in Poisson deviance to find splits,
-        also using the mean of each terminal node.
+        node, "quantile" which minimizes the pinball loss using the quantile of each
+        terminal node (controlled by ``quantile``), and "poisson" which uses reduction
+        in Poisson deviance to find splits, also using the mean of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
+
+        .. versionadded:: 1.10
+           Quantile/Pinball loss criterion
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -2555,6 +2585,17 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 1.4
 
+    quantile : float, default=0.5
+        The quantile to predict when ``criterion="quantile"``. It must be strictly
+        between 0 and 1.
+
+        Calibration of the predicted quantile is sensitive to the
+        tree-growth parameters (``max_depth``, ``min_samples_leaf``, etc.),
+        especially for quantiles far from 0.5; see
+        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+        for a discussion and tune these by cross-validation on the pinball
+        loss for the target quantile level.
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
@@ -2668,6 +2709,7 @@ class ExtraTreesRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        quantile=0.5,
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
@@ -2684,6 +2726,7 @@ class ExtraTreesRegressor(ForestRegressor):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "quantile",
             ),
             bootstrap=bootstrap,
             oob_score=oob_score,
@@ -2714,6 +2757,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.quantile = quantile
 
 
 class RandomTreesEmbedding(TransformerMixin, BaseForest):

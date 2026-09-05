@@ -360,6 +360,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     _parameter_constraints.pop("splitter")
     _parameter_constraints.pop("monotonic_cst")
     _parameter_constraints.pop("categorical_features")
+    _parameter_constraints.pop("quantile")
 
     @abstractmethod
     def __init__(

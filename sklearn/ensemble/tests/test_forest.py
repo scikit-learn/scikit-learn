@@ -297,12 +297,12 @@ def test_probability(name):
     "name, criterion",
     itertools.chain(
         product(FOREST_CLASSIFIERS, ["gini", "log_loss"]),
-        product(FOREST_REGRESSORS, ["squared_error", "absolute_error"]),
+        product(FOREST_REGRESSORS, ["squared_error", "absolute_error", "quantile"]),
     ),
 )
 def test_importances(dtype, name, criterion):
     tolerance = 0.01
-    if name in FOREST_REGRESSORS and criterion == "absolute_error":
+    if name in FOREST_REGRESSORS and criterion in {"absolute_error", "quantile"}:
         tolerance = 0.05
 
     # cast as dtype
@@ -340,6 +340,52 @@ def test_importances(dtype, name, criterion):
         est.fit(X, y, sample_weight=scale * sample_weight)
         importances_bis = est.feature_importances_
         assert np.abs(importances - importances_bis).mean() < tolerance
+
+
+@pytest.mark.parametrize("name", FOREST_REGRESSORS)
+def test_quantile_confidence_interval_coverage(name, global_random_seed):
+    """Test that quantile regression confidence intervals have appropriate
+    coverage for forest-based regressors (non-regression test for the
+    equivalent tree-based test in sklearn/tree/tests/test_tree.py)."""
+    ForestRegressor = FOREST_REGRESSORS[name]
+
+    rng = np.random.default_rng(global_random_seed)
+    n_samples = 2000
+    X = rng.uniform(0.0, 1.0, size=(n_samples, 1))
+    # Noise is independent of X (aleatoric uncertainty) so that the conditional
+    # quantiles at level 0.1 and 0.9 are not degenerate.
+    noise = rng.standard_normal(size=n_samples) * 0.1
+    y = np.sin(2 * np.pi * X[:, 0]) + noise
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.4, random_state=0
+    )
+    common_params = dict(
+        criterion="quantile",
+        n_estimators=20,
+        max_depth=6,
+        min_samples_leaf=50,
+        random_state=0,
+    )
+
+    lower = ForestRegressor(**common_params, quantile=0.1)
+    lower.fit(X_train, y_train)
+    upper = ForestRegressor(**common_params, quantile=0.9)
+    upper.fit(X_train, y_train)
+
+    lower_pred = lower.predict(X_test)
+    upper_pred = upper.predict(X_test)
+    coverage = np.mean((y_test >= lower_pred) & (y_test <= upper_pred))
+
+    # Coverage is only approximately calibrated: how close it lands to the
+    # nominal 80% depends on the interplay between max_depth/min_samples_leaf
+    # and how fast the true conditional quantile varies across the dataset,
+    # so no fixed hyperparameters give an exact match in general.
+    # In particular, at these hyperparameters, ExtraTreesRegressor's random split
+    # thresholds localize samples less efficiently than RandomForestRegressor's
+    # greedy splits, which biases its interval wider (higher coverage) here; raising
+    # n_estimators alone does not fix that. Hence the generous tolerance below.
+    assert 0.75 <= coverage <= 0.95
 
 
 def test_importances_asymptotic():

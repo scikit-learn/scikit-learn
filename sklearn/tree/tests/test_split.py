@@ -9,7 +9,7 @@ from scipy.sparse import csc_array
 from scipy.special import xlogy
 from scipy.stats import rankdata
 
-from sklearn.metrics import mean_poisson_deviance
+from sklearn.metrics import mean_pinball_loss, mean_poisson_deviance
 from sklearn.tree import (
     DecisionTreeClassifier,
     DecisionTreeRegressor,
@@ -26,7 +26,7 @@ from sklearn.utils.stats import _weighted_percentile
 
 CLF_CRITERIONS = ("gini", "log_loss")
 
-REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
+REG_CRITERIONS = ("squared_error", "absolute_error", "poisson", "quantile")
 
 
 CLF_TREES = {
@@ -107,6 +107,7 @@ class NaiveSplitter:
     criterion: str
     n_classes: int
     is_categorical: np.ndarray
+    quantile: float = 0.5
 
     def compute_node_value_and_impurity(self, y, w):
         sum_weights = np.sum(w)
@@ -126,6 +127,13 @@ class NaiveSplitter:
         elif self.criterion == "absolute_error":
             pred = _weighted_percentile(y, w, percentile_rank=50, average=True)
             loss = np.average(np.abs(y - pred), weights=w)
+        elif self.criterion == "quantile":
+            pred = _weighted_percentile(
+                y, w, percentile_rank=100 * self.quantile, average=True
+            )
+            loss = mean_pinball_loss(
+                y, np.repeat(pred, y.size), alpha=self.quantile, sample_weight=w
+            )
         elif self.criterion == "poisson":
             pred = np.average(y, weights=w)
             loss = mean_poisson_deviance(y, np.repeat(pred, y.size), sample_weight=w)
@@ -280,9 +288,9 @@ def test_split_impurity(
 ):
     is_clf = criterion in CLF_CRITERIONS
 
-    if categorical and criterion == "absolute_error":
+    if categorical and criterion in ("absolute_error", "quantile"):
         pytest.skip(
-            "absolute_error is not supported with categorical features in "
+            f"{criterion} is not supported with categorical features in "
             "DecisionTreeRegressor and ExtraTreeRegressor"
         )
     rng = np.random.default_rng(global_random_seed)
@@ -296,6 +304,13 @@ def test_split_impurity(
         tree_kwargs = dict(
             criterion=criterion, max_depth=1, random_state=global_random_seed
         )
+        naive_splitter_kwargs = {}
+        if criterion == "quantile":
+            # Exercise a quantile level other than the median (already covered
+            # by "absolute_error") on each iteration.
+            quantile = rng.uniform(0.05, 0.95)
+            tree_kwargs["quantile"] = quantile
+            naive_splitter_kwargs["quantile"] = quantile
         if categorical:
             is_categorical = rng.random(d) < 0.5
             n_classes = 2
@@ -304,7 +319,9 @@ def test_split_impurity(
             is_categorical = np.zeros(d, dtype=bool)
 
         tree = Tree(**tree_kwargs)
-        naive_splitter = NaiveSplitter(criterion, n_classes, is_categorical)
+        naive_splitter = NaiveSplitter(
+            criterion, n_classes, is_categorical, **naive_splitter_kwargs
+        )
 
         X_dense, X, y, w = make_simple_dataset(
             n, d, missing_values, sparse, is_categorical, is_clf, n_classes, rng
