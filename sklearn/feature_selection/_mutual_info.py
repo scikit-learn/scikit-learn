@@ -236,8 +236,9 @@ def _estimate_mi(
         could introduce a bias.
 
     copy : bool, default=True
-        Whether to make a copy of the given data. If set to False, the initial
-        data will be overwritten.
+        Whether to make a copy of the given data. If set to False, operations
+        are performed in-place where possible, but in-place modification is not
+        guaranteed.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
@@ -379,8 +380,9 @@ def mutual_info_regression(
         could introduce a bias.
 
     copy : bool, default=True
-        Whether to make a copy of the given data. If set to False, the initial
-        data will be overwritten.
+        Whether to make a copy of the given data. If set to False, operations
+        are performed in-place where possible, but in-place modification is not
+        guaranteed.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
@@ -507,8 +509,9 @@ def mutual_info_classif(
         could introduce a bias.
 
     copy : bool, default=True
-        Whether to make a copy of the given data. If set to False, the initial
-        data will be overwritten.
+        Whether to make a copy of the given data. If set to False, operations
+        are performed in-place where possible, but in-place modification is not
+        guaranteed.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
