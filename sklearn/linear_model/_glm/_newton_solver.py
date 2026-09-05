@@ -1477,7 +1477,7 @@ class NewtonCDSolver(NewtonSolver):
                 self.coef_newton = np.r_[w, w0] - self.coef
             else:
                 self.coef_newton = w - self.coef
-        else:  # pragma: no cover
+        else:
             # Multinomial multiclass.
             # Unfortunately, the pointwise hessian h is not diagonal and we can't write
             # this as least squares plus penalties:
@@ -1503,14 +1503,17 @@ class NewtonCDSolver(NewtonSolver):
             # Tanabe & Sagae (1992) https://doi.org/10.1111/J.2517-6161.1992.TB01875.X
             # derive an analytical LDL' decomposition for the matrix
             # h = diag(p) - p p' = LDL', L lower triangular, D diagonal.
-            # Defining A = sqrt(D) L' X and b = we can now write
+            # Defining
+            #   A = sqrt(D) L' X
+            #   b = (L sqrt(D))^-1 (LDL' X coef - g) = A coef - (L sqrt(D))^-1 g
+            # we can now write
             #     1/2 c' H c + (G' - coef' H) c + alpha ||c||_1 + beta/2 ||c||_2^2
             #   = 1/2 ||A c - b||_2^2 + alpha ||c||_1 + beta/2 ||c||_2^2 + const
             #
+            # Note that
             #   A' A = H
             #   G = X' g
-            #   -c' A' b = c' (G - H coef)
-            #   b = (L sqrt(D))^-1 (LDL' X coef - g)
+            #   A' b = H coef - G
             proba = self.hess_pointwise
             w = np.copy(self.coef, order="F")
 
@@ -1531,7 +1534,7 @@ class NewtonCDSolver(NewtonSolver):
                     tol=self.inner_tol,
                     do_screening=True,
                     early_stopping=False,
-                    verbose=max(0, self.verbose - 3),  # True for verbose >= 4
+                    verbose=self.verbose >= 4,
                 )
 
             # Set self.coef_newton.

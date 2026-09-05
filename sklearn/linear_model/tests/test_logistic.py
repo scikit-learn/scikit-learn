@@ -1676,8 +1676,9 @@ def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):
         assert cum_diff > 2.0, msg
 
 
-# Note that the inner stopping for "newton-cd" has the effect that this is not 100%
-# equivalent. Therefore, we do not list this solver.
+# We exclude the "newton-cd" solver because it fails this test. The inner solver is
+# inexact and the stopping criterion results in slight deviations between 2 iterations
+# in one go and 2 consecutive steps.
 @pytest.mark.parametrize("solver", ["newton-cholesky", "newton-cd-gram", "newton-cg"])
 @pytest.mark.parametrize("fit_intercept", (True, False))
 @pytest.mark.parametrize("C", (1, np.inf))

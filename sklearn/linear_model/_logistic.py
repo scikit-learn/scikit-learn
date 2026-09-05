@@ -1188,7 +1188,7 @@ class LogisticRegression(
            ================= ======================== ======================
            'lbfgs'           l1_ratio=0               yes
            'liblinear'       l1_ratio=1 or l1_ratio=0 no
-           'newton-cd'       0<=l1_ratio<=1           no
+           'newton-cd'       0<=l1_ratio<=1           yes
            'newton-cd-gram'  0<=l1_ratio<=1           yes
            'newton-cg'       l1_ratio=0               yes
            'newton-cholesky' l1_ratio=0               yes
@@ -1868,7 +1868,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            ================= ======================== ======================
            'lbfgs'           l1_ratio=0               yes
            'liblinear'       l1_ratio=1 or l1_ratio=0 no
-           'newton-cd'       0<=l1_ratio<=1           no
+           'newton-cd'       0<=l1_ratio<=1           yes
            'newton-cd-gram'  0<=l1_ratio<=1           yes
            'newton-cg'       l1_ratio=0               yes
            'newton-cholesky' l1_ratio=0               yes
