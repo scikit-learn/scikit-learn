@@ -1,0 +1,4 @@
+- :func:`datasets.dump_svmlight_file` now raises an informative ``ValueError``
+  instead of crashing the interpreter with a segmentation fault when
+  ``multilabel=True`` is used together with a one-dimensional target array.
+  By :user:`Jaideep Pyne <jaideeppyne>`.
