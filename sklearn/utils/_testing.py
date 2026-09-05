@@ -1525,12 +1525,6 @@ def _get_warnings_filters_info_list():
             message="vert. bool was deprecated in Matplotlib",
             category=DeprecationWarning,
         ),
-        # TODO(1.10): remove PassiveAggressive
-        WarningInfo(
-            "ignore",
-            message="Class PassiveAggressive.+is deprecated",
-            category=FutureWarning,
-        ),
         # TODO: remove once the version where scipy has removed all the sparse matrix
         # classes is our min version; note that scipy did not yet announce when this
         # will happen, only that it won't be earlier than v2.2.
