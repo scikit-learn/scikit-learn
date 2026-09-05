@@ -308,7 +308,9 @@ def test_get_response_decision_function(return_response_method_used):
 )
 def test_get_response_values_multiclass(estimator, response_method):
     """Check that we can call `_get_response_values` with a multiclass estimator.
-    It should return the predictions untouched.
+
+    Predictions should be returned untouched. `pos_label` is ignored for
+    multiclass problems, including when it is not a valid class label.
     """
     estimator = clone(estimator).fit(X, y)  # clone to make test execution thread-safe
     predictions, pos_label = _get_response_values(
@@ -321,6 +323,16 @@ def test_get_response_values_multiclass(estimator, response_method):
         assert np.logical_and(predictions >= 0, predictions <= 1).all()
     elif response_method == "predict_log_proba":
         assert (predictions <= 0.0).all()
+
+    predictions_invalid, pos_label_invalid = _get_response_values(
+        estimator,
+        X,
+        response_method=response_method,
+        pos_label="invalid",
+    )
+    assert pos_label_invalid == "invalid"
+    assert predictions_invalid.shape == (X.shape[0], len(estimator.classes_))
+    assert_allclose(predictions_invalid, predictions)
 
 
 def test_get_response_values_with_response_list():
