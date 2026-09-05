@@ -22,12 +22,14 @@ from sklearn.metrics.pairwise import (
     PAIRWISE_DISTANCE_FUNCTIONS,
     PAIRWISE_KERNEL_FUNCTIONS,
     _euclidean_distances_upcast,
+    _parallel_pairwise,
     additive_chi2_kernel,
     check_paired_arrays,
     check_pairwise_arrays,
     chi2_kernel,
     cosine_distances,
     cosine_similarity,
+    distance_metrics,
     euclidean_distances,
     haversine_distances,
     laplacian_kernel,
@@ -406,6 +408,48 @@ def test_pairwise_parallel(func, metric, kwds, dtype):
     S = func(X, Y, metric=metric, n_jobs=1, **kwds)
     S2 = func(X, Y, metric=metric, n_jobs=2, **kwds)
     assert_allclose(S, S2)
+
+
+def test_parallel_pairwise_generator_return():
+    X = np.array([[1.0], [2.0], [3.0], [4.0]])
+    Y = np.array([[10.0], [20.0], [30.0]])
+
+    def simple_pairwise(X, Y):
+        return X[:, 0][:, None] + Y[:, 0][None, :]
+
+    expected = simple_pairwise(X, Y)
+    result = _parallel_pairwise(X, Y, simple_pairwise, n_jobs=2)
+
+    assert_allclose(result, expected)
+    assert result.shape == (X.shape[0], Y.shape[0])
+
+
+def test_parallel_pairwise_with_x_norm_squared_kwd():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((11, 4))
+    Y = rng.random_sample((7, 4))
+    X_norm_squared = np.sum(X**2, axis=1)
+
+    expected = _parallel_pairwise(
+        X,
+        Y,
+        euclidean_distances,
+        n_jobs=1,
+        X_norm_squared=X_norm_squared,
+    )
+    result = _parallel_pairwise(
+        X,
+        Y,
+        euclidean_distances,
+        n_jobs=2,
+        X_norm_squared=X_norm_squared,
+    )
+
+    assert_allclose(result, expected)
+
+
+def test_distance_metrics_returns_pairwise_mapping():
+    assert distance_metrics() is PAIRWISE_DISTANCE_FUNCTIONS
 
 
 @pytest.mark.parametrize(
@@ -881,8 +925,23 @@ def test_pairwise_distances_chunked_diagonal(metric, global_dtype):
 def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     rng = np.random.RandomState(0)
     X = rng.normal(size=(1000, 10), scale=1e10).astype(global_dtype, copy=False)
+
+    # Test with n_jobs=2 to explicitly exercise the generator-based _parallel_pairwise
     distances = pairwise_distances(X, metric=metric, n_jobs=2)
+
+    # Verify diagonal is zero
     assert_allclose(np.diag(distances), 0, atol=1e-10)
+
+    # Verify consistency with n_jobs=1
+    distances_single = pairwise_distances(X, metric=metric, n_jobs=1)
+    assert_allclose(distances, distances_single)
+
+    # Verify the result is a proper distance matrix
+    assert distances.shape == (X.shape[0], X.shape[0])
+    assert distances.dtype == global_dtype
+
+    # Verify symmetry (distance matrix should be symmetric for Y=None case)
+    assert_allclose(distances, distances.T)
 
 
 def test_parallel_pairwise_distances_y_norm_squared():

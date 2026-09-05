@@ -690,7 +690,7 @@ if sp_base_version < parse_version("1.17"):  # pragma: no cover
 if sp_base_version < parse_version("1.11"):  # pragma: no cover
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     _VALID_METRICS += ["kulsinski"]
-if sp_base_version < parse_version("1.9"):
+if sp_base_version < parse_version("1.9"):  # pragma: no cover
     # Deprecated in SciPy 1.0 and removed in SciPy 1.9
     _VALID_METRICS += ["matching"]
 
@@ -1965,9 +1965,9 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
-def _transposed_dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
-    """Write in-place to a slice of a distance matrix."""
-    dist_matrix[slice_, ...] = dist_func(*args, **kwargs).T
+def _dist_wrapper(dist_func, slice_, *args, **kwargs):
+    """Write to a slice of a distance matrix."""
+    return slice_, dist_func(*args, **kwargs)
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1983,34 +1983,31 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         return func(X, Y, **kwds)
 
     # enforce a threading backend to prevent data communication overhead
-    fd = delayed(_transposed_dist_wrapper)
-    # Transpose `ret` such that a given thread writes its output to a contiguous chunk.
-    # Note `order` (i.e. F/C-contiguous) is not included in array API standard, see
-    # https://github.com/data-apis/array-api/issues/571 for details.
-    # We assume that currently (April 2025) all array API compatible namespaces
-    # allocate 2D arrays using the C-contiguity convention by default.
-    ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float).T
-    Parallel(backend="threading", n_jobs=n_jobs)(
-        fd(
-            func,
-            ret,
-            s,
-            X,
-            Y[s, ...],
-            # Y_norm_squared for euclidean distance is a precomputed per-sample norm
-            # passed through kwds; slice it to match the current Y chunk.
-            **{k: (v[s] if k == "Y_norm_squared" else v) for k, v in kwds.items()},
-        )
-        for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
+    fd = delayed(_dist_wrapper)
+    # Write each computed block directly into the matching slice in output.
+    ret = xp.empty((X.shape[0], Y.shape[0]), device=device, dtype=dtype_float)
+
+    def _slice_kwds(s):
+        return {
+            k: v[s] if k == "X_norm_squared" and v is not None else v
+            for k, v in kwds.items()
+        }
+
+    chunk_generator = Parallel(
+        backend="threading", n_jobs=n_jobs, return_as="generator_unordered"
+    )(
+        fd(func, s, X[s, ...], Y, **_slice_kwds(s))
+        for s in gen_even_slices(_num_samples(X), effective_n_jobs(n_jobs))
     )
+    for slice_, chunk in chunk_generator:
+        ret[slice_, ...] = chunk
 
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
         # TODO: do it also for other norms.
         _fill_diagonal(ret, 0, xp=xp)
 
-    # Transform output back
-    return ret.T
+    return ret
 
 
 def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
@@ -2511,7 +2508,7 @@ if sp_base_version < parse_version("1.17"):
 if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
-if sp_base_version < parse_version("1.9"):
+if sp_base_version < parse_version("1.9"):  # pragma: no cover
     # Deprecated in SciPy 1.0 and removed in SciPy 1.9
     PAIRWISE_BOOLEAN_FUNCTIONS += ["matching"]
 
