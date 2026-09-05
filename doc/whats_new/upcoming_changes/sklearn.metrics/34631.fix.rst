@@ -1,0 +1,6 @@
+- :func:`metrics.roc_auc_score` with `multi_class="ovo"` now warns with
+  :class:`exceptions.UndefinedMetricWarning` when `y_true` contains a single class,
+  matching the binary case. Previously no class pair could be formed and averaging the
+  empty array of pairwise scores surfaced a bare numpy `RuntimeWarning` instead. The
+  returned value is unchanged (`nan`).
+  By :user:`Shivam Lalakiya <shivamlalakiya>`.
