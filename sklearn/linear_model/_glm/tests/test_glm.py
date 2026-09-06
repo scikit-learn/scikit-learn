@@ -1181,7 +1181,7 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     )
 
 
-def test_newton_cholesky_fallback_to_lbfgs():
+def test_newton_cholesky_fallback_to_lbfgs(capsys):
     """Test the fallback to lbfgs, in particular the number of iterations."""
     # We combine a rank-deficient X with a non-convex problem. This should trigger the
     # Newton-Cholesky solver to raise warnings and fallback to lbfgs.
@@ -1237,6 +1237,28 @@ def test_newton_cholesky_fallback_to_lbfgs():
             n_iter_nc_limited = m_nc_limited.n_iter_
 
     assert n_iter_nc_limited == m_nc_limited.max_iter - 1
+
+    # Trigger the 2nd fallback, i.e. inner_solve raises LinAlgError due to collinear
+    # features, then the max eigenvalue is smaller than eps (flat space).
+    # We use PoissonRegressor to avoid negative pointwise Hessian.
+    X = np.zeros((y.shape[0], 1))
+    X[0, 0] = 1e-12
+    X = np.hstack([X] * 2)
+    msg = (
+        "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
+        "ill-conditioned Hessian matrix"
+    )
+    captured = capsys.readouterr()  # reset
+    with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
+        PoissonRegressor(
+            solver="newton-cholesky", alpha=0, fit_intercept=False, verbose=1
+        ).fit(X, y)
+    captured = capsys.readouterr()
+    msg = (
+        "The inner solver stumbled upon a singular or ill-"
+        "conditioned Hessian matrix and resorts to LBFGS instead."
+    )
+    assert msg in captured.out
 
 
 @pytest.mark.parametrize("solver", [NewtonCholeskySolver, NewtonCDGramSolver])
