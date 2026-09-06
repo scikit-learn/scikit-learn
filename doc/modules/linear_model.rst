@@ -146,6 +146,18 @@ the corresponding solver is chosen.
 | 'sparse_cg' | None of the above conditions are fulfilled.        |
 +-------------+----------------------------------------------------+
 
+The `"cholesky"` and `"sparse_cg"` solvers do not always operate on the same
+formulation of the problem. When ``n_samples >= n_features``, they solve the
+primal problem directly. When ``n_features > n_samples``, they instead solve
+the dual problem: the kernel :math:`K = X X^T` is used in place of the
+covariance matrix :math:`X^T X`, and the coefficients are recovered as
+:math:`w = X^T c`, where :math:`c` is the solution of the dual problem. Both
+formulations give the same coefficients, but the dual formulation changes
+the conditioning of the linear system and, for `"cholesky"`, the memory
+footprint, since the kernel is formed explicitly and is quadratic in
+``n_samples``. `"sparse_cg"` solves the dual problem matrix-free and does
+not form the kernel explicitly.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
