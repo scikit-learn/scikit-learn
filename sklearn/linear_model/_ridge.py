@@ -478,8 +478,9 @@ def ridge_regression(
           solves the primal problem via a Cholesky decomposition of
           dot(X.T, X). When n_features > n_samples, it instead forms the
           kernel dot(X, X.T), solves the dual problem for the dual
-          coefficients, and recovers the coefficients as
-          dot(X.T, dual_coef). Both paths are mathematically equivalent,
+          coefficients c, and obtains the coefficients from dot(X.T, c),
+          transposed to the returned (n_targets, n_features) layout. Both
+          paths are mathematically equivalent,
           but the numerical conditioning differs, and the kernel path
           requires memory quadratic in n_samples.
 
@@ -1113,7 +1114,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           solves the primal problem via a Cholesky decomposition of
           ``X' X``. When ``n_features > n_samples``, it instead forms the
           kernel ``K = X X'``, solves the dual problem for the dual
-          coefficients, and recovers ``coef_`` as ``X' @ dual_coef``. Both
+          coefficients ``c``, and obtains ``coef_`` from ``X' c``,
+          transposed to the ``(n_targets, n_features)`` layout. Both
           paths are mathematically equivalent, but the numerical
           conditioning differs, and the kernel path requires memory
           quadratic in ``n_samples``.
@@ -1487,7 +1489,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
           solves the primal problem via a Cholesky decomposition of
           ``X' X``. When ``n_features > n_samples``, it instead forms the
           kernel ``K = X X'``, solves the dual problem for the dual
-          coefficients, and recovers ``coef_`` as ``X' @ dual_coef``. Both
+          coefficients ``c``, and obtains ``coef_`` from ``X' c``,
+          transposed to the ``(n_targets, n_features)`` layout. Both
           paths are mathematically equivalent, but the numerical
           conditioning differs, and the kernel path requires memory
           quadratic in ``n_samples``.
