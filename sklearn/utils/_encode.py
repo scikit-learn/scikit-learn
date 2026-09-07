@@ -155,7 +155,7 @@ def _extract_missing(values):
 
 
 class _nandict(dict):
-    """Dictionary with support for nans.
+    """Dictionary with support for nans as key and with the index in the keys as values.
 
     Accessing a key that is not one of the unique values returns -1 instead
     of raising KeyError.
