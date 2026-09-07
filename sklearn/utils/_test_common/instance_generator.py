@@ -588,7 +588,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     # decision values away from the float32 rounding limit of the check.
     HistGradientBoostingClassifier: {
         "check_sample_weight_equivalence_on_dense_data": dict(
-            min_samples_leaf=1, l2_regularization=1.0
+            min_samples_leaf=1, l2_regularization=1e-2
         ),
     },
     HistGradientBoostingRegressor: {
