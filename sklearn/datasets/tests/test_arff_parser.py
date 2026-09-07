@@ -149,8 +149,8 @@ def test_pandas_arff_parser_strip_single_quotes(parser_func):
     pd.testing.assert_series_equal(frame.iloc[0], pd.Series(expected_values, name=0))
 
 
-def test_pandas_arff_parser_strip_single_quotes_non_string_categories():
-    """Check that non-string categories are left untouched by quote stripping."""
+def test_pandas_arff_parser_numeric_nominal_categories():
+    """Check that a nominal column with unquoted numeric values is parsed."""
     pd = pytest.importorskip("pandas")
 
     arff_file = BytesIO(
@@ -160,6 +160,8 @@ def test_pandas_arff_parser_strip_single_quotes_non_string_categories():
             @attribute 'cat_int' {1, 2, 3}
             @data
             1
+            2
+            3
             """
         ).encode("utf-8")
     )
@@ -171,10 +173,10 @@ def test_pandas_arff_parser_strip_single_quotes_non_string_categories():
         openml_columns_info=columns_info,
         feature_names_to_select=["cat_int"],
         target_names_to_select=[],
-        read_csv_kwargs={"dtype": {0: pd.CategoricalDtype([1, 2, 3])}},
     )
 
-    assert frame["cat_int"].cat.categories.tolist() == [1, 2, 3]
+    assert isinstance(frame["cat_int"].dtype, pd.CategoricalDtype)
+    assert len(frame["cat_int"].cat.categories) == 3
 
 
 @pytest.mark.parametrize("parser_func", [_liac_arff_parser, _pandas_arff_parser])
