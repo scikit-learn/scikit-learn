@@ -772,6 +772,27 @@ def test_sample_weight_effect(problem, global_random_seed):
     assert_allclose(est_weighted._raw_predict(X), est_repeated._raw_predict(X))
 
 
+def test_integer_sample_weight_equivalence_many_features():
+    # Many features make zero-gain candidate splits likely. Numerical noise in
+    # their gain must not make the weighted and repeated fits diverge.
+    rng = np.random.RandomState(42)
+    n_samples = 15
+    X = rng.rand(n_samples, 2 * n_samples)
+    y = rng.randint(0, 3, size=n_samples)
+    sample_weight = rng.randint(0, 5, size=n_samples)
+
+    est = HistGradientBoostingClassifier(
+        max_iter=5, min_samples_leaf=1, random_state=0
+    )
+    est_weighted = clone(est).fit(X, y, sample_weight=sample_weight)
+    est_repeated = clone(est).fit(
+        np.repeat(X, sample_weight, axis=0),
+        np.repeat(y, sample_weight),
+    )
+
+    assert_allclose(est_weighted._raw_predict(X), est_repeated._raw_predict(X))
+
+
 @pytest.mark.parametrize("Loss", (HalfSquaredError, AbsoluteError))
 def test_sum_hessians_are_sample_weight(Loss):
     # For losses with constant hessians, the sum_hessians field of the

@@ -12,6 +12,7 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
+from libc.float cimport DBL_EPSILON
 from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
@@ -1017,6 +1018,9 @@ cdef inline Y_DTYPE_C _split_gain(
     """
     cdef:
         Y_DTYPE_C gain
+        Y_DTYPE_C gain_tolerance
+        Y_DTYPE_C loss_left
+        Y_DTYPE_C loss_right
         Y_DTYPE_C value_left
         Y_DTYPE_C value_right
 
@@ -1036,12 +1040,22 @@ cdef inline Y_DTYPE_C _split_gain(
         # account (if any).
         return -1
 
-    gain = loss_current_node
-    gain -= _loss_from_value(value_left, sum_gradient_left)
-    gain -= _loss_from_value(value_right, sum_gradient_right)
+    loss_left = _loss_from_value(value_left, sum_gradient_left)
+    loss_right = _loss_from_value(value_right, sum_gradient_right)
+    gain = loss_current_node - loss_left - loss_right
     # Note that for the gain to be correct (and for min_gain_to_split to work
     # as expected), we need all values to be bounded (current node, left child
     # and right child).
+
+    # Computing the gain involves subtracting loss values of similar magnitude.
+    # Ignore positive values that are within the floating-point error of this
+    # cancellation. Otherwise a theoretically zero-gain split can be selected
+    # and alter subsequent trees.
+    gain_tolerance = 10 * DBL_EPSILON * (
+        abs(loss_current_node) + abs(loss_left) + abs(loss_right)
+    )
+    if gain > 0 and gain <= gain_tolerance:
+        return 0
 
     return gain
 
