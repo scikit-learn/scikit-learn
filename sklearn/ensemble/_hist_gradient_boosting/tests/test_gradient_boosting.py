@@ -781,9 +781,7 @@ def test_integer_sample_weight_equivalence_many_features():
     y = rng.randint(0, 3, size=n_samples)
     sample_weight = rng.randint(0, 5, size=n_samples)
 
-    est = HistGradientBoostingClassifier(
-        max_iter=5, min_samples_leaf=1, random_state=0
-    )
+    est = HistGradientBoostingClassifier(max_iter=5, min_samples_leaf=1, random_state=0)
     est_weighted = clone(est).fit(X, y, sample_weight=sample_weight)
     est_repeated = clone(est).fit(
         np.repeat(X, sample_weight, axis=0),
