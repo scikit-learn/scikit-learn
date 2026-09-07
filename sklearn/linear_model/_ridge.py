@@ -1004,6 +1004,8 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 and not use_no_center_cholesky
                 and not X_is_sparse
             ),
+            # X and y were already validated by `validate_data` in the
+            # public `fit` method of the subclass (e.g. `Ridge.fit`).
             check_input=False,
             sample_weight=sample_weight,
             rescale_with_sw=False,
