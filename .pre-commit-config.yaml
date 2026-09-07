@@ -35,6 +35,12 @@ repos:
     # possibility to pass a directory and use it as a check instead of auto-formatter.
     -   id: cython-lint
         args: [--ban-relative-imports]
+-   repo: https://github.com/sphinx-contrib/sphinx-lint
+    # NOTE if you update the sphinx-lint version here, remember to update
+    # sklearn/_min_dependencies.py as well
+    rev: v1.0.2
+    hooks:
+    -   id: sphinx-lint
 -   repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.7.1
     hooks:
@@ -42,9 +48,10 @@ repos:
         files: ^doc/css/styles/|^doc/js/scripts/
         exclude: ^doc/js/scripts/vendor/
         types_or: ["css", "javascript"]
-
-- repo: https://github.com/codespell-project/codespell
-  # Configuration for codespell is in pyproject.toml
-  rev: v2.4.1
-  hooks:
-  - id: codespell
+-   repo: https://github.com/codespell-project/codespell
+    # Configuration for codespell is in pyproject.toml
+    # NOTE if you update the codespell version here, remember to update
+    # sklearn/_min_dependencies.py as well
+    rev: v2.4.1
+    hooks:
+    -   id: codespell
