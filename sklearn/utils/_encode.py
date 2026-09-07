@@ -155,17 +155,23 @@ def _extract_missing(values):
 
 
 class _nandict(dict):
-    """Map each of the given unique values to its index, with support for nans.
+    """Dictionary with support for nans.
 
     Accessing a key that is not one of the unique values returns -1 instead
     of raising KeyError.
+
+    Parameters
+    ----------
+    keys : ndarray
+        Unique values to map to their index. A missing value (e.g. nan),
+        if present, is expected to be the last element.
     """
 
-    def __init__(self, uniques):
-        super().__init__(zip(uniques, range(len(uniques))))
-        self.has_nan = is_scalar_nan(uniques[-1])
+    def __init__(self, keys):
+        super().__init__(zip(keys, range(len(keys))))
+        self.has_nan = is_scalar_nan(keys[-1])
         if self.has_nan:
-            self.nan_value = len(uniques) - 1
+            self.nan_value = len(keys) - 1
 
     def __missing__(self, key):
         if self.has_nan and is_scalar_nan(key):
