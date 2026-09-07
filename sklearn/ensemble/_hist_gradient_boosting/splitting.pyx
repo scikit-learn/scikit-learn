@@ -12,7 +12,7 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
-from libc.float cimport DBL_EPSILON
+from libc.float cimport FLT_EPSILON
 from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
@@ -1049,9 +1049,10 @@ cdef inline Y_DTYPE_C _split_gain(
 
     # Computing the gain involves subtracting loss values of similar magnitude.
     # Ignore positive values that are within the floating-point error of this
-    # cancellation. Otherwise a theoretically zero-gain split can be selected
+    # cancellation. Gradients and hessians are stored as float32, hence the use
+    # of FLT_EPSILON. Otherwise a theoretically zero-gain split can be selected
     # and alter subsequent trees.
-    gain_tolerance = 10 * DBL_EPSILON * (
+    gain_tolerance = 10 * FLT_EPSILON * (
         abs(loss_current_node) + abs(loss_left) + abs(loss_right)
     )
     if gain > 0 and gain <= gain_tolerance:
