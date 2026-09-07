@@ -1696,6 +1696,8 @@ def test_quantile_transformer_subsample_nan_ignore_sample_weight():
     assert_allclose(qt_nan_heavy.quantiles_, qt_nan_zero.quantiles_)
     # Same result as the all-ones weighted fit if NaN rows are ignored consistently.
     assert_allclose(qt_nan_zero.quantiles_, qt_ones.quantiles_)
+    
+    
 def test_quantile_transformer_sparse_subsampling():
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/32585
