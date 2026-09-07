@@ -12,8 +12,8 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
-from libc.float cimport FLT_EPSILON
-from libc.math cimport INFINITY, ceil, sqrt
+from libc.float cimport DBL_EPSILON, FLT_EPSILON
+from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 
@@ -625,7 +625,10 @@ cdef class Splitter:
             int best_split_info_idx = 0
 
         for split_info_idx in range(1, n_allowed_features):
-            if (split_infos[split_info_idx].gain > split_infos[best_split_info_idx].gain):
+            if _gain_is_better(
+                split_infos[split_info_idx].gain,
+                split_infos[best_split_info_idx].gain,
+            ):
                 best_split_info_idx = split_info_idx
         return best_split_info_idx
 
@@ -734,7 +737,10 @@ cdef class Splitter:
                                upper_bound,
                                self.l2_regularization)
 
-            if gain > best_gain and gain > self.min_gain_to_split:
+            if (
+                _gain_is_better(gain, best_gain)
+                and gain > self.min_gain_to_split
+            ):
                 found_better_split = True
                 best_gain = gain
                 best_bin_idx = bin_idx
@@ -944,7 +950,10 @@ cdef class Splitter:
                                    loss_current_node, monotonic_cst,
                                    lower_bound, upper_bound,
                                    self.l2_regularization)
-                if gain > best_gain and gain > self.min_gain_to_split:
+                if (
+                    _gain_is_better(gain, best_gain)
+                    and gain > self.min_gain_to_split
+                ):
                     found_better_split = True
                     best_gain = gain
                     best_cat_infos_thresh = sorted_cat_idx
@@ -996,6 +1005,20 @@ cdef class Splitter:
 
 cdef int compare_cat_infos(const void * a, const void * b) noexcept nogil:
     return -1 if (<categorical_info *>a).value < (<categorical_info *>b).value else 1
+
+
+cdef inline uint8_t _gain_is_better(
+        Y_DTYPE_C gain,
+        Y_DTYPE_C best_gain) noexcept nogil:
+    """Return whether gain is meaningfully greater than the current best gain."""
+    cdef Y_DTYPE_C tolerance
+
+    # Histogram statistics accumulate float32 gradients and hessians over at
+    # most 256 bins. Keep the first candidate when gains differ only within the
+    # corresponding error bound, making tie-breaking stable.
+    tolerance = 256 * FLT_EPSILON * max(abs(gain), abs(best_gain))
+    return gain > best_gain + tolerance
+
 
 cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_gradient_left,
@@ -1049,10 +1072,9 @@ cdef inline Y_DTYPE_C _split_gain(
 
     # Computing the gain involves subtracting loss values of similar magnitude.
     # Ignore positive values that are within the floating-point error of this
-    # cancellation. Gradients and hessians are stored as float32, hence the use
-    # of FLT_EPSILON. Otherwise a theoretically zero-gain split can be selected
+    # cancellation. Otherwise a theoretically zero-gain split can be selected
     # and alter subsequent trees.
-    gain_tolerance = sqrt(FLT_EPSILON) * (
+    gain_tolerance = 10 * DBL_EPSILON * (
         abs(loss_current_node) + abs(loss_left) + abs(loss_right)
     )
     if gain > 0 and gain <= gain_tolerance:
