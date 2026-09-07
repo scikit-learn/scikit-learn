@@ -12,7 +12,7 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
-from libc.float cimport DBL_EPSILON, FLT_EPSILON
+from libc.float cimport FLT_EPSILON
 from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
@@ -24,6 +24,13 @@ from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
 from sklearn.ensemble._hist_gradient_boosting.common cimport MonotonicConstraint
+
+# Positive gains below this are ignored. Cancellation in the gain formula can
+# produce ~1e-15 dust for a theoretically zero-gain split.
+cdef Y_DTYPE_C GAIN_NUMERICAL_ZERO = 1e-12
+# Feature gains that differ only within float32 histogram accumulation error
+# are treated as ties. Applied once per feature, not per bin.
+cdef Y_DTYPE_C GAIN_FEATURE_TIE_SCALE = 256 * FLT_EPSILON
 
 
 cdef struct split_info_struct:
@@ -623,12 +630,15 @@ cdef class Splitter:
         cdef:
             int split_info_idx
             int best_split_info_idx = 0
+            Y_DTYPE_C gain
+            Y_DTYPE_C best_gain
 
         for split_info_idx in range(1, n_allowed_features):
-            if _gain_is_better(
-                split_infos[split_info_idx].gain,
-                split_infos[best_split_info_idx].gain,
-            ):
+            # O(n_features) per node. Keep the first feature when gains differ
+            # only by float32 histogram accumulation error.
+            gain = split_infos[split_info_idx].gain
+            best_gain = split_infos[best_split_info_idx].gain
+            if gain > best_gain + GAIN_FEATURE_TIE_SCALE * max(abs(gain), abs(best_gain)):
                 best_split_info_idx = split_info_idx
         return best_split_info_idx
 
@@ -738,8 +748,9 @@ cdef class Splitter:
                                self.l2_regularization)
 
             if (
-                _gain_is_better(gain, best_gain)
+                gain > best_gain
                 and gain > self.min_gain_to_split
+                and gain > GAIN_NUMERICAL_ZERO
             ):
                 found_better_split = True
                 best_gain = gain
@@ -951,8 +962,9 @@ cdef class Splitter:
                                    lower_bound, upper_bound,
                                    self.l2_regularization)
                 if (
-                    _gain_is_better(gain, best_gain)
+                    gain > best_gain
                     and gain > self.min_gain_to_split
+                    and gain > GAIN_NUMERICAL_ZERO
                 ):
                     found_better_split = True
                     best_gain = gain
@@ -1006,20 +1018,6 @@ cdef class Splitter:
 cdef int compare_cat_infos(const void * a, const void * b) noexcept nogil:
     return -1 if (<categorical_info *>a).value < (<categorical_info *>b).value else 1
 
-
-cdef inline uint8_t _gain_is_better(
-        Y_DTYPE_C gain,
-        Y_DTYPE_C best_gain) noexcept nogil:
-    """Return whether gain is meaningfully greater than the current best gain."""
-    cdef Y_DTYPE_C tolerance
-
-    # Histogram statistics accumulate float32 gradients and hessians over at
-    # most 256 bins. Keep the first candidate when gains differ only within the
-    # corresponding error bound, making tie-breaking stable.
-    tolerance = 256 * FLT_EPSILON * max(abs(gain), abs(best_gain))
-    return gain > best_gain + tolerance
-
-
 cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_gradient_left,
         Y_DTYPE_C sum_hessian_left,
@@ -1041,9 +1039,6 @@ cdef inline Y_DTYPE_C _split_gain(
     """
     cdef:
         Y_DTYPE_C gain
-        Y_DTYPE_C gain_tolerance
-        Y_DTYPE_C loss_left
-        Y_DTYPE_C loss_right
         Y_DTYPE_C value_left
         Y_DTYPE_C value_right
 
@@ -1063,22 +1058,12 @@ cdef inline Y_DTYPE_C _split_gain(
         # account (if any).
         return -1
 
-    loss_left = _loss_from_value(value_left, sum_gradient_left)
-    loss_right = _loss_from_value(value_right, sum_gradient_right)
-    gain = loss_current_node - loss_left - loss_right
+    gain = loss_current_node
+    gain -= _loss_from_value(value_left, sum_gradient_left)
+    gain -= _loss_from_value(value_right, sum_gradient_right)
     # Note that for the gain to be correct (and for min_gain_to_split to work
     # as expected), we need all values to be bounded (current node, left child
     # and right child).
-
-    # Computing the gain involves subtracting loss values of similar magnitude.
-    # Ignore positive values that are within the floating-point error of this
-    # cancellation. Otherwise a theoretically zero-gain split can be selected
-    # and alter subsequent trees.
-    gain_tolerance = 10 * DBL_EPSILON * (
-        abs(loss_current_node) + abs(loss_left) + abs(loss_right)
-    )
-    if gain > 0 and gain <= gain_tolerance:
-        return 0
 
     return gain
 
