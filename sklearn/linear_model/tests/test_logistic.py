@@ -15,10 +15,7 @@ from numpy.testing import (
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
-from sklearn.callback.tests._utils import (
-    RecordingCallback,
-    skip_callback_test_if_wasm,
-)
+from sklearn.callback.tests._common.callbacks import RecordingCallback
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier
@@ -46,7 +43,11 @@ from sklearn.utils._array_api import (
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import _array_api_for_tests, ignore_warnings
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    ignore_warnings,
+    skip_callback_test_if_wasm,
+)
 from sklearn.utils.fixes import (
     _IS_32BIT,
     COO_CONTAINERS,

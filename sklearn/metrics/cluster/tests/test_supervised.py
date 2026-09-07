@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import pytest
+import scipy.sparse as sp
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
 from sklearn.base import config_context
@@ -30,7 +31,11 @@ from sklearn.utils import assert_all_finite
 from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import _array_api_for_tests, assert_almost_equal
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    assert_almost_equal,
+    skip_if_array_api_compat_not_configured,
+)
 
 score_funcs = [
     adjusted_rand_score,
@@ -518,3 +523,15 @@ def test_normalized_mutual_info_score_bounded(average_method):
     # non constant, non perfect matching labels
     nmi = normalized_mutual_info_score(labels2, labels3, average_method=average_method)
     assert 0 <= nmi < 1
+
+
+@skip_if_array_api_compat_not_configured
+def test_contingency_matrix_array_api_sparse():
+    "Check sparse array can be returned when `array_api_dispatch=True`."
+    with config_context(array_api_dispatch=True):
+        res = contingency_matrix(
+            np.array([1, 2]),
+            np.array([1, 0]),
+            sparse=True,
+        )
+        assert isinstance(res, sp.csr_matrix)
