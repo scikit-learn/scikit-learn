@@ -790,7 +790,7 @@ def test_integer_sample_weight_equivalence_many_features():
         np.repeat(y, sample_weight),
     )
 
-    assert_allclose(est_weighted._raw_predict(X), est_repeated._raw_predict(X))
+    assert_allclose(est_weighted.predict_proba(X), est_repeated.predict_proba(X))
 
 
 @pytest.mark.parametrize("Loss", (HalfSquaredError, AbsoluteError))
