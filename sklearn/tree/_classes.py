@@ -598,25 +598,21 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 unknown_value=np.nan,
                 encoded_missing_value=np.nan,
             )
+            numerical_transformer = FunctionTransformer(
+                check_array,
+                kw_args={"dtype": np.float32, "ensure_all_finite": False},
+            )
             transformers = [
                 ("categorical", ordinal_encoder, self.is_categorical_),
+                ("numerical", numerical_transformer, ~self.is_categorical_),
             ]
-            if np.any(~self.is_categorical_):
-                numerical_transformer = FunctionTransformer(
-                    check_array,
-                    kw_args={"dtype": np.float32, "ensure_all_finite": False},
-                )
-                transformers.append(
-                    ("numerical", numerical_transformer, ~self.is_categorical_)
-                )
 
             self._preprocessor = ColumnTransformer(transformers, sparse_threshold=0)
             self._preprocessor.set_output(transform="default")
-            self._preprocessor.fit(X)
+            X_transformed = self._preprocessor.fit_transform(X)
             self._categorical_encoder = self._preprocessor.named_transformers_[
                 "categorical"
             ]
-            X_transformed = self._preprocessor.transform(X)
         else:
             X_transformed = self._preprocessor.transform(X)
 
@@ -629,9 +625,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         cat_idx = self._preprocessor.output_indices_["categorical"]
         X_out[:, self.is_categorical_] = X_transformed[:, cat_idx]
 
-        if "numerical" in self._preprocessor.output_indices_:
-            num_idx = self._preprocessor.output_indices_["numerical"]
-            X_out[:, ~self.is_categorical_] = X_transformed[:, num_idx]
+        num_idx = self._preprocessor.output_indices_["numerical"]
+        X_out[:, ~self.is_categorical_] = X_transformed[:, num_idx]
 
         return X_out
 
