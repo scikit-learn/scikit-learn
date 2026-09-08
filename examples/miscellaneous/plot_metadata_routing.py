@@ -462,7 +462,7 @@ print_routing(meta_est)
 #
 # Default and Auto-Requested Metadata
 # -----------------------------------
-
+#
 # There are two ways for developers to set request values before the user calls
 # `set_*_request`:
 #
@@ -501,6 +501,7 @@ class ClassifierWithRequestDefaults(ClassifierMixin, BaseEstimator):
         return np.ones(len(X))
 
 
+# %%
 # Note that setting auto-requests on *composite* methods such as `fit_transform` or
 # `fit_predict` will not have an effect. Their requests are the union of the underlying
 # simple methods (`fit`+`transform`, `fit`+`predict`). Call `add_auto_request` (or
@@ -515,6 +516,7 @@ print_routing(clf)
 with config_context(metadata_request_policy="auto"):
     print_routing(clf)
 
+# %%
 # The instance-level auto-requests are set on top of the class-level requests (and can
 # override them).
 
