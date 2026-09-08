@@ -6,11 +6,13 @@ Common code for all metrics.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from itertools import combinations
 
 import numpy as np
 
 import sklearn.externals.array_api_extra as xpx
+from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.utils import check_array, check_consistent_length
 from sklearn.utils._array_api import (
     _average,
@@ -184,6 +186,17 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
     y_true_unique = np.unique(y_true)
     n_classes = y_true_unique.shape[0]
     n_pairs = n_classes * (n_classes - 1) // 2
+
+    if n_pairs == 0:
+        warnings.warn(
+            (
+                "Only one class is present in y_true. The one-vs-one multiclass "
+                "score is not defined in that case."
+            ),
+            UndefinedMetricWarning,
+        )
+        return np.nan
+
     pair_scores = np.empty(n_pairs)
 
     is_weighted = average == "weighted"
