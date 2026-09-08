@@ -631,6 +631,7 @@ NO_CALLBACK_SUPPORT = {
     "VotingRegressor",
 }
 
+
 @pytest.mark.parametrize(
     "check",
     [

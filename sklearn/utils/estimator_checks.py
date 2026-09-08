@@ -5766,39 +5766,29 @@ def _fit_estimator_with_recording_callback(estimator_orig):
 
 @ignore_warnings(category=(ConvergenceWarning, UserWarning))
 def check_callback_setup_teardown_called_once(name, estimator_orig):
-    """setup and teardown are each called exactly once per fit, in that order.
-
-    This verifies that the estimator correctly wraps its fit method with
-    `@with_callbacks` or `callback_management_context`, which guarantees the
-    lifecycle hooks are called exactly once regardless of what happens inside
-    fit.
-    """
+    """Check that setup and teardown are called exactly once per fit, in that order."""
     _, callback = _fit_estimator_with_recording_callback(estimator_orig)
 
     n_setup = callback.count_hooks("setup")
     msg = f"{name}: expected setup to be called once, got {n_setup}"
     assert n_setup == 1, msg
 
-    msg = (
-        f"{name}: expected teardown to be called once, "
-        f"got {callback.count_hooks('teardown')}"
-    )
-    assert callback.count_hooks("teardown") == 1, msg
+    n_teardown = callback.count_hooks("teardown")
+    msg = f"{name}: expected teardown to be called once, got {n_teardown}"
+    assert n_teardown == 1, msg
 
     hook_names = [entry["name"] for entry in callback.record]
-    msg = f"{name}: teardown was recorded before setup"
+    msg = f"{name}: teardown called before setup"
     assert hook_names.index("setup") < hook_names.index("teardown"), msg
 
 
 @ignore_warnings(category=(ConvergenceWarning, UserWarning))
 def check_callback_begin_end_balanced(name, estimator_orig):
-    """on_fit_task_begin / on_fit_task_end form a single-rooted Dyck sequence.
+    """Check that on_fit_task_begin / on_fit_task_end calls are balanced.
 
-    Because a single `fit` call corresponds to exactly one root task, the
-    sequence of task events must be a *primitive* Dyck word: the running
-    balance (n_begin - n_end so far) must stay ≥ 1 for every event except the
-    last, and be 0 only at the very end. This rules out both unmatched ends
-    (balance goes negative) and multiple sibling root tasks, e.g. `()()`.
+    A single `fit` must have exactly one root task and begin/end events must nest:
+    every `on_fit_task_end` should match a preceding `on_fit_task_begin`, and the
+    running count of open tasks must return to zero only after the last task event.
     """
     _, callback = _fit_estimator_with_recording_callback(estimator_orig)
 
@@ -5810,39 +5800,30 @@ def check_callback_begin_end_balanced(name, estimator_orig):
 
     balance = 0
     for i, entry in enumerate(task_events):
-        if entry["name"] == "on_fit_task_begin":
-            balance += 1
-        else:
-            balance -= 1
-            msg = f"{name}: on_fit_task_end called without a matching on_fit_task_begin"
-            assert balance >= 0, msg
-            if balance == 0:
-                msg = (
-                    f"{name}: balance returned to 0 before the last task event; "
-                    f"multiple top-level tasks detected"
-                )
-                assert i == len(task_events) - 1, msg
-    msg = (
-        f"{name}: {balance} on_fit_task_begin call(s) have no matching on_fit_task_end"
-    )
+        balance += 1 if entry["name"] == "on_fit_task_begin" else -1
+
+        msg = f"{name}: on_fit_task_end called without a matching on_fit_task_begin"
+        assert balance >= 0, msg
+
+        if balance == 0:
+            msg = (
+                f"{name}: found more than one root task; on_fit_task_begin and "
+                f"on_fit_task_end must nest under a single root"
+            )
+            assert i == len(task_events) - 1, msg
+
+    msg = f"{name}: {balance} on_fit_task_begin calls without matching on_fit_task_end"
     assert balance == 0, msg
 
 
 @ignore_warnings(category=(ConvergenceWarning, UserWarning))
 def check_callback_estimator_is_self(name, estimator_orig):
-    """Every hook receives the estimator instance that fit was called on.
-
-    Each call to setup, on_fit_task_begin, on_fit_task_end, and teardown must
-    pass the estimator that owns the fit (i.e. `self`), not a clone, not a
-    sub-estimator.
-    """
+    """Check that every hook receives the estimator instance that fit was called on."""
     estimator, callback = _fit_estimator_with_recording_callback(estimator_orig)
 
     for entry in callback.record:
         msg = (
-            f"{name}: hook '{entry['name']}' received "
-            f"{entry['estimator']!r} as estimator, expected the fitted instance "
-            f"{estimator!r}"
+            f"{name}: hook '{entry['name']}' received {entry['estimator']!r} as "
+            f"estimator; expected the instance on which fit was called ({estimator!r})."
         )
         assert entry["estimator"] is estimator, msg
-
