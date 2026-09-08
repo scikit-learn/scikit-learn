@@ -1541,9 +1541,9 @@ cdef class Tree:
     ):
         """Partial dependence via background-data tree traversal (tree_accurate).
 
-        Two traversals are performed, both using the same split test as
-        prediction (so missing-value routing and any future split kind stay
-        consistent automatically):
+        Two traversals are performed, both routing through ``goes_left`` --
+        the same split test as prediction -- so numeric, categorical and
+        missing-value routing stay consistent automatically:
 
         * Background pass -- the heavy, ``O(n_background * depth)`` part. Each
           sample is routed through the tree, branching both ways at splits on
@@ -1582,7 +1582,8 @@ cdef class Tree:
             intp_t _TREE_LEAF_SENTINEL = TREE_LEAF
             intp_t K = out.shape[0]
             intp_t stack_size, sample_idx, node_idx, j, k, cnt
-            float64_t g
+            float32_t g
+            bint go_left
             Node* node
             float64_t[:, ::1] node_values
 
@@ -1611,7 +1612,14 @@ cdef class Tree:
                     stack_node[stack_size] = node.right_child
                     stack_size += 1
                 else:
-                    if X_bg[sample_idx, node.feature] <= node.threshold:
+                    go_left = goes_left(
+                        node.threshold,
+                        node.left_cat_bitset,
+                        node.missing_go_to_left,
+                        node.split_kind,
+                        X_bg[sample_idx, node.feature],
+                    )
+                    if go_left:
                         stack_node[stack_size] = node.left_child
                     else:
                         stack_node[stack_size] = node.right_child
@@ -1632,7 +1640,14 @@ cdef class Tree:
                         for k in range(K):
                             out[k, j] += node_values[node_idx, k] * cnt
                 elif node.feature == required_feature:
-                    if g <= node.threshold:
+                    go_left = goes_left(
+                        node.threshold,
+                        node.left_cat_bitset,
+                        node.missing_go_to_left,
+                        node.split_kind,
+                        g,
+                    )
+                    if go_left:
                         stack_node[stack_size] = node.left_child
                     else:
                         stack_node[stack_size] = node.right_child
