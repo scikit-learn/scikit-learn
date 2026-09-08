@@ -1,0 +1,4 @@
+- Fixed a bug where fitting an estimator with a :class:`callback.ScoringMonitor` and a
+  parallel backend using multi-processing could fail with "Could not pickle the task to
+  send it to the workers".
+  By :user:`Jérémie du Boisberranger <jeremiedbb>`.
