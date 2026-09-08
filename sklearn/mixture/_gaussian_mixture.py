@@ -231,7 +231,7 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar, xp=None):
 
     Parameters
     ----------
-    responsibilities : array-like of shape (n_samples, n_components)
+    resp : array-like of shape (n_samples, n_components)
 
     X : array-like of shape (n_samples, n_features)
 
@@ -257,7 +257,7 @@ def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar, xp=N
 
     Parameters
     ----------
-    responsibilities : array-like of shape (n_samples, n_components)
+    resp : array-like of shape (n_samples, n_components)
 
     X : array-like of shape (n_samples, n_features)
 

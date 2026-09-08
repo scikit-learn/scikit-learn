@@ -21,10 +21,7 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.decomposition import PCA
-
-# mypy error: Module 'sklearn.manifold' has no attribute '_utils'
-# mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from sklearn.manifold import _barnes_hut_tsne, _utils  # type: ignore[attr-defined]
+from sklearn.manifold import _barnes_hut_tsne, _utils
 from sklearn.metrics.pairwise import _VALID_METRICS, pairwise_distances
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils import _align_api_if_sparse, check_random_state

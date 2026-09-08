@@ -25,10 +25,11 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 #### What does this implement/fix? Explain your changes.
 
 
-#### First time contributor introduction
-<!-- If you are new to the scikit-learn community, please introduce yourself. How do you
- use scikit-learn, what prompted you to make this contribution? Getting to know you
- helps us build trust in your judgement and welcome you into the community.
+#### Introduce yourself
+<!-- Especially if you are new to the scikit-learn community, please introduce yourself.
+How do you use scikit-learn, what prompted you to make this contribution?
+Getting to know you helps us build trust in your judgement and welcome you into the
+community.
 -->
 
 
@@ -44,7 +45,6 @@ I used AI assistance for:
 - Test/benchmark generation
 - Documentation (including examples)
 - Research and understanding
-
 
 #### Any other comments?
 

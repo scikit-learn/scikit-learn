@@ -2979,7 +2979,7 @@ def train_test_split(
 
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
-# Use setattr to avoid mypy errors when monkeypatching.
+# Use setattr to avoid pyrefly errors when monkeypatching.
 setattr(train_test_split, "__test__", False)
 
 
