@@ -11,12 +11,14 @@ import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
+from hashlib import md5
 from inspect import signature
 from numbers import Integral, Real
 from typing import Callable, Literal
 
 import joblib
 import numpy as np
+from joblib.externals import cloudpickle
 from scipy import sparse
 from scipy.stats import rankdata
 
@@ -457,6 +459,7 @@ def _yield_all_checks(estimator, legacy: bool):
     yield check_set_params
     yield check_dict_unchanged
     yield check_fit_idempotent
+    yield check_estimator_internal_state_unchanged_by_inference
     yield check_fit_check_is_fitted
     if not tags.no_validation:
         yield check_n_features_in
@@ -4649,15 +4652,7 @@ def check_fit_non_negative(name, estimator_orig):
         estimator.fit(X, y)
 
 
-def check_fit_idempotent(name, estimator_orig):
-    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
-    # check that the estimated parameters during training (e.g. coefs_) are
-    # the same, but having a universal comparison function for those
-    # attributes is difficult and full of edge cases. So instead we check that
-    # predict(), predict_proba(), decision_function() and transform() return
-    # the same results.
-
-    check_methods = ["predict", "transform", "decision_function", "predict_proba"]
+def _fit_estimator(estimator_orig):
     rng = np.random.RandomState(0)
 
     estimator = clone(estimator_orig)
@@ -4680,7 +4675,20 @@ def check_fit_idempotent(name, estimator_orig):
 
     # Fit for the first time
     estimator.fit(X_train, y_train)
+    return (estimator, X_train, y_train, X_test, y_test)
 
+
+def check_fit_idempotent(name, estimator_orig):
+    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
+    # check that the estimated parameters during training (e.g. coefs_) are
+    # the same, but having a universal comparison function for those
+    # attributes is difficult and full of edge cases. So instead we check that
+    # predict(), predict_proba(), decision_function() and transform() return
+    # the same results.
+
+    estimator, X_train, y_train, X_test, _ = _fit_estimator(estimator_orig)
+
+    check_methods = ["predict", "transform", "decision_function", "predict_proba"]
     result = {
         method: getattr(estimator, method)(X_test)
         for method in check_methods
@@ -5742,3 +5750,51 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         ValueError, match="Only binary classification is supported.", err_msg=err_msg
     ):
         estimator.fit(X, y)
+
+
+def object_hash(obj: object) -> bytes:
+    """
+    Hash a Python object; mutating the object should change the result.
+
+    ``joblib.hash`` has issues with some of the estimators, so we use our own.
+    """
+    return md5(cloudpickle.dumps(obj)).digest()
+
+
+def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
+    """
+    Estimators' internal state should not be changed by inference methods, in
+    order to ensure thread safety.
+    """
+    estimator, X_train, y_train, X_test, y_test = _fit_estimator(estimator_orig)
+    check_methods = [
+        "transform",
+        "predict",
+        "decision_function",
+        "predict_proba",
+        "predict_log_proba",
+        "score",
+        "score_samples",
+    ]
+
+    before_hash = object_hash(estimator)
+    attr_hashes = {
+        key: object_hash(value) for (key, value) in estimator.__dict__.items()
+    }
+    for method_name in check_methods:
+        if not hasattr(estimator, method_name):
+            continue
+        method = getattr(estimator, method_name)
+        if method_name == "score":
+            method(X_test, y_test)
+        else:
+            method(X_test)
+        after_hash = object_hash(estimator)
+        after_attr_hashes = {
+            key: object_hash(value) for (key, value) in estimator.__dict__.items()
+        }
+        err_message = (
+            f"Hash of {estimator} changed when running {method_name}(),"
+            + f" {attr_hashes} != {after_attr_hashes}"
+        )
+        assert after_hash == before_hash, err_message
