@@ -8,6 +8,7 @@ import pickle
 import re
 import textwrap
 import warnings
+from collections import defaultdict
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
@@ -39,6 +40,7 @@ from sklearn.base import (
     is_outlier_detector,
     is_regressor,
 )
+from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._testing.callbacks import RecordingCallback
 from sklearn.datasets import (
     load_iris,
@@ -5765,55 +5767,60 @@ def _fit_estimator_with_recording_callback(estimator_orig):
 
 
 @ignore_warnings(category=(ConvergenceWarning, UserWarning))
+def check_callback_single_root(name, estimator_orig):
+    """Check that a single fit has exactly one root callback context."""
+    _, callback = _fit_estimator_with_recording_callback(estimator_orig)
+
+    root_uuids = {entry["context"].root_uuid for entry in callback.record}
+    msg = f"{name}: found {len(root_uuids)} root callback contexts. Expected one."
+    assert len(root_uuids) == 1, msg
+
+
+@ignore_warnings(category=(ConvergenceWarning, UserWarning))
 def check_callback_setup_teardown_called_once(name, estimator_orig):
     """Check that setup and teardown are called exactly once per fit, in that order."""
     _, callback = _fit_estimator_with_recording_callback(estimator_orig)
 
     n_setup = callback.count_hooks("setup")
-    msg = f"{name}: expected setup to be called once, got {n_setup}"
+    msg = f"{name}: expected setup to be called once, got {n_setup}."
     assert n_setup == 1, msg
 
     n_teardown = callback.count_hooks("teardown")
-    msg = f"{name}: expected teardown to be called once, got {n_teardown}"
+    msg = f"{name}: expected teardown to be called once, got {n_teardown}."
     assert n_teardown == 1, msg
 
     hook_names = [entry["name"] for entry in callback.record]
-    msg = f"{name}: teardown called before setup"
+    msg = f"{name}: teardown called before setup."
     assert hook_names.index("setup") < hook_names.index("teardown"), msg
 
 
 @ignore_warnings(category=(ConvergenceWarning, UserWarning))
-def check_callback_begin_end_balanced(name, estimator_orig):
-    """Check that on_fit_task_begin / on_fit_task_end calls are balanced.
+def check_callback_begin_end_match(name, estimator_orig):
+    """Check that on_fit_task_begin / on_fit_task_end calls match.
 
-    A single `fit` must have exactly one root task and begin/end events must nest:
-    every `on_fit_task_end` should match a preceding `on_fit_task_begin`, and the
-    running count of open tasks must return to zero only after the last task event.
+    Each task in the callback tree must call `on_fit_task_begin` exactly once
+    and `on_fit_task_end` exactly once, in that order.
     """
     _, callback = _fit_estimator_with_recording_callback(estimator_orig)
 
-    task_events = [
-        entry
-        for entry in callback.record
-        if entry["name"] in ("on_fit_task_begin", "on_fit_task_end")
-    ]
+    events_by_context = defaultdict(list)
+    for entry in callback.record:
+        if entry["name"] not in ("on_fit_task_begin", "on_fit_task_end"):
+            continue
+        key = tuple(ctx.task_id for ctx in get_context_path(entry["context"]))
+        events_by_context[key].append(entry)
 
-    balance = 0
-    for i, entry in enumerate(task_events):
-        balance += 1 if entry["name"] == "on_fit_task_begin" else -1
-
-        msg = f"{name}: on_fit_task_end called without a matching on_fit_task_begin"
-        assert balance >= 0, msg
-
-        if balance == 0:
-            msg = (
-                f"{name}: found more than one root task; on_fit_task_begin and "
-                f"on_fit_task_end must nest under a single root"
-            )
-            assert i == len(task_events) - 1, msg
-
-    msg = f"{name}: {balance} on_fit_task_begin calls without matching on_fit_task_end"
-    assert balance == 0, msg
+    for events in events_by_context.values():
+        context = events[0]["context"]
+        task = f"{name} task {context.task_name!r} (task_id={context.task_id})"
+        msg = f"{task}: on_fit_task_end called before on_fit_task_begin."
+        assert events[0]["name"] == "on_fit_task_begin", msg
+        assert events[-1]["name"] == "on_fit_task_end", msg
+        msg = (
+            f"{task}: expected one on_fit_task_begin and one on_fit_task_end, "
+            f"got {len(events)} events."
+        )
+        assert len(events) == 2, msg
 
 
 @ignore_warnings(category=(ConvergenceWarning, UserWarning))

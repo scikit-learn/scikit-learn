@@ -44,9 +44,10 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import (
     check_all_zero_sample_weights_error,
-    check_callback_begin_end_balanced,
+    check_callback_begin_end_match,
     check_callback_estimator_is_self,
     check_callback_setup_teardown_called_once,
+    check_callback_single_root,
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
@@ -636,8 +637,9 @@ NO_CALLBACK_SUPPORT = {
     "check",
     [
         check_callback_setup_teardown_called_once,
-        check_callback_begin_end_balanced,
+        check_callback_begin_end_match,
         check_callback_estimator_is_self,
+        check_callback_single_root,
     ],
 )
 @pytest.mark.parametrize(
