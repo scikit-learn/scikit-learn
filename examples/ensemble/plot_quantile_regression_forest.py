@@ -226,21 +226,19 @@ for max_depth, min_samples_leaf in [(1, 20), (None, 20), (None, 5)]:
         width.append(np.mean(upper_pred - lower_pred))
 
     print(
-        f"max_depth={max_depth}, min_samples_leaf={min_samples_leaf}: "
-        f"coverage = {np.mean(coverage):.1%} "
-        f"(+/- {np.std(coverage):.1%} across splits), "
-        f"avg. interval width = {np.mean(width):.2f}"
+        f"max_depth={max_depth!s:<4} min_samples_leaf={min_samples_leaf:<2} "
+        f"coverage = {np.mean(coverage):>5.1%}  "
+        f"interval width = {np.mean(width):>4.2f}"
     )
 
 # %%
 # Both `max_depth=1` and `max_depth=None` respect the
 # `min_samples_leaf = 1 / min(alpha, 1 - alpha)` floor (20 samples for
-# `alpha=0.05`/`0.95`), and both land close to the target 90% coverage,
-# well within one standard deviation of each other: on this dataset, depth
-# alone does not bias the coverage rate one way or the other. Where they do
-# differ is efficiency: shallow trees produce leaves that mix together
-# heterogeneous regions of the input space, so their (still valid) interval
-# is needlessly wide.
+# `alpha=0.05`/`0.95`), and both land close to the target 90% coverage: on
+# this dataset, depth alone does not bias the coverage rate one way or the
+# other. Where they do differ is efficiency: shallow trees produce leaves
+# that mix together heterogeneous regions of the input space, so their
+# (still valid) interval is needlessly wide.
 #
 # `min_samples_leaf=5`, which violates the floor, tells a different story:
 # coverage drops to ~69%, well short of the 90% target. Leaves this small
