@@ -694,6 +694,10 @@ class HuberLoss(BaseLoss):
     Note: HuberLoss(quantile=1) equals HalfSquaredError and HuberLoss(quantile=0)
     equals delta * (AbsoluteError() - delta/2).
 
+    Note that the exact hessian = 1 for ``abserr <= delta`` and = 0 elsewhere.
+    Optimization routines like in HGBT, however, need a hessian > 0. Therefore,
+    we assign 1 everywhere, which is an upper bound of the exact hessian.
+
     Additional Attributes
     ---------------------
     quantile : float
@@ -728,7 +732,7 @@ class HuberLoss(BaseLoss):
             device=device,
         )
         self.approx_hessian = True
-        self.constant_hessian = False
+        self.constant_hessian = sample_weight is None
 
     def fit_intercept_only(self, y_true, sample_weight=None):
         """Compute raw_prediction of an intercept-only model.

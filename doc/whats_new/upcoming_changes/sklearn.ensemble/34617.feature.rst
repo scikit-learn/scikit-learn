@@ -1,0 +1,5 @@
+- :class:`ensemble.HistGradientBoostingRegressor` now supports the Huber loss
+  with ``loss="huber"``, which is robust to outliers in the target. The
+  breakpoint between the quadratic and the linear part of the loss is
+  controlled by the ``quantile`` parameter (0.9 by default).
+  By :user:`Abduselam Tesfaye <abudi47>`.
