@@ -5709,18 +5709,54 @@ def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
         est.set_params(**new_params)
 
 
+def check_classifier_not_supporting_multiclass(name, estimator_orig):
+    """Check that if the classifier has tags.classifier_tags.multi_class=False,
+    then it should raise a ValueError when calling fit with a multiclass dataset.
+
+    This test is not yielded if the tag is not False.
+    """
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    X, y = make_classification(
+        n_samples=100,
+        n_classes=3,
+        n_informative=3,
+        n_clusters_per_class=1,
+        random_state=0,
+    )
+    err_msg = """\
+        The estimator tag `tags.classifier_tags.multi_class` is False for {name}
+        which means it does not support multiclass classification. However, it does
+        not raise the right `ValueError` when calling fit with a multiclass dataset,
+        including the error message 'Only binary classification is supported.' This
+        can be achieved by the following pattern:
+
+        y_type = type_of_target(y, input_name='y', raise_unknown=True)
+        if y_type != 'binary':
+            raise ValueError(
+                'Only binary classification is supported. The type of the target '
+                f'is {{y_type}}.'
+        )
+    """.format(name=name)
+    err_msg = textwrap.dedent(err_msg)
+
+    with raises(
+        ValueError, match="Only binary classification is supported.", err_msg=err_msg
+    ):
+        estimator.fit(X, y)
+
+
 def _fit_estimator_with_recording_callback(estimator_orig):
     if _IS_WASM:
         raise SkipTest("callback tests are skipped on WASM/Pyodide")
 
-    # make_classification guarantees class balance, which is necessary for
-    # HalvingSearch whose first rounds use very few samples.
-    X, y = make_classification(
-        n_samples=200, n_features=4, n_informative=4, n_redundant=0, random_state=0
-    )
+    X, y = make_blobs(random_state=0, n_samples=21)
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
+    # RecordingCallback is not auto-propagated, so only the estimator under
+    # test is recorded, not nested sub-estimators.
     callback = RecordingCallback()
     estimator = clone(estimator_orig)
     set_random_state(estimator)
@@ -5810,40 +5846,3 @@ def check_callback_estimator_is_self(name, estimator_orig):
         )
         assert entry["estimator"] is estimator, msg
 
-
-def check_classifier_not_supporting_multiclass(name, estimator_orig):
-    """Check that if the classifier has tags.classifier_tags.multi_class=False,
-    then it should raise a ValueError when calling fit with a multiclass dataset.
-
-    This test is not yielded if the tag is not False.
-    """
-    estimator = clone(estimator_orig)
-    set_random_state(estimator)
-
-    X, y = make_classification(
-        n_samples=100,
-        n_classes=3,
-        n_informative=3,
-        n_clusters_per_class=1,
-        random_state=0,
-    )
-    err_msg = """\
-        The estimator tag `tags.classifier_tags.multi_class` is False for {name}
-        which means it does not support multiclass classification. However, it does
-        not raise the right `ValueError` when calling fit with a multiclass dataset,
-        including the error message 'Only binary classification is supported.' This
-        can be achieved by the following pattern:
-
-        y_type = type_of_target(y, input_name='y', raise_unknown=True)
-        if y_type != 'binary':
-            raise ValueError(
-                'Only binary classification is supported. The type of the target '
-                f'is {{y_type}}.'
-        )
-    """.format(name=name)
-    err_msg = textwrap.dedent(err_msg)
-
-    with raises(
-        ValueError, match="Only binary classification is supported.", err_msg=err_msg
-    ):
-        estimator.fit(X, y)
