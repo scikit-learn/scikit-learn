@@ -319,7 +319,7 @@ cdef class Splitter:
             int n_threads = self.n_threads
 
             bint use_threads = (n_threads != 1) and (
-                n_threads * 1000 < n_samples
+                (n_threads * 500 < n_samples)
             )
 
             # Probably always bad to parallelize for <1k samples

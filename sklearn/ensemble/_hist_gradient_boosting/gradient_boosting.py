@@ -973,24 +973,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         threads are not left idle or unevenly loaded) and against ``n_samples``
         (so that small datasets use fewer threads).
         """
-        # TMP: for now disable this heuristic
-        return max_n_threads
+        # For very small problems, multi-threading is always counter-productively
+        if n_samples * n_features <= 20_000:
+            # TODO: for no-active-wait OMP, change 20k to 2M
+            return 1
+
+        # Empircally, HGB almost always scales counter-productively past 64 threads
+        max_n_threads = min(max_n_threads, 64)
 
         # Compute the per-thread chunk size first, then derive how many threads
         # are actually needed to cover n_features with that chunk size: this can
         # be lower than max_n_threads, avoiding threads with little to no work.
         n_features_per_thread = math.ceil(n_features / max_n_threads)
-        n_threads_needed_for_features = math.ceil(n_features / n_features_per_thread)
+        n_threads_for_features = math.ceil(n_features / n_features_per_thread)
 
-        # Very empirical: more samples warrant more threads, on a log scale.
-        # With active waiting, we can afford more of them.
-        n_threads_for_samples_wise_parallelism = math.log10(n_samples / 1e3) * 2
+        # Very empirical: more samples warrant more threads:
+        n_threads_for_samples = min(0.1 * math.pow(n_samples, 1 / 3), max_n_threads)
+        heuristic_n_threads = max(n_threads_for_features, n_threads_for_samples)
 
-        heuristic_n_threads = max(
-            n_threads_needed_for_features, n_threads_for_samples_wise_parallelism
-        )
-
-        return min(max_n_threads, max(1, round(heuristic_n_threads)))
+        return heuristic_n_threads
 
     def _is_fitted(self):
         return len(getattr(self, "_predictors", [])) > 0
