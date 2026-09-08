@@ -1,0 +1,6 @@
+- :class:`~feature_selection.SequentialFeatureSelector`,
+  :class:`~feature_selection.RFE` and :class:`~feature_selection.RFECV` no longer
+  convert a dataframe input to a NumPy array before passing it to the underlying
+  estimator, preserving non-numeric dtypes (such as categorical columns) for
+  dataframe-like inputs.
+  By :user:`peehu-k <peehu-k>` and :user:`Adrin Jalali <adrinjalali>`.
