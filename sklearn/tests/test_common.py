@@ -652,5 +652,5 @@ def test_callback_support(estimator, check):
         pytest.skip(f"{name} does not support callbacks yet")
 
     for est in _yield_instances_for_check(check, estimator):
-        with ignore_warnings(category=(ConvergenceWarning, UserWarning)):
+        with ignore_warnings(category=(ConvergenceWarning, FutureWarning, UserWarning)):
             check(name, est)

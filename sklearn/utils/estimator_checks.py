@@ -50,7 +50,6 @@ from sklearn.datasets import (
     make_regression,
 )
 from sklearn.exceptions import (
-    ConvergenceWarning,
     DataConversionWarning,
     EstimatorCheckFailedWarning,
     NotFittedError,
@@ -5766,7 +5765,6 @@ def _fit_estimator_with_recording_callback(estimator_orig):
     return estimator, callback
 
 
-@ignore_warnings(category=(ConvergenceWarning, UserWarning))
 def check_callback_single_root(name, estimator_orig):
     """Check that a single fit has exactly one root callback context."""
     _, callback = _fit_estimator_with_recording_callback(estimator_orig)
@@ -5776,7 +5774,6 @@ def check_callback_single_root(name, estimator_orig):
     assert len(root_uuids) == 1, msg
 
 
-@ignore_warnings(category=(ConvergenceWarning, UserWarning))
 def check_callback_setup_teardown_called_once(name, estimator_orig):
     """Check that setup and teardown are called exactly once per fit, in that order."""
     _, callback = _fit_estimator_with_recording_callback(estimator_orig)
@@ -5794,7 +5791,6 @@ def check_callback_setup_teardown_called_once(name, estimator_orig):
     assert hook_names.index("setup") < hook_names.index("teardown"), msg
 
 
-@ignore_warnings(category=(ConvergenceWarning, UserWarning))
 def check_callback_begin_end_match(name, estimator_orig):
     """Check that on_fit_task_begin / on_fit_task_end calls match.
 
@@ -5823,7 +5819,6 @@ def check_callback_begin_end_match(name, estimator_orig):
         assert len(events) == 2, msg
 
 
-@ignore_warnings(category=(ConvergenceWarning, UserWarning))
 def check_callback_estimator_is_self(name, estimator_orig):
     """Check that every hook receives the estimator instance that fit was called on."""
     estimator, callback = _fit_estimator_with_recording_callback(estimator_orig)
