@@ -204,11 +204,13 @@ Reference Steps
         .. prompt:: bash
 
           git shortlog -s {{ previous_tag }}.. |
-            cut -f2- |
-            sort --ignore-case |
-            tr "\n" ";" |
-            sed "s/;/, /g;s/, $//" |
-            fold -s
+              cut -f2- |
+              sed -E '/copilot|scikit-learn-bot|dependabot/d' |
+              sort --ignore-case |
+              tr "\n" ";" |
+              sed "s/;/, /g;s/, $//" |
+              fold -s |
+              sed 's/[[:space:]]*$//'
 
       Then create a PR targeting the `main` branch and cherry-pick this commit there.
       {%- endif %}
