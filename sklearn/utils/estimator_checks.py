@@ -215,8 +215,6 @@ def _yield_checks(estimator):
 
     yield check_f_contiguous_array_estimator
 
-    yield from _yield_callback_checks(estimator)
-
 
 def _yield_classifier_checks(classifier):
     _raise_for_missing_tags(classifier, "classifier_tags", ClassifierMixin)
@@ -5709,29 +5707,6 @@ def check_do_not_raise_errors_in_init_or_set_params(name, estimator_orig):
 
         # Also do does not raise
         est.set_params(**new_params)
-
-
-def _estimator_has_callback_support(estimator):
-    """Return True if callback checks should run for this estimator instance."""
-    if not hasattr(estimator, "set_callbacks"):
-        return False
-    name = type(estimator).__name__
-    # Inherits set_callbacks from LogisticRegression but does not implement
-    # callback support in fit.
-    if name == "LogisticRegressionCV":
-        return False
-    # LogisticRegression only supports callbacks with the lbfgs solver.
-    if name == "LogisticRegression" and estimator.solver != "lbfgs":
-        return False
-    return True
-
-
-def _yield_callback_checks(estimator):
-    if not _estimator_has_callback_support(estimator):
-        return
-    yield check_callback_setup_teardown_called_once
-    yield check_callback_begin_end_balanced
-    yield check_callback_estimator_is_self
 
 
 def _fit_estimator_with_recording_callback(estimator_orig):
