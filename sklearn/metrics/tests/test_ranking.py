@@ -1321,6 +1321,43 @@ def test_average_precision_score_binary_pos_label_errors():
         average_precision_score(y_true, y_pred, pos_label=2)
 
 
+@pytest.mark.parametrize(
+    "metric",
+    [roc_curve, precision_recall_curve, det_curve, confusion_matrix_at_thresholds],
+)
+def test_ranking_metrics_pos_label_errors(metric):
+    # Raise an error when pos_label is not in binary y_true
+    y_true = np.array([0, 1, 0, 1])
+    y_pred = np.array([0.1, 0.4, 0.35, 0.8])
+    err_msg = re.escape("pos_label=2 is not a valid label. It should be one of [0 1]")
+    with pytest.raises(ValueError, match=err_msg):
+        metric(y_true, y_pred, pos_label=2)
+
+
+@pytest.mark.parametrize(
+    "metric",
+    [roc_curve, precision_recall_curve, det_curve, confusion_matrix_at_thresholds],
+)
+def test_ranking_metrics_pos_label_errors_strings(metric):
+    # Raise an error when pos_label is not in string y_true
+    y_true = np.array(["cat", "dog", "cat", "dog"])
+    y_pred = np.array([0.1, 0.4, 0.35, 0.8])
+    err_msg = re.escape(
+        "pos_label=fish is not a valid label. It should be one of ['cat' 'dog']"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        metric(y_true, y_pred, pos_label="fish")
+
+
+def test_confusion_matrix_at_thresholds_multiclass_pos_label_errors():
+    # Raise an error when pos_label is not in multiclass y_true
+    y_true = np.array([0, 1, 2, 0, 1, 2])
+    y_pred = np.array([0.1, 0.4, 0.35, 0.8, 0.2, 0.6])
+    err_msg = re.escape("pos_label=3 is not a valid label. It should be one of [0 1 2]")
+    with pytest.raises(ValueError, match=err_msg):
+        confusion_matrix_at_thresholds(y_true, y_pred, pos_label=3)
+
+
 def test_average_precision_score_multilabel_pos_label_errors():
     # Raise an error for multilabel-indicator y_true with
     # pos_label other than 1

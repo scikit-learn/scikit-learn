@@ -3716,6 +3716,16 @@ def _validate_binary_probabilistic_prediction(y_true, y_prob, sample_weight, pos
         else:
             raise
 
+    xp_y_true, _ = get_namespace(y_true)
+    classes = xp_y_true.unique_values(y_true)
+    if classes.shape[0] >= 2:
+        classes_cpu = move_to(classes, xp=np, device="cpu")
+        if pos_label not in classes_cpu:
+            raise ValueError(
+                f"pos_label={pos_label} is not a valid label. It should be "
+                f"one of {classes}"
+            )
+
     # convert (n_samples,) to (n_samples, 2) shape
     transformed_labels = _one_hot_encoding_binary_target(
         y_true=y_true, pos_label=pos_label, target_xp=xp, target_device=device

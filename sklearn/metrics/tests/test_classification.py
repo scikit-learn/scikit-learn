@@ -3124,6 +3124,20 @@ def test_brier_score_loss_invalid_inputs():
     # error is fixed when labels is specified
     assert_almost_equal(brier_score_loss(y_true, y_prob, labels=["eggs", "ham"]), 0.01)
 
+    # raise error when pos_label is not in y_true
+    y_true = np.array([0, 1, 1, 0])
+    y_prob = np.array([0.1, 0.8, 0.9, 0.3])
+    err_msg = re.escape("pos_label=2 is not a valid label. It should be one of [0 1]")
+    with pytest.raises(ValueError, match=err_msg):
+        brier_score_loss(y_true, y_prob, pos_label=2)
+
+    y_true = np.array(["cat", "dog", "cat", "dog"])
+    err_msg = re.escape(
+        "pos_label=fish is not a valid label. It should be one of ['cat' 'dog']"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        brier_score_loss(y_true, y_prob, pos_label="fish")
+
 
 def test_brier_score_loss_warnings():
     expected_message = re.escape(

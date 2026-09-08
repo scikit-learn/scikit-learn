@@ -1013,6 +1013,14 @@ def confusion_matrix_at_thresholds(
     xp, _, device = get_namespace_and_device(y_score)
     pos_label = _check_pos_label_consistency(pos_label, y_true)
     xp_y_true, _ = get_namespace(y_true)
+    present_labels = xp_y_true.unique_values(y_true)
+    if present_labels.shape[0] >= 2:
+        present_labels_cpu = move_to(present_labels, xp=np, device="cpu")
+        if pos_label not in present_labels_cpu:
+            raise ValueError(
+                f"pos_label={pos_label} is not a valid label. It should be "
+                f"one of {present_labels}"
+            )
     # Make `y_true` a boolean vector. Use `asarray` as `y_true` could be a list
     y_true = xp_y_true.asarray(
         xp_y_true.asarray(y_true) == pos_label, dtype=xp_y_true.int32
