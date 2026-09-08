@@ -486,7 +486,16 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         if _y.ndim == 1:
             _y = _y.reshape((-1, 1))
 
-        empty_obs = np.full_like(_y[0], np.nan)
+        # `np.full_like` would inherit the target dtype, and casting NaN into an
+        # integer or boolean target is undefined: it silently yields a sentinel
+        # (0 or -2**63 depending on platform) that is indistinguishable from a
+        # real prediction. It also defeats the `np.isnan` check below, so the
+        # "no neighbors" warning never fired for such targets. Promote to a
+        # float dtype so NaN is representable, matching what `np.mean` returns
+        # for the non-empty rows.
+        empty_obs = np.full_like(
+            _y[0], np.nan, dtype=np.promote_types(_y.dtype, np.float16)
+        )
 
         if weights is None:
             y_pred = np.array(
