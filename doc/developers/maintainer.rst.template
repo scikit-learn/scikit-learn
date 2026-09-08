@@ -205,7 +205,7 @@ Reference Steps
 
           git shortlog -s {{ previous_tag }}.. |
               cut -f2- |
-              sed -E '/copilot|scikit-learn-bot|dependabot/d' |
+              sed -E '/Copilot|scikit-learn-bot|dependabot/d' |
               sort --ignore-case |
               tr "\n" ";" |
               sed "s/;/, /g;s/, $//" |
