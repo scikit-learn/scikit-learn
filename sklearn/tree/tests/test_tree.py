@@ -3293,7 +3293,7 @@ def test_categorical_preprocessor_nullable_numerical_feature(Tree):
 
     X = pd.DataFrame(
         {
-            "f_num": pd.Series([0, 1, pd.NA, 3], dtype="Int64"),
+            "f_num": pd.Series([0, 1, pd.NA, -1], dtype="Int64"),
             "f_cat": pd.Categorical(["a", "a", "b", "b"]),
         }
     )
