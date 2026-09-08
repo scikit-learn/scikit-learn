@@ -428,10 +428,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 args = (self.n_outputs_, n_samples)
                 if self.criterion == "quantile":
                     args = (*args, self.quantile)
-                if self.criterion == "absolute_error":
-                    # FIXME: this is coupled with code at a much lower level
-                    # because of the inheritance behavior of __cinit__
-                    args = (*args, 0.5)
                 criterion = CRITERIA_REG[self.criterion](*args)
         else:
             # Make a deepcopy in case the criterion has mutable attributes that

@@ -344,10 +344,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # will raise an error if the underlying tree base estimator can't handle missing
         # values. Only the criterion is required to determine if the tree supports
         # missing values.
-        estimator_kwargs = {"criterion": self.criterion}
-        if self.criterion == "quantile":
-            estimator_kwargs["quantile"] = self.quantile
-        estimator = type(self.estimator)(**estimator_kwargs)
+        estimator = type(self.estimator)(**self._get_criterion_kwargs())
         missing_values_in_feature_mask = (
             estimator._compute_missing_values_in_feature_mask(
                 X, estimator_name=self.__class__.__name__
@@ -695,14 +692,23 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         return [sample_indices for sample_indices in self._get_estimators_indices()]
 
+    def _get_criterion_kwargs(self):
+        """Keyword arguments needed to construct an unfitted base estimator.
+
+        Only the ``criterion`` (and, when relevant, ``quantile``) are needed
+        to determine tree properties such as whether missing values are
+        supported, without fitting the estimator.
+        """
+        estimator_kwargs = {"criterion": self.criterion}
+        if self.criterion == "quantile":
+            estimator_kwargs["quantile"] = self.quantile
+        return estimator_kwargs
+
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         # Only the criterion is required to determine if the tree supports
         # missing values
-        estimator_kwargs = {"criterion": self.criterion}
-        if self.criterion == "quantile":
-            estimator_kwargs["quantile"] = self.quantile
-        estimator = type(self.estimator)(**estimator_kwargs)
+        estimator = type(self.estimator)(**self._get_criterion_kwargs())
         tags.input_tags.allow_nan = get_tags(estimator).input_tags.allow_nan
         return tags
 

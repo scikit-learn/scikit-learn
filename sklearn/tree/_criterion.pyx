@@ -1543,7 +1543,11 @@ cdef class MAE(Pinball):
     And the absolute error is twice the pinball_loss (with alpha=0.5)
     """
 
-    # XXX: Trust the instanciater to pass alpha=0.5 to the __cinit__...
+    def __cinit__(self, intp_t n_outputs, intp_t n_samples):
+        # Force alpha=0.5 (the median) regardless of what the caller passes,
+        # instead of relying on the default value of `alpha` in `Pinball.__cinit__`,
+        # which Cython chains automatically before this method runs.
+        self.alpha = 0.5
 
     cdef float64_t node_impurity(self) noexcept nogil:
         return 2 * Pinball.node_impurity(self)
