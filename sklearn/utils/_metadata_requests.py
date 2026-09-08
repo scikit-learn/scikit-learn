@@ -328,11 +328,11 @@ def request_is_valid(item):
 class MethodMetadataRequest:
     """Container for metadata requests associated with a single method.
 
-    Instances of this class get used within a :class:`MetadataRequest` - one per each
-    public method (`fit`, `transform`, ...) that its owning :term:`consumers <consumer>`
-    has.
+    When an owning :term:`<consumer>` creates its
+    :class:`~utils.metadata_routing.MetadataRequest`, it will contain an instance of
+    this class for each available method.
 
-    This class can be used inside the `__sklearn_build_declared_metadata_request__`
+    This can also be used inside the `__sklearn_build_declared_metadata_request__`
     method of :class:`~utils.metadata_routing.MetadataRequester` to override how
     class-level requests are build. See the :ref:`metadata routing developing guide
     <customise_metadata_requests_in_consumers>` for examples on how
@@ -577,7 +577,8 @@ class MethodMetadataRequest:
 class MetadataRequest:
     """Container for storing metadata request info and an associated consumer (`owner`).
 
-    Instances of `MethodMetadataRequest` are used in this class for each
+    The instance of this class creates and contains one instance of
+    :class:`~utils.metadata_routing.MethodMetadataRequest` for each
     available method under `MetadataRequest(owner=obj).{method}`.
 
     Every :term:`consumer` in scikit-learn has a `_metadata_request` attribute that is a
@@ -1539,8 +1540,6 @@ class MetadataRequester:
     for examples on how to use it.
 
     .. versionadded:: 1.3
-    .. versionchanged:: 1.10
-       `MetadataRequester` is now part of scikit-learn's developer API.
     """
 
     if TYPE_CHECKING:  # pragma: no cover
@@ -1726,16 +1725,17 @@ class MetadataRequester:
         return {param: alias for param, alias in params.items() if alias is not UNUSED}
 
     def _get_metadata_request(self):
-        """Get the effective metadata request for this instance.
+        """Get the metadata requests for this instance.
 
-        Combines the consumer's class-level requests with any changes made by the user
-        via `set_{method}_request` methods. If a `set_{method}_request` has been called,
-        the stored request is returned as a copy.
+        Combines the consumer's class-level requests with requests set at
+        instance-level, for instance via user-set `set_{method}_request` methods. If a
+        `set_{method}_request` has been called, the stored request is returned as a
+        copy.
 
         See Also
         --------
-        __sklearn_build_declared_metadata_request__ : Developer API to override when
-        building class-level requests when `set_{method}_request` has not been called.
+        __sklearn_build_declared_metadata_request__ : Developer API to override
+        class-level requests.
 
         Returns
         -------
