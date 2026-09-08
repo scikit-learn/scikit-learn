@@ -109,7 +109,6 @@ from sklearn.utils._testing import (
     raises,
     set_random_state,
 )
-from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -5749,9 +5748,6 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
 
 
 def _fit_estimator_with_recording_callback(estimator_orig):
-    if _IS_WASM:
-        raise SkipTest("callback tests are skipped on WASM/Pyodide")
-
     X, y = make_blobs(random_state=0, n_samples=21)
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
