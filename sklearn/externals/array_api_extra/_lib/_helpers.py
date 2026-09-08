@@ -1,4 +1,4 @@
-"""Helper functions used by `array_api_extra/_funcs.py`."""
+"""Helper functions."""
 
 from __future__ import annotations
 
@@ -7,11 +7,10 @@ import io
 import math
 import pickle
 import types
+import typing
 import warnings
 from collections.abc import Callable, Generator, Iterable, Iterator, Sequence
-from functools import wraps
 from typing import (
-    TYPE_CHECKING,
     Any,
     ClassVar,
     Generic,
@@ -19,28 +18,10 @@ from typing import (
     ParamSpec,
     TypeAlias,
     TypeVar,
-    cast,
 )
 
 from . import _compat
-from ._compat import (
-    array_namespace,
-    is_array_api_obj,
-    is_dask_namespace,
-    is_jax_namespace,
-    is_numpy_array,
-    is_torch_namespace,
-)
-from ._typing import Array, ArrayNamespace, Device
-
-if TYPE_CHECKING:  # pragma: no cover
-    # TODO import from typing (requires Python >=3.12 and >=3.13)
-    from typing_extensions import TypeIs, override
-else:
-
-    def override(func):
-        return func
-
+from ._typing import Array, ArrayNamespace, TypeIs, override
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -52,6 +33,7 @@ __all__ = [
     "deprecated",
     "eager_shape",
     "in1d",
+    "is_jax_jit_enabled",
     "is_python_scalar",
     "jax_autojit",
     "meta_namespace",
@@ -101,7 +83,7 @@ def in1d(
     https://github.com/numpy/numpy/blob/v1.26.0/numpy/lib/arraysetops.py#L524-L758
     """
     if xp is None:
-        xp = array_namespace(x1, x2)
+        xp = _compat.array_namespace(x1, x2)
 
     x1_shape = eager_shape(x1)
     x2_shape = eager_shape(x2)
@@ -148,7 +130,7 @@ def is_python_scalar(x: object) -> TypeIs[complex]:  # numpydoc ignore=PR01,RT01
     # isinstance(x, float) returns True for np.float64
     # isinstance(x, complex) returns True for np.complex128
     # bool is a subclass of int
-    return isinstance(x, int | float | complex) and not is_numpy_array(x)
+    return isinstance(x, int | float | complex) and not _compat.is_numpy_array(x)
 
 
 def asarrays(
@@ -196,7 +178,7 @@ def asarrays(
         swap = True
         b, a = a, b
 
-    if is_array_api_obj(a):
+    if _compat.is_array_api_obj(a):
         # a is an Array API object
         # b is a int | float | complex | bool
         xa = a
@@ -208,7 +190,7 @@ def asarrays(
             float: ("real floating", "complex floating"),
             complex: "complex floating",
         }
-        kind = same_dtype[type(cast(complex, b))]
+        kind = same_dtype[type(typing.cast(complex, b))]
         if xp.isdtype(a.dtype, kind):
             xb = xp.asarray(b, dtype=a.dtype, device=_compat.device(a))
         else:
@@ -276,7 +258,7 @@ def eager_shape(x: Array, /, axis: int | None = None) -> tuple[int, ...]:
     if any(s is None or math.isnan(s) for s in shape):
         msg = "Unsupported lazy shape"
         raise TypeError(msg)
-    return cast(tuple[int, ...], shape)
+    return typing.cast(tuple[int, ...], shape)
 
 
 def meta_namespace(
@@ -300,20 +282,19 @@ def meta_namespace(
         If xp is Dask, the namespace of the Dask chunks;
         otherwise, the namespace of the arrays.
     """
-    xp = array_namespace(*arrays) if xp is None else xp
-    if not is_dask_namespace(xp):
+    xp = _compat.array_namespace(*arrays) if xp is None else xp
+    if not _compat.is_dask_namespace(xp):
         return xp
     # Quietly skip scalars and None's
-    metas = [cast(Array | None, getattr(a, "_meta", None)) for a in arrays]
-    return array_namespace(*metas)
+    metas = [typing.cast(Array | None, getattr(a, "_meta", None)) for a in arrays]
+    return _compat.array_namespace(*metas)
 
 
-def capabilities(
-    xp: ArrayNamespace, *, device: Device | None = None
-) -> dict[str, int | None]:
+def capabilities(xp: ArrayNamespace, x: Array | None = None) -> dict[str, int | None]:
     """
     Return patched ``xp.__array_namespace_info__().capabilities()``.
 
+    If an array `x` is provided, use its device.
     TODO this helper should be eventually removed once all the special cases
     it handles are fixed in the respective backends.
 
@@ -321,8 +302,8 @@ def capabilities(
     ----------
     xp : array_namespace
         The standard-compatible namespace.
-    device : Device, optional
-        The device to use.
+    x : Array, optional
+        If provided, the device of `x` is used.
 
     Returns
     -------
@@ -330,16 +311,16 @@ def capabilities(
         Capabilities of the namespace.
     """
     out = xp.__array_namespace_info__().capabilities()
-    if is_jax_namespace(xp):
+    if _compat.is_jax_namespace(xp):
         if out["boolean indexing"]:  # pragma: no cover
             # Backwards compatibility with jax <0.6.0
             # https://github.com/jax-ml/jax/issues/27418
             out = out.copy()
             out["boolean indexing"] = False
-    elif is_torch_namespace(xp):
+    elif _compat.is_torch_namespace(xp):
         # FIXME https://github.com/data-apis/array-api/issues/945
-        device = xp.get_default_device() if device is None else xp.device(device)
-        if device.type == "meta":  # type: ignore[union-attr]  # pyright: ignore[reportAttributeAccessIssue,reportOptionalMemberAccess]
+        device = xp.get_default_device() if x is None else _compat.device(x)
+        if device.type == "meta":  # type: ignore[union-attr]  # pyright: ignore[reportAttributeAccessIssue]
             out = out.copy()
             out["boolean indexing"] = False
             out["data-dependent shapes"] = False
@@ -487,7 +468,7 @@ def pickle_unflatten(instances: Iterable[object], rest: FlattenRest) -> Any:
     or even the same types of objects. Excess elements, if any, will be left untouched.
     """
     iters = iter(instances), iter(rest)
-    pik = cast(bytes, next(iters[1]))
+    pik = typing.cast(bytes, next(iters[1]))
 
     class Unpickler(pickle.Unpickler):  # numpydoc ignore=GL08
         """Mirror of the overridden Pickler in pickle_flatten."""
@@ -602,7 +583,7 @@ def jax_autojit(
         res = func(*args, **kwargs)  # pyright: ignore[reportCallIssue]
         return _AutoJITWrapper(res)
 
-    @wraps(func)
+    @functools.wraps(func)
     def outer(*args: P.args, **kwargs: P.kwargs) -> T:  # numpydoc ignore=GL08
         wargs = _AutoJITWrapper((args, kwargs))
         return inner(wargs).obj
@@ -622,5 +603,16 @@ def normalize_pad_width(
         and len(pad_width) == 2
         and all(isinstance(i, int) for i in pad_width)
     ):
-        return [cast(tuple[int, int], pad_width)] * ndim
-    return cast(list[tuple[int, int]], list(pad_width))
+        return [typing.cast(tuple[int, int], pad_width)] * ndim
+    return typing.cast(list[tuple[int, int]], list(pad_width))
+
+
+def is_jax_jit_enabled(xp: ArrayNamespace) -> bool:  # numpydoc ignore=PR01,RT01
+    """Return True if this function is being called inside ``jax.jit``."""
+    import jax  # pylint: disable=import-outside-toplevel
+
+    x = xp.asarray(False)
+    try:
+        return bool(x)
+    except jax.errors.TracerBoolConversionError:
+        return True
