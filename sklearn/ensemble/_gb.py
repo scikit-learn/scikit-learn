@@ -1756,7 +1756,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         combination of the two. 'quantile' allows quantile regression (use
         `alpha` to specify the quantile).
         See
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+        :ref:`sphx_glr_auto_examples_ensemble_plot_quantile_regression_forest.py`
         for an example that demonstrates quantile regression for creating
         prediction intervals with `loss='quantile'`.
 

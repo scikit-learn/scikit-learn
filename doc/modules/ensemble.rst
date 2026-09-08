@@ -783,7 +783,7 @@ the parameter ``loss``:
   * Quantile (``'quantile'``): A loss function for quantile regression.
     Use ``0 < alpha < 1`` to specify the quantile. This loss function
     can be used to create prediction intervals
-    (see :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`).
+    (see :ref:`sphx_glr_auto_examples_ensemble_plot_quantile_regression_forest.py`).
 
 .. dropdown:: Classification
 

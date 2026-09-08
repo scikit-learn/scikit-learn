@@ -1799,10 +1799,13 @@ class RandomForestRegressor(ForestRegressor):
         The quantile to predict when ``criterion="quantile"``. It must be strictly
         between 0 and 1.
 
-        Calibration of the predicted quantile is sensitive to the
+        As a rule of thumb, use ``min_samples_leaf >= 1 / min(quantile, 1 -
+        quantile)`` otherwise quantile estimates are likely to be biased.
+
+        Beyond that, calibration of the predicted quantile is sensitive to the
         tree-growth parameters (``max_depth``, ``min_samples_leaf``, etc.),
         especially for quantiles far from 0.5; see
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+        :ref:`sphx_glr_auto_examples_ensemble_plot_quantile_regression_forest.py`
         for a discussion and tune these by cross-validation on the pinball
         loss for the target quantile level.
 
@@ -2589,10 +2592,13 @@ class ExtraTreesRegressor(ForestRegressor):
         The quantile to predict when ``criterion="quantile"``. It must be strictly
         between 0 and 1.
 
-        Calibration of the predicted quantile is sensitive to the
+        As a rule of thumb, use ``min_samples_leaf >= 1 / min(quantile, 1 -
+        quantile)`` otherwise quantile estimates are likely to be biased.
+
+        Beyond that, calibration of the predicted quantile is sensitive to the
         tree-growth parameters (``max_depth``, ``min_samples_leaf``, etc.),
         especially for quantiles far from 0.5; see
-        :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+        :ref:`sphx_glr_auto_examples_ensemble_plot_quantile_regression_forest.py`
         for a discussion and tune these by cross-validation on the pinball
         loss for the target quantile level.
 

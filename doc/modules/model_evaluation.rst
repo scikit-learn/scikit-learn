@@ -2989,7 +2989,7 @@ explained in the example linked below.
 
 .. rubric:: Examples
 
-* See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
+* See :ref:`sphx_glr_auto_examples_ensemble_plot_quantile_regression_forest.py`
   for an example of using the pinball loss to evaluate and tune the
   hyper-parameters of quantile regression models on data with non-symmetric
   noise and outliers.

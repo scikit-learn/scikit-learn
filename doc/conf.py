@@ -511,6 +511,9 @@ redirects = {
     "auto_examples/miscellaneous/plot_partial_dependence_visualization_api": (
         "auto_examples/inspection/plot_partial_dependence_visualization_api"
     ),
+    "auto_examples/ensemble/plot_gradient_boosting_quantile": (
+        "auto_examples/ensemble/plot_quantile_regression_forest"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:

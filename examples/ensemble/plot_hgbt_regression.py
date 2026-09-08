@@ -317,7 +317,7 @@ _ = ax.legend(loc="lower right")
 #
 # - collecting more data-points;
 # - better tuning of the model hyperparameters, see
-#   :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`;
+#   :ref:`sphx_glr_auto_examples_ensemble_plot_quantile_regression_forest.py`;
 # - engineering more predictive features from the same data, see
 #   :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.
 #

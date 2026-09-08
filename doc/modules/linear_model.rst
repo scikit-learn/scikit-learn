@@ -1779,7 +1779,7 @@ estimated by models other than linear models. For example,
 :class:`~sklearn.ensemble.GradientBoostingRegressor` can predict conditional
 quantiles if its parameter ``loss`` is set to ``"quantile"`` and parameter
 ``alpha`` is set to the quantile that should be predicted. See the example in
-:ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`.
+:ref:`sphx_glr_auto_examples_ensemble_plot_quantile_regression_forest.py`.
 
 Most implementations of quantile regression are based on linear programming
 problem. The current implementation is based on
