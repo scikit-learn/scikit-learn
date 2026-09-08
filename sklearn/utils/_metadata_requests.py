@@ -328,7 +328,7 @@ def request_is_valid(item):
 class MethodMetadataRequest:
     """Container for metadata requests associated with a single method.
 
-    When an owning :term:`<consumer>` creates its
+    When an owning :term:`consumer` creates its
     :class:`~utils.metadata_routing.MetadataRequest`, it will contain an instance of
     this class for each available method.
 
