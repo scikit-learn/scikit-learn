@@ -1,0 +1,4 @@
+- Feature selectors such as :class:`feature_selection.SelectKBest` now correctly
+  reject non-finite values (infinity, and NaN unless allowed) in ``transform``
+  when using ``set_output(transform="pandas")``.
+  By :user:`Abhimanyu Singh Shekhawat <abhimanyu-bitsgoa>`.
