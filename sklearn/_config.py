@@ -196,13 +196,16 @@ def set_config(
 
         .. versionadded:: 1.3
 
-    sparse_interface : str, default="spmatrix"
+    sparse_interface : str, default=None
 
         The sparse interface used for every sparse object that scikit-learn produces,
         e.g., function returns, estimator attributes, estimator properties, etc.
 
         - `"sparray"`: Return sparse as SciPy sparse array
         - `"spmatrix"`: Return sparse as SciPy sparse matrix
+        - `None`: Configuration is unchanged
+
+        Global default: "spmatrix".
 
         .. versionadded:: 1.9
 
@@ -377,13 +380,16 @@ def config_context(
 
         .. versionadded:: 1.3
 
-    sparse_interface : str, default="spmatrix"
+    sparse_interface : str, default=None
 
         The sparse interface used for every sparse object that scikit-learn produces,
         e.g., function returns, estimator attributes, estimator properties, etc.
 
         - `"sparray"`: Return sparse as SciPy sparse array
         - `"spmatrix"`: Return sparse as SciPy sparse matrix
+        - `None`: Configuration is unchanged
+
+        Global default: "spmatrix".
 
         .. versionadded:: 1.8
 

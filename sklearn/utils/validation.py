@@ -2958,7 +2958,7 @@ def validate_data(
         The estimator to validate the input for.
 
     X : {array-like, sparse matrix, dataframe} of shape \
-            (n_samples, n_features), default='no validation'
+            (n_samples, n_features), default='no_validation'
         The input samples.
         If `'no_validation'`, no validation is performed on `X`. This is
         useful for meta-estimator which can delegate input validation to
