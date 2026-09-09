@@ -776,3 +776,118 @@ def test_rfe_sparse_coef(feature_importance):
 
     assert_array_equal(selector_sparse.support_, selector_dense.support_)
     assert_array_equal(selector_sparse.ranking_, selector_dense.ranking_)
+
+
+def test_rfe_elimination_order_step1():
+    """Test that elimination_order_ records which features were removed at each step."""
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+    n_features = X.shape[1]
+
+    clf = SVC(kernel="linear")
+    rfe = RFE(estimator=clf, n_features_to_select=4, step=1)
+    rfe.fit(X, y)
+
+    assert hasattr(rfe, "elimination_order_")
+    assert isinstance(rfe.elimination_order_, list)
+    assert len(rfe.elimination_order_) == n_features - 4
+
+    all_eliminated = np.concatenate(rfe.elimination_order_)
+    assert len(all_eliminated) == n_features - 4
+
+    # Each step should eliminate exactly 1 feature with step=1
+    for step_eliminated in rfe.elimination_order_:
+        assert len(step_eliminated) == 1
+
+    # Eliminated features should be exactly the ones not in support_
+    eliminated_set = set(all_eliminated)
+    not_selected = set(np.where(~rfe.support_)[0])
+    assert eliminated_set == not_selected
+
+
+def test_rfe_elimination_order_step_gt1():
+    """Test elimination_order_ when step > 1, each step may remove multiple features."""
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+    n_features = X.shape[1]
+    n_to_select = 4
+
+    clf = SVC(kernel="linear")
+    rfe = RFE(estimator=clf, n_features_to_select=n_to_select, step=2)
+    rfe.fit(X, y)
+
+    assert hasattr(rfe, "elimination_order_")
+    all_eliminated = np.concatenate(rfe.elimination_order_)
+    assert len(all_eliminated) == n_features - n_to_select
+
+    # Most steps should remove 2 features (last step may remove fewer)
+    for step_eliminated in rfe.elimination_order_[:-1]:
+        assert len(step_eliminated) == 2
+
+    eliminated_set = set(all_eliminated)
+    not_selected = set(np.where(~rfe.support_)[0])
+    assert eliminated_set == not_selected
+
+
+def test_rfe_elimination_order_consistent_with_ranking():
+    """Test that elimination_order_ is consistent with ranking_.
+
+    Features eliminated first should have the highest ranks, and features
+    eliminated last should have the lowest ranks (closest to 1).
+    """
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+
+    clf = SVC(kernel="linear")
+    rfe = RFE(estimator=clf, n_features_to_select=4, step=1)
+    rfe.fit(X, y)
+
+    # Features eliminated first should have higher rank values
+    n_steps = len(rfe.elimination_order_)
+    for step_idx, step_eliminated in enumerate(rfe.elimination_order_):
+        for feat_idx in step_eliminated:
+            expected_rank = n_steps - step_idx + 1
+            assert rfe.ranking_[feat_idx] == expected_rank
+
+
+def test_rfecv_elimination_order():
+    """Test that RFECV also exposes elimination_order_ from the final refit."""
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+
+    clf = SVC(kernel="linear")
+    rfecv = RFECV(estimator=clf, step=1, cv=3)
+    rfecv.fit(X, y)
+
+    assert hasattr(rfecv, "elimination_order_")
+    assert isinstance(rfecv.elimination_order_, list)
+
+    n_eliminated = X.shape[1] - rfecv.n_features_
+    if n_eliminated > 0:
+        all_eliminated = np.concatenate(rfecv.elimination_order_)
+        assert len(all_eliminated) == n_eliminated
+
+        eliminated_set = set(all_eliminated)
+        not_selected = set(np.where(~rfecv.support_)[0])
+        assert eliminated_set == not_selected
+
+
+def test_rfe_elimination_order_no_elimination():
+    """Test elimination_order_ when n_features_to_select >= n_features."""
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
+    y = np.array([0, 1, 0, 1])
+
+    clf = SVC(kernel="linear")
+    rfe = RFE(estimator=clf, n_features_to_select=3, step=1)
+    rfe.fit(X, y)
+
+    assert hasattr(rfe, "elimination_order_")
+    assert rfe.elimination_order_ == []
