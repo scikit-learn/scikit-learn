@@ -224,6 +224,25 @@ def test_importances():
     assert (importances[:3, np.newaxis] >= importances[3:]).all()
 
 
+@pytest.mark.parametrize(
+    "Estimator, base_estimator, y",
+    [
+        (AdaBoostClassifier, LogisticRegression(), y_class),
+        (AdaBoostRegressor, LinearRegression(), y_regr),
+    ],
+)
+def test_feature_importances_without_feature_importances_raises_attribute_error(
+    Estimator, base_estimator, y
+):
+    clf = Estimator(estimator=base_estimator)
+    clf.fit(X, y)
+    with pytest.raises(
+        AttributeError,
+        match="does not have a feature_importances_ attribute",
+    ):
+        _ = clf.feature_importances_
+
+
 def test_adaboost_classifier_sample_weight_error():
     # Test that it gives proper exception on incorrect sample weight.
     clf = AdaBoostClassifier()
