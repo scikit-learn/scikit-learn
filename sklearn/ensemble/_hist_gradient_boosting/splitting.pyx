@@ -18,6 +18,7 @@ from libc.string cimport memcpy
 
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C
 from sklearn.utils._bitset cimport in_bitset, init_bitset, set_bitset
+from sklearn.utils._openmp_helpers import _openmp_uses_active_wait
 from sklearn.utils._typedefs cimport uint8_t
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
@@ -183,6 +184,8 @@ cdef class Splitter:
         unsigned int [::1] left_indices_buffer
         unsigned int [::1] right_indices_buffer
         int n_threads
+        bint active_wait
+        int min_samples_per_thread_to_split
 
     def __init__(self,
                  const X_BINNED_DTYPE_C [::1, :] X_binned,
@@ -215,6 +218,7 @@ cdef class Splitter:
         self.feature_fraction_per_split = feature_fraction_per_split
         self.rng = rng
         self.n_threads = n_threads
+        self.active_wait = _openmp_uses_active_wait()
 
         # The partition array maps each sample index into the leaves of the
         # tree (a leaf in this context is a node that isn't split yet, not
@@ -318,11 +322,13 @@ cdef class Splitter:
             BITSET_DTYPE_C left_cat_bitset
             int n_threads = self.n_threads
 
-            bint use_threads = (n_threads != 1) and (
-                (n_threads * 500 < n_samples)
+            # An actively-waiting OpenMP runtime can rejoin a parallel region cheaply
+            # enough to make threading worth it on smaller workloads; a passively
+            # waiting one needs a much bigger workload to amortize that cost.
+            int min_samples_per_thread_to_split = 500 if self.active_wait else 5000
+            bint use_threads = (
+                (n_threads * min_samples_per_thread_to_split < n_samples)
             )
-
-            # Probably always bad to parallelize for <1k samples
 
             int right_child_position
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
@@ -514,6 +520,7 @@ cdef class Splitter:
             const uint8_t [::1] is_categorical = self.is_categorical
             const signed char [::1] monotonic_cst = self.monotonic_cst
             int n_threads = self.n_threads
+            bint use_threads
             bint has_interaction_cst = False
             Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
             uint8_t [:] subsample_mask  # same as npy_bool
@@ -525,6 +532,12 @@ cdef class Splitter:
             n_allowed_features = allowed_features.shape[0]
         else:
             n_allowed_features = self.n_features
+
+        # Parallelizing over too few features relative to the number of threads
+        # leaves some threads with no work while still paying for the overhead
+        # of spinning up the parallel region. An actively-waiting OpenMP runtime
+        # makes that overhead cheap enough that it's not worth guarding against.
+        use_threads = self.active_wait or (n_allowed_features >= n_threads * 5)
 
         if feature_fraction_per_split < 1.0:
             # We do all random sampling before the nogil and make sure that we sample
@@ -547,7 +560,8 @@ cdef class Splitter:
             # split_info_idx is index of split_infos of size n_allowed_features.
             # features_idx is the index of the feature column in X.
             for split_info_idx in prange(n_allowed_features, schedule='static',
-                                         num_threads=n_threads):
+                                         num_threads=n_threads,
+                                         use_threads_if=use_threads):
                 if has_interaction_cst:
                     feature_idx = allowed_features[split_info_idx]
                 else:
