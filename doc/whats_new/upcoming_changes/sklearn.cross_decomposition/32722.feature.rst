@@ -1,0 +1,3 @@
+- Added explained_variance_ratio_x_ and explained_variance_ratio_y_
+attributes to :class:`cross_decomposition._PLS`.
+  By :user:`Pau Cabaneros <paucablop>`
