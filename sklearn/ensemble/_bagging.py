@@ -84,13 +84,15 @@ def _generate_bagging_indices(
             random_state, bootstrap_samples, n_samples, max_samples
         )
     else:
-        normalized_sample_weight = sample_weight / np.sum(sample_weight)
-        sample_indices = random_state.choice(
-            n_samples,
-            max_samples,
-            replace=bootstrap_samples,
-            p=normalized_sample_weight,
-        )
+    normalized_sample_weight = sample_weight / np.sum(sample_weight)
+    if not bootstrap_samples:
+        max_samples = min(max_samples, np.count_nonzero(sample_weight))
+    sample_indices = random_state.choice(
+        n_samples,
+        max_samples,
+        replace=bootstrap_samples,
+        p=normalized_sample_weight,
+    )
 
     return feature_indices, sample_indices
 
