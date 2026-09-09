@@ -42,7 +42,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
 from sklearn.utils import check_random_state, compute_sample_weight, resample
 from sklearn.utils._missing import is_scalar_nan
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (
+    _openmp_effective_n_threads,
+    _openmp_uses_active_wait,
+)
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
@@ -973,19 +976,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         threads are not left idle or unevenly loaded) and against ``n_samples``
         (so that small datasets use fewer threads).
         """
+        active_wait = _openmp_uses_active_wait()
         # For very small problems, multi-threading is always counter-productively
-        if n_samples * n_features <= 20_000:
-            # TODO: for no-active-wait OMP, change 20k to 2M
+        min_workload = 20_000 if active_wait else 2_000_000
+        if n_samples * n_features <= min_workload:
             return 1
 
         # Empircally, HGB almost always scales counter-productively past 64 threads
         max_n_threads = min(max_n_threads, 64)
+        if not active_wait and n_samples * n_features <= 20_000_000:
+            max_n_threads = min(max_n_threads, 4)
 
         # Compute the per-thread chunk size first, then derive how many threads
         # are actually needed to cover n_features with that chunk size: this can
         # be lower than max_n_threads, avoiding threads with little to no work.
         n_features_per_thread = math.ceil(n_features / max_n_threads)
         n_threads_for_features = math.ceil(n_features / n_features_per_thread)
+
+        if not active_wait:
+            return n_features_per_thread
 
         # Very empirical: more samples warrant more threads:
         n_threads_for_samples = min(0.1 * math.pow(n_samples, 1 / 3), max_n_threads)
