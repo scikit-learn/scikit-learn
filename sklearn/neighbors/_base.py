@@ -26,7 +26,13 @@ from sklearn.utils._param_validation import Interval, StrOptions, validate_param
 from sklearn.utils.fixes import parse_version, sp_base_version
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.parallel import Parallel, delayed
-from sklearn.utils.validation import _to_object_array, check_is_fitted, validate_data
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    _to_object_array,
+    check_is_fitted,
+    validate_data,
+)
 
 SCIPY_METRICS = [
     "braycurtis",
@@ -115,6 +121,16 @@ def _get_weights(dist, weights):
 
     if callable(weights):
         return weights(dist)
+
+
+def _check_zero_weights(weights):
+    for i in range(weights.shape[0]):
+        if np.sum(weights[i].astype(float)) == 0:
+            raise ValueError(
+                "All neighbors of some sample is getting zero weights. "
+                "Please modify 'weights' to avoid this case if you are "
+                "using a user-defined function."
+            )
 
 
 def _is_sorted_by_data(graph):
@@ -464,7 +480,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     stacklevel=3,
                 )
 
-    def _fit(self, X, y=None):
+    def _fit(self, X, y=None, sample_weight=None):
         ensure_all_finite = "allow-nan" if get_tags(self).input_tags.allow_nan else True
         if self.__sklearn_tags__().target_tags.required:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
@@ -513,6 +529,17 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._y = self._y.ravel()
             else:
                 self._y = y
+
+            if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
+                n_samples = _num_samples(X)
+            else:
+                n_samples = _num_samples(self._y)
+
+            if sample_weight is not None:
+                _check_sample_weight(sample_weight, X, ensure_non_negative=True)
+                self._sample_weight = np.asarray(sample_weight)
+            else:
+                self._sample_weight = None
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):

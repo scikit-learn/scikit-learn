@@ -18,12 +18,12 @@ from sklearn.neighbors._base import (
     NeighborsBase,
     RadiusNeighborsMixin,
     _check_precomputed,
+    _check_zero_weights,
     _get_weights,
 )
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils.arrayfuncs import _all_with_any_reduction_axis_1
 from sklearn.utils.extmath import weighted_mode
-from sklearn.utils.fixes import _mode
 from sklearn.utils.validation import (
     _is_arraylike,
     _num_samples,
@@ -222,7 +222,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         # KNeighborsClassifier.metric is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the k-nearest neighbors classifier from the training dataset.
 
         Parameters
@@ -235,12 +235,15 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                 (n_samples, n_outputs)
             Target values.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Per-sample weights.
+
         Returns
         -------
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
-        return self._fit(X, y)
+        return self._fit(X, y, sample_weight)
 
     def predict(self, X):
         """Predict the class labels for the provided data.
@@ -259,7 +262,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             Class labels for each data sample.
         """
         check_is_fitted(self, "_fit_method")
-        if self.weights == "uniform":
+        if self.weights == "uniform" and self._sample_weight is None:
             if self._fit_method == "brute" and ArgKminClassMode.is_usable_for(
                 X, self._fit_X, self.metric
             ):
@@ -289,20 +292,23 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         n_outputs = len(classes_)
         n_queries = _num_samples(self._fit_X if X is None else X)
         weights = _get_weights(neigh_dist, self.weights)
-        if weights is not None and _all_with_any_reduction_axis_1(weights, value=0):
+        if weights is None:
+            weights = np.ones_like(neigh_ind)
+
+        if self._sample_weight is not None:
+            sample_weight = self._sample_weight[neigh_ind]
+            weights = weights * sample_weight
+
+        if (weights is not None) and (_all_with_any_reduction_axis_1(weights, value=0)):
             raise ValueError(
-                "All neighbors of some sample is getting zero weights. "
-                "Please modify 'weights' to avoid this case if you are "
-                "using a user-defined function."
+                "All neighbors of some sample is getting zero weights and thus"
+                "no class can be assigned. Please modify 'weights' to avoid this "
+                "case if you are using a user-defined function."
             )
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
-            if weights is None:
-                mode, _ = _mode(_y[neigh_ind, k], axis=1)
-            else:
-                mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
-
+            mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
             mode = np.asarray(mode.ravel(), dtype=np.intp)
             y_pred[:, k] = classes_k.take(mode)
 
@@ -330,7 +336,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             by lexicographic order.
         """
         check_is_fitted(self, "_fit_method")
-        if self.weights == "uniform":
+        if self.weights == "uniform" and self._sample_weight is None:
             # TODO: systematize this mapping of metric for
             # PairwiseDistancesReductions.
             metric, metric_kwargs = _adjusted_metric(
@@ -388,11 +394,16 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
-        elif _all_with_any_reduction_axis_1(weights, value=0):
+
+        if self._sample_weight is not None:
+            sample_weight = self._sample_weight[neigh_ind]
+            weights = weights * sample_weight
+
+        if (weights is not None) and (_all_with_any_reduction_axis_1(weights, value=0)):
             raise ValueError(
-                "All neighbors of some sample is getting zero weights. "
-                "Please modify 'weights' to avoid this case if you are "
-                "using a user-defined function."
+                "All neighbors of some sample is getting zero weights and thus"
+                "no class can be assigned. Please modify 'weights' to avoid this "
+                "case if you are using a user-defined function."
             )
 
         all_rows = np.arange(n_queries)
@@ -649,7 +660,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         # RadiusNeighborsClassifier.metric is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the radius neighbors classifier from the training dataset.
 
         Parameters
@@ -662,12 +673,15 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                 (n_samples, n_outputs)
             Target values.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights.
+
         Returns
         -------
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
-        self._fit(X, y)
+        self._fit(X, y, sample_weight)
 
         classes_ = self.classes_
         _y = self._y
@@ -791,6 +805,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         if (
             self.weights == "uniform"
+            and self._sample_weight is None
             and self._fit_method == "brute"
             and not self.outputs_2d_
             and RadiusNeighborsClassMode.is_usable_for(X, self._fit_X, metric)
@@ -829,8 +844,8 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         if self.outlier_label_ is None and outliers.size > 0:
             raise ValueError(
-                "No neighbors found for test samples %r, "
-                "you can try using larger radius, "
+                "No neighbors found for test samples %r and thus "
+                "no class can be assigned, you can try using larger radius, "
                 "giving a label for outliers, "
                 "or considering removing them from your dataset." % outliers
             )
@@ -838,6 +853,19 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         weights = _get_weights(neigh_dist, self.weights)
         if weights is not None:
             weights = weights[inliers]
+
+        if self._sample_weight is not None:
+            # Weights is a jagged array so we have to do some fancy indexing
+            sample_weight = [self._sample_weight[idx] for idx in neigh_ind]
+            sample_weight = np.asarray(sample_weight, dtype=np.ndarray)
+            if weights is not None:
+                weights = weights * sample_weight[inliers]
+            else:
+                # If we go down this path, each element of weights is an ndarray
+                weights = sample_weight[inliers]
+
+        if weights is not None:
+            _check_zero_weights(weights)
 
         probabilities = []
         # iterate over multi-output, measure probabilities of the k-th output.
@@ -854,8 +882,10 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                     proba_inl[i, :] = np.bincount(idx, minlength=classes_k.size)
             else:
                 for i, idx in enumerate(pred_labels[inliers]):
+                    # Convert weights[i] to float because weights[i] can have type
+                    # np.ndarray if weights is None but _sample_weight is not None
                     proba_inl[i, :] = np.bincount(
-                        idx, weights[i], minlength=classes_k.size
+                        idx, weights[i].astype(float), minlength=classes_k.size
                     )
             proba_k[inliers, :] = proba_inl
 
