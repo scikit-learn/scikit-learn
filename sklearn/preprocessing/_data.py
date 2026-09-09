@@ -38,6 +38,12 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    _manual_routing,
+    _routing_enabled,
+    process_routing,
+)
 from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -929,7 +935,7 @@ class StandardScaler(
         return self.partial_fit(X, y, sample_weight)
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def partial_fit(self, X, y=None, sample_weight=None):
+    def partial_fit(self, X, y=None, sample_weight=None, **params):
         """Online computation of mean and std on X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
@@ -956,6 +962,9 @@ class StandardScaler(
             .. versionadded:: 0.24
                parameter *sample_weight* support to StandardScaler.
 
+        **params : dict
+            Routed params.
+
         Returns
         -------
         self : object
@@ -973,13 +982,24 @@ class StandardScaler(
         )
         n_features = X.shape[1]
 
-        callback_ctx = self._init_callback_context()
-        callback_ctx.call_on_fit_task_begin(
-            estimator=self, X=X, y=y, metadata={"sample_weight": sample_weight}
-        )
-
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        callback_ctx = self._init_callback_context()
+        if _routing_enabled():
+            routed_params = process_routing(
+                self, "fit", sample_weight=sample_weight, **params
+            )
+        else:
+            routed_params = _manual_routing(
+                {"callback": self._get_manual_callback_params(sample_weight)}
+            )
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self,
+            X=X,
+            y=y,
+            metadata=routed_params.callback.on_fit_task_begin,
+        )
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -1084,8 +1104,8 @@ class StandardScaler(
             estimator=self,
             X=X,
             y=y,
-            metadata={"sample_weight": sample_weight},
             reconstruction_attributes={},
+            metadata=routed_params.callback.on_fit_task_end,
         )
 
         return self
@@ -1186,6 +1206,23 @@ class StandardScaler(
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
         tags.array_api_support = True
         return tags
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.10
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self).add_self_request(self)
+        return self._add_callback_routing(router)
 
 
 class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):

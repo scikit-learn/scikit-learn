@@ -44,12 +44,12 @@ X, y = make_classification(
     n_samples=1000, n_features=50, n_classes=10, n_informative=20, random_state=0
 )
 
-scoring_monitor = ScoringMonitor(scoring="d2_log_loss_score")
+scoring_monitor = ScoringMonitor(scoring_train="d2_log_loss_score")
 logreg = LogisticRegression(solver="lbfgs")
 logreg.set_callbacks(scoring_monitor, ProgressBar())
 logreg.fit(X, y)
 
-log = scoring_monitor.get_logs().data_as_pandas
+log = scoring_monitor.get_logs().train_scores_as_pandas
 log[["task_name", "task_id", "d2_log_loss_score"]]
 
 # %%

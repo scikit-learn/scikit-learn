@@ -14,10 +14,10 @@ at specific steps of a process, or to be triggered by specific events. Callbacks
 a clean mechanism for inserting custom logic like monitoring progress or metrics,
 without modifying the core algorithm of the process.
 
-In scikit-learn, callbacks take the form of classes following a `protocol
-<https://typing.python.org/en/latest/spec/protocol.html>`__. This protocol requires the
-callback classes to implement specific methods (referred to as callback hooks) which
-are called at specific steps of the fitting of an estimator or a meta-estimator.
+In scikit-learn, callbacks take the form of classes inheriting from the
+:class:`~FitCallback` class.
+A callback class implements specific methods (referred to as callback hooks)
+which are called at specific steps of the fitting of an estimator or a meta-estimator.
 These hooks are :meth:`~FitCallback.setup`, :meth:`~FitCallback.on_fit_task_begin`,
 :meth:`~FitCallback.on_fit_task_end` and :meth:`~FitCallback.teardown`. The
 :meth:`~FitCallback.setup` and :meth:`~FitCallback.teardown` hooks are called only once,

@@ -1028,6 +1028,30 @@ def test_method_generation():
         def inverse_transform(self, X, sample_weight=None):
             pass  # pragma: no cover
 
+        def on_fit_task_begin(
+            self,
+            estimator,
+            context,
+            *,
+            X=None,
+            y=None,
+            metadata=None,
+            fitted_estimator=None,
+        ):
+            pass  # pragma: no cover
+
+        def on_fit_task_end(
+            self,
+            estimator,
+            context,
+            *,
+            X=None,
+            y=None,
+            metadata=None,
+            fitted_estimator=None,
+        ):
+            pass  # pragma: no cover
+
     # composite methods shouldn't have a corresponding set method.
     for method in COMPOSITE_METHODS:
         assert not hasattr(SimpleEstimator(), f"set_{method}_request")

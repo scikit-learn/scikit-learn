@@ -55,7 +55,7 @@ Multiple callbacks can be registered on the same estimator, for example a
 :class:`~ProgressBar`::
 
     >>> from sklearn.callback import ScoringMonitor
-    >>> scoring_monitor = ScoringMonitor(scoring="accuracy")
+    >>> scoring_monitor = ScoringMonitor(scoring_train="accuracy")
     >>> logreg.set_callbacks(progress_bar, scoring_monitor)
     LogisticRegression(max_iter=200)
 
@@ -80,7 +80,8 @@ contextual information about the tasks. Here's an example of the logs of the
     >>> logreg.fit(X, y)
     LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
     LogisticRegression(max_iter=200)
-    >>> scoring_monitor.get_logs().data_as_pandas[["task_name", "task_id", "accuracy"]]
+    >>> log = scoring_monitor.get_logs().train_scores_as_pandas
+    >>> log[["task_name", "task_id", "accuracy"]]
           task_name  task_id  accuracy
     0           fit        0  0.973...
     1    lbfgs-iter        0  0.333...
@@ -119,13 +120,13 @@ scores of the logistic regression model for each parameter combination and each 
 the grid search::
 
     >>> from sklearn.model_selection import GridSearchCV
-    >>> scoring_monitor = ScoringMonitor(scoring="accuracy")
+    >>> scoring_monitor = ScoringMonitor(scoring_train="accuracy")
     >>> logreg = LogisticRegression(max_iter=200).set_callbacks(scoring_monitor)
     >>> grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1]})
     >>> grid_search.fit(X, y)
     GridSearchCV(estimator=LogisticRegression(max_iter=200),
                  param_grid={'C': [10, 1, 0.1]})
-    >>> log = scoring_monitor.get_logs().data_as_pandas
+    >>> log = scoring_monitor.get_logs().train_scores_as_pandas
     >>> # show the scores at the end of each fit of the search
     >>> log[log["parent_task_id_path"] == (0,0)][["task_name", "task_id", "accuracy"]]
        task_name  task_id  accuracy
