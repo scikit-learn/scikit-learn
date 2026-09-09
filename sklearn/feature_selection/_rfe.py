@@ -21,7 +21,8 @@ from sklearn.feature_selection._base import SelectorMixin, _get_feature_importan
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._validation import _score
-from sklearn.utils import metadata_routing
+from sklearn.utils import _safe_indexing, metadata_routing
+from sklearn.utils._dataframe import is_df_or_series
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
@@ -60,7 +61,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
         y_train,
         lambda estimator, features: _score(
             estimator,
-            X_test[:, features],
+            _safe_indexing(X_test, features, axis=1),
             y_test,
             scorer,
             score_params=score_params,
@@ -281,6 +282,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # step_score is not exposed to users and is used when implementing RFECV
         # self.step_scores_ will not be calculated when calling _fit through fit
 
+        preserve_X = is_df_or_series(X)
         X, y = validate_data(
             self,
             X,
@@ -289,6 +291,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             ensure_min_features=2,
             ensure_all_finite=False,
             multi_output=True,
+            skip_check_array=preserve_X,
         )
 
         # Initialization
@@ -330,9 +333,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Rank the remaining features
             estimator = clone(self.estimator)
             if self.verbose > 0:
-                print("Fitting estimator with %d features." % np.sum(support_))
+                print(f"Fitting estimator with {np.sum(support_)} features.")
 
-            estimator.fit(X[:, features], y, **fit_params)
+            estimator.fit(_safe_indexing(X, features, axis=1), y, **fit_params)
 
             # Compute step values on the previous selection iteration because
             # 'estimator' must use features that have not been eliminated yet
@@ -362,7 +365,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # Set final attributes
         features = np.arange(n_features)[support_]
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X[:, features], y, **fit_params)
+        self.estimator_.fit(_safe_indexing(X, features, axis=1), y, **fit_params)
 
         # Compute step values when only n_features_to_select features left
         if step_score:
@@ -375,6 +378,20 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.ranking_ = ranking_
 
         return self
+
+    def _transform_for_estimator(self, X):
+        """Transform X to the selected features, preserving the DataFrame."""
+        preserve_X = is_df_or_series(X)
+        X = validate_data(
+            self,
+            X,
+            dtype=None,
+            accept_sparse="csr",
+            ensure_all_finite=not get_tags(self).input_tags.allow_nan,
+            skip_check_array=preserve_X,
+            reset=False,
+        )
+        return self._transform(X)
 
     @available_if(_estimator_has("predict"))
     def predict(self, X, **predict_params):
@@ -409,7 +426,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             routed_params = _manual_routing({"estimator": {}})
 
         return self.estimator_.predict(
-            self.transform(X), **routed_params.estimator.predict
+            self._transform_for_estimator(X), **routed_params.estimator.predict
         )
 
     @available_if(_estimator_has("score"))
@@ -450,7 +467,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             routed_params = _manual_routing({"estimator": {"score": score_params}})
 
         return self.estimator_.score(
-            self.transform(X), y, **routed_params.estimator.score
+            self._transform_for_estimator(X), y, **routed_params.estimator.score
         )
 
     def _get_support_mask(self):
@@ -477,7 +494,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             [n_samples].
         """
         check_is_fitted(self)
-        return self.estimator_.decision_function(self.transform(X))
+        return self.estimator_.decision_function(self._transform_for_estimator(X))
 
     @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
@@ -497,7 +514,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.estimator_.predict_proba(self.transform(X))
+        return self.estimator_.predict_proba(self._transform_for_estimator(X))
 
     @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
@@ -515,7 +532,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.estimator_.predict_log_proba(self.transform(X))
+        return self.estimator_.predict_log_proba(self._transform_for_estimator(X))
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -828,6 +845,7 @@ class RFECV(RFE):
             Fitted estimator.
         """
         _raise_for_params(params, self, "fit", allow=["groups"])
+        preserve_X = is_df_or_series(X)
         X, y = validate_data(
             self,
             X,
@@ -836,6 +854,7 @@ class RFECV(RFE):
             ensure_min_features=2,
             ensure_all_finite=False,
             multi_output=True,
+            skip_check_array=preserve_X,
         )
 
         if _routing_enabled():
