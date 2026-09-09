@@ -52,9 +52,8 @@ cdef inline void _update_raw_predictions_helper(
         unsigned int position
         int leaf_idx
         int n_leaves = starts.shape[0]
-        bint use_threads = n_threads > 1
 
     for leaf_idx in prange(n_leaves, schedule='static', nogil=True,
-                           num_threads=n_threads, use_threads_if=use_threads):
+                           num_threads=n_threads):
         for position in range(starts[leaf_idx], stops[leaf_idx]):
             raw_predictions[partition[position]] += values[leaf_idx]
