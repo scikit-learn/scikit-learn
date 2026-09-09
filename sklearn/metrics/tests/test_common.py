@@ -16,6 +16,7 @@ from sklearn.metrics import (
     average_precision_score,
     balanced_accuracy_score,
     brier_score_loss,
+    class_likelihood_ratios,
     classification_report,
     cohen_kappa_score,
     confusion_matrix,
@@ -236,6 +237,7 @@ CLASSIFICATION_METRICS = {
     "samples_recall_score": partial(recall_score, average="samples"),
     "samples_jaccard_score": partial(jaccard_score, average="samples"),
     "cohen_kappa_score": cohen_kappa_score,
+    "class_likelihood_ratios": class_likelihood_ratios,
 }
 
 
@@ -398,6 +400,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     "roc_curve",
     "precision_recall_curve",
     "det_curve",
+    "class_likelihood_ratios",
     # average='samples' only supports multilabel
     "multilabel_confusion_matrix_sample",
     "samples_average_precision_score",
