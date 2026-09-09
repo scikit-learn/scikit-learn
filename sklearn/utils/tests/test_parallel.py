@@ -221,7 +221,7 @@ def test_parallel_thread_map_results(func: Callable, arguments: list[Iterable]) 
 
 def test_parallel_thread_map_parallelism() -> None:
     """
-    ``_parallel_thread_map()`` uses parallelism only on free-threaded Python.
+    ``_parallel_thread_map()`` uses parallelism only when ``n_jobs`` > 1.
     """
     idents = set()
 
