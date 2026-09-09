@@ -1,0 +1,3 @@
+- :class:`covariance.ShrunkCovariance` and :func:`covariance.shrunk_covariance`
+  now support array API compatible inputs.
+  By :user:`Abdul Ali Mamnun <AbdulAliMamnun>`.
