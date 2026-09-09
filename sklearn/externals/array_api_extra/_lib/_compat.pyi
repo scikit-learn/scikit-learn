@@ -1,6 +1,4 @@
-"""Static type stubs for `_compat.py`."""
-
-# https://github.com/scikit-learn/scikit-learn/pull/27910#issuecomment-2568023972
+"""Helpers from array-api-compat."""
 
 from typing import Any, TypeGuard
 

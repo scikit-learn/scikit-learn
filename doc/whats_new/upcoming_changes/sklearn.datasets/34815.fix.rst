@@ -1,0 +1,3 @@
+- :func:`datasets.fetch_file` now raises a `ValueError` when `local_filename`
+  is a path instead of a plain filename.
+  By :user:`Dea María Léon <DeaMariaLeon>`.

@@ -46,7 +46,6 @@ I used AI assistance for:
 - Documentation (including examples)
 - Research and understanding
 
-
 #### Any other comments?
 
 

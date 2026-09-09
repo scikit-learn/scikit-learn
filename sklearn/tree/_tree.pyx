@@ -3,7 +3,7 @@
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
-from libc.math cimport INFINITY, isnan
+from libc.math cimport INFINITY
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
@@ -24,9 +24,9 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_array
 
 from sklearn.utils import _align_api_if_sparse
-from sklearn.utils._bitset cimport N_BITSETS, in_bitset, BITSET_DTYPE_C, BITSET_LENGTH
+from sklearn.utils._bitset cimport N_BITSETS, BITSET_DTYPE_C, BITSET_LENGTH
 
-from sklearn.tree._utils cimport goes_left
+from sklearn.tree._utils cimport goes_left, SPLIT_LEAF
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport sizet_ptr_to_ndarray
 
@@ -77,6 +77,7 @@ NODE_DTYPE = np.dtype([
     ('n_node_samples',          np.intp),            # 8 bytes  (offset 72)
     ('weighted_n_node_samples', np.float64),         # 8 bytes  (offset 80)
     ('missing_go_to_left',      np.uint8),           # 1 byte   (offset 88)
+    ('split_kind',              np.int8),            # 1 byte  (offset 89)
 ], align=True)
 
 cdef inline void _init_parent_record(ParentInfo* record) noexcept nogil:
@@ -277,6 +278,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 node_id = tree._add_node(parent, is_left, is_leaf, split.feature,
                                          split.threshold, split.left_cat_bitset,
+                                         split.split_kind,
                                          parent_record.impurity,
                                          n_node_samples, weighted_n_node_samples,
                                          split.missing_go_to_left)
@@ -642,6 +644,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                  split.feature,
                                  split.threshold,
                                  split.left_cat_bitset,
+                                 split.split_kind,
                                  parent_record.impurity,
                                  n_node_samples, weighted_n_node_samples,
                                  split.missing_go_to_left)
@@ -726,7 +729,11 @@ cdef class Tree:
         feature[i] holds the feature to split on, for the internal node i.
 
     threshold : array of float64_t, shape [node_count]
-        threshold[i] holds the threshold for the internal node i.
+        threshold[i] holds the threshold for the numeric internal node i.
+
+    split_kind : array of int8, shape [node_count]
+        Indicates whether the split is numeric, categorical bitset, or
+        categorical hash.
 
     value : array of float64_t, shape [node_count, n_outputs, max_n_classes]
         Contains the constant prediction value of each node.
@@ -791,6 +798,10 @@ cdef class Tree:
     @property
     def missing_go_to_left(self):
         return self._get_node_ndarray()['missing_go_to_left'][:self.node_count]
+
+    @property
+    def split_kind(self):
+        return self._get_node_ndarray()['split_kind'][:self.node_count]
 
     @property
     def value(self):
@@ -947,6 +958,7 @@ cdef class Tree:
                           intp_t feature,
                           float64_t threshold,
                           BITSET_DTYPE_C left_cat_bitset,
+                          int8_t split_kind,
                           float64_t impurity,
                           intp_t n_node_samples,
                           float64_t weighted_n_node_samples,
@@ -980,6 +992,8 @@ cdef class Tree:
             node.right_child = _TREE_LEAF
             node.feature = _TREE_UNDEFINED
             node.threshold = _TREE_UNDEFINED
+            node.missing_go_to_left = 0
+            node.split_kind = SPLIT_LEAF
 
         else:
             # left_child and right_child will be set later
@@ -994,6 +1008,7 @@ cdef class Tree:
             else:
                 node.threshold = threshold
             node.missing_go_to_left = missing_go_to_left
+            node.split_kind = split_kind
 
         self.node_count += 1
 
@@ -1038,7 +1053,6 @@ cdef class Tree:
         cdef intp_t i = 0
 
         cdef bint go_left
-        cdef bint is_categorical
 
         with nogil:
             for i in range(n_samples):
@@ -1046,12 +1060,11 @@ cdef class Tree:
                 # While node not a leaf, traverse the tree
                 while node.left_child != _TREE_LEAF:
                     X_i_node_feature = X_ndarray[i, node.feature]
-                    is_categorical = self.n_categories[node.feature] > 0
                     go_left = goes_left(
                         node.threshold,
                         node.left_cat_bitset,
                         node.missing_go_to_left,
-                        is_categorical,
+                        node.split_kind,
                         X_i_node_feature,
                     )
                     if go_left:
@@ -1091,6 +1104,7 @@ cdef class Tree:
         cdef float32_t* X_sample = NULL
         cdef intp_t i = 0
         cdef int32_t k = 0
+        cdef bint go_left
 
         # feature_to_sample as a data structure records the last seen sample
         # for each feature; functionally, it is an efficient way to identify
@@ -1119,7 +1133,14 @@ cdef class Tree:
                     else:
                         feature_value = 0.
 
-                    if feature_value <= node.threshold:
+                    go_left = goes_left(
+                        node.threshold,
+                        node.left_cat_bitset,
+                        node.missing_go_to_left,
+                        node.split_kind,
+                        feature_value,
+                    )
+                    if go_left:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1164,6 +1185,7 @@ cdef class Tree:
         # Initialize auxiliary data-structure
         cdef Node* node = NULL
         cdef intp_t i = 0
+        cdef bint go_left
 
         with nogil:
             for i in range(n_samples):
@@ -1177,20 +1199,14 @@ cdef class Tree:
                     indptr[i + 1] += 1
 
                     X_i_node_feature = X_ndarray[i, node.feature]
-                    if isnan(X_i_node_feature):
-                        if node.missing_go_to_left:
-                            node = &self.nodes[node.left_child]
-                        else:
-                            node = &self.nodes[node.right_child]
-                    elif self.n_categories[node.feature] > 0:
-                        if in_bitset(
-                            node.left_cat_bitset,
-                            <uint8_t> X_i_node_feature
-                        ):
-                            node = &self.nodes[node.left_child]
-                        else:
-                            node = &self.nodes[node.right_child]
-                    elif X_i_node_feature <= node.threshold:
+                    go_left = goes_left(
+                        node.threshold,
+                        node.left_cat_bitset,
+                        node.missing_go_to_left,
+                        node.split_kind,
+                        X_i_node_feature,
+                    )
+                    if go_left:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1237,6 +1253,7 @@ cdef class Tree:
         cdef float32_t* X_sample = NULL
         cdef intp_t i = 0
         cdef int32_t k = 0
+        cdef bint go_left
 
         # feature_to_sample as a data structure records the last seen sample
         # for each feature; functionally, it is an efficient way to identify
@@ -1270,7 +1287,14 @@ cdef class Tree:
                     else:
                         feature_value = 0.
 
-                    if feature_value <= node.threshold:
+                    go_left = goes_left(
+                        node.threshold,
+                        node.left_cat_bitset,
+                        node.missing_go_to_left,
+                        node.split_kind,
+                        feature_value,
+                    )
+                    if go_left:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -1439,7 +1463,6 @@ cdef class Tree:
             intp_t current_node_idx
             bint is_target_feature
             bint go_left
-            bint is_categorical
             intp_t _TREE_LEAF = TREE_LEAF  # to avoid python interactions
 
         for sample_idx in range(X.shape[0]):
@@ -1472,12 +1495,11 @@ cdef class Tree:
 
                     if is_target_feature:
                         # In this case, we push left or right child on stack
-                        is_categorical = self.n_categories[current_node.feature] > 0
                         go_left = goes_left(
                             current_node.threshold,
                             current_node.left_cat_bitset,
                             current_node.missing_go_to_left,
-                            is_categorical,
+                            current_node.split_kind,
                             X[sample_idx, feature_idx],
                         )
                         if go_left:
@@ -2021,7 +2043,7 @@ cdef void _build_pruned_tree(
 
             new_node_id = tree._add_node(
                 parent, is_left, is_leaf, node.feature,
-                node.threshold, node.left_cat_bitset,
+                node.threshold, node.left_cat_bitset, node.split_kind,
                 node.impurity, node.n_node_samples,
                 node.weighted_n_node_samples, node.missing_go_to_left)
 

@@ -104,7 +104,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         more weight on the global target mean.
         If `"auto"`, then `smooth` is set to an empirical Bayes estimate.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the splitting strategy used in the internal :term:`cross fitting`
         during :meth:`fit_transform`. Splitters where each sample index doesn't appear
         in the validation fold exactly once, raise a `ValueError`.
