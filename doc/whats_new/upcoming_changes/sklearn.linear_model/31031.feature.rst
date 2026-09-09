@@ -1,0 +1,5 @@
+- :class:`linear_model.Ridge` now supports both single bool and list of bools for the `positive` parameter
+  to enforce non-negativity constraints on the coefficients.
+  Single bool is equivalent to passing a list of bools with all elements set to the same value.
+  List of bools allows to specify non-negativity constraints for each target variable independently.
+  By :user:`Daniel Smith <thedanindanger>`
