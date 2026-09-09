@@ -991,7 +991,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_threads_for_samples = min(0.1 * math.pow(n_samples, 1 / 3), max_n_threads)
         heuristic_n_threads = max(n_threads_for_features, n_threads_for_samples)
 
-        return heuristic_n_threads
+        return round(heuristic_n_threads)
 
     def _is_fitted(self):
         return len(getattr(self, "_predictors", [])) > 0
