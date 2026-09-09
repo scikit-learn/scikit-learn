@@ -1141,6 +1141,11 @@ def explained_variance_score(
         )
     )
 
+    if _num_samples(y_pred) < 2:
+        msg = "Explained variance score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
+
     y_diff_avg = _average(y_true - y_pred, weights=sample_weight, axis=0, xp=xp)
     numerator = _average(
         (y_true - y_pred - y_diff_avg) ** 2, weights=sample_weight, axis=0, xp=xp
