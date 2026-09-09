@@ -340,6 +340,17 @@ def test_dump_multilabel(csr_container):
         assert f.readline() == b"0,1 1:5 3:1\n"
 
 
+@pytest.mark.parametrize("y", [[0, 1, 0], np.array([0, 1, 0])])
+def test_dump_multilabel_1d_target_raises(y):
+    # Non-regression test for gh-34661: passing a 1d target together with
+    # multilabel=True used to reach the Cython writer, which indexes the
+    # target as a 2d buffer and segfaults the interpreter. It must instead
+    # raise an informative error.
+    X = [[1, 0, 3, 0, 5], [0, 0, 0, 0, 0], [0, 5, 0, 1, 0]]
+    with pytest.raises(ValueError, match="expected y of shape"):
+        dump_svmlight_file(X, y, BytesIO(), multilabel=True)
+
+
 def test_dump_concise():
     one = 1
     two = 2.1

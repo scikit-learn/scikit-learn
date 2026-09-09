@@ -544,6 +544,14 @@ def dump_svmlight_file(
     else:
         if yval.ndim != 1 and not multilabel:
             raise ValueError("expected y of shape (n_samples,), got %r" % (yval.shape,))
+        if yval.ndim == 1 and multilabel:
+            # A dense multilabel target must be a 2d indicator matrix of shape
+            # (n_samples, n_labels). Without this check a 1d array reaches the
+            # Cython writer, which indexes it as a 2d buffer and segfaults.
+            raise ValueError(
+                "expected y of shape (n_samples, n_labels) when multilabel=True, "
+                "got %r" % (yval.shape,)
+            )
 
     Xval = check_array(X, accept_sparse="csr")
     if Xval.shape[0] != yval.shape[0]:
