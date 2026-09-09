@@ -1837,7 +1837,7 @@ def test_get_heuristic_optimal_n_threads_monotonic_in_n_features():
     # there is at least one feature per thread.
     max_n_threads = 8
     n_threads_by_n_features = [
-        _get_heuristic_n_threads(max_n_threads, n_samples=10, n_features=n_features)
+        _get_heuristic_n_threads(max_n_threads, n_samples=10**5, n_features=n_features)
         for n_features in [1, 2, 4, 8, 16, 100]
     ]
     assert n_threads_by_n_features == sorted(n_threads_by_n_features)
