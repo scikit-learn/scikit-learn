@@ -606,7 +606,6 @@ API_REFERENCE = {
                 "autosummary": [
                     "LogisticRegression",
                     "LogisticRegressionCV",
-                    "PassiveAggressiveClassifier",  # TODO(1.10): remove
                     "Perceptron",
                     "RidgeClassifier",
                     "RidgeClassifierCV",
@@ -691,7 +690,6 @@ API_REFERENCE = {
             {
                 "title": "Miscellaneous",
                 "autosummary": [
-                    "PassiveAggressiveRegressor",  # TODO(1.10): remove
                     "enet_path",
                     "lars_path",
                     "lars_path_gram",

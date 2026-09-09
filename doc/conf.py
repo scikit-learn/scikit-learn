@@ -867,8 +867,6 @@ warnings.filterwarnings(
         " non-GUI backend, so cannot show the figure."
     ),
 )
-# TODO(1.10): remove PassiveAggressive
-warnings.filterwarnings("ignore", category=FutureWarning, message="PassiveAggressive")
 if os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
     turn_warnings_into_errors()
 

@@ -110,8 +110,6 @@ from sklearn.linear_model import (
     MultiTaskLasso,
     MultiTaskLassoCV,
     OrthogonalMatchingPursuitCV,
-    PassiveAggressiveClassifier,
-    PassiveAggressiveRegressor,
     Perceptron,
     PoissonRegressor,
     QuantileRegressor,
@@ -388,8 +386,6 @@ INIT_PARAMS = {
     OneVsRestClassifier: dict(estimator=LogisticRegression(C=1)),
     OrthogonalMatchingPursuitCV: dict(cv=3),
     OutputCodeClassifier: dict(estimator=LogisticRegression(C=1)),
-    PassiveAggressiveClassifier: dict(max_iter=5),
-    PassiveAggressiveRegressor: dict(max_iter=5),
     Perceptron: dict(max_iter=5),
     Pipeline: [
         {"steps": [("scaler", StandardScaler()), ("final_estimator", Ridge())]},

@@ -3831,8 +3831,6 @@ def check_regressors_train(
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
         regressor.alpha = 0.01
-    if name == "PassiveAggressiveRegressor":
-        regressor.C = 0.01
 
     # raises error on malformed input for fit
     with raises(
