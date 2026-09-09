@@ -6,7 +6,6 @@ usage.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
-import sys
 import warnings
 from concurrent.futures import ThreadPoolExecutor
 from functools import update_wrapper
@@ -258,15 +257,3 @@ def _threadpool_controller_decorator(limits=1, user_api="blas"):
         return wrapper
 
     return decorator
-
-
-def _is_gil_enabled() -> bool:
-    """Return whether Python has the GIL enabled.
-
-    Returns
-    -------
-    bool
-        Whether the GIL is enabled.
-    """
-    _is_gil_enabled = getattr(sys, "_is_gil_enabled", lambda: True)
-    return _is_gil_enabled()
