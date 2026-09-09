@@ -640,6 +640,88 @@ def test_check_array_pandas_dtype_casting():
     assert check_array(cat_df, dtype=FLOAT_DTYPES).dtype == np.float64
 
 
+@pytest.mark.parametrize("constructor_name", ["polars", "pyarrow"])
+def test_check_array_non_pandas_dataframe_dtype_casting(constructor_name):
+    """Check that non-pandas dataframes with an accepted dtype are not upcast.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/33294
+    """
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)
+    X_df = _convert_container(X, constructor_name)
+    assert check_array(X_df).dtype == np.float32
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
+    assert check_array(X_df, dtype=[np.float64, np.float32]).dtype == np.float32
+    # dtype not in the accepted list: convert to the first accepted dtype
+    assert check_array(X_df, dtype=[np.float64]).dtype == np.float64
+
+    # mixed float32 and int64 columns combine to float64, as with pandas
+    if constructor_name == "polars":
+        pl = pytest.importorskip("polars")
+        X_mixed_df = pl.DataFrame(
+            {
+                "a": pl.Series([1.0, 2.0], dtype=pl.Float32),
+                "b": pl.Series([1, 2], dtype=pl.Int64),
+            }
+        )
+    else:
+        pa = pytest.importorskip("pyarrow")
+        X_mixed_df = pa.table(
+            {
+                "a": pa.array([1.0, 2.0], type=pa.float32()),
+                "b": pa.array([1, 2], type=pa.int64()),
+            }
+        )
+    assert check_array(X_mixed_df, dtype=FLOAT_DTYPES).dtype == np.float64
+
+
+def test_check_array_non_pandas_series_dtype_casting():
+    """Check that non-pandas series with an accepted dtype are not upcast.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/33294
+    """
+    X = np.array([1, 2, 3], dtype=np.float32)
+    for X_series in [
+        _convert_container(X, "polars_series"),
+        pytest.importorskip("pyarrow").chunked_array([X]),
+    ]:
+        assert check_array(X_series, ensure_2d=False).dtype == np.float32
+        checked = check_array(X_series, dtype=FLOAT_DTYPES, ensure_2d=False)
+        assert checked.dtype == np.float32
+        checked = check_array(X_series, dtype=[np.float64], ensure_2d=False)
+        assert checked.dtype == np.float64
+
+
+def test_check_array_polars_null_support():
+    """Check dtype preservation and nulls for polars inputs with dtype lists."""
+    pl = pytest.importorskip("polars")
+
+    # float32 column with nulls keeps float32 when it is an accepted dtype
+    X = pl.DataFrame({"a": pl.Series([1.0, None, 3.0], dtype=pl.Float32)})
+    X_checked = check_array(
+        X, dtype=[np.float64, np.float32], ensure_all_finite="allow-nan"
+    )
+    assert X_checked.dtype == np.float32
+    assert_allclose(X_checked, [[1.0], [np.nan], [3.0]])
+
+    # an integer column with nulls converts to float64 with NaN, so it must
+    # not be treated as matching an accepted integer dtype
+    X = pl.DataFrame({"a": pl.Series([1, None, 3], dtype=pl.Int64)})
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        check_array(X, dtype=[np.int64, np.float64], ensure_all_finite="allow-nan")
+
+    X_checked = check_array(
+        X, dtype=[np.float64, np.float32], ensure_all_finite="allow-nan"
+    )
+    assert X_checked.dtype == np.float64
+    assert_allclose(X_checked, [[1.0], [np.nan], [3.0]])
+
+    # an integer column without nulls keeps its dtype when accepted
+    X = pl.DataFrame({"a": pl.Series([1, 2, 3], dtype=pl.Int64)})
+    assert check_array(X, dtype=[np.int64, np.float64]).dtype == np.int64
+
+
 def test_check_array_on_mock_dataframe():
     arr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
     mock_df = MockDataFrame(arr)
