@@ -1,0 +1,3 @@
+- :func:`tree.export_dict`, which exports a fitted :class:`tree.DecisionTreeClassifier`
+  or :class:`tree.DecisionTreeRegressor` as a nested dict, optionally writing it to
+  `out_file` as JSON. By :user:`lcrmorin`.

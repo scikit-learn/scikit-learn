@@ -213,6 +213,16 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       |   |   |--- class: 2
       <BLANKLINE>
 
+  Alternatively, the tree can be exported as a nested dict with the
+  function :func:`export_dict`::
+
+      >>> from sklearn.tree import export_dict
+      >>> tree_dict = export_dict(decision_tree, feature_names=iris['feature_names'])
+      >>> sorted(tree_dict.keys())
+      ['feature', 'feature_name', 'impurity', 'left', 'n_node_samples', 'node_id', 'right', 'threshold', 'weighted_n_node_samples']
+      >>> tree_dict['feature_name']
+      'petal width (cm)'
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
