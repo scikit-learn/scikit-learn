@@ -457,16 +457,24 @@ def _generate_test_scale_and_stability_datasets():
 @pytest.mark.parametrize("X, y", _generate_test_scale_and_stability_datasets())
 def test_scale_and_stability(Est, X, y):
     """scale=True is equivalent to scale=False on centered/scaled data
-    This allows to check numerical stability over platforms as well"""
+    This allows to check numerical stability over platforms as well
+    
+    For PLSRegression we raise a ValueError for zero variance predictor
+    """
     # Avoid in-place modification of X and y to avoid side effects in other tests.
     X, y = X.copy(), y.copy()
     X_s, y_s, *_ = _center_scale_xy(X, y)
 
-    X_score, y_score = Est(scale=True).fit_transform(X, y)
-    X_s_score, y_s_score = Est(scale=False).fit_transform(X_s, y_s)
+    if Est is PLSRegression and np.any(np.var(X, axis=0) == 0):
+        with pytest.raises(ValueError, match="zero variance"):
+            Est(scale=True).fit_transform(X, y)
 
-    assert_allclose(X_s_score, X_score, atol=1e-4)
-    assert_allclose(y_s_score, y_score, atol=1e-4)
+    else: 
+        X_score, y_score = Est(scale=True).fit_transform(X, y)
+        X_s_score, y_s_score = Est(scale=False).fit_transform(X_s, y_s)
+
+        assert_allclose(X_s_score, X_score, atol=1e-4)
+        assert_allclose(y_s_score, y_score, atol=1e-4)
 
 
 @pytest.mark.parametrize("Estimator", (PLSSVD, PLSRegression, PLSCanonical, CCA))
@@ -676,3 +684,18 @@ def test_pls_regression_scaling_coef():
 
     # we therefore should be able to predict `y` from `X`
     assert_allclose(pls.predict(X), y)
+
+
+    def test_pls_regression_zero_variance_predictor():
+        """Check PLSRegression raises a clear ValueError when X has zero-variance columns.
+
+        Non-regression test for:
+        https://github.com/scikit-learn/scikit-learn/issues/31971
+        """
+        #Zero variance/constant column for X
+        X = np.array([[1,1],[1,1],[1,1]])
+        y = np.array([1,2,3])
+        model = PLSRegression(n_components=1)
+        #We should expect a clear error message instead of NaN ValueError
+        with pytest.raises(ValueError,match="zero_Variance"):
+            pls.fit(X,y)
