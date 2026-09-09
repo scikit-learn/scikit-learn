@@ -127,7 +127,7 @@ cdef class HistogramBuilder:
             The computed histograms of the current node.
         """
         cdef:
-            int n_samples = sample_indices.shape[0]
+            int n_samples
             int feature_idx
             int f_idx
             int i
@@ -145,36 +145,30 @@ cdef class HistogramBuilder:
             )
             bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
-            bint use_threads_populate
-            bint use_threads_features
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
 
-        use_threads_populate = n_threads > 1
-        use_threads_features = n_allowed_features > 1 and n_threads > 1
-
         with nogil:
+            n_samples = sample_indices.shape[0]
+
             # Populate ordered_gradients and ordered_hessians. (Already done
             # for root) Ordering the gradients and hessians helps to improve
             # cache hit.
             if sample_indices.shape[0] != gradients.shape[0]:
                 if hessians_are_constant:
                     for i in prange(n_samples, schedule='static',
-                                    num_threads=n_threads,
-                                    use_threads_if=use_threads_populate):
+                                    num_threads=n_threads):
                         ordered_gradients[i] = gradients[sample_indices[i]]
                 else:
                     for i in prange(n_samples, schedule='static',
-                                    num_threads=n_threads,
-                                    use_threads_if=use_threads_populate):
+                                    num_threads=n_threads):
                         ordered_gradients[i] = gradients[sample_indices[i]]
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
             # Compute histogram of each feature
             for f_idx in prange(
-                n_allowed_features, schedule='static', num_threads=n_threads,
-                use_threads_if=use_threads_features
+                n_allowed_features, schedule='static', num_threads=n_threads
             ):
                 if has_interaction_cst:
                     feature_idx = allowed_features[f_idx]
@@ -268,16 +262,13 @@ cdef class HistogramBuilder:
             int n_allowed_features = self.n_features
             bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
-            bint use_threads
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
 
-        use_threads = n_allowed_features > 1 and n_threads > 1
-
         # Compute histogram of each feature
         for f_idx in prange(n_allowed_features, schedule='static', nogil=True,
-                            num_threads=n_threads, use_threads_if=use_threads):
+                            num_threads=n_threads):
             if has_interaction_cst:
                 feature_idx = allowed_features[f_idx]
             else:

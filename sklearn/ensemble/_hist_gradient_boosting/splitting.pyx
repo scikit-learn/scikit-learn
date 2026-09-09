@@ -519,15 +519,12 @@ cdef class Splitter:
             uint8_t [:] subsample_mask  # same as npy_bool
             int n_subsampled_features
             uint8_t missing_go_to_left
-            bint use_threads
 
         has_interaction_cst = allowed_features is not None
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
         else:
             n_allowed_features = self.n_features
-
-        n_subsampled_features = n_allowed_features
 
         if feature_fraction_per_split < 1.0:
             # We do all random sampling before the nogil and make sure that we sample
@@ -542,8 +539,6 @@ cdef class Splitter:
             # https://github.com/numpy/numpy/issues/18273
             subsample_mask = subsample_mask_arr
 
-        use_threads = n_threads > 1
-
         with nogil:
 
             split_infos = <split_info_struct *> malloc(
@@ -552,8 +547,7 @@ cdef class Splitter:
             # split_info_idx is index of split_infos of size n_allowed_features.
             # features_idx is the index of the feature column in X.
             for split_info_idx in prange(n_allowed_features, schedule='static',
-                                         num_threads=n_threads,
-                                         use_threads_if=use_threads):
+                                         num_threads=n_threads):
                 if has_interaction_cst:
                     feature_idx = allowed_features[split_info_idx]
                 else:

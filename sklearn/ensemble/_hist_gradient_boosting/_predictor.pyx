@@ -25,11 +25,9 @@ def _predict_from_raw_data(  # raw data = non-binned data
 
     cdef:
         int i
-        int n_samples = numeric_data.shape[0]
-        bint use_threads = n_threads > 1
 
-    for i in prange(n_samples, schedule='static', nogil=True,
-                    num_threads=n_threads, use_threads_if=use_threads):
+    for i in prange(numeric_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
         out[i] = _predict_one_from_raw_data(
             nodes, numeric_data, raw_left_cat_bitsets,
             known_cat_bitsets,
@@ -97,11 +95,9 @@ def _predict_from_binned_data(
 
     cdef:
         int i
-        int n_samples = binned_data.shape[0]
-        bint use_threads = n_threads > 1
 
-    for i in prange(n_samples, schedule='static', nogil=True,
-                    num_threads=n_threads, use_threads_if=use_threads):
+    for i in prange(binned_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
         out[i] = _predict_one_from_binned_data(nodes,
                                                binned_data,
                                                binned_left_cat_bitsets, i,
