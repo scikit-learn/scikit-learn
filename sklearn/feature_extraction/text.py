@@ -197,6 +197,29 @@ def strip_tags(s):
     return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
 
 
+def _validate_raw_documents(raw_documents):
+    """Raise a helpful error for common misuses of the raw_documents API.
+
+    raw_documents must be a 1D iterable of documents (or file-like objects).
+    But Python can iterate over a single string or a 2D array-like, so
+    raw_documents-consuming code don't raise for such inputs but produces
+    nonsensical results instead.
+
+    This function checks for this kind of wrong input and raises a clear error.
+    """
+    if isinstance(raw_documents, str):
+        raise ValueError(
+            "Iterable over raw text documents expected, string object received."
+        )
+    shape = getattr(raw_documents, "shape", None)
+    if shape is not None and len(shape) == 2:
+        raise ValueError(
+            "Iterable over raw text documents expected, 2-dimensional array-like"
+            f"with shape {shape} received. A vectorizer expects one document"
+            "per sample, e.g. a single DataFrame column `df['column_name']`"
+        )
+
+
 def _check_stop_list(stop):
     if stop == "english":
         return ENGLISH_STOP_WORDS
@@ -851,10 +874,7 @@ class HashingVectorizer(
             HashingVectorizer instance.
         """
         # triggers a parameter validation
-        if isinstance(X, str):
-            raise ValueError(
-                "Iterable over raw text documents expected, string object received."
-            )
+        _validate_raw_documents(X)
 
         self._warn_for_unused_params()
         self._validate_ngram_range()
@@ -877,10 +897,7 @@ class HashingVectorizer(
         X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
-        if isinstance(X, str):
-            raise ValueError(
-                "Iterable over raw text documents expected, string object received."
-            )
+        _validate_raw_documents(X)
 
         self._validate_ngram_range()
 
@@ -1361,10 +1378,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
-        if isinstance(raw_documents, str):
-            raise ValueError(
-                "Iterable over raw text documents expected, string object received."
-            )
+        _validate_raw_documents(raw_documents)
 
         self._validate_ngram_range()
         self._warn_for_unused_params()
@@ -1422,10 +1436,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
-        if isinstance(raw_documents, str):
-            raise ValueError(
-                "Iterable over raw text documents expected, string object received."
-            )
+        _validate_raw_documents(raw_documents)
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
