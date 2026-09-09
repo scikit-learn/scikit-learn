@@ -1,0 +1,5 @@
+- :class:`cluster.MiniBatchKMeans` now supports `adaptive_lr=True` to update
+  cluster centers with the adaptive learning rate described in
+  :arxiv:`2304.00419` during `fit` and `partial_fit`.
+  By :user:`Gregory Schwartzman <gregoryschwartzman>` and
+  :user:`Ben Jourdan <BenJourdan>`.
