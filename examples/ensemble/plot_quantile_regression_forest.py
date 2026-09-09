@@ -245,7 +245,7 @@ for max_depth, min_samples_leaf in [(1, 20), (None, 20), (None, 5)]:
 # rarely contain enough samples to estimate the 5th/95th percentiles
 # reliably, so the interval is both invalid and (deceptively) narrower.
 #
-# So the `min_samples_leaf` floor is a hard requirement to check first; above
+# The `min_samples_leaf` floor is a hard requirement to check first; above
 # it, as for :class:`~sklearn.ensemble.GradientBoostingRegressor`, there is
 # no universally good setting and these hyperparameters are still best tuned
 # by cross-validating on the pinball loss for the target quantile level, as
