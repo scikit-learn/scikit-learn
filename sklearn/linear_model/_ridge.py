@@ -639,6 +639,7 @@ def _ridge_regression(
     random_state=None,
     return_n_iter=False,
     return_intercept=False,
+    return_solver=False,
     X_scale=None,
     X_offset=None,
     check_input=True,
@@ -847,7 +848,7 @@ def _ridge_regression(
     else:
         res = coef
 
-    return res
+    return (*res, solver) if return_solver else res
 
 
 def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
@@ -979,7 +980,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         X_is_sparse = sparse.issparse(X)
-        self.solver_ = resolve_solver(
+        solver = resolve_solver(
             solver, self.positive, return_intercept=False, is_sparse=X_is_sparse, xp=xp
         )
 
@@ -989,7 +990,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         use_no_center_cholesky = (
             self.fit_intercept
             and sample_weight is None
-            and self.solver_ == "cholesky"
+            and solver == "cholesky"
             and X.shape[0] >= X.shape[1]
         )
 
@@ -1013,7 +1014,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         )
 
         if solver == "sag" and X_is_sparse and self.fit_intercept:
-            self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
+            self.coef_, self.n_iter_, self.intercept_, self.solver_ = _ridge_regression(
                 X,
                 y,
                 alpha=self.alpha,
@@ -1025,6 +1026,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=True,
+                return_solver=True,
                 check_input=False,
             )
             # add the offset which was subtracted by _preprocess_data
@@ -1042,18 +1044,19 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 # for dense matrices or when intercept is set to 0
                 params = {}
 
-            self.coef_, self.n_iter_ = _ridge_regression(
+            self.coef_, self.n_iter_, self.solver_ = _ridge_regression(
                 X,
                 y,
                 alpha=self.alpha,
                 sample_weight=sample_weight,
                 max_iter=self.max_iter,
                 tol=self.tol,
-                solver=self.solver_,
+                solver=solver,
                 positive=self.positive,
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=False,
+                return_solver=True,
                 check_input=False,
                 fit_intercept=self.fit_intercept,
                 **params,
