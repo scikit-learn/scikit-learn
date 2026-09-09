@@ -194,7 +194,10 @@ def strip_tags(s):
     s : str
         The stripped string.
     """
-    return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
+    return _strip_tags_re.sub(" ", s)
+
+
+_strip_tags_re = re.compile(r"<([^>]+)>", flags=re.UNICODE)
 
 
 def _check_stop_list(stop):
@@ -363,13 +366,19 @@ class _VectorizerMixin:
         """
         if self.tokenizer is not None:
             return self.tokenizer
-        token_pattern = re.compile(self.token_pattern)
 
-        if token_pattern.groups > 1:
-            raise ValueError(
-                "More than 1 capturing group in token pattern. Only a single "
-                "group should be captured."
-            )
+        pattern = self.token_pattern
+        cached = getattr(self, "_cached_token_pattern", None)
+        if cached is not None and cached.pattern == pattern:
+            token_pattern = cached
+        else:
+            token_pattern = re.compile(pattern)
+            if token_pattern.groups > 1:
+                raise ValueError(
+                    "More than 1 capturing group in token pattern. Only a single "
+                    "group should be captured."
+                )
+            self._cached_token_pattern = token_pattern
 
         return token_pattern.findall
 
