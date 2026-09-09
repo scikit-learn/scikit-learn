@@ -806,3 +806,115 @@ def sparse_matmul_to_dense(A, B, out=None):
         out = out.T
 
     return out
+
+
+def _get_weighted_median(data, weights, n_zeros, sum_w_zeros):
+    """Compute the weighted median of data with n_zeros additional zeros.
+
+    This function is used to support sparse matrices.
+
+    Parameters
+    ----------
+    data : ndarray of shape (n_nonzeros,)
+        Non-zero values for this column.
+    weights : ndarray of shape (n_nonzeros,)
+        Weights for each non-zero value.
+    n_zeros : int
+        Number of implicit zeros in the column. When ``n_zeros == 0`` the
+        column is fully dense and the zero-insertion step is skipped entirely.
+    sum_w_zeros : float
+        Sum of weights for the implicit zero samples
+        (i.e., ``np.sum(sample_weight) - np.sum(sample_weight[non_zero_rows])``).
+        May be slightly negative due to floating-point; clamped to 0 internally.
+    """
+    if len(data) == 0:
+        return 0.0 if n_zeros > 0 else np.nan
+
+    # Guard against floating-point underflow producing a tiny negative value
+    sum_w_zeros = max(0.0, sum_w_zeros)
+
+    # Sort data and weights based on data value
+    sort_idx = np.argsort(data)
+    data = data[sort_idx]
+    weights = weights[sort_idx]
+
+    if n_zeros == 0:
+        # Column is fully dense — no zero entry to insert.
+        # Use full_data alias to keep the tail of this function structurally
+        # identical to the sparse path (len(full_data) == len(cum_weights)).
+        full_data = data
+        cum_weights = np.cumsum(weights)
+    else:
+        # Find insert position for zeros in sorted data and merge them in
+        zero_pos = np.searchsorted(data, 0)
+        full_weights = np.concatenate(
+            [weights[:zero_pos], [sum_w_zeros], weights[zero_pos:]]
+        )
+        full_data = np.concatenate([data[:zero_pos], [0.0], data[zero_pos:]])
+        cum_weights = np.cumsum(full_weights)
+
+    total_weight = cum_weights[-1]
+
+    if total_weight == 0:
+        return np.nan
+
+    # The weighted median is the value at which cumulative weight >= total/2
+    half = total_weight / 2.0
+    median_idx = np.searchsorted(cum_weights, half)
+    median_idx = min(median_idx, len(full_data) - 1)
+
+    # If cumulative weight at median_idx exactly equals half, average with the next
+    if median_idx < len(cum_weights) - 1 and cum_weights[median_idx] == half:
+        return (full_data[median_idx] + full_data[median_idx + 1]) / 2.0
+
+    return full_data[median_idx]
+
+
+def csc_weighted_median_axis_0(X, sample_weight):
+    """Find the weighted median across axis 0 of a CSC matrix.
+
+    Parameters
+    ----------
+    X : sparse matrix of shape (n_samples, n_features)
+        Input data. It should be of CSC format.
+    sample_weight : ndarray of shape (n_samples,)
+        Weights for each sample.
+
+    Returns
+    -------
+    median : ndarray of shape (n_features,)
+        Weighted median along axis 0.
+    """
+    if not (sp.issparse(X) and X.format == "csc"):
+        raise TypeError("Expected matrix of CSC format, got %s" % X.format)
+
+    n_samples, n_features = X.shape
+    # _check_sample_weight is called here so this function can be used
+    # standalone. When called from NearestCentroid.fit(), the weights are
+    # already validated, making this a no-op (but harmless).
+    sample_weight = _check_sample_weight(sample_weight, X)
+    total_weight = np.sum(sample_weight)
+    median = np.zeros(n_features)
+    indptr = X.indptr
+
+    for f_ind in range(n_features):
+        start, end = indptr[f_ind], indptr[f_ind + 1]
+
+        if start == end:
+            # All zeros in this column
+            median[f_ind] = _get_weighted_median(
+                np.array([]), np.array([]), n_samples, total_weight
+            )
+            continue
+
+        data = np.array(X.data[start:end], copy=True, dtype=float)
+        indices = X.indices[start:end]
+        w = sample_weight[indices]
+
+        # sum_w_zeros = total weight minus weight of all non-zero rows
+        sum_w_zeros = total_weight - np.sum(w)
+        n_zeros = n_samples - len(indices)
+
+        median[f_ind] = _get_weighted_median(data, w, n_zeros, sum_w_zeros)
+
+    return median
