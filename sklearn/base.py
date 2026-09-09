@@ -142,6 +142,8 @@ def _clone_parametrized(estimator, *, safe=True):
         # in ensembles or during cross-validation. Therefore it is safe to pass the
         # callback instances by reference.
         new_object._skl_callbacks = estimator._skl_callbacks
+    if hasattr(estimator, "_skl_default_callbacks"):
+        new_object._skl_default_callbacks = estimator._skl_default_callbacks
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
