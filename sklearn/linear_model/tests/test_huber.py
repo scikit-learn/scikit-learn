@@ -16,11 +16,14 @@ from sklearn.utils._testing import (
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
-def make_regression_with_outliers(n_samples=50, n_features=20):
-    rng = np.random.RandomState(0)
+def make_regression_with_outliers(global_random_seed, n_samples=50, n_features=20):
+    rng = np.random.RandomState(global_random_seed)
     # Generate data with outliers by replacing 10% of the samples with noise.
     X, y = make_regression(
-        n_samples=n_samples, n_features=n_features, random_state=0, noise=0.05
+        n_samples=n_samples,
+        n_features=n_features,
+        random_state=global_random_seed,
+        noise=0.05,
     )
 
     # Replace 10% of the sample with noise.
@@ -30,9 +33,9 @@ def make_regression_with_outliers(n_samples=50, n_features=20):
     return X, y
 
 
-def test_huber_equals_lr_for_high_epsilon():
+def test_huber_equals_lr_for_high_epsilon(global_random_seed):
     # Test that Ridge matches LinearRegression for large epsilon
-    X, y = make_regression_with_outliers()
+    X, y = make_regression_with_outliers(global_random_seed)
     lr = LinearRegression()
     lr.fit(X, y)
     huber = HuberRegressor(epsilon=1e3, alpha=0.0)
@@ -41,17 +44,17 @@ def test_huber_equals_lr_for_high_epsilon():
     assert_almost_equal(huber.intercept_, lr.intercept_, 2)
 
 
-def test_huber_max_iter():
-    X, y = make_regression_with_outliers()
+def test_huber_max_iter(global_random_seed):
+    X, y = make_regression_with_outliers(global_random_seed)
     huber = HuberRegressor(max_iter=1)
     huber.fit(X, y)
     assert huber.n_iter_ == huber.max_iter
 
 
-def test_huber_gradient():
+def test_huber_gradient(global_random_seed):
     # Test that the gradient calculated by _huber_loss_and_gradient is correct
-    rng = np.random.RandomState(1)
-    X, y = make_regression_with_outliers()
+    rng = np.random.RandomState(global_random_seed)
+    X, y = make_regression_with_outliers(global_random_seed)
     sample_weight = rng.randint(1, 3, (y.shape[0]))
 
     def loss_func(x, *args):
@@ -73,10 +76,10 @@ def test_huber_gradient():
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_huber_sample_weights(csr_container):
+def test_huber_sample_weights(csr_container, global_random_seed):
     # Test sample_weights implementation in HuberRegressor"""
 
-    X, y = make_regression_with_outliers()
+    X, y = make_regression_with_outliers(global_random_seed)
     huber = HuberRegressor()
     huber.fit(X, y)
     huber_coef = huber.coef_
@@ -92,7 +95,7 @@ def test_huber_sample_weights(csr_container):
     assert_array_almost_equal(huber.coef_ / scale, huber_coef / scale)
     assert_array_almost_equal(huber.intercept_ / scale, huber_intercept / scale)
 
-    X, y = make_regression_with_outliers(n_samples=5, n_features=20)
+    X, y = make_regression_with_outliers(global_random_seed, n_samples=5, n_features=20)
     X_new = np.vstack((X, np.vstack((X[1], X[1], X[3]))))
     y_new = np.concatenate((y, [y[1]], [y[1]], [y[3]]))
     huber.fit(X_new, y_new)
@@ -114,8 +117,8 @@ def test_huber_sample_weights(csr_container):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_huber_sparse(csr_container):
-    X, y = make_regression_with_outliers()
+def test_huber_sparse(csr_container, global_random_seed):
+    X, y = make_regression_with_outliers(global_random_seed)
     huber = HuberRegressor(alpha=0.1)
     huber.fit(X, y)
 
@@ -126,9 +129,9 @@ def test_huber_sparse(csr_container):
     assert_array_equal(huber.outliers_, huber_sparse.outliers_)
 
 
-def test_huber_scaling_invariant():
+def test_huber_scaling_invariant(global_random_seed):
     # Test that outliers filtering is scaling independent.
-    X, y = make_regression_with_outliers()
+    X, y = make_regression_with_outliers(global_random_seed)
     huber = HuberRegressor(fit_intercept=False, alpha=0.0)
     huber.fit(X, y)
     n_outliers_mask_1 = huber.outliers_
@@ -143,10 +146,10 @@ def test_huber_scaling_invariant():
     assert_array_equal(n_outliers_mask_3, n_outliers_mask_1)
 
 
-def test_huber_and_sgd_same_results():
+def test_huber_and_sgd_same_results(global_random_seed):
     # Test they should converge to same coefficients for same parameters
 
-    X, y = make_regression_with_outliers(n_samples=10, n_features=2)
+    X, y = make_regression_with_outliers(global_random_seed, n_samples=10, n_features=2)
 
     # Fit once to find out the scale parameter. Scale down X and y by scale
     # so that the scale parameter is optimized to 1.0
@@ -161,7 +164,7 @@ def test_huber_and_sgd_same_results():
         alpha=0.0,
         loss="huber",
         shuffle=True,
-        random_state=0,
+        random_state=global_random_seed,
         max_iter=10000,
         fit_intercept=False,
         epsilon=1.35,
@@ -171,8 +174,8 @@ def test_huber_and_sgd_same_results():
     assert_array_almost_equal(huber.coef_, sgdreg.coef_, 1)
 
 
-def test_huber_warm_start():
-    X, y = make_regression_with_outliers()
+def test_huber_warm_start(global_random_seed):
+    X, y = make_regression_with_outliers(global_random_seed)
     huber_warm = HuberRegressor(alpha=1.0, max_iter=10000, warm_start=True, tol=1e-1)
 
     huber_warm.fit(X, y)
@@ -186,9 +189,9 @@ def test_huber_warm_start():
     assert huber_warm.n_iter_ == 0
 
 
-def test_huber_better_r2_score():
+def test_huber_better_r2_score(global_random_seed):
     # Test that huber returns a better r2 score than non-outliers"""
-    X, y = make_regression_with_outliers()
+    X, y = make_regression_with_outliers(global_random_seed)
     huber = HuberRegressor(alpha=0.01)
     huber.fit(X, y)
     linear_loss = np.dot(X, huber.coef_) + huber.intercept_ - y
@@ -209,8 +212,10 @@ def test_huber_better_r2_score():
     assert ridge_outlier_score > huber_outlier_score
 
 
-def test_huber_bool():
+def test_huber_bool(global_random_seed):
     # Test that it does not crash with bool data
-    X, y = make_regression(n_samples=200, n_features=2, noise=4.0, random_state=0)
+    X, y = make_regression(
+        n_samples=200, n_features=2, noise=4.0, random_state=global_random_seed
+    )
     X_bool = X > 0
     HuberRegressor().fit(X_bool, y)
