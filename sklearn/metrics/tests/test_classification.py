@@ -3708,14 +3708,17 @@ def test_d2_brier_score_raises(y_true, y_pred, labels, error_msg):
         d2_brier_score(y_true, y_pred, labels=labels)
 
 
-def test_d2_brier_score_warning_on_less_than_two_samples():
-    """Test that d2_brier_score emits a warning when there are less than
+@pytest.mark.parametrize(
+    "metric, y_proba",
+    [(d2_brier_score, np.array([0.8])), (d2_log_loss_score, np.array([[0.2, 0.8]]))],
+)
+def test_d2_score_warning_on_less_than_two_samples(metric, y_proba):
+    """Test that the D^2 scores emit a warning when there are less than
     two samples"""
     y_true = np.array([1])
-    y_pred = np.array([0.8])
     warning_message = "not well-defined with less than two samples"
     with pytest.warns(UndefinedMetricWarning, match=warning_message):
-        d2_brier_score(y_true, y_pred)
+        assert np.isnan(metric(y_true, y_proba))
 
 
 @pytest.mark.parametrize(
