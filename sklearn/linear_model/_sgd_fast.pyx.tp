@@ -269,6 +269,92 @@ cdef class SquaredEpsilonInsensitive(Regression):
     def __reduce__(self):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
+cdef class PoissonLoss(Regression):
+    """Half Poisson deviance loss with log link for SGD.
+
+    Equivalent to an online PoissonRegressor. The raw prediction ``p`` is
+    the log of the predicted mean (log link), so the model predicts
+    ``exp(p)``.  Targets ``y`` must be non-negative.
+
+    Loss     : exp(p) - y * p          (half-deviance, up to a constant)
+    Gradient : exp(p) - y
+    """
+
+    cdef double cy_loss(self, double y, double p) noexcept nogil:
+        return exp(p) - y * p
+
+    cdef double cy_gradient(self, double y, double p) noexcept nogil:
+        return exp(p) - y
+
+    def __reduce__(self):
+        return PoissonLoss, ()
+
+
+cdef class GammaLoss(Regression):
+    """Half Gamma deviance loss with log link for SGD.
+
+    Equivalent to an online GammaRegressor. The raw prediction ``p`` is
+    the log of the predicted mean (log link), so the model predicts
+    ``exp(p)``.  Targets ``y`` must be strictly positive.
+
+    Loss     : p + y * exp(-p)         (half-deviance, up to a constant)
+    Gradient : 1 - y * exp(-p)
+    """
+
+    cdef double cy_loss(self, double y, double p) noexcept nogil:
+        return p + y * exp(-p)
+
+    cdef double cy_gradient(self, double y, double p) noexcept nogil:
+        return 1.0 - y * exp(-p)
+
+    def __reduce__(self):
+        return GammaLoss, ()
+
+
+cdef class TweedieLoss(Regression):
+    """Half Tweedie deviance loss with log link for SGD.
+
+    Equivalent to an online TweedieRegressor(power=power). The raw
+    prediction ``p`` is the log of the predicted mean (log link).
+    Targets ``y`` must be non-negative.
+
+    Valid for power in the open interval (1, 2). For the boundary cases
+    use ``PoissonLoss`` (power=1) or ``GammaLoss`` (power=2).
+
+    Loss     : exp(p*(2-power))/(2-power) - y*exp(p*(1-power))/(1-power)
+    Gradient : exp(p*(2-power)) - y*exp(p*(1-power))
+
+    Parameters
+    ----------
+    power : double, default=1.5
+        Tweedie power parameter. Must be in the open interval (1.0, 2.0).
+    """
+
+    cdef readonly double power
+
+    def __init__(self, double power=1.5):
+        if power <= 1.0 or power >= 2.0:
+            raise ValueError(
+                f"TweedieLoss requires power in the open interval (1, 2). "
+                f"Got power={power}. Use loss='poisson' for power=1 or "
+                f"loss='gamma' for power=2."
+            )
+        self.power = power
+
+    cdef double cy_loss(self, double y, double p) noexcept nogil:
+        cdef double power = self.power
+        return (
+            exp(p * (2.0 - power)) / (2.0 - power)
+            - y * exp(p * (1.0 - power)) / (1.0 - power)
+        )
+
+    cdef double cy_gradient(self, double y, double p) noexcept nogil:
+        cdef double power = self.power
+        return exp(p * (2.0 - power)) - y * exp(p * (1.0 - power))
+
+    def __reduce__(self):
+        return TweedieLoss, (self.power,)
+
 {{for name_suffix, c_type, np_type in dtypes}}
 
 def _plain_sgd{{name_suffix}}(
