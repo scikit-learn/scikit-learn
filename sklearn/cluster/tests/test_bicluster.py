@@ -263,3 +263,15 @@ def test_n_features_in_(est):
     assert not hasattr(est, "n_features_in_")
     est.fit(X)
     assert est.n_features_in_ == 3
+
+
+@pytest.mark.parametrize("est", (SpectralBiclustering(), SpectralCoclustering()))
+def test_inf_values_handling_in_(est):
+    X = np.array(
+        [[1, 1, 2, np.inf, 0], [0, 1, 0, 1, 0], [0, 0, 1, 0, 0], [1, 2, 0, 2, 0]]
+    )
+
+    with pytest.raises(
+        ValueError, match="Input X contains infinity or a value too large for dtype"
+    ):
+        est.fit(X)
