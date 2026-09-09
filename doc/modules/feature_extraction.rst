@@ -419,6 +419,25 @@ tokenizer, so if *we've* is in ``stop_words``, but *ve* is not, *ve* will
 be retained from *we've* in transformed text.  Our vectorizers will try to
 identify and warn about some kinds of inconsistencies.
 
+Tokenization of Languages with Complex Scripts
+----------------------------------------------
+The default ``token_pattern`` used by :class:`CountVectorizer` and 
+:class:`TfidfVectorizer` is ``r"(?u)\b\w\w+\b"``. This pattern relies on
+Python's ``\w`` character class, which matches alphanumeric characters but
+specifically excludes Unicode nonspacing marks (Mn). 
+
+For languages that do not use the Latin script such as Hindi or Marathi 
+(which use the Devanagari script), vowel modifiers are classified as
+nonspacing marks. The default tokenizer will treat these modifiers as
+word delimiters, resulting in incorrectly fractured tokens.
+
+To correctly tokenize these scripts, we must override the ``token_pattern``
+parameter to explicitly capture the relevant Unicode blocks, or provide a
+completely custom callable to the ``tokenizer`` parameter. 
+
+For a practical demonstration, see the following example:
+:ref:`sphx_glr_auto_examples_text_plot_devanagari_tokenization.py`.
+
 .. rubric:: References
 
 .. [NQY18] J. Nothman, H. Qin and R. Yurchak (2018).
