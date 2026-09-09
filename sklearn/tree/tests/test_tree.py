@@ -24,6 +24,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.metrics import (
     accuracy_score,
     mean_absolute_error,
+    mean_pinball_loss,
     mean_poisson_deviance,
     mean_squared_error,
 )
@@ -43,7 +44,7 @@ from sklearn.tree._classes import (
     DENSE_SPLITTERS,
     SPARSE_SPLITTERS,
 )
-from sklearn.tree._criterion import _py_precompute_absolute_errors
+from sklearn.tree._criterion import _py_precompute_pinball_losses
 from sklearn.tree._tree import (
     NODE_DTYPE,
     TREE_LEAF,
@@ -75,7 +76,13 @@ from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import check_random_state
 
 CLF_CRITERIONS = ("gini", "log_loss")
-REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
+REG_CRITERIONS = (
+    "squared_error",
+    "absolute_error",
+    "friedman_mse",
+    "poisson",
+    "quantile",
+)
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -1878,13 +1885,15 @@ def test_criterion_copy():
             assert n_outputs == n_outputs_
             assert_array_equal(n_classes, n_classes_)
 
-        for _, typename in CRITERIA_REG.items():
-            criteria = typename(n_outputs, n_samples)
+        for name, typename in CRITERIA_REG.items():
+            args = (n_outputs, n_samples)
+            if name == "quantile":
+                args = (*args, 0.5)
+            criteria = typename(*args)
             result = copy_func(criteria).__reduce__()
-            typename_, (n_outputs_, n_samples_), _ = result
+            typename_, args_, _ = result
             assert typename == typename_
-            assert n_outputs == n_outputs_
-            assert n_samples == n_samples_
+            assert args == args_
 
 
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS)
@@ -2477,14 +2486,18 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(
     criterion, categorical_features
 ):
     """Check missing values goes to correct node during predictions."""
-    if categorical_features is not None and criterion == "absolute_error":
+    if categorical_features is not None and criterion in ("absolute_error", "quantile"):
         pytest.skip(
-            "absolute_error is not supported with categorical features in "
+            f"{criterion} is not supported with categorical features in "
             "DecisionTreeRegressor"
         )
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
-    node_value_func = np.median if criterion == "absolute_error" else np.mean
+    # criterion="quantile" defaults to quantile=0.5, i.e. the median, same as
+    # criterion="absolute_error".
+    node_value_func = (
+        np.median if criterion in ("absolute_error", "quantile") else np.mean
+    )
 
     params = dict(
         random_state=42,
@@ -2957,7 +2970,8 @@ def test_build_pruned_tree_infinite_loop():
         _build_pruned_tree_py(pruned_tree, tree.tree_, leave_in_subtree)
 
 
-def test_absolute_errors_precomputation_function(global_random_seed):
+@pytest.mark.parametrize("alpha", [0.5, 0.1, 0.75])
+def test_pinball_loss_precomputation_function(alpha, global_random_seed):
     """
     Test the main bit of logic of the MAE(RegressionCriterion) class
     (used by DecisionTreeRegressor(criterion="absolute_error")).
@@ -2968,33 +2982,41 @@ def test_absolute_errors_precomputation_function(global_random_seed):
     it can be safely removed.
     """
 
-    def compute_prefix_abs_errors_naive(y, w):
+    def compute_prefix_losses_naive(y, w):
+        """
+        Computes the pinball loss for all (y[:i], w[:i])
+        Naive: O(n^2 log n)
+        """
         y = y.ravel().copy()
-        medians = [
-            _weighted_percentile(y[:i], w[:i], 50, average=True)
+        quantiles = [
+            _weighted_percentile(y[:i], w[:i], alpha * 100, average=True)
             for i in range(1, y.size + 1)
         ]
-        errors = [
-            (np.abs(y[:i] - m) * w[:i]).sum()
-            for i, m in zip(range(1, y.size + 1), medians)
+        losses = [
+            mean_pinball_loss(
+                y[:i], np.full(i, quantile), sample_weight=w[:i], alpha=alpha
+            )
+            * w[:i].sum()
+            for i, quantile in zip(range(1, y.size + 1), quantiles)
         ]
-        return np.array(errors), np.array(medians)
+        return np.array(losses), np.array(quantiles)
 
     def assert_same_results(y, w, indices, reverse=False):
-        n = y.shape[0]
         args = (n - 1, -1) if reverse else (0, n)
-        abs_errors, medians = _py_precompute_absolute_errors(y, w, indices, *args, n)
+        losses, quantiles = _py_precompute_pinball_losses(
+            y, w, indices, *args, n, alpha=alpha
+        )
         y_sorted = y[indices]
         w_sorted = w[indices]
         if reverse:
             y_sorted = y_sorted[::-1]
             w_sorted = w_sorted[::-1]
-        abs_errors_, medians_ = compute_prefix_abs_errors_naive(y_sorted, w_sorted)
+        losses_, quantiles_ = compute_prefix_losses_naive(y_sorted, w_sorted)
         if reverse:
-            abs_errors_ = abs_errors_[::-1]
-            medians_ = medians_[::-1]
-        assert_allclose(abs_errors, abs_errors_, atol=1e-11)
-        assert_allclose(medians, medians_, atol=1e-11)
+            losses_ = losses_[::-1]
+            quantiles_ = quantiles_[::-1]
+        assert_allclose(losses, losses_, atol=1e-11)
+        assert_allclose(quantiles, quantiles_, atol=1e-11)
 
     rng = np.random.default_rng(global_random_seed)
 
@@ -3012,10 +3034,22 @@ def test_absolute_errors_precomputation_function(global_random_seed):
         assert_same_results(y, w, indices, reverse=True)
 
 
-def test_absolute_error_accurately_predicts_weighted_median(global_random_seed):
+@pytest.mark.parametrize(
+    "criterion, quantile",
+    [
+        ("absolute_error", 0.5),
+        ("quantile", 0.3),
+        ("quantile", 0.5),
+        ("quantile", 0.9),
+    ],
+)
+def test_quantile_criterion_predicts_weighted_quantile(
+    criterion, quantile, global_random_seed
+):
     """
-    Test that the weighted-median computed under-the-hood when
-    building a tree with criterion="absolute_error" is correct.
+    Test that the weighted quantile computed under-the-hood when building a tree
+    with criterion="quantile" is correct. The absolute error criterion is the
+    special case with quantile=0.5.
     """
     rng = np.random.default_rng(global_random_seed)
     n = int(1e5)
@@ -3023,14 +3057,46 @@ def test_absolute_error_accurately_predicts_weighted_median(global_random_seed):
     # Large number of zeros and otherwise continuous weights:
     weights = rng.integers(0, 3, size=n) * rng.uniform(0, 1, size=n)
 
-    tree_leaf_weighted_median = (
-        DecisionTreeRegressor(criterion="absolute_error", max_depth=1)
+    tree_leaf_weighted_quantile = (
+        DecisionTreeRegressor(criterion=criterion, quantile=quantile, max_depth=1)
         .fit(np.ones(shape=(data.shape[0], 1)), data, sample_weight=weights)
         .tree_.value.ravel()[0]
     )
-    weighted_median = _weighted_percentile(data, weights, 50, average=True)
+    weighted_quantile = _weighted_percentile(
+        data, weights, quantile * 100, average=True
+    )
 
-    assert_allclose(tree_leaf_weighted_median, weighted_median)
+    assert_allclose(tree_leaf_weighted_quantile, weighted_quantile)
+
+
+def test_quantile_confidence_interval_coverage(global_random_seed):
+    """
+    Test that quantile regression confidence intervals have appropriate coverage.
+    """
+    rng = np.random.default_rng(global_random_seed)
+    n_samples = 8000
+    X = rng.uniform(0.0, 1.0, size=(n_samples, 1))
+    noise = rng.standard_normal(size=n_samples) * 0.1
+    y = np.sin(2 * np.pi * X[:, 0]) + noise
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.4, random_state=0
+    )
+    common_params = dict(
+        criterion="quantile", max_depth=6, min_samples_leaf=150, random_state=0
+    )
+
+    lower = DecisionTreeRegressor(**common_params, quantile=0.1)
+    lower.fit(X_train, y_train)
+    upper = DecisionTreeRegressor(**common_params, quantile=0.9)
+    upper.fit(X_train, y_train)
+
+    lower_pred = lower.predict(X_test)
+    upper_pred = upper.predict(X_test)
+    coverage = np.mean((y_test >= lower_pred) & (y_test <= upper_pred))
+
+    # Trees are flexible but still approximate; allow some slack around 80%.
+    assert 0.75 <= coverage <= 0.85
 
 
 def test_splitting_with_missing_values():
@@ -3143,20 +3209,21 @@ def test_fit_categorical_with_monotonic_constraint(Tree):
         Tree(categorical_features=[0], monotonic_cst=[1], random_state=0).fit(X, y)
 
 
-def test_fit_categorical_with_absolute_error():
+@pytest.mark.parametrize("criterion", ["absolute_error", "quantile"])
+def test_fit_categorical_with_absolute_error(criterion):
     # Non-regression test: the categorical split-finding algorithm is not
-    # valid for criterion="absolute_error" (see gh-34578), so it should be
-    # rejected rather than silently return a possibly suboptimal split.
+    # valid for criterion="absolute_error" (see gh-34578), nor for
+    # criterion="quantile" which relies on the same split-finding logic, so
+    # it should be rejected rather than silently return a possibly
+    # suboptimal split.
     X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
     y = np.array([0.0, 1.0, 0.0, 1.0])
 
     with pytest.raises(
         ValueError,
-        match="Categorical features are not supported with criterion='absolute_error'",
+        match=f"Categorical features are not supported with criterion='{criterion}'",
     ):
-        DecisionTreeRegressor(categorical_features=[0], criterion="absolute_error").fit(
-            X, y
-        )
+        DecisionTreeRegressor(categorical_features=[0], criterion=criterion).fit(X, y)
 
 
 def test_predict_sparse_int64_indices_raises():
