@@ -1,0 +1,5 @@
+- :class:`impute.KNNImputer` now raises a ``UserWarning`` when fitted on
+  data with only one feature, since neighbor-based imputation is not
+  meaningful in that case and the result is equivalent to mean imputation.
+  By :user:`sajidali-ds`.
+
