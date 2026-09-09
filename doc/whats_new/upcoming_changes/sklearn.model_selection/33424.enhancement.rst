@@ -1,0 +1,4 @@
+- :class:`model_selection.TimeSeriesSplit` now supports
+  ``n_splits="walk_forward"`` with ``step`` and ``min_train_size`` to enable
+  walk-forward splitting with expanding or rolling train windows (using
+  ``max_train_size`` for rolling windows). By :user:`joelalcedo`.
