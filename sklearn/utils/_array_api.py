@@ -113,6 +113,7 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             # creates Device objects when needed.
             yield array_namespace, "CPU_DEVICE", "float64"
             yield array_namespace, "device1", "float32"
+            yield array_namespace, "no_float64", "float32"
         else:
             yield array_namespace, None, None
 
@@ -1247,10 +1248,12 @@ def _bincount(array, weights=None, minlength=0, xp=None):
     array_np = move_to(array, xp=numpy, device="cpu")
     if weights is not None:
         weights_np = move_to(weights, xp=numpy, device="cpu")
+        dtype = weights.dtype
     else:
         weights_np = None
+        dtype = None
     bin_out = numpy.bincount(array_np, weights=weights_np, minlength=minlength)
-    return xp.asarray(bin_out, device=array_device(array))
+    return xp.asarray(bin_out, device=array_device(array), dtype=dtype)
 
 
 def _logsumexp(array, axis=None, xp=None):
