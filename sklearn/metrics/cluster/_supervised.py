@@ -1274,7 +1274,13 @@ def fowlkes_mallows_score(labels_true, labels_pred):
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
-    return float(np.sqrt(tk / pk) * np.sqrt(tk / qk)) if tk != 0.0 else 0.0
+    if tk == 0.0:
+        # No pair of points is co-clustered in both labelings. When neither
+        # labeling co-clusters any pair either (pk == qk == 0), both consist
+        # only of singletons, so the two labelings agree and the score is 1.0.
+        # Otherwise one of them does group points together and they disagree.
+        return 1.0 if pk == 0.0 and qk == 0.0 else 0.0
+    return float(np.sqrt(tk / pk) * np.sqrt(tk / qk))
 
 
 def _entropy(labels):
