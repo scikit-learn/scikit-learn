@@ -246,6 +246,66 @@ def test_gradient():
             assert_almost_equal(numgrad, grad)
 
 
+@pytest.mark.parametrize("loss", ["squared_error", "poisson"])
+@pytest.mark.parametrize("n_outputs", [1, 2, 3])
+def test_gradient_regressor(loss, n_outputs):
+    # Non-regression test for gh-8349.
+    # The loss returned by `_loss_grad_lbfgs` must be the loss whose gradient is
+    # returned alongside it, otherwise lbfgs line-searches on one function while
+    # following the gradient of another. `squared_error` used to average over
+    # outputs while the gradient did not, which made the analytical gradient
+    # `n_outputs` times too large for multi-output regression.
+    n_samples, n_features = 5, 10
+    rng = np.random.RandomState(42)
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples, n_outputs)
+    if loss == "poisson":
+        y += 0.5
+    if n_outputs == 1:
+        y = y.ravel()
+
+    mlp = MLPRegressor(
+        hidden_layer_sizes=10,
+        solver="lbfgs",
+        alpha=1e-5,
+        loss=loss,
+        max_iter=1,
+        random_state=1,
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        mlp.fit(X, y)
+
+    Y = y.reshape(-1, 1) if y.ndim == 1 else y
+    theta = np.hstack([l.ravel() for l in mlp.coefs_ + mlp.intercepts_])
+    layer_units = [X.shape[1]] + [mlp.hidden_layer_sizes] + [mlp.n_outputs_]
+
+    activations = [X]
+    deltas, coef_grads, intercept_grads = [], [], []
+    for i in range(mlp.n_layers_ - 1):
+        activations.append(np.empty((X.shape[0], layer_units[i + 1])))
+        deltas.append(np.empty((X.shape[0], layer_units[i + 1])))
+        coef_grads.append(np.empty((layer_units[i], layer_units[i + 1])))
+        intercept_grads.append(np.empty(layer_units[i + 1]))
+
+    def loss_grad_fun(t):
+        return mlp._loss_grad_lbfgs(
+            t, X, Y, None, activations, deltas, coef_grads, intercept_grads
+        )
+
+    _, grad = loss_grad_fun(theta)
+    grad = grad.copy()
+    numgrad = np.zeros_like(theta)
+    epsilon = 1e-5
+    E = np.eye(theta.size)
+    for i in range(theta.size):
+        dtheta = E[:, i] * epsilon
+        numgrad[i] = (
+            loss_grad_fun(theta + dtheta)[0] - loss_grad_fun(theta - dtheta)[0]
+        ) / (epsilon * 2.0)
+    assert_allclose(numgrad, grad, rtol=1e-5, atol=1e-8)
+
+
 @pytest.mark.parametrize("X,y", classification_datasets)
 def test_lbfgs_classification(X, y):
     # Test lbfgs on classification.
