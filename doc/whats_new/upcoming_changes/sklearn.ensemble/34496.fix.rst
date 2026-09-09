@@ -1,0 +1,6 @@
+- :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` now produce a correct
+  ``ValueError`` message in ``_resize_state`` when ``n_estimators`` is
+  reduced with ``warm_start=True``, instead of crashing with a ``TypeError``
+  due to formatting a tree object as an integer.
+  By :user:`shipitdev <shipitdev>`.
