@@ -423,6 +423,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 criterion = CRITERIA_CLF[self.criterion](
                     self.n_outputs_, self.n_classes_
                 )
+            elif (
+                self.criterion == "squared_error"
+                and self.n_outputs_ == 1
+                and sample_weight is None
+            ):
+                # Specialized criterion that skips the n_outputs loop and the
+                # per-sample `sample_weight is not None` check, both always
+                # trivial in this common case.
+                criterion = _criterion.MSESingleOutputNoSampleWeight(
+                    self.n_outputs_, n_samples
+                )
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
         else:

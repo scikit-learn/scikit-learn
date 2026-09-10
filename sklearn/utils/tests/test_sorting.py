@@ -8,7 +8,8 @@ from sklearn.utils._sorting import _py_simultaneous_sort
 
 
 @pytest.mark.parametrize("kind", ["2-way", "3-way"])
-def test_simultaneous_sort_correctness(kind):
+@pytest.mark.parametrize("index_dtype", [np.intp, np.int32])
+def test_simultaneous_sort_correctness(kind, index_dtype):
     rng = np.random.default_rng(0)
     for x in [
         rng.uniform(size=3),
@@ -17,31 +18,34 @@ def test_simultaneous_sort_correctness(kind):
         # with duplicates:
         rng.geometric(0.2, size=100).astype("float32"),
         rng.integers(0, 2, size=1000).astype("float32"),
+        # large enough to exercise the SIMD-sort dispatch path:
+        rng.uniform(size=5000),
     ]:
         n = x.size
-        ind = np.arange(n, dtype=np.intp)
+        ind = np.arange(n, dtype=index_dtype)
         x_sorted = x.copy()
         _py_simultaneous_sort(x_sorted, ind, n, use_three_way_partition=kind == "3-way")
         assert (x_sorted[:-1] <= x_sorted[1:]).all()
         assert_array_equal(x[ind], x_sorted)
-        assert_array_equal(np.sort(ind), np.arange(n, dtype=np.intp))
+        assert_array_equal(np.sort(ind), np.arange(n, dtype=index_dtype))
 
 
 @pytest.mark.parametrize("kind", ["2-way", "3-way"])
-def test_simultaneous_sort_no_stackoverflow(kind):
+@pytest.mark.parametrize("index_dtype", [np.intp, np.int32])
+def test_simultaneous_sort_no_stackoverflow(kind, index_dtype):
     """Check that worst case inputs do not exceed the recursion stack limit."""
     n = 1_000_000
     # worst case pattern (i.e. triggers the quadratic path)
     # for naive 2-way partitioning quicksort:
     values = np.zeros(n)
-    indices = np.arange(n, dtype=np.intp)
+    indices = np.arange(n, dtype=index_dtype)
     _py_simultaneous_sort(
         values, indices, values.shape[0], use_three_way_partition=kind == "3-way"
     )
 
     # worst case pattern for the better (numpy-style) 2-way partitioning:
     values = np.roll(np.arange(n), -1).astype(np.float32)
-    indices = np.arange(n, dtype=np.intp)
+    indices = np.arange(n, dtype=index_dtype)
     _py_simultaneous_sort(
         values, indices, values.shape[0], use_three_way_partition=kind == "3-way"
     )
@@ -54,7 +58,7 @@ def test_simultaneous_sort_no_stackoverflow(kind):
         + [i for i in range(1, 2 * k + 1) if i % 2 == 0]
     ).astype(np.float64)
     # (very unlikely in real-world non-adversarial data)
-    indices = np.arange(n, dtype=np.intp)
+    indices = np.arange(n, dtype=index_dtype)
     assert values.size == indices.size
     _py_simultaneous_sort(
         values, indices, values.shape[0], use_three_way_partition=kind == "3-way"

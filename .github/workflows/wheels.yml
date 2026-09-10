@@ -185,6 +185,20 @@ jobs:
         with:
           miniforge-version: latest
 
+      # subprojects/x86-simd-sort is fetched by meson at configure time (see
+      # subprojects/x86-simd-sort.wrap) on x86_64 builds; cibuildwheel builds
+      # from this checked-out directory, so pre-populating it here means
+      # every x86_64/i686 leg for a given OS shares one fetch instead of each
+      # container re-cloning it from GitHub. No-op (cache miss, harmless) on
+      # the arm64/win_arm64 legs, which never touch the subproject. Scoped
+      # per-OS since restoring a git checkout across OS boundaries risks
+      # subtle corruption (line endings, file modes), especially on Windows.
+      - name: Create cache for the vendored x86-simd-sort subproject
+        uses: actions/cache@v5
+        with:
+          path: subprojects/x86-simd-sort
+          key: simd-sort-subproject-v1-${{ runner.os }}-${{ hashFiles('subprojects/x86-simd-sort.wrap', 'subprojects/packagefiles/x86-simd-sort/**') }}
+
       - name: Build and test wheels
         env:
           CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1

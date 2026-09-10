@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # See _criterion.pyx for implementation details.
-from sklearn.utils._typedefs cimport float64_t, int8_t, intp_t
+from sklearn.utils._typedefs cimport float64_t, int8_t, int32_t, intp_t
 
 
 cdef class Criterion:
@@ -14,7 +14,7 @@ cdef class Criterion:
     cdef const float64_t[:, ::1] y         # Values of y
     cdef const float64_t[:] sample_weight  # Sample weights
 
-    cdef const intp_t[:] sample_indices    # Sample indices in X, y
+    cdef const int32_t[:] sample_indices    # Sample indices in X, y
     cdef intp_t start                      # samples[start:pos] are the samples in the left node
     cdef intp_t pos                        # samples[pos:end] are the samples in the right node
     cdef intp_t end
@@ -36,7 +36,7 @@ cdef class Criterion:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         float64_t weighted_n_samples,
-        const intp_t[:] sample_indices,
+        const int32_t[:] sample_indices,
         intp_t start,
         intp_t end
     ) except -1 nogil
