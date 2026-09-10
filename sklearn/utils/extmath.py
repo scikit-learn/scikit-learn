@@ -417,7 +417,7 @@ def randomized_svd(
     (problem (1.5), p5).
 
     Refer to
-    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    :ref:`sphx_glr_auto_examples_applications_plot_wikipedia_principal_eigenvector.py`
     for a typical example where the power iteration algorithm is used to rank web pages.
     This algorithm is also known to be used as a building block in Google's PageRank
     algorithm.

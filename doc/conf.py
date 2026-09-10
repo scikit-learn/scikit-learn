@@ -511,6 +511,9 @@ redirects = {
     "auto_examples/miscellaneous/plot_partial_dependence_visualization_api": (
         "auto_examples/inspection/plot_partial_dependence_visualization_api"
     ),
+    "auto_examples/applications/wikipedia_principal_eigenvector": (
+        "auto_examples/applications/plot_wikipedia_principal_eigenvector"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
