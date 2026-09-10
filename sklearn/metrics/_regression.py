@@ -1110,6 +1110,15 @@ def explained_variance_score(
     -----
     This is not a symmetric function.
 
+    This metric is not well-defined for single samples and will return a NaN
+    value (with an :class:`~sklearn.exceptions.UndefinedMetricWarning`) if
+    n_samples is less than two, regardless of ``force_finite``.
+
+    .. versionchanged:: 1.10
+        Single-sample inputs (``n_samples < 2``) now return ``NaN`` with an
+        :class:`~sklearn.exceptions.UndefinedMetricWarning`, matching
+        :func:`r2_score`, instead of silently returning ``1.0``.
+
     Examples
     --------
     >>> from sklearn.metrics import explained_variance_score
@@ -1140,6 +1149,11 @@ def explained_variance_score(
             y_true, y_pred, sample_weight, multioutput, xp=xp, device=device
         )
     )
+
+    if _num_samples(y_pred) < 2:
+        msg = "Explained Variance score is not well-defined with less than two samples."
+        warnings.warn(msg, UndefinedMetricWarning)
+        return float("nan")
 
     y_diff_avg = _average(y_true - y_pred, weights=sample_weight, axis=0, xp=xp)
     numerator = _average(
