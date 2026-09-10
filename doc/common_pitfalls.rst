@@ -572,3 +572,10 @@ impact on robustness, as long as `split` is only called once. When `split`
 is called multiple times, fold-to-fold comparison isn't possible anymore. As
 a result, passing integer to CV splitters is usually safer and covers most
 use-cases.
+
+.. topic:: References:
+
+    Xu, Y., Goodacre, R. "On Splitting Training and Validation Set: A Comparative Study of Cross-Validation, Bootstrap and Systematic Sampling for Estimating the Generalization Performance of Supervised Learning." J. Anal. Test. 2, 249–262 (2018). 
+        `Link to article <https://link.springer.com/article/10.1007/s41664-018-0068-2>`_
+
+|details-end|
