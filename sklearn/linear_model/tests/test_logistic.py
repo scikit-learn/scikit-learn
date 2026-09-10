@@ -17,7 +17,7 @@ from scipy.optimize import minimize
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
-from sklearn.callback.tests._common.callbacks import RecordingCallback
+from sklearn.callback._testing.callbacks import RecordingCallback
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier

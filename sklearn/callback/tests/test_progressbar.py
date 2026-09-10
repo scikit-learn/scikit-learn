@@ -9,7 +9,7 @@ import pytest
 
 from sklearn.base import clone
 from sklearn.callback import ProgressBar
-from sklearn.callback.tests._common.estimators import (
+from sklearn.callback._testing.estimators import (
     HeterogeneousMetaEstimator,
     MaxIterEstimator,
     MetaEstimator,
@@ -126,7 +126,7 @@ def test_progressbar_outside_main_module(prefer):
     pytest.importorskip("rich")
     code = f"""
     from sklearn.callback import ProgressBar
-    from sklearn.callback.tests._common.estimators import (
+    from sklearn.callback._testing.estimators import (
         MaxIterEstimator,
         MetaEstimator,
     )
