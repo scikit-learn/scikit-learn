@@ -59,7 +59,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._indexing import _array_indexing
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms, softmax
-from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict, _is_gil_enabled
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -70,7 +70,7 @@ from sklearn.utils.metadata_routing import (
 )
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.optimize import _check_optimize_result, _newton_cg
-from sklearn.utils.parallel import Parallel, _is_gil_enabled, delayed
+from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
