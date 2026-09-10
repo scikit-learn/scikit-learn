@@ -994,7 +994,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_threads_for_features = math.ceil(n_features / n_features_per_thread)
 
         if not active_wait:
-            return n_features_per_thread
+            return n_threads_for_features
 
         # Very empirical: more samples warrant more threads:
         n_threads_for_samples = min(0.1 * math.pow(n_samples, 1 / 3), max_n_threads)
