@@ -79,6 +79,20 @@ def test_predict_proba(global_dtype, Estimator, parameters):
     assert_allclose(clf.predict_proba([[1.0, 1.0]]), np.array([[0.5, 0.5]]))
 
 
+@pytest.mark.parametrize(
+    "Estimator",
+    [label_propagation.LabelPropagation, label_propagation.LabelSpreading],
+)
+def test_predict_proba_uniform_for_zero_affinity(global_dtype, Estimator):
+    X = np.asarray([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], dtype=global_dtype)
+    y = np.array([0, 1, -1])
+    clf = Estimator(kernel="rbf").fit(X, y)
+
+    probabilities = clf.predict_proba([[1e6, 1e6]])
+
+    assert_allclose(probabilities, [[0.5, 0.5]])
+
+
 @pytest.mark.parametrize("alpha", [0.1, 0.3, 0.5, 0.7, 0.9])
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
 def test_label_spreading_closed_form(global_dtype, Estimator, parameters, alpha):
@@ -217,7 +231,7 @@ def test_convergence_warning():
     [label_propagation.LabelSpreading, label_propagation.LabelPropagation],
 )
 def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
-    # check that we don't divide by zero in case of null normalizer
+    # Check that a null normalizer produces a valid probability distribution.
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/15946
     # https://github.com/scikit-learn/scikit-learn/issues/9292
@@ -227,6 +241,7 @@ def test_label_propagation_non_zero_normalizer(LabelPropagationCls):
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
         mdl.fit(X, y)
+    assert_allclose(mdl.label_distributions_[2:], 0.5)
 
 
 def test_predict_sparse_callable_kernel(global_dtype):
