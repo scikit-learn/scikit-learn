@@ -19,7 +19,7 @@ import numpy as np
 from scipy.sparse import coo_array, csr_array, issparse
 
 from sklearn.exceptions import UndefinedMetricWarning
-from sklearn.preprocessing import LabelBinarizer, LabelEncoder
+from sklearn.preprocessing import LabelBinarizer, LabelEncoder, label_binarize
 from sklearn.utils import (
     _align_api_if_sparse,
     assert_all_finite,
@@ -3580,13 +3580,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     pred_decision = check_array(pred_decision, ensure_2d=False)
     y_true = column_or_1d(y_true)
 
-    # Array API dispatch follows `pred_decision`, consistent with other
-    # scoring functions: "everything follows y_pred". `y_true`/`labels` may
-    # contain strings, which have no place in a strict Array API namespace,
-    # so they stay in their own namespace until encoded to plain integers.
     xp, _, device = get_namespace_and_device(pred_decision)
-    # `pred_decision` is documented as floats; an integer dtype would break
-    # the `-inf` sentinel used below to mask out the true class's score.
     pred_decision = xp.astype(
         pred_decision, _find_matching_floating_dtype(pred_decision, xp=xp)
     )
@@ -3622,20 +3616,14 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
                     f"({y_true.shape[0]}, {y_true_unique.shape[0]}). "
                     f"Got: {pred_decision.shape}"
                 )
-        if labels is None:
-            labels = y_true_unique
-        le = LabelEncoder()
-        le.fit(labels)
-        y_true_encoded = move_to(le.transform(y_true), xp=xp, device=device)
 
-        # The Array API standard has no boolean-mask fancy indexing (it would
-        # produce a data-dependent output shape), so the true-class score and
-        # the best-of-the-rest score are each computed with a one-hot mask
-        # instead of `pred_decision[~mask]` / `pred_decision[mask]`.
-        n_classes = pred_decision.shape[1]
-        is_true_class = xp.astype(
-            xpx.one_hot(y_true_encoded, n_classes, xp=xp), xp.bool
+        # One-hot mask of the true class per row (columns ordered like
+        # `y_true_unique`); avoids boolean-mask indexing, whose output shape
+        # is data-dependent and therefore illegal in the Array API.
+        is_true_class = move_to(
+            label_binarize(y_true, classes=y_true_unique), xp=xp, device=device
         )
+        is_true_class = xp.astype(is_true_class, xp.bool)
         zero = xp.asarray(0.0, dtype=pred_decision.dtype, device=device)
         neg_inf = xp.asarray(-xp.inf, dtype=pred_decision.dtype, device=device)
 
@@ -3655,9 +3643,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
         lbin = LabelBinarizer(neg_label=-1)
         y_true_encoded = lbin.fit_transform(y_true)[:, 0]
         y_true_encoded = move_to(y_true_encoded, xp=xp, device=device)
-        # LabelBinarizer returns integer +/-1 labels; the Array API standard
-        # (unlike NumPy) disallows implicit int/float type promotion, so an
-        # explicit cast is required before combining with `pred_decision`.
+        # Array API disallows implicit int/float promotion.
         y_true_encoded = xp.astype(y_true_encoded, pred_decision.dtype)
 
         try:
