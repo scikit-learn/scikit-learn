@@ -1429,10 +1429,12 @@ def test_class_weights():
     )
 
 
-def test_unknown_category_that_are_negative():
-    """Check that unknown categories that are negative does not error.
+def test_unknown_category_at_predict_time_is_treated_as_missing():
+    """Check that categories unseen at fit time do not error, and are treated
+    like a missing category regardless of their sign.
 
-    Non-regression test for #24274.
+    We used to have a special treatment for negative value:
+    see https://github.com/scikit-learn/scikit-learn/pull/34663/
     """
     rng = np.random.RandomState(42)
     n_samples = 1000
@@ -1446,12 +1448,14 @@ def test_unknown_category_that_are_negative():
         max_iter=10,
     ).fit(X, y)
 
-    # Check that negative values from the second column are treated like a
-    # missing category
+    # Categories unseen at fit time (whether negative or positive) are
+    # treated like a missing category.
     X_test_neg = np.asarray([[1, -2], [3, -4]])
+    X_test_pos = np.asarray([[1, 99], [3, 77]])
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+    assert_allclose(hist.predict(X_test_pos), hist.predict(X_test_nan))
 
 
 @pytest.mark.parametrize(
