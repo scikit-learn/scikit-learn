@@ -28,8 +28,10 @@ from sklearn.ensemble._hist_gradient_boosting.common cimport MonotonicConstraint
 # Positive gains below this are ignored. Cancellation in the gain formula can
 # produce ~1e-15 dust for a theoretically zero-gain split.
 cdef Y_DTYPE_C GAIN_NUMERICAL_ZERO = 1e-12
-# Feature gains that differ only within float32 histogram accumulation error
-# are treated as ties. Applied once per feature, not per bin.
+# Relative gain gap treated as a tie when comparing features. 256 is the
+# maximum histogram size (uint8 bins, i.e. max_bins + the missing-value bin).
+# n_bins float32 ulps (~3e-5) is a heuristic: large enough for G/H rounding
+# (integer weights vs repeated rows), not a bound on histogram summation.
 cdef Y_DTYPE_C GAIN_FEATURE_TIE_SCALE = 256 * FLT_EPSILON
 
 
@@ -634,8 +636,7 @@ cdef class Splitter:
             Y_DTYPE_C best_gain
 
         for split_info_idx in range(1, n_allowed_features):
-            # O(n_features) per node. Keep the first feature when gains differ
-            # only by float32 histogram accumulation error.
+            # O(n_features) per node. Keep the first feature on a relative tie.
             gain = split_infos[split_info_idx].gain
             best_gain = split_infos[best_split_info_idx].gain
             if gain > best_gain + GAIN_FEATURE_TIE_SCALE * max(abs(gain), abs(best_gain)):
