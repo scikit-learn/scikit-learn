@@ -30,8 +30,9 @@ from sklearn.ensemble._hist_gradient_boosting.common cimport MonotonicConstraint
 cdef Y_DTYPE_C GAIN_NUMERICAL_ZERO = 1e-12
 # Relative gain gap treated as a tie when comparing features. 256 is the
 # maximum histogram size (uint8 bins, i.e. max_bins + the missing-value bin).
-# n_bins float32 ulps (~3e-5) is a heuristic: large enough for G/H rounding
-# (integer weights vs repeated rows), not a bound on histogram summation.
+# n_bins float32 ulps (~3e-5) is a heuristic for G/H rounding, not a bound
+# on histogram summation. Without it, tiny float32 noise can swap near-tied
+# features and change the rest of the tree.
 cdef Y_DTYPE_C GAIN_FEATURE_TIE_SCALE = 256 * FLT_EPSILON
 
 
