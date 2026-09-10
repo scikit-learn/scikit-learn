@@ -61,9 +61,6 @@ This should display:
 
 Set up a dedicated environment and install dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-..
-   TODO Add |PythonMinVersion| to min_dependency_substitutions.rst one day.
-   Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
 .. |PythonMinVersion| replace:: 3.11
 
 Using an isolated environment such as venv_ or conda_ makes it possible to
