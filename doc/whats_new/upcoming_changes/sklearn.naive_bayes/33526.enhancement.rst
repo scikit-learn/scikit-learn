@@ -1,0 +1,4 @@
+- Improved the docstrings of :class:`naive_bayes.GaussianNB` for the
+  ``var_smoothing`` parameter and ``epsilon_`` attribute to better explain
+  their formula and purpose. Added dedicated tests for ``var_smoothing``.
+  By :user:`Vishal R K <vishal-rk>`.
