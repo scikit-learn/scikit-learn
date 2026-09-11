@@ -1,0 +1,6 @@
+- :class:`ensemble.HistGradientBoostingRegressor` now supports
+  ``loss="huber"``, which uses the Huber loss for robust regression. The
+  transition point ``delta`` is re-estimated at each boosting iteration as the
+  ``quantile``-th percentile of absolute residuals (default ``quantile=0.9``),
+  following :doi:`Friedman (2001) <10.1214/aos/1013203451>`.
+  By :user:`Teja Chintala <ShadowAlzazel>`.
