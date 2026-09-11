@@ -185,26 +185,25 @@ jobs:
         with:
           miniforge-version: latest
 
+      - name: Set up macOS OpenMP
+        if: ${{ startsWith(matrix.platform_id, 'macosx') }}
+        run: bash build_tools/wheels/configure_macos_env.sh
+
+      - name: Set SOURCE_DATE_EPOCH from source commit
+        run: |
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+
       - name: Build and test wheels
+        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074 # v4.2.0
         env:
-          CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
-          CIBW_ARCHS: all
-          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
-          CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
-          # Needed on Windows CI to compile with Visual Studio compiler
-          # otherwise Meson detects a MINGW64 platform and use MINGW64
-          # toolchain
-          CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
-          CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
-          CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
+          SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
+          PYTHONHASHSEED: "0"
+          CIBW_ENVIRONMENT_PASS_LINUX: SOURCE_DATE_EPOCH PYTHONHASHSEED RUNNER_OS
           # TODO Put back pandas when there is a pandas release with Python 3.14 wheels
           CIBW_TEST_REQUIRES: ${{ contains(matrix.python, '314') && 'pytest' || 'pytest pandas' }} scipy
-          CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh {project}
-          CIBW_BUILD_VERBOSITY: 1
-
-        run: bash build_tools/wheels/build_wheels.sh
+        with:
+          config-file: cibuildwheel.toml
 
       - name: Store artifacts
         uses: actions/upload-artifact@v7

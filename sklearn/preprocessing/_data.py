@@ -1300,7 +1300,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The data used to compute the per-feature minimum and maximum
+            The data used to compute the per-feature maximum absolute value
             used for later scaling along the features axis.
 
         y : None
@@ -1326,7 +1326,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The data used to compute the mean and standard deviation
+            The data used to compute the maximum absolute value
             used for later scaling along the features axis.
 
         y : None
