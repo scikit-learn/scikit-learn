@@ -9,6 +9,7 @@ from typing import NamedTuple, cast
 import numpy as np
 
 from sklearn.utils._array_api import array_device, get_namespace, size
+from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._missing import is_scalar_nan
 
 
@@ -43,6 +44,10 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         The number of times each of the unique values comes up in the original
         array. Only provided if `return_counts` is True.
     """
+    if is_pandas_df_or_series(values):
+        return _unique_pandas(
+            values, return_inverse=return_inverse, return_counts=return_counts
+        )
     if values.dtype == object:
         return _unique_python(
             values, return_inverse=return_inverse, return_counts=return_counts
@@ -183,6 +188,60 @@ def _map_to_integer(values, uniques):
     return xp.asarray([table[v] for v in values], device=array_device(values))
 
 
+def _unique_pandas(values, *, return_inverse, return_counts):
+    """Fast path for pandas Series, see `_unique` docstring for details.
+
+    Plain `object` dtype Series never reach this function: `_check_X`
+    (`sklearn/preprocessing/_encoders.py`) materializes them via `to_numpy()`
+    so they are routed in `_unique_python`.
+    """
+    import pandas as pd
+
+    codes, index = pd.factorize(values, sort=True, use_na_sentinel=False)
+    uniques = index.to_numpy()
+    if uniques.size and pd.isna(uniques[-1]):
+        # `factorize` doesn't always normalize the missing-value entry to
+        # `np.nan` (e.g. pandas StringDtype keeps it as `pd.NA`), but the
+        # rest of the codebase (`is_scalar_nan`-based checks) expects
+        # `np.nan` specifically.
+        uniques[-1] = np.nan
+
+    ret = (uniques,)
+    if return_inverse:
+        ret += (codes,)
+    if return_counts:
+        ret += (np.bincount(codes, minlength=len(uniques)),)
+
+    return ret[0] if len(ret) == 1 else ret
+
+
+def _encode_pandas(values, uniques):
+    """Fast pandas equivalent of `_map_to_integer`.
+
+    Values not present in `uniques` are encoded as -1.
+
+    As in `_unique_pandas`, plain `object` dtype Series never reach this function.
+    """
+    import pandas as pd
+
+    # using "string" dtype is faster except when `values` is categorical dtype
+    dtype = None if isinstance(values.dtype, pd.CategoricalDtype) else "string"
+    # `copy=True` for string: on pandas<3, building a StringDtype Index from an
+    # object ndarray coerces its `np.nan` entries to `pandas.NA` in place
+    index = pd.Index(uniques, dtype=dtype, copy=dtype == "string")
+    encoded = np.asarray(index.get_indexer(values))
+    if (
+        uniques.size
+        and isinstance(values.dtype, pd.StringDtype)
+        and pd.isna(uniques[-1])
+    ):
+        # On pandas<3, `Index.get_indexer` fails to match a string-dtype Series'
+        # missing entries (stored as `pandas.NA`) against an Index's `np.nan` entry,
+        # incorrectly reporting them as unknown (-1).
+        encoded[np.asarray(values.isna())] = len(uniques) - 1
+    return encoded
+
+
 def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_unique`, see docstring there for details
     try:
@@ -272,6 +331,13 @@ def _encode(values, *, uniques, return_diff=False):
         The unique values present in `values` and not in `uniques`. Only
         returned if ``return_diff=True``.
     """
+    if is_pandas_df_or_series(values):
+        encoded = _encode_pandas(values, uniques)
+        if return_diff:
+            diff = _unique(values[encoded == -1])
+            return encoded, diff
+        return encoded
+
     xp, _ = get_namespace(values, uniques)
     if not xp.isdtype(values.dtype, "numeric"):
         encoded = _map_to_integer(values, uniques)

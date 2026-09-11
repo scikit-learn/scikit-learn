@@ -1,0 +1,4 @@
+- :class:`preprocessing.OneHotEncoder` and :class:`preprocessing.OrdinalEncoder`
+  no longer crash when fitting or transforming a pandas ``string`` dtype
+  (``string[python]``/``string[pyarrow]``) column that contains missing values.
+  By :user:`Arthur Lacote <cakedev0>`.
