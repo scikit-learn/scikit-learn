@@ -140,6 +140,9 @@ then
     exit 0
 fi
 
+# TMP: turn all sphinx warnings into errors, even in PRs. Remove before merging.
+export SPHINXOPTS="-T -W --keep-going"
+
 if [[ "$CIRCLE_BRANCH" =~ ^main$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
     # ZIP linked into HTML
