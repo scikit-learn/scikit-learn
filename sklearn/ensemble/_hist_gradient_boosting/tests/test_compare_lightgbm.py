@@ -10,6 +10,7 @@ from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estimator
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+from sklearn.utils._testing import assert_allclose
 
 
 @pytest.mark.parametrize("seed", range(5))
@@ -261,7 +262,7 @@ def test_same_predictions_multiclass_classification(
     acc_lightgbm = accuracy_score(y_train, pred_lightgbm)
     acc_sklearn = accuracy_score(y_train, pred_sklearn)
 
-    np.testing.assert_allclose(acc_lightgbm, acc_sklearn, rtol=0, atol=5e-2)
+    assert_allclose(acc_lightgbm, acc_sklearn, rtol=0, atol=5e-2)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
         pred_lightgbm = est_lightgbm.predict(X_test)

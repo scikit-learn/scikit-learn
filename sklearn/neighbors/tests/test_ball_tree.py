@@ -2,11 +2,15 @@ import itertools
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_almost_equal, assert_equal
 
 from sklearn.neighbors._ball_tree import BallTree, BallTree32, BallTree64
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
+    assert_array_almost_equal,
+)
+from sklearn.utils._testing import assert_array_equal as assert_equal
 from sklearn.utils.validation import check_array
 
 rng = np.random.RandomState(10)

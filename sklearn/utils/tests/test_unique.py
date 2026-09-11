@@ -1,6 +1,6 @@
 import numpy as np
-from numpy.testing import assert_array_equal
 
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._unique import attach_unique, cached_unique
 from sklearn.utils.validation import check_array
 

@@ -23,6 +23,7 @@ from sklearn.utils._testing import (
     TempMemmap,
     assert_allclose,
     assert_array_almost_equal,
+    assert_array_less,
     ignore_warnings,
 )
 
@@ -450,7 +451,7 @@ def test_lars_cv():
         X = diabetes.data[:length]
         y = diabetes.target[:length]
         lars_cv.fit(X, y)
-        np.testing.assert_array_less(old_alpha, lars_cv.alpha_)
+        assert_array_less(old_alpha, lars_cv.alpha_)
         old_alpha = lars_cv.alpha_
     assert not hasattr(lars_cv, "n_nonzero_coefs")
 
@@ -756,7 +757,7 @@ def test_lars_with_jitter(est):
     est_jitter.fit(X, y)
 
     assert np.mean((est.coef_ - est_jitter.coef_) ** 2) > 0.1
-    np.testing.assert_allclose(est_jitter.coef_, expected_coef, rtol=1e-3)
+    assert_allclose(est_jitter.coef_, expected_coef, rtol=1e-3)
 
 
 def test_X_none_gram_not_none():

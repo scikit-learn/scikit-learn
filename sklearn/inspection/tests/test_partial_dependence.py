@@ -438,8 +438,8 @@ def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
         pdp_gbdt = _partial_dependence_recursion(gbdt, grid, features)
         pdp_tree = _partial_dependence_recursion(tree, grid, features)
 
-        np.testing.assert_allclose(pdp_gbdt, pdp_tree)
-        np.testing.assert_allclose(pdp_forest, pdp_tree)
+        assert_allclose(pdp_gbdt, pdp_tree)
+        assert_allclose(pdp_forest, pdp_tree)
 
 
 @pytest.mark.parametrize(

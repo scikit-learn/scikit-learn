@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from sklearn.tree._partitioner import _py_swap_array_slices
+from sklearn.utils._testing import assert_array_equal
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.intp])
@@ -27,7 +28,7 @@ def test_py_swap_array_slices_random(dtype, global_random_seed):
         expected = swap_slices_np(arr, start, end, n)
 
         _py_swap_array_slices(arr, start, end, n)
-        np.testing.assert_array_equal(arr, expected)
+        assert_array_equal(arr, expected)
 
     # test some edge cases:
     size = 30
@@ -37,7 +38,7 @@ def test_py_swap_array_slices_random(dtype, global_random_seed):
     expected = arr.copy()
     # n == end - start should be no-op:
     _py_swap_array_slices(arr, start, start + n, n)
-    np.testing.assert_array_equal(arr, expected)
+    assert_array_equal(arr, expected)
     # n == 0 should be no-op:
     _py_swap_array_slices(arr, start, size, 0)
-    np.testing.assert_array_equal(arr, expected)
+    assert_array_equal(arr, expected)

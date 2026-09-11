@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 from scipy.stats.mstats import mquantiles
 
 from sklearn.compose import make_column_transformer
@@ -15,7 +14,7 @@ from sklearn.inspection import PartialDependenceDisplay
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import _convert_container, assert_allclose
 
 
 @pytest.fixture(scope="module")

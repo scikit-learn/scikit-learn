@@ -2,11 +2,11 @@ import threading
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_equal
 
 from sklearn.neighbors._kd_tree import KDTree, KDTree32, KDTree64
 from sklearn.neighbors.tests.test_ball_tree import get_dataset_for_binary_tree
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose, ignore_warnings
+from sklearn.utils._testing import assert_array_equal as assert_equal
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 

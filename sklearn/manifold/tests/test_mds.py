@@ -2,12 +2,14 @@ from unittest.mock import Mock
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose, assert_array_almost_equal, assert_equal
+from numpy.testing import assert_array_almost_equal
 
 from sklearn.datasets import load_digits, load_iris, make_blobs
 from sklearn.manifold import ClassicalMDS
 from sklearn.manifold import _mds as mds
 from sklearn.metrics import euclidean_distances
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal as assert_equal
 
 
 def test_smacof():

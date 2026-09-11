@@ -3,7 +3,6 @@ from collections import defaultdict
 from functools import partial
 
 import numpy as np
-from numpy.testing import assert_array_equal
 
 from sklearn.base import (
     BaseEstimator,
@@ -20,6 +19,7 @@ from sklearn.utils._metadata_requests import (
     METHODS,
     SIMPLE_METHODS,
 )
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,

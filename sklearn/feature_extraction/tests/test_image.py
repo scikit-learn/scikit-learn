@@ -14,7 +14,7 @@ from sklearn.feature_extraction.image import (
     img_to_graph,
     reconstruct_from_patches_2d,
 )
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 
 def test_img_to_graph():
@@ -25,9 +25,7 @@ def test_img_to_graph():
     # Negative elements are the diagonal: the elements of the original
     # image. Positive elements are the values of the gradient, they
     # should all be equal on grad_x and grad_y
-    np.testing.assert_array_equal(
-        grad_x.data[grad_x.data > 0], grad_y.data[grad_y.data > 0]
-    )
+    assert_array_equal(grad_x.data[grad_x.data > 0], grad_y.data[grad_y.data > 0])
 
 
 def test_img_to_graph_sparse():
@@ -42,7 +40,7 @@ def test_img_to_graph_sparse():
     x[1, 2] = -2
     grad_x = img_to_graph(x, mask=mask).todense()
     desired = np.array([[1, 0, 0], [0, -1, 1], [0, 1, -2]])
-    np.testing.assert_array_equal(grad_x, desired)
+    assert_array_equal(grad_x, desired)
 
 
 def test_grid_to_graph():
@@ -64,7 +62,7 @@ def test_grid_to_graph():
     mask[:, 2] = 1
     graph = grid_to_graph(2, 3, 1, mask=mask.ravel()).todense()
     desired = np.array([[1, 0, 0], [0, 1, 1], [0, 1, 1]])
-    np.testing.assert_array_equal(graph, desired)
+    assert_array_equal(graph, desired)
 
     # Checking that the function works whatever the type of mask is
     mask = np.ones((size, size), dtype=np.int16)

@@ -80,8 +80,8 @@ def test_uniform_weights():
         mode, score = _mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
-        assert_array_equal(mode, mode2)
-        assert_array_equal(score, score2)
+        assert_array_equal(mode2, mode)
+        assert_array_equal(score2, score)
 
 
 def test_random_weights():
@@ -962,7 +962,7 @@ def test_incremental_variance_ddof():
                 incremental_variances = batch.var(axis=0)
                 # Assign this twice so that the test logic is consistent
                 incremental_count = batch.shape[0]
-                sample_count = np.full(batch.shape[1], batch.shape[0], dtype=np.int32)
+                sample_count = batch.shape[0]
             else:
                 result = _incremental_mean_and_var(
                     batch, incremental_means, incremental_variances, sample_count

@@ -3,11 +3,10 @@ Tests for sklearn.cluster._feature_agglomeration
 """
 
 import numpy as np
-from numpy.testing import assert_array_equal
 
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.datasets import make_blobs
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal, assert_array_equal
 
 
 def test_feature_agglomeration():
