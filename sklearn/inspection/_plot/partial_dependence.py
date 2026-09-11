@@ -759,7 +759,9 @@ class PartialDependenceDisplay:
             for fx, cat in zip(fxs, cats):
                 if not cat and fx not in deciles:
                     X_col = _safe_indexing(X, fx, axis=1)
-                    deciles[fx] = np.quantile(X_col, np.arange(0.1, 1.0, 0.1))
+                    deciles[fx] = np.quantile(
+                        X_col, np.arange(0.1, 1.0, 0.1), method="normal_unbiased"
+                    )
 
         display = cls(
             pd_results=pd_results,

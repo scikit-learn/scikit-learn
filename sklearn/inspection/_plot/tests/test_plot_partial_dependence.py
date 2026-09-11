@@ -35,7 +35,9 @@ def clf_diabetes(diabetes):
 
 def custom_values_helper(feature, grid_resolution):
     return np.linspace(
-        *np.quantile(feature, (0.05, 0.95), axis=0), num=grid_resolution, endpoint=True
+        *np.quantile(feature, (0.05, 0.95), axis=0, method="normal_unbiased"),
+        num=grid_resolution,
+        endpoint=True,
     )
 
 
@@ -96,7 +98,9 @@ def test_plot_partial_dependence(
     for i in [0, 2]:
         assert_allclose(
             disp.deciles[i],
-            np.quantile(diabetes.data[:, i], np.arange(0.1, 1.0, 0.1)),
+            np.quantile(
+                diabetes.data[:, i], np.arange(0.1, 1.0, 0.1), method="normal_unbiased"
+            ),
         )
 
     single_feature_positions = [(0, (0, 0)), (2, (0, 1))]

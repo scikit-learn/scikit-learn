@@ -139,8 +139,14 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
                 axis = uniques
             else:
                 # create axis based on percentiles and grid resolution
+                # `normal_unbiased` (alphap=betap=3/8) is the closest built-in
+                # match to the Cunnane interpolation (alphap=betap=0.4) used by
+                # the `scipy.stats.mstats.mquantiles` this used to rely on.
                 emp_percentiles = np.quantile(
-                    _safe_indexing(X, feature, axis=1), percentiles, axis=0
+                    _safe_indexing(X, feature, axis=1),
+                    percentiles,
+                    axis=0,
+                    method="normal_unbiased",
                 )
                 if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                     raise ValueError(
