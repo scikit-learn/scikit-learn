@@ -829,10 +829,12 @@ def test_ohe_handle_unknown_warn(drop):
     X_test = [["c", 1]]
     X_expected = np.array([[0, 0]])
 
+    # `handle_unknown="warn"` always warns, but no `min_frequency` or
+    # `max_categories` is set, so no infrequent category exists and the unknown
+    # category is encoded as all zeros.
     warn_msg = (
         r"Found unknown categories in columns \[0\] during transform. "
-        r"These unknown categories will be encoded as the "
-        r"infrequent category."
+        r"These unknown categories will be encoded as all zeros"
     )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
@@ -1531,18 +1533,14 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     X_test = [["c", 3]]
     X_expected = np.array([[0, 0, 0]])
 
-    if handle_unknown == "ignore":
-        warn_msg = (
-            r"Found unknown categories in columns \[0, 1\] during "
-            r"transform. These unknown categories will be encoded as all "
-            r"zeros"
-        )
-    else:
-        warn_msg = (
-            r"Found unknown categories in columns \[0, 1\] during "
-            r"transform. These unknown categories will be encoded as the "
-            r"infrequent category."
-        )
+    # No `min_frequency` or `max_categories` is set, so neither column has an
+    # infrequent category and both unknown categories are encoded as all zeros
+    # for every `handle_unknown` value.
+    warn_msg = (
+        r"Found unknown categories in columns \[0, 1\] during "
+        r"transform. These unknown categories will be encoded as all "
+        r"zeros"
+    )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
@@ -1575,18 +1573,14 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     X_test = [["c", 3]]
     X_expected = np.array([[0, 0, 0, 0]])
 
-    if handle_unknown == "ignore":
-        warn_msg = (
-            r"Found unknown categories in columns \[0, 1\] during "
-            r"transform. These unknown categories will be encoded as all "
-            r"zeros"
-        )
-    else:
-        warn_msg = (
-            r"Found unknown categories in columns \[0, 1\] during "
-            r"transform. These unknown categories will be encoded as the "
-            r"infrequent category."
-        )
+    # No `min_frequency` or `max_categories` is set, so neither column has an
+    # infrequent category and both unknown categories are encoded as all zeros
+    # for every `handle_unknown` value.
+    warn_msg = (
+        r"Found unknown categories in columns \[0, 1\] during "
+        r"transform. These unknown categories will be encoded as all "
+        r"zeros"
+    )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
@@ -1614,17 +1608,13 @@ def test_ohe_drop_first_explicit_categories(handle_unknown):
     X_test = [["c", 1]]
     X_expected = np.array([[0, 0]])
 
-    if handle_unknown == "ignore":
-        warn_msg = (
-            r"Found unknown categories in columns \[0\] during transform. "
-            r"These unknown categories will be encoded as all zeros"
-        )
-    else:
-        warn_msg = (
-            r"Found unknown categories in columns \[0\] during transform. "
-            r"These unknown categories will be encoded as the "
-            r"infrequent category."
-        )
+    # No `min_frequency` or `max_categories` is set, so no infrequent category
+    # exists and the unknown category is encoded as all zeros for every
+    # `handle_unknown` value.
+    warn_msg = (
+        r"Found unknown categories in columns \[0\] during transform. "
+        r"These unknown categories will be encoded as all zeros"
+    )
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
@@ -2433,3 +2423,49 @@ def test_onehotencoder_handle_unknown_warn_maps_to_infrequent():
         result_warn = encoder_warn.transform(test_data)
 
     assert_allclose(result_warn[2], result_infreq[2])
+
+
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
+def test_ohe_unknown_warning_mixed_infrequent_columns(handle_unknown):
+    """Check the unknown category warning reports each column's actual outcome.
+
+    Whether an unknown category is encoded as the infrequent category is decided
+    per column: only columns that have an infrequent category can absorb it. The
+    warning must therefore not describe every column with an unknown category in
+    the same way.
+    """
+    # "a" and "b" both appear twice, so the first column has no infrequent
+    # category. "y" appears once, so the second column has one.
+    X = [["a", "x"], ["a", "x"], ["b", "x"], ["b", "y"]]
+
+    ohe = OneHotEncoder(
+        drop="first",
+        sparse_output=False,
+        handle_unknown=handle_unknown,
+        min_frequency=2,
+    ).fit(X)
+    assert ohe.infrequent_categories_[0] is None
+    assert_array_equal(ohe.infrequent_categories_[1], ["y"])
+
+    X_test = [["c", "z"]]
+
+    if handle_unknown == "ignore":
+        # In this case, unknown categories are never mapped to the infrequent category
+        X_expected = np.array([[0, 0]])
+        warn_msg = (
+            r"Found unknown categories in columns \[0, 1\] during transform. "
+            r"These unknown categories will be encoded as all zeros"
+        )
+    else:
+        # Only the second column has an infrequent category to absorb unknowns.
+        X_expected = np.array([[0, 1]])
+        warn_msg = (
+            r"Found unknown categories in columns \[0, 1\] during transform. "
+            r"The unknown categories in columns \[1\] will be encoded as the "
+            r"infrequent category. Those in columns \[0\] will be encoded as "
+            r"all zeros, because these columns have no infrequent category."
+        )
+
+    with pytest.warns(UserWarning, match=warn_msg):
+        X_trans = ohe.transform(X_test)
+    assert_allclose(X_trans, X_expected)

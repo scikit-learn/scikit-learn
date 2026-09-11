@@ -225,19 +225,42 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     columns_with_unknown.append(i)
 
         if columns_with_unknown:
-            if handle_unknown == "infrequent_if_exist":
-                msg = (
-                    "Found unknown categories in columns "
-                    f"{columns_with_unknown} during transform. These "
-                    "unknown categories will be encoded as the "
+            # Whether an unknown category is encoded as the infrequent category
+            # is decided per column by `_map_infrequent_categories` below: a
+            # column only has an infrequent category if its
+            # `_infrequent_indices` entry is not None. Unknown categories in
+            # columns where it is None are encoded as all zeros, as documented
+            # for `handle_unknown`.
+            if handle_unknown == "infrequent_if_exist" and self._infrequent_enabled:
+                infrequent_columns = [
+                    i
+                    for i in columns_with_unknown
+                    if self._infrequent_indices[i] is not None
+                ]
+            else:
+                infrequent_columns = []
+            all_zeros_columns = [
+                i for i in columns_with_unknown if i not in infrequent_columns
+            ]
+
+            msg = (
+                "Found unknown categories in columns "
+                f"{columns_with_unknown} during transform. "
+            )
+            if infrequent_columns and all_zeros_columns:
+                msg += (
+                    f"The unknown categories in columns {infrequent_columns} "
+                    "will be encoded as the infrequent category. Those in "
+                    f"columns {all_zeros_columns} will be encoded as all "
+                    "zeros, because these columns have no infrequent category."
+                )
+            elif infrequent_columns:
+                msg += (
+                    "These unknown categories will be encoded as the "
                     "infrequent category."
                 )
             else:
-                msg = (
-                    "Found unknown categories in columns "
-                    f"{columns_with_unknown} during transform. These "
-                    "unknown categories will be encoded as all zeros"
-                )
+                msg += "These unknown categories will be encoded as all zeros"
             warnings.warn(msg, UserWarning)
 
         self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
