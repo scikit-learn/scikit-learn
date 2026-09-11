@@ -166,11 +166,26 @@ class _BasePCA(
         if self.whiten:
             # For some solvers (such as "arpack" and "covariance_eigh"), on
             # rank deficient data, some components can have a variance
-            # arbitrarily close to zero, leading to non-finite results when
-            # whitening. To avoid this problem we clip the variance below.
+            # arbitrarily close to zero (but not exactly zero). Their
+            # eigenvectors are not well determined numerically: they are
+            # dominated by floating-point noise rather than signal. Simply
+            # clipping the variance to a tiny absolute floor (e.g. `eps`)
+            # avoids non-finite results but can still divide that noise by
+            # an arbitrarily small number, amplifying it into large,
+            # meaningless values (see gh-29534). Instead, following the same
+            # rank-truncation convention used by pseudo-inverses (e.g. the
+            # default `rcond` of ``numpy.linalg.pinv``), components whose
+            # scale falls below a tolerance relative to the largest one are
+            # treated as carrying no usable signal: clipping their scale to
+            # infinity makes whitening zero them out instead of amplifying
+            # noise.
             scale = xp.sqrt(self.explained_variance_)
-            min_scale = xp.finfo(scale.dtype).eps
-            scale[scale < min_scale] = min_scale
+            tol = xp.max(scale) * max(X.shape) * xp.finfo(scale.dtype).eps
+            scale = xp.where(
+                scale > tol,
+                scale,
+                xp.asarray(xp.inf, device=array_device(scale), dtype=scale.dtype),
+            )
             X_transformed /= scale
         return X_transformed
 

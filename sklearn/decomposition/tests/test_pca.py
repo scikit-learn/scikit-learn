@@ -234,6 +234,26 @@ def test_whitening(solver, copy):
     # we always center, so no test for non-centering.
 
 
+def test_whitening_rank_deficient_no_noise_amplification():
+    # Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/29534
+    # On rank-deficient data, a component's variance can come out arbitrarily
+    # close to zero (or slightly negative before clipping). Its eigenvector is
+    # then dominated by floating-point noise rather than signal. Whitening
+    # used to divide that noise by a tiny absolute floor (`eps`), amplifying
+    # it into large, spurious values instead of the intended non-finite-value
+    # safeguard. Such components should instead be zeroed out.
+    X = make_low_rank_matrix(
+        n_samples=1000, n_features=10, effective_rank=2, tail_strength=0
+    )
+    pca = PCA(n_components=None, whiten=True, svd_solver="full").fit(X)
+    X_whitened = pca.transform(X)
+
+    assert np.all(np.isfinite(X_whitened))
+    # The last component is numerically rank-deficient (near-zero variance);
+    # its whitened values must be small, not amplified floating-point noise.
+    assert np.max(np.abs(X_whitened[:, -1])) < 10
+
+
 @pytest.mark.parametrize(
     "other_svd_solver", sorted(list(set(PCA_SOLVERS) - {"full", "auto"}))
 )
