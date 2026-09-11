@@ -1,0 +1,7 @@
+﻿- :class:`preprocessing.QuantileTransformer` no longer materializes a dense
+  array of size ``n_samples`` when fitting on sparse input with implicit
+  zeros. Previously, columns with very few non-zero values relative to a
+  very large number of samples could trigger a ``MemoryError`` or
+  significant slowdown. The fix computes percentiles directly from the
+  non-zero data and the count of implicit zeros, without densifying.
+  By :user:`Saad Shabbir <Stag51>`.
