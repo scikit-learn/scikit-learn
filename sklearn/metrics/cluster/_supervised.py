@@ -1337,6 +1337,9 @@ def entropy(labels):
 
 # -*- coding: utf-8 -*-
 
+
+
+
 # Paper that describes theory and performance of metric is at
 # https://doi.org/10.48550/arXiv.2604.22655f
 
@@ -1491,7 +1494,8 @@ def associativity_metric(contmtx):
     See Also
     --------
     peakiness_metric : Peakiness of the peak values in rows of a contingency table.
-    AP_metric : AP metric, the harmonic mean of associativity and peakiness metric scores.
+    AP_metric : AP metric, the harmonic mean of associativity and peakiness 
+    metric scores.
 
     References
     ----------
@@ -1660,8 +1664,6 @@ def AP_metric(contmtx):
     """
 
     return associativity_peakiness_AP_score(contmtx)[2]
-
-
 
 
 
