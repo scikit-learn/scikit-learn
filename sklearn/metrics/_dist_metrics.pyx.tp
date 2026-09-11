@@ -1611,8 +1611,6 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         optionally specify the inverse directly.  If VI is passed,
         then V is not referenced.
     """
-    cdef float64_t[::1] buffer
-
     def __init__(self, V=None, VI=None):
         if VI is None:
             if V is None:
@@ -1626,13 +1624,9 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         self.size = self.mat.shape[0]
 
-        # We need to create a buffer to store the vectors' coordinates' differences
-        self.buffer = np.zeros(self.size, dtype=np.float64)
-
     def __setstate__(self, state):
         super().__setstate__(state)
         self.size = self.mat.shape[0]
-        self.buffer = np.zeros(self.size, dtype=np.float64)
 
     def _validate_data(self, X):
         if X.shape[1] != self.size:
@@ -1649,13 +1643,10 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         # compute (x1 - x2).T * VI * (x1 - x2)
         for i in range(size):
-            self.buffer[i] = x1[i] - x2[i]
-
-        for i in range(size):
             tmp = 0
             for j in range(size):
-                tmp += self.mat[i, j] * self.buffer[j]
-            d += tmp * self.buffer[i]
+                tmp += self.mat[i, j] * (x1[j] - x2[j])
+            d += tmp * (x1[i] - x2[i])
         return d
 
     cdef inline {{INPUT_DTYPE_t}} dist(
@@ -1692,43 +1683,55 @@ cdef class MahalanobisDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
     ) except -1 nogil:
 
         cdef:
-            intp_t ix1, ix2
             intp_t i1 = x1_start
             intp_t i2 = x2_start
+            intp_t j1, j2, ix1, ix2
+            float64_t diff_i, diff_j
+            float64_t d = 0.0
 
-            float64_t tmp, d = 0.0
-
-        while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
-
-            if ix1 == ix2:
-                self.buffer[ix1] = x1_data[i1] - x2_data[i2]
-                i1 = i1 + 1
-                i2 = i2 + 1
-            elif ix1 < ix2:
-                self.buffer[ix1] = x1_data[i1]
-                i1 = i1 + 1
-            else:
-                self.buffer[ix2] = - x2_data[i2]
-                i2 = i2 + 1
-
-        if i1 == x1_end:
-            while i2 < x2_end:
-                ix2 = x2_indices[i2]
-                self.buffer[ix2] = - x2_data[i2]
-                i2 = i2 + 1
-        else:
-            while i1 < x1_end:
+        # Iterate over the non-zero coordinates of the conceptual sparse
+        # difference vector (x1 - x2), without materializing shared scratch space.
+        while i1 < x1_end or i2 < x2_end:
+            if i2 == x2_end or (
+                i1 < x1_end and x1_indices[i1] < x2_indices[i2]
+            ):
                 ix1 = x1_indices[i1]
-                self.buffer[ix1] = x1_data[i1]
-                i1 = i1 + 1
+                diff_i = x1_data[i1]
+                i1 += 1
+            elif i1 == x1_end or x2_indices[i2] < x1_indices[i1]:
+                ix1 = x2_indices[i2]
+                diff_i = -x2_data[i2]
+                i2 += 1
+            else:
+                ix1 = x1_indices[i1]
+                diff_i = x1_data[i1] - x2_data[i2]
+                i1 += 1
+                i2 += 1
 
-        for i in range(size):
-            tmp = 0
-            for j in range(size):
-                tmp += self.mat[i, j] * self.buffer[j]
-            d += tmp * self.buffer[i]
+            if diff_i == 0:
+                continue
+
+            j1 = x1_start
+            j2 = x2_start
+            while j1 < x1_end or j2 < x2_end:
+                if j2 == x2_end or (
+                    j1 < x1_end and x1_indices[j1] < x2_indices[j2]
+                ):
+                    ix2 = x1_indices[j1]
+                    diff_j = x1_data[j1]
+                    j1 += 1
+                elif j1 == x1_end or x2_indices[j2] < x1_indices[j1]:
+                    ix2 = x2_indices[j2]
+                    diff_j = -x2_data[j2]
+                    j2 += 1
+                else:
+                    ix2 = x1_indices[j1]
+                    diff_j = x1_data[j1] - x2_data[j2]
+                    j1 += 1
+                    j2 += 1
+
+                if diff_j != 0:
+                    d += diff_i * self.mat[ix1, ix2] * diff_j
 
         return d
 
