@@ -393,3 +393,44 @@ def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
 
     # assert the same results as non-parallel
     assert_array_equal(pred, pred_parallel)
+
+
+def test_iforest_categorical_fit_predict(global_random_seed):
+    """IsolationForest encodes string categories and scores them end-to-end."""
+    X = np.array([["a"], ["b"], ["a"], ["b"], ["c"], ["c"]], dtype=object)
+    clf = IsolationForest(
+        n_estimators=10, random_state=global_random_seed, categorical_features=[0]
+    ).fit(X)
+
+    assert_array_equal(clf.is_categorical_, [True])
+    pred = clf.predict(X)
+    assert pred.shape == (X.shape[0],)
+    assert set(np.unique(pred)).issubset({-1, 1})
+    assert clf.score_samples(X).shape == (X.shape[0],)
+
+
+def test_iforest_categorical_feature_subsampling(global_random_seed):
+    """Feature bagging subsets is_categorical_ to match each tree's columns."""
+    rng = np.random.RandomState(global_random_seed)
+    X = np.column_stack(
+        [
+            rng.randn(50),
+            rng.choice(["a", "b", "c"], size=50),
+        ]
+    )
+    clf = IsolationForest(
+        n_estimators=10,
+        max_features=0.5,
+        random_state=global_random_seed,
+        categorical_features=[1],
+    ).fit(X)
+
+    assert_array_equal(clf.is_categorical_, [False, True])
+    # max_features=0.5 on 2 columns yields 1 feature per tree.
+    for tree, features in zip(clf.estimators_, clf.estimators_features_):
+        cat_subset = clf.is_categorical_[features]
+        if np.any(cat_subset):
+            assert_array_equal(tree.is_categorical_, cat_subset)
+        else:
+            assert tree.is_categorical_ is None
+    assert clf.score_samples(X).shape == (X.shape[0],)
