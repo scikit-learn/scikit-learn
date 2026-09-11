@@ -1005,9 +1005,13 @@ def _log_reg_scoring_path(
 
         if "labels" in sig:
             pos_label_kwarg = {}
-            if is_binary and "pos_label" in sig:
-                # see _logistic_regression_path
-                pos_label_kwarg["pos_label"] = n_classes - 1  # classes[-1]
+            if (
+                is_binary
+                and "pos_label" in sig
+                and "pos_label" not in getattr(scoring, "_kwargs", {})
+            ):
+                pos_label_kwarg["pos_label"] = n_classes - 1
+
             scoring = make_scorer(
                 scoring._score_func,
                 greater_is_better=True if scoring._sign == 1 else False,
@@ -1476,7 +1480,7 @@ class LogisticRegression(
             warnings.warn(
                 "l1_ratio parameter is only used when penalty is "
                 "'elasticnet'. Got "
-                "(penalty={})".format(penalty)
+                f"(penalty={penalty})"
             )
         if (self.penalty == "l2" and self.l1_ratio != 0) or (
             self.penalty == "l1" and self.l1_ratio != 1
@@ -2261,7 +2265,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             if l1_ratios is not None and self.penalty != "deprecated":
                 warnings.warn(
                     "l1_ratios parameter is only used when penalty "
-                    "is 'elasticnet'. Got (penalty={})".format(penalty)
+                    f"is 'elasticnet'. Got (penalty={penalty})"
                 )
 
             if l1_ratios is None:
