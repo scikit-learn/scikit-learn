@@ -1323,69 +1323,68 @@ def entropy(labels):
 
 
 # Paper that describes theory and performance of metric is at
-# https://doi.org/10.48550/arXiv.2604.22655f
+# https://doi.org/10.48550/arXiv.2604.22655
 
 
 
 def associativity_peakiness_AP_score(contmtx):
     """
-    Computes the associativitiy, peakiness, and AP_metric scores in a single
+    Computes the associativitiy, peakiness, and AP_metric scores in a single 
     function.
-
-    Those metrics are based on direct analysis of the values in a
-    contingency table whose row labels are Ground Truth class labels and
-    column labels are indices of the clusters formed by a clustering algorithm.
     
+    Those metrics are based on direct analysis of the values in a 
+    contingency table whose row labels are Ground Truth class labels and 
+    column labels are indices of the clusters formed by a clustering algorithm.
+     
     For each row in the contingency table, identify the column which has the largest
     value in that row. The result is a matching between clusters and truth labels.
-
-    A contingency table satisfies associativity if this matching is one-to-one, i.e.
-    only one cluster is associated with each truth label. The associativity is
+    
+    A contingency table satisfies associativity if this matching is one-to-one, i.e. 
+    only one cluster is associated with each truth label. The associativity is 
     measured by, for each row of the econtingency table, determining the index of the
     cluster with the largest value in that row. A list is formed containing the
     cluster indices selected for each row. Pairs are formed between each of these
-    elements, and then pairs whose elements are equal are discarded from the list.
+    elements, and then pairs whose elements are equal are discarded from the list. 
     The associativity is the ratio of the length of the resulting list to the length
     of the original list.
-
+    
     A contingency table satisfies peakiness if the largest value in each row is much
     larger than all the other elements in that row. The peakiness score is equal to
-    the mean, over all rows of the contingency table, of the ratio of the
+    the mean, over all rows of the contingency table, of the ratio of the 
     difference between the two largest elements in a row, and the largest element
     in that row.
-
+    
     Both scores have positive values between 0.0 and 1.0, larger values
     being desirable.
-
+    
     Read more in the :ref:`User Guide <associativity-peakiniess>`.
     
     Parameters
     ----------
     contmtx : array-like of shape (n_truth_classes, n_clusters)
         Ground truth class labels are the rows, and cluster indices are the columns.
+    
         
-        Returns
+    Returns
     -------
     associativity : float
-        Score between 0.0 and 1.0. 1.0 stands for one-to-one matching between 
-        truth labels and clusters.
-
+        Score between 0.0 and 1.0. 1.0 stands for one-to-one matching between truth
+        labels and clusters.
+    
     peakiness : float
         Score between 0.0 and 1.0. 1.0 stands for a contingency table for which
         all elements in each row, besides the peak value, are equal to 0.
-
+    
     AP_metric : float
         Harmonic mean of the associativity and the peakiness.
-
-
+    
+    
     See Also
     --------
-    associativity_metric : Associativity between truth labels and clusters in a 
-    contingency table.
+    associativity_metric : Associativity between truth labels and clusters in a contingency table.
     peakiness_metric : Peakiness of the peak values in rows of a contingency table.
-    AP_metric : AP metric, the harmonic mean of associativity and peakiness 
-    metric scores.
-
+    AP_metric : AP metric, the harmonic mean of associativity and peakiness metric scores.
+    
     Examples
     --------
     >>> from sklearn.metrics import associativity_peakiness_AP_score
@@ -1396,19 +1395,24 @@ def associativity_peakiness_AP_score(contmtx):
     >>> associativity_peakiness_AP_score(contmtx)
     (1.0, 0.556, 0.714)
     
-
+    
     References
     ----------
-    [1] `Naomi E Zirkind and William J Diehl, 2026. Associativity-Peakiness
-    Metric for Contingency Tables
+
+    .. [1] `Naomi E Zirkind and William J Diehl, 2026. Associativity-Peakiness 
+            Metric for Contingency Tables
        <https://doi.org/10.48550/arXiv.2604.22655f>`_
 
-
+    
+    
+    
     """
+
+
+
     from itertools import combinations
 
     import numpy as np
-
 
     if len(contmtx.shape) != 2:
         print('Invalid input. Contingency matrix must have 2 dimensions.')
@@ -1427,6 +1431,7 @@ def associativity_peakiness_AP_score(contmtx):
             row_metrics[i] = (mtx_sorted[i,-1] - mtx_sorted[i,-2]) / mtx_sorted[i,-1]
     peakiness_metric = np.mean(row_metrics)
 
+
     # Associativity metric - metric is highest if max of each column is in a different row
     col_of_max = np.zeros(num_truth)
     for i in range(num_truth):
@@ -1438,6 +1443,7 @@ def associativity_peakiness_AP_score(contmtx):
         if (element[0] == element[1]):
             numsame +=1
     associativity_metric = (len(pairs_list) - numsame) / len(pairs_list)
+
 
     # AP metric is harmonic mean of peakiness and associativity metrics
     if peakiness_metric + associativity_metric == 0:
@@ -1454,10 +1460,10 @@ def associativity_peakiness_AP_score(contmtx):
 def associativity_metric(contmtx):
 
     """Associativity metric of a contingency table given a ground truth.
-    
+
     For each row in the contingency table, identify the column which has the largest
     value in that row. The result is a matching between clusters and truth labels.
-    A contingency table satisfies associativity if this matching is one-to-one, i.e.
+    A contingency table satisfies associativity if this matching is one-to-one, i.e. 
     only one cluster is associated with each truth label. 
 
     Read more in the :ref:`User Guide <associativity-peakiness>`.
@@ -1476,8 +1482,7 @@ def associativity_metric(contmtx):
     See Also
     --------
     peakiness_metric : Peakiness of the peak values in rows of a contingency table.
-    AP_metric : AP metric, the harmonic mean of associativity and peakiness 
-    metric scores.
+    AP_metric : AP metric, the harmonic mean of associativity and peakiness metric scores.
 
     References
     ----------
@@ -1528,10 +1533,8 @@ def peakiness_metric(contmtx):
 
     See Also
     --------
-    associativity_metric : Associativity between truth labels and clusters in a 
-    contingency table.
-    AP_metric : AP metric, the harmonic mean of associativity and peakiness 
-    metric scores.
+    associativity_metric : Associativity between truth labels and clusters in a contingency table.
+    AP_metric : AP metric, the harmonic mean of associativity and peakiness metric scores.
 
     References
     ----------
@@ -1580,8 +1583,7 @@ def AP_metric(contmtx):
     Returns
     -------
     AP_metric : float
-       Score between 0.0 and 1.0. 1.0 stands for perfectly associative and 
-       peaky labeling.
+       Score between 0.0 and 1.0. 1.0 stands for perfectly associative and peaky labeling.
 
     See Also
     --------
@@ -1589,9 +1591,8 @@ def AP_metric(contmtx):
         contingency table as determined from the peak value in each row of the 
         contingency matrix.
     peakiness_metric : Peakiness of the peak values in rows of a contingency 
-        table. The peakiness metric measures the credence of the associativity score.
-    AP_metric : AP metric, the harmonic mean of associativity and peakiness 
-    metric scores.
+        table. The peakiness metric meaures the credence of the associativity score.
+    AP_metric : AP metric, the harmonic mean of associativity and peakiness metric scores.
 
      References
      ----------
@@ -1646,7 +1647,3 @@ def AP_metric(contmtx):
     """
 
     return associativity_peakiness_AP_score(contmtx)[2]
-
-
-
-
