@@ -9,6 +9,7 @@ at which the fix is no longer needed.
 
 import platform
 import struct
+import sys
 
 import numpy as np
 import scipy
@@ -541,3 +542,19 @@ PETROFF_COLORS = [
     "#717581",
     "#92dadd",
 ]
+
+
+# TODO Remove when Python 3.13 is the minimal supported version.
+if hasattr(sys, "_is_gil_enabled"):
+    _is_gil_enabled = sys._is_gil_enabled
+else:
+    # Support older versions of Python:
+    def _is_gil_enabled() -> bool:
+        """Return whether Python has the GIL enabled.
+
+        Returns
+        -------
+        bool
+            Whether the GIL is enabled.
+        """
+        return True
