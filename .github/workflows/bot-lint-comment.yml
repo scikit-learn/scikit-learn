@@ -23,6 +23,9 @@ jobs:
         run: mkdir -p "$ARTIFACTS_DIR"
 
       - name: Download artifact
+        # If nothing was uploaded in the linting step, this will error, but we still
+        # want to continue and post a generic comment in that case.
+        continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           name: lint-log
