@@ -2881,7 +2881,7 @@ def recall_score(
     },
     prefer_skip_nested_validation=True,
 )
-def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False):
+(y_true, y_pred, *, sample_weight=None, adjusted=False):
     """Compute the balanced accuracy.
 
     The balanced accuracy in binary and multiclass classification problems to
@@ -2920,7 +2920,7 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     average_precision_score : Compute average precision (AP) from prediction
         scores.
     precision_score : Compute the precision score.
-    recall_score : Compute the recall score.
+    recall_score : Compute the recall score.def balanced_accuracy_score
     roc_auc_score : Compute Area Under the Receiver Operating Characteristic
         Curve (ROC AUC) from prediction scores.
 
@@ -2969,10 +2969,16 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
         per_class = per_class[~xp.isnan(per_class)]
     score = xp.mean(per_class)
     if adjusted:
-        n_classes = per_class.shape[0]
-        chance = 1 / n_classes
-        score -= chance
-        score /= 1 - chance
+    n_classes = per_class.shape[0]
+    if n_classes == 1:
+        raise ValueError(
+            "Only one class present after NaN filtering. "
+            "balanced_accuracy_score requires at least 2 classes "
+            "when adjusted=True."
+        )
+    chance = 1 / n_classes
+    score -= chance
+    score /= 1 - chance
     return float(score)
 
 
