@@ -144,6 +144,10 @@ if [[ "$CIRCLE_BRANCH" =~ ^main$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
     # ZIP linked into HTML
     make_args=dist
+    # PR builds only fail on Sphinx warnings in files touched by the PR.
+    # On pushes to main and maintenance branches, treat all Sphinx warnings as
+    # errors.
+    export SPHINXOPTS="-T -W --keep-going"
 elif [[ "$build_type" =~ ^QUICK ]]
 then
     make_args=html-noplot
