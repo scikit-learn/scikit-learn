@@ -297,56 +297,22 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
 
 
 @pytest.mark.parametrize(
-    "X, grid_resolution, percentiles, err_msg",
+    "grid_resolution, percentiles, err_msg",
     [
-        # first two values are duplicated so that the low percentiles
-        # requested below are guaranteed to resolve to the same value,
-        # regardless of the interpolation method used to compute them.
-        (
-            np.asarray([[0, 2], [0, 2], [1, 4], [2, 4], [3, 4]]),
-            2,
-            (0, 0.05),
-            "percentiles are too close",
-        ),
-        (
-            np.asarray([[1, 2], [3, 4]]),
-            100,
-            (1, 2, 3, 4),
-            "'percentiles' must be a sequence of 2 elements",
-        ),
-        (
-            np.asarray([[1, 2], [3, 4]]),
-            100,
-            12345,
-            "'percentiles' must be a sequence of 2 elements",
-        ),
-        (
-            np.asarray([[1, 2], [3, 4]]),
-            100,
-            (-1, 0.95),
-            r"'percentiles' values must be in \[0, 1\]",
-        ),
-        (
-            np.asarray([[1, 2], [3, 4]]),
-            100,
-            (0.05, 2),
-            r"'percentiles' values must be in \[0, 1\]",
-        ),
-        (
-            np.asarray([[1, 2], [3, 4]]),
-            100,
-            (0.9, 0.1),
-            r"percentiles\[0\] must be strictly less than",
-        ),
-        (
-            np.asarray([[1, 2], [3, 4]]),
-            1,
-            (0.05, 0.95),
-            "'grid_resolution' must be strictly greater than 1",
-        ),
+        (2, (0, 0.05), "percentiles are too close"),
+        (100, (1, 2, 3, 4), "'percentiles' must be a sequence of 2 elements"),
+        (100, 12345, "'percentiles' must be a sequence of 2 elements"),
+        (100, (-1, 0.95), r"'percentiles' values must be in \[0, 1\]"),
+        (100, (0.05, 2), r"'percentiles' values must be in \[0, 1\]"),
+        (100, (0.9, 0.1), r"percentiles\[0\] must be strictly less than"),
+        (1, (0.05, 0.95), "'grid_resolution' must be strictly greater than 1"),
     ],
 )
-def test_grid_from_X_error(X, grid_resolution, percentiles, err_msg):
+def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
+    # first two values of the first column are duplicated so that low
+    # percentiles resolve to the same value regardless of the interpolation
+    # method used to compute them (needed for the "too close" case below).
+    X = np.asarray([[0, 2], [0, 2], [1, 4], [2, 4], [3, 4]])
     is_categorical = [False]
     with pytest.raises(ValueError, match=err_msg):
         _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values={})
