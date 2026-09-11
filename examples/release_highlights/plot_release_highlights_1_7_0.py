@@ -37,7 +37,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-model = make_pipeline(StandardScaler(with_std=False), LogisticRegression(C=2.0))
+model = make_pipeline(StandardScaler(with_std=False), LogisticRegression())
 model
 
 # %%

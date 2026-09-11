@@ -1740,7 +1740,7 @@ And the decision values do not require such processing.
   >>> clf = RidgeClassifierCV().fit(X, y)
   >>> y_score = clf.decision_function(X)
   >>> roc_auc_score(y, y_score, average=None)
-  array([0.82, 0.85, 0.93, 0.87, 0.94])
+  array([0.828, 0.851, 0.94, 0.87, 0.95])
 
 .. rubric:: Examples
 

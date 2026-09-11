@@ -741,6 +741,8 @@ def test_regressor_chain_w_fit_params():
         assert est.sample_weight_ is weight
 
 
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "MultiOutputEstimator, Estimator",
     [(MultiOutputClassifier, LogisticRegression), (MultiOutputRegressor, Ridge)],
