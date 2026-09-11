@@ -39,7 +39,7 @@ dependent_packages = {
     # here, remember to update .pre-commit-config.yaml as well
     "ruff": ("0.12.2", "tests"),
     "pyrefly": ("1.2.0", "tests"),
-    "cython-lint": ("0.21", "tests"),
+    "cython-lint": ("0.21.1", "tests"),
     "sphinx-lint": ("1.0.2", "tests"),
     "codespell": ("2.4.1", "tests"),
     "pyamg": ("5.0.0", "tests"),
