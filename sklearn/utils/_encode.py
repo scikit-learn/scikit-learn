@@ -188,6 +188,30 @@ def _map_to_integer(values, uniques):
     return xp.asarray([table[v] for v in values], device=array_device(values))
 
 
+def _sort_uniques_and_remap(uniques, codes):
+    """Lexicographically sort `uniques` and remap `codes` accordingly.
+
+    `uniques` is expected to hold at most one missing-value entry. Sorting
+    happens in O(#uniques), remapping `codes` in O(#codes), so this stays
+    cheap even though `codes` can be much larger than `uniques`.
+    """
+    import pandas as pd
+
+    nan_mask = pd.isna(uniques)
+    if nan_mask.any():
+        nan_pos = int(np.flatnonzero(nan_mask)[0])
+        non_nan_positions = np.delete(np.arange(uniques.size), nan_pos)
+        order = non_nan_positions[np.argsort(uniques[non_nan_positions], kind="stable")]
+        full_order = np.append(order, nan_pos)
+    else:
+        full_order = np.argsort(uniques, kind="stable")
+
+    sorted_uniques = uniques[full_order]
+    remap = np.empty(uniques.size, dtype=np.intp)
+    remap[full_order] = np.arange(uniques.size)
+    return sorted_uniques, remap[codes]
+
+
 def _unique_pandas(values, *, return_inverse, return_counts):
     """Fast path for pandas Series, see `_unique` docstring for details.
 
@@ -197,8 +221,18 @@ def _unique_pandas(values, *, return_inverse, return_counts):
     """
     import pandas as pd
 
-    codes, index = pd.factorize(values, sort=True, use_na_sentinel=False)
+    # For `Categorical`, `sort=True` orders `uniques` following the dtype's
+    # own category order instead of lexicographically, unlike every other
+    # dtype/backend. Sort explicitly ourselves in that case instead, so
+    # `categories_` stays consistent regardless of how the `CategoricalDtype`
+    # happens to be defined (see gh-34678).
+    is_categorical = isinstance(values.dtype, pd.CategoricalDtype)
+    codes, index = pd.factorize(values, sort=not is_categorical, use_na_sentinel=False)
     uniques = index.to_numpy()
+
+    if is_categorical:
+        uniques, codes = _sort_uniques_and_remap(uniques, codes)
+
     if uniques.size and pd.isna(uniques[-1]):
         # `factorize` doesn't always normalize the missing-value entry to
         # `np.nan` (e.g. pandas StringDtype keeps it as `pd.NA`), but the
