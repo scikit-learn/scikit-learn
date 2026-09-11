@@ -63,7 +63,12 @@ def _array_indexing(array, key, key_dtype, axis):
 
 
 def _narwhals_indexing(X, key, key_dtype, axis):
-    """Index a narwhals dataframe or series."""
+    """Index a narwhals dataframe or series.
+
+    If `X` is already a narwhals DataFrame/Series, the result is returned as a
+    narwhals object too, rather than being converted back with `to_native()`.
+    """
+    was_narwhals = isinstance(X, (nw.DataFrame, nw.Series))
     X = nw.from_native(X, allow_series=True)
     if not (isinstance(key, (list, slice)) or key is None):
         # Note that at least tuples should be converted to either list or ndarray as
@@ -74,8 +79,9 @@ def _narwhals_indexing(X, key, key_dtype, axis):
     if axis == 1:
         if key_dtype == "bool":
             subset = X.select(col for (col, select) in zip(X.columns, key) if select)
-            return subset.to_native()
-        return X[:, key].to_native()
+            return subset if was_narwhals else subset.to_native()
+        result = X[:, key]
+        return result if was_narwhals else result.to_native()
 
     # From here on axis == 0:
     if key_dtype == "bool":
@@ -90,7 +96,7 @@ def _narwhals_indexing(X, key, key_dtype, axis):
         # consistent with pandas. Narwhals would return a dataframe which is
         # advantageous if the columns have different dtypes.
         return np.array([col.item(0) for col in X_indexed.iter_columns()])
-    return X_indexed.to_native()
+    return X_indexed if was_narwhals else X_indexed.to_native()
 
 
 def _pandas_indexing(X, key, key_dtype, axis):

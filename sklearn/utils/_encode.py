@@ -6,9 +6,11 @@ from collections.abc import Iterable
 from numbers import Real
 from typing import NamedTuple, cast
 
+import narwhals.stable.v2 as nw
 import numpy as np
 
 from sklearn.utils._array_api import array_device, get_namespace, size
+from sklearn.utils._indexing import _safe_indexing
 from sklearn.utils._missing import is_scalar_nan
 
 
@@ -43,6 +45,10 @@ def _unique(values, *, return_inverse=False, return_counts=False):
         The number of times each of the unique values comes up in the original
         array. Only provided if `return_counts` is True.
     """
+    if isinstance(values, nw.Series):
+        return _unique_object_series(
+            values, return_inverse=return_inverse, return_counts=return_counts
+        )
     if values.dtype == object:
         return _unique_python(
             values, return_inverse=return_inverse, return_counts=return_counts
@@ -183,25 +189,46 @@ def _map_to_integer(values, uniques):
     return xp.asarray([table[v] for v in values], device=array_device(values))
 
 
+def _encode_series(values, uniques):
+    """Map values based on their position in uniques."""
+    mapping = {val: i for i, val in enumerate(uniques)}
+    return values.replace_strict(mapping, default=-1).to_numpy().copy()
+
+
+def _unique_object_series(values, *, return_inverse, return_counts):
+    # Only used in `_unique`, see docstring there for details
+    value_counts = values.value_counts().sort(by=values.name, nulls_last=True)
+    uniques = value_counts[:, 0].to_numpy()
+
+    ret = (uniques,)
+    if return_inverse:
+        ret += (_encode_series(values, uniques),)
+
+    if return_counts:
+        counts = value_counts[:, 1].to_numpy()
+        ret += (counts,)
+
+    return ret[0] if len(ret) == 1 else ret
+
+
 def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_unique`, see docstring there for details
+    uniques_set = set(values)
+    uniques_set, missing_values = _extract_missing(uniques_set)
     try:
-        uniques_set = set(values)
-        uniques_set, missing_values = _extract_missing(uniques_set)
-
         uniques = sorted(uniques_set)
-        uniques.extend(missing_values.to_list())
-        uniques = np.array(uniques, dtype=values.dtype)
     except TypeError:
         types = sorted(t.__qualname__ for t in set(type(v) for v in values))
         raise TypeError(
             "Encoders require their input argument must be uniformly "
             f"strings or numbers. Got {types}"
         )
+    uniques.extend(missing_values.to_list())
+    uniques = np.array(uniques, dtype=object)
     ret = (uniques,)
 
     if return_inverse:
-        ret += (_map_to_integer(values, uniques),)
+        ret += (_map_to_integer(list(values), uniques),)
 
     if return_counts:
         ret += (_get_counts(values, uniques, missing_values.all_nans),)
@@ -273,7 +300,9 @@ def _encode(values, *, uniques, return_diff=False):
         returned if ``return_diff=True``.
     """
     xp, _ = get_namespace(values, uniques)
-    if not xp.isdtype(values.dtype, "numeric"):
+    if isinstance(values, nw.Series):
+        encoded = _encode_series(values, uniques)
+    elif not xp.isdtype(values.dtype, "numeric"):
         encoded = _map_to_integer(values, uniques)
     else:
         encoded = xp.searchsorted(uniques, values)
@@ -296,7 +325,7 @@ def _encode(values, *, uniques, return_diff=False):
         encoded[~matches] = -1
 
     if return_diff:
-        diff = _unique(values[encoded == -1])
+        diff = _unique(_safe_indexing(values, encoded == -1))
         return encoded, diff
 
     return encoded
