@@ -1,10 +1,6 @@
 - :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` now exclude zero-weight
-  samples from the tree grower partition so they do not inflate unweighted
-  histogram counts and cannot form a zero-weight leaf. The
-  repeated/weighted equivalence described in :term:`sample_weight` therefore
-  holds when fitting with ``min_samples_leaf=1``: weight 0 matches removing
-  the sample even for deep trees, and datasets with many zero-weight samples
-  fit faster. Split selection also treats gain differences within float32
-  rounding as ties, so near-tied features are not swapped by numerical noise.
+  :class:`ensemble.HistGradientBoostingRegressor` now exclude samples with
+  zero `sample_weight` from the tree grower.
+  The repeated/weighted equivalence described in :term:`sample_weight` therefore
+  holds when fitting with `min_samples_leaf=1`.
   By :user:`Antoine Baker <antoinebaker>` and :user:`Olivier Grisel <ogrisel>`.
