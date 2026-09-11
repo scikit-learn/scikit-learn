@@ -6,7 +6,7 @@ from sklearn.utils._typedefs cimport (
     int32_t,
     int64_t,
     intp_t,
-    isnan,
+    inlinable_isnan,
 )
 
 import numpy as np
@@ -188,7 +188,7 @@ def _fit_encoding_fast_auto_smooth(
                     (y_variance * counts[cat_idx] + sum_of_squared_diffs[cat_idx] /
                      counts[cat_idx])
                 )
-                if isnan(lambda_):
+                if inlinable_isnan(lambda_):
                     # A nan can happen when:
                     # 1. counts[cat_idx] == 0
                     # 2. y_variance == 0 and sum_of_squared_diffs[cat_idx] == 0

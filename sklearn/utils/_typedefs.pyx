@@ -24,4 +24,4 @@ def testing_make_array_from_typed_val(testing_type_t val):
 
 
 def testing_isnan(float32_or_float64_t val):
-    return isnan(val)
+    return inlinable_isnan(val)
