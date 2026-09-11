@@ -11,6 +11,7 @@ from scipy.sparse import issparse
 
 from sklearn.base import OutlierMixin, _fit_context
 from sklearn.ensemble._bagging import BaseBagging
+from sklearn.ensemble._bootstrap import _get_n_samples_bootstrap
 from sklearn.tree import ExtraTreeRegressor
 from sklearn.utils import check_array, check_random_state, gen_batches
 from sklearn.utils._chunking import get_chunk_n_rows
@@ -350,7 +351,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
             else:
                 max_samples = self.max_samples
         else:  # max_samples is float
-            max_samples = int(self.max_samples * X.shape[0])
+            max_samples = _get_n_samples_bootstrap(
+                n_samples=X.shape[0],
+                max_samples=self.max_samples,
+                sample_weight=None,
+            )
 
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
