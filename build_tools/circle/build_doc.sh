@@ -123,6 +123,9 @@ then
     exit 0
 fi
 
+# TMP: turn all sphinx warnings into errors, even in PRs. Remove before merging.
+export SPHINXOPTS="-T -W --keep-going"
+
 # ZIP, image optimization and version listing are only useful for the
 # documentation that is deployed to the website (the "doc" CircleCI job).
 deploy_docs=false
@@ -135,6 +138,10 @@ if [[ "$deploy_docs" == "true" ]]
 then
     # ZIP linked into HTML
     make_args=dist
+    # PR builds only fail on Sphinx warnings in files touched by the PR.
+    # On pushes to main and maintenance branches, treat all Sphinx warnings as
+    # errors.
+    export SPHINXOPTS="-T -W --keep-going"
 elif [[ "$build_type" =~ ^QUICK ]]
 then
     make_args=html-noplot
