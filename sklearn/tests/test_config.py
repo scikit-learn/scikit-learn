@@ -20,6 +20,7 @@ def test_config_context():
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
         "enable_metadata_routing": False,
+        "metadata_request_policy": "class-level",
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
     }
@@ -39,6 +40,7 @@ def test_config_context():
             "enable_cython_pairwise_dist": True,
             "transform_output": "default",
             "enable_metadata_routing": False,
+            "metadata_request_policy": "class-level",
             "skip_parameter_validation": False,
             "sparse_interface": "spmatrix",
         }
@@ -75,6 +77,7 @@ def test_config_context():
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
         "enable_metadata_routing": False,
+        "metadata_request_policy": "class-level",
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
     }
