@@ -1,0 +1,6 @@
+- :class:`cluster.AgglomerativeClustering` and
+  :class:`cluster.FeatureAgglomeration` with `linkage="single"`, as well as
+  :class:`cluster.HDBSCAN`, are now faster for inputs that produce deep
+  union-find trees. Restored path compression avoids quadratic time while
+  constructing the single-linkage hierarchy.
+  By :user:`Chris Boseak <cboseak>`.
