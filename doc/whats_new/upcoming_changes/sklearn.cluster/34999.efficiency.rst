@@ -1,0 +1,5 @@
+- :class:`cluster.HDBSCAN` now validates a dense precomputed distance matrix
+  block of rows by block of rows, instead of allocating temporary arrays as
+  large as the matrix itself, which lowers the peak memory of `fit` with
+  `metric="precomputed"`.
+  By :user:`INTFRAME <aron-intframe>`.
