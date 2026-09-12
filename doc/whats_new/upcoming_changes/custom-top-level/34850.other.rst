@@ -1,0 +1,3 @@
+- The development documentation version warning banner now links to the
+  nightly build installation instructions.
+  By :user:`Bhushan Asati <bhushanasati25>`.
