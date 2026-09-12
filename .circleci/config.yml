@@ -18,8 +18,11 @@ jobs:
     docker:
       - image: cimg/base:current-22.04
     environment:
-      - MKL_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
+      - MKL_NUM_THREADS: 1
+      - OPENBLAS_NUM_THREADS: 1
+      - OMP_NUM_THREADS: 1
+      # 2 vcpus with the medium (default) resource class
+      - SPHINX_GALLERY_PARALLEL: 2
       - CONDA_ENV_NAME: testenv
       - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
       # Do not fail if the documentation build generates warnings with minimum
@@ -68,8 +71,11 @@ jobs:
       - image: cimg/base:current-22.04
     resource_class: medium+
     environment:
-      - MKL_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
+      - MKL_NUM_THREADS: 1
+      - OPENBLAS_NUM_THREADS: 1
+      - OMP_NUM_THREADS: 1
+      # 3 vcpus with the medium+ resource class
+      - SPHINX_GALLERY_PARALLEL: 3
       - CONDA_ENV_NAME: testenv
       - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
       # Make sure that we fail if the documentation build generates warnings with
