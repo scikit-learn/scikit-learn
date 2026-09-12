@@ -1,0 +1,3 @@
+- Fixed a segmentation fault in :class:`manifold.TSNE` when ``init="pca"``
+  is used with input data having zero variance (constant values).
+  By :user:`Nandan <nandan2003>`
