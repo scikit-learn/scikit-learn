@@ -345,7 +345,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 estimator=self,
                 dtype=np.float32,
                 accept_sparse="csr",
-                ensure_all_finite="allow-nan",
+                ensure_all_finite=False,
             )
             _check_n_features(self, X, reset=False)
         else:

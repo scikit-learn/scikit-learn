@@ -249,27 +249,47 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         missing_values_in_feature_mask=None,
     ):
         random_state = check_random_state(self.random_state)
-        self.is_categorical_ = _check_categorical_features(X, self.categorical_features)
-        has_categorical = self.is_categorical_ is not None
-
-        if has_categorical:
-            if issparse(X):
-                raise NotImplementedError(
-                    "Categorical features not supported with sparse inputs"
-                )
-
-            if check_input:
-                # Capture feature names on the original dataframe-like input before
-                # categorical encoding converts X to a NumPy array.
-                validate_data(self, X, reset=True, skip_check_array=True)
-
-            # Categorical feature selection must see the original container for
-            # names/dtypes, but tree fitting needs numeric values. Encode selected
-            # columns before numeric validation, preserving column order.
-            X = self._preprocess_X(X, reset=True)
-        else:
+        # Ensembles may pass an already-resolved bool mask and already-encoded X
+        # with check_input=False. Skip re-encoding to avoid a per-tree copy and
+        # OrdinalEncoder under n_jobs.
+        categorical_features = self.categorical_features
+        already_encoded = (
+            not check_input
+            and isinstance(categorical_features, np.ndarray)
+            and categorical_features.dtype == bool
+            and categorical_features.shape == (X.shape[1],)
+        )
+        if already_encoded:
+            self.is_categorical_ = (
+                categorical_features if np.any(categorical_features) else None
+            )
             self._categorical_encoder = None
             self._preprocessor = None
+            has_categorical = self.is_categorical_ is not None
+        else:
+            self.is_categorical_ = _check_categorical_features(
+                X, self.categorical_features
+            )
+            has_categorical = self.is_categorical_ is not None
+
+            if has_categorical:
+                if issparse(X):
+                    raise NotImplementedError(
+                        "Categorical features not supported with sparse inputs"
+                    )
+
+                if check_input:
+                    # Capture feature names on the original dataframe-like input before
+                    # categorical encoding converts X to a NumPy array.
+                    validate_data(self, X, reset=True, skip_check_array=True)
+
+                # Categorical feature selection must see the original container for
+                # names/dtypes, but tree fitting needs numeric values. Encode selected
+                # columns before numeric validation, preserving column order.
+                X = self._preprocess_X(X, reset=True)
+            else:
+                self._categorical_encoder = None
+                self._preprocessor = None
 
         if check_input:
             # Need to validate separately here.
@@ -493,17 +513,33 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 f"[0, {max_n_categories - 1}]."
             )
 
-            for idx, categories in zip(
-                np.flatnonzero(self.is_categorical_),
-                self._categorical_encoder.categories_,
-            ):
-                # OrdinalEncoder places np.nan last if missing values reach fit.
-                if len(categories) and is_scalar_nan(categories[-1]):
-                    n_categories[idx] = len(categories) - 1
-                else:
-                    n_categories[idx] = len(categories)
+            if self._categorical_encoder is not None:
+                category_counts = []
+                for categories in self._categorical_encoder.categories_:
+                    # OrdinalEncoder places np.nan last if missing values reach fit.
+                    if len(categories) and is_scalar_nan(categories[-1]):
+                        category_counts.append(len(categories) - 1)
+                    else:
+                        category_counts.append(len(categories))
+            else:
+                # Already-encoded ensemble input: category codes are dense in
+                # [0, n_categories - 1] with missing values as NaN.
+                category_counts = []
+                for idx in np.flatnonzero(self.is_categorical_):
+                    col = X[:, idx]
+                    if issparse(X):
+                        col = col.toarray().ravel()
+                    finite = col[np.isfinite(col)]
+                    if finite.size == 0:
+                        category_counts.append(0)
+                    else:
+                        category_counts.append(int(np.max(finite)) + 1)
 
-                max_encoded_value = n_categories[idx] - 1
+            for idx, n_cats in zip(
+                np.flatnonzero(self.is_categorical_), category_counts
+            ):
+                n_categories[idx] = n_cats
+                max_encoded_value = n_cats - 1
                 if max_encoded_value >= max_n_categories:
                     raise ValueError(f"{base_msg} Found {max_encoded_value}.")
 
@@ -675,7 +711,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             # The number of features is checked regardless of `check_input`
             _check_n_features(self, X, reset=False)
-            if has_categorical:
+            # Ensembles that already encoded X leave `_preprocessor` unset and pass
+            # check_input=False; skip transform so prediction stays on the encoded
+            # float array.
+            if has_categorical and getattr(self, "_preprocessor", None) is not None:
                 X = self._preprocess_X(X, reset=False)
         return X
 

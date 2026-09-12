@@ -1946,7 +1946,42 @@ def test_fit_categorical_raw_labels_are_reencoded(name):
     assert_array_equal(est.is_categorical_, [True])
     assert_array_equal(est._categorical_encoder.categories_[0], ["a", "b"])
     assert_array_equal(est.estimators_[0].is_categorical_, [True])
+    # Forest owns encoding; trees must not re-fit their own preprocessor.
+    assert est.estimators_[0]._preprocessor is None
     assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.parametrize("constructor_name", ["pandas", "polars"])
+def test_categorical_from_dtype_propagated_to_trees(name, constructor_name):
+    """``categorical_features="from_dtype"`` must survive down to each tree.
+
+    Trees only ever see the forest's already-encoded ndarray, so
+    ``_check_categorical_features`` on the tree side can no longer see the
+    original dataframe dtypes and would silently resolve to "no categorical
+    features" unless the forest passes the resolved bool mask.
+    """
+    pytest.importorskip(constructor_name)
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+    X = _convert_container(
+        np.array(
+            [[0.0, "low"], [1.0, "high"], [2.0, "low"], [3.0, "high"]], dtype=object
+        ),
+        constructor_name,
+        column_names=["f_num", "f_cat"],
+        dtype=object,
+        categorical_feature_names=["f_cat"],
+    )
+    y = np.array([0, 1, 0, 1])
+
+    est = Forest(
+        categorical_features="from_dtype", n_estimators=3, random_state=0
+    ).fit(X, y)
+
+    assert_array_equal(est.is_categorical_, [False, True])
+    for tree in est.estimators_:
+        assert_array_equal(tree.is_categorical_, [False, True])
+        assert tree._preprocessor is None
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)

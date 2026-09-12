@@ -159,14 +159,17 @@ def _parallel_build_estimators(
             sample_weight,
         )
 
-        if (
-            requires_feature_indexing
-            and getattr(ensemble, "is_categorical_", None) is not None
-        ):
-            cat_subset = ensemble.is_categorical_[features]
-            estimator.set_params(
-                categorical_features=None if not np.any(cat_subset) else cat_subset
-            )
+        # Pass the resolved categorical mask from the ensemble. Trees only see the
+        # already-encoded float ndarray, so user values like "from_dtype" or
+        # feature-name lists would otherwise silently resolve to None.
+        if getattr(ensemble, "is_categorical_", None) is not None:
+            if requires_feature_indexing:
+                cat_subset = ensemble.is_categorical_[features]
+                estimator.set_params(
+                    categorical_features=None if not np.any(cat_subset) else cat_subset
+                )
+            else:
+                estimator.set_params(categorical_features=ensemble.is_categorical_)
 
         fit_params_ = fit_params.copy()
 

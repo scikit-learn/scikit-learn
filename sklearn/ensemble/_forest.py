@@ -497,6 +497,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 self._make_estimator(append=False, random_state=random_state)
                 for i in range(n_more_estimators)
             ]
+            # Pass the resolved categorical mask, not the user parameter. After the
+            # forest encodes X, trees only see a float ndarray so values like
+            # "from_dtype" or feature-name lists would silently resolve to None.
+            if self.is_categorical_ is not None:
+                for tree in trees:
+                    tree.set_params(categorical_features=self.is_categorical_)
 
             # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
