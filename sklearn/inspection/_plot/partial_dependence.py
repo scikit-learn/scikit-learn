@@ -444,7 +444,7 @@ class PartialDependenceDisplay:
               when `kind='average'` and `response_method='decision_function'`.
               Joint PDP (tuples in `features`) is not supported.
               This method is equivalent to the `'brute'` method,
-              but significantly faster for tree-based estimators.
+              but faster for tree-based estimators.
 
             - `'brute'` is supported for any estimator, but is more
               computationally intensive.
