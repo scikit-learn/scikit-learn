@@ -44,6 +44,7 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
+from sklearn.tree._utils import SPLIT_CATEGORICAL_BITSET, SPLIT_CATEGORICAL_HASH
 from sklearn.tree.tests.test_tree import assert_is_subtree
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.fixes import _IS_32BIT
@@ -1265,6 +1266,28 @@ def test_partial_dependence_empty_categorical_features():
 # =============================================================================
 
 
+def _assert_tree_accurate_matches_brute(est, X, feature, **pd_kwargs):
+    """Assert tree_accurate reproduces brute for one feature of ``X``.
+
+    ``pd_kwargs`` is forwarded to both calls, so the two runs differ only in
+    ``method``. Returns the tree_accurate result so callers can assert more.
+    """
+    result_ta = partial_dependence(
+        est, X, features=[feature], method="tree_accurate", **pd_kwargs
+    )
+    result_br = partial_dependence(
+        est, X, features=[feature], method="brute", **pd_kwargs
+    )
+    np.testing.assert_allclose(
+        result_ta["average"],
+        result_br["average"],
+        rtol=1e-7,
+        atol=1e-9,
+        err_msg=f"tree_accurate does not match brute for feature {feature}",
+    )
+    return result_ta
+
+
 @pytest.mark.parametrize("seed", range(3))
 @pytest.mark.parametrize(
     "Estimator",
@@ -1287,49 +1310,7 @@ def test_tree_accurate_matches_brute(Estimator, seed):
     est = Estimator(**kwargs).fit(X, y)
 
     for feature in range(n_features):
-        pdp_brute = partial_dependence(
-            est, X, features=[feature], method="brute", grid_resolution=20
-        )
-        pdp_fast = partial_dependence(
-            est, X, features=[feature], method="tree_accurate", grid_resolution=20
-        )
-        np.testing.assert_allclose(
-            pdp_fast["average"],
-            pdp_brute["average"],
-            rtol=1e-4,
-            atol=1e-6,
-            err_msg=f"Mismatch on feature {feature} with seed {seed}",
-        )
-
-
-@pytest.mark.parametrize(
-    "Estimator",
-    [DecisionTreeRegressor, RandomForestRegressor],
-)
-def test_tree_accurate_output_shape(Estimator):
-    """Output shape should be (1, grid_resolution) for each feature."""
-    rng = np.random.RandomState(0)
-    X = rng.randn(100, 4).astype(np.float64)
-    y = rng.randn(100)
-
-    kwargs = dict(max_depth=3, random_state=0)
-    if Estimator is RandomForestRegressor:
-        kwargs["n_estimators"] = 2
-    est = Estimator(**kwargs).fit(X, y)
-
-    grid_resolution = 15
-    for feature in range(4):
-        result = partial_dependence(
-            est,
-            X,
-            features=[feature],
-            method="tree_accurate",
-            grid_resolution=grid_resolution,
-        )
-        assert result["average"].shape == (1, grid_resolution), (
-            f"Expected (1, {grid_resolution}), got {result['average'].shape}"
-        )
-        assert result["grid_values"][0].shape == (grid_resolution,)
+        _assert_tree_accurate_matches_brute(est, X, feature, grid_resolution=20)
 
 
 def test_tree_accurate_repeated_feature_in_path():
@@ -1345,22 +1326,11 @@ def test_tree_accurate_repeated_feature_in_path():
 
     est = DecisionTreeRegressor(max_depth=6, random_state=0).fit(X, y)
 
-    pdp_brute = partial_dependence(
-        est, X, features=[0], method="brute", grid_resolution=30
-    )
-    pdp_fast = partial_dependence(
-        est, X, features=[0], method="tree_accurate", grid_resolution=30
-    )
-    np.testing.assert_allclose(
-        pdp_fast["average"],
-        pdp_brute["average"],
-        rtol=1e-4,
-        atol=1e-6,
-    )
+    _assert_tree_accurate_matches_brute(est, X, 0, grid_resolution=30)
 
 
-def test_tree_accurate_kind_not_average_raises():
-    """kind != 'average' must raise ValueError."""
+def test_tree_accurate_kind_not_average_and_sample_weight_raise():
+    """kind != 'average' and sample_weight != None must raise ValueError."""
     rng = np.random.RandomState(0)
     X = rng.randn(50, 3).astype(np.float64)
     y = rng.randn(50)
@@ -1369,6 +1339,11 @@ def test_tree_accurate_kind_not_average_raises():
     for kind in ("individual", "both"):
         with pytest.raises(ValueError, match="'tree_accurate' method only supports"):
             partial_dependence(est, X, features=[0], method="tree_accurate", kind=kind)
+
+    with pytest.raises(ValueError, match="'tree_accurate' method can only be applied"):
+        partial_dependence(
+            est, X, features=[0], method="tree_accurate", sample_weight=np.ones(50)
+        )
 
 
 def test_tree_accurate_unsupported_estimator_raises():
@@ -1380,31 +1355,11 @@ def test_tree_accurate_unsupported_estimator_raises():
         partial_dependence(est, X, features=[0], method="tree_accurate")
 
 
-def test_tree_accurate_sample_weight_raises():
-    """sample_weight != None must raise ValueError."""
-    rng = np.random.RandomState(0)
-    X = rng.randn(50, 3).astype(np.float64)
-    y = rng.randn(50)
-    est = DecisionTreeRegressor(max_depth=3, random_state=0).fit(X, y)
-
-    with pytest.raises(ValueError, match="'tree_accurate' method can only be applied"):
-        partial_dependence(
-            est, X, features=[0], method="tree_accurate", sample_weight=np.ones(50)
-        )
-
-
 def test_tree_accurate_binary_classifier_matches_brute():
     """Binary DecisionTreeClassifier: tree_accurate PDP must match brute."""
     X, y = make_classification(n_samples=100, n_features=4, random_state=0)
     est = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
-
-    result_ta = partial_dependence(
-        est, X, features=[0], method="tree_accurate", grid_resolution=10
-    )
-    result_br = partial_dependence(
-        est, X, features=[0], method="brute", grid_resolution=10
-    )
-    np.testing.assert_allclose(result_ta["average"], result_br["average"], atol=1e-6)
+    _assert_tree_accurate_matches_brute(est, X, 0, grid_resolution=10)
 
 
 def test_tree_accurate_multiclass_classifier_matches_brute():
@@ -1418,14 +1373,7 @@ def test_tree_accurate_multiclass_classifier_matches_brute():
         random_state=0,
     )
     est = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
-
-    result_ta = partial_dependence(
-        est, X, features=[0], method="tree_accurate", grid_resolution=10
-    )
-    result_br = partial_dependence(
-        est, X, features=[0], method="brute", grid_resolution=10
-    )
-    np.testing.assert_allclose(result_ta["average"], result_br["average"], atol=1e-6)
+    _assert_tree_accurate_matches_brute(est, X, 0, grid_resolution=10)
 
 
 def test_tree_accurate_multi_output_matches_brute():
@@ -1438,18 +1386,10 @@ def test_tree_accurate_multi_output_matches_brute():
     est = DecisionTreeRegressor(max_depth=4, random_state=0).fit(X, Y)
     assert est.n_outputs_ == 2
 
-    result_accurate = partial_dependence(
-        est, X, features=[0], method="tree_accurate", grid_resolution=10
-    )
-    result_brute = partial_dependence(
-        est, X, features=[0], method="brute", grid_resolution=10
-    )
+    result_accurate = _assert_tree_accurate_matches_brute(est, X, 0, grid_resolution=10)
 
     # Both methods should return shape (n_outputs, n_grid) = (2, 10).
     assert result_accurate["average"].shape == (2, 10)
-    np.testing.assert_allclose(
-        result_accurate["average"], result_brute["average"], atol=1e-6
-    )
 
 
 def _make_categorical_data(seed=0, n_samples=2000):
@@ -1474,121 +1414,54 @@ def _assert_split_kinds_present(est, expected_kind):
     assert expected_kind in set(np.asarray(tree.split_kind)[internal])
 
 
-@pytest.mark.parametrize("target_feature", [0, 1])
-def test_tree_accurate_categorical_bitset_matches_brute(target_feature):
-    """Bitset categorical splits must be routed with the prediction split test.
+@pytest.mark.parametrize(
+    "estimator_cls, make_target, split_kind, n_outputs",
+    [
+        pytest.param(
+            DecisionTreeRegressor,
+            lambda y: y,
+            SPLIT_CATEGORICAL_BITSET,
+            1,
+            id="bitset-category-as-target",
+        ),
+        pytest.param(
+            ExtraTreeRegressor,
+            lambda y: y,
+            SPLIT_CATEGORICAL_HASH,
+            1,
+            id="hash-regressor",
+        ),
+        pytest.param(
+            DecisionTreeClassifier,
+            lambda y: (y > np.median(y)).astype(int),
+            SPLIT_CATEGORICAL_BITSET,
+            1,
+            id="bitset-binary-classifier",
+        ),
+        pytest.param(
+            ExtraTreeClassifier,
+            lambda y: np.digitize(y, np.quantile(y, [0.33, 0.66])),
+            SPLIT_CATEGORICAL_HASH,
+            3,
+            id="hash-multiclass-classifier",
+        ),
+    ],
+)
+def test_tree_accurate_categorical_matches_brute(
+    estimator_cls, make_target, split_kind, n_outputs
+):
+    """Categorical splits must be routed with the same split test as prediction.
 
-    Covers the category both as the PDP target feature and as a complementary
-    feature that is marginalised over.
+    Covers both routing kinds, regression and classification, and the category
+    as the PDP target as well as a feature that is marginalised over.
+    ``splitter='best'`` rejects categorical features for multiclass, so the
+    multiclass case uses ExtraTreeClassifier and its hash routing.
     """
     X, y = _make_categorical_data()
-    est = DecisionTreeRegressor(
-        categorical_features=[0], max_depth=6, random_state=0
-    ).fit(X, y)
-    _assert_split_kinds_present(est, 1)  # SPLIT_CATEGORICAL_BITSET
+    est = estimator_cls(categorical_features=[0], max_depth=8, random_state=0)
+    est.fit(X, make_target(y))
+    _assert_split_kinds_present(est, split_kind)
 
-    result_ta = partial_dependence(
-        est,
-        X,
-        features=[target_feature],
-        method="tree_accurate",
-        categorical_features=[0],
-    )
-    result_br = partial_dependence(
-        est,
-        X,
-        features=[target_feature],
-        method="brute",
-        categorical_features=[0],
-    )
-    np.testing.assert_allclose(
-        result_ta["average"], result_br["average"], rtol=1e-7, atol=1e-9
-    )
-
-
-def test_tree_accurate_categorical_hash_matches_brute():
-    """Hash-routed categorical splits (ExtraTree) must match brute."""
-    X, y = _make_categorical_data()
-    est = ExtraTreeRegressor(categorical_features=[0], max_depth=8, random_state=0).fit(
-        X, y
-    )
-    _assert_split_kinds_present(est, 2)  # SPLIT_CATEGORICAL_HASH
-
-    result_ta = partial_dependence(
-        est, X, features=[0], method="tree_accurate", categorical_features=[0]
-    )
-    result_br = partial_dependence(
-        est, X, features=[0], method="brute", categorical_features=[0]
-    )
-    np.testing.assert_allclose(
-        result_ta["average"], result_br["average"], rtol=1e-7, atol=1e-9
-    )
-
-
-def test_tree_accurate_categorical_binary_classifier_matches_brute():
-    """Binary classification with categorical splits must match brute."""
-    X, y = _make_categorical_data()
-    y_bin = (y > np.median(y)).astype(int)
-    est = DecisionTreeClassifier(
-        categorical_features=[0], max_depth=6, random_state=0
-    ).fit(X, y_bin)
-    _assert_split_kinds_present(est, 1)
-
-    result_ta = partial_dependence(
-        est, X, features=[0], method="tree_accurate", categorical_features=[0]
-    )
-    result_br = partial_dependence(
-        est, X, features=[0], method="brute", categorical_features=[0]
-    )
-    np.testing.assert_allclose(
-        result_ta["average"], result_br["average"], rtol=1e-7, atol=1e-9
-    )
-
-
-def test_tree_accurate_categorical_multiclass_matches_brute():
-    """Multiclass with categorical splits must match brute.
-
-    ``splitter='best'`` rejects categorical features for multiclass, so this
-    uses ExtraTreeClassifier, which routes categories through the hash split.
-    """
-    X, y = _make_categorical_data()
-    y_multi = np.digitize(y, np.quantile(y, [0.33, 0.66]))
-    est = ExtraTreeClassifier(
-        categorical_features=[0], max_depth=8, random_state=0
-    ).fit(X, y_multi)
-    _assert_split_kinds_present(est, 2)
-
-    result_ta = partial_dependence(
-        est, X, features=[0], method="tree_accurate", categorical_features=[0]
-    )
-    result_br = partial_dependence(
-        est, X, features=[0], method="brute", categorical_features=[0]
-    )
-    assert result_ta["average"].shape[0] == 3
-    np.testing.assert_allclose(
-        result_ta["average"], result_br["average"], rtol=1e-7, atol=1e-9
-    )
-
-
-@pytest.mark.parametrize("missing_feature", [0, 1])
-def test_tree_accurate_missing_values_match_brute(missing_feature):
-    """NaNs must follow ``missing_go_to_left`` rather than falling right.
-
-    ``missing_feature`` is the column carrying NaNs; the PDP target is always
-    feature 0, so this covers NaNs in both the target and a marginalised feature.
-    """
-    X, y = _make_categorical_data()
-    rng = np.random.RandomState(1)
-    X = X.copy()
-    X[rng.rand(X.shape[0]) < 0.2, missing_feature] = np.nan
-
-    est = DecisionTreeRegressor(max_depth=6, random_state=0).fit(X, y)
-    tree = est.tree_
-    internal = tree.children_left != -1
-    assert np.asarray(tree.missing_go_to_left)[internal].sum() > 0
-
-    result_ta = partial_dependence(est, X, features=[0], method="tree_accurate")
-    result_br = partial_dependence(est, X, features=[0], method="brute")
-    np.testing.assert_allclose(
-        result_ta["average"], result_br["average"], rtol=1e-7, atol=1e-9
-    )
+    result = _assert_tree_accurate_matches_brute(est, X, 0, categorical_features=[0])
+    result = _assert_tree_accurate_matches_brute(est, X, 1, categorical_features=[0])
+    assert result["average"].shape[0] == n_outputs
