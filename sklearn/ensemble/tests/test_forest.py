@@ -1974,9 +1974,9 @@ def test_categorical_from_dtype_propagated_to_trees(name, constructor_name):
     )
     y = np.array([0, 1, 0, 1])
 
-    est = Forest(
-        categorical_features="from_dtype", n_estimators=3, random_state=0
-    ).fit(X, y)
+    est = Forest(categorical_features="from_dtype", n_estimators=3, random_state=0).fit(
+        X, y
+    )
 
     assert_array_equal(est.is_categorical_, [False, True])
     for tree in est.estimators_:
