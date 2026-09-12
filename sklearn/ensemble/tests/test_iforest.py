@@ -19,6 +19,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import ParameterGrid, train_test_split
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -393,3 +394,74 @@ def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
 
     # assert the same results as non-parallel
     assert_array_equal(pred, pred_parallel)
+
+
+def test_iforest_categorical_fit_predict(global_random_seed):
+    """IsolationForest encodes string categories and scores them end-to-end."""
+    X = np.array([["a"], ["b"], ["a"], ["b"], ["c"], ["c"]], dtype=object)
+    clf = IsolationForest(
+        n_estimators=10, random_state=global_random_seed, categorical_features=[0]
+    ).fit(X)
+
+    assert_array_equal(clf.is_categorical_, [True])
+    assert clf.estimators_[0]._preprocessor is None
+    pred = clf.predict(X)
+    assert pred.shape == (X.shape[0],)
+    assert set(np.unique(pred)).issubset({-1, 1})
+    assert clf.score_samples(X).shape == (X.shape[0],)
+
+
+def test_iforest_categorical_feature_subsampling(global_random_seed):
+    """Feature bagging subsets is_categorical_ to match each tree's columns."""
+    rng = np.random.RandomState(global_random_seed)
+    X = np.column_stack(
+        [
+            rng.randn(50),
+            rng.choice(["a", "b", "c"], size=50),
+        ]
+    )
+    clf = IsolationForest(
+        n_estimators=10,
+        max_features=0.5,
+        random_state=global_random_seed,
+        categorical_features=[1],
+    ).fit(X)
+
+    assert_array_equal(clf.is_categorical_, [False, True])
+    # max_features=0.5 on 2 columns yields 1 feature per tree.
+    for tree, features in zip(clf.estimators_, clf.estimators_features_):
+        cat_subset = clf.is_categorical_[features]
+        if np.any(cat_subset):
+            assert_array_equal(tree.is_categorical_, cat_subset)
+        else:
+            assert tree.is_categorical_ is None
+        assert tree._preprocessor is None
+    assert clf.score_samples(X).shape == (X.shape[0],)
+
+
+@pytest.mark.parametrize("constructor_name", ["pandas", "polars"])
+def test_iforest_categorical_from_dtype_propagated_to_trees(
+    constructor_name, global_random_seed
+):
+    """``categorical_features="from_dtype"`` must reach each IsolationForest tree."""
+    pytest.importorskip(constructor_name)
+    X = _convert_container(
+        np.array(
+            [[0.0, "low"], [1.0, "high"], [2.0, "low"], [3.0, "high"]], dtype=object
+        ),
+        constructor_name,
+        column_names=["f_num", "f_cat"],
+        dtype=object,
+        categorical_feature_names=["f_cat"],
+    )
+    clf = IsolationForest(
+        categorical_features="from_dtype",
+        n_estimators=3,
+        random_state=global_random_seed,
+    ).fit(X)
+
+    assert_array_equal(clf.is_categorical_, [False, True])
+    for tree in clf.estimators_:
+        assert_array_equal(tree.is_categorical_, [False, True])
+        assert tree._preprocessor is None
+    assert clf.score_samples(X).shape == (X.shape[0],)
