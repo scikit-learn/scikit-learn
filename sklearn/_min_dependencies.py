@@ -6,8 +6,8 @@
 import argparse
 
 # scipy and cython should by in sync with pyproject.toml
-NUMPY_MIN_VERSION = "1.24.1"
-SCIPY_MIN_VERSION = "1.10.0"
+NUMPY_MIN_VERSION = "1.26.3"
+SCIPY_MIN_VERSION = "1.12.0"
 JOBLIB_MIN_VERSION = "1.4.0"
 NARWHALS_MIN_VERSION = "2.0.1"
 THREADPOOLCTL_MIN_VERSION = "3.5.0"
@@ -27,9 +27,9 @@ dependent_packages = {
     "threadpoolctl": (THREADPOOLCTL_MIN_VERSION, "install"),
     "cython": (CYTHON_MIN_VERSION, "build"),
     "meson-python": ("0.17.1", "build"),
-    "matplotlib": ("3.6.1", "benchmark, docs, examples, tests"),
-    "scikit-image": ("0.22.0", "docs, examples"),
-    "pandas": ("1.5.0", "benchmark, docs, examples, tests"),
+    "matplotlib": ("3.8.0", "benchmark, docs, examples, tests"),
+    "scikit-image": ("0.24.0", "docs, examples"),
+    "pandas": ("2.2.0", "benchmark, docs, examples, tests"),
     "rich": ("14.1.0", "docs, examples, tests"),
     "seaborn": ("0.13.0", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),
@@ -42,9 +42,9 @@ dependent_packages = {
     "cython-lint": ("0.21.1", "tests"),
     "sphinx-lint": ("1.0.2", "tests"),
     "codespell": ("2.4.1", "tests"),
-    "pyamg": ("5.0.0", "tests"),
-    "polars": ("0.20.30", "docs, tests"),
-    "pyarrow": ("13.0.0", "tests"),
+    "pyamg": ("5.1.0", "tests"),
+    "polars": ("1.12.0", "docs, tests"),
+    "pyarrow": ("14.0.0", "tests"),
     "sphinx": ("7.3.7", "docs"),
     "sphinx-copybutton": ("0.5.2", "docs"),
     "sphinx-gallery": ("0.17.1", "docs"),
@@ -53,7 +53,7 @@ dependent_packages = {
     "pooch": ("1.8.0", "docs, examples, tests"),
     "sphinx-prompt": ("1.4.0", "docs"),
     "sphinxext-opengraph": ("0.9.1", "docs"),
-    "plotly": ("5.22.0", "docs, examples"),
+    "plotly": ("5.24.0", "docs, examples"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
     "sphinx-design": ("0.6.0", "docs"),
     "pydata-sphinx-theme": ("0.15.3", "docs"),

@@ -30,18 +30,18 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
    :target: https://scikit-learn.org/scikit-learn-benchmarks
 
-.. |PythonMinVersion| replace:: 3.11
-.. |NumPyMinVersion| replace:: 1.24.1
-.. |SciPyMinVersion| replace:: 1.10.0
+.. |PythonMinVersion| replace:: 3.12
+.. |NumPyMinVersion| replace:: 1.26.3
+.. |SciPyMinVersion| replace:: 1.12.0
 .. |JoblibMinVersion| replace:: 1.4.0
 .. |NarwhalsMinVersion| replace:: 2.0.1
 .. |ThreadpoolctlMinVersion| replace:: 3.5.0
-.. |MatplotlibMinVersion| replace:: 3.6.1
-.. |Scikit-ImageMinVersion| replace:: 0.22.0
-.. |PandasMinVersion| replace:: 1.5.0
+.. |MatplotlibMinVersion| replace:: 3.8.0
+.. |Scikit-ImageMinVersion| replace:: 0.24.0
+.. |PandasMinVersion| replace:: 2.2.0
 .. |SeabornMinVersion| replace:: 0.13.0
 .. |PytestMinVersion| replace:: 7.1.2
-.. |PlotlyMinVersion| replace:: 5.22.0
+.. |PlotlyMinVersion| replace:: 5.24.0
 
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/

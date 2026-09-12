@@ -37,7 +37,7 @@ X_toy = np.arange(9).reshape((3, 3))
 
 def test_polars_indexing():
     """Check _safe_indexing for polars as expected."""
-    pl = pytest.importorskip("polars", minversion="0.18.2")
+    pl = pytest.importorskip("polars", minversion="1.12.0")
     df = pl.DataFrame(
         {"a": [1, 2, 3, 4], "b": [4, 5, 6, 8], "c": [1, 4, 1, 10]}, orient="row"
     )

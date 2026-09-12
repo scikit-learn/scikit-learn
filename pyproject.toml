@@ -7,13 +7,13 @@ maintainers = [
     {name = "scikit-learn developers", email="scikit-learn@python.org"},
 ]
 dependencies = [
-  "numpy>=1.24.1",
-  "scipy>=1.10.0",
+  "numpy>=1.26.3",
+  "scipy>=1.12.0",
   "joblib>=1.4.0",
   "narwhals>=2.0.1",
   "threadpoolctl>=3.5.0",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = "BSD-3-Clause"
 license-files = ["COPYING"]
 classifiers=[
@@ -29,10 +29,10 @@ classifiers=[
   "Operating System :: Unix",
   "Operating System :: MacOS",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
 
@@ -52,7 +52,7 @@ requires = [
     # change to "cython>[fixed-version]" or "cython>=3.1.2,!=3.2.6,!=3.2.7,!=3.2.8,!=3.2.9"
     "cython>=3.1.2,<3.2.6",
     "numpy>=2",
-    "scipy>=1.10.0",
+    "scipy>=1.12.0",
 ]
 
 [tool.pytest.ini_options]
