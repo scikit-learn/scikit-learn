@@ -1,0 +1,5 @@
+- :func:`utils.check_array` and :func:`utils.validation.validate_data` now
+  raise an informative ``TypeError`` suggesting to use ``.collect()`` when
+  passed a :class:`polars.LazyFrame`, instead of a confusing error that told
+  the user to reshape the input.
+  By :user:`55Kamiryo <55Kamiryo>`.

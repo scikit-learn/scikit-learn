@@ -889,6 +889,14 @@ def check_array(
     pandas_requires_conversion = False
     # track if we have a Series-like object to raise a better error message
     type_if_series = None
+    # Lazy dataframes are not supported
+    if nw.dependencies.is_polars_lazyframe(array):
+        padded_input = " for " + input_name if input_name else ""
+        raise TypeError(
+            f"A polars LazyFrame was passed{padded_input}, but lazy dataframes are "
+            "not supported. Use '.collect()' to convert it to a polars DataFrame."
+        )
+
     # For dataframes, use narwhals
     if _nw_is_into_df_or_series(array):
         array_df = nw.from_native(array, allow_series=True)
