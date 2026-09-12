@@ -12,8 +12,10 @@
     `n_samples >> n_features`.
   - `"newton-cd"` avoids constructing the full Hessian matrix, but formulates the
     minimization problem for the inner solver as a penalized least squares problem
-    (which amounts to taking the square root of the Hessian) and then uses
+    (which amounts to taking the square root of the Hessian; this is even done with
+    great care for multiclass/multinomial logistic regression using an analytic LDL
+    decomposition of the multinomial covariance matrix per sample) and then uses
     `ElasticNet(precompute=False)` on it. It is a good choice for
     `n_features > n_samples`.
 
-    By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`34377`, :pr:`34523`.
+    By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`34561`, :pr:`34377`, :pr:`34523`.
