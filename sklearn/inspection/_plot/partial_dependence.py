@@ -7,7 +7,6 @@ from math import ceil
 
 import numpy as np
 from scipy import sparse
-from scipy.stats.mstats import mquantiles
 
 from sklearn.base import is_regressor
 from sklearn.inspection import partial_dependence
@@ -760,7 +759,7 @@ class PartialDependenceDisplay:
             for fx, cat in zip(fxs, cats):
                 if not cat and fx not in deciles:
                     X_col = _safe_indexing(X, fx, axis=1)
-                    deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
+                    deciles[fx] = np.quantile(X_col, np.arange(0.1, 1.0, 0.1))
 
         display = cls(
             pd_results=pd_results,
