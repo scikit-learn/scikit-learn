@@ -1415,6 +1415,20 @@ def test_retry_with_clean_cache(tmpdir):
     assert result == 1
 
 
+def test_get_local_path_rejects_path_traversal(tmpdir):
+    cache_directory = str(tmpdir.mkdir("scikit_learn_data"))
+
+    # A regular OpenML path stays inside the cache directory.
+    safe = _get_local_path("data/v1/download/61/iris.arff", cache_directory)
+    cache_dir = os.path.join(cache_directory, "openml.org")
+    assert os.path.abspath(safe).startswith(os.path.abspath(cache_dir))
+
+    # A path crafted from a malicious server URL must be rejected instead of
+    # escaping the cache directory.
+    with pytest.raises(ValueError, match="escaping the cache directory"):
+        _get_local_path("../../../../../../tmp/pwned", cache_directory)
+
+
 def test_retry_with_clean_cache_http_error(tmpdir):
     data_id = 61
     openml_path = _MONKEY_PATCH_LOCAL_OPENML_PATH.format(data_id)
