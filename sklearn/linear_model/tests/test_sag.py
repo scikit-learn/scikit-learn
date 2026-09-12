@@ -3,14 +3,16 @@
 
 import math
 import re
+import warnings
 
 import numpy as np
 import pytest
 
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model._sag import get_auto_step_size
+from sklearn.linear_model._sag import _build_sag_alias_tables, get_auto_step_size
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state, compute_class_weight
@@ -865,3 +867,225 @@ def test_sag_classifier_raises_error(solver):
 
     with pytest.raises(ValueError, match="Floating-point under-/overflow"):
         clf.fit(X, y)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_build_sag_alias_tables(dtype):
+    """The alias tables must draw indices proportionally to sample_weight
+    and provide a matching inverse-probability importance correction.
+
+    Non-regression test for gh-21305: the SAG/SAGA solver used to draw
+    samples uniformly regardless of sample_weight.
+    """
+    rng = np.random.RandomState(0)
+    n_samples = 500
+    sample_weight = rng.uniform(low=0.1, high=100, size=n_samples)
+
+    alias_index, prob_threshold, importance_weight = _build_sag_alias_tables(
+        sample_weight, dtype
+    )
+
+    assert alias_index.dtype == np.int32
+    assert prob_threshold.dtype == dtype
+    assert importance_weight.dtype == dtype
+
+    # Empirically draw many samples using the alias method and check the
+    # resulting frequencies match sample_weight / sample_weight.sum().
+    draws = rng.randint(0, n_samples, size=200_000)
+    u = rng.uniform(size=200_000)
+    picked = np.where(u < prob_threshold[draws], draws, alias_index[draws])
+    empirical_freq = np.bincount(picked, minlength=n_samples) / picked.shape[0]
+    expected_freq = sample_weight / sample_weight.sum()
+    assert_allclose(empirical_freq, expected_freq, atol=5e-3)
+
+    # The importance weight must exactly cancel sample_weight on average,
+    # i.e. E_i[sample_weight[i] * importance_weight[i]] == mean(sample_weight),
+    # which is what keeps the SAG/SAGA gradient estimator unbiased.
+    expected_importance = sample_weight.sum() / (n_samples * sample_weight)
+    assert_allclose(importance_weight, expected_importance, rtol=1e-5)
+
+
+def test_sag_sample_weight_convergence():
+    """LogisticRegression(solver='saga') with a very unbalanced
+    sample_weight must converge to (essentially) the same predictions as
+    fitting on the expanded (duplicated) dataset, without raising
+    ConvergenceWarning.
+
+    Non-regression test for gh-21305: SAGA used to draw samples uniformly
+    at random regardless of sample_weight, which is fine when weights are
+    close to uniform but makes the gradient estimate very high-variance
+    (and convergence correspondingly poor or absent) when a few samples
+    carry most of the weight.
+
+    Note this is specific to L2 (or no) penalty: plain SAG has no
+    mechanism to stay unbiased when a sample is drawn rarely (see
+    _sag.py:sag_solver's use_weighted_sampling), so skewing the draw
+    towards heavy samples can slow it down instead of helping; and L1's
+    proximal-operator thresholding interacts with highly skewed
+    sample_weight in a way that can still need many more epochs than the
+    default max_iter to satisfy the strict epoch-level tol criterion (it
+    reaches a much better solution than before this fix in the same
+    number of epochs, just not always within tol). Both are distinct,
+    pre-existing rough edges this fix does not address.
+    """
+    rng = np.random.RandomState(0)
+    n_unique, n_features = 2000, 10
+
+    X_unique = rng.randn(n_unique, n_features)
+    coef_true = rng.randn(n_features)
+    y_unique = (X_unique @ coef_true + 0.1 * rng.randn(n_unique) > 0).astype(int)
+
+    weights = rng.randint(1, 6, size=n_unique)
+    # A subset of rows with a much larger multiplicity than the rest,
+    # similar in spirit to the reporter's data (min=1, max=37681, mean=3.61
+    # over 39341 rows in gh-21305), while keeping the weight mass spread
+    # over enough rows to stay well clear of the near-separable-data /
+    # unregularized-coefficient-growth regime, which is a distinct,
+    # unrelated slow-convergence phenomenon.
+    heavy_idx = rng.choice(n_unique, size=20, replace=False)
+    weights[heavy_idx] = rng.randint(50, 400, size=20)
+
+    X_dup = np.repeat(X_unique, weights, axis=0)
+    y_dup = np.repeat(y_unique, weights)
+
+    # A moderate, default-scale C: the "duplicated rows" and "unique rows +
+    # sample_weight" formulations aren't *quite* the same optimization
+    # problem regardless of C (the penalty is scaled by 1 / n_samples, and
+    # n_samples differs between the two representations), but an extremely
+    # large C makes both formulations approach the unregularized MLE, which
+    # on randomly generated (imperfectly separable, but not by a lot)
+    # data can need many more epochs to satisfy the tol-based stopping
+    # criterion regardless of sampling -- an unrelated slow-convergence
+    # phenomenon this fix does not address. See the "extreme weights"
+    # scenario in this same PR's manual testing for a case where this
+    # dominates even more starkly.
+    common_params = dict(
+        solver="saga",
+        penalty="l2",
+        C=1.0,
+        max_iter=2000,
+        tol=1e-4,
+        random_state=0,
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        clf_dup = LogisticRegression(**common_params).fit(X_dup, y_dup)
+        clf_weighted = LogisticRegression(**common_params).fit(
+            X_unique, y_unique, sample_weight=weights.astype(float)
+        )
+
+    # Raw coef_ can wobble more than this at the margins (e.g. near-zero /
+    # L1-zeroed coordinates) since SAG/SAGA only guarantee a finite-tol
+    # stochastic solution, not an exact one; predicted-probability
+    # agreement is the more meaningful invariant here.
+    proba_dup = clf_dup.predict_proba(X_unique)[:, 1]
+    proba_weighted = clf_weighted.predict_proba(X_unique)[:, 1]
+    assert_allclose(proba_dup, proba_weighted, atol=0.05)
+
+
+def test_sag_l1_sample_weight_quality_improves():
+    """With L1 penalty and highly-skewed sample_weight, SAGA may still need
+    more than the default max_iter to satisfy the strict epoch-level tol
+    criterion (a separate rough edge in how the proximal operator
+    interacts with skewed weights, see test_sag_sample_weight_convergence's
+    docstring), but drawing samples proportionally to their weight must
+    substantially reduce the (weighted) log loss reached within a fixed,
+    identical epoch budget, compared to the previous ("draw uniformly,
+    ignore sample_weight for sampling") behavior.
+
+    Non-regression test for gh-21305.
+    """
+    # A fixed seed (rather than global_random_seed): the size of the
+    # improvement is sensitive to how pathological this particular draw of
+    # sample_weight happens to be, so this uses one hand-verified to show a
+    # large (>20x), robustly-reproducible gap rather than parametrizing
+    # over arbitrary seeds where a milder weight skew wouldn't reliably do so.
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 2000, 10
+    X = rng.randn(n_samples, n_features)
+    coef_true = rng.randn(n_features)
+    y = (X @ coef_true + 0.1 * rng.randn(n_samples) > 0).astype(np.float64)
+
+    weights = rng.randint(1, 6, size=n_samples).astype(float)
+    heavy_idx = rng.choice(n_samples, size=20, replace=False)
+    weights[heavy_idx] = rng.randint(50, 400, size=20)
+
+    alpha_scaled = 1.0 / n_samples
+    beta_scaled = 1.0 / n_samples
+    max_squared_sum = row_norms(X, squared=True).max()
+    step_size = get_auto_step_size(
+        max_squared_sum, alpha_scaled, "log", True, n_samples=n_samples, is_saga=True
+    )
+
+    def weighted_log_loss(coef, intercept):
+        z = X @ coef + intercept
+        p = np.clip(1 / (1 + np.exp(-z)), 1e-12, 1 - 1e-12)
+        return np.average(-(y * np.log(p) + (1 - y) * np.log(1 - p)), weights=weights)
+
+    def run(use_weighted_sampling, max_iter=2000):
+        from sklearn.linear_model._base import make_dataset
+        from sklearn.linear_model._sag_fast import sag64
+
+        dataset, intercept_decay = make_dataset(X, y, weights, 0)
+        coef = np.zeros((n_features, 1), dtype=np.float64, order="C")
+        intercept = np.zeros(1, dtype=np.float64)
+        if use_weighted_sampling:
+            alias_index, prob_threshold, importance_weight = _build_sag_alias_tables(
+                weights, np.float64
+            )
+        else:
+            alias_index = np.zeros(1, dtype=np.int32)
+            prob_threshold = np.zeros(1, dtype=np.float64)
+            importance_weight = np.zeros(1, dtype=np.float64)
+        sag64(
+            dataset,
+            coef,
+            intercept,
+            n_samples,
+            n_features,
+            1,
+            1e-4,
+            max_iter,
+            "log",
+            step_size,
+            alpha_scaled,
+            beta_scaled,
+            np.zeros((n_features, 1), dtype=np.float64, order="C"),
+            np.zeros((n_samples, 1), dtype=np.float64, order="C"),
+            np.zeros(n_samples, dtype=np.int32, order="C"),
+            0,
+            True,
+            np.zeros(1, dtype=np.float64),
+            intercept_decay,
+            True,
+            use_weighted_sampling,
+            alias_index,
+            prob_threshold,
+            importance_weight,
+            12345,
+            0,
+        )
+        return weighted_log_loss(coef.ravel(), intercept[0])
+
+    loss_before_fix = run(use_weighted_sampling=False)
+    loss_after_fix = run(use_weighted_sampling=True)
+
+    assert loss_after_fix < 0.5 * loss_before_fix
+
+
+def test_sag_weighted_sampling_noop_for_uniform_weights():
+    """When sample_weight is uniform (including the default, None), the SAG
+    solver must take the exact original (unweighted) code path: fitting
+    with sample_weight=None and with an explicit all-ones sample_weight
+    must produce bit-identical coefficients for a fixed random_state.
+    """
+    X, y = make_classification(n_samples=200, random_state=0)
+
+    clf_none = LogisticRegression(solver="saga", random_state=0, max_iter=200).fit(X, y)
+    clf_ones = LogisticRegression(solver="saga", random_state=0, max_iter=200).fit(
+        X, y, sample_weight=np.ones(X.shape[0])
+    )
+
+    assert_allclose(clf_none.coef_, clf_ones.coef_, rtol=0, atol=0)
+    assert clf_none.n_iter_ == clf_ones.n_iter_

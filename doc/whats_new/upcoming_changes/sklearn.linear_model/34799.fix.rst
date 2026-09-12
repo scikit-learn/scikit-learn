@@ -1,0 +1,6 @@
+- Fix a bug in :class:`linear_model.LogisticRegression`, :class:`linear_model.Ridge`
+  and other estimators using ``solver="saga"``: samples were drawn uniformly at
+  random regardless of ``sample_weight`` during optimization, which could cause
+  poor or absent convergence when weights are far from uniform. Samples are now
+  drawn proportionally to their weight.
+  By :user:`Boubker Bennani <Boubker10>`.
