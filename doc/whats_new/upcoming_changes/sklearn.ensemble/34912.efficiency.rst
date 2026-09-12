@@ -1,0 +1,8 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now pick a more sensible
+  number of threads to use during `fit`, based on the size of the dataset,
+  instead of always using every available thread. This avoids thread
+  management overhead dominating the actual work on small datasets, which
+  can lead to up to ~10x speed-ups when the number of threads is
+  unconstrained (e.g. no `OMP_NUM_THREADS` or similar limit set).
+  By :user:`Arthur Lacote <cakedev0>`.
