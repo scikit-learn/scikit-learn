@@ -10,13 +10,15 @@ from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
 from sklearn.base import is_classifier, is_regressor
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble._forest import ForestClassifier, ForestRegressor
 from sklearn.ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting,
 )
 from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree._classes import BaseDecisionTree
 from sklearn.utils import Bunch, _safe_indexing, check_array
 from sklearn.utils._indexing import (
     _determine_key_type,
@@ -227,9 +229,9 @@ def _partial_dependence_tree_accurate(est, X, feature, grid):
 
     Parameters
     ----------
-    est : DecisionTreeRegressor, RandomForestRegressor, DecisionTreeClassifier,
-          or RandomForestClassifier
-        A fitted tree-based estimator.
+    est : BaseDecisionTree, ForestRegressor or ForestClassifier
+        A fitted single tree (``DecisionTree*``, ``ExtraTree*``) or forest of
+        trees (``RandomForest*``, ``ExtraTrees*``).
     X : ndarray of shape (n_samples, n_features), dtype=np.float32
         Background dataset used for marginalisation.
     feature : int
@@ -251,10 +253,10 @@ def _partial_dependence_tree_accurate(est, X, feature, grid):
 
     out = np.zeros((n_effective_outputs, len(grid)), dtype=np.float64)
 
-    if isinstance(est, (DecisionTreeRegressor, DecisionTreeClassifier)):
+    if isinstance(est, BaseDecisionTree):
         est.tree_.compute_partial_dependence_tree_accurate(X, grid, feature, out)
         out /= m
-    elif isinstance(est, (RandomForestRegressor, RandomForestClassifier)):
+    elif isinstance(est, (ForestRegressor, ForestClassifier)):
         n_trees = len(est.estimators_)
         for tree_est in est.estimators_:
             tree_est.tree_.compute_partial_dependence_tree_accurate(
@@ -557,11 +559,15 @@ def partial_dependence(
         - `'brute'` is supported for any estimator, but is more
           computationally intensive.
 
-        - `'tree_accurate'` is supported for
+        - `'tree_accurate'` is supported for the single-tree estimators
           :class:`~sklearn.tree.DecisionTreeRegressor`,
+          :class:`~sklearn.tree.DecisionTreeClassifier`,
+          :class:`~sklearn.tree.ExtraTreeRegressor`,
+          :class:`~sklearn.tree.ExtraTreeClassifier` and the forests
           :class:`~sklearn.ensemble.RandomForestRegressor`,
-          :class:`~sklearn.tree.DecisionTreeClassifier`, and
-          :class:`~sklearn.ensemble.RandomForestClassifier`
+          :class:`~sklearn.ensemble.RandomForestClassifier`,
+          :class:`~sklearn.ensemble.ExtraTreesRegressor`,
+          :class:`~sklearn.ensemble.ExtraTreesClassifier`,
           when `kind='average'` and `response_method='decision_function'`.
           Joint PDP (tuples in `features`) is not supported.
           This method is equivalent to the `'brute'` method,
@@ -680,18 +686,14 @@ def partial_dependence(
                 "sample_weight is None."
             )
         if not isinstance(
-            estimator,
-            (
-                DecisionTreeRegressor,
-                RandomForestRegressor,
-                DecisionTreeClassifier,
-                RandomForestClassifier,
-            ),
+            estimator, (BaseDecisionTree, ForestRegressor, ForestClassifier)
         ):
             raise ValueError(
                 "The 'tree_accurate' method only supports DecisionTreeRegressor, "
-                "RandomForestRegressor, DecisionTreeClassifier, and "
-                "RandomForestClassifier. Use method='brute' for other estimators."
+                "DecisionTreeClassifier, ExtraTreeRegressor, ExtraTreeClassifier, "
+                "RandomForestRegressor, RandomForestClassifier, "
+                "ExtraTreesRegressor and ExtraTreesClassifier. "
+                "Use method='brute' for other estimators."
             )
         if is_classifier(estimator):
             if response_method == "auto":
