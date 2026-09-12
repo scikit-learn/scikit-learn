@@ -851,6 +851,11 @@ def test_count_nonzero(csc_container, csr_container):
 
     with pytest.raises(TypeError):
         count_nonzero(X_csc)
+    # Negative axes are aliases for 0 / 1 and must still enforce the CSR-only
+    # format check, rather than silently processing a non-CSR matrix.
+    for axis in [-1, -2]:
+        with pytest.raises(TypeError):
+            count_nonzero(X_csc, axis=axis)
     with pytest.raises(ValueError):
         count_nonzero(X_csr, axis=2)
 
