@@ -221,13 +221,24 @@ class PolynomialCountSketch(
         count_sketches = np.zeros((X_gamma.shape[0], self.degree, self.n_components))
 
         if sp.issparse(X_gamma):
-            for j in range(X_gamma.shape[1]):
-                for d in range(self.degree):
-                    iHashIndex = self.indexHash_[d, j]
-                    iHashBit = self.bitHash_[d, j]
-                    count_sketches[:, d, iHashIndex] += (
-                        (iHashBit * X_gamma[:, [j]]).toarray().ravel()
-                    )
+            # Avoid densifying one column at a time: scale the signed
+            # features and scatter-sum them into buckets via a sparse
+            # matrix product instead, so the cost follows the number of
+            # nonzeros rather than n_features.
+            n_features = X_gamma.shape[1]
+            X_gamma = X_gamma.tocsc()
+            for d in range(self.degree):
+                signed_features = X_gamma.multiply(self.bitHash_[d, :])
+                bucket_projection = sp.csr_matrix(
+                    (
+                        np.ones(n_features),
+                        (np.arange(n_features), self.indexHash_[d, :]),
+                    ),
+                    shape=(n_features, self.n_components),
+                )
+                count_sketches[:, d, :] = (
+                    signed_features @ bucket_projection
+                ).toarray()
 
         else:
             for j in range(X_gamma.shape[1]):
