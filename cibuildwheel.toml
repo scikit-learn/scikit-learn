@@ -1,0 +1,16 @@
+[tool.cibuildwheel]
+build-verbosity = 1
+archs = ["all"]
+# Use the manylinux_2_28 images for the Linux wheels.
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-i686-image = "manylinux_2_28"
+environment = { SKLEARN_SKIP_NETWORK_TESTS = "1" }
+before-build = "bash {project}/build_tools/wheels/cibw_before_build.sh {project}"
+test-command = "bash {project}/build_tools/wheels/test_wheels.sh {project}"
+
+[tool.cibuildwheel.windows]
+# Needed on Windows CI to compile with Visual Studio compiler
+# otherwise Meson detects a MINGW64 platform and use MINGW64
+# toolchain
+config-settings = "setup-args=--vsenv"
+repair-wheel-command = "bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}"

@@ -92,7 +92,9 @@ ziphtml:
 		make html; \
 	fi
 	# Optimize the images to reduce the size of the ZIP
-	optipng $(BUILDDIR)/html/stable/_images/*.png
+	# Use 3 cores to match the CircleCI `doc` resource class (medium+).
+	find $(BUILDDIR)/html/stable/_images -name '*.png' -print0 \
+	  | xargs -0 -n 1 -P 3 optipng
 	# Exclude the output directory to avoid infinity recursion
 	cd $(BUILDDIR)/html/stable; \
 	zip -q -x _downloads \
