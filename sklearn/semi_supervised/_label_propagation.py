@@ -370,7 +370,9 @@ class LabelPropagation(BaseLabelPropagation):
         state.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to run when constructing the
+        nearest-neighbor graph for ``kernel='knn'``. This parameter has no
+        effect when ``kernel='rbf'``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -535,7 +537,9 @@ class LabelSpreading(BaseLabelPropagation):
       state.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to run when constructing the
+        nearest-neighbor graph for ``kernel='knn'``. This parameter has no
+        effect when ``kernel='rbf'``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
