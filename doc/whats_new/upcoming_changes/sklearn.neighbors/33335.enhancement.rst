@@ -1,0 +1,6 @@
+- :class:`neighbors.NearestCentroid` now supports
+  :meth:`~neighbors.NearestCentroid.partial_fit` for incremental and
+  out-of-core learning. It is available for ``metric="euclidean"`` only, since
+  the feature-wise median used by ``metric="manhattan"`` cannot be updated
+  incrementally. Fixes :issue:`12952`.
+  By :user:`Shivam Lalakiya <shivamlalakiya>`.
