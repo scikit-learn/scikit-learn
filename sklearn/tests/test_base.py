@@ -915,9 +915,9 @@ def test_estimator_getstate_using_slots_error_message():
 @pytest.mark.parametrize(
     "constructor_name, minversion",
     [
-        ("pandas", "1.5.0"),
-        ("pyarrow", "13.0.0"),
-        ("polars", "0.20.23"),
+        ("pandas", "2.2.0"),
+        ("pyarrow", "14.0.0"),
+        ("polars", "1.12.0"),
     ],
 )
 def test_feature_names_in_on_dataframes(constructor_name, minversion):
