@@ -1,0 +1,6 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now exclude samples with
+  zero `sample_weight` from the tree grower.
+  The repeated/weighted equivalence described in :term:`sample_weight` therefore
+  holds when fitting with `min_samples_leaf=1`.
+  By :user:`Antoine Baker <antoinebaker>` and :user:`Olivier Grisel <ogrisel>`.
