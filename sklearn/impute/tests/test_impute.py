@@ -1505,6 +1505,62 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
         imputer.inverse_transform(X_1_trans)
 
 
+def test_simple_imputer_inverse_transform_empty_first_feature():
+    """Non-regression test for gh-27012.
+
+    inverse_transform must preserve column order when the first feature is
+    completely empty during fit but has values during transform.
+    """
+    X1 = np.array([[np.nan, 2.0, 3.0], [np.nan, 2.0, 3.0]])
+    X2 = np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]])
+
+    imputer = SimpleImputer(add_indicator=True)
+    imputer.fit(X1)
+    X_inv = imputer.inverse_transform(imputer.transform(X2))
+
+    # Column 0 must be NaN (fully empty during fit), rest preserved
+    assert np.isnan(X_inv[:, 0]).all()
+    assert_array_equal(X_inv[:, 1:], X2[:, 1:])
+
+
+def test_simple_imputer_inverse_transform_empty_middle_feature():
+    """Non-regression test for gh-27012.
+
+    inverse_transform must preserve column order when a middle feature is
+    completely empty during fit but has values during transform.
+    """
+    X1 = np.array([[1.0, np.nan, 3.0], [1.0, np.nan, 3.0]])
+    X2 = np.array([[1.0, 5.0, 3.0], [1.0, 5.0, 3.0]])
+
+    imputer = SimpleImputer(add_indicator=True)
+    imputer.fit(X1)
+    X_inv = imputer.inverse_transform(imputer.transform(X2))
+
+    assert_array_equal(X_inv[:, 0], X2[:, 0])
+    # Column 1 must be NaN (fully empty during fit)
+    assert np.isnan(X_inv[:, 1]).all()
+    assert_array_equal(X_inv[:, 2], X2[:, 2])
+
+
+def test_simple_imputer_inverse_transform_empty_last_feature():
+    """Non-regression test for gh-27012.
+
+    inverse_transform must preserve column order when the last feature is
+    completely empty during fit but has values during transform.
+    """
+    X1 = np.array([[1.0, 2.0, np.nan], [1.0, 2.0, np.nan]])
+    X2 = np.array([[1.0, 2.0, 9.0], [1.0, 2.0, 9.0]])
+
+    imputer = SimpleImputer(add_indicator=True)
+    imputer.fit(X1)
+    X_inv = imputer.inverse_transform(imputer.transform(X2))
+
+    assert_array_equal(X_inv[:, :2], X2[:, :2])
+    # Last column must be NaN (fully empty during fit)
+    assert np.isnan(X_inv[:, 2]).all()
+
+
+
 @pytest.mark.parametrize(
     "expected,array,dtype,extra_value,n_repeat",
     [
