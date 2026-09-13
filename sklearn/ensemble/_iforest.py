@@ -144,7 +144,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         .. versionadded:: 0.21
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
-        (n_categorical_features,), or "from_dtype", default=None
+        (n_categorical_features,), or "from_dtype", default="from_dtype"
         Indicates which features are treated as categorical.
 
         - None : no feature will be considered categorical.
@@ -293,7 +293,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         random_state=None,
         verbose=0,
         warm_start=False,
-        categorical_features=None,
+        categorical_features="from_dtype",
     ):
         super().__init__(
             estimator=None,

@@ -1470,7 +1470,7 @@ class RandomForestClassifier(ForestClassifier):
         .. versionadded:: 1.4
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
-        (n_categorical_features,), or "from_dtype", default=None
+        (n_categorical_features,), or "from_dtype", default="from_dtype"
         Indicates which features are treated as categorical.
 
         - None : no feature will be considered categorical.
@@ -1641,7 +1641,7 @@ class RandomForestClassifier(ForestClassifier):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
-        categorical_features=None,
+        categorical_features="from_dtype",
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1894,7 +1894,7 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 1.4
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
-        (n_categorical_features,), or "from_dtype", default=None
+        (n_categorical_features,), or "from_dtype", default="from_dtype"
         Indicates which features are treated as categorical.
 
         - None : no feature will be considered categorical.
@@ -1914,14 +1914,10 @@ class RandomForestRegressor(ForestRegressor):
         also treated as missing values.
 
         Trees in the forest use the best split strategy, so categorical
-        features are only supported for binary classification and
-        single-output regression.
+        features are only supported for single-output regression.
+        Categorical features are not supported with `criterion="absolute_error"`.
 
         .. versionadded:: 1.11
-
-    Attributes
-    ----------
-    estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
@@ -2046,7 +2042,7 @@ class RandomForestRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
-        categorical_features=None,
+        categorical_features="from_dtype",
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -2319,7 +2315,7 @@ class ExtraTreesClassifier(ForestClassifier):
         .. versionadded:: 1.4
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
-        (n_categorical_features,), or "from_dtype", default=None
+        (n_categorical_features,), or "from_dtype", default="from_dtype"
         Indicates which features are treated as categorical.
 
         - None : no feature will be considered categorical.
@@ -2471,7 +2467,7 @@ class ExtraTreesClassifier(ForestClassifier):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
-        categorical_features=None,
+        categorical_features="from_dtype",
     ):
         super().__init__(
             estimator=ExtraTreeClassifier(),
@@ -2719,7 +2715,7 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionadded:: 1.4
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
-        (n_categorical_features,), or "from_dtype", default=None
+        (n_categorical_features,), or "from_dtype", default="from_dtype"
         Indicates which features are treated as categorical.
 
         - None : no feature will be considered categorical.
@@ -2738,8 +2734,9 @@ class ExtraTreesRegressor(ForestRegressor):
         by ``np.nan``; unknown categories at prediction time are also treated as
         missing values.
 
-        Trees in the forest use the random split strategy, including multi-class
-        classification and multi-output targets.
+        Trees in the forest use the random split strategy, including
+        multi-output targets.
+        Categorical features are not supported with `criterion="absolute_error"`.
 
         .. versionadded:: 1.11
 
@@ -2854,7 +2851,7 @@ class ExtraTreesRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
-        categorical_features=None,
+        categorical_features="from_dtype",
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),

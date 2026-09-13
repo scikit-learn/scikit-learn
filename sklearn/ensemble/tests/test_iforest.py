@@ -455,11 +455,11 @@ def test_iforest_categorical_from_dtype_propagated_to_trees(
         categorical_feature_names=["f_cat"],
     )
     clf = IsolationForest(
-        categorical_features="from_dtype",
         n_estimators=3,
         random_state=global_random_seed,
     ).fit(X)
 
+    assert clf.categorical_features == "from_dtype"
     assert_array_equal(clf.is_categorical_, [False, True])
     for tree in clf.estimators_:
         assert_array_equal(tree.is_categorical_, [False, True])
