@@ -1560,6 +1560,31 @@ def test_simple_imputer_inverse_transform_empty_last_feature():
     assert np.isnan(X_inv[:, 2]).all()
 
 
+@pytest.mark.parametrize("missing_value", [-1, np.nan])
+def test_simple_imputer_inverse_transform_empty_feature_non_default_missing(
+    missing_value,
+):
+    """Non-regression test for gh-27012 with various missing_values types.
+
+    inverse_transform must preserve column order when a feature is
+    completely empty during fit, for both NaN and integer missing values.
+    """
+    # Build X where col 1 is entirely missing during fit
+    fv = missing_value
+    X1 = np.array([[1.0, fv, 3.0], [1.0, fv, 3.0]], dtype=float)
+    X2 = np.array([[1.0, 5.0, 3.0], [1.0, 5.0, 3.0]], dtype=float)
+
+    imputer = SimpleImputer(missing_values=missing_value, add_indicator=True)
+    imputer.fit(X1)
+    X_inv = imputer.inverse_transform(imputer.transform(X2))
+
+    assert_array_equal(X_inv[:, 0], X2[:, 0])
+    # Column 1 was entirely missing during fit; its value in X_inv should
+    # equal the missing_values sentinel (not a shifted data column)
+    assert_array_equal(X_inv[:, 1], np.full(2, fv))
+    assert_array_equal(X_inv[:, 2], X2[:, 2])
+
+
 @pytest.mark.parametrize(
     "expected,array,dtype,extra_value,n_repeat",
     [
