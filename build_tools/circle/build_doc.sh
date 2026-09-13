@@ -20,6 +20,20 @@ set -x
 # defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
+tic() {
+    TIC_LABEL="$1"
+    TIC_SECONDS=$SECONDS
+    printf 'timestamp=%(%FT%TZ)T start %q\n' -1 "$TIC_LABEL"
+}
+
+toc() {
+    printf 'timestamp=%(%FT%TZ)T end %q duration_seconds=%d\n' \
+        -1 "$TIC_LABEL" "$((SECONDS - TIC_SECONDS))"
+}
+
+tic "begin of build_doc.sh"
+toc
+
 if [[ -n "$CI_PULL_REQUEST" && -z "$CI_TARGET_BRANCH" ]]
 then
     # CircleCI does not expose the PR base branch as an environment variable.
@@ -155,14 +169,18 @@ if [[ "$make_args" == "dist" ]]
 then
     apt_packages="$apt_packages zip optipng"
 fi
+
+tic "apt-get commands"
 sudo -E apt-get -yq update --allow-releaseinfo-change
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends install $apt_packages
+toc
 
 # deactivate circleci virtualenv and setup a conda env instead
 if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
+tic "miniforge install"
 # Install Miniforge
 MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
 curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
@@ -170,10 +188,12 @@ MINIFORGE_PATH=$HOME/miniforge3
 bash ./miniconda.sh -b -p $MINIFORGE_PATH
 source $MINIFORGE_PATH/etc/profile.d/conda.sh
 conda activate
+toc
 
-
+tic "conda env creation"
 create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
 conda activate $CONDA_ENV_NAME
+toc
 
 # Sets up ccache
 export PATH="/usr/lib/ccache:$PATH"
@@ -184,10 +204,12 @@ ccache -z
 
 show_installed_libraries
 
+tic "build scikit-learn"
 # Specify explicitly ninja -j argument because ninja does not handle cgroups v2 and
 # use the same default rule as ninja (-j3 since we have 2 cores on CircleCI), see
 # https://github.com/scikit-learn/scikit-learn/pull/30333
 pip install -e . -v --no-build-isolation --config-settings=compile-args="-j 3"
+toc
 
 echo "ccache build summary:"
 ccache -s
@@ -206,8 +228,10 @@ then
 fi
 
 
+tic "doc build"
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
+toc
 
 cd -
 set +o pipefail
