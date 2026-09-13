@@ -733,20 +733,32 @@ class SimpleImputer(_BaseImputer):
 
         n_features_original = len(self.statistics_)
         shape_original = (X.shape[0], n_features_original)
-        X_original = np.zeros(shape_original)
-        X_original[:, self.indicator_.features_] = missing_mask
-        full_mask = X_original.astype(bool)
 
-        imputed_idx, original_idx = 0, 0
-        while imputed_idx < len(array_imputed.T):
-            if not np.all(X_original[:, original_idx]):
-                X_original[:, original_idx] = array_imputed.T[imputed_idx]
-                imputed_idx += 1
-                original_idx += 1
+        # Determine which features were kept during fit (not dropped as empty)
+        if hasattr(self, "_valid_mask") and self._valid_mask is not None:
+            valid_mask = self._valid_mask
+        else:
+            if isinstance(self.missing_values, float) and np.isnan(self.missing_values):
+                valid_mask = ~np.isnan(self.statistics_)
             else:
-                original_idx += 1
+                valid_mask = self.statistics_ != self.missing_values
 
-        X_original[full_mask] = self.missing_values
+        # Initialize output array with missing_values (preserves empty feature cols)
+        if isinstance(self.missing_values, float) and np.isnan(self.missing_values):
+            X_original = np.full(shape_original, np.nan)
+        else:
+            X_original = np.full(shape_original, self.missing_values)
+
+        # Direct index mapping: avoids heuristic while-loop column drift
+        valid_indices = np.flatnonzero(valid_mask)
+        X_original[:, valid_indices] = array_imputed
+
+        # Restore missing values for features tracked by missing indicator
+        indicator_features = self.indicator_.features_
+        for idx, feat_idx in enumerate(indicator_features):
+            is_missing = missing_mask[:, idx]
+            X_original[is_missing, feat_idx] = self.missing_values
+
         return X_original
 
     def __sklearn_tags__(self):
