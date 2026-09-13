@@ -159,9 +159,9 @@ def _parallel_build_estimators(
             sample_weight,
         )
 
-        # Pass the resolved categorical mask from the ensemble. Trees only see the
-        # already-encoded float ndarray, so user values like "from_dtype" or
-        # feature-name lists would otherwise silently resolve to None.
+        # Trees must get the bool mask, not categorical_features="from_dtype" (or
+        # column names). The ensemble already turned X into a NumPy array, so trees
+        # can no longer read dtypes/names and would treat all features as numeric.
         if getattr(ensemble, "is_categorical_", None) is not None:
             if requires_feature_indexing:
                 cat_subset = ensemble.is_categorical_[features]

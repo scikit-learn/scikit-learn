@@ -354,9 +354,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 skip_check_array=True,
             )
             X = self._preprocess_X(X, reset=True)
-            # X has already been encoded to a numeric array. Do not call
-            # validate_data(reset=True) again here because ndarray input would
-            # remove feature_names_in_ captured from the original container.
+            # Feature names were already stored from the original dataframe above.
+            # Encoding turns X into a plain ndarray with no names.
+            # validate_data(reset=True) would treat that as "no feature names"
+            # and delete feature_names_in_.
             X, y = validate_data(
                 self,
                 X,
@@ -497,9 +498,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 self._make_estimator(append=False, random_state=random_state)
                 for i in range(n_more_estimators)
             ]
-            # Pass the resolved categorical mask, not the user parameter. After the
-            # forest encodes X, trees only see a float ndarray so values like
-            # "from_dtype" or feature-name lists would silently resolve to None.
+            # Trees must get the bool mask, not categorical_features="from_dtype" (or
+            # column names). The forest already turned X into a NumPy array, so trees
+            # can no longer read dtypes/names and would treat all features as numeric.
             if self.is_categorical_ is not None:
                 for tree in trees:
                     tree.set_params(categorical_features=self.is_categorical_)

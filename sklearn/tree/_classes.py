@@ -303,9 +303,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
             check_y_params = dict(ensure_2d=False, dtype=None)
             if has_categorical:
-                # X has already been encoded to a numeric array. Do not call
-                # validate_data(reset=True) again here because ndarray input would
-                # remove feature_names_in_ captured from the original container.
+                # Feature names were already stored from the original dataframe above.
+                # Encoding turns X into a plain ndarray with no names.
+                # validate_data(reset=True) would treat that as "no feature names" and
+                # delete feature_names_in_.
                 X = check_array(X, input_name="X", estimator=self, **check_X_params)
                 y = check_array(y, input_name="y", estimator=self, **check_y_params)
                 _check_n_features(self, X, reset=False)
