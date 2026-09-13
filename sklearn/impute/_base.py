@@ -734,20 +734,19 @@ class SimpleImputer(_BaseImputer):
         n_features_original = len(self.statistics_)
         shape_original = (X.shape[0], n_features_original)
 
-        # Determine which features were kept during fit (not dropped as empty)
-        if hasattr(self, "_valid_mask") and self._valid_mask is not None:
-            valid_mask = self._valid_mask
+        if self.keep_empty_features:
+            valid_mask = np.ones(n_features_original, dtype=bool)
         else:
-            if isinstance(self.missing_values, float) and np.isnan(self.missing_values):
-                valid_mask = ~np.isnan(self.statistics_)
-            else:
-                valid_mask = self.statistics_ != self.missing_values
+            invalid_mask = _get_mask(self.statistics_, np.nan)
+            valid_mask = np.logical_not(invalid_mask)
 
         # Initialize output array with missing_values (preserves empty feature cols)
-        if isinstance(self.missing_values, float) and np.isnan(self.missing_values):
-            X_original = np.full(shape_original, np.nan)
+        if is_scalar_nan(self.missing_values) or is_pandas_na(self.missing_values):
+            X_original = np.full(shape_original, np.nan, dtype=array_imputed.dtype)
         else:
-            X_original = np.full(shape_original, self.missing_values)
+            X_original = np.full(
+                shape_original, self.missing_values, dtype=array_imputed.dtype
+            )
 
         # Direct index mapping: avoids heuristic while-loop column drift
         valid_indices = np.flatnonzero(valid_mask)
