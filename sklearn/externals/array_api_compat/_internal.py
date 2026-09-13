@@ -2,6 +2,7 @@
 Internal helpers
 """
 
+import importlib
 from collections.abc import Callable
 from functools import wraps
 from inspect import signature
@@ -46,14 +47,31 @@ See the corresponding documentation in NumPy/CuPy and/or the array API
 specification for more details.
 
 """
-        wrapped_f.__signature__ = new_sig  # pyright: ignore[reportAttributeAccessIssue]
-        return wrapped_f  # pyright: ignore[reportReturnType]
+        wrapped_f.__signature__ = new_sig  # type: ignore[attr-defined] # pyright: ignore[reportAttributeAccessIssue]
+        return wrapped_f  # type: ignore[return-value] # pyright: ignore[reportReturnType]
 
     return inner
 
 
-__all__ = ["get_xp"]
+def clone_module(mod_name: str, globals_: dict[str, object]) -> list[str]:
+    """Import everything from module, updating globals().
+    Returns __all__.
+    """
+    mod = importlib.import_module(mod_name)
+    # Neither of these two methods is sufficient by itself,
+    # depending on various idiosyncrasies of the libraries we're wrapping.
+    objs = {}
+    exec(f"from {mod.__name__} import *", objs)
 
+    for n in dir(mod):
+        if not n.startswith("_") and hasattr(mod, n):
+            objs[n] = getattr(mod, n)
+
+    globals_.update(objs)
+    return list(objs)
+
+
+__all__ = ["get_xp", "clone_module"]
 
 def __dir__() -> list[str]:
     return __all__

@@ -6,9 +6,7 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
-import sys
 import warnings
-from io import StringIO
 
 import joblib
 import numpy as np
@@ -17,6 +15,7 @@ import pytest
 from sklearn.datasets import (
     load_digits,
     load_iris,
+    make_classification,
     make_multilabel_classification,
     make_regression,
 )
@@ -664,20 +663,18 @@ def test_tolerance():
     assert clf.max_iter > clf.n_iter_
 
 
-def test_verbose_sgd():
+def test_verbose_sgd(capsys):
     # Test verbose.
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier(solver="sgd", max_iter=2, verbose=10, hidden_layer_sizes=2)
-    old_stdout = sys.stdout
-    sys.stdout = output = StringIO()
 
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)
     clf.partial_fit(X, y)
 
-    sys.stdout = old_stdout
-    assert "Iteration" in output.getvalue()
+    out, _ = capsys.readouterr()
+    assert "Iteration" in out
 
 
 @pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
@@ -826,9 +823,37 @@ def test_early_stopping_stratified():
 
     mlp = MLPClassifier(early_stopping=True)
     with pytest.raises(
-        ValueError, match="The least populated class in y has only 1 member"
+        ValueError,
+        match=(
+            r"The least populated classes in y have only 1 member.*Classes with "
+            r"too few members are: \['True'\]"
+        ),
     ):
         mlp.fit(X, y)
+
+
+def test_mlp_early_stopping_string_labels():
+    """Check that labels can be strings when `early_stopping=True`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/33760
+    """
+    X, y = make_classification(
+        n_samples=200,
+        n_features=10,
+        n_classes=3,
+        n_informative=5,
+        random_state=42,
+    )
+    labels = np.array(["class_a", "class_b", "class_c"], dtype=object)
+    y = labels[y]
+
+    mlp = MLPClassifier(early_stopping=True, max_iter=50, random_state=42)
+    mlp.fit(X, y)
+
+    assert mlp.validation_scores_ is not None
+    assert len(mlp.validation_scores_) == mlp.n_iter_
+    assert np.isfinite(mlp.validation_scores_).all()
 
 
 def test_mlp_classifier_dtypes_casting():

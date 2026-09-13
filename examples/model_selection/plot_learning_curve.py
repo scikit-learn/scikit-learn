@@ -24,8 +24,8 @@ accuracy.
 # process. The effect is depicted by checking the statistical performance of
 # the model in terms of training score and testing score.
 #
-# Here, we compute the learning curve of a naive Bayes classifier and a SVM
-# classifier with a RBF kernel using the digits dataset.
+# Here, we compute the learning curve of a naive Bayes classifier and an SVM
+# classifier with an RBF kernel using the digits dataset.
 from sklearn.datasets import load_digits
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC

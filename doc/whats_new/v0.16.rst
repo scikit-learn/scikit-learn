@@ -414,7 +414,7 @@ Bug fixes
 
 - Fixed handling of ties in :class:`isotonic.IsotonicRegression`.
   We now use the weighted average of targets (secondary method). By
-  `Andreas Müller`_ and `Michael Bommarito <http://bommaritollc.com/>`_.
+  `Andreas Müller`_ and `Michael Bommarito <https://bommaritollc.com/>`_.
 
 API changes summary
 -------------------

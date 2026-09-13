@@ -72,6 +72,7 @@ def test_missing_value_handling(
     assert np.any(np.isnan(X_test), axis=0).all()
     X_test[:, 0] = np.nan  # make sure this boundary case is tested
 
+    est = clone(est)
     with warnings.catch_warnings():
         warnings.simplefilter("error", RuntimeWarning)
         Xt = est.fit(X_train).transform(X_test)

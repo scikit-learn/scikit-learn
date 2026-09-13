@@ -3,29 +3,29 @@ from libc.float cimport DBL_MAX
 from cython cimport final
 from cython.parallel cimport parallel, prange
 
-from ...utils._heap cimport heap_push
-from ...utils._sorting cimport simultaneous_sort
-from ...utils._typedefs cimport intp_t, float64_t
+from sklearn.utils._heap cimport heap_push
+from sklearn.utils._sorting cimport simultaneous_sort
+from sklearn.utils._typedefs cimport intp_t, float64_t
 
 import numpy as np
 import warnings
 
 from numbers import Integral
 from scipy.sparse import issparse
-from ...utils import check_array, check_scalar
-from ...utils.fixes import _in_unstable_openblas_configuration
-from ...utils.parallel import _get_threadpool_controller
+from sklearn.utils import check_array, check_scalar
+from sklearn.utils.fixes import _in_unstable_openblas_configuration
+from sklearn.utils.parallel import _get_threadpool_controller
 
 {{for name_suffix in ['64', '32']}}
 
-from ._base cimport (
+from sklearn.metrics._pairwise_distances_reduction._base cimport (
     BaseDistancesReduction{{name_suffix}},
     _sqeuclidean_row_norms{{name_suffix}},
 )
 
-from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+from sklearn.metrics._pairwise_distances_reduction._datasets_pair cimport DatasetsPair{{name_suffix}}
 
-from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
+from sklearn.metrics._pairwise_distances_reduction._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
 
 cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):

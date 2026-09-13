@@ -8,7 +8,7 @@ from numbers import Integral
 
 import numpy as np
 from scipy.linalg import norm
-from scipy.sparse import dia_matrix, issparse
+from scipy.sparse import dia_array, issparse
 from scipy.sparse.linalg import eigsh, svds
 
 from sklearn.base import BaseEstimator, BiclusterMixin, _fit_context
@@ -34,8 +34,8 @@ def _scale_normalize(X):
     col_diag = np.where(np.isnan(col_diag), 0, col_diag)
     if issparse(X):
         n_rows, n_cols = X.shape
-        r = dia_matrix((row_diag, [0]), shape=(n_rows, n_rows))
-        c = dia_matrix((col_diag, [0]), shape=(n_cols, n_cols))
+        r = dia_array((row_diag, [0]), shape=(n_rows, n_rows))
+        c = dia_array((col_diag, [0]), shape=(n_cols, n_cols))
         an = r @ X @ c
     else:
         an = row_diag[:, np.newaxis] * X * col_diag
@@ -200,7 +200,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
 
 
 class SpectralCoclustering(BaseSpectral):
-    """Spectral Co-Clustering algorithm (Dhillon, 2001).
+    """Spectral Co-Clustering algorithm (Dhillon, 2001) [1]_.
 
     Clusters rows and columns of an array `X` to solve the relaxed
     normalized cut of the bipartite graph created from `X` as follows:
@@ -290,9 +290,9 @@ class SpectralCoclustering(BaseSpectral):
 
     References
     ----------
-    * :doi:`Dhillon, Inderjit S, 2001. Co-clustering documents and words using
-      bipartite spectral graph partitioning.
-      <10.1145/502512.502550>`
+    .. [1] :doi:`Dhillon, Inderjit S, 2001. Co-clustering documents and words using
+           bipartite spectral graph partitioning.
+           <10.1145/502512.502550>`
 
     Examples
     --------
@@ -358,7 +358,7 @@ class SpectralCoclustering(BaseSpectral):
 
 
 class SpectralBiclustering(BaseSpectral):
-    """Spectral biclustering (Kluger, 2003).
+    """Spectral biclustering (Kluger, 2003) [1]_.
 
     Partitions rows and columns under the assumption that the data has
     an underlying checkerboard structure. For instance, if there are
@@ -458,14 +458,15 @@ class SpectralBiclustering(BaseSpectral):
 
     See Also
     --------
-    SpectralCoclustering : Spectral Co-Clustering algorithm (Dhillon, 2001).
+    SpectralCoclustering : Clusters rows and columns of an array `X` to solve the
+        relaxed normalized cut of the bipartite graph created from `X`.
 
     References
     ----------
 
-    * :doi:`Kluger, Yuval, et. al., 2003. Spectral biclustering of microarray
-      data: coclustering genes and conditions.
-      <10.1101/gr.648603>`
+    .. [1] :doi:`Kluger, Yuval, et. al., 2003. Spectral biclustering of microarray
+           data: coclustering genes and conditions.
+           <10.1101/gr.648603>`
 
     Examples
     --------

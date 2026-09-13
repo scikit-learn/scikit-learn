@@ -19,6 +19,7 @@ from sklearn.metrics._scorer import _CurveScorer, _threshold_scores_to_class_lab
 from sklearn.model_selection._split import StratifiedShuffleSplit, check_cv
 from sklearn.utils import _safe_indexing, get_tags
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._response import _get_response_values_binary
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
@@ -280,7 +281,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, stratify=y, random_state=42
     ... )
-    >>> classifier = LogisticRegression(random_state=0).fit(X_train, y_train)
+    >>> classifier = LogisticRegression().fit(X_train, y_train)
     >>> print(confusion_matrix(y_test, classifier.predict(X_test)))
     [[217   7]
      [ 19   7]]
@@ -392,7 +393,7 @@ class FixedThresholdClassifier(BaseThresholdClassifier):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(callee="fit", caller="fit"),
         )
@@ -502,9 +503,9 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
     used for converting posterior probability estimates (i.e. output of
     `predict_proba`) or decision scores (i.e. output of `decision_function`)
     into a class label. The tuning is done by optimizing a binary metric,
-    potentially constrained by a another metric.
+    potentially constrained by another metric.
 
-    Read more in the :ref:`User Guide <TunedThresholdClassifierCV>`.
+    Read more in the :ref:`User Guide <threshold_tuning>`.
 
     .. versionadded:: 1.5
 
@@ -858,7 +859,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             routing information.
         """
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add(
                 estimator=self.estimator,
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),
@@ -881,3 +882,13 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
             scoring, self._get_response_method(), self.thresholds
         )
         return curve_scorer
+
+    def _sk_visual_block_(self):
+        estimator = getattr(self, "estimator_", self.estimator)
+        return _VisualBlock(
+            "serial",
+            [estimator],
+            names=[estimator.__class__.__name__],
+            name_details=[str(estimator)],
+            dash_wrapped=False,
+        )

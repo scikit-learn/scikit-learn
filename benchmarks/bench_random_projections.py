@@ -70,7 +70,7 @@ def bench_scikit_transformer(X, transformer):
 # Gaussian distributed values
 def make_sparse_random_data(n_samples, n_features, n_nonzeros, random_state=None):
     rng = np.random.RandomState(random_state)
-    data_coo = sp.coo_matrix(
+    data_coo = sp.coo_array(
         (
             rng.randn(n_nonzeros),
             (

@@ -14,17 +14,17 @@ from sklearn.base import (
     TransformerMixin,
     _fit_context,
 )
-from sklearn.utils import _safe_indexing, check_array
-from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils import _align_api_if_sparse, _safe_indexing, check_array
+from sklearn.utils._encode import _encode, _get_counts, _unique
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils._set_output import _get_output_config
+from sklearn.utils.fixes import _ensure_sparse_index_int32
 from sklearn.utils.validation import (
-    _check_feature_names,
     _check_feature_names_in,
-    _check_n_features,
     check_is_fitted,
+    validate_data,
 )
 
 __all__ = ["OneHotEncoder", "OrdinalEncoder"]
@@ -83,8 +83,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return_and_ignore_missing_for_infrequent=False,
     ):
         self._check_infrequent_enabled()
-        _check_n_features(self, X, reset=True)
-        _check_feature_names(self, X, reset=True)
+        validate_data(self, X=X, reset=True, skip_check_array=True)
         X_list, n_samples, n_features = self._check_X(
             X, ensure_all_finite=ensure_all_finite
         )
@@ -160,8 +159,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(error_msg)
 
                 if handle_unknown == "error":
-                    diff = _check_unknown(Xi, cats)
-                    if diff:
+                    _, diff = _encode(_unique(Xi), uniques=cats, return_diff=True)
+                    if diff.size:
                         msg = (
                             "Found unknown categories {0} in column {1}"
                             " during fit".format(diff, i)
@@ -203,59 +202,66 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_list, n_samples, n_features = self._check_X(
             X, ensure_all_finite=ensure_all_finite
         )
-        _check_feature_names(self, X, reset=False)
-        _check_n_features(self, X, reset=False)
+        validate_data(self, X=X, reset=False, skip_check_array=True)
 
-        X_int = np.zeros((n_samples, n_features), dtype=int)
-        X_mask = np.ones((n_samples, n_features), dtype=bool)
+        X_int = np.zeros((n_samples, n_features), dtype=int, order="F")
+        X_mask = np.ones((n_samples, n_features), dtype=bool, order="F")
 
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
-            diff, valid_mask = _check_unknown(Xi, self.categories_[i], return_mask=True)
+            X_int[:, i] = _encode(Xi, uniques=self.categories_[i])
+            X_mask[:, i] = X_int[:, i] != -1
 
-            if not np.all(valid_mask):
+            if not np.all(X_mask[:, i]):
                 if handle_unknown == "error":
+                    diff = _unique(Xi[~X_mask[:, i]])
                     msg = (
                         "Found unknown categories {0} in column {1}"
                         " during transform".format(diff, i)
                     )
                     raise ValueError(msg)
-                else:
-                    if warn_on_unknown:
-                        columns_with_unknown.append(i)
-                    # Set the problematic rows to an acceptable value and
-                    # continue `The rows are marked `X_mask` and will be
-                    # removed later.
-                    X_mask[:, i] = valid_mask
-                    # cast Xi into the largest string type necessary
-                    # to handle different lengths of numpy strings
-                    if (
-                        self.categories_[i].dtype.kind in ("U", "S")
-                        and self.categories_[i].itemsize > Xi.itemsize
-                    ):
-                        Xi = Xi.astype(self.categories_[i].dtype)
-                    elif self.categories_[i].dtype.kind == "O" and Xi.dtype.kind == "U":
-                        # categories are objects and Xi are numpy strings.
-                        # Cast Xi to an object dtype to prevent truncation
-                        # when setting invalid values.
-                        Xi = Xi.astype("O")
-                    else:
-                        Xi = Xi.copy()
+                elif warn_on_unknown:
+                    columns_with_unknown.append(i)
 
-                    Xi[~valid_mask] = self.categories_[i][0]
-            # We use check_unknown=False, since _check_unknown was
-            # already called above.
-            X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
         if columns_with_unknown:
-            warnings.warn(
-                (
-                    "Found unknown categories in columns "
-                    f"{columns_with_unknown} during transform. These "
-                    "unknown categories will be encoded as all zeros"
-                ),
-                UserWarning,
+            # Whether an unknown category is encoded as the infrequent category
+            # is decided per column by `_map_infrequent_categories` below: a
+            # column only has an infrequent category if its
+            # `_infrequent_indices` entry is not None. Unknown categories in
+            # columns where it is None are encoded as all zeros, as documented
+            # for `handle_unknown`.
+            if handle_unknown == "infrequent_if_exist" and self._infrequent_enabled:
+                infrequent_columns = [
+                    i
+                    for i in columns_with_unknown
+                    if self._infrequent_indices[i] is not None
+                ]
+            else:
+                infrequent_columns = []
+            all_zeros_columns = [
+                i for i in columns_with_unknown if i not in infrequent_columns
+            ]
+
+            msg = (
+                "Found unknown categories in columns "
+                f"{columns_with_unknown} during transform. "
             )
+            if infrequent_columns and all_zeros_columns:
+                msg += (
+                    f"The unknown categories in columns {infrequent_columns} "
+                    "will be encoded as the infrequent category. Those in "
+                    f"columns {all_zeros_columns} will be encoded as all "
+                    "zeros, because these columns have no infrequent category."
+                )
+            elif infrequent_columns:
+                msg += (
+                    "These unknown categories will be encoded as the "
+                    "infrequent category."
+                )
+            else:
+                msg += "These unknown categories will be encoded as all zeros"
+            warnings.warn(msg, UserWarning)
 
         self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
         return X_int, X_mask
@@ -439,7 +445,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 continue
 
             X_int[~X_mask[:, col_idx], col_idx] = infrequent_idx[0]
-            if self.handle_unknown == "infrequent_if_exist":
+            if self.handle_unknown in ("infrequent_if_exist", "warn"):
                 # All the unknown values are now mapped to the
                 # infrequent_idx[0], which makes the unknown values valid
                 # This is needed in `transform` when the encoding is formed
@@ -541,8 +547,8 @@ class OneHotEncoder(_BaseEncoder):
             Support for dropping infrequent categories.
 
     sparse_output : bool, default=True
-        When ``True``, it returns a :class:`scipy.sparse.csr_matrix`,
-        i.e. a sparse matrix in "Compressed Sparse Row" (CSR) format.
+        When ``True``, it returns a SciPy sparse matrix/array
+        in "Compressed Sparse Row" (CSR) format.
 
         .. versionadded:: 1.2
            `sparse` was renamed to `sparse_output`
@@ -634,7 +640,7 @@ class OneHotEncoder(_BaseEncoder):
 
         If infrequent categories are enabled by setting `min_frequency` or
         `max_categories` to a non-default value and `drop_idx[i]` corresponds
-        to a infrequent category, then the entire infrequent category is
+        to an infrequent category, then the entire infrequent category is
         dropped.
 
         .. versionchanged:: 0.23
@@ -1006,8 +1012,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         Transform X using one-hot encoding.
 
-        If `sparse_output=True` (default), it returns an instance of
-        :class:`scipy.sparse._csr.csr_matrix` (CSR format).
+        If `sparse_output=True` (default), it returns a SciPy sparse in CSR format.
 
         If there are infrequent categories for a feature, set by specifying
         `max_categories` or `min_frequency`, the infrequent categories are
@@ -1069,9 +1074,9 @@ class OneHotEncoder(_BaseEncoder):
             X_int[X_int > to_drop] -= 1
             X_mask &= keep_cells
 
-        mask = X_mask.ravel()
         feature_indices = np.cumsum([0] + self._n_features_outs)
-        indices = (X_int + feature_indices[:-1]).ravel()[mask]
+        X_int += feature_indices[:-1]
+        indices = X_int[X_mask].ravel()
 
         indptr = np.empty(n_samples + 1, dtype=int)
         indptr[0] = 0
@@ -1079,15 +1084,16 @@ class OneHotEncoder(_BaseEncoder):
         np.cumsum(indptr[1:], out=indptr[1:])
         data = np.ones(indptr[-1])
 
-        out = sparse.csr_matrix(
+        out = sparse.csr_array(
             (data, indices, indptr),
             shape=(n_samples, feature_indices[-1]),
             dtype=self.dtype,
         )
-        if not self.sparse_output:
-            return out.toarray()
+        if self.sparse_output:
+            _ensure_sparse_index_int32(out)
+            return _align_api_if_sparse(out)
         else:
-            return out
+            return out.toarray()
 
     def inverse_transform(self, X):
         """
@@ -1375,13 +1381,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         suitable for high cardinality categorical variables.
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
-
-    Notes
-    -----
-    With a high proportion of `nan` values, inferring categories becomes slow with
-    Python versions before 3.10. The handling of `nan` values was improved
-    from Python 3.10 onwards, (c.f.
-    `bpo-43475 <https://github.com/python/cpython/issues/87641>`_).
 
     Examples
     --------

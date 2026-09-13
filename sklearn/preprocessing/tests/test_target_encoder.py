@@ -1,9 +1,11 @@
 import re
+import warnings
 
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
+from sklearn.datasets import make_regression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import (
@@ -20,6 +22,8 @@ from sklearn.preprocessing import (
     LabelEncoder,
     TargetEncoder,
 )
+from sklearn.utils.fixes import parse_version
+from sklearn.utils.multiclass import type_of_target
 
 
 def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
@@ -127,8 +131,7 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     target_encoder = TargetEncoder(
         smooth=smooth,
         categories=categories,
-        cv=n_splits,
-        random_state=global_random_seed,
+        cv=cv,
     )
 
     X_fit_transform = target_encoder.fit_transform(X_train, y_train)
@@ -217,8 +220,7 @@ def test_encoding_multiclass(
 
     target_encoder = TargetEncoder(
         smooth=smooth,
-        cv=n_splits,
-        random_state=global_random_seed,
+        cv=cv,
     )
     X_fit_transform = target_encoder.fit_transform(X_train, y_train)
 
@@ -363,9 +365,10 @@ def test_feature_names_out_set_output(y, feature_names):
 
     X_df = pd.DataFrame({"A": ["a", "b"] * 10, "B": [1, 2] * 10})
 
-    enc_default = TargetEncoder(cv=2, smooth=3.0, random_state=0)
+    cv = StratifiedKFold(n_splits=2, random_state=0, shuffle=True)
+    enc_default = TargetEncoder(cv=cv, smooth=3.0)
     enc_default.set_output(transform="default")
-    enc_pandas = TargetEncoder(cv=2, smooth=3.0, random_state=0)
+    enc_pandas = TargetEncoder(cv=cv, smooth=3.0)
     enc_pandas.set_output(transform="pandas")
 
     X_default = enc_default.fit_transform(X_df, y)
@@ -449,7 +452,7 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
         dtype=np.float64,
     )
 
-    enc = TargetEncoder(smooth=smooth, cv=2, random_state=0)
+    enc = TargetEncoder(smooth=smooth, cv=cv)
     X_fit_transform = enc.fit_transform(X_train, y_train)
     assert_allclose(X_fit_transform, expected_X_fit_transform)
 
@@ -476,7 +479,11 @@ def test_constant_target_and_feature(y, y_mean, smooth):
     X = np.array([[1] * 20]).T
     n_samples = X.shape[0]
 
-    enc = TargetEncoder(cv=2, smooth=smooth, random_state=0)
+    if type_of_target(y) == "continuous":
+        cv = KFold(n_splits=2, random_state=0, shuffle=True)
+    else:
+        cv = StratifiedKFold(n_splits=2, random_state=0, shuffle=True)
+    enc = TargetEncoder(cv=cv, smooth=smooth)
     X_trans = enc.fit_transform(X, y)
     assert_allclose(X_trans, np.repeat([[y_mean]], n_samples, axis=0))
     assert enc.encodings_[0][0] == pytest.approx(y_mean)
@@ -501,10 +508,12 @@ def test_fit_transform_not_associated_with_y_if_ordinal_categorical_is_not(
     y_train = y_train[y_sorted_indices]
     X_train = X_train[y_sorted_indices]
 
-    target_encoder = TargetEncoder(shuffle=True, random_state=global_random_seed)
+    target_encoder = TargetEncoder(
+        cv=KFold(n_splits=2, random_state=global_random_seed, shuffle=True)
+    )
     X_encoded_train_shuffled = target_encoder.fit_transform(X_train, y_train)
 
-    target_encoder = TargetEncoder(shuffle=False)
+    target_encoder = TargetEncoder(cv=KFold(n_splits=2, shuffle=False))
     X_encoded_train_no_shuffled = target_encoder.fit_transform(X_train, y_train)
 
     # Check that no information about y_train has leaked into X_train:
@@ -538,7 +547,7 @@ def test_smooth_zero():
     X = np.array([[0, 0, 0, 0, 0, 1, 1, 1, 1, 1]]).T
     y = np.array([2.1, 4.3, 1.2, 3.1, 1.0, 9.0, 10.3, 14.2, 13.3, 15.0])
 
-    enc = TargetEncoder(smooth=0.0, shuffle=False, cv=2)
+    enc = TargetEncoder(smooth=0.0, cv=KFold(n_splits=2, shuffle=False))
     X_trans = enc.fit_transform(X, y)
 
     # With cv = 2, category 0 does not exist in the second half, thus
@@ -575,7 +584,10 @@ def test_invariance_of_encoding_under_label_permutation(smooth, global_random_se
     X_train_permuted = permutated_labels[X_train.astype(np.int32)]
     X_test_permuted = permutated_labels[X_test.astype(np.int32)]
 
-    target_encoder = TargetEncoder(smooth=smooth, random_state=global_random_seed)
+    target_encoder = TargetEncoder(
+        smooth=smooth,
+        cv=KFold(n_splits=2, shuffle=True, random_state=global_random_seed),
+    )
     X_train_encoded = target_encoder.fit_transform(X_train, y_train)
     X_test_encoded = target_encoder.transform(X_test)
 
@@ -657,8 +669,9 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
 
     # Now do the same with target encoding using the internal CV mechanism
     # implemented when using fit_transform.
+    cv = KFold(shuffle=True, random_state=rng)
     model_with_cv = make_pipeline(
-        TargetEncoder(smooth=smooth, random_state=rng), linear_regression
+        TargetEncoder(smooth=smooth, cv=cv), linear_regression
     ).fit(X_train, y_train)
 
     # This model should be able to fit the data well and also generalise to the
@@ -679,9 +692,7 @@ def test_target_encoding_for_linear_regression(smooth, global_random_seed):
 
     # Let's now disable the internal cross-validation by calling fit and then
     # transform separately on the training set:
-    target_encoder = TargetEncoder(smooth=smooth, random_state=rng).fit(
-        X_train, y_train
-    )
+    target_encoder = TargetEncoder(smooth=smooth, cv=cv).fit(X_train, y_train)
     X_enc_no_cv_train = target_encoder.transform(X_train)
     X_enc_no_cv_test = target_encoder.transform(X_test)
     model_no_cv = linear_regression.fit(X_enc_no_cv_train, y_train)
@@ -709,6 +720,55 @@ def test_pandas_copy_on_write():
     Non-regression test for gh-27879.
     """
     pd = pytest.importorskip("pandas", minversion="2.0")
-    with pd.option_context("mode.copy_on_write", True):
+    # Pandas currently warns that setting copy_on_write will be removed in pandas 4
+    # (and copy-on-write will always be enabled).
+    # see https://github.com/scikit-learn/scikit-learn/issues/32829
+    # TODO: remove this workaround when pandas 4 is our minimum version
+    if parse_version(pd.__version__) >= parse_version("4.0"):
         df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
         TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+    else:
+        with warnings.catch_warnings():
+            expected_message = (
+                ".*Copy-on-Write can no longer be disabled.*This option will"
+                r" be removed in pandas 4\.0"
+            )
+            warnings.filterwarnings(
+                "ignore",
+                message=expected_message,
+                category=DeprecationWarning,
+            )
+            with pd.option_context("mode.copy_on_write", True):
+                df = pd.DataFrame({"x": ["a", "b", "b"], "y": [4.0, 5.0, 6.0]})
+                TargetEncoder(target_type="continuous").fit(df[["x"]], df["y"])
+
+
+def test_target_encoder_raises_cv_overlap(global_random_seed):
+    """
+    Test that `TargetEncoder` raises if `cv` has overlapping splits.
+    """
+    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
+
+    non_overlapping_iterable = KFold().split(X, y)
+    encoder = TargetEncoder(cv=non_overlapping_iterable)
+    encoder.fit_transform(X, y)
+
+    overlapping_iterable = ShuffleSplit(
+        n_splits=5, random_state=global_random_seed
+    ).split(X, y)
+    encoder = TargetEncoder(cv=overlapping_iterable)
+    msg = "Validation indices from `cv` must cover each sample index exactly once"
+    with pytest.raises(ValueError, match=msg):
+        encoder.fit_transform(X, y)
+
+
+# TODO(1.11): remove after deprecation
+def test_target_encoder_shuffle_random_state_deprecated():
+    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
+    msg = "`TargetEncoder.shuffle` and `TargetEncoder.random_state` are deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        encoder = TargetEncoder(shuffle=False)
+        encoder.fit_transform(X, y)
+    with pytest.warns(FutureWarning, match=msg):
+        encoder = TargetEncoder(random_state=0)
+        encoder.fit_transform(X, y)

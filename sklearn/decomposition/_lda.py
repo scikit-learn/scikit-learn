@@ -314,11 +314,12 @@ class LatentDirichletAllocation(
     References
     ----------
     .. [1] "Online Learning for Latent Dirichlet Allocation", Matthew D.
-           Hoffman, David M. Blei, Francis Bach, 2010
+           Hoffman, David M. Blei, Francis Bach, 2010.
            https://github.com/blei-lab/onlineldavb
 
     .. [2] "Stochastic Variational Inference", Matthew D. Hoffman,
-           David M. Blei, Chong Wang, John Paisley, 2013
+           David M. Blei, Chong Wang, John Paisley, 2013.
+           https://jmlr.org/papers/volume14/hoffman13a/hoffman13a.pdf
 
     Examples
     --------

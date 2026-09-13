@@ -1,6 +1,8 @@
 import numpy as np
-from numpy.fft import __all__ as fft_all
-from numpy.fft import fft2, ifft2, irfft2, rfft2
+
+from .._internal import clone_module
+
+__all__ = clone_module("numpy.fft", globals())
 
 from .._internal import get_xp
 from ..common import _fft
@@ -21,15 +23,8 @@ fftshift = get_xp(np)(_fft.fftshift)
 ifftshift = get_xp(np)(_fft.ifftshift)
 
 
-__all__ = ["rfft2", "irfft2", "fft2", "ifft2"]
-__all__ += _fft.__all__
-
+__all__ = sorted(set(__all__) | set(_fft.__all__))
 
 def __dir__() -> list[str]:
     return __all__
 
-
-del get_xp
-del np
-del fft_all
-del _fft

@@ -13,7 +13,7 @@ The algorithms are trained (without labels) on the whole dataset assumed to
 contain outliers.
 
 1. The ROC curves are computed using knowledge of the ground-truth labels
-and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
+   and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
 
 2. The performance is assessed in terms of the ROC-AUC.
 """

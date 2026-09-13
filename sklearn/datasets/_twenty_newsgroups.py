@@ -455,7 +455,7 @@ def fetch_20newsgroups_vectorized(
         that appear to be quoting another post.
 
     data_home : str or path-like, default=None
-        Specify an download and cache folder for the datasets. If None,
+        Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True

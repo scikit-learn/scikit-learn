@@ -178,6 +178,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         min_samples=params["hdbscan_min_samples"],
         min_cluster_size=params["hdbscan_min_cluster_size"],
         allow_single_cluster=params["allow_single_cluster"],
+        copy=True,
     )
     optics = cluster.OPTICS(
         min_samples=params["min_samples"],

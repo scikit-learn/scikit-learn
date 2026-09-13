@@ -388,8 +388,8 @@ plt.subplots_adjust(left=0.3)
 #
 # .. _covariation:
 
-plt.ylabel("Age coefficient")
-plt.xlabel("Experience coefficient")
+plt.xlabel("Age coefficient")
+plt.ylabel("Experience coefficient")
 plt.grid(True)
 plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)
@@ -624,8 +624,8 @@ coefs = pd.DataFrame(
 )
 
 # %%
-plt.ylabel("Age coefficient")
-plt.xlabel("Experience coefficient")
+plt.xlabel("Age coefficient")
+plt.ylabel("Experience coefficient")
 plt.grid(True)
 plt.xlim(-0.4, 0.5)
 plt.ylim(-0.4, 0.5)

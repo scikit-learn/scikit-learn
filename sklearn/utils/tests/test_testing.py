@@ -30,6 +30,8 @@ from sklearn.utils.fixes import (
     _IS_WASM,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
+    _sparse_diags_array,
+    _sparse_random_array,
 )
 from sklearn.utils.metaestimators import available_if
 
@@ -57,7 +59,7 @@ def test_assert_allclose_dense_sparse(csr_container):
     with pytest.raises(ValueError, match="Can only compare two sparse"):
         assert_allclose_dense_sparse(x, y)
 
-    A = sparse.diags(np.ones(5), offsets=0).tocsr()
+    A = _sparse_diags_array(np.ones(5), offsets=0, format="csr")
     B = csr_container(np.ones((1, 5)))
     with pytest.raises(AssertionError, match="Arrays are not equal"):
         assert_allclose_dense_sparse(B, A)
@@ -893,7 +895,7 @@ def test_create_memmap_backed_data(monkeypatch):
         # depending of the installed SciPy version
         *zip(["sparse_csr", "sparse_csr_array"], CSR_CONTAINERS),
         *zip(["sparse_csc", "sparse_csc_array"], CSC_CONTAINERS),
-        ("dataframe", lambda: pytest.importorskip("pandas").DataFrame),
+        ("pandas", lambda: pytest.importorskip("pandas").DataFrame),
         ("series", lambda: pytest.importorskip("pandas").Series),
         ("index", lambda: pytest.importorskip("pandas").Index),
         ("pyarrow", lambda: pytest.importorskip("pyarrow").Table),
@@ -921,7 +923,7 @@ def test_convert_container(
     """Check that we convert the container to the right type of array with the
     right data type."""
     if constructor_name in (
-        "dataframe",
+        "pandas",
         "index",
         "polars",
         "polars_series",
@@ -955,9 +957,7 @@ def test_convert_container(
 
 def test_convert_container_categories_pandas():
     pytest.importorskip("pandas")
-    df = _convert_container(
-        [["x"]], "dataframe", ["A"], categorical_feature_names=["A"]
-    )
+    df = _convert_container([["x"]], "pandas", ["A"], categorical_feature_names=["A"])
     assert df.dtypes.iloc[0] == "category"
 
 
@@ -996,7 +996,7 @@ def test_raises():
             raise ValueError("this will be raised")
     assert not cm.raised_and_matched
 
-    # Bad type, no match, with a err_msg
+    # Bad type, no match, with an err_msg
     with pytest.raises(AssertionError, match="the failure message"):
         with raises(TypeError, err_msg="the failure message") as cm:
             raise ValueError()
@@ -1102,7 +1102,7 @@ def test_convert_container_sparse_to_sparse(constructor_name):
     """Non-regression test to check that we can still convert a sparse container
     from a given format to another format.
     """
-    X_sparse = sparse.random(10, 10, density=0.1, format="csr")
+    X_sparse = _sparse_random_array((10, 10), density=0.1, format="csr")
     _convert_container(X_sparse, constructor_name)
 
 
@@ -1119,6 +1119,9 @@ def check_warnings_as_errors(warning_info, warnings_as_errors):
             # Special treatment when regex is used
             if "Pyarrow" in message:
                 message = "\nPyarrow will become a required dependency"
+            # Regex in _testing.py; emit the real Python 3.14 deprecation text.
+            elif message == r"codecs\.open\(\) is deprecated":
+                message = "codecs.open() is deprecated. Use open() instead."
 
             warnings.warn(
                 message=message,

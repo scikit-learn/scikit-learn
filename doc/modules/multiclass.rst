@@ -63,8 +63,8 @@ can provide additional strategies beyond what is built-in:
   - :class:`semi_supervised.LabelSpreading`
   - :class:`discriminant_analysis.LinearDiscriminantAnalysis`
   - :class:`svm.LinearSVC` (setting multi_class="crammer_singer")
-  - :class:`linear_model.LogisticRegression` (with most solvers)
-  - :class:`linear_model.LogisticRegressionCV` (with most solvers)
+  - :class:`linear_model.LogisticRegression` (all solvers but "liblinear")
+  - :class:`linear_model.LogisticRegressionCV` (all solvers but "liblinear")
   - :class:`neural_network.MLPClassifier`
   - :class:`neighbors.NearestCentroid`
   - :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
@@ -86,8 +86,6 @@ can provide additional strategies beyond what is built-in:
   - :class:`ensemble.GradientBoostingClassifier`
   - :class:`gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
   - :class:`svm.LinearSVC` (setting multi_class="ovr")
-  - :class:`linear_model.LogisticRegression` (most solvers)
-  - :class:`linear_model.LogisticRegressionCV` (most solvers)
   - :class:`linear_model.SGDClassifier`
   - :class:`linear_model.Perceptron`
 
@@ -169,9 +167,9 @@ Valid :term:`multiclass` representations for
      [1 0 0]
      [0 1 0]]
     >>> from scipy import sparse
-    >>> y_sparse = sparse.csr_matrix(y_dense)
+    >>> y_sparse = sparse.csr_array(y_dense)
     >>> print(y_sparse)
-    <Compressed Sparse Row sparse matrix of dtype 'int64'
+    <Compressed Sparse Row sparse array of dtype 'int64'
       with 4 stored elements and shape (4, 3)>
       Coords Values
       (0, 0) 1
@@ -379,9 +377,9 @@ refer to :ref:`preprocessing_targets`.
 
 An example of the same ``y`` in sparse matrix form:
 
-  >>> y_sparse = sparse.csr_matrix(y)
+  >>> y_sparse = sparse.csr_array(y)
   >>> print(y_sparse)
-  <Compressed Sparse Row sparse matrix of dtype 'int64'
+  <Compressed Sparse Row sparse array of dtype 'int64'
     with 4 stored elements and shape (3, 4)>
     Coords Values
     (0, 0) 1

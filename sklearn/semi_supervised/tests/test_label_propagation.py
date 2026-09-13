@@ -18,7 +18,8 @@ from sklearn.utils._testing import (
     assert_array_equal,
 )
 
-CONSTRUCTOR_TYPES = ("array", "sparse_csr", "sparse_csc")
+SPARSE_TYPES = ("sparse_csr", "sparse_csc", "sparse_csr_array", "sparse_csc_array")
+CONSTRUCTOR_TYPES = ("array",) + SPARSE_TYPES
 
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {"kernel": "rbf"}),
@@ -33,6 +34,12 @@ ESTIMATORS = [
         label_propagation.LabelSpreading,
         {"kernel": lambda x, y: rbf_kernel(x, y, gamma=20)},
     ),
+]
+
+LP_ESTIMATORS = [
+    (klass, params)
+    for (klass, params) in ESTIMATORS
+    if klass == label_propagation.LabelPropagation
 ]
 
 
@@ -126,7 +133,7 @@ def test_label_propagation_closed_form(global_dtype):
     assert_allclose(expected, clf.label_distributions_, atol=1e-4)
 
 
-@pytest.mark.parametrize("accepted_sparse_type", ["sparse_csr", "sparse_csc"])
+@pytest.mark.parametrize("accepted_sparse_type", SPARSE_TYPES)
 @pytest.mark.parametrize("index_dtype", [np.int32, np.int64])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
@@ -141,6 +148,29 @@ def test_sparse_input_types(
     labels = [0, 1, -1]
     clf = Estimator(**parameters).fit(X, labels)
     assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
+
+
+@pytest.mark.parametrize("constructor", CONSTRUCTOR_TYPES)
+@pytest.mark.parametrize("Estimator, parameters", LP_ESTIMATORS)
+def test_label_propagation_build_graph_normalized(constructor, Estimator, parameters):
+    # required but unused X and labels values
+    X = np.array([[1.0, 0.0], [1.0, 1.0], [1.0, 3.0]])
+    labels = [0, 1, -1]
+
+    # test normalization of an affinity_matrix
+    aff_matrix = np.array([[1.0, 1.0, 0.0], [2.0, 1.0, 1.0], [0.0, 1.0, 3.0]])
+    expected = np.array([[0.5, 0.5, 0.0], [0.5, 0.25, 0.25], [0.0, 0.25, 0.75]])
+
+    def kernel_affinity_matrix(x, y=None):
+        return _convert_container(aff_matrix, constructor)
+
+    clf = Estimator(kernel=kernel_affinity_matrix).fit(X, labels)
+    graph = clf._build_graph()
+    assert_allclose(graph.sum(axis=1), 1)  # normalized rows
+
+    if issparse(graph):
+        graph = graph.toarray()
+    assert_allclose(graph, expected)
 
 
 @pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)

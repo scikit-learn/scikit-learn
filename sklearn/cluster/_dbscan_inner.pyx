@@ -5,7 +5,7 @@
 
 from libcpp.vector cimport vector
 
-from ..utils._typedefs cimport uint8_t, intp_t
+from sklearn.utils._typedefs cimport uint8_t, intp_t
 
 
 def dbscan_inner(const uint8_t[::1] is_core,
@@ -28,8 +28,8 @@ def dbscan_inner(const uint8_t[::1] is_core,
                 labels[i] = label_num
                 if is_core[i]:
                     neighb = neighborhoods[i]
-                    for i in range(neighb.shape[0]):
-                        v = neighb[i]
+                    for j in range(neighb.shape[0]):
+                        v = neighb[j]
                         if labels[v] == -1:
                             stack.push_back(v)
 

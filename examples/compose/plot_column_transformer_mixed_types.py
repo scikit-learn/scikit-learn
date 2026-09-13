@@ -78,7 +78,7 @@ numeric_transformer = Pipeline(
 categorical_features = ["embarked", "sex", "pclass"]
 categorical_transformer = Pipeline(
     steps=[
-        ("encoder", OneHotEncoder(handle_unknown="ignore")),
+        ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
         ("selector", SelectPercentile(chi2, percentile=50)),
     ]
 )
@@ -94,7 +94,7 @@ preprocessor = ColumnTransformer(
 # Now we have a full prediction pipeline.
 clf = Pipeline(
     steps=[("preprocessor", preprocessor), ("classifier", LogisticRegression())]
-)
+).set_output(transform="pandas")
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
@@ -199,6 +199,7 @@ search_cv.fit(X_train, y_train)
 
 print("Best params:")
 print(search_cv.best_params_)
+search_cv
 
 # %%
 # The internal cross-validation scores obtained by those parameters is:

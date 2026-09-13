@@ -21,7 +21,7 @@ refer to the :ref:`User Guide <gp_kernels>`.
 # ---------------
 #
 # Before presenting each individual kernel available for Gaussian processes,
-# we will define an helper function allowing us plotting samples drawn from
+# we will define a helper function allowing us plotting samples drawn from
 # the Gaussian process.
 #
 # This function will take a

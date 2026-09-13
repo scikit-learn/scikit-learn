@@ -30,6 +30,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     neighbors, one can identify samples that have a substantially lower density
     than their neighbors. These are considered outliers.
 
+    Read more in the :ref:`User Guide <local_outlier_factor>`.
+
     .. versionadded:: 0.19
 
     Parameters
@@ -168,7 +170,10 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     References
     ----------
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
-           LOF: identifying density-based local outliers. In ACM sigmod record.
+           `LOF: identifying density-based local outliers.
+           <https://dl.acm.org/doi/pdf/10.1145/342009.335388>`_
+           In Proceedings of the 2000 ACM SIGMOD International Conference on
+           Management of Data, pp. 93-104.
 
     Examples
     --------

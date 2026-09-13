@@ -10,7 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
-from sklearn.utils import check_array, metadata_routing
+from sklearn.utils import _align_api_if_sparse, check_array, metadata_routing
 from sklearn.utils.validation import check_is_fitted
 
 
@@ -267,7 +267,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         indices = np.frombuffer(indices, dtype=np.intc)
         shape = (len(indptr) - 1, len(vocab))
 
-        result_matrix = sp.csr_matrix(
+        result_matrix = sp.csr_array(
             (values, indices, indptr), shape=shape, dtype=dtype
         )
 
@@ -289,7 +289,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             self.feature_names_ = feature_names
             self.vocabulary_ = vocab
 
-        return result_matrix
+        return _align_api_if_sparse(result_matrix)
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):

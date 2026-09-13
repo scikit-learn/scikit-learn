@@ -2,11 +2,11 @@
 
 import numpy as np
 import pytest
-import scipy.sparse as sp
 
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_allclose, assert_array_less
+from sklearn.utils.fixes import _sparse_random_array
 
 SVD_SOLVERS = ["arpack", "randomized"]
 
@@ -15,7 +15,7 @@ SVD_SOLVERS = ["arpack", "randomized"]
 def X_sparse():
     # Make an X that looks somewhat like a small tf-idf matrix.
     rng = check_random_state(42)
-    X = sp.random(60, 55, density=0.2, format="csr", random_state=rng)
+    X = _sparse_random_array((60, 55), density=0.2, format="csr", rng=rng)
     X.data[:] = 1 + np.log(X.data)
     return X
 
@@ -198,14 +198,27 @@ def test_truncated_svd_eq_pca(X_sparse):
 
 
 @pytest.mark.parametrize(
-    "algorithm, tol", [("randomized", 0.0), ("arpack", 1e-6), ("arpack", 0.0)]
+    "algorithm, tol, normalizer",
+    [
+        ("randomized", 0.0, "auto"),
+        ("randomized", 0.0, "QR"),
+        ("randomized", 0.0, "LU"),
+        ("randomized", 0.0, "none"),
+        ("arpack", 1e-6, "auto"),
+        ("arpack", 0.0, "auto"),
+    ],
 )
 @pytest.mark.parametrize("kind", ("dense", "sparse"))
-def test_fit_transform(X_sparse, algorithm, tol, kind):
+def test_fit_transform(X_sparse, algorithm, tol, kind, normalizer):
     # fit_transform(X) should equal fit(X).transform(X)
     X = X_sparse if kind == "sparse" else X_sparse.toarray()
     svd = TruncatedSVD(
-        n_components=5, n_iter=7, random_state=42, algorithm=algorithm, tol=tol
+        n_components=5,
+        n_iter=7,
+        random_state=42,
+        algorithm=algorithm,
+        power_iteration_normalizer=normalizer,
+        tol=tol,
     )
     X_transformed_1 = svd.fit_transform(X)
     X_transformed_2 = svd.fit(X).transform(X)

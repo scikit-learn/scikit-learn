@@ -1,7 +1,7 @@
 # simple makefile to simplify repetitive build env management tasks under posix
 
 PYTHON ?= python
-DEFAULT_MESON_BUILD_DIR = build/cp$(shell python -c 'import sys; print(f"{sys.version_info.major}{sys.version_info.minor}")' )
+DEFAULT_MESON_BUILD_DIR = build/cp$(shell python -c 'import sys, sysconfig; suffix = "t" if sysconfig.get_config_var("Py_GIL_DISABLED") else ""; print(f"{sys.version_info.major}{sys.version_info.minor}{suffix}")')
 
 all:
 	@echo "Please use 'make <target>' where <target> is one of"

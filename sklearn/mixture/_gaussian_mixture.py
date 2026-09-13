@@ -185,10 +185,10 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar, xp=None):
     covariances : array, shape (n_components, n_features, n_features)
         The covariance matrix of the current components.
     """
-    xp, _, device_ = get_namespace_and_device(X, xp=xp)
+    xp, _, device = get_namespace_and_device(X, xp=xp)
     n_components, n_features = means.shape
     covariances = xp.empty(
-        (n_components, n_features, n_features), device=device_, dtype=X.dtype
+        (n_components, n_features, n_features), device=device, dtype=X.dtype
     )
     for k in range(n_components):
         diff = X - means[k, :]
@@ -231,7 +231,7 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar, xp=None):
 
     Parameters
     ----------
-    responsibilities : array-like of shape (n_samples, n_components)
+    resp : array-like of shape (n_samples, n_components)
 
     X : array-like of shape (n_samples, n_features)
 
@@ -257,7 +257,7 @@ def _estimate_gaussian_covariances_spherical(resp, X, nk, means, reg_covar, xp=N
 
     Parameters
     ----------
-    responsibilities : array-like of shape (n_samples, n_components)
+    resp : array-like of shape (n_samples, n_components)
 
     X : array-like of shape (n_samples, n_features)
 
@@ -335,10 +335,10 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
     Returns
     -------
     precisions_cholesky : array-like
-        The cholesky decomposition of sample precisions of the current
+        The Cholesky decomposition of sample precisions of the current
         components. The shape depends of the covariance_type.
     """
-    xp, _, device_ = get_namespace_and_device(covariances, xp=xp)
+    xp, _, device = get_namespace_and_device(covariances, xp=xp)
 
     estimate_precision_error_message = (
         "Fitting the mixture model failed because some components have "
@@ -356,7 +356,7 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
     if covariance_type == "full":
         n_components, n_features, _ = covariances.shape
         precisions_chol = xp.empty(
-            (n_components, n_features, n_features), device=device_, dtype=dtype
+            (n_components, n_features, n_features), device=device, dtype=dtype
         )
         for k in range(covariances.shape[0]):
             covariance = covariances[k, :, :]
@@ -366,7 +366,7 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
             except np.linalg.LinAlgError:
                 raise ValueError(estimate_precision_error_message)
             precisions_chol[k, :, :] = _linalg_solve(
-                cov_chol, xp.eye(n_features, dtype=dtype, device=device_), xp
+                cov_chol, xp.eye(n_features, dtype=dtype, device=device), xp
             ).T
     elif covariance_type == "tied":
         _, n_features = covariances.shape
@@ -376,7 +376,7 @@ def _compute_precision_cholesky(covariances, covariance_type, xp=None):
         except np.linalg.LinAlgError:
             raise ValueError(estimate_precision_error_message)
         precisions_chol = _linalg_solve(
-            cov_chol, xp.eye(n_features, dtype=dtype, device=device_), xp
+            cov_chol, xp.eye(n_features, dtype=dtype, device=device), xp
         ).T
     else:
         if xp.any(covariances <= 0.0):
@@ -422,7 +422,7 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type, xp=
     Returns
     -------
     precisions_cholesky : array-like
-        The cholesky decomposition of sample precisions of the current
+        The Cholesky decomposition of sample precisions of the current
         components. The shape depends on the covariance_type.
     """
     if covariance_type == "full":
@@ -446,7 +446,7 @@ def _compute_precision_cholesky_from_precisions(precisions, covariance_type, xp=
 ###############################################################################
 # Gaussian mixture probability estimators
 def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features, xp=None):
-    """Compute the log-det of the cholesky decomposition of matrices.
+    """Compute the log-det of the Cholesky decomposition of matrices.
 
     Parameters
     ----------
@@ -509,7 +509,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type, xp=N
     -------
     log_prob : array, shape (n_samples, n_components)
     """
-    xp, _, device_ = get_namespace_and_device(X, means, precisions_chol, xp=xp)
+    xp, _, device = get_namespace_and_device(X, means, precisions_chol, xp=xp)
     n_samples, n_features = X.shape
     n_components, _ = means.shape
     # The determinant of the precision matrix from the Cholesky decomposition
@@ -519,7 +519,7 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type, xp=N
     log_det = _compute_log_det_cholesky(precisions_chol, covariance_type, n_features)
 
     if covariance_type == "full":
-        log_prob = xp.empty((n_samples, n_components), dtype=X.dtype, device=device_)
+        log_prob = xp.empty((n_samples, n_components), dtype=X.dtype, device=device)
         for k in range(means.shape[0]):
             mu = means[k, :]
             prec_chol = precisions_chol[k, :, :]
@@ -527,11 +527,16 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type, xp=N
             log_prob[:, k] = xp.sum(xp.square(y), axis=1)
 
     elif covariance_type == "tied":
-        log_prob = xp.empty((n_samples, n_components), dtype=X.dtype, device=device_)
-        for k in range(means.shape[0]):
-            mu = means[k, :]
-            y = (X @ precisions_chol) - (mu @ precisions_chol)
-            log_prob[:, k] = xp.sum(xp.square(y), axis=1)
+        # In the tied case all components share precisions_chol, so project X
+        # and the means once and expand ||Xp - mu_proj||**2 (as in the diag and
+        # spherical branches below).
+        Xp = X @ precisions_chol
+        mu_proj = means @ precisions_chol
+        log_prob = (
+            row_norms(mu_proj, squared=True)
+            - 2.0 * (Xp @ mu_proj.T)
+            + row_norms(Xp, squared=True)[:, xp.newaxis]
+        )
 
     elif covariance_type == "diag":
         precisions = precisions_chol**2
@@ -690,7 +695,7 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     precisions_cholesky_ : array-like
-        The cholesky decomposition of the precision matrices of each mixture
+        The Cholesky decomposition of the precision matrices of each mixture
         component. A precision matrix is the inverse of a covariance matrix.
         A covariance matrix is symmetric positive definite so the mixture of
         Gaussian can be equivalently parameterized by the precision matrices.
@@ -746,7 +751,11 @@ class GaussianMixture(BaseMixture):
     array([1, 0])
 
     For a comparison of Gaussian Mixture with other clustering algorithms, see
-    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`.
+
+    For an illustration of the negative log-likelihood surface of a
+    :class:`~sklearn.mixture.GaussianMixture` Model,
+    see :ref:`sphx_glr_auto_examples_mixture_plot_gmm_pdf.py`.
     """
 
     _parameter_constraints: dict = {
@@ -851,7 +860,7 @@ class GaussianMixture(BaseMixture):
 
         resp : array-like of shape (n_samples, n_components)
         """
-        xp, _, device_ = get_namespace_and_device(X, xp=xp)
+        xp, _, device = get_namespace_and_device(X, xp=xp)
         n_samples, _ = X.shape
         weights, means, covariances = None, None, None
         if resp is not None:
@@ -862,7 +871,7 @@ class GaussianMixture(BaseMixture):
                 weights /= n_samples
 
         self.weights_ = weights if self.weights_init is None else self.weights_init
-        self.weights_ = xp.asarray(self.weights_, device=device_)
+        self.weights_ = xp.asarray(self.weights_, device=device)
 
         self.means_ = means if self.means_init is None else self.means_init
 
@@ -917,7 +926,7 @@ class GaussianMixture(BaseMixture):
         )
 
     def _set_parameters(self, params, xp=None):
-        xp, _, device_ = get_namespace_and_device(params, xp=xp)
+        xp, _, device = get_namespace_and_device(params, xp=xp)
         (
             self.weights_,
             self.means_,
@@ -927,7 +936,7 @@ class GaussianMixture(BaseMixture):
 
         # Attributes computation
         if self.covariance_type == "full":
-            self.precisions_ = xp.empty_like(self.precisions_cholesky_, device=device_)
+            self.precisions_ = xp.empty_like(self.precisions_cholesky_, device=device)
             for k in range(self.precisions_cholesky_.shape[0]):
                 prec_chol = self.precisions_cholesky_[k, :, :]
                 self.precisions_[k, :, :] = prec_chol @ prec_chol.T

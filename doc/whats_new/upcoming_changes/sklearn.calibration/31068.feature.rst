@@ -1,2 +1,0 @@
-- Added temperature scaling method in :class:`caliabration.CalibratedClassifierCV`.
-  By :user:`Virgil Chan <virchan>` and :user:`Christian Lorentzen <lorentzenchr>`.

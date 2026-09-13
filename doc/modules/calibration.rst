@@ -36,8 +36,8 @@ good a classifier is calibrated.
     decomposition of Murphy [1]_. As it is not clear which term dominates, the score is
     of limited use for assessing calibration alone (unless one computes each term of
     the decomposition). A lower Brier loss, for instance, does not necessarily
-    mean a better calibrated model, it could also mean a worse calibrated model with much
-    more discriminatory power, e.g. using many more features.
+    mean a better calibrated model, it could also mean a worse calibrated model with
+    much more discriminatory power, e.g. using many more features.
 
 .. _calibration_curve:
 
@@ -54,6 +54,16 @@ In scikit-learn, this is accomplished by binning the predictions such that the x
 represents the average predicted probability in each bin.
 The y-axis is then the *fraction of positives* given the predictions of that bin, i.e.
 the proportion of samples whose class is the positive class (in each bin).
+
+The number of bins is controlled by the `n_bins` parameter which is subject to the
+usual bias-variance trade-off. While a higher number of bins provides a more granular
+view (less bias), it also requires more data to ensure that each bin has a sufficient
+number of samples to produce a stable estimate of the fraction of positives (variance).
+When `n_bins="cube_root"`, the number of bins is automatically set to
+:math:`\lceil n_{\text{samples}}^{1/3} \rceil`.
+This choice aims to balance this trade-off. The exponent 1/3 from the cube root is
+asymptotically optimal (large sample limit), see [10]_ and the Appendix of [11]_. For a
+small number of samples, say 100, it might return slightly too low number of bins.
 
 The top calibration curve plot is created with
 :func:`CalibrationDisplay.from_estimator`, which uses :func:`calibration_curve` to
@@ -317,7 +327,7 @@ parameters for each single class.
 .. [1] Allan H. Murphy (1973).
        :doi:`"A New Vector Partition of the Probability Score"
        <10.1175/1520-0450(1973)012%3C0595:ANVPOT%3E2.0.CO;2>`
-       Journal of Applied Meteorology and Climatology
+       Journal of Applied Meteorology and Climatology, 12(4), 595-600
 
 .. [2] `On the combination of forecast probabilities for
        consecutive precipitation periods.
@@ -357,3 +367,13 @@ parameters for each single class.
 .. [9] `On Calibration of Modern Neural Networks
        <https://proceedings.mlr.press/v70/guo17a/guo17a.pdf>`_,
        C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
+
+.. [10] Charles J. Stone. (1982).
+       :doi:`"Optimal Global Rates of Convergence for Nonparametric Regression."
+       <10.1214/aos/1176345969>`
+       The annals of statistics, 1040-1053.
+
+.. [11] Timo Dimitriadis, Tilmann Gneiting, and Alexander I. Jordan. (2021).
+       :doi:`"Stable reliability diagrams for probabilistic classifiers"
+       <10.1073/pnas.2016191118>`
+       Proceedings of the National Academy of Sciences, 118(8), e2016191118.

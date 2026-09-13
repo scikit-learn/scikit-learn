@@ -24,16 +24,13 @@ up" on issues that others reported and that are relevant to you. It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star it in GitHub to say "I use it".
 
+Note that communications on all channels should respect our
+[Code of Conduct](./CODE_OF_CONDUCT.md).
+
 Quick links
 -----------
 
 * [Submitting a bug report or feature request](https://scikit-learn.org/dev/developers/contributing.html#submitting-a-bug-report-or-a-feature-request)
-* [Contributing code](https://scikit-learn.org/dev/developers/contributing.html#contributing-code)
+* [Contributing code and documentation](https://scikit-learn.org/dev/developers/contributing.html#contributing-code-and-documentation)
 * [Coding guidelines](https://scikit-learn.org/dev/developers/develop.html#coding-guidelines)
 * [Tips to read current code](https://scikit-learn.org/dev/developers/contributing.html#reading-the-existing-code-base)
-
-Code of Conduct
----------------
-
-We abide by the principles of openness, respect, and consideration of others
-of the Python Software Foundation: https://www.python.org/psf/codeofconduct/.

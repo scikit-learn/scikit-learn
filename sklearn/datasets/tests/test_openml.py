@@ -72,10 +72,10 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
     # monkey patches the urlopen function. Important note: Do NOT use this
     # in combination with a regular cache directory, as the files that are
     # stored as cache should not be mixed up with real openml datasets
-    url_prefix_data_description = "https://api.openml.org/api/v1/json/data/"
-    url_prefix_data_features = "https://api.openml.org/api/v1/json/data/features/"
+    url_prefix_data_description = "https://www.openml.org/api/v1/json/data/"
+    url_prefix_data_features = "https://www.openml.org/api/v1/json/data/features/"
     url_prefix_download_data = "https://www.openml.org/data/v1/download"
-    url_prefix_data_list = "https://api.openml.org/api/v1/json/data/list/"
+    url_prefix_data_list = "https://www.openml.org/api/v1/json/data/list/"
 
     path_suffix = ".gz"
     read_fn = gzip.open
@@ -163,7 +163,7 @@ def _monkey_patch_webbased_functions(context, data_id, gzip_response):
         data_file_name = _file_name(url, ".json")
         data_file_path = resources.files(data_module) / data_file_name
 
-        # load the file itself, to simulate a http error
+        # load the file itself, to simulate an http error
         with data_file_path.open("rb") as f:
             decompressed_f = read_fn(f, "rb")
             decoded_s = decompressed_f.read().decode("utf-8")
@@ -1042,7 +1042,7 @@ def test_fetch_openml_sparse_arff_error(monkeypatch, params, err_msg):
 @pytest.mark.parametrize(
     "data_id, data_type",
     [
-        (61, "dataframe"),  # iris dataset version 1
+        (61, "pandas"),  # iris dataset version 1
         (292, "sparse"),  # Australian dataset version 1
     ],
 )
@@ -1052,7 +1052,7 @@ def test_fetch_openml_auto_mode(monkeypatch, data_id, data_type):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     data = fetch_openml(data_id=data_id, as_frame="auto", cache=False)
-    klass = pd.DataFrame if data_type == "dataframe" else scipy.sparse.csr_matrix
+    klass = pd.DataFrame if data_type == "pandas" else scipy.sparse.csr_matrix
     assert isinstance(data.data, klass)
 
 
@@ -1466,6 +1466,8 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
     np.testing.assert_array_equal(y_fetched, y_cached)
 
 
+@pytest.mark.parametrize("cache", [False, True])
+@pytest.mark.parametrize("recoverable", [True, False])
 @pytest.mark.parametrize(
     "as_frame, parser",
     [
@@ -1475,15 +1477,24 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
         (False, "pandas"),
     ],
 )
-def test_fetch_openml_verify_checksum(monkeypatch, as_frame, tmpdir, parser):
-    """Check that the checksum is working as expected."""
+def test_fetch_openml_verify_checksum(
+    monkeypatch, as_frame, tmpdir, parser, cache, recoverable
+):
+    """Check that the md5 checksum is enforced and a corrupted download retried.
+
+    The mock serves corrupted bytes on the first download. When ``recoverable``,
+    a valid copy is served on the retry, so the fetch succeeds; otherwise every
+    download is corrupted and a ``ValueError`` is raised once the retry is
+    exhausted. The retry happens whether or not caching is enabled.
+    """
     if as_frame or parser == "pandas":
         pytest.importorskip("pandas")
 
     data_id = 2
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    # create a temporary modified arff file
+    # Create a corrupted copy of the arff file (flip the last byte so that its
+    # md5 checksum does not match the description).
     original_data_module = OPENML_TEST_DATA_MODULE + "." + f"id_{data_id}"
     original_data_file_name = "data-v1-dl-1666876.arff.gz"
     original_data_path = resources.files(original_data_module) / original_data_file_name
@@ -1496,29 +1507,69 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, tmpdir, parser):
     with gzip.GzipFile(corrupt_copy_path, "wb") as modified_gzip:
         modified_gzip.write(data)
 
-    # Requests are already mocked by monkey_patch_webbased_functions.
-    # We want to reuse that mock for all requests except file download,
-    # hence creating a thin mock over the original mock
+    # Requests are already mocked by monkey_patch_webbased_functions. We reuse
+    # that mock for all requests except the data download, hence creating a thin
+    # mock over the original mock. Corrupted bytes are served on the first
+    # download; on subsequent downloads, valid bytes are served only when the
+    # failure is ``recoverable``.
     mocked_openml_url = sklearn.datasets._openml.urlopen
+    download_url = "https://www.openml.org/data/v1/download/1666876/anneal.arff"
+    download_calls = []
 
     def swap_file_mock(request, *args, **kwargs):
         url = request.get_full_url()
         if url.endswith("data/v1/download/1666876/anneal.arff"):
-            with open(corrupt_copy_path, "rb") as f:
-                corrupted_data = f.read()
-            return _MockHTTPResponse(BytesIO(corrupted_data), is_gzip=True)
-        else:
-            return mocked_openml_url(request)
+            download_calls.append(url)
+            if len(download_calls) == 1 or not recoverable:
+                with open(corrupt_copy_path, "rb") as f:
+                    corrupted_data = f.read()
+                return _MockHTTPResponse(BytesIO(corrupted_data), is_gzip=True)
+        return mocked_openml_url(request)
 
     monkeypatch.setattr(sklearn.datasets._openml, "urlopen", swap_file_mock)
 
-    # validate failed checksum
-    with pytest.raises(ValueError) as exc:
-        sklearn.datasets.fetch_openml(
-            data_id=data_id, cache=False, as_frame=as_frame, parser=parser
+    if cache:
+        data_home = str(tmpdir.mkdir("scikit_learn_data"))
+    else:
+        data_home = None
+    fetch = partial(
+        fetch_openml_orig,
+        data_id=data_id,
+        data_home=data_home,
+        cache=cache,
+        as_frame=as_frame,
+        parser=parser,
+    )
+
+    # Both the redownload warning and the checksum error report the download
+    # URL, plus the local cache path (rooted at ``data_home``) when caching is on.
+    if cache:
+        cache_path = re.escape(data_home) + r".*1666876/anneal\.arff\.gz"
+        warn_match = f"Invalid cache, redownloading file to {cache_path}"
+        error_match = (
+            f"md5 checksum of the file downloaded from {re.escape(download_url)} "
+            f"and cached at {cache_path} does not match"
         )
-    # exception message should have file-path
-    assert exc.match("1666876")
+    else:
+        warn_match = r"Downloaded file could have been corrupted, redownloading\."
+        error_match = (
+            f"md5 checksum of the file downloaded from {re.escape(download_url)} "
+            "does not match"
+        )
+
+    if recoverable:
+        # The corrupted (cache) file is removed and a valid copy redownloaded.
+        with pytest.warns(RuntimeWarning, match=warn_match):
+            bunch = fetch()
+        assert bunch.data.shape[0] > 0
+    else:
+        # Every download is corrupted: the retry is exhausted and we raise.
+        with pytest.raises(ValueError, match=error_match):
+            fetch()
+
+    # The download was retried: it was attempted at least twice (the initial
+    # try plus one retry; without caching the file is also reopened to parse it).
+    assert len(download_calls) >= 2
 
 
 def test_open_openml_url_retry_on_network_error(monkeypatch):

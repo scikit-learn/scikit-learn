@@ -112,7 +112,7 @@ def test_ensemble_heterogeneous_estimators_behavior(X, y, estimator):
         == estimator.named_estimators.rf.get_params()
     )
 
-    # check the behavior when setting an dropping an estimator
+    # check the behavior when setting and dropping an estimator
     estimator_dropped = clone(estimator)
     estimator_dropped.set_params(svm="drop")
     estimator_dropped.fit(X, y)

@@ -31,6 +31,7 @@ cdef class WeightVector{{name_suffix}}(object):
     cdef double average_b
     cdef int n_features
     cdef double sq_norm
+    cdef double l1_norm
 
     cdef void add(self, {{c_type}} *x_data_ptr, int *x_ind_ptr,
                   int xnnz, {{c_type}} c) noexcept nogil
@@ -41,5 +42,6 @@ cdef class WeightVector{{name_suffix}}(object):
     cdef void scale(self, {{c_type}} c) noexcept nogil
     cdef void reset_wscale(self) noexcept nogil
     cdef {{c_type}} norm(self) noexcept nogil
+    cdef {{c_type}} l1norm(self) noexcept nogil
 
 {{endfor}}

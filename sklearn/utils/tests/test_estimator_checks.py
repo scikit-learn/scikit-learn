@@ -1,5 +1,5 @@
 # We can not use pytest here, because we run
-# build_tools/azure/test_pytest_soft_dependency.sh on these
+# build_tools/github/test_pytest_soft_dependency.sh on these
 # tests to make sure estimator_checks works without pytest.
 
 import importlib
@@ -109,6 +109,14 @@ def _mark_thread_unsafe_if_pytest_imported(f):
     pytest = sys.modules.get("pytest")
     if pytest is not None:
         return pytest.mark.thread_unsafe(f)
+    else:
+        return f
+
+
+def _mark_no_check_spmatrix_if_pytest_imported(f):
+    pytest = sys.modules.get("pytest")
+    if pytest is not None:
+        return pytest.mark.no_check_spmatrix
     else:
         return f
 
@@ -638,6 +646,7 @@ def test_mutable_default_params():
         check_parameters_default_constructible("Mutable", HasMutableParameters())
 
 
+@_mark_thread_unsafe_if_pytest_imported
 def test_check_set_params():
     """Check set_params doesn't fail and sets the right values."""
     # check that values returned by get_params match set_params
@@ -807,6 +816,7 @@ def test_check_estimator_not_fail_fast():
     assert any(item["status"] == "passed" for item in check_results)
 
 
+@_mark_no_check_spmatrix_if_pytest_imported  # pickle breaks check_spmatrix
 # Some estimator checks rely on warnings in deep functions calls. This is not
 # automatically detected by pytest-run-parallel shallow AST inspection, so we
 # need to mark the test function as thread-unsafe.
@@ -911,6 +921,7 @@ def test_check_estimator_transformer_no_mixin():
         check_estimator(BadTransformerWithoutMixin())
 
 
+@_mark_no_check_spmatrix_if_pytest_imported  # pickle breaks check_spmatrix
 def test_check_estimator_clones():
     # check that check_estimator doesn't modify the estimator it receives
 
@@ -969,6 +980,9 @@ def test_check_no_attributes_set_in_init():
     class ConformantEstimatorClassAttribute(BaseEstimator):
         # making sure our __metadata_request__* class attributes are okay!
         __metadata_request__fit = {"foo": True}
+
+        def fit(self, X, y=None):
+            return self  # pragma: no cover
 
     msg = (
         "Estimator estimator_name should not set any"
@@ -1307,6 +1321,7 @@ def test_check_class_weight_balanced_linear_classifier():
         )
 
 
+@_mark_thread_unsafe_if_pytest_imported
 def test_all_estimators_all_public():
     # all_estimator should not fail when pytest is not installed and return
     # only public estimators
@@ -1322,6 +1337,61 @@ if __name__ == "__main__":
     # This module is run as a script to check that we have no dependency on
     # pytest for estimator checks.
     run_tests_without_pytest()
+
+
+def test_estimator_checks_generator_strict_none():
+    # Check that no "strict" mark is included in the generated checks
+    est = next(_construct_instances(NuSVC))
+    expected_to_fail = _get_expected_failed_checks(est)
+    # If we don't pass strict, it should not appear in the xfail mark either
+    # This way the behaviour configured in pytest.ini takes precedence.
+    checks = estimator_checks_generator(
+        est,
+        legacy=True,
+        expected_failed_checks=expected_to_fail,
+        mark="xfail",
+    )
+    # make sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
+    marked_checks = [c for c in checks if hasattr(c, "marks")]
+    # make sure we have some checks with marks
+    assert len(marked_checks) > 0
+
+    for parameter_set in marked_checks:
+        first_mark = parameter_set.marks[0]
+        assert "strict" not in first_mark.kwargs
+
+
+def test_estimator_checks_generator_strict_xfail_tests():
+    # Make sure that the checks generator marks tests that are expected to fail
+    # as strict xfail
+    est = next(_construct_instances(NuSVC))
+    expected_to_fail = _get_expected_failed_checks(est)
+    checks = estimator_checks_generator(
+        est,
+        legacy=True,
+        expected_failed_checks=expected_to_fail,
+        mark="xfail",
+        xfail_strict=True,
+    )
+    # make sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
+    strict_xfailed_checks = []
+
+    # xfail'ed checks are wrapped in a ParameterSet, so below we extract
+    # the things we need via a bit of a crutch: len()
+    marked_checks = [c for c in checks if hasattr(c, "marks")]
+    # make sure we use a class that has expected failures
+    assert len(expected_to_fail) > 0
+
+    for parameter_set in marked_checks:
+        _, check = parameter_set.values
+        first_mark = parameter_set.marks[0]
+        if first_mark.kwargs["strict"]:
+            strict_xfailed_checks.append(_check_name(check))
+
+    # all checks expected to fail are marked as strict xfail
+    assert set(expected_to_fail.keys()) == set(strict_xfailed_checks)
 
 
 @_mark_thread_unsafe_if_pytest_imported  # Some checks use warnings.
@@ -1345,6 +1415,7 @@ def test_estimator_checks_generator_skipping_tests():
     assert set(expected_to_fail.keys()) <= set(skipped_checks)
 
 
+@_mark_thread_unsafe_if_pytest_imported
 def test_xfail_count_with_no_fast_fail():
     """Test that the right number of xfail warnings are raised when on_fail is "warn".
 
@@ -1666,7 +1737,15 @@ def test_estimator_with_set_output():
                 "check_array_api_input": (
                     "this check is expected to fail because pandas and polars"
                     " are not compatible with the array api."
-                )
+                ),
+                "check_array_api_mixed_inputs": (
+                    "this check is expected to fail because pandas and polars"
+                    " are not compatible with the array api."
+                ),
+                "check_array_api_same_namespace": (
+                    "this check is expected to fail because pandas and polars"
+                    " are not compatible with the array api."
+                ),
             },
         )
 

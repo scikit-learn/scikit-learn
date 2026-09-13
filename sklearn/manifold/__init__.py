@@ -3,6 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from sklearn.manifold._classical_mds import ClassicalMDS
 from sklearn.manifold._isomap import Isomap
 from sklearn.manifold._locally_linear import (
     LocallyLinearEmbedding,
@@ -15,6 +16,7 @@ from sklearn.manifold._t_sne import TSNE, trustworthiness
 __all__ = [
     "MDS",
     "TSNE",
+    "ClassicalMDS",
     "Isomap",
     "LocallyLinearEmbedding",
     "SpectralEmbedding",

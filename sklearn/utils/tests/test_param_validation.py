@@ -2,7 +2,7 @@ from numbers import Integral, Real
 
 import numpy as np
 import pytest
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_array, csr_matrix
 
 from sklearn._config import config_context, get_config
 from sklearn.base import BaseEstimator, _fit_context
@@ -406,6 +406,7 @@ def test_generate_valid_param(constraint):
         ("array-like", [[1, 2], [3, 4]]),
         ("array-like", np.array([[1, 2], [3, 4]])),
         ("sparse matrix", csr_matrix([[1, 2], [3, 4]])),
+        ("sparse matrix", csr_array([[1, 2], [3, 4]])),
         *[
             ("sparse matrix", container([[1, 2], [3, 4]]))
             for container in CSR_CONTAINERS
