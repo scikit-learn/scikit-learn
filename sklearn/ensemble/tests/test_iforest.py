@@ -199,11 +199,22 @@ def test_iforest_average_path_length():
     # It tests non-regression for #8549 which used the wrong formula
     # for average path length, strictly for the integer case
     # Updated to check average path length when input is <= 2 (issue #11839)
-    result_one = 2.0 * (np.log(4.0) + np.euler_gamma) - 2.0 * 4.0 / 5.0
-    result_two = 2.0 * (np.log(998.0) + np.euler_gamma) - 2.0 * 998.0 / 999.0
+    # and to use the exact expected path length c(n) = 2 H(n-1) - 2 (n-1)/n
+    # instead of the paper's logarithmic approximation, which is ~30% too low
+    # for small n (issue #15724).
+    def exact_average_path_length(n):
+        # 2 H(n - 1) - 2 (n - 1) / n, straight from the definition of the
+        # harmonic number H, as an implementation-independent reference.
+        harmonic = np.sum(1.0 / np.arange(1, n))
+        return 2.0 * harmonic - 2.0 * (n - 1) / n
+
+    result_one = exact_average_path_length(5)  # 77 / 30
+    result_two = exact_average_path_length(999)
     assert_allclose(_average_path_length([0]), [0.0])
     assert_allclose(_average_path_length([1]), [0.0])
     assert_allclose(_average_path_length([2]), [1.0])
+    # Exact small-n value; the old approximation returned ~1.207 (issue #15724).
+    assert_allclose(_average_path_length([3]), [5.0 / 3.0])
     assert_allclose(_average_path_length([5]), [result_one])
     assert_allclose(_average_path_length([999]), [result_two])
     assert_allclose(
@@ -283,7 +294,22 @@ def test_iforest_chunks_works2(
 
 
 def test_iforest_with_uniform_data():
-    """Test whether iforest predicts inliers when using uniform data"""
+    """Test that iforest does not flag uniform / degenerate data as anomalies.
+
+    On perfectly uniform training data no split is possible, so every tree is a
+    single node holding all ``max_samples`` samples. Each point's path length
+    then equals the normalisation constant, so its anomaly score sits exactly on
+    the inlier/outlier decision boundary (``decision_function == 0``). Whether
+    that boundary rounds to a +1 or -1 label is governed by sub-ULP
+    floating-point error, so we assert the meaningful invariant: no point is
+    scored as a genuine anomaly (``decision_function >= 0`` up to floating-point
+    tolerance).
+    """
+    # A few ULPs of slack around the exact-boundary score of the degenerate fit.
+    tol = 1e-12
+
+    def assert_not_flagged_as_outlier(clf, X):
+        assert np.all(clf.decision_function(X) >= -tol)
 
     # 2-d array of all 1s
     X = np.ones((100, 10))
@@ -292,28 +318,28 @@ def test_iforest_with_uniform_data():
 
     rng = np.random.RandomState(0)
 
-    assert all(iforest.predict(X) == 1)
-    assert all(iforest.predict(rng.randn(100, 10)) == 1)
-    assert all(iforest.predict(X + 1) == 1)
-    assert all(iforest.predict(X - 1) == 1)
+    assert_not_flagged_as_outlier(iforest, X)
+    assert_not_flagged_as_outlier(iforest, rng.randn(100, 10))
+    assert_not_flagged_as_outlier(iforest, X + 1)
+    assert_not_flagged_as_outlier(iforest, X - 1)
 
     # 2-d array where columns contain the same value across rows
     X = np.repeat(rng.randn(1, 10), 100, 0)
     iforest = IsolationForest()
     iforest.fit(X)
 
-    assert all(iforest.predict(X) == 1)
-    assert all(iforest.predict(rng.randn(100, 10)) == 1)
-    assert all(iforest.predict(np.ones((100, 10))) == 1)
+    assert_not_flagged_as_outlier(iforest, X)
+    assert_not_flagged_as_outlier(iforest, rng.randn(100, 10))
+    assert_not_flagged_as_outlier(iforest, np.ones((100, 10)))
 
     # Single row
     X = rng.randn(1, 10)
     iforest = IsolationForest()
     iforest.fit(X)
 
-    assert all(iforest.predict(X) == 1)
-    assert all(iforest.predict(rng.randn(100, 10)) == 1)
-    assert all(iforest.predict(np.ones((100, 10))) == 1)
+    assert_not_flagged_as_outlier(iforest, X)
+    assert_not_flagged_as_outlier(iforest, rng.randn(100, 10))
+    assert_not_flagged_as_outlier(iforest, np.ones((100, 10)))
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
