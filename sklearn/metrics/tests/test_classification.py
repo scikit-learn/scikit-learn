@@ -607,6 +607,116 @@ def test_multilabel_confusion_matrix_errors():
         multilabel_confusion_matrix([[0, 1, 2], [2, 1, 0]], [[1, 2, 0], [1, 0, 2]])
 
 
+@pytest.mark.parametrize("dtype", [np.uint8, np.int32, np.int64, bool])
+def test_multilabel_confusion_matrix_fastpath_binary(dtype):
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=1000).astype(dtype)
+    y_pred = rng.randint(0, 2, size=1000).astype(dtype)
+    result_int = multilabel_confusion_matrix(y_true, y_pred)
+    result_float = multilabel_confusion_matrix(
+        y_true.astype(np.float64), y_pred.astype(np.float64)
+    )
+    np.testing.assert_array_equal(result_int, result_float)
+
+
+@pytest.mark.parametrize("dtype", [np.uint8, np.int32, np.int64])
+@pytest.mark.parametrize("K", [3, 5, 20])
+def test_multilabel_confusion_matrix_fastpath_multiclass(dtype, K):
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, K, size=2000).astype(dtype)
+    y_pred = rng.randint(0, K, size=2000).astype(dtype)
+    result_int = multilabel_confusion_matrix(y_true, y_pred)
+    result_float = multilabel_confusion_matrix(
+        y_true.astype(np.float64), y_pred.astype(np.float64)
+    )
+    np.testing.assert_array_equal(result_int, result_float)
+
+
+def test_multilabel_confusion_matrix_fastpath_single_class():
+    y_true = np.zeros(100, dtype=np.uint8)
+    y_pred = np.zeros(100, dtype=np.uint8)
+    result_int = multilabel_confusion_matrix(y_true, y_pred)
+    result_float = multilabel_confusion_matrix(
+        y_true.astype(np.float64), y_pred.astype(np.float64)
+    )
+    np.testing.assert_array_equal(result_int, result_float)
+    assert result_int.shape == (1, 2, 2)
+    np.testing.assert_array_equal(result_int[0], np.array([[0, 0], [0, 100]]))
+
+
+def test_multilabel_confusion_matrix_fastpath_f1_jaccard():
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=1000).astype(np.uint8)
+    y_pred = rng.randint(0, 2, size=1000).astype(np.uint8)
+    y_true_float = y_true.astype(np.float64)
+    y_pred_float = y_pred.astype(np.float64)
+
+    assert f1_score(y_true, y_pred, average="binary") == f1_score(
+        y_true_float, y_pred_float, average="binary"
+    )
+    assert jaccard_score(y_true, y_pred, average="binary") == jaccard_score(
+        y_true_float, y_pred_float, average="binary"
+    )
+
+
+@pytest.mark.parametrize("labels", [[1, 0], [0], [1]])
+def test_multilabel_confusion_matrix_fastpath_labels_subset_or_reorder(labels):
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=1000).astype(np.uint8)
+    y_pred = rng.randint(0, 2, size=1000).astype(np.uint8)
+    result_int = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+    result_float = multilabel_confusion_matrix(
+        y_true.astype(np.float64), y_pred.astype(np.float64), labels=labels
+    )
+    np.testing.assert_array_equal(result_int, result_float)
+
+
+def test_multilabel_confusion_matrix_fastpath_labels_force_include():
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=1000).astype(np.uint8)
+    y_pred = rng.randint(0, 2, size=1000).astype(np.uint8)
+    result = multilabel_confusion_matrix(y_true, y_pred, labels=[0, 1, 99])
+    baseline = multilabel_confusion_matrix(y_true, y_pred, labels=[0, 1])
+    assert result.shape == (3, 2, 2)
+    np.testing.assert_array_equal(result[:2], baseline)
+    # class 99 absent from data: TN=n_samples, FP=FN=TP=0
+    np.testing.assert_array_equal(result[2], np.array([[1000, 0], [0, 0]]))
+
+
+def test_multilabel_confusion_matrix_fastpath_sample_weight():
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=1000).astype(np.uint8)
+    y_pred = rng.randint(0, 2, size=1000).astype(np.uint8)
+    sample_weight = rng.uniform(0.5, 2.0, size=1000)
+    result_int = multilabel_confusion_matrix(
+        y_true, y_pred, sample_weight=sample_weight
+    )
+    result_float = multilabel_confusion_matrix(
+        y_true.astype(np.float64),
+        y_pred.astype(np.float64),
+        sample_weight=sample_weight,
+    )
+    np.testing.assert_array_equal(result_int, result_float)
+
+
+def test_multilabel_confusion_matrix_fastpath_fallthrough_negative_labels():
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=100).astype(np.int64)
+    y_pred = rng.randint(0, 2, size=100).astype(np.int64)
+    result = multilabel_confusion_matrix(y_true, y_pred, labels=[-1, 0, 1])
+    assert result.shape == (3, 2, 2)
+    # class -1 absent from data: TN=n_samples, FP=FN=TP=0
+    np.testing.assert_array_equal(result[0], np.array([[100, 0], [0, 0]]))
+
+
+def test_multilabel_confusion_matrix_fastpath_fallthrough_nonconsecutive():
+    y_true = np.array([3, 7, 3, 7, 3], dtype=np.int64)
+    y_pred = np.array([3, 7, 7, 3, 3], dtype=np.int64)
+    result = multilabel_confusion_matrix(y_true, y_pred)
+    assert result.shape == (2, 2, 2)
+    np.testing.assert_array_equal(result[0], np.array([[1, 1], [1, 2]]))
+
+
 @pytest.mark.parametrize(
     "normalize, cm_dtype, expected_results",
     [
