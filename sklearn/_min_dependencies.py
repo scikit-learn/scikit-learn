@@ -7,7 +7,7 @@ import argparse
 
 # scipy and cython should by in sync with pyproject.toml
 NUMPY_MIN_VERSION = "1.26.0"
-SCIPY_MIN_VERSION = "1.11.3"
+SCIPY_MIN_VERSION = "1.11.4"
 JOBLIB_MIN_VERSION = "1.4.0"
 NARWHALS_MIN_VERSION = "2.0.1"
 THREADPOOLCTL_MIN_VERSION = "3.5.0"

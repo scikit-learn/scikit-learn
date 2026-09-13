@@ -7,7 +7,7 @@ dependencies:
   - python=3.12
   - numpy=1.26.0  # min
   - blas[build=openblas]
-  - scipy=1.11.3  # min
+  - scipy=1.11.4  # min
   - cython=3.1.2  # min
   - joblib=1.4.0  # min
   - narwhals=2.0.1  # min

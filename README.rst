@@ -32,7 +32,7 @@
 
 .. |PythonMinVersion| replace:: 3.12
 .. |NumPyMinVersion| replace:: 1.26.0
-.. |SciPyMinVersion| replace:: 1.11.3
+.. |SciPyMinVersion| replace:: 1.11.4
 .. |JoblibMinVersion| replace:: 1.4.0
 .. |NarwhalsMinVersion| replace:: 2.0.1
 .. |ThreadpoolctlMinVersion| replace:: 3.5.0
