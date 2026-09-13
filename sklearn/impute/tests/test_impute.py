@@ -1560,7 +1560,6 @@ def test_simple_imputer_inverse_transform_empty_last_feature():
     assert np.isnan(X_inv[:, 2]).all()
 
 
-
 @pytest.mark.parametrize(
     "expected,array,dtype,extra_value,n_repeat",
     [
