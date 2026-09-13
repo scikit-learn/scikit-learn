@@ -4,17 +4,18 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.11
-  - numpy=1.24.1  # min
+  - python=3.12
+  - numpy=1.26.3  # min
   - blas[build=openblas]
-  - scipy=1.10.0  # min
+  - scipy=1.12.0  # min
   - cython=3.1.2  # min
   - joblib=1.4.0  # min
   - narwhals=2.0.1  # min
   - threadpoolctl=3.5.0  # min
-  - matplotlib=3.6.1  # min
+  - matplotlib=3.8.0  # min
+  - pandas=2.2.0  # min
   - rich=14.1.0  # min
-  - pyamg=5.0.0  # min
+  - pyamg=5.1.0  # min
   - pytest
   - pytest-xdist
   - pillow
@@ -24,8 +25,5 @@ dependencies:
   - pytest-cov<=6.3.0
   - coverage
   - ccache
-  - polars=0.20.30  # min
-  - pyarrow=13.0.0  # min
-  - pip
-  - pip:
-    - pandas==1.5.0  # min
+  - polars=1.12.0  # min
+  - pyarrow=14.0.0  # min
