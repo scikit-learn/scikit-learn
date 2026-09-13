@@ -169,6 +169,13 @@ class _CFNode:
         self.prev_leaf_ = None
         self.next_leaf_ = None
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        # Birch serializes and restores the leaf links without recursing through them.
+        state["prev_leaf_"] = None
+        state["next_leaf_"] = None
+        return state
+
     def append_subcluster(self, subcluster):
         n_samples = len(self.subclusters_)
         self.subclusters_.append(subcluster)
@@ -499,6 +506,24 @@ class Birch(
         self.branching_factor = branching_factor
         self.n_clusters = n_clusters
         self.compute_labels = compute_labels
+
+    def __getstate__(self):
+        state = super().__getstate__()
+        if hasattr(self, "dummy_leaf_"):
+            state["_serialized_leaves"] = self._get_leaves()
+        return state
+
+    def __setstate__(self, state):
+        leaves = state.pop("_serialized_leaves", None)
+        super().__setstate__(state)
+
+        if leaves is not None:
+            previous_leaf = self.dummy_leaf_
+            for leaf in leaves:
+                previous_leaf.next_leaf_ = leaf
+                leaf.prev_leaf_ = previous_leaf
+                previous_leaf = leaf
+            previous_leaf.next_leaf_ = None
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
