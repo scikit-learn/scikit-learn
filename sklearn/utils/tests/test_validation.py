@@ -2090,7 +2090,7 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
 
 @pytest.mark.parametrize(
     "constructor_name, minversion",
-    [("pyarrow", "14.0.0"), ("pandas", "2.2.0"), ("polars", "1.12.0")],
+    [("pyarrow", "14.0.0"), ("pandas", "2.1.3"), ("polars", "1.12.0")],
 )
 def test_get_feature_names_4_dataframes(constructor_name, minversion):
     """Test _get_features_names on dataframes."""

@@ -6,8 +6,8 @@
 import argparse
 
 # scipy and cython should by in sync with pyproject.toml
-NUMPY_MIN_VERSION = "1.26.3"
-SCIPY_MIN_VERSION = "1.12.0"
+NUMPY_MIN_VERSION = "1.26.0"
+SCIPY_MIN_VERSION = "1.11.3"
 JOBLIB_MIN_VERSION = "1.4.0"
 NARWHALS_MIN_VERSION = "2.0.1"
 THREADPOOLCTL_MIN_VERSION = "3.5.0"
@@ -29,7 +29,7 @@ dependent_packages = {
     "meson-python": ("0.17.1", "build"),
     "matplotlib": ("3.8.0", "benchmark, docs, examples, tests"),
     "scikit-image": ("0.24.0", "docs, examples"),
-    "pandas": ("2.2.0", "benchmark, docs, examples, tests"),
+    "pandas": ("2.1.3", "benchmark, docs, examples, tests"),
     "rich": ("14.1.0", "docs, examples, tests"),
     "seaborn": ("0.13.0", "docs, examples"),
     "memory_profiler": ("0.57.0", "benchmark, docs"),

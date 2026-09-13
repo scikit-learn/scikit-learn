@@ -7,8 +7,8 @@ maintainers = [
     {name = "scikit-learn developers", email="scikit-learn@python.org"},
 ]
 dependencies = [
-  "numpy>=1.26.3",
-  "scipy>=1.12.0",
+  "numpy>=1.26.0",
+  "scipy>=1.11.3",
   "joblib>=1.4.0",
   "narwhals>=2.0.1",
   "threadpoolctl>=3.5.0",
@@ -52,7 +52,7 @@ requires = [
     # change to "cython>[fixed-version]" or "cython>=3.1.2,!=3.2.6,!=3.2.7,!=3.2.8,!=3.2.9"
     "cython>=3.1.2,<3.2.6",
     "numpy>=2",
-    "scipy>=1.12.0",
+    "scipy>=1.11.3",
 ]
 
 [tool.pytest.ini_options]
