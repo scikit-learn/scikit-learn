@@ -237,6 +237,45 @@ def test_grid_from_X():
     assert grid.dtype == object
 
 
+def test_grid_from_X_with_nan():
+    """Non-regression test for a `np.nan` value making the whole grid `np.nan`.
+
+    Non-regression test for gh-34928's review discussion: `np.quantile` (unlike
+    the previously used `scipy.stats.mstats.mquantiles`) propagates `np.nan`,
+    which used to make the grid entirely made of `np.nan` for a column
+    containing a single missing value.
+    """
+    percentiles = (0.05, 0.95)
+    grid_resolution = 10
+    is_categorical = [False]
+    rng = np.random.RandomState(0)
+    X = rng.rand(50, 1)
+    X[0, 0] = np.nan
+
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution, {})
+
+    assert not np.isnan(grid).any()
+    assert not np.isnan(axes[0]).any()
+
+
+def test_grid_from_X_with_boolean_feature():
+    """Non-regression test for boolean columns raising a `TypeError`.
+
+    Non-regression test for gh-34928's review discussion: `np.quantile` cannot
+    interpolate between boolean values (unlike the previously used
+    `scipy.stats.mstats.mquantiles`), which used to raise a `TypeError`.
+    """
+    percentiles = (0.05, 0.95)
+    grid_resolution = 2
+    is_categorical = [False]
+    X = np.array([[True], [False]] * 10)
+
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution, {})
+
+    assert_array_equal(axes[0], [0.0, 1.0])
+    assert_array_equal(grid.ravel(), [0.0, 1.0])
+
+
 @pytest.mark.parametrize(
     "grid_resolution",
     [

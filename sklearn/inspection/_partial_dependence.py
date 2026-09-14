@@ -139,9 +139,16 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
                 axis = uniques
             else:
                 # create axis based on percentiles and grid resolution
-                emp_percentiles = np.quantile(
-                    _safe_indexing(X, feature, axis=1), percentiles, axis=0
-                )
+                column = np.asarray(_safe_indexing(X, feature, axis=1))
+                if column.dtype == bool:
+                    # `np.quantile`/`np.nanquantile` do not support boolean arrays
+                    # (interpolation between two quantiles relies on subtraction,
+                    # which is not defined for booleans).
+                    column = column.astype(np.float64)
+                # `np.nanquantile` ignores `np.nan` values instead of propagating
+                # them to every grid point (missing values are not otherwise
+                # filtered out of `X` at this point).
+                emp_percentiles = np.nanquantile(column, percentiles, axis=0)
                 if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                     raise ValueError(
                         "percentiles are too close to each other, "
