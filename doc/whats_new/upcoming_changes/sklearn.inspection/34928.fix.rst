@@ -1,0 +1,6 @@
+- :func:`inspection.partial_dependence` and :class:`inspection.PartialDependenceDisplay`
+  now use `numpy.quantile`'s linear interpolation instead of the (unmaintained)
+  `scipy.stats.mstats.mquantiles`'s Cunnane interpolation to compute the grid of
+  values and deciles from `X`. This may slightly shift the computed grid values
+  and displayed deciles.
+  By :user:`Arthur Lacote <cakedev0>`.
