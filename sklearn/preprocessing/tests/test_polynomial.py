@@ -72,7 +72,7 @@ def test_spline_transformer_input_validation(params, err_msg):
 @pytest.mark.parametrize(["n_knots", "degree"], [(3, 1), (5, 3)])
 @pytest.mark.parametrize("periodic", [False, True])
 def test_spline_transformer_for_one_unique_knot(n_knots, degree, periodic):
-    """Test that SplineTransformer for knots with a single unique value."""
+    """Test that SplineTransformer returns 0 for knots with a single unique value."""
     n_splines = n_knots + (1 - periodic) * degree - 1
     extrapolation = "periodic" if periodic else "constant"
     X = [[1, 2, 3], [1, 22, 3], [1, 222, 3]]
@@ -86,7 +86,7 @@ def test_spline_transformer_for_one_unique_knot(n_knots, degree, periodic):
     assert X_trans.shape[1] == 3 * n_splines
     assert_array_equal(X_trans[:, :n_splines], 0)
     assert_array_equal(X_trans[:, 2 * n_splines :], 0)
-    # The spline in the middle should not be zero.
+    # The spline from the middle column should contain non-zero values.
     assert np.all(np.sum(X_trans[:, n_splines : 2 * n_splines], axis=0) > 0)
 
 
@@ -609,10 +609,20 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
     )
     spline.fit(X)
 
-    all_missing_column_encoded = spline.transform(X_nan_full_column)
-    nan_mask = _get_mask(X_nan_full_column, np.nan)
-    encoded_nan_mask = np.repeat(nan_mask, spline.bsplines_[0].c.shape[1], axis=1)
-    assert (all_missing_column_encoded[encoded_nan_mask] == 0).all()
+    X_trans = spline.transform(X_nan_full_column)
+    if sparse_output:
+        X_trans = X_trans.toarray()
+
+    # first row must be all zeros
+    assert_array_equal(X_trans[0], 0)
+
+    # second row must be zero for first and last feature
+    # n_splines = n_knots + (1 - periodic) * degree - 1
+    n_splines = 3 + (1 - (extrapolation == "periodic")) * 2 - 1
+    assert_array_equal(X_trans[1, :n_splines], 0)
+    assert_array_equal(X_trans[1, -n_splines:], 0)
+    # some spline basis of the second feature not equal to zero
+    assert (X_trans[1, n_splines:-n_splines] > 0).sum() >= 1
 
 
 @pytest.mark.parametrize(
