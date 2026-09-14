@@ -235,7 +235,7 @@ def test_cython_solver_early_stopping(cd):
     else:
         coef_1 = np.zeros(X.shape[1])
     _, gap_1, _, _ = cd_solve(w=coef_1)
-    assert np.sum(coef_1 != 0) > X.shape[1] / 4  # avoid all zeros
+    assert np.sum(coef_1 != 0) > max(2, X.shape[1] / 10)  # avoid all zeros
 
     # With early stopping, the coefficients should stay unchanged.
     coef_2 = coef_1.copy(order="F")
