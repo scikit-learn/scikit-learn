@@ -31,7 +31,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._param_validation import Interval, RealNotInt, validate_params
 from sklearn.utils.extmath import _approximate_mode
-from sklearn.utils.metadata_routing import _MetadataRequester
+from sklearn.utils.metadata_routing import MetadataRequester
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import _num_samples, check_array, column_or_1d
 
@@ -90,7 +90,7 @@ class _UnsupportedGroupCVMixin:
         return super().split(X, y, groups=groups)
 
 
-class GroupsConsumerMixin(_MetadataRequester):
+class GroupsConsumerMixin(MetadataRequester):
     """A Mixin to ``groups`` by default.
 
     This Mixin makes the object to request ``groups`` by default as ``True``.
@@ -101,7 +101,7 @@ class GroupsConsumerMixin(_MetadataRequester):
     __metadata_request__split = {"groups": True}
 
 
-class BaseCrossValidator(_MetadataRequester, metaclass=ABCMeta):
+class BaseCrossValidator(MetadataRequester, metaclass=ABCMeta):
     """Base class for all cross-validators.
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
@@ -1575,7 +1575,7 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
         return super().split(X, y, groups)
 
 
-class _RepeatedSplits(_MetadataRequester, metaclass=ABCMeta):
+class _RepeatedSplits(MetadataRequester, metaclass=ABCMeta):
     """Repeated splits for an arbitrary randomized CV splitter.
 
     Repeats splits for cross-validators n times with different randomization
@@ -1859,7 +1859,7 @@ class RepeatedStratifiedKFold(_UnsupportedGroupCVMixin, _RepeatedSplits):
         return super().split(X, y, groups=groups)
 
 
-class BaseShuffleSplit(_MetadataRequester, metaclass=ABCMeta):
+class BaseShuffleSplit(MetadataRequester, metaclass=ABCMeta):
     """Base class for *ShuffleSplit.
 
     Parameters
