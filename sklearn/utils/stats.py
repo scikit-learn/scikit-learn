@@ -213,7 +213,7 @@ def _weighted_percentile(
             ]
             # Handle case when next index ('plus one') has sample weight of 0
             zero_weight_cols = col_indices[
-                sample_weight[percentile_plus_one_in_sorted, col_indices] == 0
+                sorted_weights[percentile_plus_one_indices, col_indices] == 0
             ]
             for col_idx in zero_weight_cols:
                 cdf_val = weight_cdf[col_idx, percentile_indices[col_idx]]
