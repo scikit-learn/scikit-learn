@@ -8,6 +8,7 @@ from warnings import warn
 
 import numpy as np
 from scipy.sparse import issparse
+from scipy.special import digamma
 
 from sklearn.base import OutlierMixin, _fit_context
 from sklearn.ensemble._bagging import BaseBagging
@@ -649,6 +650,17 @@ def _average_path_length(n_samples_leaf):
     The average path length in an n_samples iTree, which is equal to
     the average path length of an unsuccessful BST search since the
     latter has the same structure as an isolation tree.
+
+    This uses the exact expected path length
+
+        c(n) = 2 H(n - 1) - 2 (n - 1) / n = 2 (psi(n + 1) + gamma - 1),
+
+    where H is the harmonic number, psi the digamma function and gamma the
+    Euler-Mascheroni constant. The original Isolation Forest paper approximates
+    H(n - 1) by ``log(n - 1) + gamma``, which is inaccurate for small n (about
+    30% too low at n = 3) and biases the anomaly scores. The closed form above
+    is exact to machine precision.
+
     Parameters
     ----------
     n_samples_leaf : array-like of shape (n_samples,)
@@ -666,15 +678,10 @@ def _average_path_length(n_samples_leaf):
     n_samples_leaf = n_samples_leaf.reshape((1, -1))
     average_path_length = np.zeros(n_samples_leaf.shape)
 
-    mask_1 = n_samples_leaf <= 1
-    mask_2 = n_samples_leaf == 2
-    not_mask = ~np.logical_or(mask_1, mask_2)
-
-    average_path_length[mask_1] = 0.0
-    average_path_length[mask_2] = 1.0
-    average_path_length[not_mask] = (
-        2.0 * (np.log(n_samples_leaf[not_mask] - 1.0) + np.euler_gamma)
-        - 2.0 * (n_samples_leaf[not_mask] - 1.0) / n_samples_leaf[not_mask]
+    mask = n_samples_leaf > 1
+    average_path_length[mask] = 2.0 * (
+        digamma(n_samples_leaf[mask] + 1.0) + np.euler_gamma - 1.0
     )
+    # n_samples_leaf <= 1 keeps the initialised value of 0.
 
     return average_path_length.reshape(n_samples_leaf_shape)
