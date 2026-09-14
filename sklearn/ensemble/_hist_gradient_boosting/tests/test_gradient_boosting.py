@@ -1806,10 +1806,15 @@ def test_get_heuristic_optimal_n_threads_tiny_workload():
     assert _get_heuristic_n_threads(64, 1, 1) == 1
 
 
-def test_get_heuristic_optimal_n_threads_monotonic_in_n_features():
+def test_get_heuristic_optimal_n_threads_monotonic_in_n_features(monkeypatch):
     # More features to parallelize over should never make the heuristic
     # recommend fewer threads, and it should saturate at max_n_threads once
     # there is at least one feature per thread.
+    # Force the active-wait branch of the heuristic: without it, OpenMP
+    # runtimes using a passive wait policy (e.g. macOS's libomp) make the
+    # heuristic cap the number of threads well below max_n_threads for this
+    # workload size, which would break the saturation assertion below.
+    monkeypatch.setattr(hgb_module, "_openmp_uses_active_wait", lambda: True)
     max_n_threads = 8
     n_threads_by_n_features = [
         _get_heuristic_n_threads(max_n_threads, n_samples=10**5, n_features=n_features)
