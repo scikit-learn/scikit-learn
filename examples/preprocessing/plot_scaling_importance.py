@@ -84,7 +84,7 @@ def fit_and_plot_model(X_plot, y, clf, ax):
         alpha=0.5,
         ax=ax,
     )
-    cmap = ListedColormap(disp.multiclass_colors_)
+    cmap = ListedColormap(disp.target_colors_)
     disp.ax_.scatter(
         X_plot["proline"], X_plot["hue"], c=y, cmap=cmap, s=20, edgecolor="k"
     )

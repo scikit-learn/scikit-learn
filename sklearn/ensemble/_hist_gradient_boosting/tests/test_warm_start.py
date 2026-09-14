@@ -27,10 +27,10 @@ def _assert_predictor_equal(gb_1, gb_2, X):
 
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
+    ),
 )
 def test_max_iter_with_warm_start_validation(GradientBoosting, X, y):
     # Check that a ValueError is raised when the maximum number of iterations
@@ -49,10 +49,10 @@ def test_max_iter_with_warm_start_validation(GradientBoosting, X, y):
 
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
+    ),
 )
 def test_warm_start_yields_identical_results(GradientBoosting, X, y):
     # Make sure that fitting 50 iterations and then 25 with warm start is
@@ -75,10 +75,10 @@ def test_warm_start_yields_identical_results(GradientBoosting, X, y):
 
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
+    ),
 )
 def test_warm_start_max_depth(GradientBoosting, X, y):
     # Test if possible to fit trees of different depth in ensemble.
@@ -103,10 +103,10 @@ def test_warm_start_max_depth(GradientBoosting, X, y):
 
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
+    ),
 )
 @pytest.mark.parametrize("scoring", (None, "loss"))
 def test_warm_start_early_stopping(GradientBoosting, X, y, scoring):
@@ -132,10 +132,10 @@ def test_warm_start_early_stopping(GradientBoosting, X, y, scoring):
 
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
+    ),
 )
 def test_warm_start_equal_n_estimators(GradientBoosting, X, y):
     # Test if warm start with equal n_estimators does nothing
@@ -152,10 +152,10 @@ def test_warm_start_equal_n_estimators(GradientBoosting, X, y):
 
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
+    ),
 )
 def test_warm_start_clear(GradientBoosting, X, y):
     # Test if fit clears state.
@@ -178,10 +178,10 @@ def test_warm_start_clear(GradientBoosting, X, y):
 
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
+    ),
 )
 @pytest.mark.parametrize("rng_type", ("none", "int", "instance"))
 def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):

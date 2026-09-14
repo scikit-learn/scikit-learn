@@ -48,9 +48,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
@@ -447,7 +445,7 @@ def test_temperature_scaling(n_classes, ensemble):
         random_state=42,
     )
     X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
-    clf = LogisticRegression(C=np.inf, tol=1e-8, max_iter=200, random_state=0)
+    clf = LogisticRegression(C=np.inf, tol=1e-8, max_iter=200)
     clf.fit(X_train, y_train)
     # Train the calibrator on the calibrating set
     cal_clf = CalibratedClassifierCV(
@@ -542,6 +540,48 @@ def test_calibration_curve():
     # Check that error is raised when invalid strategy is selected
     with pytest.raises(ValueError):
         calibration_curve(y_true2, y_pred2, strategy="percentile")
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred, strategy, expected_n_bins",
+    [
+        # Standard case: 8 samples -> n_bins = ceil(8**(1/3)) = 2
+        ([0] * 4 + [1] * 4, [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9], "uniform", 2),
+        ([0] * 4 + [1] * 4, [0.1, 0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9], "quantile", 2),
+        # Check ceil boundary: 2 samples -> n_bins = ceil(2**(1/3)) = ceil(1.26) = 2
+        ([0, 1], [0.1, 0.9], "uniform", 2),
+        ([0, 1], [0.1, 0.9], "quantile", 2),
+        # Fewer unique values: 8 samples -> n_bins=2 calculated, but only 1 unique
+        # value in y_pred, so we expect the result to have only 1 bin.
+        ([0] * 4 + [1] * 4, [0.5] * 8, "uniform", 1),
+        ([0] * 4 + [1] * 4, [0.5] * 8, "quantile", 1),
+    ],
+)
+def test_calibration_curve_cube_root_bins(y_true, y_pred, strategy, expected_n_bins):
+    """Check calibration_curve with n_bins='cube_root'."""
+    prob_true, prob_pred = calibration_curve(
+        y_true, y_pred, n_bins="cube_root", strategy=strategy
+    )
+    assert len(prob_true) == expected_n_bins
+    assert len(prob_pred) == expected_n_bins
+
+
+def test_calibration_display_cube_root_bins(pyplot, iris_data_binary):
+    """Check CalibrationDisplay with n_bins='cube_root'."""
+    X, y = iris_data_binary
+    lr = LogisticRegression().fit(X, y)
+
+    # Smoke test for from_estimator
+    viz = CalibrationDisplay.from_estimator(lr, X, y, n_bins="cube_root")
+    n_samples = X.shape[0]
+    expected_n_bins = int(np.ceil(n_samples ** (1 / 3)))
+    # Note: prob_true might be smaller than expected_n_bins if some bins are empty
+    assert len(viz.prob_true) <= expected_n_bins
+
+    # Smoke test for from_predictions
+    y_prob = lr.predict_proba(X)[:, 1]
+    viz = CalibrationDisplay.from_predictions(y, y_prob, n_bins="cube_root")
+    assert len(viz.prob_true) <= expected_n_bins
 
 
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
@@ -1097,7 +1137,7 @@ def test_calibrated_classifier_cv_works_with_large_confidence_scores(
     Non-regression test for issue #26766.
     """
     prob = 0.67
-    n = 1000
+    n = 200
     random_noise = np.random.default_rng(global_random_seed).normal(size=n)
 
     y = np.array([1] * int(n * prob) + [0] * (n - int(n * prob)))
@@ -1260,14 +1300,16 @@ def test_temperature_scaling_array_api_compliance(
     else:
         sample_weight = None
 
-    clf_np = LinearDiscriminantAnalysis()
-    clf_np.fit(X_train, y_train)
-    cal_clf_np = CalibratedClassifierCV(
-        FrozenEstimator(clf_np), cv=3, method="temperature", ensemble=ensemble
-    ).fit(X_cal, y_cal, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=False):
+        clf_np = LinearDiscriminantAnalysis()
+        clf_np.fit(X_train, y_train)
+        cal_clf_np = CalibratedClassifierCV(
+            FrozenEstimator(clf_np), cv=3, method="temperature", ensemble=ensemble
+        ).fit(X_cal, y_cal, sample_weight=sample_weight)
 
-    calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
-    pred_np = cal_clf_np.predict(X_train)
+        calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
+        pred_np = cal_clf_np.predict(X_train)
+
     with config_context(array_api_dispatch=True):
         clf_xp = LinearDiscriminantAnalysis()
         clf_xp.fit(X_train_xp, y_train_xp)
@@ -1279,7 +1321,7 @@ def test_temperature_scaling_array_api_compliance(
         rtol = 1e-3 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert calibrator_xp.beta_.dtype == X_cal_xp.dtype
-        assert array_api_device(calibrator_xp.beta_) == array_api_device(X_cal_xp)
+        assert array_device(calibrator_xp.beta_) == array_device(X_cal_xp)
         assert_allclose(
             move_to(calibrator_xp.beta_, xp=np, device="cpu"),
             calibrator_np.beta_,
@@ -1329,15 +1371,17 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
     else:
         sample_weight = None
 
-    cal_clf_np = CalibratedClassifierCV(
-        estimator=LinearDiscriminantAnalysis(),
-        cv=3,
-        method="temperature",
-        ensemble=ensemble,
-    ).fit(X, y_str, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=False):
+        cal_clf_np = CalibratedClassifierCV(
+            estimator=LinearDiscriminantAnalysis(),
+            cv=3,
+            method="temperature",
+            ensemble=ensemble,
+        ).fit(X, y_str, sample_weight=sample_weight)
 
-    calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
-    pred_np = cal_clf_np.predict(X)
+        calibrator_np = cal_clf_np.calibrated_classifiers_[0].calibrators[0]
+        pred_np = cal_clf_np.predict(X)
+
     with config_context(array_api_dispatch=True):
         cal_clf_xp = CalibratedClassifierCV(
             estimator=LinearDiscriminantAnalysis(),
@@ -1350,7 +1394,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         rtol = 1e-3 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert calibrator_xp.beta_.dtype == X_xp.dtype
-        assert array_api_device(calibrator_xp.beta_) == array_api_device(X_xp)
+        assert array_device(calibrator_xp.beta_) == array_device(X_xp)
         assert_allclose(
             move_to(calibrator_xp.beta_, xp=np, device="cpu"),
             calibrator_np.beta_,

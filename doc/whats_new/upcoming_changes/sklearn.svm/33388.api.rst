@@ -1,4 +1,0 @@
-- The `probA_` and `probB_` attributes of :class:`sklearn.svm.SVC` and
-  :class:`sklearn.svm.NuSVC` are deprecated due to deprecation of the
-  `probability` parameter and will be removed in 1.11.
-  By :user:`Shruti Nath <snath-xoc>`.

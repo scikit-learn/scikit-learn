@@ -54,8 +54,6 @@ clean:
 	@echo "Removed generated/"
 	-rm -rf modules/generated/
 	@echo "Removed modules/generated/"
-	-rm -rf css/styles/
-	@echo "Removed css/styles/"
 	-rm -rf api/*.rst
 	@echo "Removed api/*.rst"
 

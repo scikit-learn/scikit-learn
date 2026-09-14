@@ -43,7 +43,7 @@ as being an organization member on the scikit-learn `GitHub organization
 <https://github.com/orgs/scikit-learn/people>`_.
 
 They are also welcome to join our `monthly core contributor meetings
-<https://github.com/scikit-learn/administrative/tree/master/meeting_notes>`_.
+<https://blog.scikit-learn.org/calendar>`_.
 
 New members can be nominated by any existing member. Once they have been
 nominated, there will be a vote by the current core contributors. Voting on new

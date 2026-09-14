@@ -240,7 +240,7 @@ def test_ard_accuracy_on_easy_problem(global_random_seed, n_samples, n_features)
     assert abs_coef_error < 1e-10
 
 
-@pytest.mark.parametrize("constructor_name", ["array", "dataframe"])
+@pytest.mark.parametrize("constructor_name", ["array", "pandas"])
 def test_return_std(constructor_name, global_random_seed):
     # Test return_std option for both Bayesian regressors
     rng = np.random.RandomState(global_random_seed)

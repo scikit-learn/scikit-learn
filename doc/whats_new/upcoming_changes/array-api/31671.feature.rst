@@ -1,3 +1,0 @@
-- :func:`sklearn.metrics.d2_absolute_error_score` and
-  :func:`sklearn.metrics.d2_pinball_score` now support array API compatible inputs.
-  By :user:`Virgil Chan <virchan>`.

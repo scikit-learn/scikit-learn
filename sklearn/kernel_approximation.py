@@ -63,7 +63,7 @@ class PolynomialCountSketch(
         Degree of the polynomial kernel whose feature map
         will be approximated.
 
-    coef0 : int, default=0
+    coef0 : float, default=0.0
         Constant term of the polynomial kernel whose feature map
         will be approximated.
 
@@ -136,7 +136,7 @@ class PolynomialCountSketch(
     }
 
     def __init__(
-        self, *, gamma=1.0, degree=2, coef0=0, n_components=100, random_state=None
+        self, *, gamma=1.0, degree=2, coef0=0.0, n_components=100, random_state=None
     ):
         self.gamma = gamma
         self.degree = degree

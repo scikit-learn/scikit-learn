@@ -44,7 +44,7 @@ ax = plt.gca()
 DecisionBoundaryDisplay.from_estimator(
     clf,
     X,
-    multiclass_colors="Paired",
+    target_colors="Paired",
     ax=ax,
     response_method="predict",
     plot_method="pcolormesh",

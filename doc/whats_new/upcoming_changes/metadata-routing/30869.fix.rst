@@ -1,0 +1,8 @@
+- Metadata is now correctly routed to the sub-estimator of meta-estimators such as
+  :class:`feature_selection.SelectFromModel`, :class:`feature_selection.RFE`,
+  :class:`feature_selection.RFECV`, :class:`feature_selection.SequentialFeatureSelector`,
+  and :class:`impute.IterativeImputer` when they are used as an intermediate step of a
+  :class:`pipeline.Pipeline`, i.e. when their composite ``fit_transform`` method is the
+  target of the routing. Previously, metadata such as ``sample_weight`` was silently
+  dropped in this case.
+  By :user:`Adrin Jalali <adrinjalali>` and :user:`Kyle Schluns <kschluns>`.

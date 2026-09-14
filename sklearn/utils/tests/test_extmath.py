@@ -15,12 +15,10 @@ from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -713,7 +711,10 @@ def test_incremental_weighted_mean_and_variance_array_api(
     mult = 10
     X = rng.rand(1000, 20).astype(dtype_name) * mult
     sample_weight = rng.rand(X.shape[0]).astype(dtype_name) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=False):
+        mean, var, _ = _incremental_mean_and_var(
+            X, 0, 0, 0, sample_weight=sample_weight
+        )
 
     X_xp = xp.asarray(X, device=device)
     sample_weight_xp = xp.asarray(sample_weight, device=device)
@@ -1148,4 +1149,21 @@ def test_randomized_range_finder_array_api_compliance(
         Q_xp = randomized_range_finder(X_xp, size=size, n_iter=n_iter, random_state=0)
 
         assert get_namespace(Q_xp)[0].__name__ == xp.__name__
+        assert_allclose(move_to(Q_xp, xp=np, device="cpu"), Q_np, atol=atol)
+
+    max_dtype = _max_precision_float_dtype(xp, device=device)
+    # Also test with integer input only once per namespace/device for
+    # namespaces that support integer-by-floating matmul.
+    if X_xp.dtype != max_dtype or array_namespace in {"array_api_strict", "torch"}:
+        return
+
+    X_int = (X * 10).astype(np.int64)
+    atol *= 10
+    X_xp = xp.asarray(X_int, device=device)
+    with config_context(array_api_dispatch=True):
+        Q_np = randomized_range_finder(X_int, size=size, n_iter=n_iter, random_state=0)
+        Q_xp = randomized_range_finder(X_xp, size=size, n_iter=n_iter, random_state=0)
+
+        assert get_namespace(Q_xp)[0].__name__ == xp.__name__
+        assert Q_xp.dtype == max_dtype
         assert_allclose(move_to(Q_xp, xp=np, device="cpu"), Q_np, atol=atol)

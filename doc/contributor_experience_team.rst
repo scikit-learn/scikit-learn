@@ -6,8 +6,8 @@
       img.avatar {border-radius: 10px;}
     </style>
     <div>
-    <a href='https://github.com/virchan'><img src='https://avatars.githubusercontent.com/u/25701849?v=4' class='avatar' /></a> <br />
-    <p>Virgil Chan</p>
+    <a href='https://github.com/AnneBeyer'><img src='https://avatars.githubusercontent.com/u/12881170?v=4' class='avatar' /></a> <br />
+    <p>Anne Beyer</p>
     </div>
     <div>
     <a href='https://github.com/alfaro96'><img src='https://avatars.githubusercontent.com/u/32649176?v=4' class='avatar' /></a> <br />

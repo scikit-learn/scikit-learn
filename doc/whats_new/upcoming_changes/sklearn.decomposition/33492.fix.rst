@@ -1,3 +1,0 @@
-- Fixed a typo (from `"OR"` to `"QR"`) in the list of allowed values for
-  `power_iteration_normalizer` in :class:`decomposition.TruncatedSVD`.
-  By :user:`Olivier Grisel <ogrisel>`.

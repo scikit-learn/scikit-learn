@@ -84,8 +84,7 @@ for ax, (clf, y_train, title) in zip(axes, classifiers):
         ax=ax,
     )
     colors = [
-        (1, 1, 1, 1) if label == -1 else disp.multiclass_colors_[label]
-        for label in y_train
+        (1, 1, 1, 1) if label == -1 else disp.target_colors_[label] for label in y_train
     ]
     ax.scatter(X[:, 0], X[:, 1], c=colors, edgecolor="black")
     ax.set_title(title)
@@ -96,7 +95,7 @@ handles = [
     mpatches.Patch(
         facecolor=color, edgecolor="black", label=iris.target_names[class_idx]
     )
-    for class_idx, color in enumerate(disp.multiclass_colors_)
+    for class_idx, color in enumerate(disp.target_colors_)
 ]
 handles.append(mpatches.Patch(facecolor="white", edgecolor="black", label="Unlabeled"))
 fig.legend(

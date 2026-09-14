@@ -24,6 +24,7 @@ utils_cython_tree = [
   # early in the build
   sklearn_root_cython_tree,
   fs.copyfile('__init__.py'),
+  fs.copyfile('_bitset.pxd'),
   fs.copyfile('_cython_blas.pxd'),
   fs.copyfile('_heap.pxd'),
   fs.copyfile('_openmp_helpers.pxd'),
@@ -38,6 +39,7 @@ utils_extension_metadata = {
     {'sources': [cython_gen.process('sparsefuncs_fast.pyx')]},
   '_cython_blas': {'sources': [cython_gen.process('_cython_blas.pyx'), _blas_int_pxi]},
   'arrayfuncs': {'sources': [cython_gen.process('arrayfuncs.pyx')]},
+  '_bitset': {'sources': [cython_gen.process('_bitset.pyx')]},
   'murmurhash': {
       'sources': [cython_gen.process('murmurhash.pyx'), 'src' / 'MurmurHash3.cpp'],
   },
@@ -46,7 +48,6 @@ utils_extension_metadata = {
   '_openmp_helpers': {'sources': [cython_gen.process('_openmp_helpers.pyx')], 'dependencies': [openmp_dep]},
   '_random': {'sources': [cython_gen.process('_random.pyx')]},
   '_typedefs': {'sources': [cython_gen.process('_typedefs.pyx')]},
-  '_heap': {'sources': [cython_gen.process('_heap.pyx')]},
   '_sorting': {'sources': [cython_gen.process('_sorting.pyx')]},
   '_vector_sentinel':
     {'sources': [cython_gen_cpp.process('_vector_sentinel.pyx')],

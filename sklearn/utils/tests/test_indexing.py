@@ -11,9 +11,7 @@ import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import _safe_indexing, resample, shuffle
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
@@ -161,19 +159,20 @@ def test_safe_indexing_array_api_support(
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     array_to_index_np = np.arange(16).reshape(4, 4)
-    expected_result = _safe_indexing(array_to_index_np, indexing_key, axis=axis)
+    with sklearn.config_context(array_api_dispatch=False):
+        expected_result = _safe_indexing(array_to_index_np, indexing_key, axis=axis)
     array_to_index_xp = move_to(array_to_index_np, xp=xp, device=device)
 
     with sklearn.config_context(array_api_dispatch=True):
         indexed_array_xp = _safe_indexing(array_to_index_xp, indexing_key, axis=axis)
-        assert array_api_device(indexed_array_xp) == array_api_device(array_to_index_xp)
+        assert array_device(indexed_array_xp) == array_device(array_to_index_xp)
         assert indexed_array_xp.dtype == array_to_index_xp.dtype
 
     assert_allclose(move_to(indexed_array_xp, xp=np, device="cpu"), expected_result)
 
 
 @pytest.mark.parametrize(
-    "array_type", ["list", "array", "sparse", "dataframe", "polars", "pyarrow"]
+    "array_type", ["list", "array", "sparse", "pandas", "polars", "pyarrow"]
 )
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
@@ -203,7 +202,7 @@ def test_safe_indexing_1d_container(array_type, indices_type):
 
 
 @pytest.mark.parametrize(
-    "array_type", ["array", "sparse", "dataframe", "polars", "pyarrow"]
+    "array_type", ["array", "sparse", "pandas", "polars", "pyarrow"]
 )
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series", "slice"])
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
@@ -214,9 +213,9 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     if indices_type == "slice" and isinstance(indices[1], int):
         indices_converted[1] += 1
 
-    columns_name = ["col_0", "col_1", "col_2"]
+    column_names = ["col_0", "col_1", "col_2"]
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, column_names
     )
     indices_converted = _convert_container(indices_converted, indices_type)
 
@@ -236,7 +235,7 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
 @pytest.mark.parametrize("array_read_only", [True, False])
 @pytest.mark.parametrize("indices_read_only", [True, False])
 @pytest.mark.parametrize(
-    "array_type", ["array", "sparse", "dataframe", "polars", "pyarrow"]
+    "array_type", ["array", "sparse", "pandas", "polars", "pyarrow"]
 )
 @pytest.mark.parametrize("indices_type", ["array", "series"])
 @pytest.mark.parametrize(
@@ -270,7 +269,7 @@ def test_safe_indexing_1d_container_mask(array_type, indices_type):
 
 
 @pytest.mark.parametrize(
-    "array_type", ["array", "sparse", "dataframe", "polars", "pyarrow"]
+    "array_type", ["array", "sparse", "pandas", "polars", "pyarrow"]
 )
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
 @pytest.mark.parametrize(
@@ -278,9 +277,9 @@ def test_safe_indexing_1d_container_mask(array_type, indices_type):
     [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])],
 )
 def test_safe_indexing_2d_mask(array_type, indices_type, axis, expected_subset):
-    columns_name = ["col_0", "col_1", "col_2"]
+    column_names = ["col_0", "col_1", "col_2"]
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, column_names
     )
     indices = [False, True, True]
     indices = _convert_container(indices, indices_type)
@@ -297,7 +296,7 @@ def test_safe_indexing_2d_mask(array_type, indices_type, axis, expected_subset):
         ("list", "list"),
         ("array", "array"),
         ("sparse", "sparse"),
-        ("dataframe", "series"),
+        ("pandas", "series"),
         ("polars", "polars_series"),
         ("pyarrow", "pyarrow_array"),
     ],
@@ -325,16 +324,16 @@ def test_safe_indexing_1d_scalar(array_type):
     [
         ("array", "array"),
         ("sparse", "sparse"),
-        ("dataframe", "series"),
+        ("pandas", "series"),
         ("polars", "polars_series"),
         ("pyarrow", "pyarrow_array"),
     ],
 )
 @pytest.mark.parametrize("indices", [2, "col_2"])
 def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type, indices):
-    columns_name = ["col_0", "col_1", "col_2"]
+    column_names = ["col_0", "col_1", "col_2"]
     array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, column_names
     )
 
     if isinstance(indices, str) and array_type in ("array", "sparse"):
@@ -440,7 +439,7 @@ def test_safe_indexing_list_axis_1_unsupported(indices):
         _safe_indexing(X, indices, axis=1)
 
 
-@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+@pytest.mark.parametrize("array_type", ["array", "sparse", "pandas"])
 def test_safe_assign(array_type):
     """Check that `_safe_assign` works as expected."""
     rng = np.random.RandomState(0)
@@ -513,7 +512,7 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
 def test_get_column_indices_dataframes(constructor_name):
     """Check _get_column_indices for edge cases with 2d input X."""
     df = _convert_container(
-        [[1, 2, 3], [4, 5, 6]], constructor_name, columns_name=["a", "b", "c"]
+        [[1, 2, 3], [4, 5, 6]], constructor_name, column_names=["a", "b", "c"]
     )
 
     key_results = [

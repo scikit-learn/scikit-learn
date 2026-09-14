@@ -1,3 +1,0 @@
-- In :class:`inspection.DecisionBoundaryDisplay`, `multiclass_colors_` now always stores
-  the colors for multiclass problems as a numpy array.
-  By :user:`Anne Beyer <AnneBeyer>`.

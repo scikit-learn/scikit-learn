@@ -16,9 +16,7 @@ from sklearn.naive_bayes import (
     MultinomialNB,
 )
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
@@ -1018,34 +1016,36 @@ def test_gnb_array_api_compliance(
     else:
         sample_weight = None
 
-    clf_np = GaussianNB().fit(X_np, y_np, sample_weight=sample_weight)
-    y_pred_np = clf_np.predict(X_np)
-    y_pred_proba_np = clf_np.predict_proba(X_np)
-    y_pred_log_proba_np = clf_np.predict_log_proba(X_np)
+    with config_context(array_api_dispatch=False):
+        clf_np = GaussianNB().fit(X_np, y_np, sample_weight=sample_weight)
+        y_pred_np = clf_np.predict(X_np)
+        y_pred_proba_np = clf_np.predict_proba(X_np)
+        y_pred_log_proba_np = clf_np.predict_log_proba(X_np)
+
     with config_context(array_api_dispatch=True):
         clf_xp = GaussianNB().fit(X_xp, y_xp_or_np, sample_weight=sample_weight)
         for fitted_attr in ("class_count_", "class_prior_", "theta_", "var_"):
             xp_attr = getattr(clf_xp, fitted_attr)
             np_attr = getattr(clf_np, fitted_attr)
             assert xp_attr.dtype == X_xp.dtype
-            assert array_api_device(xp_attr) == array_api_device(X_xp)
+            assert array_device(xp_attr) == array_device(X_xp)
             assert_allclose(move_to(xp_attr, xp=np, device="cpu"), np_attr)
 
         y_pred_xp = clf_xp.predict(X_xp)
         if not use_str_y:
-            assert array_api_device(y_pred_xp) == array_api_device(X_xp)
+            assert array_device(y_pred_xp) == array_device(X_xp)
             y_pred_xp = move_to(y_pred_xp, xp=np, device="cpu")
         assert_array_equal(y_pred_xp, y_pred_np)
         assert y_pred_xp.dtype == y_pred_np.dtype
 
         y_pred_proba_xp = clf_xp.predict_proba(X_xp)
         assert y_pred_proba_xp.dtype == X_xp.dtype
-        assert array_api_device(y_pred_proba_xp) == array_api_device(X_xp)
+        assert array_device(y_pred_proba_xp) == array_device(X_xp)
         assert_allclose(move_to(y_pred_proba_xp, xp=np, device="cpu"), y_pred_proba_np)
 
         y_pred_log_proba_xp = clf_xp.predict_log_proba(X_xp)
         assert y_pred_log_proba_xp.dtype == X_xp.dtype
-        assert array_api_device(y_pred_log_proba_xp) == array_api_device(X_xp)
+        assert array_device(y_pred_log_proba_xp) == array_device(X_xp)
         assert_allclose(
             move_to(y_pred_log_proba_xp, xp=np, device="cpu"), y_pred_log_proba_np
         )

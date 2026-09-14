@@ -332,7 +332,7 @@ class __array_namespace_info__:
             return res
         raise ValueError(f"unsupported kind: {kind!r}")
 
-    def devices(self) -> list[Device]:
+    def devices(self) -> tuple[Device]:
         """
         The devices supported by NumPy.
 
@@ -357,7 +357,7 @@ class __array_namespace_info__:
         ['cpu']
 
         """
-        return ["cpu"]
+        return ("cpu",)
 
 
 __all__ = ["__array_namespace_info__"]

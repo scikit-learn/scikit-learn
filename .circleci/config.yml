@@ -9,9 +9,7 @@ jobs:
       - run:
           name: dependencies
           command: |
-            source build_tools/shared.sh
-            # Include pytest compatibility with mypy
-            pip install pytest $(get_dep ruff min) $(get_dep mypy min) cython-lint
+            pip install -r build_tools/github/lint_lock.txt
       - run:
           name: linting
           command: ./build_tools/linting.sh
@@ -31,8 +29,19 @@ jobs:
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
+      # Cache keys are matched by prefix. The second key makes a build that has
+      # no cache of its own, e.g. the first build of a branch, start from the
+      # datasets downloaded by the last build of main instead of from scratch.
+      # The third key uses the cache created by _any_ previous build. This is
+      # a useful fallback for PRs from contributors who don't have a cache
+      # for `main`.
+      # Caches are not shared across repositories. This means that the
+      # scikit-learn/scikit-learn cache is not used by PRs from <user>/scikit-learn.
       - restore_cache:
-          key: v1-doc-min-deps-datasets-{{ .Branch }}
+          keys:
+            - v1-doc-min-deps-datasets-{{ .Branch }}
+            - v1-doc-min-deps-datasets-main
+            - v1-doc-min-deps-datasets
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
@@ -69,8 +78,19 @@ jobs:
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
+      # Cache keys are matched by prefix. The second key makes a build that has
+      # no cache of its own, e.g. the first build of a branch, start from the
+      # datasets downloaded by the last build of main instead of from scratch.
+      # The third key uses the cache created by _any_ previous build. This is
+      # a useful fallback for PRs from contributors who don't have a cache
+      # for `main`.
+      # Caches are not shared across repositories. This means that the
+      # scikit-learn/scikit-learn cache is not used by PRs from <user>/scikit-learn.
       - restore_cache:
-          key: v1-doc-datasets-{{ .Branch }}
+          keys:
+            - v1-doc-datasets-{{ .Branch }}
+            - v1-doc-datasets-main
+            - v1-doc-datasets
       - restore_cache:
           keys:
             - doc-ccache-{{ .Branch }}

@@ -1,0 +1,5 @@
+- ``set_output(transform="polars")`` no longer emits a
+  ``DeprecationWarning`` with ``polars>=1.42.1`` by using
+  ``how="horizontal_extend"`` instead of the deprecated
+  ``how="horizontal"`` when concatenating polars dataframes.
+  By :user:`Felix Hoehle <fhoehle>`.

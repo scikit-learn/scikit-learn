@@ -1,0 +1,4 @@
+- :class:`pipeline.Pipeline`'s :meth:`~pipeline.Pipeline.fit_transform` and
+  :meth:`~pipeline.Pipeline.fit_predict` now correctly apply ``transform_input`` to
+  metadata routed to intermediate steps, matching :meth:`~pipeline.Pipeline.fit`.
+  By :user:`Stefanie Senger <StefanieSenger>`.

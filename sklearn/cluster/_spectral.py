@@ -70,7 +70,7 @@ def discretize(
     max_svd_restarts : int, default=30
         Maximum number of attempts to restart SVD if convergence fails
 
-    n_iter_max : int, default=30
+    n_iter_max : int, default=20
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
@@ -227,11 +227,12 @@ def spectral_clustering(
           - heat kernel of the pairwise distance matrix of the samples,
           - symmetric k-nearest neighbours connectivity matrix of the samples.
 
-    n_clusters : int, default=None
+    n_clusters : int, default=8
         Number of clusters to extract.
 
-    n_components : int, default=n_clusters
-        Number of eigenvectors to use for the spectral embedding.
+    n_components : int, default=None
+        Number of eigenvectors to use for the spectral embedding. If None,
+        defaults to `n_clusters`.
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition method. If None then ``'arpack'`` is used.

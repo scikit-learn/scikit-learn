@@ -1,0 +1,4 @@
+- :meth:`neighbors.NearestNeighbors.radius_neighbors` now correctly handles an
+  array-like ``radius`` when ``n_jobs > 1`` with the ``ball_tree`` and
+  ``kd_tree`` algorithms.
+  By :user:`Nicolas Salvy <nicolassalvy>`.

@@ -895,7 +895,7 @@ def test_create_memmap_backed_data(monkeypatch):
         # depending of the installed SciPy version
         *zip(["sparse_csr", "sparse_csr_array"], CSR_CONTAINERS),
         *zip(["sparse_csc", "sparse_csc_array"], CSC_CONTAINERS),
-        ("dataframe", lambda: pytest.importorskip("pandas").DataFrame),
+        ("pandas", lambda: pytest.importorskip("pandas").DataFrame),
         ("series", lambda: pytest.importorskip("pandas").Series),
         ("index", lambda: pytest.importorskip("pandas").Index),
         ("pyarrow", lambda: pytest.importorskip("pyarrow").Table),
@@ -923,7 +923,7 @@ def test_convert_container(
     """Check that we convert the container to the right type of array with the
     right data type."""
     if constructor_name in (
-        "dataframe",
+        "pandas",
         "index",
         "polars",
         "polars_series",
@@ -957,9 +957,7 @@ def test_convert_container(
 
 def test_convert_container_categories_pandas():
     pytest.importorskip("pandas")
-    df = _convert_container(
-        [["x"]], "dataframe", ["A"], categorical_feature_names=["A"]
-    )
+    df = _convert_container([["x"]], "pandas", ["A"], categorical_feature_names=["A"])
     assert df.dtypes.iloc[0] == "category"
 
 

@@ -34,6 +34,10 @@ class EighResult(NamedTuple):
     eigenvalues: Array
     eigenvectors: Array
 
+class EigResult(NamedTuple):
+    eigenvalues: Array
+    eigenvectors: Array
+
 class QRResult(NamedTuple):
     Q: Array
     R: Array

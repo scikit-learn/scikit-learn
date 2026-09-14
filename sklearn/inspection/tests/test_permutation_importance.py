@@ -369,7 +369,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     )
 
 
-@pytest.mark.parametrize("input_type", ["array", "dataframe"])
+@pytest.mark.parametrize("input_type", ["array", "pandas"])
 def test_permutation_importance_large_memmaped_data(input_type):
     # Smoke, non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15810
@@ -545,6 +545,6 @@ def test_permutation_importance_array_function_not_called():
     """Check that `__array_function__` (NEP18) is not called."""
     X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
     y = _NotAnArray([1, 1, 1, 2, 2, 2, 1, 1])
-    estimator = LogisticRegression(random_state=0)
+    estimator = LogisticRegression()
     estimator.fit(X, y)
     permutation_importance(estimator, X, y, n_repeats=2, random_state=0)
