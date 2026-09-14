@@ -781,6 +781,47 @@ def test_stratified_group_kfold_against_group_kfold(cls_distr, n_groups):
     assert sgkf_entr <= gkf_entr
 
 
+@pytest.mark.parametrize(
+    "n_splits, y, groups",
+    [
+        (
+            4,
+            [0, 1, 1, 2, 2, 2, 1, 1, 0, 2, 0, 2, 0, 2, 1, 0, 1, 0],
+            [0, 3, 3, 3, 3, 3, 0, 1, 3, 1, 2, 1, 0, 0, 3, 3, 0, 2],
+        ),
+        (
+            4,
+            [0, 3, 3, 2, 2, 0, 2, 0, 1, 1, 1, 3, 3, 0, 1, 2, 3, 0, 0, 2, 2, 3],
+            [3, 3, 0, 3, 1, 0, 0, 3, 3, 0, 3, 3, 3, 0, 0, 3, 2, 1, 3, 3, 1, 2],
+        ),
+        (
+            6,
+            [0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1],
+            [5, 1, 2, 0, 3, 5, 1, 2, 4, 4, 4, 1, 5, 1, 5, 1, 5, 5, 1, 0, 2, 4, 0, 0],
+        ),
+        (
+            4,
+            [1, 0, 0, 1, 0, 0, 2, 2, 0, 1, 1, 1, 0, 2, 2, 2, 2, 0, 1, 0],
+            [0, 3, 1, 1, 1, 0, 3, 1, 1, 2, 0, 1, 3, 1, 3, 3, 3, 1, 1, 0],
+        ),
+        (
+            5,
+            [1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1],
+            [4, 2, 2, 3, 0, 1, 2, 0, 3, 4, 0, 2, 3],
+        ),
+    ],
+)
+def test_stratified_group_kfold_no_empty_fold(n_splits, y, groups):
+    # Non-regression test for gh-34828: fold evaluations that are mathematically
+    # tied can still differ by a few ULP. A strict `<` comparison let that noise
+    # pick the fold and bypass the least-populated-fold tiebreak, which could
+    # leave a fold empty when there was no slack (`n_groups == n_splits`).
+    X = np.ones((len(y), 1))
+    sgkf = StratifiedGroupKFold(n_splits=n_splits)
+    test_sizes = [len(test) for _, test in sgkf.split(X, y, groups=groups)]
+    assert min(test_sizes) > 0
+
+
 def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
