@@ -54,11 +54,13 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     for _ in range(max_iter):
         X_new, _, _ = _scale_normalize(X_scaled)
         if issparse(X):
-            dist = norm(X_scaled.data - X.data)
+            # X_new has the same sparsity pattern as X_scaled, so the
+            # difference of the data arrays is the change in this iteration
+            dist = norm(X_scaled.data - X_new.data)
         else:
             dist = norm(X_scaled - X_new)
         X_scaled = X_new
-        if dist is not None and dist < tol:
+        if dist < tol:
             break
     return X_scaled
 
