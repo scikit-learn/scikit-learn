@@ -238,13 +238,7 @@ def test_grid_from_X():
 
 
 def test_grid_from_X_with_nan():
-    """Non-regression test for a `np.nan` value making the whole grid `np.nan`.
-
-    Non-regression test for gh-34928's review discussion: `np.quantile` (unlike
-    the previously used `scipy.stats.mstats.mquantiles`) propagates `np.nan`,
-    which used to make the grid entirely made of `np.nan` for a column
-    containing a single missing value.
-    """
+    """Check that _grid_from_X ignores NaNs."""
     percentiles = (0.05, 0.95)
     grid_resolution = 10
     is_categorical = [False]
@@ -259,12 +253,7 @@ def test_grid_from_X_with_nan():
 
 
 def test_grid_from_X_with_boolean_feature():
-    """Non-regression test for boolean columns raising a `TypeError`.
-
-    Non-regression test for gh-34928's review discussion: `np.quantile` cannot
-    interpolate between boolean values (unlike the previously used
-    `scipy.stats.mstats.mquantiles`), which used to raise a `TypeError`.
-    """
+    """Check that _grid_from_X handles booleans."""
     percentiles = (0.05, 0.95)
     grid_resolution = 2
     is_categorical = [False]
@@ -272,8 +261,8 @@ def test_grid_from_X_with_boolean_feature():
 
     grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution, {})
 
-    assert_array_equal(axes[0], [0.0, 1.0])
-    assert_array_equal(grid.ravel(), [0.0, 1.0])
+    assert_allclose(axes[0], [0.0, 1.0])
+    assert_allclose(grid.ravel(), [0.0, 1.0])
 
 
 @pytest.mark.parametrize(

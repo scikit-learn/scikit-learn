@@ -526,15 +526,14 @@ def test_weighted_percentile_like_numpy_nanquantile(
 
 
 def test_nanquantile():
+    """Sanity check for _nanquantile."""
     X = np.array([[0.0], [1.0], [2.0], [3.0], [4.0]])
     quantiles = _nanquantile(X, 0, (0.0, 0.5, 1.0))
     assert_allclose(quantiles, [0.0, 2.0, 4.0])
 
 
 def test_nanquantile_ignores_nan():
-    """Non-regression test for gh-34928: a single `np.nan` used to make every
-    computed quantile `np.nan` when using `np.quantile` naively.
-    """
+    """Check that _nanquantile ignores NaNs."""
     X = np.array([[np.nan], [1.0], [2.0], [3.0], [4.0]])
     quantiles = _nanquantile(X, 0, (0.0, 0.5, 1.0))
     assert not np.isnan(quantiles).any()
@@ -542,9 +541,7 @@ def test_nanquantile_ignores_nan():
 
 
 def test_nanquantile_boolean_column():
-    """Non-regression test for gh-34928: `np.nanquantile` raises a `TypeError`
-    on boolean arrays.
-    """
+    """Check that _nanquantile handles booleans."""
     X = np.array([[True], [False], [True], [False]])
     quantiles = _nanquantile(X, 0, (0.0, 1.0))
     assert_allclose(quantiles, [0.0, 1.0])
