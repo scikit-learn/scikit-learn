@@ -1,6 +1,5 @@
 """
 Kernel Density Estimation
--------------------------
 """
 
 # Authors: The scikit-learn developers
@@ -10,6 +9,7 @@ import itertools
 from numbers import Integral, Real
 
 import numpy as np
+from scipy.linalg import cholesky, solve_triangular
 from scipy.special import gammainc
 
 from sklearn.base import BaseEstimator, _fit_context
@@ -130,7 +130,7 @@ class KernelDensity(BaseEstimator):
     >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(X)
     >>> log_density = kde.score_samples(X[:3])
     >>> log_density
-    array([-1.52955942, -1.51462041, -1.60244657])
+    array([-0.36399292,  0.03333733, -0.28804462])
     """
 
     _parameter_constraints: dict = {
@@ -220,11 +220,20 @@ class KernelDensity(BaseEstimator):
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=np.float64, ensure_non_negative=True
+            )
+            normalized_sample_weight = sample_weight / sample_weight.sum()
+            n_effective_samples = 1 / np.sum(normalized_sample_weight**2)
+        else:
+            n_effective_samples = X.shape[0]
+
         if isinstance(self.bandwidth, str):
             if self.bandwidth == "scott":
-                self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
+                self.bandwidth_ = n_effective_samples ** (-1 / (X.shape[1] + 4))
             elif self.bandwidth == "silverman":
-                self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
+                self.bandwidth_ = (n_effective_samples * (X.shape[1] + 2) / 4) ** (
                     -1 / (X.shape[1] + 4)
                 )
         else:
@@ -232,16 +241,25 @@ class KernelDensity(BaseEstimator):
 
         X = validate_data(self, X, order="C", dtype=np.float64)
 
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=np.float64, ensure_non_negative=True
-            )
+        # The formula is:
+        #   1 / (N * sum(w_i) * |H|) * sum_i [ w_i * K(H^{-1} (x - x_i)) ],
+        # where H = bandwidth * covariance^{1/2}. Here `self._cho_cov` is just the
+        # square root of the covariance matrix
+        if X.shape[0] == 1:
+            self._cov = np.eye(X.shape[1])
+            self._cho_cov = np.eye(X.shape[1])
+        else:
+            self._cov = np.atleast_2d(np.cov(X.T, aweights=sample_weight))
+            self._cho_cov = cholesky(self._cov, lower=True)
 
         kwargs = self.metric_params
         if kwargs is None:
             kwargs = {}
+
+        # Data need to be scaled before passing to the tree (bandwidth is taken care
+        # of by the tree so we only scale by covariance^{-1/2} here)
         self.tree_ = TREE_DICT[algorithm](
-            X,
+            solve_triangular(self._cho_cov, X.T, lower=True).T,
             metric=self.metric,
             leaf_size=self.leaf_size,
             sample_weight=sample_weight,
@@ -275,8 +293,10 @@ class KernelDensity(BaseEstimator):
         else:
             N = self.tree_.sum_weight
         atol_N = self.atol * N
+
+        # Points need to be scaled in the same way as tree data
         log_density = self.tree_.kernel_density(
-            X,
+            solve_triangular(self._cho_cov, X.T, lower=True).T,
             h=self.bandwidth_,
             kernel=self.kernel,
             atol=atol_N,
@@ -284,7 +304,11 @@ class KernelDensity(BaseEstimator):
             breadth_first=self.breadth_first,
             return_log=True,
         )
-        log_density -= np.log(N)
+
+        # The result of self.tree_.kernel_density is only normalized by
+        # the kernel norm and bandwidth. We need to further normalize by
+        # the determinant of the square root of the covariance matrix and N
+        log_density -= np.log(N) + np.sum(np.log(np.diag(self._cho_cov)))
         return log_density
 
     def score(self, X, y=None):
@@ -335,7 +359,8 @@ class KernelDensity(BaseEstimator):
         if self.kernel not in ["gaussian", "tophat"]:
             raise NotImplementedError()
 
-        data = np.asarray(self.tree_.data)
+        # Tree data is already scaled at creation, need to convert back
+        data = np.dot(np.asarray(self.tree_.data), self._cho_cov.T)
 
         rng = check_random_state(random_state)
         u = rng.uniform(0, 1, size=n_samples)
@@ -345,8 +370,14 @@ class KernelDensity(BaseEstimator):
             cumsum_weight = np.cumsum(np.asarray(self.tree_.sample_weight))
             sum_weight = cumsum_weight[-1]
             i = np.searchsorted(cumsum_weight, u * sum_weight)
+
         if self.kernel == "gaussian":
-            return np.atleast_2d(rng.normal(data[i], self.bandwidth_))
+            norm = rng.multivariate_normal(
+                np.zeros(data.shape[1]),
+                self._cov * self.bandwidth_**2,
+                size=n_samples,
+            )
+            return data[i] + norm
 
         elif self.kernel == "tophat":
             # we first draw points from a d-dimensional normal distribution,
