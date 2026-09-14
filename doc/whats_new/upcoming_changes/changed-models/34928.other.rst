@@ -1,0 +1,8 @@
+- :func:`inspection.partial_dependence` and :class:`inspection.PartialDependenceDisplay`
+  now use `numpy.nanquantile`'s linear interpolation instead of the (unmaintained)
+  `scipy.stats.mstats.mquantiles`'s Cunnane interpolation to compute the grid of
+  values and deciles from `X`. This may slightly shift the computed grid values
+  and displayed deciles. `np.nan` values in a numerical column are now ignored
+  (instead of being sorted last in the quantile calculation and hence possibly
+  affecting the result depending on the requested percentiles).
+  By :user:`Arthur Lacote <cakedev0>`.
