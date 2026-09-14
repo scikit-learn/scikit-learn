@@ -106,8 +106,8 @@ if __name__ == "__main__":
 
     ###########################################################################
     # Set Python core input
-    sampling_algorithm["python-core-sample"] = (
-        lambda n_population, n_sample: random.sample(range(n_population), n_sample)
+    sampling_algorithm["python-core-sample"] = lambda n_population, n_sample: (
+        random.sample(range(n_population), n_sample)
     )
 
     ###########################################################################
@@ -150,8 +150,8 @@ if __name__ == "__main__":
 
     ###########################################################################
     # Numpy permutation based
-    sampling_algorithm["numpy-permutation"] = (
-        lambda n_population, n_sample: np.random.permutation(n_population)[:n_sample]
+    sampling_algorithm["numpy-permutation"] = lambda n_population, n_sample: (
+        np.random.permutation(n_population)[:n_sample]
     )
 
     ###########################################################################
