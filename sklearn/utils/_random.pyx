@@ -10,6 +10,10 @@ The module contains:
     * Several algorithms to sample integers without replacement.
     * Fast rand_r alternative based on xor shifts
 """
+
+from libcpp.set cimport set as cppset
+from libcpp.random cimport mt19937_64, uniform_int_distribution
+
 import numpy as np
 from sklearn.utils.validation import check_random_state
 
@@ -87,18 +91,24 @@ cpdef _sample_without_replacement_with_tracking_selection(
     cdef default_int[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
-    rng_randint = rng.randint
+    cdef mt19937_64 random_gen
+    random_gen = mt19937_64(rng.randint(2 ** 20))
+    cdef uniform_int_distribution[default_int] int_dist = uniform_int_distribution[default_int](0, n_population - 1)
 
     # The following line of code are heavily inspired from python core,
     # more precisely of random.sample.
-    cdef set selected = set()
+    cdef cppset[default_int] selected
 
-    for i in range(n_samples):
-        j = rng_randint(n_population)
-        while j in selected:
-            j = rng_randint(n_population)
-        selected.add(j)
-        out[i] = j
+    with nogil:
+        for i in range(n_samples):
+            while True:
+                j = int_dist(random_gen)
+                # set.contains is only in C++20, so do it the annoying way.
+                if selected.find(j) == selected.end():
+                    # Not found.
+                    break
+            selected.insert(j)
+            out[i] = j
 
     return np.asarray(out)
 
@@ -143,7 +153,9 @@ cpdef _sample_without_replacement_with_pool(default_int n_population,
     cdef default_int[::1] pool = np.empty((n_population,), dtype=int)
 
     rng = check_random_state(random_state)
-    rng_randint = rng.randint
+    cdef uniform_int_distribution[default_int] int_dist
+    cdef mt19937_64 random_gen
+    random_gen = mt19937_64(rng.randint(2 ** 20))
 
     # Initialize the pool
     for i in range(n_population):
@@ -151,10 +163,12 @@ cpdef _sample_without_replacement_with_pool(default_int n_population,
 
     # The following line of code are heavily inspired from python core,
     # more precisely of random.sample.
-    for i in range(n_samples):
-        j = rng_randint(n_population - i)  # invariant: non-selected at [0,n-i)
-        out[i] = pool[j]
-        pool[j] = pool[n_population - i - 1]  # move non-selected item into vacancy
+    with nogil:
+        for i in range(n_samples):
+            int_dist = uniform_int_distribution[default_int](0, n_population - i - 1)
+            j = int_dist(random_gen)  # invariant: non-selected at [0,n-i)
+            out[i] = pool[j]
+            pool[j] = pool[n_population - i - 1]  # move non-selected item into vacancy
 
     return np.asarray(out)
 
@@ -202,7 +216,9 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     cdef default_int[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
-    rng_randint = rng.randint
+    cdef mt19937_64 random_gen
+    cdef uniform_int_distribution[default_int] int_dist
+    random_gen = mt19937_64(rng.randint(2 ** 20))
 
     # This cython implementation is based on the one of Robert Kern:
     # http://mail.scipy.org/pipermail/numpy-discussion/2010-December/
@@ -212,7 +228,8 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
         out[i] = i
 
     for i from n_samples <= i < n_population:
-        j = rng_randint(0, i + 1)
+        int_dist = uniform_int_distribution[default_int](0, i)
+        j = int_dist(random_gen)
         if j < n_samples:
             out[j] = i
 

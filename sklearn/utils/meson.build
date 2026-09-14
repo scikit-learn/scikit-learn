@@ -46,7 +46,7 @@ utils_extension_metadata = {
   '_fast_dict':
     {'sources': [cython_gen_cpp.process('_fast_dict.pyx')]},
   '_openmp_helpers': {'sources': [cython_gen.process('_openmp_helpers.pyx')], 'dependencies': [openmp_dep]},
-  '_random': {'sources': [cython_gen.process('_random.pyx')]},
+  '_random': {'sources': [cython_gen_cpp.process('_random.pyx')]},
   '_typedefs': {'sources': [cython_gen.process('_typedefs.pyx')]},
   '_sorting': {'sources': [cython_gen.process('_sorting.pyx')]},
   '_vector_sentinel':
