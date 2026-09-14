@@ -153,7 +153,9 @@ cpdef _sample_without_replacement_with_pool(default_int n_population,
     cdef default_int[::1] pool = np.empty((n_population,), dtype=int)
 
     rng = check_random_state(random_state)
-    rng_randint = rng.randint
+    cdef uniform_int_distribution[default_int] int_dist
+    cdef mt19937 random_gen
+    random_gen = mt19937(rng.randint(2 ** 20))
 
     # Initialize the pool
     for i in range(n_population):
@@ -161,10 +163,12 @@ cpdef _sample_without_replacement_with_pool(default_int n_population,
 
     # The following line of code are heavily inspired from python core,
     # more precisely of random.sample.
-    for i in range(n_samples):
-        j = rng_randint(n_population - i)  # invariant: non-selected at [0,n-i)
-        out[i] = pool[j]
-        pool[j] = pool[n_population - i - 1]  # move non-selected item into vacancy
+    with nogil:
+        for i in range(n_samples):
+            int_dist = uniform_int_distribution[default_int](0, n_population - i - 1)
+            j = int_dist(random_gen)  # invariant: non-selected at [0,n-i)
+            out[i] = pool[j]
+            pool[j] = pool[n_population - i - 1]  # move non-selected item into vacancy
 
     return np.asarray(out)
 
