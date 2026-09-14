@@ -237,7 +237,7 @@ https://conda.anaconda.org/conda-forge/noarch/importlib-resources-7.1.0-pyhd8ed1
 https://conda.anaconda.org/conda-forge/noarch/lazy_loader-0.5-pyhd8ed1ab_0.conda#4c8327180586e7b1cd8b6815fc8827f1
 https://conda.anaconda.org/conda-forge/linux-64/libclang13-23.1.1-default_h7037f76_0.conda#477ba0fcc49cbf8dad6fadac96dd87c5
 https://conda.anaconda.org/conda-forge/linux-64/libharfbuzz-devel-14.4.0-h23af247_1.conda#148cd995f5ba8af22412a4258abc2f94
-https://conda.anaconda.org/conda-forge/noarch/meson-python-0.21.0-pyh3b9e9f2_0.conda#97d15e45b37d6e897db731f8c76cb9b5
+https://conda.anaconda.org/conda-forge/noarch/meson-python-0.21.1-pyh3b9e9f2_0.conda#ac12901baf9cbaa4d6f12cf4fb085279
 https://conda.anaconda.org/conda-forge/linux-64/mkl-2026.1.0-hd2095e1_245.conda#5c8b5643ac9b96cd1c5b65a17337ce5c
 https://conda.anaconda.org/conda-forge/linux-64/pango-1.58.2-h7bb47b9_1.conda#0b889b1c6b472d215d6332c6b195589c
 https://conda.anaconda.org/conda-forge/noarch/pip-26.2.1-pyh8b19718_0.conda#77b6cf3b0689d9fc68561df0db9b856d
@@ -262,7 +262,7 @@ https://conda.anaconda.org/conda-forge/linux-64/numpy-1.26.0-py312heda63a1_0.con
 https://conda.anaconda.org/conda-forge/linux-64/pyqt-5.15.11-py312h82c0db2_2.conda#84d5670ea1c8e72198bce0710f015e0c
 https://conda.anaconda.org/conda-forge/linux-64/blas-devel-3.11.0-11_hcf00494_mkl.conda#8180a78b954cc3968cd92b9eccf4bf30
 https://conda.anaconda.org/conda-forge/linux-64/contourpy-1.3.3-py312h0a2e395_4.conda#43c2bc96af3ae5ed9e8a10ded942aa50
-https://conda.anaconda.org/conda-forge/linux-64/imagecodecs-2026.8.16-py312hec1f0d2_1.conda#e063c3014adee117fa1cec89bcdc14a4
+https://conda.anaconda.org/conda-forge/linux-64/imagecodecs-2026.8.16-py312hec1f0d2_2.conda#cbf370e0fb255b534db3978973635482
 https://conda.anaconda.org/conda-forge/noarch/imageio-2.37.4-pyh5ded981_0.conda#8d928b5d0cb918d9966ab8570ad2a8aa
 https://conda.anaconda.org/conda-forge/linux-64/pandas-2.1.3-py312hfb8ada1_0.conda#ef74af58f348d62a35c58e82aef5f868
 https://conda.anaconda.org/conda-forge/noarch/patsy-1.0.3-pyhcf101f3_0.conda#13e1355debaf21a0b8c2726697ebb01b

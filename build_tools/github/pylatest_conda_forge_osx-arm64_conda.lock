@@ -144,7 +144,7 @@ https://conda.anaconda.org/conda-forge/osx-arm64/ld64-956.6-llvm21_1_h5d6df6c_6.
 https://conda.anaconda.org/conda-forge/osx-arm64/libclang13-23.1.1-default_hfbe3a31_0.conda#0fc44d6ba92e8e6137556138d91c3283
 https://conda.anaconda.org/conda-forge/osx-arm64/libopenblas-0.3.34-openmp_h4f80526_1.conda#0b5dfcfae89beafb81234b90d5d07729
 https://conda.anaconda.org/conda-forge/osx-arm64/llvm-tools-21.1.8-hdb3d66b_1.conda#50fd053bd7140fd31e79bbc61ecef3f1
-https://conda.anaconda.org/conda-forge/noarch/meson-python-0.21.0-pyh3b9e9f2_0.conda#97d15e45b37d6e897db731f8c76cb9b5
+https://conda.anaconda.org/conda-forge/noarch/meson-python-0.21.1-pyh3b9e9f2_0.conda#ac12901baf9cbaa4d6f12cf4fb085279
 https://conda.anaconda.org/conda-forge/osx-arm64/optree-0.20.0-py314h3209116_1.conda#d04003d6c244449fe8eb18ccb2e47374
 https://conda.anaconda.org/conda-forge/noarch/pytest-9.1.1-pyhc364b38_2.conda#64c98a12c4e23eb238bf66bbecafdf3c
 https://conda.anaconda.org/conda-forge/noarch/rich-15.0.0-pyhcf101f3_0.conda#0242025a3c804966bf71aa04eee82f66
@@ -171,7 +171,7 @@ https://conda.anaconda.org/conda-forge/noarch/array-api-strict-2.6.1-pyhc364b38_
 https://conda.anaconda.org/conda-forge/osx-arm64/blas-devel-3.11.0-11_h11c0a38_openblas.conda#259a982677bdb3a16ea207a148a2e14a
 https://conda.anaconda.org/conda-forge/osx-arm64/c-compiler-2.0.0-h39478f8_0.conda#124b89a32eeeea68a3016366de507ee5
 https://conda.anaconda.org/conda-forge/osx-arm64/clangxx-21.1.8-default_cfg_h7f0254a_6.conda#9f2cb1aecf42ce02e0ce9310f074498a
-https://conda.anaconda.org/conda-forge/osx-arm64/contourpy-1.3.3-py314hf8a3a22_4.conda#cddc851000ce131d757678c2f329eaad
+https://conda.anaconda.org/conda-forge/osx-arm64/contourpy-1.4.0-py314h2e43715_0.conda#d491608049b247d2484b3c906fba8075
 https://conda.anaconda.org/conda-forge/osx-arm64/gcc_impl_osx-arm64-15.3.0-hdd9f9fa_4.conda#3a6d4a437d9decd5e377f85eb6c3d194
 https://conda.anaconda.org/conda-forge/osx-arm64/pandas-3.0.5-py314he609de1_0.conda#b1dde16791eca59c8316d0ad1487bff0
 https://conda.anaconda.org/conda-forge/osx-arm64/pytorch-2.12.0-cpu_generic_py314_h30a3122_0.conda#e5ea6806ef6fbddfa0cb5cbce0de8acf

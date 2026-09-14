@@ -7,6 +7,35 @@ from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     get_namespace_and_device,
 )
+from sklearn.utils._indexing import _safe_indexing
+
+
+def _nanquantile(X, feature, quantiles):
+    """Compute quantiles of a column of `X`, ignoring missing values.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Input data.
+
+    feature : int or str
+        Column of `X` to compute the quantiles of.
+
+    quantiles : array-like of shape (n_quantiles,)
+        Quantiles to compute, each in `[0, 1]`.
+
+    Returns
+    -------
+    quantiles : ndarray of shape (n_quantiles,)
+        The computed quantiles.
+    """
+    column = np.asarray(_safe_indexing(X, feature, axis=1))
+    if column.dtype == bool:
+        # `np.nanquantile` does not support boolean arrays.
+        column = column.astype(np.float64)
+    # Use `nanquantile` so that missing values do not propagate to every
+    # quantile.
+    return np.nanquantile(column, quantiles, axis=0)
 
 
 def _weighted_percentile(
