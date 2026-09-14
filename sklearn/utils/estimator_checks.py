@@ -8,6 +8,7 @@ import pickle
 import re
 import textwrap
 import warnings
+from collections import defaultdict
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
@@ -39,6 +40,8 @@ from sklearn.base import (
     is_outlier_detector,
     is_regressor,
 )
+from sklearn.callback._callback_context import get_context_path
+from sklearn.callback._testing.callbacks import RecordingCallback
 from sklearn.datasets import (
     load_iris,
     make_blobs,
@@ -106,6 +109,7 @@ from sklearn.utils._testing import (
     raises,
     set_random_state,
 )
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.validation import _num_samples, check_is_fitted, has_fit_parameter
 
 REGRESSION_DATASET = None
@@ -5742,3 +5746,86 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         ValueError, match="Only binary classification is supported.", err_msg=err_msg
     ):
         estimator.fit(X, y)
+
+
+def _fit_estimator_with_recording_callback(estimator_orig):
+    if _IS_WASM:
+        raise SkipTest("callback tests are skipped on WASM/Pyodide")
+
+    X, y = make_blobs(random_state=0, n_samples=21)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    # RecordingCallback is not auto-propagated, so only the estimator under
+    # test is recorded, not nested sub-estimators.
+    callback = RecordingCallback()
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    estimator.set_callbacks(callback).fit(X, y)
+    return estimator, callback
+
+
+def check_callback_single_root(name, estimator_orig):
+    """Check that a single fit has exactly one root callback context."""
+    _, callback = _fit_estimator_with_recording_callback(estimator_orig)
+
+    root_uuids = {entry["context"].root_uuid for entry in callback.record}
+    msg = f"{name}: found {len(root_uuids)} root callback contexts. Expected one."
+    assert len(root_uuids) == 1, msg
+
+
+def check_callback_setup_teardown_called_once(name, estimator_orig):
+    """Check that setup and teardown are called exactly once per fit, in that order."""
+    _, callback = _fit_estimator_with_recording_callback(estimator_orig)
+
+    n_setup = callback.count_hooks("setup")
+    msg = f"{name}: expected setup to be called once, got {n_setup}."
+    assert n_setup == 1, msg
+
+    n_teardown = callback.count_hooks("teardown")
+    msg = f"{name}: expected teardown to be called once, got {n_teardown}."
+    assert n_teardown == 1, msg
+
+    hook_names = [entry["name"] for entry in callback.record]
+    msg = f"{name}: teardown called before setup."
+    assert hook_names.index("setup") < hook_names.index("teardown"), msg
+
+
+def check_callback_begin_end_match(name, estimator_orig):
+    """Check that on_fit_task_begin / on_fit_task_end calls match.
+
+    Each task in the callback tree must call `on_fit_task_begin` exactly once
+    and `on_fit_task_end` exactly once, in that order.
+    """
+    _, callback = _fit_estimator_with_recording_callback(estimator_orig)
+
+    events_by_context = defaultdict(list)
+    for entry in callback.record:
+        if entry["name"] not in ("on_fit_task_begin", "on_fit_task_end"):
+            continue
+        key = tuple(ctx.task_id for ctx in get_context_path(entry["context"]))
+        events_by_context[key].append(entry)
+
+    for events in events_by_context.values():
+        context = events[0]["context"]
+        task = f"{name} task {context.task_name!r} (task_id={context.task_id})"
+        msg = f"{task}: on_fit_task_end called before on_fit_task_begin."
+        assert events[0]["name"] == "on_fit_task_begin", msg
+        assert events[-1]["name"] == "on_fit_task_end", msg
+        msg = (
+            f"{task}: expected one on_fit_task_begin and one on_fit_task_end, "
+            f"got {len(events)} events."
+        )
+        assert len(events) == 2, msg
+
+
+def check_callback_estimator_is_self(name, estimator_orig):
+    """Check that every hook receives the estimator instance that fit was called on."""
+    estimator, callback = _fit_estimator_with_recording_callback(estimator_orig)
+
+    for entry in callback.record:
+        msg = (
+            f"{name}: hook '{entry['name']}' received {entry['estimator']!r} as "
+            f"estimator; expected the instance on which fit was called ({estimator!r})."
+        )
+        assert entry["estimator"] is estimator, msg
