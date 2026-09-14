@@ -49,7 +49,7 @@ X, y = make_classification(
 )
 
 scoring_metrics = ["d2_log_loss_score", "accuracy", "average_precision"]
-scoring_monitor = ScoringMonitor(scoring=scoring_metrics)
+scoring_monitor = ScoringMonitor(scoring_train=scoring_metrics)
 model = make_pipeline(
     StandardScaler(),
     LogisticRegression(solver="lbfgs", max_iter=1000).set_callbacks(scoring_monitor),
@@ -117,7 +117,7 @@ cv_results.sort_values(by="rank_test_d2_log_loss_score", ascending=True)
 # These values are stored in the `scoring_monitor` callback object:
 
 # %%
-all_tasks_log = scoring_monitor.get_logs().data_as_pandas
+all_tasks_log = scoring_monitor.get_logs().train_scores_as_pandas
 all_tasks_log
 # %%
 # Let's enrich this log with the candidate parameters and the split index so we

@@ -6,46 +6,16 @@ Developing callbacks
 
 .. currentmodule:: sklearn.callback
 
-The callback protocol
+The callback class
 ---------------------
 
-To be compatible with scikit-learn estimators, :term:`callbacks` must implement the
-:class:`FitCallback` `protocol
-<https://typing.python.org/en/latest/spec/protocol.html>`__:
+To be compatible with scikit-learn estimators, :term:`callbacks` must inherit from the
+:class:`FitCallback` class.
 
-.. code-block:: python
-
-    class FitCallback(Protocol):
-
-        def setup(self, estimator, context) -> None: ...
-
-        def on_fit_task_begin(
-            self,
-            estimator,
-            context,
-            *,
-            X=None,
-            y=None,
-            metadata=None,
-            fitted_estimator=None
-        ) -> None: ...
-
-        def on_fit_task_end(
-            self,
-            estimator,
-            context,
-            *,
-            X=None,
-            y=None,
-            metadata=None,
-            fitted_estimator=None
-        ) -> bool: ...
-
-        def teardown(self, estimator, context) -> None: ...
-
-The methods of the protocol, referred to as callback :term:`hooks`, will be called at
-specific steps during the fitting process of the estimator the callback is registered
-on:
+The following 4 methods provided by that class are referred to as callback
+:term:`hooks`. They will be called at specific steps during the fitting process of the
+estimator the callback is registered on. A callback class has to overwrite the ones it
+needs.
 
 - :meth:`~FitCallback.setup` and :meth:`~FitCallback.teardown`
 
@@ -98,16 +68,8 @@ Auto-propagated callbacks
 -------------------------
 
 :term:`Auto-propagated <auto-propagated>` callbacks, i.e. callbacks that are expected to
-be propagated from meta-estimators to their sub-estimators, must implement the
-:class:`~AutoPropagatedCallback` protocol, an extension of the :class:`~FitCallback`
-protocol:
-
-.. code-block:: python
-
-    class AutoPropagatedCallback(FitCallback, Protocol):
-
-        @property
-        def max_propagation_depth(self) -> int | None: ...
+be propagated from meta-estimators to their sub-estimators, must inherit from the
+:class:`~AutoPropagatedCallback` class.
 
 By contrast with regular callbacks that are only invoked at the tasks of the estimator
 on which they are registered, auto-propagated callbacks are invoked at the tasks of
@@ -147,7 +109,9 @@ every time it is invoked:
 
 .. code-block:: python
 
-    class MyCallback:
+    from sklearn.callback import FitCallback
+
+    class MyCallback(FitCallback):
 
         def setup(self, estimator, context):
             print(f"Setup hook is being called in the {context.task_name} task.")
