@@ -1,0 +1,8 @@
+- :class:`kernel_approximation.PolynomialCountSketch` is now much faster to
+  transform sparse input, especially when the input is genuinely sparse
+  (low density) with many features. The sparse path previously densified one
+  feature column at a time in a Python loop, so its cost scaled with the
+  number of features rather than the number of nonzeros; it now uses a
+  single sparse matrix multiplication per degree, whose cost scales with the
+  number of nonzeros instead.
+  By :user:`Mukesh Regar <regarmukesh3g>`.
