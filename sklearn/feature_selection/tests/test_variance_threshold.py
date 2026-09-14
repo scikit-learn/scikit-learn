@@ -70,3 +70,19 @@ def test_variance_nan(sparse_container):
     X = arr if sparse_container is None else sparse_container(arr)
     sel = VarianceThreshold().fit(X)
     assert_array_equal([0, 3, 4], sel.get_support(indices=True))
+
+
+def test_transform_dataframe_allow_nan():
+    """Test that `VarianceThreshold` (only built-in selector with hardcoded nan
+    support) passes nan values if "pandas" is selected as an output.
+    Regression test for https://github.com/scikit-learn/scikit-learn/issues/34500.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+    sel = VarianceThreshold().set_output(transform="pandas").fit(X)
+
+    X_nan = X.copy()
+    X_nan.loc[0, "a"] = np.nan
+    output = sel.transform(X_nan)
+    assert np.isnan(output.loc[0, "a"])
