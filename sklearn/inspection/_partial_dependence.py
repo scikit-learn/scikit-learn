@@ -141,13 +141,10 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
                 # create axis based on percentiles and grid resolution
                 column = np.asarray(_safe_indexing(X, feature, axis=1))
                 if column.dtype == bool:
-                    # `np.quantile`/`np.nanquantile` do not support boolean arrays
-                    # (interpolation between two quantiles relies on subtraction,
-                    # which is not defined for booleans).
+                    # `np.nanquantile` do not support boolean arrays
                     column = column.astype(np.float64)
-                # `np.nanquantile` ignores `np.nan` values instead of propagating
-                # them to every grid point (missing values are not otherwise
-                # filtered out of `X` at this point).
+                # Use `nanquantile` so that missing values do not propagate
+                # to every decile.
                 emp_percentiles = np.nanquantile(column, percentiles, axis=0)
                 if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                     raise ValueError(
