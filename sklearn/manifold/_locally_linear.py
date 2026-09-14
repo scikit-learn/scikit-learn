@@ -681,7 +681,7 @@ class LocallyLinearEmbedding(
         across multiple function calls. See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to run for the nearest-neighbor search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

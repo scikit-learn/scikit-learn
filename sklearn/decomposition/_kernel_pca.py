@@ -154,7 +154,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         .. versionadded:: 0.18
 
     n_jobs : int, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to run when computing the kernel matrix.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
