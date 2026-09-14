@@ -12,7 +12,11 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.fixes import np_version, parse_version
-from sklearn.utils.stats import _weighted_percentile, _weighted_percentile_1d_sorted
+from sklearn.utils.stats import (
+    _nanquantile,
+    _weighted_percentile,
+    _weighted_percentile_1d_sorted,
+)
 
 
 @pytest.mark.parametrize("average", [True, False])
@@ -519,3 +523,25 @@ def test_weighted_percentile_like_numpy_nanquantile(
     )
 
     assert_array_equal(percentile_weighted_percentile, percentile_numpy_nanquantile)
+
+
+def test_nanquantile():
+    """Sanity check for _nanquantile."""
+    X = np.array([[0.0], [1.0], [2.0], [3.0], [4.0]])
+    quantiles = _nanquantile(X, 0, (0.0, 0.5, 1.0))
+    assert_allclose(quantiles, [0.0, 2.0, 4.0])
+
+
+def test_nanquantile_ignores_nan():
+    """Check that _nanquantile ignores NaNs."""
+    X = np.array([[np.nan], [1.0], [2.0], [3.0], [4.0]])
+    quantiles = _nanquantile(X, 0, (0.0, 0.5, 1.0))
+    assert not np.isnan(quantiles).any()
+    assert_allclose(quantiles, [1.0, 2.5, 4.0])
+
+
+def test_nanquantile_boolean_column():
+    """Check that _nanquantile handles booleans."""
+    X = np.array([[True], [False], [True], [False]])
+    quantiles = _nanquantile(X, 0, (0.0, 1.0))
+    assert_allclose(quantiles, [0.0, 1.0])
