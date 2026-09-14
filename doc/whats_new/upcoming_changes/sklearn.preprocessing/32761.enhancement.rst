@@ -1,0 +1,7 @@
+- :class:`preprocessing.QuantileTransformer` can now handle sample weight values
+  by subsampling using sample weights if subsampling is enabled or otherwise using
+  `_weighted_percentile`. The default method of calculating percentiles for both
+  weighted and unweighted cases is now fixed to "averaged_inverted_cdf".
+  Support is only implemented for dense X.
+  By :user:`Karassay Raushanbek <kaekkr>` and :user:`Shruti Nath
+  <snath-xoc>`.
