@@ -11,12 +11,14 @@ from scipy.stats.mstats import mquantiles
 
 from sklearn.base import is_classifier, is_regressor
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble._forest import ForestClassifier, ForestRegressor
 from sklearn.ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting,
 )
 from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree._classes import BaseDecisionTree
 from sklearn.utils import Bunch, _safe_indexing, check_array
 from sklearn.utils._indexing import (
     _determine_key_type,
@@ -218,6 +220,53 @@ def _partial_dependence_recursion(est, grid, features):
     return averaged_predictions
 
 
+def _partial_dependence_tree_accurate(est, X, feature, grid):
+    """Calculate partial dependence for a single feature using tree_accurate.
+
+    Performs a single O(m * D²) background pass over ``X`` per tree to collect
+    per-leaf statistics, then combines them with a vectorised pass over the grid.
+    Only ``kind='average'`` is supported.
+
+    Parameters
+    ----------
+    est : BaseDecisionTree, ForestRegressor or ForestClassifier
+        A fitted single tree (``DecisionTree*``, ``ExtraTree*``) or forest of
+        trees (``RandomForest*``, ``ExtraTrees*``).
+    X : ndarray of shape (n_samples, n_features), dtype=np.float32
+        Background dataset used for marginalisation.
+    feature : int
+        Global column index of the target feature.
+    grid : ndarray of shape (n_grid,), dtype=np.float32
+        Grid of values for the target feature.
+
+    Returns
+    -------
+    averaged_predictions : ndarray of shape (n_outputs, n_grid)
+    """
+    m = X.shape[0]
+
+    if is_classifier(est):
+        n_classes = est.n_classes_
+        n_effective_outputs = 1 if n_classes == 2 else n_classes
+    else:
+        n_effective_outputs = est.n_outputs_
+
+    out = np.zeros((n_effective_outputs, len(grid)), dtype=np.float64)
+
+    if isinstance(est, BaseDecisionTree):
+        est.tree_.compute_partial_dependence_tree_accurate(X, grid, feature, out)
+        out /= m
+    elif isinstance(est, (ForestRegressor, ForestClassifier)):
+        n_trees = len(est.estimators_)
+        for tree_est in est.estimators_:
+            tree_est.tree_.compute_partial_dependence_tree_accurate(
+                X, grid, feature, out
+            )
+        out /= m * n_trees
+
+    return out
+
+
 def _partial_dependence_brute(
     est, grid, features, X, response_method, sample_weight=None
 ):
@@ -361,7 +410,7 @@ def _partial_dependence_brute(
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
         "percentiles": [tuple],
         "grid_resolution": [Interval(Integral, 1, None, closed="left")],
-        "method": [StrOptions({"auto", "recursion", "brute"})],
+        "method": [StrOptions({"auto", "recursion", "brute", "tree_accurate"})],
         "kind": [StrOptions({"average", "individual", "both"})],
         "custom_values": [dict, None],
     },
@@ -487,7 +536,7 @@ def partial_dependence(
 
         .. versionadded:: 1.7
 
-    method : {'auto', 'recursion', 'brute'}, default='auto'
+    method : {'auto', 'recursion', 'brute', 'tree_accurate'}, default='auto'
         The method used to calculate the averaged predictions:
 
         - `'recursion'` is only supported for some tree-based estimators
@@ -510,6 +559,20 @@ def partial_dependence(
         - `'brute'` is supported for any estimator, but is more
           computationally intensive.
 
+        - `'tree_accurate'` is supported for the single-tree estimators
+          :class:`~sklearn.tree.DecisionTreeRegressor`,
+          :class:`~sklearn.tree.DecisionTreeClassifier`,
+          :class:`~sklearn.tree.ExtraTreeRegressor`,
+          :class:`~sklearn.tree.ExtraTreeClassifier` and the forests
+          :class:`~sklearn.ensemble.RandomForestRegressor`,
+          :class:`~sklearn.ensemble.RandomForestClassifier`,
+          :class:`~sklearn.ensemble.ExtraTreesRegressor`,
+          :class:`~sklearn.ensemble.ExtraTreesClassifier`,
+          when `kind='average'` and `response_method='decision_function'`.
+          Joint PDP (tuples in `features`) is not supported.
+          This method is equivalent to the `'brute'` method,
+          but significantly faster for tree-based estimators.
+
         - `'auto'`: the `'recursion'` is used for estimators that support it,
           and `'brute'` is used otherwise. If `sample_weight` is not `None`,
           then `'brute'` is used regardless of the estimator.
@@ -522,10 +585,10 @@ def partial_dependence(
         samples in the dataset or one value per sample or both.
         See Returns below.
 
-        Note that the fast `method='recursion'` option is only available for
-        `kind='average'` and `sample_weights=None`. Computing individual
-        dependencies and doing weighted averages requires using the slower
-        `method='brute'`.
+        Note that the fast `method='recursion'` and `method='tree_accurate'`
+        options are only available for `kind='average'`.
+        Computing individual dependencies and doing weighted averages requires
+        using the slower `method='brute'`.
 
         .. versionadded:: 0.24
 
@@ -601,12 +664,46 @@ def partial_dependence(
             raise ValueError(
                 "The 'recursion' method only applies when 'kind' is set to 'average'"
             )
+        if method == "tree_accurate":
+            raise ValueError("The 'tree_accurate' method only supports kind='average'.")
         method = "brute"
 
     if method == "recursion" and sample_weight is not None:
         raise ValueError(
             "The 'recursion' method can only be applied when sample_weight is None."
         )
+
+    if method == "tree_accurate":
+        _features_iter = [features] if isinstance(features, (str, int)) else features
+        if any(isinstance(f, (list, tuple)) for f in _features_iter):
+            raise ValueError(
+                "The 'tree_accurate' method does not support joint PDP "
+                "(tuples in features). Use method='brute' instead."
+            )
+        if sample_weight is not None:
+            raise ValueError(
+                "The 'tree_accurate' method can only be applied when "
+                "sample_weight is None."
+            )
+        if not isinstance(
+            estimator, (BaseDecisionTree, ForestRegressor, ForestClassifier)
+        ):
+            raise ValueError(
+                "The 'tree_accurate' method only supports DecisionTreeRegressor, "
+                "DecisionTreeClassifier, ExtraTreeRegressor, ExtraTreeClassifier, "
+                "RandomForestRegressor, RandomForestClassifier, "
+                "ExtraTreesRegressor and ExtraTreesClassifier. "
+                "Use method='brute' for other estimators."
+            )
+        if is_classifier(estimator):
+            if response_method == "auto":
+                response_method = "decision_function"
+            if response_method != "decision_function":
+                raise ValueError(
+                    "With the 'tree_accurate' method, the response_method for "
+                    "classifiers must be 'decision_function'. "
+                    "Got {}.".format(response_method)
+                )
 
     if method == "auto":
         if sample_weight is not None:
@@ -749,6 +846,13 @@ def partial_dependence(
         # (n_outputs, n_instances, n_values_feature_0, n_values_feature_1, ...)
         predictions = predictions.reshape(
             -1, X.shape[0], *[val.shape[0] for val in values]
+        )
+    elif method == "tree_accurate":
+        X_bg = np.asarray(X, dtype=np.float32, order="C")
+        feature = int(features_indices[0])
+        grid_1d = np.asarray(values[0], dtype=np.float32)
+        averaged_predictions = _partial_dependence_tree_accurate(
+            estimator, X_bg, feature, grid_1d
         )
     else:
         averaged_predictions = _partial_dependence_recursion(
