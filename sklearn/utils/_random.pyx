@@ -12,7 +12,7 @@ The module contains:
 """
 
 from libcpp.set cimport set as cppset
-from libcpp.random cimport mt19937, uniform_int_distribution
+from libcpp.random cimport mt19937_64, uniform_int_distribution
 
 import numpy as np
 from sklearn.utils.validation import check_random_state
@@ -91,8 +91,8 @@ cpdef _sample_without_replacement_with_tracking_selection(
     cdef default_int[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
-    cdef mt19937 random_gen
-    random_gen = mt19937(rng.randint(2 ** 20))
+    cdef mt19937_64 random_gen
+    random_gen = mt19937_64(rng.randint(2 ** 20))
     cdef uniform_int_distribution[default_int] int_dist = uniform_int_distribution[default_int](0, n_population - 1)
 
     # The following line of code are heavily inspired from python core,
@@ -154,8 +154,8 @@ cpdef _sample_without_replacement_with_pool(default_int n_population,
 
     rng = check_random_state(random_state)
     cdef uniform_int_distribution[default_int] int_dist
-    cdef mt19937 random_gen
-    random_gen = mt19937(rng.randint(2 ** 20))
+    cdef mt19937_64 random_gen
+    random_gen = mt19937_64(rng.randint(2 ** 20))
 
     # Initialize the pool
     for i in range(n_population):
@@ -216,9 +216,9 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     cdef default_int[::1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
-    cdef mt19937 random_gen
+    cdef mt19937_64 random_gen
     cdef uniform_int_distribution[default_int] int_dist
-    random_gen = mt19937(rng.randint(2 ** 20))
+    random_gen = mt19937_64(rng.randint(2 ** 20))
 
     # This cython implementation is based on the one of Robert Kern:
     # http://mail.scipy.org/pipermail/numpy-discussion/2010-December/
