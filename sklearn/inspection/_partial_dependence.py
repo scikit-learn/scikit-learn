@@ -14,11 +14,7 @@ from sklearn.ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting,
 )
-from sklearn.inspection._pd_utils import (
-    _check_feature_names,
-    _get_feature_index,
-    _nanpercentile,
-)
+from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import Bunch, _safe_indexing, check_array
 from sklearn.utils._indexing import (
@@ -36,6 +32,7 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._response import _get_response_values
 from sklearn.utils.extmath import cartesian
+from sklearn.utils.stats import _nanquantile
 from sklearn.utils.validation import _check_sample_weight, check_is_fitted
 
 __all__ = [
@@ -143,7 +140,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
                 axis = uniques
             else:
                 # create axis based on percentiles and grid resolution
-                emp_percentiles = _nanpercentile(X, feature, percentiles)
+                emp_percentiles = _nanquantile(X, feature, percentiles)
                 if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                     raise ValueError(
                         "percentiles are too close to each other, "
