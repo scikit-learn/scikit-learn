@@ -1,7 +1,12 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_allclose
 
-from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.inspection._pd_utils import (
+    _check_feature_names,
+    _get_feature_index,
+    _nanpercentile,
+)
 from sklearn.utils._testing import _convert_container
 
 
@@ -45,3 +50,28 @@ def test_get_feature_index(fx, idx):
 def test_get_feature_names_error(fx, feature_names, err_msg):
     with pytest.raises(ValueError, match=err_msg):
         _get_feature_index(fx, feature_names)
+
+
+def test_nanpercentile():
+    X = np.array([[0.0], [1.0], [2.0], [3.0], [4.0]])
+    percentiles = _nanpercentile(X, 0, (0.0, 0.5, 1.0))
+    assert_allclose(percentiles, [0.0, 2.0, 4.0])
+
+
+def test_nanpercentile_ignores_nan():
+    """Non-regression test for gh-34928: a single `np.nan` used to make every
+    computed percentile `np.nan` when using `np.quantile` naively.
+    """
+    X = np.array([[np.nan], [1.0], [2.0], [3.0], [4.0]])
+    percentiles = _nanpercentile(X, 0, (0.0, 0.5, 1.0))
+    assert not np.isnan(percentiles).any()
+    assert_allclose(percentiles, [1.0, 2.5, 4.0])
+
+
+def test_nanpercentile_boolean_column():
+    """Non-regression test for gh-34928: `np.nanquantile` raises a `TypeError`
+    on boolean arrays.
+    """
+    X = np.array([[True], [False], [True], [False]])
+    percentiles = _nanpercentile(X, 0, (0.0, 1.0))
+    assert_allclose(percentiles, [0.0, 1.0])

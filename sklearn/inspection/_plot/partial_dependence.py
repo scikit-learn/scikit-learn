@@ -10,7 +10,11 @@ from scipy import sparse
 
 from sklearn.base import is_regressor
 from sklearn.inspection import partial_dependence
-from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.inspection._pd_utils import (
+    _check_feature_names,
+    _get_feature_index,
+    _nanpercentile,
+)
 from sklearn.utils import Bunch, _safe_indexing, check_array, check_random_state
 from sklearn.utils._encode import _unique
 from sklearn.utils._optional_dependencies import check_matplotlib_support
@@ -758,13 +762,7 @@ class PartialDependenceDisplay:
         for fxs, cats in zip(features, is_categorical):
             for fx, cat in zip(fxs, cats):
                 if not cat and fx not in deciles:
-                    X_col = np.asarray(_safe_indexing(X, fx, axis=1))
-                    if X_col.dtype == bool:
-                        # `np.nanquantile` does not support boolean arrays.
-                        X_col = X_col.astype(np.float64)
-                    # Use `nanquantile` so that missing values do not propagate
-                    # to every decile.
-                    deciles[fx] = np.nanquantile(X_col, np.arange(0.1, 1.0, 0.1))
+                    deciles[fx] = _nanpercentile(X, fx, np.arange(0.1, 1.0, 0.1))
 
         display = cls(
             pd_results=pd_results,

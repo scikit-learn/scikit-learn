@@ -1,6 +1,38 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import numpy as np
+
+from sklearn.utils import _safe_indexing
+
+
+def _nanpercentile(X, feature, percentiles):
+    """Compute percentiles of a column of `X`, ignoring missing values.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Input data.
+
+    feature : int or str
+        Column of `X` to compute the percentiles of.
+
+    percentiles : array-like of shape (n_percentiles,)
+        Percentiles to compute, each in `[0, 1]`.
+
+    Returns
+    -------
+    percentiles : ndarray of shape (n_percentiles,)
+        The computed percentiles.
+    """
+    column = np.asarray(_safe_indexing(X, feature, axis=1))
+    if column.dtype == bool:
+        # `np.nanquantile` does not support boolean arrays.
+        column = column.astype(np.float64)
+    # Use `nanquantile` so that missing values do not propagate to every
+    # percentile.
+    return np.nanquantile(column, percentiles, axis=0)
+
 
 def _check_feature_names(X, feature_names=None):
     """Check feature names.
