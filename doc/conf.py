@@ -738,6 +738,7 @@ sphinx_gallery_conf = {
     "gallery_dirs": [sg_gallery_dir],
     "subsection_order": SubSectionTitleOrder(sg_examples_dir),
     "within_subsection_order": SKExampleTitleSortKey,
+    "parallel": int(os.environ.get("SPHINX_GALLERY_PARALLEL", "0")),
     "binder": {
         "org": "scikit-learn",
         "repo": "scikit-learn",
