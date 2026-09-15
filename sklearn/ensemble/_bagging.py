@@ -159,6 +159,18 @@ def _parallel_build_estimators(
             sample_weight,
         )
 
+        # Trees must get the bool mask, not categorical_features="from_dtype" (or
+        # column names). The ensemble already turned X into a NumPy array, so trees
+        # can no longer read dtypes/names and would treat all features as numeric.
+        if getattr(ensemble, "is_categorical_", None) is not None:
+            if requires_feature_indexing:
+                cat_subset = ensemble.is_categorical_[features]
+                estimator.set_params(
+                    categorical_features=None if not np.any(cat_subset) else cat_subset
+                )
+            else:
+                estimator.set_params(categorical_features=ensemble.is_categorical_)
+
         fit_params_ = fit_params.copy()
 
         # Note: Row sampling can be achieved either through setting sample_weight or
