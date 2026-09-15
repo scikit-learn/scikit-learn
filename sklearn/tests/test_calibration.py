@@ -537,6 +537,9 @@ def test_ensure_logits_decision_function(method, predictions):
     ids=["1d_binary", "2d_binary", "multiclass"],
 )
 def test_ensure_logits_predict_proba(method, predictions):
+    eps = np.finfo(predictions.dtype).eps
+    proba_clipped = predictions.clip(eps, 1 - eps)
+
     if method == "isotonic":
         # Probabilities are passed through (with binary reshaping).
         if predictions.ndim == 1:
@@ -545,28 +548,24 @@ def test_ensure_logits_predict_proba(method, predictions):
             expected = predictions[:, 1].reshape(-1, 1)
         else:
             expected = predictions
-    else:
-        eps = np.finfo(predictions.dtype).eps
-        proba_clipped = predictions.clip(eps, 1 - eps)
-
-        if method == "sigmoid":
-            if predictions.ndim == 1:
-                expected = LogitLink().link(proba_clipped).reshape(-1, 1)
-            elif predictions.shape[1] == 2:
-                expected = LogitLink().link(proba_clipped[:, 1]).reshape(-1, 1)
-            else:
-                sigmoid_link = LogitLink()
-                expected = np.zeros_like(predictions)
-                for class_idx in range(predictions.shape[1]):
-                    expected[:, class_idx] = sigmoid_link.link(
-                        proba_clipped[:, class_idx]
-                    )
-        else:  # temperature
-            if predictions.ndim == 1:
-                proba_2d = np.column_stack([1 - proba_clipped, proba_clipped])
-            else:
-                proba_2d = proba_clipped
-            expected = MultinomialLogit().link(proba_2d)
+    elif method=="sigmoid":
+        if predictions.ndim == 1:
+            expected = LogitLink().link(proba_clipped).reshape(-1, 1)
+        elif predictions.shape[1] == 2:
+            expected = LogitLink().link(proba_clipped[:, 1]).reshape(-1, 1)
+        else:
+            sigmoid_link = LogitLink()
+            expected = np.zeros_like(predictions)
+            for class_idx in range(predictions.shape[1]):
+                expected[:, class_idx] = sigmoid_link.link(
+                    proba_clipped[:, class_idx]
+                )
+    else:  # temperature
+        if predictions.ndim == 1:
+            proba_2d = np.column_stack([1 - proba_clipped, proba_clipped])
+        else:
+            proba_2d = proba_clipped
+        expected = MultinomialLogit().link(proba_2d)
 
     scores = _ensure_logits(predictions, "predict_proba", method)
     assert_allclose(scores, expected)
