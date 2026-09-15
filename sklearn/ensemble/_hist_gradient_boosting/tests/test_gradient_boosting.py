@@ -33,7 +33,12 @@ from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.exceptions import NotFittedError
-from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_deviance
+from sklearn.metrics import (
+    get_scorer,
+    mean_gamma_deviance,
+    mean_poisson_deviance,
+    median_absolute_error,
+)
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
@@ -240,6 +245,87 @@ def test_absolute_error_sample_weight():
     sample_weight = rng.uniform(0, 1, size=n_samples)
     gbdt = HistGradientBoostingRegressor(loss="absolute_error")
     gbdt.fit(X, y, sample_weight=sample_weight)
+
+
+def test_huber_loss():
+    # Smoke test: fits without error, achieves good score, and works with sample_weight.
+    X, y = make_regression(n_samples=500, random_state=0)
+    rng = np.random.RandomState(0)
+    gbdt = HistGradientBoostingRegressor(loss="huber", random_state=0)
+    gbdt.fit(X, y)
+    assert gbdt.score(X, y) > 0.9
+
+    sample_weight = rng.uniform(0, 1, size=len(y))
+    gbdt.fit(X, y, sample_weight=sample_weight)
+
+
+def test_huber_loss_outlier_robustness():
+    # Huber loss should give better predictions than squared_error on data
+    # with heavy-tailed noise.
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+    X = rng.randn(n_samples, 5)
+    y = X[:, 0] + 0.1 * rng.randn(n_samples)
+    # Corrupt 10% of samples with large outliers.
+    n_outliers = n_samples // 10
+    outlier_idx = rng.choice(n_samples, n_outliers, replace=False)
+    y[outlier_idx] += 50 * rng.randn(n_outliers)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=0
+    )
+    gbdt_huber = HistGradientBoostingRegressor(
+        loss="huber", max_iter=50, random_state=0
+    )
+    gbdt_sq = HistGradientBoostingRegressor(
+        loss="squared_error", max_iter=50, random_state=0
+    )
+    gbdt_huber.fit(X_train, y_train)
+    gbdt_sq.fit(X_train, y_train)
+    err_huber = median_absolute_error(y_test, gbdt_huber.predict(X_test))
+    err_sq = median_absolute_error(y_test, gbdt_sq.predict(X_test))
+    # on this dataset, huber is much better for absolute error:
+    assert 2 * err_huber < err_sq
+
+
+def test_huber_vs_absolute_and_squared_error():
+    """Check that Huber predictions lie between absolute and squared error."""
+    n_rep = 100
+    n_samples = 10
+    y = np.tile(np.arange(n_samples), n_rep)
+    x1 = np.minimum(y, n_samples / 2)
+    x2 = np.minimum(-y, -n_samples / 2)
+    X = np.c_[x1, x2]
+
+    rng = np.random.RandomState(42)
+    y = y + rng.exponential(scale=1, size=y.shape)
+
+    gbdt_abs = HistGradientBoostingRegressor(loss="absolute_error").fit(X, y)
+    gbdt_huber = HistGradientBoostingRegressor(loss="huber").fit(X, y)
+    gbdt_sq = HistGradientBoostingRegressor(loss="squared_error").fit(X, y)
+
+    huber_pred = gbdt_huber.predict(X)
+    assert np.all(gbdt_abs.predict(X) <= huber_pred)
+    assert np.all(huber_pred <= gbdt_sq.predict(X))
+
+
+def test_huber_default_quantile():
+    # When loss="huber" and quantile=None, default quantile of 0.9 is used.
+    X, y = make_regression(n_samples=100, random_state=0)
+    gbdt = HistGradientBoostingRegressor(loss="huber", quantile=None, random_state=0)
+    gbdt.fit(X, y)
+    assert gbdt._loss.quantile == 0.9
+
+
+@pytest.mark.parametrize("quantile", [0.5, 0.75, 0.9])
+def test_huber_quantile_parameter(quantile):
+    # quantile parameter controls the delta percentile used for Huber loss.
+    X, y = make_regression(n_samples=100, random_state=0)
+    gbdt = HistGradientBoostingRegressor(
+        loss="huber", quantile=quantile, random_state=0
+    )
+    gbdt.fit(X, y)
+    assert gbdt._loss.quantile == quantile
 
 
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 1.0, 2.0])])
