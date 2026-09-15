@@ -369,9 +369,10 @@ def _spectral_embedding(
             tol = 0 if eigen_tol == "auto" else eigen_tol
 
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
-            laplacian = check_array(
-                laplacian, accept_sparse="csr", accept_large_sparse=False
-            )
+            # `eigsh` works fine with 64-bit indices, so don't pass
+            # `accept_large_sparse=False`: sparse arrays (unlike sparse matrices)
+            # never downcast indices to 32-bit, even when the content allows it.
+            laplacian = check_array(laplacian, accept_sparse="csr")
             _, diffusion_map = eigsh(
                 laplacian, k=n_components, sigma=-1e-5, which="LM", tol=tol, v0=v0
             )
