@@ -27,7 +27,7 @@ from sklearn.callback.tests._common.callbacks import (
 )
 from sklearn.callback.tests._common.estimators import MaxIterEstimator
 from sklearn.cluster import KMeans
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_classification
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -78,6 +78,7 @@ from sklearn.utils._testing import (
     skip_callback_test_if_wasm,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.metadata_routing import get_routing_for_object
 from sklearn.utils.validation import _check_feature_names, check_is_fitted
 
 # Load a shared tests data sets for the tests in this module. Mark them
@@ -2274,6 +2275,69 @@ def test_transform_tuple_input():
         transform_input=["X_val"],
     )
     pipe.fit(X, y, X_val=(X_val0, X_val1), y_val=(y_val0, y_val1))
+
+
+@config_context(enable_metadata_routing=True)
+def test_validation_set_auto_request():
+    """Test that Pipeline correctly routes auto-requested validation sets."""
+    X, y = make_classification(n_samples=200, random_state=42)
+    sample_weight = np.random.RandomState(42).rand(len(X))
+    (
+        X_train,
+        X_val,
+        y_train,
+        y_val,
+        sample_weight_train,
+        sample_weight_val,
+    ) = train_test_split(X, y, sample_weight, test_size=0.3, random_state=42)
+
+    hist = HistGradientBoostingClassifier(early_stopping=True).set_fit_request(
+        sample_weight=True
+    )
+    pipe = make_pipeline(StandardScaler().set_fit_request(sample_weight=True), hist)
+
+    # With metadata_request_policy="class-level" the validation set should be discovered
+    # but fitting on them should raise:
+    assert all(
+        get_routing_for_object(pipe)
+        ._route_mappings["histgradientboostingclassifier"]
+        .router.fit.requests[k]
+        is None
+        for k in ("X_val", "y_val", "sample_weight_val")
+    )
+    error_message = "[X_val, y_val, sample_weight_val] are passed but are not"
+    with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+        pipe.fit(
+            X_train,
+            y_train,
+            sample_weight=sample_weight_train,
+            X_val=X_val,
+            y_val=y_val,
+            sample_weight_val=sample_weight_val,
+        )
+
+    # With metadata_request_policy="auto" the validation set should be requested and
+    # fitting on them should work:
+    with config_context(metadata_request_policy="auto"):
+        hist = HistGradientBoostingClassifier(early_stopping=True).set_fit_request(
+            sample_weight=True
+        )
+        pipe = make_pipeline(StandardScaler().set_fit_request(sample_weight=True), hist)
+        assert all(
+            get_routing_for_object(pipe)
+            ._route_mappings["histgradientboostingclassifier"]
+            .router.fit.requests[k]
+            is True
+            for k in ("X_val", "y_val", "sample_weight_val")
+        )
+        pipe.fit(
+            X_train,
+            y_train,
+            sample_weight=sample_weight_train,
+            X_val=X_val,
+            y_val=y_val,
+            sample_weight_val=sample_weight_val,
+        )
 
 
 # end of transform_input tests

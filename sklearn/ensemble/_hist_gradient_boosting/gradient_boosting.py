@@ -1355,6 +1355,22 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         check_is_fitted(self)
         return len(self._predictors)
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRequest
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
+            routing information.
+        """
+        requests = super().get_metadata_routing()
+        requests.fit.add_auto_request("X_val", "y_val", "sample_weight_val")
+        return requests
+
 
 class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     """Histogram-based Gradient Boosting Regression Tree.

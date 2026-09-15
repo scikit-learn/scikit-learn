@@ -14,6 +14,7 @@ from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose, assert_array_equal
 
 import sklearn.ensemble._hist_gradient_boosting.gradient_boosting as hgb_module
+from sklearn import config_context
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -41,6 +42,7 @@ from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
 from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.metadata_routing import get_routing_for_object
 
 n_threads = _openmp_effective_n_threads()
 
@@ -1545,6 +1547,20 @@ def test_X_val_raises_with_early_stopping_false():
     ):
         HistGradientBoostingRegressor(early_stopping=False).fit(
             X, y, X_val=X_val, y_val=y_val
+        )
+
+
+@pytest.mark.parametrize(
+    "HistGradientBoosting",
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
+)
+def test_X_val_auto_request_hgb(HistGradientBoosting):
+    """Test that HGB* correctly sets auto-requests on the validation set."""
+    with config_context(metadata_request_policy="auto"):
+        hist = HistGradientBoosting()
+        assert all(
+            get_routing_for_object(hist).fit.requests[k] is True
+            for k in ("X_val", "y_val", "sample_weight_val")
         )
 
 
