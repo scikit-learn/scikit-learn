@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: cimg/python:3.11
+      - image: cimg/python:3.12
     steps:
       - checkout
       - run:
@@ -39,9 +39,9 @@ jobs:
       # scikit-learn/scikit-learn cache is not used by PRs from <user>/scikit-learn.
       - restore_cache:
           keys:
-            - v1-doc-min-deps-datasets-{{ .Branch }}
-            - v1-doc-min-deps-datasets-main
-            - v1-doc-min-deps-datasets
+            - v2-doc-min-deps-datasets-{{ .Branch }}
+            - v2-doc-min-deps-datasets-main
+            - v2-doc-min-deps-datasets
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
@@ -53,7 +53,7 @@ jobs:
             - ~/.ccache
             - ~/.cache/pip
       - save_cache:
-          key: v1-doc-min-deps-datasets-{{ .Branch }}
+          key: v2-doc-min-deps-datasets-{{ .Branch }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
