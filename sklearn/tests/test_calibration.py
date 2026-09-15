@@ -592,6 +592,7 @@ def test_get_calibration_logits_prefers_predict_proba(data):
     """When both responses exist, calibration inputs come from predict_proba."""
     X, y = data
     clf = LogisticRegression().fit(X, y)
+    # To be 100% sure that both responses exist:
     assert hasattr(clf, "predict_proba")
     assert hasattr(clf, "decision_function")
 
