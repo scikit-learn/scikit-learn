@@ -127,8 +127,10 @@ def _ensure_logits(predictions, response_method_name, method):
             return xp.reshape(predictions[:, 1], (-1, 1))
         return predictions
 
-    eps = xp.asarray(xp.finfo(predictions.dtype).eps, dtype=predictions.dtype, device=device_)
-    predictions = xp.clip(predictions, eps_, one - eps_)
+    eps = xp.asarray(
+        xp.finfo(predictions.dtype).eps, dtype=predictions.dtype, device=device_
+    )
+    predictions = xp.clip(predictions, eps, one - eps)
 
     if method == "sigmoid":
         if predictions.ndim == 1:
@@ -392,8 +394,9 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     Examples
     --------
-    Without calibration, the GaussianNB classifier is over-confident, i.e. `predict_proba` is closer to the 0 or 1 as is should be, in
-    particular on its training set:
+    Without calibration, the GaussianNB classifier is over-confident
+    (predicted probabilities closer to 0 or 1 than they should be),
+    in particular on its training set:
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.naive_bayes import GaussianNB

@@ -201,8 +201,8 @@ compute_metrics(clf_list, X_train, y_train, X_test, y_test)
 # sigmoid calibration method because this method applies a strictly monotonic
 # transformation on the probabilities predicted by the base estimator. However,
 # the isotonic calibration method can degrade the ROC AUC score a bit because
-# it is not a **strictly** monotonic transformation, only a monotonic one (constant piecewise
-# transformation).
+# it is not a **strictly** monotonic transformation, only a monotonic one
+# (constant piecewise transformation).
 #
 # Post-hoc calibration can significantly alter metrics computed on discrete
 # predictions such as precision, recall and F1 score. This is because
