@@ -5,4 +5,4 @@
   metadata requests to set automatically via the ``add_auto_request`` method, which
   complements the existing class-level defaults set through ``__metadata_request__*``
   attributes. Refer to :ref:`metadata_routing_auto_request` for more details.
-  By `Adrin Jalali`_.
+  By `Adrin Jalali`_ and :user:`Stefanie Senger <StefanieSenger>`.
