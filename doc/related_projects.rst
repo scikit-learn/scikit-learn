@@ -211,6 +211,11 @@ Note scikit-learn own modern gradient boosting estimators
 - `gplearn <https://github.com/trevorstephens/gplearn>`_ Genetic Programming
   for symbolic regression tasks.
 
+- `neural-trees <https://github.com/cgrtml/neural-trees>`_ Differentiable and
+  constructive classifiers with a PyTorch backend: soft decision trees,
+  omnivariate trees, hierarchical mixtures of experts and a grow-and-prune
+  network, together with the combined 5x2cv F test for comparing classifiers.
+
 - `scikit-multilearn <https://github.com/scikit-multilearn/scikit-multilearn>`_
   Multi-label classification with focus on label space manipulation.
 
