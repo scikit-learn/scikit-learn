@@ -1034,8 +1034,7 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_requires_y_none": "Doesn't fail gracefully",
     },
     HistGradientBoostingClassifier: {
-        # TODO: use min_samples_leaf=1 and exclude zero-weight samples in tree grower
-        # see issue #34745 and https://github.com/ogrisel/scikit-learn/pull/27
+        # TODO: replace by a statistical test, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
@@ -1044,8 +1043,7 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         ),
     },
     HistGradientBoostingRegressor: {
-        # TODO: use min_samples_leaf=1 and exclude zero-weight samples in tree grower
-        # see issue #34745 and https://github.com/ogrisel/scikit-learn/pull/27
+        # TODO: replace by a statistical test, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),

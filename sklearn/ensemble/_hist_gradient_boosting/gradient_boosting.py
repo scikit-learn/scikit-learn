@@ -1423,9 +1423,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
 
-        This constraint is applied to the unweighted sample count, not the
-        sum of sample weights. Therefore the repeated/weighted equivalence
-        described in :term:`sample_weight` only holds when
+        This constraint is applied to the sample count (number of data rows),
+        not the sum of sample weights. Therefore the repeated/weighted
+        equivalence described in :term:`sample_weight` only holds when
         ``min_samples_leaf=1``.
     l2_regularization : float, default=0
         The L2 regularization parameter penalizing leaves with small hessians.
@@ -1820,9 +1820,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
 
-        This constraint is applied to the unweighted sample count, not the
-        sum of sample weights. Therefore the repeated/weighted equivalence
-        described in :term:`sample_weight` only holds when
+        This constraint is applied to the sample count (number of data rows),
+        not the sum of sample weights. Therefore the repeated/weighted
+        equivalence described in :term:`sample_weight` only holds when
         ``min_samples_leaf=1``.
     l2_regularization : float, default=0
         The L2 regularization parameter penalizing leaves with small hessians.
