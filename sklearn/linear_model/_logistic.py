@@ -59,7 +59,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._indexing import _array_indexing
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms, softmax
-from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict, _is_gil_enabled
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -2352,9 +2352,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         path_func = delayed(_log_reg_scoring_path)
 
-        # The SAG solver releases the GIL so it's more efficient to use
-        # threads for this solver.
-        if self.solver in ["sag", "saga"]:
+        # If this Python has a GIL, the SAG solver releases the GIL so it's
+        # more efficient to use threads. If there is no GIL, threads are more
+        # efficient in general.
+        if not _is_gil_enabled() or self.solver in ["sag", "saga"]:
             prefer = "threads"
         else:
             prefer = "processes"
