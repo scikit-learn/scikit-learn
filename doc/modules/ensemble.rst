@@ -251,6 +251,10 @@ multiplying the gradients (and the hessians) by the sample weights. Note that
 the binning stage (specifically the quantiles computation) does not take the
 weights into account.
 
+``min_samples_leaf`` is applied to the sample count (number of data rows)
+so the repeated/weighted equivalence described in :term:`sample_weight`
+only holds when ``min_samples_leaf=1``.
+
 .. _categorical_support_gbdt:
 
 Categorical Features Support
