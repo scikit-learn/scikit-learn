@@ -158,7 +158,6 @@ def _ensure_logits(predictions, response_method_name, method):
         )
 
 
-
 def _get_calibration_logits(estimator, X, *, method, pos_label=None):
     """Get classifier outputs and convert them to calibration logits."""
     predictions, _, response_method_used = _get_response_values(

@@ -548,7 +548,7 @@ def test_ensure_logits_predict_proba(method, predictions):
             expected = predictions[:, 1].reshape(-1, 1)
         else:
             expected = predictions
-    elif method=="sigmoid":
+    elif method == "sigmoid":
         if predictions.ndim == 1:
             expected = LogitLink().link(proba_clipped).reshape(-1, 1)
         elif predictions.shape[1] == 2:
@@ -557,9 +557,7 @@ def test_ensure_logits_predict_proba(method, predictions):
             sigmoid_link = LogitLink()
             expected = np.zeros_like(predictions)
             for class_idx in range(predictions.shape[1]):
-                expected[:, class_idx] = sigmoid_link.link(
-                    proba_clipped[:, class_idx]
-                )
+                expected[:, class_idx] = sigmoid_link.link(proba_clipped[:, class_idx])
     else:  # temperature
         if predictions.ndim == 1:
             proba_2d = np.column_stack([1 - proba_clipped, proba_clipped])
