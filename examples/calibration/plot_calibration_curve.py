@@ -142,12 +142,12 @@ plt.show()
 #
 # Post-hoc calibration of the predicted probabilities of
 # :class:`~sklearn.naive_bayes.GaussianNB` with :ref:`isotonic` or
-# :ref:`Sigmoid regression <sigmoid_regressor>` can fix this issue as can be
+# :ref:`Sigmoid regression <sigmoid_regressor> fix this issue to a good extent as can be
 # seen from the nearly diagonal calibration curve. Neither method is perfect
 # because of the limited amount of training and calibration data (1,000 samples
 # for both).
 #
-# Below we will make a quantitative analysis considering several classification
+# Below we make a quantitative analysis considering several classification
 # metrics: :ref:`brier_score_loss`, :ref:`log_loss`, :ref:`precision, recall,
 # F1 score <precision_recall_f_measure_metrics>` and :ref:`ROC AUC
 # <roc_metrics>`.
@@ -202,7 +202,7 @@ compute_metrics(clf_list, X_train, y_train, X_test, y_test)
 # sigmoid calibration method because this method applies a strictly monotonic
 # transformation on the probabilities predicted by the base estimator. However,
 # the isotonic calibration method can degrade the ROC AUC score a bit because
-# it is not a **strictly** monotonic transformation (constant piecewise
+# it is not a **strictly** monotonic transformation, only a monotonic one (constant piecewise
 # transformation).
 #
 # Post-hoc calibration can significantly alter metrics computed on discrete

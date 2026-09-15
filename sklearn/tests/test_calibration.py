@@ -282,15 +282,14 @@ def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
     cal_clf.fit(X_train, y_train)
     y_pred_cal = cal_clf.predict_proba(X_test)
-    assert_allclose(np.sum(y_pred_cal, axis=1), np.ones(len(X_test)))
+    assert_allclose(np.sum(y_pred_cal, axis=1), 1)
 
     # TODO: once we have a calibration loss, use it instead of the
     # brier score to check recalibration.
     # Check that Brier loss of calibrated classifier is smaller than
     # loss obtained on the original classifier.
-    labels = np.arange(n_classes)
-    bs_uncal = brier_score_loss(y_test, y_pred_uncal, labels=labels)
-    bs_cal = brier_score_loss(y_test, y_pred_cal, labels=labels)
+    bs_uncal = brier_score_loss(y_test, y_pred_uncal, labels=cal_clf.classes_)
+    bs_cal = brier_score_loss(y_test, y_pred_cal, labels=cal_clf.classes_)
     assert bs_cal < bs_uncal
 
 

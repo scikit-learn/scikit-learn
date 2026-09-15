@@ -27,19 +27,19 @@ class of an instance (red: class 1, green: class 2, blue: class 3).
 # calibration set and a test set.
 #
 # We use a large test set to get reliable estimates of the Brier score and
-# log-loss values.
+# log loss values.
 #
 # To simplify the example, we use a fixed calibration set that is as large as
 # the training set. In practice, this would limit the amount of data available
-# for training the classifier and instead we would be better off using a
+# for training the classifier and instead we would be better off using an
 # ensemble of calibrated classifiers using the internal cross-validation of
 # :class:`~sklearn.calibration.CalibratedClassifierCV`.
 #
-# Similarly, we use a large test set to get reliable estimates of the log-loss
+# Similarly, we use a large test set to get reliable estimates of the log loss
 # and Brier score values. In practice, we would be better off using an outer
 # cross-validation loop with the majority of the data used for training and
 # calibration to get better models, and the rest for evaluation, at the cost of
-# larger uncertainty in the scores.
+# larger uncertainty in the cross-validation scores.
 
 import numpy as np
 
@@ -210,8 +210,8 @@ plot_simplex(
 #
 # In this example, the recalibration yields an overall better model. We can show
 # this objectively by comparing the :ref:`log loss <log_loss>` (lower is better)
-# of the uncalibrated and calibrated classifiers on the predictions of the test
-# data points. Note that an alternative would have been to increase the number
+# of the uncalibrated and re-calibrated classifiers on the predictions of the test
+# set. Note that an alternative would have been to increase the number
 # of base estimators (trees) of the
 # :class:`~sklearn.ensemble.RandomForestClassifier` which could have resulted in
 # a similar decrease in :ref:`log loss <log_loss>`.
@@ -242,7 +242,7 @@ print(f" - calibrated classifier: {cal_loss:.3f}")
 # According to the Brier score, the calibrated classifier is also slightly
 # better than the original model.
 #
-# Be aware that an improvement in log-loss or Brier score on a test set is not
+# Be aware that an improvement in log loss or Brier score on a test set is not
 # always guaranteed since the calibration set is finite and sometimes the base
 # classifier is already well calibrated.
 #
@@ -314,7 +314,7 @@ plot_calibrator_map(cal_clf)
 
 # %%
 #
-# Let's now do the same for various classifiers with different mis-calibration
+# Let's now repeat the above for various classifiers with different mis-calibration
 # profiles and the three calibration methods available in
 # `CalibratedClassifierCV`, namely, "sigmoid", "isotonic", and "temperature".
 # Sigmoid and isotonic methods are implemented via an One-vs-Rest reduction to
@@ -393,8 +393,8 @@ for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
 #
 # We observe the following:
 #
-# - Some estimators such as highly regularized polynomial classifiers and
-#   shallow tree-based models tend to be under-confident by default and each
+# - Some estimators such as the highly regularized polynomial classifier and
+#   the shallow tree-based model tend to be under-confident by default and each
 #   kind of post-hoc calibration moves the predictions towards the edges or the
 #   corners of the simplex.
 #

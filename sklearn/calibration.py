@@ -79,7 +79,7 @@ def _ensure_logits(predictions, response_method_name, method):
 
     When the response method is ``predict_proba``:
 
-    - For ``method='sigmoid'``, Bernoulli logits are computed per class
+    - For ``method='sigmoid'``, logits are computed per class
       (OvR convention for multiclass).
     - For ``method='isotonic'``, probabilities are passed through (with
       reshaping / positive-class selection in the binary case).
@@ -119,7 +119,7 @@ def _ensure_logits(predictions, response_method_name, method):
             return xp.reshape(predictions, (-1, 1))
         return predictions
 
-    if method == "isotonic":
+    elif method == "isotonic":
         # Keep probabilities on the probability scale for isotonic regression.
         if predictions.ndim == 1:
             return xp.reshape(predictions, (-1, 1))
@@ -127,8 +127,7 @@ def _ensure_logits(predictions, response_method_name, method):
             return xp.reshape(predictions[:, 1], (-1, 1))
         return predictions
 
-    eps = xp.finfo(predictions.dtype).eps
-    eps_ = xp.asarray(eps, dtype=predictions.dtype, device=device_)
+    eps = xp.asarray(xp.finfo(predictions.dtype).eps, dtype=predictions.dtype, device=device_)
     predictions = xp.clip(predictions, eps_, one - eps_)
 
     if method == "sigmoid":
@@ -150,10 +149,11 @@ def _ensure_logits(predictions, response_method_name, method):
             predictions = xp.concat([one - predictions, predictions], axis=1)
         return MultinomialLogit().link(predictions)
 
-    raise ValueError(
-        f"Unknown calibration method: {method}. "
-        "Expected 'sigmoid', 'isotonic', or 'temperature'."
-    )
+    else:
+        raise ValueError(
+            f"Unknown calibration method: {method}. "
+            "Expected 'sigmoid', 'isotonic', or 'temperature'."
+        )
 
 
 def _to_calibration_logits(predictions, *, response_method_name, method, classes=None):
@@ -256,7 +256,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         that optimizes the log loss.
 
         For all methods, ``predict_proba`` outputs are preferred when available.
-        Sigmoid converts them to Bernoulli logits per class. Isotonic keeps them
+        Sigmoid converts them to logits per class. Isotonic keeps them
         as probabilities. Temperature scaling converts them to symmetric
         multinomial logits. When ``predict_proba`` is unavailable
         (e.g. :class:`~sklearn.svm.LinearSVC`), ``decision_function``
@@ -392,7 +392,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     Examples
     --------
-    Without calibration, the GaussianNB classifier is over-confident, in
+    Without calibration, the GaussianNB classifier is over-confident, i.e. `predict_proba` is closer to the 0 or 1 as is should be, in
     particular on its training set:
 
     >>> from sklearn.datasets import make_classification
@@ -414,8 +414,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     >>> calibrated_clf.predict_proba(X)[:, 1].max()
     np.float64(0.989...)
 
-    We can also calibrate a pre-fitted classifier. In this case, we need a held
-    out calibration set instead of relying on internal cross-validation:
+    We can also calibrate a pre-fitted classifier. In this case, we need a held-out
+    calibration set instead of relying on internal cross-validation:
 
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = make_classification(n_samples=100, n_features=2,
