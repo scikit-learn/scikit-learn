@@ -2236,6 +2236,88 @@ def test_dtype_match_cholesky():
 
 
 @pytest.mark.parametrize(
+    "dtype,offset,rtol,atol",
+    [
+        (np.float32, 0.0, 1e-5, 1e-6),
+        (np.float32, 30.0, 1e-5, 1e-6),
+        (np.float32, 1e3, 1e-3, 1e-4),
+        # offset=1e6 pushes float32's own representation to its limit
+        # (ULP there is ~0.06, same order as the signal's spread), so a
+        # much looser tolerance is expected regardless of the cancellation
+        # guard below -- Cholesky and SVD both remain "correct" given the
+        # already-degraded input, they just aren't bit-compatible. The
+        # intercept in particular inherits the ~1e6 offset's own scale.
+        (np.float32, 1e6, 1e-1, 1.0),
+        (np.float64, 0.0, 1e-8, 1e-9),
+        (np.float64, 30.0, 1e-8, 1e-9),
+        (np.float64, 1e3, 1e-8, 1e-9),
+        (np.float64, 1e6, 1e-8, 1e-9),
+    ],
+    ids=[
+        "float32-none",
+        "float32-small",
+        "float32-large",
+        "float32-huge",
+        "float64-none",
+        "float64-small",
+        "float64-large",
+        "float64-huge",
+    ],
+)
+def test_ridge_cholesky_centering_cancellation_fallback(dtype, offset, rtol, atol):
+    # Non-regression test for the algebraic centering trick used by
+    # `_solve_cholesky` when `fit_intercept=True`:
+    #   Xc.T @ Xc = X.T @ X - n_samples * outer(X_offset, X_offset)
+    # For large `X_offset` relative to the spread of X (un-centered
+    # features far from zero), this correction catastrophically cancels
+    # and `_solve_cholesky` must fall back to explicitly centering X
+    # instead. Check that `solver="cholesky"` keeps agreeing with
+    # `solver="svd"` (which always centers explicitly), and that it keeps
+    # reporting `solver_="cholesky"` -- i.e. the fallback stays local to
+    # the Gram matrix computation instead of switching to a different
+    # algorithm.
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 100, 5
+    X0 = rng.normal(size=(n_samples, n_features))
+    coef = rng.normal(size=n_features)
+    y = X0.dot(coef) + 0.01 * rng.normal(size=n_samples)
+    X = (X0 + offset).astype(dtype)
+    y = y.astype(dtype)
+
+    ridge_cholesky = Ridge(alpha=1.0, solver="cholesky").fit(X, y)
+    ridge_svd = Ridge(alpha=1.0, solver="svd").fit(X, y)
+
+    assert ridge_cholesky.solver_ == "cholesky"
+    assert_allclose(ridge_cholesky.coef_, ridge_svd.coef_, rtol=rtol, atol=atol)
+    assert_allclose(
+        ridge_cholesky.intercept_, ridge_svd.intercept_, rtol=rtol, atol=atol
+    )
+
+
+def test_cholesky_centering_cancellation_check():
+    # Unit test for `_cholesky_centering_would_cancel`: a large offset
+    # relative to the spread of X must be flagged, a small one must not.
+    from sklearn.linear_model._ridge import _cholesky_centering_would_cancel
+
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 200, 4
+
+    def gram_and_correction(offset, dtype):
+        X = (rng.normal(size=(n_samples, n_features)) + offset).astype(dtype)
+        X_offset = X.mean(axis=0)
+        A = X.T @ X
+        correction = n_samples * np.outer(X_offset, X_offset)
+        A -= correction
+        return np.diag(A), np.diag(correction)
+
+    A_diag, correction_diag = gram_and_correction(offset=1.0, dtype=np.float64)
+    assert not _cholesky_centering_would_cancel(A_diag, correction_diag, np.float64)
+
+    A_diag, correction_diag = gram_and_correction(offset=1e9, dtype=np.float64)
+    assert _cholesky_centering_would_cancel(A_diag, correction_diag, np.float64)
+
+
+@pytest.mark.parametrize(
     "solver", ["svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"]
 )
 @pytest.mark.parametrize("seed", range(1))
