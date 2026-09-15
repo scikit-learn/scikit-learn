@@ -583,6 +583,17 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
     GraphicalLasso: {"check_array_api_input": dict(max_iter=5, alpha=1.0)},
+    # min_samples_leaf uses unweighted counts; zero-weight samples are excluded
+    # from the grower partition. A little L2 keeps the classifier's raw
+    # decision values away from the float32 rounding limit of the check.
+    HistGradientBoostingClassifier: {
+        "check_sample_weight_equivalence_on_dense_data": dict(
+            min_samples_leaf=1, l2_regularization=1e-2
+        ),
+    },
+    HistGradientBoostingRegressor: {
+        "check_sample_weight_equivalence_on_dense_data": dict(min_samples_leaf=1),
+    },
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
     KBinsDiscretizer: {
@@ -1032,24 +1043,6 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_fit2d_1feature": "FIXME",
         "check_supervised_y_2d": "DataConversionWarning not caught",
         "check_requires_y_none": "Doesn't fail gracefully",
-    },
-    HistGradientBoostingClassifier: {
-        # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-    },
-    HistGradientBoostingRegressor: {
-        # TODO: replace by a statistical test, see meta-issue #16298
-        "check_sample_weight_equivalence_on_dense_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
-        "check_sample_weight_equivalence_on_sparse_data": (
-            "sample_weight is not equivalent to removing/repeating samples."
-        ),
     },
     IsolationForest: {
         # TODO: replace by a statistical test, see meta-issue #16298
