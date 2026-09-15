@@ -396,7 +396,12 @@ def _write_estimator_html(
             else:  # parallel
                 out.write('<div class="sk-parallel-item">')
                 # wrap element in a serial visualblock
-                serial_block = _VisualBlock("serial", [est], dash_wrapped=False)
+                dash_wrapped = (
+                    hasattr(est, "steps")
+                    and isinstance(name, str)
+                    and name.endswith(": Pipeline")
+                )
+                serial_block = _VisualBlock("serial", [est], dash_wrapped=dash_wrapped)
                 _write_estimator_html(
                     out,
                     serial_block,
