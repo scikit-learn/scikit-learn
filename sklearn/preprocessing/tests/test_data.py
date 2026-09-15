@@ -36,7 +36,11 @@ from sklearn.preprocessing import (
     robust_scale,
     scale,
 )
-from sklearn.preprocessing._data import BOUNDS_THRESHOLD, _handle_zeros_in_scale
+from sklearn.preprocessing._data import (
+    BOUNDS_THRESHOLD,
+    _handle_zeros_in_scale,
+    _sparse_column_quantile,
+)
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
 from sklearn.utils._array_api import (
@@ -1719,6 +1723,73 @@ def test_quantile_transformer_sparse_subsampling():
     qt = clone(qt).set_params(ignore_implicit_zeros=False)
     quantiles = qt.fit(X).quantiles_
     assert np.isclose(quantiles, 0).mean() > 0.9
+
+
+@pytest.mark.parametrize("zeros_fraction", [0.0, 0.1, 1.0, 5.0, 100.0])
+@pytest.mark.parametrize("with_nans", [False, True])
+def test_sparse_column_quantile(with_nans, zeros_fraction, global_random_seed):
+    # Check that `_sparse_column_quantile` matches `np.nanquantile`
+    rng = np.random.RandomState(global_random_seed)
+    n_nnz = rng.randint(10, 100)
+    n_zeros = round(n_nnz * zeros_fraction)
+    column_nnz_data = rng.uniform(low=-10, high=10, size=n_nnz)
+    if with_nans:
+        nan_mask = rng.uniform(size=n_nnz) < rng.uniform()
+        column_nnz_data[nan_mask] = np.nan
+
+    quantiles = np.array([0, 0.1, 0.25, 0.5, 0.75, 0.9, 1])
+
+    result = _sparse_column_quantile(column_nnz_data, n_zeros, quantiles)
+
+    dense_column = np.concatenate([column_nnz_data, np.zeros(n_zeros)])
+    expected = np.nanquantile(dense_column, quantiles)
+
+    assert_allclose(result, expected)
+
+
+def test_sparse_column_quantile_all_nan():
+    # all-NaN column (no zeros, no valid non-zero values): `nanquantile`
+    # returns NaN in this case, `_sparse_column_quantile` should match.
+    quantiles = np.array([0, 0.5, 1])
+    result = _sparse_column_quantile(
+        np.array([np.nan, np.nan]), n_zeros=0, quantiles=quantiles
+    )
+    assert np.isnan(result).all()
+
+
+@pytest.mark.parametrize(
+    "Estimator, kwargs",
+    [
+        (RobustScaler, {"with_centering": False}),
+        (QuantileTransformer, {"n_quantiles": 10}),
+    ],
+)
+def test_sparse_quantile_computation_does_not_materialize_column(
+    Estimator, kwargs, monkeypatch
+):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/34298
+    n_samples = 10**9
+    max_allowed_alloc_size = 1000
+
+    original_zeros = np.zeros
+
+    def guarded_zeros(shape, *args, **kwargs):
+        size = shape if isinstance(shape, int) else np.prod(shape)
+        assert size <= max_allowed_alloc_size, (
+            "a column was densified into a large array instead of computing "
+            "quantiles directly from its non-zero entries"
+        )
+        return original_zeros(shape, *args, **kwargs)
+
+    monkeypatch.setattr(np, "zeros", guarded_zeros)
+
+    data = np.array([1.0, 2.0, 3.0, 0.5, 5.0])
+    row = np.array([0, 1, 2, n_samples - 2, n_samples - 1], dtype=np.int64)
+    col = np.zeros(5, dtype=np.int64)
+    X = sparse.csc_array((data, (row, col)), shape=(n_samples, 1))
+
+    Estimator(**kwargs).fit(X)
 
 
 def test_robust_scaler_invalid_range():
