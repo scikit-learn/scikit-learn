@@ -2251,11 +2251,19 @@ def check_array_api_metric(
         numpy_as_array_works = False
 
     def _check_metric_matches(metric_a, metric_b):
-        assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
+        # Handle cases where there are multiple return values, e.g. roc_curve:
+        if isinstance(metric_a, tuple):
+            for a, b in zip(metric_a, metric_b):
+                _check_metric_matches(a, b)
+        else:
+            assert_allclose(metric_a, metric_b, atol=_atol_for_type(dtype_name))
 
-    def _check_each_metric_matches(metric_a, metric_b):
-        for metric_a_val, metric_b_val in zip(metric_a, metric_b):
-            _check_metric_matches(metric_a_val, metric_b_val)
+    def _move_metric_to_xp(metric):
+        if isinstance(metric, tuple):
+            return tuple(_move_metric_to_xp(value) for value in metric)
+        if np.isscalar(metric):
+            return xp.asarray(metric, device=device)
+        return move_to(metric, xp=xp, device=device)
 
     if numpy_as_array_works:
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
@@ -2268,14 +2276,19 @@ def check_array_api_metric(
         metric_xp_mixed_2 = metric(a_xp, b_np, **metric_kwargs)
         _check_metric_matches(metric_xp_mixed_2, metric_np)
 
+    metric_xp_reference = _move_metric_to_xp(metric_np)
+
     with config_context(array_api_dispatch=True):
         metric_xp = metric(a_xp, b_xp, **metric_kwargs)
 
-        # Handle cases where there are multiple return values, e.g. roc_curve:
-        if isinstance(metric_xp, tuple):
-            _check_each_metric_matches(metric_xp, metric_np)
-        else:
-            _check_metric_matches(metric_xp, metric_np)
+        if np.isscalar(metric_np):
+            if np.isscalar(metric_xp):
+                _check_metric_matches(metric_xp, metric_np)
+                return
+            else:
+                assert metric_xp.ndim == 0
+
+        _check_metric_matches(metric_xp, metric_xp_reference)
 
 
 def check_array_api_binary_classification_metric(
