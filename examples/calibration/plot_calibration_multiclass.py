@@ -243,8 +243,7 @@ print(f" - calibrated classifier: {cal_loss:.3f}")
 # better than the original model.
 #
 # Be aware that an improvement in log loss or Brier score on a test set is not
-# always guaranteed since the calibration set is finite and sometimes the base
-# classifier is already well calibrated.
+# always guaranteed.
 #
 # Finally, we generate a grid of uncalibrated probabilities over the
 # 2-simplex, compute the corresponding calibrated probabilities and plot arrows

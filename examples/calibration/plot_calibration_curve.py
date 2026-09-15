@@ -131,13 +131,13 @@ plt.show()
 # %%
 #
 # The logistic regression classifier is well calibrated by default, as
-# indicated by the diagonal calibration curve. This is expected since we
+# indicated by the diagonal calibration curve. This is not surprising since we
 # adjusted the regularization parameter to minimize the :ref:`log_loss` via
 # internal cross-validation.
 #
 # On the contrary :class:`~sklearn.naive_bayes.GaussianNB` is poorly calibrated
 # by default because of the redundant features which violate the assumption of
-# feature-independence and result in an **overly confident** classifier, which
+# feature-independence. It results in an **overly confident** classifier, which
 # is indicated by the typical transposed-sigmoid calibration curve.
 #
 # Post-hoc calibration of the predicted probabilities of
@@ -193,10 +193,9 @@ def compute_metrics(clf_list, X_train, y_train, X_test, y_test):
 compute_metrics(clf_list, X_train, y_train, X_test, y_test)
 # %%
 #
-# Post-hoc calibration improves the :ref:`brier_score_loss` (a metric composed
-# of calibration term and refinement term) and :ref:`log_loss` as expected
-# since both metrics are sensitive to the calibration of the predicted
-# probabilities.
+# Post-hoc calibration improves the :ref:`brier_score_loss` and :ref:`log_loss`.
+# Both metrics can be decomposed into decomposed into calibration and refinement terms
+# and are thus sensitive to the calibration of the predicted probabilities.
 #
 # The ROC AUC score is a pure ranking metric: it is not changed by the
 # sigmoid calibration method because this method applies a strictly monotonic
