@@ -469,9 +469,14 @@ print_routing(meta_est)
 # 1. Class-level request defaults using `__metadata_request__{method}` class attributes,
 #    which apply to all instances of a class, and can even remove a metadata from the
 #    metadata routing machinery if necessary.
-# 2. Auto-requests, which apply at instance-level only if
-#    `set_config(metadata_request_policy="auto")` is set by the user. Developers can add
-#    these via the `add_auto_request` method.
+# 2. Auto-requests, which apply at instance level only if
+#    `set_config(metadata_request_policy="auto")` is set by the user.
+#    Developers can add these via the
+#    :func:`~sklearn.utils.metadata_routing.MethodMetadataRequest.add_auto_request`
+#    method. Here by instance level we mean they are actualised inside
+#   `get_metadata_routing` which has access to the instance (`self`), and
+#   `add_auto_request` only adds the request depending on the value set for
+#   `metadata_request_policy`. Hencefor we refer to these as "auto-requests".
 #
 # Here is an example demonstrating both approaches on a :term:`consumer`:
 
@@ -512,13 +517,11 @@ clf = ClassifierWithRequestDefaults()
 print_routing(clf)
 
 # %%
-# And now with auto requests enabled, applying the instance-level requests:
+# And now with auto requests enabled:
 with config_context(metadata_request_policy="auto"):
     print_routing(clf)
 
-# %%
-# The instance-level auto-requests are set on top of the class-level requests (and can
-# override them).
+# %% Note that the auto-requests override class-level requests.
 
 # %%
 # The routing can still be modified by the user with `set_*_request` methods, which take
@@ -528,7 +531,7 @@ clf.set_fit_request(sample_weight=False)
 print_routing(clf)
 
 # %%
-# Instance-level requests can also be overridden:
+# Auto-requests can also be overridden:
 with config_context(metadata_request_policy="auto"):
     clf = ClassifierWithRequestDefaults()
     clf.set_predict_request(other_metadata=False)

@@ -181,7 +181,7 @@ def _auto_requests_enabled():
     enabled : bool
         Whether auto-requesting metadata is enabled.
     """
-    return get_config().get("metadata_request_policy", "class-level") == "auto"
+    return get_config().get("enable_metadata_auto_request", False)
 
 
 def _raise_for_params(params, owner, method, allow=None):
@@ -435,11 +435,10 @@ class MethodMetadataRequest:
         return self
 
     def add_auto_request(self, *params):
-        """Mark metadata to request when auto-request policy is enabled.
+        """Request metadata when auto-request policy is enabled.
 
-        This method is used by developers of scikit-learn compatible estimators. To
-        learn how to enable and use the auto-request policy refer to
-        :ref:`metadata_routing_auto_request`.
+        This method is used by estimator developers. To learn how to enable and use the
+        auto-request policy refer to :ref:`metadata_routing_auto_request`.
 
         Note that setting auto-requests on *composite* methods such as `fit_transform`
         or `fit_predict` will not have an effect. Call `add_auto_request` on the simple
@@ -1683,21 +1682,7 @@ class _MetadataRequester:
     ):
         """Get class level metadata request values.
 
-        This method serves two purposes:
-        During class creation via `__init_subclass__`, it determines what metadata
-        routing methods should be created. It does this by:
-        1. Checking method signatures for passable metadata.
-        2. Updating the metadata request info with the metadata request values set at
-        class level via the `__metadata_request__{method}` class attributes.
-
-        The collected information is used to create `set_{method}_request` methods
-        (e.g. `set_fit_request`) that allow runtime configuration of metadata routing.
-
-        For example, if a method's signature includes `sample_weight`, this method will:
-        - During class creation: Create a `set_{method}_request` method to configure
-          how `sample_weight` should be routed
-        - Right after initialization: Provide the default routing configuration for
-          `sample_weight` based on class attributes and method signatures
+        Potential metadata for each method are defined in two steps:
 
         Parameters
         ----------
@@ -1719,6 +1704,10 @@ class _MetadataRequester:
 
         Notes
         -----
+        This method first checks the `method`'s signature for passable metadata and then
+        updates these with the metadata request values set at class level via the
+        ``__metadata_request__{method}`` class attributes.
+
         This method (being a class-method), does not take request values set at
         instance level into account.
         """
