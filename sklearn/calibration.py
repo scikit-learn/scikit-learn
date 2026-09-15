@@ -158,30 +158,6 @@ def _ensure_logits(predictions, response_method_name, method):
         )
 
 
-def _to_calibration_logits(predictions, *, response_method_name, method, classes=None):
-    """Convert precomputed classifier outputs to calibration logits.
-
-    This helper is used when predictions are obtained outside of
-    :func:`~sklearn.utils._response._get_response_values`, for instance via
-    :func:`~sklearn.model_selection.cross_val_predict`.
-    """
-    if (
-        response_method_name == "predict_proba"
-        and classes is not None
-        and classes.shape[0] == 2
-    ):
-        predictions = _process_predict_proba(
-            y_pred=predictions,
-            target_type="binary",
-            classes=classes,
-            pos_label=classes[1],
-        )
-    return _ensure_logits(
-        predictions,
-        response_method_name=response_method_name,
-        method=method,
-    )
-
 
 def _get_calibration_logits(estimator, X, *, method, pos_label=None):
     """Get classifier outputs and convert them to calibration logits."""
@@ -610,11 +586,22 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 n_jobs=self.n_jobs,
                 params=routed_params.estimator.fit,
             )
-            predictions = _to_calibration_logits(
+            classes = self.classes_
+            if (
+                method_name == "predict_proba"
+                and classes is not None
+                and classes.shape[0] == 2
+            ):
+                predictions = _process_predict_proba(
+                    y_pred=predictions,
+                    target_type="binary",
+                    classes=classes,
+                    pos_label=classes[1],
+                )
+            predictions = _ensure_logits(
                 predictions,
                 response_method_name=method_name,
                 method=self.method,
-                classes=self.classes_,
             )
 
             if sample_weight is not None:
