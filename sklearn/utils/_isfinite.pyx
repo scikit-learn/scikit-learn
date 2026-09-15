@@ -1,8 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from libc.math cimport isnan, isinf
+from libc.math cimport isinf
 from cython cimport floating
+
+from sklearn.utils._typedefs cimport inlinable_isnan
 
 
 cpdef enum FiniteStatus:
@@ -44,7 +46,7 @@ cdef inline FiniteStatus _isfinite_disable_nan(floating* a_ptr,
     cdef floating v
     for i in range(length):
         v = a_ptr[i]
-        if isnan(v):
+        if inlinable_isnan(v):
             return FiniteStatus.has_nan
         elif isinf(v):
             return FiniteStatus.has_infinite
