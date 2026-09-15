@@ -1,0 +1,11 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now pick a more sensible
+  number of threads to use during `fit`, based on the size of the data and
+  on the detected OpenMP setup, instead of always using every available
+  thread, avoiding thread-management overhead that dominates the actual
+  work on small to medium datasets. This can lead to 2-10x speed-ups, most
+  noticeably when the number of threads is left unconstrained (e.g. no
+  `OMP_NUM_THREADS` or similar limit set), or on machines where idle
+  OpenMP threads sleep rather than spin, which is the default for most
+  conda-forge builds on hybrid CPUs (laptops).
+  By :user:`Arthur Lacote <cakedev0>`.
