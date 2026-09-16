@@ -181,7 +181,7 @@ def _auto_requests_enabled():
     enabled : bool
         Whether auto-requesting metadata is enabled.
     """
-    return get_config().get("enable_metadata_auto_request", False)
+    return get_config().get("enable_metadata_auto_requests", False)
 
 
 def _raise_for_params(params, owner, method, allow=None):
@@ -435,7 +435,7 @@ class MethodMetadataRequest:
         return self
 
     def add_auto_request(self, *params):
-        """Request metadata when auto-request policy is enabled.
+        """Request metadata when auto-requests are enabled.
 
         This method is used by estimator developers. To learn how to enable and use the
         auto-request policy refer to :ref:`metadata_routing_auto_request`.
@@ -1682,7 +1682,11 @@ class _MetadataRequester:
     ):
         """Get class level metadata request values.
 
-        Potential metadata for each method are defined in two steps:
+        Potential metadata per method is discovered in two steps:
+        1. Creating metadata requests by checking method signatures for passable
+        metadata.
+        2. Overriding metadata requests with the metadata request values set at
+        class level via the `__metadata_request__{method}` class attributes.
 
         Parameters
         ----------
@@ -1701,12 +1705,6 @@ class _MetadataRequester:
         -------
         requests : dict
             A dictionary of metadata request values.
-
-        Notes
-        -----
-        This method first checks the `method`'s signature for passable metadata and then
-        updates these with the metadata request values set at class level via the
-        ``__metadata_request__{method}`` class attributes.
 
         This method (being a class-method), does not take request values set at
         instance level into account.

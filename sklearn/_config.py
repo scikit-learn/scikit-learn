@@ -19,7 +19,7 @@ _global_config = {
     "array_api_dispatch": False,
     "transform_output": "default",
     "enable_metadata_routing": False,
-    "metadata_request_policy": "class-level",
+    "enable_metadata_auto_requests": False,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
 }
@@ -72,7 +72,7 @@ def set_config(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
-    enable_metadata_auto_request=None,
+    enable_metadata_auto_requests=None,
     skip_parameter_validation=None,
     sparse_interface=None,
 ):
@@ -186,7 +186,7 @@ def set_config(
 
         .. versionadded:: 1.3
 
-    enable_metadata_auto_request : bool, default=None
+    enable_metadata_auto_requests : bool, default=None
         Configure the auto metadata request policy.
 
         Consumer objects, i.e. estimators, splitters, and scorers, can automatically
@@ -196,7 +196,7 @@ def set_config(
         config.
 
         - `False`: auto-requests are not enabled
-        - `True`: Metadata are requested per each estimtor's internal policy
+        - `True`: Metadata are requested per each consumer's internal policy
         - `None`: configuration is unchanged
 
         Global default: `False`.
@@ -260,8 +260,8 @@ def set_config(
         local_config["transform_output"] = transform_output
     if enable_metadata_routing is not None:
         local_config["enable_metadata_routing"] = enable_metadata_routing
-    if enable_metadata_auto_request is not None:
-        local_config["enable_metadata_auto_request"] = enable_metadata_auto_request
+    if enable_metadata_auto_requests is not None:
+        local_config["enable_metadata_auto_requests"] = enable_metadata_auto_requests
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
     if sparse_interface is not None:
@@ -280,7 +280,7 @@ def config_context(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
-    enable_metadata_auto_request=None,
+    enable_metadata_auto_requests=None,
     skip_parameter_validation=None,
     sparse_interface=None,
 ):
@@ -389,7 +389,7 @@ def config_context(
 
         .. versionadded:: 1.3
 
-    enable_metadata_auto_request : bool, default=None
+    enable_metadata_auto_requests : bool, default=None
         Configure the auto metadata request policy.
 
         Consumer objects, i.e. estimators, splitters, and scorers, can automatically
@@ -399,7 +399,7 @@ def config_context(
         config.
 
         - `False`: auto-requests are not enabled
-        - `True`: Metadata are requested per each estimtor's internal policy
+        - `True`: Metadata are requested per each consumer's internal policy
         - `None`: configuration is unchanged
 
         Global default: `False`.
@@ -468,7 +468,7 @@ def config_context(
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
         enable_metadata_routing=enable_metadata_routing,
-        enable_metadata_auto_request=enable_metadata_auto_request,
+        enable_metadata_auto_requests=enable_metadata_auto_requests,
         skip_parameter_validation=skip_parameter_validation,
         sparse_interface=sparse_interface,
     )

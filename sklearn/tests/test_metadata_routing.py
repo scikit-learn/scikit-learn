@@ -1191,16 +1191,16 @@ def test_unbound_set_methods_work():
 
 
 @pytest.mark.parametrize(
-    "metadata_request_policy, auto_requests_enabled",
+    "enable_metadata_auto_requests, auto_requests_enabled",
     [
-        ("auto", True),
-        ("class-level", False),
+        (True, True),
+        (False, False),
     ],
 )
-def test_auto_requests_enabled(metadata_request_policy, auto_requests_enabled):
+def test_auto_requests_enabled(enable_metadata_auto_requests, auto_requests_enabled):
     """Check correctness of _auto_requests_enabled."""
-    with config_context(metadata_request_policy=metadata_request_policy):
-        assert _auto_requests_enabled() == auto_requests_enabled
+    with config_context(enable_metadata_auto_requests=enable_metadata_auto_requests):
+        assert _auto_requests_enabled() == enable_metadata_auto_requests
 
 
 def test_auto_requests_override_class_level_requests():
@@ -1223,7 +1223,7 @@ def test_auto_requests_override_class_level_requests():
 
     est = SimpleConsumingEstimator()
 
-    with config_context(metadata_request_policy="auto"):
+    with config_context(enable_metadata_auto_requests=True):
         # Instance-level True should override class-level False:
         assert get_routing_for_object(est).fit.requests["prop"] is True
         # New method request should be present:
