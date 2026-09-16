@@ -1,0 +1,5 @@
+- :class:`preprocessing.OrdinalEncoder` now correctly rejects an `unknown_value`
+  or `encoded_missing_value` that collides with the shared code of grouped
+  infrequent categories. Previously an off-by-one in the used-code count let such
+  a value silently alias with the infrequent categories.
+  By :user:`Madankumar <winklemad>`.
