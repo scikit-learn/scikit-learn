@@ -1,17 +1,8 @@
 version: 2.1
 
-# The doc jobs below use the Linux VM executor rather than Docker because gen3
-# resource classes are only offered on Linux VM (and remote Docker), and gen3 is
-# both faster and cheaper per minute than its gen1 and gen2 equivalents. gen3 is
-# an open beta, so drop the `.gen3` suffix if queue times or reliability become a
-# problem. It is also only valid with the `current` image tag, not a pinned dated
-# tag -- a pinned tag is rejected with "is not a valid resource class"
-#
-# 22.04 rather than a newer Ubuntu because the conda toolchain in the doc lock
-# files still leans on the host: on ubuntu-2604 meson fails its Cython sanity
-# check with "Compiler cython cannot compile programs", while the same lock file
-# builds fine against 22.04. 22.04 is what the Docker image these jobs used to
-# run on (cimg/base:current-22.04) was based on
+# gen3 resource classes need the Linux VM executor and the `current` image tag (a
+# dated tag is rejected). gen3 is an open beta: drop `.gen3` if queue times or
+# reliability become a problem. 22.04 matches the Docker image used before.
 _machine_image: &machine_image
   image: ubuntu-2204:current
 
@@ -32,10 +23,8 @@ jobs:
   doc-min-dependencies:
     machine:
       <<: *machine_image
-    # medium.gen3 2 vCPUs 8GiB mem -- same core count as the Docker `medium` this
-    # job used to run on, with twice the memory. This build only checks that the
-    # docs still build against the minimum dependencies and gates nothing else in
-    # the workflow, so it does not need the extra cores that the `doc` job gets
+    # medium.gen3 2 vCPUs 8GiB mem -- as many cores as the old Docker `medium`;
+    # this job gates nothing, so it does not need the `doc` job's extra cores
     resource_class: medium.gen3
     environment:
       - MKL_NUM_THREADS: 2
@@ -90,8 +79,7 @@ jobs:
   doc:
     machine:
       <<: *machine_image
-    # large.gen3 4 vCPUs 16GiB mem -- more cores and memory than the Docker
-    # `medium+` this job used to run on, which the parallel doc build makes use of
+    # large.gen3 4 vCPUs 16GiB mem -- the parallel doc build uses the extra cores
     resource_class: large.gen3
     environment:
       - MKL_NUM_THREADS: 2

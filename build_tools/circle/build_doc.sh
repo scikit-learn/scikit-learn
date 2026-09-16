@@ -175,6 +175,11 @@ conda activate
 create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
 conda activate $CONDA_ENV_NAME
 
+# Keep pkg-config inside the env: meson's Cython sanity check resolves `python3`
+# through it, and the host's python3.pc points the build at the wrong Python
+export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig"
+export PKG_CONFIG_LIBDIR="$CONDA_PREFIX/lib/pkgconfig"
+
 # Sets up ccache
 export PATH="/usr/lib/ccache:$PATH"
 ccache -M 512M
@@ -184,11 +189,8 @@ ccache -z
 
 show_installed_libraries
 
-# Specify explicitly ninja -j argument, since ninja's own default (cores + 2)
-# oversubscribes enough to matter here. `nproc` is accurate now that these jobs
-# run on a Linux VM; the original reason for hardcoding the value was that ninja
-# does not handle cgroups v2, which no longer applies outside a container, see
-# https://github.com/scikit-learn/scikit-learn/pull/30333
+# Pin ninja's -j: its default (cores + 2) oversubscribes. `nproc` is accurate on
+# the Linux VM, see https://github.com/scikit-learn/scikit-learn/pull/30333
 pip install -e . -v --no-build-isolation --config-settings=compile-args="-j $(nproc)"
 
 echo "ccache build summary:"
