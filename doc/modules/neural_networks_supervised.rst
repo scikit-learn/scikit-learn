@@ -99,6 +99,9 @@ After fitting (training), the model can predict labels for new samples::
 
     >>> clf.predict([[2., 2.], [-1., -2.]])
     array([1, 0])
+In this example, `fit(X, y)` trains the MLPClassifier using the input
+features `X` and target labels `y`. After training, `predict()` uses the
+learned model to assign a class label to each new sample.
 
 MLP can fit a non-linear model to the training data. ``clf.coefs_``
 contains the weight matrices that constitute the model parameters::
