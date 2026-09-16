@@ -184,10 +184,12 @@ ccache -z
 
 show_installed_libraries
 
-# Specify explicitly ninja -j argument because ninja does not handle cgroups v2 and
-# use the same default rule as ninja (-j3 since we have 2 cores on CircleCI), see
+# Specify explicitly ninja -j argument, since ninja's own default (cores + 2)
+# oversubscribes enough to matter here. `nproc` is accurate now that these jobs
+# run on a Linux VM; the original reason for hardcoding the value was that ninja
+# does not handle cgroups v2, which no longer applies outside a container, see
 # https://github.com/scikit-learn/scikit-learn/pull/30333
-pip install -e . -v --no-build-isolation --config-settings=compile-args="-j 3"
+pip install -e . -v --no-build-isolation --config-settings=compile-args="-j $(nproc)"
 
 echo "ccache build summary:"
 ccache -s
