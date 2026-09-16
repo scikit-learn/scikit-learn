@@ -440,10 +440,6 @@ class MethodMetadataRequest:
         This method is used by estimator developers. To learn how to enable and use the
         auto-request policy refer to :ref:`metadata_routing_auto_request`.
 
-        Note that setting auto-requests on *composite* methods such as `fit_transform`
-        or `fit_predict` will not have an effect. Call `add_auto_request` on the simple
-        methods instead.
-
         Parameters
         ----------
         *params : str
@@ -661,6 +657,7 @@ class MetadataRequest:
 
     def __init__(self, owner):
         self.owner = owner
+        self._composite_requests = {}
         for method in SIMPLE_METHODS:
             setattr(
                 self,
@@ -674,11 +671,17 @@ class MetadataRequest:
         new = MetadataRequest(owner=self.owner)
         for method in SIMPLE_METHODS:
             setattr(new, method, getattr(self, method).__sklearn_clone__())
+        new._composite_requests = {
+            name: mmr.__sklearn_clone__()
+            for name, mmr in self._composite_requests.items()
+        }
         return new
 
     def _actualize_auto_requests(self):
         for method in SIMPLE_METHODS:
             getattr(self, method)._actualize_auto_requests()
+        for mmr in self._composite_requests.values():
+            mmr._actualize_auto_requests()
         return self
 
     def consumes(self, method, params):
@@ -719,6 +722,22 @@ class MetadataRequest:
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
             )
 
+        # Persist composite-only state (auto/direct requests) without putting the
+        # name on ``__dict__``, so this method keeps running and can re-merge.
+        if name not in self._composite_requests:
+            self._composite_requests[name] = MethodMetadataRequest(
+                owner=self.owner, method=name
+            )
+        composite_mmr = self._composite_requests[name]
+
+        # Keep only values coming from auto-request actualization on the composite
+        # itself; drop leftovers from a previous composed snapshot.
+        explicit = {
+            key: composite_mmr._requests[key]
+            for key in composite_mmr._auto_requests
+            if key in composite_mmr._requests
+        }
+
         requests = {}
         for method in COMPOSITE_METHODS[name]:
             mmr = getattr(self, method)
@@ -734,7 +753,14 @@ class MetadataRequest:
                     " same request value."
                 )
             requests.update(mmr._requests)
-        return MethodMetadataRequest(owner=self.owner, method=name, requests=requests)
+
+        for key, val in explicit.items():
+            # Requests set on the composite itself take precedence over the
+            # values inherited from simple methods.
+            requests[key] = val
+
+        composite_mmr._requests = requests
+        return composite_mmr
 
     def _get_param_names(self, method, return_alias, ignore_self_request=None):
         """Get names of all metadata that can be consumed or routed by specified \

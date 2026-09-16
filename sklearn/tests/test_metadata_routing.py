@@ -1213,23 +1213,28 @@ def test_auto_requests_override_class_level_requests():
             # fit method to prove the override of the class-level request
             pass  # pragma: no cover
 
+        def predict(self, X):
+            pass  # pragma: no cover
+
         def get_metadata_routing(self):
             requests = super().get_metadata_routing()
             # Override class-level False with True:
             requests.fit.add_auto_request("prop")
-            # Add new method request:
+            # Auto-request on a simple method:
             requests.predict.add_auto_request("prop")
+            # Auto-request directly on a composite method:
+            requests.fit_predict.add_auto_request("prop")
             return requests
 
     est = SimpleConsumingEstimator()
 
     with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(est)
         # Instance-level True should override class-level False:
-        assert get_routing_for_object(est).fit.requests["prop"] is True
-        # New method request should be present:
-        assert get_routing_for_object(est).predict.requests["prop"] is True
-        # Request for composite method is set too:
-        assert get_routing_for_object(est).fit_transform.requests["prop"] is True
+        assert routing.fit.requests["prop"] is True
+        assert routing.predict.requests["prop"] is True
+        assert routing.fit_transform.requests["prop"] is True
+        assert routing.fit_predict.requests["prop"] is True
 
 
 class _UncopyableOwner:
