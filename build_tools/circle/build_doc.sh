@@ -180,24 +180,21 @@ conda activate $CONDA_ENV_NAME
 export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig"
 export PKG_CONFIG_LIBDIR="$CONDA_PREFIX/lib/pkgconfig"
 
-# Sets up ccache. CCACHE_DIR is set explicitly because ccache only defaults to
-# the legacy ~/.ccache when that directory already exists, and otherwise uses
-# ~/.cache/ccache, which is not what save_cache stores (compression is on by
-# default, so it needs no setting here)
+# Sets up ccache. CCACHE_DIR is pinned because ccache only defaults there when
+# the legacy ~/.ccache is absent, and save_cache needs a fixed path (compression
+# is on by default, so it needs no setting here)
 export PATH="/usr/lib/ccache:$PATH"
-export CCACHE_DIR=$HOME/.ccache
+export CCACHE_DIR=$HOME/.cache/ccache
 ccache -M 512M
 # Zeroing statistics so that ccache statistics are shown only for this build
 ccache -z
 
 show_installed_libraries
 
-# Pin ninja's -j: its default (cores + 2) oversubscribes. `nproc` is accurate on
-# the Linux VM, see https://github.com/scikit-learn/scikit-learn/pull/30333
+# Pin ninja's -j to the vCPU count; `nproc` is accurate on the Linux VM, unlike
+# the Docker executor this was hardcoded for, see
+# https://github.com/scikit-learn/scikit-learn/pull/30333
 pip install -e . -v --no-build-isolation --config-settings=compile-args="-j $(nproc)"
-
-echo "ccache build summary:"
-ccache -s
 
 export OMP_NUM_THREADS=1
 
