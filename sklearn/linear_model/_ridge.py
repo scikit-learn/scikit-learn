@@ -2369,13 +2369,26 @@ class _RidgeGCV(LinearModel):
         """
         xp, _, device = get_namespace_and_device(y)
         if self.is_clf:
-            identity_estimator = _IdentityClassifier(
-                classes=xp.arange(n_y, device=device)
-            )
+            if y.ndim == 1 or y.shape[1] == 1:
+                # Binary classification: LabelBinarizer produces a single
+                # column of -1 / +1, so xp.argmax(y, axis=1) would always
+                # return 0. Convert to a two-column layout so that the
+                # usual argmax-based class inference works.
+                y_true = xp.astype(xp.reshape(y, (-1,)) > 0, xp.int64)
+                pred_flat = xp.reshape(predictions, (-1,))
+                predictions = xp.stack([-pred_flat, pred_flat], axis=1)
+                identity_estimator = _IdentityClassifier(
+                    classes=xp.arange(2, device=device)
+                )
+            else:
+                y_true = xp.argmax(y, axis=1)
+                identity_estimator = _IdentityClassifier(
+                    classes=xp.arange(n_y, device=device)
+                )
             _score = scorer(
                 identity_estimator,
                 predictions,
-                xp.argmax(y, axis=1),
+                y_true,
                 **score_params,
             )
         else:
@@ -2402,7 +2415,6 @@ class _RidgeGCV(LinearModel):
                 )
 
         return _score
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         # Required since this is neither a RegressorMixin nor a ClassifierMixin

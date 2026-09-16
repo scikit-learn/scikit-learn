@@ -4,6 +4,8 @@ from itertools import product
 import numpy as np
 import pytest
 from scipy import linalg
+import numpy as np
+from sklearn.linear_model import RidgeClassifierCV
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
@@ -2706,6 +2708,51 @@ def test_set_score_request_with_default_scoring(metaestimator, make_dataset):
     metaestimator = clone(metaestimator)  # Avoid side effects from shared instances
     metaestimator.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
+def test_ridge_classifier_cv_binary_scoring_accuracy():
+    """Non-regression test for gh-34942.
 
+    RidgeClassifierCV with ``cv=None`` (GCV) must not report perfect
+    accuracy on random binary data.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(200, 20))
+    y = rng.randint(0, 2, size=200)
+
+    clf = RidgeClassifierCV(
+        alphas=[0.1, 1.0, 10.0],
+        scoring="accuracy",
+    ).fit(X, y)
+
+    # On random data, accuracy must be strictly below 1.0.
+    assert 0.0 < clf.best_score_ < 1.0
+
+
+def test_ridge_classifier_cv_binary_scoring_matches_cv():
+    """GCV score should be comparable to explicit cross-validation."""
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(200, 20))
+    y = rng.randint(0, 2, size=200)
+
+    clf_gcv = RidgeClassifierCV(
+        alphas=[0.1, 1.0, 10.0], scoring="accuracy"
+    ).fit(X, y)
+    clf_cv = RidgeClassifierCV(
+        alphas=[0.1, 1.0, 10.0], scoring="accuracy", cv=5
+    ).fit(X, y)
+
+    assert abs(clf_gcv.best_score_ - clf_cv.best_score_) < 0.2
+
+
+def test_ridge_classifier_cv_multiclass_scoring_still_works():
+    """Multiclass scoring must be unaffected by the binary fix."""
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(200, 20))
+    y = rng.randint(0, 3, size=200)
+
+    clf = RidgeClassifierCV(
+        alphas=[0.1, 1.0, 10.0], scoring="accuracy"
+    ).fit(X, y)
+
+    assert 0.0 < clf.best_score_ < 1.0
 # End of Metadata Routing Tests
 # =============================
