@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from scipy.stats.mstats import mquantiles
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import (
