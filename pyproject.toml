@@ -165,7 +165,7 @@ ban-relative-imports = "all"
 "sklearn/utils/_metadata_requests.py"=["CPY001"]
 
 [tool.pyrefly]
-project-includes = ["sklearn"]
+project-includes = ["sklearn", "build_tools", "maint_tools"]
 project-excludes = ["**/sklearn/externals*"]
 preset = "legacy"
 ignore-missing-imports = [

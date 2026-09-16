@@ -772,10 +772,6 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
     sample_weight : ndarray of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : ndarray of shape (n_samples,)
-        Precomputed squared euclidean norm of each data point, to speed up
-        computations.
-
     centers : ndarray of shape (n_clusters, n_features)
         The cluster centers.
 
@@ -1582,9 +1578,6 @@ def _mini_batch_step(
 
     X : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The original data array. If sparse, must be in CSR format.
-
-    x_squared_norms : ndarray of shape (n_samples,)
-        Squared euclidean norm of each data point.
 
     sample_weight : ndarray of shape (n_samples,)
         The weights for each observation in `X`.
