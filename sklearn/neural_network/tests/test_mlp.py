@@ -7,6 +7,7 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 
 import re
 import warnings
+from concurrent.futures import ThreadPoolExecutor
 
 import joblib
 import numpy as np
@@ -592,6 +593,23 @@ def test_predict_proba_multilabel():
     assert (y_proba.sum(1) - 1).dot(y_proba.sum(1) - 1) > 1e-10
     assert_array_equal(proba_max, proba_log_max)
     assert_allclose(y_log_proba, np.log(y_proba))
+
+
+def test_mlp_classifier_predict_threadsafe():
+    X = X_digits_binary[:100]
+    y = y_digits_binary[:100]
+
+    mlp = MLPClassifier(hidden_layer_sizes=50, random_state=42, max_iter=100)
+    with ignore_warnings(category=ConvergenceWarning):
+        mlp.fit(X, y)
+
+    expected = mlp.predict(X)
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        predictions = list(executor.map(mlp.predict, [X] * 20))
+
+    for prediction in predictions:
+        assert_array_equal(prediction, expected)
 
 
 def test_shuffle():
