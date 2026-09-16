@@ -143,9 +143,9 @@ much we can do about it. You can see the warning filters in the
 
 Note that Sphinx warnings, like undefined references, documents missing from a toctree,
 etc., are handled separately and are not controlled by this environment variable. Pull
-requests fail if a Sphinx warning mentions a file changed in the PR. Pushes to `main`
-and maintenance branches turn all Sphinx warnings from the `doc` CircleCI job into
-errors.
+requests fail if a Sphinx warning or error mentions a file changed in the PR. Pushes to
+`main` and maintenance branches turn all Sphinx warnings from the `doc` CircleCI job
+into errors.
 
 Build and debug
 ---------------
