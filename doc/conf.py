@@ -85,6 +85,8 @@ extensions = [
 # Specify how to identify the prompt when copying code snippets
 copybutton_prompt_text = r">>> |\.\.\. |\$ |PS C:\\> "
 copybutton_prompt_is_regexp = True
+# Without this, only the prompt line of a `\`-continued command gets copied
+copybutton_line_continuation_character = "\\"
 copybutton_exclude = "style"
 
 try:
@@ -515,6 +517,9 @@ redirects = {
     ),
     "auto_examples/miscellaneous/plot_partial_dependence_visualization_api": (
         "auto_examples/inspection/plot_partial_dependence_visualization_api"
+    ),
+    "auto_examples/applications/wikipedia_principal_eigenvector": (
+        "auto_examples/applications/plot_wikipedia_principal_eigenvector"
     ),
 }
 html_context["redirects"] = redirects

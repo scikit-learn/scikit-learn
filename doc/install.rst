@@ -343,9 +343,9 @@ Note that those solvers are not enabled by default, please refer to the
 `scikit-learn-intelex <https://uxlfoundation.github.io/scikit-learn-intelex/latest/patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
-.. code-block:: pycon
+.. code-block:: python
 
-  >>> from sklearnex.neighbors import NearestNeighbors
+  from sklearnex.neighbors import NearestNeighbors
 
 Compatibility with the standard scikit-learn solvers is checked by running the
 full scikit-learn test suite via automated continuous integration as reported

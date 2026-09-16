@@ -125,7 +125,7 @@ the required packages.
           Open the downloaded "Miniforge Prompt" and create a new conda environment with
           the required python packages:
 
-          .. code-block:: text
+          .. code-block:: bat
 
             conda create -n sklearn-dev -c conda-forge ^
               python numpy scipy narwhals cython meson-python ninja ^
@@ -134,7 +134,7 @@ the required packages.
 
           Activate the newly created conda environment:
 
-          .. code-block:: text
+          .. code-block:: bat
 
             conda activate sklearn-dev
 
@@ -156,15 +156,15 @@ the required packages.
 
           Now create a virtual environment (venv_) and install the required python packages:
 
-          .. code-block:: text
+          .. code-block:: bat
 
             python -m venv sklearn-dev
 
-          .. code-block:: text
+          .. code-block:: bat
 
             sklearn-dev\Scripts\activate  # activate
 
-          .. code-block:: text
+          .. code-block:: bat
 
             pip install wheel numpy scipy cython meson-python ninja ^
               pytest pytest-cov ruff==0.12.2 pyrefly numpydoc ^

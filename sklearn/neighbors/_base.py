@@ -1268,7 +1268,12 @@ class RadiusNeighborsMixin:
             n_jobs = effective_n_jobs(self.n_jobs)
             delayed_query = delayed(self._tree.query_radius)
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed_query(X[s], radius, return_distance, sort_results=sort_results)
+                delayed_query(
+                    X[s],
+                    radius[s] if np.ndim(radius) > 0 else radius,
+                    return_distance,
+                    sort_results=sort_results,
+                )
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
