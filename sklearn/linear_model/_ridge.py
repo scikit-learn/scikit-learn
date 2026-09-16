@@ -47,6 +47,7 @@ from sklearn.utils._array_api import (
     array_device,
     get_namespace,
     get_namespace_and_device,
+    indexing_dtype,
     move_to,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
@@ -2369,13 +2370,23 @@ class _RidgeGCV(LinearModel):
         """
         xp, _, device = get_namespace_and_device(y)
         if self.is_clf:
-            identity_estimator = _IdentityClassifier(
-                classes=xp.arange(n_y, device=device)
-            )
+            # Handle binary case like `LinearClassifierMixin.predict`
+            if n_y == 1:
+                identity_estimator = _IdentityClassifier(
+                    classes=xp.arange(2, device=device)
+                )
+                y_true = xp.astype(_ravel(y) > 0, indexing_dtype(xp))
+                _predictions = _ravel(predictions)
+            else:
+                identity_estimator = _IdentityClassifier(
+                    classes=xp.arange(n_y, device=device)
+                )
+                y_true = xp.argmax(y, axis=1)
+                _predictions = predictions
             _score = scorer(
                 identity_estimator,
-                predictions,
-                xp.argmax(y, axis=1),
+                _predictions,
+                y_true,
                 **score_params,
             )
         else:
