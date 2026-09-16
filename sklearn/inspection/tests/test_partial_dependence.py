@@ -237,6 +237,34 @@ def test_grid_from_X():
     assert grid.dtype == object
 
 
+def test_grid_from_X_with_nan():
+    """Check that _grid_from_X ignores NaNs."""
+    percentiles = (0.05, 0.95)
+    grid_resolution = 10
+    is_categorical = [False]
+    rng = np.random.RandomState(0)
+    X = rng.rand(50, 1)
+    X[0, 0] = np.nan
+
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution, {})
+
+    assert not np.isnan(grid).any()
+    assert not np.isnan(axes[0]).any()
+
+
+def test_grid_from_X_with_boolean_feature():
+    """Check that _grid_from_X handles booleans."""
+    percentiles = (0.05, 0.95)
+    grid_resolution = 2
+    is_categorical = [False]
+    X = np.array([[True], [False]] * 10)
+
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution, {})
+
+    assert_allclose(axes[0], [0.0, 1.0])
+    assert_allclose(grid.ravel(), [0.0, 1.0])
+
+
 @pytest.mark.parametrize(
     "grid_resolution",
     [
@@ -299,7 +327,9 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
 @pytest.mark.parametrize(
     "grid_resolution, percentiles, err_msg",
     [
-        (2, (0, 0.0001), "percentiles are too close"),
+        # percentiles gap small enough that the resulting grid endpoints are
+        # indistinguishable under linear interpolation
+        (2, (0, 1e-6), "percentiles are too close"),
         (100, (1, 2, 3, 4), "'percentiles' must be a sequence of 2 elements"),
         (100, 12345, "'percentiles' must be a sequence of 2 elements"),
         (100, (-1, 0.95), r"'percentiles' values must be in \[0, 1\]"),
