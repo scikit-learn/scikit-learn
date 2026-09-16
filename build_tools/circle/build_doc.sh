@@ -180,10 +180,13 @@ conda activate $CONDA_ENV_NAME
 export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig"
 export PKG_CONFIG_LIBDIR="$CONDA_PREFIX/lib/pkgconfig"
 
-# Sets up ccache
+# Sets up ccache. CCACHE_DIR is set explicitly because ccache only defaults to
+# the legacy ~/.ccache when that directory already exists, and otherwise uses
+# ~/.cache/ccache, which is not what save_cache stores (compression is on by
+# default, so it needs no setting here)
 export PATH="/usr/lib/ccache:$PATH"
+export CCACHE_DIR=$HOME/.ccache
 ccache -M 512M
-export CCACHE_COMPRESS=1
 # Zeroing statistics so that ccache statistics are shown only for this build
 ccache -z
 
