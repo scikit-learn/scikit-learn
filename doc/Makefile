@@ -51,8 +51,8 @@ clean:
 	-rm -rf api/*.rst
 	@echo "Removed api/*.rst"
 
-# Sphinx-Gallery runs the examples serially at builder-inited whatever -j is (we
-# leave its `parallel` unset), so this only parallelizes the reST read/write
+# Sphinx-Gallery picks up this -j too (`parallel` in conf.py), so it covers
+# running the examples as well as the reST read/write
 html: SPHINX_NUMJOBS ?= $(SPHINX_NUMJOBS_DEFAULT)
 html:
 	@echo $(ALLSPHINXOPTS)

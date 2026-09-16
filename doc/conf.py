@@ -619,6 +619,8 @@ sphinx_gallery_conf = {
     "inspect_global_variables": False,
     "remove_config_comments": True,
     "plot_gallery": "True",
+    # Run the examples in parallel too, using Sphinx's own -j value
+    "parallel": True,
     "recommender": {"enable": True, "n_examples": 4, "min_df": 12},
     "reset_modules": (
         "matplotlib",
