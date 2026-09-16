@@ -57,9 +57,10 @@ X[X.columns[::3]].head()
 # We will first fit a Lasso model with the AIC criterion.
 import time
 
-from sklearn.linear_model import LassoLarsIC
+from sklearn.linear_model import Lasso, LassoLarsIC, LassoCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
 
 start_time = time.time()
 lasso_lars_ic = make_pipeline(StandardScaler(), LassoLarsIC(criterion="aic")).fit(X, y)
@@ -147,12 +148,18 @@ _ = ax.set_title(
 #
 # In the remainder of this section, we will present both approaches. For both
 # algorithms, we will use a 20-fold cross-validation strategy.
+# Note that placing preprocessing steps before LassoCV does not make them
+# fold-specific: the pipeline fits StandardScaler on all samples before
+# LassoCV performs its internal cross-validation. This can cause data leakage
+# during cross-validation. For leakage-free hyperparameter selection with
+# preprocessing, use GridSearchCV with a pipeline containing the scaler and
+# Lasso.
 #
 # Lasso via coordinate descent
 # ............................
 # Let's start by making the hyperparameter tuning using
 # :class:`~sklearn.linear_model.LassoCV`.
-from sklearn.linear_model import LassoCV
+
 
 start_time = time.time()
 model = make_pipeline(StandardScaler(), LassoCV(cv=20)).fit(X, y)
@@ -183,6 +190,18 @@ _ = plt.title(
 
 # %%
 # Lasso via least angle regression
+
+# A leakage-free alternative is to put preprocessing inside a pipeline
+# evaluated by GridSearchCV. The scaler is then fitted separately on each
+# training fold used to select the regularization parameter.
+lasso_pipeline = make_pipeline(StandardScaler(), Lasso(max_iter=10_000))
+lasso_search = GridSearchCV(
+    lasso_pipeline,
+    param_grid={"lasso__alpha": np.logspace(-4, 1, 100)},
+    cv=20,
+    scoring="neg_mean_squared_error",
+)
+lasso_search.fit(X, y)
 # ................................
 # Let's start by making the hyperparameter tuning using
 # :class:`~sklearn.linear_model.LassoLarsCV`.
