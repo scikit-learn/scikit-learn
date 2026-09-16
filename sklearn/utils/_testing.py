@@ -188,6 +188,7 @@ _AUTOCONVERT_TYPE_NAMES = {
     "Int64Array",
     "RangeIndex",
     "Series",
+    "StringArray",
     "Table",
     "flatiter",
     "_memoryviewslice",

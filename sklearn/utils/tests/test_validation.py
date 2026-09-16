@@ -539,7 +539,7 @@ def test_check_array_pandas_string_dtype_numeric_error():
 
     result = check_array(s_str, dtype=None, ensure_2d=False)
     assert result.dtype == np.object_
-    assert_array_equal(result, s_str.to_numpy())
+    assert_array_equal(result, s_str.values)
 
 
 @pytest.mark.parametrize(
