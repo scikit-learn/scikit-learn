@@ -507,11 +507,6 @@ class ClassifierWithRequestDefaults(ClassifierMixin, BaseEstimator):
 
 
 # %%
-# Note that setting auto-requests on *composite* methods such as `fit_transform` or
-# `fit_predict` will not have an effect. Their requests are the union of the underlying
-# simple methods (`fit`+`transform`, `fit`+`predict`). Call `add_auto_request` (or
-# `set_*_request`) on the simple methods instead.
-
 # Let's see the default class-level requests:
 clf = ClassifierWithRequestDefaults()
 print_routing(clf)
