@@ -6,8 +6,14 @@ version: 2.1
 # an open beta, so drop the `.gen3` suffix if queue times or reliability become a
 # problem. It is also only valid with the `current` image tag, not a pinned dated
 # tag -- a pinned tag is rejected with "is not a valid resource class"
+#
+# 22.04 rather than a newer Ubuntu because the conda toolchain in the doc lock
+# files still leans on the host: on ubuntu-2604 meson fails its Cython sanity
+# check with "Compiler cython cannot compile programs", while the same lock file
+# builds fine against 22.04. 22.04 is what the Docker image these jobs used to
+# run on (cimg/base:current-22.04) was based on
 _machine_image: &machine_image
-  image: ubuntu-2604:current
+  image: ubuntu-2204:current
 
 jobs:
   lint:
@@ -61,6 +67,10 @@ jobs:
             - doc-min-deps-ccache-{{ .Branch }}
             - doc-min-deps-ccache
       - run: ./build_tools/circle/build_doc.sh
+      - run:
+          name: meson log (on failure)
+          when: on_fail
+          command: cat build/cp*/meson-logs/meson-log.txt || true
       - save_cache:
           key: doc-min-deps-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:
@@ -112,6 +122,10 @@ jobs:
             - doc-ccache-{{ .Branch }}
             - doc-ccache
       - run: ./build_tools/circle/build_doc.sh
+      - run:
+          name: meson log (on failure)
+          when: on_fail
+          command: cat build/cp*/meson-logs/meson-log.txt || true
       - save_cache:
           key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:
