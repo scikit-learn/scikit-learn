@@ -460,12 +460,33 @@ def _write_estimator_html(
         else:
             attrs = ""
 
+        # A plain (non-composite) estimator has no `_sk_visual_block_` of its
+        # own, so `_get_visual_block` above falls back to its bare class name,
+        # discarding any step name the parent's visual block assigned to it
+        # (e.g. the "step_name: ClassName" built by
+        # `Pipeline._sk_visual_block_`). Restore that label here. Estimators
+        # that define their own `_sk_visual_block_` (like
+        # `FunctionTransformer`) as well as strings and `None` (e.g.
+        # "passthrough" steps) already carry their intended label in
+        # `est_block.names` and must keep it as-is.
+        uses_generic_single_block = (
+            not hasattr(estimator, "_sk_visual_block_")
+            and not isinstance(estimator, str)
+            and estimator is not None
+        )
+        if estimator_label and uses_generic_single_block:
+            display_name = estimator_label
+            display_name_details = estimator_label_details
+        else:
+            display_name = est_block.names
+            display_name_details = est_block.name_details
+
         _write_label_html(
             out,
             params,
             attrs,
-            est_block.names,
-            est_block.name_details,
+            display_name,
+            display_name_details,
             est_block.name_caption,
             est_block.doc_link_label,
             outer_class="sk-item",

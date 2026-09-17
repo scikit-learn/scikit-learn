@@ -377,6 +377,45 @@ def test_show_arrow_pipeline():
     )
 
 
+def test_estimator_html_repr_pipeline_step_names():
+    """A `Pipeline` step whose estimator has no `_sk_visual_block_` of its own
+    (i.e. is not itself a meta-estimator) must still show its step name in the
+    diagram, not just the estimator's bare class name.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/32146
+    """
+    pipe = Pipeline(
+        [
+            ("scale", StandardScaler()),
+            ("do_nothing", "passthrough"),
+            ("log_reg", LogisticRegression()),
+        ]
+    )
+    html_output = estimator_html_repr(pipe)
+
+    assert "<div><div>scale: StandardScaler</div>" in html_output
+    assert "<div><div>log_reg: LogisticRegression</div>" in html_output
+    # passthrough keeps its own bare label, it is not a real estimator step
+    assert "<div><div>passthrough</div>" in html_output
+    assert "<div><div>do_nothing: passthrough</div>" not in html_output
+
+    # `TransformedTargetRegressor` builds the same kind of "name: ClassName"
+    # label for its wrapped regressor and hits the same code path.
+    ttr = TransformedTargetRegressor(regressor=LinearRegression(), func=None)
+    assert "<div><div>regressor: LinearRegression</div>" in estimator_html_repr(ttr)
+
+    # Estimators that define their own `_sk_visual_block_`, like
+    # `FunctionTransformer`, keep showing their own label (e.g. the wrapped
+    # function's name) instead of being overridden by the step name.
+    pipe_with_function_transformer = Pipeline(
+        [("ft", FunctionTransformer(dummy_function)), ("log_reg", LogisticRegression())]
+    )
+    html_output = estimator_html_repr(pipe_with_function_transformer)
+    assert "<div><div>dummy_function</div>" in html_output
+    assert "<div><div>ft: FunctionTransformer</div>" not in html_output
+
+
 def test_invalid_parameters_in_stacking():
     """Invalidate stacking configuration uses default repr.
 
