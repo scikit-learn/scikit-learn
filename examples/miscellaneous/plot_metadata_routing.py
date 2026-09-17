@@ -594,7 +594,7 @@ pipe.fit(X, y, sample_weight=my_weights, groups=my_groups).predict(
 # ----------------------------------------
 # Most :term:`consumers <consumer>` inherit from :class:`~base.BaseEstimator` and use
 # the class-level default metadata requests inferred from method signatures and
-# `__metadata_request__*` class attributes. Developers can instead also inherit directly
+# `__metadata_request__*` class attributes. Instead developers can inherit directly
 # from :class:`~utils.metadata_routing.MetadataRequester` and override its
 # `__sklearn_build_declared_metadata_request__` method. This is useful when consumers
 # are not :term:`estimators <estimator>` or require a more nuanced control over which
@@ -664,7 +664,7 @@ pprint(consumer.__sklearn_build_declared_metadata_request__()._serialize())
 #
 # Be aware that for the callable passed as `method`, the first parameter is always
 # treated as data and excluded from metadata discovery (e.g. `self` for a
-# bound method, or `first_arg` for a scoring function), as well as parameter names like
+# bound method), as well as parameter names like
 # `X, y, Y, Xt, yt` that have a special meaning in sklearn.
 
 
