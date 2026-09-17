@@ -449,7 +449,7 @@ def test_categorical_feature(n_bins):
     assert bin_mapper.n_bins_non_missing_ == [6]
     assert_array_equal(bin_mapper.bin_thresholds_[0], [0, 1, 4, 7, 10, 13])
 
-    # Categorical features go through an OrdinalEncoder that doesn't produces
+    # Categorical features go through an OrdinalEncoder that doesn't produce
     # values outside of the range seen in the fit (except NaNs), so
     # we test only in-range values:
     X = np.array([[0, 1, 4, np.nan, 7, 10, 13]], dtype=X_DTYPE).T
