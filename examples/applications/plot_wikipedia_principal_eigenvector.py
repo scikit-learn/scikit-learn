@@ -142,11 +142,11 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
     n = len(index_map)
     rows, cols = np.array(links, dtype=np.int32).T
     del links
-    # Multiple links between the same pair of pages must still count as a
-    # single edge, so we set the data to 1 after the CSR matrix constructor.
-    # that sums duplicate (row, col) entries.
     data = np.ones(len(rows), dtype=np.float32)
     X = sparse.csr_array((data, (rows, cols)), shape=(n, n))
+    # Multiple links between the same pair of pages must still count as a
+    # single edge, so we set the data to 1 after the CSR matrix constructor
+    # which sums duplicate (row, col) entries.
     X.data[:] = 1.0
     return X, redirects, index_map
 
