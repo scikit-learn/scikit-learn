@@ -474,13 +474,16 @@ def ridge_regression(
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
-          obtain a closed-form solution via a Cholesky decomposition of
-          dot(X.T, X)
+          obtain a closed-form solution via a Cholesky decomposition. It solves
+          the primal problem involving `X.T @ X` when `n_samples >= n_features`,
+          and the dual problem involving `X @ X.T` otherwise.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
-          more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          scipy.sparse.linalg.cg. It solves the same primal or dual problem
+          as 'cholesky', without explicitly forming `X.T @ X` or `X @ X.T`.
+          As an iterative algorithm, this solver is more appropriate than
+          'cholesky' for large-scale data (possibility to set `tol` and
+          `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
@@ -1099,12 +1102,16 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
-          obtain a closed-form solution.
+          obtain a closed-form solution via a Cholesky decomposition. It solves
+          the primal problem involving `X.T @ X` when `n_samples >= n_features`,
+          and the dual problem involving `X @ X.T` otherwise.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
-          more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
+          as 'cholesky', without explicitly forming `X.T @ X` or `X @ X.T`.
+          As an iterative algorithm, this solver is more appropriate than
+          'cholesky' for large-scale data (possibility to set `tol` and
+          `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
@@ -1462,12 +1469,16 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
-          obtain a closed-form solution.
+          obtain a closed-form solution via a Cholesky decomposition. It solves
+          the primal problem involving `X.T @ X` when `n_samples >= n_features`,
+          and the dual problem involving `X @ X.T` otherwise.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
-          more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
+          as 'cholesky', without explicitly forming `X.T @ X` or `X @ X.T`.
+          As an iterative algorithm, this solver is more appropriate than
+          'cholesky' for large-scale data (possibility to set `tol` and
+          `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
