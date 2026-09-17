@@ -2526,3 +2526,75 @@ def test_ohe_unknown_warning_mixed_infrequent_columns(handle_unknown):
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
+
+
+def test_ordinal_encoder_datetime_column_transform_matches_fit():
+    """`transform` on the exact data used to `fit` a datetime64 column must
+    reproduce the codes learned at fit time, instead of reporting every
+    value as an unknown category.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame({"a": pd.to_datetime(["2020-01-01", "2020-01-02", "2020-01-01"])})
+    enc = OrdinalEncoder().fit(X)
+    assert_array_equal(enc.transform(X), [[0], [1], [0]])
+
+
+def test_ordinal_encoder_datetime_column_with_missing_value_fit():
+    """Fitting a datetime64 column containing a missing value must not raise,
+    even though pandas' `Index.to_numpy()` can return a read-only array for
+    this dtype.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame({"a": pd.to_datetime(["2020-01-01", "2020-01-02", None])})
+    OrdinalEncoder().fit(X)
+
+
+def test_ordinal_encoder_predefined_categories_nullable_string_missing_value():
+    """Predefined `categories` must accept a nullable `string` dtype column
+    with missing values, matching the "auto" categories fast path.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(
+        {"col": pd.Series(["c", "a", None, "b", "a"], dtype="string[python]")}
+    )
+    enc = OrdinalEncoder(categories=[["a", "b", "c", float("nan")]]).fit(X)
+    assert_array_equal(enc.transform(X), [[2], [0], [np.nan], [1], [0]])
+
+
+def test_ordinal_encoder_predefined_categories_nullable_string_missing_value_counts():
+    """With predefined `categories`, missing values stored as `pandas.NA` (e.g.
+    a nullable `string` dtype column) must be counted correctly for
+    infrequent-category grouping, instead of being silently undercounted as
+    0 (which would incorrectly classify a frequent missing-value category as
+    infrequent).
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(
+        {"col": pd.Series(["a", None, None, None, "b"], dtype="string[python]")}
+    )
+    enc = OrdinalEncoder(
+        categories=[["a", "b", float("nan")]],
+        handle_unknown="use_encoded_value",
+        unknown_value=-1,
+        min_frequency=3,
+    ).fit(X)
+    # nan appears 3 times (>= min_frequency): it must not be grouped as infrequent.
+    assert_array_equal(enc.infrequent_categories_[0], ["a", "b"])
+
+
+def test_ordinal_encoder_categorical_column_allows_infinity():
+    """Unlike numeric columns, a pandas `Categorical` column is not run through
+    the finiteness check: `inf` is treated as a valid category, matching the
+    fact that a category with a numeric label doesn't need its value to be
+    finite (accepted trade-off, see PR discussion).
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame({"a": pd.Categorical([1.0, 2.0, np.inf, np.nan])})
+    enc = OrdinalEncoder().fit(X)
+    assert_array_equal(enc.categories_[0], [1.0, 2.0, np.inf, np.nan])
+    assert_array_equal(enc.transform(X).ravel(), [0, 1, 2, np.nan])

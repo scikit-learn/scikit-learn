@@ -68,6 +68,15 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     # for object dtype to_numpy() is free and pandas factorize/indexing
                     # doesn't bring a big speed-up, so the object-array path is faster:
                     Xi = Xi.to_numpy()
+                elif isinstance(
+                    Xi.dtype, pd.CategoricalDtype
+                ) or pd.api.types.is_string_dtype(Xi):
+                    pass  # keep as Series to use the pandas fast path
+                else:
+                    # other dtypes (datetime64, timedelta64, ...): the pandas fast
+                    # path above doesn't handle them correctly
+                    # back to the same plain object-array path as object dtype:
+                    Xi = Xi.to_numpy(dtype=object)
                 X_columns.append(Xi)
             return X_columns, n_samples, n_features
 
@@ -122,8 +131,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             else:
                 if is_pandas_df_or_series(Xi):
                     # User-provided `categories` is a comparatively rare and already
-                    # more expensive path => do not attempt the Series path
-                    Xi = Xi.to_numpy()
+                    # more expensive path => do not attempt the Series path.
+                    # `na_value=np.nan` normalizes missing entries to `np.nan`.
+                    Xi = Xi.to_numpy(na_value=np.nan)
 
                 if np.issubdtype(Xi.dtype, np.str_):
                     # Always convert string categories to objects to avoid
