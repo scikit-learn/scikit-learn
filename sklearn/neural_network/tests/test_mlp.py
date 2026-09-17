@@ -690,6 +690,11 @@ def test_early_stopping(MLPEstimator):
 
     assert mlp_estimator.best_loss_ is None
     assert isinstance(mlp_estimator.validation_scores_, list)
+    assert isinstance(mlp_estimator.validation_loss_curve_, list)
+    assert len(mlp_estimator.validation_loss_curve_) == len(
+        mlp_estimator.validation_scores_
+    )
+    assert all(np.isfinite(loss) for loss in mlp_estimator.validation_loss_curve_)
 
     valid_scores = mlp_estimator.validation_scores_
     best_valid_score = mlp_estimator.best_validation_score_
@@ -704,6 +709,7 @@ def test_early_stopping(MLPEstimator):
     )
     mlp_estimator.fit(X, y)
     assert mlp_estimator.validation_scores_ is None
+    assert mlp_estimator.validation_loss_curve_ is None
     assert mlp_estimator.best_validation_score_ is None
     assert mlp_estimator.best_loss_ is not None
 
