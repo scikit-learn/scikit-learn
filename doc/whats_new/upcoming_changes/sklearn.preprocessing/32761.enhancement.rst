@@ -3,5 +3,4 @@
   `_weighted_percentile`. The default method of calculating percentiles for both
   weighted and unweighted cases is now fixed to "averaged_inverted_cdf".
   Support is only implemented for dense X.
-  By :user:`Karassay Raushanbek <kaekkr>` and :user:`Shruti Nath
-  <snath-xoc>`.
+  By :user:`Karassay Raushanbek <kaekkr>` and :user:`Shruti Nath <snath-xoc>`.
