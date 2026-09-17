@@ -814,9 +814,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
             if loss_func_name == "log_loss" and self.out_activation_ == "logistic":
                 loss_func_name = "binary_log_loss"
 
-            val_loss = LOSS_FUNCTIONS[loss_func_name](
-                y_val, val_pred, sample_weight
-            )
+            val_loss = LOSS_FUNCTIONS[loss_func_name](y_val, val_pred, sample_weight)
 
             # Add L2 regularization to match the training loss.
             values = 0
@@ -836,10 +834,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
 
             if self.verbose:
                 print("Validation score: %f" % self.validation_scores_[-1])
-                print(
-                    "Validation loss: %.8f"
-                    % self.validation_loss_curve_[-1]
-                )
+                print("Validation loss: %.8f" % self.validation_loss_curve_[-1])
 
             # update best parameters
             # use validation_scores_, not loss_curve_
