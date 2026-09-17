@@ -1,0 +1,7 @@
+- Fixed the HTML representation of :class:`pipeline.Pipeline` and
+  :class:`compose.TransformedTargetRegressor` so that a step's name is no
+  longer dropped from the diagram when the step's estimator is not itself a
+  meta-estimator (e.g. plain steps like a :class:`preprocessing.StandardScaler`
+  now show as ``"step_name: StandardScaler"`` instead of just
+  ``"StandardScaler"``).
+  By :user:`Junnie18`.
