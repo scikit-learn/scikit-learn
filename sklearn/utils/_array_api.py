@@ -1309,6 +1309,76 @@ def _matching_numpy_dtype(X, xp=None):
     return np_compat.__array_namespace_info__().dtypes()[dtype_name]
 
 
+def _interp(x, xp, fp, left=None, right=None):
+    """Partial port of `numpy.interp` for array API."""
+    # TODO: Replace with `scipy.interpolate` once it supports array API:
+    # https://scipy.github.io/devdocs/dev/api-dev/array_api_modules_tables/interpolate.html
+    xp_ns, _, device = get_namespace_and_device(xp, fp)
+    fp = move_to(fp, xp=xp_ns, device=device)
+
+    if xp.ndim != 1 or fp.ndim != 1:
+        raise ValueError("Data points must be 1-D sequences")
+    if xp.shape[0] != fp.shape[0]:
+        raise ValueError("fp and xp are not of the same length")
+
+    x = xp_ns.asarray(x, device=device)
+
+    # Complex floating-point dtypes are not supported. Here, we check `x`'s own dtype
+    # before casting to the floating dtype below. Otherwise, a complex `x` will not
+    # raise the `NotImplementedError`.
+    for dtype_to_check in (xp.dtype, fp.dtype, x.dtype):
+        if xp_ns.isdtype(dtype_to_check, "complex floating"):
+            raise NotImplementedError(
+                "Complex floating-point values are not supported by interp."
+            )
+
+    dtype = _find_matching_floating_dtype(xp, fp, xp=xp_ns)
+    x = xp_ns.astype(x, dtype)
+
+    # Match NumPy when `xp` or `fp` is empty
+    if xp.shape[0] == 0 or fp.shape[0] == 0:
+        if size(x) == 0:
+            return x
+        raise ValueError("array of sample points is empty")
+
+    if _is_numpy_namespace(xp_ns):
+        return xp_ns.interp(x, xp, fp, left, right)
+
+    left_value = (
+        fp[0] if left is None else xp_ns.asarray(left, dtype=dtype, device=device)
+    )
+    right_value = (
+        fp[-1] if right is None else xp_ns.asarray(right, dtype=dtype, device=device)
+    )
+
+    # A single sample point has no interval to interpolate within.
+    if xp.shape[0] == 1:
+        return xp_ns.where(
+            x < xp[0],
+            left_value,
+            xp_ns.where(x > xp[0], right_value, fp[0]),
+        )
+
+    # Clipping avoids out-of-bounds indexing when `x` is outside the range of `xp`.
+    stop = xp_ns.clip(xp_ns.searchsorted(xp, x, side="right"), 1, xp.shape[0] - 1)
+    x0 = xp[stop - 1]
+    x1 = xp[stop]
+    y0 = fp[stop - 1]
+    y1 = fp[stop]
+    denom = x1 - x0
+
+    interp_y = xp_ns.where(
+        x == x0,
+        y0,
+        xp_ns.where(x == x1, y1, y0 + (x - x0) * (y1 - y0) / denom),
+    )
+
+    interp_y = xp_ns.where(x < xp[0], left_value, interp_y)
+    interp_y = xp_ns.where(x > xp[-1], right_value, interp_y)
+
+    return interp_y
+
+
 def _swapaxes(array, axis1, axis2, /, xp=None):
     xp, _ = get_namespace(array)
     if hasattr(xp, "swapaxes"):
