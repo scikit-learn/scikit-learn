@@ -500,14 +500,29 @@ is given by
 
 .. math::
 
-    \eta^{(t)} = \frac {1}{\alpha  (t_0 + t)}
+    \eta^{(t)} = \frac {1}{\alpha  (t_0 + t - 1)}
 
-where :math:`t` is the time step (there are a total of `n_samples * n_iter`
-time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
-such that the expected initial updates are comparable with the expected
-size of the weights (this assumes that the norm of the training samples is
-approximately 1). The exact definition can be found in ``_init_t`` in `BaseSGD`.
+where :math:`t` is the time step starting at 1 (there are a total of
+``n_samples * n_iter`` time steps). The offset :math:`t_0` is determined
+by the heuristic proposed by Léon Bottou in section 5.2 of [#1]_, such that
+the expected initial updates are comparable with the expected size of the
+weights (this assumes that the norm of the training samples is approximately
+1). In the implementation, this is computed as:
 
+.. math::
+
+    \begin{aligned}
+    \textrm{typw} &= \sqrt{\frac{1}{\sqrt{\alpha}}},\\
+    \eta^{(1)} &=
+        \frac{\textrm{typw}}
+             {\max(1, \partial L(y, p) / \partial p \mid_{y=1, p=-\textrm{typw}})},\\
+    t_0 &= \frac{1}{\eta^{(1)} \alpha}.
+    \end{aligned}
+
+Thus the first update uses :math:`\eta^{(1)}` and later updates follow the
+decreasing schedule above. The value of :math:`t_0` depends on the
+regularization strength ``alpha`` and on the selected loss through its
+gradient.
 
 For regression the default learning rate schedule is inverse scaling
 (``learning_rate='invscaling'``), given by
