@@ -613,25 +613,18 @@ from sklearn.utils.metadata_routing import (
 
 # %%
 # Use `get_declared_metadata_request_values` with `ignore_params` to exclude
-# parameters from class-level metadata requests. Here `y_true` and `y_pred`
+# parameters from class-level metadata requests. Here `param1` and `param2`
 # should not be treated as metadata.
 
 
 class CustomRequestConsumer(MetadataRequester):
     __metadata_request__fit = {"metadata1": True}
-    # Note that a declaration like `__metadata_request__score = {"y_true": True}` would
-    # override the requests derived by signature sniffing, even when `y_true` is in
-    # `ignore_params`. __metadata_request__* class attributes always override other
-    # class-level requests, including those modified in
-    # `__sklearn_build_declared_metadata_request__`.
 
     def fit(self, X, y, metadata1, metadata2):
         return self
 
-    def score(self, y_true, y_pred, metadata1):
-        # To show customisation, we deviate from the usual (X, y) inputs and use
-        # `y_true` and `y_pred` instead.
-        return np.sum(y_true / y_pred) / len(y_true)
+    def score(self, X, y, param1, param2, metadata1):
+        return 1
 
     def __sklearn_build_declared_metadata_request__(self):
         requests = MetadataRequest(owner=self)
@@ -645,9 +638,9 @@ class CustomRequestConsumer(MetadataRequester):
                     requests=get_declared_metadata_request_values(
                         self,
                         method_name,
-                        # We do not wish to treat `y_true` and `y_pred` as metadata, so
+                        # We do not wish to treat `param1` and `param2` as metadata, so
                         # we exclude them from the discovery mechanism:
-                        ignore_params={"y_true", "y_pred"},
+                        ignore_params={"param1", "param2"},
                     ),
                 ),
             )

@@ -270,8 +270,8 @@ def test_custom_consumers_return_declared_metadata_requests():
         def fit(self, X, y, metadata1, metadata2):
             return self  # pragma: no cover
 
-        def score(self, y_true, y_pred, metadata1):
-            return np.sum(y_true / y_pred) / len(y_true)  # pragma: no cover
+        def score(self, X, y, param1, param2, metadata1):
+            return 1  # pragma: no cover
 
         def __sklearn_build_declared_metadata_request__(self):
             requests = MetadataRequest(owner=self)
@@ -286,8 +286,8 @@ def test_custom_consumers_return_declared_metadata_requests():
                             self,
                             method_name,
                             ignore_params={
-                                "y_true",
-                                "y_pred",
+                                "param1",
+                                "param2",
                             },
                         ),
                     ),
