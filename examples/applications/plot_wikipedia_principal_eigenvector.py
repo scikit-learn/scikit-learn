@@ -151,9 +151,9 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
     return X, redirects, index_map
 
 
-# stop after 5M links to make it possible to work in RAM
+# stop after 3M links so parsing stays fast and the graph stays small enough in memory.
 X, redirects, index_map = get_adjacency_matrix(
-    redirects_filename, page_links_filename, limit=5000000
+    redirects_filename, page_links_filename, limit=3000000
 )
 names = {i: name for name, i in index_map.items()}
 
