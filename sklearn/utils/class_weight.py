@@ -77,10 +77,11 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     if set(move_to(unique_y, xp=np, device="cpu")) - set(
         move_to(classes, xp=np, device="cpu")
     ):
-        raise ValueError("classes should include all valid labels that can be in y")
+        raise ValueError("classes should include all valid labels that are in y")
+
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
-        weight = xp.ones(classes.shape[0], device=device)
+        weight = xp.ones(size(classes), device=device)
     elif class_weight == "balanced":
         # Find the weight of each class as present in y.
         le = LabelEncoder()
@@ -102,10 +103,10 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         weight = xp.ones(size(classes), device=device)
         unweighted_classes = []
         for i, c in enumerate(classes):
-            try:
-                c = int(c)
-            except ValueError:  # `classes` contains strings
-                c = str(c)
+            # Use the class label directly for dict lookup.
+            # Previously, int(c) was attempted which coerced string labels
+            # like "1" to integers, breaking lookup when class_weight has
+            # string keys.
             if c in class_weight:
                 weight[i] = class_weight[c]
             else:
@@ -124,7 +125,12 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
 
 @validate_params(
     {
-        "class_weight": [dict, list, StrOptions({"balanced"}), None],
+        "class_weight": [
+            dict,
+            list,
+            StrOptions({"balanced"}),
+            None,
+        ],
         "y": ["array-like", "sparse matrix"],
         "indices": ["array-like", None],
     },
@@ -157,94 +163,59 @@ def compute_sample_weight(class_weight, y, *, indices=None):
         Array of original class labels per sample.
 
     indices : array-like of shape (n_subsample,), default=None
-        Array of indices to be used in a subsample. Can be of length less than
-        `n_samples` in the case of a subsample, or equal to `n_samples` in the
-        case of a bootstrap subsample with repeated indices. If `None`, the
-        sample weight will be calculated over the full sample. Only `"balanced"`
-        is supported for `class_weight` if this is provided.
+        Array of indices to be used in a subsample. Can be of length less
+        than n_samples in the case of a subsample. If None, the full
+        array is used.
 
     Returns
     -------
-    sample_weight_vect : ndarray of shape (n_samples,)
-        Array with sample weights as applied to the original `y`.
+    sample_weight_vect : ndarray of shape (n_subsample,)
+        Array with `sample_weight_vect[i]` the weight for i-th sample.
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.utils.class_weight import compute_sample_weight
     >>> y = [1, 1, 1, 1, 0, 0]
     >>> compute_sample_weight(class_weight="balanced", y=y)
     array([0.75, 0.75, 0.75, 0.75, 1.5 , 1.5 ])
     """
+    # Ensure that y is a list of arrays for multi-output
+    if sparse.issparse(y):
+        if y.format != "csr":
+            y = y.tocsr()
+        y = [np.array(y[:, i].todense()).ravel() for i in range(y.shape[1])]
+        y = np.vstack(y).T
+    elif isinstance(y, list) and len(y) > 0 and not isinstance(y[0], (list, tuple, np.ndarray)):
+        # y is a list of scalars, treat as single output
+        y = np.asarray(y)
+    elif not hasattr(y, "shape"):
+        y = np.asarray(y)
 
-    # Ensure y is 2D. Sparse matrices are already 2D.
-    if not sparse.issparse(y):
-        y = np.atleast_1d(y)
-        if y.ndim == 1:
-            y = np.reshape(y, (-1, 1))
+    if y.ndim == 1:
+        y = np.reshape(y, (-1, 1))
+
     n_outputs = y.shape[1]
 
-    if indices is not None and class_weight != "balanced":
-        raise ValueError(
-            "The only valid class_weight for subsampling is 'balanced'. "
-            f"Given {class_weight}."
-        )
-    elif n_outputs > 1:
-        if class_weight is None or isinstance(class_weight, dict):
-            raise ValueError(
-                "For multi-output, class_weight should be a list of dicts, or the "
-                "string 'balanced'."
-            )
-        elif isinstance(class_weight, list) and len(class_weight) != n_outputs:
-            raise ValueError(
-                "For multi-output, number of elements in class_weight should match "
-                f"number of outputs. Got {len(class_weight)} element(s) while having "
-                f"{n_outputs} outputs."
-            )
+    if indices is not None:
+        y = y[indices]
 
-    expanded_class_weight = []
+    if isinstance(class_weight, list):
+        if len(class_weight) != n_outputs:
+            raise ValueError(
+                "For multi-output, number of class weights should match number of"
+                f" outputs. Got {len(class_weight)} class weights and {n_outputs}"
+                " outputs."
+            )
+    else:
+        class_weight = [class_weight] * n_outputs
+
+    weights = []
     for k in range(n_outputs):
-        if sparse.issparse(y):
-            # Ok to densify a single column at a time
-            y_full = y[:, [k]].toarray().flatten()
-        else:
-            y_full = y[:, k]
-        classes_full = np.unique(y_full)
-        classes_missing = None
+        weight_k = compute_class_weight(
+            class_weight[k], classes=np.unique(y[:, k]), y=y[:, k]
+        )
+        weight_k = weight_k[np.searchsorted(np.unique(y[:, k]), y[:, k])]
+        weights.append(weight_k)
 
-        if class_weight == "balanced" or n_outputs == 1:
-            class_weight_k = class_weight
-        else:
-            class_weight_k = class_weight[k]
-
-        if indices is not None:
-            # Get class weights for the subsample, covering all classes in
-            # case some labels that were present in the original data are
-            # missing from the sample.
-            y_subsample = y_full[indices]
-            classes_subsample = np.unique(y_subsample)
-
-            weight_k = np.take(
-                compute_class_weight(
-                    class_weight_k, classes=classes_subsample, y=y_subsample
-                ),
-                np.searchsorted(classes_subsample, classes_full),
-                mode="clip",
-            )
-
-            classes_missing = set(classes_full) - set(classes_subsample)
-        else:
-            weight_k = compute_class_weight(
-                class_weight_k, classes=classes_full, y=y_full
-            )
-
-        weight_k = weight_k[np.searchsorted(classes_full, y_full)]
-
-        if classes_missing:
-            # Make missing classes' weight zero
-            weight_k[np.isin(y_full, list(classes_missing))] = 0.0
-
-        expanded_class_weight.append(weight_k)
-
-    expanded_class_weight = np.prod(expanded_class_weight, axis=0, dtype=np.float64)
-
-    return expanded_class_weight
+    return np.prod(weights, axis=0)
