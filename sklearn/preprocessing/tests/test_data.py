@@ -1455,6 +1455,71 @@ def test_quantile_transform_sparse_ignore_zeros(csc_container):
     )
 
 
+def test_quantile_transform_sparse_no_densify_large_n_samples():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/34298
+    # QuantileTransformer used to materialize a dense array of size
+    # n_samples when fitting a sparse column with implicit zeros,
+    # which could OOM for very sparse, very large matrices.
+    subsample = 100
+    n_quantiles = 10
+    n, d = 10**9, 1  # large enough to OOM the old code, but this
+    # test only checks correctness/no-crash, not memory
+    nnz = subsample
+
+    rng = np.random.RandomState(0)
+    X = sparse.csc_matrix(
+        (
+            rng.rand(nnz),
+            (np.arange(nnz), np.zeros(nnz, dtype=int)),
+        ),
+        shape=(n, d),
+    )
+
+    transformer = QuantileTransformer(subsample=subsample, n_quantiles=n_quantiles)
+    transformer.fit(X)  # should not raise MemoryError
+
+    # correctness: compare against the equivalent computation on a
+    # smaller, densifiable case
+    n_small = 100_000
+    X_small = sparse.csc_matrix(
+        (
+            rng.rand(nnz),
+            (rng.choice(n_small, nnz, replace=False), np.zeros(nnz, dtype=int)),
+        ),
+        shape=(n_small, d),
+    )
+    transformer_small = QuantileTransformer(
+        subsample=None, n_quantiles=n_quantiles, random_state=0
+    )
+    transformer_small.fit(X_small)
+
+    dense_equiv = np.zeros(n_small)
+    dense_equiv[: X_small.data.size] = X_small.data
+    expected = np.nanpercentile(dense_equiv, transformer_small.references_ * 100)
+
+    assert_allclose(transformer_small.quantiles_.ravel(), expected)
+
+
+def test_sparse_column_percentile_all_zeros_and_nan():
+    from sklearn.preprocessing._data import _sparse_column_percentile
+
+    # all-NaN, no implicit zeros: should return all-NaN, matching
+    # np.nanpercentile's behavior on an all-NaN input
+    result = _sparse_column_percentile(
+        np.array([np.nan, np.nan]), n_zeros=0, percentiles=np.array([0, 50, 100])
+    )
+    assert np.all(np.isnan(result))
+
+    # NaNs present alongside implicit zeros
+    result = _sparse_column_percentile(
+        np.array([1.0, np.nan, 3.0]), n_zeros=3, percentiles=np.array([0, 50, 100])
+    )
+    dense_equiv = np.array([1.0, np.nan, 3.0, 0, 0, 0])
+    expected = np.nanpercentile(dense_equiv, [0, 50, 100])
+    assert_allclose(result, expected)
+
+
 def test_quantile_transform_dense_toy():
     X = np.array(
         [[0, 2, 2.6], [25, 4, 4.1], [50, 6, 2.3], [75, 8, 9.5], [100, 10, 0.1]]
