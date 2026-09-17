@@ -435,11 +435,13 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
             self._no_improvement_count = 0
             if self.early_stopping:
                 self.validation_scores_ = []
+                self.validation_loss_curve_ = []
                 self.best_validation_score_ = -np.inf
                 self.best_loss_ = None
             else:
                 self.best_loss_ = np.inf
                 self.validation_scores_ = None
+                self.validation_loss_curve_ = None
                 self.best_validation_score_ = None
 
     def _init_coef(self, fan_in, fan_out, dtype):
@@ -801,10 +803,44 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
             # compute validation score (can be NaN), use that for stopping
             val_score = self._score(X, y, sample_weight=sample_weight)
 
+            # Compute validation loss using the same loss function as training.
+            y_val = y
+            if is_classifier(self):
+                y_val = self._label_binarizer.transform(y)
+
+            val_pred = self._forward_pass_fast(X)
+
+            loss_func_name = self.loss
+            if loss_func_name == "log_loss" and self.out_activation_ == "logistic":
+                loss_func_name = "binary_log_loss"
+
+            val_loss = LOSS_FUNCTIONS[loss_func_name](
+                y_val, val_pred, sample_weight
+            )
+
+            # Add L2 regularization to match the training loss.
+            values = 0
+            for coef in self.coefs_:
+                coef = coef.ravel()
+                values += np.dot(coef, coef)
+
+            if sample_weight is None:
+                sw_sum = X.shape[0]
+            else:
+                sw_sum = sample_weight.sum()
+
+            val_loss += (0.5 * self.alpha) * values / sw_sum
+
             self.validation_scores_.append(val_score)
+            self.validation_loss_curve_.append(val_loss)
 
             if self.verbose:
                 print("Validation score: %f" % self.validation_scores_[-1])
+                print(
+                    "Validation loss: %.8f"
+                    % self.validation_loss_curve_[-1]
+                )
+
             # update best parameters
             # use validation_scores_, not loss_curve_
             # let's hope no-one overloads .score with mse
@@ -824,6 +860,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
                 self._no_improvement_count += 1
             else:
                 self._no_improvement_count = 0
+
             if self.loss_curve_[-1] < self.best_loss_:
                 self.best_loss_ = self.loss_curve_[-1]
 
@@ -1066,6 +1103,10 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         The score at each iteration on a held-out validation set. The score
         reported is the accuracy score. Only available if `early_stopping=True`,
         otherwise the attribute is set to `None`.
+    validation_loss_curve_ : list of shape (`n_iter_`,) or None
+        The loss at each iteration on a held-out validation set. Only available
+        if `early_stopping=True`, otherwise the attribute is set to `None`.
+
 
     best_validation_score_ : float or None
         The best validation score (i.e. accuracy score) that triggered the
@@ -1578,6 +1619,10 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         reported is the R2 score. Only available if `early_stopping=True`,
         otherwise the attribute is set to `None`.
         Only accessible when solver='sgd' or 'adam'.
+    validation_loss_curve_ : list of shape (`n_iter_`,) or None
+        The loss at each iteration on a held-out validation set. Only available
+        if `early_stopping=True`, otherwise the attribute is set to `None`.
+
 
     best_validation_score_ : float or None
         The best validation score (i.e. R2 score) that triggered the
