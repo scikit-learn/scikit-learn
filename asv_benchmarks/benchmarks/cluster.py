@@ -1,8 +1,35 @@
+import numpy as np
+from sklearn.cluster._hierarchical_fast import _single_linkage_label
+
 from sklearn.cluster import KMeans, MiniBatchKMeans
 
 from .common import Benchmark, Estimator, Predictor, Transformer
 from .datasets import _20newsgroups_highdim_dataset, _blobs_dataset
 from .utils import neg_mean_inertia
+
+
+class SingleLinkageLabelBenchmark(Benchmark):
+    """Benchmark conversion of an adversarial MST to single linkage."""
+
+    param_names = ["n_samples"]
+    params = ([2_000, 16_000],)
+
+    def setup(self, n_samples):
+        half_n_samples = n_samples // 2
+        self.mst = np.empty((n_samples - 1, 3), dtype=np.float64)
+
+        indices = np.arange(half_n_samples - 1)
+        self.mst[: half_n_samples - 1, 0] = indices
+        self.mst[: half_n_samples - 1, 1] = indices + 1
+
+        indices = np.arange(half_n_samples)
+        self.mst[half_n_samples - 1 :, 0] = indices
+        self.mst[half_n_samples - 1 :, 1] = half_n_samples + indices
+
+        self.mst[:, 2] = np.arange(n_samples - 1)
+
+    def time_single_linkage_label(self, n_samples):
+        _single_linkage_label(self.mst)
 
 
 class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):

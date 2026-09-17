@@ -189,13 +189,9 @@ build_metadata_list = [
         "folder": "build_tools/github",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(common_dependencies, ["pandas"])
-        + ["ccache", "polars", "pyarrow"],
-        # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
-        # supported version
-        "pip_dependencies": ["pandas"],
+        "conda_dependencies": common_dependencies + ["ccache", "polars", "pyarrow"],
         "package_constraints": {
-            "python": "3.11",
+            "python": "3.12",
             "blas": "[build=openblas]",
             "numpy": "min",
             "scipy": "min",
@@ -225,7 +221,7 @@ build_metadata_list = [
             + ["ccache"]
         ),
         "package_constraints": {
-            "python": "3.11",
+            "python": "3.12",
             "blas": "[build=openblas]",
         },
     },
@@ -330,7 +326,7 @@ build_metadata_list = [
             "libopenblas",
         ],
         "package_constraints": {
-            "python": "3.11",
+            "python": "3.12",
             "blas": "[build=openblas]",
             # OpenBLAS 0.3.34 makes the Windows test runs segfault intermittently
             # ("Windows fatal exception: access violation" inside gemm and LAPACK calls,
@@ -348,9 +344,7 @@ build_metadata_list = [
         "folder": "build_tools/circle",
         "platform": "linux-64",
         "channels": ["conda-forge"],
-        "conda_dependencies": remove_from(
-            common_dependencies_without_coverage, ["pandas"]
-        )
+        "conda_dependencies": common_dependencies_without_coverage
         + [
             "scikit-image",
             "seaborn",
@@ -370,13 +364,8 @@ build_metadata_list = [
             "pydata-sphinx-theme",
             "towncrier",
         ],
-        "pip_dependencies": [
-            # TODO: move pandas to conda_dependencies when pandas 1.5.1 is the minimum
-            # supported version
-            "pandas",
-        ],
         "package_constraints": {
-            "python": "3.11",
+            "python": "3.12",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
@@ -445,7 +434,7 @@ build_metadata_list = [
         )
         + ["pip", "ccache"],
         "package_constraints": {
-            "python": "3.11",
+            "python": "3.12",
             # The following is needed to avoid getting libnvpl build for blas for some
             # reason.
             "blas": "[build=openblas]",
@@ -523,7 +512,7 @@ build_metadata_list = [
             "sphinx-lint": "min",
             "codespell": "min",
         },
-        "python_version": "3.11",
+        "python_version": "3.12",
     },
 ]
 
