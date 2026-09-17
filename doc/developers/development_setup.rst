@@ -64,7 +64,7 @@ Set up a dedicated environment and install dependencies
 ..
    TODO Add |PythonMinVersion| to min_dependency_substitutions.rst one day.
    Probably would need to change a bit sklearn/_min_dependencies.py since Python is not really a package ...
-.. |PythonMinVersion| replace:: 3.11
+.. |PythonMinVersion| replace:: 3.12
 
 Using an isolated environment such as venv_ or conda_ makes it possible to
 install a specific version of scikit-learn with pip or conda and its dependencies,
@@ -129,7 +129,7 @@ the required packages.
 
             conda create -n sklearn-dev -c conda-forge ^
               python numpy scipy narwhals cython meson-python ninja ^
-              pytest pytest-cov ruff==0.12.2 mypy numpydoc ^
+              pytest pytest-cov ruff==0.12.2 pyrefly numpydoc ^
               joblib threadpoolctl pre-commit
 
           Activate the newly created conda environment:
@@ -167,7 +167,7 @@ the required packages.
           .. prompt::
 
             pip install wheel numpy scipy cython meson-python ninja ^
-              pytest pytest-cov ruff==0.12.2 mypy numpydoc ^
+              pytest pytest-cov ruff==0.12.2 pyrefly numpydoc ^
               joblib threadpoolctl pre-commit
 
 
@@ -199,7 +199,7 @@ the required packages.
 
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
+              pytest pytest-cov ruff==0.12.2 pyrefly numpydoc \
               joblib threadpoolctl compilers llvm-openmp pre-commit
 
           and activate the newly created conda environment:
@@ -244,7 +244,7 @@ the required packages.
           .. prompt::
 
             pip install wheel numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
+              pytest pytest-cov ruff==0.12.2 pyrefly numpydoc \
               joblib threadpoolctl pre-commit
 
     .. tab-item:: Linux
@@ -267,7 +267,7 @@ the required packages.
 
             conda create -n sklearn-dev -c conda-forge python \
               numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
+              pytest pytest-cov ruff==0.12.2 pyrefly numpydoc \
               joblib threadpoolctl compilers pre-commit
 
           and activate the newly created environment:
@@ -327,7 +327,7 @@ the required packages.
           .. prompt::
 
             pip install wheel numpy scipy cython meson-python ninja \
-              pytest pytest-cov ruff==0.12.2 mypy numpydoc \
+              pytest pytest-cov ruff==0.12.2 pyrefly numpydoc \
               joblib threadpoolctl pre-commit
 
 

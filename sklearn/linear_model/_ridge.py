@@ -1500,10 +1500,10 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-        ``coef_`` is of shape (1, n_features) when the given problem is binary.
+        ``coef_`` is of shape ``(n_features,)`` when the given problem is binary.
 
     intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
@@ -1640,25 +1640,6 @@ def _check_gcv_mode(X, gcv_mode):
     # fallbacks to gram (n <= p) or cov (p < n)
     n, p = X.shape
     return "gram" if n <= p else "cov"
-
-
-def _find_smallest_angle(query, vectors):
-    """Find the column of vectors that is most aligned with the query.
-
-    Both query and the columns of vectors must have their l2 norm equal to 1.
-
-    Parameters
-    ----------
-    query : ndarray of shape (n_samples,)
-        Normalized query vector.
-
-    vectors : ndarray of shape (n_samples, n_features)
-        Vectors to which we compare query, as columns. Must be normalized.
-    """
-    xp, _ = get_namespace(query)
-    abs_cosine = xp.abs(query @ vectors)
-    index = xp.argmax(abs_cosine)
-    return index
 
 
 class _X_CenterStackOp(sparse.linalg.LinearOperator):
@@ -2946,10 +2927,10 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         .. versionchanged:: 1.5
             `cv_values_` changed to `cv_results_`.
 
-    coef_ : ndarray of shape (1, n_features) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         Coefficient of the features in the decision function.
 
-        ``coef_`` is of shape (1, n_features) when the given problem is binary.
+        ``coef_`` is of shape ``(n_features,)`` when the given problem is binary.
 
     intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
