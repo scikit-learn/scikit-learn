@@ -1032,11 +1032,12 @@ def confusion_matrix_at_thresholds(
         tps_int = xp.cumulative_sum(y_true_int, dtype=xp.int64)[threshold_idxs]
         fps_int = (xp.astype(threshold_idxs, xp.int64) + 1) - tps_int
 
-        output_dtype = (
-            y_score.dtype
-            if hasattr(y_score, "dtype") and xp.isdtype(y_score.dtype, "real floating")
-            else _max_precision_float_dtype(xp, device)
-        )
+        # Cast to the device's max-precision float dtype rather than
+        # y_score's own dtype: y_score may be float32 even on a device that
+        # supports float64 (e.g. plain numpy), in which case casting to
+        # float32 would needlessly reintroduce rounding errors that the
+        # int64 accumulation above was meant to avoid.
+        output_dtype = _max_precision_float_dtype(xp, device)
         tps = xp.astype(tps_int, output_dtype)
         fps = xp.astype(fps_int, output_dtype)
     else:
