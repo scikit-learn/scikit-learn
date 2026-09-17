@@ -143,13 +143,11 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
     rows, cols = np.array(links, dtype=np.int32).T
     del links
     # Multiple links between the same pair of pages must still count as a
-    # single edge, so we set the data to 1 after building the CSR array
-    # instead of relying on `coo_array`'s default behavior of summing
-    # duplicate (row, col) entries.
+    # single edge, so we set the data to 1 after the CSR matrix constructor.
+    # that sums duplicate (row, col) entries.
     data = np.ones(len(rows), dtype=np.float32)
-    X = sparse.coo_array((data, (rows, cols)), shape=(n, n)).tocsr()
+    X = sparse.csr_array((data, (rows, cols)), shape=(n, n))
     X.data[:] = 1.0
-    print("CSR conversion done")
     return X, redirects, index_map
 
 
