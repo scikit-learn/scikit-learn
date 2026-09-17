@@ -1024,10 +1024,12 @@ def confusion_matrix_at_thresholds(
             y_true, y_score, sample_weight
         )
     )
-    # accumulate the true positives with decreasing threshold
+    # Accumulate the true positives with decreasing threshold.
+    # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
+    # https://github.com/scikit-learn/scikit-learn/issues/34813
     if sample_weight is None:
         # Accumulate the counts using an integer datatype to avoid
-        # rounding errors on devices that do not support float64.
+        # rounding errors on devices that do not support float64 (#34817).
         y_true_int = xp.astype(y_true, xp.int64)
         tps_int = xp.cumulative_sum(y_true_int, dtype=xp.int64)[threshold_idxs]
         fps_int = (xp.astype(threshold_idxs, xp.int64) + 1) - tps_int
@@ -1041,16 +1043,50 @@ def confusion_matrix_at_thresholds(
         fps = xp.astype(fps_int, output_dtype)
     else:
         max_float_dtype = _max_precision_float_dtype(xp, device)
-        # Perform the weighted cumulative sum using float64 precision when possible
-        # to avoid numerical stability problem with tens of millions of very noisy
-        # predictions:
-        # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
-        y_true = xp.astype(y_true, max_float_dtype)
-        tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
-        fps = xp.cumulative_sum((1 - y_true) * weight, dtype=max_float_dtype)[
-            threshold_idxs
-        ]
-
+        if max_float_dtype == xp.float32:
+            # Maximize fixed-point resolution under int64 headroom (#34813).
+            # A fixed scale (e.g. 1e6) or a mean-based scale (≈1e6 / mean(weight))
+            # still rounds minority tiny weights to 0 when most weights are O(1).
+            # Using the largest scale such that n * max(weight) * scale fits in
+            # int64 preserves those tails. Clip scale itself to int64 max when
+            # n * max(weight) < 1 (uniformly tiny / pre-normalized weights).
+            # int64 is assumed available on float32-only devices of interest
+            # (e.g. torch MPS).
+            n_samples = size(weight)
+            weight_max = float(move_to(xp.max(weight), xp=np, device="cpu"))
+            int64_max = 2**63 - 1
+            if weight_max > 0:
+                scale = int(0.9 * int64_max / (n_samples * weight_max))
+                scale = max(min(scale, int64_max), 1)
+            else:
+                scale = 1_000_000
+            y_true_i = xp.astype(y_true, xp.int64)
+            w_scaled = xp.astype(xp.round(weight * scale), xp.int64)
+            tps_i = xp.cumulative_sum(y_true_i * w_scaled)[threshold_idxs]
+            fps_i = xp.cumulative_sum((1 - y_true_i) * w_scaled)[threshold_idxs]
+            # Divide in the integer domain first so we never cast integers much
+            # larger than the true counts to float32 (which cannot represent all
+            # integers above 2**24).
+            scale_f = xp.asarray(scale, dtype=max_float_dtype, device=device)
+            tps = xp.astype(tps_i // scale, max_float_dtype) + (
+                xp.astype(tps_i % scale, max_float_dtype) / scale_f
+            )
+            fps = xp.astype(fps_i // scale, max_float_dtype) + (
+                xp.astype(fps_i % scale, max_float_dtype) / scale_f
+            )
+        else:
+            # Perform the weighted cumulative sum using float64 precision when
+            # possible to avoid numerical stability problem with tens of
+            # millions of very noisy predictions.
+            y_true = xp.astype(y_true, max_float_dtype)
+            tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[
+                threshold_idxs
+            ]
+            # express fps as a cumsum to ensure fps is increasing even in
+            # the presence of floating point errors
+            fps = xp.cumulative_sum((1 - y_true) * weight, dtype=max_float_dtype)[
+                threshold_idxs
+            ]
     tns = fps[-1] - fps
     fns = tps[-1] - tps
     return tns, fps, fns, tps, y_score[threshold_idxs]
