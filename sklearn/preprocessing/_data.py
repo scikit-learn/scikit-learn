@@ -2696,14 +2696,14 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     Parameters
     ----------
-    n_quantiles : int, default=1000 or n_samples
+    n_quantiles : int, default=1000
         Number of quantiles to be computed. It corresponds to the number of
         landmarks used to discretize the cumulative distribution function.
 
-          .. versionchanged:: 1.10
-              `n_quantiles` is no longer capped according to the number of
-              samples. The number of quantiles is now always equal to the value
-              of `n_quantiles`.
+        .. versionchanged:: 1.10
+            `n_quantiles` is no longer capped according to the number of
+            samples. The number of quantiles is now always equal to the value
+            of `n_quantiles`.
 
     output_distribution : {'uniform', 'normal'}, default='uniform'
         Marginal distribution for the transformed data. The choices are
@@ -2737,8 +2737,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
     Attributes
     ----------
     n_quantiles_ : int
-        The actual number of quantiles used to discretize the cumulative
-        distribution function.
+        The number of quantiles used to discretize the cumulative
+        distribution function. Always equal to `n_quantiles`.
 
     quantiles_ : ndarray of shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
@@ -2816,6 +2816,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         ----------
         X : ndarray of shape (n_samples, n_features)
             The data used to scale along the features axis.
+
+        random_state : RandomState instance
+            Random number generator used for subsampling.
+
+        sample_weight : ndarray of shape (n_samples,), default=None
+            Individual weights for each sample.
         """
         if self.ignore_implicit_zeros:
             warnings.warn(
@@ -2825,36 +2831,25 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         n_samples, n_features = X.shape
         references = self.references_ * 100
-        self.n_quantiles_ = self.n_quantiles
 
         if self.subsample is not None and self.subsample < n_samples:
-            if sample_weight is None:
-                # Take an unweighted subsample of rows.
-                X = resample(
-                    X,
-                    replace=False,
-                    n_samples=self.subsample,
-                    random_state=random_state,
-                )
-            else:
-                # Weighted subsampling should ignore rows containing NaN values.
-                valid_mask = ~np.isnan(X).any(axis=1)
-                n_valid_samples = np.sum(valid_mask)
-
-                if self.subsample < n_valid_samples:
-                    valid_indices = np.where(valid_mask)[0]
-                    valid_weights = sample_weight[valid_indices]
-                    subsample_indices = resample(
-                        valid_indices,
-                        replace=True,
-                        n_samples=self.subsample,
-                        random_state=random_state,
-                        sample_weight=valid_weights,
-                    )
-                    X = X[subsample_indices]
-                    # As we do not want to double count the sample weights, we set
-                    # sample weights to None if they are used for subsampling
-                    sample_weight = None
+            # Take a subsample of `X`.
+            # When resampling, it is important to subsample **with replacement** to
+            # preserve the distribution, in particular in the presence of a few data
+            # points with large weights. You can check this by setting `replace=False`
+            # in sklearn.utils.tests.test_indexing.test_resample_weighted and check that
+            # it fails as a justification for this claim.
+            X = resample(
+                X,
+                replace=True,
+                n_samples=self.subsample,
+                random_state=random_state,
+                sample_weight=sample_weight,
+            )
+            # Since we already used the weights when resampling when provided,
+            # we set them back to `None` to avoid accounting for the weights twice
+            # in subsequent quantile estimation.
+            sample_weight = None
 
         if sample_weight is not None:
             self.quantiles_ = _weighted_percentile(
@@ -2889,6 +2884,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         `n_samples` array.
         """
         n_samples, n_features = X.shape
+        references = self.references_ * 100
 
         self.quantiles_ = []
         for feature_idx in range(n_features):
@@ -2918,7 +2914,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 self.quantiles_.append(
                     np.nanpercentile(
                         column_data,
-                        self.references_ * 100,
+                        references,
                         method="averaged_inverted_cdf",
                     )
                 )
@@ -2967,7 +2963,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.n_quantiles_ = self.n_quantiles
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, ensure_non_negative=True
+            )
 
         rng = check_random_state(self.random_state)
 
@@ -3209,13 +3207,14 @@ def quantile_transform(
         Axis used to compute the means and standard deviations along. If 0,
         transform each feature, otherwise (if 1) transform each sample.
 
-    n_quantiles : int, default=1000 or n_samples
+    n_quantiles : int, default=1000
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
-        If n_quantiles is larger than the number of samples, n_quantiles is set
-        to the number of samples as a larger number of quantiles does not give
-        a better approximation of the cumulative distribution function
-        estimator.
+
+        .. versionchanged:: 1.10
+            `n_quantiles` is no longer capped according to the number of
+            samples. The number of quantiles is now always equal to the value
+            of `n_quantiles`.
 
     output_distribution : {'uniform', 'normal'}, default='uniform'
         Marginal distribution for the transformed data. The choices are

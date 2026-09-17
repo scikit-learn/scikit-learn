@@ -703,6 +703,17 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="highs-ipm"),
         ],
     },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            # Using subsample != None leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence_on_dense_data test.
+            dict(n_quantiles=2, subsample=None),
+            dict(n_quantiles=5, subsample=None),
+            dict(n_quantiles=1000, subsample=None),
+        ],
+        # Force subsampling to happen so that the weighted subsampling branch is covered
+        "check_sample_weights_not_overwritten": dict(n_quantiles=5, subsample=8),
+    },
     QuadraticDiscriminantAnalysis: {"check_array_api_input": dict(reg_param=1.0)},
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
     Ridge: {
