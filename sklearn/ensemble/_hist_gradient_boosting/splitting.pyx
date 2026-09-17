@@ -12,6 +12,7 @@
 cimport cython
 from cython.parallel import prange
 import numpy as np
+from libc.float cimport FLT_EPSILON
 from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
@@ -23,6 +24,16 @@ from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
 from sklearn.ensemble._hist_gradient_boosting.common cimport MonotonicConstraint
+
+# Positive gains below this are ignored. Cancellation in the gain formula can
+# produce ~1e-15 dust for a theoretically zero-gain split.
+cdef Y_DTYPE_C GAIN_NUMERICAL_ZERO = 1e-12
+# Relative gain gap treated as a tie when comparing features. 256 is the
+# maximum histogram size (uint8 bins, i.e. max_bins + the missing-value bin).
+# n_bins float32 ulps (~3e-5) is a heuristic for G/H rounding, not a bound
+# on histogram summation. Without it, tiny float32 noise can swap near-tied
+# features and change the rest of the tree.
+cdef Y_DTYPE_C GAIN_FEATURE_TIE_SCALE = 256 * FLT_EPSILON
 
 
 cdef struct split_info_struct:
@@ -162,6 +173,13 @@ cdef class Splitter:
     rng : Generator
     n_threads : int, default=1
         Number of OpenMP threads to use.
+    sample_weight : ndarray of shape (n_samples,), dtype=float64, default=None
+        Optional sample weights. Zero-weight samples are excluded from
+        ``partition`` so they never enter a leaf (same approach as
+        :class:`~sklearn.tree.DecisionTreeClassifier`). That prevents
+        unweighted histogram ``count`` / ``min_samples_leaf`` from being
+        inflated by ignored rows, and avoids splits that would create a
+        zero-weight leaf.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
@@ -198,7 +216,8 @@ cdef class Splitter:
                  uint8_t hessians_are_constant=False,
                  Y_DTYPE_C feature_fraction_per_split=1.0,
                  rng=np.random.RandomState(),
-                 unsigned int n_threads=1):
+                 unsigned int n_threads=1,
+                 sample_weight=None):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -219,13 +238,21 @@ cdef class Splitter:
         # The partition array maps each sample index into the leaves of the
         # tree (a leaf in this context is a node that isn't split yet, not
         # necessarily a 'finalized' leaf). Initially, the root contains all
-        # the indices, e.g.:
+        # positively weighted indices, e.g.:
         # partition = [abcdefghijkl]
         # After a call to split_indices, it may look e.g. like this:
         # partition = [cef|abdghijkl]
         # we have 2 leaves, the left one is at position 0 and the second one at
         # position 3. The order of the samples is irrelevant.
-        self.partition = np.arange(X_binned.shape[0], dtype=np.uint32)
+        #
+        # Zero-weight samples are omitted so they do not inflate hist.count /
+        # min_samples_leaf and cannot form a leaf alone.
+        if sample_weight is None:
+            self.partition = np.arange(X_binned.shape[0], dtype=np.uint32)
+        else:
+            self.partition = np.flatnonzero(sample_weight).astype(
+                np.uint32, copy=False
+            )
         # buffers used in split_indices to support parallel splitting.
         self.left_indices_buffer = np.empty_like(self.partition)
         self.right_indices_buffer = np.empty_like(self.partition)
@@ -606,9 +633,14 @@ cdef class Splitter:
         cdef:
             int split_info_idx
             int best_split_info_idx = 0
+            Y_DTYPE_C gain
+            Y_DTYPE_C best_gain
 
         for split_info_idx in range(1, n_allowed_features):
-            if (split_infos[split_info_idx].gain > split_infos[best_split_info_idx].gain):
+            # O(n_features) per node. Keep the first feature on a relative tie.
+            gain = split_infos[split_info_idx].gain
+            best_gain = split_infos[best_split_info_idx].gain
+            if gain > best_gain + GAIN_FEATURE_TIE_SCALE * max(abs(gain), abs(best_gain)):
                 best_split_info_idx = split_info_idx
         return best_split_info_idx
 
@@ -717,7 +749,11 @@ cdef class Splitter:
                                upper_bound,
                                self.l2_regularization)
 
-            if gain > best_gain and gain > self.min_gain_to_split:
+            if (
+                gain > best_gain
+                and gain > self.min_gain_to_split
+                and gain > GAIN_NUMERICAL_ZERO
+            ):
                 found_better_split = True
                 best_gain = gain
                 best_bin_idx = bin_idx
@@ -927,7 +963,11 @@ cdef class Splitter:
                                    loss_current_node, monotonic_cst,
                                    lower_bound, upper_bound,
                                    self.l2_regularization)
-                if gain > best_gain and gain > self.min_gain_to_split:
+                if (
+                    gain > best_gain
+                    and gain > self.min_gain_to_split
+                    and gain > GAIN_NUMERICAL_ZERO
+                ):
                     found_better_split = True
                     best_gain = gain
                     best_cat_infos_thresh = sorted_cat_idx

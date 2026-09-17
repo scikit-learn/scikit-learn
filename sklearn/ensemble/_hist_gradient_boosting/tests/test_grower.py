@@ -337,6 +337,37 @@ def test_input_validation():
         TreeGrower(X_binned_C_array, all_gradients, all_hessians)
 
 
+def test_sample_weight_excludes_zero_weight_from_partition():
+    # Zero-weight samples must not enter the grower partition, otherwise they
+    # inflate hist.count / min_samples_leaf and can produce zero-weight leaves.
+    rng = np.random.RandomState(0)
+    n_samples = 20
+    X_binned = np.asfortranarray(
+        rng.randint(0, 10, size=(n_samples, 2), dtype=X_BINNED_DTYPE)
+    )
+    gradients = rng.randn(n_samples).astype(G_H_DTYPE)
+    hessians = np.ones(n_samples, dtype=G_H_DTYPE)
+    sample_weight = np.ones(n_samples, dtype=np.float64)
+    sample_weight[:5] = 0.0
+    gradients[:5] = 0.0
+    hessians[:5] = 0.0
+
+    grower = TreeGrower(
+        X_binned,
+        gradients,
+        hessians,
+        min_samples_leaf=1,
+        sample_weight=sample_weight,
+    )
+    expected = np.flatnonzero(sample_weight).astype(np.uint32)
+    assert_array_equal(np.sort(grower.root.sample_indices), expected)
+    grower.grow()
+    leaf_indices = np.concatenate(
+        [leaf.sample_indices for leaf in grower.finalized_leaves]
+    )
+    assert_array_equal(np.sort(leaf_indices), expected)
+
+
 def test_init_parameters_validation():
     X_binned, all_gradients, all_hessians = _make_training_data()
     with pytest.raises(ValueError, match="min_gain_to_split=-1 must be positive"):
