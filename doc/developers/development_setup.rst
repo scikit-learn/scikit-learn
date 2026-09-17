@@ -61,7 +61,7 @@ This should display:
 
 Set up a dedicated environment and install dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. |PythonMinVersion| replace:: 3.11
+.. |PythonMinVersion| replace:: 3.12
 
 Using an isolated environment such as venv_ or conda_ makes it possible to
 install a specific version of scikit-learn with pip or conda and its dependencies,
