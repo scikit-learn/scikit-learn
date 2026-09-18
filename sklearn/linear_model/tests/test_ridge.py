@@ -2677,15 +2677,22 @@ def test_ridge_cv_custom_multioutput_scorer(X_shape):
     assert_allclose(ridge_cv.best_score_, -custom_error(y, y_pred_loo))
 
 
-def test_ridge_classifier_cv_binary_accuracy_loo(global_random_seed):
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_ridge_classifier_cv_accuracy_loo(global_random_seed, n_classes):
     """Binary LOO scoring used to take `argmax` over a single-column
-    `LabelBinarizer` output, making `best_score_` always 1.0."""
+    `LabelBinarizer` output, making `best_score_` always 1.0. Multiclass is
+    checked alongside as a guard on the shared code path."""
     X, y = make_classification(
-        n_samples=60, n_features=8, random_state=global_random_seed
+        n_samples=60,
+        n_features=8,
+        n_informative=4,
+        n_classes=n_classes,
+        random_state=global_random_seed,
     )
     alphas = [0.1, 1.0, 10.0]
     clf = RidgeClassifierCV(alphas=alphas, scoring="accuracy").fit(X, y)
-    assert clf.best_score_ < 1.0
+    if n_classes == 2:
+        assert clf.best_score_ < 1.0
 
     cv = LeaveOneOut()
     y_pred_loo = [
