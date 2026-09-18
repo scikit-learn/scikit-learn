@@ -20,9 +20,12 @@ from sklearn.linear_model._base import _pre_fit
 from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent,
     enet_coordinate_descent_gram,
+    enet_coordinate_descent_multinomial,
     enet_coordinate_descent_sparse,
 )
-from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.linear_model._linear_loss import (
+    LinearModelLoss,
+)
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.optimize import _check_optimize_result
 
@@ -1027,6 +1030,7 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
 
         n_samples, n_features = X.shape
         gradient, hessian = self.prepare_gradient_hessian()
+        # TODO: Pass correct y=b (see NewtonCDSolver), or at least y=||b||_2^2.
 
         if self.linear_loss.base_loss.is_multiclass:
             # Often needed variables for the multinomial.
@@ -1339,11 +1343,6 @@ class NewtonCDSolver(NewtonSolver):
                 raise ValueError(
                     f"X must be a CSC array/matrix for {self.__class__.__name__}"
                 )
-            if self.linear_loss.base_loss.is_multiclass:
-                raise ValueError(
-                    f"Solver {self.__class__.__name__} does not support multiclass "
-                    "settings (n_classes >= 3)."
-                )
         elif not X.flags.f_contiguous:
             raise ValueError(f"X must be F-contiguous for {self.__class__.__name__}")
 
@@ -1478,7 +1477,7 @@ class NewtonCDSolver(NewtonSolver):
                 self.coef_newton = np.r_[w, w0] - self.coef
             else:
                 self.coef_newton = w - self.coef
-        else:  # pragma: no cover
+        else:
             # Multinomial multiclass.
             # Unfortunately, the pointwise hessian h is not diagonal and we can't write
             # this as least squares plus penalties:
@@ -1496,14 +1495,50 @@ class NewtonCDSolver(NewtonSolver):
             # middle loop over classes and optimized only for that class. This is
             # the same as using the diagonal majorization above and additionally
             # updating gradient and hessian in this middle loop.
-            #
-            # Unfortunately, all these strategies fail even for simple datasets such as
+            # Unfortunately, these strategies fail even for simple datasets such as
             #     X, y = make_classification(n_samples=20, n_features=20,
             #         n_informative=10, n_classes=3)
             #     LogisticRegression(C=1).fit(X, y)
-            # Therefore, for the time being, we honestly fail.
-            msg = "Multinomial (n_classes >= 3) is not supported by NewtonCDSolver."
-            raise ValueError(msg)
+            # Therefore, we take a more sophisticated approach:
+            # Tanabe & Sagae (1992) https://doi.org/10.1111/J.2517-6161.1992.TB01875.X
+            # derive an analytical LDL' decomposition for the matrix
+            # h = diag(p) - p p' = LDL', L lower triangular, D diagonal.
+            # Defining
+            #   A = sqrt(D) L' X
+            #   b = (L sqrt(D))^-1 (LDL' X coef - g) = A coef - (L sqrt(D))^-1 g
+            # we can now write
+            #     1/2 c' H c + (G' - coef' H) c + alpha ||c||_1 + beta/2 ||c||_2^2
+            #   = 1/2 ||A c - b||_2^2 + alpha ||c||_1 + beta/2 ||c||_2^2 + const
+            #
+            # Note that
+            #   A' A = H
+            #   G = X' g
+            #   A' b = H coef - G
+            proba = self.hess_pointwise
+            w = np.copy(self.coef, order="F")
+
+            with warnings.catch_warnings():
+                # Ignore warnings that add little information for users.
+                warnings.simplefilter("ignore", ConvergenceWarning)
+                _, gap, inner_tol, n_inner_iter = enet_coordinate_descent_multinomial(
+                    W=w,
+                    alpha=self.l1_reg_strength,
+                    beta=self.l2_reg_strength,
+                    X=X,
+                    sample_weight=sample_weight,
+                    raw_prediction=self.raw_prediction,
+                    grad_pointwise=self.grad_pointwise,
+                    proba=proba,
+                    fit_intercept=self.linear_loss.fit_intercept,
+                    max_iter=1000,  # TODO(newton-cd): improve
+                    tol=self.inner_tol,
+                    do_screening=True,
+                    early_stopping=False,
+                    verbose=self.verbose >= 4,
+                )
+
+            # Set self.coef_newton.
+            self.coef_newton = w - self.coef
 
         # Tighten inner stopping criterion, see Chapter 6.1 of "An Improved GLMNET".
         if n_inner_iter == 0:
