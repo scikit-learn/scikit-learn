@@ -533,6 +533,14 @@ with config_context(enable_metadata_auto_requests=True):
     print_routing(clf)
 
 # %%
+# Auto-requests can also be set on composite methods such as `fit_transform` or
+# `fit_predict`. Since the requests of a composite method are composed from those of
+# its component methods (`fit` + `transform`, `fit` + `predict`), this is only allowed
+# for metadata which is not already present in the requests of any of the component
+# methods. Otherwise, call `add_auto_request` on the component method, and the
+# composite method inherits the request.
+
+# %%
 # On a consuming :term:`router`, apply `add_auto_request` on the `MetadataRequest`, then
 # attach it with ``add_self_request``. Here we subclass `RouterConsumerClassifier` from
 # above:

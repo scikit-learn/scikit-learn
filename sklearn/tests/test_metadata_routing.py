@@ -1220,10 +1220,8 @@ def test_auto_requests_override_class_level_requests():
             requests = super().get_metadata_routing()
             # Override class-level False with True:
             requests.fit.add_auto_request("prop")
-            # Auto-request on a simple method:
+            # Add new method request:
             requests.predict.add_auto_request("prop")
-            # Auto-request directly on a composite method:
-            requests.fit_predict.add_auto_request("prop")
             return requests
 
     est = SimpleConsumingEstimator()
@@ -1233,8 +1231,93 @@ def test_auto_requests_override_class_level_requests():
         # Instance-level True should override class-level False:
         assert routing.fit.requests["prop"] is True
         assert routing.predict.requests["prop"] is True
+        # Composite methods inherit the requests of their component methods:
         assert routing.fit_transform.requests["prop"] is True
         assert routing.fit_predict.requests["prop"] is True
+
+
+@config_context(enable_metadata_routing=True)
+def test_auto_requests_on_composite_methods():
+    """Auto-requests set directly on a composite method apply to metadata which
+    none of its component methods request, and the requests of the component
+    methods are still composed into the composite method."""
+
+    class Estimator(BaseEstimator):
+        def fit(self, X, y, prop=None):
+            pass  # pragma: no cover
+
+        def predict(self, X):
+            pass  # pragma: no cover
+
+        def fit_predict(self, X, y, prop=None, composite_only=None):
+            pass  # pragma: no cover
+
+        def get_metadata_routing(self):
+            requests = super().get_metadata_routing()
+            requests.fit_predict.add_auto_request("composite_only")
+            return requests
+
+    def make_router(est):
+        return MetadataRouter(owner="test").add(
+            estimator=est,
+            method_mapping=MethodMapping().add(
+                caller="fit_predict", callee="fit_predict"
+            ),
+        )
+
+    # With auto-requests disabled, the composite method only has the requests
+    # composed from its component methods, and the metadata is not routed.
+    est = Estimator()
+    assert get_routing_for_object(est).fit_predict.requests == {"prop": None}
+    with pytest.raises(TypeError, match="got unexpected argument"):
+        process_routing(make_router(est), "fit_predict", composite_only="value")
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(est)
+        assert routing.fit_predict.requests == {"prop": None, "composite_only": True}
+        # The component methods are not affected:
+        assert "composite_only" not in routing.fit.requests
+        assert "composite_only" not in routing.predict.requests
+        # And the metadata is routed to the composite method:
+        routed = process_routing(
+            make_router(est), "fit_predict", composite_only="value"
+        )
+        assert routed.estimator.fit_predict == {"composite_only": "value"}
+
+        # Requests set by the user on a component method are still composed into the
+        # composite method, next to its own auto-request:
+        est.set_fit_request(prop="alias")
+        routing = get_routing_for_object(est)
+        assert routing.fit_predict.requests == {
+            "prop": "alias",
+            "composite_only": True,
+        }
+
+
+def test_auto_requests_on_composite_methods_overlap_error():
+    """Auto-requesting metadata on a composite method which is already present in
+    the requests of one of its component methods raises an informative error."""
+
+    class Estimator(BaseEstimator):
+        def fit(self, X, y, prop=None):
+            pass  # pragma: no cover
+
+        def get_metadata_routing(self):
+            requests = super().get_metadata_routing()
+            requests.fit_transform.add_auto_request("prop")
+            return requests
+
+    msg = re.escape(
+        "Auto-requests can only be set on the composite method fit_transform for"
+        " metadata which is not already present in the requests of its component"
+        " methods (fit, transform). Set the auto-request for prop on the component"
+        " method instead."
+    )
+    # The error is raised independently of whether auto-requests are enabled.
+    for enabled in (False, True):
+        with config_context(enable_metadata_auto_requests=enabled):
+            with pytest.raises(ValueError, match=msg):
+                get_routing_for_object(Estimator()).fit_transform
 
 
 class _UncopyableOwner:

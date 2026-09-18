@@ -440,6 +440,12 @@ class MethodMetadataRequest:
         This method is used by estimator developers. To learn how to enable and use the
         auto-request policy refer to :ref:`metadata_routing_auto_request`.
 
+        Auto-requests can also be set on a composite method such as `fit_transform`
+        or `fit_predict`, but only for metadata which is not already present in the
+        requests of any of its component methods (`fit` and `transform`, or `fit` and
+        `predict`). For such metadata, set the auto-request on the component method
+        instead; the composite method then inherits it.
+
         Parameters
         ----------
         *params : str
@@ -722,21 +728,16 @@ class MetadataRequest:
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
             )
 
-        # Persist composite-only state (auto/direct requests) without putting the
-        # name on ``__dict__``, so this method keeps running and can re-merge.
+        # The `MethodMetadataRequest` of a composite method is cached in
+        # `_composite_requests` instead of being set as an attribute, so that this
+        # method keeps being called and the requests of the component methods are
+        # re-composed on every access. The cached object persists the auto-requests
+        # which are set directly on the composite method.
         if name not in self._composite_requests:
             self._composite_requests[name] = MethodMetadataRequest(
                 owner=self.owner, method=name
             )
         composite_mmr = self._composite_requests[name]
-
-        # Keep only values coming from auto-request actualization on the composite
-        # itself; drop leftovers from a previous composed snapshot.
-        explicit = {
-            key: composite_mmr._requests[key]
-            for key in composite_mmr._auto_requests
-            if key in composite_mmr._requests
-        }
 
         requests = {}
         for method in COMPOSITE_METHODS[name]:
@@ -754,10 +755,26 @@ class MetadataRequest:
                 )
             requests.update(mmr._requests)
 
-        for key, val in explicit.items():
-            # Requests set on the composite itself take precedence over the
-            # values inherited from simple methods.
-            requests[key] = val
+        # Auto-requests set directly on a composite method are only allowed for
+        # metadata which none of its component methods have a request for. Otherwise
+        # they would override the request values of the component methods, including
+        # the ones explicitly set by the user via `set_{method}_request`.
+        overlap = sorted(composite_mmr._auto_requests & set(requests))
+        if overlap:
+            raise ValueError(
+                f"Auto-requests can only be set on the composite method {name} for"
+                " metadata which is not already present in the requests of its"
+                f" component methods ({', '.join(COMPOSITE_METHODS[name])}). Set the"
+                f" auto-request for {', '.join(overlap)} on the component method"
+                " instead."
+            )
+
+        # Carry over the composite's own actualized auto-requests, which are not part
+        # of the composed requests. Everything else in the previous snapshot has been
+        # re-composed above.
+        for param in composite_mmr._auto_requests:
+            if param in composite_mmr._requests:
+                requests[param] = composite_mmr._requests[param]
 
         composite_mmr._requests = requests
         return composite_mmr
