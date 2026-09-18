@@ -999,6 +999,47 @@ def test_neighbors_regressors_zero_distance():
             assert_allclose(corr_labels, knn.predict(z))
 
 
+@pytest.mark.parametrize("y_dtype", [np.int32, np.int64, np.float32, np.float64])
+@pytest.mark.parametrize("weights", ["uniform", "distance"])
+def test_radius_neighbors_regressor_empty_neighborhood_dtype(y_dtype, weights):
+    """Empty neighborhoods must predict NaN and warn for any target dtype.
+
+    Non-regression test for #12960: the placeholder was built with
+    `np.full_like` on the target, so casting NaN into an integer target
+    produced a platform-dependent sentinel (0 or -2**63) that looked like a
+    real prediction. That also defeated the `np.isnan` check guarding the
+    "no neighbors" warning, so integer targets failed silently.
+    """
+    X = np.array([[0.0], [1.0], [2.0]])
+    y = np.array([0, 1, 2], dtype=y_dtype)
+
+    est = neighbors.RadiusNeighborsRegressor(radius=0.5, weights=weights).fit(X, y)
+    with pytest.warns(UserWarning, match="no neighbors"):
+        y_pred = est.predict(np.array([[100.0]]))
+
+    assert np.issubdtype(y_pred.dtype, np.floating)
+    assert np.isnan(y_pred).all()
+
+
+@pytest.mark.parametrize("y_dtype", [np.int64, np.float64])
+def test_radius_neighbors_regressor_partially_empty_neighborhood(y_dtype):
+    """A sample with neighbors and one without must not contaminate each other.
+
+    Non-regression test for #12960: with an integer target the empty row came
+    back as 0 rather than NaN, so the caller could not tell it apart from a
+    genuine zero prediction.
+    """
+    X = np.array([[0.0], [1.0], [2.0]])
+    y = np.array([0, 1, 2], dtype=y_dtype)
+
+    est = neighbors.RadiusNeighborsRegressor(radius=0.6).fit(X, y)
+    with pytest.warns(UserWarning, match="no neighbors"):
+        y_pred = est.predict(np.array([[1.0], [100.0]]))
+
+    assert y_pred[0] == pytest.approx(1.0)
+    assert np.isnan(y_pred[1])
+
+
 def test_radius_neighbors_boundary_handling():
     """Test whether points lying on boundary are handled consistently
 
