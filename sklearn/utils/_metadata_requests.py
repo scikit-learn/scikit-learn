@@ -663,6 +663,8 @@ class MetadataRequest:
 
     def __init__(self, owner):
         self.owner = owner
+        # Composite methods (e.g. `fit_transform`) are not attributes, see
+        # `__getattr__`. This only stores what is set directly on them.
         self._composite_requests = {}
         for method in SIMPLE_METHODS:
             setattr(
@@ -728,16 +730,16 @@ class MetadataRequest:
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
             )
 
-        # The `MethodMetadataRequest` of a composite method is cached in
-        # `_composite_requests` instead of being set as an attribute, so that this
-        # method keeps being called and the requests of the component methods are
-        # re-composed on every access. The cached object persists the auto-requests
-        # which are set directly on the composite method.
+        # The requests of a composite method are composed from those of its
+        # component methods on every access, so that they always reflect the
+        # current state of the component methods. Only what is set directly on the
+        # composite method is stored, in `own`: its auto-requests and, once
+        # actualized, the resulting request values.
         if name not in self._composite_requests:
             self._composite_requests[name] = MethodMetadataRequest(
                 owner=self.owner, method=name
             )
-        composite_mmr = self._composite_requests[name]
+        own = self._composite_requests[name]
 
         requests = {}
         for method in COMPOSITE_METHODS[name]:
@@ -755,11 +757,10 @@ class MetadataRequest:
                 )
             requests.update(mmr._requests)
 
-        # Auto-requests set directly on a composite method are only allowed for
-        # metadata which none of its component methods have a request for. Otherwise
-        # they would override the request values of the component methods, including
-        # the ones explicitly set by the user via `set_{method}_request`.
-        overlap = sorted(composite_mmr._auto_requests & set(requests))
+        # Auto-requests on a composite method may only add metadata which none of
+        # its component methods have a request for, so that they never override the
+        # component methods' request values, e.g. the ones set by the user.
+        overlap = sorted(own._auto_requests & set(requests))
         if overlap:
             raise ValueError(
                 f"Auto-requests can only be set on the composite method {name} for"
@@ -769,15 +770,15 @@ class MetadataRequest:
                 " instead."
             )
 
-        # Carry over the composite's own actualized auto-requests, which are not part
-        # of the composed requests. Everything else in the previous snapshot has been
-        # re-composed above.
-        for param in composite_mmr._auto_requests:
-            if param in composite_mmr._requests:
-                requests[param] = composite_mmr._requests[param]
+        requests.update(own._requests)
 
-        composite_mmr._requests = requests
-        return composite_mmr
+        composed = MethodMetadataRequest(
+            owner=self.owner, method=name, requests=requests
+        )
+        # The returned object shares the stored auto-requests, so that calling
+        # `add_auto_request` on it is persisted for later accesses.
+        composed._auto_requests = own._auto_requests
+        return composed
 
     def _get_param_names(self, method, return_alias, ignore_self_request=None):
         """Get names of all metadata that can be consumed or routed by specified \
