@@ -88,6 +88,18 @@ class RecordingCallback:
         )
 
     def count_hooks(self, hook_name):
+        """Count the recorded calls for a given hook.
+
+        Parameters
+        ----------
+        hook_name : str
+            Name of the hook to count.
+
+        Returns
+        -------
+        count : int
+            Number of recorded calls for `hook_name`.
+        """
         return len([rec for rec in self.record if rec["name"] == hook_name])
 
 
