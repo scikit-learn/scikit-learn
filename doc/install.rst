@@ -222,7 +222,11 @@ purpose.
 
     Scikit-learn 1.6 supported Python 3.9—3.13.
 
-    Scikit-learn 1.7 requires Python 3.10 or newer.
+    Scikit-learn 1.7 supported Python 3.10—3.13.
+
+    Scikit-learn 1.8 supported Python 3.11—3.14.
+
+    Scikit-learn 1.9 requires Python 3.11 or newer.
 
 .. _install_by_distribution:
 
