@@ -672,7 +672,6 @@ _VALID_METRICS = [
     "hamming",
     "jaccard",
     "mahalanobis",
-    "matching",
     "minkowski",
     "rogerstanimoto",
     "russellrao",
@@ -687,12 +686,6 @@ _VALID_METRICS = [
 if sp_base_version < parse_version("1.17"):  # pragma: no cover
     # Deprecated in SciPy 1.15 and removed in SciPy 1.17
     _VALID_METRICS += ["sokalmichener"]
-if sp_base_version < parse_version("1.11"):  # pragma: no cover
-    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
-    _VALID_METRICS += ["kulsinski"]
-if sp_base_version < parse_version("1.9"):
-    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
-    _VALID_METRICS += ["matching"]
 
 _NAN_METRICS = ["nan_euclidean"]
 
@@ -755,19 +748,12 @@ def pairwise_distances_argmin_min(
           'manhattan', 'nan_euclidean']
 
         - from :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'mahalanobis', 'minkowski',
+          'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         See the documentation for :mod:`scipy.spatial.distance` for details on these
         metrics.
-
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
-
-        .. note::
-           `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -903,19 +889,12 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
           'manhattan', 'nan_euclidean']
 
         - from :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'mahalanobis', 'minkowski',
+          'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         See the documentation for :mod:`scipy.spatial.distance` for details on these
         metrics.
-
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
-
-        .. note::
-           `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -2346,16 +2325,10 @@ def pairwise_distances(
       inputs except 'nan_euclidean'.
 
     - From :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
-      'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
-      'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
-      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule'].
+      'correlation', 'dice', 'hamming', 'jaccard', 'mahalanobis', 'minkowski',
+      'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+      'sqeuclidean', 'yule'].
       These metrics do not support sparse matrix inputs.
-
-    .. note::
-        `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
-
-    .. note::
-        `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid :mod:`scipy.spatial.distance` metrics), the scikit-learn implementation
@@ -2508,12 +2481,6 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
 if sp_base_version < parse_version("1.17"):
     # Deprecated in SciPy 1.15 and removed in SciPy 1.17
     PAIRWISE_BOOLEAN_FUNCTIONS += ["sokalmichener"]
-if sp_base_version < parse_version("1.11"):
-    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
-    PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
-if sp_base_version < parse_version("1.9"):
-    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
-    PAIRWISE_BOOLEAN_FUNCTIONS += ["matching"]
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {
