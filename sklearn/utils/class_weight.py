@@ -102,6 +102,8 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         weight = xp.ones(size(classes), device=device)
         unweighted_classes = []
         for i, c in enumerate(classes):
+            if hasattr(c, "item"):
+                c = c.item()
             if c in class_weight:
                 weight[i] = class_weight[c]
             else:
