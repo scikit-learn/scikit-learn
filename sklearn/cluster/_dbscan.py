@@ -269,10 +269,10 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         distance). When p=1, this is equivalent to Manhattan distance.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of parallel jobs to run for the radius-neighbor queries used
+        to compute the neighborhoods. ``None`` means 1 unless in a
+        :obj:`joblib.parallel_backend` context. ``-1`` means using all
+        processors. See :term:`Glossary <n_jobs>` for more details.
 
     Attributes
     ----------

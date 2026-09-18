@@ -81,7 +81,7 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         passed to neighbors.NearestNeighbors instance.
 
     n_jobs : int or None, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to run for neighbor searches.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
