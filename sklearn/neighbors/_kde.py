@@ -220,6 +220,8 @@ class KernelDensity(BaseEstimator):
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
+        X = validate_data(self, X, order="C", dtype=np.float64)
+
         if isinstance(self.bandwidth, str):
             if self.bandwidth == "scott":
                 self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
@@ -229,8 +231,6 @@ class KernelDensity(BaseEstimator):
                 )
         else:
             self.bandwidth_ = self.bandwidth
-
-        X = validate_data(self, X, order="C", dtype=np.float64)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
