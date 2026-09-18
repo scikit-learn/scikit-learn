@@ -593,10 +593,10 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
     """Test that SplineTransformer encodes missing values to zeros even for
     all-nan-features."""
 
-    X = np.array(
+    X1 = np.array(
         [[1, 1, np.nan], [2, 2, np.nan], [3, 3, np.nan], [4, 5, np.nan], [4, 4, np.nan]]
     )
-    X_nan_full_column = np.array([[np.nan, np.nan, 1], [np.nan, 1, 2]])
+    X2 = np.array([[np.nan, np.nan, 1], [np.nan, 1, 2]])
 
     spline = SplineTransformer(
         degree=2,
@@ -605,9 +605,9 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
         extrapolation=extrapolation,
         sparse_output=sparse_output,
     )
-    spline.fit(X)
+    spline.fit(X1)
 
-    X_trans = spline.transform(X_nan_full_column)
+    X_trans = spline.transform(X2)
     if sparse_output:
         X_trans = X_trans.toarray()
 

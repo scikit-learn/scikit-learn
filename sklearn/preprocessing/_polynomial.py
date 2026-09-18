@@ -969,7 +969,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         n_unique_knots = np.fromiter(
             [len(np.unique(knots[:, i])) for i in range(n_features)], dtype=int
         )
-        self._has_only_one_unique_knot = n_unique_knots == 1
+        self._unique_knot_mask = n_unique_knots == 1
 
         bsplines = [
             BSpline.construct_fast(
@@ -1024,7 +1024,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             XBS = np.zeros((n_samples, n_out), dtype=dtype, order=self.order)
 
         for feature_idx in range(n_features):
-            if self._has_only_one_unique_knot[feature_idx]:
+            if self._unique_knot_mask[feature_idx]:
                 # Return all zeros. Dense case: XBS is already set to zero.
                 if self.sparse_output:
                     output_list.append(sparse.csr_array((n_samples, n_splines)))
@@ -1047,11 +1047,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # values in the output of that function that correspond to missing
                     # values in the original input will be replaced by 0.0 afterwards.
                     #
-                    # Note that in the following we use spl.t[spl.k] as the
-                    # input replacement to make sure that this code works even
-                    # when `extrapolation == "error"`. Any other choice of
-                    # in-range value would have worked work since the
-                    # corresponding values in the array are replaced by zeros.
+                    # Note that in the following we use spl.t[spl.k] as the input
+                    # replacement to make sure that this code works even when
+                    # `extrapolation == "error"`. Any other choice of in-range value
+                    # would have worked since the corresponding values in the array are
+                    # replaced by zeros.
                     if nan_row_indices.size == x.size:
                         # The column is all np.nan valued. Replace it by a
                         # constant column with an arbitrary non-nan value
@@ -1063,9 +1063,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         x = x.copy()  # avoid mutation of input data
                         x[nan_row_indices] = spl.t[spl.k]
 
-                    # Note: spl.extrapolate is True for extrapolation in
-                    # ["periodic", "continue"]. It is "periodic" for
-                    # extrapolation = "periodic".
+                    # Note: spl.extrapolate is True for extrapolation = "continue". It
+                    # is "periodic" for extrapolation = "periodic".
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k, spl.extrapolate)
 
                     if self.extrapolation == "periodic":
