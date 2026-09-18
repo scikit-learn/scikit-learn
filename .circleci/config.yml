@@ -1,5 +1,15 @@
 version: 2.1
 
+executors:
+  doc-linux:
+    docker:
+      - image: cimg/base:current-22.04
+    environment:
+      - MKL_NUM_THREADS: 1
+      - OPENBLAS_NUM_THREADS: 1
+      - OMP_NUM_THREADS: 1
+      - CONDA_ENV_NAME: testenv
+
 jobs:
   lint:
     docker:
@@ -15,12 +25,11 @@ jobs:
           command: ./build_tools/linting.sh
 
   doc-min-dependencies:
-    docker:
-      - image: cimg/base:current-22.04
+    executor: doc-linux
+    resource_class: medium
     environment:
-      - MKL_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
-      - CONDA_ENV_NAME: testenv
+      # 2 vCPUs with the medium resource class
+      - SPHINX_GALLERY_PARALLEL: 2
       - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
       # Do not fail if the documentation build generates warnings with minimum
       # dependencies as long as we can avoid raising warnings with more recent
@@ -64,13 +73,11 @@ jobs:
           destination: log.txt
 
   doc:
-    docker:
-      - image: cimg/base:current-22.04
+    executor: doc-linux
     resource_class: medium+
     environment:
-      - MKL_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
-      - CONDA_ENV_NAME: testenv
+      # 3 vCPUs with the medium+ resource class
+      - SPHINX_GALLERY_PARALLEL: 3
       - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
       # Make sure that we fail if the documentation build generates warnings with
       # recent versions of the dependencies.
