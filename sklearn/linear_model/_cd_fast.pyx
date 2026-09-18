@@ -2263,7 +2263,7 @@ cdef (floating, floating) gap_enet_multinomial(
     const floating[::1, :] LD_R,  # LD_R = LDL.L_sqrt_D_matmul(R.copy()) * sqrt_sw[:, None]
     const floating[::1, :] H00_pinv_H0,
     bint fit_intercept,
-    floating[::1, :] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
+    floating[::1, :] XtA,  # XtA = (X.T @ LD_R).T - beta * w is calculated inplace
     bint gap_smaller_eps,
 ) noexcept nogil:
     """Compute dual gap for use in enet_coordinate_descent.
@@ -2301,7 +2301,7 @@ cdef (floating, floating) gap_enet_multinomial(
     # XtA[:, :] = (X.T @ LD_R).T
     if not X_is_sparse:
         for k in range(n_classes):
-            # XtA[:, k] = X.T @ LD_R[:, k]
+            # XtA[k, :] = X.T @ LD_R[:, k]
             _gemv(
                 ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
                 n_samples, &LD_R[0, k], 1, 0.0, &XtA[k, 0], n_classes,
@@ -2352,7 +2352,7 @@ cdef (floating, floating) gap_enet_multinomial(
             gap = 0.0
         return gap, dual_norm_XtA
 
-    # XtA = X.T @ R - beta * w
+    # XtA = (X.T @ LD_R).T - beta * w
     # XtA -= beta * w
     _axpy(n_classes * n_features, -beta, &w[0, 0], 1, &XtA[0, 0], 1)
     dual_norm_XtA = abs_max(n_classes * n_features, &XtA[0, 0])
@@ -2390,7 +2390,7 @@ cdef inline void update_LD_R(
     floating[::1] x_k,
     floating[::1, :] xx,
 ) noexcept nogil:
-    """Update LD_R by X[:, j] * w_kj for class k and feature j.
+    """Update LD_R by LDL[:, k] * X[:, j] * w_kj for class k and feature j.
 
     Note:
         - LDL = diag(proba) - proba proba', the last term being the outer product.
@@ -2448,7 +2448,7 @@ cdef inline void update_LD_R(
         else:
             for i_ind in range(startptr, endptr):
                 i = X_indices[i_ind]
-                xx[i] = X_data[i_ind]
+                xx[i, k] = X_data[i_ind]
         for l in range(n_classes - 1):
             for i in range(n_samples):
                 xx[i, l] -= H00_pinv_H0[l, k + n_classes * j]
@@ -2673,7 +2673,8 @@ def enet_coordinate_descent_multinomial(
                 H0[l, k::n_classes] = H0[k, l::n_classes]
                 H0_coef[k] += (h * raw_prediction[:, l]).sum()
                 H0_coef[l] += (h * raw_prediction[:, k]).sum()
-            # So far omitted term for last class where we still need it:
+            # Inclusion of the term for the last class which was omitted so far,
+            # so it is present only where we need it:
             l = n_classes - 1
             h[:] = -proba[:, k] * proba[:, l] * sw
             H0[k, l::n_classes] = X.T @ h

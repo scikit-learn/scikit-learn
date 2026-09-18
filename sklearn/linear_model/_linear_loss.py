@@ -968,11 +968,12 @@ class Multinomial_LDL_Decomposition:
     """A class for symbolic LDL' decomposition of multinomial hessian.
 
     The pointwise hessian of the multinomial loss with c = n_classes is given by
-        h = diag(p) - p' p        or with indices
-        h_ij = p_i * delta_ij - p_i * p_j    i and j are indices of classes.
-    This holds for every single point (sample). The LDL decomposition
-    of this 2-dim matrix is given in [1] for p_i > 0 and sum(p) <= 1 as (math indices)
-        h = L D L'   with lower triangular L and diagonal D:: text
+        h = diag(p) - p' p
+    or with indices i and j for classes
+        h_ij = p_i * delta_ij - p_i * p_j
+    This holds for every single point (sample). The LDL decomposition of this 2-dim
+    matrix is given in [1] for p_i > 0 and sum(p) <= 1 as (math not Python indices)
+        h = L D L'   with lower triangular L and diagonal D
 
         q_0 = 1
         q_i = 1 - sum(p_k, k=1..i)
@@ -982,7 +983,7 @@ class Multinomial_LDL_Decomposition:
         D_ii = p_i * q_i / q_{i-1}
 
     If the p_i sum to 1, then q_c = 0 and D_cc = 0, with c = n_classes.
-    The inverse L^-1 is also lower triangular and given by:: text
+    The inverse L^-1 is also lower triangular and given by
 
         (L^-1)_ii = 1
         for i > j:
@@ -998,23 +999,23 @@ class Multinomial_LDL_Decomposition:
 
     Parameters
     ----------
-        proba : ndarray of shape (n_samples, n_classes)
-            Array of predicted probabilities per class (and sample).
+    proba : ndarray of shape (n_samples, n_classes)
+        Array of predicted probabilities per class (and sample).
 
     Attributes
     ----------
-        p : ndarray of shape (n_samples, n_classes)
-            Array of predicted probabilities per class (and sample).
+    p : ndarray of shape (n_samples, n_classes)
+        Array of predicted probabilities per class (and sample).
 
-        q_inv : ndarray of shape (n_samples, n_classes)
-            Helper array, inverse of q[:, j] = 1 - sum_{i=0}^j p[:, i], i.e. 1/q.
+    q_inv : ndarray of shape (n_samples, n_classes)
+        Helper array, inverse of q[:, j] = 1 - sum_{i=0}^j p[:, i], i.e. 1/q.
 
-        sqrt_d : ndarray of shape (n_samples, n_classes)
-            Square root of the diagonal matrix D, D_ii = p_i * q_i / q_{i-1}
-            with q_{-1} = 1.
+    sqrt_d : ndarray of shape (n_samples, n_classes)
+        Square root of the diagonal matrix D, D_ii = p_i * q_i / q_{i-1}
+        with q_{-1} = 1.
 
-        proba_sum_to_1 : bool
-            True if probabilities p sum to 1. This is most often expected to be true.
+    proba_sum_to_1 : bool
+        True if probabilities p sum to 1. This is most often expected to be true.
 
     References
     ----------
@@ -1034,7 +1035,7 @@ class Multinomial_LDL_Decomposition:
             eps = 2 * np.finfo(np.float64).resolution
         if not np.allclose(q[:, -1], 0, atol=eps):
             warnings.warn(
-                "Probabilities proba are assumed to sum to 1, but they don't.",
+                "Probabilities 'proba' are assumed to sum to 1, but they don't.",
                 UserWarning,
             )
         if self.proba_sum_to_1:
@@ -1064,7 +1065,7 @@ class Multinomial_LDL_Decomposition:
         L' is the transpose of L, Lij is the i-th row and j-th column of L:
             Lij = -p[:, i] / q[:, j]
 
-        For n_classes = 4, L' looks like:: text
+        For n_classes = 4, L' looks like
 
             L' = (1 L10 L20 L30)
                  (0   1 L21 L31)
@@ -1074,7 +1075,7 @@ class Multinomial_LDL_Decomposition:
         The carried out operation is matmul over n_classes (1st dimension) and
         element-wise multiplication over n_samples (0th dimension):
 
-            x_ij = sum_k sqrt_d_{i, j} L'_{i, j, k} x_{i, k}
+            x_ij = sqrt_d_{i, j} * sum_k L'_{i, j, k} x_{i, k}
 
         Parameters
         ----------
@@ -1117,7 +1118,7 @@ class Multinomial_LDL_Decomposition:
 
         L is lower triangular and given by Lij = -p[:, i] / q[:, j]
 
-        For n_classes = 4, L looks like:: text
+        For n_classes = 4, L looks like
 
             L = (1     0   0 0)
                 (L10   1   0 0)
@@ -1127,7 +1128,7 @@ class Multinomial_LDL_Decomposition:
         The carried out operation is matmul over n_classes (1st dimension) and
         element-wise multiplication over n_samples (0th dimension):
 
-            x_ij = sum_k L'_{i, j, k} sqrt_d_{i, k}  x_{i, k}
+            x_ij = sum_k L'_{i, j, k} sqrt_d_{i, k} x_{i, k}
 
         Parameters
         ----------
@@ -1161,7 +1162,7 @@ class Multinomial_LDL_Decomposition:
         L^(-1) is again lower triangular and given by:
             L^(-1)_ij = f[:, i] = p[:, i] / q[:, i-1]
 
-        For n_classes = 4, L^(-1) looks like:: text
+        For n_classes = 4, L^(-1) looks like
 
             L^(-1) = (1   0  0  0)
                      (f1  1  0  0)
