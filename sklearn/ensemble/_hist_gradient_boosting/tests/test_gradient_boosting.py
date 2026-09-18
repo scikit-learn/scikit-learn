@@ -37,7 +37,7 @@ from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_devian
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
-from sklearn.utils import check_random_state, shuffle
+from sklearn.utils import check_random_state, shuffle, validate_model
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
 from sklearn.utils.fixes import _IS_32BIT
@@ -1762,3 +1762,42 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+def test_validate_model_rejects_tampered_predictor():
+    """``validate_model`` raises on a model whose predictors were corrupted.
+
+    Non-regression test for a memory-safety issue: predicting with a corrupted
+    predictor loaded from a persisted model previously segfaulted. The value
+    bounds are covered in ``test_predictor.py``; here we check the pickle
+    round-trip and the estimator level entry point.
+    """
+    X, y = make_regression(n_samples=100, n_features=5, random_state=0)
+    est = HistGradientBoostingRegressor(max_iter=3, random_state=0).fit(X, y)
+    validate_model(est)
+    validate_model(pickle.loads(pickle.dumps(est)))
+
+    # Tamper the first split node of the first predictor with an out-of-range
+    # feature index (same dtype, only the value changes).
+    predictor = est._predictors[0][0]
+    internal = np.flatnonzero(~predictor.nodes["is_leaf"].astype(bool))
+    predictor.nodes["feature_idx"][internal[0]] = X.shape[1] + 100
+
+    with pytest.raises(ValueError, match="out-of-bounds 'feature_idx'"):
+        validate_model(est)
+    with pytest.raises(ValueError, match="out-of-bounds 'feature_idx'"):
+        validate_model(pickle.loads(pickle.dumps(est)))
+
+
+def test_validate_model_rejects_bin_mapper_mismatch():
+    """``validate_model`` raises when the bin mapper disagrees on the features.
+
+    The bitsets of known categories used at prediction time are built from the
+    bin mapper's ``is_categorical_``, so it must have an entry per feature.
+    """
+    X, y = make_regression(n_samples=100, n_features=5, random_state=0)
+    est = HistGradientBoostingRegressor(max_iter=3, random_state=0).fit(X, y)
+    est._bin_mapper.is_categorical_ = est._bin_mapper.is_categorical_[:-1]
+
+    with pytest.raises(ValueError, match="bin mapper"):
+        validate_model(est)

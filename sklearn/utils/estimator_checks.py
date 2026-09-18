@@ -106,7 +106,12 @@ from sklearn.utils._testing import (
     raises,
     set_random_state,
 )
-from sklearn.utils.validation import _num_samples, check_is_fitted, has_fit_parameter
+from sklearn.utils.validation import (
+    _num_samples,
+    check_is_fitted,
+    has_fit_parameter,
+    validate_model,
+)
 
 REGRESSION_DATASET = None
 
@@ -458,6 +463,7 @@ def _yield_all_checks(estimator, legacy: bool):
     yield check_dict_unchanged
     yield check_fit_idempotent
     yield check_fit_check_is_fitted
+    yield check_fit_validate_model
     if not tags.no_validation:
         yield check_n_features_in
         yield check_fit1d
@@ -4746,6 +4752,31 @@ def check_fit_check_is_fitted(name, estimator_orig):
         raise NotFittedError(
             "Estimator fails to pass `check_is_fitted` even though it has been fit."
         ) from e
+
+
+def check_fit_validate_model(name, estimator_orig):
+    # Make sure that a legitimately fitted estimator, and the estimators nested
+    # in it, pass the consistency checks run by `validate_model`, before and
+    # after a pickle round-trip.
+    rng = np.random.RandomState(42)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _enforce_estimator_tags_X(estimator, X)
+    if is_regressor(estimator_orig):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    # An unfitted estimator has nothing to check.
+    validate_model(estimator)
+    estimator.fit(X, y)
+    validate_model(estimator)
+    validate_model(pickle.loads(pickle.dumps(estimator)))
 
 
 def check_n_features_in(name, estimator_orig):
