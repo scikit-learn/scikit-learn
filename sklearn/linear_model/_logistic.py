@@ -1517,10 +1517,11 @@ class LogisticRegression(
             y,
             accept_sparse="csc" if solver == "newton-cd" else "csr",
             dtype=[xp.float64, xp.float32],
-            order="F" if solver == "newton-cd" else "C",
+            order=(
+                "F" if solver == "newton-cd" else None if solver == "lbfgs" else "C"
+            ),
             accept_large_sparse=solver not in ("liblinear", "newton-cd", "sag", "saga"),
         )
-        n_samples, n_features = X.shape
         check_classification_targets(y)
         le = LabelEncoder().fit(y)
         self.classes_ = le.classes_
