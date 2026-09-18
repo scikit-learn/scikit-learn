@@ -72,7 +72,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
     # Import error caused by circular imports.
     from sklearn.preprocessing import LabelEncoder
 
-    xp, _, device_ = get_namespace_and_device(y, classes)
+    xp, _, device = get_namespace_and_device(y, classes)
     unique_y = xp.unique_values(y)
     if set(move_to(unique_y, xp=np, device="cpu")) - set(
         move_to(classes, xp=np, device="cpu")
@@ -80,7 +80,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         raise ValueError("classes should include all valid labels that can be in y")
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
-        weight = xp.ones(classes.shape[0], device=device_)
+        weight = xp.ones(classes.shape[0], device=device)
     elif class_weight == "balanced":
         # Find the weight of each class as present in y.
         le = LabelEncoder()
@@ -99,7 +99,7 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
-        weight = xp.ones(size(classes), device=device_)
+        weight = xp.ones(size(classes), device=device)
         unweighted_classes = []
         for i, c in enumerate(classes):
             try:

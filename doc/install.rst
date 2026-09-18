@@ -222,7 +222,11 @@ purpose.
 
     Scikit-learn 1.6 supported Python 3.9—3.13.
 
-    Scikit-learn 1.7 requires Python 3.10 or newer.
+    Scikit-learn 1.7 supported Python 3.10—3.13.
+
+    Scikit-learn 1.8 supported Python 3.11—3.14.
+
+    Scikit-learn 1.9 requires Python 3.11 or newer.
 
 .. _install_by_distribution:
 
@@ -340,7 +344,7 @@ C++ library and are optimized for the x86_64 architecture, and are
 optimized for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/latest/what-is-patching.html>`_
+`scikit-learn-intelex <https://uxlfoundation.github.io/scikit-learn-intelex/latest/patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
 .. prompt:: python >>>

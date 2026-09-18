@@ -47,7 +47,7 @@ from sklearn.model_selection._validation import (
 )
 
 if typing.TYPE_CHECKING:
-    # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
+    # Avoid errors in type checkers (e.g. pyrefly) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
     from sklearn.model_selection._search_successive_halving import (
         HalvingGridSearchCV,

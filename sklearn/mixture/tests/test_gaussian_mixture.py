@@ -31,9 +31,7 @@ from sklearn.mixture._gaussian_mixture import (
     _estimate_gaussian_parameters,
 )
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
@@ -1523,7 +1521,8 @@ def test_gaussian_mixture_array_api_compliance(
         init_params=init_params,
         **additional_kwargs,
     )
-    gmm.fit(X)
+    with sklearn.config_context(array_api_dispatch=False):
+        gmm.fit(X)
 
     X_xp = xp.asarray(X, device=device)
 
@@ -1537,8 +1536,8 @@ def test_gaussian_mixture_array_api_compliance(
 
         assert get_namespace(gmm_xp.means_)[0] == xp
         assert get_namespace(gmm_xp.covariances_)[0] == xp
-        assert array_api_device(gmm_xp.means_) == array_api_device(X_xp)
-        assert array_api_device(gmm_xp.covariances_) == array_api_device(X_xp)
+        assert array_device(gmm_xp.means_) == array_device(X_xp)
+        assert array_device(gmm_xp.covariances_) == array_device(X_xp)
 
         predict_xp = gmm_xp.predict(X_xp)
         predict_proba_xp = gmm_xp.predict_proba(X_xp)
@@ -1557,7 +1556,7 @@ def test_gaussian_mixture_array_api_compliance(
         ]
         for result in results:
             assert get_namespace(result)[0] == xp
-            assert array_api_device(result) == array_api_device(X_xp)
+            assert array_device(result) == array_device(X_xp)
 
         for score in [score_xp, aic_xp, bic_xp]:
             assert isinstance(score, float)
@@ -1590,26 +1589,33 @@ def test_gaussian_mixture_array_api_compliance(
     )
 
     # Check methods
+    with sklearn.config_context(array_api_dispatch=False):
+        predict_np = gmm.predict(X)
+        predict_proba_np = gmm.predict_proba(X)
+        score_samples_np = gmm.score_samples(X)
+        score_np = gmm.score(X)
+        aic_np = gmm.aic(X)
+        bic_np = gmm.bic(X)
+        sample_X, sample_y = gmm.sample(10)
+
     assert (
-        adjusted_rand_score(gmm.predict(X), move_to(predict_xp, xp=np, device="cpu"))
-        > 0.95
+        adjusted_rand_score(predict_np, move_to(predict_xp, xp=np, device="cpu")) > 0.95
     )
     assert_allclose(
-        gmm.predict_proba(X),
+        predict_proba_np,
         move_to(predict_proba_xp, xp=np, device="cpu"),
         rtol=increased_rtol,
         atol=increased_atol,
     )
     assert_allclose(
-        gmm.score_samples(X),
+        score_samples_np,
         move_to(score_samples_xp, xp=np, device="cpu"),
         rtol=increased_rtol,
     )
     # comparing Python float so need explicit rtol when X has dtype float32
-    assert_allclose(gmm.score(X), score_xp, rtol=default_rtol)
-    assert_allclose(gmm.aic(X), aic_xp, rtol=default_rtol)
-    assert_allclose(gmm.bic(X), bic_xp, rtol=default_rtol)
-    sample_X, sample_y = gmm.sample(10)
+    assert_allclose(score_np, score_xp, rtol=default_rtol)
+    assert_allclose(aic_np, aic_xp, rtol=default_rtol)
+    assert_allclose(bic_np, bic_xp, rtol=default_rtol)
     # generated samples are float64 so need explicit rtol when X has dtype float32
     assert_allclose(
         sample_X, move_to(sample_X_xp, xp=np, device="cpu"), rtol=default_rtol

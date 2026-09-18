@@ -375,31 +375,73 @@ def test_ridge_regression_unpenalized_hstacked_X(
         X = X[:, :-1]  # remove intercept
         intercept = coef[-1]
         coef = coef[:-1]
+        # Put one intercept term into the new X, the other one is the "fit_intercept".
+        X = np.concatenate((X, X, np.ones((n_samples, 1))), axis=1)
+        # We omit the factor of 1/2 such that both intercept terms have the same
+        # effective design matrix column (all ones).
+        # We will need to correct for this factor of 2 later.
     else:
         intercept = 0
-    X = 0.5 * np.concatenate((X, X), axis=1)
+        X = 0.5 * np.concatenate((X, X), axis=1)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
-    model.fit(X, y)
 
-    if n_samples > n_features or not fit_intercept:
-        assert model.intercept_ == pytest.approx(intercept)
+    with warnings.catch_warnings():
         if solver == "cholesky":
-            # Cholesky is a bad choice for singular X.
-            pytest.skip()
-        assert_allclose(model.coef_, np.r_[coef, coef])
-    else:
-        # FIXME: Same as in test_ridge_regression_unpenalized.
-        # As it is an underdetermined problem, residuals = 0. This shows that we get
-        # a solution to X w = y ....
-        assert_allclose(model.predict(X), y)
-        # But it is not the minimum norm solution. (This should be equal.)
-        assert np.linalg.norm(np.r_[model.intercept_, model.coef_]) > np.linalg.norm(
-            np.r_[intercept, coef, coef]
-        )
+            # Cause is np.linalg.LinAlgError
+            warnings.filterwarnings("ignore", category=UserWarning)
+        model.fit(X, y)
 
-        pytest.xfail(reason="Ridge does not provide the minimum norm solution.")
-        assert model.intercept_ == pytest.approx(intercept)
-        assert_allclose(model.coef_, np.r_[coef, coef])
+    norm_solution = np.linalg.norm(np.r_[intercept, intercept, coef, coef])
+    if fit_intercept:
+        # Here we meed the factor of 2 because we did not divide X by 1/2.
+        norm_model = np.linalg.norm(2 * np.r_[model.intercept_, model.coef_])
+        model_coef = 2 * model.coef_[:-1]  # remove the intercept
+    else:
+        norm_model = np.linalg.norm(np.r_[model.coef_])
+        model_coef = model.coef_
+
+    if n_samples > n_features:  # long
+        if not fit_intercept and solver == "cholesky":
+            # It always fails for some platforms like Windows, and it fails for some
+            # global_random_seed. So we skip instead of xfail.
+            pytest.skip(
+                reason="Solver cholesky with fit_intercept=False fails from time to "
+                "time for unknown reasons."
+            )
+        assert_allclose(model_coef, np.r_[coef, coef])
+        if fit_intercept:
+            # We should have model.intercept_ == model.coef[-1] == 0.5 * intercept.
+            # But Ridge does center X to obtain model.intercept_, so X[-1] gets
+            # centered to zero and model.coef_[-1] stays zero.
+            # We therefore test model_intercept + model.coef_[-1] == intercept.
+            # FIXME: Note that this is NOT the minimum norm solution.
+            assert model.intercept_ == pytest.approx(intercept)
+            assert model.coef_[-1] == 0
+            assert norm_model > (1 + 1e-12) * norm_solution
+        else:
+            assert model.intercept_ == pytest.approx(0.5 * intercept)
+            assert norm_model == pytest.approx(norm_solution, rel=5e-11)
+    else:  # wide
+        # As it is an underdetermined problem, residuals = 0. The following shows that
+        # we get a solution, i.e. a (non-unique) minimum of the objective function ...
+        assert_allclose(model.predict(X), y)
+
+        if fit_intercept:
+            # FIXME: Same as in test_ridge_regression_unpenalized.
+            # As it is an underdetermined problem, residuals = 0. This shows that we get
+            # a solution to X w = y ....
+            # But it is not the minimum norm solution. Otherwise the norms would be
+            # equal.
+            pytest.xfail(reason="Ridge does not provide the minimum norm solution.")
+            assert norm_model == pytest.approx(norm_solution, rel=1e-12)
+            # This time it is not only related to the intercept, as above, but also to
+            # the coefficients.
+            assert_allclose(model_coef, np.r_[coef, coef])
+        else:
+            # Here, we find the minimum norm solution.
+            assert norm_model == pytest.approx(norm_solution, rel=1e-12)
+            assert model.intercept_ == pytest.approx(intercept)
+            assert_allclose(model_coef, np.r_[coef, coef])
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -1418,9 +1460,10 @@ def check_array_api_attributes(
     X_iris_xp = xp.asarray(X_iris_np, device=device)
     y_iris_xp = xp.asarray(y_iris_np, device=device)
 
-    estimator.fit(X_iris_np, y_iris_np)
-    coef_np = estimator.coef_
-    intercept_np = estimator.intercept_
+    with config_context(array_api_dispatch=False):
+        estimator.fit(X_iris_np, y_iris_np)
+        coef_np = estimator.coef_
+        intercept_np = estimator.intercept_
 
     with config_context(array_api_dispatch=True):
         estimator_xp = clone(estimator).fit(X_iris_xp, y_iris_xp)
@@ -1493,9 +1536,11 @@ def test_ridge_classifier_multilabel_array_api(
     X, y = make_multilabel_classification(random_state=0)
     X_np = X.astype(dtype_name)
     y_np = y.astype(dtype_name)
-    ridge_np = estimator.fit(X_np, y_np)
-    pred_np = ridge_np.predict(X_np)
-    classes_np = ridge_np.classes_.copy()
+    with config_context(array_api_dispatch=False):
+        ridge_np = estimator.fit(X_np, y_np)
+        pred_np = ridge_np.predict(X_np)
+        classes_np = ridge_np.classes_.copy()
+
     with config_context(array_api_dispatch=True):
         X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)
         ridge_xp = estimator.fit(X_xp, y_xp)
@@ -1520,8 +1565,9 @@ def test_ridge_per_target_alpha_array_api(array_namespace, device_name, dtype_na
     y_np = y.astype(dtype_name)
     alphas = np.asarray([1e-2, 0.1, 1.0], dtype=dtype_name)
 
-    ridge_np = Ridge(alpha=alphas, solver="svd").fit(X_np, y_np)
-    pred_np = ridge_np.predict(X_np)
+    with config_context(array_api_dispatch=False):
+        ridge_np = Ridge(alpha=alphas, solver="svd").fit(X_np, y_np)
+        pred_np = ridge_np.predict(X_np)
 
     with config_context(array_api_dispatch=True):
         X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)

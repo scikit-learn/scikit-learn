@@ -164,7 +164,7 @@ def _preprocess_data(
     sample_weight_sqrt : ndarray of shape (n_samples, ) or None
         `np.sqrt(sample_weight)`
     """
-    xp, _, device_ = get_namespace_and_device(X, y, sample_weight)
+    xp, _, device = get_namespace_and_device(X, y, sample_weight)
     n_samples, n_features = X.shape
     X_is_sparse = sp.issparse(X)
 
@@ -173,7 +173,7 @@ def _preprocess_data(
             X,
             copy=copy,
             accept_sparse=["csr", "csc"],
-            dtype=supported_float_dtypes(xp, device=device_),
+            dtype=supported_float_dtypes(xp, device=device),
         )
         y = check_array(y, dtype=X.dtype, copy=True, ensure_2d=False)
     else:
@@ -198,15 +198,15 @@ def _preprocess_data(
         y_offset = _average(y, axis=0, weights=sample_weight, xp=xp)
         y -= y_offset
     else:
-        X_offset = xp.zeros(n_features, dtype=X.dtype, device=device_)
+        X_offset = xp.zeros(n_features, dtype=X.dtype, device=device)
         if y.ndim == 1:
-            y_offset = xp.asarray(0.0, dtype=dtype_, device=device_)
+            y_offset = xp.asarray(0.0, dtype=dtype_, device=device)
         else:
-            y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device_)
+            y_offset = xp.zeros(y.shape[1], dtype=dtype_, device=device)
 
     # X_scale is no longer needed. It is a historic artifact from the
     # time where linear model exposed the normalize parameter.
-    X_scale = xp.ones(n_features, dtype=X.dtype, device=device_)
+    X_scale = xp.ones(n_features, dtype=X.dtype, device=device)
 
     if sample_weight is not None and rescale_with_sw:
         # Sample weight can be implemented via a simple rescaling.
@@ -410,7 +410,7 @@ class LinearClassifierMixin(ClassifierMixin):
             Vector containing the class labels for each sample.
         """
         check_same_namespace(X, self, attribute="coef_", method="predict")
-        xp, _, device_ = get_namespace_and_device(X)
+        xp, _, device = get_namespace_and_device(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
             indices = xp.astype(scores > 0, indexing_dtype(xp))
@@ -424,7 +424,7 @@ class LinearClassifierMixin(ClassifierMixin):
         if isinstance(y_pred[0], str):
             return y_pred
         else:
-            return move_to(y_pred, xp=xp, device=device_)
+            return move_to(y_pred, xp=xp, device=device)
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.

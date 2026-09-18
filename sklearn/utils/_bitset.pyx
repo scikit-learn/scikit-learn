@@ -11,44 +11,6 @@ https://en.wikipedia.org/wiki/Bitwise_operation
 # SPDX-License-Identifier: BSD-3-Clause
 
 
-cdef inline void init_bitset(BITSET_DTYPE_C bitset) noexcept nogil:
-    cdef:
-        unsigned int i
-
-    for i in range(BITSET_LENGTH):
-        bitset[i] = 0
-
-
-cdef inline void set_bitset(BITSET_DTYPE_C bitset, uint8_t val) noexcept nogil:
-    bitset[val // BITSET_INNER_BITS] |= (1 << (val % BITSET_INNER_BITS))
-
-
-cdef inline uint8_t in_bitset(
-    const BITSET_INNER_DTYPE_C* bitset, uint8_t val
-) noexcept nogil:
-    return (bitset[val // BITSET_INNER_BITS] >> (val % BITSET_INNER_BITS)) & 1
-
-
-cpdef inline uint8_t in_bitset_memoryview(
-    const BITSET_INNER_DTYPE_C[:] bitset, uint8_t val
-) noexcept nogil:
-    return (bitset[val // BITSET_INNER_BITS] >> (val % BITSET_INNER_BITS)) & 1
-
-
-cdef inline uint8_t in_bitset_2d_memoryview(
-    const BITSET_INNER_DTYPE_C[:, :] bitset, uint8_t val, unsigned int row
-) noexcept nogil:
-    # Same as above but works on 2d memory views to avoid the creation of 1d
-    # memory views. See https://github.com/scikit-learn/scikit-learn/issues/17299
-    return (
-        bitset[row, val // BITSET_INNER_BITS] >> (val % BITSET_INNER_BITS)
-    ) & 1
-
-
-cpdef inline void set_bitset_memoryview(BITSET_INNER_DTYPE_C[:] bitset, uint8_t val):
-    bitset[val // BITSET_INNER_BITS] |= (1 << (val % BITSET_INNER_BITS))
-
-
 def set_raw_bitset_from_binned_bitset(
     BITSET_INNER_DTYPE_C[:] raw_bitset,
     BITSET_INNER_DTYPE_C[:] binned_bitset,

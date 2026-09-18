@@ -51,19 +51,23 @@ class LinearModelLoss:
 
     Note that raw_prediction is also known as linear predictor.
 
-    The loss is the average of per sample losses and includes a term for L2
+    The loss is the average of per sample losses and includes a term for L1 and L2
     regularization::
 
         loss = 1 / s_sum * sum_i s_i loss(y_i, X_i @ coef + intercept)
                + 1/2 * l2_reg_strength * ||coef||_2^2
+               + l1_reg_strength * ||coef||_1
 
     with sample weights s_i=1 if sample_weight=None and s_sum=sum_i s_i.
+    Note that the L1 penalty is not taken into account for gradient and hessian.
 
     Gradient and hessian, for simplicity without intercept, are::
 
         gradient = 1 / s_sum * X.T @ loss.gradient + l2_reg_strength * coef
         hessian = 1 / s_sum * X.T @ diag(loss.hessian) @ X
                   + l2_reg_strength * identity
+
+    The L1 penalty NEVER enters gradient or hessian, only loss.
 
     Conventions:
         if fit_intercept:
@@ -212,15 +216,15 @@ class LinearModelLoss:
             (n_samples, n_classes)
         """
         weights, intercept = self.weight_intercept(coef)
-        xp, _, device_ = get_namespace_and_device(X)
+        xp, _, device = get_namespace_and_device(X)
 
         # The `weights` and `intercept` are only converted internally to the
         # array API because the relevant `scipy.optimize` functions do not
         # currently support the array API and we have to ensure that the final
         # values returned to the respective `scipy.optimize` function are in
         # the `numpy` namespace.
-        weights_xp = xp.asarray(weights, dtype=X.dtype, device=device_)
-        intercept_xp = xp.asarray(intercept, dtype=X.dtype, device=device_)
+        weights_xp = xp.asarray(weights, dtype=X.dtype, device=device)
+        intercept_xp = xp.asarray(intercept, dtype=X.dtype, device=device)
         if not self.base_loss.is_multiclass:
             raw_prediction = X @ weights_xp + intercept_xp
         else:
@@ -229,8 +233,17 @@ class LinearModelLoss:
 
         return weights, intercept, raw_prediction
 
+    def l1_penalty(self, weights, l1_reg_strength):
+        """Compute L1 penalty term: l1_reg_strength * ||w||_1."""
+        # TODO(numpy 2.0): use np.linalg.vector_norm
+        if weights.ndim == 1:
+            norm1_w = np.linalg.norm(weights, ord=1)
+        else:
+            norm1_w = np.sum(np.abs(weights))
+        return float(l1_reg_strength * norm1_w)
+
     def l2_penalty(self, weights, l2_reg_strength):
-        """Compute L2 penalty term l2_reg_strength/2 *||w||_2^2."""
+        """Compute L2 penalty term l2_reg_strength / 2 * ||w||_2^2."""
         norm2_w = weights @ weights if weights.ndim == 1 else squared_norm(weights)
         return float(0.5 * l2_reg_strength * norm2_w)
 
@@ -240,6 +253,7 @@ class LinearModelLoss:
         X,
         y,
         sample_weight=None,
+        l1_reg_strength=0.0,
         l2_reg_strength=0.0,
         n_threads=1,
         raw_prediction=None,
@@ -259,6 +273,8 @@ class LinearModelLoss:
             Observed, true target values.
         sample_weight : None or contiguous array of shape (n_samples,), default=None
             Sample weights.
+        l1_reg_strength : float, default=0.0
+            L1 regularization strength
         l2_reg_strength : float, default=0.0
             L2 regularization strength
         n_threads : int, default=1
@@ -289,9 +305,10 @@ class LinearModelLoss:
         sw_sum = n_samples if sample_weight is None else xp.sum(sample_weight)
         loss = float(xp.sum(loss) / sw_sum)
 
+        if l1_reg_strength > 0:
+            loss += self.l1_penalty(weights, l1_reg_strength)
         if l2_reg_strength > 0:
             loss += self.l2_penalty(weights, l2_reg_strength)
-
         return loss
 
     def loss_gradient(
@@ -300,6 +317,7 @@ class LinearModelLoss:
         X,
         y,
         sample_weight=None,
+        l1_reg_strength=0.0,
         l2_reg_strength=0.0,
         n_threads=1,
         raw_prediction=None,
@@ -319,6 +337,8 @@ class LinearModelLoss:
             Observed, true target values.
         sample_weight : None or contiguous array of shape (n_samples,), default=None
             Sample weights.
+        l1_reg_strength : float, default=0.0
+            L1 regularization strength
         l2_reg_strength : float, default=0.0
             L2 regularization strength
         n_threads : int, default=1
@@ -353,7 +373,10 @@ class LinearModelLoss:
         xp, _ = get_namespace(X, y, sample_weight)
         sw_sum = n_samples if sample_weight is None else xp.sum(sample_weight)
         loss = float(xp.sum(loss) / sw_sum)
-        loss += self.l2_penalty(weights, l2_reg_strength)
+        if l1_reg_strength > 0:
+            loss += self.l1_penalty(weights, l1_reg_strength)
+        if l2_reg_strength > 0:
+            loss += self.l2_penalty(weights, l2_reg_strength)
 
         grad_pointwise /= sw_sum
 
@@ -389,12 +412,15 @@ class LinearModelLoss:
 
         return loss, grad
 
+    # Note: From here on, l1_reg_strength is unused. But we still want to ensure the
+    # same function signature across all related functions.
     def gradient(
         self,
         coef,
         X,
         y,
         sample_weight=None,
+        l1_reg_strength=0.0,
         l2_reg_strength=0.0,
         n_threads=1,
         raw_prediction=None,
@@ -414,6 +440,8 @@ class LinearModelLoss:
             Observed, true target values.
         sample_weight : None or contiguous array of shape (n_samples,), default=None
             Sample weights.
+        l1_reg_strength : float, default=0.0
+            Unused L1 regularization strength.
         l2_reg_strength : float, default=0.0
             L2 regularization strength
         n_threads : int, default=1
@@ -475,6 +503,7 @@ class LinearModelLoss:
         X,
         y,
         sample_weight=None,
+        l1_reg_strength=0.0,
         l2_reg_strength=0.0,
         n_threads=1,
         gradient_out=None,
@@ -498,6 +527,8 @@ class LinearModelLoss:
             Observed, true target values.
         sample_weight : None or contiguous array of shape (n_samples,), default=None
             Sample weights.
+        l1_reg_strength : float, default=0.0
+            Unused L1 regularization strength.
         l2_reg_strength : float, default=0.0
             L2 regularization strength
         n_threads : int, default=1
@@ -740,7 +771,14 @@ class LinearModelLoss:
         return grad, hess, hessian_warning
 
     def gradient_hessian_product(
-        self, coef, X, y, sample_weight=None, l2_reg_strength=0.0, n_threads=1
+        self,
+        coef,
+        X,
+        y,
+        sample_weight=None,
+        l1_reg_strength=0.0,
+        l2_reg_strength=0.0,
+        n_threads=1,
     ):
         """Computes gradient and hessp (hessian product function) w.r.t. coef.
 
@@ -757,6 +795,8 @@ class LinearModelLoss:
             Observed, true target values.
         sample_weight : None or contiguous array of shape (n_samples,), default=None
             Sample weights.
+        l1_reg_strength : float, default=0.0
+            Unused L1 regularization strength.
         l2_reg_strength : float, default=0.0
             L2 regularization strength
         n_threads : int, default=1

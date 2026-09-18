@@ -15,7 +15,7 @@ from sklearn.base import _fit_context
 from sklearn.decomposition._base import _BasePCA
 from sklearn.utils import check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
-from sklearn.utils._array_api import _cov, device, get_namespace
+from sklearn.utils._array_api import _cov, array_device, get_namespace
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.extmath import _randomized_svd, fast_logdet, svd_flip
 from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
@@ -641,7 +641,7 @@ class PCA(_BasePCA):
             n_components = (
                 xp.searchsorted(
                     ratio_cumsum,
-                    xp.asarray(n_components, device=device(ratio_cumsum)),
+                    xp.asarray(n_components, device=array_device(ratio_cumsum)),
                     side="right",
                 )
                 + 1

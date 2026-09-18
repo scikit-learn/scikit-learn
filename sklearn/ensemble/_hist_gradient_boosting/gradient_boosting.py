@@ -1457,10 +1457,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories. Negative values for categorical features encoded as numeric
-        dtypes are treated as missing values. All categorical values are
-        converted to floating point numbers. This means that categorical values
-        of 1.0 and 1 are treated as the same category.
+        categories. Missing values for categorical features should be
+        represented by ``np.nan``; unknown categories at prediction time are
+        also treated as missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>` and
         :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
@@ -1850,10 +1849,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           work. This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories. Negative values for categorical features encoded as numeric
-        dtypes are treated as missing values. All categorical values are
-        converted to floating point numbers. This means that categorical values
-        of 1.0 and 1 are treated as the same category.
+        categories. Missing values for categorical features should be
+        represented by ``np.nan``; unknown categories at prediction time are
+        also treated as missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 

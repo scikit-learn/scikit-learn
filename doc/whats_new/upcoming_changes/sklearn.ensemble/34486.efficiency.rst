@@ -1,0 +1,2 @@
+- Prediction in :class:`sklearn.ensemble.HistGradientBoostingClassifier` and :class:`sklearn.ensemble.HistGradientBoostingRegressor` is faster when using categoricals.
+  By :user:`Itamar Turner-Trauring <itamarst>`.

@@ -15,12 +15,10 @@ from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -713,7 +711,10 @@ def test_incremental_weighted_mean_and_variance_array_api(
     mult = 10
     X = rng.rand(1000, 20).astype(dtype_name) * mult
     sample_weight = rng.rand(X.shape[0]).astype(dtype_name) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=False):
+        mean, var, _ = _incremental_mean_and_var(
+            X, 0, 0, 0, sample_weight=sample_weight
+        )
 
     X_xp = xp.asarray(X, device=device)
     sample_weight_xp = xp.asarray(sample_weight, device=device)

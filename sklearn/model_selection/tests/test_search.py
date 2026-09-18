@@ -16,12 +16,13 @@ from scipy.stats import bernoulli, expon, randint, uniform
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
-from sklearn.callback.tests._utils import (
-    MaxIterEstimator,
-    NoCallbackEstimator,
+from sklearn.callback.tests._common.callbacks import (
     RecordingAutoPropagatedCallback,
     RecordingCallback,
-    skip_callback_test_if_wasm,
+)
+from sklearn.callback.tests._common.estimators import (
+    MaxIterEstimator,
+    NoCallbackEstimator,
 )
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
@@ -93,18 +94,20 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._array_api import (
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import (
     MinimalClassifier,
     MinimalRegressor,
     MinimalTransformer,
     _array_api_for_tests,
+    _convert_container,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
     set_random_state,
+    skip_callback_test_if_wasm,
 )
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -823,35 +826,33 @@ def test_y_as_list():
     assert hasattr(grid_search, "cv_results_")
 
 
-def test_pandas_input():
-    # check cross_val_score doesn't destroy pandas dataframe
-    types = [(MockDataFrame, MockDataFrame)]
-    try:
-        from pandas import DataFrame, Series
+@pytest.mark.parametrize(
+    ["input_type", "target_type"],
+    [
+        ("pandas", "series"),
+        ("polars", "polars_series"),
+        ("pyarrow", "pyarrow_array"),
+    ],
+)
+def test_dataframe_input(input_type, target_type):
+    # check cross_val_score doesn't destroy dataframes
+    X = _convert_container(np.arange(100).reshape(10, 10), input_type)
+    y = _convert_container(np.array([0] * 5 + [1] * 5), target_type)
+    input_type = type(X)
+    target_type = type(y)
 
-        types.append((DataFrame, Series))
-    except ImportError:
-        pass
+    def check_df(x):
+        return isinstance(x, input_type) or isinstance(x.to_native(), input_type)
 
-    X = np.arange(100).reshape(10, 10)
-    y = np.array([0] * 5 + [1] * 5)
+    def check_series(x):
+        return isinstance(x, target_type) or isinstance(x.to_native(), target_type)
 
-    for InputFeatureType, TargetType in types:
-        # X dataframe, y series
-        X_df, y_ser = InputFeatureType(X), TargetType(y)
+    clf = CheckingClassifier(check_X=check_df, check_y=check_series)
 
-        def check_df(x):
-            return isinstance(x, InputFeatureType)
-
-        def check_series(x):
-            return isinstance(x, TargetType)
-
-        clf = CheckingClassifier(check_X=check_df, check_y=check_series)
-
-        grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]})
-        grid_search.fit(X_df, y_ser).score(X_df, y_ser)
-        grid_search.predict(X_df)
-        assert hasattr(grid_search, "cv_results_")
+    grid_search = GridSearchCV(clf, {"foo_param": [1, 2, 3]})
+    grid_search.fit(X, y).score(X, y)
+    grid_search.predict(X)
+    assert hasattr(grid_search, "cv_results_")
 
 
 def test_unsupervised_grid_search():
@@ -2905,7 +2906,7 @@ ordinal_encoder = OrdinalEncoder()
 
 # If we construct this directly via `MaskedArray`, the list of tuples
 # gets auto-converted to a 2D array.
-ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)  # type: ignore[var-annotated]
+ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)
 ma_with_tuples[0] = (1, 2)
 ma_with_tuples[1] = (3, 4)
 

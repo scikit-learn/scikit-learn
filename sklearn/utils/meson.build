@@ -48,7 +48,6 @@ utils_extension_metadata = {
   '_openmp_helpers': {'sources': [cython_gen.process('_openmp_helpers.pyx')], 'dependencies': [openmp_dep]},
   '_random': {'sources': [cython_gen.process('_random.pyx')]},
   '_typedefs': {'sources': [cython_gen.process('_typedefs.pyx')]},
-  '_heap': {'sources': [cython_gen.process('_heap.pyx')]},
   '_sorting': {'sources': [cython_gen.process('_sorting.pyx')]},
   '_vector_sentinel':
     {'sources': [cython_gen_cpp.process('_vector_sentinel.pyx')],

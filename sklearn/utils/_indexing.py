@@ -31,16 +31,16 @@ from sklearn.utils.validation import (
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
-    xp, is_array_api, device_ = get_namespace_and_device(array)
+    xp, is_array_api, device = get_namespace_and_device(array)
     if is_array_api:
         if hasattr(key, "shape"):
-            key = move_to(key, xp=xp, device=device_)
+            key = move_to(key, xp=xp, device=device)
         elif isinstance(key, (int, slice)):
             # Passthrough for valid __getitem__ inputs as noted in the array
             # API spec.
             pass
         else:
-            key = xp.asarray(key, device=device_)
+            key = xp.asarray(key, device=device)
 
         if hasattr(key, "dtype"):
             if xp.isdtype(key.dtype, "integral"):
@@ -48,7 +48,7 @@ def _array_indexing(array, key, key_dtype, axis):
             elif xp.isdtype(key.dtype, "bool"):
                 # Array API does not support boolean indexing for n-dim arrays
                 # yet hence the need to turn to equivalent integer indexing.
-                indices = xp.arange(array.shape[axis], device=device_)
+                indices = xp.arange(array.shape[axis], device=device)
                 return xp.take(array, indices[key], axis=axis)
 
     if issparse(array):

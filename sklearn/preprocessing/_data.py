@@ -23,11 +23,12 @@ from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     _max_precision_float_dtype,
     _modify_in_place_if_numpy,
-    device,
+    array_device,
     get_namespace,
     get_namespace_and_device,
     size,
     supported_float_dtypes,
+    xpx,
 )
 from sklearn.utils._param_validation import (
     Interval,
@@ -47,6 +48,7 @@ from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
@@ -90,8 +92,8 @@ def _is_constant_feature(var, mean, n_samples):
     recommendations", by Chan, Golub, and LeVeque.
     """
     # In scikit-learn, variance is always computed using float64 accumulators.
-    xp, _, device_ = get_namespace_and_device(var, mean)
-    max_float_dtype = _max_precision_float_dtype(xp=xp, device=device_)
+    xp, _, device = get_namespace_and_device(var, mean)
+    max_float_dtype = _max_precision_float_dtype(xp=xp, device=device)
     eps = xp.finfo(max_float_dtype).eps
 
     upper_bound = n_samples * eps * var + (n_samples * mean * eps) ** 2
@@ -514,18 +516,18 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self,
             X,
             reset=first_pass,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             ensure_all_finite="allow-nan",
         )
 
-        device_ = device(X)
+        device = array_device(X)
         feature_range = (
-            xp.asarray(feature_range[0], dtype=X.dtype, device=device_),
-            xp.asarray(feature_range[1], dtype=X.dtype, device=device_),
+            xp.asarray(feature_range[0], dtype=X.dtype, device=device),
+            xp.asarray(feature_range[1], dtype=X.dtype, device=device),
         )
 
-        data_min = _array_api._nanmin(X, axis=0, xp=xp)
-        data_max = _array_api._nanmax(X, axis=0, xp=xp)
+        data_min = xpx.nanmin(X, axis=0, xp=xp)
+        data_max = xpx.nanmax(X, axis=0, xp=xp)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
@@ -565,7 +567,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self,
             X,
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
             reset=False,
@@ -574,13 +576,13 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X *= self.scale_
         X += self.min_
         if self.clip:
-            device_ = device(X)
+            device = array_device(X)
             X = _modify_in_place_if_numpy(
                 xp,
                 xp.clip,
                 X,
-                xp.asarray(self.feature_range[0], dtype=X.dtype, device=device_),
-                xp.asarray(self.feature_range[1], dtype=X.dtype, device=device_),
+                xp.asarray(self.feature_range[0], dtype=X.dtype, device=device),
+                xp.asarray(self.feature_range[1], dtype=X.dtype, device=device),
                 out=X,
             )
         return X
@@ -605,7 +607,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = check_array(
             X,
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1298,7 +1300,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The data used to compute the per-feature minimum and maximum
+            The data used to compute the per-feature maximum absolute value
             used for later scaling along the features axis.
 
         y : None
@@ -1324,7 +1326,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The data used to compute the mean and standard deviation
+            The data used to compute the maximum absolute value
             used for later scaling along the features axis.
 
         y : None
@@ -1343,7 +1345,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             reset=first_pass,
             accept_sparse=("csr", "csc"),
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             ensure_all_finite="allow-nan",
         )
 
@@ -1351,7 +1353,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             mins, maxs = min_max_axis(X, axis=0, ignore_nan=True)
             max_abs = np.maximum(np.abs(mins), np.abs(maxs))
         else:
-            max_abs = _array_api._nanmax(xp.abs(X), axis=0, xp=xp)
+            max_abs = xpx.nanmax(xp.abs(X), axis=0, xp=xp)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
@@ -1386,7 +1388,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             accept_sparse=("csr", "csc"),
             copy=self.copy,
             reset=False,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1398,13 +1400,13 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         else:
             X /= self.scale_
             if self.clip:
-                device_ = device(X)
+                device = array_device(X)
                 X = _modify_in_place_if_numpy(
                     xp,
                     xp.clip,
                     X,
-                    xp.asarray(-1.0, dtype=X.dtype, device=device_),
-                    xp.asarray(1.0, dtype=X.dtype, device=device_),
+                    xp.asarray(-1.0, dtype=X.dtype, device=device),
+                    xp.asarray(1.0, dtype=X.dtype, device=device),
                     out=X,
                 )
         return X
@@ -1430,7 +1432,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -2047,7 +2049,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         accept_sparse=sparse_format,
         copy=copy,
         estimator="the normalize function",
-        dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+        dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
         force_writeable=True,
     )
     if axis == 0:
@@ -2535,7 +2537,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         xp, _ = get_namespace(K)
 
         K = validate_data(
-            self, K, dtype=_array_api.supported_float_dtypes(xp, device=device(K))
+            self, K, dtype=_array_api.supported_float_dtypes(xp, device=array_device(K))
         )
 
         if K.shape[0] != K.shape[1]:
@@ -2574,7 +2576,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             K,
             copy=copy,
             force_writeable=True,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(K)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(K)),
             reset=False,
         )
 
@@ -2694,13 +2696,14 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     Parameters
     ----------
-    n_quantiles : int, default=1000 or n_samples
-        Number of quantiles to be computed. It corresponds to the number
-        of landmarks used to discretize the cumulative distribution function.
-        If n_quantiles is larger than the number of samples, n_quantiles is set
-        to the number of samples as a larger number of quantiles does not give
-        a better approximation of the cumulative distribution function
-        estimator.
+    n_quantiles : int, default=1000
+        Number of quantiles to be computed. It corresponds to the number of
+        landmarks used to discretize the cumulative distribution function.
+
+        .. versionchanged:: 1.10
+            `n_quantiles` is no longer capped according to the number of
+            samples. The number of quantiles is now always equal to the value
+            of `n_quantiles`.
 
     output_distribution : {'uniform', 'normal'}, default='uniform'
         Marginal distribution for the transformed data. The choices are
@@ -2708,8 +2711,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If False,
-        these entries are treated as zeros.
+        matrix are discarded to compute the quantile statistics, including
+        when subsampling. If False, these entries are treated as zeros.
 
     subsample : int or None, default=10_000
         Maximum number of samples used to estimate the quantiles for
@@ -2734,8 +2737,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
     Attributes
     ----------
     n_quantiles_ : int
-        The actual number of quantiles used to discretize the cumulative
-        distribution function.
+        The number of quantiles used to discretize the cumulative
+        distribution function. Always equal to `n_quantiles`.
 
     quantiles_ : ndarray of shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
@@ -2806,13 +2809,19 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.random_state = random_state
         self.copy = copy
 
-    def _dense_fit(self, X, random_state):
+    def _dense_fit(self, X, random_state, sample_weight=None):
         """Compute percentiles for dense matrices.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
             The data used to scale along the features axis.
+
+        random_state : RandomState instance
+            Random number generator used for subsampling.
+
+        sample_weight : ndarray of shape (n_samples,), default=None
+            Individual weights for each sample.
         """
         if self.ignore_implicit_zeros:
             warnings.warn(
@@ -2824,12 +2833,39 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         references = self.references_ * 100
 
         if self.subsample is not None and self.subsample < n_samples:
-            # Take a subsample of `X`
+            # Take a subsample of `X`.
+            # When resampling, it is important to subsample **with replacement** to
+            # preserve the distribution, in particular in the presence of a few data
+            # points with large weights. You can check this by setting `replace=False`
+            # in sklearn.utils.tests.test_indexing.test_resample_weighted and check that
+            # it fails as a justification for this claim.
             X = resample(
-                X, replace=False, n_samples=self.subsample, random_state=random_state
+                X,
+                replace=True,
+                n_samples=self.subsample,
+                random_state=random_state,
+                sample_weight=sample_weight,
             )
+            # Since we already used the weights when resampling when provided,
+            # we set them back to `None` to avoid accounting for the weights twice
+            # in subsequent quantile estimation.
+            sample_weight = None
 
-        self.quantiles_ = np.nanpercentile(X, references, axis=0)
+        if sample_weight is not None:
+            self.quantiles_ = _weighted_percentile(
+                X,
+                sample_weight=sample_weight,
+                percentile_rank=references,
+                average=True,
+            )
+            self.quantiles_ = np.asarray(self.quantiles_).T
+        else:
+            self.quantiles_ = np.nanpercentile(
+                X,
+                references,
+                method="averaged_inverted_cdf",
+                axis=0,
+            )
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2840,6 +2876,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             The data used to scale along the features axis. The sparse matrix
             needs to be nonnegative. If a sparse matrix is provided,
             it will be converted into a SciPy sparse CSC matrix.
+
+        Notes
+        -----
+        Columns with fewer non-zero entries than `subsample` are not
+        subsampled: when `ignore_implicit_zeros=False`, this materializes a
+        `n_samples` array.
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
@@ -2848,11 +2890,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
             if self.subsample is not None and len(column_nnz_data) > self.subsample:
-                column_subsample = self.subsample * len(column_nnz_data) // n_samples
-                if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=column_subsample, dtype=X.dtype)
-                else:
-                    column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
+                column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
+                column_subsample = (
+                    self.subsample
+                    if self.ignore_implicit_zeros
+                    else self.subsample * len(column_nnz_data) // n_samples
+                )
                 column_data[:column_subsample] = random_state.choice(
                     column_nnz_data, size=column_subsample, replace=False
                 )
@@ -2866,13 +2909,19 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             if not column_data.size:
                 # if no nnz, an error will be raised for computing the
                 # quantiles. Force the quantiles to be zeros.
-                self.quantiles_.append([0] * len(references))
+                self.quantiles_.append([0] * len(self.references_))
             else:
-                self.quantiles_.append(np.nanpercentile(column_data, references))
+                self.quantiles_.append(
+                    np.nanpercentile(
+                        column_data,
+                        references,
+                        method="averaged_inverted_cdf",
+                    )
+                )
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Compute the quantiles used for transforming.
 
         Parameters
@@ -2886,6 +2935,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         y : None
             Ignored.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Individual weights for each sample. Sample weights are not
+            supported for sparse inputs.
+
+            .. versionadded:: 1.10
+
         Returns
         -------
         self : object
@@ -2894,29 +2949,32 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         if self.subsample is not None and self.n_quantiles > self.subsample:
             raise ValueError(
                 "The number of quantiles cannot be greater than"
-                " the number of samples used. Got {} quantiles"
-                " and {} samples.".format(self.n_quantiles, self.subsample)
+                f" the number of samples used. Got {self.n_quantiles} quantiles"
+                f" and {self.subsample} samples."
             )
 
         X = self._check_inputs(X, in_fit=True, copy=False)
-        n_samples = X.shape[0]
+        is_sparse = sparse.issparse(X)
 
-        if self.n_quantiles > n_samples:
-            warnings.warn(
-                "n_quantiles (%s) is greater than the total number "
-                "of samples (%s). n_quantiles is set to "
-                "n_samples." % (self.n_quantiles, n_samples)
+        if is_sparse and sample_weight is not None:
+            raise NotImplementedError(
+                "sample_weight is not supported for sparse input."
             )
-        self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
+        self.n_quantiles_ = self.n_quantiles
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, ensure_non_negative=True
+            )
 
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
         self.references_ = np.linspace(0, 1, self.n_quantiles_, endpoint=True)
-        if sparse.issparse(X):
+        if is_sparse:
             self._sparse_fit(X, rng)
         else:
-            self._dense_fit(X, rng)
+            self._dense_fit(X, rng, sample_weight=sample_weight)
 
         return self
 
@@ -3149,13 +3207,14 @@ def quantile_transform(
         Axis used to compute the means and standard deviations along. If 0,
         transform each feature, otherwise (if 1) transform each sample.
 
-    n_quantiles : int, default=1000 or n_samples
+    n_quantiles : int, default=1000
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
-        If n_quantiles is larger than the number of samples, n_quantiles is set
-        to the number of samples as a larger number of quantiles does not give
-        a better approximation of the cumulative distribution function
-        estimator.
+
+        .. versionchanged:: 1.10
+            `n_quantiles` is no longer capped according to the number of
+            samples. The number of quantiles is now always equal to the value
+            of `n_quantiles`.
 
     output_distribution : {'uniform', 'normal'}, default='uniform'
         Marginal distribution for the transformed data. The choices are
@@ -3163,8 +3222,8 @@ def quantile_transform(
 
     ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If False,
-        these entries are treated as zeros.
+        matrix are discarded to compute the quantile statistics, including
+        when subsampling. If False, these entries are treated as zeros.
 
     subsample : int or None, default=1e5
         Maximum number of samples used to estimate the quantiles for
