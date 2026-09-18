@@ -74,7 +74,7 @@ jobs:
       - name: Trigger additional tests
         if: steps.cpr.outputs.pull-request-number != '' && matrix.name == 'array-api'
         env:
-          GH_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.TRIAGE_BOT_GITHUB_TOKEN }}
           PR_NUMBER: ${{steps.cpr.outputs.pull-request-number}}
         run: |
           curl -L \
