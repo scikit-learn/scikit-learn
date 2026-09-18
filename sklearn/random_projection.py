@@ -428,7 +428,7 @@ class BaseRandomProjection(
             self.inverse_components_ = self._compute_inverse_components()
 
         # Required by ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
-        self._n_features_out = self.n_components
+        self._n_features_out = self.n_components_
 
         return self
 
