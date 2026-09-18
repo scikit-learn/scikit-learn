@@ -536,7 +536,7 @@ def test_get_metadata_routing():
 
 @config_context(enable_metadata_routing=True)
 def test_setting_default_requests():
-    # Test _get_default_requests method
+    # Test setting class-level requests works.
     test_cases = dict()
 
     class ExplicitRequest(BaseEstimator):
