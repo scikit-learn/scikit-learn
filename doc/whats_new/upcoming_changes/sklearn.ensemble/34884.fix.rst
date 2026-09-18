@@ -1,0 +1,6 @@
+- :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor` and
+  :class:`ensemble.IsolationForest` no longer raise when fitted with
+  `sample_weight` containing zeros and `bootstrap=False` (the default):
+  zero-weighted samples are now excluded from the sampling, as with
+  `bootstrap=True`.
+  By :user:`istoolsfox`.
