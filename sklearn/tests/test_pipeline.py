@@ -27,7 +27,7 @@ from sklearn.callback.tests._common.callbacks import (
 )
 from sklearn.callback.tests._common.estimators import MaxIterEstimator
 from sklearn.cluster import KMeans
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_classification
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -78,6 +78,7 @@ from sklearn.utils._testing import (
     skip_callback_test_if_wasm,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.metadata_routing import get_routing_for_object
 from sklearn.utils.validation import _check_feature_names, check_is_fitted
 
 # Load a shared tests data sets for the tests in this module. Mark them
@@ -2505,6 +2506,86 @@ def test_metadata_routing_error_for_pipeline(method):
             # not all methods accept y (like `predict`), so here we only
             # pass X as a positional arg.
             getattr(pipeline, method)(X, sample_weight=sample_weight, prop=prop)
+
+
+@config_context(enable_metadata_routing=True)
+def test_sample_weight_routing_auto_request():
+    """Test that Pipeline correctly routes `sample_weight` auto-requested in consuming
+    estimators."""
+
+    class MyEstimator(BaseEstimator):
+        def fit(self, X, y, sample_weight=None):
+            self.sample_weight_ = sample_weight
+            return self
+
+        def transform(self, X, y=None, sample_weight=None):
+            return X
+
+        def predict(self, X, y=None, sample_weight=None):
+            return np.ones(X.shape[0])
+
+    X, y = make_classification(n_samples=200, random_state=42)
+    sample_weight = np.random.RandomState(42).rand(len(X))
+
+    scaler = StandardScaler()
+    est = MyEstimator()
+    pipe = make_pipeline(scaler, est)
+
+    with config_context(metadata_request_policy="auto"):
+        assert (
+            getattr(get_routing_for_object(est), "fit").requests.get("sample_weight")
+            is True
+        )
+        assert (
+            getattr(get_routing_for_object(est), "transform").requests.get(
+                "sample_weight"
+            )
+            is True
+        )
+        assert (
+            getattr(get_routing_for_object(est), "predict").requests.get(
+                "sample_weight"
+            )
+            is True
+        )
+        assert (
+            getattr(get_routing_for_object(scaler), "fit").requests.get("sample_weight")
+            is True
+        )
+
+        pipe.fit(X, y, sample_weight=sample_weight)
+        assert_allclose(pipe[-1].sample_weight_, sample_weight)
+
+        # smoke test
+        pipe.transform(X, sample_weight=sample_weight)
+        pipe.predict(X, sample_weight=sample_weight)
+
+    # check that with metadata_request_policy="class-level" the auto-requests are unset
+    assert (
+        getattr(get_routing_for_object(est), "fit").requests.get("sample_weight")
+        is not True
+    )
+    assert (
+        getattr(get_routing_for_object(est), "transform").requests.get("sample_weight")
+        is not True
+    )
+    assert (
+        getattr(get_routing_for_object(est), "predict").requests.get("sample_weight")
+        is not True
+    )
+    assert (
+        getattr(get_routing_for_object(scaler), "fit").requests.get("sample_weight")
+        is not True
+    )
+
+    with pytest.raises(UnsetMetadataPassedError):
+        pipe.fit(X, y, sample_weight=sample_weight)
+
+    with pytest.raises(UnsetMetadataPassedError):
+        pipe.transform(X, sample_weight=sample_weight)
+
+    with pytest.raises(UnsetMetadataPassedError):
+        pipe.predict(X, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize(

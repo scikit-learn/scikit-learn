@@ -17,7 +17,11 @@ import numpy as np
 from sklearn import __version__
 from sklearn._config import config_context, get_config
 from sklearn.exceptions import InconsistentVersionWarning
-from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
+from sklearn.utils._metadata_requests import (
+    SIMPLE_METHODS,
+    _MetadataRequester,
+    _routing_enabled,
+)
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
@@ -556,6 +560,34 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             self.get_params(deep=False),
             caller_name=self.__class__.__name__,
         )
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        This override of :class:`~utils.metadata_routing.MetadataRequester`'s
+        `get_metadata_routing` adds auto-requests for `sample_weight` for all consuming
+        methods of scikit-learn compatible estimators that inherit from `BaseEstimator`.
+        The auto-requests are actualised once a function gets the metadata routing, for
+        instance by calling `get_metadata_routing()`.
+
+        Note that third party developers can still customise requests by inheriting from
+        `MetadataRequester` directly.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing mechanism
+        works.
+
+        Returns
+        -------
+        routing : MetadataRequest
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
+            routing information.
+        """
+        requests = super().get_metadata_routing()
+        for method in SIMPLE_METHODS:
+            method_request = "sample_weight" in getattr(requests, method).requests
+            if method_request:
+                getattr(requests, method).add_auto_request("sample_weight")
+        return requests
 
 
 class ClassifierMixin:
