@@ -157,12 +157,22 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
            [0.254, 0.411]])
     """
     emp_cov = check_array(emp_cov, allow_nd=True)
+    xp, _, device_ = get_namespace_and_device(emp_cov)
     n_features = emp_cov.shape[-1]
 
     shrunk_cov = (1.0 - shrinkage) * emp_cov
-    mu = np.trace(emp_cov, axis1=-2, axis2=-1) / n_features
-    mu = np.expand_dims(mu, axis=tuple(range(mu.ndim, emp_cov.ndim)))
-    shrunk_cov += shrinkage * mu * np.eye(n_features)
+    # `xp.linalg.trace` reduces over the innermost two dimensions, which is what
+    # `np.trace(..., axis1=-2, axis2=-1)` did, so a stacked input of shape
+    # (..., n_features, n_features) still yields `mu` of shape (...,). Unlike
+    # `_ledoit_wolf`/`_oas`, `mu` must NOT be cast with `float()`: it is only
+    # 0-dimensional for unstacked input.
+    mu = xp.linalg.trace(emp_cov) / n_features
+    # Append the two matrix dimensions back so `mu` broadcasts against the
+    # identity. `mu[..., None, None]` avoids `expand_dims(axis=tuple(...))`,
+    # whose tuple-valued `axis` only entered the spec in revision 2025.12.
+    # This broadcast is used in place of `_add_to_diagonal`, which is 2D-only.
+    eye = xp.eye(n_features, dtype=shrunk_cov.dtype, device=device_)
+    shrunk_cov += shrinkage * mu[..., None, None] * eye
 
     return shrunk_cov
 
@@ -262,6 +272,11 @@ class ShrunkCovariance(EmpiricalCovariance):
         )
         self.shrinkage = shrinkage
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the shrunk covariance model to X.
@@ -280,14 +295,20 @@ class ShrunkCovariance(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
-        X = validate_data(self, X)
         # Not calling the parent object to fit, to avoid a potential
         # matrix inversion when setting the precision
+        xp, _, device_ = get_namespace_and_device(X)
+        X = validate_data(self, X, dtype=supported_float_dtypes(xp, device_))
         if self.assume_centered:
-            self.location_ = np.zeros(X.shape[1])
+            self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
         else:
-            self.location_ = X.mean(0)
-        covariance = empirical_covariance(X, assume_centered=self.assume_centered)
+            self.location_ = xp.mean(X, axis=0)
+        # Centering here and passing `assume_centered=True` (as `LedoitWolf` and
+        # `OAS` do) is mathematically equivalent to passing the raw `X`, but it
+        # avoids the `np.cov` branch of `empirical_covariance`, which always
+        # returns float64 and would make the NumPy result differ in dtype from
+        # the array API one for float32 inputs.
+        covariance = empirical_covariance(X - self.location_, assume_centered=True)
         covariance = shrunk_covariance(covariance, self.shrinkage)
         self._set_covariance(covariance)
 
