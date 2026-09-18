@@ -368,17 +368,22 @@ class MethodMetadataRequest:
         self.method = method
         self._requests = requests or dict()
         self._auto_requests = auto_requests or set()
+        # Metadata requested via `add_request`, i.e. by the user through
+        # `set_{method}_request`. Auto-requests never override these.
+        self._explicit_requests = set()
 
     def __sklearn_clone__(self):
         # `owner` is a reference to the estimator and is only used by
         # `_routing_repr` for display; deep-copying it would drag the full
         # estimator state (and fail for non-picklable attributes) for no benefit.
-        return MethodMetadataRequest(
+        new = MethodMetadataRequest(
             owner=self.owner,
             method=self.method,
             requests=deepcopy(self._requests),
             auto_requests=deepcopy(self._auto_requests),
         )
+        new._explicit_requests = set(self._explicit_requests)
+        return new
 
     @property
     def requests(self):
@@ -392,6 +397,9 @@ class MethodMetadataRequest:
         alias,
     ):
         """Add request info for a metadata.
+
+        Requests added this way are explicit: they take precedence over the
+        class-level requests and are never overridden by auto-requests.
 
         Parameters
         ----------
@@ -424,6 +432,7 @@ class MethodMetadataRequest:
         if alias == UNUSED:
             if param in self._requests:
                 del self._requests[param]
+                self._explicit_requests.discard(param)
             else:
                 raise ValueError(
                     f"Trying to remove parameter {param} with UNUSED which doesn't"
@@ -431,6 +440,7 @@ class MethodMetadataRequest:
                 )
         else:
             self._requests[param] = alias
+            self._explicit_requests.add(param)
 
         return self
 
@@ -461,10 +471,10 @@ class MethodMetadataRequest:
         return self
 
     def _actualize_auto_requests(self):
-        """Set metadata requests for all params in self._auto_requests."""
+        """Request the auto-requested metadata if enabled, unless explicitly set."""
         if _auto_requests_enabled():
-            for param in self._auto_requests:
-                self.add_request(param=param, alias=True)
+            for param in self._auto_requests - self._explicit_requests:
+                self._requests[param] = True
         return self
 
     def _get_param_names(self, return_alias):
@@ -1049,6 +1059,13 @@ class MetadataRouter:
         }
         return new
 
+    def _actualize_auto_requests(self):
+        # The consumers added via `add` are actualized when they are added, see
+        # `get_routing_for_object`; only the router's own requests are left.
+        if self._self_request is not None:
+            self._self_request._actualize_auto_requests()
+        return self
+
     def add_self_request(self, obj):
         """Add `self` (as a :term:`consumer`) to the `MetadataRouter`.
 
@@ -1394,7 +1411,8 @@ def get_routing_for_object(obj=None):
     ----------
     obj : object
         - If the object provides a `get_metadata_routing` method, return a copy
-            of the output of that method.
+            of the output of that method, with auto-requests actualized if they
+            are enabled.
         - If the object is already a
             :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
             :class:`~sklearn.utils.metadata_routing.MetadataRouter`, return a copy
@@ -1430,18 +1448,12 @@ def get_routing_for_object(obj=None):
     """
     # doing this instead of a try/except since an AttributeError could be raised
     # for other reasons.
+    if hasattr(obj, "get_metadata_routing"):
+        # Auto-requests are actualized here, since they are added inside
+        # `get_metadata_routing` implementations.
+        return obj.get_metadata_routing().__sklearn_clone__()._actualize_auto_requests()
     if isinstance(obj, (MetadataRequest, MetadataRouter)):
         return obj.__sklearn_clone__()
-    if hasattr(obj, "_metadata_request"):
-        return obj._metadata_request.__sklearn_clone__()
-    elif hasattr(obj, "get_metadata_routing"):
-        requests = obj.get_metadata_routing().__sklearn_clone__()
-        if _auto_requests_enabled():
-            if hasattr(requests, "_actualize_auto_requests"):
-                requests._actualize_auto_requests()
-            if getattr(requests, "_self_request", None):
-                requests._self_request._actualize_auto_requests()
-        return requests
 
     return MetadataRequest(owner=None)
 
@@ -1581,13 +1593,8 @@ class RequestMethod:
                     f" {len(args)} were given"
                 )
 
-            requests = get_routing_for_object(_instance)
-            if isinstance(requests, MetadataRouter):
-                consumer_requests = requests._self_request
-            else:
-                consumer_requests = requests
-
-            method_metadata_request = getattr(consumer_requests, self.name)
+            requests = _instance._get_metadata_request()
+            method_metadata_request = getattr(requests, self.name)
 
             for prop, alias in kw.items():
                 if alias is not UNCHANGED:
@@ -1836,8 +1843,6 @@ class _MetadataRequester:
         """
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
-            if isinstance(requests, MetadataRouter):
-                return requests._self_request
         else:
             requests = MetadataRequest(owner=self)
             for method_name in SIMPLE_METHODS:

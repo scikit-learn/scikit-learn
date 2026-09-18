@@ -1320,6 +1320,58 @@ def test_auto_requests_on_composite_methods_overlap_error():
                 get_routing_for_object(Estimator()).fit_transform
 
 
+@config_context(enable_metadata_routing=True)
+def test_set_request_on_router_without_self_request():
+    """`set_{method}_request` on a router which does not consume metadata itself
+    works, and only stores the requests of the object itself.
+
+    Non-regression test for a bug where the whole routing was stored instead.
+    """
+    pipe = Pipeline([("clf", ConsumingClassifier())])
+    pipe.set_score_request(sample_weight=True)
+    assert isinstance(pipe._metadata_request, MetadataRequest)
+    assert pipe._metadata_request.score.requests == {"sample_weight": True}
+
+
+@config_context(enable_metadata_routing=True)
+def test_routing_not_frozen_by_set_request():
+    """Calling `set_{method}_request` on a consuming router does not freeze the
+    routing to its sub-estimators: later changes to them are still reflected."""
+    meta = WeightedMetaRegressor(estimator=ConsumingRegressor())
+    meta.set_fit_request(sample_weight=True)
+    meta.set_params(estimator=ConsumingRegressor().set_fit_request(sample_weight=True))
+    routed = process_routing(meta, "fit", sample_weight=[1, 2])
+    assert routed.estimator.fit == {"sample_weight": [1, 2]}
+
+
+@pytest.mark.parametrize("auto_requests_enabled_at_set_time", [True, False])
+def test_explicit_requests_win_over_auto_requests(auto_requests_enabled_at_set_time):
+    """Requests set via `set_{method}_request` are never overridden by
+    auto-requests, whether or not auto-requests were enabled when they were set."""
+
+    class Estimator(BaseEstimator):
+        def fit(self, X, y, prop=None, other=None):
+            pass  # pragma: no cover
+
+        def get_metadata_routing(self):
+            requests = super().get_metadata_routing()
+            requests.fit.add_auto_request("prop", "other")
+            return requests
+
+    with config_context(
+        enable_metadata_routing=True,
+        enable_metadata_auto_requests=auto_requests_enabled_at_set_time,
+    ):
+        est = Estimator().set_fit_request(prop=False)
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(est)
+        assert routing.fit.requests == {"prop": False, "other": True}
+    with config_context(enable_metadata_auto_requests=False):
+        routing = get_routing_for_object(est)
+        assert routing.fit.requests == {"prop": False, "other": None}
+
+
 class _UncopyableOwner:
     """An owner-like object that fails on deepcopy.
 
