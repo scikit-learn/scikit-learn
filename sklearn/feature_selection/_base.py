@@ -119,9 +119,8 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             skip_check_array=preserve_X,
             reset=False,
         )
-        # Check if X is non-finite as check_array is skipped when preserving X
-        if preserve_X:
-            assert_all_finite(X, allow_nan=allow_nan, input_name="X")
+        if preserve_X and not allow_nan:
+            assert_all_finite(X, input_name="X")
         return self._transform(X)
 
     def _transform(self, X):
