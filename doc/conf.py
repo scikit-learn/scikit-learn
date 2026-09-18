@@ -723,8 +723,14 @@ default_global_config = sklearn.get_config()
 
 
 def reset_sklearn_config(gallery_conf, fname):
-    """Reset sklearn config to default values."""
+    """Reset sklearn config to default values.
+
+    Also re-apply warning-as-error filters so that Sphinx-Gallery's loky workers
+    get them.
+    """
     sklearn.set_config(**default_global_config)
+    if os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+        turn_warnings_into_errors()
 
 
 sg_examples_dir = "../examples"
