@@ -780,6 +780,17 @@ class _CalibratedClassifier:
         self.classes = classes
         self.method = method
 
+    def __sklearn_validate_model__(self):
+        """Take part in :func:`~sklearn.utils.validate_model`.
+
+        There is nothing to check here, but only objects defining this method
+        (or `get_params`) are walked into, and this one holds the fitted
+        `estimator` and `calibrators` that need checking.
+
+        Note that this wouldn't have been needed if this class inherited from
+        `BaseEstimator`, which arguably it should.
+        """
+
     def predict_proba(self, X):
         """Calculate calibrated probabilities.
 

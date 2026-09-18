@@ -889,13 +889,6 @@ cdef class Tree:
             expected_shape=value_shape
         )
 
-        _check_node_ndarray_values(
-            node_ndarray,
-            n_features=self.n_features,
-            node_count=self.node_count,
-            max_depth=self.max_depth,
-        )
-
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
@@ -904,6 +897,22 @@ cdef class Tree:
                self.capacity * sizeof(Node))
         memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
                self.capacity * self.value_stride * sizeof(float64_t))
+
+    def check_state(self):
+        """Check that the node array is consistent and safe to traverse.
+
+        The traversals in `apply`, `decision_path` and
+        `compute_feature_importances` read `left_child`, `right_child` and
+        `feature` without bounds checking. This raises a `ValueError` if a
+        corrupted node array (for instance loaded from a damaged persisted
+        model) would make them access memory out of bounds or loop forever.
+        See `_check_node_ndarray_values` for the exact invariants.
+        """
+        _check_node_ndarray_values(
+            self._get_node_ndarray(),
+            n_features=self.n_features,
+            max_depth=self.max_depth,
+        )
 
     cdef int _resize(self, intp_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
@@ -1646,39 +1655,31 @@ def _check_node_ndarray(node_ndarray, expected_dtype):
     return node_ndarray.astype(expected_dtype, casting="same_kind")
 
 
-def _check_node_ndarray_values(node_ndarray, n_features, node_count, max_depth):
-    """Validate the values of a deserialized node array.
+def _check_node_ndarray_values(node_ndarray, n_features, max_depth):
+    """Validate the values of a node array.
 
     `_check_node_ndarray` only validates the structure of the array; this
-    function validates the node values so that the cython traversal cannot be
-    tricked into an out-of-bounds memory access or an infinite loop by a
-    malicious node array (see `Tree.__setstate__`).
+    function validates the node values so that a corrupted node array cannot
+    make the cython traversals access memory out of bounds or loop forever
+    (see `Tree.check_state`).
 
-    The traversal treats a node as a leaf iff `left_child == TREE_LEAF`, and
-    only dereferences `left_child` / `right_child` (as node ids) and `feature`
-    (as a column index into `X`) for the remaining, internal nodes. We
-    therefore only check those fields on internal nodes, and require each child
-    to be strictly greater than the node's own index: this keeps children in
-    `[0, n_nodes)` and, matching the `children_left[i] > i` invariant
-    documented on `Tree`, rules out cycles that would make the traversal loop
-    forever. Requiring on top of that that a node is the child of at most one
-    node makes the array a tree rather than a DAG, which bounds the number of
-    paths the traversals that visit both children have to walk.
+    The traversals treat a node as a leaf iff `left_child == TREE_LEAF`, and
+    only dereference `left_child` / `right_child` (as node ids) and `feature`
+    (as a column index into `X` and into the feature importances) for the
+    remaining, internal nodes. We therefore only check those fields on
+    internal nodes, and require each child to be strictly greater than the
+    node's own index: this keeps children in `[0, n_nodes)` and, matching the
+    `children_left[i] > i` invariant documented on `Tree`, rules out cycles
+    that would make the traversal loop forever. Requiring on top of that that
+    a node is the child of at most one node makes the array a tree rather
+    than a DAG, which bounds the number of paths the traversals that visit
+    both children have to walk.
 
-    `max_depth` and `node_count` are not node values, but they size buffers
-    that the traversals write node ids into, so they are checked against the
-    node array here as well.
+    `max_depth` is not a node value, but it sizes a buffer that
+    `decision_path` writes node ids into, so it is checked against the node
+    array here as well.
     """
     n_nodes = node_ndarray.shape[0]
-
-    # `node_count` is used to slice the `capacity`-sized node buffer (e.g. in
-    # `_get_node_ndarray`), so a mismatch is itself out-of-bounds.
-    if node_count != n_nodes:
-        raise ValueError(
-            f"node array from the pickle is inconsistent: node_count "
-            f"({node_count}) does not match the number of nodes ({n_nodes})"
-        )
-
     left_child = node_ndarray["left_child"]
     right_child = node_ndarray["right_child"]
     feature = node_ndarray["feature"]
@@ -1692,18 +1693,18 @@ def _check_node_ndarray_values(node_ndarray, n_features, node_count, max_depth):
     for field, children in (("left_child", left_child), ("right_child", right_child)):
         if np.any(is_internal & ((children <= node_index) | (children >= n_nodes))):
             raise ValueError(
-                f"node array from the pickle has out-of-bounds '{field}' "
-                f"values: every internal node's '{field}' must be a node id "
-                f"greater than the node's own index and less than {n_nodes} "
-                f"(or {TREE_LEAF} for a leaf), got {children}"
+                f"node array has out-of-bounds '{field}' values: every internal "
+                f"node's '{field}' must be a node id greater than the node's own "
+                f"index and less than {n_nodes} (or {TREE_LEAF} for a leaf), got "
+                f"{children}"
             )
 
-    # `feature` is dereferenced as a column index into `X`.
+    # `feature` is dereferenced as a column index into `X` and into the
+    # feature importances.
     if np.any(is_internal & ((feature < 0) | (feature >= n_features))):
         raise ValueError(
-            f"node array from the pickle has out-of-bounds 'feature' values: "
-            f"every internal node's 'feature' must be in [0, {n_features}), "
-            f"got {feature}"
+            f"node array has out-of-bounds 'feature' values: every internal "
+            f"node's 'feature' must be in [0, {n_features}), got {feature}"
         )
 
     # `compute_partial_dependence` visits both children of an internal node and
@@ -1712,11 +1713,11 @@ def _check_node_ndarray_values(node_ndarray, n_features, node_count, max_depth):
     children = np.concatenate((left_child[is_internal], right_child[is_internal]))
     if children.size and np.bincount(children, minlength=n_nodes).max() > 1:
         raise ValueError(
-            "node array from the pickle is inconsistent: expected each node to "
-            "be the child of at most one node, got several nodes sharing a child"
+            "node array is inconsistent: expected each node to be the child of "
+            "at most one node, got several nodes sharing a child"
         )
 
-    _check_max_depth(node_ndarray["left_child"], node_ndarray["right_child"], max_depth)
+    _check_max_depth(left_child, right_child, max_depth)
 
 
 def _check_max_depth(const intp_t[:] left_child, const intp_t[:] right_child,
@@ -1752,7 +1753,7 @@ def _check_max_depth(const intp_t[:] left_child, const intp_t[:] right_child,
 
     if max_depth < max_depth_seen:
         raise ValueError(
-            f"node array from the pickle is inconsistent: max_depth "
+            f"node array is inconsistent: max_depth "
             f"({max_depth}) is smaller than the depth of the node array "
             f"({max_depth_seen})"
         )

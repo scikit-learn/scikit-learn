@@ -79,6 +79,7 @@ from sklearn.utils.estimator_checks import (
     check_estimators_unfitted,
     check_fit_check_is_fitted,
     check_fit_score_takes_y,
+    check_fit_validate_model,
     check_methods_sample_order_invariance,
     check_methods_subset_invariance,
     check_mixin_order,
@@ -1789,3 +1790,30 @@ def test_check_positive_only_tag_during_fit():
         check_positive_only_tag_during_fit(
             "RequiresPositiveXBadTag", RequiresPositiveXBadTag()
         )
+
+
+class _ValidateModelEstimator(BaseEstimator):
+    """Estimator whose `__sklearn_validate_model__` fails on demand.
+
+    Defined at module level so that the check can pickle it.
+    """
+
+    def __init__(self, fail_when="never"):
+        self.fail_when = fail_when
+
+    def fit(self, X, y):
+        self.fitted_ = True
+        return self
+
+    def __sklearn_validate_model__(self):
+        fitted = hasattr(self, "fitted_")
+        if self.fail_when == "always" or (self.fail_when == "fitted" and fitted):
+            raise ValueError("inconsistent state")
+
+
+def test_check_fit_validate_model():
+    check_fit_validate_model("estimator", _ValidateModelEstimator())
+    with raises(ValueError, match="inconsistent state"):
+        check_fit_validate_model("estimator", _ValidateModelEstimator("always"))
+    with raises(ValueError, match="inconsistent state"):
+        check_fit_validate_model("estimator", _ValidateModelEstimator("fitted"))

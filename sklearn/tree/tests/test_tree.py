@@ -56,7 +56,7 @@ from sklearn.tree._tree import (
     _check_value_ndarray,
 )
 from sklearn.tree._tree import Tree as CythonTree
-from sklearn.utils import compute_sample_weight
+from sklearn.utils import compute_sample_weight, validate_model
 from sklearn.utils._array_api import xpx
 from sklearn.utils._testing import (
     _convert_container,
@@ -2405,13 +2405,13 @@ def test_check_node_ndarray():
 def test_check_node_ndarray_values():
     """Node fields are validated to stay within bounds and consistent.
 
-    Non-regression test for memory-safety issues where a tampered persisted
-    ``nodes`` array was loaded via ``Tree.__setstate__`` and caused an
-    out-of-bounds native memory read/write (segfault) or an infinite loop at
-    prediction time. Validation enforces the joint per-node invariant: a node
-    is either a leaf (``left_child == TREE_LEAF``) or an internal node whose
-    ``left_child`` / ``right_child`` are valid node ids strictly greater than
-    the node's own index and whose ``feature`` is in ``[0, n_features)``.
+    Non-regression test for memory-safety issues where a corrupted ``nodes``
+    array loaded via ``Tree.__setstate__`` caused an out-of-bounds native
+    memory read/write (segfault) or an infinite loop at prediction time.
+    Validation enforces the joint per-node invariant: a node is either a leaf
+    (``left_child == TREE_LEAF``) or an internal node whose ``left_child`` /
+    ``right_child`` are valid node ids strictly greater than the node's own
+    index and whose ``feature`` is in ``[0, n_features)``.
     """
     n_features = 4
     n_nodes = 5
@@ -2425,10 +2425,7 @@ def test_check_node_ndarray_values():
     # Valid array does not raise. `max_depth` is only required to be at least
     # the real depth of the array, so a generous value is fine here.
     check = partial(
-        _check_node_ndarray_values,
-        n_features=n_features,
-        node_count=n_nodes,
-        max_depth=n_nodes,
+        _check_node_ndarray_values, n_features=n_features, max_depth=n_nodes
     )
     check(node_ndarray)
 
@@ -2481,62 +2478,83 @@ def test_check_node_ndarray_values():
     leaf_with_junk["right_child"][0] = 999_999_999
     check(leaf_with_junk)
 
-    # `node_count` inconsistent with the array length.
-    with pytest.raises(ValueError, match="node_count"):
-        _check_node_ndarray_values(
-            node_ndarray,
-            n_features=n_features,
-            node_count=n_nodes + 1,
-            max_depth=n_nodes,
-        )
-
     # `max_depth` smaller than the real depth of the array: it sizes the
     # `indices` buffer that `decision_path` writes into.
     with pytest.raises(ValueError, match="max_depth"):
-        _check_node_ndarray_values(
-            valid, n_features=n_features, node_count=n_nodes, max_depth=0
-        )
+        _check_node_ndarray_values(valid, n_features=n_features, max_depth=0)
 
 
-def test_tree_setstate_rejects_tampered_nodes():
-    """Loading a tampered tree model raises instead of segfaulting.
-
-    Non-regression test for a memory-safety issue: deserializing a maliciously
-    crafted tree model previously segfaulted at ``predict`` time. The individual
-    value bounds are covered by ``test_check_node_ndarray_values``; here we check
-    the end-to-end pickle round-trip. ``node_count`` is not tampered with here
-    since a mismatch makes ``__getstate__`` over-read the node buffer at dump
-    time (that case is covered by the unit test above).
-    """
-    X, y = datasets.make_classification(n_samples=60, n_features=4, random_state=0)
+def _fit_tree_and_reduce(n_features=4):
+    X, y = datasets.make_classification(
+        n_samples=60, n_features=n_features, random_state=0
+    )
     clf = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
+    cls, args, state = clf.tree_.__reduce__()
+    return clf, cls, args, dict(state)
+
+
+def test_tree_validate_model_rejects_tampered_nodes():
+    """``validate_model`` raises on a tree whose node array was corrupted.
+
+    Non-regression test for a memory-safety issue: predicting with a corrupted
+    tree structure loaded from a persisted model previously segfaulted. The
+    individual value bounds are covered by ``test_check_node_ndarray_values``;
+    here we check the pickle round-trip and the estimator level entry point.
+    """
+    clf, *_ = _fit_tree_and_reduce()
+    validate_model(clf)
+    validate_model(pickle.loads(pickle.dumps(clf)))
 
     # `__getstate__` returns a writable view into the tree's node buffer, so
     # this tampers the fitted model in place with out-of-bounds child indices.
     clf.tree_.__getstate__()["nodes"]["left_child"][:] = 999_999_999
 
     with pytest.raises(ValueError, match="out-of-bounds"):
-        pickle.loads(pickle.dumps(clf))
+        validate_model(clf)
+    with pytest.raises(ValueError, match="out-of-bounds"):
+        validate_model(pickle.loads(pickle.dumps(clf)))
 
 
-def test_tree_setstate_rejects_understated_max_depth():
-    """Loading a tree whose ``max_depth`` understates the node array raises.
+def test_tree_validate_model_rejects_understated_max_depth():
+    """``validate_model`` raises on a tree whose ``max_depth`` understates it.
 
     Non-regression test for a memory-safety issue: ``decision_path`` sizes its
     ``indices`` buffer as ``n_samples * (1 + max_depth)`` and writes one entry
-    per node it walks through, so a ``max_depth`` smaller than the real depth of
-    the tree corrupted the heap instead of raising.
+    per node it walks through, so a ``max_depth`` smaller than the real depth
+    of the tree corrupted the heap instead of raising.
     """
-    X, y = datasets.make_classification(n_samples=60, n_features=4, random_state=0)
-    clf = DecisionTreeClassifier(max_depth=3, random_state=0).fit(X, y)
-
-    cls, args, state = clf.tree_.__reduce__()
-    state = dict(state)
+    clf, cls, args, state = _fit_tree_and_reduce()
     assert state["max_depth"] > 0
     state["max_depth"] = 0
+    tree = cls(*args)
+    tree.__setstate__(state)
 
     with pytest.raises(ValueError, match="max_depth"):
-        cls(*args).__setstate__(state)
+        tree.check_state()
+    clf.tree_ = tree
+    with pytest.raises(ValueError, match="max_depth"):
+        validate_model(clf)
+
+
+def test_tree_validate_model_rejects_n_features_mismatch():
+    """``validate_model`` raises when the tree and ``n_features_in_`` disagree.
+
+    ``X`` is checked against ``n_features_in_`` at prediction time while the
+    node array is checked against the number of features of the tree
+    structure, so the two must agree for ``feature`` to be bounded by the
+    columns of ``X``.
+    """
+    clf, cls, args, state = _fit_tree_and_reduce(n_features=4)
+    n_features, n_classes, n_outputs, _ = args
+    n_categories = np.full(n_features + 10, -1, dtype=np.intp)
+    tree = cls(n_features + 10, n_classes, n_outputs, n_categories)
+    tree.__setstate__(state)
+    # Consistent on its own: the features are within the tree's own bounds.
+    tree.check_state()
+
+    clf.tree_ = tree
+    with pytest.raises(ValueError, match="n_features_in_"):
+        validate_model(clf)
 
 
 @pytest.mark.parametrize(

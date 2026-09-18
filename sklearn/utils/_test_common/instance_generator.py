@@ -759,6 +759,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_readonly_memmap_input": dict(dictionary=rng.normal(size=(5, 2))),
         "check_n_features_in_after_fitting": dict(dictionary=rng.normal(size=(5, 4))),
         "check_fit_check_is_fitted": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_fit_validate_model": dict(dictionary=rng.normal(size=(5, 2))),
         "check_n_features_in": dict(dictionary=rng.normal(size=(5, 2))),
         "check_positive_only_tag_during_fit": dict(dictionary=rng.normal(size=(5, 4))),
         "check_fit2d_1sample": dict(dictionary=rng.normal(size=(5, 10))),

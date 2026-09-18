@@ -601,6 +601,32 @@ method taking no input and returning a boolean. If this method exists,
 See :ref:`sphx_glr_auto_examples_developing_estimators_sklearn_is_fitted.py`
 for an example on how to use the API.
 
+.. _developer_api_validate_model:
+
+Developer API for `validate_model`
+==================================
+
+:func:`~sklearn.utils.validate_model` checks that the fitted state of a model
+is consistent, in the sense that there are no out-of-bounds memory access or an
+infinite loop at prediction time.
+
+By default, :func:`~sklearn.utils.validate_model` has nothing to check on an
+estimator and only walks its attributes (including lists, tuples, dicts and
+object arrays) to find nested estimators, such as the steps of a pipeline or
+the trees of a forest, to check in turn. An estimator defines what a consistent
+fitted state means for it by implementing a `__sklearn_validate_model__` method
+taking no input and raising a :class:`ValueError` if its state is inconsistent.
+The method should:
+
+- only check the estimator's own fitted state: nested estimators are found and
+  checked by :func:`~sklearn.utils.validate_model` itself;
+- do nothing on an unfitted estimator;
+- be cheap relative to `fit` and `predict`, as it is meant to run on every
+  loaded model.
+
+For instance, tree-based models check that the child and feature indices of
+their node arrays are within bounds and that the nodes form a tree.
+
 Developer API for HTML representation
 =====================================
 
