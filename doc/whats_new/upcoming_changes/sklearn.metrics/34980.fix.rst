@@ -1,0 +1,6 @@
+- Fixed :func:`metrics.confusion_matrix_at_thresholds`, and the curve/score
+  functions built on it (:func:`metrics.roc_curve`,
+  :func:`metrics.precision_recall_curve`, :func:`metrics.det_curve`,
+  :func:`metrics.roc_auc_score`), to no longer lose integer precision on
+  plain NumPy when `y_score` is `float32`.
+  By :user:`Ammar Hashmi <ammar-iitm>`.
