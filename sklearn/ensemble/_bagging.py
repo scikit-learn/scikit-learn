@@ -756,8 +756,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
            *warm_start* constructor parameter.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel for both :meth:`fit` and
-        :meth:`predict`. ``None`` means 1 unless in a
+        The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
+        :meth:`predict_proba`, :meth:`predict_log_proba` and
+        :meth:`decision_function` are all parallelized by splitting the base
+        estimators across jobs. ``None`` means 1 unless in a
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
@@ -1262,10 +1264,11 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         a whole new ensemble. See :term:`the Glossary <warm_start>`.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel for both :meth:`fit` and
-        :meth:`predict`. ``None`` means 1 unless in a
-        :obj:`joblib.parallel_backend` context. ``-1`` means using all
-        processors. See :term:`Glossary <n_jobs>` for more details.
+        The number of jobs to run in parallel. :meth:`fit` and :meth:`predict`
+        are both parallelized by splitting the base estimators across jobs.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>` for
+        more details.
 
     random_state : int, RandomState instance or None, default=None
         Controls the random resampling of the original dataset
