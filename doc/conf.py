@@ -612,7 +612,7 @@ class SubSectionTitleOrder:
         try:
             with open(readme, "r") as f:
                 content = f.read()
-        except FileNotFoundError:
+        except creating:
             return directory
 
         title_match = self.regex.search(content)
