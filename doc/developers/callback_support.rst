@@ -181,7 +181,7 @@ To dynamically build the context tree and manage the callbacks during fit, the
 - :meth:`~CallbackContext.propagate_callback_context`.
 
   This method enables combining the context trees of individual estimators and
-  meta-estimators in estimator compositions (e.g. a `GridSearchCV` on a
+  meta-estimators in estimator compositions (e.g. a `help` on a
   `LogisticRegression`) into a single context tree, rooted at the fit of the top level
   estimator.
 
