@@ -6,6 +6,7 @@ usage.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+import threading
 import warnings
 from functools import update_wrapper
 
@@ -212,3 +213,41 @@ def _threadpool_controller_decorator(limits=1, user_api="blas"):
         return wrapper
 
     return decorator
+
+
+class _RefcountedBLASLimit:
+    """Thread-safe reference-counted context manager for BLAS thread limits.
+
+    Ensures BLAS is pegged to limits=1 as long as at least one thread is
+    executing, and only restores the original thread count when the last
+    concurrent thread exits. Prevents overlapping context managers from
+    prematurely restoring multi-threading during concurrent GEMM operations.
+    """
+
+    def __init__(self, limits=1):
+        self.limits = limits
+        self._lock = threading.Lock()
+        self._count = 0
+        self._cm = None
+
+    def __enter__(self):
+        with self._lock:
+            if self._count == 0:
+                self._cm = _get_threadpool_controller().limit(
+                    limits=self.limits, user_api="blas"
+                )
+                self._cm.__enter__()
+            self._count += 1
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        with self._lock:
+            self._count -= 1
+            if self._count == 0 and self._cm is not None:
+                cm = self._cm
+                self._cm = None
+                return cm.__exit__(exc_type, exc_val, exc_tb)
+        return False
+
+
+_shared_blas_limit = _RefcountedBLASLimit(limits=1)

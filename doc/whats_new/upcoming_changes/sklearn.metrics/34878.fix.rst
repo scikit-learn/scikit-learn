@@ -1,0 +1,3 @@
+Fix race condition and silent data corruption in :class:`~sklearn.metrics.pairwise_distances_argmin_min`
+and neighborhood reductions when called concurrently from multiple threads with OpenBLAS and OpenMP.
+
