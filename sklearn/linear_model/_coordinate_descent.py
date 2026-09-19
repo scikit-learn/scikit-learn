@@ -3278,7 +3278,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
-    alphas : array-like or int, default=None
+    alphas : array-like or int, default=100
         Values of alphas to test along the regularization path.
         If int, `alphas` values are generated automatically.
         If array-like, list of alpha values to use.
