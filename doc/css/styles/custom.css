@@ -327,3 +327,9 @@ div.sk-text-image-grid-large {
     height: 130%;
   }
 }
+
+/* pydata-sphinx-theme only unselects prompts inside doctest blocks, but we also
+   render shell prompts via the console/ps1con lexers */
+div.highlight span.gp {
+  user-select: none;
+}

@@ -1,5 +1,25 @@
 version: 2.1
 
+# gen3 resource classes need the Linux VM executor and the `current` image tag (a
+# dated tag is rejected). gen3 is an open beta: drop `.gen3` if queue times or
+# reliability become a problem. 22.04 matches the Docker image used before.
+_machine_image: &machine_image
+  image: ubuntu-2204:current
+
+# Diagnostics for both doc jobs. They are separate steps because build_doc.sh's
+# own log is truncated to its last ~400kB, dropping anything printed mid-script.
+_meson_log: &meson_log
+  run:
+    name: meson log (on failure)
+    when: on_fail
+    command: cat build/cp*/meson-logs/meson-log.txt || true
+_ccache_stats: &ccache_stats
+  run:
+    name: ccache statistics
+    when: always
+    # `ccache -z` in build_doc.sh means these cover just this build
+    command: CCACHE_DIR=$HOME/.cache/ccache ccache -s || true
+
 jobs:
   lint:
     docker:
@@ -15,8 +35,11 @@ jobs:
           command: ./build_tools/linting.sh
 
   doc-min-dependencies:
-    docker:
-      - image: cimg/base:current-22.04
+    machine:
+      <<: *machine_image
+    # medium.gen3 2 vCPUs 8GiB mem -- as many cores as the old Docker `medium`;
+    # this job gates nothing, so it does not need the `doc` job's extra cores
+    resource_class: medium.gen3
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
@@ -45,12 +68,15 @@ jobs:
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
+            - doc-min-deps-ccache-main
             - doc-min-deps-ccache
       - run: ./build_tools/circle/build_doc.sh
+      - *meson_log
+      - *ccache_stats
       - save_cache:
           key: doc-min-deps-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:
-            - ~/.ccache
+            - ~/.cache/ccache
             - ~/.cache/pip
       - save_cache:
           key: v2-doc-min-deps-datasets-{{ .Branch }}
@@ -64,9 +90,10 @@ jobs:
           destination: log.txt
 
   doc:
-    docker:
-      - image: cimg/base:current-22.04
-    resource_class: medium+
+    machine:
+      <<: *machine_image
+    # large.gen3 4 vCPUs 16GiB mem -- the parallel doc build uses the extra cores
+    resource_class: large.gen3
     environment:
       - MKL_NUM_THREADS: 2
       - OPENBLAS_NUM_THREADS: 2
@@ -94,12 +121,15 @@ jobs:
       - restore_cache:
           keys:
             - doc-ccache-{{ .Branch }}
+            - doc-ccache-main
             - doc-ccache
       - run: ./build_tools/circle/build_doc.sh
+      - *meson_log
+      - *ccache_stats
       - save_cache:
           key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:
-            - ~/.ccache
+            - ~/.cache/ccache
             - ~/.cache/pip
       - save_cache:
           key: v1-doc-datasets-{{ .Branch }}

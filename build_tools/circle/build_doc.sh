@@ -175,22 +175,26 @@ conda activate
 create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
 conda activate $CONDA_ENV_NAME
 
-# Sets up ccache
+# Keep pkg-config inside the env: meson's Cython sanity check resolves `python3`
+# through it, and the host's python3.pc points the build at the wrong Python
+export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig"
+export PKG_CONFIG_LIBDIR="$CONDA_PREFIX/lib/pkgconfig"
+
+# Sets up ccache. CCACHE_DIR is pinned because ccache only defaults there when
+# the legacy ~/.ccache is absent, and save_cache needs a fixed path (compression
+# is on by default, so it needs no setting here)
 export PATH="/usr/lib/ccache:$PATH"
+export CCACHE_DIR=$HOME/.cache/ccache
 ccache -M 512M
-export CCACHE_COMPRESS=1
 # Zeroing statistics so that ccache statistics are shown only for this build
 ccache -z
 
 show_installed_libraries
 
-# Specify explicitly ninja -j argument because ninja does not handle cgroups v2 and
-# use the same default rule as ninja (-j3 since we have 2 cores on CircleCI), see
+# Pin ninja's -j to the vCPU count; `nproc` is accurate on the Linux VM, unlike
+# the Docker executor this was hardcoded for, see
 # https://github.com/scikit-learn/scikit-learn/pull/30333
-pip install -e . -v --no-build-isolation --config-settings=compile-args="-j 3"
-
-echo "ccache build summary:"
-ccache -s
+pip install -e . -v --no-build-isolation --config-settings=compile-args="-j $(nproc)"
 
 export OMP_NUM_THREADS=1
 
