@@ -184,7 +184,7 @@ struct parameter *set_parameter(int solver_type, double eps, double C,
     if (param == NULL)
         return NULL;
 
-    set_seed(seed);
+    
     param->solver_type = solver_type;
     param->eps = eps;
     param->C = C;
@@ -193,6 +193,7 @@ struct parameter *set_parameter(int solver_type, double eps, double C,
     param->weight_label = (int *) weight_label;
     param->weight = (double *) weight;
     param->max_iter = max_iter;
+    param->seed = seed;
     return param;
 }
 
