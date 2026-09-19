@@ -277,7 +277,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             else n_features - self.n_features_to_select_
         )
 
-        old_score = -np.inf
         is_auto_select = self.tol is not None and self.n_features_to_select == "auto"
 
         # We only need to verify the routing here and not use the routed params
@@ -285,6 +284,16 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         # `cross_val_score` function.
         if _routing_enabled():
             process_routing(self, "fit", **params)
+
+        if self.direction == "backward" and is_auto_select:
+            # In backward selection the stopping criterion compares the score
+            # obtained after removing a feature with the score obtained before
+            # removing it. The reference score for the first iteration must
+            # therefore be the score using all the features.
+            old_score = self._cross_val_score(cloned_estimator, X, y, cv, params)
+        else:
+            old_score = -np.inf
+
         for _ in range(n_iterations):
             new_feature_idx, new_score = self._get_best_new_feature_score(
                 cloned_estimator, X, y, cv, current_mask, **params
@@ -317,17 +326,23 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             if self.direction == "backward":
                 candidate_mask = ~candidate_mask
             X_new = X[:, candidate_mask]
-            scores[feature_idx] = cross_val_score(
-                estimator,
-                X_new,
-                y,
-                cv=cv,
-                scoring=self.scoring,
-                n_jobs=self.n_jobs,
-                params=params,
-            ).mean()
+            scores[feature_idx] = self._cross_val_score(estimator, X_new, y, cv, params)
         new_feature_idx = max(scores, key=lambda feature_idx: scores[feature_idx])
         return new_feature_idx, scores[new_feature_idx]
+
+    def _cross_val_score(self, estimator, X, y, cv, params):
+        # Shared by `fit` (scoring all features) and `_get_best_new_feature_score`
+        # (scoring a candidate subset). Keep both call sites going through this
+        # helper so the cross-validation setup stays consistent between them.
+        return cross_val_score(
+            estimator,
+            X,
+            y,
+            cv=cv,
+            scoring=self.scoring,
+            n_jobs=self.n_jobs,
+            params=params,
+        ).mean()
 
     def _get_support_mask(self):
         check_is_fitted(self)
