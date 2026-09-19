@@ -31,6 +31,8 @@ def _check_inputs_dtype(X, missing_values):
     if is_pandas_na(missing_values):
         # Allow using `pd.NA` as missing values to impute numerical arrays.
         return
+    if missing_values is None:
+        return
     if X.dtype.kind in ("f", "i", "u") and not isinstance(missing_values, numbers.Real):
         raise ValueError(
             "'X' and 'missing_values' types are expected to be"
@@ -341,13 +343,24 @@ class SimpleImputer(_BaseImputer):
             else:
                 dtype = None
         else:
-            dtype = FLOAT_DTYPES
+            if (
+                self.strategy in ("mean", "median")
+                and isinstance(X, np.ndarray)
+                and X.dtype.kind == "O"
+            ):
+                dtype = object
+            else:
+                dtype = FLOAT_DTYPES
 
         if not in_fit and self._fit_dtype.kind == "O":
             # Use object dtype if fitted on object dtypes
             dtype = self._fit_dtype
 
-        if is_pandas_na(self.missing_values) or is_scalar_nan(self.missing_values):
+        if (
+            is_pandas_na(self.missing_values)
+            or is_scalar_nan(self.missing_values)
+            or (self.missing_values is None and dtype is FLOAT_DTYPES)
+        ):
             ensure_all_finite = "allow-nan"
         else:
             ensure_all_finite = True
@@ -532,6 +545,21 @@ class SimpleImputer(_BaseImputer):
         masked_X = ma.masked_array(X, mask=missing_mask)
 
         super()._fit_indicator(missing_mask)
+
+        if strategy in ("mean", "median") and X.dtype.kind == "O":
+            masked_X = masked_X.copy()
+            masked_X.data[missing_mask] = np.nan
+            try:
+                masked_X = masked_X.astype(np.float64)
+            except ValueError as ve:
+                raise ValueError(
+                    f"Cannot use {strategy} strategy with non-numeric data:\n{ve}"
+                ) from None
+            if np.isnan(masked_X.data[~missing_mask]).any():
+                raise ValueError(
+                    f"Cannot use {strategy} strategy with non-numeric values "
+                    "that are not marked as missing."
+                )
 
         # Mean
         if strategy == "mean":
