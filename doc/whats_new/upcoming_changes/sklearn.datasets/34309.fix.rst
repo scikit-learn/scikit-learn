@@ -1,0 +1,4 @@
+- :func:`datasets.fetch_20newsgroups` no longer raises a race condition
+  when called concurrently from multiple processes or threads (for example
+  under pytest-xdist), by downloading and caching the dataset atomically.
+  By :user:`Nisha <nisha-muthurajan>`.
