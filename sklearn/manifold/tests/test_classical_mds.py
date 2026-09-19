@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from sklearn.datasets import load_iris
 from sklearn.decomposition import PCA
 from sklearn.manifold import ClassicalMDS
 from sklearn.metrics import euclidean_distances
+from sklearn.utils._testing import assert_allclose
 
 
 def test_classical_mds_equivalent_to_pca():

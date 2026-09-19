@@ -5,14 +5,13 @@ import pytest
 
 from sklearn import config_context
 from sklearn.utils._chunking import gen_even_slices, get_chunk_n_rows
-from sklearn.utils._testing import assert_array_equal
 
 
 def test_gen_even_slices():
     # check that gen_even_slices contains all samples
     some_range = range(10)
     joined_range = list(chain(*[some_range[slice] for slice in gen_even_slices(10, 3)]))
-    assert_array_equal(some_range, joined_range)
+    assert list(some_range) == joined_range
 
 
 @pytest.mark.parametrize(

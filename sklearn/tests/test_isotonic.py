@@ -377,7 +377,7 @@ def test_isotonic_regression_pickle():
 
     ir_ser = pickle.dumps(ir, pickle.HIGHEST_PROTOCOL)
     ir2 = pickle.loads(ir_ser)
-    np.testing.assert_array_equal(ir.predict(x), ir2.predict(x))
+    assert_array_equal(ir.predict(x), ir2.predict(x))
 
 
 def test_isotonic_duplicate_min_entry():

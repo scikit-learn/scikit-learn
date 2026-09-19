@@ -299,7 +299,7 @@ def test_update_sigma(global_random_seed):
     sigma = reg._update_sigma(X, alpha, lmbda, keep_lambda)
     sigma_woodbury = reg._update_sigma_woodbury(X, alpha, lmbda, keep_lambda)
 
-    np.testing.assert_allclose(sigma, sigma_woodbury)
+    assert_allclose(sigma, sigma_woodbury)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -328,4 +328,4 @@ def test_dtype_correctness(Estimator):
     model = Estimator()
     coef_32 = model.fit(X.astype(np.float32), y).coef_
     coef_64 = model.fit(X.astype(np.float64), y).coef_
-    np.testing.assert_allclose(coef_32, coef_64, rtol=1e-4)
+    assert_allclose(coef_32, coef_64, rtol=1e-4)

@@ -264,7 +264,7 @@ def test_linear_regression_positive():
     reg = LinearRegression(positive=True)
     reg.fit(X, y)
     assert_allclose(reg.coef_, [0])
-    assert_allclose(reg.intercept_, [0])
+    assert_allclose(reg.intercept_, 0)
     assert_allclose(reg.predict(X), [0])
 
 

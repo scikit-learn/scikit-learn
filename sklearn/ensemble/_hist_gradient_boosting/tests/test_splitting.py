@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE,
@@ -14,7 +13,7 @@ from sklearn.ensemble._hist_gradient_boosting.splitting import (
     compute_node_value,
 )
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import assert_array_equal, skip_if_32bit
 
 n_threads = _openmp_effective_n_threads()
 

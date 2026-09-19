@@ -9,7 +9,6 @@ import warnings
 import joblib
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn import config_context
@@ -36,6 +35,7 @@ from sklearn.tests.metadata_routing_common import (
 from sklearn.utils._indexing import _safe_indexing
 from sklearn.utils._testing import (
     _convert_container,
+    assert_allclose,
     assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_equal,
