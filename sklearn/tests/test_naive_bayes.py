@@ -1049,3 +1049,16 @@ def test_gnb_array_api_compliance(
         assert_allclose(
             move_to(y_pred_log_proba_xp, xp=np, device="cpu"), y_pred_log_proba_np
         )
+
+
+def test_nb_gammanb():
+    from sklearn.naive_bayes import GammaNB
+
+    rng = np.random.RandomState(1)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([0, 1, 0, 0, 1, 0])
+
+    clf = GammaNB()
+    clf.fit(X, y)
+    result = clf.predict(X[2:3], p_min=1, priori_distr="Exponential")
+    assert result.shape == (1,)
