@@ -1166,3 +1166,67 @@ def test_nb_gammanb_poi_p1():
     clf.fit(X, y)
     result = clf.predict(X[2:3], p_min=0.7, priori_distr="Poisson")
     assert result.shape == (1,)
+
+
+def test_zerovar_feature_ignored():
+    # To test whether zero variance would be neglected
+    from sklearn.naive_bayes import GammaNB
+
+    # the second column is variance
+    X = np.array([[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]])
+    y = np.array([0, 0, 0, 1, 1, 1])
+    X_useful = X[:, 0].reshape(-1, 1)  # only working features
+
+    clf_full = GammaNB()
+    clf_full.fit(X, y)
+    clf_useful = GammaNB()
+    clf_useful.fit(X_useful, y)
+
+    # assert: two predicts should be close enough,
+    # and assert_allclose, allow for small error
+    np.testing.assert_allclose(clf_full.predict([[3, 0]]), clf_useful.predict([[3]]))
+    # CHECK predict, with the same results
+    assert clf_full.predict([[3, 0]]) == clf_useful.predict([[3]])
+
+
+def test_zerovar_pos():
+    import random
+
+    from sklearn.naive_bayes import GammaNB
+
+    # zero-var in different column position
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=float)
+
+    # the specific column should be zero
+    zero_col_index = int(random.uniform(0, 3) // 1)  # randomized
+    X[:, zero_col_index] = 0
+    y = np.array([0, 1, 0])
+
+    clf = GammaNB()
+    clf.fit(X, y)  # RIGHT
+    assert clf.predict(X).shape == y.shape
+
+
+def test_sigma_val():
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[5, 5], [5, 5], [5, 5]])
+    y = np.array([0, 1, 0])
+    clf = GammaNB()
+    clf.fit(X, y)
+
+    # should be greater than 0
+    assert clf.priori_distr in ("Exponential", "Uniform", "Poisson")
+
+
+def test_extreme_zerovar():
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[1, 2]])  # one sample
+    y = np.array([0])
+    clf = GammaNB()
+    clf.fit(X, y)
+
+    # should be working
+    y_pred = clf.predict(X)
+    assert y_pred[0] == 0

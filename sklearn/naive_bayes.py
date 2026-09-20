@@ -1850,7 +1850,10 @@ class GammaNB:
                 elif x_curr > 9999:
                     x_curr = 9999
                 # FEAT0: min. value of one feat.
-                x_record = float(self.feat0[i][2])  # min-val
+                try:
+                    x_record = float(self.feat0[i][2])  # min-val
+                except IndexError:
+                    x_record = 1
                 if x_record < -9999:
                     x_record = -9999
                 elif x_record > 9999:
@@ -1859,7 +1862,10 @@ class GammaNB:
                 tmp_delta_1 = float(tmp_delta_1)
                 # FEAT0: average value of one Feat.
                 # {0:'cate', 1:'vname', 2:'min', 3:'avg'}
-                x_record_1 = float(self.feat0[i][3])  # avg-val
+                try:
+                    x_record_1 = float(self.feat0[i][3])  # avg-val
+                except IndexError:
+                    x_record_1 = 1
                 if x_record_1 < -9999:
                     x_record_1 = -9999
                 elif x_record_1 > 9999:
@@ -1887,14 +1893,20 @@ class GammaNB:
                     return -1
                 # --- p1
                 # Feat1: minimum value of one feat.
-                x_record_2 = float(self.feat1[i][2])  # min-val
+                try:
+                    x_record_2 = float(self.feat1[i][2])  # min-val
+                except IndexError:
+                    x_record_2 = 1
                 if x_record_2 < -9999:
                     x_record_2 = -9999
                 elif x_record_2 > 9999:
                     x_record_2 = 9999
                 tmp_delta_3 = float(abs(x_curr - x_record_2))
                 # FEAT1: average value of one feat.
-                x_record_3 = float(self.feat1[i][3])  # avg-val
+                try:
+                    x_record_3 = float(self.feat1[i][3])  # avg-val
+                except IndexError:
+                    x_record_3 = 1
                 if x_record_3 < -9999:
                     x_record_3 = -9999
                 elif x_record_3 > 9999:
