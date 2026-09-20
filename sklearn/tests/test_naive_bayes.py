@@ -1062,3 +1062,29 @@ def test_nb_gammanb():
     clf.fit(X, y)
     result = clf.predict(X[2:3], p_min=1, priori_distr="Exponential")
     assert result.shape == (1,)
+
+
+def test_nb_gammanb_un():
+    from sklearn.naive_bayes import GammaNB
+
+    rng = np.random.RandomState(1)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([0, 1, 0, 0, 1, 0])
+
+    clf = GammaNB()
+    clf.fit(X, y)
+    result = clf.predict(X[2:3], p_min=1, priori_distr="Uniform")
+    assert result.shape == (1,)
+
+
+def test_nb_gammanb_poi():
+    from sklearn.naive_bayes import GammaNB
+
+    rng = np.random.RandomState(1)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([0, 1, 0, 0, 1, 0])
+
+    clf = GammaNB()
+    clf.fit(X, y)
+    result = clf.predict(X[2:3], p_min=1, priori_distr="Poisson")
+    assert result.shape == (1,)
