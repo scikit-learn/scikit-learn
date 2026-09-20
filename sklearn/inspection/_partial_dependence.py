@@ -506,7 +506,9 @@ def partial_dependence(
           `'average'`.
 
         - `'brute'` is supported for any estimator, but is more
-          computationally intensive.
+          computationally intensive. Unlike `'recursion'`, it computes the
+          interventional partial dependence and is the recommended method when
+          features are correlated.
 
         - `'auto'`: the `'recursion'` is used for estimators that support it,
           and `'brute'` is used otherwise. If `sample_weight` is not `None`,
