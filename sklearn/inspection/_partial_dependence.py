@@ -567,6 +567,15 @@ def partial_dependence(
     PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
     PartialDependenceDisplay : Partial Dependence visualization.
 
+    Notes
+    -----
+    When features are correlated, ``method='recursion'`` (tree-based
+    estimators only) and ``method='brute'`` estimate different quantities
+    and are **not** equivalent. ``'brute'`` computes the interventional
+    partial dependence; ``'recursion'`` computes the conditional partial
+    dependence, which reflects the correlation structure of the training
+    data. See :ref:`pdp_method_differences` for the full discussion.
+
     Examples
     --------
     >>> X = [[0, 0, 2], [1, 0, 0]]
