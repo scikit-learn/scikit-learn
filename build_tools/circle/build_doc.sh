@@ -20,26 +20,9 @@ set -x
 # defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
-if [ -n "$GITHUB_ACTION" ]
+if [[ -n "$CI_PULL_REQUEST" && -z "$CI_TARGET_BRANCH" ]]
 then
-    # Map the variables from Github Action to CircleCI
-    CIRCLE_SHA1=$(git log -1 --pretty=format:%H)
-
-    CIRCLE_JOB=$GITHUB_JOB
-
-    if [ "$GITHUB_EVENT_NAME" == "pull_request" ]
-    then
-        CIRCLE_BRANCH=$GITHUB_HEAD_REF
-        CI_PULL_REQUEST=true
-        CI_TARGET_BRANCH=$GITHUB_BASE_REF
-    else
-        CIRCLE_BRANCH=$GITHUB_REF_NAME
-    fi
-fi
-
-if [[ -n "$CI_PULL_REQUEST"  && -z "$CI_TARGET_BRANCH" ]]
-then
-    # Get the target branch name when using CircleCI
+    # CircleCI does not expose the PR base branch as an environment variable.
     CI_TARGET_BRANCH=$(curl -s "https://api.github.com/repos/scikit-learn/scikit-learn/pulls/$CIRCLE_PR_NUMBER" | jq -r .base.ref)
 fi
 
@@ -140,7 +123,15 @@ then
     exit 0
 fi
 
-if [[ "$CIRCLE_BRANCH" =~ ^main$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
+# ZIP, image optimization and version listing are only useful for the
+# documentation that is deployed to the website (the "doc" CircleCI job).
+deploy_docs=false
+if [[ "$CIRCLE_BRANCH" =~ ^main$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" && "$CIRCLE_JOB" == "doc" ]]
+then
+    deploy_docs=true
+fi
+
+if [[ "$deploy_docs" == "true" ]]
 then
     # ZIP linked into HTML
     make_args=dist
@@ -157,10 +148,15 @@ else
 fi
 
 # Installing required system packages to support the rendering of math
-# notation in the HTML documentation and to optimize the image files
+# notation in the HTML documentation. zip and optipng are only needed when
+# building the downloadable documentation archive for the website.
+apt_packages="dvipng gsfonts ccache"
+if [[ "$make_args" == "dist" ]]
+then
+    apt_packages="$apt_packages zip optipng"
+fi
 sudo -E apt-get -yq update --allow-releaseinfo-change
-sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
-    install dvipng gsfonts ccache zip optipng
+sudo -E apt-get -yq --no-install-suggests --no-install-recommends install $apt_packages
 
 # deactivate circleci virtualenv and setup a conda env instead
 if [[ `type -t deactivate` ]]; then
@@ -203,7 +199,7 @@ then
     towncrier build --yes
 fi
 
-if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
+if [[ "$CIRCLE_BRANCH" == "main" && "$deploy_docs" == "true" ]]
 then
     # List available documentation versions if on main
     python build_tools/circle/list_versions.py --json doc/js/versions.json --rst doc/versions.rst
