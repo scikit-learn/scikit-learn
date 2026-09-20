@@ -219,9 +219,35 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       >>> from sklearn.tree import export_dict
       >>> tree_dict = export_dict(decision_tree, feature_names=iris['feature_names'])
       >>> sorted(tree_dict.keys())
-      ['feature', 'feature_name', 'impurity', 'left', 'n_node_samples', 'node_id', 'right', 'threshold', 'weighted_n_node_samples']
+      ['feature', 'feature_name', 'impurity', 'left', 'missing_go_to_left', 'n_node_samples', 'node_id', 'right', 'threshold', 'weighted_n_node_samples']
       >>> tree_dict['feature_name']
       'petal width (cm)'
+
+  For a single-output classifier, the following example traverses the exported
+  tree and reads the predicted class. Inputs are converted to ``float32``, as
+  they are by the estimator, and missing values follow the stored direction::
+
+      >>> import numpy as np
+      >>> def predict_from_dict(tree_dict, row):
+      ...     row = np.asarray(row, dtype=np.float32)
+      ...     node = tree_dict
+      ...     while "left" in node:
+      ...         value = float(row[node["feature"]])
+      ...         go_left = (node["missing_go_to_left"] if np.isnan(value)
+      ...                    else value <= node["threshold"])
+      ...         node = node["left"] if go_left else node["right"]
+      ...     return node["class"]
+      >>> predict_from_dict(tree_dict, iris.data[0])
+      0
+      >>> bool(predict_from_dict(tree_dict, iris.data[0]) == decision_tree.predict(
+      ...     iris.data[:1])[0])
+      True
+
+  This example assumes a full, unrounded export with the original class labels
+  (the defaults). Truncated exports summarize omitted branches, and rounding
+  can change predictions. Missing-value routing applies only to trees that
+  support missing inputs. The dictionary does not replace the estimator's
+  input validation; see :func:`export_dict` for the output schema and limitations.
 
 .. rubric:: Examples
 

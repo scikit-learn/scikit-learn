@@ -1273,10 +1273,12 @@ def export_dict(
 
     feature_names : array-like of shape (n_features,), default=None
         An array containing the feature names.
-        If None generic names will be used ("feature_0", "feature_1", ...).
+        If None, the ``"feature_name"`` key is omitted. Feature indices
+        are always included at internal nodes.
 
     class_names : array-like of shape (n_classes,), default=None
-        Names of each of the target classes in ascending numerical order.
+        Names of each of the target classes in the order of
+        ``decision_tree.classes_``.
         Only relevant for classification and not supported for multi-output.
 
         - if `None`, the class names are delegated to `decision_tree.classes_`;
@@ -1285,12 +1287,16 @@ def export_dict(
           the length of `decision_tree.classes_`.
 
     max_depth : int, default=None
-        Only the first max_depth levels of the tree are exported. Nodes
-        beyond this depth are exported as leaves, with a ``"truncated"``
-        key set to `True`. If None, the full tree is exported.
+        Maximum depth at which split information is exported, counting the
+        root as depth 0. Internal nodes one level beyond this depth are
+        replaced by terminal summaries with ``"truncated": True``. For
+        example, ``max_depth=0`` retains the root split and summarizes its
+        children. Actual leaves are not marked as truncated. If None, the
+        full tree is exported.
 
     decimals : int, default=None
-        Number of decimal digits `threshold`, `impurity` and `value` are
+        Number of decimal digits `threshold`, `impurity`,
+        `weighted_n_node_samples` and `value` are
         rounded to. If None, no rounding is applied and values are exported
         at full floating-point precision. Rounding `threshold` can change
         which branch a value near the boundary is routed to, so the default
@@ -1304,10 +1310,42 @@ def export_dict(
         Every node has the keys ``"node_id"``, ``"n_node_samples"``,
         ``"weighted_n_node_samples"`` and ``"impurity"``. An internal node
         additionally has ``"feature"``, ``"feature_name"`` (only if
-        `feature_names` was provided), ``"threshold"``, ``"left"`` and
-        ``"right"``. A leaf, or a node truncated by `max_depth`,
+        `feature_names` was provided), ``"threshold"``,
+        ``"missing_go_to_left"``, ``"left"`` and ``"right"``. The boolean
+        ``"missing_go_to_left"`` records the branch used for missing values
+        by trees that support them. A leaf, or a node truncated by `max_depth`,
         additionally has ``"value"`` and, for single-output classifiers,
         ``"class"``.
+
+        For single-output classification, ``"value"`` is a list of weighted
+        class proportions in the order of ``decision_tree.classes_``. For
+        single-output regression, it is a one-element list containing the
+        predicted value. For multiple outputs, it is a list of such lists,
+        one per output. Classification lists are padded with zeros to the
+        largest number of classes across outputs; only the first
+        ``decision_tree.n_classes_[k]`` entries are meaningful for output k.
+        Multi-output class labels are not included: interpret these entries
+        using ``decision_tree.classes_[k]``.
+
+    Notes
+    -----
+    This representation is intended for inspection and conversion, rather
+    than as a complete model persistence format. To reproduce tree traversal,
+    convert input features to ``numpy.float32`` before comparing them with
+    thresholds, as the estimator does. Compare the converted values at
+    float64 precision without downcasting the exported thresholds (for
+    example, convert each float32 scalar to a Python float). Route finite
+    values left when they are less than or equal to the threshold, and right
+    otherwise. For trees
+    supporting missing values, route NaNs according to
+    ``"missing_go_to_left"``. This field does not enable missing-value support
+    for estimators or criteria that reject NaNs.
+
+    Keep ``decimals=None`` and ``max_depth=None`` when reproducing predictions.
+    Rounding thresholds can change traversal, and rounding leaf values can
+    change predictions or probabilities. A truncated node describes that
+    node's aggregate values, not the predictions of the omitted subtree.
+    Custom ``class_names`` replace the estimator's labels in ``"class"``.
 
     Examples
     --------
@@ -1391,6 +1429,7 @@ def export_dict(
         if feature_names is not None:
             node["feature_name"] = _native(feature_names[feature])
         node["threshold"] = _round(tree_.threshold[node_id])
+        node["missing_go_to_left"] = bool(tree_.missing_go_to_left[node_id])
         node["left"] = _recurse(tree_.children_left[node_id], depth + 1)
         node["right"] = _recurse(tree_.children_right[node_id], depth + 1)
         return node
