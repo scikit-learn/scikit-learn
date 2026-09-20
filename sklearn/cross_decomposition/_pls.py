@@ -152,6 +152,46 @@ def _svd_flip_1d(u, v):
     v *= sign
 
 
+def _variable_importance_in_projection(x_scores, x_rotations, y_loadings):
+    """Calculate Variable Importance in Projection (VIP) scores.
+
+    Parameters
+    ----------
+    x_scores : ndarray of shape (n_samples, n_components)
+        The transformed training samples (latent scores).
+
+    x_rotations : ndarray of shape (n_features, n_components)
+        The projection matrix used to transform X.
+
+    y_loadings : ndarray of shape (n_targets, n_components)
+        The loadings of y.
+
+    Returns
+    -------
+    vip : ndarray of shape (n_features,)
+        The VIP score for each feature.
+    """
+    p = x_rotations.shape[0]
+    w_norm_sq = np.sum(x_rotations**2, axis=0, keepdims=True)
+    nonzero_cols = w_norm_sq.squeeze(0) > 0
+    if not np.any(nonzero_cols):
+        return np.zeros(p, dtype=x_rotations.dtype)
+
+    w = x_rotations[:, nonzero_cols]
+    w_norm_sq = w_norm_sq[:, nonzero_cols]
+    w_weights = (w**2) / w_norm_sq
+
+    t = x_scores[:, nonzero_cols]
+    q = y_loadings[:, nonzero_cols]
+    t_ss = np.sum(t**2, axis=0)
+    q_ss = np.sum(q**2, axis=0)
+    ss_comp = t_ss * q_ss
+    ss_total = np.sum(ss_comp)
+    if ss_total <= 0:
+        return np.zeros(p, dtype=x_rotations.dtype)
+    return np.sqrt(p * np.dot(w_weights, ss_comp) / ss_total)
+
+
 class _PLS(
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
@@ -590,6 +630,13 @@ class PLSRegression(_PLS):
 
         .. versionadded:: 1.0
 
+    vip_ : ndarray of shape (n_features,)
+        Variable Importance in Projection (VIP) scores for each feature.
+        A value greater than 1 indicates a feature with higher-than-average
+        contribution to explaining the target variable(s).
+
+        .. versionadded:: 1.9
+
     See Also
     --------
     PLSCanonical : Partial Least Squares transformer and regressor.
@@ -654,6 +701,9 @@ class PLSRegression(_PLS):
         # expose the fitted attributes `x_scores_` and `y_scores_`
         self.x_scores_ = self._x_scores
         self.y_scores_ = self._y_scores
+        self.vip_ = _variable_importance_in_projection(
+            self.x_scores_, self.x_rotations_, self.y_loadings_
+        )
         return self
 
 
