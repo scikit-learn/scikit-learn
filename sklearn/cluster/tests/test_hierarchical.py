@@ -24,6 +24,7 @@ from sklearn.cluster._agglomerative import (
     linkage_tree,
 )
 from sklearn.cluster._hierarchical_fast import (
+    PytestUnionFind,
     average_merge,
     max_merge,
     mst_linkage_core,
@@ -227,17 +228,6 @@ def test_agglomerative_clustering(global_random_seed, lil_container):
         with pytest.raises(ValueError):
             clustering.fit(X)
 
-    # Test that using ward with another metric than euclidean raises an
-    # exception
-    clustering = AgglomerativeClustering(
-        n_clusters=10,
-        connectivity=connectivity.toarray(),
-        metric="manhattan",
-        linkage="ward",
-    )
-    with pytest.raises(ValueError):
-        clustering.fit(X)
-
     # Test using another metric than euclidean works with linkage complete
     for metric in PAIRED_DISTANCES.keys():
         # Compare our (structured) implementation to scipy
@@ -396,6 +386,36 @@ def test_vector_scikit_single_vs_scipy_single(global_random_seed):
     cut = _hc_cut(n_clusters, children, n_leaves)
     cut_scipy = _hc_cut(n_clusters, children_scipy, n_leaves)
     assess_same_labelling(cut, cut_scipy)
+
+
+def test_union_find_fast_find_compresses_path():
+    """Check that fast_find compresses the queried path to its root."""
+    union_find = PytestUnionFind(5)
+
+    node_5 = union_find.py_union(0, 1)
+    node_6 = union_find.py_union(node_5, 2)
+    root = union_find.py_union(node_6, 3)
+
+    assert union_find.py_fast_find(0) == root
+
+    parent = union_find.py_get_parent()
+    assert_array_equal(
+        parent[[0, node_5, node_6]],
+        np.full(3, root, dtype=np.intp),
+    )
+    assert parent[root] == -1
+
+
+def test_union_find_fast_find_on_root_is_noop():
+    """Check that fast_find does not mutate state when called on a root.
+
+    Non-regression test for issue #34626.
+    """
+    union_find = PytestUnionFind(3)
+    parent_before = union_find.py_get_parent()
+
+    assert union_find.py_fast_find(0) == 0
+    assert_array_equal(union_find.py_get_parent(), parent_before)
 
 
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
@@ -888,3 +908,42 @@ def test_precomputed_connectivity_metric_with_2_connected_components():
 
     assert_array_equal(clusterer.labels_, clusterer_precomputed.labels_)
     assert_array_equal(clusterer.children_, clusterer_precomputed.children_)
+
+
+@pytest.mark.parametrize("Clustering", [AgglomerativeClustering, FeatureAgglomeration])
+def test_agglomeration_ward_constrained_metric(Clustering):
+    """Check that we raise an error when 'euclidean' or 'l2' are not passed with
+    ward linkage."""
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    connectivity = grid_to_graph(*mask.shape)
+
+    clustering = Clustering(
+        n_clusters=10,
+        connectivity=connectivity.toarray(),
+        metric="manhattan",
+        linkage="ward",
+    )
+    with pytest.raises(ValueError):
+        clustering.fit(X)
+
+
+@pytest.mark.parametrize("Clustering", [AgglomerativeClustering, FeatureAgglomeration])
+@pytest.mark.parametrize("metric", ["euclidean", "l2"])
+def test_agglomeration_ward_euclidean(Clustering, metric):
+    """Check that we can pass 'euclidean' and 'l2' as metric with Ward linkage."""
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 100)
+    connectivity = grid_to_graph(*mask.shape)
+
+    clustering = Clustering(
+        n_clusters=10,
+        connectivity=connectivity.toarray(),
+        metric=metric,
+        linkage="ward",
+    )
+    clustering.fit(X)

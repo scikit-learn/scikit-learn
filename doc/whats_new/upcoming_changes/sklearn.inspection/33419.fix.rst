@@ -1,4 +1,0 @@
-- In :class:`inspection.DecisionBoundaryDisplay`, a `ValueError` is now raised if the
-  colormap passed to `multiclass_colors` contains fewer colors than there are classes in
-  multiclass problems.
-  By :user:`Anne Beyer <AnneBeyer>`.

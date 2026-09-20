@@ -11,17 +11,15 @@ import scipy.sparse as sp
 from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.preprocessing import LabelEncoder
-from sklearn.svm import _liblinear as liblinear  # type: ignore[attr-defined]
-
-# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
-# (and same for other imports)
-from sklearn.svm import _libsvm as libsvm  # type: ignore[attr-defined]
-from sklearn.svm import _libsvm_sparse as libsvm_sparse  # type: ignore[attr-defined]
+from sklearn.svm import _liblinear as liblinear
+from sklearn.svm import _libsvm as libsvm
+from sklearn.svm import _libsvm_sparse as libsvm_sparse
 from sklearn.utils import (
     check_array,
     check_random_state,
     column_or_1d,
     compute_class_weight,
+    deprecated,
 )
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils._sparse import _align_api_if_sparse
@@ -900,7 +898,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         datasets.
         """
         X = self._validate_for_predict(X)
-        if self.probA_.size == 0 or self.probB_.size == 0:
+        if self._probA.size == 0 or self._probB.size == 0:
             raise NotFittedError(
                 "predict_proba is not available when fitted with probability=False"
             )
@@ -1017,6 +1015,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         return coef
 
+    @deprecated(
+        "Attribute `probA_` was deprecated in version 1.9 and will be removed in "
+        "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
+        "and will be removed in 1.11."
+    )
     @property
     def probA_(self):
         """Parameter learned in Platt scaling when `probability=True`.
@@ -1027,6 +1030,11 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         """
         return self._probA
 
+    @deprecated(
+        "Attribute `probB_` was deprecated in version 1.9 and will be removed in "
+        "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
+        "and will be removed in 1.11."
+    )
     @property
     def probB_(self):
         """Parameter learned in Platt scaling when `probability=True`.

@@ -171,6 +171,7 @@ from sklearn.preprocessing import (
     Normalizer,
     OneHotEncoder,
     PolynomialFeatures,
+    QuantileTransformer,
     SplineTransformer,
     StandardScaler,
     TargetEncoder,
@@ -472,6 +473,10 @@ INIT_PARAMS = {
     # Default "auto" parameter can lead to different ordering of eigenvalues on
     # windows: #24105
     SpectralEmbedding: dict(eigen_tol=1e-05),
+    # SplineTransformer supports NaN only with handle_missing="zeros", so we
+    # need this additional parameter set for the allow_nan_estimators Sphinx
+    # directive to detect it.
+    SplineTransformer: [dict(), dict(handle_missing="zeros")],
     StackingClassifier: dict(
         estimators=[
             ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
@@ -581,7 +586,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     GraphicalLasso: {"check_array_api_input": dict(max_iter=5, alpha=1.0)},
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
-    # TODO(1.9) simplify when averaged_inverted_cdf is the default
     KBinsDiscretizer: {
         "check_sample_weight_equivalence_on_dense_data": [
             # Using subsample != None leads to a stochastic fit that is not
@@ -596,21 +600,6 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             # The "kmeans" strategy leads to a stochastic fit that is not
             # handled by the check_sample_weight_equivalence test.
         ],
-        "check_sample_weights_list": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_pandas_series": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_shape": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_not_an_array": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_not_overwritten": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
     },
     KernelPCA: {
         "check_dict_unchanged": dict(n_components=1),
@@ -713,6 +702,17 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="highs-ds"),
             dict(solver="highs-ipm"),
         ],
+    },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            # Using subsample != None leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence_on_dense_data test.
+            dict(n_quantiles=2, subsample=None),
+            dict(n_quantiles=5, subsample=None),
+            dict(n_quantiles=1000, subsample=None),
+        ],
+        # Force subsampling to happen so that the weighted subsampling branch is covered
+        "check_sample_weights_not_overwritten": dict(n_quantiles=5, subsample=8),
     },
     QuadraticDiscriminantAnalysis: {"check_array_api_input": dict(reg_param=1.0)},
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
@@ -910,7 +910,7 @@ def _yield_instances_for_check(check, estimator_orig):
         yield estimator
 
 
-PER_ESTIMATOR_XFAIL_CHECKS = {
+PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     AdaBoostClassifier: {
         # TODO: replace by a statistical test, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
@@ -997,6 +997,10 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     GaussianNB: {
+        # TODO: Remove once fixed: https://github.com/pytorch/pytorch/issues/188128
+        "check_array_api_mixed_inputs": (
+            "PyTorch bug when asarray used on array-api-strict boolean array"
+        ),
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     GradientBoostingClassifier: {
@@ -1162,7 +1166,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     Nystroem: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
-        "check_transformer_preserves_dtypes": (
+        "check_transformer_preserve_dtypes": (
             "dtypes are preserved but not at a close enough precision"
         ),
     },
@@ -1178,7 +1182,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     PCA: {
         # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298
@@ -1204,6 +1207,11 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     PolynomialFeatures: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "QuantileTransformer does not yet support sample_weight on sparse data."
+        ),
     },
     RadiusNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
@@ -1263,7 +1271,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     RidgeClassifier: {
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
-        )
+        ),
     },
     SelfTrainingClassifier: {
         "check_non_transformer_estimators_n_iter": "n_iter_ can be 0."
@@ -1351,14 +1359,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
 }
 
-# TODO: remove when scipy min version >= 1.11
-if sp_base_version < parse_version("1.11"):
-    PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
-        "check_estimators_pickle": (
-            "scipy < 1.11 implementation of _bsplines does not"
-            "support const memory views."
-        ),
-    }
 
 linear_svr_not_thread_safe = "LinearSVR is not thread-safe https://github.com/scikit-learn/scikit-learn/issues/31883"
 if "pytest_run_parallel" in sys.modules:

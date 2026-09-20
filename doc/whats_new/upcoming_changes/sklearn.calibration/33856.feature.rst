@@ -1,0 +1,6 @@
+- :func:`calibration.calibration_curve`,
+  :meth:`calibration.CalibrationDisplay.from_estimator`, and
+  :meth:`calibration.CalibrationDisplay.from_predictions` now support
+  ``n_bins="cube_root"``. This option sets the number of bins to
+  ``ceil(n_samples**(1/3))``.
+  By :user:`Zeyu Sun <zeyusun>`

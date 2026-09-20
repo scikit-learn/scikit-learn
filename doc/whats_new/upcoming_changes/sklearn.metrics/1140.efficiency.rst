@@ -1,0 +1,4 @@
+- :func:`metrics.nan_euclidean_distances` is now several times faster on dense data,
+  with a more moderate speed-up for :class:`impute.KNNImputer` and estimators using
+  ``metric="nan_euclidean"`` such as :class:`neighbors.NearestNeighbors`.
+  By :user:`Roman Yurchak <rth>`.

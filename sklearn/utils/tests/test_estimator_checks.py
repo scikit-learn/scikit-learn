@@ -94,7 +94,7 @@ from sklearn.utils.estimator_checks import (
     estimator_checks_generator,
     set_random_state,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS, SPARRAY_PRESENT
+from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import (
@@ -752,9 +752,8 @@ def test_check_estimator_sparse_data():
     with raises(AssertionError, match=msg):
         check_estimator_sparse_matrix(name, NoSparseClassifier("sparse_matrix"))
 
-    if SPARRAY_PRESENT:
-        with raises(AssertionError, match=msg):
-            check_estimator_sparse_array(name, NoSparseClassifier("sparse_array"))
+    with raises(AssertionError, match=msg):
+        check_estimator_sparse_array(name, NoSparseClassifier("sparse_array"))
 
     # Large indices test on bad estimator
     msg = (
@@ -767,12 +766,11 @@ def test_check_estimator_sparse_data():
             LargeSparseNotSupportedClassifier("sparse_matrix"),
         )
 
-    if SPARRAY_PRESENT:
-        with raises(AssertionError, match=msg):
-            check_estimator_sparse_array(
-                "LargeSparseNotSupportedClassifier",
-                LargeSparseNotSupportedClassifier("sparse_array"),
-            )
+    with raises(AssertionError, match=msg):
+        check_estimator_sparse_array(
+            "LargeSparseNotSupportedClassifier",
+            LargeSparseNotSupportedClassifier("sparse_array"),
+        )
 
 
 def test_check_classifiers_one_label_sample_weights():
@@ -1735,6 +1733,10 @@ def test_estimator_with_set_output():
             estimator=estimator,
             expected_failed_checks={
                 "check_array_api_input": (
+                    "this check is expected to fail because pandas and polars"
+                    " are not compatible with the array api."
+                ),
+                "check_array_api_mixed_inputs": (
                     "this check is expected to fail because pandas and polars"
                     " are not compatible with the array api."
                 ),

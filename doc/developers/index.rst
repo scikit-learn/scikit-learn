@@ -1,3 +1,5 @@
+:orphan:
+
 .. _developers_guide:
 
 =================
@@ -8,6 +10,7 @@ Developer's Guide
 
    contributing
    development_setup
+   global_configuration
    minimal_reproducer
    develop
    tips
@@ -18,3 +21,4 @@ Developer's Guide
    bug_triaging
    maintainer
    plotting
+   callbacks

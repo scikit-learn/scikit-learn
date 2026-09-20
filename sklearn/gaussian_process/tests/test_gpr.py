@@ -306,7 +306,7 @@ def test_y_normalization(kernel):
 
 def test_large_variance_y():
     """
-    Here we test that, when noramlize_y=True, our GP can produce a
+    Here we test that, when normalize_y=True, our GP can produce a
     sensible fit to training data whose variance is significantly
     larger than unity. This test was made in response to issue #15612.
 

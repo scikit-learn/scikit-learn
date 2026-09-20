@@ -14,7 +14,6 @@ from numpy.lib.stride_tricks import sliding_window_view
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.ensemble._hist_gradient_boosting._binning import _map_to_bins
-from sklearn.ensemble._hist_gradient_boosting._bitset import set_bitset_memoryview
 from sklearn.ensemble._hist_gradient_boosting.common import (
     ALMOST_INF,
     X_BINNED_DTYPE,
@@ -22,9 +21,10 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     X_DTYPE,
 )
 from sklearn.utils import check_array, check_random_state
+from sklearn.utils._bitset import set_bitset_memoryview
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.parallel import Parallel, delayed
-from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.stats import _weighted_percentile_1d_sorted
 from sklearn.utils.validation import check_is_fitted
 
 
@@ -50,35 +50,42 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         A given value x will be mapped into bin value i iff
         bining_thresholds[i - 1] < x <= binning_thresholds[i]
     """
-    # ignore missing values when computing bin thresholds
-    missing_mask = np.isnan(col_data)
-    any_missing = missing_mask.any()
-    if any_missing:
-        col_data = col_data[~missing_mask]
-
-    # If sample_weight is not None and 0-weighted values exist, we need to
-    # remove those before calculating the distinct points.
-    if sample_weight is not None:
-        if any_missing:
+    # The data will be sorted anyway to find distinct values and again in percentile,
+    # so we do it here, like once and for all. Sorting also returns a contiguous array.
+    if sample_weight is None:
+        col_data = np.sort(col_data)
+        # ignore missing values when computing bin thresholds
+        idx_nan = np.searchsorted(col_data, np.nan)
+        col_data = col_data[:idx_nan]
+    else:
+        # First, remove missing values because argsort is much slower when missing
+        # values are present (which is not the case for sort).
+        missing_mask = np.isnan(col_data)
+        if missing_mask.any():
+            col_data = col_data[~missing_mask]
             sample_weight = sample_weight[~missing_mask]
+
+        # If 0-weighted values exist, we need to remove those
+        # before calculating the distinct points.
         nnz_sw = sample_weight != 0
         col_data = col_data[nnz_sw]
         sample_weight = sample_weight[nnz_sw]
 
-    # The data will be sorted anyway in np.unique and again in percentile, so we do it
-    # here. Sorting also returns a contiguous array.
-    sort_idx = np.argsort(col_data)
-    col_data = col_data[sort_idx]
-    if sample_weight is not None:
+        sort_idx = np.argsort(col_data)
+        col_data = col_data[sort_idx]
         sample_weight = sample_weight[sort_idx]
 
-    distinct_values = np.unique(col_data).astype(X_DTYPE)
+    # fast way for n_distinct = len(np.unique(col_data))
+    distinct_mask = np.empty(len(col_data), dtype=bool)
+    distinct_mask[0] = True
+    distinct_mask[1:] = col_data[1:] != col_data[:-1]
+    n_distincts = distinct_mask.sum()
 
-    if len(distinct_values) == 1:
+    if n_distincts == 1:
         return np.asarray([])
-
-    if len(distinct_values) <= max_bins:
+    elif n_distincts <= max_bins:
         # Calculate midpoints if distinct values <= max_bins
+        distinct_values = col_data[distinct_mask]
         bin_thresholds = sliding_window_view(distinct_values, 2).mean(axis=1)
     elif sample_weight is None:
         # We compute bin edges using the output of np.percentile with
@@ -93,17 +100,12 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     else:
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
-        bin_thresholds = np.array(
-            [
-                _weighted_percentile(col_data, sample_weight, percentile, average=True)
-                for percentile in percentiles
-            ]
+        bin_thresholds = _weighted_percentile_1d_sorted(
+            col_data, sample_weight, percentiles
         )
         assert bin_thresholds.shape[0] == max_bins - 1
     # Remove duplicated thresholds if they exist.
-    unique_bin_values = np.unique(bin_thresholds)
-    if unique_bin_values.shape[0] != bin_thresholds.shape[0]:
-        bin_thresholds = unique_bin_values
+    bin_thresholds = np.unique(bin_thresholds)
 
     # We avoid having +inf thresholds: +inf thresholds are only allowed in
     # a "split on nan" situation.

@@ -77,6 +77,18 @@ def test_params_html_repr():
     assert "estimator-table" in _params_html_repr(params)
 
 
+def test_params_html_repr_copy_button():
+    """Copy control renders as an accessible <button> with an aria-label."""
+    params = ParamsDict(params={"alpha": 1}, estimator_class="")
+    html_output = _params_html_repr(params)
+
+    copy_button = (
+        r'<button type="button" class="copy-paste-icon"'
+        r'\s*aria-label="Copy alpha to clipboard"'
+    )
+    assert re.search(copy_button, html_output, flags=re.DOTALL)
+
+
 def test_params_html_repr_with_doc_links():
     """Test `_params_html_repr` with valid and invalid doc links."""
 
@@ -212,3 +224,25 @@ def test_generate_link_to_param_doc_empty_docstring():
     doc_link = "mock_module.MockEstimator.html"
     url = generate_link_to_param_doc(MockEstimator, "alpha", doc_link)
     assert url is None
+
+
+def test_generate_link_to_param_doc_special_char():
+    """Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/33830
+    """
+
+    class MockEstimator:
+        """Mock class.
+
+        Attributes
+        ----------
+        weird_attr_ : ndarray of shape (`n_features_in_`,)
+        """
+
+    doc_link = "mock_module.MockEstimator.html"
+    url = generate_link_to_param_doc(MockEstimator, "weird_attr_", doc_link)
+    expected_url = (
+        "mock_module.MockEstimator.html#:~:text=weird_attr_,"
+        "-ndarray%20of%20shape%20%28n_features_in_%2C%29"
+    )
+    assert url == expected_url

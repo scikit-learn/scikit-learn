@@ -753,3 +753,26 @@ def test_results_per_cv_in_rfecv(global_random_seed):
     assert len(rfecv.cv_results_["split1_ranking"]) == len(
         rfecv.cv_results_["split2_ranking"]
     )
+
+
+@pytest.mark.parametrize(
+    "feature_importance",
+    [
+        lambda estimator: estimator.sparsify().coef_,
+        lambda estimator: estimator.sparsify().coef_.tocsc(),
+    ],
+)
+def test_rfe_sparse_coef(feature_importance):
+    X = [[0, 1, 3], [1, 0, 0], [2, 0, 4], [0, 2, 4]]
+    y = [0, 1, 2, 3]
+
+    estimator = LogisticRegression()
+    selector_sparse = RFE(
+        estimator, n_features_to_select=1, importance_getter=feature_importance
+    )
+    selector_dense = RFE(estimator, n_features_to_select=1)
+    selector_sparse.fit(X, y)
+    selector_dense.fit(X, y)
+
+    assert_array_equal(selector_sparse.support_, selector_dense.support_)
+    assert_array_equal(selector_sparse.ranking_, selector_dense.ranking_)

@@ -342,7 +342,7 @@ cdef class _QuadTree:
 
             if not cell.is_leaf:
                 # Compute the number of point in children and compare with
-                # its cummulative_size.
+                # its cumulative_size.
                 n_points = 0
                 for idx in range(self.n_cells_per_cell):
                     child_id = cell.children[idx]

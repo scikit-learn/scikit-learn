@@ -81,7 +81,7 @@ def test_explicit_diagonal():
     assert not _has_explicit_diagonal(X2t)
 
 
-@pytest.mark.parametrize("Klass", [KNeighborsTransformer, RadiusNeighborsTransformer])
+@pytest.mark.parametrize("Klass", (KNeighborsTransformer, RadiusNeighborsTransformer))
 def test_graph_feature_names_out(Klass):
     """Check `get_feature_names_out` for transformers defined in `_graph.py`."""
 

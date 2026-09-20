@@ -186,7 +186,7 @@ plt.show()
 # sufficient to guarantee a well-calibrated model by itself: even with a very
 # large training set, logistic regression could still be poorly calibrated, if
 # it was too strongly regularized or if the choice and preprocessing of input
-# features made this model mis-specified (e.g. if the true decision boundary of
+# features made this model misspecified (e.g. if the true decision boundary of
 # the dataset is a highly non-linear function of the input features).
 #
 # In this example the training set was intentionally kept very small. In this

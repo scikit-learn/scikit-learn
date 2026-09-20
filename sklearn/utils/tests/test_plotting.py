@@ -438,7 +438,7 @@ def test_validate_score_name(score_name, scoring, negate_score, expected_score_n
         ([1, 2, 5, 10, 20, 50], 20, 40),
     ],
 )
-def test_inverval_max_min_ratio(data, lower_bound, upper_bound):
+def test_interval_max_min_ratio(data, lower_bound, upper_bound):
     assert lower_bound < _interval_max_min_ratio(data) < upper_bound
 
 

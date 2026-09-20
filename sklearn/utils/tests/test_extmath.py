@@ -5,7 +5,7 @@ import itertools
 
 import numpy as np
 import pytest
-from scipy import linalg, sparse
+from scipy import linalg, sparse, stats
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
@@ -15,12 +15,10 @@ from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -54,7 +52,6 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     DOK_CONTAINERS,
     LIL_CONTAINERS,
-    _mode,
     _sparse_random_array,
 )
 
@@ -79,7 +76,7 @@ def test_uniform_weights():
     weights = np.ones(x.shape)
 
     for axis in (None, 0, 1):
-        mode, score = _mode(x, axis)
+        mode, score = stats.mode(x, axis=axis, keepdims=axis is not None)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
         assert_array_equal(mode, mode2)
@@ -708,12 +705,15 @@ def test_incremental_weighted_mean_and_variance_simple(dtype, as_list):
 def test_incremental_weighted_mean_and_variance_array_api(
     array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     rng = np.random.RandomState(42)
     mult = 10
     X = rng.rand(1000, 20).astype(dtype_name) * mult
     sample_weight = rng.rand(X.shape[0]).astype(dtype_name) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=False):
+        mean, var, _ = _incremental_mean_and_var(
+            X, 0, 0, 0, sample_weight=sample_weight
+        )
 
     X_xp = xp.asarray(X, device=device)
     sample_weight_xp = xp.asarray(sample_weight, device=device)
@@ -1106,7 +1106,7 @@ def test_approximate_mode():
     yield_namespace_device_dtype_combinations(),
 )
 def test_randomized_svd_array_api_compliance(array_namespace, device_name, dtype_name):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     X = rng.normal(size=(30, 10)).astype(dtype_name)
@@ -1134,7 +1134,7 @@ def test_randomized_svd_array_api_compliance(array_namespace, device_name, dtype
 def test_randomized_range_finder_array_api_compliance(
     array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     rng = np.random.RandomState(0)
     X = rng.normal(size=(30, 10)).astype(dtype_name)
@@ -1148,4 +1148,21 @@ def test_randomized_range_finder_array_api_compliance(
         Q_xp = randomized_range_finder(X_xp, size=size, n_iter=n_iter, random_state=0)
 
         assert get_namespace(Q_xp)[0].__name__ == xp.__name__
+        assert_allclose(move_to(Q_xp, xp=np, device="cpu"), Q_np, atol=atol)
+
+    max_dtype = _max_precision_float_dtype(xp, device=device)
+    # Also test with integer input only once per namespace/device for
+    # namespaces that support integer-by-floating matmul.
+    if X_xp.dtype != max_dtype or array_namespace in {"array_api_strict", "torch"}:
+        return
+
+    X_int = (X * 10).astype(np.int64)
+    atol *= 10
+    X_xp = xp.asarray(X_int, device=device)
+    with config_context(array_api_dispatch=True):
+        Q_np = randomized_range_finder(X_int, size=size, n_iter=n_iter, random_state=0)
+        Q_xp = randomized_range_finder(X_xp, size=size, n_iter=n_iter, random_state=0)
+
+        assert get_namespace(Q_xp)[0].__name__ == xp.__name__
+        assert Q_xp.dtype == max_dtype
         assert_allclose(move_to(Q_xp, xp=np, device="cpu"), Q_np, atol=atol)

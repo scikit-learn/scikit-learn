@@ -36,10 +36,10 @@ X = np.atleast_2d(np.linspace(0, 10, 30)).T
 X2 = np.atleast_2d([2.0, 4.0, 5.5, 6.5, 7.5]).T
 y = np.array(f(X).ravel() > 0, dtype=int)
 fX = f(X).ravel()
-y_mc = np.empty(y.shape, dtype=int)  # multi-class
+y_mc = np.zeros(y.shape, dtype=int)  # multi-class
 y_mc[fX < -0.35] = 0
 y_mc[(fX >= -0.35) & (fX < 0.35)] = 1
-y_mc[fX > 0.35] = 2
+y_mc[fX >= 0.35] = 2
 
 
 fixed_kernel = RBF(length_scale=1.0, length_scale_bounds="fixed")

@@ -160,7 +160,17 @@ tick_labels_parameter_name = (
 tick_labels_dict = {
     tick_labels_parameter_name: np.array(diabetes.feature_names)[sorted_idx]
 }
-plt.boxplot(result.importances[sorted_idx].T, vert=False, **tick_labels_dict)
+# `vert` was deprecated in matplotlib 3.11 and is replaced by `orientation`,
+# which is available since matplotlib 3.10. The following code handles this, but
+# as a scikit-learn user you probably can write simpler code by using
+# `vert=False` (matplotlib < 3.11) or `orientation="horizontal"`
+# (matplotlib >= 3.10).
+orientation_dict = (
+    {"orientation": "horizontal"}
+    if parse_version(matplotlib.__version__) >= parse_version("3.10")
+    else {"vert": False}
+)
+plt.boxplot(result.importances[sorted_idx].T, **orientation_dict, **tick_labels_dict)
 plt.title("Permutation Importance (test set)")
 fig.tight_layout()
 plt.show()

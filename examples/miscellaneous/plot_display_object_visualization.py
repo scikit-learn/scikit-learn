@@ -35,7 +35,7 @@ from sklearn.preprocessing import StandardScaler
 X, y = fetch_openml(data_id=1464, return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
-clf = make_pipeline(StandardScaler(), LogisticRegression(random_state=0))
+clf = make_pipeline(StandardScaler(), LogisticRegression())
 clf.fit(X_train, y_train)
 
 # %%
@@ -79,7 +79,7 @@ pr_display = PrecisionRecallDisplay(precision=prec, recall=recall).plot()
 # Combining the display objects into a single plot
 # ################################################
 # The display objects store the computed values that were passed as arguments.
-# This allows for the visualizations to be easliy combined using matplotlib's
+# This allows for the visualizations to be easily combined using matplotlib's
 # API. In the following example, we place the displays next to each other in a
 # row.
 

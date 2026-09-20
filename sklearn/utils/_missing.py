@@ -1,9 +1,9 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import math
-import numbers
 from contextlib import suppress
+from math import isnan
+from numbers import Real
 
 
 def is_scalar_nan(x):
@@ -37,11 +37,7 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-    return (
-        not isinstance(x, numbers.Integral)
-        and isinstance(x, numbers.Real)
-        and math.isnan(x)
-    )
+    return isinstance(x, Real) and isnan(x)
 
 
 def is_pandas_na(x):

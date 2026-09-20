@@ -7,7 +7,6 @@ from math import ceil
 
 import numpy as np
 from scipy import sparse
-from scipy.stats.mstats import mquantiles
 
 from sklearn.base import is_regressor
 from sklearn.inspection import partial_dependence
@@ -17,6 +16,7 @@ from sklearn.utils._encode import _unique
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._plotting import _validate_style_kwargs
 from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.stats import _nanquantile
 
 
 class PartialDependenceDisplay:
@@ -33,7 +33,7 @@ class PartialDependenceDisplay:
     :ref:`Inspection Guide <partial_dependence>`.
 
     For an example on how to use this class, see the following example:
-    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`.
+    :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence_visualization_api.py`.
 
     .. versionadded:: 0.22
 
@@ -759,8 +759,7 @@ class PartialDependenceDisplay:
         for fxs, cats in zip(features, is_categorical):
             for fx, cat in zip(fxs, cats):
                 if not cat and fx not in deciles:
-                    X_col = _safe_indexing(X, fx, axis=1)
-                    deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
+                    deciles[fx] = _nanquantile(X, fx, np.arange(0.1, 1.0, 0.1))
 
         display = cls(
             pd_results=pd_results,

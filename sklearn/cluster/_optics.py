@@ -17,7 +17,7 @@ from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics.pairwise import _VALID_METRICS, PAIRWISE_BOOLEAN_FUNCTIONS
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, sort_graph_by_row_values
 from sklearn.utils import gen_batches
 from sklearn.utils._chunking import get_chunk_n_rows
 from sklearn.utils._param_validation import (
@@ -86,16 +86,12 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'mahalanobis', 'minkowski',
+          'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         Sparse matrices are only supported by scikit-learn metrics.
         See :mod:`scipy.spatial.distance` for details on these metrics.
-
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     p : float, default=2
         Parameter for the Minkowski metric from
@@ -341,6 +337,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
                 # Set each diagonal to an explicit value so each point is its
                 # own neighbor
                 X.setdiag(X.diagonal())
+            # Sorting could be undone by .setdiag(), make sure it's sorted
+            X = sort_graph_by_row_values(X, warn_when_not_sorted=False)
         memory = check_memory(self.memory)
 
         (
@@ -498,16 +496,12 @@ def compute_optics_graph(
           'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'mahalanobis', 'minkowski',
+          'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
-
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     p : float, default=2
         Parameter for the Minkowski metric from
