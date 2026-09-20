@@ -69,9 +69,9 @@ not affect the rest of the documentation.
 Scikit-learn's support for the array API standard requires the environment variable
 `SCIPY_ARRAY_API` to be set to `1` before importing `scipy` and `scikit-learn`:
 
-.. prompt:: bash $
+.. code-block:: console
 
-   export SCIPY_ARRAY_API=1
+   $ export SCIPY_ARRAY_API=1
 
 Please note that this environment variable is intended for temporary use.
 For more details, refer to SciPy's `Array API documentation
@@ -159,6 +159,7 @@ Estimators
 ----------
 
 - :class:`covariance.LedoitWolf` (see :ref:`device_support_for_float64`)
+- :class:`covariance.OAS` (see :ref:`device_support_for_float64`)
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`kernel_approximation.Nystroem`
@@ -204,6 +205,7 @@ Metrics
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
 - :func:`sklearn.metrics.calinski_harabasz_score`
+- :func:`sklearn.metrics.cluster.contingency_matrix`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
 - :func:`sklearn.metrics.d2_absolute_error_score`
@@ -376,10 +378,10 @@ not be executed or have missing dependencies will be automatically skipped.
 Therefore it's important to run the tests with the `-v` flag to see which
 checks are skipped:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    pip install array-api-strict  # and other libraries as needed
-    pytest -k "array_api" -v
+    $ pip install array-api-strict  # and other libraries as needed
+    $ pytest -k "array_api" -v
 
 Running the scikit-learn tests against `array-api-strict` should help reveal
 most code problems related to handling multiple device inputs via the use of
@@ -414,9 +416,9 @@ writing. See the following github issue for more details:
 To enable the MPS support in PyTorch, set the environment variable
 `PYTORCH_ENABLE_MPS_FALLBACK=1` before running the tests:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
+    $ PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
 
 At the time of writing all scikit-learn tests should pass, however, the
 computational speed is not necessarily better than with the CPU device.

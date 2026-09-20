@@ -62,7 +62,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.imgconverter",
     "sphinx_gallery.gen_gallery",
-    "sphinx-prompt",
     "sphinx_copybutton",
     "sphinxext.opengraph",
     "matplotlib.sphinxext.plot_directive",
@@ -78,8 +77,10 @@ extensions = [
 ]
 
 # Specify how to identify the prompt when copying code snippets
-copybutton_prompt_text = r">>> |\.\.\. "
+copybutton_prompt_text = r">>> |\.\.\. |\$ |PS C:\\> "
 copybutton_prompt_is_regexp = True
+# Without this, only the prompt line of a `\`-continued command gets copied
+copybutton_line_continuation_character = "\\"
 copybutton_exclude = "style"
 
 try:
@@ -510,6 +511,9 @@ redirects = {
     ),
     "auto_examples/miscellaneous/plot_partial_dependence_visualization_api": (
         "auto_examples/inspection/plot_partial_dependence_visualization_api"
+    ),
+    "auto_examples/applications/wikipedia_principal_eigenvector": (
+        "auto_examples/applications/plot_wikipedia_principal_eigenvector"
     ),
 }
 html_context["redirects"] = redirects

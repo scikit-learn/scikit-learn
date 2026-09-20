@@ -215,7 +215,7 @@ def test_default_requests():
         __metadata_request__fit = {
             # set a different default request
             "sample_weight": True
-        }  # type: ignore[var-annotated]
+        }
 
         def fit(self, X, y=None):
             return self  # pragma: no cover
