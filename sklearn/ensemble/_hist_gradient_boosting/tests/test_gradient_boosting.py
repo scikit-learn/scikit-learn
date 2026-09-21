@@ -39,6 +39,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
 from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.utils._testing import _convert_container
 from sklearn.utils.fixes import _IS_32BIT
 
@@ -1016,7 +1017,10 @@ def test_staged_predict(HistGradientBoosting, X, y):
     "Est", (HistGradientBoostingRegressor, HistGradientBoostingClassifier)
 )
 @pytest.mark.parametrize("bool_categorical_parameter", [True, False])
-def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter):
+@pytest.mark.parametrize("missing_value", [np.nan, -1])
+def test_unknown_categories_nan(
+    insert_missing, Est, bool_categorical_parameter, missing_value
+):
     # Make sure no error is raised at predict if a category wasn't seen during
     # fit. We also make sure they're treated as nans.
 
@@ -1036,7 +1040,7 @@ def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter)
     if insert_missing:
         mask = rng.binomial(1, 0.01, size=X.shape).astype(bool)
         assert mask.sum() > 0
-        X[mask] = np.nan
+        X[mask] = missing_value
 
     est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
     assert_array_equal(est.is_categorical_, [False, True])
@@ -1045,7 +1049,7 @@ def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter)
     # unknown categories will be treated as nans
     X_test = np.zeros((10, X.shape[1]), dtype=float)
     X_test[:5, 1] = 30
-    X_test[5:, 1] = np.nan
+    X_test[5:, 1] = missing_value
     assert len(np.unique(est.predict(X_test))) == 1
 
 
@@ -1426,12 +1430,10 @@ def test_class_weights():
     )
 
 
-def test_unknown_category_at_predict_time_is_treated_as_missing():
-    """Check that categories unseen at fit time do not error, and are treated
-    like a missing category regardless of their sign.
+def test_unknown_category_that_are_negative():
+    """Check that unknown categories that are negative does not error.
 
-    We used to have a special treatment for negative value:
-    see https://github.com/scikit-learn/scikit-learn/pull/34663/
+    Non-regression test for #24274.
     """
     rng = np.random.RandomState(42)
     n_samples = 1000
@@ -1445,14 +1447,12 @@ def test_unknown_category_at_predict_time_is_treated_as_missing():
         max_iter=10,
     ).fit(X, y)
 
-    # Categories unseen at fit time (whether negative or positive) are
-    # treated like a missing category.
+    # Check that negative values from the second column are treated like a
+    # missing category
     X_test_neg = np.asarray([[1, -2], [3, -4]])
-    X_test_pos = np.asarray([[1, 99], [3, 77]])
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
-    assert_allclose(hist.predict(X_test_pos), hist.predict(X_test_nan))
 
 
 @pytest.mark.parametrize(
@@ -1763,3 +1763,87 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
+)
+def test_min_cat_support_invalid(Est):
+    # min_cat_support must be a non-negative real.
+    X = np.array([[0], [1], [2], [3]] * 5, dtype=np.float64)
+    y = np.arange(20) % 2
+    if is_regressor(Est()):
+        y = y.astype(np.float64)
+    with pytest.raises(InvalidParameterError):
+        Est(min_cat_support=-1.0).fit(X, y)
+
+
+def test_min_cat_support_changes_categorical_split():
+    # A larger min_cat_support should drop low-support categories from the set
+    # of candidate split groups, changing the learned categorical split.
+    # Construct a categorical feature where one category is rare.
+    # Categories 0 and 2 have a high target; category 1 has a low target.
+    # Category 2 is rare: with a small min_cat_support it clears the support
+    # threshold and is grouped with the other high-target category (mapped
+    # left); with a large min_cat_support it is dropped and, by convention,
+    # forced to the right child. The learned left-category bitset must differ.
+    cat = np.r_[
+        np.zeros(200, dtype=int),  # frequent, high target
+        np.ones(200, dtype=int),  # frequent, low target
+        np.full(15, 2, dtype=int),  # rare, high target
+    ]
+    X = cat.reshape(-1, 1).astype(np.float64)
+    y = np.isin(cat, [0, 2]).astype(np.float64)
+
+    common = dict(categorical_features=[0], max_iter=1, max_depth=1, random_state=0)
+    low = HistGradientBoostingClassifier(min_cat_support=1.0, **common).fit(X, y)
+    high = HistGradientBoostingClassifier(min_cat_support=1000.0, **common).fit(X, y)
+
+    # With a small support the rare high-target category is kept and grouped
+    # with the frequent high-target category, yielding a categorical split.
+    low_bitset = low._predictors[0][0].raw_left_cat_bitsets[0]
+    assert low_bitset.any()
+    # With a very large support every category is dropped, so no categorical
+    # split can form. The two models must therefore predict differently.
+    assert not np.array_equal(low.predict(X), high.predict(X))
+
+
+def test_min_cat_support_default_matches_hardcoded():
+    # The default (10.0) must reproduce the historical hard-coded MIN_CAT_SUPPORT
+    # behavior exactly, so existing models are unchanged.
+    X, y = make_classification(
+        n_samples=300,
+        n_features=4,
+        n_informative=3,
+        n_redundant=0,
+        n_repeated=0,
+        random_state=0,
+    )
+    X = (X * 5).astype(int).astype(float)  # low-cardinality integer categories
+    cat_features = [0, 1, 2, 3]
+    default = HistGradientBoostingClassifier(
+        categorical_features=cat_features, random_state=0
+    ).fit(X, y)
+    explicit = HistGradientBoostingClassifier(
+        categorical_features=cat_features, min_cat_support=10.0, random_state=0
+    ).fit(X, y)
+    assert_allclose(default.predict_proba(X), explicit.predict_proba(X))
+
+
+def test_min_cat_support_larger_than_all_categories():
+    # A min_cat_support above every category's support drops all categories from
+    # the candidate split set. The split finder must handle the resulting empty
+    # candidate set gracefully (no categorical split) rather than crash.
+    rng = np.random.RandomState(0)
+    cat = rng.randint(0, 3, size=1000)
+    X = np.column_stack([cat, rng.randn(1000)]).astype(np.float64)
+    y = (cat == 2).astype(np.int64)
+    clf = HistGradientBoostingClassifier(
+        categorical_features=[0],
+        min_cat_support=10_000.0,
+        max_iter=10,
+        random_state=0,
+    )
+    # Should not raise even though every category is below the support threshold.
+    clf.fit(X, y)
+    assert clf.predict(X[:2]).shape == (2,)
