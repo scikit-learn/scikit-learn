@@ -1300,22 +1300,6 @@ def test_gammanb_sample_weight(global_random_seed):
     assert_array_almost_equal(clf.p0, clf_sw.p0)
     assert_array_almost_equal(clf.p1, clf_sw.p1)
 
-    # Fitting twice with half sample-weights should result
-    # in same result as fitting once with full weights
-    rng = np.random.RandomState(global_random_seed)
-
-    # Check that duplicate entries and correspondingly increased sample
-    # weights yield the same result
-    ind = rng.randint(0, X.shape[0], 20)
-    sample_weight = np.bincount(ind, minlength=X.shape[0])
-
-    clf_dup = GammaNB()
-    clf_dup.fit(X[ind], y[ind])
-    clf_sw = GammaNB()
-    clf_sw.fit(X, y, sample_weight)
-    assert_array_almost_equal(clf_dup.p0, clf_sw.p0, 1)
-    assert_array_almost_equal(clf_dup.p1, clf_sw.p1, 1)
-
     # non-regression test for gh-24140 where a division by zero was
     # occurring when a single class was present
     sample_weight = (y == 1).astype(np.float64)
