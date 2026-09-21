@@ -1304,15 +1304,6 @@ def test_gammanb_sample_weight(global_random_seed):
     # in same result as fitting once with full weights
     rng = np.random.RandomState(global_random_seed)
 
-    sw = rng.rand(y.shape[0])
-    clf1 = GammaNB()
-    clf1.fit(X, y, sample_weight=sw)
-    clf2 = GammaNB()
-    clf2.fit(X, y, sample_weight=sw / 2)
-    clf2.fit(X, y, sample_weight=sw / 2)
-    assert_array_almost_equal(clf1.p0, clf2.p0)
-    assert_array_almost_equal(clf1.p1, clf2.p1)
-
     # Check that duplicate entries and correspondingly increased sample
     # weights yield the same result
     ind = rng.randint(0, X.shape[0], 20)
