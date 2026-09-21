@@ -57,6 +57,15 @@ class InputTags:
         Note that if setting this tag to ``True`` means the estimator can take only
         positive values, the `positive_only` tag must reflect it and also be set to
         ``True``.
+
+    preserves_dataframe : bool, default=False
+        Whether the estimator forwards a dataframe ``X`` to a wrapped
+        sub-estimator without converting it to a NumPy array, preserving its
+        column dtypes (e.g. categorical columns). This is typically ``True`` for
+        :term:`meta-estimators <meta-estimator>` such as
+        :class:`~sklearn.feature_selection.SequentialFeatureSelector` that select
+        a subset of columns and pass the data through. It enables the common
+        check that verifies the dataframe is not collapsed to a NumPy array.
     """
 
     one_d_array: bool = False
@@ -69,6 +78,7 @@ class InputTags:
     positive_only: bool = False
     allow_nan: bool = False
     pairwise: bool = False
+    preserves_dataframe: bool = False
 
 
 @dataclass(slots=True)
