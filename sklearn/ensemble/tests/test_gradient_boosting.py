@@ -868,6 +868,19 @@ def test_warm_start_smaller_n_estimators(Cls):
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
+def test_resize_state_smaller_n_estimators(Cls):
+    # Non-regression test for gh-34496: _resize_state must raise a clean
+    # ValueError (not a TypeError from %d formatting) when shrinking
+    # n_estimators below the number of fitted estimators.
+    est = Cls(n_estimators=5)
+    est.estimators_ = np.empty((10, 1), dtype=object)
+    with pytest.raises(
+        ValueError, match="resize with smaller n_estimators 5 < 10"
+    ):
+        est._resize_state()
+
+
+@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_warm_start_equal_n_estimators(Cls):
     # Test if warm start with equal n_estimators does nothing
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
