@@ -259,6 +259,7 @@ class TreeGrower:
         interaction_cst=None,
         l2_regularization=0.0,
         feature_fraction_per_split=1.0,
+        min_cat_support=10.0,
         rng=np.random.default_rng(),
         shrinkage=1.0,
         n_threads=None,
@@ -327,6 +328,7 @@ class TreeGrower:
             min_gain_to_split=min_gain_to_split,
             hessians_are_constant=hessians_are_constant,
             feature_fraction_per_split=feature_fraction_per_split,
+            min_cat_support=min_cat_support,
             rng=rng,
             n_threads=n_threads,
         )

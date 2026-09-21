@@ -152,6 +152,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
         "max_features": [Interval(RealNotInt, 0, 1, closed="right")],
+        "min_cat_support": [Interval(Real, 0, None, closed="left")],
         "monotonic_cst": ["array-like", dict, None],
         "interaction_cst": [
             list,
@@ -187,6 +188,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         min_samples_leaf,
         l2_regularization,
         max_features,
+        min_cat_support,
         max_bins,
         categorical_features,
         monotonic_cst,
@@ -208,6 +210,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.min_samples_leaf = min_samples_leaf
         self.l2_regularization = l2_regularization
         self.max_features = max_features
+        self.min_cat_support = min_cat_support
         self.max_bins = max_bins
         self.monotonic_cst = monotonic_cst
         self.interaction_cst = interaction_cst
@@ -834,6 +837,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     min_samples_leaf=self.min_samples_leaf,
                     l2_regularization=self.l2_regularization,
                     feature_fraction_per_split=self.max_features,
+                    min_cat_support=self.min_cat_support,
                     rng=self._feature_subsample_rng,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
@@ -1434,6 +1438,18 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 1.4
 
+    min_cat_support : float, default=10.0
+        The minimum number of samples (or sum of hessians, for losses with
+        non-constant hessians) that a category must have to be treated as a
+        distinct group when finding categorical splits. Categories with less
+        support are grouped together and always mapped to the right child. This
+        value also acts as a smoothing factor (``cat_smooth`` in LightGBM) when
+        ranking categories, reducing the effect of noise in categories with few
+        samples. Larger values apply stronger regularization to categorical
+        splits.
+
+        .. versionadded:: 1.9
+
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
@@ -1654,6 +1670,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         min_samples_leaf=20,
         l2_regularization=0.0,
         max_features=1.0,
+        min_cat_support=10.0,
         max_bins=255,
         categorical_features="from_dtype",
         monotonic_cst=None,
@@ -1676,6 +1693,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization,
             max_features=max_features,
+            min_cat_support=min_cat_support,
             max_bins=max_bins,
             monotonic_cst=monotonic_cst,
             interaction_cst=interaction_cst,
@@ -1825,6 +1843,18 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         features are taken into account for the subsampling.
 
         .. versionadded:: 1.4
+
+    min_cat_support : float, default=10.0
+        The minimum number of samples (or sum of hessians, for losses with
+        non-constant hessians) that a category must have to be treated as a
+        distinct group when finding categorical splits. Categories with less
+        support are grouped together and always mapped to the right child. This
+        value also acts as a smoothing factor (``cat_smooth`` in LightGBM) when
+        ranking categories, reducing the effect of noise in categories with few
+        samples. Larger values apply stronger regularization to categorical
+        splits.
+
+        .. versionadded:: 1.9
 
     max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
@@ -2046,6 +2076,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         min_samples_leaf=20,
         l2_regularization=0.0,
         max_features=1.0,
+        min_cat_support=10.0,
         max_bins=255,
         categorical_features="from_dtype",
         monotonic_cst=None,
@@ -2069,6 +2100,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization,
             max_features=max_features,
+            min_cat_support=min_cat_support,
             max_bins=max_bins,
             categorical_features=categorical_features,
             monotonic_cst=monotonic_cst,
