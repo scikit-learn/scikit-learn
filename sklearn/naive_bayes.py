@@ -1608,6 +1608,16 @@ class GammaNB:
         is 'Poisson', suggesting that the gamma-distributed feature has Poisson
         priori distribution.
 
+    fit_count : Int, default=0
+        This variable would plus 1 if self.fit() is used once.
+
+    priors : array-like of shape (n_classes,), default=None
+        Prior probabilities of the classes. If specified, the priors are not
+        adjusted according to the data.
+
+    class_prior_ : array-like of shape (n_classes,), default=None
+        probability of each class.
+
     See Also
     --------
     BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
@@ -1635,10 +1645,9 @@ class GammaNB:
         self.feat1 = []
         self.p_min = 0.5
         self.priori_distr = "Uniform"
-        self.class_prior = None
-        self.y_imbalance = False
-        self.priors = priors  # dim == num_classes
         self.fit_count = 0
+        self.priors = priors  # dim == num_classes
+        # --- not a pivot
         if not np.all(self.priors):
             self.class_prior_ = np.array([0.5, 0.5])
         else:
@@ -1667,7 +1676,16 @@ class GammaNB:
             X = X.reshape(n, 1)
         return X
 
-    def _check_target(self):
+    def _check_target_imbalance(self):
+        """See if class prior favor largely one class
+
+        This method is used to judge whether class prior favor one specific class.
+
+        Returns
+        -------
+        out_result : Boolean
+            If class prior favor one class return True, and return False otherwise.
+        """
         out_result = False
         if np.all(self.priors):
             out = 0
@@ -1732,7 +1750,8 @@ class GammaNB:
 
         # --- X
         X = self._check_features(X)
-        self.y_imbalance = self._check_target()
+        is_imbalance = self._check_target_imbalance()
+
         # --- self.priors
         if np.all(self.priors) and np.sum(self.priors) != 1:
             raise ValueError("The sum of the priors should be 1")
@@ -1799,7 +1818,7 @@ class GammaNB:
             feat_0 = np.array(feat_0)
             feat_1 = np.array(feat_1)
             # STORE feat0 and feat1
-            if not self.y_imbalance:
+            if not is_imbalance:
                 self.feat0 = feat_0
                 self.feat1 = feat_1
         else:
@@ -1856,8 +1875,9 @@ class GammaNB:
             return -1
 
         # --- predict
+        is_imbalance = self._check_target_imbalance()
         y_pred = []
-        if not self.y_imbalance:
+        if not is_imbalance:
             for i in range(len(tmp_log_prob)):
                 # --- Judging on weighted log_prob
                 if np.all(self.priors):
