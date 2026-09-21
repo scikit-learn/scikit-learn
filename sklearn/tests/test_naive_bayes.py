@@ -1230,3 +1230,207 @@ def test_extreme_zerovar():
     # should be working
     y_pred = clf.predict(X)
     assert y_pred[0] == 0
+
+
+def test_zerovar_partial_fit():
+    from sklearn.naive_bayes import GammaNB
+    # partial_fit should be zero-var in the first batch data
+    # whether sshould be updated later on
+
+    # some feature equals 0
+    X_batch_1 = np.array([[0, 0], [0, 0], [0, 0]])
+    y_batch_1 = np.array([0, 0, 0])
+
+    # assign some variance
+    X_batch_2 = np.array([[1, 0], [0, -1], [-1, 1]])
+    y_batch_2 = np.array([1, 1, 1])
+
+    X_all = np.vstack((X_batch_1, X_batch_2))
+    y_all = np.hstack((y_batch_1, y_batch_2))
+
+    # 1.partial_fit
+    clf_incremental = GammaNB()
+    clf_incremental.fit(X_batch_1, y_batch_1)
+    clf_incremental.fit(X_batch_2, y_batch_2)
+
+    # 2.fit
+    clf_single = GammaNB()
+    clf_single.fit(X_all, y_all)
+
+    # incremental should be the same as single
+    tmp_x = np.array([0, 1])
+    np.testing.assert_allclose(
+        clf_incremental.predict(tmp_x), clf_single.predict(tmp_x)
+    )
+
+
+# --- weights test
+
+
+def test_gammanb_prior(global_random_seed):
+    from sklearn.naive_bayes import GammaNB
+
+    # Test whether class priors are properly set.
+    clf = GammaNB(priors=np.array([0.5, 0.5]))
+    clf.fit(X, y)
+    compare_1 = np.array([3, 3]) / 6.0
+    compare_2 = clf.class_prior_
+    assert_array_almost_equal(compare_1, compare_2, 4)
+
+    X1, y1 = get_random_normal_x_binary_y(global_random_seed)
+    clf1 = GammaNB()
+    clf1.fit(X1, y1)
+    # Check that the class priors sum to 1
+    assert_array_almost_equal(np.sum(clf1.class_prior_), 1)
+
+
+def test_gammanb_sample_weight(global_random_seed):
+    """Test whether sample weights are properly used in GammaNB."""
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]])
+    y = np.array([0, 0, 0, 1, 1, 1])
+
+    # Sample weights all being 1 should not change results
+    sw = np.ones(6)
+    clf = GammaNB()
+    clf.fit(X, y)
+    clf_sw = GammaNB()
+    clf_sw.fit(X, y, sw)
+    assert_array_almost_equal(clf.p0, clf_sw.p0)
+    assert_array_almost_equal(clf.p1, clf_sw.p1)
+
+    # Fitting twice with half sample-weights should result
+    # in same result as fitting once with full weights
+    rng = np.random.RandomState(global_random_seed)
+
+    sw = rng.rand(y.shape[0])
+    clf1 = GammaNB()
+    clf1.fit(X, y, sample_weight=sw)
+    clf2 = GammaNB()
+    clf2.fit(X, y, sample_weight=sw / 2)
+    clf2.fit(X, y, sample_weight=sw / 2)
+    assert_array_almost_equal(clf1.p0, clf2.p0)
+    assert_array_almost_equal(clf1.p1, clf2.p1)
+
+    # Check that duplicate entries and correspondingly increased sample
+    # weights yield the same result
+    ind = rng.randint(0, X.shape[0], 20)
+    sample_weight = np.bincount(ind, minlength=X.shape[0])
+
+    clf_dup = GammaNB()
+    clf_dup.fit(X[ind], y[ind])
+    clf_sw = GammaNB()
+    clf_sw.fit(X, y, sample_weight)
+    assert_array_almost_equal(clf_dup.p0, clf_sw.p0, 1)
+    assert_array_almost_equal(clf_dup.p1, clf_sw.p1, 1)
+
+    # non-regression test for gh-24140 where a division by zero was
+    # occurring when a single class was present
+    sample_weight = (y == 1).astype(np.float64)
+    clf = GammaNB()
+    clf.fit(X, y, sample_weight=sample_weight)
+
+
+def test_gammanb_neg_priors():
+    """Test whether an error is raised in case of negative priors"""
+    from sklearn.naive_bayes import GammaNB
+
+    clf = GammaNB(priors=np.array([-1.0, 2.0]))
+
+    msg = "Priors must be non-negative"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+
+
+def test_gammanb_priors():
+    """Test whether the class prior override is properly used"""
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]])
+    y = np.array([0, 0, 0, 1, 1, 1])
+    clf = GammaNB(priors=np.array([0.3, 0.7]))
+    clf.fit(X, y)
+    y_pred = clf.predict([[-0.1, -0.1]])
+    if y_pred[0] == 0:
+        y_pred_prob = np.array([[0.99999, 0.00001]])
+    elif y_pred[0] == 1:
+        y_pred_prob = np.array([[0.00001, 0.99999]])
+
+    assert_array_almost_equal(
+        y_pred_prob,
+        np.array([[0.9999036622, 0.0000963378]]),
+        4,
+    )
+    assert_array_almost_equal(clf.class_prior_, np.array([0.3, 0.7]))
+
+
+def test_gammanb_priors_sum_isclose():
+    """test whether the class prior sum is properly tested"""
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array(
+        [
+            [-1, -1],
+            [-2, -1],
+            [-3, -2],
+            [-4, -5],
+            [-5, -4],
+            [1, 1],
+            [2, 1],
+            [3, 2],
+            [4, 4],
+            [5, 5],
+        ]
+    )
+    priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14, 0.11, 0.0])
+    Y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+    clf = GammaNB(priors=priors)
+    # smoke test for issue #9633
+    clf.fit(X, Y)
+
+
+def test_gammanb_wrong_nb_priors():
+    """Test whether an error is raised if the number of prior is different
+    from the number of class"""
+    from sklearn.naive_bayes import GammaNB
+
+    clf = GammaNB(priors=np.array([0.25, 0.25, 0.25, 0.25]))
+
+    msg = "Number of priors must match number of classes"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+
+
+def test_gammanb_prior_greater_one():
+    """Test if an error is raised if the sum of prior greater than one"""
+    from sklearn.naive_bayes import GammaNB
+
+    clf = GammaNB(priors=np.array([2.0, 1.0]))
+
+    msg = "The sum of the priors should be 1"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
+
+
+def test_gammanb_prior_large_bias():
+    """Test if good prediction when class prior favor largely one class"""
+    from sklearn.naive_bayes import GammaNB
+
+    clf = GammaNB(priors=np.array([0.01, 0.99]))
+    clf.fit(X, y)
+    assert clf.predict([[-0.1, -0.1]]) == np.array([2])
+
+
+def test_gammanb_check_update_with_no_data():
+    """Test when the partial fit is called without any data"""
+    from sklearn.naive_bayes import GammaNB
+
+    # Create an empty array
+    prev_points = 100
+    mean = 0.0
+    var = 1.0
+    x_empty = np.empty((0, X.shape[1]))
+    tmean, tvar = GammaNB._update_mean_variance(prev_points, mean, var, x_empty)
+    assert tmean == mean
+    assert tvar == var

@@ -1628,13 +1628,21 @@ class GammaNB:
     [0]
     """
 
-    def __init__(self):
+    def __init__(self, priors=None):
         self.p0 = 0
         self.p1 = 0
         self.feat0 = []
         self.feat1 = []
         self.p_min = 0.5
         self.priori_distr = "Uniform"
+        self.class_prior = None
+        self.y_imbalance = False
+        self.priors = priors  # dim == num_classes
+        self.fit_count = 0
+        if not np.all(self.priors):
+            self.class_prior_ = np.array([0.5, 0.5])
+        else:
+            self.class_prior_ = priors
 
     def _check_features(self, X):
         """Validate and fix the shape of X
@@ -1654,9 +1662,20 @@ class GammaNB:
             returning (n_samples, 1) when the shape looks like (n_samples,).
         """
         if X.ndim == 1:
-            n = X.shape
+            X = np.array(X)
+            n = X.shape[0]
             X = X.reshape(n, 1)
         return X
+
+    def _check_target(self):
+        out_result = False
+        if np.all(self.priors):
+            out = 0
+            for i in range(len(self.priors)):
+                out += self.priors[i] * np.log(self.priors[i])
+            if abs(out) < 0.1:
+                out_result = True
+        return out_result
 
     def _out_split_array(self, data_in, ind_vec_in):
         """Split the feature set according to labels, namely 0 or 1.
@@ -1709,7 +1728,26 @@ class GammaNB:
         n, m = X.shape
         X = np.array(X)
         Y = np.array(y)
+        num_classes = len(set(Y))
+
+        # --- X
         X = self._check_features(X)
+        self.y_imbalance = self._check_target()
+        # --- self.priors
+        if np.all(self.priors) and np.sum(self.priors) != 1:
+            raise ValueError("The sum of the priors should be 1")
+        if np.all(self.priors) and (len(self.priors) != num_classes):
+            raise ValueError("Number of priors must match number of classes")
+        if np.all(self.priors):
+            is_nega = False
+            for i in range(len(self.priors)):
+                if self.priors[i] < 0:
+                    is_nega = True
+                    break
+            if is_nega:
+                raise ValueError("Priors must be non-negative")
+
+        # Calculate self.feat0 and self.feat1
         tmp_ind0 = []
         tmp_ind1 = []
         for i in range(n):
@@ -1737,16 +1775,22 @@ class GammaNB:
                 "Wrong label: Label should be 0 or 1,\
                 and the number of label 1 is 0."
             )
-        self.p0 = len(tmp_y0) / len(y)
-        self.p1 = len(tmp_y1) / len(y)
+        p0_this_round = len(tmp_y0) / len(y)
+        p1_this_round = len(tmp_y1) / len(y)
+        if self.p0 > 0:
+            self.fit_count += 1
+        self.p0 = (self.p0 + p0_this_round) / (1 + self.fit_count)
+        self.p1 = (self.p1 + p1_this_round) / (1 + self.fit_count)
+
         # record according to Feat.
-        if self.p0 > 0 and self.p1 > 0:
+        if self.p0 > 0 and self.p1 > 0 and len(tmp_x0) > 0 and len(tmp_x1) > 0:
             feat_0 = []
             feat_1 = []
             for i in range(m):
                 tmp_min_0 = np.min(tmp_x0[:, i])
                 tmp_avg_0 = np.median(tmp_x0[:, i])
                 feat_0.append([0, "vn", float(tmp_min_0), float(tmp_avg_0)])
+
                 # --- Min && Max
                 tmp_min_1 = np.min(tmp_x1[:, i])
                 tmp_avg_1 = np.median(tmp_x1[:, i])
@@ -1754,8 +1798,10 @@ class GammaNB:
             # array and vname: {0:'cate', 1:'vname', 2:'min', 3:'avg'}
             feat_0 = np.array(feat_0)
             feat_1 = np.array(feat_1)
-            self.feat0 = feat_0
-            self.feat1 = feat_1
+            # STORE feat0 and feat1
+            if not self.y_imbalance:
+                self.feat0 = feat_0
+                self.feat1 = feat_1
         else:
             print("The number of label 0 is 0 or of label 1 is 0.")
 
@@ -1808,13 +1854,27 @@ class GammaNB:
         if isinstance(tmp_log_prob, int):
             print("Joint log likelihood wrong.")
             return -1
-        # predict
+
+        # --- predict
         y_pred = []
-        for i in range(len(tmp_log_prob)):
-            if tmp_log_prob[i][1] > tmp_log_prob[i][0]:
-                y_pred.append(1)
-            else:
-                y_pred.append(0)
+        if not self.y_imbalance:
+            for i in range(len(tmp_log_prob)):
+                # --- Judging on weighted log_prob
+                if np.all(self.priors):
+                    judge_cond = (
+                        tmp_log_prob[i][1] * self.priors[1]
+                        > tmp_log_prob[i][0] * self.priors[0]
+                    )
+                else:
+                    judge_cond = tmp_log_prob[i][1] > tmp_log_prob[i][0]
+                # --- predict
+                if judge_cond:
+                    y_pred.append(1)
+                else:
+                    y_pred.append(0)
+        else:
+            for i in range(len(X)):
+                y_pred.append(2)
         return np.array(y_pred)
 
     def _log_likelihood(self, X):
@@ -1844,12 +1904,13 @@ class GammaNB:
             tmp_p1 = 0
             for i in range(m):
                 # --- p0
+                # FEAT0: min. value of one feat.
                 x_curr = tmp_x[i]
                 if x_curr < -9999:
                     x_curr = -9999
                 elif x_curr > 9999:
                     x_curr = 9999
-                # FEAT0: min. value of one feat.
+
                 try:
                     x_record = float(self.feat0[i][2])  # min-val
                 except IndexError:
@@ -1891,6 +1952,7 @@ class GammaNB:
                 else:
                     print("Priori Distribution Wrong.")
                     return -1
+
                 # --- p1
                 # Feat1: minimum value of one feat.
                 try:
@@ -1945,3 +2007,78 @@ class GammaNB:
         tmp_mat = np.array(tmp_mat)
         tmp_mat_1 = tmp_mat.T  # n_samples * 2
         return tmp_mat_1
+
+    @staticmethod
+    def _update_mean_variance(n_past, mu, var, X, sample_weight=None):
+        """Compute online update of Gaussian mean and variance.
+
+        Given starting sample count, mean, and variance, a new set of
+        points X, and optionally sample weights, return the updated mean and
+        variance. (NB - each dimension (column) in X is treated as independent
+        -- you get variance, not covariance).
+
+        Can take scalar mean and variance, or vector mean and variance to
+        simultaneously update a number of independent Gaussians.
+
+        See Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque:
+
+        http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
+
+        Parameters
+        ----------
+        n_past : int
+            Number of samples represented in old mean and variance. If sample
+            weights were given, this should contain the sum of sample
+            weights represented in old mean and variance.
+
+        mu : array-like of shape (number of Gaussians,)
+            Means for Gaussians in original set.
+
+        var : array-like of shape (number of Gaussians,)
+            Variances for Gaussians in original set.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        total_mu : array-like of shape (number of Gaussians,)
+            Updated mean for each Gaussian over the combined set.
+
+        total_var : array-like of shape (number of Gaussians,)
+            Updated variance for each Gaussian over the combined set.
+        """
+        xp, _ = get_namespace(X)
+        if X.shape[0] == 0:
+            return mu, var
+
+        # Compute (potentially weighted) mean and variance of new datapoints
+        if sample_weight is not None:
+            n_new = float(xp.sum(sample_weight))
+            if np.isclose(n_new, 0.0):
+                return mu, var
+            new_mu = _average(X, axis=0, weights=sample_weight, xp=xp)
+            new_var = _average((X - new_mu) ** 2, axis=0, weights=sample_weight, xp=xp)
+        else:
+            n_new = X.shape[0]
+            new_var = xp.var(X, axis=0)
+            new_mu = xp.mean(X, axis=0)
+
+        if n_past == 0:
+            return new_mu, new_var
+
+        n_total = float(n_past + n_new)
+
+        # Combine mean of old and new data, taking into consideration
+        # (weighted) number of observations
+        total_mu = (n_new * new_mu + n_past * mu) / n_total
+
+        # Combine variance of old and new data, taking into consideration
+        # (weighted) number of observations. This is achieved by combining
+        # the sum-of-squared-differences (ssd)
+        old_ssd = n_past * var
+        new_ssd = n_new * new_var
+        total_ssd = old_ssd + new_ssd + (n_new * n_past / n_total) * (mu - new_mu) ** 2
+        total_var = total_ssd / n_total
+
+        return total_mu, total_var
