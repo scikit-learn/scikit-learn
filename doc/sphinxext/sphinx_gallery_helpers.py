@@ -14,6 +14,7 @@ from sphinx_gallery.sorting import ExampleTitleSortKey
 
 import sklearn
 from sklearn.externals._packaging.version import parse
+from sklearn.utils._testing import turn_warnings_into_errors
 
 EXAMPLES_DIR = "../examples"
 
@@ -150,5 +151,11 @@ def notebook_modification_function(notebook_content, notebook_filename):
 
 
 def reset_sklearn_config(gallery_conf, fname):
-    """Reset sklearn config to default values."""
+    """Reset sklearn config to default values.
+
+    Also re-apply the warnings-as-errors filters that conf.py sets, since the worker
+    processes that run the examples in parallel never import conf.py.
+    """
     sklearn.set_config(**_default_global_config)
+    if os.environ.get("SKLEARN_WARNINGS_AS_ERRORS", "0") != "0":
+        turn_warnings_into_errors()

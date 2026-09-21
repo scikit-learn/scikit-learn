@@ -11,8 +11,7 @@ ifneq ($(EXAMPLES_PATTERN),)
     EXAMPLES_PATTERN_OPTS := -D sphinx_gallery_conf.filename_pattern="$(EXAMPLES_PATTERN)"
 endif
 
-# `auto` is the CPU count, accurate on the CircleCI Linux VM but not on the
-# Docker executor, where Python cannot see the container's cgroup CPU limit
+# CircleCI sets SPHINX_NUMJOBS explicitly instead (see build_tools/circle/build_doc.sh)
 SPHINX_NUMJOBS_DEFAULT=auto
 
 # Internal variables.

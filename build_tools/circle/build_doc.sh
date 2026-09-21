@@ -191,12 +191,9 @@ ccache -z
 
 show_installed_libraries
 
-# Pin ninja's -j to the vCPU count; `nproc` is accurate on the Linux VM, unlike
-# the Docker executor this was hardcoded for, see
+# CPU_COUNT comes from .circleci/config.yml rather than CPU detection, see
 # https://github.com/scikit-learn/scikit-learn/pull/30333
-pip install -e . -v --no-build-isolation --config-settings=compile-args="-j $(nproc)"
-
-export OMP_NUM_THREADS=1
+pip install -e . -v --no-build-isolation --config-settings=compile-args="-j $CPU_COUNT"
 
 if [[ "$CIRCLE_BRANCH" == "main" || "$CI_TARGET_BRANCH" == "main" ]]
 then
@@ -211,7 +208,7 @@ fi
 
 
 # The pipefail is requested to propagate exit code
-set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
+set -o pipefail && cd doc && make SPHINX_NUMJOBS=$CPU_COUNT $make_args 2>&1 | tee ~/log.txt
 
 cd -
 set +o pipefail
