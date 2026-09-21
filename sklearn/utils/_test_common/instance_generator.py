@@ -1359,14 +1359,6 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     },
 }
 
-# TODO: remove when scipy min version >= 1.11
-if sp_base_version < parse_version("1.11"):
-    PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
-        "check_estimators_pickle": (
-            "scipy < 1.11 implementation of _bsplines does not"
-            "support const memory views."
-        ),
-    }
 
 linear_svr_not_thread_safe = "LinearSVR is not thread-safe https://github.com/scikit-learn/scikit-learn/issues/31883"
 if "pytest_run_parallel" in sys.modules:

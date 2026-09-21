@@ -5,7 +5,7 @@ import itertools
 
 import numpy as np
 import pytest
-from scipy import linalg, sparse
+from scipy import linalg, sparse, stats
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
@@ -52,7 +52,6 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     DOK_CONTAINERS,
     LIL_CONTAINERS,
-    _mode,
     _sparse_random_array,
 )
 
@@ -77,7 +76,7 @@ def test_uniform_weights():
     weights = np.ones(x.shape)
 
     for axis in (None, 0, 1):
-        mode, score = _mode(x, axis)
+        mode, score = stats.mode(x, axis=axis, keepdims=axis is not None)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
         assert_array_equal(mode, mode2)
