@@ -100,9 +100,9 @@ When writing a new test function that uses this fixture, please use the
 following command to make sure that it passes deterministically for all
 admissible seeds on your local machine:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
+    $ SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
 
 `SKLEARN_SKIP_NETWORK_TESTS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
