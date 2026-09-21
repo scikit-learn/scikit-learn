@@ -358,7 +358,7 @@ class MethodMetadataRequest:
         The initial requests for this method.
 
     auto_requests : set of str, default=None
-        The default requests set on instance level.
+        The auto-requests set on instance level.
 
         .. versionadded:: 1.10
     """
@@ -633,11 +633,17 @@ class MethodMetadataRequest:
 class MetadataRequest:
     """Container for storing metadata request info and an associated consumer (`owner`).
 
-    Instances of `MethodMetadataRequest` are used in this class for each
-    available method under `MetadataRequest(owner=obj).{method}`.
+    Instances of `MethodMetadataRequest` are used in this class for each available
+    method under `MetadataRequest(owner=obj).{method}`.
 
     Every :term:`consumer` in scikit-learn has a `_metadata_request` attribute that is a
     `MetadataRequest`.
+
+    Note that requests on composite methods (`fit_transform`, `fit_predict`) are not
+    stored as attributes. Accessing them, for example `request.fit_predict`, builds
+    their requests from the component methods (`fit` and `predict` in this case), plus
+    auto-requests set on them. Auto-requests are included only when
+    `set_config(enable_metadata_auto_requests=True)`.
 
     Read more on developing custom estimators that can route metadata in the
     :ref:`Metadata Routing Developing Guide
@@ -728,29 +734,21 @@ class MetadataRequest:
         return getattr(self, method)._consumes(params=params)
 
     def __getattr__(self, name):
-        # Called when the default attribute access fails with an AttributeError
-        # (either __getattribute__() raises an AttributeError because name is
-        # not an instance attribute or an attribute in the class tree for self;
-        # or __get__() of a name property raises AttributeError). This method
-        # should either return the (computed) attribute value or raise an
-        # AttributeError exception.
-        # https://docs.python.org/3/reference/datamodel.html#object.__getattr__
+        # Composite methods are not stored as attributes; build them on access.
         if name not in COMPOSITE_METHODS:
             raise AttributeError(
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
             )
 
-        # The requests of a composite method are composed from those of its
-        # component methods on every access, so that they always reflect the
-        # current state of the component methods. Only what is set directly on the
-        # composite method is stored, in `own`: its auto-requests and, once
-        # actualized, the resulting request values.
+        # Stash mmr with auto-requests on this composite method:
         if name not in self._composite_requests:
             self._composite_requests[name] = MethodMetadataRequest(
                 owner=self.owner, method=name
             )
-        own = self._composite_requests[name]
+        stored_mmr = self._composite_requests[name]
 
+        # Rebuild fit_predict/fit_transform from fit+predict / fit+transform on every
+        # access so that they stay up to date:
         requests = {}
         for method in COMPOSITE_METHODS[name]:
             mmr = getattr(self, method)
@@ -770,7 +768,7 @@ class MetadataRequest:
         # Auto-requests on a composite method may only add metadata which none of
         # its component methods have a request for, so that they never override the
         # component methods' request values, e.g. the ones set by the user.
-        overlap = sorted(own._auto_requests & set(requests))
+        overlap = sorted(stored_mmr._auto_requests & set(requests))
         if overlap:
             raise ValueError(
                 f"Auto-requests can only be set on the composite method {name} for"
@@ -780,14 +778,14 @@ class MetadataRequest:
                 " instead."
             )
 
-        requests.update(own._requests)
+        requests.update(stored_mmr._requests)
 
         composed = MethodMetadataRequest(
             owner=self.owner, method=name, requests=requests
         )
         # The returned object shares the stored auto-requests, so that calling
         # `add_auto_request` on it is persisted for later accesses.
-        composed._auto_requests = own._auto_requests
+        composed._auto_requests = stored_mmr._auto_requests
         return composed
 
     def _get_param_names(self, method, return_alias, ignore_self_request=None):
@@ -1446,8 +1444,8 @@ def get_routing_for_object(obj=None):
     >>> type(get_routing_for_object(pipe.named_steps.lr_cv))
     <class 'sklearn.utils._metadata_requests.MetadataRouter'>
     """
-    # doing this instead of a try/except since an AttributeError could be raised
-    # for other reasons.
+    # Doing hasattr instead of try/except since get_metadata_routing() may raise
+    # AttributeError itself:
     if hasattr(obj, "get_metadata_routing"):
         # Auto-requests are actualized here, since they are added inside
         # `get_metadata_routing` implementations.
