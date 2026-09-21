@@ -12,7 +12,6 @@ from scipy.sparse import issparse
 
 from sklearn.utils._array_api import _is_numpy_namespace, get_namespace
 from sklearn.utils._unique import attach_unique, cached_unique
-from sklearn.utils.fixes import VisibleDeprecationWarning
 from sklearn.utils.validation import _assert_all_finite, _num_samples, check_array
 
 
@@ -165,8 +164,7 @@ def is_multilabel(y):
     """
     xp, is_array_api_compliant = get_namespace(y)
     if hasattr(y, "__array__") or isinstance(y, Sequence) or is_array_api_compliant:
-        # DeprecationWarning will be replaced by ValueError, see NEP 34
-        # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
+        # Ragged sequences need dtype=object (NEP 34).
         check_y_kwargs = dict(
             accept_sparse=True,
             allow_nd=True,
@@ -175,17 +173,12 @@ def is_multilabel(y):
             ensure_min_samples=0,
             ensure_min_features=0,
         )
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", VisibleDeprecationWarning)
-            try:
-                y = check_array(y, dtype=None, **check_y_kwargs)
-            except (VisibleDeprecationWarning, ValueError) as e:
-                if str(e).startswith("Complex data not supported"):
-                    raise
-
-                # dtype=object should be provided explicitly for ragged arrays,
-                # see NEP 34
-                y = check_array(y, dtype=object, **check_y_kwargs)
+        try:
+            y = check_array(y, dtype=None, **check_y_kwargs)
+        except ValueError as e:
+            if str(e).startswith("Complex data not supported"):
+                raise
+            y = check_array(y, dtype=object, **check_y_kwargs)
 
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
@@ -345,18 +338,12 @@ def type_of_target(y, input_name="", raise_unknown=False):
             "Expected array-like (array or non-string sequence), got %r" % y
         )
 
-    # TODO(1.10): SparseSeries and SparseArray was removed in pandas 2.0.
-    sparse_pandas = y.__class__.__name__ in ["SparseSeries", "SparseArray"]
-    if sparse_pandas:
-        raise ValueError("y cannot be class 'SparseSeries' or 'SparseArray'")
+    if y.__class__.__name__ == "SparseArray":
+        raise ValueError("y cannot be class 'SparseArray'")
 
     if is_multilabel(y):
         return "multilabel-indicator"
 
-    # DeprecationWarning will be replaced by ValueError, see NEP 34
-    # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
-    # We therefore catch both deprecation (NumPy < 1.24) warning and
-    # value error (NumPy >= 1.24).
     check_y_kwargs = dict(
         accept_sparse=True,
         allow_nd=True,
@@ -365,19 +352,14 @@ def type_of_target(y, input_name="", raise_unknown=False):
         ensure_min_samples=0,
         ensure_min_features=0,
     )
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", VisibleDeprecationWarning)
-        if not issparse(y):
-            try:
-                y = check_array(y, dtype=None, **check_y_kwargs)
-            except (VisibleDeprecationWarning, ValueError) as e:
-                if str(e).startswith("Complex data not supported"):
-                    raise
-
-                # dtype=object should be provided explicitly for ragged arrays,
-                # see NEP 34
-                y = check_array(y, dtype=object, **check_y_kwargs)
+    if not issparse(y):
+        try:
+            y = check_array(y, dtype=None, **check_y_kwargs)
+        except ValueError as e:
+            if str(e).startswith("Complex data not supported"):
+                raise
+            # Ragged sequences need dtype=object (NEP 34).
+            y = check_array(y, dtype=object, **check_y_kwargs)
 
     try:
         first_row_or_val = y[[0], :] if issparse(y) else y[0]

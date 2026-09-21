@@ -188,6 +188,10 @@ exclude_patterns = [
     "whats_new/upcoming_changes",
 ]
 
+# sphinx_gallery_conf holds callables, so Sphinx cannot pickle it into the
+# environment cache. The warning is harmless.
+suppress_warnings = ["config.cache"]
+
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
 default_role = "literal"
@@ -920,11 +924,6 @@ rst_templates = [
     (
         "min_dependency_table",
         "min_dependency_table",
-        {"dependent_packages": dependent_packages},
-    ),
-    (
-        "min_dependency_substitutions",
-        "min_dependency_substitutions",
         {"dependent_packages": dependent_packages},
     ),
     (
