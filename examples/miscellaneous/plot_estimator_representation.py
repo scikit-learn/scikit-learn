@@ -10,13 +10,6 @@ displayed.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
-
-warnings.warn(
-    "This is a test warning",
-    FutureWarning,
-)
-
 from sklearn.compose import make_column_transformer
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
