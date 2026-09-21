@@ -184,7 +184,7 @@ class RANSACRegressor(
         .. versionadded:: 0.18
 
     random_state : int, RandomState instance, default=None
-        The generator used to initialize the subset of samples 
+        The generator used to initialize the subset of samples
         selected at each iteration.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
