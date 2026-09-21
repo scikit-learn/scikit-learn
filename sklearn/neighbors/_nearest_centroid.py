@@ -19,8 +19,13 @@ from sklearn.utils import get_tags
 from sklearn.utils._available_if import available_if
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.sparsefuncs import csc_median_axis_0
-from sklearn.utils.validation import check_is_fitted, validate_data
+from sklearn.utils.sparsefuncs import csc_weighted_median_axis_0
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 
 class NearestCentroid(
@@ -147,7 +152,7 @@ class NearestCentroid(
         self.priors = priors
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """
         Fit the NearestCentroid model according to the given training data.
 
@@ -159,6 +164,10 @@ class NearestCentroid(
             Note that centroid shrinking cannot be used with sparse matrices.
         y : array-like of shape (n_samples,)
             Target values.
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If `None`, all samples are given equal weight.
+
+            .. versionadded:: 1.7
 
         Returns
         -------
@@ -194,9 +203,17 @@ class NearestCentroid(
                 % (n_classes)
             )
 
-        if self.priors == "empirical":  # estimate priors from sample
-            _, class_counts = np.unique(y, return_inverse=True)  # non-negative ints
-            self.class_prior_ = np.bincount(class_counts) / float(len(y))
+        # Validate or initialize sample_weight
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
+        total_weight = np.sum(sample_weight)
+
+        if self.priors == "empirical":  # estimate priors from weighted sample
+            # Use sum of weights per class divided by total weight
+            _, class_indices = np.unique(y, return_inverse=True)
+            class_weight_sums = np.bincount(
+                class_indices, weights=sample_weight, minlength=n_classes
+            )
+            self.class_prior_ = class_weight_sums / total_weight
         elif self.priors == "uniform":
             self.class_prior_ = np.asarray([1 / n_classes] * n_classes)
         else:
@@ -214,44 +231,96 @@ class NearestCentroid(
         # Mask mapping each class to its members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)
 
-        # Number of clusters in each class.
+        # Sum of weights for each class (replaces simple count for weighting).
         nk = np.zeros(n_classes)
 
         for cur_class in range(n_classes):
             center_mask = y_ind == cur_class
-            nk[cur_class] = np.sum(center_mask)
+            center_mask_weights = sample_weight[center_mask]
+            nk[cur_class] = np.sum(center_mask_weights)
+
+            if nk[cur_class] == 0:
+                raise ValueError(
+                    f"Class {classes[cur_class]} has zero total sample weight. "
+                    "Ensure that each class has at least one sample with a "
+                    "non-zero weight."
+                )
+
             if is_X_sparse:
                 center_mask = np.where(center_mask)[0]
 
             if self.metric == "manhattan":
                 # NumPy does not calculate median of sparse matrices.
                 if not is_X_sparse:
-                    self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
+                    self.centroids_[cur_class] = _weighted_percentile(
+                        X[center_mask], center_mask_weights, percentile_rank=50
+                    )
                 else:
-                    self.centroids_[cur_class] = csc_median_axis_0(X[center_mask])
+                    # Row-indexing a CSC matrix may return CSR depending on
+                    # scipy version; explicitly convert to CSC to be safe.
+                    self.centroids_[cur_class] = csc_weighted_median_axis_0(
+                        X[center_mask].tocsc(), center_mask_weights
+                    )
             else:  # metric == "euclidean"
-                self.centroids_[cur_class] = X[center_mask].mean(axis=0)
+                if is_X_sparse:
+                    # Weighted sum: X[class].T @ weights / sum(weights)
+                    X_class = X[center_mask]
+                    self.centroids_[cur_class] = np.asarray(
+                        X_class.T.dot(center_mask_weights) / nk[cur_class]
+                    ).ravel()
+                else:
+                    self.centroids_[cur_class] = np.average(
+                        X[center_mask], axis=0, weights=center_mask_weights
+                    )
 
-        # Compute within-class std_dev with unshrunked centroids
-        variance = np.array(X - self.centroids_[y_ind], copy=False) ** 2
-        self.within_class_std_dev_ = np.array(
-            np.sqrt(variance.sum(axis=0) / (n_samples - n_classes)), copy=False
+        # Compute weighted within-class dispersion with unshrunken centroids
+        # Compute per-sample squared deviations from their class centroid
+        if is_X_sparse:
+            X_dense = X.toarray()
+        else:
+            X_dense = np.asarray(X)
+
+        deviations_sq = (X_dense - self.centroids_[y_ind]) ** 2
+        # Weighted sum of all squared deviations across all samples and classes.
+        # Dividing by (total_weight - n_classes) is the weighted analogue of
+        # the original (n_samples - n_classes) denominator, and reduces to it
+        # exactly when all sample_weight values equal 1.
+        weighted_sq_sum = np.sum(deviations_sq * sample_weight[:, np.newaxis], axis=0)
+
+        # Guard against a non-positive denominator.
+        if total_weight - n_classes <= 0:
+            raise ValueError(
+                "The effective degrees of freedom (total_weight - n_classes = "
+                "%g - %d = %g) must be positive. Add more samples or increase "
+                "sample weights." % (total_weight, n_classes, total_weight - n_classes)
+            )
+
+        self.within_class_std_dev_ = np.sqrt(
+            weighted_sq_sum / (total_weight - n_classes)
         )
+
         if any(self.within_class_std_dev_ == 0):
             warnings.warn(
-                "self.within_class_std_dev_ has at least 1 zero standard deviation."
+                "self.within_class_std_dev_ has at least 1 zero standard deviation. "
                 "Inputs within the same classes for at least 1 feature are identical."
             )
 
         err_msg = "All features have zero variance. Division by zero."
         if is_X_sparse and np.all((X.max(axis=0) - X.min(axis=0)).toarray() == 0):
             raise ValueError(err_msg)
-        elif not is_X_sparse and np.all(np.ptp(X, axis=0) == 0):
+        elif not is_X_sparse and np.all((X.max(axis=0) - X.min(axis=0)) == 0):
             raise ValueError(err_msg)
 
-        dataset_centroid_ = X.mean(axis=0)
-        # m parameter for determining deviation
-        m = np.sqrt((1.0 / nk) - (1.0 / n_samples))
+        # Weighted dataset centroid
+        if is_X_sparse:
+            dataset_centroid_ = np.asarray(
+                X.T.dot(sample_weight) / total_weight
+            ).ravel()
+        else:
+            dataset_centroid_ = np.average(X, axis=0, weights=sample_weight)
+
+        # m parameter for determining deviation (using weight sums instead of counts)
+        m = np.sqrt((1.0 / nk) - (1.0 / total_weight))
         # Calculate deviation using the standard deviation of centroids.
         # To deter outliers from affecting the results.
         s = self.within_class_std_dev_ + np.median(self.within_class_std_dev_)
