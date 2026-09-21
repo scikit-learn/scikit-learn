@@ -1,0 +1,6 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now expose a
+  ``min_cat_support`` parameter that controls the minimum support a category
+  must have to be considered as its own group when finding categorical splits.
+  This value was previously hard-coded to ``10``, which remains the default.
+  By :user:`Nikolas Sapalidis <nikolas-sapa>`.
