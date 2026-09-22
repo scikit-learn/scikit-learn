@@ -1644,7 +1644,7 @@ class GammaNB:
     [0]
     """
 
-    def __init__(self, priors=[0.5, 0.5]):
+    def __init__(self, priors=None):
         self.p0 = 0
         self.p1 = 0
         self.feat0 = []
