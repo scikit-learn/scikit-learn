@@ -1147,6 +1147,7 @@ def test_tsne_works_with_pandas_output():
     ],
 )
 def test_tsne_pca_init_constant_data(method, X):
+    # Non-regression test for issue #28368.
     # PCA init on constant or near-constant data must trigger a warning,
     # fall back to random initialization, and not crash.
     tsne1 = TSNE(init="pca", method=method, perplexity=5, random_state=42)

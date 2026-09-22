@@ -1010,6 +1010,7 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
             # the default value for random initialization. See issue #18018.
             std_pc1 = np.std(X_embedded[:, 0])
+            # Avoid division by zero and crashing on constant data, see #28368
             if std_pc1 < 1e-12:
                 warnings.warn(
                     "Input data is (near) constant. "
