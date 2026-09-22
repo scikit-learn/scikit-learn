@@ -479,7 +479,7 @@ def ridge_regression(
           and the dual problem involving `X @ X.T` otherwise.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          scipy.sparse.linalg.cg. It solves the same primal or dual problem
+          :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
           as 'cholesky', without explicitly forming `X.T @ X` or `X @ X.T`.
           As an iterative algorithm, this solver is more appropriate than
           'cholesky' for large-scale data (possibility to set `tol` and
