@@ -1577,6 +1577,13 @@ class GammaNB:
     The Gamma Naive Bayes classifier is suitable for classification with
     features that have Gamma distribution.
 
+    Parameters
+    ----------
+    priors : array-like of shape (n_classes,), default=None
+        Prior is the array of probabilities of the classes. If specified, the
+        priors are not adjusted according to the data and used as a weight
+        of target vector.
+
     Attributes
     ----------
     p0 : Float, default=0
