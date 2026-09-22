@@ -84,6 +84,7 @@ y = rng.randint(0, 3, size=N)
 y_binary = (y >= 1).astype(int)
 classes = np.unique(y)
 y_multi = rng.randint(0, 3, size=(N, 3))
+y_multi_output_binary_class = rng.randint(0, 2, size=(N, 3))
 classes_multi = [np.unique(y_multi[:, i]) for i in range(y_multi.shape[1])]
 metadata = rng.randint(0, 10, size=N)
 sample_weight = rng.rand(N)
@@ -122,7 +123,7 @@ METAESTIMATORS: list = [
         "estimator_name": "estimator",
         "estimator": "classifier",
         "X": X,
-        "y": y_multi,
+        "y": y_multi_output_binary_class,
         "estimator_routing_methods": ["fit"],
     },
     {
