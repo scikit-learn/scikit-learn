@@ -19,7 +19,7 @@ from sklearn.utils import check_array, check_random_state, check_symmetric
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
-from sklearn.utils.fixes import _sparse_eye_array, parse_version, sp_version
+from sklearn.utils.fixes import _sparse_eye_array
 from sklearn.utils.fixes import laplacian as csgraph_laplacian
 from sklearn.utils.validation import validate_data
 
@@ -84,15 +84,7 @@ def _graph_is_connected(graph):
         True means the graph is fully connected and False means not.
     """
     if sparse.issparse(graph):
-        # Before Scipy 1.11.3, `connected_components` only supports 32-bit indices.
-        # PR: https://github.com/scipy/scipy/pull/18913
-        # First integration in 1.11.3: https://github.com/scipy/scipy/pull/19279
-        # TODO(jjerphan): Once SciPy 1.11.3 is the minimum supported version, use
-        # `accept_large_sparse=True`.
-        accept_large_sparse = sp_version >= parse_version("1.11.3")
-        graph = check_array(
-            graph, accept_sparse=True, accept_large_sparse=accept_large_sparse
-        )
+        graph = check_array(graph, accept_sparse=True, accept_large_sparse=True)
         # sparse graph, find all the connected components
         n_connected_components, _ = connected_components(graph)
         return n_connected_components == 1

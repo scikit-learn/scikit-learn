@@ -46,5 +46,5 @@ pytest-cov==6.3.0
     # via -r build_tools/github/debian_32bit_requirements.txt
 pytest-xdist==3.8.0
     # via -r build_tools/github/debian_32bit_requirements.txt
-threadpoolctl==3.6.0
+threadpoolctl==3.7.0
     # via -r build_tools/github/debian_32bit_requirements.txt
