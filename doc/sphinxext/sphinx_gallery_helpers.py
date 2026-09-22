@@ -13,6 +13,9 @@ from sphinx_gallery.notebook import add_code_cell, add_markdown_cell
 from sphinx_gallery.sorting import ExampleTitleSortKey
 
 import sklearn
+
+# conf.py's import doesn't reach the gallery worker processes (needed for backrefs)
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.externals._packaging.version import parse
 from sklearn.utils._testing import turn_warnings_into_errors
 
