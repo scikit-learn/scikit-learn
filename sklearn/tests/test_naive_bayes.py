@@ -1447,6 +1447,40 @@ def test_gammanb_extreme_x1():
     assert_array_almost_equal(y_pred, y_pred1)
 
 
+def test_gammanb_extreme_x2():
+    """Test if x input are wrong."""
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[5, -99999], [5, 6]])
+    X1 = np.array([[5, -9900], [5, 6]])
+    y = np.array([0, 1])
+    clf = GammaNB()
+    clf.fit(X, y)
+    y_pred = clf.predict([[2, 2]])
+
+    clf1 = GammaNB()
+    clf1.fit(X1, y)
+    y_pred1 = clf1.predict([[2, 2]])
+    assert_array_almost_equal(y_pred, y_pred1)
+
+
+def test_gammanb_extreme_x3():
+    """Test if x input are wrong."""
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[5, -99999], [5, 6]])
+    X1 = np.array([[5, -9900], [5, 6]])
+    y = np.array([1, 0])
+    clf = GammaNB()
+    clf.fit(X, y)
+    y_pred = clf.predict([[2, 2]])
+
+    clf1 = GammaNB()
+    clf1.fit(X1, y)
+    y_pred1 = clf1.predict([[2, 2]])
+    assert_array_almost_equal(y_pred, y_pred1)
+
+
 def test_gammanb_extreme_xpred():
     """Test if predict input are wrong."""
     from sklearn.naive_bayes import GammaNB
@@ -1458,4 +1492,18 @@ def test_gammanb_extreme_xpred():
 
     y_pred = clf.predict([[2, 9000]])
     y_pred1 = clf.predict([[2, 99999]])
+    assert_array_almost_equal(y_pred, y_pred1)
+
+
+def test_gammanb_extreme_xpred1():
+    """Test if predict input are wrong."""
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[5, -99999], [5, 6]])
+    y = np.array([0, 1])
+    clf = GammaNB()
+    clf.fit(X, y)
+
+    y_pred = clf.predict([[2, -9000]])
+    y_pred1 = clf.predict([[2, -99999]])
     assert_array_almost_equal(y_pred, y_pred1)
