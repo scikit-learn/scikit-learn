@@ -1208,7 +1208,6 @@ def test_auto_requests_override_class_level_requests():
 
     class SimpleConsumingEstimator(BaseEstimator):
         __metadata_request__fit = {"prop": False}
-        __metadata_request__fit_predict = {"prop": False}
 
         def fit(self, X, y, prop):
             # fit method to prove the override of the class-level request
@@ -1324,11 +1323,8 @@ def test_auto_requests_on_composite_methods_overlap_error():
 
 @config_context(enable_metadata_routing=True)
 def test_set_request_on_router_without_self_request():
-    """`set_{method}_request` on a router which does not consume metadata itself
-    works, and only stores the requests of the object itself.
-
-    Non-regression test for a bug where the whole routing was stored instead.
-    """
+    """Check that `set_{method}_request` on a pure router stores a `MetadataRequest`,
+    not the whole `MetadataRouter`."""
     pipe = Pipeline([("clf", ConsumingClassifier())])
     pipe.set_score_request(sample_weight=True)
     assert isinstance(pipe._metadata_request, MetadataRequest)
@@ -1337,8 +1333,11 @@ def test_set_request_on_router_without_self_request():
 
 @config_context(enable_metadata_routing=True)
 def test_routing_not_frozen_by_set_request():
-    """Calling `set_{method}_request` on a consuming router does not freeze the
-    routing to its sub-estimators: later changes to them are still reflected."""
+    """Check that calling `set_{method}_request` on a consuming router does not freeze
+    routing to sub-estimators: later changes to them are still reflected.
+    `get_metadata_routing` must still be built from the current sub-estimators, not from
+    a frozen MetadataRouter stored on `_metadata_request`.
+    """
     meta = WeightedMetaRegressor(estimator=ConsumingRegressor())
     meta.set_fit_request(sample_weight=True)
     meta.set_params(estimator=ConsumingRegressor().set_fit_request(sample_weight=True))
@@ -1346,12 +1345,13 @@ def test_routing_not_frozen_by_set_request():
     assert routed.estimator.fit == {"sample_weight": [1, 2]}
 
 
+@config_context(enable_metadata_routing=True)
 @pytest.mark.parametrize("auto_requests_enabled_at_set_time", [True, False])
 def test_explicit_requests_win_over_auto_requests(auto_requests_enabled_at_set_time):
     """Requests set via `set_{method}_request` are never overridden by
     auto-requests, whether or not auto-requests were enabled when they were set."""
 
-    class Estimator(BaseEstimator):
+    class SimpleConsumingEstimator(BaseEstimator):
         def fit(self, X, y, prop=None, other=None):
             pass  # pragma: no cover
 
@@ -1361,10 +1361,9 @@ def test_explicit_requests_win_over_auto_requests(auto_requests_enabled_at_set_t
             return requests
 
     with config_context(
-        enable_metadata_routing=True,
         enable_metadata_auto_requests=auto_requests_enabled_at_set_time,
     ):
-        est = Estimator().set_fit_request(prop=False)
+        est = SimpleConsumingEstimator().set_fit_request(prop=False)
 
     with config_context(enable_metadata_auto_requests=True):
         routing = get_routing_for_object(est)

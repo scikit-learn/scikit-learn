@@ -740,7 +740,7 @@ class MetadataRequest:
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
             )
 
-        # Stash mmr with auto-requests on this composite method:
+        # Store mmr with auto-requests on this composite method:
         if name not in self._composite_requests:
             self._composite_requests[name] = MethodMetadataRequest(
                 owner=self.owner, method=name
@@ -1058,8 +1058,8 @@ class MetadataRouter:
         return new
 
     def _actualize_auto_requests(self):
-        # The consumers added via `add` are actualized when they are added, see
-        # `get_routing_for_object`; only the router's own requests are left.
+        # Actualize self-requests on the router; requests on sub-estimators are already
+        # actualized in `add`.
         if self._self_request is not None:
             self._self_request._actualize_auto_requests()
         return self
