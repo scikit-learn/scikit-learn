@@ -1579,7 +1579,7 @@ class GammaNB:
 
     Parameters
     ----------
-    priors : array-like of shape (n_classes,), default=[0.5, 0.5]
+    priors : array-like of shape (n_classes,), default=None
         Prior is the array of probabilities of the classes. If specified, the
         priors are not adjusted according to the data and used as a weight
         of target vector.
@@ -1615,10 +1615,14 @@ class GammaNB:
         is 'Poisson', suggesting that the gamma-distributed feature has Poisson
         priori distribution.
 
-    priors : array-like of shape (n_classes,), default=[0.5, 0.5]
+    priors : array-like of shape (n_classes,), default=None
         Prior is the array of probabilities of the classes. If specified, the
         priors are not adjusted according to the data and used as a weight
         of target vector.
+
+    fit_count : int, default=0
+        This variable is the count of fitting and pluses itself 1 when
+        self.fit() is used.
 
     See Also
     --------
@@ -1648,6 +1652,7 @@ class GammaNB:
         self.p_min = 0.5
         self.priori_distr = "Uniform"
         self.priors = priors  # dim == num_classes
+        self.fit_count = 0
 
     def _check_features(self, X):
         """Validate and fix the shape of X
@@ -1792,14 +1797,10 @@ class GammaNB:
             )
         p0_this_round = len(tmp_y0) / len(y)
         p1_this_round = len(tmp_y1) / len(y)
-        # if self.p0 > 0:
-        #    self.fit_count += 1
         if self.p0 > 0:
-            fit_count = 1
-        else:
-            fit_count = 0
-        self.p0 = (self.p0 + p0_this_round) / (1 + fit_count)
-        self.p1 = (self.p1 + p1_this_round) / (1 + fit_count)
+            self.fit_count += 1
+        self.p0 = (self.p0 + p0_this_round) / (1 + self.fit_count)
+        self.p1 = (self.p1 + p1_this_round) / (1 + self.fit_count)
 
         # record according to Feat.
         if self.p0 > 0 and self.p1 > 0 and len(tmp_x0) > 0 and len(tmp_x1) > 0:
