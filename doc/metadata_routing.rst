@@ -26,8 +26,8 @@ This guide demonstrates how :term:`metadata` can be routed and passed between ob
 scikit-learn. If you are developing a scikit-learn compatible estimator or
 meta-estimator, check our related developer guide:
 :ref:`sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py`. For a narrative
-introduction to metadata routing, see `Scikit-learn's Metadata Routing API
-<https://blog.probabl.ai/update-on-scikit-learn-metadata-routing-api>`__.
+introduction to metadata routing, see this blog post on `Scikit-learn's Metadata Routing
+API <https://blog.probabl.ai/update-on-scikit-learn-metadata-routing-api>`__.
 
 
 Metadata is data that an estimator, scorer, or CV splitter takes into account if the
@@ -36,8 +36,8 @@ user explicitly passes it as a parameter. For instance, :class:`~cluster.KMeans`
 `classes` are consumed by some classifiers and `groups` are used in some splitters, but
 any data that is passed into an object's methods apart from X and y can be considered as
 metadata. The most used metadata in scikit-learn is `sample_weight`. If you are new to
-it and want to understand when ``sample_weight`` is useful, see `Improving models via
-subsets <https://www.youtube.com/watch?v=REIg5NH2SNc>`__.
+it and want to understand when ``sample_weight`` is useful, see this tutorial on
+`Improving models via subsets <https://www.youtube.com/watch?v=REIg5NH2SNc>`__.
 
 Prior to scikit-learn version 1.3, there was no single API for passing metadata even if
 these were used in conjunction with other objects, e.g. a scorer accepting
