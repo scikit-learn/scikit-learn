@@ -1557,7 +1557,7 @@ def test_X_val_raises_with_early_stopping_false():
 )
 def test_X_val_auto_request_hgb(HistGradientBoosting):
     """Test that HGB* correctly sets auto-requests on the validation set."""
-    with config_context(metadata_request_policy="auto"):
+    with config_context(enable_metadata_auto_requests=True):
         hist = HistGradientBoosting()
         assert all(
             get_routing_for_object(hist).fit.requests[k] is True

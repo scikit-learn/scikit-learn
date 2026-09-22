@@ -2296,8 +2296,8 @@ def test_validation_set_auto_request():
     )
     pipe = make_pipeline(StandardScaler().set_fit_request(sample_weight=True), hist)
 
-    # With metadata_request_policy="class-level" the validation set should be discovered
-    # but fitting on them should raise:
+    # With the default `enable_metadata_auto_requests=False `the validation set should
+    # be discovered but fitting on them should raise:
     assert all(
         get_routing_for_object(pipe)
         ._route_mappings["histgradientboostingclassifier"]
@@ -2316,9 +2316,9 @@ def test_validation_set_auto_request():
             sample_weight_val=sample_weight_val,
         )
 
-    # With metadata_request_policy="auto" the validation set should be requested and
-    # fitting on them should work:
-    with config_context(metadata_request_policy="auto"):
+    # With `enable_metadata_auto_requests=True` the validation set should be requested
+    # and fitting on them should work:
+    with config_context(enable_metadata_auto_requests=True):
         hist = HistGradientBoostingClassifier(early_stopping=True).set_fit_request(
             sample_weight=True
         )
