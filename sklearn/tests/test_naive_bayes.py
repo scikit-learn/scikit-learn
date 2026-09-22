@@ -1274,14 +1274,14 @@ def test_gammanb_prior(global_random_seed):
     clf = GammaNB(priors=np.array([0.5, 0.5]))
     clf.fit(X, y)
     compare_1 = np.array([3, 3]) / 6.0
-    compare_2 = clf.priors
+    compare_2 = clf.class_prior_
     assert_array_almost_equal(compare_1, compare_2, 4)
 
     X1, y1 = get_random_normal_x_binary_y(global_random_seed)
     clf1 = GammaNB()
     clf1.fit(X1, y1)
     # Check that the class priors sum to 1
-    assert_array_almost_equal(np.sum(clf1.priors), 1)
+    assert_array_almost_equal(np.sum(clf1.class_prior_), 1)
 
 
 def test_gammanb_sample_weight(global_random_seed):
@@ -1337,7 +1337,7 @@ def test_gammanb_priors():
         np.array([[0.9999036622, 0.0000963378]]),
         4,
     )
-    assert_array_almost_equal(clf.priors, np.array([0.3, 0.7]))
+    assert_array_almost_equal(clf.class_prior_, np.array([0.3, 0.7]))
 
 
 def test_gammanb_priors_sum_isclose():
