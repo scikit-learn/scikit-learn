@@ -19,7 +19,7 @@ _global_config = {
     "array_api_dispatch": False,
     "transform_output": "default",
     "enable_metadata_routing": False,
-    "metadata_request_policy": "class-level",
+    "enable_metadata_auto_requests": False,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
 }
@@ -72,7 +72,7 @@ def set_config(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
-    metadata_request_policy=None,
+    enable_metadata_auto_requests=None,
     skip_parameter_validation=None,
     sparse_interface=None,
 ):
@@ -186,17 +186,20 @@ def set_config(
 
         .. versionadded:: 1.3
 
-    metadata_request_policy : str, default=None
-        Configure the metadata request policy.
+    enable_metadata_auto_requests : bool, default=None
+        Configure the auto metadata request policy.
 
-        This flag controls instance `add_auto_request` flags. Class-level requests
-        always apply.
+        Consumer objects, i.e. estimators, splitters, and scorers, can automatically
+        request metadata for convenience. Note that these are subject to change and
+        stability guarantees applied to the rest of the scikit-learn API do not apply
+        here. If you want these to be enabled, you set the value to `True` on this
+        config.
 
-        - `"class-level"`: do not apply auto-requests
-        - `"auto"`: apply requests for metadata flagged with `add_auto_request`
+        - `False`: auto-requests are not enabled
+        - `True`: Metadata are requested per each consumer's internal policy
         - `None`: configuration is unchanged
 
-        Global default: `"class-level"`.
+        Global default: `False`.
 
         Refer to :ref:`metadata_routing_auto_request` for more details.
 
@@ -257,8 +260,8 @@ def set_config(
         local_config["transform_output"] = transform_output
     if enable_metadata_routing is not None:
         local_config["enable_metadata_routing"] = enable_metadata_routing
-    if metadata_request_policy is not None:
-        local_config["metadata_request_policy"] = metadata_request_policy
+    if enable_metadata_auto_requests is not None:
+        local_config["enable_metadata_auto_requests"] = enable_metadata_auto_requests
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
     if sparse_interface is not None:
@@ -277,7 +280,7 @@ def config_context(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
-    metadata_request_policy=None,
+    enable_metadata_auto_requests=None,
     skip_parameter_validation=None,
     sparse_interface=None,
 ):
@@ -386,17 +389,20 @@ def config_context(
 
         .. versionadded:: 1.3
 
-    metadata_request_policy : str, default=None
-        Configure the metadata request policy.
+    enable_metadata_auto_requests : bool, default=None
+        Configure the auto metadata request policy.
 
-        This flag controls instance `add_auto_request` flags. Class-level requests
-        always apply.
+        Consumer objects, i.e. estimators, splitters, and scorers, can automatically
+        request metadata for convenience. Note that these are subject to change and
+        stability guarantees applied to the rest of the scikit-learn API do not apply
+        here. If you want these to be enabled, you set the value to `True` on this
+        config.
 
-        - `"class-level"`: do not apply auto-requests
-        - `"auto"`: apply requests for metadata flagged with `add_auto_request`
+        - `False`: auto-requests are not enabled
+        - `True`: Metadata are requested per each consumer's internal policy
         - `None`: configuration is unchanged
 
-        Global default: `"class-level"`.
+        Global default: `False`.
 
         Refer to :ref:`metadata_routing_auto_request` for more details.
 
@@ -462,7 +468,7 @@ def config_context(
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
         enable_metadata_routing=enable_metadata_routing,
-        metadata_request_policy=metadata_request_policy,
+        enable_metadata_auto_requests=enable_metadata_auto_requests,
         skip_parameter_validation=skip_parameter_validation,
         sparse_interface=sparse_interface,
     )
