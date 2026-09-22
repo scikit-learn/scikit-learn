@@ -628,7 +628,7 @@ hour_workday_interaction = make_pipeline(
             (
                 "workingday",
                 FunctionTransformer(
-                    lambda x: x == "True", feature_names_out="one-to-one"
+                    lambda x: x.astype(str) == "True", feature_names_out="one-to-one"
                 ),
                 ["workingday"],
             ),
