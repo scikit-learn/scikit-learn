@@ -1438,6 +1438,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
+
+        This constraint is applied to the sample count (number of data rows),
+        not the sum of sample weights.
     l2_regularization : float, default=0
         The L2 regularization parameter penalizing leaves with small hessians.
         Use ``0`` for no regularization (default).
@@ -1830,6 +1833,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
+
+        This constraint is applied to the sample count (number of data rows),
+        not the sum of sample weights.
     l2_regularization : float, default=0
         The L2 regularization parameter penalizing leaves with small hessians.
         Use ``0`` for no regularization (default).

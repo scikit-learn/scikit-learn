@@ -469,9 +469,14 @@ print_routing(meta_est)
 # 1. Class-level request defaults using `__metadata_request__{method}` class attributes,
 #    which apply to all instances of a class, and can even remove a metadata from the
 #    metadata routing machinery if necessary.
-# 2. Auto-requests, which apply at instance-level only if
-#    `set_config(metadata_request_policy="auto")` is set by the user. Developers can add
-#    these via the `add_auto_request` method.
+# 2. Auto-requests, which apply at instance level only if
+#    `set_config(enable_metadata_auto_requests=True)` is set by the user.
+#    Developers can add these via the
+#    :func:`~sklearn.utils.metadata_routing.MethodMetadataRequest.add_auto_request`
+#    method. By instance level we mean they are actualised inside `get_metadata_routing`
+#    which has access to the instance (`self`), and `add_auto_request` only adds the
+#    request depending on if `enable_metadata_auto_requests` is set. Therefore we refer
+#    to these as "auto-requests".
 #
 # Here is an example demonstrating both approaches on a :term:`consumer`:
 
@@ -480,13 +485,13 @@ class ClassifierWithRequestDefaults(ClassifierMixin, BaseEstimator):
     """This consumer can use `sample_weight` in its `fit` and `other_metadata` in its
     `predict` method."""
 
-    # Class-level default request for fit method
+    # Class-level default request for fit method:
     __metadata_request__fit = {"sample_weight": True}
 
     def get_metadata_routing(self):
         # Each instance can configure metadata which should be auto-requested if
-        # `set_config(metadata_request_policy="auto")` is set. The `add_auto_request`
-        # method does this.
+        # `set_config(enable_metadata_auto_requests=True)` is set. The
+        # `add_auto_request` method does this.
         requests = super().get_metadata_routing()
         requests.predict.add_auto_request("other_metadata")
         return requests
@@ -502,23 +507,16 @@ class ClassifierWithRequestDefaults(ClassifierMixin, BaseEstimator):
 
 
 # %%
-# Note that setting auto-requests on *composite* methods such as `fit_transform` or
-# `fit_predict` will not have an effect. Their requests are the union of the underlying
-# simple methods (`fit`+`transform`, `fit`+`predict`). Call `add_auto_request` (or
-# `set_*_request`) on the simple methods instead.
-
 # Let's see the default class-level requests:
 clf = ClassifierWithRequestDefaults()
 print_routing(clf)
 
 # %%
-# And now with auto requests enabled, applying the instance-level requests:
-with config_context(metadata_request_policy="auto"):
+# And now with auto requests enabled:
+with config_context(enable_metadata_auto_requests=True):
     print_routing(clf)
 
-# %%
-# The instance-level auto-requests are set on top of the class-level requests (and can
-# override them).
+# %% Note that the auto-requests override class-level requests.
 
 # %%
 # The routing can still be modified by the user with `set_*_request` methods, which take
@@ -528,11 +526,19 @@ clf.set_fit_request(sample_weight=False)
 print_routing(clf)
 
 # %%
-# Instance-level requests can also be overridden:
-with config_context(metadata_request_policy="auto"):
+# Auto-requests can also be overridden:
+with config_context(enable_metadata_auto_requests=True):
     clf = ClassifierWithRequestDefaults()
     clf.set_predict_request(other_metadata=False)
     print_routing(clf)
+
+# %%
+# Auto-requests can also be set on composite methods such as `fit_transform` or
+# `fit_predict`. Since the requests of a composite method are composed from those of
+# its component methods (`fit` + `transform`, `fit` + `predict`), this is only allowed
+# for metadata which is not already present in the requests of any of the component
+# methods. Otherwise, call `add_auto_request` on the component method, and the
+# composite method inherits the request.
 
 # %%
 # On a consuming :term:`router`, apply `add_auto_request` on the `MetadataRequest`, then
@@ -560,14 +566,14 @@ class RouterConsumerClassifierWithAutoRequests(RouterConsumerClassifier):
 meta_est = RouterConsumerClassifierWithAutoRequests(estimator=ExampleClassifier())
 
 # %%
-# With the default `metadata_request_policy="class-level"`, no request is automatically
+# With the default `enable_metadata_auto_requests=False`, no request is automatically
 # set:
 print_routing(meta_est)
 
 # %%
-# When the auto-request policy is set, the consuming router requests `sample_weight`
+# When auto-requests are enabled, the consuming router requests `sample_weight`
 # for its own usage:
-with config_context(metadata_request_policy="auto"):
+with config_context(enable_metadata_auto_requests=True):
     print_routing(meta_est)
 
 # %%
