@@ -10,9 +10,83 @@ import numpy as np
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._base import make_dataset
 from sklearn.linear_model._sag_fast import sag32, sag64
-from sklearn.utils import check_array
+from sklearn.utils import check_array, check_random_state
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.validation import _check_sample_weight
+
+
+def _build_sag_alias_tables(sample_weight, dtype):
+    """Build Walker/Vose alias-method tables for the SAG/SAGA solver.
+
+    The SAG/SAGA solver draws one sample per inner iteration. Without this,
+    that draw is uniform over the ``n_samples`` rows, i.e. it ignores
+    ``sample_weight`` entirely when deciding *which* sample to look at (it
+    only uses ``sample_weight`` to scale the loss of whichever sample was
+    drawn). When weights are far from uniform this makes the stochastic
+    gradient estimate very high-variance -- a sample with a huge weight is
+    drawn just as rarely as one with a tiny weight -- and the solver fails
+    to converge (see gh-21305).
+
+    Since ``sample_weight`` is fixed for the duration of a single solver
+    run, we can afford an O(n_samples) one-time setup so that afterwards
+    each iteration draws a sample index proportional to its weight in O(1),
+    via Walker's alias method.
+
+    Returns
+    -------
+    alias_index : ndarray of shape (n_samples,), dtype=np.int32
+    prob_threshold : ndarray of shape (n_samples,), dtype=dtype
+        Together, ``alias_index`` and ``prob_threshold`` parameterize the
+        alias tables: to draw a sample, pick a bucket ``b`` uniformly at
+        random, then return ``b`` with probability ``prob_threshold[b]``,
+        else return ``alias_index[b]``.
+    importance_weight : ndarray of shape (n_samples,), dtype=dtype
+        ``importance_weight[i] = total_weight / (n_samples * sample_weight[i])``
+        is the inverse-probability correction applied to the gradient
+        update of a drawn sample ``i``, so that the SAG/SAGA gradient
+        estimator stays unbiased despite the non-uniform sampling.
+    """
+    n_samples = sample_weight.shape[0]
+    total_weight = sample_weight.sum()
+
+    # Scaled probabilities: mean value is 1 by construction (Vose's algorithm).
+    scaled_prob = (sample_weight / total_weight) * n_samples
+
+    alias_index = np.arange(n_samples, dtype=np.int32)
+    prob_threshold = np.empty(n_samples, dtype=np.float64)
+
+    small = [i for i in range(n_samples) if scaled_prob[i] < 1.0]
+    large = [i for i in range(n_samples) if scaled_prob[i] >= 1.0]
+
+    while small and large:
+        s = small.pop()
+        l = large.pop()
+        prob_threshold[s] = scaled_prob[s]
+        alias_index[s] = l
+        scaled_prob[l] = scaled_prob[l] + scaled_prob[s] - 1.0
+        if scaled_prob[l] < 1.0:
+            small.append(l)
+        else:
+            large.append(l)
+
+    # Remaining buckets only differ from 1 by floating-point error.
+    for i in large:
+        prob_threshold[i] = 1.0
+    for i in small:
+        prob_threshold[i] = 1.0
+
+    with np.errstate(divide="ignore"):
+        importance_weight = total_weight / (n_samples * sample_weight)
+    # Samples with zero weight get prob_threshold == 0 and are therefore
+    # never returned by the alias draw, so their (otherwise infinite)
+    # importance_weight is never read.
+    importance_weight[sample_weight == 0] = 0.0
+
+    return (
+        alias_index,
+        prob_threshold.astype(dtype),
+        importance_weight.astype(dtype),
+    )
 
 
 def get_auto_step_size(
@@ -319,6 +393,42 @@ def sag_solver(
             "the case step_size * alpha_scaled == 1"
         )
 
+    # SAG/SAGA draw one sample per inner iteration. Left to its default
+    # behaviour, that draw is uniform over the rows and ignores
+    # sample_weight, which makes the SAGA solver converge poorly (or not
+    # at all) when weights are far from uniform (gh-21305). When weights
+    # aren't all equal, draw samples proportionally to their weight
+    # instead, via a one-time O(n_samples) alias-table setup (see
+    # _build_sag_alias_tables). This is a no-op, byte-for-byte identical
+    # code path when sample_weight is uniform (the common, unweighted
+    # case), since sampling is then uniform either way.
+    #
+    # This is restricted to SAGA (is_saga=True): SAGA corrects each drawn
+    # sample's contribution immediately via its "direct" update term
+    # (see sag_fast.pyx.tp), so a sample that is drawn rarely still
+    # contributes correctly, just with higher variance. Plain SAG has no
+    # such term -- it relies solely on eventually revisiting every sample
+    # to populate its gradient-memory table -- so skewing the draw
+    # probability towards heavy samples makes light ones visited *less*
+    # often than under uniform sampling and can slow SAG down instead of
+    # helping it. Plain SAG's convergence under non-uniform sample_weight
+    # is a separate, unresolved problem (see the "Non-Uniform Sampling"
+    # discussion on gh-21305) that this fix does not address.
+    use_weighted_sampling = is_saga and not np.all(sample_weight == sample_weight[0])
+    if use_weighted_sampling:
+        alias_index, prob_threshold, importance_weight = _build_sag_alias_tables(
+            sample_weight, X.dtype
+        )
+        # Drawn *after* make_dataset has already consumed random_state for
+        # the dataset's own (unused in the weighted path) internal seed, so
+        # as to not perturb the unweighted code path's random_state stream.
+        alias_seed = check_random_state(random_state).randint(1, np.iinfo(np.int32).max)
+    else:
+        alias_index = np.zeros(1, dtype=np.int32)
+        prob_threshold = np.zeros(1, dtype=X.dtype)
+        importance_weight = np.zeros(1, dtype=X.dtype)
+        alias_seed = 1
+
     sag = sag64 if X.dtype == np.float64 else sag32
     num_seen, n_iter_ = sag(
         dataset,
@@ -341,6 +451,11 @@ def sag_solver(
         intercept_sum_gradient,
         intercept_decay,
         is_saga,
+        use_weighted_sampling,
+        alias_index,
+        prob_threshold,
+        importance_weight,
+        alias_seed,
         verbose,
     )
 

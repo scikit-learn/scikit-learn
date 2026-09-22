@@ -32,7 +32,9 @@ from sklearn._loss._loss cimport (
     CyHalfMultinomialLoss,
     CyHalfSquaredError,
 )
+from sklearn.utils._random cimport our_rand_r, RAND_R_MAX
 from sklearn.utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
+from sklearn.utils._typedefs cimport uint32_t
 
 
 {{for name_suffix, c_type, np_type in dtypes}}
@@ -48,6 +50,35 @@ cdef inline {{c_type}} fmax{{name_suffix}}({{c_type}} x, {{c_type}} y) noexcept 
 
 cdef inline {{c_type}} _soft_thresholding{{name_suffix}}({{c_type}} x, {{c_type}} shrinkage) noexcept nogil:
     return fmax{{name_suffix}}(x - shrinkage, 0) - fmax{{name_suffix}}(- x - shrinkage, 0)
+
+{{endfor}}
+
+
+{{for name_suffix, c_type, np_type in dtypes}}
+
+cdef inline int _sample_alias_index{{name_suffix}}(
+    int n_samples,
+    int* alias_index_ptr,
+    {{c_type}}* prob_threshold_ptr,
+    uint32_t* random_state,
+) noexcept nogil:
+    """Draw a sample index in O(1) with probability proportional to weight.
+
+    Uses Walker/Vose's alias method: ``prob_threshold_ptr`` and
+    ``alias_index_ptr`` must have been built by
+    ``_sag.py:_build_sag_alias_tables`` from the (fixed, for the duration of
+    this solver run) per-sample weights. This lets SAG/SAGA draw
+    non-uniformly according to ``sample_weight`` instead of ignoring it at
+    sampling time (gh-21305), without paying more than an O(1) cost per
+    iteration.
+    """
+    cdef int bucket = our_rand_r(random_state) % n_samples
+    cdef {{c_type}} u = (
+        <{{c_type}}> our_rand_r(random_state) / <{{c_type}}> (RAND_R_MAX + 1)
+    )
+    if u < prob_threshold_ptr[bucket]:
+        return bucket
+    return alias_index_ptr[bucket]
 
 {{endfor}}
 
@@ -75,6 +106,11 @@ def sag{{name_suffix}}(
     {{c_type}}[::1] intercept_sum_gradient_init,
     double intercept_decay,
     bint saga,
+    bint use_weighted_sampling,
+    int[::1] alias_index,
+    {{c_type}}[::1] prob_threshold,
+    {{c_type}}[::1] importance_weight,
+    uint32_t alias_seed,
     bint verbose
 ):
     """Stochastic Average Gradient (SAG) and SAGA solvers.
@@ -184,6 +220,16 @@ def sag{{name_suffix}}(
     # the scalar used for multiplying z
     cdef {{c_type}} wscale = 1.0
 
+    # alias-method tables for O(1) sampling proportional to sample_weight,
+    # and the per-sample inverse-probability correction that keeps the
+    # SAG/SAGA gradient estimator unbiased under that non-uniform sampling.
+    # See _sample_alias_index{{name_suffix}} and _sag.py:_build_sag_alias_tables.
+    cdef int* alias_index_ptr = &alias_index[0]
+    cdef {{c_type}}* prob_threshold_ptr = &prob_threshold[0]
+    cdef {{c_type}}* importance_weight_ptr = &importance_weight[0]
+    cdef uint32_t alias_rng_state = alias_seed
+    cdef {{c_type}} importance_factor = 1.0
+
     # return value (-1 if an error occurred, 0 otherwise)
     cdef int status = 0
 
@@ -227,7 +273,16 @@ def sag{{name_suffix}}(
         for n_iter in range(max_iter):
             for sample_itr in range(n_samples):
                 # extract a random sample
-                sample_ind = dataset.random(&x_data_ptr, &x_ind_ptr, &xnnz, &y, &sample_weight)
+                if use_weighted_sampling:
+                    sample_ind = _sample_alias_index{{name_suffix}}(
+                        n_samples, alias_index_ptr, prob_threshold_ptr,
+                        &alias_rng_state
+                    )
+                    dataset._sample(&x_data_ptr, &x_ind_ptr, &xnnz, &y,
+                                    &sample_weight, sample_ind)
+                    importance_factor = importance_weight_ptr[sample_ind]
+                else:
+                    sample_ind = dataset.random(&x_data_ptr, &x_ind_ptr, &xnnz, &y, &sample_weight)
 
                 # cached index for gradient_memory
                 s_idx = sample_ind * n_classes
@@ -290,6 +345,15 @@ def sag{{name_suffix}}(
                     val = x_data_ptr[j]
                     f_idx = feature_ind * n_classes
                     for class_ind in range(n_classes):
+                        # sum_gradient is an exact, deterministic running
+                        # sum of the latest known per-sample gradient (it
+                        # telescopes to sum_j g_j as samples get
+                        # re-visited), so it must accumulate the *raw*
+                        # delta regardless of how samples are drawn: only
+                        # the direct SAGA step below is a stochastic
+                        # estimator that needs the importance_factor
+                        # correction to stay unbiased under non-uniform
+                        # sampling.
                         gradient_correction = \
                             val * (gradient[class_ind] -
                                    gradient_memory[s_idx + class_ind])
@@ -300,17 +364,25 @@ def sag{{name_suffix}}(
                             # as it does not depend on the average gradient.
                             # The prox operator is applied after the JIT update
                             weights[f_idx + class_ind] -= \
-                                (gradient_correction * step_size
+                                (gradient_correction * importance_factor
+                                 * step_size
                                  * (1 - 1. / num_seen) / wscale)
                         sum_gradient[f_idx + class_ind] += gradient_correction
 
                 # fit the intercept
                 if fit_intercept:
                     for class_ind in range(n_classes):
-                        gradient_correction = (gradient[class_ind] -
-                                               gradient_memory[s_idx + class_ind])
+                        # As above: intercept_sum_gradient_init is exact,
+                        # deterministic bookkeeping and must accumulate the
+                        # raw delta; only the direct SAGA step needs the
+                        # importance_factor correction.
+                        gradient_correction = (
+                            gradient[class_ind] -
+                            gradient_memory[s_idx + class_ind])
                         intercept_sum_gradient_init[class_ind] += gradient_correction
-                        gradient_correction *= step_size * (1. - 1. / num_seen)
+                        gradient_correction *= (
+                            importance_factor * step_size * (1. - 1. / num_seen)
+                        )
                         if saga:
                             intercept_array[class_ind] -= \
                                 (step_size * intercept_sum_gradient_init[class_ind] /
