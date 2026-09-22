@@ -128,6 +128,8 @@ def _check_pos_label_statistics(
     check_metric(display, constructor_name, pos_label)
 
 
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -154,6 +156,8 @@ def test_display_curve_error_binary_classifier(pyplot, data, data_binary, Displa
         Display.from_estimator(clf, X, y)
 
 
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -228,6 +232,8 @@ def test_display_curve_error_no_response_method(
         Display.from_estimator(clf, X, y, response_method=response_method)
 
 
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -280,6 +286,8 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
         assert clf_name in disp.line_.get_label()
 
 
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "clf",
     [
@@ -312,6 +320,8 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
         assert disp.estimator_name == model.__class__.__name__
 
 
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -350,6 +360,8 @@ def test_display_curve_error_pos_label(pyplot, data_binary, Display):
         Display.from_predictions(y, y_pred)
 
 
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "Display",
     [
