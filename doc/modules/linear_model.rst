@@ -198,6 +198,40 @@ This method has the same order of complexity as
 .. between these
 
 
+Incremental fitting with partial_fit
+-------------------------------------
+
+:class:`Ridge` supports incremental fitting via
+:meth:`~linear_model.Ridge.partial_fit`. This is useful when the dataset is
+too large to fit in memory, or when data arrives in a stream.
+
+Unlike :meth:`~linear_model.Ridge.fit`, which uses the full dataset at once,
+:meth:`~linear_model.Ridge.partial_fit` accumulates the sufficient statistics
+:math:`X^\top X` and :math:`X^\top y` across batches and then solves the
+regularized normal equations:
+
+.. math::
+
+   (X^\top X + \alpha I) w = X^\top y
+
+The solution is therefore exact (not iterative): splitting the data into
+batches gives the same result as fitting on the full dataset at once::
+
+    >>> from sklearn import linear_model
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    >>> y = np.dot(X, np.array([1, 2])) + 3
+    >>> reg = linear_model.Ridge(alpha=0.5)
+    >>> reg.partial_fit(X[:2], y[:2])
+    Ridge(alpha=0.5)
+    >>> reg.partial_fit(X[2:], y[2:])
+    Ridge(alpha=0.5)
+
+Sparse input is not supported by :meth:`~linear_model.Ridge.partial_fit`.
+Calling :meth:`~linear_model.Ridge.fit` on an estimator that has previously
+been updated with :meth:`~linear_model.Ridge.partial_fit` resets the
+incremental state.
+
 Setting the regularization parameter: leave-one-out Cross-Validation
 --------------------------------------------------------------------
 
