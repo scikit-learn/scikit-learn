@@ -1397,15 +1397,65 @@ def test_gammanb_prior_large_bias():
     assert clf.predict([[-0.1, -0.1]]) == np.array([2])
 
 
-def test_gammanb_check_update_with_no_data():
-    """Test when the partial fit is called without any data"""
+# --- TEST wrong distr. params
+def test_gammanb_params_distr():
+    """Test if distr. params input are wrong."""
     from sklearn.naive_bayes import GammaNB
 
-    # Create an empty array
-    prev_points = 100
-    mean = 0.0
-    var = 1.0
-    x_empty = np.empty((0, X.shape[1]))
-    tmean, tvar = GammaNB._update_mean_variance(prev_points, mean, var, x_empty)
-    assert tmean == mean
-    assert tvar == var
+    X = np.array([[5, 5], [5, 5], [5, 5]])
+    y = np.array([0, 1, 0])
+    clf = GammaNB()
+    clf.fit(X, y)
+
+    msg = "Priori Distribution Wrong."
+    with pytest.raises(ValueError, match=msg):
+        y_pred = clf.predict([[3, 4]], priori_distr="uniform")
+        assert_array_almost_equal(y_pred, -1)
+
+
+def test_gammanb_extreme_x():
+    """Test if x input are wrong."""
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[5, 99999], [5, 6]])
+    X1 = np.array([[5, 9900], [5, 6]])
+    y = np.array([0, 1])
+    clf = GammaNB()
+    clf.fit(X, y)
+    y_pred = clf.predict([[2, 2]])
+
+    clf1 = GammaNB()
+    clf1.fit(X1, y)
+    y_pred1 = clf1.predict([[2, 2]])
+    assert_array_almost_equal(y_pred, y_pred1)
+
+
+def test_gammanb_extreme_x1():
+    """Test if x input are wrong."""
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[5, 99999], [5, 6]])
+    X1 = np.array([[5, 9900], [5, 6]])
+    y = np.array([1, 0])
+    clf = GammaNB()
+    clf.fit(X, y)
+    y_pred = clf.predict([[2, 2]])
+
+    clf1 = GammaNB()
+    clf1.fit(X1, y)
+    y_pred1 = clf1.predict([[2, 2]])
+    assert_array_almost_equal(y_pred, y_pred1)
+
+
+def test_gammanb_extreme_xpred():
+    """Test if predict input are wrong."""
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[5, 99999], [5, 6]])
+    y = np.array([0, 1])
+    clf = GammaNB()
+    clf.fit(X, y)
+
+    y_pred = clf.predict([[2, 9000]])
+    y_pred1 = clf.predict([[2, 99999]])
+    assert_array_almost_equal(y_pred, y_pred1)
