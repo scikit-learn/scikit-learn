@@ -1329,12 +1329,30 @@ def test_gammanb_priors():
     y_pred = clf.predict([[-0.1, -0.1]])
     if y_pred[0] == 0:
         y_pred_prob = np.array([[0.99999, 0.00001]])
-    elif y_pred[0] == 1:
-        y_pred_prob = np.array([[0.00001, 0.99999]])
 
     assert_array_almost_equal(
         y_pred_prob,
         np.array([[0.9999036622, 0.0000963378]]),
+        4,
+    )
+    assert_array_almost_equal(clf.class_prior_, np.array([0.3, 0.7]))
+
+
+def test_gammanb_priors_1():
+    """Test whether the class prior override is properly used"""
+    from sklearn.naive_bayes import GammaNB
+
+    X = np.array([[1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0]])
+    y = np.array([0, 0, 0, 1, 1, 1])
+    clf = GammaNB(priors=np.array([0.3, 0.7]))
+    clf.fit(X, y)
+    y_pred = clf.predict([[4.8, 0.1]])
+    if y_pred[0] == 1:
+        y_pred_prob = np.array([[0.00001, 0.99999]])
+
+    assert_array_almost_equal(
+        y_pred_prob,
+        np.array([[0.0000963378, 0.9999036622]]),
         4,
     )
     assert_array_almost_equal(clf.class_prior_, np.array([0.3, 0.7]))
