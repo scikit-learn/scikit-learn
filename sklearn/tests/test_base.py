@@ -1145,7 +1145,7 @@ def test_baseestimator_sample_weight_auto_request():
 
     est = MyEstimator()
 
-    with config_context(metadata_request_policy="auto"):
+    with config_context(enable_metadata_auto_requests=True):
         for method in SIMPLE_METHODS:
             if method == "fit":
                 assert (

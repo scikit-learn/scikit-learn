@@ -2531,7 +2531,7 @@ def test_sample_weight_routing_auto_request():
     est = MyEstimator()
     pipe = make_pipeline(scaler, est)
 
-    with config_context(metadata_request_policy="auto"):
+    with config_context(enable_metadata_auto_requests=True):
         assert (
             getattr(get_routing_for_object(est), "fit").requests.get("sample_weight")
             is True
@@ -2560,7 +2560,8 @@ def test_sample_weight_routing_auto_request():
         pipe.transform(X, sample_weight=sample_weight)
         pipe.predict(X, sample_weight=sample_weight)
 
-    # check that with metadata_request_policy="class-level" the auto-requests are unset
+    # check that with teh default `enable_metadata_auto_requests=False` the
+    # auto-requests are unset
     assert (
         getattr(get_routing_for_object(est), "fit").requests.get("sample_weight")
         is not True
