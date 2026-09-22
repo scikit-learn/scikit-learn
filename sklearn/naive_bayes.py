@@ -1615,16 +1615,10 @@ class GammaNB:
         is 'Poisson', suggesting that the gamma-distributed feature has Poisson
         priori distribution.
 
-    fit_count : Int, default=0
-        This variable would plus 1 if fit function is used once.
-
     priors : array-like of shape (n_classes,), default=None
         Prior is the array of probabilities of the classes. If specified, the
         priors are not adjusted according to the data and used as a weight
         of target vector.
-
-    class_prior_ : array-like of shape (n_classes,), default=None
-        probability of each class.
 
     See Also
     --------
@@ -1653,13 +1647,7 @@ class GammaNB:
         self.feat1 = []
         self.p_min = 0.5
         self.priori_distr = "Uniform"
-        self.fit_count = 0
         self.priors = priors  # dim == num_classes
-        # --- not a pivot
-        if not np.all(self.priors):
-            self.class_prior_ = np.array([0.5, 0.5])
-        else:
-            self.class_prior_ = priors
 
     def _check_features(self, X):
         """Validate and fix the shape of X
@@ -1804,10 +1792,14 @@ class GammaNB:
             )
         p0_this_round = len(tmp_y0) / len(y)
         p1_this_round = len(tmp_y1) / len(y)
+        # if self.p0 > 0:
+        #    self.fit_count += 1
         if self.p0 > 0:
-            self.fit_count += 1
-        self.p0 = (self.p0 + p0_this_round) / (1 + self.fit_count)
-        self.p1 = (self.p1 + p1_this_round) / (1 + self.fit_count)
+            fit_count = 1
+        else:
+            fit_count = 0
+        self.p0 = (self.p0 + p0_this_round) / (1 + fit_count)
+        self.p1 = (self.p1 + p1_this_round) / (1 + fit_count)
 
         # record according to Feat.
         if self.p0 > 0 and self.p1 > 0 and len(tmp_x0) > 0 and len(tmp_x1) > 0:
