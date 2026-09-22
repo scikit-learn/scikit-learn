@@ -1579,7 +1579,7 @@ class GammaNB:
 
     Parameters
     ----------
-    priors : array-like of shape (n_classes,), default=None
+    priors : array-like of shape (n_classes,), default=[0.5, 0.5]
         Prior is the array of probabilities of the classes. If specified, the
         priors are not adjusted according to the data and used as a weight
         of target vector.
@@ -1615,7 +1615,7 @@ class GammaNB:
         is 'Poisson', suggesting that the gamma-distributed feature has Poisson
         priori distribution.
 
-    priors : array-like of shape (n_classes,), default=None
+    priors : array-like of shape (n_classes,), default=[0.5, 0.5]
         Prior is the array of probabilities of the classes. If specified, the
         priors are not adjusted according to the data and used as a weight
         of target vector.
@@ -1640,7 +1640,7 @@ class GammaNB:
     [0]
     """
 
-    def __init__(self, priors=None):
+    def __init__(self, priors=[0.5, 0.5]):
         self.p0 = 0
         self.p1 = 0
         self.feat0 = []
