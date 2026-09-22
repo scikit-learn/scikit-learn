@@ -1615,14 +1615,15 @@ class GammaNB:
         is 'Poisson', suggesting that the gamma-distributed feature has Poisson
         priori distribution.
 
-    priors : array-like of shape (n_classes,), default=None
-        Prior is the array of probabilities of the classes. If specified, the
-        priors are not adjusted according to the data and used as a weight
-        of target vector.
+    fit_count : Int, default=0
+        This variable would plus 1 if self.fit() is used once.
 
-    fit_count : int, default=0
-        This variable is the count of fitting and pluses itself 1 when
-        self.fit() is used.
+    priors : array-like of shape (n_classes,), default=None
+        Prior probabilities of the classes. If specified, the priors are not
+        adjusted according to the data.
+
+    class_prior_ : array-like of shape (n_classes,), default=None
+        probability of each class.
 
     See Also
     --------
@@ -1651,8 +1652,13 @@ class GammaNB:
         self.feat1 = []
         self.p_min = 0.5
         self.priori_distr = "Uniform"
-        self.priors = priors  # dim == num_classes
         self.fit_count = 0
+        self.priors = priors  # dim == num_classes
+        # --- not a pivot
+        if not np.all(self.priors):
+            self.class_prior_ = np.array([0.5, 0.5])
+        else:
+            self.class_prior_ = priors
 
     def _check_features(self, X):
         """Validate and fix the shape of X
@@ -1874,7 +1880,6 @@ class GammaNB:
         if isinstance(tmp_log_prob, int):
             print("Joint log likelihood wrong.")
             return -1
-
         # --- predict
         is_imbalance = self._check_target_imbalance()
         y_pred = []
@@ -2084,7 +2089,6 @@ class GammaNB:
             n_new = X.shape[0]
             new_var = xp.var(X, axis=0)
             new_mu = xp.mean(X, axis=0)
-
         if n_past == 0:
             return new_mu, new_var
 
@@ -2101,5 +2105,4 @@ class GammaNB:
         new_ssd = n_new * new_var
         total_ssd = old_ssd + new_ssd + (n_new * n_past / n_total) * (mu - new_mu) ** 2
         total_var = total_ssd / n_total
-
         return total_mu, total_var
