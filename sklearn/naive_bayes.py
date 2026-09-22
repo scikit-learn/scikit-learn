@@ -1787,20 +1787,14 @@ class GammaNB:
         else:
             tmp_x0 = []
             tmp_y0 = []
-            print(
-                "Wrong label: Label should be 0 or 1,\
-                and the number of label 0 is 0."
-            )
+            print("At least 2 classes. Lack 0 sample.")
         if len(tmp_ind1) > 0:
             tmp_x1 = self._out_split_array(X, tmp_ind1)
             tmp_y1 = self._out_split_array(Y, tmp_ind1)
         else:
             tmp_x1 = []
             tmp_y1 = []
-            print(
-                "Wrong label: Label should be 0 or 1,\
-                and the number of label 1 is 0."
-            )
+            print("At least 2 classes. Lack 1 sample.")
         p0_this_round = len(tmp_y0) / len(y)
         p1_this_round = len(tmp_y1) / len(y)
         if self.p0 > 0:
@@ -1829,7 +1823,7 @@ class GammaNB:
                 self.feat0 = feat_0
                 self.feat1 = feat_1
         else:
-            print("The number of label 0 is 0 or of label 1 is 0.")
+            print("At least 2 classes.")
 
     def predict(self, X, p_min=0.5, priori_distr="Uniform"):
         """Predict the labels of the input X.
@@ -1876,10 +1870,8 @@ class GammaNB:
         self.priori_distr = priori_distr
         X = np.array(X)
         X = self._check_features(X)
+        # raise ValueError if wrong params of distr.
         tmp_log_prob = self._log_likelihood(X)
-        if isinstance(tmp_log_prob, int):
-            print("Joint log likelihood wrong.")
-            return -1
         # --- predict
         is_imbalance = self._check_target_imbalance()
         y_pred = []
@@ -1976,9 +1968,7 @@ class GammaNB:
                         -0.13 - np.log(tmp_linear_delta + tmp_slack) + tmp_poi_priori
                     )
                 else:
-                    print("Priori Distribution Wrong.")
-                    return -1
-
+                    raise ValueError("Priori Distribution Wrong.")
                 # --- p1
                 # Feat1: minimum value of one feat.
                 try:
@@ -2023,8 +2013,7 @@ class GammaNB:
                         + tmp_poi_priori_1
                     )
                 else:
-                    print("Priori Distribution Wrong.")
-                    return -1
+                    raise ValueError("Priori Distribution Wrong.")
             # Priori-prob.
             tmp_p0 += np.log(self.p0 + tmp_slack)
             tmp_p1 += np.log(self.p1 + tmp_slack)
@@ -2033,76 +2022,3 @@ class GammaNB:
         tmp_mat = np.array(tmp_mat)
         tmp_mat_1 = tmp_mat.T  # n_samples * 2
         return tmp_mat_1
-
-    @staticmethod
-    def _update_mean_variance(n_past, mu, var, X, sample_weight=None):
-        """Compute online update of Gaussian mean and variance.
-
-        Given starting sample count, mean, and variance, a new set of
-        points X, and optionally sample weights, return the updated mean and
-        variance. (NB - each dimension (column) in X is treated as independent
-        -- you get variance, not covariance).
-
-        Can take scalar mean and variance, or vector mean and variance to
-        simultaneously update a number of independent Gaussians.
-
-        See Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque:
-
-        http://i.stanford.edu/pub/cstr/reports/cs/tr/79/773/CS-TR-79-773.pdf
-
-        Parameters
-        ----------
-        n_past : int
-            Number of samples represented in old mean and variance. If sample
-            weights were given, this should contain the sum of sample
-            weights represented in old mean and variance.
-
-        mu : array-like of shape (number of Gaussians,)
-            Means for Gaussians in original set.
-
-        var : array-like of shape (number of Gaussians,)
-            Variances for Gaussians in original set.
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Weights applied to individual samples (1. for unweighted).
-
-        Returns
-        -------
-        total_mu : array-like of shape (number of Gaussians,)
-            Updated mean for each Gaussian over the combined set.
-
-        total_var : array-like of shape (number of Gaussians,)
-            Updated variance for each Gaussian over the combined set.
-        """
-        xp, _ = get_namespace(X)
-        if X.shape[0] == 0:
-            return mu, var
-
-        # Compute (potentially weighted) mean and variance of new datapoints
-        if sample_weight is not None:
-            n_new = float(xp.sum(sample_weight))
-            if np.isclose(n_new, 0.0):
-                return mu, var
-            new_mu = _average(X, axis=0, weights=sample_weight, xp=xp)
-            new_var = _average((X - new_mu) ** 2, axis=0, weights=sample_weight, xp=xp)
-        else:
-            n_new = X.shape[0]
-            new_var = xp.var(X, axis=0)
-            new_mu = xp.mean(X, axis=0)
-        if n_past == 0:
-            return new_mu, new_var
-
-        n_total = float(n_past + n_new)
-
-        # Combine mean of old and new data, taking into consideration
-        # (weighted) number of observations
-        total_mu = (n_new * new_mu + n_past * mu) / n_total
-
-        # Combine variance of old and new data, taking into consideration
-        # (weighted) number of observations. This is achieved by combining
-        # the sum-of-squared-differences (ssd)
-        old_ssd = n_past * var
-        new_ssd = n_new * new_var
-        total_ssd = old_ssd + new_ssd + (n_new * n_past / n_total) * (mu - new_mu) ** 2
-        total_var = total_ssd / n_total
-        return total_mu, total_var
