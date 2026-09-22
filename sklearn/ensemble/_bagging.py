@@ -920,8 +920,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                 "to compute any reliable oob estimates."
             )
 
-        oob_decision_function = predictions / predictions.sum(axis=1)[:, np.newaxis]
-        oob_score = accuracy_score(y, np.argmax(predictions, axis=1))
+        with np.errstate(invalid="ignore", divide="ignore"):
+            oob_decision_function = predictions / predictions.sum(axis=1)[:, np.newaxis]
+        oob_mask = ~np.isnan(oob_decision_function).any(axis=1)
+        oob_score = accuracy_score(
+            y[oob_mask], np.argmax(oob_decision_function[oob_mask], axis=1)
+        )
 
         self.oob_decision_function_ = oob_decision_function
         self.oob_score_ = oob_score
@@ -1466,12 +1470,13 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
                 "This probably means too few estimators were used "
                 "to compute any reliable oob estimates."
             )
-            n_predictions[n_predictions == 0] = 1
+        valid = n_predictions > 0
+        predictions[valid] /= n_predictions[valid]
+        predictions[~valid] = np.nan
 
-        predictions /= n_predictions
-
+        oob_mask = valid
         self.oob_prediction_ = predictions
-        self.oob_score_ = r2_score(y, predictions)
+        self.oob_score_ = r2_score(y[oob_mask], predictions[oob_mask])
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
