@@ -1609,11 +1609,12 @@ class GammaNB:
         priori distribution.
 
     fit_count : Int, default=0
-        This variable would plus 1 if self.fit() is used once.
+        This variable would plus 1 if fit function is used once.
 
     priors : array-like of shape (n_classes,), default=None
-        Prior probabilities of the classes. If specified, the priors are not
-        adjusted according to the data.
+        Prior is the array of probabilities of the classes. If specified, the
+        priors are not adjusted according to the data and used as a weight
+        of target vector.
 
     class_prior_ : array-like of shape (n_classes,), default=None
         probability of each class.
