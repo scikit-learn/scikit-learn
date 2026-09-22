@@ -201,7 +201,9 @@ def set_config(
 
         Global default: `False`.
 
-        Refer to :ref:`metadata_routing_auto_request` for more details.
+        Refer to the :ref:`Metadata Routing User Guide
+        <metadata_routing_auto_request_user>` for usage, and to
+        :ref:`metadata_routing_auto_request` for the developer API.
 
         .. versionadded:: 1.10
 
@@ -404,7 +406,9 @@ def config_context(
 
         Global default: `False`.
 
-        Refer to :ref:`metadata_routing_auto_request` for more details.
+        Refer to the :ref:`Metadata Routing User Guide
+        <metadata_routing_auto_request_user>` for usage, and to
+        :ref:`metadata_routing_auto_request` for the developer API.
 
         .. versionadded:: 1.10
 
