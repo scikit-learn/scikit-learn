@@ -37,6 +37,15 @@ def test_barycenter_kneighbors_graph(global_dtype):
     assert linalg.norm(pred - X) / X.shape[0] < 1
 
 
+def test_barycenter_kneighbors_graph_duplicates(global_dtype):
+    # Regression test for #16512
+    X = np.array([[0, 1], [1.01, 1.0], [2, 0]], dtype=global_dtype)
+    X = np.concatenate((X, X))
+
+    graph = barycenter_kneighbors_graph(X, 1).toarray()
+    assert_array_equal(np.diag(graph), np.zeros(len(X), dtype=global_dtype))
+
+
 # ----------------------------------------------------------------------
 # Test LLE by computing the reconstruction error on some manifolds.
 

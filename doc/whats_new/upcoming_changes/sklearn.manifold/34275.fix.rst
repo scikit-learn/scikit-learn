@@ -1,0 +1,1 @@
+- :func:`manifold.locally_linear_embedding` and :class:`manifold.LocallyLinearEmbedding` now correctly exclude the point itself from its nearest neighbors when duplicate points are present. By :user:`Saiteja Bandaru <saitejabandaru-in>`.
