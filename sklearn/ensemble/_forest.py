@@ -1486,7 +1486,7 @@ class RandomForestClassifier(ForestClassifier):
         .. versionadded:: 1.4
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
-        (n_categorical_features,), or "from_dtype", default="from_dtype"
+        (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
 
         - None : no feature will be considered categorical.
@@ -1659,7 +1659,7 @@ class RandomForestClassifier(ForestClassifier):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
-        categorical_features="from_dtype",
+        categorical_features=None,  # TODO(1.13): change default to "from_dtype"
     ):
         super().__init__(
             estimator=DecisionTreeClassifier(),
@@ -1912,7 +1912,7 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 1.4
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
-        (n_categorical_features,), or "from_dtype", default="from_dtype"
+        (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
 
         - None : no feature will be considered categorical.
@@ -2072,7 +2072,7 @@ class RandomForestRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
-        categorical_features="from_dtype",
+        categorical_features=None,  # TODO(1.13): change default to "from_dtype"
     ):
         super().__init__(
             estimator=DecisionTreeRegressor(),
@@ -2345,7 +2345,7 @@ class ExtraTreesClassifier(ForestClassifier):
         .. versionadded:: 1.4
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
-        (n_categorical_features,), or "from_dtype", default="from_dtype"
+        (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
 
         - None : no feature will be considered categorical.
@@ -2505,7 +2505,7 @@ class ExtraTreesClassifier(ForestClassifier):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
-        categorical_features="from_dtype",
+        categorical_features=None,  # TODO(1.13): change default to "from_dtype"
     ):
         super().__init__(
             estimator=ExtraTreeClassifier(),
@@ -2753,7 +2753,7 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionadded:: 1.4
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
-        (n_categorical_features,), or "from_dtype", default="from_dtype"
+        (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
 
         - None : no feature will be considered categorical.
@@ -2897,7 +2897,7 @@ class ExtraTreesRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
-        categorical_features="from_dtype",
+        categorical_features=None,  # TODO(1.13): change default to "from_dtype"
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
