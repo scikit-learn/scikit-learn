@@ -179,24 +179,25 @@ conda activate
 create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
 conda activate $CONDA_ENV_NAME
 
-# Sets up ccache
+# Keep pkg-config inside the env: meson's Cython sanity check resolves `python3`
+# through it, and the host's python3.pc points the build at the wrong Python
+export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig"
+export PKG_CONFIG_LIBDIR="$CONDA_PREFIX/lib/pkgconfig"
+
+# Sets up ccache. CCACHE_DIR is pinned because ccache only defaults there when
+# the legacy ~/.ccache is absent, and save_cache needs a fixed path (compression
+# is on by default, so it needs no setting here)
 export PATH="/usr/lib/ccache:$PATH"
+export CCACHE_DIR=$HOME/.cache/ccache
 ccache -M 512M
-export CCACHE_COMPRESS=1
 # Zeroing statistics so that ccache statistics are shown only for this build
 ccache -z
 
 show_installed_libraries
 
-# Specify explicitly ninja -j argument because ninja does not handle cgroups v2 and
-# use the same default rule as ninja (-j3 since we have 2 cores on CircleCI), see
+# CPU_COUNT comes from .circleci/config.yml rather than CPU detection, see
 # https://github.com/scikit-learn/scikit-learn/pull/30333
-pip install -e . -v --no-build-isolation --config-settings=compile-args="-j 3"
-
-echo "ccache build summary:"
-ccache -s
-
-export OMP_NUM_THREADS=1
+pip install -e . -v --no-build-isolation --config-settings=compile-args="-j $CPU_COUNT"
 
 if [[ "$CIRCLE_BRANCH" == "main" || "$CI_TARGET_BRANCH" == "main" ]]
 then
@@ -211,7 +212,7 @@ fi
 
 
 # The pipefail is requested to propagate exit code
-set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
+set -o pipefail && cd doc && make SPHINX_NUMJOBS=$CPU_COUNT $make_args 2>&1 | tee ~/log.txt
 
 cd -
 set +o pipefail
