@@ -118,6 +118,8 @@ from sklearn.linear_model import (
     RANSACRegressor,
     Ridge,
     RidgeClassifier,
+    RidgeClassifierCV,
+    RidgeCV,
     SGDClassifier,
     SGDOneClassSVM,
     SGDRegressor,
@@ -1022,6 +1024,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         ),
     },
     GridSearchCV: {
+        "check_array_api_same_namespace": (
+            "inference moves fitted attributes to the namespace of X, "
+            "so any namespace is accepted"
+        ),
         "check_supervised_y_2d": "DataConversionWarning not caught",
         "check_requires_y_none": "Doesn't fail gracefully",
     },
@@ -1095,6 +1101,12 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     LabelEncoder: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
+    LinearDiscriminantAnalysis: {
+        "check_array_api_same_namespace": (
+            "inference moves fitted attributes to the namespace of X, "
+            "so any namespace is accepted"
+        ),
+    },
     LinearSVC: {
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
@@ -1117,12 +1129,22 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         ),
     },
     LogisticRegression: {
+        "check_array_api_same_namespace": (
+            "inference moves fitted attributes to the namespace of X, "
+            "so any namespace is accepted"
+        ),
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    LogisticRegressionCV: {
+        "check_array_api_same_namespace": (
+            "inference moves fitted attributes to the namespace of X, "
+            "so any namespace is accepted"
         ),
     },
     MinMaxScaler: {
@@ -1239,6 +1261,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         ),
     },
     RandomizedSearchCV: {
+        "check_array_api_same_namespace": (
+            "inference moves fitted attributes to the namespace of X, "
+            "so any namespace is accepted"
+        ),
         "check_supervised_y_2d": "DataConversionWarning not caught",
         "check_requires_y_none": "Doesn't fail gracefully",
     },
@@ -1264,13 +1290,29 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     Ridge: {
+        "check_array_api_same_namespace": (
+            "inference moves fitted attributes to the namespace of X, "
+            "so any namespace is accepted"
+        ),
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
-        )
+        ),
     },
     RidgeClassifier: {
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
+        ),
+    },
+    RidgeCV: {
+        "check_array_api_same_namespace": (
+            "inference moves fitted attributes to the namespace of X, "
+            "so any namespace is accepted"
+        ),
+    },
+    RidgeClassifierCV: {
+        "check_array_api_same_namespace": (
+            "inference moves fitted attributes to the namespace of X, "
+            "so any namespace is accepted"
         ),
     },
     SelfTrainingClassifier: {
