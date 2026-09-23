@@ -16,12 +16,13 @@ from scipy.stats import bernoulli, expon, randint, uniform
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
-from sklearn.callback.tests._utils import (
-    MaxIterEstimator,
-    NoCallbackEstimator,
+from sklearn.callback.tests._common.callbacks import (
     RecordingAutoPropagatedCallback,
     RecordingCallback,
-    skip_callback_test_if_wasm,
+)
+from sklearn.callback.tests._common.estimators import (
+    MaxIterEstimator,
+    NoCallbackEstimator,
 )
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
@@ -106,6 +107,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     set_random_state,
+    skip_callback_test_if_wasm,
 )
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS

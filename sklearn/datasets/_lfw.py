@@ -30,7 +30,6 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from sklearn.utils.fixes import tarfile_extractall
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +122,7 @@ def _check_fetch_lfw(
 
         logger.debug("Decompressing the data archive to %s", data_folder_path)
         with tarfile.open(archive_path, "r:gz") as fp:
-            tarfile_extractall(fp, path=lfw_home)
+            fp.extractall(path=lfw_home, filter="data")
 
         remove(archive_path)
 
@@ -306,7 +305,7 @@ def fetch_lfw_people(
         Ratio used to resize the each face picture. If `None`, no resizing is
         performed.
 
-    min_faces_per_person : int, default=None
+    min_faces_per_person : int, default=0
         The extracted dataset will only retain pictures of people that have at
         least `min_faces_per_person` different pictures.
 
@@ -476,7 +475,7 @@ def _fetch_lfw_pairs(
     n_faces = shape.pop(0)
     shape.insert(0, 2)
     shape.insert(0, n_faces // 2)
-    pairs.shape = shape
+    pairs = pairs.reshape(shape)
 
     return pairs, target, np.array(["Different persons", "Same person"])
 

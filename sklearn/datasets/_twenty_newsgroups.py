@@ -51,7 +51,6 @@ from sklearn.datasets._base import (
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.utils import Bunch, check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.fixes import tarfile_extractall
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +81,7 @@ def _download_20newsgroups(target_dir, cache_path, n_retries, delay):
 
     logger.debug("Decompressing %s", archive_path)
     with tarfile.open(archive_path, "r:gz") as fp:
-        tarfile_extractall(fp, path=target_dir)
+        fp.extractall(path=target_dir, filter="data")
 
     with suppress(FileNotFoundError):
         os.remove(archive_path)

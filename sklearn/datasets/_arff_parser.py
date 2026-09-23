@@ -133,7 +133,7 @@ def _liac_arff_parser(
         - `"pandas"`: `X` will be a pandas DataFrame and `y` will be either a
           pandas Series or DataFrame.
 
-    columns_info : dict
+    openml_columns_info : dict
         The information provided by OpenML regarding the columns of the ARFF
         file.
 
@@ -432,6 +432,9 @@ def _pandas_arff_parser(
     single_quote_pattern = re.compile(r"^'(?P<contents>.*)'$")
 
     def strip_single_quotes(input_string):
+        if not isinstance(input_string, str):
+            return input_string
+
         match = re.search(single_quote_pattern, input_string)
         if match is None:
             return input_string
