@@ -102,6 +102,7 @@ def test_compute_class_weight_dict():
     ],
 )
 def test_compute_class_weight_dict_preserves_labels(labels):
+    """Ensure numeric-looking string labels are not converted to integer keys."""
     # Non-regression for https://github.com/scikit-learn/scikit-learn/issues/34883
     classes = np.asarray(labels)
     y = np.asarray([labels[0], labels[0], labels[1]])
