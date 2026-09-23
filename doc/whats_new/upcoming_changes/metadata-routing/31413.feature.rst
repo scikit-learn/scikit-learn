@@ -1,0 +1,9 @@
+- |Feature| Added support for auto-requesting metadata through
+  ``set_config(enable_metadata_auto_requests=True)``. This enables automatic routing of
+  common metadata like ``sample_weight``, or ``X_val``. :term:`Consumers <consumer>`
+  (estimators, scorers, and CV splitters) and consuming :term:`routers <router>` can now
+  define which metadata requests to set automatically via the ``add_auto_request``
+  method, which complements the existing class-level defaults set through
+  ``__metadata_request__*`` attributes. Refer to :ref:`metadata_routing_auto_request`
+  for more details.
+  By `Adrin Jalali`_ and :user:`Stefanie Senger <StefanieSenger>`.
