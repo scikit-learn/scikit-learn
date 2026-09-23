@@ -180,6 +180,15 @@ class GaussianNB(_BaseNB):
         Portion of the largest variance of all features that is added to
         variances for calculation stability.
 
+        This floors the per-feature variances: a feature that is (almost)
+        constant within a class would otherwise get a variance close to
+        zero, making the Gaussian density blow up and dominate the
+        log-probability ratios. The value actually added, exposed as
+        ``epsilon_``, is ``var_smoothing * max(var(X, axis=0))``. Increase
+        ``var_smoothing`` when features are nearly constant relative to the
+        largest-variance feature, or when predictions flip due to
+        floating point precision.
+
         .. versionadded:: 0.20
 
     Attributes
@@ -194,7 +203,9 @@ class GaussianNB(_BaseNB):
         class labels known to the classifier.
 
     epsilon_ : float
-        absolute additive value to variances.
+        Absolute additive value to variances, computed as
+        ``var_smoothing * max(var(X, axis=0))`` from the data passed to
+        :meth:`fit` or to the most recent :meth:`partial_fit` call.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
