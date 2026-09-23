@@ -163,8 +163,8 @@ cross-validation split:
 
 1. a clone of `base_estimator` is trained on the train subset
 2. the trained `base_estimator` makes predictions on the test subset
-3. the predictions are used to fit a calibrator (either a sigmoid or isotonic
-   regressor) (when the data is multiclass, a calibrator is fit for every class)
+3. the predictions are used to fit a calibrator (when the data is multiclass,
+   a calibrator is fit for every class)
 
 This results in an
 ensemble of :math:`k` `(classifier, calibrator)` couples where each calibrator maps

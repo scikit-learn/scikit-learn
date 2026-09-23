@@ -421,8 +421,7 @@ for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
 #   points in the simplex. This effect is more pronounced with smaller
 #   calibration sets.
 #
-# - The temperature scaling method applies a single global rescaling of the
-#   multinomial logits. This induces a smooth mapping that preserves the
+# - The temperature scaling method induces a smooth mapping that preserves the
 #   ranking of the predicted classes while adjusting their confidence.
 #
 # Let us now consider the quantitative evaluation results of the available
