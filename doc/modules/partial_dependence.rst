@@ -261,6 +261,19 @@ estimators that support it, and 'brute' is used for the rest.
     samples differently. Remember, however, that the primary assumption for
     interpreting PDPs is that the features should be independent.
 
+    More precisely, the two methods estimate different quantities when the
+    features are correlated. The `'brute'` method computes the
+    **interventional** partial dependence
+    :math:`E[f(x_S, X_C) \mid \text{do}(X_S = x_S)]`, which is the quantity
+    typically intended when interpreting PDPs. The `'recursion'` method
+    (tree-based estimators only) computes the **conditional** partial
+    dependence :math:`E[f(x_S, X_C) \mid X_S = x_S]`, which averages over the
+    conditional distribution of :math:`X_C` given :math:`X_S` and therefore
+    reflects the correlation structure of the training data. As a result, the
+    two methods are **not** equivalent for tree-based estimators when features
+    are correlated, and `'recursion'` should not be interpreted as an
+    interventional PDP in that setting.
+
 
 .. rubric:: Examples
 

@@ -506,7 +506,9 @@ def partial_dependence(
           `'average'`.
 
         - `'brute'` is supported for any estimator, but is more
-          computationally intensive.
+          computationally intensive. Unlike `'recursion'`, it computes the
+          interventional partial dependence and is the recommended method when
+          features are correlated.
 
         - `'auto'`: the `'recursion'` is used for estimators that support it,
           and `'brute'` is used otherwise. If `sample_weight` is not `None`,
@@ -564,6 +566,15 @@ def partial_dependence(
     --------
     PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
     PartialDependenceDisplay : Partial Dependence visualization.
+
+    Notes
+    -----
+    When features are correlated, ``method='recursion'`` (tree-based
+    estimators only) and ``method='brute'`` estimate different quantities
+    and are **not** equivalent. ``'brute'`` computes the interventional
+    partial dependence; ``'recursion'`` computes the conditional partial
+    dependence, which reflects the correlation structure of the training
+    data. See :ref:`pdp_method_differences` for the full discussion.
 
     Examples
     --------
