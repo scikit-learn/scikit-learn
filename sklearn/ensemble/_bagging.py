@@ -165,11 +165,21 @@ def _parallel_build_estimators(
         if getattr(ensemble, "is_categorical_", None) is not None:
             if requires_feature_indexing:
                 cat_subset = ensemble.is_categorical_[features]
-                estimator.set_params(
-                    categorical_features=None if not np.any(cat_subset) else cat_subset
-                )
+                if np.any(cat_subset):
+                    estimator.set_params(categorical_features=cat_subset)
+                    categorical_counts = ensemble._categorical_counts[features]
+                else:
+                    estimator.set_params(categorical_features=None)
+                    categorical_counts = None
             else:
                 estimator.set_params(categorical_features=ensemble.is_categorical_)
+                categorical_counts = ensemble._categorical_counts
+
+            estimator_fit = partial(
+                estimator._fit,
+                check_input=check_input,
+                categorical_counts=categorical_counts,
+            )
 
         fit_params_ = fit_params.copy()
 

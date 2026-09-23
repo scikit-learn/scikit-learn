@@ -144,6 +144,7 @@ def _parallel_build_trees(
     class_weight=None,
     n_samples_bootstrap=None,
     missing_values_in_feature_mask=None,
+    categorical_counts=None,
 ):
     """
     Private function used to fit a single tree in parallel."""
@@ -169,6 +170,7 @@ def _parallel_build_trees(
             sample_weight=sample_weight_tree,
             check_input=False,
             missing_values_in_feature_mask=missing_values_in_feature_mask,
+            categorical_counts=categorical_counts,
         )
     else:
         tree._fit(
@@ -177,6 +179,7 @@ def _parallel_build_trees(
             sample_weight=sample_weight,
             check_input=False,
             missing_values_in_feature_mask=missing_values_in_feature_mask,
+            categorical_counts=categorical_counts,
         )
 
     return tree
@@ -371,6 +374,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             self._categorical_encoder = None
             self._preprocessor = None
+            self._categorical_counts = None
             X, y = validate_data(
                 self,
                 X,
@@ -528,6 +532,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
                     missing_values_in_feature_mask=missing_values_in_feature_mask,
+                    categorical_counts=self._categorical_counts,
                 )
                 for i, t in enumerate(trees)
             )

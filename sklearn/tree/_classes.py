@@ -247,24 +247,21 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         sample_weight=None,
         check_input=True,
         missing_values_in_feature_mask=None,
+        categorical_counts=None,
     ):
         random_state = check_random_state(self.random_state)
-        # Ensembles may pass an already-resolved bool mask and already-encoded X
-        # with check_input=False. Skip re-encoding to avoid a per-tree copy and
-        # OrdinalEncoder under n_jobs.
-        categorical_features = self.categorical_features
-        already_encoded = (
-            not check_input
-            and isinstance(categorical_features, np.ndarray)
-            and categorical_features.dtype == bool
-            and categorical_features.shape == (X.shape[1],)
-        )
+        # Ensembles pass an already-resolved bool mask, already-encoded X and
+        # precomputed categorical_counts to skip re-encoding (avoiding a per-tree
+        # copy and OrdinalEncoder under n_jobs).
+        already_encoded = categorical_counts is not None
         if already_encoded:
-            self.is_categorical_ = (
-                categorical_features if np.any(categorical_features) else None
-            )
+            assert check_input is False
+            self.is_categorical_ = categorical_counts >= 0
+            if not np.any(self.is_categorical_):
+                self.is_categorical_ = None
             self._categorical_encoder = None
             self._preprocessor = None
+            self._categorical_counts = categorical_counts
             has_categorical = self.is_categorical_ is not None
         else:
             self.is_categorical_ = _check_categorical_features(
@@ -290,6 +287,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 self._categorical_encoder = None
                 self._preprocessor = None
+                self._categorical_counts = None
 
         if check_input:
             # Need to validate separately here.
@@ -514,27 +512,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 f"[0, {max_n_categories - 1}]."
             )
 
-            if self._categorical_encoder is not None:
-                category_counts = []
-                for categories in self._categorical_encoder.categories_:
-                    # OrdinalEncoder places np.nan last if missing values reach fit.
-                    if len(categories) and is_scalar_nan(categories[-1]):
-                        category_counts.append(len(categories) - 1)
-                    else:
-                        category_counts.append(len(categories))
-            else:
-                # Already-encoded ensemble input: category codes are dense in
-                # [0, n_categories - 1] with missing values as NaN.
-                category_counts = []
-                for idx in np.flatnonzero(self.is_categorical_):
-                    col = X[:, idx]
-                    if issparse(X):
-                        col = col.toarray().ravel()
-                    finite = col[np.isfinite(col)]
-                    if finite.size == 0:
-                        category_counts.append(0)
-                    else:
-                        category_counts.append(int(np.max(finite)) + 1)
+            category_counts = self._categorical_counts[self.is_categorical_]
 
             for idx, n_cats in zip(
                 np.flatnonzero(self.is_categorical_), category_counts
@@ -650,6 +628,18 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self._categorical_encoder = self._preprocessor.named_transformers_[
                 "categorical"
             ]
+
+            self._categorical_counts = np.full(
+                self.is_categorical_.shape[0], -1, np.intp
+            )
+            counts = []
+            for categories in self._categorical_encoder.categories_:
+                # OrdinalEncoder places np.nan last if missing values reach fit.
+                if len(categories) and is_scalar_nan(categories[-1]):
+                    counts.append(len(categories) - 1)
+                else:
+                    counts.append(len(categories))
+            self._categorical_counts[self.is_categorical_] = counts
         else:
             X_transformed = self._preprocessor.transform(X)
 
