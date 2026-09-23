@@ -337,9 +337,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         if issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
 
-        categorical_features = getattr(self, "categorical_features", None)
-        self.is_categorical_ = _check_categorical_features(X, categorical_features)
-        has_categorical = self.is_categorical_ is not None
+        if hasattr(self, "categorical_features"):
+            self.is_categorical_ = _check_categorical_features(
+                X, self.categorical_features
+            )
+            has_categorical = self.is_categorical_ is not None
+        else:
+            has_categorical = False
 
         if has_categorical and self.warm_start and getattr(self, "estimators_", None):
             raise ValueError(
@@ -512,7 +516,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Trees must get the bool mask, not categorical_features="from_dtype" (or
             # column names). The forest already turned X into a NumPy array, so trees
             # can no longer read dtypes/names and would treat all features as numeric.
-            if self.is_categorical_ is not None:
+            if has_categorical:
                 for tree in trees:
                     tree.set_params(categorical_features=self.is_categorical_)
 
@@ -679,7 +683,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             ensure_all_finite = True
 
-        has_categorical = self.is_categorical_ is not None
+        has_categorical = getattr(self, "is_categorical_", None) is not None
         if has_categorical:
             if issparse(X):
                 raise NotImplementedError(
