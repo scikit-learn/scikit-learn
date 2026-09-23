@@ -142,7 +142,7 @@ plt.show()
 #
 # Post-hoc calibration of the predicted probabilities of
 # :class:`~sklearn.naive_bayes.GaussianNB` with :ref:`isotonic` or
-# :ref:`Sigmoid regression <sigmoid_regressor>` fix this issue to a good extent as 
+# :ref:`Sigmoid regression <sigmoid_regressor>` fix this issue to a good extent as
 # can be seen from the nearly diagonal calibration curve. Neither method is perfect
 # because of the limited amount of training and calibration data (1,000 samples
 # for both).
