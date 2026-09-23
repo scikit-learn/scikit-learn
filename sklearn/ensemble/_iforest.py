@@ -413,6 +413,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         else:
             self._categorical_encoder = None
             self._preprocessor = None
+            self._categorical_counts = None
             X = validate_data(
                 self,
                 X,
