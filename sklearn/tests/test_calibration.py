@@ -321,7 +321,6 @@ def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
     ],
 )
 @pytest.mark.parametrize("calibration_method", ["temperature", "sigmoid", "isotonic"])
-# @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_asymptotic_multiclass_calibration_improvement(
     estimator, is_loss_expected_to_improve, calibration_method, global_random_seed
 ):
