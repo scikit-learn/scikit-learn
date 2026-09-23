@@ -1001,7 +1001,10 @@ def test_neighbors_regressors_zero_distance():
 
 @pytest.mark.parametrize("y_dtype", [np.int32, np.int64, np.float32, np.float64])
 @pytest.mark.parametrize("weights", ["uniform", "distance"])
-def test_radius_neighbors_regressor_empty_neighborhood_dtype(y_dtype, weights):
+@pytest.mark.parametrize("n_outputs", [1, 2])
+def test_radius_neighbors_regressor_empty_neighborhood_dtype(
+    y_dtype, weights, n_outputs
+):
     """Empty neighborhoods must predict NaN and warn for any target dtype.
 
     Non-regression test for #12960: the placeholder was built with
@@ -1012,11 +1015,14 @@ def test_radius_neighbors_regressor_empty_neighborhood_dtype(y_dtype, weights):
     """
     X = np.array([[0.0], [1.0], [2.0]])
     y = np.array([0, 1, 2], dtype=y_dtype)
+    if n_outputs == 2:
+        y = np.column_stack([y, y])
 
     est = neighbors.RadiusNeighborsRegressor(radius=0.5, weights=weights).fit(X, y)
     with pytest.warns(UserWarning, match="no neighbors"):
         y_pred = est.predict(np.array([[100.0]]))
 
+    assert y_pred.shape == ((1,) if n_outputs == 1 else (1, n_outputs))
     assert np.issubdtype(y_pred.dtype, np.floating)
     assert np.isnan(y_pred).all()
 
