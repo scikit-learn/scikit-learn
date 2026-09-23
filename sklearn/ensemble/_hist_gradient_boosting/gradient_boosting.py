@@ -419,10 +419,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         X_val : array-like of shape (n_val, n_features)
             Additional sample of features for validation used in early stopping.
 
-            In a `Pipeline`, `X_val` is transformed like `X` by default (see
-            `transform_input`). With metadata routing and auto-requests enabled
-            (:func:`~sklearn.set_config`), `X_val`, `y_val` and `sample_weight_val` are
-            routed automatically.
+            In a :class:`~pipeline.Pipeline`, `X_val` is transformed like `X` by default
+            (`transform_input`). Passing it through the pipeline requires metadata
+            routing; with auto-requests also enabled, `X_val`, `_val` and
+            `sample_weight_val` are requested automatically
+            (:func:`~sklearn.set_config`). See
+            :ref:`metadata_routing_auto_request_user`.
 
             .. versionadded:: 1.7
 
@@ -1361,11 +1363,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def get_metadata_routing(self):
         """Get metadata routing of this object.
 
-        When `enable_metadata_auto_requests=True` (and metadata routing is enabled),
-        `fit` auto-requests `X_val`, `y_val` and `sample_weight_val`.
-
         Please check :ref:`User Guide <metadata_routing>` on how the routing mechanism
-        works, specifically the section on :ref:`metadata_routing_auto_request_user`.
+        works.
 
         Returns
         -------
