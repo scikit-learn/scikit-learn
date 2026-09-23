@@ -378,7 +378,7 @@ def test_asymptotic_multiclass_calibration_improvement(
     log_loss_uncal = log_loss(y_test, y_pred_uncal)
     log_loss_cal = log_loss(y_test, y_pred_cal)
     if is_loss_expected_to_improve:
-        assert log_loss_cal < 0.9 * log_loss_uncal  # at least 10% loss deacrease
+        assert log_loss_cal < 0.9 * log_loss_uncal  # at least 10% loss decrease
     else:
         # Degradation should never be large. Increasing calibration and test
         # data size would allow to reduce the 2% degradation at the cost of
