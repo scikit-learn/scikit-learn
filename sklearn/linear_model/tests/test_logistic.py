@@ -2759,6 +2759,45 @@ def test_newton_cholesky_fallback_to_lbfgs():
     assert n_iter_nc_limited == lr_nc_limited.max_iter - 1
 
 
+def test_newton_cholesky_uncentered_X_silently_wrong():
+    """Newton-Cholesky silently loses precision for features far from zero.
+
+    The Hessian used by the Newton-Cholesky solver is built from the *raw*,
+    uncentered [X, 1] design (see ``LinearModelLoss.gradient_hessian``).
+    Eliminating the intercept row/column during the Cholesky factorization is
+    algebraically equivalent to Ridge's algebraic centering trick
+    i.e. it implicitly computes ``X.T @ X - n * mean(X) * mean(X).T``. When the
+    mean of X is large relative to its variance, this subtracts two
+    close-in-magnitude numbers and can catastrophically cancel
+
+    Shifting every feature by a constant only shifts the intercept, so the
+    fitted coefficients should be (almost) unchanged. No LinAlgWarning is
+    raised here, yet the coefficients come back substantially wrong.
+    """
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 5000, 5
+    X_centered = rng.normal(size=(n_samples, n_features)) * 1e-5
+    true_coef = rng.normal(size=n_features)
+    proba = 1 / (1 + np.exp(-(X_centered @ true_coef)))
+    y = (rng.uniform(size=n_samples) < proba).astype(int)
+
+    # Reliable reference: same (well-scaled) problem, solved with lbfgs.
+    ref = LogisticRegression(solver="lbfgs", C=1.0, tol=1e-12, max_iter=20000).fit(
+        X_centered, y
+    )
+
+    X = (X_centered + 3.0).astype(np.float32)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", LinAlgWarning)
+        clf = LogisticRegression(solver="newton-cholesky", C=1.0, tol=1e-10).fit(X, y)
+
+    rel_error = np.linalg.norm(clf.coef_ - ref.coef_) / np.linalg.norm(ref.coef_)
+    assert rel_error < 1e-2, (
+        f"newton-cholesky coefficients are off by {rel_error:.0%} relative to "
+        "the well-conditioned reference, with no LinAlgWarning raised."
+    )
+
+
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
 # TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
