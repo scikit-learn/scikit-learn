@@ -159,32 +159,6 @@ def _parallel_build_estimators(
             sample_weight,
         )
 
-        # Trees must get the bool mask, not categorical_features="from_dtype" (or
-        # column names). The ensemble already turned X into a NumPy array, so trees
-        # can no longer read dtypes/names and would treat all features as numeric.
-        # Only IsolationForest sets is_categorical_ among Bagging subclasses, and
-        # only when its base estimator actually accepts categorical_features.
-        if getattr(ensemble, "is_categorical_", None) is not None and hasattr(
-            estimator, "categorical_features"
-        ):
-            if requires_feature_indexing:
-                cat_subset = ensemble.is_categorical_[features]
-                if np.any(cat_subset):
-                    estimator.set_params(categorical_features=cat_subset)
-                    categorical_counts = ensemble._categorical_counts[features]
-                else:
-                    estimator.set_params(categorical_features=None)
-                    categorical_counts = None
-            else:
-                estimator.set_params(categorical_features=ensemble.is_categorical_)
-                categorical_counts = ensemble._categorical_counts
-
-            estimator_fit = partial(
-                estimator._fit,
-                check_input=check_input,
-                categorical_counts=categorical_counts,
-            )
-
         fit_params_ = fit_params.copy()
 
         # Note: Row sampling can be achieved either through setting sample_weight or
