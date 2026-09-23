@@ -341,6 +341,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self.is_categorical_ = _check_categorical_features(X, categorical_features)
         has_categorical = self.is_categorical_ is not None
 
+        if has_categorical and self.warm_start and getattr(self, "estimators_", None):
+            raise ValueError(
+                "warm_start is not supported with categorical features. "
+                "Refitting would re-encode categories and invalidate splits "
+                "learned by trees from earlier iterations."
+            )
+
         if has_categorical:
             if issparse(X):
                 raise NotImplementedError(
@@ -1498,6 +1505,8 @@ class RandomForestClassifier(ForestClassifier):
         features are only supported for binary classification and
         single-output regression.
 
+        ``warm_start`` is not supported when categorical features are used.
+
         .. versionadded:: 1.11
 
     Attributes
@@ -1922,7 +1931,13 @@ class RandomForestRegressor(ForestRegressor):
         features are only supported for single-output regression.
         Categorical features are not supported with `criterion="absolute_error"`.
 
+        ``warm_start`` is not supported when categorical features are used.
+
         .. versionadded:: 1.11
+
+    Attributes
+    ----------
+    estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
@@ -1947,6 +1962,12 @@ class RandomForestRegressor(ForestRegressor):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    is_categorical_ : ndarray of shape (n_features,) or None
+        Boolean mask indicating which features are treated as categorical.
+        ``None`` if no categorical features are used.
+
+        .. versionadded:: 1.11
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2342,6 +2363,8 @@ class ExtraTreesClassifier(ForestClassifier):
         Trees in the forest use the random split strategy, including multi-class
         classification and multi-output targets.
 
+        ``warm_start`` is not supported when categorical features are used.
+
         .. versionadded:: 1.11
 
     Attributes
@@ -2379,6 +2402,12 @@ class ExtraTreesClassifier(ForestClassifier):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    is_categorical_ : ndarray of shape (n_features,) or None
+        Boolean mask indicating which features are treated as categorical.
+        ``None`` if no categorical features are used.
+
+        .. versionadded:: 1.11
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2743,6 +2772,8 @@ class ExtraTreesRegressor(ForestRegressor):
         multi-output targets.
         Categorical features are not supported with `criterion="absolute_error"`.
 
+        ``warm_start`` is not supported when categorical features are used.
+
         .. versionadded:: 1.11
 
     Attributes
@@ -2772,6 +2803,12 @@ class ExtraTreesRegressor(ForestRegressor):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    is_categorical_ : ndarray of shape (n_features,) or None
+        Boolean mask indicating which features are treated as categorical.
+        ``None`` if no categorical features are used.
+
+        .. versionadded:: 1.11
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

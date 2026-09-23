@@ -465,3 +465,25 @@ def test_iforest_categorical_from_dtype_propagated_to_trees(
         assert_array_equal(tree.is_categorical_, [False, True])
         assert tree._preprocessor is None
     assert clf.score_samples(X).shape == (X.shape[0],)
+
+
+def test_iforest_warm_start_with_categorical_features_raises(global_random_seed):
+    """Refitting IsolationForest with warm_start and categoricals is rejected."""
+    X = np.array([["a"], ["a"], ["b"], ["b"]], dtype=object)
+    clf = IsolationForest(
+        categorical_features=[0],
+        n_estimators=2,
+        warm_start=True,
+        random_state=global_random_seed,
+    )
+    clf.fit(X)
+    assert len(clf.estimators_) == 2
+
+    with pytest.raises(
+        ValueError, match="warm_start is not supported with categorical features"
+    ):
+        clf.fit(X)
+
+    clf.set_params(warm_start=False)
+    clf.fit(X)
+    assert len(clf.estimators_) == 2

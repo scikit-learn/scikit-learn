@@ -163,6 +163,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         by ``np.nan``; unknown categories at prediction time are also treated as
         missing values.
 
+        ``warm_start`` is not supported when categorical features are used.
+
         .. versionadded:: 1.11
 
     Attributes
@@ -394,6 +396,13 @@ class IsolationForest(OutlierMixin, BaseBagging):
         """
         self.is_categorical_ = _check_categorical_features(X, self.categorical_features)
         has_categorical = self.is_categorical_ is not None
+
+        if has_categorical and self.warm_start and getattr(self, "estimators_", None):
+            raise ValueError(
+                "warm_start is not supported with categorical features. "
+                "Refitting would re-encode categories and invalidate splits "
+                "learned by trees from earlier iterations."
+            )
 
         if has_categorical:
             if issparse(X):

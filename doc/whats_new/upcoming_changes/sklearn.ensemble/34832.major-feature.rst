@@ -5,5 +5,5 @@
   Random forests support binary classification and single-output regression with up to
   255 categories per feature. Extra trees and isolation forests support up to
   ``2**24 - 1`` categories per feature, including multi-class and multi-output targets
-  for extra trees.
+  for extra trees. ``warm_start`` is not supported together with categorical features.
   By :user:`Adam Li <adam2392>`.
