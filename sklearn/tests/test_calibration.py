@@ -332,9 +332,9 @@ def test_asymptotic_multiclass_calibration_improvement(
     It covers the example's base classifiers on slightly imbalanced 3-class
     blob data (one class twice as frequent as each of the others).
 
-    All calibration methods are expected to improve the log-loss of the base
-    classifiers given enough calibration data because the log-loss is a
-    strictly proper scoring rule.
+    Given enough calibration data, all calibration methods aim to improve the
+    log loss by reducing its miscalibration term while keeping refinement mostly
+    unchanged.
 
     GaussianNB is already a very good fit for this problem so we do not expect
     it to be improved by calibration. Shallow trees and dummy classifiers are
