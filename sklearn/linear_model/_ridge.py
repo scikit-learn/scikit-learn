@@ -212,19 +212,6 @@ def _solve_lsqr(
     return coefs, n_iter
 
 
-# Below this ratio of "subtracted correction" to "surviving (centered)
-# diagonal", the relative error introduced by canceling X.T @ X against
-# n_samples * outer(X_offset, X_offset) stays comfortably under sqrt(eps),
-# i.e. at the noise floor of the rest of the computation (the Cholesky
-# solve itself). See discussion on gh-34793.
-_CHOLESKY_CENTERING_CANCELLATION_RATIO = 0.1
-
-
-def _cholesky_centering_would_cancel(A_diag, correction_diag, dtype):
-    threshold = _CHOLESKY_CENTERING_CANCELLATION_RATIO / np.sqrt(np.finfo(dtype).eps)
-    return bool(np.any(A_diag <= 0) or np.any(correction_diag > threshold * A_diag))
-
-
 def _solve_cholesky(X, y, alpha, X_offset=None):
     # w = inv(X^t X + alpha*Id) * X.T y
     #
@@ -234,15 +221,6 @@ def _solve_cholesky(X, y, alpha, X_offset=None):
     #   Xc.T @ Xc = X.T @ X - n_samples * outer(X_offset, X_offset)
     # Xy needs no such correction: Xc.T @ yc = X.T @ yc - X_offset * yc.sum(0),
     # and yc.sum(0) is 0 because yc is centered.
-    #
-    # Unlike `X - X_offset`, which only suffers the mild precision loss of a
-    # single subtraction, this correction subtracts two squared, same-order-
-    # of-magnitude quantities and can catastrophically cancel when X_offset
-    # is large relative to the spread of X (e.g. un-centered features far
-    # from zero). When `_cholesky_centering_would_cancel` detects this, we
-    # fall back to materializing the centered X locally and recomputing the
-    # Gram matrix from it directly -- still solved with Cholesky, just
-    # without the unsafe algebraic shortcut for this particular input.
     n_features = X.shape[1]
     n_targets = y.shape[1]
 
@@ -250,11 +228,7 @@ def _solve_cholesky(X, y, alpha, X_offset=None):
     Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
     if X_offset is not None:
-        correction = X.shape[0] * np.outer(X_offset, X_offset)
-        A -= correction
-        if _cholesky_centering_would_cancel(np.diag(A), np.diag(correction), X.dtype):
-            Xc = X - X_offset
-            A = safe_sparse_dot(Xc.T, Xc, dense_output=True)
+        A -= X.shape[0] * np.outer(X_offset, X_offset)
 
     one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
 
