@@ -1,0 +1,5 @@
+- |Feature| :class:`~ensemble.HistGradientBoostingClassifier` and
+  :class:`~ensemble.HistGradientBoostingRegressor` auto-request `X_val`, `y_val` and
+  `sample_weight_val` when metadata routing and auto-requests are enabled via
+  :func:`~sklearn.set_config`.
+  By :user:`Stefanie Senger <StefanieSenger>`.
