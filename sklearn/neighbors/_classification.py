@@ -7,6 +7,7 @@ import warnings
 from numbers import Integral
 
 import numpy as np
+from scipy import stats
 
 from sklearn.base import ClassifierMixin, _fit_context
 from sklearn.metrics._pairwise_distances_reduction import (
@@ -23,7 +24,6 @@ from sklearn.neighbors._base import (
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils.arrayfuncs import _all_with_any_reduction_axis_1
 from sklearn.utils.extmath import weighted_mode
-from sklearn.utils.fixes import _mode
 from sklearn.utils.validation import (
     _is_arraylike,
     _num_samples,
@@ -299,7 +299,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             if weights is None:
-                mode, _ = _mode(_y[neigh_ind, k], axis=1)
+                mode, _ = stats.mode(_y[neigh_ind, k], axis=1, keepdims=True)
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
