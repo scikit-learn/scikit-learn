@@ -55,13 +55,15 @@ represents the average predicted probability in each bin.
 The y-axis is then the *fraction of positives* given the predictions of that bin, i.e.
 the proportion of samples whose class is the positive class (in each bin).
 
-The number of bins is controlled by the `n_bins` parameter. While a higher
-number of bins provides a more granular view, it also requires more data to
-ensure that each bin has a sufficient number of samples to produce a stable
-estimate of the fraction of positives. When `n_bins="cube_root"`, the number of
-bins is automatically set to :math:`\lceil n_{\text{samples}}^{1/3} \rceil`,
-which aims to balance the trade-off between the bias and variance of the
-estimate [10]_ [11]_.
+The number of bins is controlled by the `n_bins` parameter which is subject to the
+usual bias-variance trade-off. While a higher number of bins provides a more granular
+view (less bias), it also requires more data to ensure that each bin has a sufficient
+number of samples to produce a stable estimate of the fraction of positives (variance).
+When `n_bins="cube_root"`, the number of bins is automatically set to
+:math:`\lceil n_{\text{samples}}^{1/3} \rceil`.
+This choice aims to balance this trade-off. The exponent 1/3 from the cube root is
+asymptotically optimal (large sample limit), see [10]_ and the Appendix of [11]_. For a
+small number of samples, say 100, it might return slightly too low number of bins.
 
 The top calibration curve plot is created with
 :func:`CalibrationDisplay.from_estimator`, which uses :func:`calibration_curve` to
@@ -161,8 +163,8 @@ cross-validation split:
 
 1. a clone of `base_estimator` is trained on the train subset
 2. the trained `base_estimator` makes predictions on the test subset
-3. the predictions are used to fit a calibrator (either a sigmoid or isotonic
-   regressor) (when the data is multiclass, a calibrator is fit for every class)
+3. the predictions are used to fit a calibrator (when the data is multiclass,
+   one calibrator is fit for each class)
 
 This results in an
 ensemble of :math:`k` `(classifier, calibrator)` couples where each calibrator maps
@@ -205,10 +207,10 @@ Alternatively an already fitted classifier can be calibrated by using a
 :class:`~sklearn.frozen.FrozenEstimator` as
 ``CalibratedClassifierCV(estimator=FrozenEstimator(estimator))``.
 It is up to the user to make sure that the data used for fitting the classifier
-is disjoint from the data used for fitting the regressor.
+is disjoint from the data used for fitting the calibrator.
 
-:class:`CalibratedClassifierCV` supports the use of two regression techniques
-for calibration via the `method` parameter: `"sigmoid"` and `"isotonic"`.
+:class:`CalibratedClassifierCV` supports the use of three regression techniques for
+calibration via the `method` parameter: `"sigmoid"`, `"isotonic"` and `"temperature"`.
 
 .. _sigmoid_regressor:
 
@@ -221,9 +223,11 @@ The sigmoid regressor, `method="sigmoid"` is based on Platt's logistic model [4]
        p(y_i = 1 | f_i) = \frac{1}{1 + \exp(A f_i + B)} \,,
 
 where :math:`y_i` is the true label of sample :math:`i` and :math:`f_i`
-is the output of the un-calibrated classifier for sample :math:`i`. :math:`A`
-and :math:`B` are real numbers to be determined when fitting the regressor via
-maximum likelihood.
+is the uncalibrated classifier output for that sample. When the classifier
+implements :term:`predict_proba`, :math:`f_i = \text{logit}(\hat{p}_i)` is the
+logit of the predicted probability; otherwise, :math:`f_i` is the value from
+:term:`decision_function`. :math:`A` and :math:`B` are real numbers to be
+determined when fitting via maximum likelihood.
 
 The sigmoid method assumes the :ref:`calibration curve <calibration_curve>`
 can be corrected by applying a sigmoid function to the raw predictions. This
@@ -249,9 +253,11 @@ a step-wise non-decreasing function, see :mod:`sklearn.isotonic`. It minimizes:
        \sum_{i=1}^{n} (y_i - \hat{f}_i)^2
 
 subject to :math:`\hat{f}_i \geq \hat{f}_j` whenever
-:math:`f_i \geq f_j`. :math:`y_i` is the true
-label of sample :math:`i` and :math:`\hat{f}_i` is the output of the
-calibrated classifier for sample :math:`i` (i.e., the calibrated probability).
+:math:`f_i \geq f_j`. Here :math:`y_i` is the true label of sample
+:math:`i`, :math:`f_i` is the uncalibrated predicted probability from
+:term:`predict_proba` or score from :term:`decision_function`,
+and :math:`\hat{f}_i` is the recalibrated probability.
+
 This method is more general when compared to `'sigmoid'` as the only restriction
 is that the mapping function is monotonically increasing. It is thus more
 powerful as it can correct any monotonic distortion of the un-calibrated model.
@@ -366,10 +372,12 @@ parameters for each single class.
        <https://proceedings.mlr.press/v70/guo17a/guo17a.pdf>`_,
        C. Guo, G. Pleiss, Y. Sun, & K. Q. Weinberger, ICML 2017.
 
-.. [10] `Minimum-Risk Recalibration of Classifiers
-       <https://proceedings.neurips.cc/paper_files/paper/2023/hash/dbd6b295535e44f2b8ec0c3f1da7c509-Abstract-Conference.html>`_,
-       Sun, Z., Song, D., & Hero, A. O., NeurIPS 2023.
+.. [10] Charles J. Stone. (1982).
+       :doi:`"Optimal Global Rates of Convergence for Nonparametric Regression."
+       <10.1214/aos/1176345969>`
+       The annals of statistics, 1040-1053.
 
-.. [11] `Information-Theoretic Generalization Analysis for Expected Calibration Error
-       <https://arxiv.org/abs/2405.15709>`_,
-       Futami, F., & Fujisawa, M., arXiv:2405.15709, 2024.
+.. [11] Timo Dimitriadis, Tilmann Gneiting, and Alexander I. Jordan. (2021).
+       :doi:`"Stable reliability diagrams for probabilistic classifiers"
+       <10.1073/pnas.2016191118>`
+       Proceedings of the National Academy of Sciences, 118(8), e2016191118.

@@ -1153,7 +1153,7 @@ Changelog
   datasets was created. These include:
   :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`,
   :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`,
-  :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py` and
+  :ref:`sphx_glr_auto_examples_applications_plot_wikipedia_principal_eigenvector.py` and
   others.
 
 - Faster :ref:`least_angle_regression` algorithm. It is now 2x

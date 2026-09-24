@@ -596,8 +596,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -632,8 +630,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -666,8 +662,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -696,8 +690,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -787,8 +779,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         log_resp : array, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.

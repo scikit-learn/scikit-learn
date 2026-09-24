@@ -387,7 +387,7 @@ def pytest_generate_tests(metafunc):
     See the documentation for the SKLEARN_TESTS_GLOBAL_RANDOM_SEED
     variable for instructions on how to use this fixture.
 
-    https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
+    https://scikit-learn.org/dev/developers/global_configuration.html#sklearn-tests-global-random-seed
 
     """
     # When using pytest-xdist this function is called in the xdist workers.

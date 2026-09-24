@@ -232,8 +232,8 @@ As it does not rely on the calculation of the covariance matrix, the 'svd'
 solver may be preferable in situations where the number of features is large.
 The 'svd' solver cannot be used with shrinkage.
 For QDA, the use of the SVD solver relies on the fact that the covariance
-matrix :math:`\Sigma_k` is, by definition, equal to :math:`\frac{1}{n - 1}
-X_k^TX_k = \frac{1}{n - 1} V S^2 V^T` where :math:`V` comes from the SVD of the (centered)
+matrix :math:`\Sigma_k` is, by definition, equal to :math:`\frac{1}{n}
+X_k^TX_k = \frac{1}{n} V S^2 V^T` where :math:`V` comes from the SVD of the (centered)
 matrix: :math:`X_k = U S V^T`. It turns out that we can compute the
 log-posterior above without having to explicitly compute :math:`\Sigma`:
 computing :math:`S` and :math:`V` via the SVD of :math:`X` is enough. For

@@ -152,6 +152,11 @@ def yield_mixed_namespace_input_permutations():
         NamespaceAndDevice("torch", "mps"),
         "numpy to torch mps",
     )
+    yield (
+        NamespaceAndDevice("numpy", None),
+        NamespaceAndDevice("cupy", None),
+        "numpy to cupy",
+    )
 
     yield (
         NamespaceAndDevice("array_api_strict", "device1"),
@@ -580,13 +585,26 @@ def move_to(*arrays, xp, device):
             if xp == xp_array and device == device_array:
                 converted_arrays.append(array)
             else:
-                if _is_xp_namespace(xp, "torch") and _is_numpy_namespace(xp_array):
-                    if any(stride < 0 for stride in array.strides):
-                        # Work around PyTorch aborting the process when importing
-                        # negative-strided NumPy arrays with DLPack. Remove this once
-                        # https://github.com/pytorch/pytorch/issues/188023 is fixed.
-                        # See also https://github.com/scikit-learn/scikit-learn/issues/34307
-                        array = numpy.ascontiguousarray(array)
+                if (
+                    _is_numpy_namespace(xp_array)
+                    and not _is_numpy_namespace(xp)
+                    and not isinstance(array, numpy.ndarray)
+                ):
+                    # Other array-like containers (e.g. Python lists, pandas Series...)
+                    # are first converted to numpy arrays to ensure dlpack
+                    # compatibility.
+                    array = numpy.asarray(array)
+
+                if (
+                    _is_xp_namespace(xp, "torch")
+                    and _is_numpy_namespace(xp_array)
+                    and any(stride < 0 for stride in array.strides)
+                ):
+                    # Work around PyTorch aborting the process when importing
+                    # negative-strided NumPy arrays with DLPack. Remove this once
+                    # https://github.com/pytorch/pytorch/issues/188023 is fixed.
+                    # See also https://github.com/scikit-learn/scikit-learn/issues/34307
+                    array = numpy.ascontiguousarray(array)
                 try:
                     # The dlpack protocol is the future proof and library agnostic
                     # method to transfer arrays across namespace and device boundaries
@@ -933,74 +951,6 @@ def _xlogy(x, y, xp=None):
     with numpy.errstate(divide="ignore", invalid="ignore"):
         temp = x * xp.log(y)
     return xp.where(x == 0.0, xp.asarray(0.0, dtype=temp.dtype, device=device), temp)
-
-
-def _nanmin(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmin(X, axis=axis))
-
-    else:
-        mask = xp.isnan(X)
-        X = xp.min(
-            xp.where(mask, xp.asarray(+xp.inf, dtype=X.dtype, device=device), X),
-            axis=axis,
-        )
-        # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
-        if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device), X)
-        return X
-
-
-def _nanmax(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmax(X, axis=axis))
-
-    else:
-        mask = xp.isnan(X)
-        X = xp.max(
-            xp.where(mask, xp.asarray(-xp.inf, dtype=X.dtype, device=device), X),
-            axis=axis,
-        )
-        # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
-        if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device), X)
-        return X
-
-
-def _nanmean(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmean(X, axis=axis))
-    else:
-        mask = xp.isnan(X)
-        total = xp.sum(
-            xp.where(mask, xp.asarray(0.0, dtype=X.dtype, device=device), X), axis=axis
-        )
-        count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
-        return total / count
-
-
-def _nansum(X, axis=None, xp=None, keepdims=False, dtype=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, X_device = get_namespace_and_device(X, xp=xp)
-
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nansum(X, axis=axis, keepdims=keepdims, dtype=dtype))
-
-    mask = xp.isnan(X)
-    masked_arr = xp.where(mask, xp.asarray(0, device=X_device, dtype=X.dtype), X)
-    return xp.sum(masked_arr, axis=axis, keepdims=keepdims, dtype=dtype)
 
 
 def _asarray_with_order(

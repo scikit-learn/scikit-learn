@@ -521,7 +521,7 @@ def test_type_of_target_pandas_sparse():
     pd = pytest.importorskip("pandas")
 
     y = pd.arrays.SparseArray([1, np.nan, np.nan, 1, np.nan])
-    msg = "y cannot be class 'SparseSeries' or 'SparseArray'"
+    msg = "y cannot be class 'SparseArray'"
     with pytest.raises(ValueError, match=msg):
         type_of_target(y)
 

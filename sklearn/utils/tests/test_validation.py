@@ -32,6 +32,7 @@ from sklearn.utils import (
     check_symmetric,
     check_X_y,
     deprecated,
+    indexable,
 )
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
@@ -555,10 +556,6 @@ def test_check_array_pandas_string_dtype_numeric_error():
 def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     # Test pandas numerical extension arrays with pd.NA
     pd = pytest.importorskip("pandas")
-
-    if pd_dtype in {"Float32", "Float64"}:
-        # Extension dtypes with Floats was added in 1.2
-        pd = pytest.importorskip("pandas", minversion="1.2")
 
     X_np = np.array(
         [[1, 2, 3, np.nan, np.nan], [np.nan, np.nan, 8, 4, 6], [1, 2, 3, 4, 5]]
@@ -2087,17 +2084,12 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
     assert names is None
 
 
-@pytest.mark.parametrize(
-    "constructor_name, minversion",
-    [("pyarrow", "13.0.0"), ("pandas", "1.5.0"), ("polars", "0.18.2")],
-)
-def test_get_feature_names_4_dataframes(constructor_name, minversion):
+@pytest.mark.parametrize("constructor_name", ["pyarrow", "pandas", "polars"])
+def test_get_feature_names_4_dataframes(constructor_name):
     """Test _get_features_names on dataframes."""
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
-    df = _convert_container(
-        data, constructor_name, column_names=columns, minversion=minversion
-    )
+    df = _convert_container(data, constructor_name, column_names=columns)
     feature_names = _get_feature_names(df)
 
     assert_array_equal(feature_names, columns)
@@ -2538,3 +2530,31 @@ def test_num_samples_pa_chunked_array():
 
     result = _num_samples(chunked_array([[0.1, 0.2, 0.3]]))
     assert result == 3
+
+
+@pytest.mark.parametrize(
+    "constructor_name",
+    [
+        "list",
+        "tuple",
+        "array",
+        "series",
+        "polars_series",
+        "pyarrow_array",
+        "sparse_csr",
+        "sparse_csc_array",
+        "pandas",
+        "polars",
+        "pyarrow",
+        "index",
+    ],
+)
+def test_indexable_return_type(constructor_name):
+    """Test that indexable returns objects of expected type."""
+    X = _convert_container(list(range(3)), constructor_name)
+    if constructor_name == "sparse_csc_array":
+        expected_type = sp.csr_array
+    else:
+        expected_type = type(X)
+    X = indexable(X)[0]
+    assert isinstance(X, expected_type)

@@ -21,9 +21,7 @@ from sklearn.base import (
     ClusterMixin,
     _fit_context,
 )
-
-# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from sklearn.cluster import (  # type: ignore[attr-defined]
+from sklearn.cluster import (
     _hierarchical_fast as _hierarchical,
 )
 from sklearn.cluster._feature_agglomeration import AgglomerationTransform
