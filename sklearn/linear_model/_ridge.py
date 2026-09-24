@@ -215,54 +215,32 @@ def _solve_lsqr(
 def _solve_cholesky(X, y, alpha, X_offset=None):
     # w = inv(X^t X + alpha*Id) * X.T y
     #
-    # If X_offset is given, X is assumed to *not* be centered (unlike y,
-    # which is always assumed centered). Instead of materializing a centered
-    # copy of X, solve for coef and an unregularized dummy intercept against
-    # the augmented matrix [X, 1].
-    # The dummy intercept is discarded: the real intercept is recovered from
-    # coef and X_offset by `LinearModel._set_intercept`.
+    # If X_offset is given, X is assumed to *not* be centered (unlike y, which
+    # is always assumed centered) and the Gram matrix is corrected
+    # algebraically instead of materializing a centered copy of X:
+    #   Xc.T @ Xc = X.T @ X - n_samples * outer(X_offset, X_offset)
+    # Xy needs no such correction: Xc.T @ yc = X.T @ yc - X_offset * yc.sum(0),
+    # and yc.sum(0) is 0 because yc is centered.
     n_features = X.shape[1]
     n_targets = y.shape[1]
-    centered = X_offset is None
 
-    if centered:
-        A = safe_sparse_dot(X.T, X, dense_output=True)
-        Xy = safe_sparse_dot(X.T, y, dense_output=True)
-    else:
-        # Gram matrix is assembled from
-        # blocks without ever materializing that extra column:
-        #   [X, 1].T @ [X, 1] = [[X.T @ X,  X.sum(0)],
-        #                        [X.sum(0), n_samples]]
-        n_samples = X.shape[0]
-        X_sum = n_samples * X_offset
+    A = safe_sparse_dot(X.T, X, dense_output=True)
+    Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
-        A = np.empty((n_features + 1, n_features + 1), dtype=X.dtype)
-        A[:n_features, :n_features] = safe_sparse_dot(X.T, X, dense_output=True)
-        A[:n_features, n_features] = X_sum
-        A[n_features, :n_features] = X_sum
-        A[n_features, n_features] = n_samples
-
-        Xy = np.empty((n_features + 1, n_targets), dtype=X.dtype)
-        Xy[:n_features] = safe_sparse_dot(X.T, y, dense_output=True)
-        Xy[n_features] = y.sum(axis=0)
+    if X_offset is not None:
+        A -= X.shape[0] * np.outer(X_offset, X_offset)
 
     one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
-    # Only the coef block (the first n_features diagonal entries) is
-    # regularized -- the dummy intercept, like a real one, never is.
-    n_dof = n_features if centered else n_features + 1
-    diag = slice(None, n_features * (n_dof + 1), n_dof + 1)
 
     if one_alpha:
-        A.flat[diag] += alpha[0]
-        w = linalg.solve(A, Xy, assume_a="pos", overwrite_a=True)
-        return w[:n_features].T
+        A.flat[:: n_features + 1] += alpha[0]
+        return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
     else:
         coefs = np.empty([n_targets, n_features], dtype=X.dtype)
         for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
-            A.flat[diag] += current_alpha
-            w = linalg.solve(A, target, assume_a="pos", overwrite_a=False).ravel()
-            coef[:] = w[:n_features]
-            A.flat[diag] -= current_alpha
+            A.flat[:: n_features + 1] += current_alpha
+            coef[:] = linalg.solve(A, target, assume_a="pos", overwrite_a=False).ravel()
+            A.flat[:: n_features + 1] -= current_alpha
         return coefs
 
 
