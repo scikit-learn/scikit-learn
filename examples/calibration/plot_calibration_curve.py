@@ -208,6 +208,9 @@ compute_metrics(clf_list, X_train, y_train, X_test, y_test)
 # calibration change prediction probabilities at the location of the default
 # decision threshold (at x = 0.5 on the graph), especially when the
 # classification problem is not balanced.
+# :class:`~sklearn.model_selection.FixedThresholder` and
+# :class:`~sklearn.model_selection.TunedThresholdClassifierCV` can help assess
+# the impact of different decision thresholds on the value of F1 score.
 #
 # Linear support vector classifier
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
