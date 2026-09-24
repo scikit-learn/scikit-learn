@@ -11,7 +11,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import (
     CalibratedClassifierCV,
     CalibrationDisplay,
-    _CalibratedClassifier,
     _ensure_logits,
     _get_calibration_logits,
     _sigmoid_calibration,
@@ -19,7 +18,7 @@ from sklearn.calibration import (
     _TemperatureScaling,
     calibration_curve,
 )
-from sklearn.datasets import load_iris, make_blobs, make_classification
+from sklearn.datasets import load_iris, make_classification
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
@@ -49,8 +48,6 @@ from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import (
     LabelEncoder,
-    PolynomialFeatures,
-    SplineTransformer,
     StandardScaler,
 )
 from sklearn.svm import LinearSVC
@@ -227,7 +224,7 @@ def test_sample_weight(data, method, ensemble):
 def test_parallel_execution(data, method, ensemble):
     """Test parallel calibration"""
     X, y = data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+    X_train, X_test, y_train, _ = train_test_split(X, y, random_state=42)
 
     estimator = make_pipeline(StandardScaler(), LinearSVC(random_state=42))
 
@@ -367,9 +364,12 @@ def test_calibration_ensemble_false(data, method, calibrator):
     clf_df = clf.decision_function(X)
     manual_probas = calibrator.predict(clf_df)
 
-    if method == "temperature":
-        if (manual_probas.ndim == 2) and (manual_probas.shape[1] == 2):
-            manual_probas = manual_probas[:, 1]
+    if (
+        method == "temperature"
+        and (manual_probas.ndim == 2)
+        and (manual_probas.shape[1] == 2)
+    ):
+        manual_probas = manual_probas[:, 1]
 
     assert_allclose(cal_probas[:, 1], manual_probas)
 
