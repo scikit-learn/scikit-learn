@@ -73,12 +73,11 @@ clf.fit(X_train, y_train)
 
 # %%
 #
-# Then we re-calibrate the model in a 2-stage process by fitting a sigmoid
-# correction to the predicted probabilities of the validation set. The sigmoid
-# calibration is done using the
-# :class:`~sklearn.calibration.CalibratedClassifierCV`. The
-# :class:`~sklearn.frozen.FrozenEstimator` is used to freeze the fitted
-# classifier to avoid re-fitting it when calling the
+# Then we re-calibrate the model in a 2-stage process by fitting a sigmoid correction
+# to the predicted probabilities of the validation set. The sigmoid calibration is done
+# using the :class:`~sklearn.calibration.CalibratedClassifierCV`. The
+# :class:`~sklearn.frozen.FrozenEstimator` is used to freeze the fitted classifier to
+# avoid re-fitting it when calling the
 # :meth:`~sklearn.calibration.CalibratedClassifierCV.fit` method. This way, we
 # ensure that the calibration data is not used to fit the base classifier.
 
@@ -208,7 +207,7 @@ plot_simplex(
 # the edges of the simplex, where the probability of one class is 0.
 # This results in fewer over-confident (near 0 or 1) predicted probabilities.
 #
-# In this example, the recalibration yields an overall better model. We can show
+# In this example, the re-calibration yields an overall better model. We can show
 # this objectively by comparing the :ref:`log loss <log_loss>` (lower is better)
 # of the uncalibrated and re-calibrated classifiers on the predictions of the test
 # set. Note that an alternative would have been to increase the number
@@ -316,7 +315,7 @@ plot_calibrator_map(cal_clf)
 # Let's now repeat the above for various classifiers with different mis-calibration
 # profiles and the three calibration methods available in
 # `CalibratedClassifierCV`, namely, "sigmoid", "isotonic", and "temperature".
-# Sigmoid and isotonic methods are implemented via an One-vs-Rest reduction to
+# Sigmoid and isotonic methods are implemented via a One-vs-Rest reduction to
 # binary calibration followed by sum-to-one normalization. Temperature scaling
 # fits a single temperature parameter on multinomial logits.
 
@@ -416,10 +415,9 @@ for classifier_idx, (name, base_clf) in enumerate(base_classifiers.items()):
 #
 # - The isotonic calibration method induces a piecewise constant mapping of the
 #   uncalibrated probabilities to the calibrated probabilities. To adapt to the
-#   multiclass setting, the One-vs-Rest strategy is used. As a result, the
-#   calibration maps show locally converging arrows to a finite number of
-#   points in the simplex. This effect is more pronounced with smaller
-#   calibration sets.
+#   multiclass setting, the One-vs-Rest strategy is used. As a result, the calibration
+#   maps show locally converging arrows to a finite number of points in the simplex.
+#   This effect is more pronounced with smaller calibration sets.
 #
 # - The temperature scaling method induces a smooth mapping that preserves the
 #   ranking of the predicted classes while adjusting their confidence.

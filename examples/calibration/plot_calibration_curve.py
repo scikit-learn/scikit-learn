@@ -136,7 +136,7 @@ plt.show()
 # internal cross-validation.
 #
 # On the contrary :class:`~sklearn.naive_bayes.GaussianNB` is poorly calibrated
-# by default because of the redundant features which violate the assumption of
+# because of the redundant features which violate the assumption of
 # feature-independence. It results in an **overly confident** classifier, which
 # is indicated by the typical transposed-sigmoid calibration curve.
 #
@@ -194,15 +194,14 @@ compute_metrics(clf_list, X_train, y_train, X_test, y_test)
 # %%
 #
 # Post-hoc calibration improves the :ref:`brier_score_loss` and :ref:`log_loss`.
-# Both metrics can be decomposed into decomposed into calibration and refinement terms
+# Both metrics can be decomposed into calibration and refinement terms
 # and are thus sensitive to the calibration of the predicted probabilities.
 #
-# The ROC AUC score is a pure ranking metric: it is not changed by the
-# sigmoid calibration method because this method applies a strictly monotonic
-# transformation on the probabilities predicted by the base estimator. However,
-# the isotonic calibration method can degrade the ROC AUC score a bit because
-# it is not a **strictly** monotonic transformation, only a monotonic one
-# (constant piecewise transformation).
+# The ROC AUC score is a pure ranking metric. It is not changed by a strictly
+# monotonic transformation of the predicted probabilities, like the sigmoid
+# calibration. However, the isotonic calibration method can degrade the ROC AUC
+# score a bit because it is not a **strictly** monotonic transformation, only a
+# monotonic one (constant piecewise transformation).
 #
 # Post-hoc calibration can significantly alter metrics computed on discrete
 # predictions such as precision, recall and F1 score. This is because

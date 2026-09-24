@@ -164,7 +164,7 @@ cross-validation split:
 1. a clone of `base_estimator` is trained on the train subset
 2. the trained `base_estimator` makes predictions on the test subset
 3. the predictions are used to fit a calibrator (when the data is multiclass,
-   a calibrator is fit for every class)
+   one calibrator is fit for each class)
 
 This results in an
 ensemble of :math:`k` `(classifier, calibrator)` couples where each calibrator maps
@@ -225,7 +225,7 @@ The sigmoid regressor, `method="sigmoid"` is based on Platt's logistic model [4]
 where :math:`y_i` is the true label of sample :math:`i` and :math:`f_i`
 is the uncalibrated classifier output for that sample. When the classifier
 implements :term:`predict_proba`, :math:`f_i = \text{logit}(\hat{p}_i)` is the
-logit of the predicted probability; otherwise, :math:`f_i` is the score from
+logit of the predicted probability; otherwise, :math:`f_i` is the value from
 :term:`decision_function`. :math:`A` and :math:`B` are real numbers to be
 determined when fitting via maximum likelihood.
 
