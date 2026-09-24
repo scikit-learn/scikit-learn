@@ -515,6 +515,7 @@ def test_linear_loss_gradient_hessian_raises_wrong_out_parameters():
 
 
 def test_multinomial_LDL_decomposition_operates_inplace(global_random_seed):
+    """Test that LDL operates inplace on the input array."""
     n_samples, n_classes = 3, 5
     rng = np.random.RandomState(global_random_seed)
     p = rng.uniform(low=0, high=1, size=(n_samples, n_classes))
@@ -536,11 +537,11 @@ def test_multinomial_LDL_decomposition_operates_inplace(global_random_seed):
 
 
 def test_multinomial_LDL_decomposition_binomial_single_point():
-    """Test LDL' decomposition of multinomial hessian for simple cases.
+    """Test LDL' decomposition of multinomial hessian for 2 classes, 1 data point.
 
     For the binomial case, we have p0 = 1 - p1
-    LDL = [p0 * (1 - p0),      -p0 * p1] = p0 * (1 - p0) * [1, -1]
-          [     -p0 * p1, p1 * (1 - p1)]                   [-1, 1]
+    LDL = [p0 * (1 - p0),      -p0 * p1] = p0 * (1 - p0) * [ 1, -1]
+          [     -p0 * p1, p1 * (1 - p1)]                   [-1,  1]
 
     L = [ 1, 0]    D = [p0 * (1 - p0), 0]
         [-1, 1]        [            0, 0]
@@ -570,7 +571,6 @@ def test_multinomial_LDL_decomposition_binomial_single_point():
         base_loss=HalfMultinomialLoss(n_classes=2),
         fit_intercept=False,
     )
-    # Note that y has no effect on the hessian.
     coef = 0.5 * np.array([[logit(p0)], [logit(p1)]])  # tested below
     X = np.array([[1.0]])
     raw = X @ coef.T  # raw.shape = (n_samples, n_classes) = (1, 2)
@@ -579,7 +579,7 @@ def test_multinomial_LDL_decomposition_binomial_single_point():
     grad, hessp = loss.gradient_hessian_product(
         coef=coef,
         X=X,
-        y=np.array([0.0]),
+        y=np.array([0.0]),  # Note that y has no effect on the hessian.
         l2_reg_strength=0.0,
     )
     # Note: hessp(coef).shape = (n_classes, n_features) = (2, 1)
