@@ -2251,7 +2251,12 @@ def test_ridge_cholesky_uncentered_X_close_to_svd_or_warns(dtype, offset):
     X = X.astype(dtype)
     y = y.astype(dtype)
 
-    ridge_svd = Ridge(alpha=1.0, solver="svd").fit(X, y)
+    # The reference is computed in float64 on the same data: for large
+    # offsets, the float32 mean computed by `solver="svd"` is not accurate
+    # enough for it to be a reference.
+    ridge_svd = Ridge(alpha=1.0, solver="svd").fit(
+        X.astype(np.float64), y.astype(np.float64)
+    )
 
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
@@ -2263,8 +2268,13 @@ def test_ridge_cholesky_uncentered_X_close_to_svd_or_warns(dtype, offset):
 
     rtol, atol = (1e-3, 1e-3) if dtype == np.float32 else (1e-6, 1e-6)
     assert_allclose(ridge_cholesky.coef_, ridge_svd.coef_, rtol=rtol, atol=atol)
+    # intercept = y_offset - X_offset @ coef: errors on coef are amplified by
+    # the offset of the features.
     assert_allclose(
-        ridge_cholesky.intercept_, ridge_svd.intercept_, rtol=rtol, atol=atol
+        ridge_cholesky.intercept_,
+        ridge_svd.intercept_,
+        rtol=rtol,
+        atol=atol * (1 + n_features * offset),
     )
 
 
