@@ -58,12 +58,16 @@ requested by default.
 
 Usage Examples
 **************
-Here we present a few examples to show some common use-cases. Our goal is to pass
-`sample_weight` and `groups` through :func:`~model_selection.cross_validate`, which
-routes the metadata to :class:`~linear_model.LogisticRegressionCV` and to a custom scorer
-made with :func:`~metrics.make_scorer`, both of which *can* use the metadata in their
-methods. In these examples we want to individually set whether to use the metadata
-within the different :term:`consumers <consumer>`.
+For convenience and a faster start into metadata routing, see
+:ref:`auto-requested metadata <metadata_routing_auto_request_user>`.
+
+The following examples use explicit ``set_{method}_request`` calls and are designed to
+show some common use-cases. Our goal here is to pass `sample_weight` and `groups`
+through :func:`~model_selection.cross_validate`, which routes the metadata to
+:class:`~linear_model.LogisticRegressionCV` and to a custom scorer made with
+:func:`~metrics.make_scorer`, both of which *can* use the metadata in their methods. In
+these examples we want to individually set whether to use the metadata within the
+different :term:`consumers <consumer>`.
 
 The examples in this section require the following imports and data::
 
@@ -261,8 +265,50 @@ The issue can be fixed by explicitly setting the request value::
     ...     sample_weight=True
     ... ).set_score_request(sample_weight=False)
 
-At the end of the **Usage Examples** section, we disable the configuration flag for
-metadata routing::
+.. _metadata_routing_auto_request_user:
+
+Auto-requested metadata
+***********************
+
+By default, most :term:`consumers <consumer>` leave metadata requests as ``None``, so
+you must call ``set_{method}_request`` before passing that metadata through a
+:term:`router`. In addition, consumers can **auto-request** selected metadata when you
+enable a second configuration flag::
+
+    >>> sklearn.set_config(
+    ...     enable_metadata_routing=True,
+    ...     enable_metadata_auto_requests=True,
+    ... )
+
+See :func:`~sklearn.set_config` and :func:`~sklearn.config_context` for
+``enable_metadata_auto_requests``. Both ``enable_metadata_routing`` and
+``enable_metadata_auto_requests`` must be ``True`` for auto-requests to take effect.
+
+Auto-requests are declared for specific metadata such as ``sample_weight``, ``X_val``,
+``y_val`` and ``sample_weight_val``. Once a metadata is supported, methods that take
+that argument are expected to auto-request it. (``groups`` in ``Group*Fold`` is not an
+auto-request and is requested by default whether auto-requests are switched on or off.)
+
+Note that auto-requests are subject to change and stability guarantees applied to the
+rest of the scikit-learn API do not apply here. They may grow or change over time.
+
+For most use cases it is enough to set ``enable_metadata_auto_requests=True``
+(with metadata routing enabled) and leave request values unchanged. Use
+``set_{method}_request`` only when you need to opt out, alias, or handle a
+consumer that does not yet auto-request the metadata you pass.
+
+You can still override any auto-request (or default request) with
+``set_{method}_request``. Values set that way take precedence. In particular,
+``set_fit_request(sample_weight=False)`` opts out of receiving ``sample_weight`` even
+when auto-requests are enabled.
+
+If you pass metadata that no consumer requests (including under auto-requests), the
+router still raises an error.
+
+Developers who implement auto-requests should follow
+:ref:`metadata_routing_auto_request`.
+
+Finally, we disable the configuration flag for metadata routing::
 
     >>> sklearn.set_config(enable_metadata_routing=False)
 
