@@ -47,6 +47,7 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import validate_model
 from sklearn.utils._array_api import (
     array_device,
     get_namespace,
@@ -1402,3 +1403,21 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         )
         pred_xp = cal_clf_xp.predict(X_xp)
         assert_array_equal(pred_xp, pred_np)
+
+
+def test_validate_model_reaches_calibrated_classifiers():
+    """`validate_model` checks the estimators wrapped in `calibrated_classifiers_`.
+
+    `_CalibratedClassifier` is not an estimator, so it takes part in the walk
+    explicitly for the fitted classifiers inside it to be checked.
+    """
+    X, y = make_classification(n_samples=100, n_features=4, random_state=0)
+    calibrated = CalibratedClassifierCV(
+        DecisionTreeClassifier(max_depth=2, random_state=0), cv=2
+    ).fit(X, y)
+    validate_model(calibrated)
+
+    tree = calibrated.calibrated_classifiers_[0].estimator.tree_
+    tree.__getstate__()["nodes"]["left_child"][:] = 999_999_999
+    with pytest.raises(ValueError, match="out-of-bounds"):
+        validate_model(calibrated)

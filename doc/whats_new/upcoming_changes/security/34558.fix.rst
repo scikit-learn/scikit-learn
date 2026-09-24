@@ -1,0 +1,8 @@
+- :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`, the
+  forest and gradient boosting ensembles built on them, and
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now implement the
+  `__sklearn_validate_model__` protocol: :func:`utils.validate_model` raises a
+  `ValueError` if the node arrays of a loaded model are corrupted in a way that
+  would make prediction read or write memory out of bounds or loop forever.
+  By `Adrin Jalali`_

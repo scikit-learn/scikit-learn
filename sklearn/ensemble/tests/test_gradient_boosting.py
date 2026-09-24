@@ -2,6 +2,7 @@
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 
+import pickle
 import re
 import warnings
 
@@ -22,7 +23,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import scale
 from sklearn.svm import NuSVR
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, validate_model
 from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.utils._testing import (
@@ -1675,3 +1676,22 @@ def test_criterion_param_deprecation(GradientBoosting):
     with pytest.warns(FutureWarning, match="criterion"):
         reg = GradientBoosting(criterion="friedman_mse")
         reg.fit(X, y)
+
+
+def test_validate_model_rejects_n_features_in_mismatch():
+    """``validate_model`` raises when a tree disagrees with the ensemble on features.
+
+    ``predict_stages`` traverses the trees directly on ``X``, which is only
+    checked against the ensemble's ``n_features_in_``, so every tree must
+    expect that many features.
+    """
+    X, y = make_classification(n_samples=50, n_features=4, random_state=0)
+    gb = GradientBoostingClassifier(n_estimators=3, random_state=0).fit(X, y)
+    validate_model(gb)
+    validate_model(pickle.loads(pickle.dumps(gb)))
+
+    gb.estimators_[1, 0].n_features_in_ = 10
+    with pytest.raises(ValueError, match="one of its estimators expects 10"):
+        gb.__sklearn_validate_model__()
+    with pytest.raises(ValueError, match="features"):
+        validate_model(gb)

@@ -8,7 +8,7 @@ import operator
 import warnings
 from collections.abc import Sequence
 from functools import reduce, wraps
-from inspect import Parameter, isclass, signature
+from inspect import Parameter, getattr_static, isclass, signature
 
 import joblib
 import narwhals.stable.v2 as nw
@@ -1721,6 +1721,116 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     if not _is_fitted(estimator, attributes, all_or_any):
         raise NotFittedError(msg % {"name": type(estimator).__name__})
+
+
+# Objects that can neither be nor hold an estimator: skipped by `validate_model`
+# before any attribute lookup, since they make up the bulk of e.g. a vocabulary.
+_LEAF_TYPES = (str, bytes, int, float, complex, np.generic)
+
+
+def _is_estimator_like(obj):
+    """Whether `obj` takes part in the walk of `validate_model`.
+
+    The names are looked up statically, i.e. without running `__getattr__`,
+    so that objects synthesizing attributes on access (mocks, lazy proxies)
+    are left alone instead of being walked into endlessly.
+    """
+    return (
+        getattr_static(obj, "get_params", None) is not None
+        or getattr_static(obj, "__sklearn_validate_model__", None) is not None
+    )
+
+
+def _nested_objects(obj):
+    """Return an iterator over the objects held by `obj`, or None if none.
+
+    Containers are iterated lazily, so that walking e.g. a large vocabulary or
+    object array does not copy it. The attributes of an estimator are
+    snapshotted (a short list) so that `__sklearn_validate_model__` may set
+    attributes without disturbing the walk. Anything else is opaque.
+    """
+    if isinstance(obj, dict):
+        return iter(obj.values())
+    if isinstance(obj, (list, tuple, set, frozenset)):
+        return iter(obj)
+    if isinstance(obj, np.ndarray):
+        return obj.flat if obj.dtype == object else None
+    if _is_estimator_like(obj):
+        return iter(list(getattr(obj, "__dict__", {}).values()))
+    return None
+
+
+def validate_model(estimator):
+    """Check that the fitted state of an estimator is consistent.
+
+    Some estimators keep their fitted state in arrays that compiled code reads
+    without bounds checking, for instance the node arrays of tree-based models.
+    If such an array is corrupted, e.g. in a persisted model that was damaged or
+    tampered with, calling ``predict`` may read or write memory out of bounds or
+    loop forever instead of raising an exception. This function runs the
+    consistency checks that estimators define for their own fitted state and
+    raises a :class:`ValueError` on the first inconsistency, so that a model
+    loaded from a file can be checked before it is used.
+
+    Nested estimators, such as the steps of a :class:`~sklearn.pipeline.Pipeline`
+    or the trees of a :class:`~sklearn.ensemble.RandomForestClassifier`, are
+    found by walking the attributes of `estimator`, through lists, tuples, sets,
+    dicts and object arrays, and are checked as well. Other objects, e.g.
+    dataframes, are not looked into. Estimators that do not define any check
+    pass. See
+    :ref:`developer_api_validate_model` for how an estimator defines its checks.
+
+    This does not make loading a model from an untrusted source safe: a pickle
+    file can run arbitrary code while it is loaded, before any check can take
+    place. See :ref:`model_persistence` for details.
+
+    .. versionadded:: 1.10
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        The estimator to check. An unfitted estimator has no state to check
+        and passes.
+
+    Raises
+    ------
+    ValueError
+        If the fitted state of `estimator`, or of one of the estimators nested
+        in it, is inconsistent.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.utils import validate_model
+    >>> X, y = make_classification(random_state=0)
+    >>> clf = RandomForestClassifier(n_estimators=3, random_state=0).fit(X, y)
+    >>> validate_model(clf)
+    """
+    if isclass(estimator):
+        raise TypeError(f"{estimator} is a class, not an instance.")
+
+    # Depth-first walk over the attributes of the estimator and the containers
+    # they hold, as a stack of iterators so that nothing is copied. Only the
+    # objects that get expanded (containers and estimators) are recorded in
+    # `seen`, which guards against reference cycles: leaves are far more
+    # numerous and harmless to visit twice.
+    seen = set()
+    stack = [iter((estimator,))]
+    while stack:
+        for obj in stack[-1]:
+            if obj is None or isinstance(obj, _LEAF_TYPES) or isclass(obj):
+                continue
+            children = _nested_objects(obj)
+            if children is None or id(obj) in seen:
+                continue
+            seen.add(id(obj))
+            if getattr_static(obj, "__sklearn_validate_model__", None) is not None:
+                obj.__sklearn_validate_model__()
+            stack.append(children)
+            break
+        else:
+            stack.pop()
 
 
 def _estimator_has(attr, *, delegates=("estimator_", "estimator")):
