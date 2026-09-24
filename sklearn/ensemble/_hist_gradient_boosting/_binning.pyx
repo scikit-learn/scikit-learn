@@ -4,10 +4,9 @@
 from math import log2, ceil
 
 from cython.parallel import prange
-from libc.math cimport isnan
 
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C, X_BINNED_DTYPE_C
-from sklearn.utils._typedefs cimport uint8_t
+from sklearn.utils._typedefs cimport uint8_t, inlinable_isnan
 
 
 def _map_to_bins(const X_DTYPE_C [:, :] data,
@@ -66,7 +65,7 @@ cdef void _map_col_to_bins(
 
     for i in prange(data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
-        if isnan(data[i]):
+        if inlinable_isnan(data[i]):
             binned[i] = missing_values_bin_idx
         else:
             # for known values, use binary search
