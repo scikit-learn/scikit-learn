@@ -11,7 +11,6 @@ from sklearn.utils._typedefs cimport uint8_t, inlinable_isnan
 
 def _map_to_bins(const X_DTYPE_C [:, :] data,
                  list binning_thresholds,
-                 const uint8_t[::1] is_categorical,
                  const uint8_t missing_values_bin_idx,
                  int n_threads,
                  X_BINNED_DTYPE_C [::1, :] binned):
@@ -27,8 +26,6 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
     binning_thresholds : list of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
-    is_categorical : ndarray of uint8_t of shape (n_features,)
-        Indicates categorical features.
     n_threads : int
         Number of OpenMP threads to use.
     binned : ndarray, shape (n_samples, n_features)
@@ -41,7 +38,6 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
         _map_col_to_bins(
             data[:, feature_idx],
             binning_thresholds[feature_idx],
-            is_categorical[feature_idx],
             missing_values_bin_idx,
             n_threads,
             binned[:, feature_idx]
@@ -51,7 +47,6 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
 cdef void _map_col_to_bins(
     const X_DTYPE_C [:] data,
     const X_DTYPE_C [::1] binning_thresholds,
-    const uint8_t is_categorical,
     const uint8_t missing_values_bin_idx,
     int n_threads,
     X_BINNED_DTYPE_C [::1] binned
@@ -70,12 +65,7 @@ cdef void _map_col_to_bins(
 
     for i in prange(data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
-        if (
-            inlinable_isnan(data[i]) or
-            # To follow LightGBM's conventions, negative values for
-            # categorical features are considered as missing values.
-            (is_categorical and data[i] < 0)
-        ):
+        if inlinable_isnan(data[i]):
             binned[i] = missing_values_bin_idx
         else:
             # for known values, use binary search
