@@ -1,0 +1,5 @@
+- :class:`semi_supervised.LabelPropagation` and
+  :class:`semi_supervised.LabelSpreading` now use uniform class probabilities
+  for samples with zero affinity, ensuring that probability distributions from
+  both ``fit`` and ``predict_proba`` sum to one.
+  By :user:`Sudam Ranasinghe <sudam802>`.
