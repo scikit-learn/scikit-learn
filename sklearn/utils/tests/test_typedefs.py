@@ -26,7 +26,7 @@ def test_types(type_t, value, expected_dtype):
 
 
 @pytest.mark.parametrize(
-    "type_t, dtype", [("float32_t", np.float32), ("float64_t", np.float64)]
+    "type_t, dtype", [("float", np.float32), ("double", np.float64)]
 )
 @pytest.mark.parametrize(
     "value, expected",

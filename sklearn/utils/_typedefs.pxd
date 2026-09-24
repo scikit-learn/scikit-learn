@@ -1,3 +1,4 @@
+from cython cimport floating
 from libc.string cimport memcpy
 
 # Commonly used types
@@ -42,12 +43,7 @@ ctypedef signed char int8_t
 ctypedef signed int int32_t
 ctypedef signed long long int64_t
 
-ctypedef fused float32_or_float64_t:
-    float32_t
-    float64_t
-
-
-cdef inline bint inlinable_isnan(float32_or_float64_t x) noexcept nogil:
+cdef inline bint inlinable_isnan(floating x) noexcept nogil:
     """Check whether x is NaN.
 
     Prefer this over libc.math.isnan in hot loops: unlike that libm call,
@@ -60,7 +56,7 @@ cdef inline bint inlinable_isnan(float32_or_float64_t x) noexcept nogil:
     """
     cdef uint32_t bits32
     cdef uint64_t bits64
-    if float32_or_float64_t is float32_t:
+    if floating is float:
         memcpy(&bits32, &x, sizeof(bits32))
         return (bits32 & 0x7fffffff) > 0x7f800000
     else:
