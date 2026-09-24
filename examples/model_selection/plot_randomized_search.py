@@ -56,7 +56,7 @@ linear_svm = SGDClassifier(
     loss="modified_huber",
     penalty="elasticnet",
     fit_intercept=True,
-    max_iter=5_000,
+    max_iter=1_000,
 )
 
 # %%
@@ -116,7 +116,7 @@ from sklearn.model_selection import GridSearchCV
 
 param_grid = {
     "average": [True, False],
-    "l1_ratio": np.linspace(0, 1, num=10),
+    "l1_ratio": np.linspace(0, 1, num=5),
     "alpha": np.power(10, np.arange(-2, 1, dtype=float)),
 }
 
@@ -152,7 +152,7 @@ param_dist = {
     "alpha": stats.loguniform(1e-2, 1e0),
 }
 
-n_iter_search = 30
+n_iter_search = 15
 random_search = RandomizedSearchCV(
     linear_svm,
     param_distributions=param_dist,
@@ -186,7 +186,7 @@ report(random_search.cv_results_)
 from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.model_selection import HalvingRandomSearchCV
 
-n_candidates = 60
+n_candidates = 30
 halving_search = HalvingRandomSearchCV(
     linear_svm,
     param_distributions=param_dist,
@@ -212,15 +212,15 @@ report(halving_search.cv_results_)
 #
 # Running the three searches on the same problem highlights their trade-offs:
 #
-# - **Grid search** evaluates all 60 combinations of the grid and reaches a best
+# - **Grid search** evaluates all 30 combinations of the grid and reaches a best
 #   mean validation ROC AUC of essentially 1.0. It is exhaustive, but its cost
 #   grows with the resolution of the grid and a finer grid would be needed to
 #   refine the continuous parameters, making it the slowest of the three.
 # - **Randomized search** reaches an essentially equivalent score while sampling
-#   only 30 candidates, i.e. half the budget, and is therefore markedly faster.
+#   only 15 candidates, i.e. half the budget, and is therefore markedly faster.
 #   Drawing the continuous parameters from distributions is usually a better use
 #   of a limited budget than refining a grid.
-# - **Successive halving** screens the 60 candidates for a run time comparable to
+# - **Successive halving** screens the 30 candidates for a run time comparable to
 #   the randomized search by spending most of its resources only on the most
 #   promising candidates. It explores more candidates than the randomized search
 #   without paying the full cost of the grid search.
