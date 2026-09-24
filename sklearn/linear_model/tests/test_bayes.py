@@ -1,10 +1,9 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from math import log
-
 import numpy as np
 import pytest
+from scipy.stats import gamma, multivariate_normal
 
 from sklearn import datasets
 from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
@@ -16,7 +15,6 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_less,
 )
-from sklearn.utils.extmath import fast_logdet
 
 diabetes = datasets.load_diabetes()
 
@@ -31,55 +29,78 @@ def test_bayesian_ridge_scores():
     assert clf.scores_.shape == (clf.n_iter_ + 1,)
 
 
-def test_bayesian_ridge_score_values():
-    """Check value of score on toy example.
+@pytest.mark.parametrize("n_samples, n_features", [(6, 2), (2, 6)])
+def test_bayesian_ridge_score_values(n_samples, n_features):
+    """Check the joint log density against independent probability densities."""
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(n_samples, n_features))
+    y = rng.normal(size=n_samples)
+    alpha, lambda_ = 2.0, 3.0
+    alpha_1, alpha_2 = 0.2, 0.3
+    lambda_1, lambda_2 = 0.7, 1.2
 
-    Compute log marginal likelihood with equation (36) in Sparse Bayesian
-    Learning and the Relevance Vector Machine (Tipping, 2001):
+    def expected_score(alpha, lambda_):
+        # Integrating out the coefficient vector gives y ~ N(0, C).
+        C = np.eye(n_samples) / alpha + X @ X.T / lambda_
+        score = multivariate_normal.logpdf(y, cov=C)
+        score += gamma.logpdf(alpha, a=alpha_1 + 1, scale=1 / alpha_2)
+        score += gamma.logpdf(lambda_, a=lambda_1 + 1, scale=1 / lambda_2)
+        return score
 
-    - 0.5 * (log |Id/alpha + X.X^T/lambda| +
-             y^T.(Id/alpha + X.X^T/lambda).y + n * log(2 * pi))
-    + lambda_1 * log(lambda) - lambda_2 * lambda
-    + alpha_1 * log(alpha) - alpha_2 * alpha
-
-    and check equality with the score computed during training.
-    """
-
-    X, y = diabetes.data, diabetes.target
-    n_samples = X.shape[0]
-    # check with initial values of alpha and lambda (see code for the values)
-    eps = np.finfo(np.float64).eps
-    alpha_ = 1.0 / (np.var(y) + eps)
-    lambda_ = 1.0
-
-    # value of the parameters of the Gamma hyperpriors
-    alpha_1 = 0.1
-    alpha_2 = 0.1
-    lambda_1 = 0.1
-    lambda_2 = 0.1
-
-    # compute score using formula of docstring
-    score = lambda_1 * log(lambda_) - lambda_2 * lambda_
-    score += alpha_1 * log(alpha_) - alpha_2 * alpha_
-    M = 1.0 / alpha_ * np.eye(n_samples) + 1.0 / lambda_ * np.dot(X, X.T)
-    M_inv_dot_y = np.linalg.solve(M, y)
-    score += -0.5 * (
-        fast_logdet(M) + np.dot(y.T, M_inv_dot_y) + n_samples * log(2 * np.pi)
-    )
-
-    # compute score with BayesianRidge
     clf = BayesianRidge(
         alpha_1=alpha_1,
         alpha_2=alpha_2,
         lambda_1=lambda_1,
         lambda_2=lambda_2,
+        alpha_init=alpha,
+        lambda_init=lambda_,
         max_iter=1,
         fit_intercept=False,
         compute_score=True,
     )
     clf.fit(X, y)
+    assert_allclose(clf.scores_[0], expected_score(alpha, lambda_), rtol=1e-12)
+    assert_allclose(
+        clf.scores_[-1], expected_score(clf.alpha_, clf.lambda_), rtol=1e-12
+    )
 
-    assert_almost_equal(clf.scores_[0], score, decimal=9)
+
+@pytest.mark.parametrize("alpha_2, lambda_2", [(0, 0), (0, 1.2), (0.3, 0)])
+def test_bayesian_ridge_score_zero_prior_rate(alpha_2, lambda_2):
+    """Omit the undefined normalizer of each improper Gamma prior."""
+    X = np.array([[1.0, 2.0], [3.0, 1.0], [2.0, 4.0]])
+    y = np.array([1.0, 2.0, 4.0])
+    alpha, lambda_ = 2.0, 3.0
+    alpha_1, lambda_1 = 0.2, 0.7
+
+    def expected_score(alpha, lambda_):
+        C = np.eye(len(y)) / alpha + X @ X.T / lambda_
+        score = multivariate_normal.logpdf(y, cov=C)
+        if alpha_2:
+            score += gamma.logpdf(alpha, a=alpha_1 + 1, scale=1 / alpha_2)
+        else:
+            score += alpha_1 * np.log(alpha)
+        if lambda_2:
+            score += gamma.logpdf(lambda_, a=lambda_1 + 1, scale=1 / lambda_2)
+        else:
+            score += lambda_1 * np.log(lambda_)
+        return score
+
+    clf = BayesianRidge(
+        alpha_1=alpha_1,
+        alpha_2=alpha_2,
+        lambda_1=lambda_1,
+        lambda_2=lambda_2,
+        alpha_init=alpha,
+        lambda_init=lambda_,
+        max_iter=1,
+        fit_intercept=False,
+        compute_score=True,
+    ).fit(X, y)
+    assert_allclose(clf.scores_[0], expected_score(alpha, lambda_), rtol=1e-12)
+    assert_allclose(
+        clf.scores_[-1], expected_score(clf.alpha_, clf.lambda_), rtol=1e-12
+    )
 
 
 def test_bayesian_ridge_parameter():
