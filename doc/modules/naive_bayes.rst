@@ -90,6 +90,17 @@ classification. The likelihood of the features is assumed to be Gaussian:
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
 
+In practice the variances are smoothed: :class:`GaussianNB` adds
+``var_smoothing * var(X).max()`` -- exposed as the ``epsilon_`` attribute --
+to every feature variance. This floors near-zero variances, which would
+otherwise make the Gaussian density explode on features that are almost
+constant within a class, and keeps the log-probabilities numerically stable.
+The default ``var_smoothing=1e-9`` leaves well-scaled features untouched;
+increase it when features are nearly constant relative to the
+largest-variance feature. With :meth:`partial_fit`, ``epsilon_`` is
+recomputed from the data of each call, so batches with very different
+scales result in different smoothing.
+
    >>> from sklearn.datasets import load_iris
    >>> from sklearn.model_selection import train_test_split
    >>> from sklearn.naive_bayes import GaussianNB
