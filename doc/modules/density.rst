@@ -82,8 +82,8 @@ follows:
    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
    >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.2).fit(X)
    >>> kde.score_samples(X)
-   array([-0.41075698, -0.41075698, -0.41076071, -0.41075698, -0.41075698,
-          -0.41076071])
+   array([-0.04377612, -0.04377612, -0.04377612, -0.04377612, -0.04377612,
+          -0.04377612])
 
 Here we have used ``kernel='gaussian'``, as seen above.
 Mathematically, a kernel is a positive function :math:`K(x;h)`
