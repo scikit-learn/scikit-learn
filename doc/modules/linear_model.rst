@@ -850,6 +850,69 @@ There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
+When ``compute_score=True``, :attr:`BayesianRidge.scores_` evaluates the log
+marginal likelihood of the data plus the log priors of the two precisions.
+For unweighted data, let :math:`n` be the number of samples, :math:`p` the
+number of features, :math:`A = \lambda I_p + \alpha X^\top X`, and
+:math:`\mu = \alpha A^{-1} X^\top y`. When an intercept is fitted, :math:`X`
+and :math:`y` denote the centered data. Completing the square gives
+
+.. math::
+
+    \alpha\lVert y-Xw\rVert^2 + \lambda\lVert w\rVert^2
+    = (w-\mu)^\top A(w-\mu)
+      + \alpha\lVert y-X\mu\rVert^2 + \lambda\lVert\mu\rVert^2.
+
+Integrating the Gaussian density over :math:`w` therefore yields
+
+.. math::
+
+    \log p(y\mid X,\alpha,\lambda)
+    = \frac{1}{2}\left[p\log\lambda + n\log\alpha - \log|A|
+      - \alpha\lVert y-X\mu\rVert^2 - \lambda\lVert\mu\rVert^2
+      - n\log(2\pi)\right].
+
+Equivalently, :math:`y` has Gaussian covariance
+:math:`C=\alpha^{-1}I_n+\lambda^{-1}XX^\top`. The matrix determinant lemma
+gives :math:`|C|=\alpha^{-n}\lambda^{-p}|A|`, while the completed-square
+identity gives
+:math:`y^\top C^{-1}y=\alpha\lVert y-X\mu\rVert^2+
+\lambda\lVert\mu\rVert^2`. These identities produce the same normalized
+Gaussian log density and allow the score to be checked independently.
+
+The Gamma prior of :math:`\alpha` has shape :math:`\alpha_1+1` and rate
+:math:`\alpha_2`, and analogously for :math:`\lambda`. For a positive rate,
+its normalized density is
+
+.. math::
+
+    p(\alpha\mid\alpha_1,\alpha_2)
+    = \frac{\alpha_2^{\alpha_1+1}}{\Gamma(\alpha_1+1)}
+      \alpha^{\alpha_1}e^{-\alpha_2\alpha}.
+
+The reported score is
+:math:`\log p(y\mid X,\alpha,\lambda)
++ \log p(\alpha\mid\alpha_1,\alpha_2)
++ \log p(\lambda\mid\lambda_1,\lambda_2)`.
+Thus the Gamma-prior contributions include the constants
+:math:`(\alpha_1+1)\log\alpha_2-\log\Gamma(\alpha_1+1)` and
+:math:`(\lambda_1+1)\log\lambda_2-\log\Gamma(\lambda_1+1)`.
+The shape offsets also agree with the fitting equations. Let
+:math:`\gamma=p-\lambda\operatorname{tr}(A^{-1})`. Setting the derivatives
+of the score with respect to the precisions to zero gives the fixed-point
+updates used during fitting:
+
+.. math::
+
+    \alpha = \frac{n-\gamma+2\alpha_1}
+                   {\lVert y-X\mu\rVert^2+2\alpha_2}, \qquad
+    \lambda = \frac{\gamma+2\lambda_1}
+                    {\lVert\mu\rVert^2+2\lambda_2}.
+
+When a prior rate is zero, that prior is improper and has no normalization;
+the score omits its undefined constant. With sample weights, the likelihood
+uses the corresponding weighted data term.
+
 Bayesian Ridge Regression is used for regression::
 
     >>> from sklearn import linear_model
