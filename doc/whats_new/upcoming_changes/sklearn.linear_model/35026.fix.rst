@@ -1,0 +1,4 @@
+- :class:`linear_model.BayesianRidge` now includes the Gamma prior normalization
+  constants in ``scores_`` when the prior rates are positive. This corrects the
+  reported scores without changing the fitted model.
+  By :user:`Luis A. Ortega <Ludvins>`.
