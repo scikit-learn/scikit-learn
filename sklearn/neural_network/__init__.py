@@ -3,7 +3,17 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from sklearn.neural_network._extreme_learning_machine import (
+    ExtremeLearningClassifier,
+    ExtremeLearningRegressor,
+)
 from sklearn.neural_network._multilayer_perceptron import MLPClassifier, MLPRegressor
 from sklearn.neural_network._rbm import BernoulliRBM
 
-__all__ = ["BernoulliRBM", "MLPClassifier", "MLPRegressor"]
+__all__ = [
+    "BernoulliRBM",
+    "ExtremeLearningClassifier",
+    "ExtremeLearningRegressor",
+    "MLPClassifier",
+    "MLPRegressor",
+]
