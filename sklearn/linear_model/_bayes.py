@@ -531,7 +531,8 @@ class ARDRegression(RegressorMixin, LinearModel):
        estimated precisions of the weights.
 
     sigma_ : array-like of shape (n_features, n_features)
-        estimated variance-covariance matrix of the weights
+        estimated variance-covariance matrix of the weights -- when weights are pruned,
+        shape is (n_features - n_features_pruned, n_features - n_features_pruned)
 
     scores_ : float
         if computed, value of the objective function (to be maximized)
