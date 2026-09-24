@@ -70,7 +70,7 @@ def sag{{name_suffix}}(
     {{c_type}}[:, ::1] sum_gradient_init,
     {{c_type}}[:, ::1] gradient_memory_init,
     bint[::1] seen_init,
-    int num_seen,
+    double num_seen,
     bint fit_intercept,
     {{c_type}}[::1] intercept_sum_gradient_init,
     double intercept_decay,
@@ -234,8 +234,10 @@ def sag{{name_suffix}}(
 
                 # update the number of samples seen and the seen array
                 if seen_init[sample_ind] == 0:
-                    num_seen += 1
+                    num_seen += sample_weight
                     seen_init[sample_ind] = 1
+                if num_seen==0:
+                    continue
 
                 # make the weight updates (just-in-time gradient step, and prox operator)
                 if sample_itr > 0:
