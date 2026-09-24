@@ -837,25 +837,28 @@ called *Bayesian Ridge Regression*, and is similar to the classical
 :class:`Ridge`.
 
 The parameters :math:`w`, :math:`\alpha` and :math:`\lambda` are estimated
-jointly during the fit of the model, the regularization parameters
-:math:`\alpha` and :math:`\lambda` being estimated by maximizing the
-*log marginal likelihood*. The scikit-learn implementation
-is based on the algorithm described in Appendix A of (Tipping, 2001)
+jointly during the fit of the model. The regularization parameters
+:math:`\alpha` and :math:`\lambda` are estimated with fixed-point updates
+derived from the *log marginal likelihood* plus the log Gamma prior terms.
+The scikit-learn implementation is based on the algorithm described in
+Appendix A of (Tipping, 2001)
 where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
-as suggested in (MacKay, 1992). The initial value of the maximization procedure
-can be set with the hyperparameters ``alpha_init`` and ``lambda_init``.
+as suggested in (MacKay, 1992). The initial values of :math:`\alpha` and
+:math:`\lambda` can be set with ``alpha_init`` and ``lambda_init``.
 
 There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\lambda_1` and :math:`\lambda_2` of the gamma prior distributions over
 :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
-When ``compute_score=True``, :attr:`BayesianRidge.scores_` evaluates the log
-marginal likelihood of the data plus the log priors of the two precisions.
-For unweighted data, let :math:`n` be the number of samples, :math:`p` the
-number of features, :math:`A = \lambda I_p + \alpha X^\top X`, and
-:math:`\mu = \alpha A^{-1} X^\top y`. When an intercept is fitted, :math:`X`
-and :math:`y` denote the centered data. Completing the square gives
+When ``compute_score=True``, :attr:`BayesianRidge.scores_` evaluates an
+objective based on the log marginal likelihood and the prior terms of the two
+precisions. For unweighted data with ``fit_intercept=False`` and positive prior
+rates, this is the normalized joint log density of :math:`y`, :math:`\alpha`,
+and :math:`\lambda` given :math:`X`. In this case, let :math:`n` be the number
+of samples, :math:`p` the number of features,
+:math:`A = \lambda I_p + \alpha X^\top X`, and
+:math:`\mu = \alpha A^{-1} X^\top y`. Completing the square gives
 
 .. math::
 
@@ -898,9 +901,20 @@ Thus the Gamma-prior contributions include the constants
 :math:`(\alpha_1+1)\log\alpha_2-\log\Gamma(\alpha_1+1)` and
 :math:`(\lambda_1+1)\log\lambda_2-\log\Gamma(\lambda_1+1)`.
 The shape offsets also agree with the fitting equations. Let
-:math:`\gamma=p-\lambda\operatorname{tr}(A^{-1})`. Setting the derivatives
-of the score with respect to the precisions to zero gives the fixed-point
-updates used during fitting:
+:math:`\gamma=p-\lambda\operatorname{tr}(A^{-1})` and denote the score above
+by :math:`S`. Its derivatives with respect to the precisions are
+
+.. math::
+
+    \frac{\partial S}{\partial\alpha}
+    = \frac{n-\gamma+2\alpha_1}{2\alpha}
+      - \frac{\lVert y-X\mu\rVert^2+2\alpha_2}{2}, \qquad
+    \frac{\partial S}{\partial\lambda}
+    = \frac{\gamma+2\lambda_1}{2\lambda}
+      - \frac{\lVert\mu\rVert^2+2\lambda_2}{2}.
+
+Setting these derivatives to zero gives the fixed-point updates used during
+fitting:
 
 .. math::
 
@@ -910,8 +924,13 @@ updates used during fitting:
                     {\lVert\mu\rVert^2+2\lambda_2}.
 
 When a prior rate is zero, that prior is improper and has no normalization;
-the score omits its undefined constant. With sample weights, the likelihood
-uses the corresponding weighted data term.
+the score omits its undefined constant. With ``fit_intercept=True``, the
+implementation centers :math:`X` and :math:`y` before evaluating the same
+expression. The resulting score is evaluated on centered data and is not a
+normalized density of the original target vector. With sample weights, the
+objective uses weighted residuals and the sum of weights in place of
+:math:`n`; for non-integer weights it is not a normalized density of the
+original observations.
 
 Bayesian Ridge Regression is used for regression::
 

@@ -39,11 +39,13 @@ def test_bayesian_ridge_score_values(n_samples, n_features):
     alpha_1, alpha_2 = 0.2, 0.3
     lambda_1, lambda_2 = 0.7, 1.2
 
-    # Integrating out the coefficient vector gives y ~ N(0, C).
-    C = np.eye(n_samples) / alpha + X @ X.T / lambda_
-    expected = multivariate_normal.logpdf(y, cov=C)
-    expected += gamma.logpdf(alpha, a=alpha_1 + 1, scale=1 / alpha_2)
-    expected += gamma.logpdf(lambda_, a=lambda_1 + 1, scale=1 / lambda_2)
+    def expected_score(alpha, lambda_):
+        # Integrating out the coefficient vector gives y ~ N(0, C).
+        C = np.eye(n_samples) / alpha + X @ X.T / lambda_
+        score = multivariate_normal.logpdf(y, cov=C)
+        score += gamma.logpdf(alpha, a=alpha_1 + 1, scale=1 / alpha_2)
+        score += gamma.logpdf(lambda_, a=lambda_1 + 1, scale=1 / lambda_2)
+        return score
 
     clf = BayesianRidge(
         alpha_1=alpha_1,
@@ -57,7 +59,10 @@ def test_bayesian_ridge_score_values(n_samples, n_features):
         compute_score=True,
     )
     clf.fit(X, y)
-    assert_allclose(clf.scores_[0], expected, rtol=1e-12)
+    assert_allclose(clf.scores_[0], expected_score(alpha, lambda_), rtol=1e-12)
+    assert_allclose(
+        clf.scores_[-1], expected_score(clf.alpha_, clf.lambda_), rtol=1e-12
+    )
 
 
 @pytest.mark.parametrize("alpha_2, lambda_2", [(0, 0), (0, 1.2), (0.3, 0)])
@@ -67,16 +72,19 @@ def test_bayesian_ridge_score_zero_prior_rate(alpha_2, lambda_2):
     y = np.array([1.0, 2.0, 4.0])
     alpha, lambda_ = 2.0, 3.0
     alpha_1, lambda_1 = 0.2, 0.7
-    C = np.eye(len(y)) / alpha + X @ X.T / lambda_
-    expected = multivariate_normal.logpdf(y, cov=C)
-    if alpha_2:
-        expected += gamma.logpdf(alpha, a=alpha_1 + 1, scale=1 / alpha_2)
-    else:
-        expected += alpha_1 * np.log(alpha)
-    if lambda_2:
-        expected += gamma.logpdf(lambda_, a=lambda_1 + 1, scale=1 / lambda_2)
-    else:
-        expected += lambda_1 * np.log(lambda_)
+
+    def expected_score(alpha, lambda_):
+        C = np.eye(len(y)) / alpha + X @ X.T / lambda_
+        score = multivariate_normal.logpdf(y, cov=C)
+        if alpha_2:
+            score += gamma.logpdf(alpha, a=alpha_1 + 1, scale=1 / alpha_2)
+        else:
+            score += alpha_1 * np.log(alpha)
+        if lambda_2:
+            score += gamma.logpdf(lambda_, a=lambda_1 + 1, scale=1 / lambda_2)
+        else:
+            score += lambda_1 * np.log(lambda_)
+        return score
 
     clf = BayesianRidge(
         alpha_1=alpha_1,
@@ -89,7 +97,10 @@ def test_bayesian_ridge_score_zero_prior_rate(alpha_2, lambda_2):
         fit_intercept=False,
         compute_score=True,
     ).fit(X, y)
-    assert_allclose(clf.scores_[0], expected, rtol=1e-12)
+    assert_allclose(clf.scores_[0], expected_score(alpha, lambda_), rtol=1e-12)
+    assert_allclose(
+        clf.scores_[-1], expected_score(clf.alpha_, clf.lambda_), rtol=1e-12
+    )
 
 
 def test_bayesian_ridge_parameter():

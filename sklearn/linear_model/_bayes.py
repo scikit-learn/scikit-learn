@@ -75,10 +75,13 @@ class BayesianRidge(RegressorMixin, LinearModel):
         .. versionadded:: 0.22
 
     compute_score : bool, default=False
-        If True, compute the log marginal likelihood of the data plus the log
-        Gamma prior densities of alpha and lambda at each iteration. If a prior
-        rate (`alpha_2` or `lambda_2`) is zero, its undefined normalization
-        constant is omitted from the score.
+        If True, compute an objective based on the log marginal likelihood and
+        Gamma prior terms for alpha and lambda at each iteration. This is a
+        normalized joint log density for unweighted data with
+        `fit_intercept=False` and positive prior rates. With a fitted intercept
+        or sample weights, it is an objective evaluated on centered or
+        weighted data. If a prior rate (`alpha_2` or `lambda_2`) is zero, its
+        undefined normalization constant is omitted.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model.
@@ -112,11 +115,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Estimated variance-covariance matrix of the weights
 
     scores_ : array-like of shape (n_iter_+1,)
-        If `compute_score` is True, the log marginal likelihood of the data
-        plus the log prior densities of alpha and lambda at each iteration.
+        When `compute_score` is True, each entry contains the log marginal
+        likelihood term plus the Gamma prior terms for alpha and lambda.
+        See `compute_score` for normalization caveats.
         The array starts with the score for the initial values of alpha and
-        lambda and ends with the score for their estimated values. See the
-        `compute_score` parameter for the case of a zero prior rate.
+        lambda and ends with the score for their estimated values.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
@@ -315,8 +318,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
                 X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
             )
             if self.compute_score:
-                # compute the log marginal likelihood and log priors
-                s = self._log_joint_density(
+                # compute the training objective
+                s = self._log_joint_score(
                     n_samples,
                     n_features,
                     sw_sum,
@@ -343,22 +346,22 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.n_iter_ = iter_ + 1
 
         # return regularization parameters and corresponding posterior mean,
-        # log joint density and posterior covariance
+        # score and posterior covariance
         self.alpha_ = alpha_
         self.lambda_ = lambda_
         self.coef_, sse_ = self._update_coef_(
             X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
         )
         if self.compute_score:
-            # compute the log marginal likelihood and log priors
-            s = self._log_joint_density(
+            # compute the training objective
+            s = self._log_joint_score(
                 n_samples,
                 n_features,
                 sw_sum,
                 eigen_vals_,
                 alpha_,
                 lambda_,
-                coef_,
+                self.coef_,
                 sse_,
             )
             self.scores_.append(s)
@@ -429,10 +432,10 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         return coef_, sse_
 
-    def _log_joint_density(
+    def _log_joint_score(
         self, n_samples, n_features, sw_sum, eigen_vals, alpha_, lambda_, coef, sse
     ):
-        """Log marginal likelihood of the data plus log Gamma priors."""
+        """Score based on log evidence and Gamma prior terms."""
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
         lambda_1 = self.lambda_1
