@@ -986,31 +986,27 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         # X with n_features <= n_samples, no sample weights, and a
         # resolved "cholesky" solver hits _solve_cholesky's primal branch,
-        # which can apply an algebraically-centering optimization.
-        use_no_center_cholesky = (
+        # which can center X algebraically, when numerically safe.
+        try_no_center_cholesky = (
             self.fit_intercept
             and sample_weight is None
             and solver == "cholesky"
             and X.shape[0] >= X.shape[1]
         )
 
-        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _, use_no_center_cholesky = _preprocess_data(
             X,
             y,
             fit_intercept=self.fit_intercept,
-            copy=(
-                self.copy_X
-                # If `use_no_center_cholesky` or X is sparse,
-                # X is never mutated
-                and not use_no_center_cholesky
-                and not X_is_sparse
-            ),
+            # If X is sparse, X is never mutated
+            copy=self.copy_X and not X_is_sparse,
             # X and y were already validated by `validate_data` in the
             # public `fit` method of the subclass (e.g. `Ridge.fit`).
             check_input=False,
             sample_weight=sample_weight,
             rescale_with_sw=False,
-            center_X=not use_no_center_cholesky,
+            skip_centering_if_safe=try_no_center_cholesky,
+            return_centering_skipped=True,
         )
 
         if solver == "sag" and X_is_sparse and self.fit_intercept:
