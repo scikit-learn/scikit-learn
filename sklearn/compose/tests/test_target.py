@@ -9,8 +9,12 @@ from sklearn.compose import TransformedTargetRegressor
 from sklearn.datasets import make_regression
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression, OrthogonalMatchingPursuit
+from sklearn.metrics import pairwise_distances
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
+from sklearn.utils import get_tags
 from sklearn.utils._testing import assert_allclose
 
 friedman = datasets.make_friedman1(random_state=0)
@@ -446,3 +450,37 @@ def test_transform_target_regressor_metadata_routing_default_estimator():
     X, y = make_regression()
     ttr = TransformedTargetRegressor()
     ttr.fit(X, y, sample_weight=np.ones(shape=(X.shape[0],)))
+
+
+def test_transform_target_regressor_pairwise_tag():
+    """Check that TransformedTargetRegressor exposes the pairwise tag of the
+    wrapped regressor.
+
+    Non-regression test for issue #22828.
+    """
+    regr = TransformedTargetRegressor(regressor=KNeighborsRegressor())
+    assert not get_tags(regr).input_tags.pairwise
+
+    regr = TransformedTargetRegressor(
+        regressor=KNeighborsRegressor(metric="precomputed")
+    )
+    assert get_tags(regr).input_tags.pairwise
+
+
+def test_transform_target_regressor_pairwise_grid_search():
+    """Check that GridSearchCV correctly splits a precomputed distance matrix
+    when the underlying pairwise estimator is wrapped in a
+    TransformedTargetRegressor.
+
+    Non-regression test for issue #22828.
+    """
+    X, y = make_regression(n_samples=10, n_features=5, random_state=42)
+    X_dist = pairwise_distances(X, metric="euclidean")
+
+    regr = TransformedTargetRegressor(
+        regressor=KNeighborsRegressor(metric="precomputed", n_neighbors=2)
+    )
+    grid_search = GridSearchCV(
+        regr, param_grid={"regressor__n_neighbors": [2, 3]}, cv=2
+    )
+    grid_search.fit(X_dist, y)
