@@ -1,0 +1,4 @@
+- :class:`kernel_approximation.Nystroem` now supports `n_components` smaller than
+  `n_samples` when `kernel="precomputed"`. It previously raised a `ValueError`
+  because only the rows of the precomputed kernel were subsampled.
+  By :user:`Lawson Darrow <Lawson-Darrow>`.

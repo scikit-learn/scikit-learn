@@ -1054,13 +1054,32 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         else:
             basis = _safe_indexing(X, basis_inds, axis=0)
 
-        basis_kernel = pairwise_kernels(
-            basis,
-            metric=self.kernel,
-            filter_params=True,
-            n_jobs=self.n_jobs,
-            **self._get_kernel_params(),
-        )
+        if self.kernel == "precomputed":
+            # Validate kernel params (e.g. reject gamma/coef0/degree) even
+            # though they are unused for a precomputed kernel.
+            self._get_kernel_params()
+            # X is the precomputed kernel and must be square (n_samples,
+            # n_samples) so it can be subsampled on both axes.
+            if X.shape[0] != X.shape[1]:
+                raise ValueError(
+                    "Precomputed kernel matrix must be a square matrix of shape "
+                    "(n_samples, n_samples). Got an array of shape "
+                    f"{X.shape}."
+                )
+            # The kernel on the basis is the square submatrix indexed by
+            # basis_inds on both axes.
+            if sp.issparse(basis):
+                basis_kernel = basis[:, basis_inds].toarray()
+            else:
+                basis_kernel = _safe_indexing(basis, basis_inds, axis=1)
+        else:
+            basis_kernel = pairwise_kernels(
+                basis,
+                metric=self.kernel,
+                filter_params=True,
+                n_jobs=self.n_jobs,
+                **self._get_kernel_params(),
+            )
 
         # sqrt of kernel matrix on basis vectors
         _, _, dtype = _find_floating_dtype_allow_sparse(basis_kernel, Y=None, xp=xp)
@@ -1095,14 +1114,23 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         X = validate_data(self, X, accept_sparse="csr", reset=False)
 
         kernel_params = self._get_kernel_params()
-        embedded = pairwise_kernels(
-            X,
-            self.components_,
-            metric=self.kernel,
-            filter_params=True,
-            n_jobs=self.n_jobs,
-            **kernel_params,
-        )
+        if self.kernel == "precomputed":
+            # X is the precomputed kernel between the data to transform and the
+            # samples seen during fit, of shape (n_samples, n_samples_fit). The
+            # embedding only uses the columns of the basis samples.
+            if sp.issparse(X):
+                embedded = X[:, self.component_indices_].toarray()
+            else:
+                embedded = _safe_indexing(X, self.component_indices_, axis=1)
+        else:
+            embedded = pairwise_kernels(
+                X,
+                self.components_,
+                metric=self.kernel,
+                filter_params=True,
+                n_jobs=self.n_jobs,
+                **kernel_params,
+            )
         dtype = _find_matching_floating_dtype(embedded, xp=xp)
         embedded = xp.asarray(embedded, dtype=dtype, device=device)
         return embedded @ self.normalization_.T
