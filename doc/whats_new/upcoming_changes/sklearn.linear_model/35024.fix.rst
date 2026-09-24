@@ -1,0 +1,3 @@
+- :class:`linear_model.Ridge` now correctly reports the solver used when
+  the Cholesky solver falls back to `lstsq` for singular matrices.
+  By :user:`Arpit Deosthale <Arpit483>`.

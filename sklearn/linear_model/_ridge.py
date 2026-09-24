@@ -234,7 +234,9 @@ def _solve_cholesky(X, y, alpha):
         return coefs
 
 
-def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
+def _solve_cholesky_kernel(
+    K, y, alpha, sample_weight=None, copy=False, return_solver=False
+):
     # dual_coef = inv(X X^t + alpha*Id) y
     n_samples = K.shape[0]
     n_targets = y.shape[1]
@@ -252,6 +254,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         sw = np.sqrt(np.atleast_1d(sample_weight))
         y = y * sw[:, np.newaxis]
         K *= np.outer(sw, sw)
+    solver = "cholesky"
 
     if one_alpha:
         # Only one penalty, we can solve multi-target problems in one time.
@@ -268,6 +271,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
                 "least-squares solution instead."
             )
             dual_coef = linalg.lstsq(K, y)[0]
+            solver = "lstsq"
 
         # K is expensive to compute and store in memory so change it back in
         # case it was user-given.
@@ -276,7 +280,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         if has_sw:
             dual_coef *= sw[:, np.newaxis]
 
-        return dual_coef
+        result = dual_coef
     else:
         # One penalty per target. We need to solve each target separately.
         dual_coefs = np.empty([n_targets, n_samples], K.dtype)
@@ -293,7 +297,9 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         if has_sw:
             dual_coefs *= sw[np.newaxis, :]
 
-        return dual_coefs.T
+        result = dual_coefs.T
+
+    return (result, solver) if return_solver else result
 
 
 def _solve_svd(X, y, alpha, xp=None):
@@ -747,7 +753,9 @@ def _ridge_regression(
         if n_features > n_samples:
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
-                dual_coef = _solve_cholesky_kernel(K, y, alpha)
+                dual_coef, solver = _solve_cholesky_kernel(
+                    K, y, alpha, return_solver=True
+                )
 
                 coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
             except linalg.LinAlgError:
