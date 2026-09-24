@@ -33,6 +33,20 @@ class ScoringMonitorLog:
     - `sequential_subtasks`: whether the task has sequential subtasks.
     - A column for each score name that was passed as `scoring` parameter.
 
+    Parameters
+    ----------
+    run_id : uuid.UUID
+        The unique identifier for the run.
+
+    estimator_name : str
+        The name of the estimator for the run.
+
+    timestamp : datetime.datetime
+        The timestamp of the start of the run.
+
+    data : list[dict]
+        The recorded scores for the run.
+
     Attributes
     ----------
     run_id : uuid.UUID
@@ -49,6 +63,24 @@ class ScoringMonitorLog:
 
     data_as_pandas : pandas.DataFrame
         The recorded scores for the run as a Pandas DataFrame.
+
+    See Also
+    --------
+    ScoringMonitor : Callback that monitors a score.
+
+    Examples
+    --------
+    >>> import uuid
+    >>> from datetime import datetime
+    >>> from sklearn.callback import ScoringMonitorLog
+    >>> log = ScoringMonitorLog(
+    ...     run_id=uuid.UUID('12345678-1234-5678-1234-567812345678'),
+    ...     estimator_name="LogisticRegression",
+    ...     timestamp=datetime(2026, 6, 30),
+    ...     data=[{"accuracy": 0.9}]
+    ... )
+    >>> log.estimator_name
+    'LogisticRegression'
     """
 
     run_id: uuid.UUID
