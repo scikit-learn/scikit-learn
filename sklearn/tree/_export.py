@@ -5,6 +5,7 @@ This module defines export functions for decision trees.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import json
 from collections.abc import Iterable
 from io import StringIO
 from numbers import Integral
@@ -1232,3 +1233,218 @@ def export_text(
 
     print_tree_recurse(report, 0, 1)
     return report.getvalue()
+
+
+@validate_params(
+    {
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
+        "out_file": [str, None, HasMethods("write")],
+        "feature_names": ["array-like", None],
+        "class_names": ["array-like", None],
+        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
+        "decimals": [Interval(Integral, 0, None, closed="left"), None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def export_dict(
+    decision_tree,
+    out_file=None,
+    *,
+    feature_names=None,
+    class_names=None,
+    max_depth=None,
+    decimals=None,
+):
+    """Build a nested dict representation of a decision tree.
+
+    Note that backwards compatibility may not be supported.
+
+    Parameters
+    ----------
+    decision_tree : object
+        The decision tree estimator to be exported.
+        It can be an instance of
+        DecisionTreeClassifier or DecisionTreeRegressor.
+
+    out_file : object or str, default=None
+        Handle or name of the file to additionally write the result to, as
+        JSON. If None, nothing is written to a file. The dict is returned
+        either way.
+
+    feature_names : array-like of shape (n_features,), default=None
+        An array containing the feature names.
+        If None, the ``"feature_name"`` key is omitted. Feature indices
+        are always included at internal nodes.
+
+    class_names : array-like of shape (n_classes,), default=None
+        Names of each of the target classes in the order of
+        ``decision_tree.classes_``.
+        Only relevant for classification and not supported for multi-output.
+
+        - if `None`, the class names are delegated to `decision_tree.classes_`;
+        - otherwise, `class_names` will be used as class names instead of
+          `decision_tree.classes_`. The length of `class_names` must match
+          the length of `decision_tree.classes_`.
+
+    max_depth : int, default=None
+        Maximum depth at which split information is exported, counting the
+        root as depth 0. Internal nodes one level beyond this depth are
+        replaced by terminal summaries with ``"truncated": True``. For
+        example, ``max_depth=0`` retains the root split and summarizes its
+        children. Actual leaves are not marked as truncated. If None, the
+        full tree is exported.
+
+    decimals : int, default=None
+        Number of decimal digits `threshold`, `impurity`,
+        `weighted_n_node_samples` and `value` are
+        rounded to. If None, no rounding is applied and values are exported
+        at full floating-point precision. Rounding `threshold` can change
+        which branch a value near the boundary is routed to, so the default
+        should be kept when the output is used to reproduce
+        `decision_tree.predict`.
+
+    Returns
+    -------
+    tree_dict : dict
+        Nested dict representation of the decision tree, rooted at node 0.
+        Every node has the keys ``"node_id"``, ``"n_node_samples"``,
+        ``"weighted_n_node_samples"`` and ``"impurity"``. An internal node
+        additionally has ``"feature"``, ``"feature_name"`` (only if
+        `feature_names` was provided), ``"threshold"``,
+        ``"missing_go_to_left"``, ``"left"`` and ``"right"``. The boolean
+        ``"missing_go_to_left"`` records the branch used for missing values
+        by trees that support them. A leaf, or a node truncated by `max_depth`,
+        additionally has ``"value"`` and, for single-output classifiers,
+        ``"class"``.
+
+        For single-output classification, ``"value"`` is a list of weighted
+        class proportions in the order of ``decision_tree.classes_``. For
+        single-output regression, it is a one-element list containing the
+        predicted value. For multiple outputs, it is a list of such lists,
+        one per output. Classification lists are padded with zeros to the
+        largest number of classes across outputs; only the first
+        ``decision_tree.n_classes_[k]`` entries are meaningful for output k.
+        Multi-output class labels are not included: interpret these entries
+        using ``decision_tree.classes_[k]``.
+
+    Notes
+    -----
+    This representation is intended for inspection and conversion, rather
+    than as a complete model persistence format. To reproduce tree traversal,
+    convert input features to ``numpy.float32`` before comparing them with
+    thresholds, as the estimator does. Compare the converted values at
+    float64 precision without downcasting the exported thresholds (for
+    example, convert each float32 scalar to a Python float). Route finite
+    values left when they are less than or equal to the threshold, and right
+    otherwise. For trees
+    supporting missing values, route NaNs according to
+    ``"missing_go_to_left"``. This field does not enable missing-value support
+    for estimators or criteria that reject NaNs.
+
+    Keep ``decimals=None`` and ``max_depth=None`` when reproducing predictions.
+    Rounding thresholds can change traversal, and rounding leaf values can
+    change predictions or probabilities. A truncated node describes that
+    node's aggregate values, not the predictions of the omitted subtree.
+    Custom ``class_names`` replace the estimator's labels in ``"class"``.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.tree import DecisionTreeClassifier, export_dict
+    >>> iris = load_iris()
+    >>> clf = DecisionTreeClassifier(random_state=0, max_depth=1)
+    >>> clf = clf.fit(iris.data, iris.target)
+    >>> tree_dict = export_dict(clf, feature_names=iris.feature_names)
+    >>> tree_dict["feature_name"]
+    'petal width (cm)'
+    """
+    check_is_fitted(decision_tree)
+    tree_ = decision_tree.tree_
+
+    if feature_names is not None:
+        feature_names = check_array(
+            feature_names, ensure_2d=False, dtype=None, ensure_min_samples=0
+        )
+        if len(feature_names) != tree_.n_features:
+            raise ValueError(
+                "feature_names must contain %d elements, got %d"
+                % (tree_.n_features, len(feature_names))
+            )
+
+    single_output_clf = is_classifier(decision_tree) and tree_.n_outputs == 1
+
+    if class_names is not None:
+        if not single_output_clf:
+            raise ValueError(
+                "class_names is only supported for single-output classification trees."
+            )
+        class_names = check_array(
+            class_names, ensure_2d=False, dtype=None, ensure_min_samples=0
+        )
+        if len(class_names) != len(decision_tree.classes_):
+            raise ValueError(
+                "When `class_names` is an array, it should contain as"
+                " many items as `decision_tree.classes_`. Got"
+                f" {len(class_names)} while the tree was fitted with"
+                f" {len(decision_tree.classes_)} classes."
+            )
+    elif single_output_clf:
+        class_names = decision_tree.classes_
+
+    def _round(value):
+        value = float(value)
+        return value if decimals is None else round(value, decimals)
+
+    def _native(value):
+        return value.item() if hasattr(value, "item") else value
+
+    def _value(node_id):
+        value = tree_.value[node_id]
+        if tree_.n_outputs == 1:
+            return [_round(v) for v in value[0]]
+        return [[_round(v) for v in output] for output in value]
+
+    def _recurse(node_id, depth):
+        node = {
+            "node_id": int(node_id),
+            "n_node_samples": int(tree_.n_node_samples[node_id]),
+            "weighted_n_node_samples": _round(tree_.weighted_n_node_samples[node_id]),
+            "impurity": _round(tree_.impurity[node_id]),
+        }
+
+        is_leaf = tree_.feature[node_id] == _tree.TREE_UNDEFINED
+        truncated = max_depth is not None and depth > max_depth
+
+        if is_leaf or truncated:
+            node["value"] = _value(node_id)
+            if single_output_clf:
+                class_idx = int(np.argmax(tree_.value[node_id][0]))
+                node["class"] = _native(class_names[class_idx])
+            if truncated and not is_leaf:
+                node["truncated"] = True
+            return node
+
+        feature = int(tree_.feature[node_id])
+        node["feature"] = feature
+        if feature_names is not None:
+            node["feature_name"] = _native(feature_names[feature])
+        node["threshold"] = _round(tree_.threshold[node_id])
+        node["missing_go_to_left"] = bool(tree_.missing_go_to_left[node_id])
+        node["left"] = _recurse(tree_.children_left[node_id], depth + 1)
+        node["right"] = _recurse(tree_.children_right[node_id], depth + 1)
+        return node
+
+    tree_dict = _recurse(0, 0)
+
+    if out_file is not None:
+        own_file = False
+        if isinstance(out_file, str):
+            out_file = open(out_file, "w", encoding="utf-8")
+            own_file = True
+        try:
+            json.dump(tree_dict, out_file)
+        finally:
+            if own_file:
+                out_file.close()
+
+    return tree_dict
