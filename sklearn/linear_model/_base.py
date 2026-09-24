@@ -66,6 +66,13 @@ SPARSE_INTERCEPT_DECAY = 0.01
 # amplifies rounding errors by a factor of about `1 + mu ** 2 / var`.
 _UNCENTERED_RELATIVE_ERROR_TOL = 1e-4
 
+# Largest ratio `|mu| / std` of the features tolerated by iterative solvers of
+# GLMs before centering X. With an unpenalized intercept, the condition number
+# of the problem grows like `1 + mu ** 2 / var`, and the convergence criteria
+# of the solvers (e.g. on the gradient norm) become unreliable long before
+# rounding errors matter.
+_GLM_MAX_OFFSET_TO_STD_RATIO = 10.0
+
 
 def _dense_mean_and_centering_needed(X, max_offset_to_std_ratio=None):
     """Per-feature mean of dense X and whether solvers need X to be centered.
@@ -99,6 +106,51 @@ def _dense_mean_and_centering_needed(X, max_offset_to_std_ratio=None):
     # Written without division to handle constant features.
     centering_needed = bool(np.any(X_mean**2 > max_squared_ratio * X_var))
     return X_mean.astype(X.dtype, copy=False), centering_needed
+
+
+def _center_dense_X_if_needed(X, fit_intercept, max_offset_to_std_ratio):
+    """Return a centered copy of X if its features have large offsets.
+
+    For linear models whose intercept is not penalized, replacing `X` by
+    `X - X_offset` is an exact reparametrization: `X @ coef + intercept` equals
+    `(X - X_offset) @ coef + intercept_centered` with
+    `intercept = intercept_centered - X_offset @ coef`. Centering is only done
+    when it matters numerically, to avoid a copy of X in the common case.
+
+    Parameters
+    ----------
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        Training data.
+
+    fit_intercept : bool
+        Whether the model has an intercept, without which centering is not a
+        reparametrization.
+
+    max_offset_to_std_ratio : float
+        See `_dense_mean_and_centering_needed`.
+
+    Returns
+    -------
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        `X` itself, or a centered copy of it, with the same memory layout.
+
+    X_offset : ndarray of shape (n_features,) or None
+        The per-feature mean subtracted to X, or None if X was not centered.
+        X is never centered if `fit_intercept=False`, if it is sparse, or if it
+        is not a numpy array.
+    """
+    if (
+        not fit_intercept
+        or sp.issparse(X)
+        or not _is_numpy_namespace(get_namespace(X)[0])
+    ):
+        return X, None
+    X_offset, centering_needed = _dense_mean_and_centering_needed(
+        X, max_offset_to_std_ratio
+    )
+    if not centering_needed:
+        return X, None
+    return X - X_offset, X_offset
 
 
 def make_dataset(X, y, sample_weight, random_state=None):

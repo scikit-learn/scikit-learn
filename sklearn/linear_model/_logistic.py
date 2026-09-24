@@ -22,9 +22,11 @@ from sklearn._loss.loss import (
 from sklearn.base import _fit_context
 from sklearn.callback import CallbackSupportMixin
 from sklearn.linear_model._base import (
+    _GLM_MAX_OFFSET_TO_STD_RATIO,
     BaseEstimator,
     LinearClassifierMixin,
     SparseCoefMixin,
+    _center_dense_X_if_needed,
 )
 from sklearn.linear_model._glm._newton_solver import (
     NewtonCDGramSolver,
@@ -442,6 +444,20 @@ def _logistic_regression_path(
 
     random_state = check_random_state(random_state)
 
+    # Solvers are not robust to features with a large offset relative to their
+    # standard deviation: fit on centered X in this case. As the intercept is
+    # not penalized, this is an exact reparametrization, except for liblinear
+    # which penalizes the intercept.
+    X_offset = None
+    if solver != "liblinear":
+        X, X_offset = _center_dense_X_if_needed(
+            X, fit_intercept, _GLM_MAX_OFFSET_TO_STD_RATIO
+        )
+        if X_offset is not None:
+            # The step size of sag/saga depends on the norms of the rows of X,
+            # much smaller once centered: let sag_solver compute it again.
+            max_squared_sum = None
+
     if is_binary:
         # y is already encoded as values in {0, 1}.
         if coef_as_xp:
@@ -524,6 +540,11 @@ def _logistic_regression_path(
                     f"{w0.shape}"
                 )
                 raise ValueError(msg)
+
+    if X_offset is not None:
+        # Intercept of the centered problem: X @ coef + intercept equals
+        # (X - X_offset) @ coef + intercept + X_offset @ coef.
+        w0[..., -1] += w0[..., :-1] @ X_offset
 
     if is_binary:
         loss = LinearModelLoss(
@@ -773,6 +794,12 @@ def _logistic_regression_path(
             else:
                 multi_w0 = w0
             coefs.append(xp.asarray(multi_w0, copy=True, dtype=X.dtype, device=device))
+
+        if X_offset is not None:
+            # Back to the intercept of the uncentered problem (coefs[-1] is a
+            # copy of w0, which stays in the centered parametrization for the
+            # warm start of the next C).
+            coefs[-1][..., -1] -= coefs[-1][..., :-1] @ X_offset
 
         n_iter[i] = n_iter_i
 
