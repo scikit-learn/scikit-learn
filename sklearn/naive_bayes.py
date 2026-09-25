@@ -1569,3 +1569,456 @@ class CategoricalNB(_BaseDiscreteNB):
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
+
+
+class GammaNB:
+    """A Gamma kernel with different priori distributions.
+
+    The Gamma Naive Bayes classifier is suitable for classification with
+    features that have Gamma distribution.
+
+    Parameters
+    ----------
+    priors : array-like of shape (n_classes,), default=None
+        Prior is the array of probabilities of the classes. If specified, the
+        priors are not adjusted according to the data and used as a weight
+        of target vector.
+
+    Attributes
+    ----------
+    p0 : Float, default=0
+        between 0 and 1,
+        a percentage of samples labeled as 0 in all samples.
+
+    p1 : Float, default=0
+        between 0 and 1,
+        a percentage of samples labeled as 1 in all samples.
+
+    feat0 : Array-like of shape (n0_samples, n_features),
+        including n0_samples, the number of samples with label of 0,
+        and n_features, the number of features.
+
+    feat1 : Array-like of shape (n1_samples, n_features),
+        including n1_samples, the number of samples with label of 1,
+        and n_features, the number of features.
+
+    p_min : Float, default=0.5
+        between 0 and 1,
+        deciding the percentage between min_x and median_x.
+
+    priori_distr : String, default='Uniform',
+        with another two optional values, namely 'Exponential' and 'Poisson'.
+        The value of priori_distr is 'Uniform', suggesting that the
+        gamma-distributed feature has Uniform priori distribution. The value
+        of priori_distr is 'Exponential', suggesting that the gamma-distributed
+        feature has Exponential priori distribution. The value of priori_distr
+        is 'Poisson', suggesting that the gamma-distributed feature has Poisson
+        priori distribution.
+
+    fit_count : Int, default=0
+        This variable would plus 1 if self.fit() is used once.
+
+    priors : array-like of shape (n_classes,), default=None
+        Prior probabilities of the classes. If specified, the priors are not
+        adjusted according to the data.
+
+    class_prior_ : array-like of shape (n_classes,), default=None
+        probability of each class.
+
+    See Also
+    --------
+    BernoulliNB : Naive Bayes classifier for multivariate Bernoulli models.
+    ComplementNB : Complement Naive Bayes classifier.
+    GaussianNB : Gaussian Naive Bayes.
+    MultinomialNB : Naive Bayes classifier for multinomial models.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> y = np.array([0, 1, 0, 0, 1, 0])
+    >>> from sklearn.naive_bayes import GammaNB
+    >>> clf = GammaNB()
+    >>> clf.fit(X, y)
+    >>> print(clf.predict(X[2:3], p_min=1, priori_distr='Exponential'))
+    [0]
+    """
+
+    def __init__(self, priors=None):
+        self.p0 = 0
+        self.p1 = 0
+        self.feat0 = []
+        self.feat1 = []
+        self.p_min = 0.5
+        self.priori_distr = "Uniform"
+        self.fit_count = 0
+        self.priors = priors  # dim == num_classes
+        # --- not a pivot
+        if not np.all(self.priors):
+            self.class_prior_ = np.array([0.5, 0.5])
+        else:
+            self.class_prior_ = priors
+
+    def _check_features(self, X):
+        """Validate and fix the shape of X
+
+        This method is used in fit and predict function.
+
+        Parameters
+        ----------
+        X : Array-like of shape (n_samples, n_features),
+            including n_samples, the number of samples, and n_features,
+            the number of features. When the shape looks like (n_samples,),
+            it should be changed.
+
+        Returns
+        -------
+        X : Array-like of shape (n_samples, n_features),
+            returning (n_samples, 1) when the shape looks like (n_samples,).
+        """
+        if X.ndim == 1:
+            X = np.array(X)
+            n = X.shape[0]
+            X = X.reshape(n, 1)
+        return X
+
+    def _check_target_imbalance(self):
+        """See if class prior favor largely one class
+
+        This method is used to judge whether class prior favor one specific class.
+
+        Returns
+        -------
+        out_result : Boolean
+            If class prior favor one class return True, and return False otherwise.
+        """
+        out_result = False
+        if np.all(self.priors):
+            out = 0
+            for i in range(len(self.priors)):
+                out += self.priors[i] * np.log(self.priors[i])
+            if abs(out) < 0.1:
+                out_result = True
+        return out_result
+
+    def _out_split_array(self, data_in, ind_vec_in):
+        """Split the feature set according to labels, namely 0 or 1.
+
+        This method is used to split the whole feature set X according to
+        different labels, generating two subsets that one has the label
+        of 0 and the other has the label of 1.
+
+        Parameters
+        ----------
+        data_in : Array-like of shape (n_samples, n_features),
+            including n_samples, number of all samples, and n_features,
+            the number of features.
+
+        ind_vec_in : Array-like of shape (k_samples,),
+            including k_samples, the number of the subset of all samples.
+
+        Returns
+        -------
+        out_array : Array-like of shape (k_samples, n_features),
+            including k_samples, the number of the subset of all samples,
+            and n_features, the number of features.
+        """
+        tmp_array = np.array(data_in)
+        out_array = []
+        for i in range(len(ind_vec_in)):
+            tmp_ind = ind_vec_in[i]
+            out_array.append(tmp_array[tmp_ind].tolist())
+        return np.array(out_array)
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the pattern of linkage between X and y.
+
+        This method is used to learn the pattern of linkage between
+        X and y.
+
+        Parameters
+        ----------
+        X : Array-like of shape (n_samples, n_features),
+            including n_samples, the number of samples, and n_features,
+            the number of features.
+
+        y : Array-like of shape (n_samples,),
+            including n_samples, the number of samples,
+            referring to a vector of labels in array form.
+
+        sample_weight : Float, default=None
+            referring to the weights of samples.
+        """
+        n, m = X.shape
+        X = np.array(X)
+        Y = np.array(y)
+        num_classes = len(set(Y))
+
+        # --- X
+        X = self._check_features(X)
+        is_imbalance = self._check_target_imbalance()
+
+        # --- self.priors
+        if np.all(self.priors) and np.sum(self.priors) != 1:
+            raise ValueError("The sum of the priors should be 1")
+        if np.all(self.priors) and (len(self.priors) != num_classes):
+            raise ValueError("Number of priors must match number of classes")
+        if np.all(self.priors):
+            is_nega = False
+            for i in range(len(self.priors)):
+                if self.priors[i] < 0:
+                    is_nega = True
+                    break
+            if is_nega:
+                raise ValueError("Priors must be non-negative")
+
+        # Calculate self.feat0 and self.feat1
+        tmp_ind0 = []
+        tmp_ind1 = []
+        for i in range(n):
+            if Y[i] < 0.5:
+                tmp_ind0.append(i)
+            else:
+                tmp_ind1.append(i)
+        if len(tmp_ind0) > 0:
+            tmp_x0 = self._out_split_array(X, tmp_ind0)
+            tmp_y0 = self._out_split_array(Y, tmp_ind0)
+        else:
+            tmp_x0 = []
+            tmp_y0 = []
+            print("At least 2 classes. Lack 0 sample.")
+        if len(tmp_ind1) > 0:
+            tmp_x1 = self._out_split_array(X, tmp_ind1)
+            tmp_y1 = self._out_split_array(Y, tmp_ind1)
+        else:
+            tmp_x1 = []
+            tmp_y1 = []
+            print("At least 2 classes. Lack 1 sample.")
+        p0_this_round = len(tmp_y0) / len(y)
+        p1_this_round = len(tmp_y1) / len(y)
+        if self.p0 > 0:
+            self.fit_count += 1
+        self.p0 = (self.p0 + p0_this_round) / (1 + self.fit_count)
+        self.p1 = (self.p1 + p1_this_round) / (1 + self.fit_count)
+
+        # record according to Feat.
+        if self.p0 > 0 and self.p1 > 0 and len(tmp_x0) > 0 and len(tmp_x1) > 0:
+            feat_0 = []
+            feat_1 = []
+            for i in range(m):
+                tmp_min_0 = np.min(tmp_x0[:, i])
+                tmp_avg_0 = np.median(tmp_x0[:, i])
+                feat_0.append([0, "vn", float(tmp_min_0), float(tmp_avg_0)])
+
+                # --- Min && Max
+                tmp_min_1 = np.min(tmp_x1[:, i])
+                tmp_avg_1 = np.median(tmp_x1[:, i])
+                feat_1.append([1, "vn", float(tmp_min_1), float(tmp_avg_1)])
+            # array and vname: {0:'cate', 1:'vname', 2:'min', 3:'avg'}
+            feat_0 = np.array(feat_0)
+            feat_1 = np.array(feat_1)
+            # STORE feat0 and feat1
+            if not is_imbalance:
+                self.feat0 = feat_0
+                self.feat1 = feat_1
+        else:
+            print("At least 2 classes.")
+
+    def predict(self, X, p_min=0.5, priori_distr="Uniform"):
+        """Predict the labels of the input X.
+
+        This method is used to predict the labels of an input feature set
+        X. For a specific sample, it is need to calculate the probability
+        of the event that the sample equals to 0.
+
+        During the calculation process, we need to calculate maximum
+        likelihood probability, consisting of a log form of posterior
+        probability and a log form of priori probability.
+
+        Firstly, with different input of p_min, there should be different
+        estimator of log likelihood. Secondly, with different input of
+        priori_distr, there should be different calculation of log
+        likelihood.
+
+        Parameters
+        ----------
+        X : Array-like of shape (n_samples, n_features),
+            including n_samples, the number of samples, and n_features,
+            the number of features.
+
+        p_min : Float, default=0.5
+            between 0 and 1,
+            deciding the percentage between min_x and median_x.
+
+        priori_distr : String, default='Uniform',
+            with another two optional values, namely 'Exponential' and 'Poisson'.
+            The value of priori_distr is 'Uniform', suggesting that the
+            gamma-distributed feature has Uniform priori distribution. The value
+            of priori_distr is 'Exponential', suggesting that the gamma-distributed
+            feature has Exponential priori distribution. The value of priori_distr
+            is 'Poisson', suggesting that the gamma-distributed feature has Poisson
+            priori distribution.
+
+        Returns
+        -------
+        y_pred : Array-like of shape (n_samples,),
+            including n_samples, the number of samples,
+            referring to a vector of labels in array form.
+        """
+        self.p_min = p_min
+        self.priori_distr = priori_distr
+        X = np.array(X)
+        X = self._check_features(X)
+        # raise ValueError if wrong params of distr.
+        tmp_log_prob = self._log_likelihood(X)
+        # --- predict
+        is_imbalance = self._check_target_imbalance()
+        y_pred = []
+        if not is_imbalance:
+            for i in range(len(tmp_log_prob)):
+                # --- Judging on weighted log_prob
+                if np.all(self.priors):
+                    judge_cond = (
+                        tmp_log_prob[i][1] * self.priors[1]
+                        > tmp_log_prob[i][0] * self.priors[0]
+                    )
+                else:
+                    judge_cond = tmp_log_prob[i][1] > tmp_log_prob[i][0]
+                # --- predict
+                if judge_cond:
+                    y_pred.append(1)
+                else:
+                    y_pred.append(0)
+        else:
+            for i in range(len(X)):
+                y_pred.append(2)
+        return np.array(y_pred)
+
+    def _log_likelihood(self, X):
+        """Calculate the log likelihood.
+
+        This method is to calculate the log likelihood of label 0 and label 1
+        respectively.
+
+        Parameters
+        ----------
+        X : Array-like of shape (n_samples, n_features),
+            including n_samples, the number of samples, and n_features,
+            the number of features.
+
+        Returns
+        -------
+        tmp_mat_1 : Array-like of shape (n_samples, 2).
+            The first column is the probability of label 0, while the second one is
+            the probability of label 1.
+        """
+        tmp_slack = 1e-10
+        n, m = X.shape
+        tmp_mat = [[], []]
+        for j in range(n):
+            tmp_x = X[j].tolist()  # one line
+            tmp_p0 = 0
+            tmp_p1 = 0
+            for i in range(m):
+                # --- p0
+                # FEAT0: min. value of one feat.
+                x_curr = tmp_x[i]
+                if x_curr < -9999:
+                    x_curr = -9999
+                elif x_curr > 9999:
+                    x_curr = 9999
+
+                try:
+                    x_record = float(self.feat0[i][2])  # min-val
+                except IndexError:
+                    x_record = 1
+                if x_record < -9999:
+                    x_record = -9999
+                elif x_record > 9999:
+                    x_record = 9999
+                tmp_delta_1 = abs(x_curr - x_record)  # not necessary
+                tmp_delta_1 = float(tmp_delta_1)
+                # FEAT0: average value of one Feat.
+                # {0:'cate', 1:'vname', 2:'min', 3:'avg'}
+                try:
+                    x_record_1 = float(self.feat0[i][3])  # avg-val
+                except IndexError:
+                    x_record_1 = 1
+                if x_record_1 < -9999:
+                    x_record_1 = -9999
+                elif x_record_1 > 9999:
+                    x_record_1 = 9999
+                tmp_delta_2 = float(abs(x_curr - x_record_1))
+                tmp_linear_delta = (
+                    self.p_min * tmp_delta_1 + (1 - self.p_min) * tmp_delta_2
+                )
+                if self.priori_distr == "Uniform":
+                    tmp_p0 += -0.13 - np.log(tmp_linear_delta + tmp_slack) + 0
+                elif self.priori_distr == "Exponential":
+                    tmp_exp_priori = -3.39 - np.log(tmp_linear_delta + tmp_slack)
+                    tmp_p0 += (
+                        -0.13 - np.log(tmp_linear_delta + tmp_slack) + tmp_exp_priori
+                    )
+                elif self.priori_distr == "Poisson":
+                    tmp_poi_priori = tmp_linear_delta * np.log(self.p0 + tmp_slack) + (
+                        tmp_delta_2 - tmp_linear_delta
+                    ) * np.log(self.p1 + tmp_slack)
+                    tmp_p0 += (
+                        -0.13 - np.log(tmp_linear_delta + tmp_slack) + tmp_poi_priori
+                    )
+                else:
+                    raise ValueError("Priori Distribution Wrong.")
+                # --- p1
+                # Feat1: minimum value of one feat.
+                try:
+                    x_record_2 = float(self.feat1[i][2])  # min-val
+                except IndexError:
+                    x_record_2 = 1
+                if x_record_2 < -9999:
+                    x_record_2 = -9999
+                elif x_record_2 > 9999:
+                    x_record_2 = 9999
+                tmp_delta_3 = float(abs(x_curr - x_record_2))
+                # FEAT1: average value of one feat.
+                try:
+                    x_record_3 = float(self.feat1[i][3])  # avg-val
+                except IndexError:
+                    x_record_3 = 1
+                if x_record_3 < -9999:
+                    x_record_3 = -9999
+                elif x_record_3 > 9999:
+                    x_record_3 = 9999
+                tmp_delta_4 = abs(x_curr - x_record_3)
+                tmp_delta_4 = float(tmp_delta_4)
+                tmp_linear_delta_1 = (
+                    self.p_min * tmp_delta_3 + (1 - self.p_min) * tmp_delta_4
+                )
+                if self.priori_distr == "Uniform":
+                    tmp_p1 += -0.13 - np.log(tmp_linear_delta_1 + tmp_slack) + 0
+                elif self.priori_distr == "Exponential":
+                    tmp_exp_priori_1 = -3.39 - np.log(tmp_linear_delta_1 + tmp_slack)
+                    tmp_p1 += (
+                        -0.13
+                        - np.log(tmp_linear_delta_1 + tmp_slack)
+                        + tmp_exp_priori_1
+                    )
+                elif self.priori_distr == "Poisson":
+                    tmp_poi_priori_1 = tmp_linear_delta_1 * np.log(
+                        self.p0 + tmp_slack
+                    ) + (tmp_delta_4 - tmp_linear_delta_1) * np.log(self.p1 + tmp_slack)
+                    tmp_p1 += (
+                        -0.13
+                        - np.log(tmp_linear_delta_1 + tmp_slack)
+                        + tmp_poi_priori_1
+                    )
+                else:
+                    raise ValueError("Priori Distribution Wrong.")
+            # Priori-prob.
+            tmp_p0 += np.log(self.p0 + tmp_slack)
+            tmp_p1 += np.log(self.p1 + tmp_slack)
+            tmp_mat[0].append(tmp_p0)
+            tmp_mat[1].append(tmp_p1)
+        tmp_mat = np.array(tmp_mat)
+        tmp_mat_1 = tmp_mat.T  # n_samples * 2
+        return tmp_mat_1
