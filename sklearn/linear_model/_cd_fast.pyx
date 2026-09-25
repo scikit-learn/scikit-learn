@@ -2542,7 +2542,7 @@ def enet_coordinate_descent_multinomial(
 
     Note:
         - A0 = sqrt(D) L' 1_{n_samples, n_classes}
-        - H00 = A0 A0', i.e. the part of the hessian for the the intercept alone
+        - H00 = A0' A0, i.e. the part of the hessian for the intercept alone
         - H0 = A0' A, i.e. the part of the hessian mixing intercepts with the features:
           H[-n_classes, :-n_classes]
         - q0 = A0' b = 1' (LDL' X coef - g)
@@ -2565,6 +2565,36 @@ def enet_coordinate_descent_multinomial(
 
     with LDL[:, k] begin the k-th column of the LDL matrix, having shape
     (n_sampels, n_classes).
+
+    Parameters
+    ----------
+    W : ndarray of shape (n_classes, n_features + fit_intercept)
+        Initial coefficients.
+    alpha : float
+        L1 penalty strength.
+    beta : float
+        L2 penalty strength.
+    X : ndarray or sparse array
+    sample_weight : ndarray or None
+    raw_prediction : ndarray of shape (n_samples, n_classes)
+        Without intercept: `raw_prediction = X @ W.T`
+        With intercept: `raw_prediction = X @ W[:, :-1].T + W[:, -1]`
+    grad_pointwise : ndarray of shape (n_samples, n_classes)
+    proba : ndarray of shape (n_samples, n_classes)
+        Predicted probabilities with current `raw_prediction`.
+    fit_intercept : bint (bool)
+        Whether to calculate with or without intercept terms.
+    max_iter : unsigned int
+        The maximum number of outer iterations (full cycles over features and classes).
+    tol : float
+        The tolerance for the stopping criterion.
+    do_screening : bint (bool)
+        Whether to you gap safe screening rules.
+    early_stopping : bint (bool)
+        Whether early stopping before the main loop is allowed. Setting it to False
+        guarantees at least one single update loop over the coefficients.
+    verbose : int
+        Value of 0 prints additional information. All other value do not print.
 
     Returns
     -------
@@ -2646,19 +2676,19 @@ def enet_coordinate_descent_multinomial(
         # We set the intercept of the last class to zero, loops and shapes often
         # have n_classes - 1 instead of n_classes. The missing entries are all zeros,
         # but we often do not add those zeros explicitly.
-        W0 = W[:, -1]
+        W0 = W[:, -1]  # intercepts, shape (n_classes,)
         # W0[-1] = 0  # intercept of last class
         W0[n_classes - 1] = 0  # Cython does not like negative indices
-        W = W[:, :-1]
+        W = W[:, :-1]  # coefficients (w/o intercepts), shape (n_classes, n_features)
         # H00 = H[-n_classes:-1, -n_classes:-1] = Hessian part of intercepts
         H00 = np.zeros((n_classes - 1, n_classes - 1), dtype=dtype)
         # H0 = H[-n_classes:-1, :-n_classes] = Hessian part mixing intercepts with
         # features
         H0 = np.zeros((n_classes - 1, n_classes * n_features), dtype=dtype)
         H0_coef = np.zeros((n_classes - 1,), dtype=dtype)  # 1' LDL raw_prediction
-        h = x_k
+        h = x_k  # h = temporary for entries of the pointwise hessian
         for k in range(n_classes - 1):
-            # Diagonal terms h_kk.
+            # Diagonal terms (in classes) hess_kk.
             h[:] = proba[:, k] * (1 - proba[:, k]) * sw
             H00[k, k] = h.sum()
             H0[k, k::n_classes] = X.T @ h
