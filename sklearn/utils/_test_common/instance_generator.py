@@ -647,7 +647,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     LogisticRegression: {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
-            dict(solver="liblinear"),
+            dict(solver="newton-cd"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
             dict(solver="newton-cholesky", class_weight="balanced"),
@@ -664,7 +664,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             ),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="liblinear"),
+            dict(solver="newton-cg"),
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
