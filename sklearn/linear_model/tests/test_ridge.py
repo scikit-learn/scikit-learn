@@ -2238,7 +2238,7 @@ def test_dtype_match_cholesky():
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("offset", [0.0, 1.0, 10.0, 30.0, 100.0, 1e3, 1e4, 1e6])
 def test_ridge_cholesky_uncentered_X_close_to_svd_or_warns(dtype, offset):
-    # `solver="cholesky"` fits X uncentered when it is deemed safe, which can
+    # `solver="cholesky"` fits X uncentered when it can (gh-34793), which can
     # lose precision for features far from zero. Whatever `offset` is, it
     # must either still agree with `solver="svd"` (which always centers
     # explicitly), or a `LinAlgWarning` must be raised -- it must never
