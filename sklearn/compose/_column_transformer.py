@@ -1265,6 +1265,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
 def _check_X(X):
     """Use check_array only when necessary, e.g. on lists and other non-array-likes."""
+    if sparse.issparse(X) and not hasattr(X, "__getitem__"):
+        # Column selection relies on sparse inputs being subscriptable. Some
+        # sparse formats (e.g. DIA) do not implement ``__getitem__`` even
+        # though the underlying transformers support sparse data.
+        return X.tocsr()
+
     if (
         (hasattr(X, "__array__") and hasattr(X, "shape"))
         or nw.dependencies.is_into_dataframe(X)
