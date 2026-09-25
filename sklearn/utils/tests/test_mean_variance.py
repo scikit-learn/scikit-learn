@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -6,10 +8,21 @@ from sklearn.utils._mean_variance import _dense_mean_variance_axis0
 
 
 def _reference(X):
-    """Two-pass mean and variance in long double precision."""
-    X = X.astype(np.longdouble)
-    mean = X.mean(axis=0)
-    return mean.astype(np.float64), ((X - mean) ** 2).mean(axis=0).astype(np.float64)
+    """Two-pass mean and variance with exactly rounded sums.
+
+    `np.longdouble` is not used as it is just float64 on some platforms (e.g.
+    Windows, macOS arm64).
+    """
+    X = X.astype(np.float64)
+    n_samples = X.shape[0]
+    mean = np.array([math.fsum(col) / n_samples for col in X.T])
+    # For features with a large offset, `X - mean` is exact (Sterbenz lemma), and
+    # the correction accounts for the rounding of `mean`.
+    D = X - mean
+    var = np.array(
+        [math.fsum(d**2) / n_samples - (math.fsum(d) / n_samples) ** 2 for d in D.T]
+    )
+    return mean, var
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
