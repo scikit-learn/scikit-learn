@@ -3253,3 +3253,51 @@ def test_logistic_regression_callback_support_warning():
         match="Callbacks are only supported in LogisticRegression for solver='lbfgs'",
     ):
         LogisticRegression(solver="liblinear").set_callbacks(cb)
+
+
+@pytest.mark.parametrize("solver", sorted(set(SOLVERS) - {"liblinear"}))
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_logistic_regression_invariant_to_feature_offset(
+    solver, n_classes, global_random_seed
+):
+    # Shifting the features only changes the (unpenalized) intercept. Solvers
+    # would silently fail on features with a large offset relative to their
+    # standard deviation if X was not centered internally.
+    if solver in ("newton-cd", "newton-cd-gram") and n_classes > 2:
+        pytest.skip(f"{solver} does not support multiclass classification")
+    X, y = make_classification(
+        n_samples=300,
+        n_features=3,
+        n_informative=3,
+        n_redundant=0,
+        n_classes=n_classes,
+        n_clusters_per_class=1,
+        class_sep=0.5,
+        random_state=global_random_seed,
+    )
+    offset = 1e4
+    X_shifted = X + offset
+
+    params = dict(solver=solver, tol=1e-10, max_iter=10_000)
+    reference = LogisticRegression(**params).fit(X, y)
+    shifted = LogisticRegression(**params).fit(X_shifted, y)
+
+    rtol = 1e-4 if solver in ("sag", "saga") else 1e-5
+    assert_allclose(shifted.coef_, reference.coef_, rtol=rtol, atol=rtol / 10)
+    assert_allclose(
+        shifted.predict_proba(X_shifted), reference.predict_proba(X), atol=rtol
+    )
+
+    # Warm start from the solution: a single iteration must not move away from
+    # it, which requires the intercept to be converted to the centered problem.
+    # sag and saga restart with an empty memory of the gradients, and a single
+    # epoch moves away from the solution even without offset.
+    max_iter = 10_000 if solver in ("sag", "saga") else 1
+    shifted.set_params(warm_start=True, max_iter=max_iter)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        shifted.fit(X_shifted, y)
+    assert_allclose(shifted.coef_, reference.coef_, rtol=rtol, atol=rtol / 10)
+    assert_allclose(
+        shifted.predict_proba(X_shifted), reference.predict_proba(X), atol=rtol
+    )

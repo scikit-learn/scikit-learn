@@ -19,6 +19,10 @@ from sklearn._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.linear_model._base import (
+    _GLM_MAX_OFFSET_TO_STD_RATIO,
+    _center_dense_X_if_needed,
+)
 from sklearn.linear_model._glm._newton_solver import (
     NewtonCDGramSolver,
     NewtonCDSolver,
@@ -327,6 +331,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # Thus, without rescaling, we have
         #     obj = LinearModelLoss.loss(...)
 
+        # Solvers are not robust to features with a large offset relative to
+        # their standard deviation: fit on centered X in this case. As the
+        # intercept is not penalized, this is an exact reparametrization.
+        X, X_offset = _center_dense_X_if_needed(
+            X, self.fit_intercept, _GLM_MAX_OFFSET_TO_STD_RATIO
+        )
+
         loss_dtype_np = _matching_numpy_dtype(X, xp=xp)
         if self.warm_start and hasattr(self, "coef_"):
             coef_xp, _ = get_namespace(self.coef_)
@@ -334,6 +345,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             if self.fit_intercept:
                 # LinearModelLoss needs intercept at the end of coefficient array.
                 intercept = move_to(self.intercept_, xp=np, device="cpu")
+                if X_offset is not None:
+                    intercept = intercept + X_offset @ coef
                 coef = np.concatenate((coef, np.array([intercept])))
             coef = coef.astype(loss_dtype_np, copy=False)
         else:
@@ -432,6 +445,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         if self.fit_intercept:
             self.intercept_ = coef[-1]
             self.coef_ = coef[:-1]
+            if X_offset is not None:
+                self.intercept_ -= X_offset @ self.coef_
         else:
             # set intercept to zero as the other linear models do
             self.intercept_ = 0.0
