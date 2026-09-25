@@ -244,7 +244,7 @@ def test_parallel_execution(data, method, ensemble):
     assert_allclose(probs_parallel, probs_sequential)
 
 
-@pytest.mark.parametrize("clf", [GaussianNB(), LogisticRegression(C=1e-6)])
+@pytest.mark.parametrize("clf", [GaussianNB(), LogisticRegression(alpha=1e6)])
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
@@ -533,7 +533,7 @@ def test_temperature_scaling(n_classes, ensemble):
         random_state=42,
     )
     X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
-    clf = LogisticRegression(C=np.inf, tol=1e-8, max_iter=200)
+    clf = LogisticRegression(alpha=0, tol=1e-8, max_iter=200)
     clf.fit(X_train, y_train)
     # Train the calibrator on the calibrating set
     cal_clf = CalibratedClassifierCV(

@@ -500,9 +500,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> import numpy as np
     >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
-    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.svm import LinearSVC
     >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
-    >>> clf = MultiOutputClassifier(LogisticRegression()).fit(X, y)
+    >>> clf = MultiOutputClassifier(LinearSVC()).fit(X, y)
     >>> clf.predict(X[-2:])
     array([[1, 1, 1],
            [1, 0, 1]])
@@ -973,8 +973,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [0., 1., 0.]])
     >>> chain.predict_proba(X_test)
     array([[0.8387, 0.9431, 0.4576],
-           [0.8878, 0.3684, 0.2640],
-           [0.0321, 0.9935, 0.0626]])
+          [0.8878, 0.3684, 0.2640],
+          [0.0321, 0.9935, 0.0626]])
     """
 
     _parameter_constraints: dict = {
@@ -1206,7 +1206,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     --------
     >>> from sklearn.multioutput import RegressorChain
     >>> from sklearn.linear_model import LogisticRegression
-    >>> logreg = LogisticRegression(solver='lbfgs')
+    >>> logreg = LogisticRegression()
     >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
     >>> chain = RegressorChain(logreg, order=[0, 1]).fit(X, Y)
     >>> chain.predict(X)
