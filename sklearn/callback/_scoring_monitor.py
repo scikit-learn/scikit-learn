@@ -7,7 +7,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from sklearn.callback._callback_context import get_context_path
-from sklearn.callback._transport import can_reuse_listener, open_listener, send
+from sklearn.callback._transport import Channel
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 
@@ -116,17 +116,19 @@ class ScoringMonitor:
 
         self._log = []
 
-        # Handle to the main-process listener, opened eagerly so that any worker that
-        # receives a pickled copy of this callback can send data to the main process.
-        # `self._log.append` is the message consumer that `send` calls will use to
-        # to grow the main process's log.
-        self._listener_handle = open_listener(self._log.append, owner=self)
+        # Opened eagerly so that a worker that receives a pickled copy of this callback
+        # can send data to the main process. `self._log.append` is the message consumer
+        # that grows the log in the main process.
+        self._channel = Channel(self._log.append)
 
     def setup(self, estimator, context):
         pass
 
     def teardown(self, estimator, context):
-        pass
+        # Nothing more will be sent for this fit. The channel itself outlives the fit,
+        # since this callback keeps logging across fits, but the connection a worker
+        # copy holds is released here rather than whenever that copy is collected.
+        self._channel.disconnect()
 
     def on_fit_task_begin(self, estimator, context):
         pass
@@ -168,19 +170,19 @@ class ScoringMonitor:
         if X is not None and y is not None:
             scores.update(self._scorer(fitted_estimator, X, y, **metadata))
 
-        send(self._listener_handle, (run_id, run_info, task_info_path, scores))
+        self._channel.send((run_id, run_info, task_info_path, scores))
 
     def __getstate__(self):
-        # `_log` is grown by the listener thread, which can run while this callback is
+        # `_log` is grown by a background thread, which can run while this callback is
         # being pickled by another thread, e.g. loky's queue feeder when a task is
         # dispatched to a worker. The pickler must therefore never walk the live list.
         return {**self.__dict__, "_log": list(self._log)}
 
     def __setstate__(self, state):
-        """Restore state, opening a fresh listener if the inherited one is unusable."""
+        """Restore state, opening a fresh channel if the inherited one is unusable."""
         self.__dict__.update(state)
-        if not can_reuse_listener(self._listener_handle):
-            self._listener_handle = open_listener(self._log.append, owner=self)
+        if not self._channel.is_reusable():
+            self._channel = Channel(self._log.append)
 
     @validate_params(
         {
