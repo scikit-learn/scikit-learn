@@ -66,7 +66,7 @@ clf = make_pipeline(
     StandardScaler(),
     LogisticRegression(
         l1_ratio=1,
-        solver="liblinear",
+        solver="newton-cd",
         tol=1e-6,
         max_iter=int(1e6),
         warm_start=True,
