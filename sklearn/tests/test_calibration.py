@@ -244,7 +244,7 @@ def test_parallel_execution(data, method, ensemble):
     assert_allclose(probs_parallel, probs_sequential)
 
 
-@pytest.mark.parametrize("clf", [GaussianNB(), LogisticRegression(C=1e-6)])
+@pytest.mark.parametrize("clf", [GaussianNB(), LogisticRegression(alpha=1e6)])
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
