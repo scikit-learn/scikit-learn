@@ -2603,7 +2603,7 @@ def enet_coordinate_descent_multinomial(
     gap : float
         Achieved dual gap.
     tol : float
-        Equals input `tol` times `np.dot(y, y)`. The tolerance used for the dual gap.
+        Equals input `tol` times `np.dot(b, b)`. The tolerance used for the dual gap.
     n_iter : int
         Number of coordinate descent iterations.
     """
