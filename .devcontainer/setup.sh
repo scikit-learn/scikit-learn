@@ -6,6 +6,7 @@ set -e
 # .bashrc has been updated by the mamba install one-liner above.
 # 'source $HOME/.bashrc' sets up micromamba for later use
 source $HOME/.bashrc
+eval "$(micromamba shell hook --shell bash)"
 
 micromamba env create -f build_tools/circle/doc_environment.yml -n sklearn-dev --yes
 # Install additional packages:
@@ -13,8 +14,7 @@ micromamba env create -f build_tools/circle/doc_environment.yml -n sklearn-dev -
 # - pre-commit: avoid linting issues
 micromamba install pre-commit ipykernel -n sklearn-dev --yes
 # install pre-commit hooks
-micromamba activate sklearn-dev
-pre-commit install
+micromamba run -n sklearn-dev pre-commit install
 
 # Auto-activate sklearn-dev in terminal
 echo "micromamba activate sklearn-dev" >> $HOME/.bashrc
