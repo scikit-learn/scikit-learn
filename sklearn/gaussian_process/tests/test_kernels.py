@@ -16,6 +16,7 @@ from sklearn.gaussian_process.kernels import (
     DotProduct,
     Exponentiation,
     ExpSineSquared,
+    Hyperparameter,
     KernelOperator,
     Matern,
     PairwiseKernel,
@@ -148,6 +149,50 @@ def test_kernel_theta(kernel):
 
         setattr(kernel, hyperparameter.name, 43)
         assert_almost_equal(kernel.theta[i], np.log(43))
+
+
+def test_kernel_hyperparameters_without_dir(monkeypatch):
+    kernel = RBF()
+    original_dir = dir
+
+    def fail_dir(*args):
+        if len(args) == 1 and args[0] is kernel:
+            raise AssertionError("dir() was called on the kernel")
+        return original_dir(*args)
+
+    monkeypatch.setattr("builtins.dir", fail_dir)
+    assert [hyperparameter.name for hyperparameter in kernel.hyperparameters] == [
+        "length_scale"
+    ]
+
+
+def test_kernel_hyperparameters_with_failing_dir():
+    class RBFWithFailingDir(RBF):
+        def __dir__(self):
+            raise RuntimeError("dictionary changed size during iteration")
+
+    # Hyperparameters from a parent class remain discoverable when dir() fails.
+    kernel = RBFWithFailingDir()
+    assert [hyperparameter.name for hyperparameter in kernel.hyperparameters] == [
+        "length_scale"
+    ]
+
+
+def test_kernel_hyperparameters_with_custom_dir():
+    class RBFWithVirtualHyperparameter(RBF):
+        def __dir__(self):
+            return [*super().__dir__(), "hyperparameter_extra"]
+
+        def __getattr__(self, name):
+            if name == "hyperparameter_extra":
+                return Hyperparameter("extra", "numeric", (1e-5, 1e5))
+            raise AttributeError(name)
+
+    kernel = RBFWithVirtualHyperparameter()
+    assert [hyperparameter.name for hyperparameter in kernel.hyperparameters] == [
+        "extra",
+        "length_scale",
+    ]
 
 
 @pytest.mark.parametrize(

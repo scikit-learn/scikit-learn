@@ -280,12 +280,31 @@ class Kernel(metaclass=ABCMeta):
     @property
     def hyperparameters(self):
         """Returns a list of all hyperparameter specifications."""
-        r = [
+        if type(self).__dir__ is object.__dir__:
+            use_snapshot = True
+        else:
+            # Preserve hyperparameters exposed by a custom __dir__.
+            try:
+                attrs = dir(self)
+            except RuntimeError as exc:
+                if str(exc) != "dictionary changed size during iteration":
+                    raise
+                use_snapshot = True
+            else:
+                use_snapshot = False
+
+        if use_snapshot:
+            # deepcopy can add __slotnames__ to a kernel class in another
+            # thread. Copy each dictionary before iterating over its keys.
+            attrs = set(vars(self).copy())
+            for cls in type(self).__mro__:
+                attrs.update(vars(cls).copy())
+
+        return [
             getattr(self, attr)
-            for attr in dir(self)
+            for attr in sorted(attrs)
             if attr.startswith("hyperparameter_")
         ]
-        return r
 
     @property
     def theta(self):
