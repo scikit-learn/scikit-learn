@@ -123,6 +123,9 @@ then
     exit 0
 fi
 
+# TMP: turn all sphinx warnings into errors, even in PRs. Remove before merging.
+export SPHINXOPTS="-T -W"
+
 # ZIP, image optimization and version listing are only useful for the
 # documentation that is deployed to the website (the "doc" CircleCI job).
 deploy_docs=false
