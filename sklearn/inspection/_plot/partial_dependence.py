@@ -432,6 +432,20 @@ class PartialDependenceDisplay:
               the average of the ICEs by design, it is not compatible with ICE and
               thus `kind` must be `'average'`.
 
+             - `'tree_accurate'` is supported for the single-tree estimators
+              :class:`~sklearn.tree.DecisionTreeRegressor`,
+              :class:`~sklearn.tree.DecisionTreeClassifier`,
+              :class:`~sklearn.tree.ExtraTreeRegressor`,
+              :class:`~sklearn.tree.ExtraTreeClassifier` and the forests
+              :class:`~sklearn.ensemble.RandomForestRegressor`,
+              :class:`~sklearn.ensemble.RandomForestClassifier`,
+              :class:`~sklearn.ensemble.ExtraTreesRegressor`,
+              :class:`~sklearn.ensemble.ExtraTreesClassifier`,
+              when `kind='average'` and `response_method='decision_function'`.
+              Joint PDP (tuples in `features`) is not supported.
+              This method is equivalent to the `'brute'` method,
+              but faster for tree-based estimators.
+
             - `'brute'` is supported for any estimator, but is more
               computationally intensive.
 
