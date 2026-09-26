@@ -1,0 +1,5 @@
+- :class:`sklearn.ensemble.IsolationForest` no longer raises a confusing error
+  when ``max_samples`` is a small float that rounds down to zero. It now floors
+  the number of drawn samples to 1 and warns, matching
+  :class:`sklearn.ensemble.BaggingClassifier`.
+  By :user:`Alejandro Coronado <AlejandroCoronadoN>`.

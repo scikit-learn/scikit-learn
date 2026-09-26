@@ -95,6 +95,16 @@ def test_iforest_error():
         IsolationForest().fit(X).predict(X[:, 1:])
 
 
+def test_max_samples_small_float_floors_to_one():
+    # A small float `max_samples` must floor the drawn sample count to 1 and
+    # warn, like BaggingClassifier, instead of truncating to 0 and raising a
+    # confusing "Sample weights must contain at least one non-zero number."
+    X = np.random.RandomState(0).randn(100, 3)
+    with pytest.warns(UserWarning, match="low number"):
+        clf = IsolationForest(max_samples=0.005, random_state=0).fit(X)
+    assert clf.max_samples_ == 1
+
+
 def test_recalculate_max_depth():
     """Check max_depth recalculation when max_samples is reset to n_samples"""
     X = iris.data
