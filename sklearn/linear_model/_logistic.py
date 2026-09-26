@@ -86,7 +86,26 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 )
 
 
-def _check_solver(solver, penalty, dual):
+def _check_solver(solver, penalty, dual, warn_dual=False):
+    if solver == "liblinear":
+        warnings.warn(
+            (
+                "The solver 'liblinear' was deprecated in version 1.10 and will "
+                "be removed in 1.12."
+            ),
+            FutureWarning,
+        )
+    if isinstance(dual, str) and dual == "deprecated":
+        dual = False
+    elif warn_dual:
+        warnings.warn(
+            (
+                "The parameter 'dual' was deprecated in version 1.10 and will "
+                "be removed in 1.12."
+            ),
+            FutureWarning,
+        )
+
     if solver not in (
         "liblinear",
         "newton-cd",
@@ -116,7 +135,7 @@ def _check_solver(solver, penalty, dual):
             "C=np.inf as well as penalty=None is not supported for the liblinear solver"
         )
 
-    return solver
+    return solver, dual
 
 
 class _LbfgsCallbackBridge:
@@ -398,7 +417,7 @@ def _logistic_regression_path(
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
 
-    solver = _check_solver(solver, penalty, dual)
+    solver, dual = _check_solver(solver, penalty, dual)
     xp, _, device = get_namespace_and_device(X)
     # Only newton-cg has complete support of the array API, lbfgs still needs
     # coef / w0 as numpy arrays.
@@ -1118,6 +1137,9 @@ class LogisticRegression(
         is only implemented for l2 penalty with liblinear solver. Prefer `dual=False`
         when n_samples > n_features.
 
+        .. deprecated:: 1.10
+           `dual` is deprecated and will be removed in version 1.12.
+
     tol : float, default=1e-4
         Tolerance for stopping criteria.
 
@@ -1139,6 +1161,9 @@ class LogisticRegression(
             regularization as all other features.
             To lessen the effect of regularization on synthetic feature weight
             (and therefore on the intercept) `intercept_scaling` has to be increased.
+
+        .. deprecated:: 1.10
+           `intercept_scaling` is deprecated and will be removed in version 1.12.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1219,6 +1244,8 @@ class LogisticRegression(
            The default solver changed from 'liblinear' to 'lbfgs' in 0.22.
         .. versionadded:: 1.2
            newton-cholesky solver. Multinomial support in version 1.6.
+        .. deprecated:: 1.10
+           The solver 'liblinear' is deprecated and will be removed in version 1.12.
 
     max_iter : int, default=100
         Maximum number of iterations taken for the solvers to converge.
@@ -1325,10 +1352,13 @@ class LogisticRegression(
         ],
         "C": [Interval(Real, 0, None, closed="right")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
-        "dual": ["boolean"],
+        "dual": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "tol": [Interval(Real, 0, None, closed="left")],
         "fit_intercept": ["boolean"],
-        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
+        "intercept_scaling": [
+            Interval(Real, 0, None, closed="neither"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
         "class_weight": [dict, StrOptions({"balanced"}), None],
         "random_state": ["random_state"],
         "solver": [
@@ -1357,10 +1387,10 @@ class LogisticRegression(
         *,
         C=1.0,
         l1_ratio=0.0,
-        dual=False,
+        dual="deprecated",
         tol=1e-4,
         fit_intercept=True,
-        intercept_scaling=1,
+        intercept_scaling="deprecated",
         class_weight=None,
         random_state=None,
         solver="lbfgs",
@@ -1468,7 +1498,22 @@ class LogisticRegression(
                 FutureWarning,
             )
 
-        solver = _check_solver(self.solver, penalty, self.dual)
+        if (
+            isinstance(self.intercept_scaling, str)
+            and self.intercept_scaling == "deprecated"
+        ):
+            intercept_scaling = 1.0  # set to default
+        else:
+            warnings.warn(
+                (
+                    "The parameter 'intercept_scaling' was deprecated in version 1.10 "
+                    "and will be removed in 1.12."
+                ),
+                FutureWarning,
+            )
+            intercept_scaling = self.intercept_scaling
+
+        solver, dual = _check_solver(self.solver, penalty, self.dual, warn_dual=True)
 
         if penalty != "elasticnet" and (
             self.l1_ratio is not None and 0 < self.l1_ratio < 1
@@ -1582,10 +1627,10 @@ class LogisticRegression(
                 2 * y_encoded - 1,  # liblinear requires target values -1, +1
                 self.C,
                 self.fit_intercept,
-                self.intercept_scaling,
+                intercept_scaling,
                 None,  # class_weight
                 penalty,
-                self.dual,
+                dual,
                 self.verbose,
                 self.max_iter,
                 self.tol,
@@ -1798,6 +1843,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
+        .. deprecated:: 1.10
+           `dual` is deprecated and will be removed in version 1.12.
+
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
         Specify the norm of the penalty:
 
@@ -1882,6 +1930,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            SAGA solver.
         .. versionadded:: 1.2
            newton-cholesky solver. Multinomial support in version 1.6.
+        .. deprecated:: 1.10
+           The solver 'liblinear' is deprecated and will be removed in version 1.12.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -1934,6 +1984,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             regularization as all other features.
             To lessen the effect of regularization on synthetic feature weight
             (and therefore on the intercept) `intercept_scaling` has to be increased.
+
+        .. deprecated:: 1.10
+           `intercept_scaling` is deprecated and will be removed in version 1.12.
 
     random_state : int, RandomState instance, default=None
         Only used for `solver` == 'sag', 'saga' or 'liblinear' to shuffle the
@@ -2101,7 +2154,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         l1_ratios="warn",
         fit_intercept=True,
         cv=None,
-        dual=False,
+        dual="deprecated",
         penalty="deprecated",
         scoring="warn",
         solver="lbfgs",
@@ -2111,7 +2164,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         n_jobs=None,
         verbose=0,
         refit=True,
-        intercept_scaling=1.0,
+        intercept_scaling="deprecated",
         random_state=None,
         use_legacy_attributes="warn",
     ):
@@ -2237,7 +2290,22 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             use_legacy_attributes = self.use_legacy_attributes
 
-        solver = _check_solver(self.solver, penalty, self.dual)
+        if (
+            isinstance(self.intercept_scaling, str)
+            and self.intercept_scaling == "deprecated"
+        ):
+            intercept_scaling = 1.0  # set to default
+        else:
+            warnings.warn(
+                (
+                    "The parameter 'intercept_scaling' was deprecated in version 1.10 "
+                    "and will be removed in 1.12."
+                ),
+                FutureWarning,
+            )
+            intercept_scaling = self.intercept_scaling
+
+        solver, dual = _check_solver(self.solver, penalty, self.dual, warn_dual=True)
 
         if penalty == "elasticnet":
             if (
@@ -2370,13 +2438,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 Cs=self.Cs,
                 fit_intercept=self.fit_intercept,
                 penalty=penalty,
-                dual=self.dual,
+                dual=dual,
                 solver=solver,
                 tol=self.tol,
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 scoring=scoring,
-                intercept_scaling=self.intercept_scaling,
+                intercept_scaling=intercept_scaling,
                 random_state=self.random_state,
                 max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
