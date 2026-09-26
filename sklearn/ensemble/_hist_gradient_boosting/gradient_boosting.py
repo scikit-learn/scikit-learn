@@ -531,7 +531,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._loss = self.loss
 
         if self.early_stopping == "auto":
-            self.do_early_stopping_ = n_samples > 10_000
+            self.do_early_stopping_ = n_samples > 10_000 or validation_data_provided
         else:
             self.do_early_stopping_ = self.early_stopping
 

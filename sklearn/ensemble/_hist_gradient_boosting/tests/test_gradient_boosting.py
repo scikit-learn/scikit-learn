@@ -1763,3 +1763,22 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+def test_early_stopping_auto_with_validation_data():
+    # Check that early stopping is enabled when early_stopping="auto"
+    # and validation arrays are explicitly provided, even with <10k samples.
+    # Non-regression test for issue #35032
+    import numpy as np
+    X = np.arange(40.0).reshape(-1, 1)
+    
+    for estimator_class in (HistGradientBoostingRegressor, HistGradientBoostingClassifier):
+        y = np.sin(X[:, 0]) if estimator_class is HistGradientBoostingRegressor else np.arange(40) % 2
+        
+        for mode in ("auto", True):
+            estimator = estimator_class(
+                early_stopping=mode, max_iter=3, random_state=0
+            ).fit(X[:30], y[:30], X_val=X[30:], y_val=y[30:])
+            
+            assert estimator.do_early_stopping_
+            assert len(estimator.validation_score_) == estimator.n_iter_ + 1
