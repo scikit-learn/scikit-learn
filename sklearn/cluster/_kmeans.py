@@ -372,9 +372,15 @@ def k_means(
         Verbosity mode.
 
     tol : float, default=1e-4
-        Relative tolerance with regards to Frobenius norm of the difference
-        in the cluster centers of two consecutive iterations to declare
-        convergence.
+        Tolerance on the squared change of the cluster centers between two
+        consecutive iterations to declare convergence. Convergence is declared
+        when::
+
+            (center_shift ** 2).sum() <= tol * mean(var(X, axis=0))
+
+        that is, `tol` is scaled by the mean variance of the features, so that
+        it is interpreted relative to the scale of the data rather than as an
+        absolute distance.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for centroid initialization. Use
@@ -488,9 +494,12 @@ def _kmeans_single_elkan(
         Verbosity mode.
 
     tol : float, default=1e-4
-        Relative tolerance with regards to Frobenius norm of the difference
-        in the cluster centers of two consecutive iterations to declare
-        convergence.
+        Tolerance on the squared change of the cluster centers between two
+        consecutive iterations to declare convergence, i.e. convergence is
+        declared when ``(center_shift ** 2).sum() <= tol``. Unlike the `tol`
+        parameter of :class:`KMeans`, this is an absolute threshold: it is
+        expected to have already been scaled by the mean feature variance of
+        the data by the caller.
         It's not advised to set `tol=0` since convergence might never be
         declared due to rounding errors. Use a very small number instead.
 
@@ -656,9 +665,12 @@ def _kmeans_single_lloyd(
         Verbosity mode
 
     tol : float, default=1e-4
-        Relative tolerance with regards to Frobenius norm of the difference
-        in the cluster centers of two consecutive iterations to declare
-        convergence.
+        Tolerance on the squared change of the cluster centers between two
+        consecutive iterations to declare convergence, i.e. convergence is
+        declared when ``(center_shift ** 2).sum() <= tol``. Unlike the `tol`
+        parameter of :class:`KMeans`, this is an absolute threshold: it is
+        expected to have already been scaled by the mean feature variance of
+        the data by the caller.
         It's not advised to set `tol=0` since convergence might never be
         declared due to rounding errors. Use a very small number instead.
 
@@ -1250,9 +1262,15 @@ class KMeans(_BaseKMeans):
         single run.
 
     tol : float, default=1e-4
-        Relative tolerance with regards to Frobenius norm of the difference
-        in the cluster centers of two consecutive iterations to declare
-        convergence.
+        Tolerance on the squared change of the cluster centers between two
+        consecutive iterations to declare convergence. Convergence is declared
+        when::
+
+            (center_shift ** 2).sum() <= tol * mean(var(X, axis=0))
+
+        that is, `tol` is scaled by the mean variance of the features, so that
+        it is interpreted relative to the scale of the data rather than as an
+        absolute distance.
 
     verbose : int, default=0
         Verbosity mode.
