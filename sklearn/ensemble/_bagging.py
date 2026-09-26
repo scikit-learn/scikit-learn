@@ -85,6 +85,12 @@ def _generate_bagging_indices(
         )
     else:
         normalized_sample_weight = sample_weight / np.sum(sample_weight)
+        if not bootstrap_samples:
+            # Sampling without replacement requires at least `max_samples`
+            # entries of `p` to be non-zero. Zero-weighted samples are meant
+            # to be excluded from the fit, so cap `max_samples` at the number
+            # of non-zero weights, i.e. draw all non-zero-weighted samples.
+            max_samples = min(max_samples, np.count_nonzero(sample_weight))
         sample_indices = random_state.choice(
             n_samples,
             max_samples,
