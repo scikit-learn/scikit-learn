@@ -651,7 +651,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             ),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="newton-cg", tol=1e-6),
+            dict(solver="newton-cholesky"),
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
