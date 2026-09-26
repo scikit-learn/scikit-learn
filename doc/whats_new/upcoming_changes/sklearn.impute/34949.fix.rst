@@ -1,0 +1,6 @@
+- :meth:`impute.SimpleImputer.inverse_transform` now correctly preserves
+  the order of output columns when a feature is entirely missing during
+  :meth:`impute.SimpleImputer.fit` but has observed values during
+  :meth:`impute.SimpleImputer.transform`. Previously, non-empty columns
+  were shifted left, overwriting the wrong positions.
+  :issue:`27012` by :user:`Abhisek Kundu <abhisekkundu-DS>`.
