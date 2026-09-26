@@ -378,9 +378,9 @@ The parameter `deep` controls whether or not the parameters of the
     my_extra_param -> random
     subestimator__C -> 1.0
     subestimator__class_weight -> None
-    subestimator__dual -> False
+    subestimator__dual -> deprecated
     subestimator__fit_intercept -> True
-    subestimator__intercept_scaling -> 1
+    subestimator__intercept_scaling -> deprecated
     subestimator__l1_ratio -> 0.0
     subestimator__max_iter -> 100
     subestimator__n_jobs -> None
