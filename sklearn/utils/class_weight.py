@@ -101,11 +101,8 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         # user-defined dictionary
         weight = xp.ones(size(classes), device=device)
         unweighted_classes = []
-        for i, c in enumerate(classes):
-            try:
-                c = int(c)
-            except ValueError:  # `classes` contains strings
-                c = str(c)
+        # Use NumPy scalars for dictionary lookup without changing label types.
+        for i, c in enumerate(move_to(classes, xp=np, device="cpu")):
             if c in class_weight:
                 weight[i] = class_weight[c]
             else:
