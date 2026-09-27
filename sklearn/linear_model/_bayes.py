@@ -75,13 +75,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
         .. versionadded:: 0.22
 
     compute_score : bool, default=False
-        If True, compute an objective based on the log marginal likelihood and
-        Gamma prior terms for alpha and lambda at each iteration. This is a
-        normalized joint log density for unweighted data with
-        `fit_intercept=False` and positive prior rates. With a fitted intercept
-        or sample weights, it is an objective evaluated on centered or
-        weighted data. If a prior rate (`alpha_2` or `lambda_2`) is zero, its
-        undefined normalization constant is omitted.
+        If True, compute the log marginal likelihood plus Gamma-prior terms
+        for alpha and lambda at each iteration. See `scores_` for details.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model.
@@ -115,11 +110,19 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Estimated variance-covariance matrix of the weights
 
     scores_ : array-like of shape (n_iter_+1,)
-        When `compute_score` is True, each entry contains the log marginal
-        likelihood term plus the Gamma prior terms for alpha and lambda.
-        See `compute_score` for normalization caveats.
-        The array starts with the score for the initial values of alpha and
-        lambda and ends with the score for their estimated values.
+        When `compute_score=True`, each entry contains the log marginal
+        likelihood plus the Gamma-prior terms for alpha and lambda. The array
+        starts with the score for the initial values and ends with the score
+        for the estimated values. For unweighted data with
+        `fit_intercept=False` and positive prior rates, this is a normalized
+        joint log density of the target vector and the two precisions
+        conditional on X. With a fitted intercept, the score uses centered
+        data; with sample weights, it uses reweighted data and the sum of
+        weights in place of the sample count. In these cases, it should not
+        generally be interpreted as a normalized density of the original
+        target vector. If either `alpha_2` or `lambda_2` is zero, the
+        corresponding prior is improper, and its undefined normalization
+        constant is omitted.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
