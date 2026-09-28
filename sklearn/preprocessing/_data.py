@@ -1655,9 +1655,9 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> transformer
     RobustScaler()
     >>> transformer.transform(X)
-    array([[ 0. , -2. ,  0. ],
-           [-1. ,  0. ,  0.4],
-           [ 1. ,  0. , -1.6]])
+    array([[ 0. , -1. ,  0. ],
+           [-0.5,  0. ,  0.2],
+           [ 0.5,  0. , -0.8]])
     """
 
     _parameter_constraints: dict = {
@@ -1939,11 +1939,11 @@ def robust_scale(
     >>> from sklearn.preprocessing import robust_scale
     >>> X = [[-2, 1, 2], [-1, 0, 1]]
     >>> robust_scale(X, axis=0)  # scale each column independently
-    array([[-1.,  1.,  1.],
-           [ 1., -1., -1.]])
+    array([[-0.5,  0.5,  0.5],
+           [ 0.5, -0.5, -0.5]])
     >>> robust_scale(X, axis=1)  # scale each row independently
-    array([[-1.5,  0. ,  0.5],
-           [-1. ,  0. ,  1. ]])
+    array([[-0.75,  0.  ,  0.25],
+           [-0.5 ,  0.  ,  0.5 ]])
     """
     X = check_array(
         X,
