@@ -893,7 +893,7 @@ in the cluster but are not themselves core samples. Intuitively, these samples
 are on the fringes of a cluster.
 
 Any core sample is part of a cluster, by definition. Any sample that is not a
-core sample, and is at least ``eps`` in distance from any core sample, is
+core sample, and is greater than ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
 While the parameter ``min_samples`` primarily controls how tolerant the
