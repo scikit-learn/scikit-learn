@@ -1,0 +1,4 @@
+- Improved the error message raised by :func:`tree.export_graphviz` when an invalid
+  ``node_id`` is passed to internal tree export routines by including the valid
+  range and clarifying that ``TREE_LEAF`` is not a valid root node.
+  By :user:`Krish Patel <KrishPatel1905>`.
