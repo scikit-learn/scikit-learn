@@ -636,8 +636,8 @@ class MetadataRequest:
     Instances of `MethodMetadataRequest` are used in this class for each available
     method under `MetadataRequest(owner=obj).{method}`.
 
-    Every :term:`consumer` in scikit-learn has a `_metadata_request` attribute that is a
-    `MetadataRequest`.
+    Every :term:`consumer` in scikit-learn has a `_metadata_request` attribute that
+    is a `MetadataRequest`.
 
     Note that requests on composite methods (`fit_transform`, `fit_predict`) are not
     stored as attributes. Accessing them, for example `request.fit_predict`, builds
