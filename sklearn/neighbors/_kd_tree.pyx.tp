@@ -101,7 +101,7 @@ cdef int init_node{{name_suffix}}(
         lower_bounds[j] = INF
         upper_bounds[j] = -INF
 
-    # Compute the actual data range.  At buildx time, this is slightly
+    # Compute the actual data range.  At build time, this is slightly
     # slower than using the previously-computed bounds of the parent node,
     # but leads to more compact trees and thus faster queries.
     for i in range(idx_start, idx_end):
