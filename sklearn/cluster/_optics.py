@@ -86,16 +86,12 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'mahalanobis', 'minkowski',
+          'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         Sparse matrices are only supported by scikit-learn metrics.
         See :mod:`scipy.spatial.distance` for details on these metrics.
-
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     p : float, default=2
         Parameter for the Minkowski metric from
@@ -500,16 +496,12 @@ def compute_optics_graph(
           'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'mahalanobis', 'minkowski',
+          'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
-
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     p : float, default=2
         Parameter for the Minkowski metric from
