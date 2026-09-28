@@ -223,6 +223,9 @@ def permutation_importance(
         - If `max_samples` is equal to `1.0` or `X.shape[0]`, all samples
           will be used.
 
+        The baseline score is computed on the same subsample, so each
+        importance measures only the effect of permuting the feature.
+
         While using this option may provide less accurate importance estimates,
         it keeps the method tractable when evaluating feature importance on
         large datasets. In combination with `n_repeats`, this allows to control
@@ -283,7 +286,31 @@ def permutation_importance(
         raise ValueError("max_samples must be <= n_samples")
 
     scorer = check_scoring(estimator, scoring=scoring)
-    baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
+
+    if max_samples < X.shape[0]:
+        # Subsample once, up front, with the same seed that each parallel
+        # worker would use, so every column sees identical rows. The baseline
+        # score is computed on this subsample rather than on the full data so
+        # that importances measure only the effect of the permutation:
+        # otherwise the gap between the full-data score and the subsample
+        # score leaks into every feature's importance, giving non-zero
+        # importances to features the model never uses. See #35027.
+        row_indices = _generate_indices(
+            random_state=check_random_state(random_seed),
+            bootstrap=False,
+            n_population=X.shape[0],
+            n_samples=max_samples,
+        )
+        X = _safe_indexing(X, row_indices, axis=0)
+        y = _safe_indexing(y, row_indices, axis=0)
+        if sample_weight is not None:
+            sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
+        baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
+        # The data is already subsampled: workers take the copy branch and
+        # permute within these rows, exactly as before.
+        max_samples = X.shape[0]
+    else:
+        baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
     scores = Parallel(n_jobs=n_jobs)(
         delayed(_calculate_permutation_scores)(
