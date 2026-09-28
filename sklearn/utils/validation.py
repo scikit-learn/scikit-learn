@@ -14,6 +14,7 @@ import joblib
 import narwhals.stable.v2 as nw
 import numpy as np
 import scipy.sparse as sp
+from numpy.exceptions import ComplexWarning
 
 from sklearn import get_config as _get_config
 from sklearn.exceptions import (
@@ -32,11 +33,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
-from sklearn.utils.fixes import (
-    ComplexWarning,
-    _object_dtype_isnan,
-    _preserve_dia_indices_dtype,
-)
+from sklearn.utils.fixes import _object_dtype_isnan, _preserve_dia_indices_dtype
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 

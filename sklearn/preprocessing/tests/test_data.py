@@ -39,7 +39,7 @@ from sklearn.preprocessing import (
 from sklearn.preprocessing._data import (
     BOUNDS_THRESHOLD,
     _handle_zeros_in_scale,
-    _sparse_column_quantile,
+    _sparse_column_percentile,
 )
 from sklearn.svm import SVR
 from sklearn.utils import gen_batches, shuffle
@@ -1384,13 +1384,6 @@ def test_quantile_transform_check_error(csc_container):
     # check that an error is raised if input is scalar
     with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         transformer.transform(10)
-    # check that a warning is raised is n_quantiles > n_samples
-    transformer = QuantileTransformer(n_quantiles=100)
-    warn_msg = "n_quantiles is set to n_samples"
-    with pytest.warns(UserWarning, match=warn_msg) as record:
-        transformer.fit(X)
-    assert len(record) == 1
-    assert transformer.n_quantiles_ == X.shape[0]
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
@@ -1547,7 +1540,9 @@ def test_quantile_transform_subsampling_disabled():
 
     expected_references = np.linspace(0, 1, n_quantiles)
     assert_allclose(transformer.references_, expected_references)
-    expected_quantiles = np.quantile(X.ravel(), expected_references)
+    expected_quantiles = np.quantile(
+        X.ravel(), expected_references, method="averaged_inverted_cdf"
+    )
     assert_allclose(transformer.quantiles_.ravel(), expected_quantiles)
 
 
@@ -1678,6 +1673,22 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     assert all(np.diff(quantiles) >= 0)
 
 
+def test_quantile_transformer_sample_weight_nans():
+    """Check that NaNs are ignored, regardless of their weight."""
+    # Compare quantiles estimated from X with no NaNs and X extended with additional
+    # rows of NaNs
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(20, 2))
+    sample_weight = rng.uniform(0, 5, size=20)
+    X_nan = np.vstack([X, np.full((5, 2), np.nan)])
+    sample_weight_nan = np.hstack([sample_weight, rng.uniform(0, 5, size=5)])
+
+    params = {"n_quantiles": 10, "subsample": None}
+    qt = QuantileTransformer(**params).fit(X, sample_weight=sample_weight)
+    qt_nan = QuantileTransformer(**params).fit(X_nan, sample_weight=sample_weight_nan)
+    assert_allclose(qt.quantiles_, qt_nan.quantiles_)
+
+
 def test_quantile_transformer_sparse_subsampling():
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/32585
@@ -1725,10 +1736,13 @@ def test_quantile_transformer_sparse_subsampling():
     assert np.isclose(quantiles, 0).mean() > 0.9
 
 
+@pytest.mark.parametrize("method", ["linear", "averaged_inverted_cdf"])
 @pytest.mark.parametrize("zeros_fraction", [0.0, 0.1, 1.0, 5.0, 100.0])
 @pytest.mark.parametrize("with_nans", [False, True])
-def test_sparse_column_quantile(with_nans, zeros_fraction, global_random_seed):
-    # Check that `_sparse_column_quantile` matches `np.nanquantile`
+def test_sparse_column_percentile(
+    with_nans, zeros_fraction, method, global_random_seed
+):
+    # Check that `_sparse_column_percentile` matches `np.nanpercentile`
     rng = np.random.RandomState(global_random_seed)
     n_nnz = rng.randint(10, 100)
     n_zeros = round(n_nnz * zeros_fraction)
@@ -1737,22 +1751,22 @@ def test_sparse_column_quantile(with_nans, zeros_fraction, global_random_seed):
         nan_mask = rng.uniform(size=n_nnz) < rng.uniform()
         column_nnz_data[nan_mask] = np.nan
 
-    quantiles = np.array([0, 0.1, 0.25, 0.5, 0.75, 0.9, 1])
+    percentiles = np.array([0, 10, 25, 50, 75, 90, 100])
 
-    result = _sparse_column_quantile(column_nnz_data, n_zeros, quantiles)
+    result = _sparse_column_percentile(column_nnz_data, n_zeros, percentiles, method)
 
     dense_column = np.concatenate([column_nnz_data, np.zeros(n_zeros)])
-    expected = np.nanquantile(dense_column, quantiles)
+    expected = np.nanpercentile(dense_column, percentiles, method=method)
 
     assert_allclose(result, expected)
 
 
-def test_sparse_column_quantile_all_nan():
-    # all-NaN column (no zeros, no valid non-zero values): `nanquantile`
-    # returns NaN in this case, `_sparse_column_quantile` should match.
-    quantiles = np.array([0, 0.5, 1])
-    result = _sparse_column_quantile(
-        np.array([np.nan, np.nan]), n_zeros=0, quantiles=quantiles
+def test_sparse_column_percentile_all_nan():
+    # all-NaN column (no zeros, no valid non-zero values): `nanpercentile`
+    # returns NaN in this case, `_sparse_column_percentile` should match.
+    percentiles = np.array([0, 50, 100])
+    result = _sparse_column_percentile(
+        np.array([np.nan, np.nan]), n_zeros=0, percentiles=percentiles
     )
     assert np.isnan(result).all()
 
