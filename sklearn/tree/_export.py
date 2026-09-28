@@ -20,6 +20,7 @@ from sklearn.tree import (
     _tree,
 )
 from sklearn.tree._reingold_tilford import Tree, buchheim
+from sklearn.tree._utils import SPLIT_NUMERIC
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -1310,8 +1311,19 @@ def export_dict(
         Every node has the keys ``"node_id"``, ``"n_node_samples"``,
         ``"weighted_n_node_samples"`` and ``"impurity"``. An internal node
         additionally has ``"feature"``, ``"feature_name"`` (only if
-        `feature_names` was provided), ``"threshold"``,
-        ``"missing_go_to_left"``, ``"left"`` and ``"right"``.
+        `feature_names` was provided), ``"missing_go_to_left"``, ``"left"`` and
+        ``"right"``. Numerical splits have a ``"threshold"``; categorical
+        splits instead have ``"categories_left"``, a list of integer category
+        codes routed to the left child.
+
+        For trees fitted with categorical features, the root also contains
+        ``"categorical_features"``: a list of dictionaries with ``"feature"``
+        (the original column index) and ``"categories"`` (the known labels in
+        code order). Labels must be JSON-compatible scalars: strings, finite
+        numbers, booleans, or None. NaN is excluded from these lists because
+        it represents a missing value. This metadata is included even for
+        truncated trees or trees consisting of a single leaf.
+
         Infinite thresholds are represented by the strings ``"Infinity"`` or
         ``"-Infinity"`` so that the representation remains JSON-compatible.
         The boolean ``"missing_go_to_left"`` records the branch used for missing
@@ -1333,7 +1345,7 @@ def export_dict(
     -----
     This representation is intended for inspection and conversion, rather
     than as a complete model persistence format. To reproduce tree traversal,
-    convert input features to ``numpy.float32`` before comparing them with
+    convert numerical input features to ``numpy.float32`` before comparing them with
     thresholds, as the estimator does. Convert exported thresholds with
     ``float(threshold)`` to handle both numbers and infinity strings.
     Compare the converted values at float64 precision without downcasting
@@ -1344,6 +1356,15 @@ def export_dict(
     supporting missing values, route NaNs according to
     ``"missing_go_to_left"``. This field does not enable missing-value support
     for estimators or criteria that reject NaNs.
+
+    For categorical features, look up the original label in the root's
+    corresponding ``"categories"`` list, without converting the label to
+    float32. Its position is the category code. Route known categories left
+    when their code belongs to ``"categories_left"``, and right otherwise.
+    Missing values and unknown labels follow ``"missing_go_to_left"``.
+    Random categorical splits are expanded to explicit category-code lists;
+    export size and time therefore grow with the number of known categories
+    at each exported categorical split.
 
     Keep ``decimals=None`` and ``max_depth=None`` when reproducing predictions.
     Rounding thresholds can change traversal, and rounding leaf values can
@@ -1436,16 +1457,40 @@ def export_dict(
         node["feature"] = feature
         if feature_names is not None:
             node["feature_name"] = _native(feature_names[feature])
-        threshold = _round(tree_.threshold[node_id])
-        if np.isinf(threshold):
-            threshold = "Infinity" if threshold > 0 else "-Infinity"
-        node["threshold"] = threshold
+        if tree_.split_kind[node_id] == SPLIT_NUMERIC:
+            threshold = _round(tree_.threshold[node_id])
+            if np.isinf(threshold):
+                threshold = "Infinity" if threshold > 0 else "-Infinity"
+            node["threshold"] = threshold
+        else:
+            node["categories_left"] = tree_._get_left_categories(node_id).tolist()
         node["missing_go_to_left"] = bool(tree_.missing_go_to_left[node_id])
         node["left"] = _recurse(tree_.children_left[node_id], depth + 1)
         node["right"] = _recurse(tree_.children_right[node_id], depth + 1)
         return node
 
     tree_dict = _recurse(0, 0)
+    if decision_tree.is_categorical_ is not None:
+        categorical_features = []
+        for feature, categories in zip(
+            np.flatnonzero(decision_tree.is_categorical_),
+            decision_tree._categorical_encoder.categories_,
+        ):
+            # Missing values are encoded as NaN, not as a category index.
+            categories = [
+                _native(v) for v in categories[: tree_._n_categories[feature]]
+            ]
+            try:
+                json.dumps(categories, allow_nan=False)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "Categorical labels must be JSON-compatible scalars "
+                    "(strings, finite numbers, booleans, or None)."
+                ) from exc
+            categorical_features.append(
+                {"feature": int(feature), "categories": categories}
+            )
+        tree_dict["categorical_features"] = categorical_features
 
     if out_file is not None:
         own_file = False

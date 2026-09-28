@@ -224,23 +224,52 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       'petal width (cm)'
 
   For a single-output classifier, the following example traverses the exported
-  tree and reads the predicted class. Inputs are converted to ``float32``, as
-  they are by the estimator, and missing values follow the stored direction::
+  tree and reads the predicted class. Numerical inputs are converted to
+  ``float32``, and categorical labels are mapped to their exported codes::
 
       >>> import numpy as np
       >>> def predict_from_dict(tree_dict, row):
-      ...     row = np.asarray(row, dtype=np.float32)
+      ...     categories = {
+      ...         item["feature"]: item["categories"]
+      ...         for item in tree_dict.get("categorical_features", [])
+      ...     }
       ...     node = tree_dict
       ...     while "left" in node:
-      ...         value = float(row[node["feature"]])
-      ...         go_left = (node["missing_go_to_left"] if np.isnan(value)
-      ...                    else value <= float(node["threshold"]))
+      ...         feature = node["feature"]
+      ...         value = row[feature]
+      ...         if "categories_left" in node:
+      ...             try:
+      ...                 code = categories[feature].index(value)
+      ...             except ValueError:  # Missing or unknown category.
+      ...                 go_left = node["missing_go_to_left"]
+      ...             else:
+      ...                 go_left = code in node["categories_left"]
+      ...         else:
+      ...             value = float(np.float32(value))
+      ...             go_left = (node["missing_go_to_left"] if np.isnan(value)
+      ...                        else value <= float(node["threshold"]))
       ...         node = node["left"] if go_left else node["right"]
       ...     return node["class"]
       >>> predict_from_dict(tree_dict, iris.data[0])
       0
       >>> bool(predict_from_dict(tree_dict, iris.data[0]) == decision_tree.predict(
       ...     iris.data[:1])[0])
+      True
+
+  Categorical splits contain ``categories_left`` instead of a numerical
+  threshold. The root stores the category labels in code order, so the same
+  traversal also works on the original labels, including unknown categories::
+
+      >>> X_cat = np.array([["blue"], ["green"], ["red"], ["blue"]], dtype=object)
+      >>> cat_tree = tree.DecisionTreeClassifier(
+      ...     categorical_features=[0], random_state=0
+      ... ).fit(X_cat, [0, 1, 0, 0])
+      >>> cat_dict = export_dict(cat_tree)
+      >>> cat_dict["categorical_features"]
+      [{'feature': 0, 'categories': ['blue', 'green', 'red']}]
+      >>> probes = np.array([["green"], ["unknown"], [np.nan]], dtype=object)
+      >>> [predict_from_dict(cat_dict, row) for row in probes] == cat_tree.predict(
+      ...     probes).tolist()
       True
 
   This example assumes a full, unrounded export with the original class labels

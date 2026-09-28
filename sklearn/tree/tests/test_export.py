@@ -16,6 +16,8 @@ from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
     DecisionTreeRegressor,
+    ExtraTreeClassifier,
+    ExtraTreeRegressor,
     export_dict,
     export_graphviz,
     export_text,
@@ -957,16 +959,29 @@ def test_export_dict_errors():
 
 
 def _export_dict_leaf(tree_dict, row):
-    # Match the estimator's float32 input conversion and double comparison.
-    row = np.asarray(row, dtype=np.float32)
+    categories = {
+        item["feature"]: item["categories"]
+        for item in tree_dict.get("categorical_features", [])
+    }
     node = tree_dict
     while "left" in node:
-        value = float(row[node["feature"]])
-        go_left = (
-            node["missing_go_to_left"]
-            if np.isnan(value)
-            else value <= float(node["threshold"])
-        )
+        feature = node["feature"]
+        value = row[feature]
+        if "categories_left" in node:
+            try:
+                code = categories[feature].index(value)
+            except ValueError:
+                go_left = node["missing_go_to_left"]
+            else:
+                go_left = code in node["categories_left"]
+        else:
+            # Match the estimator's float32 input conversion and double comparison.
+            value = float(np.float32(value))
+            go_left = (
+                node["missing_go_to_left"]
+                if np.isnan(value)
+                else value <= float(node["threshold"])
+            )
         node = node["left"] if go_left else node["right"]
     return node
 
@@ -1129,3 +1144,170 @@ def test_export_dict_missing_only_split_json(Tree, decimals, tmp_path):
         for leaf in leaves
     ]
     np.testing.assert_allclose(predictions, estimator.predict(X_test))
+
+
+@pytest.mark.parametrize(
+    "Tree",
+    [
+        DecisionTreeClassifier,
+        DecisionTreeRegressor,
+        ExtraTreeClassifier,
+        ExtraTreeRegressor,
+    ],
+)
+@pytest.mark.parametrize("numeric_labels", [False, True])
+@pytest.mark.parametrize("missing_in_fit", [False, True])
+def test_export_dict_categorical_round_trip(Tree, numeric_labels, missing_in_fit):
+    # Categorical columns are not adjacent or first: preserve original indices.
+    rng = np.random.RandomState(0)
+    labels = np.array([10, 20, 30, 40] if numeric_labels else list("abcd"))
+    codes = rng.randint(0, 4, size=160)
+    other_codes = rng.randint(0, 4, size=160)
+    X = np.empty((160, 3), dtype=object)
+    X[:, 0] = rng.normal(size=160)
+    X[:, 1] = labels[codes]
+    X[:, 2] = labels[other_codes]
+    if missing_in_fit:
+        X[::11, 1] = np.nan
+    y = ((codes % 2 == 0) ^ (X[:, 0] > 0) ^ (other_codes == 0)).astype(int)
+    estimator = Tree(categorical_features=[1, 2], random_state=0).fit(X, y)
+    tree_dict = export_dict(estimator)
+    restored = json.loads(json.dumps(tree_dict, allow_nan=False))
+    assert restored == tree_dict
+    assert restored["categorical_features"] == [
+        {"feature": feature, "categories": labels.tolist()} for feature in [1, 2]
+    ]
+    categorical_nodes = []
+
+    def inspect(node):
+        if "left" in node:
+            if "categories_left" in node:
+                categorical_nodes.append(node)
+                assert "threshold" not in node
+            inspect(node["left"])
+            inspect(node["right"])
+
+    inspect(restored)
+    assert categorical_nodes
+    # Probe categories on combinations not necessarily seen at a particular node.
+    probes = [*labels.tolist(), np.nan, 99 if numeric_labels else "unseen"]
+    X_test = np.array(
+        [[v, a, b] for v in [-2.0, 0.0, 2.0] for a in probes for b in probes],
+        dtype=object,
+    )
+    leaves = [_export_dict_leaf(restored, row) for row in X_test]
+    np.testing.assert_array_equal(
+        [leaf["node_id"] for leaf in leaves], estimator.apply(X_test)
+    )
+    if is_classifier(estimator):
+        np.testing.assert_array_equal(
+            [leaf["class"] for leaf in leaves], estimator.predict(X_test)
+        )
+        np.testing.assert_allclose(
+            [leaf["value"] for leaf in leaves], estimator.predict_proba(X_test)
+        )
+    else:
+        np.testing.assert_allclose(
+            [leaf["value"][0] for leaf in leaves], estimator.predict(X_test)
+        )
+
+
+@pytest.mark.parametrize("n_categories", [40, 250, 300])
+def test_export_dict_categorical_random_multioutput(n_categories, tmp_path):
+    # Cross bitset word boundaries and the capacity of best-split bitsets.
+    X = np.arange(n_categories).reshape(-1, 1)
+    y = np.column_stack([X[:, 0] % 3, X[:, 0] % 2])
+    estimator = ExtraTreeClassifier(
+        categorical_features=[0], max_depth=4, random_state=0
+    ).fit(X, y)
+    path = tmp_path / "categorical.json"
+    expected = export_dict(estimator, str(path))
+    restored = json.loads(path.read_text())
+    assert restored == expected
+    leaves = [_export_dict_leaf(restored, row) for row in X]
+    np.testing.assert_array_equal(
+        [leaf["node_id"] for leaf in leaves], estimator.apply(X)
+    )
+    values = np.array([leaf["value"] for leaf in leaves])
+    for k, classes in enumerate(estimator.classes_):
+        np.testing.assert_allclose(
+            values[:, k, : len(classes)], estimator.predict_proba(X)[k]
+        )
+
+
+@pytest.mark.parametrize("max_depth", [0, None])
+@pytest.mark.parametrize("constant", [False, True])
+def test_export_dict_categorical_metadata_with_truncation(max_depth, constant):
+    X = np.array(list("abcdef"), dtype=object).reshape(-1, 1)
+    estimator = DecisionTreeClassifier(categorical_features=[0]).fit(
+        X, np.zeros(6) if constant else [0, 1, 0, 1, 0, 1]
+    )
+    exported = export_dict(estimator, max_depth=max_depth, decimals=0)
+    assert exported["categorical_features"] == [
+        {"feature": 0, "categories": list("abcdef")}
+    ]
+    json.dumps(exported, allow_nan=False)
+
+
+def test_export_dict_categorical_from_dtype():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(
+        {"number": [0, 1, 0, 1], "label": pd.Categorical(["a", "b", "a", "b"])}
+    )
+    estimator = DecisionTreeClassifier(
+        categorical_features="from_dtype", random_state=0
+    ).fit(X, [0, 1, 0, 1])
+    exported = export_dict(estimator, feature_names=X.columns)
+    assert exported["categorical_features"] == [
+        {"feature": 1, "categories": ["a", "b"]}
+    ]
+    np.testing.assert_array_equal(
+        [_export_dict_leaf(exported, row)["node_id"] for row in X.to_numpy()],
+        estimator.apply(X),
+    )
+
+
+@pytest.mark.parametrize("n_categories", [40, 250])
+def test_export_dict_categorical_best_bitset(n_categories):
+    X = np.arange(n_categories).reshape(-1, 1)
+    estimator = DecisionTreeClassifier(categorical_features=[0], random_state=0).fit(
+        X, X[:, 0] % 2
+    )
+    exported = json.loads(json.dumps(export_dict(estimator), allow_nan=False))
+    np.testing.assert_array_equal(
+        [_export_dict_leaf(exported, row)["node_id"] for row in X],
+        estimator.apply(X),
+    )
+
+
+def test_export_dict_categorical_none_label():
+    X = np.array([["a"], [None], [np.nan], ["b"], [None]], dtype=object)
+    estimator = DecisionTreeClassifier(categorical_features=[0], random_state=0).fit(
+        X, [0, 1, 0, 0, 1]
+    )
+    exported = json.loads(json.dumps(export_dict(estimator), allow_nan=False))
+    assert exported["categorical_features"][0]["categories"] == ["a", "b", None]
+    np.testing.assert_array_equal(
+        [_export_dict_leaf(exported, row)["node_id"] for row in X],
+        estimator.apply(X),
+    )
+
+
+def test_export_dict_categorical_unsupported_label():
+    X = np.array([[b"a"], [b"b"]], dtype=object)
+    estimator = DecisionTreeClassifier(categorical_features=[0]).fit(X, [0, 1])
+    with pytest.raises(ValueError, match="Categorical labels must be JSON-compatible"):
+        export_dict(estimator)
+
+
+@pytest.mark.parametrize("node_id", [-1, 3])
+def test_export_dict_left_categories_invalid_node(node_id):
+    estimator = DecisionTreeClassifier().fit([[0], [1]], [0, 1])
+    with pytest.raises(ValueError, match="node_id is out of bounds"):
+        estimator.tree_._get_left_categories(node_id)
+
+
+def test_export_dict_left_categories_numeric_node():
+    estimator = DecisionTreeClassifier().fit([[0], [1]], [0, 1])
+    with pytest.raises(ValueError, match="categorical split"):
+        estimator.tree_._get_left_categories(0)
