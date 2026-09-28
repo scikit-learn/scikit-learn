@@ -9,7 +9,7 @@ from sklearn.utils._typedefs cimport (
 
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._tree cimport ParentInfo
-from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, BITSET_DTYPE_C
+from sklearn.utils._bitset cimport BITSET_DTYPE_C
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -22,9 +22,18 @@ cdef struct SplitRecord:
     # - feature values less than or equal to the threshold go left, and values greater than the threshold go right.
     float64_t threshold
 
-    # Threshold for categorical features splits:
-    # - left_cat_bitset stores the set of categories that go to the left child.
+    # Threshold, or hash seed for categorical features splits:
+    # - for SPLIT_CATEGORICAL_BITSET: left_cat_bitset stores the set of
+    #   categories that go to the left child;
+    # - for SPLIT_CATEGORICAL_HASH: left_cat_bitset[0] stores the hash seed.
     BITSET_DTYPE_C left_cat_bitset
+
+    # The kind of split:
+    # - SPLIT_NUMERIC: numerical split
+    # - SPLIT_CATEGORICAL_BITSET: categorical split using bitset
+    # - SPLIT_CATEGORICAL_HASH: categorical split using hash
+    # - SPLIT_LEAF: no split, the node is a leaf
+    int8_t split_kind
 
     float64_t improvement     # Impurity improvement given parent node.
     float64_t impurity_left   # Impurity of the left split.
@@ -69,6 +78,9 @@ cdef class Splitter:
     cdef const int8_t[:] monotonic_cst
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
+
+    # Per-feature number of categories; -1 means the feature is numerical.
+    cdef const intp_t[:] n_categories
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

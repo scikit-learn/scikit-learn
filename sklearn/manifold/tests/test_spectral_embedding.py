@@ -25,8 +25,6 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     _sparse_diags_array,
     _sparse_random_array,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.fixes import laplacian as csgraph_laplacian
 
@@ -343,15 +341,7 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
     affinity.indptr = affinity.indptr.astype(np.int64)
     affinity.indices = affinity.indices.astype(np.int64)
 
-    # PR: https://github.com/scipy/scipy/pull/18913
-    # First integration in 1.11.3: https://github.com/scipy/scipy/pull/19279
-    scipy_graph_traversal_supports_int64_index = sp_version >= parse_version("1.11.3")
-    if scipy_graph_traversal_supports_int64_index:
-        se_amg.fit_transform(affinity)
-    else:
-        err_msg = "Only sparse matrices with 32-bit integer indices are accepted"
-        with pytest.raises(ValueError, match=err_msg):
-            se_amg.fit_transform(affinity)
+    se_amg.fit_transform(affinity)
 
 
 @pytest.mark.skipif(

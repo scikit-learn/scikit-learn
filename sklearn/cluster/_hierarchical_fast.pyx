@@ -336,17 +336,34 @@ cdef class UnionFind(object):
         self.next_label += 1
         return
 
-    @cython.wraparound(True)
     cdef intp_t fast_find(self, intp_t n) noexcept:
-        cdef intp_t p
-        p = n
+        cdef intp_t root = n
+        cdef intp_t next_parent
+
         # find the highest node in the linkage graph so far
-        while self.parent[n] != -1:
-            n = self.parent[n]
-        # provide a shortcut up to the highest node
-        while self.parent[p] != n:
-            p, self.parent[p] = self.parent[p], n
-        return n
+        while self.parent[root] != -1:
+            root = self.parent[root]
+        # compress the path to the highest node
+        while n != root and self.parent[n] != root:
+            next_parent = self.parent[n]
+            self.parent[n] = root
+            n = next_parent
+        return root
+
+
+cdef class PytestUnionFind(UnionFind):
+    """Used for testing only."""
+
+    def py_union(self, intp_t m, intp_t n):
+        cdef intp_t new_label = self.next_label
+        self.union(m, n)
+        return new_label
+
+    def py_fast_find(self, intp_t n):
+        return self.fast_find(n)
+
+    def py_get_parent(self):
+        return np.asarray(self.parent).copy()
 
 
 def _single_linkage_label(const float64_t[:, :] L):

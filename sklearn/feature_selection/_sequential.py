@@ -92,7 +92,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 

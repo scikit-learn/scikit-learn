@@ -70,6 +70,21 @@ else
     global_status=1
 fi
 
+echo -e "### Running codespell ###\n"
+# Use git ls-files + xargs to avoid running Codespell on untracked local files
+# (like build artifacts or notebooks). It's easier to use this pattern than
+# explicitly excluding files with --exclude-file and other flags.
+# This matters mostly when running locally not in CI.
+git ls-files -z | xargs -0 codespell
+status=$?
+if [[ $status -eq 0 ]]
+then
+    echo -e "No problem detected by codespell\n"
+else
+    echo -e "Problems detected by codespell, please fix them\n"
+    global_status=1
+fi
+
 # For docstrings and warnings of deprecated attributes to be rendered
 # properly, the `deprecated` decorator must come before the `property` decorator
 # (else they are treated as functions)
