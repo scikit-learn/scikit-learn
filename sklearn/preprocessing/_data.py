@@ -1740,7 +1740,13 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     )
                 else:
                     column_data = X[:, feature_idx]
-                    quantiles.append(np.nanpercentile(column_data, self.quantile_range))
+                    quantiles.append(
+                        np.nanpercentile(
+                            column_data,
+                            self.quantile_range,
+                            method="averaged_inverted_cdf",
+                        )
+                    )
 
             quantiles = np.transpose(quantiles)
 
@@ -2672,15 +2678,14 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
-def _sparse_column_percentile(column_nnz_data, n_zeros, percentiles, method="linear"):
+def _sparse_column_percentile(column_nnz_data, n_zeros, percentiles):
     """
     Compute percentiles of a sparse column without densifying it.
 
     ``column_nnz_data`` holds the explicitly stored (non-implicit-zero)
     entries of the column, which may be of any sign; ``n_zeros`` implicit
     zeros complete the column. Calculations/Implementation are meant to
-    match np.nanpercentile(, method=method), for ``method`` in
-    ``{"linear", "averaged_inverted_cdf"}``.
+    match np.nanpercentile(, method="averaged_inverted_cdf").
     """
     quantiles = np.true_divide(percentiles, 100)
 
@@ -2700,18 +2705,11 @@ def _sparse_column_percentile(column_nnz_data, n_zeros, percentiles, method="lin
     # the sorted non-zero values (i.e. the number of stored values < 0).
     zero_insert_pos = np.searchsorted(sorted_nnz, 0)
 
-    # Same virtual index / interpolation weight definitions as numpy.
-    if method == "linear":
-        idx = quantiles * (n_total - 1)
-    elif method == "averaged_inverted_cdf":
-        idx = n_total * quantiles - 1
-    else:
-        raise ValueError(f"Unsupported method: {method!r}")
+    # Same virtual index definition as numpy: take the next value, or average
+    # the two neighbours when landing exactly on a step of the empirical CDF.
+    idx = n_total * quantiles - 1
     lo = np.floor(idx)
-    frac = idx - lo
-    if method == "averaged_inverted_cdf":
-        # Average the two neighbours when landing exactly on a CDF step.
-        frac = np.where(frac == 0, 0.5, 1.0)
+    frac = np.where(idx == lo, 0.5, 1.0)
     lo = lo.astype(int)
     hi = lo + 1
 
@@ -2974,12 +2972,7 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 )
             else:
                 self.quantiles_.append(
-                    _sparse_column_percentile(
-                        column_data,
-                        n_zeros,
-                        references,
-                        method="averaged_inverted_cdf",
-                    )
+                    _sparse_column_percentile(column_data, n_zeros, references)
                 )
 
         self.quantiles_ = np.transpose(self.quantiles_)

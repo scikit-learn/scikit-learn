@@ -1297,7 +1297,7 @@ def test_robust_scaler_iris():
     assert_array_almost_equal(np.median(X_trans, axis=0), 0)
     X_trans_inv = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
-    q = np.percentile(X_trans, q=(25, 75), axis=0)
+    q = np.percentile(X_trans, q=(25, 75), axis=0, method="averaged_inverted_cdf")
     iqr = q[1] - q[0]
     assert_array_almost_equal(iqr, 1)
 
@@ -1309,7 +1309,7 @@ def test_robust_scaler_iris_quantiles():
     assert_array_almost_equal(np.median(X_trans, axis=0), 0)
     X_trans_inv = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
-    q = np.percentile(X_trans, q=(10, 90), axis=0)
+    q = np.percentile(X_trans, q=(10, 90), axis=0, method="averaged_inverted_cdf")
     q_range = q[1] - q[0]
     assert_array_almost_equal(q_range, 1)
 
@@ -1736,12 +1736,9 @@ def test_quantile_transformer_sparse_subsampling():
     assert np.isclose(quantiles, 0).mean() > 0.9
 
 
-@pytest.mark.parametrize("method", ["linear", "averaged_inverted_cdf"])
 @pytest.mark.parametrize("zeros_fraction", [0.0, 0.1, 1.0, 5.0, 100.0])
 @pytest.mark.parametrize("with_nans", [False, True])
-def test_sparse_column_percentile(
-    with_nans, zeros_fraction, method, global_random_seed
-):
+def test_sparse_column_percentile(with_nans, zeros_fraction, global_random_seed):
     # Check that `_sparse_column_percentile` matches `np.nanpercentile`
     rng = np.random.RandomState(global_random_seed)
     n_nnz = rng.randint(10, 100)
@@ -1753,10 +1750,12 @@ def test_sparse_column_percentile(
 
     percentiles = np.array([0, 10, 25, 50, 75, 90, 100])
 
-    result = _sparse_column_percentile(column_nnz_data, n_zeros, percentiles, method)
+    result = _sparse_column_percentile(column_nnz_data, n_zeros, percentiles)
 
     dense_column = np.concatenate([column_nnz_data, np.zeros(n_zeros)])
-    expected = np.nanpercentile(dense_column, percentiles, method=method)
+    expected = np.nanpercentile(
+        dense_column, percentiles, method="averaged_inverted_cdf"
+    )
 
     assert_allclose(result, expected)
 
@@ -1861,7 +1860,7 @@ def test_robust_scale_axis1():
     X = iris.data
     X_trans = robust_scale(X, axis=1)
     assert_array_almost_equal(np.median(X_trans, axis=1), 0)
-    q = np.percentile(X_trans, q=(25, 75), axis=1)
+    q = np.percentile(X_trans, q=(25, 75), axis=1, method="averaged_inverted_cdf")
     iqr = q[1] - q[0]
     assert_array_almost_equal(iqr, 1)
 
@@ -1870,7 +1869,7 @@ def test_robust_scale_1d_array():
     X = iris.data[:, 1]
     X_trans = robust_scale(X)
     assert_array_almost_equal(np.median(X_trans), 0)
-    q = np.percentile(X_trans, q=(25, 75))
+    q = np.percentile(X_trans, q=(25, 75), method="averaged_inverted_cdf")
     iqr = q[1] - q[0]
     assert_array_almost_equal(iqr, 1)
 
@@ -1883,12 +1882,10 @@ def test_robust_scaler_zero_variance_features():
     X_trans = scaler.fit_transform(X)
 
     # NOTE: for such a small sample size, what we expect in the third column
-    # depends HEAVILY on the method used to calculate quantiles. The values
-    # here were calculated to fit the quantiles produces by np.percentile
-    # using numpy 1.9 Calculating quantiles with
-    # scipy.stats.mstats.scoreatquantile or scipy.stats.mstats.mquantiles
-    # would yield very different results!
-    X_expected = [[0.0, 0.0, +0.0], [0.0, 0.0, -1.0], [0.0, 0.0, +1.0]]
+    # depends HEAVILY on the method used to calculate quantiles. With
+    # `averaged_inverted_cdf`, the 25th and 75th percentiles of the third
+    # column are its min (-0.1) and max (1.1), hence an IQR of 1.2.
+    X_expected = [[0.0, 0.0, +0.0], [0.0, 0.0, -0.5], [0.0, 0.0, +0.5]]
     assert_array_almost_equal(X_trans, X_expected)
     X_trans_inv = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
@@ -1896,7 +1893,7 @@ def test_robust_scaler_zero_variance_features():
     # make sure new data gets transformed correctly
     X_new = [[+0.0, 2.0, 0.5], [-1.0, 1.0, 0.0], [+0.0, 1.0, 1.5]]
     X_trans_new = scaler.transform(X_new)
-    X_expected_new = [[+0.0, 1.0, +0.0], [-1.0, 0.0, -0.83333], [+0.0, 0.0, +1.66667]]
+    X_expected_new = [[+0.0, 1.0, +0.0], [-1.0, 0.0, -0.41667], [+0.0, 0.0, +0.83333]]
     assert_array_almost_equal(X_trans_new, X_expected_new, decimal=3)
 
 
