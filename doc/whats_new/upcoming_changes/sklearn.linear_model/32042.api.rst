@@ -14,7 +14,7 @@
   This means, the defaults result in the same model as before (up to floating point
   precision).
 
-  With this change the penalty parameter of most linear models is `alpha`, the large
+  With this change the penalty parameter of most linear models is `alpha`, the larger
   its value the stronger the penalty. For L2-penalties, the parametrization is
   similar to :class:`linear_model.Ridge` where the penalty gets weaker the larger the
   training dataset (by a factor of `1/n_samples`).

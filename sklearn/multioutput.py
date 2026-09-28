@@ -973,8 +973,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [0., 1., 0.]])
     >>> chain.predict_proba(X_test)
     array([[0.8387, 0.9431, 0.4576],
-          [0.8878, 0.3684, 0.2640],
-          [0.0321, 0.9935, 0.0626]])
+           [0.8878, 0.3684, 0.2640],
+           [0.0321, 0.9935, 0.0626]])
     """
 
     _parameter_constraints: dict = {
