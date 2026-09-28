@@ -21,6 +21,7 @@ from sklearn.utils import _safe_indexing, check_random_state, column_or_1d
 from sklearn.utils._mask import indices_to_mask
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
 from sklearn.utils._tags import get_tags
+from sklearn.utils.fixes import _is_gil_enabled
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -882,7 +883,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         )
 
     def _parallel_args(self):
-        if self.estimator is None:  # TODO and is_free_threaded():
+        if self.estimator is None and not _is_gil_enabled():
+            # Using DecisionTreeClassifier, which is known to be faster with
+            # threads when there is no GIL.
             return {"require": "sharedmem"}
         return {}
 
@@ -1391,7 +1394,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         )
 
     def _parallel_args(self):
-        if self.estimator is None:  # TODO and is_free_threaded():
+        if self.estimator is None and not _is_gil_enabled():
+            # Using DecisionTreeRegressor, which is known to be faster with
+            # threads when there is no GIL.
             return {"require": "sharedmem"}
         return {}
 
