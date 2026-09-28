@@ -2826,7 +2826,7 @@ def enet_coordinate_descent_multinomial(
     #     "ij,ij->j", X, X, dtype=dtype, order="C"
     # )
     # X -> sqrt(D) L' X = A
-    # sum_{i} X_{ij} X_{ij} -> sum_i X_{ij} LDL_i X_{ij}
+    # sum_{i} X_{ij} X_{ij} -> sum_i X_{ij} diag(LDL)_i X_{ij}
     # These are just the diagonal elements of the full hessian H.
     # for k in range(n_classes):
     #     h = proba[:, k] * (1 - proba[:, k]) * sw
