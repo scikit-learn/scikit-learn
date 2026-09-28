@@ -1,0 +1,4 @@
+- Add `tied-diagonal` and `tied-spherical` to :class:`mixture.GaussianMixture`
+  and :class:`BayesianGaussianMixture` which allows fitting of multiple
+  mixture components with a single diagonal or spherical covariance matrix
+  By :user:`Billy Lim <BillyLjm>`.
