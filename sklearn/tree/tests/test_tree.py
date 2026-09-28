@@ -2469,6 +2469,11 @@ def test_missing_values_best_splitter_on_equal_nodes_no_missing(
     criterion, categorical_features
 ):
     """Check missing values goes to correct node during predictions."""
+    if categorical_features is not None and criterion == "absolute_error":
+        pytest.skip(
+            "absolute_error is not supported with categorical features in "
+            "DecisionTreeRegressor"
+        )
     X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
     y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
     node_value_func = np.median if criterion == "absolute_error" else np.mean
@@ -3134,6 +3139,22 @@ def test_fit_categorical_with_monotonic_constraint(Tree):
         ValueError, match="Categorical features cannot have monotonic constraints"
     ):
         Tree(categorical_features=[0], monotonic_cst=[1], random_state=0).fit(X, y)
+
+
+def test_fit_categorical_with_absolute_error():
+    # Non-regression test: the categorical split-finding algorithm is not
+    # valid for criterion="absolute_error" (see gh-34578), so it should be
+    # rejected rather than silently return a possibly suboptimal split.
+    X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
+    y = np.array([0.0, 1.0, 0.0, 1.0])
+
+    with pytest.raises(
+        ValueError,
+        match="Categorical features are not supported with criterion='absolute_error'",
+    ):
+        DecisionTreeRegressor(categorical_features=[0], criterion="absolute_error").fit(
+            X, y
+        )
 
 
 def test_predict_sparse_int64_indices_raises():

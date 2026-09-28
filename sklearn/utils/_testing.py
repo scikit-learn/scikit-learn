@@ -1524,6 +1524,14 @@ def _get_warnings_filters_info_list():
             message="Class PassiveAggressive.+is deprecated",
             category=FutureWarning,
         ),
+        # TODO: remove once the version where scipy has removed all the sparse matrix
+        # classes is our min version; note that scipy did not yet announce when this
+        # will happen, only that it won't be earlier than v2.2.
+        WarningInfo(
+            "ignore",
+            message=r"(?s).*All sparse matrix classes.+deprecated",
+            category=DeprecationWarning,
+        ),
     ]
 
 

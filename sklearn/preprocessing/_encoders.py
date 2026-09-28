@@ -15,7 +15,7 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.utils import _align_api_if_sparse, _safe_indexing, check_array
-from sklearn.utils._encode import _check_unknown, _encode, _get_counts, _unique
+from sklearn.utils._encode import _encode, _get_counts, _unique
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
@@ -159,8 +159,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(error_msg)
 
                 if handle_unknown == "error":
-                    diff = _check_unknown(Xi, cats)
-                    if diff:
+                    _, diff = _encode(_unique(Xi), uniques=cats, return_diff=True)
+                    if diff.size:
                         msg = (
                             "Found unknown categories {0} in column {1}"
                             " during fit".format(diff, i)
@@ -210,41 +210,20 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
-            diff, valid_mask = _check_unknown(Xi, self.categories_[i], return_mask=True)
+            X_int[:, i] = _encode(Xi, uniques=self.categories_[i])
+            X_mask[:, i] = X_int[:, i] != -1
 
-            if not np.all(valid_mask):
+            if not np.all(X_mask[:, i]):
                 if handle_unknown == "error":
+                    diff = _unique(Xi[~X_mask[:, i]])
                     msg = (
                         "Found unknown categories {0} in column {1}"
                         " during transform".format(diff, i)
                     )
                     raise ValueError(msg)
-                else:
-                    if warn_on_unknown:
-                        columns_with_unknown.append(i)
-                    # Set the problematic rows to an acceptable value and
-                    # continue `The rows are marked `X_mask` and will be
-                    # removed later.
-                    X_mask[:, i] = valid_mask
-                    # cast Xi into the largest string type necessary
-                    # to handle different lengths of numpy strings
-                    if (
-                        self.categories_[i].dtype.kind in ("U", "S")
-                        and self.categories_[i].itemsize > Xi.itemsize
-                    ):
-                        Xi = Xi.astype(self.categories_[i].dtype)
-                    elif self.categories_[i].dtype.kind == "O" and Xi.dtype.kind == "U":
-                        # categories are objects and Xi are numpy strings.
-                        # Cast Xi to an object dtype to prevent truncation
-                        # when setting invalid values.
-                        Xi = Xi.astype("O")
-                    else:
-                        Xi = Xi.copy()
+                elif warn_on_unknown:
+                    columns_with_unknown.append(i)
 
-                    Xi[~valid_mask] = self.categories_[i][0]
-            # We use check_unknown=False, since _check_unknown was
-            # already called above.
-            X_int[:, i] = _encode(Xi, uniques=self.categories_[i], check_unknown=False)
         if columns_with_unknown:
             if handle_unknown == "infrequent_if_exist":
                 msg = (

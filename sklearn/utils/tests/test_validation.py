@@ -32,6 +32,7 @@ from sklearn.utils import (
     check_symmetric,
     check_X_y,
     deprecated,
+    indexable,
 )
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
@@ -2538,3 +2539,31 @@ def test_num_samples_pa_chunked_array():
 
     result = _num_samples(chunked_array([[0.1, 0.2, 0.3]]))
     assert result == 3
+
+
+@pytest.mark.parametrize(
+    "constructor_name",
+    [
+        "list",
+        "tuple",
+        "array",
+        "series",
+        "polars_series",
+        "pyarrow_array",
+        "sparse_csr",
+        "sparse_csc_array",
+        "pandas",
+        "polars",
+        "pyarrow",
+        "index",
+    ],
+)
+def test_indexable_return_type(constructor_name):
+    """Test that indexable returns objects of expected type."""
+    X = _convert_container(list(range(3)), constructor_name)
+    if constructor_name == "sparse_csc_array":
+        expected_type = sp.csr_array
+    else:
+        expected_type = type(X)
+    X = indexable(X)[0]
+    assert isinstance(X, expected_type)

@@ -47,8 +47,8 @@ from sklearn.utils._array_api import (
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
@@ -1478,21 +1478,15 @@ def test_train_test_split_32bit_overflow():
     assert y_train.size + y_test.size == big_number
 
 
-def test_train_test_split_pandas():
+@pytest.mark.parametrize("input_type", ["pandas", "polars", "pyarrow"])
+def test_train_test_split_dataframe(input_type):
     # check train_test_split doesn't destroy pandas dataframe
-    types = [MockDataFrame]
-    try:
-        from pandas import DataFrame
+    X_df = _convert_container(X, input_type)
+    input_type = type(X_df)
 
-        types.append(DataFrame)
-    except ImportError:
-        pass
-    for InputFeatureType in types:
-        # X dataframe
-        X_df = InputFeatureType(X)
-        X_train, X_test = train_test_split(X_df)
-        assert isinstance(X_train, InputFeatureType)
-        assert isinstance(X_test, InputFeatureType)
+    X_train, X_test = train_test_split(X_df)
+    assert isinstance(X_train, input_type)
+    assert isinstance(X_test, input_type)
 
 
 @pytest.mark.parametrize(
@@ -1506,15 +1500,6 @@ def test_train_test_split_sparse(sparse_container):
     X_train, X_test = train_test_split(X_s)
     assert issparse(X_train) and X_train.format == "csr"
     assert issparse(X_test) and X_test.format == "csr"
-
-
-def test_train_test_split_mock_pandas():
-    # X mock dataframe
-    X_df = MockDataFrame(X)
-    X_train, X_test = train_test_split(X_df)
-    assert isinstance(X_train, MockDataFrame)
-    assert isinstance(X_test, MockDataFrame)
-    X_train_arr, X_test_arr = train_test_split(X_df)
 
 
 def test_train_test_split_list_input():

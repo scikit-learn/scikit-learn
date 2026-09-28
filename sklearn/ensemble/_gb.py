@@ -597,10 +597,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _is_fitted(self):
         return len(getattr(self, "estimators_", [])) > 0
 
-    def _check_initialized(self):
-        """Check that the estimator is initialized, raising an error if not."""
-        check_is_fitted(self)
-
     @_fit_context(
         # GradientBoosting*.init is not validated yet
         prefer_skip_nested_validation=False
@@ -948,7 +944,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _raw_predict_init(self, X):
         """Check input and compute raw predictions of the init estimator."""
-        self._check_initialized()
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
         if self.init_ == "zero":
             raw_predictions = np.zeros(
@@ -991,6 +986,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
+        check_is_fitted(self)
         if check_input:
             X = validate_data(
                 self, X, dtype=np.float32, order="C", accept_sparse="csr", reset=False
@@ -1020,7 +1016,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             trees consisting of only the root node, in which case it will be an
             array of zeros.
         """
-        self._check_initialized()
+        check_is_fitted(self)
 
         relevant_trees = [
             tree
@@ -1103,7 +1099,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             In the case of binary classification n_classes is 1.
         """
 
-        self._check_initialized()
+        check_is_fitted(self)
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
 
         # n_classes will be equal to 1 in the binary classification or the

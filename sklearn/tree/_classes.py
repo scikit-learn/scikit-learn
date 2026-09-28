@@ -510,6 +510,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 "Categorical features are only supported for binary classification. "
                 f"Found {self.n_classes_.max()} classes."
             )
+        if has_categorical and self.criterion == "absolute_error":
+            raise ValueError(
+                "Categorical features are not supported with "
+                "criterion='absolute_error'."
+            )
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
         splitter = SPLITTERS[self.splitter](
@@ -1455,6 +1460,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
+
+        Categorical features are not supported with `criterion="absolute_error"`.
 
         .. versionadded:: 1.10
 

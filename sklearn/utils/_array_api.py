@@ -152,6 +152,11 @@ def yield_mixed_namespace_input_permutations():
         NamespaceAndDevice("torch", "mps"),
         "numpy to torch mps",
     )
+    yield (
+        NamespaceAndDevice("numpy", None),
+        NamespaceAndDevice("cupy", None),
+        "numpy to cupy",
+    )
 
     yield (
         NamespaceAndDevice("array_api_strict", "device1"),
