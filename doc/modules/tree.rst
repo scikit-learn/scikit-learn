@@ -234,7 +234,7 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       ...     while "left" in node:
       ...         value = float(row[node["feature"]])
       ...         go_left = (node["missing_go_to_left"] if np.isnan(value)
-      ...                    else value <= node["threshold"])
+      ...                    else value <= float(node["threshold"]))
       ...         node = node["left"] if go_left else node["right"]
       ...     return node["class"]
       >>> predict_from_dict(tree_dict, iris.data[0])

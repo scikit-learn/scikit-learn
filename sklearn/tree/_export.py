@@ -1311,9 +1311,11 @@ def export_dict(
         ``"weighted_n_node_samples"`` and ``"impurity"``. An internal node
         additionally has ``"feature"``, ``"feature_name"`` (only if
         `feature_names` was provided), ``"threshold"``,
-        ``"missing_go_to_left"``, ``"left"`` and ``"right"``. The boolean
-        ``"missing_go_to_left"`` records the branch used for missing values
-        by trees that support them. A leaf, or a node truncated by `max_depth`,
+        ``"missing_go_to_left"``, ``"left"`` and ``"right"``.
+        Infinite thresholds are represented by the strings ``"Infinity"`` or
+        ``"-Infinity"`` so that the representation remains JSON-compatible.
+        The boolean ``"missing_go_to_left"`` records the branch used for missing
+        values by trees that support them. A leaf, or a node truncated by `max_depth`,
         additionally has ``"value"`` and, for single-output classifiers,
         ``"class"``.
 
@@ -1332,8 +1334,10 @@ def export_dict(
     This representation is intended for inspection and conversion, rather
     than as a complete model persistence format. To reproduce tree traversal,
     convert input features to ``numpy.float32`` before comparing them with
-    thresholds, as the estimator does. Compare the converted values at
-    float64 precision without downcasting the exported thresholds (for
+    thresholds, as the estimator does. Convert exported thresholds with
+    ``float(threshold)`` to handle both numbers and infinity strings.
+    Compare the converted values at float64 precision without downcasting
+    the exported thresholds (for
     example, convert each float32 scalar to a Python float). Route finite
     values left when they are less than or equal to the threshold, and right
     otherwise. For trees
@@ -1346,6 +1350,10 @@ def export_dict(
     change predictions or probabilities. A truncated node describes that
     node's aggregate values, not the predictions of the omitted subtree.
     Custom ``class_names`` replace the estimator's labels in ``"class"``.
+
+    Very deep trees may exceed Python's recursion limit during dictionary
+    construction or JSON serialization. Use `max_depth` to limit the export
+    depth in that case.
 
     Examples
     --------
@@ -1428,7 +1436,10 @@ def export_dict(
         node["feature"] = feature
         if feature_names is not None:
             node["feature_name"] = _native(feature_names[feature])
-        node["threshold"] = _round(tree_.threshold[node_id])
+        threshold = _round(tree_.threshold[node_id])
+        if np.isinf(threshold):
+            threshold = "Infinity" if threshold > 0 else "-Infinity"
+        node["threshold"] = threshold
         node["missing_go_to_left"] = bool(tree_.missing_go_to_left[node_id])
         node["left"] = _recurse(tree_.children_left[node_id], depth + 1)
         node["right"] = _recurse(tree_.children_right[node_id], depth + 1)
@@ -1442,7 +1453,7 @@ def export_dict(
             out_file = open(out_file, "w", encoding="utf-8")
             own_file = True
         try:
-            json.dump(tree_dict, out_file)
+            json.dump(tree_dict, out_file, allow_nan=False)
         finally:
             if own_file:
                 out_file.close()

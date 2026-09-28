@@ -965,7 +965,7 @@ def _export_dict_leaf(tree_dict, row):
         go_left = (
             node["missing_go_to_left"]
             if np.isnan(value)
-            else value <= node["threshold"]
+            else value <= float(node["threshold"])
         )
         node = node["left"] if go_left else node["right"]
     return node
@@ -1098,3 +1098,34 @@ def test_export_dict_root_leaf():
     assert "left" not in tree_dict
     assert "truncated" not in tree_dict
     assert "missing_go_to_left" not in tree_dict
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+@pytest.mark.parametrize("decimals", [None, 2])
+def test_export_dict_missing_only_split_json(Tree, decimals, tmp_path):
+    X = np.array([[0.0], [0.0], [np.nan], [np.nan]])
+    estimator = Tree(random_state=0).fit(X, [0, 0, 1, 1])
+    assert np.isposinf(estimator.tree_.threshold[0])
+
+    path = tmp_path / "tree.json"
+    tree_dict = export_dict(estimator, str(path), decimals=decimals)
+    assert tree_dict["threshold"] == "Infinity"
+
+    # Python accepts bare Infinity by default; reject non-standard constants.
+    def reject_constant(value):
+        raise AssertionError(f"Non-standard JSON constant: {value}")
+
+    restored = json.loads(path.read_text(), parse_constant=reject_constant)
+    assert restored == tree_dict
+    assert json.loads(json.dumps(tree_dict, allow_nan=False)) == tree_dict
+
+    X_test = np.array([[-1.0], [0.0], [1.0], [np.nan]])
+    leaves = [_export_dict_leaf(restored, row) for row in X_test]
+    np.testing.assert_array_equal(
+        [leaf["node_id"] for leaf in leaves], estimator.apply(X_test)
+    )
+    predictions = [
+        leaf["class"] if is_classifier(estimator) else leaf["value"][0]
+        for leaf in leaves
+    ]
+    np.testing.assert_allclose(predictions, estimator.predict(X_test))
