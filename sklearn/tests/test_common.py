@@ -39,6 +39,7 @@ from sklearn.utils._test_common.instance_generator import (
 )
 from sklearn.utils._testing import (
     SkipTest,
+    assert_run_python_script_without_output,
     ignore_warnings,
 )
 from sklearn.utils.estimator_checks import (
@@ -150,6 +151,22 @@ def test_import_all_consistency():
             assert hasattr(package, name), "Module '{0}' has no attribute '{1}'".format(
                 modname, name
             )
+
+
+def test_star_import_public_modules():
+    # Non-regression test for gh-35038: `from module import *` resolves every name
+    # in `__all__`, so names that are only available after importing an experimental
+    # module must not be listed there. This runs in a fresh interpreter because this
+    # test module enables the experimental estimators on import.
+    code = """
+import importlib.util
+import sklearn
+
+for name in sklearn.__all__:
+    if importlib.util.find_spec(f"sklearn.{name}") is not None:
+        exec(f"from sklearn.{name} import *", {})
+"""
+    assert_run_python_script_without_output(code, timeout=120)
 
 
 def test_root_import_all_completeness():
