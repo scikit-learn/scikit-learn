@@ -38,6 +38,13 @@ VALID_METRICS{{name_suffix}} = [
 
 include "_binary_tree.pxi"
 
+cdef inline double fastpow(const double x, const double y) nogil noexcept:
+     if y == 1:
+         return x
+     if y == 2:
+         return x * x
+     return pow(x, y)
+
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 # Inherit KDTree{{name_suffix}} from BinaryTree{{name_suffix}}
@@ -94,7 +101,7 @@ cdef int init_node{{name_suffix}}(
         lower_bounds[j] = INF
         upper_bounds[j] = -INF
 
-    # Compute the actual data range.  At build time, this is slightly
+    # Compute the actual data range.  At buildx time, this is slightly
     # slower than using the previously-computed bounds of the parent node,
     # but leads to more compact trees and thus faster queries.
     for i in range(idx_start, idx_end):
@@ -107,7 +114,7 @@ cdef int init_node{{name_suffix}}(
         if tree.dist_metric.p == INF:
             rad = fmax(rad, 0.5 * (upper_bounds[j] - lower_bounds[j]))
         else:
-            rad += pow(0.5 * abs(upper_bounds[j] - lower_bounds[j]),
+            rad += fastpow(0.5 * abs(upper_bounds[j] - lower_bounds[j]),
                        tree.dist_metric.p)
 
     node_data[i_node].idx_start = idx_start
@@ -116,7 +123,7 @@ cdef int init_node{{name_suffix}}(
     # The radius will hold the size of the circumscribed hypersphere measured
     # with the specified metric: in querying, this is used as a measure of the
     # size of each node when deciding which nodes to split.
-    node_data[i_node].radius = pow(rad, 1. / tree.dist_metric.p)
+    node_data[i_node].radius = fastpow(rad, 1. / tree.dist_metric.p)
     return 0
 
 
@@ -142,7 +149,7 @@ cdef float64_t min_rdist{{name_suffix}}(
             d_lo = tree.node_bounds[0, i_node, j] - pt[j]
             d_hi = pt[j] - tree.node_bounds[1, i_node, j]
             d = (d_lo + fabs(d_lo)) + (d_hi + fabs(d_hi))
-            rdist += pow(0.5 * d, tree.dist_metric.p)
+            rdist += fastpow(0.5 * d, tree.dist_metric.p)
 
     return rdist
 
@@ -156,7 +163,7 @@ cdef float64_t min_dist{{name_suffix}}(
     if tree.dist_metric.p == INF:
         return min_rdist{{name_suffix}}(tree, i_node, pt)
     else:
-        return pow(
+        return fastpow(
             min_rdist{{name_suffix}}(tree, i_node, pt),
             1. / tree.dist_metric.p
         )
@@ -181,7 +188,7 @@ cdef float64_t max_rdist{{name_suffix}}(
         for j in range(n_features):
             d_lo = fabs(pt[j] - tree.node_bounds[0, i_node, j])
             d_hi = fabs(pt[j] - tree.node_bounds[1, i_node, j])
-            rdist += pow(fmax(d_lo, d_hi), tree.dist_metric.p)
+            rdist += fastpow(fmax(d_lo, d_hi), tree.dist_metric.p)
 
     return rdist
 
@@ -195,7 +202,7 @@ cdef float64_t max_dist{{name_suffix}}(
     if tree.dist_metric.p == INF:
         return max_rdist{{name_suffix}}(tree, i_node, pt)
     else:
-        return pow(
+        return fastpow(
             max_rdist{{name_suffix}}(tree, i_node, pt),
             1. / tree.dist_metric.p
         )
@@ -231,12 +238,12 @@ cdef inline int min_max_dist{{name_suffix}}(
             d_lo = tree.node_bounds[0, i_node, j] - pt[j]
             d_hi = pt[j] - tree.node_bounds[1, i_node, j]
             d = (d_lo + fabs(d_lo)) + (d_hi + fabs(d_hi))
-            min_dist[0] += pow(0.5 * d, tree.dist_metric.p)
-            max_dist[0] += pow(fmax(fabs(d_lo), fabs(d_hi)),
+            min_dist[0] += fastpow(0.5 * d, tree.dist_metric.p)
+            max_dist[0] += fastpow(fmax(fabs(d_lo), fabs(d_hi)),
                                tree.dist_metric.p)
 
-        min_dist[0] = pow(min_dist[0], 1. / tree.dist_metric.p)
-        max_dist[0] = pow(max_dist[0], 1. / tree.dist_metric.p)
+        min_dist[0] = fastpow(min_dist[0], 1. / tree.dist_metric.p)
+        max_dist[0] = fastpow(max_dist[0], 1. / tree.dist_metric.p)
 
     return 0
 
@@ -271,7 +278,7 @@ cdef inline float64_t min_rdist_dual{{name_suffix}}(
                   - tree1.node_bounds[1, i_node1, j])
             d = (d1 + fabs(d1)) + (d2 + fabs(d2))
 
-            rdist += pow(0.5 * d, tree1.dist_metric.p)
+            rdist += fastpow(0.5 * d, tree1.dist_metric.p)
 
     return rdist
 
@@ -312,7 +319,7 @@ cdef inline float64_t max_rdist_dual{{name_suffix}}(
                       - tree2.node_bounds[1, i_node2, j])
             d2 = fabs(tree1.node_bounds[1, i_node1, j]
                       - tree2.node_bounds[0, i_node2, j])
-            rdist += pow(fmax(d1, d2), tree1.dist_metric.p)
+            rdist += fastpow(fmax(d1, d2), tree1.dist_metric.p)
 
     return rdist
 
