@@ -1097,7 +1097,7 @@ class MetadataRouter:
         """
         if isinstance(obj, MetadataRequest):
             self._self_request = obj.__sklearn_clone__()
-        elif isinstance(obj, _MetadataRequester):
+        elif isinstance(obj, MetadataRequester):
             self._self_request = obj._get_metadata_request().__sklearn_clone__()
         else:
             raise ValueError(

@@ -40,9 +40,8 @@ from sklearn.utils._metadata_requests import (
     MetadataRequester,
     MethodMetadataRequest,
     MethodPair,
-    get_declared_metadata_request_values,
     _auto_requests_enabled,
-    _MetadataRequester,
+    get_declared_metadata_request_values,
     request_is_alias,
     request_is_valid,
 )
