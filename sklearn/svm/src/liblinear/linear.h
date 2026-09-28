@@ -36,6 +36,7 @@ struct parameter
 	double* weight;
 	int max_iter;
 	double p;
+	unsigned seed;
 };
 
 struct model
