@@ -839,7 +839,8 @@ called *Bayesian Ridge Regression*, and is similar to the classical
 The parameters :math:`w`, :math:`\alpha` and :math:`\lambda` are estimated
 jointly during the fit of the model. The regularization parameters
 :math:`\alpha` and :math:`\lambda` are estimated with fixed-point updates
-derived from the *log marginal likelihood* plus the log Gamma prior terms.
+derived from the *log marginal likelihood* plus the log Gamma prior terms
+in log-precision coordinates.
 The scikit-learn implementation is based on the algorithm described in
 Appendix A of (Tipping, 2001)
 where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
@@ -851,22 +852,13 @@ There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
-When ``compute_score=True``, :attr:`BayesianRidge.scores_` evaluates an
-objective based on the log marginal likelihood and the two Gamma prior
-terms. For unweighted data with ``fit_intercept=False`` and positive prior
-rates, it is the normalized joint log density of :math:`y`,
-:math:`\alpha` and :math:`\lambda` given :math:`X`:
-
-.. math::
-
-    S(\alpha,\lambda)
-    = \log p(y\mid X,\alpha,\lambda)
-      + \log p(\alpha) + \log p(\lambda).
-
-The prior on :math:`\alpha` has shape :math:`\alpha_1+1` and rate
-:math:`\alpha_2`; the prior on :math:`\lambda` has shape
-:math:`\lambda_1+1` and rate :math:`\lambda_2`. Other cases are
-described in :attr:`BayesianRidge.scores_`.
+When ``compute_score=True``, :attr:`BayesianRidge.scores_` records this
+objective. The Gamma priors of :math:`\alpha` and :math:`\lambda` have
+shape and rate parameters :math:`(\alpha_1, \alpha_2)` and
+:math:`(\lambda_1, \lambda_2)`, respectively. For
+``fit_intercept=False``, ``sample_weight=None``, and proper priors,
+the score is a normalized log density of :math:`y`,
+:math:`\log\alpha`, and :math:`\log\lambda` given :math:`X`.
 
 Bayesian Ridge Regression is used for regression::
 

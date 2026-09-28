@@ -47,16 +47,16 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Stop the algorithm if w has converged.
 
     alpha_1 : float, default=1e-6
-        Hyper-parameter : the Gamma distribution prior over alpha has shape
-        ``alpha_1 + 1``.
+        Hyper-parameter : shape parameter for the Gamma distribution prior
+        over the alpha parameter.
 
     alpha_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
         Gamma distribution prior over the alpha parameter.
 
     lambda_1 : float, default=1e-6
-        Hyper-parameter : the Gamma distribution prior over lambda has shape
-        ``lambda_1 + 1``.
+        Hyper-parameter : shape parameter for the Gamma distribution prior
+        over the lambda parameter.
 
     lambda_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
@@ -110,19 +110,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Estimated variance-covariance matrix of the weights
 
     scores_ : array-like of shape (n_iter_+1,)
-        When `compute_score=True`, each entry contains the log marginal
-        likelihood plus the Gamma-prior terms for alpha and lambda. The array
-        starts with the score for the initial values and ends with the score
-        for the estimated values. For unweighted data with
-        `fit_intercept=False` and positive prior rates, this is a normalized
-        joint log density of the target vector and the two precisions
-        conditional on X. With a fitted intercept, the score uses centered
-        data; with sample weights, it uses reweighted data and the sum of
-        weights in place of the sample count. In these cases, it should not
-        generally be interpreted as a normalized density of the original
-        target vector. If either `alpha_2` or `lambda_2` is zero, the
-        corresponding prior is improper, and its undefined normalization
-        constant is omitted.
+        When `compute_score=True`, each entry is the log marginal likelihood
+        plus the log Gamma-prior terms for alpha and lambda, starting from
+        the initial values and ending with the estimated ones. It is a
+        normalized log density of y, log(alpha), and log(lambda) only when
+        `fit_intercept=False`, `sample_weight=None`, and both priors are proper.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
@@ -456,12 +448,12 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         score = lambda_1 * log(lambda_) - lambda_2 * lambda_
         score += alpha_1 * log(alpha_) - alpha_2 * alpha_
-        # The prior terms above imply Gamma(shape=prior_1 + 1, rate=prior_2).
-        # A zero rate gives an improper prior with no normalizing constant.
-        if lambda_2 > 0:
-            score += (lambda_1 + 1) * log(lambda_2) - lgamma(lambda_1 + 1)
-        if alpha_2 > 0:
-            score += (alpha_1 + 1) * log(alpha_2) - lgamma(alpha_1 + 1)
+        # The prior terms above include the Jacobian for log-precision
+        # coordinates. Add Gamma normalizers only for proper priors.
+        if lambda_1 > 0 and lambda_2 > 0:
+            score += lambda_1 * log(lambda_2) - lgamma(lambda_1)
+        if alpha_1 > 0 and alpha_2 > 0:
+            score += alpha_1 * log(alpha_2) - lgamma(alpha_1)
         score += 0.5 * (
             n_features * log(lambda_)
             + sw_sum * log(alpha_)

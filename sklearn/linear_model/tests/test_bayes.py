@@ -31,7 +31,7 @@ def test_bayesian_ridge_scores():
 
 @pytest.mark.parametrize("n_samples, n_features", [(6, 2), (2, 6)])
 def test_bayesian_ridge_score_values(n_samples, n_features):
-    """Check the joint log density against independent probability densities."""
+    """Check the joint log density of y and the log precisions."""
     rng = np.random.RandomState(0)
     X = rng.normal(size=(n_samples, n_features))
     y = rng.normal(size=n_samples)
@@ -43,8 +43,9 @@ def test_bayesian_ridge_score_values(n_samples, n_features):
         # Integrating out the coefficient vector gives y ~ N(0, C).
         C = np.eye(n_samples) / alpha + X @ X.T / lambda_
         score = multivariate_normal.logpdf(y, cov=C)
-        score += gamma.logpdf(alpha, a=alpha_1 + 1, scale=1 / alpha_2)
-        score += gamma.logpdf(lambda_, a=lambda_1 + 1, scale=1 / lambda_2)
+        score += gamma.logpdf(alpha, a=alpha_1, scale=1 / alpha_2) + np.log(alpha)
+        score += gamma.logpdf(lambda_, a=lambda_1, scale=1 / lambda_2)
+        score += np.log(lambda_)
         return score
 
     clf = BayesianRidge(
@@ -65,25 +66,33 @@ def test_bayesian_ridge_score_values(n_samples, n_features):
     )
 
 
-@pytest.mark.parametrize("alpha_2, lambda_2", [(0, 0), (0, 1.2), (0.3, 0)])
-def test_bayesian_ridge_score_zero_prior_rate(alpha_2, lambda_2):
+@pytest.mark.parametrize(
+    "alpha_1, alpha_2, lambda_1, lambda_2",
+    [
+        (0.2, 0, 0.7, 0),
+        (0.2, 0, 0.7, 1.2),
+        (0.2, 0.3, 0.7, 0),
+        (0, 0.3, 0.7, 1.2),
+        (0.2, 0.3, 0, 1.2),
+        (0, 0, 0, 0),
+    ],
+)
+def test_bayesian_ridge_score_improper_prior(alpha_1, alpha_2, lambda_1, lambda_2):
     """Omit the undefined normalizer of each improper Gamma prior."""
     X = np.array([[1.0, 2.0], [3.0, 1.0], [2.0, 4.0]])
     y = np.array([1.0, 2.0, 4.0])
     alpha, lambda_ = 2.0, 3.0
-    alpha_1, lambda_1 = 0.2, 0.7
+
+    def log_prior(precision, shape, rate):
+        if shape > 0 and rate > 0:
+            return gamma.logpdf(precision, a=shape, scale=1 / rate) + np.log(precision)
+        return shape * np.log(precision) - rate * precision
 
     def expected_score(alpha, lambda_):
         C = np.eye(len(y)) / alpha + X @ X.T / lambda_
         score = multivariate_normal.logpdf(y, cov=C)
-        if alpha_2:
-            score += gamma.logpdf(alpha, a=alpha_1 + 1, scale=1 / alpha_2)
-        else:
-            score += alpha_1 * np.log(alpha)
-        if lambda_2:
-            score += gamma.logpdf(lambda_, a=lambda_1 + 1, scale=1 / lambda_2)
-        else:
-            score += lambda_1 * np.log(lambda_)
+        score += log_prior(alpha, alpha_1, alpha_2)
+        score += log_prior(lambda_, lambda_1, lambda_2)
         return score
 
     clf = BayesianRidge(
