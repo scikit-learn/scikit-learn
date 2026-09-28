@@ -321,9 +321,13 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
                 self.negative_outlier_factor_, 100.0 * self.contamination
             )
 
-        # Verify if negative_outlier_factor_ values are within acceptable range.
-        # Novelty must also be false to detect outliers
-        if np.min(self.negative_outlier_factor_) < -1e7 and not self.novelty:
+        # Duplicated samples make the k-distance of their duplicates zero, which
+        # sends local reachability densities to ~1e10 (see the `+ 1e-10` term in
+        # `_local_reachability_density`) and makes the scores of samples close
+        # to a duplicated cluster explode by orders of magnitude. This corrupts
+        # scores on training data and, when `novelty=True`, on new data passed
+        # to `score_samples`, hence the check is done regardless of `novelty`.
+        if np.any(self._distances_fit_X_[:, -1] == 0):
             warnings.warn(
                 "Duplicate values are leading to incorrect results. "
                 "Increase the number of neighbors for more accurate results."
