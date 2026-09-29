@@ -11,6 +11,7 @@ from sklearn.datasets import load_iris, make_regression, make_sparse_uncorrelate
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import (
     LinearClassifierMixin,
+    _dense_mean_and_centering_needed,
     _preprocess_data,
     _rescale_data,
     make_dataset,
@@ -918,3 +919,77 @@ def test_predict_proba_lr_large_values():
 
     proba = clf._predict_proba_lr(np.ones(5))
     assert_allclose(np.sum(proba, axis=1), 1)
+
+
+@pytest.mark.parametrize("copy", [True, False])
+@pytest.mark.parametrize("offset, expected_skipped", [(0.0, True), (1e10, False)])
+def test_preprocess_data_skip_centering_if_safe(
+    copy, offset, expected_skipped, global_random_seed
+):
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.normal(size=(50, 3)) + offset
+    y = rng.normal(size=50)
+    X_orig = X.copy()
+
+    X_out, y_out, X_offset, _, _, _, centering_skipped = _preprocess_data(
+        X,
+        y,
+        fit_intercept=True,
+        copy=copy,
+        skip_centering_if_safe=True,
+        return_centering_skipped=True,
+    )
+
+    assert centering_skipped == expected_skipped
+    assert_allclose(X_offset, X_orig.mean(axis=0))
+    assert_allclose(y_out, y - y.mean())
+    if expected_skipped:
+        # Neither centered nor copied.
+        assert np.shares_memory(X_out, X)
+        assert_array_equal(X_out, X_orig)
+    else:
+        assert_allclose(X_out, X_orig - X_offset)
+        if copy:
+            assert_array_equal(X, X_orig)
+
+
+def test_preprocess_data_skip_centering_if_safe_with_sample_weight():
+    # Centering is never skipped with sample weights.
+    rng = np.random.RandomState(0)
+    X, y = rng.normal(size=(50, 3)), rng.normal(size=50)
+    sample_weight = rng.uniform(size=50)
+
+    X_out, _, X_offset, _, _, _, centering_skipped = _preprocess_data(
+        X,
+        y,
+        fit_intercept=True,
+        sample_weight=sample_weight,
+        rescale_with_sw=False,
+        skip_centering_if_safe=True,
+        return_centering_skipped=True,
+    )
+
+    assert not centering_skipped
+    assert_allclose(X_offset, np.average(X, axis=0, weights=sample_weight))
+    assert_allclose(X_out, X - X_offset)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_dense_mean_and_centering_needed(dtype):
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(100, 3)).astype(dtype)
+    X_mean, centering_needed = _dense_mean_and_centering_needed(X)
+    assert X_mean.dtype == dtype
+    assert_allclose(X_mean, X.mean(axis=0), rtol=1e-5)
+    assert not centering_needed
+
+    # Zero constant features don't need centering, nonzero ones do.
+    X[:, 1] = 0.0
+    assert not _dense_mean_and_centering_needed(X)[1]
+    X[:, 1] = 1.0
+    assert _dense_mean_and_centering_needed(X)[1]
+
+    X = rng.normal(size=(100, 3)).astype(dtype)
+    X[:, 2] += 20
+    assert _dense_mean_and_centering_needed(X, max_offset_to_std_ratio=10)[1]
+    assert not _dense_mean_and_centering_needed(X, max_offset_to_std_ratio=30)[1]

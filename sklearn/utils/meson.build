@@ -40,6 +40,7 @@ utils_extension_metadata = {
   '_cython_blas': {'sources': [cython_gen.process('_cython_blas.pyx'), _blas_int_pxi]},
   'arrayfuncs': {'sources': [cython_gen.process('arrayfuncs.pyx')]},
   '_bitset': {'sources': [cython_gen.process('_bitset.pyx')]},
+  '_mean_variance': {'sources': [cython_gen.process('_mean_variance.pyx')]},
   'murmurhash': {
       'sources': [cython_gen.process('murmurhash.pyx'), 'src' / 'MurmurHash3.cpp'],
   },

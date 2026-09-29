@@ -1,0 +1,6 @@
+- :class:`linear_model.LogisticRegression`, :class:`linear_model.PoissonRegressor`,
+  :class:`linear_model.GammaRegressor` and :class:`linear_model.TweedieRegressor`
+  now fit on centered data when some features have a large mean relative to their
+  standard deviation. Previously, their solvers could silently return very
+  inaccurate coefficients on such data.
+  By :user:`Arthur Lacote <cakedev0>`.

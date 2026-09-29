@@ -2235,6 +2235,47 @@ def test_dtype_match_cholesky():
     assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("offset", [0.0, 1.0, 10.0, 30.0, 100.0, 1e3, 1e4, 1e6])
+def test_ridge_cholesky_uncentered_X_close_to_svd(dtype, offset):
+    # `solver="cholesky"` fits X uncentered when it is deemed safe, which can
+    # lose precision for features far from zero. Whatever `offset` is, it
+    # must still agree with `solver="svd"` (which always centers explicitly).
+    if dtype == np.float32 and offset >= 1e6:
+        # The float32 spacing around the offset is not small w.r.t. the
+        # standard deviation: X can't be centered accurately, whatever the solver.
+        pytest.skip("offset too large for float32")
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 100, 5
+    X = rng.normal(size=(n_samples, n_features)) + offset
+    true_coef = rng.normal(size=n_features)
+    y = X.dot(true_coef) + 0.01 * rng.normal(size=n_samples)
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+
+    # The reference is computed in float64 on the same data: for large
+    # offsets, the float32 mean computed by `solver="svd"` is not accurate
+    # enough for it to be a reference.
+    ridge_svd = Ridge(alpha=1.0, solver="svd").fit(
+        X.astype(np.float64), y.astype(np.float64)
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", linalg.LinAlgWarning)
+        ridge_cholesky = Ridge(alpha=1.0, solver="cholesky").fit(X, y)
+
+    rtol, atol = (1e-3, 1e-3) if dtype == np.float32 else (1e-6, 1e-6)
+    assert_allclose(ridge_cholesky.coef_, ridge_svd.coef_, rtol=rtol, atol=atol)
+    # intercept = y_offset - X_offset @ coef: errors on coef are amplified by
+    # the offset of the features.
+    assert_allclose(
+        ridge_cholesky.intercept_,
+        ridge_svd.intercept_,
+        rtol=rtol,
+        atol=atol * (1 + n_features * offset),
+    )
+
+
 @pytest.mark.parametrize(
     "solver", ["svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"]
 )

@@ -26,6 +26,7 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
     _expit,
+    _is_numpy_namespace,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -33,6 +34,7 @@ from sklearn.utils._array_api import (
     move_to,
     supported_float_dtypes,
 )
+from sklearn.utils._mean_variance import _dense_mean_variance_axis0
 from sklearn.utils._param_validation import Interval
 from sklearn.utils._seq_dataset import (
     ArrayDataset32,
@@ -55,6 +57,100 @@ from sklearn.utils.validation import (
 SPARSE_INTERCEPT_DECAY = 0.01
 # For sparse data intercept updates are scaled by this decay factor to avoid
 # intercept oscillation.
+
+# Largest relative rounding error, w.r.t. the centered problem, tolerated when
+# solving a linear model with an intercept on uncentered data. For a feature
+# with mean `mu` and variance `var`, quantities such as `X.T @ X` are of the
+# order of `mu ** 2 + var` while the information that matters to estimate the
+# coefficients is of the order of `var`: working on uncentered data therefore
+# amplifies rounding errors by a factor of about `1 + mu ** 2 / var`.
+_UNCENTERED_RELATIVE_ERROR_TOL = 1e-4
+
+# Largest ratio `|mu| / std` of the features tolerated by iterative solvers of
+# GLMs before centering X. With an unpenalized intercept, the condition number
+# of the problem grows like `1 + mu ** 2 / var`, and the convergence criteria
+# of the solvers (e.g. on the gradient norm) become unreliable long before
+# rounding errors matter.
+_GLM_MAX_OFFSET_TO_STD_RATIO = 10.0
+
+
+def _dense_mean_and_centering_needed(X, max_offset_to_std_ratio=None):
+    """Per-feature mean of dense X and whether solvers need X to be centered.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+        Dense numpy array of dtype float32 or float64.
+
+    max_offset_to_std_ratio : float, default=None
+        Centering is needed if `|mean| > max_offset_to_std_ratio * std` for at
+        least one feature. If None, the ratio is chosen such that the rounding
+        errors when working on uncentered data are at most
+        `_UNCENTERED_RELATIVE_ERROR_TOL` relative to the centered problem.
+
+    Returns
+    -------
+    X_mean : ndarray of shape (n_features,)
+        Mean of each feature, with the same dtype as `X`.
+
+    centering_needed : bool
+        Whether the offset of at least one feature is too large relative to its
+        standard deviation. Constant features with a nonzero value always need
+        centering.
+    """
+    if max_offset_to_std_ratio is None:
+        max_squared_ratio = _UNCENTERED_RELATIVE_ERROR_TOL / np.finfo(X.dtype).eps
+    else:
+        max_squared_ratio = max_offset_to_std_ratio**2
+    X_mean, X_var = _dense_mean_variance_axis0(X)
+    # Written without division to handle constant features.
+    centering_needed = bool(np.any(X_mean**2 > max_squared_ratio * X_var))
+    return X_mean.astype(X.dtype, copy=False), centering_needed
+
+
+def _center_dense_X_if_needed(X, fit_intercept, max_offset_to_std_ratio):
+    """Return a centered copy of X if its features have large offsets.
+
+    For linear models whose intercept is not penalized, replacing `X` by
+    `X - X_offset` is an exact reparametrization: `X @ coef + intercept` equals
+    `(X - X_offset) @ coef + intercept_centered` with
+    `intercept = intercept_centered - X_offset @ coef`. Centering is only done
+    when it matters numerically, to avoid a copy of X in the common case.
+
+    Parameters
+    ----------
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        Training data.
+
+    fit_intercept : bool
+        Whether the model has an intercept, without which centering is not a
+        reparametrization.
+
+    max_offset_to_std_ratio : float
+        See `_dense_mean_and_centering_needed`.
+
+    Returns
+    -------
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        `X` itself, or a centered copy of it, with the same memory layout.
+
+    X_offset : ndarray of shape (n_features,) or None
+        The per-feature mean subtracted to X, or None if X was not centered.
+        X is never centered if `fit_intercept=False`, if it is sparse, or if it
+        is not a numpy array.
+    """
+    if (
+        not fit_intercept
+        or sp.issparse(X)
+        or not _is_numpy_namespace(get_namespace(X)[0])
+    ):
+        return X, None
+    X_offset, centering_needed = _dense_mean_and_centering_needed(
+        X, max_offset_to_std_ratio
+    )
+    if not centering_needed:
+        return X, None
+    return X - X_offset, X_offset
 
 
 def make_dataset(X, y, sample_weight, random_state=None):
@@ -119,6 +215,8 @@ def _preprocess_data(
     sample_weight=None,
     check_input=True,
     rescale_with_sw=True,
+    skip_centering_if_safe=False,
+    return_centering_skipped=False,
 ):
     """Common data preprocessing for fitting linear models.
 
@@ -132,11 +230,11 @@ def _preprocess_data(
 
     Then, if `fit_intercept=True` this preprocessing centers both `X` and `y` as
     follows:
-        - if `X` is dense, center the data and
-        store the mean vector in `X_offset`.
-        - if `X` is sparse, store the mean in `X_offset`
-        without centering `X`. The centering is expected to be handled by the
-        linear solver where appropriate.
+        - if `X` is dense, center the data and store the mean vector in
+          `X_offset`, unless centering is skipped (see `skip_centering_if_safe`).
+        - if `X` is sparse, store the mean in `X_offset` without centering `X`.
+          The centering is expected to be handled by the linear solver where
+          appropriate.
         - in either case, always center `y` and store the mean in `y_offset`.
         - both `X_offset` and `y_offset` are always weighted by `sample_weight`
           if not set to `None`.
@@ -147,12 +245,19 @@ def _preprocess_data(
     If `rescale_with_sw` is True, then X and y are rescaled with the square root of
     sample weights.
 
+    `skip_centering_if_safe=True` lets a caller whose solver can handle the
+    centering implicitly (from `X_offset`) skip the `O(n_samples * n_features)`
+    centering pass and the copy of a dense `X`, as long as it is numerically
+    safe, i.e. the offset of each feature is not too large relative to its
+    standard deviation (see `_dense_mean_and_centering_needed`). Centering is
+    only skipped for numpy arrays without `sample_weight`.
+
     Returns
     -------
     X_out : {ndarray, sparse matrix} of shape (n_samples, n_features)
         If copy=True a copy of the input X is triggered, otherwise operations are
         inplace.
-        If input X is dense, then X_out is centered.
+        If input X is dense and centering is not skipped, then X_out is centered.
     y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
         Centered copy of y.
     X_offset : ndarray of shape (n_features,)
@@ -163,37 +268,57 @@ def _preprocess_data(
         possible to remove this unused variable.
     sample_weight_sqrt : ndarray of shape (n_samples, ) or None
         `np.sqrt(sample_weight)`
+    centering_skipped : bool
+        Whether the centering of a dense X was skipped, in which case X_out is
+        not centered. Only returned if `return_centering_skipped=True`.
     """
     xp, _, device = get_namespace_and_device(X, y, sample_weight)
     n_samples, n_features = X.shape
     X_is_sparse = sp.issparse(X)
+    # When centering might be skipped, the copy of X is deferred to the first
+    # inplace modification, if any.
+    defer_copy = copy and skip_centering_if_safe
 
     if check_input:
         X = check_array(
             X,
-            copy=copy,
+            copy=copy and not defer_copy,
             accept_sparse=["csr", "csc"],
             dtype=supported_float_dtypes(xp, device=device),
         )
         y = check_array(y, dtype=X.dtype, copy=True, ensure_2d=False)
     else:
         y = xp.astype(y, X.dtype)
-        if copy:
+        if copy and not defer_copy:
             if X_is_sparse:
                 X = X.copy()
             else:
                 X = _asarray_with_order(X, order="K", copy=True, xp=xp)
 
     dtype_ = X.dtype
+    centering_skipped = False
 
     if fit_intercept:
         if X_is_sparse:
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
         else:
-            X_offset = _average(X, axis=0, weights=sample_weight, xp=xp)
+            if (
+                skip_centering_if_safe
+                and sample_weight is None
+                and _is_numpy_namespace(xp)
+            ):
+                X_offset, centering_needed = _dense_mean_and_centering_needed(X)
+                centering_skipped = not centering_needed
+            else:
+                X_offset = _average(X, axis=0, weights=sample_weight, xp=xp)
+                X_offset = xp.astype(X_offset, X.dtype, copy=False)
 
-            X_offset = xp.astype(X_offset, X.dtype, copy=False)
-            X -= X_offset
+            if not centering_skipped:
+                if defer_copy:
+                    X = X - X_offset
+                    defer_copy = False
+                else:
+                    X -= X_offset
 
         y_offset = _average(y, axis=0, weights=sample_weight, xp=xp)
         y -= y_offset
@@ -213,10 +338,13 @@ def _preprocess_data(
         # For sparse X and y, it triggers copies anyway.
         # For dense X and y that already have been copied, we safely do inplace
         # rescaling.
-        # Hence, inplace=True here regardless of copy.
-        X, y, sample_weight_sqrt = _rescale_data(X, y, sample_weight, inplace=True)
+        X, y, sample_weight_sqrt = _rescale_data(
+            X, y, sample_weight, inplace=not defer_copy
+        )
     else:
         sample_weight_sqrt = None
+    if return_centering_skipped:
+        return X, y, X_offset, y_offset, X_scale, sample_weight_sqrt, centering_skipped
     return X, y, X_offset, y_offset, X_scale, sample_weight_sqrt
 
 

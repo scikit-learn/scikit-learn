@@ -1346,3 +1346,40 @@ def test_poisson_regressor_array_api_warm_start(
         reg_xp.predict(X_xp)
         # fit again and ensure there is no error
         reg_xp.fit(X_xp, y_xp)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [PoissonRegressor(), GammaRegressor(), TweedieRegressor(power=1.5)],
+    ids=lambda est: est.__class__.__name__,
+)
+@pytest.mark.parametrize(
+    "solver", ["lbfgs", "newton-cg", "newton-cholesky", "newton-cd", "newton-cd-gram"]
+)
+def test_glm_invariant_to_feature_offset(estimator, solver, global_random_seed):
+    # Shifting the features only changes the (unpenalized) intercept. Solvers
+    # would silently fail on features with a large offset relative to their
+    # standard deviation if X was not centered internally.
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_features = 500, 3
+    X = rng.normal(size=(n_samples, n_features))
+    raw_prediction = X @ rng.normal(scale=0.3, size=n_features)
+    y = rng.gamma(shape=2.0, scale=np.exp(raw_prediction) / 2)
+    offset = 1e4
+    X_shifted = X + offset
+
+    params = dict(alpha=1e-2, solver=solver, tol=1e-10, max_iter=1000)
+    reference = clone(estimator).set_params(**params).fit(X, y)
+    shifted = clone(estimator).set_params(**params).fit(X_shifted, y)
+
+    assert_allclose(shifted.coef_, reference.coef_, rtol=1e-6, atol=1e-7)
+    assert_allclose(shifted.predict(X_shifted), reference.predict(X), rtol=1e-6)
+
+    # Warm start from the solution: a single iteration must not move away from
+    # it, which requires the intercept to be converted to the centered problem.
+    shifted.set_params(warm_start=True, max_iter=1)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        shifted.fit(X_shifted, y)
+    assert_allclose(shifted.coef_, reference.coef_, rtol=1e-6, atol=1e-7)
+    assert_allclose(shifted.predict(X_shifted), reference.predict(X), rtol=1e-6)
