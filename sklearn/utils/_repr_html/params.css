@@ -42,8 +42,8 @@
 /*
     `table td`is set in notebook with right text-align.
     We need to overwrite it.
-    Padding added here so params without a doc link are
-    look like params with a link.
+    Padding added here so params without a doc link look like params
+    with a link.
 */
 .estimator-table table td.param {
     text-align: left;

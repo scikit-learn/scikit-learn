@@ -106,7 +106,7 @@ def _write_label_html(
     features=None,
     outer_class="sk-label-container",
     inner_class="sk-label",
-    checked=False,
+    open=False,
     doc_link="",
     is_fitted_css_class="",
     is_fitted_icon="",
@@ -142,7 +142,7 @@ def _write_label_html(
         The CSS class for the outer container.
     inner_class : {"sk-label", "sk-estimator"}, default="sk-label"
         The CSS class for the inner container.
-    checked : bool, default=False
+    open : bool, default=False
         Whether the dropdown is folded or not. With a single estimator, we intend to
         unfold the content.
     doc_link : str, default=""
@@ -166,7 +166,7 @@ def _write_label_html(
     name = html.escape(name)
     if name_details is not None:
         name_details = html.escape(str(name_details))
-        open_str = "open" if checked else ""
+        open_str = "open" if open else ""
         hide_marker = name == "passthrough" or name_details == "[]"
 
         if doc_link:
@@ -469,7 +469,7 @@ def _write_estimator_html(
             est_block.doc_link_label,
             outer_class="sk-item",
             inner_class="sk-estimator",
-            checked=first_call,
+            open=first_call,
             doc_link=doc_link,
             features=output_features,
             is_fitted_css_class=is_fitted_css_class,
