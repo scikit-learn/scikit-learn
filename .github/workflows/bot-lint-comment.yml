@@ -23,6 +23,9 @@ jobs:
         run: mkdir -p "$ARTIFACTS_DIR"
 
       - name: Download artifact
+        # If nothing was uploaded in the linting step, this will error, but we still
+        # want to continue and post a generic comment in that case.
+        continue-on-error: true
         uses: actions/download-artifact@v8
         with:
           name: lint-log
@@ -55,7 +58,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: 3.11
+          python-version: 3.12
 
       - name: Install dependencies
         run: python -m pip install PyGithub
