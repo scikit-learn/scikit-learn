@@ -1049,6 +1049,7 @@ def test_move_to_numpy_leaves_numpy_untouched(array, description):
     assert move_to(array, xp=numpy, device=None) is array
 
 
+@skip_if_array_api_compat_not_configured
 def test_fitted_attrs_as_numpy_preserves_masked_cv_results(opt_in_numpy_attrs):
     """`cv_results_` holds masked arrays whose mask marks inapplicable params."""
     from sklearn.linear_model import Ridge
