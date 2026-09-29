@@ -1,0 +1,4 @@
+- |Enhancement| :func:`~metrics.matthews_corrcoef` now has a
+  `replace_undefined_by` parameter, that can be set to define the function's
+  return value when the metric is undefined.
+  By :user:`Xiao Yuan <yuanx749>`.
