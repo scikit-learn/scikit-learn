@@ -64,6 +64,7 @@ from sklearn.utils._array_api import (
     _NUMPY_FITTED_ATTRS,
     NamespaceAndDevice,
     _atol_for_type,
+    _is_numpy_namespace,
     _max_precision_float_dtype,
     array_device,
     get_namespace,
@@ -398,11 +399,11 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                     device_name=device_name,
                     dtype_name=dtype_name,
                 )
-        # 4. Namespace/device consistency between fit and predict/transform
-        # Only test with one namespace to keep costs down
-        # There should be no dependency on the exact namespace used.
+        # 4. Inference accepts input from a namespace/device other than the one
+        # used to fit. Only test with one namespace to keep costs down, there
+        # should be no dependency on the exact namespace used.
         yield partial(
-            check_array_api_same_namespace,
+            check_array_api_cross_namespace_inference,
             array_namespace="array_api_strict",
         )
 
@@ -1564,15 +1565,15 @@ def check_array_api_string_and_numeric_inputs(
     )
 
 
-def check_array_api_same_namespace(
+def check_array_api_cross_namespace_inference(
     name, estimator_orig, array_namespace, device_name=None
 ):
-    """Check that estimator raises when predict/transform namespace differs from fit.
+    """Check that inference accepts input from any namespace and device.
 
-    Array API compatible estimators should call ``check_same_namespace`` in
-    their ``predict``, ``transform``, and similar methods to verify that the
-    input arrays are from the same namespace and device as the fitted
-    attributes.
+    Fitted arrays are stored as NumPy, and inference methods move the ones they
+    need to the namespace and device of their input. An estimator fitted on one
+    namespace therefore accepts input from another, and its output follows the
+    input rather than whatever the estimator happened to be fitted on.
     """
     xp, device = _array_api_for_tests(array_namespace, device_name, "float64")
 
@@ -1582,14 +1583,18 @@ def check_array_api_same_namespace(
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
-    est = clone(estimator_orig)
-    set_random_state(est)
-
-    X_xp = xp.asarray(X, device=device)
-    y_xp = xp.asarray(y, device=device)
+    est_np = clone(estimator_orig)
+    set_random_state(est_np)
+    est_xp = clone(estimator_orig)
+    set_random_state(est_xp)
 
     with config_context(array_api_dispatch=True):
-        est.fit(X_xp, y_xp)
+        X_xp = xp.asarray(X, device=device)
+        y_xp = xp.asarray(y, device=device)
+        est_xp.fit(X_xp, y_xp)
+
+    with config_context(array_api_dispatch=False):
+        est_np.fit(X, y)
 
     methods = (
         "decision_function",
@@ -1598,27 +1603,36 @@ def check_array_api_same_namespace(
         "predict_proba",
         "transform",
     )
+    atol = _atol_for_type(X.dtype)
 
     for method_name in methods:
-        method = getattr(est, method_name, None)
-        if method is None:
+        if getattr(est_np, method_name, None) is None:
             continue
 
+        with config_context(array_api_dispatch=False):
+            expected = getattr(est_np, method_name)(X)
+
+        # Fitted on `xp`, called with NumPy.
         with config_context(array_api_dispatch=True):
-            try:
-                method(X)
-            except ValueError as e:
-                if "must use the same namespace" in str(
-                    e
-                ) and f"{name}.{method_name}()" in str(e):
-                    continue
-                raise
-            raise AssertionError(
-                f"{name}.{method_name}() did not raise when called with a "
-                f"different array namespace than the one used during fit. "
-                f"Add a call to check_same_namespace() at the start of "
-                f"{method_name} to fix this."
-            )
+            result = getattr(est_xp, method_name)(X)
+            result_ns = get_namespace(result)[0]
+        assert _is_numpy_namespace(result_ns), (
+            f"{name}.{method_name}() called with a NumPy input returned a "
+            f"{result_ns.__name__} array, the output should follow the input"
+        )
+        assert_allclose(result, expected, atol=atol, err_msg=method_name)
+
+        # Fitted on NumPy, called with `xp`.
+        with config_context(array_api_dispatch=True):
+            result = getattr(est_np, method_name)(X_xp)
+            result_ns = get_namespace(result)[0]
+            assert array_device(result) == array_device(X_xp)
+            result = move_to(result, xp=np, device="cpu")
+        assert result_ns.__name__ == xp.__name__, (
+            f"{name}.{method_name}() called with a {xp.__name__} input returned "
+            f"a {result_ns.__name__} array, the output should follow the input"
+        )
+        assert_allclose(result, expected, atol=atol, err_msg=method_name)
 
 
 def check_estimator_sparse_tag(name, estimator_orig):
