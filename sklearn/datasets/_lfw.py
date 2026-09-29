@@ -30,7 +30,6 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from sklearn.utils.fixes import tarfile_extractall
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +122,7 @@ def _check_fetch_lfw(
 
         logger.debug("Decompressing the data archive to %s", data_folder_path)
         with tarfile.open(archive_path, "r:gz") as fp:
-            tarfile_extractall(fp, path=lfw_home)
+            fp.extractall(path=lfw_home, filter="data")
 
         remove(archive_path)
 
