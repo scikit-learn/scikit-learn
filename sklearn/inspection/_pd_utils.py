@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import numpy as np
+
 
 def _check_feature_names(X, feature_names=None):
     """Check feature names.
@@ -66,3 +68,62 @@ def _get_feature_index(fx, feature_names=None):
         except ValueError as e:
             raise ValueError(f"Feature {fx!r} not in feature_names") from e
     return fx
+
+
+def _get_is_categorical(
+    categorical_features, features_indices, feature_names, n_features
+):
+    """Tell whether each feature in `features_indices` is categorical.
+
+    Parameters
+    ----------
+    categorical_features : array-like of shape (n_features,) or shape \
+            (n_categorical_features,), dtype={bool, int, str} or None
+        Boolean mask, integer indices or names of the categorical features.
+        `None` means that no feature is categorical.
+
+    features_indices : array-like of int
+        Indices of the features of interest.
+
+    feature_names : list of str
+        All feature names from which to search the indices.
+
+    n_features : int
+        Number of features in `X`.
+
+    Returns
+    -------
+    is_categorical : list of bool
+        Whether each feature in `features_indices` is categorical.
+    """
+    if categorical_features is None:
+        return [False] * len(features_indices)
+
+    categorical_features = np.asarray(categorical_features)
+    if categorical_features.size == 0:
+        raise ValueError(
+            "Passing an empty list (`[]`) to `categorical_features` is not "
+            "supported. Use `None` instead to indicate that there are no "
+            "categorical features."
+        )
+    if categorical_features.dtype.kind == "b":
+        # categorical features provided as a list of boolean
+        if categorical_features.size != n_features:
+            raise ValueError(
+                "When `categorical_features` is a boolean array-like, "
+                "the array should be of shape (n_features,). Got "
+                f"{categorical_features.size} elements while `X` contains "
+                f"{n_features} features."
+            )
+        return [categorical_features[idx] for idx in features_indices]
+    if categorical_features.dtype.kind in ("i", "O", "U"):
+        # categorical features provided as a list of indices or feature names
+        categorical_features_idx = [
+            _get_feature_index(cat, feature_names=feature_names)
+            for cat in categorical_features
+        ]
+        return [idx in categorical_features_idx for idx in features_indices]
+    raise ValueError(
+        "Expected `categorical_features` to be an array-like of boolean,"
+        f" integer, or string. Got {categorical_features.dtype} instead."
+    )
