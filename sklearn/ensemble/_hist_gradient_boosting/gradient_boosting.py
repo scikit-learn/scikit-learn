@@ -65,6 +65,18 @@ _LOSSES.update(
 )
 
 
+def _take_rows(X, indices):
+    """Return ``X[indices]`` as a Fortran-ordered array.
+
+    Rows are gathered one column at a time, which is much faster than fancy
+    indexing the rows of a Fortran-ordered array.
+    """
+    X_out = np.empty((indices.shape[0], X.shape[1]), dtype=X.dtype, order="F")
+    for j in range(X.shape[1]):
+        np.take(X[:, j], indices, out=X_out[:, j])
+    return X_out
+
+
 def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     """Update the leaf values to be predicted by the tree.
 
@@ -555,35 +567,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # This is needed in order to have the same split when using
             # warm starting.
 
+            # Only split the indices: X is split after binning, as the binned
+            # data is 8 times smaller.
+            # TODO: incorporate sample_weight in sampling here, as well as
+            # stratify
+            train_indices, val_indices = train_test_split(
+                np.arange(n_samples),
+                test_size=self.validation_fraction,
+                stratify=stratify,
+                random_state=self._random_seed,
+            )
+            y_train, y_val = y[train_indices], y[val_indices]
             if sample_weight is None:
-                X_train, X_val, y_train, y_val = train_test_split(
-                    X,
-                    y,
-                    test_size=self.validation_fraction,
-                    stratify=stratify,
-                    random_state=self._random_seed,
-                )
                 sample_weight_train = sample_weight_val = None
             else:
-                # TODO: incorporate sample_weight in sampling here, as well as
-                # stratify
-                (
-                    X_train,
-                    X_val,
-                    y_train,
-                    y_val,
-                    sample_weight_train,
-                    sample_weight_val,
-                ) = train_test_split(
-                    X,
-                    y,
-                    sample_weight,
-                    test_size=self.validation_fraction,
-                    stratify=stratify,
-                    random_state=self._random_seed,
-                )
+                sample_weight_train = sample_weight[train_indices]
+                sample_weight_val = sample_weight[val_indices]
         else:
-            X_train, y_train, sample_weight_train = X, y, sample_weight
+            train_indices = None
+            y_train, sample_weight_train = y, sample_weight
             if not validation_data_provided:
                 X_val = y_val = sample_weight_val = None
 
@@ -603,15 +605,23 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             random_state=self._random_seed,
             n_threads=n_threads,
         )
-        X_binned_train = self._bin_data(
-            X_train, sample_weight_train, is_training_data=True
-        )
-        if X_val is not None:
-            X_binned_val = self._bin_data(
-                X_val, sample_weight_val, is_training_data=False
-            )
+        if train_indices is None:
+            X_binned_train = self._bin_data(X, sample_weight, is_training_data=True)
+            if X_val is not None:
+                X_binned_val = self._bin_data(
+                    X_val, sample_weight_val, is_training_data=False
+                )
+            else:
+                X_binned_val = None
         else:
-            X_binned_val = None
+            # The bin thresholds are computed from the training samples only.
+            X_binned = self._bin_data(
+                X, sample_weight, is_training_data=True, sample_indices=train_indices
+            )
+            X_binned_train = _take_rows(X_binned, train_indices)
+            # Predicting is faster on C-contiguous arrays.
+            X_binned_val = np.ascontiguousarray(_take_rows(X_binned, val_indices))
+            del X_binned
 
         # Uses binned data to check for missing values
         has_missing_values = (
@@ -1106,10 +1116,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         recent_improvements = [score > reference_score for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, sample_weight, is_training_data):
+    def _bin_data(self, X, sample_weight, is_training_data, sample_indices=None):
         """Bin data X.
 
-        If is_training_data, then fit the _bin_mapper attribute.
+        If is_training_data, then fit the _bin_mapper attribute on the samples
+        at ``sample_indices`` (all samples if None).
         Else, the binned data is converted to a C-contiguous array.
         """
 
@@ -1123,7 +1134,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         tic = time()
         if is_training_data:
             X_binned = self._bin_mapper.fit_transform(
-                X, sample_weight=sample_weight
+                X, sample_weight=sample_weight, sample_indices=sample_indices
             )  # F-aligned array
         else:
             X_binned = self._bin_mapper.transform(X)  # F-aligned array
