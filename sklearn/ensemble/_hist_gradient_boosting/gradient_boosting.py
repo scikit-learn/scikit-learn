@@ -421,7 +421,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             In a :class:`~pipeline.Pipeline`, `X_val` is transformed like `X` by default
             (`transform_input`). Passing it through the pipeline requires metadata
-            routing; with auto-requests also enabled, `X_val`, `_val` and
+            routing; with auto-requests also enabled, `X_val`, `y_val` and
             `sample_weight_val` are requested automatically
             (:func:`~sklearn.set_config`). See
             :ref:`metadata_routing_auto_request_user`.
