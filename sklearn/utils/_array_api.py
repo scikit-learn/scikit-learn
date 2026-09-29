@@ -1112,6 +1112,13 @@ def _estimator_with_converted_arrays(estimator, converter):
     return _convert_arrays(estimator, converter)
 
 
+# TODO(#34604): delete this, and the check that reads it, once every array API
+# estimator's inference methods have been moved onto `_fitted_attrs_like`. Until
+# then converting unconditionally would break the estimators whose inference
+# still reads fitted attributes straight off `self`.
+_NUMPY_FITTED_ATTRS = frozenset({"LogisticRegression", "LogisticRegressionCV"})
+
+
 def _fitted_attrs_as_numpy(estimator):
     """Convert `estimator`'s fitted arrays to NumPy arrays, in place.
 
@@ -1129,6 +1136,9 @@ def _fitted_attrs_as_numpy(estimator):
     estimator : estimator object
         The estimator to convert. Modified in place.
     """
+    if type(estimator).__name__ not in _NUMPY_FITTED_ATTRS:
+        return
+
     if not get_config()["array_api_dispatch"]:
         # Without dispatch every input has already been converted to NumPy by
         # `check_array`, so there is nothing to do and no reason to pay for a walk.

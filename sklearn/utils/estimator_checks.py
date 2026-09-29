@@ -61,6 +61,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, scale
 from sklearn.utils import _safe_indexing, shuffle
 from sklearn.utils._array_api import (
+    _NUMPY_FITTED_ATTRS,
     NamespaceAndDevice,
     _atol_for_type,
     _max_precision_float_dtype,
@@ -1164,6 +1165,11 @@ def _check_array_api_core(
         key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
     }
 
+    # TODO(#34604): delete this, and the branch below that reads it, together with
+    # `_NUMPY_FITTED_ATTRS`. Once every array API estimator stores its fitted
+    # arrays as NumPy, only the NumPy branch is left.
+    stores_numpy = type(est_xp).__name__ in _NUMPY_FITTED_ATTRS
+
     # Fitted attributes which are arrays must have the same namespace as `X`,
     # except `classes_`, to allow it to be string when `y` is string.
     for attribute_name, attribute_value in array_attributes.items():
@@ -1174,17 +1180,27 @@ def _check_array_api_core(
             continue
 
         est_xp_attr = getattr(est_xp, attribute_name)
-        # `classes_` should be in same ns and device as `y`
-        expected_xp, expected_ns = (
-            (y_xp, y_ns) if attribute_name == "classes_" else (X_xp, X_ns)
-        )
-        with config_context(array_api_dispatch=True):
-            attribute_ns = get_namespace(est_xp_attr)[0].__name__
-            assert array_device(est_xp_attr) == array_device(expected_xp)
-        assert attribute_ns == expected_ns, (
-            f"'{attribute_name}' attribute is in wrong namespace, expected "
-            f"{expected_ns} got {attribute_ns}"
-        )
+        if stores_numpy:
+            # Every fitted array is NumPy, `classes_` included. Requiring this of
+            # all of them is what catches an estimator that was only converted
+            # half way, which is the failure mode to worry about while the
+            # rollout is in progress.
+            assert isinstance(est_xp_attr, (np.ndarray, np.generic)), (
+                f"'{attribute_name}' attribute should be a NumPy array, got "
+                f"{type(est_xp_attr)}"
+            )
+        else:
+            # `classes_` should be in same ns and device as `y`
+            expected_xp, expected_ns = (
+                (y_xp, y_ns) if attribute_name == "classes_" else (X_xp, X_ns)
+            )
+            with config_context(array_api_dispatch=True):
+                attribute_ns = get_namespace(est_xp_attr)[0].__name__
+                assert array_device(est_xp_attr) == array_device(expected_xp)
+            assert attribute_ns == expected_ns, (
+                f"'{attribute_name}' attribute is in wrong namespace, expected "
+                f"{expected_ns} got {attribute_ns}"
+            )
 
         est_xp_attr_np = move_to(est_xp_attr, xp=np, device="cpu")
         if check_values:

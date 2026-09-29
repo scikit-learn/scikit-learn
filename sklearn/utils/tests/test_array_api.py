@@ -9,6 +9,7 @@ from scipy.special import expit, logit
 
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator
+from sklearn.utils import _array_api
 from sklearn.utils._array_api import (
     _add_to_diagonal,
     _asarray_with_order,
@@ -997,6 +998,22 @@ def test_swapaxes(namespace, device_name, dtype_name):
     assert_array_equal(move_to(result_xp, xp=numpy, device="cpu"), result_np)
 
 
+@pytest.fixture
+def opt_in_numpy_attrs(monkeypatch):
+    """Opt the estimators used below into the temporary rollout allow-list.
+
+    These tests exercise `_fitted_attrs_as_numpy` itself, which is independent of
+    which estimators the rollout has reached so far.
+
+    TODO(#34604): delete together with `_NUMPY_FITTED_ATTRS`.
+    """
+    monkeypatch.setattr(
+        _array_api,
+        "_NUMPY_FITTED_ATTRS",
+        _array_api._NUMPY_FITTED_ATTRS | {"MixedAttributesEstimator", "GridSearchCV"},
+    )
+
+
 class MixedAttributesEstimator(BaseEstimator):
     """Estimator whose fitted attributes cover every branch of the array walk."""
 
@@ -1032,7 +1049,7 @@ def test_move_to_numpy_leaves_numpy_untouched(array, description):
     assert move_to(array, xp=numpy, device=None) is array
 
 
-def test_fitted_attrs_as_numpy_preserves_masked_cv_results():
+def test_fitted_attrs_as_numpy_preserves_masked_cv_results(opt_in_numpy_attrs):
     """`cv_results_` holds masked arrays whose mask marks inapplicable params."""
     from sklearn.linear_model import Ridge
     from sklearn.model_selection import GridSearchCV
@@ -1054,7 +1071,7 @@ def test_fitted_attrs_as_numpy_preserves_masked_cv_results():
     "namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
 )
-def test_fitted_attrs_as_numpy(namespace, device_name, dtype_name):
+def test_fitted_attrs_as_numpy(namespace, device_name, dtype_name, opt_in_numpy_attrs):
     """Arrays reachable from the estimator become NumPy, everything else is left."""
     xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     X_np = numpy.asarray([[1.3, 4.5]], dtype=dtype_name)
@@ -1075,7 +1092,7 @@ def test_fitted_attrs_as_numpy(namespace, device_name, dtype_name):
 
 
 @skip_if_array_api_compat_not_configured
-def test_fitted_attrs_as_numpy_leaves_nested_estimators_alone():
+def test_fitted_attrs_as_numpy_leaves_nested_estimators_alone(opt_in_numpy_attrs):
     """Nested estimators convert themselves when their own fit returns.
 
     Descending into them would re-walk every sub-estimator of an ensemble on top
@@ -1093,7 +1110,7 @@ def test_fitted_attrs_as_numpy_leaves_nested_estimators_alone():
 
 
 @skip_if_array_api_compat_not_configured
-def test_fitted_attrs_as_numpy_without_dispatch_is_a_no_op():
+def test_fitted_attrs_as_numpy_without_dispatch_is_a_no_op(opt_in_numpy_attrs):
     """Without dispatch every input is already NumPy, so the walk is skipped."""
     xp = pytest.importorskip("array_api_strict")
 
