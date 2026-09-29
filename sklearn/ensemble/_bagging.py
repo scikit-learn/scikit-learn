@@ -16,7 +16,7 @@ from sklearn.base import ClassifierMixin, RegressorMixin, _fit_context
 from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
 from sklearn.ensemble._bootstrap import _get_n_samples_bootstrap
 from sklearn.metrics import accuracy_score, r2_score
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.tree import BaseDecisionTree, DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import _safe_indexing, check_random_state, column_or_1d
 from sklearn.utils._mask import indices_to_mask
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
@@ -391,9 +391,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             **fit_params,
         )
 
-    def _parallel_args(self):
-        return {}
-
     def _fit(
         self,
         X,
@@ -669,6 +666,13 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         router.add(estimator=self._get_estimator(), method_mapping=method_mapping)
         return router
 
+    def _parallel_args(self):
+        if isinstance(self.estimator_, BaseDecisionTree):
+            # Subclasses of BaseDecisionTree are known to be faster with
+            # threads.
+            return {"prefer": "threads"}
+        return {}
+
     @abstractmethod
     def _get_estimator(self):
         """Resolve which estimator to return."""
@@ -880,13 +884,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             random_state=random_state,
             verbose=verbose,
         )
-
-    def _parallel_args(self):
-        if self.estimator is None:
-            # Using DecisionTreeClassifier, which is known to be faster with
-            # threads.
-            return {"prefer": "threads"}
-        return {}
 
     def _get_estimator(self):
         """Resolve which estimator to return (default is DecisionTreeClassifier)"""
@@ -1391,13 +1388,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             random_state=random_state,
             verbose=verbose,
         )
-
-    def _parallel_args(self):
-        if self.estimator is None:
-            # Using DecisionTreeRegressor, which is known to be faster with
-            # threads.
-            return {"prefer": "threads"}
-        return {}
 
     def predict(self, X, **params):
         """Predict regression target for X.
