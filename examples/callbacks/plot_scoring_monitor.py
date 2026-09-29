@@ -207,7 +207,7 @@ _ = axes[-1].set_xlabel("L-BFGS iteration")
 # to reach higher D² log-loss scores, and models trained on scaled features
 # converge in much fewer iterations.
 #
-# Furthermore, models trained with high regularization `àlpha``
+# Furthermore, models trained with high regularization ``alpha``
 # converge to a final D² log-loss value that depends on the regularization
 # strength while this is not the case for models trained with low
 # regularization: there is a strong coupling between the optimal regularization

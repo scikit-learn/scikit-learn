@@ -613,8 +613,8 @@ def _logistic_regression_path(
             l2_reg_strength = 1.0 / (C * sw_sum)
 
         if solver == "lbfgs":
-            # In LogisticRegression.fit, Cs is always a one-element list, so we don't
-            # add additional callback subcontexts inside this for-loop to avoid
+            # In LogisticRegression.fit, alphas is always a one-element list, so we
+            # don't add additional callback subcontexts inside this for-loop to avoid
             # introducing an unnecessary subtask level.
             # TODO(callbacks) When adding callback support to LogisticRegressionCV,
             # another subcontext level will be necessary, so we'll need to add a level
@@ -978,7 +978,7 @@ def _log_reg_scoring_path(
         Scores obtained for each Cs.
 
     n_iter : ndarray of shape (n_alphas,)
-        Actual number of iteration for each C in Cs.
+        Actual number of iteration for each alpha in alphas.
     """
     xp, _, device = get_namespace_and_device(X)
     train_xp = xp.asarray(train, device=device)
@@ -1171,11 +1171,13 @@ class LogisticRegression(
            `l1_ratio=1` for `penalty='l1'`, `l1_ratio` set to any float between 0 and 1
            for `penalty='elasticnet'`, and `C=np.inf` for `penalty=None`.
 
-    alpha : float, str, default=1.0
+    alpha : float, default=1.0
         Regularization strength that multiplies the penalty term (both L1 and L2).
         ``alpha = 0`` is equivalent to unpenalized logistic regression. In this case,
         the design matrix `X` must have full column rank (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
+        For a visual example on the effect of tuning the `alpha` parameter with an L1
+        penalty, see: :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
 
         .. warning::
            In order to already use `alpha` during the deprecation period of `C`, just
@@ -1188,9 +1190,6 @@ class LogisticRegression(
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
         regularization. `C=np.inf` results in unpenalized logistic regression.
-        For a visual example on the effect of tuning the `C` parameter
-        with an L1 penalty, see:
-        :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
 
         .. deprecated:: 1.10
            `C` was deprecated in version 1.10 and will be removed in 1.14.
@@ -1853,7 +1852,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     See glossary entry for :term:`cross-validation estimator`.
 
     This class implements regularized logistic regression with implicit cross
-    validation for the penalty parameters `C` and `l1_ratio`, see
+    validation for the penalty parameters `alpha` and `l1_ratio`, see
     :class:`LogisticRegression`, using a set of available solvers.
 
     The solvers 'lbfgs', 'newton-cg', 'newton-cholesky' and 'sag' support only L2
@@ -1862,7 +1861,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     with a dual formulation only for the L2 penalty. The Elastic-Net (combination of L1
     and L2) regularization is only supported by the 'saga' solver.
 
-    For the grid of `Cs` values and `l1_ratios` values, the best hyperparameter
+    For the grid of `alphas` values and `l1_ratios` values, the best hyperparameter
     is selected by the cross-validator
     :class:`~sklearn.model_selection.StratifiedKFold`, but it can be changed
     using the :term:`cv` parameter. All solvers except 'liblinear' can warm-start the
@@ -2057,9 +2056,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     refit : bool, default=True
         If set to True, the scores are averaged across all folds, and the
-        coefs and the C that corresponds to the best score is taken, and a
+        coefs and the alpha that corresponds to the best score is taken, and a
         final refit is done using these parameters.
-        Otherwise the coefs, intercepts and C that correspond to the
+        Otherwise the coefs, intercepts and alpha that correspond to the
         best scores across folds are averaged.
 
     intercept_scaling : float, default=1
@@ -2187,7 +2186,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     n_iter_ : ndarray of shape (1, n_folds, n_alphas) or \
             (1, n_folds, n_alphas, n_l1_ratios)
-        Actual number of iterations for all classes, folds and Cs.
+        Actual number of iterations for all classes, folds and alphas.
         If `penalty='elasticnet'`, the shape is `(1, n_folds, n_alphas, n_l1_ratios)`.
         See also parameter `use_legacy_attributes`.
 
@@ -2204,8 +2203,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     See Also
     --------
-    LogisticRegression : Logistic regression without tuning the
-        hyperparameter `C`.
+    LogisticRegression : Logistic regression with a fixed hyperparameter `alpha`.
 
     Examples
     --------
@@ -2698,7 +2696,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 (int(i), int(j))
                 for i, j in zip(*best_indices)  # (n_folds, 2)
             )
-            # each row of best_indices has the 2 indices for Cs and l1_ratios
+            # each row of best_indices has the 2 indices for alphas and l1_ratios
             if is_binary:
                 fold_coef_paths = xp.stack(
                     [coefs_paths[0, i, *best_indices[i], :] for i in range(n_folds)]
