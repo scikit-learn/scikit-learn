@@ -3280,17 +3280,29 @@ def test_equivalence_of_default_C_and_alpha(n_classes, sample_weight, solver):
     else:
         sample_weight = None
 
-    clf_C = LogisticRegression(C=1.0, **params).fit(X, y, sample_weight)
-    # alpha=1/C
-    clf_alpha = LogisticRegression(alpha=1.0, **params).fit(X, y, sample_weight)
-    assert_allclose(clf_C.coef_, clf_alpha.coef_)
+    for alpha, C in ((0, np.inf), (0.1, 10), (1.0, 1.0), (10, 0.1), (1e5, 1e-5)):
+        if solver == "liblinear" and (alpha == 0 or alpha > 1e3):
+            # C=np.inf as well as penalty=None is not supported for the liblinear
+            # solver. For huge alpha / tiny C, liblinear freezes.
+            continue
+        clf_C = LogisticRegression(C=C, **params).fit(X, y, sample_weight)
+        # alpha=1/C
+        clf_alpha = LogisticRegression(alpha=alpha, **params).fit(X, y, sample_weight)
+        assert_allclose(clf_C.coef_, clf_alpha.coef_, err_msg=f"{alpha=} {C=}")
 
     params["scoring"] = "neg_log_loss"
     params["use_legacy_attributes"] = False
-    clf_C = LogisticRegressionCV(Cs=5, **params).fit(X, y, sample_weight)
-    clf_alpha = LogisticRegressionCV(alphas=5, **params).fit(X, y, sample_weight)
-    assert clf_C.C_ == pytest.approx(1 / clf_alpha.alpha_)
-    assert_allclose(clf_C.coef_, clf_alpha.coef_)
+    for alphas, Cs in ((5, 5), ([0, 0.1, 10, 1e5], [np.inf, 10, 0.1, 1e-5])):
+        if solver == "liblinear" and not isinstance(alphas, int):
+            # C=np.inf is unsupported. For huge alpha / tiny C, liblinear freezes.
+            alphas = [alpha for alpha in alphas if 0 < alpha < 1e3]
+            Cs = [C for C in Cs if (C > 1e-3 and np.isfinite(C))]
+        clf_C = LogisticRegressionCV(Cs=Cs, **params).fit(X, y, sample_weight)
+        clf_alpha = LogisticRegressionCV(alphas=alphas, **params).fit(
+            X, y, sample_weight
+        )
+        assert clf_C.C_ == pytest.approx(1 / clf_alpha.alpha_)
+        assert_allclose(clf_C.coef_, clf_alpha.coef_, err_msg=f"{alpha=} {C=}")
 
 
 # TODO(1.14): remove after deprecation cycle.
