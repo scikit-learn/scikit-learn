@@ -232,7 +232,7 @@ def test_sparse_regression(sparse_container):
     for params in parameter_sets:
         # Trained on sparse format
         sparse_classifier = BaggingRegressor(
-            estimator=CustomSVR(), random_state=1, n_jobs=-1, **params
+            estimator=CustomSVR(), random_state=1, **params
         ).fit(X_train_sparse, y_train)
         sparse_results = sparse_classifier.predict(X_test_sparse)
 
@@ -353,7 +353,9 @@ def test_probability():
 
         # Degenerate case, where some classes are missing
         ensemble = BaggingClassifier(
-            estimator=LogisticRegression(), random_state=rng, max_samples=5
+            estimator=LogisticRegression(),
+            random_state=rng,
+            max_samples=5,
         ).fit(X_train, y_train)
 
         assert_array_almost_equal(
