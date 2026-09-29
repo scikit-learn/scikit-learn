@@ -885,7 +885,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         if self.estimator is None:
             # Using DecisionTreeClassifier, which is known to be faster with
             # threads.
-            return {"require": "sharedmem"}
+            return {"prefer": "threads"}
         return {}
 
     def _get_estimator(self):
@@ -1396,7 +1396,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         if self.estimator is None:
             # Using DecisionTreeRegressor, which is known to be faster with
             # threads.
-            return {"require": "sharedmem"}
+            return {"prefer": "threads"}
         return {}
 
     def predict(self, X, **params):
