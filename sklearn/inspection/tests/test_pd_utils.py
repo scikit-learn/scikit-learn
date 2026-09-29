@@ -1,7 +1,11 @@
 import numpy as np
 import pytest
 
-from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.inspection._pd_utils import (
+    _check_feature_names,
+    _get_feature_index,
+    _get_is_categorical,
+)
 from sklearn.utils._testing import _convert_container
 
 
@@ -45,3 +49,33 @@ def test_get_feature_index(fx, idx):
 def test_get_feature_names_error(fx, feature_names, err_msg):
     with pytest.raises(ValueError, match=err_msg):
         _get_feature_index(fx, feature_names)
+
+
+@pytest.mark.parametrize(
+    "categorical_features, expected",
+    [
+        (None, [False, False]),
+        ([True, False, True], [False, True]),
+        ([2], [False, True]),
+        (["c"], [False, True]),
+    ],
+)
+def test_get_is_categorical(categorical_features, expected):
+    feature_names = ["a", "b", "c"]
+    is_categorical = _get_is_categorical(
+        categorical_features, [1, 2], feature_names, n_features=3
+    )
+    assert is_categorical == expected
+
+
+@pytest.mark.parametrize(
+    "categorical_features, err_msg",
+    [
+        ([], "Passing an empty list"),
+        ([True, False], "the array should be of shape"),
+        ([1.5], "Expected `categorical_features` to be an array-like"),
+    ],
+)
+def test_get_is_categorical_error(categorical_features, err_msg):
+    with pytest.raises(ValueError, match=err_msg):
+        _get_is_categorical(categorical_features, [0], ["a", "b", "c"], n_features=3)
