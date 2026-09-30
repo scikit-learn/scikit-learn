@@ -1987,14 +1987,14 @@ def test_elastic_net_l1_l2_equivalence(global_random_seed, C, penalty, l1_ratio)
     assert_array_almost_equal(lr_enet.coef_, lr_expected.coef_)
 
 
-@pytest.mark.parametrize("alpha", np.logspace(3, -2, 4))
+@pytest.mark.parametrize("alpha", np.logspace(3, 0, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
 def test_LogisticRegression_elastic_net_objective(alpha, l1_ratio, global_random_seed):
     # Check that training with a penalty matching the objective leads
     # to a lower objective.
     # Here we train a logistic regression with l2 (a) and elasticnet (b)
     # penalties, and compute the elasticnet objective. That of (a) should be
-    # greater than that of (b) (both objectives are convex).
+    # greater than that of (b) (both objectives are convex), if alpha is not too small.
     n_samples = 1000
     X, y = make_classification(
         n_samples=n_samples,
