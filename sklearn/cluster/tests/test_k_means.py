@@ -321,6 +321,106 @@ def test_minibatch_kmeans_partial_fit_init(init):
     _check_fitted_model(km)
 
 
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
+def test_minibatch_kmeans_partial_fit_adaptive_lr(array_constr):
+    X = array_constr([[0.0, 0.0], [0.0, 1.0], [10.0, 10.0], [10.0, 11.0]])
+    sample_weight = np.ones(4)
+    init_centers = np.array([[0.0, 0.0], [10.0, 10.0]])
+    initial_inertia = _labels_inertia(X, sample_weight, init_centers)[1]
+
+    # Each cluster receives half of the batch weight so alpha = sqrt(1 / 2).
+    alpha = np.sqrt(0.5)
+    # After a single step, the centers move according to the update rule:
+    # new_center = (1 - alpha) * old_center + alpha * batch_center
+    expected_first_step_centers = np.array(
+        [[0.0, 0.5 * alpha], [10.0, 10.0 + 0.5 * alpha]]
+    )
+    expected_final_centers = np.array([[0.0, 0.5], [10.0, 10.5]])
+
+    km = MiniBatchKMeans(
+        n_clusters=2,
+        init=init_centers,
+        n_init=1,
+        batch_size=X.shape[0],
+        random_state=0,
+        reassignment_ratio=0,
+        adaptive_lr=True,
+    )
+
+    inertias = []
+    first_step_centers = None
+    for _ in range(16):
+        km.partial_fit(X)
+        inertias.append(km.inertia_)
+        if first_step_centers is None:
+            first_step_centers = km.cluster_centers_.copy()
+
+    # Note that inertia is not guaranteed to decrease at each step,
+    # but it does on this toy example.
+    assert inertias[0] < initial_inertia
+    assert np.all(np.diff(inertias) <= 1e-12)
+    assert_allclose(
+        first_step_centers[np.argsort(first_step_centers[:, 0])],
+        expected_first_step_centers,
+    )
+    assert_allclose(
+        km.cluster_centers_[np.argsort(km.cluster_centers_[:, 0])],
+        expected_final_centers,
+    )
+
+
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
+def test_minibatch_kmeans_fit_adaptive_lr(array_constr):
+    X = array_constr([[0.0, 0.0], [0.0, 1.0], [10.0, 10.0], [10.0, 11.0]])
+    sample_weight = np.ones(4)
+    init_centers = np.array([[0.0, 0.0], [10.0, 10.0]])
+    expected_final_centers = np.array([[0.0, 0.5], [10.0, 10.5]])
+    initial_inertia = _labels_inertia(X, sample_weight, init_centers)[1]
+    initial_dist_to_expected = np.linalg.norm(init_centers - expected_final_centers)
+
+    km = MiniBatchKMeans(
+        n_clusters=2,
+        init=init_centers,
+        n_init=1,
+        batch_size=X.shape[0],
+        max_iter=20,
+        tol=0,
+        max_no_improvement=None,
+        random_state=0,
+        reassignment_ratio=0,
+        adaptive_lr=True,
+    ).fit(X)
+    centers = km.cluster_centers_[np.argsort(km.cluster_centers_[:, 0])]
+
+    # Note that inertia is not guaranteed to decrease at each step,
+    # but it does on this toy example.
+    assert km.inertia_ < initial_inertia
+    assert np.linalg.norm(centers - expected_final_centers) < initial_dist_to_expected
+
+
+@pytest.mark.parametrize("method", ["fit", "partial_fit"])
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
+def test_minibatch_kmeans_adaptive_lr_rejects_negative_sample_weight(
+    method, array_constr
+):
+    X = array_constr([[0.0, 0.0], [0.0, 1.0], [10.0, 10.0], [10.0, 11.0]])
+    sample_weight = np.array([1.0, -1.0, 1.0, 1.0])
+    km = MiniBatchKMeans(
+        n_clusters=2,
+        init=np.array([[0.0, 0.0], [10.0, 10.0]]),
+        n_init=1,
+        batch_size=X.shape[0],
+        random_state=0,
+        reassignment_ratio=0,
+        adaptive_lr=True,
+    )
+
+    with pytest.raises(
+        ValueError, match="Negative values in data passed to `sample_weight`."
+    ):
+        getattr(km, method)(X, sample_weight=sample_weight)
+
+
 @pytest.mark.parametrize(
     "init, expected_n_init",
     [
