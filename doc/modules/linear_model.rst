@@ -499,8 +499,8 @@ scikit-learn.
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The equivalence between ``alpha`` and the regularization parameter of SVM,
-``C`` is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``,
+The equivalence between ``alpha`` and the regularization parameter ``C`` of SVM
+is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``,
 depending on the estimator and the exact objective function optimized by the
 model.
 
@@ -951,7 +951,7 @@ regularization.
     Regularization is applied by default, which is common in machine
     learning but not in statistics. Another advantage of regularization is
     that it improves numerical stability. No regularization amounts to
-    setting C to a very high value.
+    setting `alpha` to zero.
 
 .. note:: **Logistic Regression as a special case of the Generalized Linear Models (GLM)**
 
