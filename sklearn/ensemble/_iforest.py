@@ -610,7 +610,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # https://github.com/scikit-learn/scikit-learn/pull/28622 for more
         # details.
         lock = threading.Lock()
-        results = _parallel_thread_map(
+        # Results are stored in `depths`, so we just need to iterate to ensure
+        # all the jobs run.
+        for _ in _parallel_thread_map(
             None,
             lambda args: _parallel_compute_tree_depths(*args),
             (
@@ -627,8 +629,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
                     zip(self.estimators_, self.estimators_features_)
                 )
             ),
-        )
-        list(results)
+        ):
+            pass
 
         denominator = len(self.estimators_) * average_path_length_max_samples
         scores = 2 ** (
