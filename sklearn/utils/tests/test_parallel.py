@@ -211,7 +211,7 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
     ],
 )
 def test_parallel_thread_map_results(func: Callable, arguments: list[Iterable]) -> None:
-    """``_parallel_thread_map()`` gives the same results as ``map()``."""
+    """Test that `_parallel_thread_map()` gives the same results as `map()`."""
     for n_jobs in [None, 1, 2, -1]:
         expected = list(map(func, *arguments))
         actual = _parallel_thread_map(n_jobs, func, *arguments)
@@ -220,9 +220,7 @@ def test_parallel_thread_map_results(func: Callable, arguments: list[Iterable]) 
 
 
 def test_parallel_thread_map_parallelism() -> None:
-    """
-    ``_parallel_thread_map()`` uses parallelism only when ``n_jobs`` > 1.
-    """
+    """Test that `_parallel_thread_map()` uses parallelism only when n_jobs > 1."""
     idents = set()
 
     def add_ident(_):

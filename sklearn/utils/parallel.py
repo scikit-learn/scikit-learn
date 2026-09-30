@@ -187,12 +187,9 @@ class _FuncWrapper:
 
 def _parallel_thread_map(n_jobs, func, *iterables):
     """
-    Like ``map()``, but uses threads to run in parallel.
+    Like `map(..)`, but uses threads to run in parallel.
 
-    Aims for minimal overhead, to maximize the cases where it improves
-    performance.
-
-    .. versionadded:: 1.10
+    Aims for minimal overhead, to maximize the cases where it improves performance.
 
     Parameters
     ----------
@@ -201,7 +198,7 @@ def _parallel_thread_map(n_jobs, func, *iterables):
         See :class:`joblib.Parallel` for details.
 
     func : callable function
-        Called with each value in the iterable.
+        Called with each value in the iterable as arguments.
 
     *iterables : iterables of values
         Each value will be passed to func.
@@ -209,8 +206,8 @@ def _parallel_thread_map(n_jobs, func, *iterables):
     Returns
     -------
     results : Iterable
-        Results of calling ``func(*values)`` for each set of values
-        from the input iterables.
+        Results of calling `func(*values)` for each set of values from the input
+        iterables.
     """
     n_jobs = joblib.effective_n_jobs(n_jobs)
     if n_jobs == 1:
