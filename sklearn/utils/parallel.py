@@ -209,7 +209,8 @@ def _parallel_thread_map(n_jobs, func, *iterables):
     -------
     results : Iterable
         Results of calling `func(*values)` for each set of values from the input
-        iterables.
+        iterables. You must iterate over all values to ensure the scheduled tasks
+        all ran.
     """
     n_jobs = joblib.effective_n_jobs(n_jobs)
     if n_jobs == 1:
@@ -220,7 +221,8 @@ def _parallel_thread_map(n_jobs, func, *iterables):
     config = get_config()
     executor = ThreadPoolExecutor(n_jobs, initializer=lambda: set_config(**config))
 
-    # Make sure pool doesn't get garbage collected prematurely:
+    # Since we might return a generator above, we also want to return a
+    # generator in this code path.
     def gen():
         with executor:
             yield from executor.map(func, *iterables)
