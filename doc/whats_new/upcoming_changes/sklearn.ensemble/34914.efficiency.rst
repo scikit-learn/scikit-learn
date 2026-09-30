@@ -1,0 +1,4 @@
+- Improved the performance of prediction in :class:`ensemble.IsolationForest`
+  when using parallelism for a relatively small number of samples. The speed
+  comes from using a lower-overhead threading API.
+  By :user:`Itamar Turner-Trauring <itamarst>`.
