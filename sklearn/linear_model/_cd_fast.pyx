@@ -2484,7 +2484,8 @@ def enet_coordinate_descent_multinomial(
 ):
     """Cython coordinate descent algorithm for Elastic-Net multinomial regression.
 
-    See function enet_coordinate_descent.
+    This function is used as inner solver in class NewtonCDSolver.
+    The basic algorithm is the same as function enet_coordinate_descent.
     We minimize the primal
 
         P(w) = 1/2 ||y - X w||_2^2 + alpha ||w||_1 + beta/2 ||w||_2^2
@@ -2494,19 +2495,21 @@ def enet_coordinate_descent_multinomial(
 
         1/2 w' H w + (G' - coef' H) w + alpha ||w||_1 + beta/2 ||w||_2^2
 
-    - w = W.ravel(order="F")
+    - w = W.ravel(order="F"), coefficients to optimize for
+    - coef = current coefficients (equal to W at function entry)
     - G = gradient = X.T @ (proba - Y)  with Y_k = (y==k)
     - H = X' * (diag(p) - pp') * X, the full multinomial hessian
       (* is kind of a Kronecker multiplication)
 
-    We use the analytical LDL decomposition of diag(p) - pp' = L D L' of
-    Tanabe & Sagae (1992) to replace
+    We use the analytical LDL decomposition (in classes) of h = diag(p) - pp' = L D L'
+    of Tanabe & Sagae (1992) for each of the n_samples rows of h to replace
 
         X -> A = sqrt(D) L' * X
         y -> b = (L sqrt(D))^-1 (LDL' * X coef - g)
                = A coef - (L sqrt(D))^-1 g
 
-    Which gives (up to a constant)
+    The LDL decomposition is done for all n_samples, therefore has same shape as
+    h.shape = (n_samples, n_classes, n_classes). Up to a constant, this gives
 
         P(w) = 1/2 ||b - A w||_2^2 + alpha ||w||_1 + beta/2 ||w||_2^2
 
@@ -2546,6 +2549,8 @@ def enet_coordinate_descent_multinomial(
         - H0 = A0' A, i.e. the part of the hessian mixing intercepts with the features:
           H[-n_classes, :-n_classes]
         - q0 = A0' b = 1' (LDL' X coef - g)
+        - coef is the current coefficient (of the last Newton iteration) and includes
+          the intercept; X coef = raw_prediction = X @ coef[:, :-1].T + coef[:, -1]
 
     Tracking the Residual
     ---------------------
@@ -2563,7 +2568,7 @@ def enet_coordinate_descent_multinomial(
 
         L sqrt(D) R -= (w_new_kj - w_old_kj) * LDL[:, k] * X[:, j]
 
-    with LDL[:, k] begin the k-th column of the LDL matrix, having shape
+    where LDL[:, k] is the k-th column of the LDL matrix, i.e. LDL[:, k] has shape
     (n_sampels, n_classes).
 
     Parameters
@@ -2725,8 +2730,11 @@ def enet_coordinate_descent_multinomial(
         # Centering X as
         #   X -= (H00_pinv_H0)[None, :]
         # is not an option because it would mean n_classes^2 copies of X.
+        # To proceed, we need to compute b, residual R and rotated residual LD_R.
+        # The change with intercepts amounts to modifying raw_prediction and
+        # grad_pointwise. Then in the main loop, updates of LD_R get more involved.
         # Center raw_prediction: += -intercepts - 1 H00^(-1) H0) coef
-        raw_prediction = raw_prediction - W0  # creates a copy
+        raw_prediction = np.subtract(raw_prediction, W0, order="F")  # creates a copy
         raw_prediction[:, :-1] -= (H00_pinv_H0 @ W.ravel(order="F"))[None, :]
         # Center grad_pointwise: g -= LDL' 1 H00^(-1) 1' g
         t = H00_pinv @ grad_p_sum  # H00^(-1) 1' g
@@ -2737,9 +2745,12 @@ def enet_coordinate_descent_multinomial(
                 h = -proba[:, k] * proba[:, l] * sw
                 grad_pointwise[:, k] -= h * t[l]
                 grad_pointwise[:, l] -= h * t[k]
+    else:
+        # Avoid to modify the original raw_prediction inplace in LDL.sqrt_D_Lt_matmul.
+        raw_prediction = raw_prediction.copy(order="F")
 
     # A w = sqrt(D) L' X w = sqrt(D) L' raw = sqrt_D_Lt_raw
-    sqrt_D_Lt_raw = LDL.sqrt_D_Lt_matmul(raw_prediction.copy(order="F")) * sqrt_sw[:, None]
+    sqrt_D_Lt_raw = LDL.sqrt_D_Lt_matmul(raw_prediction) * sqrt_sw[:, None]
 
     # residual R = b - A w = -(L sqrt(D))^-1 g
     # R[:, :] = LDL.inverse_L_sqrt_D_matmul(-grad_pointwise / sqrt_sw[:, None])
