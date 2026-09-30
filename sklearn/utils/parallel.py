@@ -194,8 +194,10 @@ def _parallel_thread_map(n_jobs, func, *iterables):
     Parameters
     ----------
     n_jobs : int or None
-        The maximum number of concurrently running jobs.
-        See :class:`joblib.Parallel` for details.
+        The maximum number of concurrently running jobs, i.e. the number of worker
+        threads. ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     func : callable function
         Called with each value in the iterable as arguments.
