@@ -333,6 +333,7 @@ class NewtonSolver(ABC):
             - self.raw_prediction
         """
         # line search parameters
+        ls_converged = False
         sigma = 0.00048828125  # 1/2**11, sometimes called c1
         min_step_reduction = 1e-2  # minimum factor of decrease of alpha per step
         min_step_length = 1e-12  # absolute minimum value of alpha
@@ -400,6 +401,7 @@ class NewtonSolver(ABC):
                     f"<= {alpha * armijo_term} {check}"
                 )
             if check:
+                ls_converged = True
                 break
             # 2. Tiny gradient / Armijo term.
             # If we are already close to the minimum, gradient and Armijo term are
@@ -417,6 +419,7 @@ class NewtonSolver(ABC):
                         f"{g_max_abs} <= {self.tol} {check}"
                     )
                 if check:
+                    ls_converged = True
                     break
             # 3. Deal with differences around machine precision.
             # 3.1 Check relative loss difference ~ machine precision
@@ -448,6 +451,7 @@ class NewtonSolver(ABC):
                         f"{sum_abs_grad} < {sum_abs_grad_old} {check}"
                     )
                 if check:
+                    ls_converged = True
                     break
 
             # Set a smart new value of alpha, smaller than previous one, larger than 0.
@@ -482,7 +486,12 @@ class NewtonSolver(ABC):
                 alpha_trial = 0.5 * alpha
             # Avoid too large a reduction of alpha.
             alpha = max(alpha_trial, min_step_reduction * alpha, min_step_length)
-        else:
+            if alpha == alpha_old:
+                # For example if alpha = alpha_old = min_step_length.
+                # The early exit avoids dividing by denom = 0 in the next iteration.
+                break
+
+        if not ls_converged:
             warnings.warn(
                 (
                     f"Line search of Newton solver {self.__class__.__name__} at"
