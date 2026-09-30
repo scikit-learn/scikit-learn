@@ -210,13 +210,15 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
         (lambda a, b: a + b, [range(1, 1001), range(2, 1002)]),
     ],
 )
-def test_parallel_thread_map_results(func: Callable, arguments: list[Iterable]) -> None:
+@pytest.mark.parametrize("n_jobs", [None, 1, 2, -1])
+def test_parallel_thread_map_results(
+    func: Callable, arguments: list[Iterable], n_jobs: int | None
+) -> None:
     """Test that `_parallel_thread_map()` gives the same results as `map()`."""
-    for n_jobs in [None, 1, 2, -1]:
-        expected = list(map(func, *arguments))
-        actual = _parallel_thread_map(n_jobs, func, *arguments)
-        assert not isinstance(actual, list)
-        assert expected == list(actual)
+    expected = list(map(func, *arguments))
+    actual = _parallel_thread_map(n_jobs, func, *arguments)
+    assert not isinstance(actual, list)
+    assert expected == list(actual)
 
 
 def test_parallel_thread_map_parallelism() -> None:
