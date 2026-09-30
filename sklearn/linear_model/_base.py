@@ -481,7 +481,7 @@ class SparseCoefMixin:
         """
         Convert coefficient matrix to sparse format.
 
-        Converts the ``coef_`` member to a scipy.sparse matrix, which for
+        Converts the ``coef_`` member to a scipy.sparse array/matrix, which for
         L1-regularized models can be much more memory- and storage-efficient
         than the usual numpy.ndarray representation.
 
