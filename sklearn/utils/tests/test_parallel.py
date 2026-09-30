@@ -252,8 +252,7 @@ def test_parallel_thread_map_warnings_settings() -> None:
     """
     Warning settings are propagated on to threads by ``_parallel_thread_map()``.
     """
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", category=ConvergenceWarning)
+    warnings.simplefilter("error", category=ConvergenceWarning)
 
-        with pytest.raises(ConvergenceWarning):
-            list(_parallel_thread_map(-1, lambda _: raise_warning(), range(2)))
+    with pytest.raises(ConvergenceWarning):
+        list(_parallel_thread_map(-1, lambda _: raise_warning(), range(2)))
