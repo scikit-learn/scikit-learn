@@ -216,12 +216,12 @@ def _parallel_thread_map(n_jobs, func, *iterables):
 
     # Create pool here, so it copies contextvars:
     config = get_config()
-    pool = ThreadPoolExecutor(n_jobs, initializer=lambda: set_config(**config))
+    executor = ThreadPoolExecutor(n_jobs, initializer=lambda: set_config(**config))
 
     # Make sure pool doesn't get garbage collected prematurely:
     def gen():
-        with pool:
-            yield from pool.map(func, *iterables)
+        with executor:
+            yield from executor.map(func, *iterables)
 
     return gen()
 
