@@ -22,6 +22,7 @@ from sklearn.utils._array_api import (
     move_to,
     xpx,
 )
+from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._encode import _encode_labels, _unique
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.multiclass import type_of_target, unique_labels
@@ -34,6 +35,24 @@ __all__ = [
     "MultiLabelBinarizer",
     "label_binarize",
 ]
+
+
+def _label_column_or_1d(y, *, dtype=None):
+    """Like `column_or_1d`, but preserves a pandas Series of a non-numeric,
+    non-`object` dtype (e.g. `category`, `string`) instead of eagerly
+    materializing it into a numpy array, so that `_unique`/`_encode` can
+    route it through the pandas fast path.
+    """
+    if (
+        is_pandas_df_or_series(y)
+        and getattr(y, "ndim", None) == 1
+        and (dtype is None or dtype == object)
+    ):
+        import pandas as pd
+
+        if not pd.api.types.is_numeric_dtype(y) and y.dtype != object:
+            return y
+    return column_or_1d(y, dtype=dtype, warn=True)
 
 
 class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
@@ -99,7 +118,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         self : returns an instance of self.
             Fitted label encoder.
         """
-        y = column_or_1d(y, warn=True)
+        y = _label_column_or_1d(y)
         self.classes_ = _unique(y)
         return self
 
@@ -116,7 +135,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         y : array-like of shape (n_samples,)
             Encoded labels.
         """
-        y = column_or_1d(y, warn=True)
+        y = _label_column_or_1d(y)
         self.classes_, y = _unique(y, return_inverse=True)
         return y
 
@@ -135,7 +154,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         """
         check_is_fitted(self)
         xp, _ = get_namespace(y)
-        y = column_or_1d(y, dtype=self.classes_.dtype, warn=True)
+        y = _label_column_or_1d(y, dtype=self.classes_.dtype)
         # transform of empty array is empty array
         if _num_samples(y) == 0:
             return xp.asarray([])
