@@ -1,0 +1,4 @@
+- Added ``elimination_order_`` attribute to :class:`feature_selection.RFE`
+  and :class:`feature_selection.RFECV` to expose the order in which features
+  were eliminated during recursive feature elimination.
+  By :user:`Gunakarthik1`.
