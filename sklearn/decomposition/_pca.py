@@ -22,28 +22,29 @@ from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axi
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 
-def _assess_dimension(spectrum, rank, n_samples):
-    """Compute the log-likelihood of a rank ``rank`` dataset.
+def _infer_dimension(spectrum, n_samples):
+    """Infers the dimension of a dataset with a given spectrum.
 
-    The dataset is assumed to be embedded in gaussian noise of shape(n,
-    dimf) having spectrum ``spectrum``. This implements the method of
-    T. P. Minka.
+    The dataset is assumed to be a low-rank signal embedded in isotropic
+    gaussian noise, with ``spectrum`` holding the eigenvalues of its sample
+    covariance. This implements the method of T. P. Minka, sometimes referred
+    to as a "Laplace approximation" in the literature.
+
+    In the original paper, the algorithm runs in O(n_features^3); Minka
+    has an accompanying laplace_pca.m that provides an O(n_features^2)
+    reformulation, which has been partially adapted here.
 
     Parameters
     ----------
     spectrum : ndarray of shape (n_features,)
-        Data spectrum.
-    rank : int
-        Tested rank value. It should be strictly lower than n_features,
-        otherwise the method isn't specified (division by zero in equation
-        (31) from the paper).
+        Data spectrum, in non-increasing order.
     n_samples : int
         Number of samples.
 
     Returns
     -------
-    ll : float
-        The log-likelihood.
+    n_components : int
+        The rank with the highest likelihood, in [1, n_features - 1].
 
     References
     ----------
@@ -52,62 +53,88 @@ def _assess_dimension(spectrum, rank, n_samples):
     <https://proceedings.neurips.cc/paper/2000/file/7503cfacd12053d309b6bed5c89de212-Paper.pdf>`_
     """
     xp, _ = get_namespace(spectrum)
-
     n_features = spectrum.shape[0]
-    if not 1 <= rank < n_features:
-        raise ValueError("the tested rank should be in [1, n_features - 1]")
-
     eps = 1e-15
 
-    if spectrum[rank - 1] < eps:
-        # When the tested rank is associated with a small eigenvalue, there's
-        # no point in computing the log-likelihood: it's going to be very
-        # small and won't be the max anyway. Also, it can lead to numerical
-        # issues below when computing pa, in particular in log((spectrum[i] -
-        # spectrum[j]) because this will take the log of something very small.
-        return -xp.inf
+    # Running argmax of log likelihood. Rank 0 is never a candidate (per the
+    # documented return range).
+    best_ll = -xp.inf
+    best_rank = 1
 
-    pu = -rank * log(2.0)
-    for i in range(1, rank + 1):
-        pu += (
-            lgamma((n_features - i + 1) / 2.0) - log(xp.pi) * (n_features - i + 1) / 2.0
-        )
+    # Below, l = spectrum (non-increasing) and d = n_features. At rank k the
+    # retained block is l(0:k) and lambda_hat(j) = v for j >= k.
+    #
+    # log_diff_sum(k) = sum_{i<k} sum_{j>i} log(l(i) - l(j))
+    # inv_pair_sum(k) = sum_{i<j<k} log(1/l(j) - 1/l(i))
+    # pu_terms(k) = sum_{i<=k} gammaln((d-i+1)/2) - (d-i+1)/2 log(pi), so that
+    #               -k log(2) + pu_terms(k) = log p(U)
+    log_diff_sum = 0.0
+    inv_pair_sum = 0.0
+    pu_terms = 0.0
 
-    pl = xp.sum(xp.log(spectrum[:rank]))
-    pl = -pl * n_samples / 2.0
+    with np.errstate(divide="ignore", invalid="ignore"):
+        # cum_log_spec(k-1) = sum_{i<k} log(l(i)). A spectrum with trailing
+        # zeros makes the tail of this -inf, but the loop breaks at the noise
+        # floor and so only ever reads entries above it.
+        cum_log_spec = xp.cumulative_sum(xp.log(spectrum))
 
-    v = max(eps, xp.sum(spectrum[rank:]) / (n_features - rank))
-    pv = -log(v) * n_samples * (n_features - rank) / 2.0
+        for rank in range(1, n_features):
+            if spectrum[rank - 1] < eps:
+                # When the tested rank is associated with a small eigenvalue,
+                # there's no point in computing the log-likelihood: it's going
+                # to be very small and won't be the max anyway. Also, it can
+                # lead to numerical issues below when computing pa, in
+                # particular in log(spectrum[i] - spectrum[j]) because this
+                # will take the log of something very small. The spectrum is
+                # non-increasing, so every remaining rank is below the floor
+                # too and keeps its -inf.
+                break
 
-    m = n_features * rank - rank * (rank + 1.0) / 2.0
-    pp = log(2.0 * xp.pi) * (m + rank) / 2.0
+            pu_terms += (
+                lgamma((n_features - rank + 1) / 2.0)
+                - log(xp.pi) * (n_features - rank + 1) / 2.0
+            )
+            pu = -rank * log(2.0) + pu_terms
 
-    pa = 0.0
-    spectrum_ = xp.asarray(spectrum, copy=True)
-    spectrum_[rank:n_features] = v
-    for i in range(rank):
-        for j in range(i + 1, spectrum.shape[0]):
-            pa += log(
-                (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
-            ) + log(n_samples)
+            pl = -cum_log_spec[rank - 1] * n_samples / 2.0
 
-    ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
+            # v = mean of the discarded eigenvalues, the noise variance MLE
+            v = max(eps, xp.sum(spectrum[rank:]) / (n_features - rank))
+            pv = -log(v) * n_samples * (n_features - rank) / 2.0
 
-    return ll
+            # m = #{(i, j) : i < k, j > i}, the dimension of the Stiefel
+            # manifold U lives on, so m log(n_samples) is the whole log N
+            # contribution to pa
+            m = n_features * rank - rank * (rank + 1.0) / 2.0
+            pp = log(2.0 * xp.pi) * (m + rank) / 2.0
 
+            # pa = logdet(A_Z). Each rank appends one row to each pair sum:
+            #   log_diff_sum += sum_{j>=k} log(l(k-1) - l(j))
+            #   inv_pair_sum += sum_{i<k-1} log(1/l(k-1) - 1/l(i))
+            # Tied eigenvalues make these log(0); the guard on `ll` below
+            # deals with the -inf that propagates from there.
+            last = spectrum[rank - 1]
+            log_diff_sum += xp.sum(xp.log(last - spectrum[rank:]))
+            inv_pair_sum += xp.sum(xp.log(1.0 / last - 1.0 / spectrum[: rank - 1]))
 
-def _infer_dimension(spectrum, n_samples):
-    """Infers the dimension of a dataset with a given spectrum.
+            # lambda_hat(j) = v for j >= k, so the k(d-k) signal-noise pairs
+            # share one value per i and collapse to a (d-k)-weighted sum
+            inv_v_sum = xp.sum(xp.log(1.0 / v - 1.0 / spectrum[:rank]))
+            pa = (
+                log_diff_sum
+                + inv_pair_sum
+                + (n_features - rank) * inv_v_sum
+                + m * log(n_samples)
+            )
 
-    The returned value will be in [1, n_features - 1].
-    """
-    xp, _ = get_namespace(spectrum)
+            ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
-    ll = xp.empty_like(spectrum)
-    ll[0] = -xp.inf  # we don't want to return n_components = 0
-    for rank in range(1, spectrum.shape[0]):
-        ll[rank] = _assess_dimension(spectrum, rank, n_samples)
-    return xp.argmax(ll)
+            # Reject +inf or nan
+            if ll < xp.inf and ll > best_ll:
+                best_ll = ll
+                best_rank = rank
+
+    return best_rank
 
 
 class PCA(_BasePCA):
