@@ -3,6 +3,7 @@ Tests for sklearn.cluster._feature_agglomeration
 """
 
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn.cluster import FeatureAgglomeration
@@ -53,3 +54,75 @@ def test_feature_agglomeration_feature_names_out():
     assert_array_equal(
         [f"featureagglomeration{i}" for i in range(n_clusters)], names_out
     )
+
+
+def test_feature_agglomeration_inverse_transform_array_like():
+    """Check that inverse_transform works with lists, 1D arrays, and DataFrames.
+
+    Non-regression test for issue #35052.
+    """
+    X = np.arange(20, dtype=float).reshape(10, 2)
+    agglo = FeatureAgglomeration(n_clusters=1).fit(X)
+
+    # 1. 2D list
+    res_list_2d = agglo.inverse_transform([[0.0], [1.0]])
+    assert isinstance(res_list_2d, np.ndarray)
+    assert_array_equal(res_list_2d, [[0.0, 0.0], [1.0, 1.0]])
+
+    # 2. 1D list
+    res_list_1d = agglo.inverse_transform([0.5])
+    assert isinstance(res_list_1d, np.ndarray)
+    assert_array_equal(res_list_1d, [0.5, 0.5])
+
+    # 3. 1D numpy array
+    res_np_1d = agglo.inverse_transform(np.array([0.5]))
+    assert isinstance(res_np_1d, np.ndarray)
+    assert_array_equal(res_np_1d, [0.5, 0.5])
+
+    # 4. pandas DataFrame and Series
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame([[0.0], [1.0]], columns=["c0"])
+    res_df = agglo.inverse_transform(df)
+    assert isinstance(res_df, np.ndarray)
+    assert_array_equal(res_df, [[0.0, 0.0], [1.0, 1.0]])
+
+    series = pd.Series([0.5])
+    res_series = agglo.inverse_transform(series)
+    assert isinstance(res_series, np.ndarray)
+    assert_array_equal(res_series, [0.5, 0.5])
+
+    # 5. set_output(transform="pandas") roundtrip
+    agglo.set_output(transform="pandas")
+    Xt_df = agglo.transform(X)
+    assert isinstance(Xt_df, pd.DataFrame)
+    res_set_output = agglo.inverse_transform(Xt_df)
+    assert isinstance(res_set_output, np.ndarray)
+    assert res_set_output.shape == (10, 2)
+    assert_array_almost_equal(agglo.transform(res_set_output), Xt_df.to_numpy())
+
+
+def test_feature_agglomeration_inverse_transform_shape_mismatch():
+    """Check ValueError when feature count in inverse_transform does not match."""
+    X = np.arange(20, dtype=float).reshape(10, 2)
+    agglo = FeatureAgglomeration(n_clusters=1).fit(X)
+
+    msg = "X has 2 features, but FeatureAgglomeration is expecting 1 features as input."
+    with pytest.raises(ValueError, match=msg):
+        agglo.inverse_transform([[1.0, 2.0]])
+
+    with pytest.raises(ValueError, match=msg):
+        agglo.inverse_transform([1.0, 2.0])
+
+
+def test_feature_agglomeration_inverse_transform_dtype():
+    """Check that inverse_transform preserves the input dtype."""
+    X = np.arange(20, dtype=float).reshape(10, 2)
+    agglo = FeatureAgglomeration(n_clusters=1).fit(X)
+
+    X_int = np.array([[1], [2]], dtype=np.int32)
+    res_int = agglo.inverse_transform(X_int)
+    assert res_int.dtype == np.int32
+
+    X_float32 = np.array([[1.0], [2.0]], dtype=np.float32)
+    res_float32 = agglo.inverse_transform(X_float32)
+    assert res_float32.dtype == np.float32
