@@ -2679,55 +2679,19 @@ def add_dummy_feature(X, value=1.0):
 
 
 def _sparse_column_percentile(column_nnz_data, n_zeros, percentiles):
+    """Compute percentiles of a sparse column without densifying it.
+
+    ``column_nnz_data`` holds the explicitly stored entries of the column, which
+    may be of any sign and may contain NaNs; ``n_zeros`` implicit zeros complete
+    the column. The implicit zeros are represented by a single zero whose weight
+    is ``n_zeros``, which matches ``np.nanpercentile`` on the densified column
+    with ``method="averaged_inverted_cdf"``.
     """
-    Compute percentiles of a sparse column without densifying it.
-
-    ``column_nnz_data`` holds the explicitly stored (non-implicit-zero)
-    entries of the column, which may be of any sign; ``n_zeros`` implicit
-    zeros complete the column. Calculations/Implementation are meant to
-    match np.nanpercentile(, method="averaged_inverted_cdf").
-    """
-    quantiles = np.true_divide(percentiles, 100)
-
-    nan_mask = np.isnan(column_nnz_data)
-    if nan_mask.any():
-        column_nnz_data = column_nnz_data[~nan_mask]
-
-    n_total = n_zeros + column_nnz_data.size
-
-    if n_total == 0:
-        # all-NaN column (no zeros, no valid non-zero values):
-        # nanpercentile returns nan in this case
-        return np.full(quantiles.shape, np.nan)
-
-    sorted_nnz = np.sort(column_nnz_data)
-    # Position where the block of `n_zeros` implicit zeros is merged into
-    # the sorted non-zero values (i.e. the number of stored values < 0).
-    zero_insert_pos = np.searchsorted(sorted_nnz, 0)
-
-    # Same virtual index definition as numpy: take the next value, or average
-    # the two neighbours when landing exactly on a step of the empirical CDF.
-    idx = n_total * quantiles - 1
-    lo = np.floor(idx)
-    frac = np.where(idx == lo, 0.5, 1.0)
-    lo = lo.astype(int)
-    hi = lo + 1
-
-    def value_at_rank(ranks):
-        ranks = np.clip(ranks, 0, n_total - 1)
-        out = np.empty(ranks.shape, dtype=float)
-
-        before_zeros = ranks < zero_insert_pos
-        after_zeros = ranks >= zero_insert_pos + n_zeros
-
-        out[before_zeros] = sorted_nnz[ranks[before_zeros]]
-        out[~before_zeros & ~after_zeros] = 0.0
-        out[after_zeros] = sorted_nnz[ranks[after_zeros] - n_zeros]
-        return out
-
-    v_lo = value_at_rank(lo)
-    v_hi = value_at_rank(hi)
-    return v_lo + frac * (v_hi - v_lo)
+    # float64 so that the weights CDF stays exact for large `n_samples`
+    column_data = np.append(column_nnz_data.astype(np.float64), 0.0)
+    sample_weight = np.ones_like(column_data)
+    sample_weight[-1] = n_zeros
+    return _weighted_percentile(column_data, sample_weight, percentiles, average=True)
 
 
 class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):

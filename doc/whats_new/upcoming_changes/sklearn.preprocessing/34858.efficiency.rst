@@ -1,5 +1,5 @@
-- Fixed a bug in :class:`preprocessing.QuantileTransformer` and
-  :class:`preprocessing.RobustScaler` where fitting on sparse data could
-  densify a column into an array of size `n_samples` to compute causing
-  slowdowns or out-of-memory errors for very sparse matrices.
+- :class:`preprocessing.QuantileTransformer` and
+  :class:`preprocessing.RobustScaler` no longer densify the columns of sparse
+  data into arrays of size `n_samples` to compute quantiles. This avoids
+  slowdowns and out-of-memory errors when fitting on very sparse matrices.
   By :user:`Saad Shabbir <Stag51>` and :user:`Arthur Lacote <cakedev0>`.
