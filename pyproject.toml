@@ -11,7 +11,7 @@ dependencies = [
   "scipy>=1.11.4",
   "joblib>=1.4.0",
   "narwhals>=2.0.1",
-  "threadpoolctl>=3.5.0",
+  "threadpoolctl>=3.7.0",
 ]
 requires-python = ">=3.12"
 license = "BSD-3-Clause"
