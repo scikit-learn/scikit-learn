@@ -13,7 +13,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._base import LinearModel
 from sklearn.utils import _safe_indexing
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils.fixes import _sparse_eye_array, parse_version, sp_version
+from sklearn.utils.fixes import _sparse_eye_array
 from sklearn.utils.validation import _check_sample_weight, validate_data
 
 
@@ -43,8 +43,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     fit_intercept : bool, default=True
         Whether or not to fit the intercept.
 
-    solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
-            'revised simplex'}, default='highs'
+    solver : {'highs-ds', 'highs-ipm', 'highs', 'revised simplex'}, default='highs'
         Method used by :func:`scipy.optimize.linprog` to solve the linear
         programming formulation.
 
@@ -52,16 +51,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         they are the fastest ones. Solvers "highs-ds", "highs-ipm" and "highs"
         support sparse input data and, in fact, always convert to sparse csc.
 
-        From `scipy>=1.11.0`, "interior-point" is not available anymore.
-
         .. versionchanged:: 1.4
            The default of `solver` changed to `"highs"` in version 1.4.
 
     solver_options : dict, default=None
-        Additional parameters passed to :func:`scipy.optimize.linprog` as
-        options. If `None` and if `solver='interior-point'`, then
-        `{"lstsq": True}` is passed to :func:`scipy.optimize.linprog` for the
-        sake of stability.
+        Additional parameters passed to :func:`scipy.optimize.linprog` as options.
 
     Attributes
     ----------
@@ -99,8 +93,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> # the two following lines are optional in practice
-    >>> from sklearn.utils.fixes import sp_version, parse_version
     >>> reg = QuantileRegressor(quantile=0.8).fit(X, y)
     >>> np.mean(y <= reg.predict(X))
     np.float64(0.8)
@@ -110,17 +102,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         "quantile": [Interval(Real, 0, 1, closed="neither")],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "fit_intercept": ["boolean"],
-        "solver": [
-            StrOptions(
-                {
-                    "highs-ds",
-                    "highs-ipm",
-                    "highs",
-                    "interior-point",
-                    "revised simplex",
-                }
-            ),
-        ],
+        "solver": [StrOptions({"highs-ds", "highs-ipm", "highs", "revised simplex"})],
         "solver_options": [dict, None],
     }
 
@@ -181,21 +163,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # So we rescale the penalty term, which is equivalent.
         alpha = np.sum(sample_weight) * self.alpha
 
-        if self.solver == "interior-point" and sp_version >= parse_version("1.11.0"):
-            raise ValueError(
-                f"Solver {self.solver} is not anymore available in SciPy >= 1.11.0."
-            )
-
         if sparse.issparse(X) and self.solver not in ["highs", "highs-ds", "highs-ipm"]:
             raise ValueError(
                 f"Solver {self.solver} does not support sparse X. "
                 "Use solver 'highs' for example."
             )
-        # make default solver more stable
-        if self.solver_options is None and self.solver == "interior-point":
-            solver_options = {"lstsq": True}
-        else:
-            solver_options = self.solver_options
 
         # After rescaling alpha, the minimization problem is
         #     min sum(pinball loss) + alpha * L1
@@ -261,7 +233,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             A_eq=A_eq,
             b_eq=b_eq,
             method=self.solver,
-            options=solver_options,
+            options=self.solver_options,
         )
         solution = result.x
         if not result.success:
