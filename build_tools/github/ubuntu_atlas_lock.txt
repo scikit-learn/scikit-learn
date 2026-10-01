@@ -37,5 +37,5 @@ pytest==9.1.1
     #   pytest-xdist
 pytest-xdist==3.8.0
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
-threadpoolctl==3.5.0
+threadpoolctl==3.7.0
     # via -r build_tools/github/ubuntu_atlas_requirements.txt

@@ -71,7 +71,7 @@
         "cython": ["3.1.2"],
         "joblib": ["1.4.0"],
         "narwhals": ["2.0.1"],
-        "threadpoolctl": ["3.5.0"],
+        "threadpoolctl": ["3.7.0"],
         "pandas": ["2.2.2"]
     },
 
