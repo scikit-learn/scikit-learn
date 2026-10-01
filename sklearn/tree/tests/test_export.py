@@ -1311,3 +1311,141 @@ def test_export_dict_left_categories_numeric_node():
     estimator = DecisionTreeClassifier().fit([[0], [1]], [0, 1])
     with pytest.raises(ValueError, match="categorical split"):
         estimator.tree_._get_left_categories(0)
+
+
+@pytest.mark.parametrize(
+    "Tree",
+    [
+        DecisionTreeClassifier,
+        DecisionTreeRegressor,
+        ExtraTreeClassifier,
+        ExtraTreeRegressor,
+    ],
+)
+@pytest.mark.parametrize(
+    "labels", [list("abcd"), [10, 20, 30, 40], ["a", "b", "c", None]]
+)
+@pytest.mark.parametrize("missing_in_fit", [False, True])
+@pytest.mark.parametrize("exporter", ["text", "graphviz", "plot"])
+def test_categorical_export_labels_and_routing(
+    Tree, labels, missing_in_fit, exporter, request
+):
+    # Keep the categorical feature away from column zero to exercise label lookup.
+    X = np.empty((80, 2), dtype=object)
+    X[:, 0] = 0.0
+    X[:, 1] = np.tile(labels, 20)
+    y = np.tile([0, 1, 0, 1], 20)
+    if missing_in_fit:
+        X[::9, 1] = np.nan
+    estimator = Tree(categorical_features=[1], max_depth=1, random_state=0).fit(X, y)
+    tree = estimator.tree_
+    exported = export_dict(estimator)
+    categories = exported["categorical_features"][0]["categories"]
+    left_codes = exported["categories_left"]
+    left = [label for code, label in enumerate(categories) if code in left_codes]
+    right = [label for code, label in enumerate(categories) if code not in left_codes]
+    left_set = "{" + ", ".join(repr(label) for label in left) + "}"
+    right_set = "{" + ", ".join(repr(label) for label in right) + "}"
+    direction = "left" if exported["missing_go_to_left"] else "right"
+    feature_names = ["constant", "category"]
+    if exporter == "text":
+        result = export_text(estimator, feature_names=feature_names)
+        assert f"category in {left_set}" in result
+        assert f"category in {right_set}" in result
+        missing_set = left_set if direction == "left" else right_set
+        assert f"category in {missing_set} or missing/unknown" in result
+    elif exporter == "graphviz":
+        result = export_graphviz(estimator, feature_names=feature_names)
+        assert f"category in {left_set}" in result
+        assert f"missing/unknown: {direction}" in result
+    else:
+        pyplot = request.getfixturevalue("pyplot")
+        _, ax = pyplot.subplots()
+        annotations = plot_tree(estimator, feature_names=feature_names, ax=ax)
+        assert f"category in {left_set}" in annotations[0].get_text()
+        assert f"missing/unknown: {direction}" in annotations[0].get_text()
+        pyplot.close(ax.figure)
+    probes = np.array(
+        [[0.0, label] for label in [*categories, np.nan, "unknown"]], dtype=object
+    )
+    expected = [
+        tree.children_left[0] if i in left_codes else tree.children_right[0]
+        for i in range(len(categories))
+    ]
+    missing_leaf = (
+        tree.children_left[0] if direction == "left" else tree.children_right[0]
+    )
+    np.testing.assert_array_equal(
+        estimator.apply(probes), [*expected, missing_leaf, missing_leaf]
+    )
+
+
+@pytest.mark.parametrize(
+    "Tree, n_categories", [(DecisionTreeClassifier, 40), (ExtraTreeClassifier, 300)]
+)
+def test_categorical_export_large_splits(Tree, n_categories):
+    X = np.arange(n_categories).reshape(-1, 1)
+    estimator = Tree(categorical_features=[0], max_depth=1, random_state=0).fit(
+        X, X[:, 0] % 2
+    )
+    left_leaves = estimator.apply(X) == estimator.tree_.children_left[0]
+    left_set = "{" + ", ".join(repr(int(v)) for v in X[left_leaves, 0]) + "}"
+    assert f"feature_0 in {left_set}" in export_text(estimator)
+    assert f"x[0] in {left_set}" in export_graphviz(estimator)
+
+
+@pytest.mark.parametrize("special_characters", [False, True])
+def test_categorical_graphviz_escape(special_characters):
+    from html import unescape
+    from xml.etree import ElementTree
+
+    labels = ['a"b', "c'd", "<tag>&", r"back\slash", "line\nbreak", "plain"]
+    X = np.array(labels * 4, dtype=object).reshape(-1, 1)
+    estimator = DecisionTreeClassifier(categorical_features=[0], max_depth=1).fit(
+        X, np.tile([0, 0, 0, 0, 0, 1], 4)
+    )
+    contents = export_graphviz(estimator, special_characters=special_characters)
+    if special_characters:
+        label = contents.split("0 [label=<", 1)[1].split(">]", 1)[0]
+        # DOT HTML labels must remain well-formed with arbitrary category strings.
+        ElementTree.fromstring("<root>" + label.replace("&le;", "&#8804;") + "</root>")
+        decoded = unescape(label)
+    else:
+        label = search(r'0 \[label=("(?:\\.|[^"\\])*")', contents).group(1)
+        decoded = json.loads(label)
+    exported = export_dict(estimator)
+    categories = exported["categorical_features"][0]["categories"]
+    for code in exported["categories_left"]:
+        assert repr(categories[code]) in decoded
+
+
+@pytest.mark.parametrize("exporter", [export_text, export_graphviz])
+def test_categorical_export_truncation_and_mixed_splits(exporter):
+    X = np.array([[v, label] for v in [0.0, 1.0] for label in "abc"] * 4, dtype=object)
+    y = ((X[:, 0] == 1.0) ^ (X[:, 1] == "b")).astype(int)
+    estimator = DecisionTreeClassifier(categorical_features=[1], random_state=0).fit(
+        X, y
+    )
+    result = exporter(estimator, feature_names=["number", "category"])
+    assert "number <= " in result
+    assert "category in {" in result
+    truncated = exporter(estimator, max_depth=0)
+    assert (
+        "truncated branch" in truncated
+        if exporter is export_text
+        else "(...)" in truncated
+    )
+
+
+def test_categorical_plot_literal_dollar_labels(pyplot):
+    X = np.array([["$a$"], ["$b$"], ["other"]] * 4, dtype=object)
+    estimator = DecisionTreeClassifier(categorical_features=[0], max_depth=1).fit(
+        X, np.tile([0, 0, 1], 4)
+    )
+    _, ax = pyplot.subplots()
+    annotations = plot_tree(estimator, ax=ax)
+    label = annotations[0].get_text()
+    assert r"'\$a\$'" in label
+    assert r"'\$b\$'" in label
+    ax.figure.canvas.draw()
+    pyplot.close(ax.figure)

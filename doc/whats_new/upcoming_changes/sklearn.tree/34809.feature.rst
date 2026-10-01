@@ -1,3 +1,5 @@
-- :func:`tree.export_dict`, which exports a fitted :class:`tree.DecisionTreeClassifier`
-  or :class:`tree.DecisionTreeRegressor` as a nested dict, including categorical splits, optionally writing it to
-  `out_file` as JSON. By :user:`lcrmorin`.
+- :func:`tree.export_dict` exports a fitted decision tree as a nested dict,
+  including categorical splits, optionally writing it to `out_file` as JSON.
+  :func:`tree.export_text`, :func:`tree.export_graphviz`, and :func:`tree.plot_tree`
+  also display categorical splits with their original labels and indicate
+  missing-value and unknown-category routing. By :user:`lcrmorin`.

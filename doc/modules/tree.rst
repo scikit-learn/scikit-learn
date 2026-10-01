@@ -272,6 +272,23 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       ...     probes).tolist()
       True
 
+  :func:`export_text`, :func:`export_graphviz`, and :func:`plot_tree` also
+  show categorical splits using the original labels. Text reports list the
+  known categories on each branch and mark the branch taken by missing values
+  and unknown categories::
+
+      >>> print(export_text(cat_tree, feature_names=["color"]))
+      |--- color in {'blue', 'red'} or missing/unknown
+      |   |--- class: 0
+      |--- color in {'green'}
+      |   |--- class: 1
+      <BLANKLINE>
+
+  Graphviz and plotted nodes show the left-category membership condition and
+  a separate ``missing/unknown: left`` or ``missing/unknown: right`` annotation.
+  Category labels are not rounded. Large categorical splits can produce long
+  labels, including when the tree uses random categorical splits.
+
   This example assumes a full, unrounded export with the original class labels
   (the defaults). Truncated exports summarize omitted branches, and rounding
   can change predictions. Missing-value routing applies only to trees that
