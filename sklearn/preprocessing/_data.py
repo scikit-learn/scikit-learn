@@ -48,7 +48,7 @@ from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
-from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.stats import _weighted_percentile, _weighted_percentile_1d_sorted
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
@@ -2687,11 +2687,23 @@ def _sparse_column_percentile(column_nnz_data, n_zeros, percentiles):
     is ``n_zeros``, which matches ``np.nanpercentile`` on the densified column
     with ``method="averaged_inverted_cdf"``.
     """
+    percentiles = np.asarray(percentiles, dtype=np.float64)
+    n_nans = np.count_nonzero(np.isnan(column_nnz_data))
     # float64 so that the weights CDF stays exact for large `n_samples`
-    column_data = np.append(column_nnz_data.astype(np.float64), 0.0)
+    column_data = column_nnz_data.astype(np.float64)
+    column_data.sort()  # NaNs are sorted last
+    column_data = column_data[: column_data.size - n_nans]
     sample_weight = np.ones_like(column_data)
-    sample_weight[-1] = n_zeros
-    return _weighted_percentile(column_data, sample_weight, percentiles, average=True)
+    if n_zeros > 0:
+        zero_idx = np.searchsorted(column_data, 0.0)
+        column_data = np.insert(column_data, zero_idx, 0.0)
+        sample_weight = np.insert(sample_weight, zero_idx, n_zeros)
+    if column_data.size == 0:
+        return np.full(percentiles.shape, np.nan)
+    # Unlike `_weighted_percentile`, `_weighted_percentile_1d_sorted` is vectorized
+    # over `percentiles`, which matters for `QuantileTransformer` (`n_quantiles`
+    # percentiles per column).
+    return _weighted_percentile_1d_sorted(column_data, sample_weight, percentiles)
 
 
 class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
