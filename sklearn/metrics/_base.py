@@ -8,19 +8,20 @@ Common code for all metrics.
 
 from itertools import combinations
 
-import numpy as np
-
 import sklearn.externals.array_api_extra as xpx
 from sklearn.utils import check_array, check_consistent_length
 from sklearn.utils._array_api import (
     _average,
     _ravel,
     get_namespace_and_device,
+    move_to,
 )
-from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.multiclass import type_of_target, unique_labels
 
 
-def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight=None):
+def _average_binary_score(
+    binary_metric, y_true_encoded, y_score, average, sample_weight=None
+):
     """Average a binary metric for multilabel classification.
 
     Parameters
@@ -28,7 +29,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
     binary_metric : callable, returns shape [n_classes]
         The binary metric function to use.
 
-    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+    y_true_encoded : array, shape = [n_samples] or [n_samples, n_classes]
         True binary labels in binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
@@ -52,7 +53,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         ``'samples'``:
             Calculate metrics for each instance, and find their average.
 
-        Will be ignored when ``y_true`` is binary.
+        Will be ignored when ``y_true_encoded`` is binary.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -64,21 +65,24 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         classes.
 
     """
-    xp, _, _device = get_namespace_and_device(y_score, sample_weight)
+    xp, _, device = get_namespace_and_device(y_score)
     average_options = (None, "micro", "macro", "weighted", "samples")
     if average not in average_options:
         raise ValueError("average has to be one of {0}".format(average_options))
 
-    y_type = type_of_target(y_true)
+    y_type = type_of_target(y_true_encoded)
     if y_type not in ("binary", "multilabel-indicator"):
         raise ValueError("{0} format is not supported".format(y_type))
 
     if y_type == "binary":
-        return binary_metric(y_true, y_score, sample_weight=sample_weight)
+        return binary_metric(y_true_encoded, y_score, sample_weight=sample_weight)
 
-    check_consistent_length(y_true, y_score, sample_weight)
-    y_true = check_array(y_true)
+    check_consistent_length(y_true_encoded, y_score, sample_weight)
+    y_true_encoded = check_array(y_true_encoded)
     y_score = check_array(y_score)
+    y_true_encoded, sample_weight = move_to(
+        y_true_encoded, sample_weight, xp=xp, device=device
+    )
 
     not_average_axis = 1
     score_weight = sample_weight
@@ -86,22 +90,22 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
 
     if average == "micro":
         if score_weight is not None:
-            score_weight = xp.repeat(score_weight, y_true.shape[1])
-        y_true = _ravel(y_true)
+            score_weight = xp.repeat(score_weight, y_true_encoded.shape[1])
+        y_true_encoded = _ravel(y_true_encoded)
         y_score = _ravel(y_score)
 
     elif average == "weighted":
         if score_weight is not None:
             #  Mixed integer and float type promotion not defined in array standard
-            y_true = xp.asarray(y_true, dtype=score_weight.dtype)
+            y_true_encoded = xp.asarray(y_true_encoded, dtype=score_weight.dtype)
             average_weight = xp.sum(
-                xp.multiply(y_true, xp.reshape(score_weight, (-1, 1))), axis=0
+                xp.multiply(y_true_encoded, xp.reshape(score_weight, (-1, 1))), axis=0
             )
         else:
-            average_weight = xp.sum(y_true, axis=0)
+            average_weight = xp.sum(y_true_encoded, axis=0)
         if xpx.isclose(
             xp.sum(average_weight),
-            xp.asarray(0, dtype=average_weight.dtype, device=_device),
+            xp.asarray(0, dtype=average_weight.dtype, device=device),
         ):
             return 0
 
@@ -111,20 +115,22 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         score_weight = None
         not_average_axis = 0
 
-    if y_true.ndim == 1:
-        y_true = xp.reshape(y_true, (-1, 1))
+    if y_true_encoded.ndim == 1:
+        y_true_encoded = xp.reshape(y_true_encoded, (-1, 1))
 
     if y_score.ndim == 1:
         y_score = xp.reshape(y_score, (-1, 1))
 
     n_classes = y_score.shape[not_average_axis]
-    score = xp.zeros((n_classes,), device=_device)
+    score = xp.zeros((n_classes,), device=device)
     for c in range(n_classes):
         y_true_c = _ravel(
-            xp.take(y_true, xp.asarray([c], device=_device), axis=not_average_axis)
+            xp.take(
+                y_true_encoded, xp.asarray([c], device=device), axis=not_average_axis
+            )
         )
         y_score_c = _ravel(
-            xp.take(y_score, xp.asarray([c], device=_device), axis=not_average_axis)
+            xp.take(y_score, xp.asarray([c], device=device), axis=not_average_axis)
         )
         score[c] = binary_metric(y_true_c, y_score_c, sample_weight=score_weight)
 
@@ -139,7 +145,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average, sample_weight
         return score
 
 
-def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro"):
+def _average_multiclass_ovo_score(
+    binary_metric, y_true_encoded, y_score, average="macro"
+):
     """Average one-versus-one scores for multiclass classification.
 
     Uses the binary metric for one-vs-one multiclass classification,
@@ -150,14 +158,14 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
     binary_metric : callable
         The binary metric function to use that accepts the following as input:
             y_true_target : array, shape = [n_samples_target]
-                Some sub-array of y_true for a pair of classes designated
+                Some sub-array of y_true_encoded for a pair of classes designated
                 positive and negative in the one-vs-one scheme.
             y_score_target : array, shape = [n_samples_target]
                 Scores corresponding to the probability estimates
                 of a sample belonging to the designated positive class label
 
-    y_true : array-like of shape (n_samples,)
-        True multiclass labels.
+    y_true_encoded : array-like of shape (n_samples,)
+        Encoded true multiclass labels.
 
     y_score : array-like of shape (n_samples, n_classes)
         Target scores corresponding to probability estimates of a sample
@@ -176,28 +184,36 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
 
     Returns
     -------
-    score : float
+    score : array-like
         Average of the pairwise binary metric scores.
     """
-    check_consistent_length(y_true, y_score)
+    check_consistent_length(y_true_encoded, y_score)
 
-    y_true_unique = np.unique(y_true)
+    xp, _, device = get_namespace_and_device(y_score)
+    y_true_encoded = move_to(y_true_encoded, xp=xp, device=device)
+
+    y_true_unique = unique_labels(y_true_encoded)
     n_classes = y_true_unique.shape[0]
     n_pairs = n_classes * (n_classes - 1) // 2
-    pair_scores = np.empty(n_pairs)
+    pair_scores = xp.empty(n_pairs, device=device)
 
     is_weighted = average == "weighted"
-    prevalence = np.empty(n_pairs) if is_weighted else None
+    prevalence = xp.empty(n_pairs, device=device) if is_weighted else None
 
     # Compute scores treating a as positive class and b as negative class,
     # then b as positive class and a as negative class
     for ix, (a, b) in enumerate(combinations(y_true_unique, 2)):
-        a_mask = y_true == a
-        b_mask = y_true == b
-        ab_mask = np.logical_or(a_mask, b_mask)
+        a_mask = y_true_encoded == a
+        b_mask = y_true_encoded == b
+        ab_mask = xp.logical_or(a_mask, b_mask)
 
         if is_weighted:
-            prevalence[ix] = np.average(ab_mask)
+            prevalence[ix] = _average(ab_mask, xp=xp)
+
+        # array API does not allow mixed Boolean / integral indexing.
+        # Hence, need to convert to integers to be able to index
+        # y_score[ab_mask, a] and y_score[ab_mask, b].
+        ab_mask = xp.nonzero(ab_mask)[0]
 
         a_true = a_mask[ab_mask]
         b_true = b_mask[ab_mask]
@@ -206,4 +222,4 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score, average="macro
         b_true_score = binary_metric(b_true, y_score[ab_mask, b])
         pair_scores[ix] = (a_true_score + b_true_score) / 2
 
-    return np.average(pair_scores, weights=prevalence)
+    return _average(pair_scores, weights=prevalence, xp=xp)
