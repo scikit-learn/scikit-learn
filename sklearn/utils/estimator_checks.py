@@ -5761,19 +5761,37 @@ def _fit_estimator_with_recording_callback(estimator_orig):
     return estimator, callback
 
 
-def check_callback_single_root(name, estimator_orig):
-    """Check that a single fit has exactly one root callback context."""
-    _, callback = _fit_estimator_with_recording_callback(estimator_orig)
+def check_callback_support(name, estimator_orig):
+    """Check that callback support is correctly implemented in estimator.
 
+    The estimator is fitted once with a recording callback, then we run a series of
+    checks on the recording.
+    """
+    estimator, callback = _fit_estimator_with_recording_callback(estimator_orig)
+    errors = []
+    for subcheck in (
+        _check_callback_single_root,
+        _check_callback_setup_teardown_called_once,
+        _check_callback_begin_end_match,
+        _check_callback_estimator_is_self,
+    ):
+        try:
+            subcheck(name, estimator, callback)
+        except AssertionError as e:
+            errors.append(str(e))
+    if errors:
+        raise AssertionError("\n".join(errors))
+
+
+def _check_callback_single_root(name, _estimator, callback):
+    """Check that a single fit has exactly one root callback context."""
     root_uuids = {entry["context"].root_uuid for entry in callback.record}
     msg = f"{name}: found {len(root_uuids)} root callback contexts. Expected one."
     assert len(root_uuids) == 1, msg
 
 
-def check_callback_setup_teardown_called_once(name, estimator_orig):
+def _check_callback_setup_teardown_called_once(name, _estimator, callback):
     """Check that setup and teardown are called exactly once per fit, in that order."""
-    _, callback = _fit_estimator_with_recording_callback(estimator_orig)
-
     n_setup = callback.count_hooks("setup")
     msg = f"{name}: expected setup to be called once, got {n_setup}."
     assert n_setup == 1, msg
@@ -5787,14 +5805,12 @@ def check_callback_setup_teardown_called_once(name, estimator_orig):
     assert hook_names.index("setup") < hook_names.index("teardown"), msg
 
 
-def check_callback_begin_end_match(name, estimator_orig):
+def _check_callback_begin_end_match(name, _estimator, callback):
     """Check that on_fit_task_begin / on_fit_task_end calls match.
 
     Each task in the callback tree must call `on_fit_task_begin` exactly once
     and `on_fit_task_end` exactly once, in that order.
     """
-    _, callback = _fit_estimator_with_recording_callback(estimator_orig)
-
     events_by_context = defaultdict(list)
     for entry in callback.record:
         if entry["name"] not in ("on_fit_task_begin", "on_fit_task_end"):
@@ -5815,10 +5831,8 @@ def check_callback_begin_end_match(name, estimator_orig):
         assert len(events) == 2, msg
 
 
-def check_callback_estimator_is_self(name, estimator_orig):
+def _check_callback_estimator_is_self(name, estimator, callback):
     """Check that every hook receives the estimator instance that fit was called on."""
-    estimator, callback = _fit_estimator_with_recording_callback(estimator_orig)
-
     for entry in callback.record:
         msg = (
             f"{name}: hook '{entry['name']}' received {entry['estimator']!r} as "

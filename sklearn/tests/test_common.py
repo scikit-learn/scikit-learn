@@ -44,10 +44,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import (
     check_all_zero_sample_weights_error,
-    check_callback_begin_end_match,
-    check_callback_estimator_is_self,
-    check_callback_setup_teardown_called_once,
-    check_callback_single_root,
+    check_callback_support,
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
@@ -634,23 +631,14 @@ NO_CALLBACK_SUPPORT = {
 
 
 @pytest.mark.parametrize(
-    "check",
-    [
-        check_callback_setup_teardown_called_once,
-        check_callback_begin_end_match,
-        check_callback_estimator_is_self,
-        check_callback_single_root,
-    ],
-)
-@pytest.mark.parametrize(
     "estimator", list(_tested_estimators()), ids=_get_check_estimator_ids
 )
 @skip_callback_test_if_wasm
-def test_callback_support(estimator, check):
+def test_callback_support(estimator):
     name = estimator.__class__.__name__
     if name in NO_CALLBACK_SUPPORT:
         pytest.skip(f"{name} does not support callbacks yet")
 
-    for est in _yield_instances_for_check(check, estimator):
+    for est in _yield_instances_for_check(check_callback_support, estimator):
         with ignore_warnings(category=(ConvergenceWarning, FutureWarning, UserWarning)):
-            check(name, est)
+            check_callback_support(name, est)
