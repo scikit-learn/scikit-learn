@@ -16,11 +16,10 @@ from sklearn.utils._array_api import (
     _average,
     _is_numpy_namespace,
     _max_precision_float_dtype,
-    _nanmean,
-    _nansum,
     array_device,
     get_namespace,
     get_namespace_and_device,
+    xpx,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.deprecation import deprecated
@@ -417,7 +416,7 @@ def randomized_svd(
     (problem (1.5), p5).
 
     Refer to
-    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    :ref:`sphx_glr_auto_examples_applications_plot_wikipedia_principal_eigenvector.py`
     for a typical example where the power iteration algorithm is used to rank web pages.
     This algorithm is also known to be used as a building block in Google's PageRank
     algorithm.
@@ -1183,7 +1182,7 @@ def _incremental_mean_and_var(
     last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
-        sum_op = _nansum
+        sum_op = xpx.nansum
     else:
         sum_op = xp.sum
     if sample_weight is not None:
@@ -1367,7 +1366,7 @@ def _nanaverage(a, weights=None):
         return xp.nan
 
     if weights is None:
-        return _nanmean(a, xp=xp)
+        return xpx.nanmean(a, xp=xp)
 
     weights = xp.asarray(weights)
     a, weights = a[~mask], weights[~mask]
