@@ -268,7 +268,7 @@ html_theme_options = {
     # https://pydata-sphinx-theme.readthedocs.io/en/stable/user_guide/version-dropdown.html#configure-switcher-json-url
     "check_switcher": True,
     "pygments_light_style": "github-light-high-contrast",
-    "pygments_dark_style": " github-dark-high-contrast",
+    "pygments_dark_style": "github-dark-high-contrast",
     "logo": {
         "alt_text": "scikit-learn homepage",
         "image_relative": "logos/scikit-learn-logo-without-subtitle.svg",
