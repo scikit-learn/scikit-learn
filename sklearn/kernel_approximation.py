@@ -85,7 +85,7 @@ class PolynomialCountSketch(
         Array of indexes in range [0, n_components) used to represent
         the 2-wise independent hash functions for Count Sketch computation.
 
-    bitHash_ : ndarray of shape (degree, n_features), dtype=float32
+    bitHash_ : ndarray of shape (degree, n_features), dtype=int64
         Array with random entries in {+1, -1}, used to represent
         the 2-wise independent hash functions for Count Sketch computation.
 
