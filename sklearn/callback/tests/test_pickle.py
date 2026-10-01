@@ -19,7 +19,7 @@ import textwrap
 import pytest
 
 from sklearn.callback import ProgressBar, ScoringMonitor
-from sklearn.callback._transport import _message_consumers
+from sklearn.callback._transport import Channel
 from sklearn.callback.tests._common.estimators import MaxIterEstimator
 from sklearn.datasets import make_regression
 
@@ -162,58 +162,58 @@ class _TraversalRecorder(pickle.Pickler):
         return None  # pickle `obj` as usual
 
 
-def _checked(hook):
-    """Wrap a callback hook so that it first checks the callback it is called on.
-
-    The check is that the pickler does not walk through the objects that listener
-    threads mutate. They are found through the registered consumers: a consumer is
-    normally a method bound to the container it fills, e.g. `self._log.append` for
-    ScoringMonitor or `queue.put` for ProgressBar, so the container is what it is bound
-    to. A consumer bound to nothing, e.g. a closure, is skipped, since there is then no
-    way to tell what it mutates.
-    """
-
-    # preserve the signature of the hook because callbacks are validated against it
-    @functools.wraps(hook)
-    def checked_hook(self, *args, **kwargs):
-        # snapshot because another thread may register a listener concurrently
-        consumers = list(_message_consumers.values())
-        # the containers are held, not just their ids, which could be reused once freed
-        watched = [c.__self__ for c in consumers if hasattr(c, "__self__")]
-
-        recorder = _TraversalRecorder()
-        recorder.dump(self)
-
-        offenders = recorder.walked_through & {id(container) for container in watched}
-        assert not offenders, (
-            f"Pickling {self.__class__.__name__} walks through a container that a"
-            " listener thread mutates concurrently. Keep it away from the pickler,"
-            " either by handing over a copy of it in the callback's `__getstate__`, or"
-            " by storing it outside of the callback instance."
-        )
-
-        return hook(self, *args, **kwargs)
-
-    return checked_hook
-
-
 @pytest.mark.parametrize("factory", CALLBACK_FACTORIES)
-def test_listener_state_is_not_walked_by_the_pickler(factory, monkeypatch):
-    """Check that pickling a callback never traverses state its listener mutates.
+def test_channel_state_is_not_walked_by_the_pickler(factory, monkeypatch):
+    """Check that pickling a callback never traverses state its channels write to.
 
     An estimator carrying a callback can be pickled by a background thread, e.g. loky's
-    queue feeder dispatching a task to a worker, while the listener thread of that same
+    queue feeder dispatching a task to a worker, while a channel thread of that same
     callback mutates the callback's state as messages come in. Pickling a container that
     another thread mutates breaks the dump, which joblib reports as "Could not pickle
     the task to send it to the workers".
 
-    The check runs from a hook, i.e. while the listeners are up, which is when such a
+    The check runs from a hook, i.e. while the channels are up, which is when such a
     dispatch would happen.
     """
+    # Modify Channel.__init__ to record the objects that the message consumers mutate.
+    # A message consumer is normally a method bound to the container it mutates, e.g.
+    # `self._log.append` for ScoringMonitor or `queue.put` for ProgressBar, so the
+    # container is what it is bound to. A consumer bound to nothing, e.g. a closure, is
+    # skipped, since there is then no way to tell what it mutates.
+
+    watched = []
+    channel_init = Channel.__init__
+
+    def recording_init(channel, message_consumer):
+        if hasattr(message_consumer, "__self__"):
+            watched.append(message_consumer.__self__)
+        channel_init(channel, message_consumer)
+
+    monkeypatch.setattr(Channel, "__init__", recording_init)
+
+    # Modify callback hooks so that they first check that the pickler does not walk
+    # through the objects that channel threads mutate.
+    def checked(hook):
+        # `functools.wraps` because callbacks are validated against the hook signature
+        @functools.wraps(hook)
+        def checked_hook(self, *args, **kwargs):
+            recorder = _TraversalRecorder()
+            recorder.dump(self)
+            offenders = recorder.walked_through & {id(obj) for obj in watched}
+            assert not offenders, (
+                f"Pickling {type(self).__name__} walks through a container that a"
+                " channel thread mutates concurrently. Keep it away from the pickler,"
+                " either by handing over a copy of it in the callback's `__getstate__`,"
+                " or by storing it outside of the callback instance."
+            )
+            return hook(self, *args, **kwargs)
+
+        return checked_hook
+
     callback = factory()
 
     for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
         hook = getattr(callback.__class__, hook_name)
-        monkeypatch.setattr(callback.__class__, hook_name, _checked(hook))
+        monkeypatch.setattr(callback.__class__, hook_name, checked(hook))
 
     MaxIterEstimator(max_iter=3).set_callbacks(callback).fit()
