@@ -1,0 +1,5 @@
+- Fix a regression where :class:`ensemble.IsolationForest`,
+  :class:`ensemble.BaggingClassifier`, and :class:`ensemble.BaggingRegressor`
+  crashed with a ``ValueError`` when ``bootstrap=False`` and ``sample_weight``
+  contained zeros.
+  By :user:`shubhampotdar4122003-debug`
