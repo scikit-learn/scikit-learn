@@ -1612,12 +1612,10 @@ def test_logreg_predict_proba_multinomial(global_random_seed):
 
     # Predicted probabilities using the true-entropy loss should give a
     # smaller loss than those using the ovr method.
-    clf_multi = LogisticRegression(alpha=1e-2, solver="newton-cholesky")
+    clf_multi = LogisticRegression()
     clf_multi.fit(X, y)
     clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
-    clf_ovr = OneVsRestClassifier(
-        LogisticRegression(alpha=1e-2, solver="newton-cholesky")
-    )
+    clf_ovr = OneVsRestClassifier(LogisticRegression())
     clf_ovr.fit(X, y)
     clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
     assert clf_ovr_loss > clf_multi_loss
@@ -1656,7 +1654,6 @@ def test_max_iter(global_random_seed, max_iter, solver, message):
         pytest.skip("solver newton-cholesky might converge very fast")
 
     lr = LogisticRegression(
-        alpha=1e-2,
         max_iter=max_iter,
         tol=1e-15,
         random_state=global_random_seed,
