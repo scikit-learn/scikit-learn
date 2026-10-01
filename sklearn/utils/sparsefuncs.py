@@ -9,7 +9,6 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import LinearOperator
 
-from sklearn.utils.fixes import _sparse_min_max, _sparse_nan_min_max
 from sklearn.utils.sparsefuncs_fast import (
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
 )
@@ -576,7 +575,7 @@ def min_max_axis(X, axis, ignore_nan=False):
     X : sparse matrix of shape (n_samples, n_features)
         Input data. It should be of CSR or CSC format.
 
-    axis : {0, 1}
+    axis : {0, 1} or None
         Axis along which the axis should be computed.
 
     ignore_nan : bool, default=False
@@ -594,10 +593,14 @@ def min_max_axis(X, axis, ignore_nan=False):
         Feature-wise maxima.
     """
     if sp.issparse(X) and X.format in ("csr", "csc"):
-        if ignore_nan:
-            return _sparse_nan_min_max(X, axis=axis)
-        else:
-            return _sparse_min_max(X, axis=axis)
+        the_min = X.nanmin(axis=axis) if ignore_nan else X.min(axis=axis)
+        the_max = X.nanmax(axis=axis) if ignore_nan else X.max(axis=axis)
+
+        if axis is not None:
+            the_min = the_min.toarray().ravel()
+            the_max = the_max.toarray().ravel()
+
+        return the_min, the_max
     else:
         _raise_typeerror(X)
 
