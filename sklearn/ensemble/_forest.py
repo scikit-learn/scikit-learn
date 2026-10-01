@@ -52,7 +52,11 @@ from sklearn.base import (
     _fit_context,
     is_classifier,
 )
-from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
+from sklearn.ensemble._base import (
+    BaseEnsemble,
+    _check_n_features_in_consistent,
+    _partition_estimators,
+)
 from sklearn.ensemble._bootstrap import _get_n_samples_bootstrap
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import accuracy_score, r2_score
@@ -691,6 +695,17 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         data. Thus fetching the property may be slower than expected.
         """
         return [sample_indices for sample_indices in self._get_estimators_indices()]
+
+    def __sklearn_validate_model__(self):
+        """Check that the fitted forest is consistent.
+
+        The trees check their own structure; the forest checks that they were
+        all fitted on as many features as itself, which is what `X` is checked
+        against at prediction time. See :func:`~sklearn.utils.validate_model`.
+        """
+        if not hasattr(self, "estimators_"):
+            return
+        _check_n_features_in_consistent(self, self.estimators_)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

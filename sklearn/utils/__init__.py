@@ -43,6 +43,7 @@ from sklearn.utils.validation import (
     check_X_y,
     column_or_1d,
     indexable,
+    validate_model,
 )
 
 __all__ = [
@@ -80,4 +81,5 @@ __all__ = [
     "safe_mask",
     "safe_sqr",
     "shuffle",
+    "validate_model",
 ]

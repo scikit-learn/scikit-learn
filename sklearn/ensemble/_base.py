@@ -168,6 +168,37 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return iter(self.estimators_)
 
 
+def _check_n_features_in_consistent(ensemble, estimators):
+    """Check that fitted sub-estimators expect as many features as `ensemble`.
+
+    Meant for the `__sklearn_validate_model__` method of ensembles whose
+    prediction code reads the fitted state of their sub-estimators directly,
+    where `X` is only ever checked against the `n_features_in_` of the
+    ensemble. See :func:`~sklearn.utils.validate_model`.
+
+    Parameters
+    ----------
+    ensemble : estimator instance
+        The fitted ensemble.
+
+    estimators : iterable of estimator instances
+        The fitted sub-estimators of `ensemble`.
+
+    Raises
+    ------
+    ValueError
+        If the `n_features_in_` of a sub-estimator is not that of `ensemble`.
+    """
+    for estimator in estimators:
+        n_features_in = getattr(estimator, "n_features_in_", None)
+        if n_features_in != ensemble.n_features_in_:
+            raise ValueError(
+                f"{ensemble.__class__.__name__} is inconsistent: it was fitted "
+                f"on {ensemble.n_features_in_} features but one of its "
+                f"estimators expects {n_features_in} features."
+            )
+
+
 def _partition_estimators(n_estimators, n_jobs):
     """Private function used to partition estimators between jobs."""
     # Compute the number of jobs

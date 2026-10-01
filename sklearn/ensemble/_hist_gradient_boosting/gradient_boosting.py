@@ -1242,6 +1242,28 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     )
                 raw_predictions[:, k] += predict(X)
 
+    def __sklearn_validate_model__(self):
+        """Check that the fitted predictors are consistent and safe to traverse.
+
+        See :func:`~sklearn.utils.validate_model`.
+        """
+        if not hasattr(self, "_predictors"):
+            return
+        # `X` is checked against `_n_features` in `_raw_predict`, and the
+        # bitsets of known categories that `TreePredictor.predict` looks up
+        # are built from `is_categorical_` of the bin mapper.
+        n_features = self._n_features
+        is_categorical = self._bin_mapper.is_categorical_
+        if is_categorical.shape != (n_features,):
+            raise ValueError(
+                f"{self.__class__.__name__} is inconsistent: its bin mapper "
+                f"was fitted on {is_categorical.shape[0]} features but the "
+                f"estimator on {n_features} features."
+            )
+        for predictors_of_ith_iteration in self._predictors:
+            for predictor in predictors_of_ith_iteration:
+                predictor.check_state(n_features, is_categorical)
+
     def _staged_raw_predict(self, X):
         """Compute raw predictions of ``X`` for each iteration.
 

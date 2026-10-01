@@ -39,7 +39,7 @@ from sklearn._loss.loss import (
 )
 from sklearn.base import ClassifierMixin, RegressorMixin, _fit_context, is_classifier
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.ensemble._base import BaseEnsemble
+from sklearn.ensemble._base import BaseEnsemble, _check_n_features_in_consistent
 from sklearn.ensemble._gradient_boosting import (
     _random_sample_mask,
     predict_stage,
@@ -1113,6 +1113,18 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 leaves[:, i, j] = estimator.apply(X, check_input=False)
 
         return leaves
+
+    def __sklearn_validate_model__(self):
+        """Check that the fitted ensemble is consistent.
+
+        The trees check their own structure; the ensemble checks that they
+        were all fitted on as many features as itself, since `predict_stages`
+        traverses their structure directly on `X`. See
+        :func:`~sklearn.utils.validate_model`.
+        """
+        if not hasattr(self, "estimators_"):
+            return
+        _check_n_features_in_consistent(self, self.estimators_.ravel())
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

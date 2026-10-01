@@ -874,6 +874,24 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self.tree_.compute_feature_importances()
 
+    def __sklearn_validate_model__(self):
+        """Check that the fitted tree structure is consistent and safe to traverse.
+
+        See :func:`~sklearn.utils.validate_model`.
+        """
+        if not hasattr(self, "tree_"):
+            return
+        # `X` is checked against `n_features_in_` at prediction time, while
+        # the node array is checked against the number of features of the
+        # tree structure, so the two must agree.
+        if self.tree_.n_features != self.n_features_in_:
+            raise ValueError(
+                f"{self.__class__.__name__} is inconsistent: its tree structure "
+                f"was built for {self.tree_.n_features} features but "
+                f"n_features_in_ is {self.n_features_in_}."
+            )
+        self.tree_.check_state()
+
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
