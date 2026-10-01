@@ -1,4 +1,5 @@
-- Improved the performance of prediction in :class:`ensemble.IsolationForest`
-  when using parallelism for a relatively small number of samples. The speed
-  comes from using a lower-overhead threading API.
+- The time to fit :class:`ensemble.IsolationForest` was improved when using
+  parallelism with `n_jobs` in combination with a relatively small number of
+  samples. The speed comes from using a lower-overhead threading API
+  (`ThreadPoolExecturor` from the Python standard library).
   By :user:`Itamar Turner-Trauring <itamarst>`.
