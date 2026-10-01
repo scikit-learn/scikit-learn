@@ -7,7 +7,6 @@ from collections.abc import Iterable
 
 import numpy as np
 from scipy import sparse
-from scipy.stats.mstats import mquantiles
 
 from sklearn.base import is_classifier, is_regressor
 from sklearn.ensemble import RandomForestRegressor
@@ -33,6 +32,7 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._response import _get_response_values
 from sklearn.utils.extmath import cartesian
+from sklearn.utils.stats import _nanquantile
 from sklearn.utils.validation import _check_sample_weight, check_is_fitted
 
 __all__ = [
@@ -140,9 +140,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
                 axis = uniques
             else:
                 # create axis based on percentiles and grid resolution
-                emp_percentiles = mquantiles(
-                    _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
-                )
+                emp_percentiles = _nanquantile(X, feature, percentiles)
                 if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                     raise ValueError(
                         "percentiles are too close to each other, "
