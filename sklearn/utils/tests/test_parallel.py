@@ -221,20 +221,33 @@ def test_parallel_thread_map_results(
     assert expected == list(actual)
 
 
-def test_parallel_thread_map_parallelism() -> None:
-    """Test that `_parallel_thread_map()` uses parallelism only when n_jobs > 1."""
+@pytest.mark.skipif(joblib.effective_n_jobs(-1) > 1, reason="Single core test")
+def test_parallel_thread_map_parallelism_single_core() -> None:
+    """Test that `_parallel_thread_map()` does not use parallelism when n_jobs == 1."""
     idents = set()
 
     def add_ident(_):
         idents.add(current_thread().ident)
 
-    list(_parallel_thread_map(-1, add_ident, range(1000)))
+    list(_parallel_thread_map(-1, add_ident, range(20)))
 
-    if joblib.effective_n_jobs(-1) == 1:
-        assert idents == {current_thread().ident}
-    else:
-        assert current_thread().ident not in idents
-        assert len(idents) > 1
+    assert idents == {current_thread().ident}
+
+
+@pytest.mark.skipif(joblib.effective_n_jobs(-1) == 1, reason="Requires multiple cores")
+def test_parallel_thread_map_parallelism_multiple_cores() -> None:
+    """Test that `_parallel_thread_map()` uses parallelism when n_jobs > 1."""
+    idents = set()
+
+    def add_ident(_):
+        # Small delay to ensure jobs get spread across multiple threads:
+        time.sleep(0.001)
+        idents.add(current_thread().ident)
+
+    list(_parallel_thread_map(-1, add_ident, range(500)))
+
+    assert current_thread().ident not in idents
+    assert joblib.effective_n_jobs(-1) >= len(idents) > 1
 
 
 def test_parallel_thread_map_preserves_config() -> None:
