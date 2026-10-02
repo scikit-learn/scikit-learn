@@ -134,12 +134,9 @@ def test_nmi_uncertainty_coefficient():
         labels_true, labels_pred, average_method="labels_pred"
     ) == pytest.approx(mi / h_pred)
     # The uncertainty coefficient is not symmetric.
-    assert (
-        normalized_mutual_info_score(
-            labels_pred, labels_true, average_method="labels_true"
-        )
-        == pytest.approx(mi / h_pred)
-    )
+    assert normalized_mutual_info_score(
+        labels_pred, labels_true, average_method="labels_true"
+    ) == pytest.approx(mi / h_pred)
 
 
 def test_homogeneous_but_not_complete_labeling():
