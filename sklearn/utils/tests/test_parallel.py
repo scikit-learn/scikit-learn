@@ -2,6 +2,7 @@ import itertools
 import re
 import time
 import warnings
+from threading import current_thread
 
 import joblib
 import numpy as np
@@ -17,7 +18,11 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.fixes import _IS_WASM
-from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import (
+    Parallel,
+    _parallel_thread_map,
+    delayed,
+)
 
 
 def get_working_memory():
@@ -195,3 +200,71 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
             joblib.delayed(warnings.warn)("Convergence warning", ConvergenceWarning)
             for _ in range(10)
         )
+
+
+@pytest.mark.parametrize(
+    "func,arguments",
+    [
+        (lambda x: x + 1, [range(1000)]),
+        (lambda a, b: a + b, [range(1, 1001), range(2, 1002)]),
+    ],
+)
+@pytest.mark.parametrize("n_jobs", [None, 1, 2, -1])
+def test_parallel_thread_map_results(func, arguments, n_jobs):
+    """Test that `_parallel_thread_map()` gives the same results as `map()`."""
+    expected = list(map(func, *arguments))
+    actual = _parallel_thread_map(n_jobs, func, *arguments)
+    assert not isinstance(actual, list)
+    assert expected == list(actual)
+
+
+@pytest.mark.skipif(joblib.effective_n_jobs(-1) > 1, reason="Single core test")
+def test_parallel_thread_map_parallelism_single_core():
+    """Test that `_parallel_thread_map()` does not use parallelism when n_jobs == 1."""
+    idents = set()
+
+    def add_ident(_):
+        idents.add(current_thread().ident)
+
+    list(_parallel_thread_map(-1, add_ident, range(20)))
+
+    assert idents == {current_thread().ident}
+
+
+@pytest.mark.skipif(joblib.effective_n_jobs(-1) == 1, reason="Requires multiple cores")
+def test_parallel_thread_map_parallelism_multiple_cores():
+    """Test that `_parallel_thread_map()` uses parallelism when n_jobs > 1."""
+    idents = set()
+
+    def add_ident(_):
+        # Small delay to ensure jobs get spread across multiple threads:
+        time.sleep(0.001)
+        idents.add(current_thread().ident)
+
+    list(_parallel_thread_map(-1, add_ident, range(500)))
+
+    assert current_thread().ident not in idents
+    assert joblib.effective_n_jobs(-1) >= len(idents) > 1
+
+
+def test_parallel_thread_map_preserves_config() -> None:
+    """
+    The scikit-learn config is passed on to threads by
+    ``_parallel_thread_map()``.
+    """
+    with config_context(working_memory=123):
+        results = set(
+            _parallel_thread_map(-1, lambda _: get_working_memory(), range(100))
+        )
+
+    assert_array_equal(results, {123})
+
+
+def test_parallel_thread_map_warnings_settings():
+    """
+    Warning settings are propagated on to threads by ``_parallel_thread_map()``.
+    """
+    warnings.simplefilter("error", category=ConvergenceWarning)
+
+    with pytest.raises(ConvergenceWarning):
+        list(_parallel_thread_map(-1, lambda _: raise_warning(), range(2)))
