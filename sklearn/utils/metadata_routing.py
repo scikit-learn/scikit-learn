@@ -9,6 +9,7 @@ from sklearn.utils._metadata_requests import (  # noqa: F401
     UNCHANGED,
     UNUSED,
     WARN,
+    AutoRequestMixin,
     MetadataRequest,
     MetadataRouter,
     MethodMapping,
