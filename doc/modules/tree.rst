@@ -213,6 +213,88 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       |   |   |--- class: 2
       <BLANKLINE>
 
+  Alternatively, the tree can be exported as a nested dict with the
+  function :func:`export_dict`::
+
+      >>> from sklearn.tree import export_dict
+      >>> tree_dict = export_dict(decision_tree, feature_names=iris['feature_names'])
+      >>> sorted(tree_dict.keys())
+      ['feature', 'feature_name', 'impurity', 'left', 'missing_go_to_left', 'n_node_samples', 'node_id', 'right', 'threshold', 'weighted_n_node_samples']
+      >>> tree_dict['feature_name']
+      'petal width (cm)'
+
+  For a single-output classifier, the following example traverses the exported
+  tree and reads the predicted class. Numerical inputs are converted to
+  ``float32``, and categorical labels are mapped to their exported codes::
+
+      >>> import numpy as np
+      >>> def predict_from_dict(tree_dict, row):
+      ...     categories = {
+      ...         item["feature"]: item["categories"]
+      ...         for item in tree_dict.get("categorical_features", [])
+      ...     }
+      ...     node = tree_dict
+      ...     while "left" in node:
+      ...         feature = node["feature"]
+      ...         value = row[feature]
+      ...         if "categories_left" in node:
+      ...             try:
+      ...                 code = categories[feature].index(value)
+      ...             except ValueError:  # Missing or unknown category.
+      ...                 go_left = node["missing_go_to_left"]
+      ...             else:
+      ...                 go_left = code in node["categories_left"]
+      ...         else:
+      ...             value = float(np.float32(value))
+      ...             go_left = (node["missing_go_to_left"] if np.isnan(value)
+      ...                        else value <= float(node["threshold"]))
+      ...         node = node["left"] if go_left else node["right"]
+      ...     return node["class"]
+      >>> predict_from_dict(tree_dict, iris.data[0])
+      0
+      >>> bool(predict_from_dict(tree_dict, iris.data[0]) == decision_tree.predict(
+      ...     iris.data[:1])[0])
+      True
+
+  Categorical splits contain ``categories_left`` instead of a numerical
+  threshold. The root stores the category labels in code order, so the same
+  traversal also works on the original labels, including unknown categories::
+
+      >>> X_cat = np.array([["blue"], ["green"], ["red"], ["blue"]], dtype=object)
+      >>> cat_tree = tree.DecisionTreeClassifier(
+      ...     categorical_features=[0], random_state=0
+      ... ).fit(X_cat, [0, 1, 0, 0])
+      >>> cat_dict = export_dict(cat_tree)
+      >>> cat_dict["categorical_features"]
+      [{'feature': 0, 'categories': ['blue', 'green', 'red']}]
+      >>> probes = np.array([["green"], ["unknown"], [np.nan]], dtype=object)
+      >>> [predict_from_dict(cat_dict, row) for row in probes] == cat_tree.predict(
+      ...     probes).tolist()
+      True
+
+  :func:`export_text`, :func:`export_graphviz`, and :func:`plot_tree` also
+  show categorical splits using the original labels. Text reports list the
+  known categories on each branch and mark the branch taken by missing values
+  and unknown categories::
+
+      >>> print(export_text(cat_tree, feature_names=["color"]))
+      |--- color in {'blue', 'red'} or missing/unknown
+      |   |--- class: 0
+      |--- color in {'green'}
+      |   |--- class: 1
+      <BLANKLINE>
+
+  Graphviz and plotted nodes show the left-category membership condition and
+  a separate ``missing/unknown: left`` or ``missing/unknown: right`` annotation.
+  Category labels are not rounded. Large categorical splits can produce long
+  labels, including when the tree uses random categorical splits.
+
+  This example assumes a full, unrounded export with the original class labels
+  (the defaults). Truncated exports summarize omitted branches, and rounding
+  can change predictions. Missing-value routing applies only to trees that
+  support missing inputs. The dictionary does not replace the estimator's
+  input validation; see :func:`export_dict` for the output schema and limitations.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
