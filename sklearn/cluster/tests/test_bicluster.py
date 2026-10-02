@@ -15,6 +15,7 @@ from sklearn.datasets import make_biclusters, make_checkerboard
 from sklearn.metrics import consensus_score, v_measure_score
 from sklearn.model_selection import ParameterGrid
 from sklearn.utils._testing import (
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
@@ -169,6 +170,28 @@ def test_bistochastic_normalize(global_random_seed, csr_container):
         _do_bistochastic_test(scaled)
         if issparse(mat):
             assert issparse(scaled)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_bistochastic_normalize_sparse_matches_dense(global_random_seed, csr_container):
+    # non-regression: the sparse convergence check compared the current
+    # iterate against the original input rather than against the new one, so
+    # it stopped after a single scaling pass and the result was not
+    # bistochastic.
+    generator = np.random.RandomState(global_random_seed)
+    X = generator.rand(60, 40) + 0.1
+
+    dense = _bistochastic_normalize(X)
+    sparse = _bistochastic_normalize(csr_container(X)).toarray()
+    assert_allclose(sparse, dense, atol=1e-12)
+
+    # every row sums to one constant and every column to another; checking
+    # the spread rather than the mean, which a single scaling pass already
+    # gets right
+    row_sums = sparse.sum(axis=1)
+    col_sums = sparse.sum(axis=0)
+    assert row_sums.max() - row_sums.min() < 1e-3
+    assert col_sums.max() - col_sums.min() < 1e-3
 
 
 def test_log_normalize(global_random_seed):
