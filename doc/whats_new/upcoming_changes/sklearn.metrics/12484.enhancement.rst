@@ -1,0 +1,4 @@
+- :func:`metrics.normalized_mutual_info_score` accepts ``average_method="labels_true"``
+  and ``average_method="labels_pred"``. These are the uncertainty coefficients
+  :math:`I(U;V)/H(U)` and :math:`I(U;V)/H(V)`.
+  By :user:`shanyu <shaneraphel>`.

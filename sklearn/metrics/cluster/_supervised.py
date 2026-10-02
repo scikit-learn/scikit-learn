@@ -1086,7 +1086,11 @@ def adjusted_mutual_info_score(
     {
         "labels_true": ["array-like"],
         "labels_pred": ["array-like"],
-        "average_method": [StrOptions({"arithmetic", "max", "min", "geometric"})],
+        "average_method": [
+            StrOptions(
+                {"arithmetic", "max", "min", "geometric", "labels_true", "labels_pred"}
+            )
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1108,10 +1112,12 @@ def normalized_mutual_info_score(
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching ``label_true`` with
-    ``label_pred`` will return the same score value. This can be useful to
-    measure the agreement of two independent label assignments strategies
-    on the same dataset when the real ground truth is not known.
+    The ``min``, ``geometric``, ``arithmetic``, and ``max`` normalizers are
+    symmetric: switching ``labels_true`` with ``labels_pred`` returns the same
+    score. ``labels_true`` and ``labels_pred`` are the uncertainty coefficients
+    :math:`I(U; V) / H(U)` and :math:`I(U; V) / H(V)`. Those two are not
+    symmetric. They measure the fraction of the entropy of one labeling that
+    is recovered by the other.
 
     Read more in the :ref:`User Guide <mutual_info_score>`.
 
@@ -1123,14 +1129,19 @@ def normalized_mutual_info_score(
     labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
-        How to compute the normalizer in the denominator.
+    average_method : {'min', 'geometric', 'arithmetic', 'max', 'labels_true',
+        'labels_pred'}, default='arithmetic'
+        How to compute the normalizer in the denominator. ``labels_true`` uses
+        ``H(labels_true)`` and ``labels_pred`` uses ``H(labels_pred)``.
 
         .. versionadded:: 0.20
 
         .. versionchanged:: 0.22
            The default value of ``average_method`` changed from 'geometric' to
            'arithmetic'.
+
+        .. versionadded:: 1.10
+           The ``labels_true`` and ``labels_pred`` normalizers.
 
     Returns
     -------
@@ -1190,7 +1201,12 @@ def normalized_mutual_info_score(
     # Calculate entropy for each labeling
     h_true, h_pred = _entropy(labels_true), _entropy(labels_pred)
 
-    normalizer = _generalized_average(h_true, h_pred, average_method)
+    if average_method == "labels_true":
+        normalizer = h_true
+    elif average_method == "labels_pred":
+        normalizer = h_pred
+    else:
+        normalizer = _generalized_average(h_true, h_pred, average_method)
     return float(mi / normalizer)
 
 

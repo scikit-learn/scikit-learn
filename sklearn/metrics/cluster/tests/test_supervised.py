@@ -119,6 +119,29 @@ def test_perfect_matches_with_changing_means(score_func, average_method):
     ) == pytest.approx(1.0)
 
 
+def test_nmi_uncertainty_coefficient():
+    # https://github.com/scikit-learn/scikit-learn/issues/12484
+    # labels_pred determines labels_true, so I / H(labels_true) is 1.
+    labels_true = [0, 1, 0, 1]
+    labels_pred = [0, 1, 0, 2]
+    assert normalized_mutual_info_score(
+        labels_true, labels_pred, average_method="labels_true"
+    ) == pytest.approx(1.0)
+
+    mi = mutual_info_score(labels_true, labels_pred)
+    h_pred = _entropy(labels_pred)
+    assert normalized_mutual_info_score(
+        labels_true, labels_pred, average_method="labels_pred"
+    ) == pytest.approx(mi / h_pred)
+    # The uncertainty coefficient is not symmetric.
+    assert (
+        normalized_mutual_info_score(
+            labels_pred, labels_true, average_method="labels_true"
+        )
+        == pytest.approx(mi / h_pred)
+    )
+
+
 def test_homogeneous_but_not_complete_labeling():
     # homogeneous but not complete clustering
     h, c, v = homogeneity_completeness_v_measure([0, 0, 0, 1, 1, 1], [0, 0, 0, 1, 2, 2])
