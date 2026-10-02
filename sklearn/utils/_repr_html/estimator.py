@@ -25,7 +25,6 @@ def _get_css_style():
 
 
 _CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
-_ESTIMATOR_ID_COUNTER = _IDCounter("sk-estimator-id")
 _CSS_STYLE = _get_css_style()
 
 
@@ -107,7 +106,7 @@ def _write_label_html(
     features=None,
     outer_class="sk-label-container",
     inner_class="sk-label",
-    checked=False,
+    open=False,
     doc_link="",
     is_fitted_css_class="",
     is_fitted_icon="",
@@ -143,7 +142,7 @@ def _write_label_html(
         The CSS class for the outer container.
     inner_class : {"sk-label", "sk-estimator"}, default="sk-label"
         The CSS class for the inner container.
-    checked : bool, default=False
+    open : bool, default=False
         Whether the dropdown is folded or not. With a single estimator, we intend to
         unfold the content.
     doc_link : str, default=""
@@ -167,8 +166,8 @@ def _write_label_html(
     name = html.escape(name)
     if name_details is not None:
         name_details = html.escape(str(name_details))
-        checked_str = "checked" if checked else ""
-        est_id = _ESTIMATOR_ID_COUNTER.get_id()
+        open_str = "open" if open else ""
+        hide_marker = name == "passthrough" or name_details == "[]"
 
         if doc_link:
             doc_label = "<span>Online documentation</span>"
@@ -180,32 +179,32 @@ def _write_label_html(
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
-        if name == "passthrough" or name_details == "[]":
+        if hide_marker:
             name_caption = ""
-        name_caption_div = (
+        name_caption_span = (
             ""
             if name_caption is None or name_caption == ""
-            else f'<div class="caption">{html.escape(name_caption)}</div>'
+            else f'<span class="caption">{html.escape(name_caption)}</span>'
         )
-        name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
-        links_div = (
-            f"<div>{doc_link}{is_fitted_icon}</div>"
+        name_caption_span = (
+            f'<span class="sk-toggleable__label-name"><span>{name}</span>'
+            f"{name_caption_span}</span>"
+        )
+        links_span = (
+            f"<span>{doc_link}{is_fitted_icon}</span>"
             if doc_link or is_fitted_icon
             else ""
         )
-        label_arrow_class = (
-            "" if name == "passthrough" else "sk-toggleable__label-arrow"
-        )
-
+        no_marker_class = " sk-toggleable__label--no-marker" if hide_marker else ""
         label_html = (
-            f'<label for="{est_id}" class="sk-toggleable__label {is_fitted_css_class} '
-            f'{label_arrow_class}">{name_caption_div}{links_div}</label>'
+            f'<summary class="sk-toggleable__label'
+            f' {is_fitted_css_class}{no_marker_class}">'
+            f'<span class="sk-toggleable__label-content">'
+            f"{name_caption_span}{links_span}</span></summary>"
         )
 
         out.write(
-            f'<input class="sk-toggleable__control sk-hidden--visually '
-            f'sk-global" id="{est_id}" '
-            f'type="checkbox" {checked_str}>{label_html}<div '
+            f'<details class="sk-toggleable" {open_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}" '
             f'data-param-prefix="{html.escape(param_prefix)}">'
         )
@@ -213,11 +212,11 @@ def _write_label_html(
         out.write(params)
         out.write(attrs)
         if name_details and ("Pipeline" not in name) and not params:
-            if name == "passthrough" or name_details == "[]":
+            if hide_marker:
                 name_details = ""
             out.write(f"<pre>{name_details}</pre>")
 
-        out.write("</div>")
+        out.write("</div></details>")
         if features is None or len(features) == 0:
             features_div = ""
         else:
@@ -470,7 +469,7 @@ def _write_estimator_html(
             est_block.doc_link_label,
             outer_class="sk-item",
             inner_class="sk-estimator",
-            checked=first_call,
+            open=first_call,
             doc_link=doc_link,
             features=output_features,
             is_fitted_css_class=is_fitted_css_class,
@@ -543,8 +542,11 @@ def estimator_html_repr(estimator):
             f"<style>{_CSS_STYLE}</style>"
             f"<body>"
             # we need tabindex="0" to make it 'focusable'
-            f'<div id="{container_id}" tabindex="0" class="sk-top-container sk-global">'
-            '<div class="sk-text-repr-fallback">'
+            f'<div id="{container_id}" tabindex="0" role="region" '
+            f'aria-label="'
+            f'{html.escape(estimator.__class__.__name__)} estimator diagram" '
+            f'class="sk-top-container sk-global">'
+            f'<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
             '<div class="sk-container" hidden>'
