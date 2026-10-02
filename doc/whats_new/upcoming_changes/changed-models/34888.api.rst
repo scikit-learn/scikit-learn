@@ -1,0 +1,5 @@
+- :class:`covariance.ShrunkCovariance` no longer upcasts `float32` input data to
+  `float64`. Its `location_`, `covariance_` and `precision_` attributes now have
+  the same dtype as `X`, matching :class:`covariance.LedoitWolf` and
+  :class:`covariance.OAS`.
+  By :user:`Abdul Ali Mamnun <AbdulAliMamnun>`.
