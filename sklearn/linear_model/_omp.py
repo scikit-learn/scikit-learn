@@ -965,7 +965,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
-        Number of CPUs to use during the cross validation.
+        Number of CPUs to use during cross-validation. The fits for the
+        different folds are run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
