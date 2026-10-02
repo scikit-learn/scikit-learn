@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from sklearn import get_config
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
+from sklearn.callback._progressbar import ProgressBar
 
 
 def _callbacks_by_default():
@@ -168,6 +169,7 @@ class CallbackSupportMixin:
         self._skl_callbacks_to_teardown = []
 
         callbacks = getattr(self, "_skl_callbacks", [])
+
         default_callbacks = getattr(self, "_skl_default_callbacks", [])
         if hasattr(self, "_parent_callback_ctx"):
             default_callbacks = [
@@ -176,6 +178,9 @@ class CallbackSupportMixin:
                 if not isinstance(cb, AutoPropagatedCallback)
             ]
         callbacks += default_callbacks
+
+        has_progressbar = False
+
         for callback in callbacks:
             # Only call the setup hook of callbacks that are not propagated from a
             # meta-estimator and are not deactivated.
@@ -183,6 +188,11 @@ class CallbackSupportMixin:
                 isinstance(callback, AutoPropagatedCallback)
                 and hasattr(self, "_parent_callback_ctx")
             ) and not getattr(callback, "_deactivated", False):
+                if isinstance(callback, ProgressBar):
+                    if has_progressbar:
+                        continue  # only one progressbar can be active at a time
+                    else:
+                        has_progressbar = True
                 self._skl_callbacks_to_teardown.append(callback)
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 

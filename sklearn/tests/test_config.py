@@ -5,7 +5,7 @@ import pytest
 
 import sklearn
 from sklearn import config_context, get_config, set_config
-from sklearn.callback.tests._utils import RecordingCallback
+from sklearn.callback.tests._common.callbacks import RecordingCallback
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 
