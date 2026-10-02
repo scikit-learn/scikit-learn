@@ -282,7 +282,8 @@ See :func:`~sklearn.set_config` and :func:`~sklearn.config_context` for
 Auto-requests are declared for specific metadata such as ``sample_weight``, ``X_val``,
 ``y_val`` and ``sample_weight_val``. Once a metadata is supported, methods that take
 that argument are expected to auto-request it. (``groups`` in ``Group*Fold`` is not an
-auto-request and is requested by default whether auto-requests are switched on or off.)
+auto-request and is requested by default whether auto-requests are switched on or off
+since they raise an error if `groups` is not provided.)
 
 Note that auto-requests are subject to change and stability guarantees applied to the
 rest of the scikit-learn API do not apply here. They may grow or change over time.
