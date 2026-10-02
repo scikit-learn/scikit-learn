@@ -267,9 +267,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Refer to the :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -279,8 +276,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         iterations.
 
         See :term:`Glossary <n_jobs>` for more details.
-
-        .. versionadded:: 0.24
 
     ensemble : bool, or "auto", default="auto"
         Determines how the calibrator is fitted.
@@ -301,8 +296,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Note that this method is also internally implemented  in
         :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
-        .. versionadded:: 0.24
-
         .. versionchanged:: 1.6
             `"auto"` option is added and is the default.
 
@@ -314,8 +307,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -330,9 +321,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
           `n_cv` is the number of cross-validation folds.
         - When `ensemble=False`, the `estimator`, fitted on all the data, and fitted
           calibrator.
-
-        .. versionchanged:: 0.24
-            Single calibrated classifier case when `ensemble=False`.
 
     See Also
     --------

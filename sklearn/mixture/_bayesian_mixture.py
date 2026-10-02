@@ -85,8 +85,6 @@ class BayesianGaussianMixture(BaseMixture):
     maximum number of components (called the Stick-breaking representation).
     The number of components actually used almost always depends on the data.
 
-    .. versionadded:: 0.18
-
     Read more in the :ref:`User Guide <bgmm>`.
 
     Parameters
@@ -306,8 +304,6 @@ class BayesianGaussianMixture(BaseMixture):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
