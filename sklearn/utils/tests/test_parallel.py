@@ -3,7 +3,6 @@ import re
 import time
 import warnings
 from threading import current_thread
-from typing import Callable, Iterable
 
 import joblib
 import numpy as np
@@ -211,9 +210,7 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
     ],
 )
 @pytest.mark.parametrize("n_jobs", [None, 1, 2, -1])
-def test_parallel_thread_map_results(
-    func: Callable, arguments: list[Iterable], n_jobs: int | None
-) -> None:
+def test_parallel_thread_map_results(func, arguments, n_jobs):
     """Test that `_parallel_thread_map()` gives the same results as `map()`."""
     expected = list(map(func, *arguments))
     actual = _parallel_thread_map(n_jobs, func, *arguments)
@@ -222,7 +219,7 @@ def test_parallel_thread_map_results(
 
 
 @pytest.mark.skipif(joblib.effective_n_jobs(-1) > 1, reason="Single core test")
-def test_parallel_thread_map_parallelism_single_core() -> None:
+def test_parallel_thread_map_parallelism_single_core():
     """Test that `_parallel_thread_map()` does not use parallelism when n_jobs == 1."""
     idents = set()
 
@@ -235,7 +232,7 @@ def test_parallel_thread_map_parallelism_single_core() -> None:
 
 
 @pytest.mark.skipif(joblib.effective_n_jobs(-1) == 1, reason="Requires multiple cores")
-def test_parallel_thread_map_parallelism_multiple_cores() -> None:
+def test_parallel_thread_map_parallelism_multiple_cores():
     """Test that `_parallel_thread_map()` uses parallelism when n_jobs > 1."""
     idents = set()
 
@@ -263,7 +260,7 @@ def test_parallel_thread_map_preserves_config() -> None:
     assert_array_equal(results, {123})
 
 
-def test_parallel_thread_map_warnings_settings() -> None:
+def test_parallel_thread_map_warnings_settings():
     """
     Warning settings are propagated on to threads by ``_parallel_thread_map()``.
     """
