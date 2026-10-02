@@ -702,8 +702,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <bagging>`.
 
-    .. versionadded:: 0.15
-
     Parameters
     ----------
     estimator : object, default=None
@@ -752,9 +750,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         and add more estimators to the ensemble, otherwise, just fit
         a whole new ensemble. See :term:`the Glossary <warm_start>`.
 
-        .. versionadded:: 0.17
-           *warm_start* constructor parameter.
-
     n_jobs : int, default=None
         The number of jobs to run in parallel for both :meth:`fit` and
         :meth:`predict`. ``None`` means 1 unless in a
@@ -782,8 +777,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1211,8 +1204,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <bagging>`.
 
-    .. versionadded:: 0.15
-
     Parameters
     ----------
     estimator : object, default=None
@@ -1288,8 +1279,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

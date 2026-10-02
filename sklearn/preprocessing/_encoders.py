@@ -511,8 +511,6 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
-        .. versionadded:: 0.20
-
     drop : {'first', 'if_binary'} or an array-like of shape (n_features,), \
             default=None
         Specifies a methodology to use to drop one of the categories per
@@ -536,12 +534,6 @@ class OneHotEncoder(_BaseEncoder):
         When `max_categories` or `min_frequency` is configured to group
         infrequent categories, the dropping behavior is handled after the
         grouping.
-
-        .. versionadded:: 0.21
-           The parameter `drop` was added in 0.21.
-
-        .. versionchanged:: 0.23
-           The option `drop='if_binary'` was added in 0.23.
 
         .. versionchanged:: 1.1
             Support for dropping infrequent categories.
@@ -642,9 +634,6 @@ class OneHotEncoder(_BaseEncoder):
         `max_categories` to a non-default value and `drop_idx[i]` corresponds
         to an infrequent category, then the entire infrequent category is
         dropped.
-
-        .. versionchanged:: 0.23
-           Added the possibility to contain `None` values.
 
     infrequent_categories_ : list of ndarray
         Defined only if infrequent categories are enabled by setting
@@ -1275,8 +1264,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     For a comparison of different encoders, refer to:
     :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     categories : 'auto' or a list of array-like, default='auto'
@@ -1299,16 +1286,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         set to the value given for the parameter `unknown_value`. In
         :meth:`inverse_transform`, an unknown category will be denoted as None.
 
-        .. versionadded:: 0.24
-
     unknown_value : int or np.nan, default=None
         When the parameter handle_unknown is set to 'use_encoded_value', this
         parameter is required and will set the encoded value of unknown
         categories. It has to be distinct from the values used to encode any of
         the categories in `fit`. If set to np.nan, the `dtype` parameter must
         be a float dtype.
-
-        .. versionadded:: 0.24
 
     encoded_missing_value : int or np.nan, default=np.nan
         Encoded value of missing categories. If set to `np.nan`, then the `dtype`
