@@ -40,7 +40,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_eye_array, parse_version
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_eye_array
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -2661,10 +2661,6 @@ def test_column_transformer_column_renaming(dataframe_lib):
 # TODO: remove mark once loky bug is fixed:
 # https://github.com/joblib/loky/issues/458
 @pytest.mark.thread_unsafe
-@pytest.mark.skipif(
-    parse_version(joblib.__version__) < parse_version("1.3"),
-    reason="requires joblib >= 1.3",
-)
 def test_column_transformer_auto_memmap(global_random_seed):
     """Check that ColumnTransformer works in parallel with joblib's auto-memmapping.
 

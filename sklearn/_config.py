@@ -26,6 +26,7 @@ _global_config = {
     "array_api_dispatch": False,
     "transform_output": "default",
     "enable_metadata_routing": False,
+    "enable_metadata_auto_requests": False,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
     "default_callbacks": ("progressbar",) if _rich_available else (),
@@ -94,6 +95,7 @@ def set_config(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
+    enable_metadata_auto_requests=None,
     skip_parameter_validation=None,
     sparse_interface=None,
     default_callbacks=None,
@@ -109,8 +111,6 @@ def set_config(
     setting unchanged. This allows users to selectively update the global configuration
     values without affecting the others.
 
-    .. versionadded:: 0.19
-
     Parameters
     ----------
     assume_finite : bool, default=None
@@ -119,15 +119,11 @@ def set_config(
         False, validation for finiteness will be performed,
         avoiding error. Global default: False.
 
-        .. versionadded:: 0.19
-
     working_memory : int, default=None
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
-
-        .. versionadded:: 0.20
 
     print_changed_only : bool, default=None
         If True, only the parameters that were set to non-default
@@ -136,16 +132,10 @@ def set_config(
         behaviour would be to print 'SVC(C=1.0, cache_size=200, ...)' with
         all the non-changed parameters. Global default: True.
 
-        .. versionadded:: 0.21
-        .. versionchanged:: 0.23
-           Global default configuration changed from False to True.
-
     display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
         text. Global default: 'diagram'.
-
-        .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
@@ -207,6 +197,25 @@ def set_config(
         Global default: False.
 
         .. versionadded:: 1.3
+
+    enable_metadata_auto_requests : bool, default=None
+        Configure the auto metadata request policy.
+
+        Consumer objects, i.e. estimators, splitters, and scorers, can automatically
+        request metadata for convenience. Note that these are subject to change and
+        stability guarantees applied to the rest of the scikit-learn API do not apply
+        here. If you want these to be enabled, you set the value to `True` on this
+        config.
+
+        - `False`: auto-requests are not enabled
+        - `True`: Metadata are requested per each consumer's internal policy
+        - `None`: configuration is unchanged
+
+        Global default: `False`.
+
+        Refer to :ref:`metadata_routing_auto_request` for more details.
+
+        .. versionadded:: 1.10
 
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
@@ -276,6 +285,8 @@ def set_config(
         local_config["transform_output"] = transform_output
     if enable_metadata_routing is not None:
         local_config["enable_metadata_routing"] = enable_metadata_routing
+    if enable_metadata_auto_requests is not None:
+        local_config["enable_metadata_auto_requests"] = enable_metadata_auto_requests
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
     if sparse_interface is not None:
@@ -298,6 +309,7 @@ def config_context(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
+    enable_metadata_auto_requests=None,
     skip_parameter_validation=None,
     sparse_interface=None,
     default_callbacks=None,
@@ -335,16 +347,11 @@ def config_context(
         when False. If None, the existing configuration won't change.
         Global default: True.
 
-        .. versionchanged:: 0.23
-           Global default configuration changed from False to True.
-
     display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
         text. If None, the existing configuration won't change.
         Global default: 'diagram'.
-
-        .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
@@ -406,6 +413,25 @@ def config_context(
         Global default: False.
 
         .. versionadded:: 1.3
+
+    enable_metadata_auto_requests : bool, default=None
+        Configure the auto metadata request policy.
+
+        Consumer objects, i.e. estimators, splitters, and scorers, can automatically
+        request metadata for convenience. Note that these are subject to change and
+        stability guarantees applied to the rest of the scikit-learn API do not apply
+        here. If you want these to be enabled, you set the value to `True` on this
+        config.
+
+        - `False`: auto-requests are not enabled
+        - `True`: Metadata are requested per each consumer's internal policy
+        - `None`: configuration is unchanged
+
+        Global default: `False`.
+
+        Refer to :ref:`metadata_routing_auto_request` for more details.
+
+        .. versionadded:: 1.10
 
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
@@ -480,6 +506,7 @@ def config_context(
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
         enable_metadata_routing=enable_metadata_routing,
+        enable_metadata_auto_requests=enable_metadata_auto_requests,
         skip_parameter_validation=skip_parameter_validation,
         sparse_interface=sparse_interface,
         default_callbacks=default_callbacks,

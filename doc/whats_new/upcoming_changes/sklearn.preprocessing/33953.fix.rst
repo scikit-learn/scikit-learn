@@ -1,0 +1,5 @@
+- A few edge cases with missing values and unique knot values in
+  :class:`preprocessing.SplineTransformer` are now handled correctly.
+  For instance, if a feature is constant, i.e., has only one unique value at fit time,
+  `transform` now always returns all zeros for that feature.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

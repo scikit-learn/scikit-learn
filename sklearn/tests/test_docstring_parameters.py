@@ -36,7 +36,6 @@ from sklearn.utils.estimator_checks import (
 # FutureWarnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", FutureWarning)
-    # mypy error: Module has no attribute "__path__"
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     PUBLIC_MODULES = set(
         [

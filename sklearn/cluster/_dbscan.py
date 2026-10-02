@@ -14,7 +14,7 @@ from scipy import sparse
 from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
 from sklearn.cluster._dbscan_inner import dbscan_inner
 from sklearn.metrics.pairwise import _VALID_METRICS
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, sort_graph_by_row_values
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import _check_sample_weight, validate_data
 
@@ -86,8 +86,6 @@ def dbscan(
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
-
-        .. versionadded:: 0.19
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
@@ -241,13 +239,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         must be square. X may be a :term:`sparse graph`, in which
         case only "nonzero" elements may be considered neighbors for DBSCAN.
 
-        .. versionadded:: 0.17
-           metric *precomputed* to accept precomputed sparse matrix.
-
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
-
-        .. versionadded:: 0.19
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
@@ -289,8 +282,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -434,6 +425,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())
+                # Sorting could be undone by .setdiag(), make sure it's sorted
+                X = sort_graph_by_row_values(X, warn_when_not_sorted=False)
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,

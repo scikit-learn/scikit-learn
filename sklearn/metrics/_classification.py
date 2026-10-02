@@ -472,8 +472,6 @@ def confusion_matrix(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-        .. versionadded:: 0.18
-
     normalize : {'true', 'pred', 'all'}, default=None
         Normalizes confusion matrix over the true (rows), predicted (columns)
         conditions or all the population. If None, confusion matrix will not be
@@ -639,8 +637,6 @@ def multilabel_confusion_matrix(
     y_true, y_pred, *, sample_weight=None, labels=None, samplewise=False
 ):
     """Compute a confusion matrix for each class or sample.
-
-    .. versionadded:: 0.21
 
     Compute class-wise (default) or sample-wise (samplewise=True) multilabel
     confusion matrix to evaluate the accuracy of a classification, and output
@@ -1133,12 +1129,10 @@ def jaccard_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", {0.0, 1.0}, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division, i.e. when there
-        there are no negative values in predictions and labels. If set to
+        are no negative values in predictions and labels. If set to
         "warn", this acts like 0, but a warning is also raised.
-
-        .. versionadded:: 0.24
 
     Returns
     -------
@@ -1277,8 +1271,6 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
-
-        .. versionadded:: 0.18
 
     Returns
     -------
@@ -1514,9 +1506,6 @@ def f1_score(
         "assigned" 0 samples. For multilabel targets, labels are column indices.
         By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
-        .. versionchanged:: 0.17
-           Parameter `labels` improved for multiclass problem.
-
     pos_label : int, float, bool or str, default=1
         The class to report if `average='binary'` and the data is binary,
         otherwise this parameter is ignored.
@@ -1718,9 +1707,6 @@ def fbeta_score(
         class". Labels not present in the data can be included and will be
         "assigned" 0 samples. For multilabel targets, labels are column indices.
         By default, all labels in `y_true` and `y_pred` are used in sorted order.
-
-        .. versionchanged:: 0.17
-           Parameter `labels` improved for multiclass problem.
 
     pos_label : int, float, bool or str, default=1
         The class to report if `average='binary'` and the data is binary,
@@ -2037,9 +2023,6 @@ def precision_recall_fscore_support(
         class". Labels not present in the data can be included and will be
         "assigned" 0 samples. For multilabel targets, labels are column indices.
         By default, all labels in `y_true` and `y_pred` are used in sorted order.
-
-        .. versionchanged:: 0.17
-           Parameter `labels` improved for multiclass problem.
 
     pos_label : int, float, bool or str, default=1
         The class to report if `average='binary'` and the data is binary,
@@ -2573,9 +2556,6 @@ def precision_score(
         "assigned" 0 samples. For multilabel targets, labels are column indices.
         By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
-        .. versionchanged:: 0.17
-           Parameter `labels` improved for multiclass problem.
-
     pos_label : int, float, bool or str, default=1
         The class to report if `average='binary'` and the data is binary,
         otherwise this parameter is ignored.
@@ -2754,9 +2734,6 @@ def recall_score(
         "assigned" 0 samples. For multilabel targets, labels are column indices.
         By default, all labels in `y_true` and `y_pred` are used in sorted order.
 
-        .. versionchanged:: 0.17
-           Parameter `labels` improved for multiclass problem.
-
     pos_label : int, float, bool or str, default=1
         The class to report if `average='binary'` and the data is binary,
         otherwise this parameter is ignored.
@@ -2891,8 +2868,6 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
     The best value is 1 and the worst value is 0 when ``adjusted=False``.
 
     Read more in the :ref:`User Guide <balanced_accuracy_score>`.
-
-    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -3034,8 +3009,6 @@ def classification_report(
 
     output_dict : bool, default=False
         If True, return output as dict.
-
-        .. versionadded:: 0.20
 
     zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division. If set to
@@ -3247,8 +3220,6 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-        .. versionadded:: 0.18
-
     Returns
     -------
     loss : float
@@ -3399,8 +3370,6 @@ def log_loss(
         If not provided, labels will be inferred from y_true. If ``labels``
         is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
         assumed to be binary and are inferred from ``y_true``.
-
-        .. versionadded:: 0.18
 
     y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's

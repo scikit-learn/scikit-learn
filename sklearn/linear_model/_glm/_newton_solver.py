@@ -12,13 +12,20 @@ from abc import ABC, abstractmethod
 import numpy as np
 import scipy.linalg
 import scipy.optimize
+from scipy import sparse
 
 from sklearn._loss.loss import HalfSquaredError
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import _pre_fit
 from sklearn.linear_model._cd_fast import (
+    enet_coordinate_descent,
     enet_coordinate_descent_gram,
+    enet_coordinate_descent_multinomial,
+    enet_coordinate_descent_sparse,
 )
-from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.linear_model._linear_loss import (
+    LinearModelLoss,
+)
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.optimize import _check_optimize_result
 
@@ -122,6 +129,13 @@ class NewtonSolver(ABC):
     Usage pattern:
         - initialize solver: sol = NewtonSolver(...)
         - solve the problem: sol.solve(X, y, sample_weight)
+
+    Conventions:
+        - coef means all coefficients. If there is an intercept, it is at the end:
+        - intercept = coef[-1]; or intercept = coef[:, -1]
+        - raw_predictions = X @ coef
+          With intercept it means X @ coef[:-1] + coef[-1]
+        - penalties ||coef|| always exclude a possible intercept
 
     References
     ----------
@@ -329,6 +343,7 @@ class NewtonSolver(ABC):
             - self.raw_prediction
         """
         # line search parameters
+        ls_converged = False
         sigma = 0.00048828125  # 1/2**11, sometimes called c1
         min_step_reduction = 1e-2  # minimum factor of decrease of alpha per step
         min_step_length = 1e-12  # absolute minimum value of alpha
@@ -396,6 +411,7 @@ class NewtonSolver(ABC):
                     f"<= {alpha * armijo_term} {check}"
                 )
             if check:
+                ls_converged = True
                 break
             # 2. Tiny gradient / Armijo term.
             # If we are already close to the minimum, gradient and Armijo term are
@@ -413,6 +429,7 @@ class NewtonSolver(ABC):
                         f"{g_max_abs} <= {self.tol} {check}"
                     )
                 if check:
+                    ls_converged = True
                     break
             # 3. Deal with differences around machine precision.
             # 3.1 Check relative loss difference ~ machine precision
@@ -444,6 +461,7 @@ class NewtonSolver(ABC):
                         f"{sum_abs_grad} < {sum_abs_grad_old} {check}"
                     )
                 if check:
+                    ls_converged = True
                     break
 
             # Set a smart new value of alpha, smaller than previous one, larger than 0.
@@ -478,7 +496,12 @@ class NewtonSolver(ABC):
                 alpha_trial = 0.5 * alpha
             # Avoid too large a reduction of alpha.
             alpha = max(alpha_trial, min_step_reduction * alpha, min_step_length)
-        else:
+            if alpha == alpha_old:
+                # For example if alpha = alpha_old = min_step_length.
+                # The early exit avoids dividing by denom = 0 in the next iteration.
+                break
+
+        if not ls_converged:
             warnings.warn(
                 (
                     f"Line search of Newton solver {self.__class__.__name__} at"
@@ -656,8 +679,11 @@ class NewtonSolver(ABC):
 class NewtonCholeskySolver(NewtonSolver):
     """Cholesky based Newton solver.
 
-    Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
-    solver.
+    The inner solver for finding the Newton step
+
+        H @ coef_newton = -g
+
+    uses Cholesky based linear solver.
     """
 
     def __init__(
@@ -895,11 +921,11 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
 
     This solver can deal with L1 and L2 penalties.
 
-    The inner solver for finding the Newton step H w_newton = -g uses coordinate
-    descent:
+    The inner solver for finding the Newton step
 
         H @ coef_newton = -G
 
+    uses coordinate descent.
     With an L1 penalty, it is better to write down the minimization problem and use
     the 2nd order Taylor approximation only on the smooth parts (loss and L2), see
     Eq. 13 of Yuan, Ho, Lin (2011)
@@ -1023,6 +1049,7 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
 
         n_samples, n_features = X.shape
         gradient, hessian = self.prepare_gradient_hessian()
+        # TODO: Pass correct y=b (see NewtonCDSolver), or at least y=||b||_2^2.
 
         if self.linear_loss.base_loss.is_multiclass:
             # Often needed variables for the multinomial.
@@ -1123,11 +1150,13 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
         #   y = -g / h + X coef
         if self.linear_loss.base_loss.is_multiclass:
             # TODO(newton-cd): This is still the simple solution.
+            # Consider to pass correct y_cd=b (see NewtonCDSolver), or ensure at least
+            # ||y||_2 = ||b||_2.
             y_cd = np.ones(shape=n_samples, dtype=X.dtype)
         else:
             y_cd = self.raw_prediction.copy()
-            h_zero = self.hess_pointwise != 0
-            y_cd[h_zero] -= self.grad_pointwise[h_zero] / self.hess_pointwise[h_zero]
+            mask = self.hess_pointwise != 0
+            y_cd[mask] -= self.grad_pointwise[mask] / self.hess_pointwise[mask]
             if self.linear_loss.fit_intercept:
                 # As if applying _pre_fit(X, y_cd, ..).
                 y_cd -= np.average(y_cd, axis=0, weights=self.hess_pointwise)
@@ -1221,3 +1250,395 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
             weights, _ = self.linear_loss.weight_intercept(self.coef_newton)
             d2 += 2 * self.linear_loss.l2_penalty(weights, self.l2_reg_strength)
         return d2
+
+
+class NewtonCDSolver(NewtonSolver):
+    """Coordinate Descent inner solver for a Newton solver.
+
+    This solver can deal with L1 and L2 penalties.
+
+    It avoids the explicit computation of hessian H = X' @ diag(h) @ X which makes it
+    a good choice for use cases with n_features > n_samples (saves computation and
+    saves large memory allocation of H).
+
+    Inner solver for finding the Newton step
+
+            H @ coef_newton = -G
+
+    uses coordinate descent.
+    With an L1 penalty, it is better to write down the minimization problem and use
+    the 2nd order Taylor approximation only on the smooth parts (loss and L2), see
+    Eq. 13 of Yuan, Ho, Lin (2011)
+
+        min 1/2 d' H d + G' d + l1_reg ||coef + d||_1 - l1_reg ||coef||_1
+
+    with d = coef_newton and coef = current coefficients.
+    To circumvent the norm ||coef + d||_1, we instead minimize for
+    c = coef_new = coef + d. This gives, up to constant terms
+
+        min 1/2 c' H c + (G' - coef' H) c + l1_reg ||c||_1
+
+    with
+        c = coef_new = coef + coef_newton
+        coef = current coefficients
+        G = X.T @ g + l2_reg_strength * P @ coef
+        H = X.T @ diag(h) @ X + l2_reg_strength * P
+        g = loss.gradient = pointwise gradient
+        h = loss.hessian = pointwise hessian
+        P = penalty matrix in 1/2 w @ P @ w,
+            for a pure L2 penalty without intercept it equals the identity matrix.
+
+    Up to constant terms, this is then cast as a Lasso/Enet least squares problem with
+    sample weights equal to the pointwise hessian
+
+        min 1/2 ||diag(sqrt(h)) (X c - z)||_2^2 + l1_reg ||c||_1 + 1/2 l2_reg ||c||_2^2
+
+    with
+
+        z = -g/h + X coef
+
+    Note: Defining
+        A = diag(sqrt(h)) X
+        b = sqrt(h) z = -g / sqrt(h) + diag(sqrt(h)) X coef
+    The first term is equivalent to 1/2 ||A c - b||_2^2.
+    - A is a square root of H but without L2 penalty: A'A = X' diag(h) X
+    - A and b form G - H coef (note: L2 cancels out): -A'b = G - H coef
+    - The normal equation of this least squares problem, A'A coef_newton = A'b, is
+      again H @ coef_newton = -G (without L2 penalty).
+
+    This minimization problem is then solved by enet_coordinate_descent or
+    enet_coordinate_descent_sparse.
+
+    Note that this solver can naturally deal with sparse X.
+
+    Attributes
+    ----------
+    This solver does not have the attribute
+    - self.hessian
+
+    Instead, it has
+    - self.grad_pointwise
+    - self.hess_pointwise
+    """
+
+    def __init__(
+        self,
+        *,
+        coef,
+        linear_loss=LinearModelLoss(base_loss=HalfSquaredError(), fit_intercept=True),
+        l1_reg_strength=0.0,
+        l2_reg_strength=0.0,
+        tol=1e-4,
+        max_iter=100,
+        n_threads=1,
+        verbose=0,
+    ):
+        super().__init__(
+            coef=coef,
+            linear_loss=linear_loss,
+            l1_reg_strength=l1_reg_strength,
+            l2_reg_strength=l2_reg_strength,
+            tol=tol,
+            max_iter=max_iter,
+            n_threads=n_threads,
+            verbose=verbose,
+        )
+        self.inner_tol = self.tol
+
+    def setup(self, X, y, sample_weight):
+        super().setup(X=X, y=y, sample_weight=sample_weight)
+        if self.linear_loss.base_loss.is_multiclass and self.coef.ndim == 1:
+            # NewtonCDSolver prefers 2-dim coef of shape (n_classes, n_dof). The
+            # computation of gradient follows the shape of coef.
+            n_classes = self.linear_loss.base_loss.n_classes
+            self.coef = self.coef.reshape(n_classes, -1, order="F")
+
+        self.gradient = np.empty_like(self.coef, order="F")
+        self.grad_pointwise = np.empty_like(self.raw_prediction, order="F")
+        self.hess_pointwise = np.empty_like(self.raw_prediction, order="F")
+        self.sw_sum = X.shape[0] if sample_weight is None else np.sum(sample_weight)
+        if sparse.issparse(X):
+            if X.format != "csc":
+                raise ValueError(
+                    f"X must be a CSC array/matrix for {self.__class__.__name__}"
+                )
+        elif not X.flags.f_contiguous:
+            raise ValueError(f"X must be F-contiguous for {self.__class__.__name__}")
+
+    def update_gradient_hessian(self, X, y, sample_weight):
+        """Update gradient and only pointwise hessian.
+
+        Neglect l2_reg_strength because it is passed directly to the CD solver.
+        This is later corrected for at the end of inner_solve.
+
+        self.gradient (G)
+        self.grad_pointwise (g)
+        self.hess_pointwise (h)
+        """
+        # This duplicates a bit of code from LinearModelLoss.
+        n_features = X.shape[1]
+        if not self.linear_loss.base_loss.is_multiclass:
+            _, _ = self.linear_loss.base_loss.gradient_hessian(
+                y_true=y,
+                raw_prediction=self.raw_prediction,  # this was updated in line_search
+                sample_weight=sample_weight,
+                gradient_out=self.grad_pointwise,
+                hessian_out=self.hess_pointwise,
+                n_threads=self.n_threads,
+            )
+            # For non-canonical link functions and far away from the optimum, the
+            # pointwise hessian can be negative.
+            np.maximum(0, self.hess_pointwise, out=self.hess_pointwise)
+
+            self.grad_pointwise /= self.sw_sum
+            self.hess_pointwise /= self.sw_sum
+            self.gradient[:n_features] = X.T @ self.grad_pointwise
+            if self.linear_loss.fit_intercept:
+                self.gradient[-1] = self.grad_pointwise.sum()
+        else:
+            # We use self.hess_pointwise to store the predicted class probabilities.
+            _, _ = self.linear_loss.base_loss.gradient_proba(
+                y_true=y,
+                raw_prediction=self.raw_prediction,  # this was updated in line_search
+                sample_weight=sample_weight,
+                gradient_out=self.grad_pointwise,
+                proba_out=self.hess_pointwise,
+                n_threads=self.n_threads,
+            )
+            self.grad_pointwise /= self.sw_sum
+            self.gradient[:, :n_features] = self.grad_pointwise.T @ X
+            if self.linear_loss.fit_intercept:
+                self.gradient[:, -1] = self.grad_pointwise.sum(axis=0)
+
+    def fallback_lbfgs_solve(self, X, y, sample_weight):
+        if self.l1_reg_strength == 0:
+            super().fallback_lbfgs_solve(X, y, sample_weight)
+        else:
+            # TODO(newton-cd): For the time being, we just honestly fail.
+            cname = self.__class__.__name__
+            msg = (
+                f"This solver, {cname}, does not have a fallback for non-zero L1 "
+                "penalties."
+            )
+            raise ConvergenceWarning(msg)
+
+    def inner_solve(self, X, y, sample_weight):
+        n_samples, n_features = X.shape
+        if not self.linear_loss.base_loss.is_multiclass:
+            # z = self.raw_prediction - self.grad_pointwise / self.hess_pointwise
+            z = self.raw_prediction.copy()
+            mask = self.hess_pointwise != 0
+            z[mask] -= self.grad_pointwise[mask] / self.hess_pointwise[mask]
+
+            X, z, X_offset, z_offset, X_scale, _, _ = _pre_fit(
+                X=X,
+                y=z,
+                Xy=None,
+                precompute=False,
+                fit_intercept=self.linear_loss.fit_intercept,
+                copy=True,
+                sample_weight=self.hess_pointwise,
+            )
+
+            if self.linear_loss.fit_intercept:
+                w = self.coef[:-1].copy()
+            else:
+                w = self.coef.copy()
+
+            with warnings.catch_warnings():
+                # Ignore warnings that add little information for users.
+                warnings.simplefilter("ignore", ConvergenceWarning)
+                if sparse.issparse(X):
+                    w, gap, inner_tol, n_inner_iter = enet_coordinate_descent_sparse(
+                        w=w,
+                        alpha=self.l1_reg_strength,
+                        beta=self.l2_reg_strength,
+                        X_data=X.data,
+                        X_indices=X.indices,
+                        X_indptr=X.indptr,
+                        y=z,
+                        sample_weight=self.hess_pointwise,
+                        X_mean=np.asarray(X_offset / X_scale, dtype=X.dtype)
+                        if X_offset is not None
+                        else np.zeros(n_features, dtype=X.dtype),
+                        max_iter=1000,  # TODO(newton-cd): improve
+                        tol=self.inner_tol,
+                        rng=np.random.RandomState(42),
+                        random=False,
+                        positive=False,
+                        early_stopping=False,
+                    )
+                else:
+                    w, gap, inner_tol, n_inner_iter = enet_coordinate_descent(
+                        w=w,
+                        alpha=self.l1_reg_strength,
+                        beta=self.l2_reg_strength,
+                        X=X,
+                        y=z,
+                        max_iter=1000,  # TODO(newton-cd): improve
+                        tol=self.inner_tol,
+                        rng=np.random.RandomState(42),
+                        random=False,
+                        positive=False,
+                        early_stopping=False,
+                    )
+            # Set self.coef_newton and compute intercept terms.
+            if n_inner_iter == 0:
+                # Safeguard: if nothing changed nothing should change in this iter.
+                # Without it, intercept terms might change.
+                self.coef_newton = np.zeros_like(self.coef)
+            elif self.linear_loss.fit_intercept:
+                # Intercept treatment as in class ElasticNet, i.e. mean centering and
+                # scaling.
+                if X_scale is not None:
+                    w /= X_scale
+                w0 = z_offset - X_offset @ w
+                self.coef_newton = np.r_[w, w0] - self.coef
+            else:
+                self.coef_newton = w - self.coef
+        else:
+            # Multinomial multiclass.
+            # Unfortunately, the pointwise hessian h is not diagonal and we can't write
+            # this as least squares plus penalties:
+            #   ||sqrt(h) X w - y||_2^2 + penalties
+            # One possible solution is to majorize the pointwise hessian by a diagonal
+            # matrix t, see Lemma 3.3 in https://arxiv.org/abs/1311.6529, 2 ways:
+            #   - one diagonal t_k for each class k
+            #     diag(p) - p p' <= 2 diag(p (1 - p)) = t
+            #   - identity times constant
+            #     diag(p) - p p' <= max(2 diag(p (1 - p))) * identity = t
+            # The full Hessian H would then be majorized by
+            #     H <= X' diag(t) X  for each class k=1..K
+            # Another strategy is pursued in Friedman, Hastie & Tibshirani (2010)
+            # https://doi.org/10.18637/JSS.V033.I01. In section 4, they add another
+            # middle loop over classes and optimized only for that class. This is
+            # the same as using the diagonal majorization above and additionally
+            # updating gradient and hessian in this middle loop.
+            # Unfortunately, these strategies fail even for simple datasets such as
+            #     X, y = make_classification(n_samples=20, n_features=20,
+            #         n_informative=10, n_classes=3)
+            #     LogisticRegression(C=1).fit(X, y)
+            # Therefore, we take a more sophisticated approach:
+            # Tanabe & Sagae (1992) https://doi.org/10.1111/J.2517-6161.1992.TB01875.X
+            # derive an analytical LDL' decomposition for the matrix
+            # h = diag(p) - p p' = LDL', L lower triangular, D diagonal.
+            # Defining
+            #   A = sqrt(D) L' X
+            #   b = (L sqrt(D))^-1 (LDL' X coef - g) = A coef - (L sqrt(D))^-1 g
+            # we can now write
+            #     1/2 c' H c + (G' - coef' H) c + alpha ||c||_1 + beta/2 ||c||_2^2
+            #   = 1/2 ||A c - b||_2^2 + alpha ||c||_1 + beta/2 ||c||_2^2 + const
+            #
+            # Note that
+            #   A' A = H
+            #   G = X' g
+            #   A' b = H coef - G
+            proba = self.hess_pointwise
+            w = np.copy(self.coef, order="F")
+
+            with warnings.catch_warnings():
+                # Ignore warnings that add little information for users.
+                warnings.simplefilter("ignore", ConvergenceWarning)
+                _, gap, inner_tol, n_inner_iter = enet_coordinate_descent_multinomial(
+                    W=w,
+                    alpha=self.l1_reg_strength,
+                    beta=self.l2_reg_strength,
+                    X=X,
+                    sample_weight=sample_weight,
+                    raw_prediction=self.raw_prediction,
+                    grad_pointwise=self.grad_pointwise,
+                    proba=proba,
+                    fit_intercept=self.linear_loss.fit_intercept,
+                    max_iter=1000,  # TODO(newton-cd): improve
+                    tol=self.inner_tol,
+                    do_screening=True,
+                    early_stopping=False,
+                    verbose=self.verbose >= 4,
+                )
+
+            # Set self.coef_newton.
+            self.coef_newton = w - self.coef
+
+        # Tighten inner stopping criterion, see Chapter 6.1 of "An Improved GLMNET".
+        if n_inner_iter == 0:
+            self.inner_tol *= 0.1
+        elif n_inner_iter <= 4:  # "An Improved GLMNET" uses n_inner_iter <= 1
+            self.inner_tol *= 0.25
+        # elif n_inner_iter <= 8:
+        #     # TODO(newton-cd): Check if this improves convergence
+        #     self.inner_tol *= 0.5
+
+        if self.verbose >= 2:
+            print(
+                f"  Inner coordinate descent solver stopped with {n_inner_iter} "
+                f"iterations and a dualilty gap={float(gap)}."
+            )
+
+        if self.l2_reg_strength:
+            # We neglected the l2_reg_strength in update_gradient_hessian. We correct it
+            # now for the gradient.
+            weights, _ = self.linear_loss.weight_intercept(self.coef)
+            if self.linear_loss.base_loss.is_multiclass:
+                self.gradient[:, :n_features] += self.l2_reg_strength * weights
+            else:
+                self.gradient[:n_features] += self.l2_reg_strength * weights
+
+        self.gradient_times_newton = self.gradient.ravel(
+            order="F"
+        ) @ self.coef_newton.ravel(order="F")
+        if self.gradient_times_newton > 0:
+            if self.verbose:
+                # TODO(newton-cd): What to do?
+                print(
+                    "  The inner solver found a Newton step that is not a "
+                    "descent direction."
+                )
+            return
+
+        return
+
+    def compute_d2(self, X, sample_weight):
+        """Compute square of Newton decrement."""
+        # return self.coef_newton @ self.hessian @ self.coef_newton
+        weights, intercept, raw_prediction = self.linear_loss.weight_intercept_raw(
+            self.coef_newton, X
+        )
+        if not self.linear_loss.base_loss.is_multiclass:
+            d2 = np.sum(raw_prediction * self.hess_pointwise * raw_prediction)
+        else:
+            # hess_pointwise is predicted probability
+            proba = self.hess_pointwise
+            # coef' H coef = raw_prediction' * h * raw_prediction
+            # = sum_{i,k,l} raw_{i,k} p_{i,k} (1_{k=l} - p_{i,l}) raw_{i,l}
+            # = sum_{i,k} p_{i,k} raw_{i,k}^2
+            # - sum_{i} (sum_{k} raw_{i,k} p_{i,k})^2
+            proba_raw = proba * raw_prediction
+            if sample_weight is None:
+                d2 = np.sum(proba_raw * raw_prediction)
+                d2 -= np.sum(np.sum(proba_raw, axis=1) ** 2)
+            else:
+                d2 = np.sum(sample_weight[:, None] * proba_raw * raw_prediction)
+                d2 -= np.sum(sample_weight * np.sum(proba_raw, axis=1) ** 2)
+            d2 /= self.sw_sum
+        if self.l2_reg_strength > 0:
+            d2 += 2 * self.linear_loss.l2_penalty(weights, self.l2_reg_strength)
+        return d2
+
+    def finalize(self, X, y, sample_weight):
+        if (
+            self.linear_loss.base_loss.is_multiclass
+            and self.l1_reg_strength == 0
+            and self.l2_reg_strength == 0
+        ):
+            # Our convention is usually the symmetric parametrization where
+            # sum(coef[classes, features], axis=0) = 0.
+            # We convert now to this convention. Note that it does not change
+            # the predicted probabilities.
+            n_classes = self.linear_loss.base_loss.n_classes
+            # self.coef = self.coef.reshape(n_classes, -1, order="F")
+            self.coef -= np.mean(self.coef, axis=0)
+        elif (
+            self.linear_loss.base_loss.is_multiclass and self.linear_loss.fit_intercept
+        ):
+            # Only the intercept needs an update to the symmetric parametrization.
+            self.coef[:, -1] -= np.mean(self.coef[:, -1])

@@ -11,7 +11,7 @@ import warnings
 from numbers import Integral, Real
 
 import numpy as np
-from scipy import optimize
+from scipy import optimize, sparse
 
 from sklearn._loss.loss import (
     HalfBinomialLoss,
@@ -28,6 +28,7 @@ from sklearn.linear_model._base import (
 )
 from sklearn.linear_model._glm._newton_solver import (
     NewtonCDGramSolver,
+    NewtonCDSolver,
     NewtonCholeskySolver,
 )
 from sklearn.linear_model._linear_loss import LinearModelLoss
@@ -58,7 +59,12 @@ from sklearn.utils._array_api import (
 from sklearn.utils._indexing import _array_indexing
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms, softmax
-from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.fixes import (
+    _get_additional_lbfgs_options_dict,
+    _is_gil_enabled,
+    parse_version,
+    sp_version,
+)
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -86,21 +92,27 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 
 def _check_solver(solver, penalty, dual):
-    if solver not in ("liblinear", "newton-cd-gram", "saga") and penalty not in (
-        "l2",
-        None,
-    ):
+    if solver not in (
+        "liblinear",
+        "newton-cd",
+        "newton-cd-gram",
+        "saga",
+    ) and penalty not in ("l2", None):
         raise ValueError(
-            f"Solver {solver} supports only 'l2' or None penalties, got {penalty} "
+            f"Solver '{solver}' supports only 'l2' or None penalties, got {penalty} "
             "penalty."
         )
     if solver != "liblinear" and dual:
         raise ValueError(f"Solver {solver} supports only dual=False, got dual={dual}")
 
-    if penalty == "elasticnet" and solver not in ("saga", "newton-cd-gram"):
+    if penalty == "elasticnet" and solver not in (
+        "saga",
+        "newton-cd",
+        "newton-cd-gram",
+    ):
         raise ValueError(
-            "Only solvers 'newton-cd-gram' and 'saga' support elasticnet penalty, "
-            f"got solver={solver}."
+            "Only solvers 'newton-cd', 'newton-cd-gram' and 'saga' support elasticnet "
+            f"penalty, got solver={solver}."
         )
 
     if solver == "liblinear" and penalty is None:
@@ -295,8 +307,8 @@ def _logistic_regression_path(
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cd-gram', 'newton-cg', 'newton-cholesky', \
-            'sag', 'saga'}, default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cd', 'newton-cd-gram', 'newton-cg', \
+            'newton-cholesky', 'sag', 'saga'}, default='lbfgs'
         Numerical solver to use.
 
     coef : array-like of shape (n_classes, features + int(fit_intercept)) or \
@@ -384,9 +396,6 @@ def _logistic_regression_path(
     -----
     You might get slightly different results with the solver liblinear than
     with the others since this uses LIBLINEAR which penalizes the intercept.
-
-    .. versionchanged:: 0.19
-        The "copy" parameter was removed.
     """
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
@@ -401,10 +410,10 @@ def _logistic_regression_path(
     if check_input:
         X = check_array(
             X,
-            accept_sparse="csr",
+            accept_sparse="csc" if solver == "newton-cd" else "csr",
             dtype=[xp.float64, xp.float32],
-            accept_large_sparse=solver
-            not in ("liblinear", "newton-cd-gram", "sag", "saga"),
+            order="F" if solver == "newton-cd" else None,
+            accept_large_sparse=solver not in ("liblinear", "newton-cd", "sag", "saga"),
         )
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
@@ -465,7 +474,13 @@ def _logistic_regression_path(
     #     C * sum(pointwise_loss) + penalty
     # instead of (as LinearModelLoss does)
     #     mean(pointwise_loss) + 1/C * penalty
-    if solver in ("lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"):
+    if solver in (
+        "lbfgs",
+        "newton-cd",
+        "newton-cd-gram",
+        "newton-cg",
+        "newton-cholesky",
+    ):
         # This needs to be calculated after sample_weight is multiplied by
         # class_weight. It is even tested that passing class_weight is equivalent to
         # passing sample_weights according to class_weight.
@@ -532,7 +547,13 @@ def _logistic_regression_path(
             ),
             fit_intercept=fit_intercept,
         )
-        if solver in ("lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"):
+        if solver in (
+            "lbfgs",
+            "newton-cd",
+            "newton-cd-gram",
+            "newton-cg",
+            "newton-cholesky",
+        ):
             # scipy.optimize.minimize and newton-cg accept only ravelled parameters,
             # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
             # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
@@ -645,14 +666,15 @@ def _logistic_regression_path(
             )
             w0 = sol.solve(X=X, y=y, sample_weight=sample_weight)
             n_iter_i = sol.iteration
-        elif solver == "newton-cd-gram":
+        elif solver in ("newton-cd", "newton-cd-gram"):
             if penalty == "l1":
                 l1_ratio = 1.0
             elif penalty == "l2":
                 l1_ratio = 0
             l1_reg_strength = l1_ratio / (C * sw_sum)
             l2_reg_strength = (1.0 - l1_ratio) / (C * sw_sum)
-            sol = NewtonCDGramSolver(
+            sol = {"newton-cd": NewtonCDSolver, "newton-cd-gram": NewtonCDGramSolver}
+            sol = sol[solver](
                 coef=w0,
                 linear_loss=loss,
                 l1_reg_strength=l1_reg_strength,
@@ -735,7 +757,13 @@ def _logistic_regression_path(
             else:
                 coefs.append(xp.asarray(w0, copy=True, dtype=X.dtype, device=device))
         else:
-            if solver in ("lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"):
+            if solver in (
+                "lbfgs",
+                "newton-cd",
+                "newton-cd-gram",
+                "newton-cg",
+                "newton-cholesky",
+            ):
                 if _is_numpy_namespace(xp) or not coef_as_xp:
                     multi_w0 = np.reshape(w0, (n_classes, -1), order="F")
                 else:
@@ -904,6 +932,12 @@ def _log_reg_scoring_path(
         sw_train = sample_weight[train_xp]
         sw_test = sample_weight[test_xp]
 
+    if solver == "newton-cd":
+        if sparse.issparse(X_train):
+            X_train = X_train.tocsc()
+        else:
+            X_train = np.asfortranarray(X_train)
+
     # Note: We pass classes for the whole dataset to avoid inconsistencies,
     # i.e. different number of classes in different folds. This way, if a class
     # is not present in a fold, _logistic_regression_path will still return
@@ -1041,9 +1075,6 @@ class LogisticRegression(
            `solver` below, to know the compatibility between the penalty and
            solver.
 
-        .. versionadded:: 0.19
-           l1 penalty with SAGA solver (allowing 'multinomial' + L1)
-
         .. deprecated:: 1.8
            `penalty` was deprecated in version 1.8 and will be removed in 1.10.
            Use `l1_ratio` and `C` instead. `l1_ratio=0` for `penalty='l2'`,
@@ -1115,16 +1146,13 @@ class LogisticRegression(
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-        .. versionadded:: 0.17
-           *class_weight='balanced'*
-
     random_state : int, RandomState instance, default=None
         Only used for `solver` == 'sag', 'saga' or 'liblinear' to shuffle the
         data. It has no effect on the other solvers.
         See :term:`Glossary <random_state>` for details.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cd-gram', 'newton-cg', 'newton-cholesky', \
-            'sag', 'saga'}, default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cd', 'newton-cd-gram', 'newton-cg', \
+            'newton-cholesky', 'sag', 'saga'}, default='lbfgs'
 
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
@@ -1155,6 +1183,7 @@ class LogisticRegression(
            ================= ======================== ======================
            'lbfgs'           l1_ratio=0               yes
            'liblinear'       l1_ratio=1 or l1_ratio=0 no
+           'newton-cd'       0<=l1_ratio<=1           yes
            'newton-cd-gram'  0<=l1_ratio<=1           yes
            'newton-cg'       l1_ratio=0               yes
            'newton-cholesky' l1_ratio=0               yes
@@ -1173,13 +1202,6 @@ class LogisticRegression(
            :ref:`Table <logistic_regression_solvers>`
            summarizing solver/penalty supports.
 
-        .. versionadded:: 0.17
-           Stochastic Average Gradient (SAG) descent solver. Multinomial support in
-           version 0.18.
-        .. versionadded:: 0.19
-           SAGA solver.
-        .. versionchanged:: 0.22
-           The default solver changed from 'liblinear' to 'lbfgs' in 0.22.
         .. versionadded:: 1.2
            newton-cholesky solver. Multinomial support in version 1.6.
 
@@ -1194,9 +1216,6 @@ class LogisticRegression(
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
-
-        .. versionadded:: 0.17
-           *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
     n_jobs : int, default=None
         Does not have any effect.
@@ -1229,8 +1248,6 @@ class LogisticRegression(
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1239,11 +1256,6 @@ class LogisticRegression(
 
     n_iter_ : ndarray of shape (1, )
         Actual number of iterations for all classes.
-
-        .. versionchanged:: 0.20
-
-            In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
-            ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
     See Also
     --------
@@ -1299,6 +1311,7 @@ class LogisticRegression(
                 {
                     "lbfgs",
                     "liblinear",
+                    "newton-cd",
                     "newton-cd-gram",
                     "newton-cg",
                     "newton-cholesky",
@@ -1385,9 +1398,6 @@ class LogisticRegression(
         sample_weight : array-like of shape (n_samples,) default=None
             Array of weights that are assigned to individual samples.
             If not provided, then each sample is given unit weight.
-
-            .. versionadded:: 0.17
-               *sample_weight* support to LogisticRegression.
 
         Returns
         -------
@@ -1477,11 +1487,10 @@ class LogisticRegression(
             self,
             X,
             y,
-            accept_sparse="csr",
+            accept_sparse="csc" if solver == "newton-cd" else "csr",
             dtype=[xp.float64, xp.float32],
-            order="C",
-            accept_large_sparse=solver
-            not in ("liblinear", "newton-cd-gram", "sag", "saga"),
+            order="F" if solver == "newton-cd" else "C",
+            accept_large_sparse=solver not in ("liblinear", "newton-cd", "sag", "saga"),
         )
         n_samples, n_features = X.shape
         check_classification_targets(y)
@@ -1513,6 +1522,15 @@ class LogisticRegression(
             )
             # Avoid overriding the input sample_weight.
             sample_weight = sample_weight * class_weight_
+
+        if solver == "newton-cd" and n_classes >= 3 and sparse.issparse(X):
+            # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+            if sp_version < parse_version("1.17.0"):
+                raise ValueError(
+                    "Solver 'newton-cd' supports sparse X in a multiclass setting "
+                    "(n_classes >= 3) only with scipy >= 1.17."
+                )
+            X = sparse.csc_array(X)
 
         # With lbfgs, the fit task will have a subtask even if max_iter is 0.
         # There's also always one extra empty subtask due to the scipy.optimize.minimize
@@ -1752,9 +1770,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     dual : bool, default=False
         Dual (constrained) or primal (regularized, see also
         :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
@@ -1825,6 +1840,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            ================= ======================== ======================
            'lbfgs'           l1_ratio=0               yes
            'liblinear'       l1_ratio=1 or l1_ratio=0 no
+           'newton-cd'       0<=l1_ratio<=1           yes
            'newton-cd-gram'  0<=l1_ratio<=1           yes
            'newton-cg'       l1_ratio=0               yes
            'newton-cholesky' l1_ratio=0               yes
@@ -1837,11 +1853,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            with approximately the same scale. You can preprocess the data with
            a scaler from :mod:`sklearn.preprocessing`.
 
-        .. versionadded:: 0.17
-           Stochastic Average Gradient (SAG) descent solver. Multinomial support in
-           version 0.18.
-        .. versionadded:: 0.19
-           SAGA solver.
         .. versionadded:: 1.2
            newton-cholesky solver. Multinomial support in version 1.6.
 
@@ -1861,9 +1872,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
-
-        .. versionadded:: 0.17
-           class_weight == 'balanced'
 
     n_jobs : int, default=None
         Number of CPU cores used during the cross-validation loop.
@@ -1995,8 +2003,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2237,11 +2243,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             self,
             X,
             y,
-            accept_sparse="csr",
+            accept_sparse="csr",  # CV will index data on first dimension
             dtype=[xp.float64, xp.float32],
-            order="C",
-            accept_large_sparse=solver
-            not in ("liblinear", "newton-cd-gram", "sag", "saga"),
+            order="C",  # CV will index data on first dimension
+            accept_large_sparse=solver not in ("liblinear", "newton-cd", "sag", "saga"),
         )
         n_samples, n_features = X.shape
         check_classification_targets(y)
@@ -2283,6 +2288,15 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         class_labels = move_to(class_labels, xp=np, device="cpu")
 
+        if solver == "newton-cd" and n_classes >= 3 and sparse.issparse(X):
+            # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+            if sp_version < parse_version("1.17.0"):
+                raise ValueError(
+                    "Solver 'newton-cd' supports sparse X in a multiclass setting "
+                    "(n_classes >= 3) only with scipy >= 1.17."
+                )
+            X = sparse.csr_array(X)
+
         if solver in ["sag", "saga"]:
             max_squared_sum = row_norms(X, squared=True).max()
         else:
@@ -2309,9 +2323,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         path_func = delayed(_log_reg_scoring_path)
 
-        # The SAG solver releases the GIL so it's more efficient to use
-        # threads for this solver.
-        if self.solver in ["sag", "saga"]:
+        # If this Python has a GIL, the SAG solver releases the GIL so it's
+        # more efficient to use threads. If there is no GIL, threads are more
+        # efficient in general.
+        if not _is_gil_enabled() or self.solver in ["sag", "saga"]:
             prefer = "threads"
         else:
             prefer = "processes"
@@ -2405,6 +2420,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
             if solver == "lbfgs":
                 coef_init = move_to(coef_init, xp=np, device="cpu")
+
+            if solver == "newton-cd":
+                if sparse.issparse(X):
+                    X = X.tocsc()
+                else:
+                    X = np.asfortranarray(X)
 
             # Note that y is label encoded
             w, _, _ = _logistic_regression_path(

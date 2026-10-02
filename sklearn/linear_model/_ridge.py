@@ -461,8 +461,6 @@ def ridge_regression(
         will have the same weight. If sample_weight is not None and
         solver='auto', the solver will be set to 'cholesky'.
 
-        .. versionadded:: 0.17
-
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
             'sag', 'saga', 'lbfgs'}, default='auto'
         Solver to use in the computational routines:
@@ -502,11 +500,6 @@ def ridge_regression(
         'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
         `fit_intercept` is True.
 
-        .. versionadded:: 0.17
-           Stochastic Average Gradient descent solver.
-        .. versionadded:: 0.19
-           SAGA solver.
-
     max_iter : int, default=None
         Maximum number of iterations for conjugate gradient solver.
         For the 'sparse_cg' and 'lsqr' solvers, the default value is determined
@@ -537,20 +530,14 @@ def ridge_regression(
         If True, the method also returns `n_iter`, the actual number of
         iteration performed by the solver.
 
-        .. versionadded:: 0.17
-
     return_intercept : bool, default=False
         If True and if X is sparse, the method also returns the intercept,
         and the solver is automatically changed to 'sag'. This is only a
         temporary fix for fitting the intercept with sparse data. For dense
         data, use sklearn.linear_model._preprocess_data before your regression.
 
-        .. versionadded:: 0.17
-
     check_input : bool, default=True
         If False, the input arrays X and y will not be checked.
-
-        .. versionadded:: 0.21
 
     Returns
     -------
@@ -1126,11 +1113,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
         `fit_intercept` is True.
 
-        .. versionadded:: 0.17
-           Stochastic Average Gradient descent solver.
-        .. versionadded:: 0.19
-           SAGA solver.
-
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
         Only 'lbfgs' solver is supported in this case.
@@ -1138,9 +1120,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
         See :term:`Glossary <random_state>` for details.
-
-        .. versionadded:: 0.17
-           `random_state` to support Stochastic Average Gradient.
 
     Attributes
     ----------
@@ -1155,12 +1134,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         Actual number of iterations for each target. Available only for
         'sag' and 'lsqr' solvers. Other solvers will return None.
 
-        .. versionadded:: 0.17
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1481,11 +1456,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
 
-          .. versionadded:: 0.17
-             Stochastic Average Gradient descent solver.
-          .. versionadded:: 0.19
-             SAGA solver.
-
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
           `scipy.optimize.minimize`. It can be used only when `positive`
           is True.
@@ -1500,10 +1470,10 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
-        ``coef_`` is of shape (1, n_features) when the given problem is binary.
+        ``coef_`` is of shape ``(n_features,)`` when the given problem is binary.
 
     intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
@@ -1518,8 +1488,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1600,9 +1568,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
-            .. versionadded:: 0.17
-               *sample_weight* support to RidgeClassifier.
-
         Returns
         -------
         self : object
@@ -1640,25 +1605,6 @@ def _check_gcv_mode(X, gcv_mode):
     # fallbacks to gram (n <= p) or cov (p < n)
     n, p = X.shape
     return "gram" if n <= p else "cov"
-
-
-def _find_smallest_angle(query, vectors):
-    """Find the column of vectors that is most aligned with the query.
-
-    Both query and the columns of vectors must have their l2 norm equal to 1.
-
-    Parameters
-    ----------
-    query : ndarray of shape (n_samples,)
-        Normalized query vector.
-
-    vectors : ndarray of shape (n_samples, n_features)
-        Vectors to which we compare query, as columns. Must be normalized.
-    """
-    xp, _ = get_namespace(query)
-    abs_cosine = xp.abs(query @ vectors)
-    index = xp.argmax(abs_cosine)
-    return index
 
 
 class _X_CenterStackOp(sparse.linalg.LinearOperator):
@@ -2741,8 +2687,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         This flag is only compatible with ``cv=None`` (i.e. using
         Leave-One-Out Cross-Validation).
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     cv_results_ : ndarray of shape (n_samples, n_alphas) or \
@@ -2771,12 +2715,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Score of base estimator with best alpha, or, if
         ``alpha_per_target=True``, a score for each target.
 
-        .. versionadded:: 0.23
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2946,10 +2886,10 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         .. versionchanged:: 1.5
             `cv_values_` changed to `cv_results_`.
 
-    coef_ : ndarray of shape (1, n_features) or (n_targets, n_features)
+    coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         Coefficient of the features in the decision function.
 
-        ``coef_`` is of shape (1, n_features) when the given problem is binary.
+        ``coef_`` is of shape ``(n_features,)`` when the given problem is binary.
 
     intercept_ : float or ndarray of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
@@ -2961,15 +2901,11 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     best_score_ : float
         Score of base estimator with best alpha.
 
-        .. versionadded:: 0.23
-
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

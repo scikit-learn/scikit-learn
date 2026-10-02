@@ -9,7 +9,6 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.sparse.linalg import LinearOperator
 
-from sklearn.utils.fixes import _sparse_min_max, _sparse_nan_min_max
 from sklearn.utils.sparsefuncs_fast import (
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
 )
@@ -114,13 +113,9 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
         if axis is set to 1 shape is (n_features,).
         If it is set to None, then samples are equally weighted.
 
-        .. versionadded:: 0.24
-
     return_sum_weights : bool, default=False
         If True, returns the sum of weights seen for each feature
         if `axis=0` or each sample if `axis=1`.
-
-        .. versionadded:: 0.24
 
     Returns
     -------
@@ -211,8 +206,6 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
         If axis is set to 0 shape is (n_samples,) or
         if axis is set to 1 shape is (n_features,).
         If it is set to None, then samples are equally weighted.
-
-        .. versionadded:: 0.24
 
     Returns
     -------
@@ -576,13 +569,11 @@ def min_max_axis(X, axis, ignore_nan=False):
     X : sparse matrix of shape (n_samples, n_features)
         Input data. It should be of CSR or CSC format.
 
-    axis : {0, 1}
+    axis : {0, 1} or None
         Axis along which the axis should be computed.
 
     ignore_nan : bool, default=False
         Ignore or passing through NaN values.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
@@ -594,10 +585,14 @@ def min_max_axis(X, axis, ignore_nan=False):
         Feature-wise maxima.
     """
     if sp.issparse(X) and X.format in ("csr", "csc"):
-        if ignore_nan:
-            return _sparse_nan_min_max(X, axis=axis)
-        else:
-            return _sparse_min_max(X, axis=axis)
+        the_min = X.nanmin(axis=axis) if ignore_nan else X.min(axis=axis)
+        the_max = X.nanmax(axis=axis) if ignore_nan else X.max(axis=axis)
+
+        if axis is not None:
+            the_min = the_min.toarray().ravel()
+            the_max = the_max.toarray().ravel()
+
+        return the_min, the_max
     else:
         _raise_typeerror(X)
 

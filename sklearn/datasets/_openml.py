@@ -63,7 +63,7 @@ def _openml_path_from_url(url: str) -> str:
 def _retry_with_clean_cache(
     openml_path: str,
     data_home: Optional[str],
-    no_retry_exception: Optional[Exception] = None,
+    no_retry_exception: Optional[type[Exception]] = None,
 ) -> Callable:
     """If the first call to the decorated function fails, the local cached file
     (if any) is removed and the function is called again. The retry happens
@@ -826,8 +826,6 @@ def fetch_openml(
 
     Read more in the :ref:`User Guide <openml>`.
 
-    .. versionadded:: 0.20
-
     .. note:: EXPERIMENTAL
 
         The API is experimental (particularly the return value structure),
@@ -888,10 +886,6 @@ def fetch_openml(
         where the categories are provided in the attribute `categories` of the
         `Bunch` instance. When `parser="pandas"`, no ordinal encoding is made.
 
-        .. versionchanged:: 0.24
-           The default value of `as_frame` changed from `False` to `'auto'`
-           in 0.24.
-
     n_retries : int, default=3
         Number of retries when HTTP errors or network timeouts are encountered.
         Error with status code 412 won't be retried as they represent OpenML
@@ -940,8 +934,6 @@ def fetch_openml(
             The names of the dataset columns.
         target_names: list
             The names of the target columns.
-
-        .. versionadded:: 0.22
 
         categories : dict or None
             Maps each categorical feature name to a list of values, such
