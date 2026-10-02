@@ -1,0 +1,5 @@
+- Fixed the subsampling of very sparse columns in
+  :class:`preprocessing.QuantileTransformer`, which previously could retain
+  only a handful of non-zero values regardless of `subsample`, degrading the
+  estimated quantiles.
+  By :user:`Arthur Lacote <cakedev0>`.
