@@ -466,10 +466,33 @@ class CallbackContext:
         )
 
     def _get_manual_routing_params(self, metadata, hook_name):
-        """Generate manually routed params for callbacks when routing is disabled.
+        # TODO(slep006): remove when metadata routing is the only way
+        """Split one hook's shared params into per-callback params.
 
-        This is used to forward sample_weight to callback hooks that accept them even
-        if metadata routing is disabled.
+        This is the second manual-routing step, used when metadata routing is
+        disabled. ``metadata`` is one hook entry from
+        `CallbackSupportMixin._get_manual_callback_params`, after `_manual_routing`,
+        for example ``{"sample_weight": weights}``.
+
+        The result is what `_call_hooks` indexes. Key ``callback_{i}`` holds the
+        kwargs for the callback at position ``i``. Only callbacks that accept
+        ``sample_weight`` on ``hook_name`` get an entry. The others are omitted and
+        receive no routed kwargs.
+
+        Parameters
+        ----------
+        metadata : dict or Bunch
+            Params for this hook, shared by all callbacks.
+
+        hook_name : {"on_fit_task_begin", "on_fit_task_end"}
+            Hook these params are routed to.
+
+        Returns
+        -------
+        params : dict
+            ``{"callback_{i}": {hook_name: {"sample_weight": value}}}`` for each
+            callback that accepts ``sample_weight``. Empty when ``sample_weight``
+            is not in ``metadata``.
         """
         params = {}
         if "sample_weight" not in metadata:

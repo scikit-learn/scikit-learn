@@ -24,10 +24,11 @@ from sklearn.utils.metadata_routing import (
 class ScoringMonitorLog:
     """Log for one run of a scoring monitor.
 
-    The recorded scores are accessed through the `data` attribute, as a list of dicts,
-    or the `data_as_pandas` attribute, as a Pandas DataFrame. In the former case, each
-    dict corresponds to one row of the corresponding DataFrame and contains
-    column_name -> value pairs. The columns are structured as follows:
+    Training and validation scores are respectively accessed through the `train_scores`
+    and `val_scores` attributes, as lists of dicts, or through `train_scores_as_pandas`
+    and `val_scores_as_pandas`, as Pandas DataFrames. In the list form, each dict
+    corresponds to one row of the corresponding DataFrame and contains column_name ->
+    value pairs. Both tables have the same columns:
 
     - `task_id_path`: tuple containing the task ids from the root task to the
       task for which the score was computed. Each value in this column is
@@ -39,7 +40,10 @@ class ScoringMonitorLog:
     - `task_name`: the name of the task.
     - `task_id`: the id of the task.
     - `sequential_subtasks`: whether the task has sequential subtasks.
-    - A column for each score name that was passed as `scoring` parameter.
+    - A column for each score name. On `train_scores`, these come from the
+      `scoring_train` parameter. On `val_scores`, they come from `scoring_val`.
+      A table is empty when the corresponding scorer is disabled
+      (`"no_train_score"` or `"no_val_score"`) or when that data was not provided.
 
     Attributes
     ----------
@@ -122,36 +126,37 @@ class ScoringMonitor(FitCallback):
     scoring_train : str, callable, list, tuple or dict, default="no_train_score"
         The scoring method to use to monitor the model on the training data.
 
-        If `scoring` represents a single score, one can use:
+        If `scoring_train` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_string_names`);
         - a callable (see :ref:`scoring_callable`) that returns a single value;
 
-        If `scoring` represents multiple scores, one can use:
+        If `scoring_train` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables as values.
 
-        If `scoring = 'no_train_score'`, scores are not computed on the train set.
+        If `scoring_train = 'no_train_score'`, scores are not computed on the train set.
 
     scoring_val : str, callable, list, tuple, or dict, default="no_val_score"
         The scoring method to use to monitor the model on the validation data.
 
-        If `scoring` represents a single score, one can use:
+        If `scoring_val` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_string_names`);
         - a callable (see :ref:`scoring_callable`) that returns a single value;
 
-        If `scoring` represents multiple scores, one can use:
+        If `scoring_val` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables as values.
 
-        If `scoring = 'no_val_score'`, scores are not computed on the validation set.
+        If `scoring_val = 'no_val_score'`, scores are not computed on the validation
+        set.
     """
 
     @validate_params(

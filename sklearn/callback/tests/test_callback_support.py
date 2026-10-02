@@ -12,7 +12,6 @@ from sklearn.callback.tests._common.callbacks import (
     NotValidSetupPositionalCallback,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
-    SampleWeightCallback,
 )
 from sklearn.callback.tests._common.estimators import MaxIterEstimator
 from sklearn.utils.parallel import Parallel, delayed
@@ -170,25 +169,3 @@ def test_set_callback_empty():
     # calling again doesn't raise
     estimator.set_callbacks()
     assert not hasattr(estimator, "_skl_callbacks")
-
-
-def test_get_manual_callback_params():
-    """Test the _get_manual_callback_params method."""
-
-    sample_weight = 12
-
-    output_no_forward = {"on_fit_task_begin": {}, "on_fit_task_end": {}}
-
-    output_forward = {
-        "on_fit_task_begin": {"sample_weight": sample_weight},
-        "on_fit_task_end": {"sample_weight": sample_weight},
-    }
-
-    est = MaxIterEstimator()
-    assert est._get_manual_callback_params(sample_weight) == output_no_forward
-
-    est.set_callbacks(RecordingCallback())
-    assert est._get_manual_callback_params(sample_weight) == output_no_forward
-
-    est.set_callbacks(RecordingCallback(), SampleWeightCallback())
-    assert est._get_manual_callback_params(sample_weight) == output_forward

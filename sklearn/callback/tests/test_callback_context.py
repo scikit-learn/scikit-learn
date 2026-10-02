@@ -583,44 +583,41 @@ def test_metadata_routing_callback_consumer_in_metaestimator(n_jobs):
     assert all([m == "val_2" for m in task_end_metadatas])
 
 
+def _assert_recorded_routed_arg(callback, expected):
+    for hook_name, key in (
+        ("on_fit_task_begin", "requested_arg_begin"),
+        ("on_fit_task_end", "requested_arg_end"),
+    ):
+        values = [
+            rec["kwargs"][key] for rec in callback.record if rec["name"] == hook_name
+        ]
+        assert values
+        assert all(value == expected for value in values)
+
+
 def test_sample_weight_without_routing():
-    """Test that callbacks receive sample_weight even when routing is disabled."""
-    cb = SampleWeightCallback()
+    """Forward sample_weight without metadata routing only to callbacks that accept it.
 
-    MaxIterEstimator().set_callbacks(cb).fit(sample_weight="sample_weight")
+    Fit goes through both manual routing steps. `_get_manual_callback_params` builds
+    one mapping shared by every callback, then `_get_manual_routing_params` delivers
+    `sample_weight` only to callbacks that accept it. Other callbacks are still called.
+    """
+    weight = "sample_weight"
+    accepting = SampleWeightCallback()
+    ignoring = RecordingCallback()
+    MaxIterEstimator(max_iter=1, computation_intensity=0).set_callbacks(
+        ignoring, accepting
+    ).fit(sample_weight=weight)
+    _assert_recorded_routed_arg(accepting, weight)
+    _assert_recorded_routed_arg(ignoring, None)
 
-    for rec in cb.record:
-        if rec["name"] == "on_fit_task_begin":
-            assert rec["kwargs"]["requested_arg_begin"] == "sample_weight"
-        elif rec["name"] == "on_fit_task_end":
-            assert rec["kwargs"]["requested_arg_end"] == "sample_weight"
-
-
-def test_get_manual_routing_params():
-    """Test the _get_manual_routing_params method."""
-
-    estimator = MaxIterEstimator()
-    context = _make_callback_ctx(estimator, task_name="mytask", task_id=42)
-
-    assert context._get_manual_routing_params({}, "on_fit_task_begin") == {}
-    assert (
-        context._get_manual_routing_params({"sample_weight": 12}, "on_fit_task_begin")
-        == {}
-    )
-
-    estimator.set_callbacks(RecordingCallback())
-    context = _make_callback_ctx(estimator, task_name="mytask", task_id=42)
-
-    assert context._get_manual_routing_params({}, "on_fit_task_begin") == {}
-    assert (
-        context._get_manual_routing_params({"sample_weight": 12}, "on_fit_task_begin")
-        == {}
-    )
-
-    estimator.set_callbacks(RecordingCallback(), SampleWeightCallback())
-    context = _make_callback_ctx(estimator, task_name="mytask", task_id=42)
-
-    assert context._get_manual_routing_params({}, "on_fit_task_begin") == {}
-    assert context._get_manual_routing_params(
-        {"sample_weight": 12}, "on_fit_task_begin"
-    ) == {"callback_1": {"on_fit_task_begin": {"sample_weight": 12}}}
+    # Nothing to forward: no sample_weight, or no callback accepts it.
+    for callbacks, fit_kwargs in (
+        ([SampleWeightCallback()], {}),
+        ([RecordingCallback()], {"sample_weight": weight}),
+    ):
+        (callback,) = callbacks
+        MaxIterEstimator(max_iter=1, computation_intensity=0).set_callbacks(
+            *callbacks
+        ).fit(**fit_kwargs)
+        _assert_recorded_routed_arg(callback, None)

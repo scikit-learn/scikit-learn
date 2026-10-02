@@ -174,16 +174,34 @@ class CallbackSupportMixin:
 
     def _get_manual_callback_params(self, sample_weight):
         # TODO(slep006): remove when metadata routing is the only way
-        """Generate manually routed params for callbacks when routing is disabled.
+        """Build the shared callback params used when metadata routing is disabled.
 
         This is used to forward sample_weight to callback hooks that accept them even
         if metadata routing is disabled.
+
+        This is the first of the two manual-routing steps. Pass the result to
+        `_manual_routing` as the ``callback`` child::
+
+            params = self._get_manual_callback_params(sample_weight)
+            routed_params = _manual_routing({"callback": params})
+
+        Parameters
+        ----------
+        sample_weight : array-like or None
+            Sample weights passed to `fit`. ``None`` forwards nothing.
+
+        Returns
+        -------
+        callback_params : dict
+            ``{"on_fit_task_begin": params, "on_fit_task_end": params}``. ``params``
+            is empty, or ``{"sample_weight": sample_weight}`` when some callback
+            accepts it on that hook.
         """
         callback_params = {"on_fit_task_begin": Bunch(), "on_fit_task_end": Bunch()}
         if sample_weight is None:
             return callback_params
         for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
-            for i, cb in enumerate(getattr(self, "_skl_callbacks", [])):
+            for cb in getattr(self, "_skl_callbacks", []):
                 if cb._accept_sample_weight(hook_name):
                     callback_params[hook_name] = {"sample_weight": sample_weight}
                     break

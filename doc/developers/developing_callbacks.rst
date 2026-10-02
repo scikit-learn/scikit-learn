@@ -7,7 +7,7 @@ Developing callbacks
 .. currentmodule:: sklearn.callback
 
 The callback class
----------------------
+------------------
 
 To be compatible with scikit-learn estimators, :term:`callbacks` must inherit from the
 :class:`FitCallback` class.
@@ -63,6 +63,36 @@ attributes. See :class:`~CallbackContext` for more details.
     expected to be fully fitted (except for the :meth:`~FitCallback.teardown` hook).
     Callbacks should not rely on it to :term:`predict`, :term:`transform`, etc ... but
     rather use the `fitted_estimator` when available.
+
+Requesting metadata
+-------------------
+
+In addition to values produced by the estimator (such as `X`, `y`, and
+`fitted_estimator`), callbacks can receive routed metadata (e.g. `sample_weight`). The
+routed metadata reach a hook only when :ref:`metadata routing <metadata_routing>` is
+enabled and the callback requests them for that hook using the
+`set_on_fit_task_begin_request` or `set_on_fit_task_end_request` methods. Parameters
+that can be requested must be declared as keyword-only parameters of the hook. For
+example:
+
+.. code-block:: python
+
+    from sklearn.callback import FitCallback
+
+    class MyCallback(FitCallback):
+
+        def on_fit_task_end(self, estimator, context, *, sample_weight=None):
+            ...
+
+    callback = MyCallback().set_on_fit_task_end_request(sample_weight=True)
+
+`True` requests the parameter under its own name. A string requests a `fit` argument
+under a different name, for example
+`set_on_fit_task_end_request(sample_weight="sw_val")`.
+
+Until metadata routing is always enabled, `sample_weight` can still be forwarded while
+routing is disabled. Override `_accept_sample_weight` and return `True` for each hook
+that should receive it.
 
 Auto-propagated callbacks
 -------------------------

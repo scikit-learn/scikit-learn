@@ -139,7 +139,8 @@ class AutoPropagatedCallback(BaseCallback):
 
     @max_propagation_depth.setter
     def max_propagation_depth(self, value):
-        """The setter: This is where you can add logic/validation"""
-        if not isinstance(value, int) or value < 0:
-            raise ValueError("max_propagation_depth must be a positive integer.")
+        if (not isinstance(value, int) or value < 0) and value is not None:
+            raise ValueError(
+                "max_propagation_depth must be a positive integer or None."
+            )
         self._max_propagation_depth = value
