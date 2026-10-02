@@ -637,6 +637,77 @@ def test_ordinal_encoder(X):
 
 
 @pytest.mark.parametrize(
+    "kwargs",
+    [   
+        #missing values
+        {"fit":  [["a", "x"],["a", "x"]] + [["b", "y"],["b", "y"]],
+            "X":[["a", "x"]] + [["ab", "x"]] + [["b", "y"],["b", "y"]],
+            "X_decoded":[["a", "x"]] + [[None, "x"]] + [["b", "y"],["b", "y"]],
+            "X_encoded":[[ 0.0,  0.0]] + [[ -2.0,  0.0]]+[[ 1.0,  1.0],[ 1.0,  1.0]]},
+        #nan
+         {"fit":  [["aa", "xx"],["aa", "xx"]] + [["bb", "yy"],["bb", "yy"]],
+            "X":[[np.nan, "xx"]] + [["bb", "yy"],["bb", "yy"]],#x
+            "X_decoded":[[None, "xx"]] + [["bb", "yy"],["bb", "yy"]],
+            "X_encoded":[[-2.0,  0.0]] + [[ 1.0,  1.0],[ 1.0,  1.0]]},
+        #
+         {"fit":  [["aa", "xx"],["aa", "xx"]] + [["bb", "yy"],["bb", "yy"]],
+            "X":[["aa", "xx"]] + [["bb", "yy"],["bb", "yy"]],
+            "X_decoded":[["aa", "xx"]] + [["bb", "yy"],["bb", "yy"]],
+            "X_encoded":[[ 0.0,  0.0]] + [[ 1.0,  1.0],[ 1.0,  1.0]]},
+        #numeric
+         {"fit":  [[2, 7]] + [[1, 5],[1, 5]],
+            "X": [[2, 7]] + [[1, 5],[1, 5]],
+            "X_decoded":[[2, 7]] + [[1, 5],[1, 5]],
+            "X_encoded":[[ 0.0,  0.0]] + [[ 1.0,  1.0],[ 1.0,  1.0]]}
+    ],
+)
+def test_ordinal_encoder_frequency(kwargs):    
+    print("kwargs",list(kwargs.keys()))
+    enc = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-2,categories='frequency',
+    )
+    X_fit = np.array(
+        kwargs['fit'] ,
+        dtype=object,
+    )
+    X = np.array(
+        kwargs['X'], 
+        dtype=object,
+    )
+    X_decoded = np.array(
+        kwargs['X_decoded'],
+        dtype=object,
+    )
+    X_encoded = np.array(kwargs['X_encoded'])
+
+    enc.fit(X_fit)
+    X_trans_enc = enc.transform(X)
+    assert_array_equal(X_trans_enc, X_encoded)
+    X_trans_inv = enc.inverse_transform(X_trans_enc)
+    assert_array_equal(X_trans_inv, X_decoded)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"max_categories": 1},
+        {"min_frequency": 100},
+    ],
+)
+def test_ordinal_encoder_all_infrequent_frequency(kwargs):
+    """When all categories are infrequent, they are all encoded as zero."""
+    X_train = np.array(
+        [["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object
+    ).T
+    encoder = OrdinalEncoder(
+        **kwargs, handle_unknown="use_encoded_value", unknown_value=-1,categories='frequency',
+    ).fit(X_train)
+
+    X_test = [["a"], ["b"], ["c"], ["d"], ["e"]]
+    assert_allclose(encoder.transform(X_test), [[0], [0], [0], [0], [-1]])
+
+
+@pytest.mark.parametrize(
     "X, X2, cats, cat_dtype",
     [
         (
