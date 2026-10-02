@@ -6,6 +6,8 @@ usage.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+import os
+import sys
 import warnings
 from functools import update_wrapper
 
@@ -135,6 +137,7 @@ class _FuncWrapper:
     def with_config_and_warning_filters(self, config, warning_filters):
         self.config = config
         self.warning_filters = warning_filters
+        self.process_id = os.getpid()
         return self
 
     def __call__(self, *args, **kwargs):
@@ -150,6 +153,23 @@ class _FuncWrapper:
                 ),
                 UserWarning,
             )
+
+        if getattr(sys.flags, "context_aware_warnings", False):
+            # Each context has its own filters (free-threaded Python >= 3.14 by
+            # default): a worker thread inheriting the caller's context already
+            # has the caller's filters.
+            filters_already_set = warnings._get_filters() is warning_filters
+        else:
+            # The filters are process-wide: a thread of the caller's process
+            # already has them.
+            filters_already_set = getattr(self, "process_id", None) == os.getpid()
+        if filters_already_set:
+            # Setting the filters again is useless and, with many threads,
+            # costly (warnings module lock) or racy: catch_warnings swaps
+            # process-wide filters, so threads leaving it out of order can leave
+            # stale or partially reset filters behind.
+            with config_context(**config):
+                return self.function(*args, **kwargs)
 
         with config_context(**config), warnings.catch_warnings():
             # TODO is there a simpler way that resetwarnings+ filterwarnings?

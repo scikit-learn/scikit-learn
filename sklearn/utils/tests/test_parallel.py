@@ -1,5 +1,6 @@
 import itertools
 import re
+import sys
 import time
 import warnings
 
@@ -179,6 +180,24 @@ def test_check_warnings_threading():
             assert normalize_main_module(
                 worker_warning_filter
             ) == normalize_main_module(main_warning_filters)
+
+
+@pytest.mark.skipif(
+    getattr(sys.flags, "context_aware_warnings", False)
+    and not getattr(sys.flags, "thread_inherit_context", False),
+    reason="Worker threads don't inherit the caller's warning filters",
+)
+def test_warning_filters_not_reset_in_threads():
+    """Tasks of the threading backend run with the caller's warning filters
+    themselves, not a copy: resetting them in each task is racy with
+    process-wide filters (and costly with many threads)."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConvergenceWarning)
+        main_warning_filters = get_warning_filters()
+        worker_warning_filters = Parallel(n_jobs=2, backend="threading")(
+            delayed(get_warning_filters)() for _ in range(4)
+        )
+    assert all(filters is main_warning_filters for filters in worker_warning_filters)
 
 
 @pytest.mark.xfail(_IS_WASM, reason="Pyodide always use the sequential backend")
