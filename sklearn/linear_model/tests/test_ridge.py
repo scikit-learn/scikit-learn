@@ -2235,6 +2235,39 @@ def test_dtype_match_cholesky():
     assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("offset", [0.0, 1.0, 10.0, 30.0, 100.0, 1e3, 1e4, 1e6])
+def test_ridge_cholesky_uncentered_X_close_to_svd_or_warns(dtype, offset):
+    # `solver="cholesky"` fits X uncentered when it can (gh-34793), which can
+    # lose precision for features far from zero. Whatever `offset` is, it
+    # must either still agree with `solver="svd"` (which always centers
+    # explicitly), or a `LinAlgWarning` must be raised -- it must never
+    # silently return a substantially wrong answer.
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 100, 5
+    X = rng.normal(size=(n_samples, n_features)) + offset
+    true_coef = rng.normal(size=n_features)
+    y = X.dot(true_coef) + 0.01 * rng.normal(size=n_samples)
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+
+    ridge_svd = Ridge(alpha=1.0, solver="svd").fit(X, y)
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        ridge_cholesky = Ridge(alpha=1.0, solver="cholesky").fit(X, y)
+    warned = any(issubclass(w.category, linalg.LinAlgWarning) for w in caught)
+
+    if warned:
+        return
+
+    rtol, atol = (1e-3, 1e-3) if dtype == np.float32 else (1e-6, 1e-6)
+    assert_allclose(ridge_cholesky.coef_, ridge_svd.coef_, rtol=rtol, atol=atol)
+    assert_allclose(
+        ridge_cholesky.intercept_, ridge_svd.intercept_, rtol=rtol, atol=atol
+    )
+
+
 @pytest.mark.parametrize(
     "solver", ["svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"]
 )
