@@ -1134,15 +1134,19 @@ def test_param_is_default(default_value, test_value):
 
 
 def test_baseestimator_sample_weight_auto_request():
-    """Test that BaseEstimator correctly sets auto-requests on sample_weight."""
+    """Test that sklearn estimators auto-request `sample_weight`."""
 
     class MyEstimator(BaseEstimator):
+        """This class lives in a sklearn module and therefore creates the
+        `__auto_request_sample_weight__` class attribute in __init_subclass__."""
+
         def fit(self, X, y, sample_weight=None):
             return self
 
         def predict(self, X, y=None):
             return y
 
+    assert MyEstimator.__auto_request_sample_weight__
     est = MyEstimator()
 
     with config_context(enable_metadata_auto_requests=True):
@@ -1161,3 +1165,44 @@ def test_baseestimator_sample_weight_auto_request():
                     )
                     is not True
                 )
+
+
+def test_third_party_baseestimator_no_sample_weight_auto_request():
+    # Test that third-party subclasses of `BaseEstimator` do not auto-request
+    # sample_weight.
+
+    def fit(self, X, y, sample_weight=None):
+        return self
+
+    # This class lives in 'third_party.pkg' and therefore doesn't have a
+    # `__auto_request_sample_weight__` class attribute.
+    ThirdPartyEstimator = type(
+        "ThirdPartyEstimator",
+        (BaseEstimator,),
+        {"__module__": "third_party.pkg", "fit": fit},
+    )
+
+    assert "__auto_request_sample_weight__" not in ThirdPartyEstimator.__dict__
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(ThirdPartyEstimator())
+        assert routing.fit.requests.get("sample_weight") is not True
+
+
+def test_auto_request_mixin_opts_in_sample_weight():
+    """AutoRequestMixin opts third-party estimators into sample_weight auto-requests."""
+    from sklearn.utils.metadata_routing import AutoRequestMixin
+
+    def fit(self, X, y, sample_weight=None):
+        return self
+
+    ThirdPartyEstimator = type(
+        "ThirdPartyEstimator",
+        (AutoRequestMixin, BaseEstimator),
+        {"__module__": "third_party.pkg", "fit": fit},
+    )
+    assert ThirdPartyEstimator.__auto_request_sample_weight__
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(ThirdPartyEstimator())
+        assert routing.fit.requests.get("sample_weight") is True
