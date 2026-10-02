@@ -1639,7 +1639,7 @@ def fetch_file(
 
     if folder is None:
         folder = Path(get_data_home()) / folder_from_url
-        makedirs(folder, exist_ok=True)
+    makedirs(folder, exist_ok=True)
 
     remote_metadata = RemoteFileMetadata(
         filename=local_filename, url=url, checksum=sha256
