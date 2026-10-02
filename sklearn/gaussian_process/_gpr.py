@@ -48,6 +48,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     Bayesian modelling approach, refer to the example entitled
     :ref:`sphx_glr_auto_examples_gaussian_process_plot_compare_gpr_krr.py`.
 
+    Multi-output targets are handled by fitting one Gaussian process per target
+    while sharing the same kernel hyperparameters. This estimator does not model
+    correlations between different target dimensions.
+
     Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
