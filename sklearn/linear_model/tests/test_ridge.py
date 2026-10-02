@@ -347,6 +347,24 @@ def test_ridge_regression_unpenalized(
         assert_allclose(model.coef_, coef)
 
 
+def test_ridge_cholesky_reports_lstsq_fallback():
+    X, y = make_regression(n_samples=5, n_features=20, random_state=123)
+    X = np.r_[X, X]
+    y = np.r_[y, y]
+
+    with pytest.warns(
+        UserWarning,
+        match="Singular matrix in solving dual problem",
+    ):
+        model = Ridge(
+            fit_intercept=False,
+            alpha=0,
+            solver="cholesky",
+        ).fit(X, y)
+
+    assert model.solver_ == "lstsq"
+
+
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
 def test_ridge_regression_unpenalized_hstacked_X(
