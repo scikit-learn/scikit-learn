@@ -365,8 +365,9 @@ def test_weighted_percentile_array_api_consistency(
 
 @pytest.mark.parametrize("average", [True, False])
 @pytest.mark.parametrize("sample_weight_ndim", [1, 2])
+@pytest.mark.parametrize("percentile_rank", [0, 30, 100])
 def test_weighted_percentile_nan_filtered(
-    global_random_seed, sample_weight_ndim, average
+    global_random_seed, sample_weight_ndim, average, percentile_rank
 ):
     """Test `_weighted_percentile` ignores NaNs.
 
@@ -387,7 +388,9 @@ def test_weighted_percentile_nan_filtered(
         sample_weight = rng.randint(1, 6, size=(100,))
 
     # Find the weighted percentile on the array with nans:
-    results = _weighted_percentile(array_with_nans, sample_weight, 30, average=average)
+    results = _weighted_percentile(
+        array_with_nans, sample_weight, percentile_rank, average=average
+    )
 
     # Find the weighted percentile on the filtered array:
     filtered_array = [
@@ -405,7 +408,10 @@ def test_weighted_percentile_nan_filtered(
     expected_results = np.array(
         [
             _weighted_percentile(
-                filtered_array[col], filtered_weights[col], 30, average=average
+                filtered_array[col],
+                filtered_weights[col],
+                percentile_rank,
+                average=average,
             )
             for col in range(array_with_nans.shape[1])
         ]
