@@ -181,9 +181,6 @@ def cross_validate(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
         the score are parallelized over the cross-validation splits.
@@ -217,15 +214,8 @@ def cross_validate(
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-        .. versionadded:: 0.19
-
-        .. versionchanged:: 0.21
-            Default value was changed from ``True`` to ``False``
-
     return_estimator : bool, default=False
         Whether to return the estimators fitted on each split.
-
-        .. versionadded:: 0.20
 
     return_indices : bool, default=False
         Whether to return the train-test indices selected for each split.
@@ -236,8 +226,6 @@ def cross_validate(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
@@ -584,9 +572,6 @@ def cross_val_score(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            `cv` default value if `None` changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
         the score are parallelized over the cross-validation splits.
@@ -619,8 +604,6 @@ def cross_val_score(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
@@ -1120,9 +1103,6 @@ def cross_val_predict(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and
         predicting are parallelized over the cross-validation splits.
@@ -1320,9 +1300,6 @@ def _fit_and_predict(estimator, X, y, train, test, fit_params, method):
 
     X : array-like of shape (n_samples, n_features)
         The data to fit.
-
-        .. versionchanged:: 0.20
-            X is only required to be an object with finite length or shape now
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         The target variable to try to predict in the case of
@@ -1572,9 +1549,6 @@ def permutation_test_score(
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            `cv` default value if `None` changed from 3-fold to 5-fold.
 
     n_permutations : int, default=100
         Number of times to permute ``y``.
@@ -1882,9 +1856,6 @@ def learning_curve(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     scoring : str or callable, default=None
         Scoring method to use to evaluate the training and test sets.
 
@@ -1926,8 +1897,6 @@ def learning_curve(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     return_times : bool, default=False
         Whether to return the fit and score times.
@@ -2380,9 +2349,6 @@ def validation_curve(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     scoring : str or callable, default=None
         Scoring method to use to evaluate the training and test sets.
 
@@ -2412,8 +2378,6 @@ def validation_curve(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     params : dict, default=None
         Parameters to pass to the estimator, scorer and cross-validation object.

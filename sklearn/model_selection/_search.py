@@ -587,8 +587,6 @@ class BaseSearchCV(
         Only available if ``refit=True`` and the underlying estimator supports
         ``score_samples``.
 
-        .. versionadded:: 0.24
-
         Parameters
         ----------
         X : iterable
@@ -1452,9 +1450,6 @@ class GridSearchCV(BaseSearchCV):
         for an example of how to use ``refit=callable`` to balance model
         complexity and cross-validated score.
 
-        .. versionchanged:: 0.20
-            Support for callable added.
-
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -1471,9 +1466,6 @@ class GridSearchCV(BaseSearchCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     verbose : int, default=0
         Controls the verbosity of information printed during fitting, with higher
@@ -1511,11 +1503,6 @@ class GridSearchCV(BaseSearchCV):
         However computing the scores on the training set can be computationally
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
-
-        .. versionadded:: 0.19
-
-        .. versionchanged:: 0.21
-            Default value was changed from ``True`` to ``False``
 
     Attributes
     ----------
@@ -1625,8 +1612,6 @@ class GridSearchCV(BaseSearchCV):
 
         This is present only if ``refit`` is not False.
 
-        .. versionadded:: 0.20
-
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
 
@@ -1639,8 +1624,6 @@ class GridSearchCV(BaseSearchCV):
         `best_estimator_` is defined (see the documentation for the `refit`
         parameter for more details) and that `best_estimator_` exposes
         `n_features_in_` when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if
@@ -1762,8 +1745,6 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Read more in the :ref:`User Guide <randomized_parameter_search>`.
 
-    .. versionadded:: 0.14
-
     Parameters
     ----------
     estimator : estimator object
@@ -1847,9 +1828,6 @@ class RandomizedSearchCV(BaseSearchCV):
         for an example of how to use ``refit=callable`` to balance model
         complexity and cross-validated score.
 
-        .. versionchanged:: 0.20
-            Support for callable added.
-
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -1866,9 +1844,6 @@ class RandomizedSearchCV(BaseSearchCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     verbose : int, default = 0
         Controls the verbosity of information printed during fitting, with higher
@@ -1913,11 +1888,6 @@ class RandomizedSearchCV(BaseSearchCV):
         However computing the scores on the training set can be computationally
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
-
-        .. versionadded:: 0.19
-
-        .. versionchanged:: 0.21
-            Default value was changed from ``True`` to ``False``
 
     Attributes
     ----------
@@ -2025,8 +1995,6 @@ class RandomizedSearchCV(BaseSearchCV):
 
         This is present only if ``refit`` is not False.
 
-        .. versionadded:: 0.20
-
     multimetric_ : bool
         Whether or not the scorers compute several metrics.
 
@@ -2039,8 +2007,6 @@ class RandomizedSearchCV(BaseSearchCV):
         `best_estimator_` is defined (see the documentation for the `refit`
         parameter for more details) and that `best_estimator_` exposes
         `n_features_in_` when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if
