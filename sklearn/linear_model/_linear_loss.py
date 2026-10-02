@@ -124,7 +124,7 @@ class LinearModelLoss:
         self.base_loss = base_loss
         self.fit_intercept = fit_intercept
 
-    def init_zero_coef(self, X, dtype=None):
+    def init_zero_coef(self, X, dtype=None, xp=None, device=None):
         """Allocate coef of correct shape with zeros.
 
         Parameters:
@@ -134,6 +134,12 @@ class LinearModelLoss:
         dtype : data-type, default=None
             Overrides the data type of coef. With dtype=None, coef will have the same
             dtype as X.
+        xp : module, default=None
+            Array API namespace used to allocate coef. With xp=None, the namespace
+            of `self.base_loss` is used, `xp=None` selects numpy.
+        device : device, default=None
+            Device used to allocate coef. Only used together with an explicit
+            `xp`. With `xp=None`, the device of `base_loss` is used.
 
         Returns
         -------
@@ -142,14 +148,23 @@ class LinearModelLoss:
         """
         n_features = X.shape[1]
         n_classes = self.base_loss.n_classes
+        if xp is None:
+            xp, device = self.base_loss.xp, self.base_loss.device
+        if xp is None:
+            xp = np
         if self.fit_intercept:
             n_dof = n_features + 1
         else:
             n_dof = n_features
         if self.base_loss.is_multiclass:
-            coef = np.zeros(shape=(n_classes, n_dof), dtype=dtype, order="F")
+            if _is_numpy_namespace(xp):
+                coef = np.zeros(shape=(n_classes, n_dof), dtype=dtype, order="F")
+            else:
+                # Needs to be F-contiguous which only numpy provides. We init a
+                # ravelled array instead.
+                coef = xp.zeros(shape=(n_classes * n_dof), dtype=dtype, device=device)
         else:
-            coef = np.zeros(shape=n_dof, dtype=dtype)
+            coef = xp.zeros(shape=n_dof, dtype=dtype, device=device)
         return coef
 
     def weight_intercept(self, coef):
@@ -224,7 +239,7 @@ class LinearModelLoss:
         # array API because the relevant `scipy.optimize` functions do not
         # currently support the array API and we have to ensure that the final
         # values returned to the respective `scipy.optimize` function are in
-        # the `numpy` namespace.
+        # the `numpy` namespace. This happens for solver="lbfgs".
         weights_xp = xp.asarray(weights, dtype=X.dtype, device=device)
         intercept_xp = xp.asarray(intercept, dtype=X.dtype, device=device)
         if not self.base_loss.is_multiclass:
