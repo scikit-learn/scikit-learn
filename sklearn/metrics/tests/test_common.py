@@ -2842,6 +2842,36 @@ def test_array_api_classification_string_input(metric_name):
 
 
 @pytest.mark.parametrize(
+    "metric_name",
+    sorted(
+        (
+            CLASSIFICATION_METRICS.keys()
+            - (METRIC_UNDEFINED_BINARY | METRICS_NOT_SUPPORTING_ARRAY_API)
+        )
+    ),
+)
+def test_array_api_mixed_pandas_integer_input(metric_name):
+    """Check that mixed pandas and array API integer inputs are accepted."""
+    pd = pytest.importorskip("pandas")
+    xp, device = _array_api_for_tests("array_api_strict", "device1", "float64")
+    metric = ALL_METRICS[metric_name]
+    y_true = pd.Series([1, 2, 1, 1], dtype="int64")
+    y_pred = xp.asarray([1, 2, 2, 1], dtype=xp.int64, device=device)
+
+    kwargs = {}
+    if metric_name in METRICS_WITH_POS_LABEL:
+        kwargs["pos_label"] = 1
+
+    with config_context(array_api_dispatch=True):
+        metric_enabled = metric(y_true, y_pred, **kwargs)
+
+    with config_context(array_api_dispatch=False):
+        metric_disabled = metric(y_true, move_to(y_pred, xp=np, device="cpu"), **kwargs)
+
+    _check_output(metric_enabled, metric_disabled, get_namespace(y_pred)[0], y_pred)
+
+
+@pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
@@ -2855,8 +2885,9 @@ def test_array_api_classification_string_input(metric_name):
         - (METRIC_UNDEFINED_BINARY | METRICS_NOT_SUPPORTING_ARRAY_API)
     ),
 )
+@pytest.mark.parametrize("label_type", ["string", "categorical"])
 def test_array_api_classification_mixed_string_numeric_input(
-    metric_name, array_namespace, device_name, dtype_name
+    metric_name, array_namespace, device_name, dtype_name, label_type
 ):
     """Check string inputs and numeric inputs from mixed namespace and devices accepted.
 
@@ -2868,7 +2899,11 @@ def test_array_api_classification_mixed_string_numeric_input(
     metric = ALL_METRICS[metric_name]
 
     # Binary
-    y_true = np.array(["a", "b", "a", "a"])
+    if label_type == "categorical":
+        pd = pytest.importorskip("pandas")
+        y_true = pd.Series(["a", "b", "a", "a"], dtype="category")
+    else:
+        y_true = np.array(["a", "b", "a", "a"])
     y_prob_np = np.array([0.5, 0.2, 0.7, 0.6], dtype=dtype_name)
     y_prob_xp = xp.asarray(y_prob_np, device=device)
 
@@ -2892,7 +2927,10 @@ def test_array_api_classification_mixed_string_numeric_input(
 
     # Multiclass
     if metric_name not in METRIC_UNDEFINED_MULTICLASS:
-        y_true = np.array(["a", "b", "c", "d"])
+        if label_type == "categorical":
+            y_true = pd.Series(["a", "b", "c", "d"], dtype="category")
+        else:
+            y_true = np.array(["a", "b", "c", "d"])
         y_prob_np = np.array(
             [
                 [0.5, 0.2, 0.2, 0.1],

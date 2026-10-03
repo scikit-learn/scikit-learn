@@ -149,6 +149,48 @@ def test_pandas_arff_parser_strip_single_quotes(parser_func):
     pd.testing.assert_series_equal(frame.iloc[0], pd.Series(expected_values, name=0))
 
 
+@pytest.mark.parametrize("force_int_categories", [False, True])
+def test_pandas_arff_parser_numeric_nominal_categories(force_int_categories):
+    """Check that a nominal column with numeric values is parsed."""
+    pd = pytest.importorskip("pandas")
+
+    arff_file = BytesIO(
+        textwrap.dedent(
+            """
+            @relation 'toy'
+            @data
+            1
+            2
+            3
+            """
+        ).encode("utf-8")
+    )
+    columns_info = {"cat_int": {"data_type": "nominal", "name": "cat_int"}}
+
+    # pandas only infers the categories as integers from recent versions onwards,
+    # so force it to cover the case on any supported version.
+    read_csv_kwargs = (
+        {"dtype": {0: pd.CategoricalDtype([1, 2, 3])}} if force_int_categories else None
+    )
+
+    _, _, frame, _ = _pandas_arff_parser(
+        arff_file,
+        output_arrays_type="pandas",
+        openml_columns_info=columns_info,
+        feature_names_to_select=["cat_int"],
+        target_names_to_select=[],
+        read_csv_kwargs=read_csv_kwargs,
+    )
+
+    assert isinstance(frame["cat_int"].dtype, pd.CategoricalDtype)
+    categories = frame["cat_int"].cat.categories
+    if force_int_categories:
+        assert categories.tolist() == [1, 2, 3]
+    else:
+        # the inferred categories are integers or strings depending on the version
+        assert categories.astype(str).tolist() == ["1", "2", "3"]
+
+
 @pytest.mark.parametrize("parser_func", [_liac_arff_parser, _pandas_arff_parser])
 def test_pandas_arff_parser_strip_double_quotes(parser_func):
     """Check that we properly strip double quotes from the data."""

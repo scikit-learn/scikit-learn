@@ -499,8 +499,6 @@ def load_descr(descr_file_name, *, descr_module=DESCR_MODULE, encoding="utf-8"):
 def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
-    .. versionadded:: 0.18
-
     The wine dataset is a classic and very easy multi-class classification
     dataset.
 
@@ -531,8 +529,6 @@ def load_wine(*, return_X_y=False, as_frame=False):
         If `return_X_y` is True, then (`data`, `target`) will be pandas
         DataFrames or Series as described below.
 
-        .. versionadded:: 0.23
-
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
@@ -552,7 +548,6 @@ def load_wine(*, return_X_y=False, as_frame=False):
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
-            .. versionadded:: 0.23
         DESCR: str
             The full description of the dataset.
 
@@ -637,18 +632,11 @@ def load_iris(*, return_X_y=False, as_frame=False):
 
     Read more in the :ref:`User Guide <iris_dataset>`.
 
-    .. versionchanged:: 0.20
-        Fixed two wrong data points according to Fisher's paper.
-        The new version is the same as in R, but not as in the UCI
-        Machine Learning Repository.
-
     Parameters
     ----------
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
-
-        .. versionadded:: 0.18
 
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
@@ -656,8 +644,6 @@ def load_iris(*, return_X_y=False, as_frame=False):
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
         DataFrames or Series as described below.
-
-        .. versionadded:: 0.23
 
     Returns
     -------
@@ -678,13 +664,10 @@ def load_iris(*, return_X_y=False, as_frame=False):
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
-            .. versionadded:: 0.23
         DESCR: str
             The full description of the dataset.
         filename: str
             The path to the location of the data.
-
-            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
         A tuple of two ndarrays. The first contains a 2D array of
@@ -692,8 +675,6 @@ def load_iris(*, return_X_y=False, as_frame=False):
         representing the features. The second ndarray of shape (150,) contains
         the target samples. If `as_frame=True`, both arrays are pandas objects,
         i.e. `X` a dataframe and `y` a series.
-
-        .. versionadded:: 0.18
 
     Examples
     --------
@@ -777,16 +758,12 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` objects.
 
-        .. versionadded:: 0.18
-
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
         DataFrames or Series as described below.
-
-        .. versionadded:: 0.23
 
     Returns
     -------
@@ -807,13 +784,10 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
-            .. versionadded:: 0.23
         DESCR : str
             The full description of the dataset.
         filename : str
             The path to the location of the data.
-
-            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
         A tuple of two ndarrays. The first contains a 2D ndarray of
@@ -821,8 +795,6 @@ def load_breast_cancer(*, return_X_y=False, as_frame=False):
         representing the features. The second ndarray of shape (569,) contains
         the target samples. If `as_frame=True`, both arrays are pandas objects,
         i.e. `X` a dataframe and `y` a series.
-
-        .. versionadded:: 0.18
 
     Examples
     --------
@@ -935,16 +907,12 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` objects.
 
-        .. versionadded:: 0.18
-
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
         DataFrames or Series as described below.
-
-        .. versionadded:: 0.23
 
     Returns
     -------
@@ -962,13 +930,10 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         target_names: list
             The names of target classes.
 
-            .. versionadded:: 0.20
-
         frame: DataFrame of shape (1797, 65)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
-            .. versionadded:: 0.23
         images: {ndarray} of shape (1797, 8, 8)
             The raw image data.
         DESCR: str
@@ -980,8 +945,6 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
         representing the features. The second ndarray of shape (1797,) contains
         the target samples. If `as_frame=True`, both arrays are pandas objects,
         i.e. `X` a dataframe and `y` a series.
-
-        .. versionadded:: 0.18
 
     Examples
     --------
@@ -1067,16 +1030,12 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` objects.
 
-        .. versionadded:: 0.18
-
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
         DataFrames or Series as described below.
-
-        .. versionadded:: 0.23
 
     scaled : bool, default=True
         If True, the feature variables are mean centered and scaled by the
@@ -1102,7 +1061,6 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
-            .. versionadded:: 0.23
         DESCR: str
             The full description of the dataset.
         data_filename: str
@@ -1116,8 +1074,6 @@ def load_diabetes(*, return_X_y=False, as_frame=False, scaled=True):
         representing the features. The second ndarray of shape (442,) contains
         the target samples. If `as_frame=True`, both arrays are pandas objects,
         i.e. `X` a dataframe and `y` a series.
-
-        .. versionadded:: 0.18
 
     Examples
     --------
@@ -1192,16 +1148,12 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` objects.
 
-        .. versionadded:: 0.18
-
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
         DataFrames or Series as described below.
-
-        .. versionadded:: 0.23
 
     Returns
     -------
@@ -1222,7 +1174,6 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
 
-            .. versionadded:: 0.23
         DESCR: str
             The full description of the dataset.
         data_filename: str
@@ -1230,15 +1181,11 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
         target_filename: str
             The path to the location of the target.
 
-            .. versionadded:: 0.20
-
     (data, target) : tuple if ``return_X_y`` is True
         A tuple of two ndarrays. The first contains a 2D ndarray of
         shape `(20, 3)` with each row representing one sample and the columns
         representing the features. The second ndarray of shape `(20, 3)` contains
         the multi target samples. If `as_frame=True`, both arrays are pandas dataframes.
-
-        .. versionadded:: 0.18
 
     Examples
     --------
@@ -1605,8 +1552,9 @@ def fetch_file(
         scikit-learn data home folder.
 
     local_filename : str, default=None
-        Name of the file to save. If None, the filename is inferred from the
-        URL.
+        Name of the file to save. It must be a plain filename. A value holding
+        a directory separator or a relative reference such as `".."`, raises
+        `ValueError`. If None, the filename is inferred from the URL.
 
     sha256 : str, default=None
         SHA256 checksum of the file. If None, no checksum is verified.
@@ -1626,6 +1574,15 @@ def fetch_file(
 
     if local_filename is None:
         local_filename = filename_from_url
+    elif Path(local_filename).name != local_filename or local_filename in (
+        "",
+        "..",
+    ):
+        raise ValueError(
+            "`local_filename` should be a filename, not a path, got"
+            f" {local_filename!r}. Use the `folder` argument to control the"
+            " output folder."
+        )
 
     if folder is None:
         folder = Path(get_data_home()) / folder_from_url
