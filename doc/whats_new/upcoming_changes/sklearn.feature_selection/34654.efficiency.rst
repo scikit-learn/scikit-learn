@@ -1,0 +1,5 @@
+- :class:`feature_selection.SelectKBest` now uses partition-based selection
+  for large score arrays, reducing the time required to construct the support
+  mask. Stable sorting remains available through the `selection_method`
+  parameter.
+  By :user:`mncrftfrcnm`.
