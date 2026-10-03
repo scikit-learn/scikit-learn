@@ -5,15 +5,6 @@
 
 /* Global */
 
-/* Needed to override the pydata sphinx theme's default */
-html[data-theme="light"] .highlight pre {
-  background: #fff;
-}
-
-html[data-theme="dark"] .highlight pre {
-  background: #000;
-}
-
 code.literal {
   border: 0;
 }
