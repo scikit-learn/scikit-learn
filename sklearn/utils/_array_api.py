@@ -549,6 +549,16 @@ def move_to(*arrays, xp, device):
         Tuple of arrays with the same namespace and device as reference. Single array
         returned if only one `arrays` input.
     """
+    # Short cut for the common case of source and target being Numpy
+    if _is_numpy_namespace(xp) and (device is None or device == "cpu"):
+        if all(isinstance(array, (numpy.ndarray, numpy.generic)) for array in arrays):
+            # NumPy arrays are already where they need to be.
+            # The general path below is lossy for `ndarray` subclasses because
+            # it round trips through dlpack. A masked array would
+            # come back as a plain `ndarray` with its mask silently dropped, which
+            # matters for e.g. `GridSearchCV.cv_results_["param_*"]`.
+            return arrays[0] if len(arrays) == 1 else arrays
+
     if isinstance(device, str) and device == "xpu":  # pragma: nocover
         # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
         # device strings that do not include any device number suffix.
@@ -1019,6 +1029,68 @@ def _convert_to_numpy(array, xp):
     return numpy.asarray(array)
 
 
+def _convert_arrays(obj, converter, recurse_estimators=True):
+    """Apply `converter` to every array reachable from `obj`.
+
+    Containers are recursed into. Estimators are cloned and recursed into via
+    their ``vars()``, so an array nested in e.g. a dict attribute of a
+    sub-estimator is converted too. Anything that is not an array, a container or
+    an estimator is left unchanged.
+
+    Objects defining ``__sklearn_array_api_convert__`` are asked to convert
+    themselves. This is the escape hatch for objects that hold arrays but are
+    neither containers nor estimators.
+
+    Parameters
+    ----------
+    obj : object
+        Estimator, container or array to convert.
+
+    converter : callable
+        Callable that takes an array and returns the converted array.
+
+    recurse_estimators : bool, default=True
+        Whether to descend into nested estimators. Callers that run after every
+        fit pass False, because each nested estimator converts itself when its
+        own fit returns and descending would repeat that work once per
+        sub-estimator.
+
+    Returns
+    -------
+    converted : object
+        `obj` with its arrays converted.
+    """
+    # Inline import to avoid circular import
+    from sklearn.base import clone
+
+    if hasattr(obj, "__sklearn_array_api_convert__") and not inspect.isclass(obj):
+        return obj.__sklearn_array_api_convert__(converter)
+
+    obj_type = type(obj)
+
+    if obj_type is dict:
+        return {
+            k: _convert_arrays(v, converter, recurse_estimators) for k, v in obj.items()
+        }
+
+    if obj_type in (list, tuple, set, frozenset):
+        return obj_type(_convert_arrays(v, converter, recurse_estimators) for v in obj)
+
+    if hasattr(obj, "__dlpack__") or isinstance(obj, (numpy.ndarray, numpy.generic)):
+        return converter(obj)
+
+    if not hasattr(obj, "get_params") or isinstance(obj, type):
+        return obj
+
+    if not recurse_estimators:
+        return obj
+
+    new_obj = clone(obj)
+    for key, attribute in vars(obj).items():
+        setattr(new_obj, key, _convert_arrays(attribute, converter, recurse_estimators))
+    return new_obj
+
+
 def _estimator_with_converted_arrays(estimator, converter):
     """Create a new estimator with converted array attributes.
 
@@ -1037,42 +1109,47 @@ def _estimator_with_converted_arrays(estimator, converter):
     new_estimator : Estimator
         A clone of the estimator with converted array attributes.
     """
-    # Inline import to avoid circular import
-    from sklearn.base import clone
+    return _convert_arrays(estimator, converter)
 
-    # Because we call this function recursively `estimator` might actually be an
-    # attribute of an estimator and not an actual estimator object.
-    estimator_type = type(estimator)
 
-    if hasattr(estimator, "__sklearn_array_api_convert__") and not inspect.isclass(
-        estimator
-    ):
-        return estimator.__sklearn_array_api_convert__(converter)
+# TODO(#34604): delete this, and the check that reads it, once every array API
+# estimator's inference methods have been moved onto `_fitted_attrs_like`. Until
+# then converting unconditionally would break the estimators whose inference
+# still reads fitted attributes straight off `self`.
+_NUMPY_FITTED_ATTRS = frozenset({"LogisticRegression", "LogisticRegressionCV"})
 
-    if estimator_type is dict:
-        return {
-            k: _estimator_with_converted_arrays(v, converter)
-            for k, v in estimator.items()
-        }
 
-    if estimator_type in (list, tuple, set, frozenset):
-        return estimator_type(
-            _estimator_with_converted_arrays(v, converter) for v in estimator
-        )
+def _fitted_attrs_as_numpy(estimator):
+    """Convert `estimator`'s fitted arrays to NumPy arrays, in place.
 
-    if hasattr(estimator, "__dlpack__") or isinstance(
-        estimator, (numpy.ndarray, numpy.generic)
-    ):
-        return converter(estimator)
+    Called at the end of every fit method so that the arrays an estimator exposes
+    do not depend on the namespace and device of the data it was fitted on.
+    Inference still happens in the namespace and device of `X`, see
+    `_fitted_attrs_like`.
 
-    if not hasattr(estimator, "get_params") or isinstance(estimator, type):
-        return estimator
+    Nested estimators are left alone: each one converts itself when its own fit
+    returns, so descending into them would re-walk every sub-estimator of an
+    ensemble on top of the walks they already did.
 
-    new_estimator = clone(estimator)
-    for key, attribute in vars(estimator).items():
-        attribute = _estimator_with_converted_arrays(attribute, converter)
-        setattr(new_estimator, key, attribute)
-    return new_estimator
+    Parameters
+    ----------
+    estimator : estimator object
+        The estimator to convert. Modified in place.
+    """
+    if type(estimator).__name__ not in _NUMPY_FITTED_ATTRS:
+        return
+
+    if not get_config()["array_api_dispatch"]:
+        # Without dispatch every input has already been converted to NumPy by
+        # `check_array`, so there is nothing to do and no reason to pay for a walk.
+        return
+
+    converter = partial(move_to, xp=np_compat, device="cpu")
+    # `vars()` is a live view, so materialise it before assigning back into it.
+    for name, value in list(vars(estimator).items()):
+        converted = _convert_arrays(value, converter, recurse_estimators=False)
+        if converted is not value:
+            setattr(estimator, name, converted)
 
 
 def move_estimator_to(estimator, xp, device):
@@ -1099,6 +1176,72 @@ def move_estimator_to(estimator, xp, device):
     return _estimator_with_converted_arrays(
         estimator, partial(move_to, xp=xp, device=device)
     )
+
+
+class _FittedAttrsLike:
+    """Read-only view of an estimator's fitted attributes in `xp` on `device`.
+
+    Attributes are moved when they are first read and the result is remembered, so
+    a method that uses the same attribute twice only pays for one transfer.
+
+    Read attributes through this view when they take part in a computation, and
+    through the estimator itself when only their metadata is needed
+    (``self.coef_.ndim``, ``self.classes_.shape[0]``), since metadata is the same
+    either way and reading it here would trigger a pointless transfer.
+    """
+
+    def __init__(self, estimator, xp, device):
+        self._estimator = estimator
+        self._xp = xp
+        self._device = device
+
+    def __getattr__(self, name):
+        value = getattr(self._estimator, name)
+        if hasattr(value, "__dlpack__") or isinstance(
+            value, (numpy.ndarray, numpy.generic)
+        ):
+            value = move_to(value, xp=self._xp, device=self._device)
+        # `__getattr__` is only consulted for names that are not already in the
+        # instance dict, so writing to it makes the next access "cached".
+        self.__dict__[name] = value
+        return value
+
+    def __setattr__(self, name, value):
+        if name not in ("_estimator", "_xp", "_device"):
+            raise AttributeError(
+                "Fitted attribute views are read-only, assign to the estimator instead."
+            )
+        object.__setattr__(self, name, value)
+
+
+def _fitted_attrs_like(estimator, X=None, *, xp=None, device=None):
+    """Return `estimator`'s fitted attributes in the namespace and device of `X`.
+
+    Pass `xp` and `device` directly when the caller has already resolved them, to
+    avoid inspecting `X` twice.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        The fitted estimator.
+
+    X : array, default=None
+        The data the method was called with. Ignored when `xp` is given.
+
+    xp : namespace, default=None
+        Array API namespace to move attributes to. Resolved from `X` when None.
+
+    device : device, default=None
+        Array API device to move attributes to. Resolved from `X` when `xp` is None.
+
+    Returns
+    -------
+    fitted : _FittedAttrsLike
+        Read-only view of the fitted attributes.
+    """
+    if xp is None:
+        xp, _, device = get_namespace_and_device(X)
+    return _FittedAttrsLike(estimator, xp, device)
 
 
 def check_same_namespace(X, estimator, *, attribute, method):

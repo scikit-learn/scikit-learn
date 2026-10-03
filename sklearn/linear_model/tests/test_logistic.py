@@ -2896,8 +2896,10 @@ def test_logistic_regression_array_api_compliance(
             assert_allclose(
                 move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
             )
-            assert attr_xp.dtype == X_xp.dtype
-            assert array_device(attr_xp) == array_device(X_xp)
+            # Fitted arrays are NumPy whatever the namespace of `X` was. Only
+            # their dtype follows the data the estimator was fitted on.
+            assert isinstance(attr_xp, np.ndarray)
+            assert attr_xp.dtype == attr_np.dtype
 
         predict_proba_xp = lr_xp.predict_proba(X_xp)
         assert_allclose(
@@ -3027,7 +3029,7 @@ def test_logistic_regression_cv_array_api_compliance(
             X_xp, y_xp_or_np, sample_weight=sample_weight
         )
         assert lr_cv_xp.n_iter_.shape == lr_cv_np.n_iter_.shape
-        assert xp.max(lr_cv_xp.n_iter_) < lr_cv_xp.max_iter
+        assert np.max(lr_cv_xp.n_iter_) < lr_cv_xp.max_iter
 
         for attr_name in ("scores_", "coefs_paths_", "coef_", "intercept_"):
             attr_xp = getattr(lr_cv_xp, attr_name)
@@ -3035,8 +3037,10 @@ def test_logistic_regression_cv_array_api_compliance(
             assert_allclose(
                 move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
             )
-            assert attr_xp.dtype == X_xp.dtype
-            assert array_device(attr_xp) == array_device(X_xp)
+            # Fitted arrays are NumPy whatever the namespace of `X` was. Only
+            # their dtype follows the data the estimator was fitted on.
+            assert isinstance(attr_xp, np.ndarray)
+            assert attr_xp.dtype == attr_np.dtype
 
         prediction_xp = lr_cv_xp.predict(X_xp)
         if not use_str_y:

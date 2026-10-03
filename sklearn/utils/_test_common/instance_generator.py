@@ -163,14 +163,10 @@ from sklearn.neighbors import (
 from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
 from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import (
-    Binarizer,
     KBinsDiscretizer,
     KernelCenterer,
-    LabelEncoder,
     MinMaxScaler,
-    Normalizer,
     OneHotEncoder,
-    PolynomialFeatures,
     QuantileTransformer,
     SplineTransformer,
     StandardScaler,
@@ -947,9 +943,6 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    Binarizer: {
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
-    },
     BernoulliRBM: {
         "check_methods_subset_invariance": ("fails for the decision_function method"),
         "check_methods_sample_order_invariance": ("fails for the score_samples method"),
@@ -978,9 +971,12 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_methods_sample_order_invariance": "fails for the predict method",
     },
     FeatureUnion: {
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
         # Fails because StandardScaler, which gets wrapped by FeatureUnion, supports
         # array API but FeatureUnion itself does not
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
         "check_estimators_overwrite_params": "FIXME",
         "check_estimators_nan_inf": "FIXME",
         "check_dont_overwrite_parameters": "FIXME",
@@ -997,11 +993,14 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         ),
     },
     GaussianNB: {
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
         # TODO: Remove once fixed: https://github.com/pytorch/pytorch/issues/188128
         "check_array_api_mixed_inputs": (
             "PyTorch bug when asarray used on array-api-strict boolean array"
         ),
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     GradientBoostingClassifier: {
         # TODO: investigate failure see meta-issue #16298
@@ -1073,7 +1072,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         ),
     },
     KernelCenterer: {
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
     },
     KernelDensity: {
         "check_sample_weight_equivalence_on_dense_data": (
@@ -1092,8 +1094,11 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
     },
-    LabelEncoder: {
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    LinearDiscriminantAnalysis: {
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
     },
     LinearSVC: {
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
@@ -1125,9 +1130,6 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    MinMaxScaler: {
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
-    },
     MiniBatchKMeans: {
         # TODO: replace by a statistical test, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
@@ -1135,6 +1137,12 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         ),
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
+        ),
+    },
+    MinMaxScaler: {
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
         ),
     },
     NuSVC: {
@@ -1161,11 +1169,11 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    Normalizer: {
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
-    },
     Nystroem: {
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
         "check_transformer_preserve_dtypes": (
             "dtypes are preserved but not at a close enough precision"
         ),
@@ -1180,6 +1188,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         ),
     },
     PCA: {
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
         # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
     },
@@ -1203,10 +1215,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         ),
     },
     PoissonRegressor: {
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
-    },
-    PolynomialFeatures: {
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
     },
     QuantileTransformer: {
         "check_sample_weight_equivalence_on_sparse_data": (
@@ -1260,13 +1272,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    RBFSampler: {
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
-    },
     Ridge: {
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
-        )
+        ),
     },
     RidgeClassifier: {
         "check_non_transformer_estimators_n_iter": (
@@ -1327,7 +1336,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_fit2d_predict1d": "empty array passed inside",
     },
     StandardScaler: {
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
     },
     SVC: {
         # TODO: fix sample_weight handling of this estimator when probability=False
