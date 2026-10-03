@@ -222,7 +222,8 @@ def test_multioutput_regression():
 
 def test_regression_metrics_at_limits():
     # Single-sample case
-    # Note: for r2 and d2_tweedie see also test_regression_single_sample
+    # Note: for r2, d2_tweedie and explained_variance see also
+    # test_regression_single_sample
     assert_almost_equal(mean_squared_error([0.0], [0.0]), 0.0)
     assert_almost_equal(root_mean_squared_error([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_squared_log_error([0.0], [0.0]), 0.0)
@@ -231,7 +232,6 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(mean_absolute_percentage_error([0.0], [0.0]), 0.0)
     assert_almost_equal(median_absolute_error([0.0], [0.0]), 0.0)
     assert_almost_equal(max_error([0.0], [0.0]), 0.0)
-    assert_almost_equal(explained_variance_score([0.0], [0.0]), 1.0)
 
     # Perfect cases
     assert_almost_equal(r2_score([0.0, 1], [0.0, 1]), 1.0)
@@ -492,7 +492,10 @@ def test_regression_custom_weights():
     assert_almost_equal(msle, msle2, decimal=2)
 
 
-@pytest.mark.parametrize("metric", [r2_score, d2_tweedie_score, d2_pinball_score])
+@pytest.mark.parametrize(
+    "metric",
+    [r2_score, d2_tweedie_score, d2_pinball_score, explained_variance_score],
+)
 def test_regression_single_sample(metric):
     y_true = [0]
     y_pred = [1]
@@ -502,6 +505,16 @@ def test_regression_single_sample(metric):
     with pytest.warns(UndefinedMetricWarning, match=warning_msg):
         score = metric(y_true, y_pred)
         assert np.isnan(score)
+
+
+def test_explained_variance_score_single_sample_force_finite():
+    # Single-sample inputs must return NaN + warn regardless of
+    # `force_finite`, matching r2_score's behavior. Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/34622
+    warning_msg = "not well-defined with less than two samples."
+    with pytest.warns(UndefinedMetricWarning, match=warning_msg):
+        score = explained_variance_score([1.0], [2.0], force_finite=False)
+    assert np.isnan(score)
 
 
 def test_tweedie_deviance_continuity(global_random_seed):
