@@ -1,0 +1,6 @@
+- ``from sklearn.model_selection import *`` no longer raises an ``ImportError``.
+  The experimental :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` are no longer listed in
+  ``sklearn.model_selection.__all__``; they are still available after importing
+  ``sklearn.experimental.enable_halving_search_cv``.
+  By :user:`Pranav Negi <825pranav>`.
