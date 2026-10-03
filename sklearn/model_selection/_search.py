@@ -318,21 +318,31 @@ class ParameterSampler:
         # if all distributions are given as lists, we want to sample without
         # replacement
         if self._is_all_lists():
-            # look up sampled parameter settings in parameter grid
-            param_grid = ParameterGrid(self.param_distributions)
-            grid_size = len(param_grid)
+            # Sample each sub-grid (dict) uniformly rather than flattening all
+            # sub-grids into a single grid. Flattening biases sampling towards
+            # the sub-grids that happen to hold more combinations, which
+            # contradicts the documented behaviour of first sampling a dict
+            # uniformly and then a parameter within it. See #18057.
+            grids = [ParameterGrid(dist) for dist in self.param_distributions]
+            grid_sizes = [len(grid) for grid in grids]
+            total_size = sum(grid_sizes)
             n_iter = self.n_iter
 
-            if grid_size < n_iter:
+            if total_size < n_iter:
                 warnings.warn(
-                    "The total space of parameters %d is smaller "
-                    "than n_iter=%d. Running %d iterations. For exhaustive "
-                    "searches, use GridSearchCV." % (grid_size, self.n_iter, grid_size),
+                    f"The total space of parameters {total_size} is smaller "
+                    f"than n_iter={self.n_iter}. Running {total_size} iterations. "
+                    f"For exhaustive searches, use GridSearchCV.",
                     UserWarning,
                 )
-                n_iter = grid_size
-            for i in sample_without_replacement(grid_size, n_iter, random_state=rng):
-                yield param_grid[i]
+                n_iter = total_size
+
+            # Distribute the draws across the sub-grids as evenly as possible
+            # and sample without replacement within each sub-grid.
+            n_samples = self._distribute_n_samples(grid_sizes, n_iter)
+            for grid, grid_size, n in zip(grids, grid_sizes, n_samples):
+                for i in sample_without_replacement(grid_size, n, random_state=rng):
+                    yield grid[i]
 
         else:
             for _ in range(self.n_iter):
@@ -346,6 +356,27 @@ class ParameterSampler:
                     else:
                         params[k] = v[rng.randint(len(v))]
                 yield params
+
+    @staticmethod
+    def _distribute_n_samples(grid_sizes, n_iter):
+        """Split ``n_iter`` draws across sub-grids as evenly as possible.
+
+        Each sub-grid receives an equal share of the remaining draws, capped
+        at its own number of candidates, with any leftover flowing to the
+        larger sub-grids. This keeps sampling uniform across sub-grids while
+        never requesting more unique samples than a sub-grid can provide.
+        """
+        n_samples = [0] * len(grid_sizes)
+        remaining = n_iter
+        # Fill the smallest sub-grids first so their unused capacity is
+        # redistributed to the larger ones.
+        for position, i in enumerate(
+            sorted(range(len(grid_sizes)), key=lambda idx: grid_sizes[idx])
+        ):
+            n_left = len(grid_sizes) - position
+            n_samples[i] = min(grid_sizes[i], remaining // n_left)
+            remaining -= n_samples[i]
+        return n_samples
 
     def __len__(self):
         """Number of points that will be sampled."""
