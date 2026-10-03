@@ -5,7 +5,6 @@
 
 import inspect
 import warnings
-from contextlib import nullcontext
 from functools import partial
 from numbers import Integral
 
@@ -1179,7 +1178,8 @@ def _incremental_mean_and_var(
     last_sample_count = xp.asarray(
         last_sample_count, dtype=max_float_dtype, device=X_device
     )
-    last_sum = last_mean * last_sample_count
+    # A feature with no previous observations can have a NaN mean.
+    last_sum = xp.where(last_sample_count == 0, 0, last_mean) * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
         sum_op = xpx.nansum
@@ -1206,14 +1206,24 @@ def _incremental_mean_and_var(
         )
 
     updated_sample_count = last_sample_count + new_sample_count
-
-    updated_mean = (last_sum + new_sum) / updated_sample_count
+    updated_sample_count_safe = xp.where(
+        updated_sample_count == 0, 1, updated_sample_count
+    )
+    nan = xp.asarray(np.nan, dtype=max_float_dtype, device=X_device)
+    updated_mean = xp.where(
+        updated_sample_count == 0,
+        nan,
+        (last_sum + new_sum) / updated_sample_count_safe,
+    )
 
     if last_variance is None:
         updated_variance = None
     else:
-        T = new_sum / new_sample_count
-        temp = X - T
+        # Avoid dividing by zero when a feature has no observations in X.
+        new_sample_count_safe = xp.where(new_sample_count == 0, 1, new_sample_count)
+        T = new_sum / new_sample_count_safe
+        # Zero-weight and all-NaN features have no new variance contribution.
+        temp = xp.where(new_sample_count == 0, 0, X) - T
         if sample_weight is not None:
             # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
             # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
@@ -1236,29 +1246,35 @@ def _incremental_mean_and_var(
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis
         # and recommendations", by Chan, Golub, and LeVeque.
-        new_unnormalized_variance -= correction**2 / new_sample_count
+        new_unnormalized_variance -= correction**2 / new_sample_count_safe
 
-        last_unnormalized_variance = last_variance * last_sample_count
-
-        # There is no errstate equivalent for warning/error management in array API
-        context_manager = (
-            np.errstate(divide="ignore", invalid="ignore")
-            if _is_numpy_namespace(xp)
-            else nullcontext()
+        last_unnormalized_variance = (
+            xp.where(last_sample_count == 0, 0, last_variance) * last_sample_count
         )
-        with context_manager:
-            last_over_new_count = last_sample_count / new_sample_count
-            updated_unnormalized_variance = (
-                last_unnormalized_variance
-                + new_unnormalized_variance
-                + last_over_new_count
-                / updated_sample_count
-                * (last_sum / last_over_new_count - new_sum) ** 2
-            )
 
-        zeros = last_sample_count == 0
-        updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
-        updated_variance = updated_unnormalized_variance / updated_sample_count
+        # The pooling term only exists when both batches have observations.
+        both_counts_nonzero = (last_sample_count != 0) & (new_sample_count != 0)
+        last_over_new_count = last_sample_count / new_sample_count_safe
+        last_over_new_count_safe = xp.where(
+            both_counts_nonzero, last_over_new_count, 1
+        )
+        updated_unnormalized_variance = (
+            last_unnormalized_variance
+            + new_unnormalized_variance
+            + xp.where(both_counts_nonzero, last_over_new_count, 0)
+            / updated_sample_count_safe
+            * (
+                xp.where(both_counts_nonzero, last_sum, 0)
+                / last_over_new_count_safe
+                - xp.where(both_counts_nonzero, new_sum, 0)
+            )
+            ** 2
+        )
+        updated_variance = xp.where(
+            updated_sample_count == 0,
+            nan,
+            updated_unnormalized_variance / updated_sample_count_safe,
+        )
 
     return updated_mean, updated_variance, updated_sample_count
 

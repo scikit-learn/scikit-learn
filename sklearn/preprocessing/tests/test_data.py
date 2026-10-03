@@ -1051,6 +1051,44 @@ def test_scaler_n_samples_seen_with_nan(with_mean, with_std, sparse_container):
     assert_array_equal(transformer.n_samples_seen_, np.array([3, 4, 2]))
 
 
+@pytest.mark.parametrize("sample_weight", [None, np.array([1.0, 2.0])])
+def test_standard_scaler_partial_fit_dense_all_nan_feature(sample_weight):
+    X_first = np.array([[1.0, 10.0], [3.0, 20.0]])
+    X_second = np.array([[np.nan, 30.0], [np.nan, 40.0]])
+    scaler = StandardScaler().partial_fit(X_first)
+
+    with np.errstate(divide="raise", invalid="raise"):
+        scaler.partial_fit(X_second, sample_weight=sample_weight)
+
+    assert_allclose(scaler.mean_[0], 2)
+    assert_allclose(scaler.var_[0], 1)
+    assert_allclose(scaler.scale_[0], 1)
+    assert_allclose(scaler.n_samples_seen_[0], 2)
+    weights = [1, 1, 1, 2] if sample_weight is not None else None
+    values = np.array([10, 20, 30, 40])
+    expected_mean = np.average(values, weights=weights)
+    expected_var = np.average((values - expected_mean) ** 2, weights=weights)
+    assert_allclose(scaler.mean_[1], expected_mean)
+    assert_allclose(scaler.var_[1], expected_var)
+    assert_allclose(scaler.scale_[1], np.sqrt(expected_var))
+    assert_allclose(scaler.n_samples_seen_[1], 5 if sample_weight is not None else 4)
+    assert_allclose(scaler.transform([[3.0, np.nan]])[0, 0], 1)
+
+
+def test_standard_scaler_partial_fit_dense_first_valid_observations():
+    scaler = StandardScaler()
+    with np.errstate(divide="raise", invalid="raise"):
+        scaler.partial_fit([[1.0, np.nan], [3.0, np.nan]])
+
+    with np.errstate(divide="raise", invalid="raise"):
+        scaler.partial_fit([[5.0, 10.0], [7.0, 20.0]])
+
+    assert_allclose(scaler.mean_, [4, 15])
+    assert_allclose(scaler.var_, [5, 25])
+    assert_allclose(scaler.scale_, np.sqrt([5, 25]))
+    assert_array_equal(scaler.n_samples_seen_, [4, 2])
+
+
 def _check_identity_scalers_attributes(scaler_1, scaler_2):
     assert scaler_1.mean_ is scaler_2.mean_ is None
     assert scaler_1.var_ is scaler_2.var_ is None

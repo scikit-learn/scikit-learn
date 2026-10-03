@@ -871,6 +871,128 @@ def test_incremental_mean_and_variance_ignore_nan():
     assert_allclose(X_nan_count, X_count)
 
 
+@pytest.mark.parametrize("sample_weight", [None, np.array([1.0, 2.0])])
+def test_incremental_mean_and_variance_no_new_observations(sample_weight):
+    X = np.array([[np.nan, 30.0], [np.nan, 40.0]])
+    last_mean = np.array([2.0, 15.0])
+    last_variance = np.array([1.0, 25.0])
+    last_sample_count = np.array([2.0, 2.0])
+
+    with np.errstate(divide="raise", invalid="raise"):
+        mean, variance, count = _incremental_mean_and_var(
+            X,
+            last_mean,
+            last_variance,
+            last_sample_count,
+            sample_weight=sample_weight,
+        )
+
+    assert_allclose(mean[0], last_mean[0])
+    assert_allclose(variance[0], last_variance[0])
+    assert_allclose(count[0], last_sample_count[0])
+    weights = [1, 1, 1, 2] if sample_weight is not None else None
+    values = np.array([10, 20, 30, 40])
+    expected_mean = np.average(values, weights=weights)
+    assert_allclose(mean[1], expected_mean)
+    assert_allclose(
+        variance[1], np.average((values - expected_mean) ** 2, weights=weights)
+    )
+    assert_allclose(count[1], 5 if sample_weight is not None else 4)
+
+
+@pytest.mark.parametrize("zero_weight", [False, True])
+def test_incremental_mean_and_variance_no_new_observations_no_overflow(zero_weight):
+    X = np.array([[np.nan, 30.0], [np.nan, 40.0]])
+    sample_weight = None
+    if zero_weight:
+        X[:, 0] = 1e200
+        sample_weight = np.zeros(2)
+
+    with np.errstate(divide="raise", invalid="raise", over="raise"):
+        mean, variance, count = _incremental_mean_and_var(
+            X,
+            np.array([1e200, 15.0]),
+            np.array([0.0, 25.0]),
+            np.array([2.0, 2.0]),
+            sample_weight=sample_weight,
+        )
+
+    assert_allclose(mean[0], 1e200)
+    assert_allclose(variance[0], 0)
+    assert_allclose(count[0], 2)
+    if not zero_weight:
+        assert_allclose(mean[1], 25)
+        assert_allclose(variance[1], 125)
+        assert_allclose(count[1], 4)
+
+
+def test_incremental_mean_and_variance_first_valid_observations():
+    X = np.array([[1.0, np.nan], [3.0, np.nan]])
+    with np.errstate(divide="raise", invalid="raise"):
+        mean, variance, count = _incremental_mean_and_var(
+            X, 0, 0, np.zeros(2)
+        )
+
+    assert_allclose(mean[0], 2)
+    assert_allclose(variance[0], 1)
+    assert_allclose(count, [2, 0])
+    assert np.isnan(mean[1])
+    assert np.isnan(variance[1])
+
+    with np.errstate(divide="raise", invalid="raise"):
+        mean, variance, count = _incremental_mean_and_var(
+            np.array([[5.0, 10.0], [7.0, 20.0]]), mean, variance, count
+        )
+    assert_allclose(mean, [4, 15])
+    assert_allclose(variance, [5, 25])
+    assert_allclose(count, [4, 2])
+
+
+def test_incremental_mean_and_variance_zero_weight_batch():
+    last_mean = np.array([2.0, 15.0])
+    last_variance = np.array([1.0, 25.0])
+    last_sample_count = np.array([2.0, 2.0])
+    with np.errstate(divide="raise", invalid="raise"):
+        mean, variance, count = _incremental_mean_and_var(
+            np.array([[5.0, 30.0], [7.0, 40.0]]),
+            last_mean,
+            last_variance,
+            last_sample_count,
+            sample_weight=np.zeros(2),
+        )
+
+    assert_allclose(mean, last_mean)
+    assert_allclose(variance, last_variance)
+    assert_allclose(count, last_sample_count)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_incremental_mean_and_variance_zero_counts_array_api(
+    array_namespace, device_name, dtype_name
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    X = xp.asarray(
+        np.array([[3, np.nan, 10, np.nan], [5, np.nan, 20, np.nan]]),
+        dtype=getattr(xp, dtype_name),
+        device=device,
+    )
+    last_mean = xp.asarray([2, 1e20, np.nan, np.nan], dtype=X.dtype, device=device)
+    last_variance = xp.asarray([1, 0, np.nan, np.nan], dtype=X.dtype, device=device)
+    last_count = xp.asarray([2, 2, 0, 0], dtype=X.dtype, device=device)
+
+    with config_context(array_api_dispatch=True):
+        mean, variance, count = _incremental_mean_and_var(
+            X, last_mean, last_variance, last_count
+        )
+
+    assert_allclose(move_to(mean, xp=np, device="cpu"), [3, 1e20, 15, np.nan])
+    assert_allclose(move_to(variance, xp=np, device="cpu"), [2, 0, 25, np.nan])
+    assert_allclose(move_to(count, xp=np, device="cpu"), [4, 2, 2, 0])
+
+
 @skip_if_32bit
 def test_incremental_variance_numerical_stability():
     # Test Youngs and Cramer incremental variance formulas.
