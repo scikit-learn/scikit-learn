@@ -27,6 +27,7 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     RandomForestRegressor,
 )
+from sklearn.ensemble._bagging import _generate_bagging_indices
 from sklearn.feature_selection import SelectKBest
 from sklearn.linear_model import LogisticRegression, Perceptron
 from sklearn.model_selection import GridSearchCV, ParameterGrid, train_test_split
@@ -820,6 +821,34 @@ def test_draw_indices_using_sample_weight(
                 assert estimator.y_.shape == (expected_integer_max_samples,)
                 assert_allclose(estimator.X_, X[samples])
                 assert_allclose(estimator.y_, y[samples])
+
+
+def test_generate_bagging_indices_zero_sample_weight():
+    # Non-regression test for the case where `sample_weight` contains zeros
+    # while sampling without replacement: `random_state.choice` cannot draw
+    # more indices than the number of non-zero entries of `p`, hence the number
+    # of drawn samples is clamped to `np.count_nonzero(sample_weight)`.
+    n_samples = 20
+    sample_weight = np.ones(n_samples)
+    sample_weight[[0, 3, 7]] = 0
+    n_non_zero = np.count_nonzero(sample_weight)
+
+    _, sample_indices = _generate_bagging_indices(
+        random_state=0,
+        bootstrap_features=False,
+        bootstrap_samples=False,
+        n_features=4,
+        n_samples=n_samples,
+        max_features=4,
+        max_samples=n_samples,
+        sample_weight=sample_weight,
+    )
+
+    assert len(sample_indices) == n_non_zero
+    # The drawn indices are unique (sampling without replacement) and restricted
+    # to the samples with a non-zero weight.
+    assert len(np.unique(sample_indices)) == n_non_zero
+    assert np.all(sample_weight[sample_indices] > 0)
 
 
 def test_oob_score_removed_on_warm_start():

@@ -85,6 +85,11 @@ def _generate_bagging_indices(
         )
     else:
         normalized_sample_weight = sample_weight / np.sum(sample_weight)
+        if not bootstrap_samples:
+            # Sampling without replacement requires to draw at most as many
+            # samples as the number of non-zero entries in `p`, otherwise
+            # `np.random.RandomState.choice` raises a ValueError.
+            max_samples = min(max_samples, np.count_nonzero(sample_weight))
         sample_indices = random_state.choice(
             n_samples,
             max_samples,
