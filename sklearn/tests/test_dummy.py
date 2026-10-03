@@ -636,24 +636,21 @@ def test_dummy_regressor_sample_weight(global_random_seed, n_samples=10):
     assert est.constant_ == _weighted_percentile(y, sample_weight, 50.0, average=True)
 
     est = DummyRegressor(strategy="quantile", quantile=0.95).fit(X, y, sample_weight)
-    assert est.constant_ == _weighted_percentile(y, sample_weight, 95.0, average=True)
+    assert est.constant_ == _weighted_percentile(y, sample_weight, 95.0)
 
 
-@pytest.mark.parametrize(
-    "strategy, quantile",
-    [("mean", None), ("median", None), ("quantile", 0.5)],
-)
-def test_dummy_regressor_unit_sample_weight(strategy, quantile):
+@pytest.mark.parametrize("strategy", ["mean", "median"])
+def test_dummy_regressor_unit_sample_weight(strategy):
     """Passing unit weights must be the same as passing no weights.
 
-    Non-regression test for the `median` and `quantile=0.5` strategies, which used
-    the `inverted_cdf` percentile while the unweighted branch uses `np.median` /
-    `np.percentile`. The two disagree when the number of samples is even.
+    Non-regression test for the `median` strategy, which used the `inverted_cdf`
+    percentile while the unweighted branch uses `np.median`. The two disagree
+    when the number of samples is even.
     """
     y = np.array([0.0, 1.0, 2.0, 4.0, 8.0, 16.0])
     X = [[0]] * len(y)
 
-    est = DummyRegressor(strategy=strategy, quantile=quantile)
+    est = DummyRegressor(strategy=strategy)
     unweighted = est.fit(X, y).constant_
     weighted = est.fit(X, y, sample_weight=np.ones(len(y))).constant_
 

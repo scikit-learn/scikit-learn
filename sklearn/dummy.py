@@ -588,7 +588,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 self.constant_ = np.percentile(y, axis=0, q=percentile_rank)
             else:
                 self.constant_ = _weighted_percentile(
-                    y, sample_weight, percentile_rank=percentile_rank, average=True
+                    y, sample_weight, percentile_rank=percentile_rank
                 )
 
         elif self.strategy == "constant":
