@@ -1,8 +1,8 @@
-name: First-time contributor workflow
-# Welcome first-time contributors when they open a pull request.
+name: Close PR if linked issue is not ready
 
 permissions:
   contents: read
+  issues: read
   pull-requests: write
 
 on:
@@ -11,12 +11,8 @@ on:
       - opened
 
 jobs:
-  first-time-contributor-pr:
-    name: first-time contributor workflow
-    if: |
-      github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' ||
-      github.event.pull_request.author_association == 'FIRST_TIMER' ||
-      github.event.pull_request.author_association == 'NONE'
+  close-pr-if-issue-not-ready:
+    name: Check linked issue readiness
     runs-on: ubuntu-latest
 
     env:
@@ -34,7 +30,7 @@ jobs:
       - name: Checkout workflow script
         uses: actions/checkout@v7
         with:
-          sparse-checkout: .github/scripts/first-time-contributor.py
+          sparse-checkout: .github/scripts/close-pr-if-issue-not-ready.py
           sparse-checkout-cone-mode: false # false for files/ true for directories
-      - name: first-time contributor workflow
-        run: python .github/scripts/first-time-contributor.py
+      - name: Check linked issue readiness
+        run: python .github/scripts/close-pr-if-issue-not-ready.py
