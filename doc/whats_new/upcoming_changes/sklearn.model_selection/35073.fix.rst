@@ -1,0 +1,3 @@
+- :meth:`model_selection.StratifiedGroupKFold.split` now raises an informative
+  :class:`ValueError` when ``y`` or ``groups`` is ``None``.
+  By :user:`destopianpirate <destopianpirate>`.
