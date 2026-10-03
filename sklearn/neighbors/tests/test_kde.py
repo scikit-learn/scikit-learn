@@ -250,3 +250,20 @@ def test_bandwidth(bandwidth):
     else:
         h = bandwidth
     assert kde.bandwidth_ == pytest.approx(h)
+
+
+@pytest.mark.parametrize("bandwidth", ["scott", "silverman"])
+def test_bandwidth_estimation_validates_X(bandwidth):
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/29443
+    # The bandwidth used to be estimated from X.shape before X was validated, so
+    # a 1d array raised an IndexError and a list raised an AttributeError.
+    rng = np.random.RandomState(0)
+    X = rng.randn(20, 2)
+
+    with pytest.raises(ValueError, match="Expected 2D array, got 1D array"):
+        KernelDensity(bandwidth=bandwidth).fit(X[:, 0])
+
+    kde_list = KernelDensity(bandwidth=bandwidth).fit(X.tolist())
+    kde_array = KernelDensity(bandwidth=bandwidth).fit(X)
+    assert kde_list.bandwidth_ == pytest.approx(kde_array.bandwidth_)
