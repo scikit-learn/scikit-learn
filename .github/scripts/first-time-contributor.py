@@ -1,6 +1,6 @@
 """Welcome first-time contributors.
 
-Called from .github/workflows/first-time-contributor.yml.
+Called from .github/workflows/pull-request-opened-or-edited.yml.
 """
 
 import os

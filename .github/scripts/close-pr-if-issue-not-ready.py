@@ -1,9 +1,4 @@
-"""Close PRs linked to unready issues for early contributors.
-
-Early contributors have fewer than 10 merged PRs in this repository.
-
-Called from .github/workflows/close-pr-if-issue-not-ready.yml.
-"""
+"""Close PRs from early contributors if associated issue is not ready."""
 
 import os
 
@@ -57,6 +52,9 @@ def is_not_ready(issue):
 gh = Github(auth=Auth.Token(GITHUB_TOKEN))
 repo = gh.get_repo(GITHUB_REPO)
 pr = repo.get_pull(PR_NUMBER)
+
+if pr.state != "open":
+    raise SystemExit(0)
 
 linked_issue = get_linked_issue(gh, GITHUB_REPO, PR_NUMBER)
 

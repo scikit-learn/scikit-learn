@@ -1,22 +1,19 @@
-name: First-time contributor workflow
-# Welcome first-time contributors when they open a pull request.
+name: Handle opened or edited pull requests
 
 permissions:
   contents: read
+  issues: read
   pull-requests: write
 
 on:
   pull_request_target:
     types:
       - opened
+      - edited
 
 jobs:
-  first-time-contributor-pr:
-    name: first-time contributor workflow
-    if: |
-      github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' ||
-      github.event.pull_request.author_association == 'FIRST_TIMER' ||
-      github.event.pull_request.author_association == 'NONE'
+  pull-request-opened-or-edited:
+    name: Check linked issue and welcome contributor
     runs-on: ubuntu-latest
 
     env:
@@ -31,10 +28,15 @@ jobs:
           python-version: '3.13'
       - name: Install PyGithub
         run: pip install -Uq PyGithub
-      - name: Checkout workflow script
+      - name: Checkout workflow scripts
         uses: actions/checkout@v7
         with:
-          sparse-checkout: .github/scripts/first-time-contributor.py
+          sparse-checkout: |
+            .github/scripts/close-pr-if-issue-not-ready.py
+            .github/scripts/first-time-contributor.py
           sparse-checkout-cone-mode: false # false for files/ true for directories
-      - name: first-time contributor workflow
+      - name: Check linked issue readiness
+        run: python .github/scripts/close-pr-if-issue-not-ready.py
+      - name: Welcome first-time contributor
+        if: github.event.action == 'opened'
         run: python .github/scripts/first-time-contributor.py
