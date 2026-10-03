@@ -177,7 +177,12 @@ def test_nodes_values(monotonic_cst, seed):
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 
     grower = TreeGrower(
-        X_binned, gradients, hessians, monotonic_cst=[monotonic_cst], shrinkage=0.1
+        X_binned,
+        gradients,
+        hessians,
+        monotonic_cst=[monotonic_cst],
+        shrinkage=0.1,
+        n_threads=n_threads,
     )
     grower.grow()
 
