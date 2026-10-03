@@ -781,6 +781,36 @@ def test_stratified_group_kfold_against_group_kfold(cls_distr, n_groups):
     assert sgkf_entr <= gkf_entr
 
 
+def test_stratified_group_kfold_none_parameters():
+    """Check that helpful error messages are raised when y or groups is None.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/30742
+    """
+    X = np.ones((10, 2))
+    y = np.array([0, 1] * 5)
+    groups = np.array([1, 2] * 5)
+    sgkf = StratifiedGroupKFold(n_splits=2)
+
+    with pytest.raises(ValueError, match="The 'y' parameter should not be None."):
+        next(sgkf.split(X, y=None, groups=groups))
+
+    with pytest.raises(ValueError, match="The 'groups' parameter should not be None."):
+        next(sgkf.split(X, y=y, groups=None))
+
+    with pytest.raises(ValueError, match="The 'y' parameter should not be None."):
+        next(sgkf.split(X, y=None, groups=None))
+
+    with pytest.raises(ValueError, match="The 'y' parameter should not be None."):
+        next(sgkf.split(X))
+
+    with pytest.raises(ValueError, match="The 'y' parameter should not be None."):
+        next(sgkf._iter_test_indices(X, y=None, groups=groups))
+
+    with pytest.raises(ValueError, match="The 'groups' parameter should not be None."):
+        next(sgkf._iter_test_indices(X, y=y, groups=None))
+
+
 def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
