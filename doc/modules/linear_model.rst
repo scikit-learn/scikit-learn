@@ -837,18 +837,28 @@ called *Bayesian Ridge Regression*, and is similar to the classical
 :class:`Ridge`.
 
 The parameters :math:`w`, :math:`\alpha` and :math:`\lambda` are estimated
-jointly during the fit of the model, the regularization parameters
-:math:`\alpha` and :math:`\lambda` being estimated by maximizing the
-*log marginal likelihood*. The scikit-learn implementation
-is based on the algorithm described in Appendix A of (Tipping, 2001)
+jointly during the fit of the model. The regularization parameters
+:math:`\alpha` and :math:`\lambda` are estimated with fixed-point updates
+derived from the *log marginal likelihood* plus the log Gamma prior terms
+in log-precision coordinates.
+The scikit-learn implementation is based on the algorithm described in
+Appendix A of (Tipping, 2001)
 where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
-as suggested in (MacKay, 1992). The initial value of the maximization procedure
-can be set with the hyperparameters ``alpha_init`` and ``lambda_init``.
+as suggested in (MacKay, 1992). The initial values of :math:`\alpha` and
+:math:`\lambda` can be set with ``alpha_init`` and ``lambda_init``.
 
 There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\lambda_1` and :math:`\lambda_2` of the gamma prior distributions over
 :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
+
+When ``compute_score=True``, :attr:`BayesianRidge.scores_` records this
+objective. The Gamma priors of :math:`\alpha` and :math:`\lambda` have
+shape and rate parameters :math:`(\alpha_1, \alpha_2)` and
+:math:`(\lambda_1, \lambda_2)`, respectively. For
+``fit_intercept=False``, ``sample_weight=None``, and proper priors,
+the score is a normalized log density of :math:`y`,
+:math:`\log\alpha`, and :math:`\log\lambda` given :math:`X`.
 
 Bayesian Ridge Regression is used for regression::
 
