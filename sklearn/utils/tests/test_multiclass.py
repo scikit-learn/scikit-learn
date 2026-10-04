@@ -698,3 +698,25 @@ def test_string_target_type(numpy_string_dtype, values, expected):
     y = np.array(values, dtype=numpy_string_dtype)
     assert type_of_target(y) == expected
     check_classification_targets(y)
+
+
+@pytest.mark.parametrize("other_dtype", [None, "U", "O"])
+@pytest.mark.parametrize(
+    "numpy_string_dtype",
+    [
+        "U",
+        "O",
+        "T",
+    ],
+    indirect=True,
+)
+def test_unique_labels_string_dtypes(numpy_string_dtype, other_dtype):
+    y = np.array(["b", "a", "b"], dtype=numpy_string_dtype)
+    if other_dtype is None:
+        result = unique_labels(y)
+        expected = ["a", "b"]
+    else:
+        other = np.array(["c", "b"], dtype=other_dtype)
+        result = unique_labels(y, other)
+        expected = ["a", "b", "c"]
+    assert_array_equal(result, expected)

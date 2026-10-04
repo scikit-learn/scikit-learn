@@ -6,29 +6,37 @@ import numpy as np
 from sklearn.utils._array_api import get_namespace
 
 
-def _attach_unique(y):
-    """Attach unique values of y to y and return the result.
+def _get_metadata(y):
+    """Return dtype metadata, or None when dtype metadata is unsupported."""
+    if not isinstance(y, np.ndarray) or y.dtype.kind == "T":
+        # StringDType cannot carry arbitrary metadata, including on NumPy 2.5.
+        return None
+    return y.dtype.metadata or {}
 
-    The result is a view of y, and the metadata (unique) is not attached to y.
-    """
-    if not isinstance(y, np.ndarray):
+
+def _attach_metadata(y, **metadata):
+    """Return a view with metadata, or the input if metadata is unsupported."""
+    current_metadata = _get_metadata(y)
+    if current_metadata is None:
         return y
-    try:
-        # avoid recalculating unique in nested calls.
-        if "unique" in y.dtype.metadata:
-            return y
-    except (AttributeError, TypeError):
-        pass
+    dtype = np.dtype(y.dtype, metadata={**current_metadata, **metadata})
+    return y.view(dtype=dtype)
 
-    unique = np.unique(y)
-    unique_dtype = np.dtype(y.dtype, metadata={"unique": unique})
-    return y.view(dtype=unique_dtype)
+
+def _attach_unique(y):
+    """Attach unique values when the dtype supports metadata, without mutating y."""
+    metadata = _get_metadata(y)
+    if metadata is None or "unique" in metadata:
+        return y
+    return _attach_metadata(y, unique=np.unique(y))
 
 
 def attach_unique(*ys, return_tuple=False):
     """Attach unique values of ys to ys and return the results.
 
-    The result is a view of y, and the metadata (unique) is not attached to y.
+    For NumPy dtypes supporting metadata, the result is a view of y with
+    cached unique values. Other inputs are returned unchanged. The input is
+    never modified.
 
     IMPORTANT: The output of this function should NEVER be returned in functions.
     This is to avoid this pattern:
@@ -68,12 +76,9 @@ def _cached_unique(y, xp=None):
 
     Call `attach_unique` to attach the unique values to y.
     """
-    try:
-        if y.dtype.metadata is not None and "unique" in y.dtype.metadata:
-            return y.dtype.metadata["unique"]
-    except AttributeError:
-        # in case y is not a numpy array
-        pass
+    metadata = _get_metadata(y)
+    if metadata is not None and "unique" in metadata:
+        return metadata["unique"]
     xp, _ = get_namespace(y, xp=xp)
     return xp.unique_values(y)
 
