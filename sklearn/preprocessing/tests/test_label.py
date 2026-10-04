@@ -930,3 +930,66 @@ def test_label_encoder_array_api_compliance(
         assert_array_equal(
             move_to(xp_label.classes_, xp=np, device="cpu"), np_label.classes_
         )
+
+
+def test_label_encoder_string_dtype(numpy_string_dtype):
+    values = np.array(["b", "a", "longer", "a"], dtype=numpy_string_dtype)
+    encoder = LabelEncoder()
+    encoded = encoder.fit_transform(values)
+    assert_array_equal(encoded, [1, 0, 2, 0])
+    assert_array_equal(encoder.classes_, ["a", "b", "longer"])
+    assert_array_equal(encoder.transform(values), encoded)
+    assert_array_equal(encoder.inverse_transform(encoded), values)
+    with pytest.raises(ValueError, match="unseen labels"):
+        encoder.transform(np.array(["unknown"], dtype=numpy_string_dtype))
+
+
+@pytest.mark.parametrize("values", [["a", "a"], ["a", "b", "a"], ["a", "c", "b"]])
+@pytest.mark.parametrize("sparse_output", [False, True])
+def test_label_binarizer_string_dtype(numpy_string_dtype, values, sparse_output):
+    y = np.array(values, dtype=numpy_string_dtype)
+    encoder = LabelBinarizer(sparse_output=sparse_output)
+    encoded = encoder.fit_transform(y)
+    reference = LabelBinarizer(sparse_output=sparse_output).fit_transform(values)
+    assert_array_equal(toarray(encoded), toarray(reference))
+    assert_array_equal(encoder.inverse_transform(encoded), values)
+
+
+@pytest.mark.parametrize(
+    "numpy_string_dtype, classes_dtype",
+    [(a, b) for a in ["U", "O", "T"] for b in ["U", "O", "T"]],
+    indirect=["numpy_string_dtype"],
+)
+def test_label_binarize_mixed_string_dtypes(numpy_string_dtype, classes_dtype):
+    if classes_dtype == "T":
+        pytest.importorskip("numpy", minversion="2.0")
+    y = np.array(["b", "a", "c"], dtype=numpy_string_dtype)
+    classes = np.array(["c", "b", "a"], dtype=classes_dtype)
+    result = label_binarize(y, classes=classes)
+    assert_array_equal(result, [[0, 1, 0], [0, 0, 1], [1, 0, 0]])
+
+
+@pytest.mark.parametrize("sparse_output", [False, True])
+@pytest.mark.parametrize("explicit_classes", [False, True])
+def test_multilabel_binarizer_string_dtype(
+    numpy_string_dtype, sparse_output, explicit_classes
+):
+    labels = np.array(["z", "", "é"], dtype=numpy_string_dtype)
+    y = [labels[[0, 2]], labels[[1]], labels[[]]]
+    classes = labels if explicit_classes else None
+    encoder = MultiLabelBinarizer(classes=classes, sparse_output=sparse_output)
+    encoded = encoder.fit_transform(y)
+    dense = encoded.toarray() if sparse_output else encoded
+    assert_array_equal(
+        encoder.classes_, labels if explicit_classes else np.sort(labels)
+    )
+    expected = np.array([[int(c in row) for c in encoder.classes_] for row in y])
+    assert_array_equal(dense, expected)
+    assert [set(row) for row in encoder.inverse_transform(encoded)] == [
+        set(row) for row in y
+    ]
+    with pytest.warns(UserWarning, match="unknown class"):
+        unknown = encoder.transform([np.array(["unseen"], dtype=numpy_string_dtype)])
+    assert_array_equal(
+        unknown.toarray() if sparse_output else unknown, np.zeros((1, 3))
+    )

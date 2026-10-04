@@ -8,15 +8,19 @@ from typing import NamedTuple, cast
 
 import numpy as np
 
-from sklearn.utils._array_api import array_device, get_namespace, size
+from sklearn.utils._array_api import (
+    _is_numpy_namespace,
+    array_device,
+    get_namespace,
+    size,
+)
 from sklearn.utils._missing import is_scalar_nan
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):
-    """Helper function to find unique values with support for python objects.
+    """Find unique values with support for objects and StringDType arrays.
 
-    Uses pure python method for object dtype, and numpy method for
-    all other dtypes.
+    Uses a Python method for object arrays and a NumPy method for other arrays.
 
     Parameters
     ----------
@@ -283,7 +287,9 @@ def _encode(values, *, uniques, return_diff=False):
         returned if ``return_diff=True``.
     """
     xp, _ = get_namespace(values, uniques)
-    if not xp.isdtype(values.dtype, "numeric"):
+    if (_is_numpy_namespace(xp) and values.dtype.kind == "T") or not xp.isdtype(
+        values.dtype, "numeric"
+    ):
         encoded = _map_to_integer(values, uniques)
     else:
         encoded = xp.searchsorted(uniques, values)
@@ -319,7 +325,7 @@ def _get_counts(values, uniques, nan_values=(np.nan,), counter=None):
     to be the last item in `uniques`, if it was one of the values.  For
     non-object dtypes, `uniques` is assumed to be sorted.
     """
-    if values.dtype.kind in "OU":
+    if values.dtype.kind in "OUT":
         counter = counter or Counter(values)
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):

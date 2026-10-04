@@ -1394,9 +1394,14 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
 
 # deliberately omit 'OS' as an invalid combo
 @pytest.mark.parametrize(
-    "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]
+    "input_dtype, category_dtype, array_type",
+    [
+        (a, b, container)
+        for a, b in ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]
+        for container in ["list", "array", "pandas"]
+    ]
+    + [(a, b, "array") for a, b in ["TT", "TU", "TO", "UT", ("O", "T")]],
 )
-@pytest.mark.parametrize("array_type", ["list", "array", "pandas"])
 def test_encoders_string_categories(input_dtype, category_dtype, array_type):
     """Check that encoding work with object, unicode, and byte string dtypes.
     Non-regression test for:
@@ -1405,6 +1410,8 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
     https://github.com/scikit-learn/scikit-learn/issues/19677
     """
 
+    if "T" in (input_dtype, category_dtype):
+        pytest.importorskip("numpy", minversion="2.0")
     X = np.array([["b"], ["a"]], dtype=input_dtype)
     categories = [np.array(["b", "a"], dtype=category_dtype)]
     ohe = OneHotEncoder(categories=categories, sparse_output=False).fit(X)
@@ -2469,3 +2476,48 @@ def test_ohe_unknown_warning_mixed_infrequent_columns(handle_unknown):
     with pytest.warns(UserWarning, match=warn_msg):
         X_trans = ohe.transform(X_test)
     assert_allclose(X_trans, X_expected)
+
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoders_string_dtype_round_trip(numpy_string_dtype, Encoder):
+    X = np.array([["a"], ["longer"], ["é"], ["a"]], dtype=numpy_string_dtype)
+    encoder = Encoder()
+    encoded = encoder.fit_transform(X)
+    assert_array_equal(encoder.inverse_transform(encoded), X)
+    assert_array_equal(encoder.categories_[0], ["a", "longer", "é"])
+    with pytest.raises(ValueError, match="unknown categories"):
+        encoder.transform(np.array([["new"]], dtype=numpy_string_dtype))
+
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+def test_encoders_string_dtype_unknown(numpy_string_dtype, Encoder):
+    X = np.array([["a"], ["b"]], dtype=numpy_string_dtype)
+    X_test = np.array([["b"], ["new"]], dtype=numpy_string_dtype)
+    if Encoder is OneHotEncoder:
+        encoder = Encoder(handle_unknown="ignore", sparse_output=False).fit(X)
+        assert_array_equal(encoder.transform(X_test), [[0, 1], [0, 0]])
+    else:
+        encoder = Encoder(handle_unknown="use_encoded_value", unknown_value=-1).fit(X)
+        assert_array_equal(encoder.transform(X_test), [[1], [-1]])
+
+
+@pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
+@pytest.mark.parametrize("transform_dtype", ["U", "O", "T"])
+def test_encoder_mixed_string_dtype(numpy_string_dtype, Encoder, transform_dtype):
+    if transform_dtype == "T":
+        pytest.importorskip("numpy", minversion="2.0")
+    X = np.array([["z"], [""], ["é"], ["z"]], dtype=numpy_string_dtype)
+    X_test = np.array([["é"], [""], ["z"]], dtype=transform_dtype)
+    original, original_test = X.copy(), X_test.copy()
+    encoder = Encoder().fit(X)
+    reference = Encoder().fit(X.astype(object))
+    result = encoder.transform(X_test)
+    expected = reference.transform(X_test.astype(object))
+    assert_allclose(
+        result.toarray() if hasattr(result, "toarray") else result,
+        expected.toarray() if hasattr(expected, "toarray") else expected,
+    )
+    assert_array_equal(encoder.inverse_transform(result), X_test)
+    assert_array_equal(encoder.categories_[0], reference.categories_[0])
+    assert_array_equal(X, original)
+    assert_array_equal(X_test, original_test)

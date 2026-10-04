@@ -148,7 +148,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     )
                     raise ValueError(msg)
 
-                if Xi.dtype.kind not in "OUS":
+                if Xi.dtype.kind not in "OUST":
                     sorted_cats = np.sort(cats)
                     error_msg = (
                         "Unsorted categories are not supported for numerical categories"

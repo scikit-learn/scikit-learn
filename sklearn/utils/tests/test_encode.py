@@ -235,3 +235,35 @@ def test_get_counts_multiple_nans():
     # themselves. So compare as Python lists:
     assert list(uniques) == list(real_uniques)
     assert_array_equal(real_counts, expected_counts)
+
+
+@pytest.mark.parametrize("encode", [_encode, _encode_labels])
+@pytest.mark.parametrize("prefix", ["", "long_category_name_"])
+def test_encode_string_dtypes(numpy_string_dtype, encode, prefix):
+    values = np.array(
+        [prefix + label for label in ["b", "a", "c", "a", "c"]],
+        dtype=numpy_string_dtype,
+    )
+    uniques, inverse, counts = _unique(values, return_inverse=True, return_counts=True)
+    assert_array_equal(uniques, [prefix + label for label in ["a", "b", "c"]])
+    assert_array_equal(inverse, [1, 0, 2, 0, 2])
+    assert_array_equal(counts, [2, 1, 2])
+    assert_array_equal(encode(values, uniques=uniques), inverse)
+    # String categories can have an explicitly supplied, non-sorted order.
+    assert_array_equal(encode(values, uniques=uniques[::-1]), 2 - inverse)
+
+
+def test_encode_unknown_string_dtypes(numpy_string_dtype):
+    values = np.array(["b", "unknown", "a"], dtype=numpy_string_dtype)
+    uniques = np.array(["a", "b"], dtype=numpy_string_dtype)
+    encoded, diff = _encode(values, uniques=uniques, return_diff=True)
+    assert_array_equal(encoded, [1, -1, 0])
+    assert_array_equal(diff, ["unknown"])
+    with pytest.raises(ValueError, match="previously unseen labels"):
+        _encode_labels(values, uniques=uniques)
+
+
+def test_get_counts_string_dtypes(numpy_string_dtype):
+    values = np.array(["b", "a", "b"], dtype=numpy_string_dtype)
+    uniques = np.array(["a", "b", "c"], dtype=numpy_string_dtype)
+    assert_array_equal(_get_counts(values, uniques), [1, 2, 0])
