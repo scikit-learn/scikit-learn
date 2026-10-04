@@ -189,7 +189,6 @@ class GaussianNB(_BaseNB):
         largest-variance feature, or when predictions flip due to
         floating point precision.
 
-        .. versionadded:: 0.20
     Attributes
     ----------
     class_count_ : ndarray of shape (n_classes,)
