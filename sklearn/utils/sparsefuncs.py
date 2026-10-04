@@ -612,7 +612,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
     X : sparse matrix of shape (n_samples, n_labels)
         Input data. It should be of CSR format.
 
-    axis : {0, 1}, default=None
+    axis : {-2, -1, 0, 1}, default=None
         The axis on which the data is aggregated.
 
     sample_weight : array-like of shape (n_samples,), default=None
