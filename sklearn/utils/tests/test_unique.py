@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
+from sklearn.utils._testing import skip_if_array_api_compat_not_configured
 from sklearn.utils._unique import (
     _attach_metadata,
     _get_metadata,
@@ -117,3 +118,152 @@ def test_string_dtype_metadata_fallback_preserves_parameters(monkeypatch):
     # No stale cache is left behind on the unchanged input.
     arr[0] = "c"
     assert_array_equal(cached_unique(arr), ["a", "b", "c"])
+
+
+@pytest.mark.parametrize("dtype", ["float64", "U", "O", "T"])
+def test_operation_cache_computes_once_and_expires(dtype, monkeypatch):
+    from sklearn.utils._unique import _metadata_cache
+
+    if dtype == "T":
+        pytest.importorskip("numpy", minversion="2.0")
+        dtype = np.dtypes.StringDType()
+    arr = np.array(["1", "2", "1"], dtype=dtype)
+    original_unique = np.unique
+    calls = []
+
+    def counted_unique(*args, **kwargs):
+        calls.append(1)
+        return original_unique(*args, **kwargs)
+
+    monkeypatch.setattr(np, "unique", counted_unique)
+    with _metadata_cache():
+        attached = attach_unique(arr)
+        first = cached_unique(attached)
+        with _metadata_cache():
+            assert cached_unique(attached) is first
+            assert cached_unique(arr) is first
+            assert attach_unique(attached) is attached
+        assert len(calls) == 1
+    assert arr.dtype.metadata is None
+    arr[0] = "3"
+    with _metadata_cache():
+        assert_array_equal(cached_unique(arr), np.array(["1", "2", "3"], dtype=dtype))
+    assert len(calls) == 2
+
+
+def test_operation_metadata_cleanup_on_exception():
+    import gc
+    import weakref
+
+    from sklearn.utils._unique import _metadata_cache
+
+    with pytest.raises(RuntimeError, match="test"):
+        with _metadata_cache():
+            arr = np.array([1, 2, 1])
+            reference = weakref.ref(arr)
+            cached_unique(arr)
+            del arr
+            assert reference() is not None
+            raise RuntimeError("test")
+    gc.collect()
+    assert reference() is None
+
+
+def test_operation_metadata_does_not_reuse_slices():
+    from sklearn.utils._unique import _metadata_cache
+
+    arr = np.array([1, 2, 3])
+    with _metadata_cache():
+        assert_array_equal(cached_unique(arr), [1, 2, 3])
+        assert_array_equal(cached_unique(arr[:1]), [1])
+
+
+def test_operation_metadata_is_thread_local():
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    from sklearn.utils._unique import _metadata_cache
+
+    barrier = Barrier(2)
+    arr = np.array([1, 2, 1])
+
+    def run():
+        with _metadata_cache():
+            result = cached_unique(arr)
+            barrier.wait(timeout=10)
+            assert cached_unique(arr) is result
+            return result
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = [executor.submit(run) for _ in range(2)]
+        first, second = [future.result() for future in futures]
+    assert first is not second
+    assert_array_equal(first, second)
+
+
+@skip_if_array_api_compat_not_configured
+def test_operation_metadata_array_api(monkeypatch):
+    from sklearn import config_context
+    from sklearn.utils._unique import _metadata_cache
+
+    xp = pytest.importorskip("array_api_strict")
+    arr = xp.asarray([1, 2, 1])
+    unique_values = xp.unique_values
+    calls = []
+
+    def counted_unique(values):
+        calls.append(1)
+        return unique_values(values)
+
+    monkeypatch.setattr(xp, "unique_values", counted_unique)
+    with config_context(array_api_dispatch=True), _metadata_cache():
+        first = cached_unique(arr)
+        assert cached_unique(arr) is first
+        assert len(calls) == 1
+        attached = _attach_metadata(arr, source="test")
+        assert attached is arr
+        assert _get_metadata(attached)["source"] == "test"
+    assert _get_metadata(arr) is None
+
+
+def test_operation_metadata_fallback_is_not_specific_to_stringdtype(monkeypatch):
+    from sklearn.utils._unique import _metadata_cache
+
+    arr = np.array([1, 2])
+
+    def unsupported_metadata(*args, **kwargs):
+        raise TypeError("cannot attach metadata")
+
+    with _metadata_cache():
+        monkeypatch.setattr(np, "dtype", unsupported_metadata)
+        assert _attach_metadata(arr, source="test") is arr
+        assert _get_metadata(arr) == {"source": "test"}
+
+
+@pytest.mark.parametrize("use_scope", [False, True])
+def test_operation_metadata_expires_in_copied_context(use_scope):
+    import gc
+    import weakref
+    from contextlib import nullcontext
+    from contextvars import copy_context
+
+    from sklearn.utils._unique import _metadata_cache
+
+    with _metadata_cache():
+        original = np.array([1, 2, 1])
+        reference = weakref.ref(original)
+        cached_unique(original)
+        copied = copy_context()
+    del original
+    gc.collect()
+    assert reference() is None
+
+    values = np.array([1, 2, 1])
+
+    def read():
+        with _metadata_cache() if use_scope else nullcontext():
+            return cached_unique(values)
+
+    assert_array_equal(copied.run(read), [1, 2])
+    values[0] = 3
+    assert_array_equal(copied.run(read), [1, 2, 3])
