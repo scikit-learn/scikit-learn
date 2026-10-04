@@ -345,4 +345,54 @@ cdef class CSRDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
         sample_weight[0] = self.sample_weight_data[sample_idx]
 
 
+cdef class MockArrayDataset{{name_suffix}}(ArrayDataset{{name_suffix}}):
+    """An ``ArrayDataset`` with a fully deterministic, user-controlled draw order.
+
+    This class is only used for testing. It replaces the pseudo-random draws
+    performed by ``next``/``random`` by a deterministic cycling through a
+    user-provided sequence of indices, set with ``set_index_sequence``. This
+    makes it possible to reproduce, index for index, the exact sequence of
+    samples used by a Cython solver in a pure Python reference implementation,
+    so that both can be compared exactly rather than only up to convergence.
+    """
+
+    def set_index_sequence(self, const int[::1] index_sequence):
+        self.index_sequence = index_sequence
+        self.sequence_position = 0
+
+    cdef int _get_next_index(self) noexcept nogil:
+        return self._get_random_index()
+
+    cdef int _get_random_index(self) noexcept nogil:
+        cdef int current_index = self.index_sequence[
+            self.sequence_position % self.index_sequence.shape[0]
+        ]
+        self.current_index = current_index
+        self.sequence_position += 1
+        return current_index
+
+
+cdef class MockCSRDataset{{name_suffix}}(CSRDataset{{name_suffix}}):
+    """A ``CSRDataset`` with a fully deterministic, user-controlled draw order.
+
+    See ``MockArrayDataset{{name_suffix}}`` for details, this class only differs
+    by the underlying storage of the samples (sparse CSR instead of dense).
+    """
+
+    def set_index_sequence(self, const int[::1] index_sequence):
+        self.index_sequence = index_sequence
+        self.sequence_position = 0
+
+    cdef int _get_next_index(self) noexcept nogil:
+        return self._get_random_index()
+
+    cdef int _get_random_index(self) noexcept nogil:
+        cdef int current_index = self.index_sequence[
+            self.sequence_position % self.index_sequence.shape[0]
+        ]
+        self.current_index = current_index
+        self.sequence_position += 1
+        return current_index
+
+
 {{endfor}}

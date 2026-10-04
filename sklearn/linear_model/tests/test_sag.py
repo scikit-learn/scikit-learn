@@ -3,9 +3,11 @@
 
 import math
 import re
+from functools import partial
 
 import numpy as np
 import pytest
+import scipy.sparse as sp
 
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_blobs, make_classification, make_regression
@@ -15,6 +17,12 @@ from sklearn.linear_model._sag import get_auto_step_size, sag_solver
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state, compute_class_weight
+from sklearn.utils._seq_dataset import (
+    MockArrayDataset32,
+    MockArrayDataset64,
+    MockCSRDataset32,
+    MockCSRDataset64,
+)
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
@@ -148,7 +156,13 @@ def sag_sparse(
     saga=False,
     tol=0,
     random_state=77,
+    index_sequence=None,
 ):
+    # index_sequence : array-like of shape (max_iter * n_samples,), default=None
+    #     If provided, replaces the pseudo-random draws by this exact sequence
+    #     of indices. Used to compare this reference implementation to the
+    #     Cython ``sag_solver`` fed with the same sequence via a
+    #     ``MockArrayDataset``/``MockCSRDataset``.
     if step_size * alpha == 1.0:
         raise ZeroDivisionError(
             "Sparse sag does not handle the case step_size * alpha == 1"
@@ -172,7 +186,10 @@ def sag_sparse(
     for epoch in range(max_iter):
         previous_weights = actual_weights
         for k in range(n_samples):
-            idx = int(rng.rand() * n_samples)
+            if index_sequence is None:
+                idx = int(rng.rand() * n_samples)
+            else:
+                idx = int(index_sequence[counter])
             entry = X[idx]
             seen.add(idx)
             n_seen = len(seen)
@@ -267,6 +284,32 @@ def sag_sparse(
 
     n_iter = epoch + 1
     return weights, intercept, n_iter
+
+
+def make_mock_dataset(X, y, sample_weight, random_state=None, *, index_sequence):
+    """Build a ``SequentialDataset`` whose ``random`` draws are fully deterministic.
+
+    This is used to replicate, index for index, the exact sequence of samples
+    drawn by the Cython ``sag_solver`` in the pure Python reference
+    implementation ``sag_sparse``, so that both can be compared exactly rather
+    than only up to convergence.
+    """
+    index_sequence = np.asarray(index_sequence, dtype=np.intc)
+    if X.dtype == np.float32:
+        ArrayData, CSRData = MockArrayDataset32, MockCSRDataset32
+    else:
+        ArrayData, CSRData = MockArrayDataset64, MockCSRDataset64
+
+    if sp.issparse(X):
+        X = X.tocsr()
+        dataset = CSRData(X.data, X.indptr, X.indices, y, sample_weight)
+        intercept_decay = SPARSE_INTERCEPT_DECAY
+    else:
+        X = np.ascontiguousarray(X)
+        dataset = ArrayData(X, y, sample_weight)
+        intercept_decay = 1.0
+    dataset.set_index_sequence(index_sequence)
+    return dataset, intercept_decay
 
 
 def get_step_size(
@@ -1049,3 +1092,103 @@ def test_sag_weighted_regression_convergence(solver, saga, fit_intercept):
     assert_allclose(weights, true_weights, atol=1e-8)
     if fit_intercept:
         assert_allclose(intercept, true_intercept, atol=1e-8)
+
+
+@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
+@pytest.mark.parametrize(
+    "saga",
+    [
+        pytest.param(
+            True,
+            marks=pytest.mark.xfail(
+                reason=(
+                    "The SAGA update in sag_solver (Cython) does not exactly "
+                    "replicate the pure Python sag_sparse reference "
+                    "implementation, even when both draw the exact same "
+                    "sequence of sample indices. This is a known discrepancy, "
+                    "unlike the SAG update which matches exactly."
+                ),
+                strict=True,
+            ),
+        ),
+        False,
+    ],
+    ids=["SAGA", "SAG"],
+)
+@pytest.mark.parametrize(
+    "fit_intercept", [True, False], ids=["intercept", "no_intercept"]
+)
+def test_sag_solver_matches_sag_sparse_exactly(
+    monkeypatch, csr_container, saga, fit_intercept
+):
+    # Force the Cython ``sag_solver`` to draw samples in the exact same order
+    # as the pure Python reference implementation ``sag_sparse`` (thanks to
+    # ``MockArrayDataset``/``MockCSRDataset``) and check that both produce
+    # (near) bit-identical results, instead of only checking convergence to
+    # the same optimum.
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 15, 5
+    X = rng.randn(n_samples, n_features)
+    y = 2 * (rng.uniform(size=n_samples) > 0.5).astype(np.float64) - 1
+    sample_weight = rng.randint(1, 4, size=n_samples).astype(np.float64)
+    if csr_container is not None:
+        X = csr_container(X)
+    X_dense = X.toarray() if sp.issparse(X) else X
+
+    alpha = 0.5
+    max_iter = 7
+    tol = 0.0
+    index_sequence = rng.randint(0, n_samples, size=max_iter * n_samples)
+    # sag_solver uses a smaller intercept decay for sparse data to avoid
+    # oscillation, see ``SPARSE_INTERCEPT_DECAY`` in ``sklearn.linear_model._base``.
+    decay = SPARSE_INTERCEPT_DECAY if csr_container is not None else 1.0
+
+    step_size = get_step_size(
+        X_dense,
+        alpha,
+        fit_intercept,
+        classification=True,
+        sample_weight=sample_weight,
+        is_saga=saga,
+    )
+    weights_ref, intercept_ref, _ = sag_sparse(
+        X_dense,
+        y,
+        step_size,
+        alpha,
+        sample_weight=sample_weight,
+        max_iter=max_iter,
+        dloss=log_dloss,
+        decay=decay,
+        fit_intercept=fit_intercept,
+        saga=saga,
+        tol=tol,
+        index_sequence=index_sequence,
+    )
+
+    monkeypatch.setattr(
+        "sklearn.linear_model._sag.make_dataset",
+        partial(make_mock_dataset, index_sequence=index_sequence),
+    )
+
+    sw_sum = sample_weight.sum()
+    coef_init = np.zeros((n_features + fit_intercept, 1))
+    weights, n_iter, _ = sag_solver(
+        X,
+        (y + 1) / 2,  # sag_solver expects y in {0, 1} for loss='log'
+        sample_weight,
+        loss="log",
+        alpha=alpha * sw_sum,
+        max_iter=max_iter,
+        tol=tol,
+        warm_start_mem={"coef": coef_init},
+        is_saga=saga,
+        random_state=0,
+    )
+    if fit_intercept:
+        intercept = weights[-1]
+        weights = weights[:-1]
+
+    assert_allclose(weights, weights_ref, rtol=1e-10, atol=1e-12)
+    if fit_intercept:
+        assert_allclose(intercept, intercept_ref, rtol=1e-10, atol=1e-12)

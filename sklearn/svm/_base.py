@@ -11,9 +11,12 @@ import scipy.sparse as sp
 from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.preprocessing import LabelEncoder
-from sklearn.svm import _liblinear as liblinear
-from sklearn.svm import _libsvm as libsvm
-from sklearn.svm import _libsvm_sparse as libsvm_sparse
+from sklearn.svm import _liblinear as liblinear  # type: ignore[attr-defined]
+
+# mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
+# (and same for other imports)
+from sklearn.svm import _libsvm as libsvm  # type: ignore[attr-defined]
+from sklearn.svm import _libsvm_sparse as libsvm_sparse  # type: ignore[attr-defined]
 from sklearn.utils import (
     check_array,
     check_random_state,
@@ -1020,6 +1023,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
         "and will be removed in 1.11."
     )
+    # type: ignore[prop-decorator]
     @property
     def probA_(self):
         """Parameter learned in Platt scaling when `probability=True`.
@@ -1035,6 +1039,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         "1.11 as the `probability=True` option for SVC and NuSVC was deprecated "
         "and will be removed in 1.11."
     )
+    # type: ignore[prop-decorator]
     @property
     def probB_(self):
         """Parameter learned in Platt scaling when `probability=True`.
