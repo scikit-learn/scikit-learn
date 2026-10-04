@@ -190,7 +190,6 @@ class GaussianNB(_BaseNB):
         floating point precision.
 
         .. versionadded:: 0.20
-
     Attributes
     ----------
     class_count_ : ndarray of shape (n_classes,)
@@ -209,8 +208,6 @@ class GaussianNB(_BaseNB):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -275,9 +272,6 @@ class GaussianNB(_BaseNB):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
-
-            .. versionadded:: 0.17
-               Gaussian Naive Bayes supports fitting with *sample_weight*.
 
         Returns
         -------
@@ -402,8 +396,6 @@ class GaussianNB(_BaseNB):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
-
-            .. versionadded:: 0.17
 
         Returns
         -------
@@ -876,8 +868,6 @@ class MultinomialNB(_BaseDiscreteNB):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -955,8 +945,6 @@ class ComplementNB(_BaseDiscreteNB):
 
     Read more in the :ref:`User Guide <complement_naive_bayes>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     alpha : float or array-like of shape (n_features,), default=1.0
@@ -1010,8 +998,6 @@ class ComplementNB(_BaseDiscreteNB):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1159,8 +1145,6 @@ class BernoulliNB(_BaseDiscreteNB):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1313,8 +1297,6 @@ class CategoricalNB(_BaseDiscreteNB):
         - None (default): Determines the number of categories automatically
           from the training data.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     category_count_ : list of arrays of shape (n_features,)
@@ -1340,8 +1322,6 @@ class CategoricalNB(_BaseDiscreteNB):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1351,8 +1331,6 @@ class CategoricalNB(_BaseDiscreteNB):
     n_categories_ : ndarray of shape (n_features,), dtype=np.int64
         Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
-
-        .. versionadded:: 0.24
 
     See Also
     --------

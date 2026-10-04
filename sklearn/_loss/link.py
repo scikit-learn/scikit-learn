@@ -229,8 +229,8 @@ class MultinomialLogit(BaseLink):
     sum(coef[k], k=0..n_classes-1) = 0, i.e. the sum over classes for every
     feature is zero.
 
-    Reference
-    ---------
+    References
+    ----------
     .. [1] Friedman, Jerome; Hastie, Trevor; Tibshirani, Robert. "Additive
         logistic regression: a statistical view of boosting" Ann. Statist.
         28 (2000), no. 2, 337--407. doi:10.1214/aos/1016218223.
@@ -246,6 +246,18 @@ class MultinomialLogit(BaseLink):
     interval_y_pred = Interval(0, 1, False, False)
 
     def symmetrize_raw_prediction(self, raw_prediction):
+        """Center raw predictions to satisfy the symmetric constraint.
+
+        Parameters
+        ----------
+        raw_prediction : array of shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+
+        Returns
+        -------
+        array of shape (n_samples, n_classes)
+            Mean-centered raw predictions.
+        """
         xp, _ = get_namespace(raw_prediction)
         return raw_prediction - xp.mean(raw_prediction, axis=1)[:, None]
 

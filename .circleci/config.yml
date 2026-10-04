@@ -1,5 +1,37 @@
 version: 2.1
 
+executors:
+  # gen3 resource classes need the Linux VM executor and the `current` image tag (a
+  # dated tag is rejected). gen3 is an open beta: drop `.gen3` if queue times or
+  # reliability become a problem.
+  doc-linux:
+    machine:
+      image: ubuntu-2204:current
+    # large.gen3 4 vCPUs 16GiB mem, so keep CPU_COUNT in sync with it
+    resource_class: large.gen3
+    environment:
+      # Parallelism of the compile, Sphinx and Sphinx-Gallery (see build_doc.sh)
+      - CPU_COUNT: 4
+      # One thread per process, as Sphinx-Gallery already runs CPU_COUNT workers
+      - MKL_NUM_THREADS: 1
+      - OPENBLAS_NUM_THREADS: 1
+      - OMP_NUM_THREADS: 1
+      - CONDA_ENV_NAME: testenv
+
+# Diagnostics for both doc jobs. They are separate steps because build_doc.sh's
+# own log is truncated to its last ~400kB, dropping anything printed mid-script.
+_meson_log: &meson_log
+  run:
+    name: meson log (on failure)
+    when: on_fail
+    command: cat build/cp*/meson-logs/meson-log.txt || true
+_ccache_stats: &ccache_stats
+  run:
+    name: ccache statistics
+    when: always
+    # `ccache -z` in build_doc.sh means these cover just this build
+    command: CCACHE_DIR=$HOME/.cache/ccache ccache -s || true
+
 jobs:
   lint:
     docker:
@@ -15,12 +47,8 @@ jobs:
           command: ./build_tools/linting.sh
 
   doc-min-dependencies:
-    docker:
-      - image: cimg/base:current-22.04
+    executor: doc-linux
     environment:
-      - MKL_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
-      - CONDA_ENV_NAME: testenv
       - LOCK_FILE: build_tools/circle/doc_min_dependencies_linux-64_conda.lock
       # Do not fail if the documentation build generates warnings with minimum
       # dependencies as long as we can avoid raising warnings with more recent
@@ -45,12 +73,15 @@ jobs:
       - restore_cache:
           keys:
             - doc-min-deps-ccache-{{ .Branch }}
+            - doc-min-deps-ccache-main
             - doc-min-deps-ccache
       - run: ./build_tools/circle/build_doc.sh
+      - *meson_log
+      - *ccache_stats
       - save_cache:
           key: doc-min-deps-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:
-            - ~/.ccache
+            - ~/.cache/ccache
             - ~/.cache/pip
       - save_cache:
           key: v2-doc-min-deps-datasets-{{ .Branch }}
@@ -64,13 +95,8 @@ jobs:
           destination: log.txt
 
   doc:
-    docker:
-      - image: cimg/base:current-22.04
-    resource_class: medium+
+    executor: doc-linux
     environment:
-      - MKL_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
-      - CONDA_ENV_NAME: testenv
       - LOCK_FILE: build_tools/circle/doc_linux-64_conda.lock
       # Make sure that we fail if the documentation build generates warnings with
       # recent versions of the dependencies.
@@ -94,12 +120,15 @@ jobs:
       - restore_cache:
           keys:
             - doc-ccache-{{ .Branch }}
+            - doc-ccache-main
             - doc-ccache
       - run: ./build_tools/circle/build_doc.sh
+      - *meson_log
+      - *ccache_stats
       - save_cache:
           key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
           paths:
-            - ~/.ccache
+            - ~/.cache/ccache
             - ~/.cache/pip
       - save_cache:
           key: v1-doc-datasets-{{ .Branch }}
