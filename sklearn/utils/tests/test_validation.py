@@ -2558,3 +2558,46 @@ def test_indexable_return_type(constructor_name):
         expected_type = type(X)
     X = indexable(X)[0]
     assert isinstance(X, expected_type)
+
+
+@pytest.mark.parametrize("values", [[["1", "2"]], [["short", "longer"]]])
+@pytest.mark.parametrize("numpy_string_dtype", ["U", "T"], indirect=True)
+def test_check_array_string_numeric_error(numpy_string_dtype, values):
+    X = np.array(values, dtype=numpy_string_dtype)
+    with pytest.raises(ValueError, match="dtype='numeric'.*bytes/strings"):
+        check_array(X, dtype="numeric")
+
+
+def test_check_array_string_explicit_numeric_conversion(numpy_string_dtype):
+    X = np.array([["1", "2.5"]], dtype=numpy_string_dtype)
+    checked = check_array(X, dtype=np.float64)
+    assert checked.dtype == np.float64
+    assert_array_equal(checked, [[1, 2.5]])
+
+
+def test_check_array_string_preservation(numpy_string_dtype):
+    values = [["", "longer string"], ["é", "日本語"]]
+    X = np.array(values, dtype=numpy_string_dtype)
+    checked = check_array(X, dtype=None)
+    assert checked.dtype == X.dtype
+    assert_array_equal(checked, values)
+
+
+@pytest.mark.parametrize("sentinel", [None, np.nan, "MISSING"])
+def test_string_dtype_sentinel_preservation(sentinel):
+    pytest.importorskip("numpy", minversion="2.0")
+    dtype = np.dtypes.StringDType(na_object=sentinel)
+    X = np.array([[""], ["nan"], ["é"], [sentinel]], dtype=dtype)
+    result = check_array(X, dtype=None, ensure_all_finite=False, copy=True)
+    assert result.dtype == dtype
+    assert result is not X
+    for array in [X, result]:
+        assert array[:3, 0].tolist() == ["", "nan", "é"]
+        if sentinel is None:
+            assert array[3, 0] is None
+        elif isinstance(sentinel, float):
+            assert np.isnan(array[3, 0])
+        else:
+            assert array[3, 0] == sentinel
+    result[0, 0] = "changed"
+    assert X[0, 0] == ""

@@ -119,7 +119,9 @@ def _assert_all_finite(
             raise ValueError("Input contains NaN")
 
     # We need only consider float arrays, hence can early return for all else.
-    if not xp.isdtype(X.dtype, ("real floating", "complex floating")):
+    if (_is_numpy_namespace(xp) and X.dtype.kind == "T") or not xp.isdtype(
+        X.dtype, ("real floating", "complex floating")
+    ):
         return
 
     # First try an O(n) time, O(1) space solution for the common case that
@@ -1022,12 +1024,20 @@ def check_array(
         with warnings.catch_warnings():
             try:
                 warnings.simplefilter("error", ComplexWarning)
-                if dtype is not None and xp.isdtype(dtype, "integral"):
+                if (
+                    dtype is not None
+                    and not (_is_numpy_namespace(xp) and dtype.kind == "T")
+                    and xp.isdtype(dtype, "integral")
+                ):
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
                     array = _asarray_with_order(array, order=order, xp=xp)
-                    if xp.isdtype(array.dtype, ("real floating", "complex floating")):
+                    if not (
+                        _is_numpy_namespace(xp) and array.dtype.kind == "T"
+                    ) and xp.isdtype(
+                        array.dtype, ("real floating", "complex floating")
+                    ):
                         _assert_all_finite(
                             array,
                             allow_nan=False,
@@ -1077,7 +1087,11 @@ def check_array(
                     )
                 raise ValueError(msg)
 
-        if dtype_numeric and hasattr(array.dtype, "kind") and array.dtype.kind in "USV":
+        if (
+            dtype_numeric
+            and hasattr(array.dtype, "kind")
+            and array.dtype.kind in "USVT"
+        ):
             raise ValueError(
                 "dtype='numeric' is not compatible with arrays of bytes/strings."
                 "Convert your data to numeric values explicitly instead."

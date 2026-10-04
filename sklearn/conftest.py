@@ -519,3 +519,11 @@ if dt_config is not None:
     # Strict mode to differentiate between 3.14 and np.float64(3.14)
     dt_config.strict_check = True
     # dt_config.rtol = 0.01
+
+
+@pytest.fixture(params=["U", "O", "T"])
+def numpy_string_dtype(request):
+    """String representations, with collection-safe NumPy 1.x support."""
+    if request.param == "T":
+        pytest.importorskip("numpy", minversion="2.0")
+    return np.dtype(request.param)

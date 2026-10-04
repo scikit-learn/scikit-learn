@@ -684,3 +684,17 @@ def test_labels_in_bytes_format_error(input_type):
     err_msg = "Support for labels represented as bytes is not supported"
     with pytest.raises(TypeError, match=err_msg):
         type_of_target(target)
+
+
+@pytest.mark.parametrize(
+    "values, expected",
+    [
+        (["a", "b", "a"], "binary"),
+        (["a", "b", "c"], "multiclass"),
+        ([["a", "b"], ["b", "c"], ["c", "a"]], "multiclass-multioutput"),
+    ],
+)
+def test_string_target_type(numpy_string_dtype, values, expected):
+    y = np.array(values, dtype=numpy_string_dtype)
+    assert type_of_target(y) == expected
+    check_classification_targets(y)

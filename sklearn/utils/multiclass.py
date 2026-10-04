@@ -129,6 +129,8 @@ def unique_labels(*ys, ys_types=None):
 
 def _is_integral_float(y):
     xp, is_array_api_compliant = get_namespace(y)
+    if _is_numpy_namespace(xp) and y.dtype.kind == "T":
+        return False
     return xp.isdtype(y.dtype, "real floating") and bool(
         xp.all(xp.astype((xp.astype(y, xp.int64)), y.dtype) == y)
     )
@@ -194,6 +196,8 @@ def is_multilabel(y):
     else:
         labels = cached_unique(y, xp=xp)
 
+        if _is_numpy_namespace(xp) and y.dtype.kind == "T":
+            return False
         return labels.shape[0] < 3 and (
             xp.isdtype(y.dtype, ("bool", "signed integer", "unsigned integer"))
             or _is_integral_float(labels)
@@ -407,7 +411,9 @@ def type_of_target(y, input_name="", raise_unknown=False):
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
     # Check float and contains non-integer float values
-    if xp.isdtype(y.dtype, "real floating"):
+    if not (_is_numpy_namespace(xp) and y.dtype.kind == "T") and xp.isdtype(
+        y.dtype, "real floating"
+    ):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
         data = y.data if issparse(y) else y
         integral_data = xp.astype(data, xp.int64)
