@@ -29,7 +29,7 @@ repos:
 -   repo: https://github.com/MarcoGorelli/cython-lint
     # NOTE if you update the cython-lint version here, remember to update
     # sklearn/_min_dependencies.py as well
-    rev: v0.21.0
+    rev: v0.21.1
     hooks:
     # TODO: add the double-quote-cython-strings hook when it's usability has improved:
     # possibility to pass a directory and use it as a check instead of auto-formatter.

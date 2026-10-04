@@ -120,8 +120,6 @@ def sag_solver(
     The regularizer is a penalty added to the loss function that shrinks model
     parameters towards the zero vector using the squared euclidean norm L2.
 
-    .. versionadded:: 0.17
-
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -140,9 +138,6 @@ def sag_solver(
         -'squared' is the squared loss, as used in Ridge.
         -'multinomial' is the multinomial logistic loss, as used in
          LogisticRegression.
-
-        .. versionadded:: 0.18
-           *loss='multinomial'*
 
     alpha : float, default=1.
         L2 regularization term in the objective function

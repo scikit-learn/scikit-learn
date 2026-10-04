@@ -7,7 +7,6 @@ from math import ceil
 
 import numpy as np
 from scipy import sparse
-from scipy.stats.mstats import mquantiles
 
 from sklearn.base import is_regressor
 from sklearn.inspection import partial_dependence
@@ -17,6 +16,7 @@ from sklearn.utils._encode import _unique
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._plotting import _validate_style_kwargs
 from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.stats import _nanquantile
 
 
 class PartialDependenceDisplay:
@@ -34,8 +34,6 @@ class PartialDependenceDisplay:
 
     For an example on how to use this class, see the following example:
     :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence_visualization_api.py`.
-
-    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -90,10 +88,6 @@ class PartialDependenceDisplay:
            dependencies and doing weighted averages requires using the slower
            `method='brute'`.
 
-        .. versionadded:: 0.24
-           Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
-           options.
-
         .. versionadded:: 1.1
            Add the possibility to pass a list of string specifying `kind`
            for each plot.
@@ -107,13 +101,9 @@ class PartialDependenceDisplay:
         Note that the full dataset is still used to calculate partial
         dependence when `kind='both'`.
 
-        .. versionadded:: 0.24
-
     random_state : int, RandomState instance or None, default=None
         Controls the randomness of the selected samples when subsamples is not
         `None`. See :term:`Glossary <random_state>` for details.
-
-        .. versionadded:: 0.24
 
     is_categorical : list of (bool,) or list of (bool, bool), default=None
         Whether each target feature in `features` is categorical or not.
@@ -149,16 +139,12 @@ class PartialDependenceDisplay:
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a PDP plot.
 
-        .. versionadded:: 0.23
-
     deciles_hlines_ : ndarray of matplotlib LineCollection
         If `ax` is an axes or None, `vlines_[i, j]` is the line collection
         representing the y axis deciles of the i-th row and j-th column. If
         `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a 2-way plot.
-
-        .. versionadded:: 0.23
 
     contours_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `contours_[i, j]` is the partial dependence
@@ -759,8 +745,7 @@ class PartialDependenceDisplay:
         for fxs, cats in zip(features, is_categorical):
             for fx, cat in zip(fxs, cats):
                 if not cat and fx not in deciles:
-                    X_col = _safe_indexing(X, fx, axis=1)
-                    deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
+                    deciles[fx] = _nanquantile(X, fx, np.arange(0.1, 1.0, 0.1))
 
         display = cls(
             pd_results=pd_results,
