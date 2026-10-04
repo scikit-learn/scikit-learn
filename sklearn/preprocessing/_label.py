@@ -24,6 +24,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._encode import _encode_labels, _unique
 from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils._unique import _metadata_cache
 from sklearn.utils.multiclass import type_of_target, unique_labels
 from sklearn.utils.sparsefuncs import min_max_axis
 from sklearn.utils.validation import _num_samples, check_array, check_is_fitted
@@ -317,17 +318,18 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
                 "Use `sparse_output=False` to return a dense array instead."
             )
 
-        self.y_type_ = type_of_target(y, input_name="y")
+        with _metadata_cache():
+            self.y_type_ = type_of_target(y, input_name="y")
 
-        if "multioutput" in self.y_type_:
-            raise ValueError(
-                "Multioutput target data is not supported with label binarization"
-            )
-        if _num_samples(y) == 0:
-            raise ValueError("y has 0 samples: %r" % y)
+            if "multioutput" in self.y_type_:
+                raise ValueError(
+                    "Multioutput target data is not supported with label binarization"
+                )
+            if _num_samples(y) == 0:
+                raise ValueError("y has 0 samples: %r" % y)
 
-        self.sparse_input_ = sp.issparse(y)
-        self.classes_ = unique_labels(y)
+            self.sparse_input_ = sp.issparse(y)
+            self.classes_ = unique_labels(y)
         return self
 
     def fit_transform(self, y):
@@ -350,7 +352,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
             Shape will be (n_samples, 1) for binary problems. Sparse matrix
             will be of CSR format.
         """
-        return self.fit(y).transform(y)
+        with _metadata_cache():
+            return self.fit(y).transform(y)
 
     def transform(self, y):
         """Transform multi-class labels to binary labels.
@@ -383,17 +386,18 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
                 "Use `sparse_output=False` to return a dense array instead."
             )
 
-        y_is_multilabel = type_of_target(y).startswith("multilabel")
-        if y_is_multilabel and not self.y_type_.startswith("multilabel"):
-            raise ValueError("The object was not fitted with multilabel input.")
+        with _metadata_cache():
+            y_is_multilabel = type_of_target(y).startswith("multilabel")
+            if y_is_multilabel and not self.y_type_.startswith("multilabel"):
+                raise ValueError("The object was not fitted with multilabel input.")
 
-        return label_binarize(
-            y,
-            classes=self.classes_,
-            pos_label=self.pos_label,
-            neg_label=self.neg_label,
-            sparse_output=self.sparse_output,
-        )
+            return label_binarize(
+                y,
+                classes=self.classes_,
+                pos_label=self.pos_label,
+                neg_label=self.neg_label,
+                sparse_output=self.sparse_output,
+            )
 
     def inverse_transform(self, Y, threshold=None):
         """Transform binary labels back to multi-class labels.

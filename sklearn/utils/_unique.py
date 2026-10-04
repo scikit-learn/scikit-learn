@@ -80,6 +80,14 @@ def _attach_metadata(y, **metadata):
     return view
 
 
+def _transfer_unique(source, target):
+    """Reuse unique values after a conversion known to preserve every value."""
+    metadata = _get_metadata(source)
+    if metadata is not None and "unique" in metadata:
+        current = _get_metadata(target) or {}
+        _remember_metadata(target, {**current, "unique": metadata["unique"]})
+
+
 def _attach_unique(y):
     """Cache NumPy unique values using dtype metadata or the active scope."""
     if not isinstance(y, np.ndarray):

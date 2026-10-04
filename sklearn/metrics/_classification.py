@@ -51,7 +51,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from sklearn.utils._unique import attach_unique
+from sklearn.utils._unique import _metadata_cache, _transfer_unique, attach_unique
 from sklearn.utils.extmath import _nanaverage
 from sklearn.utils.multiclass import type_of_target, unique_labels
 from sklearn.utils.validation import (
@@ -70,6 +70,7 @@ def _check_zero_division(zero_division):
         return np.nan
 
 
+@_metadata_cache()
 def _check_targets(y_true, y_pred, sample_weight=None, xp=None, device=None):
     """Check that y_true and y_pred belong to the same classification task.
 
@@ -164,8 +165,11 @@ def _check_targets(y_true, y_pred, sample_weight=None, xp=None, device=None):
 
     if y_type in ["binary", "multiclass"]:
         try:
-            y_true = column_or_1d(y_true, input_name="y_true")
-            y_pred = column_or_1d(y_pred, input_name="y_pred")
+            y_true_1d = column_or_1d(y_true, input_name="y_true")
+            y_pred_1d = column_or_1d(y_pred, input_name="y_pred")
+            _transfer_unique(y_true, y_true_1d)
+            _transfer_unique(y_pred, y_pred_1d)
+            y_true, y_pred = y_true_1d, y_pred_1d
         except TypeError as e:
             if "Sparse data was passed" in str(e):
                 raise TypeError(

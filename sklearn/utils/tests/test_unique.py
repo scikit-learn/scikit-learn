@@ -201,6 +201,30 @@ def test_operation_metadata_is_thread_local():
     assert_array_equal(first, second)
 
 
+@pytest.mark.parametrize("column", [False, True])
+def test_stringdtype_metric_reuses_unique_after_reshape(column, monkeypatch):
+    from sklearn.metrics import accuracy_score
+
+    pytest.importorskip("numpy", minversion="2.0")
+    true = np.array(["a", "b", "a"], dtype=np.dtypes.StringDType())
+    pred = np.array(["b", "b", "a"], dtype=np.dtypes.StringDType())
+    if column:
+        true, pred = true[:, None], pred[:, None]
+    original_unique = np.unique
+    calls = []
+
+    def counted_unique(*args, **kwargs):
+        calls.append(1)
+        return original_unique(*args, **kwargs)
+
+    monkeypatch.setattr(np, "unique", counted_unique)
+    assert accuracy_score(true, pred) == pytest.approx(2 / 3)
+    assert len(calls) == 2
+    true[0] = "b"
+    assert accuracy_score(true, pred) == 1
+    assert len(calls) == 4
+
+
 @skip_if_array_api_compat_not_configured
 def test_operation_metadata_array_api(monkeypatch):
     from sklearn import config_context
@@ -238,6 +262,44 @@ def test_operation_metadata_fallback_is_not_specific_to_stringdtype(monkeypatch)
         monkeypatch.setattr(np, "dtype", unsupported_metadata)
         assert _attach_metadata(arr, source="test") is arr
         assert _get_metadata(arr) == {"source": "test"}
+
+
+@pytest.mark.parametrize("dtype", ["int64", "U", "O", "T"])
+@pytest.mark.parametrize("operation", ["targets", "fit", "fit_transform", "transform"])
+def test_label_validation_reuses_unique(dtype, operation, monkeypatch):
+    from sklearn.preprocessing import LabelBinarizer
+    from sklearn.utils.multiclass import check_classification_targets
+
+    if dtype == "T":
+        pytest.importorskip("numpy", minversion="2.0")
+        dtype = np.dtypes.StringDType()
+    y = np.array(["0", "1", "2"] * 10, dtype=dtype)
+    estimator = LabelBinarizer()
+    if operation == "transform":
+        estimator.fit(y)
+    original_unique = np.unique
+    calls = []
+
+    def counted_unique(values, *args, **kwargs):
+        # Ignore discovery on the much smaller array of merged classes.
+        if np.asarray(values).size == y.size:
+            calls.append(1)
+        return original_unique(values, *args, **kwargs)
+
+    monkeypatch.setattr(np, "unique", counted_unique)
+    function = (
+        check_classification_targets
+        if operation == "targets"
+        else getattr(estimator, operation)
+    )
+    function(y)
+    assert len(calls) == 1
+    # A separate public call must recompute, even when given the same array.
+    y[0] = "1"
+    result = function(y)
+    assert len(calls) == 2
+    if operation in ("fit_transform", "transform"):
+        assert_array_equal(result[0], [0, 1, 0])
 
 
 @pytest.mark.parametrize("use_scope", [False, True])
