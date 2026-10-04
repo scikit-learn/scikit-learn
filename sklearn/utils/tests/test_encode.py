@@ -267,3 +267,37 @@ def test_get_counts_string_dtypes(numpy_string_dtype):
     values = np.array(["b", "a", "b"], dtype=numpy_string_dtype)
     uniques = np.array(["a", "b", "c"], dtype=numpy_string_dtype)
     assert_array_equal(_get_counts(values, uniques), [1, 2, 0])
+
+
+@pytest.mark.parametrize(
+    "values, expected_strings, expected_counts",
+    [
+        (["b", np.nan, "a", np.nan, "b"], ["a", "b"], [1, 2, 2]),
+        ([np.nan, np.nan], [], [2]),
+        ([], [], []),
+        (["b", "a", "b"], ["a", "b"], [1, 2]),
+    ],
+)
+@pytest.mark.parametrize("return_inverse", [False, True])
+@pytest.mark.parametrize("return_counts", [False, True])
+def test_unique_string_dtype_missing_inverse_counts(
+    values, expected_strings, expected_counts, return_inverse, return_counts
+):
+    pytest.importorskip("numpy", minversion="2.0")
+    dtype = np.dtypes.StringDType(na_object=np.nan, coerce=False)
+    values = np.array(values, dtype=dtype)
+    result = _unique(values, return_inverse=return_inverse, return_counts=return_counts)
+    uniques = result[0] if return_inverse or return_counts else result
+    assert uniques.dtype == dtype
+    assert uniques.dtype.coerce is False
+    assert np.isnan(uniques.dtype.na_object)
+    missing = np.isnan(uniques)
+    assert_array_equal(uniques[~missing], expected_strings)
+    if return_counts:
+        assert_array_equal(result[-1], expected_counts)
+    if missing.any():
+        assert missing[-1] and missing.sum() == 1
+    if return_inverse:
+        reconstructed = uniques[result[1]]
+        assert_array_equal(np.isnan(reconstructed), np.isnan(values))
+        assert_array_equal(reconstructed[~np.isnan(values)], values[~np.isnan(values)])

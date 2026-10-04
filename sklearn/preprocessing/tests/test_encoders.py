@@ -2501,6 +2501,19 @@ def test_encoders_string_dtype_unknown(numpy_string_dtype, Encoder):
         assert_array_equal(encoder.transform(X_test), [[1], [-1]])
 
 
+@pytest.mark.parametrize("numpy_string_dtype", ["O", "T"], indirect=True)
+def test_ordinal_encoder_string_dtype_missing_unknown(numpy_string_dtype):
+    dtype = numpy_string_dtype
+    if dtype.kind == "T":
+        dtype = np.dtypes.StringDType(na_object=np.nan)
+    X = np.array([["a"], ["b"], [np.nan]], dtype=dtype)
+    encoder = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-1, encoded_missing_value=-2
+    ).fit(X)
+    X_test = np.array([["b"], [np.nan], ["new"]], dtype=dtype)
+    assert_array_equal(encoder.transform(X_test), [[1], [-2], [-1]])
+
+
 @pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
 @pytest.mark.parametrize("transform_dtype", ["U", "O", "T"])
 def test_encoder_mixed_string_dtype(numpy_string_dtype, Encoder, transform_dtype):

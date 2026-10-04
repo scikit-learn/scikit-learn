@@ -118,10 +118,13 @@ def _assert_all_finite(
         if _object_dtype_isnan(X).any():
             raise ValueError("Input contains NaN")
 
+    if _is_numpy_namespace(xp) and X.dtype.kind == "T":
+        if not allow_nan and xp.any(xp.isnan(X)):
+            raise ValueError("Input contains NaN")
+        return
+
     # We need only consider float arrays, hence can early return for all else.
-    if (_is_numpy_namespace(xp) and X.dtype.kind == "T") or not xp.isdtype(
-        X.dtype, ("real floating", "complex floating")
-    ):
+    if not xp.isdtype(X.dtype, ("real floating", "complex floating")):
         return
 
     # First try an O(n) time, O(1) space solution for the common case that

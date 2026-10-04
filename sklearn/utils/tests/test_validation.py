@@ -2583,6 +2583,33 @@ def test_check_array_string_preservation(numpy_string_dtype):
     assert_array_equal(checked, values)
 
 
+@pytest.mark.parametrize(
+    "numpy_string_dtype, ensure_all_finite",
+    [
+        ("O", True),
+        ("O", False),
+        ("O", "allow-nan"),
+        ("T", True),
+        ("T", False),
+        ("T", "allow-nan"),
+    ],
+    indirect=["numpy_string_dtype"],
+)
+def test_check_array_string_missing(numpy_string_dtype, ensure_all_finite):
+    dtype = numpy_string_dtype
+    if dtype.kind == "T":
+        dtype = np.dtypes.StringDType(na_object=np.nan)
+    X = np.array([["a"], [np.nan]], dtype=dtype)
+    if ensure_all_finite is True:
+        with pytest.raises(ValueError, match="Input contains NaN"):
+            check_array(X, dtype=None, ensure_all_finite=ensure_all_finite)
+    else:
+        checked = check_array(X, dtype=None, ensure_all_finite=ensure_all_finite)
+        assert checked[0, 0] == "a"
+        assert np.isnan(checked[1, 0])
+        assert checked.dtype == X.dtype
+
+
 @pytest.mark.parametrize("sentinel", [None, np.nan, "MISSING"])
 def test_string_dtype_sentinel_preservation(sentinel):
     pytest.importorskip("numpy", minversion="2.0")
@@ -2601,3 +2628,17 @@ def test_string_dtype_sentinel_preservation(sentinel):
             assert array[3, 0] == sentinel
     result[0, 0] = "changed"
     assert X[0, 0] == ""
+
+
+@pytest.mark.parametrize("with_nan_sentinel", [False, True])
+def test_check_array_string_nan_text_is_not_missing(with_nan_sentinel):
+    pytest.importorskip("numpy", minversion="2.0")
+    dtype = (
+        np.dtypes.StringDType(na_object=np.nan)
+        if with_nan_sentinel
+        else np.dtypes.StringDType()
+    )
+    X = np.array([["nan", "inf", ""]], dtype=dtype)
+    checked = check_array(X, dtype=None, ensure_all_finite=True)
+    assert checked.dtype == dtype
+    assert_array_equal(checked, X)
