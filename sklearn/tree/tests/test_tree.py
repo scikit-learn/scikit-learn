@@ -3697,3 +3697,30 @@ def test_random_splitter_missing_values_uses_non_missing_min_max(X, y):
 
     assert np.isfinite(threshold)
     assert non_missing.min() <= threshold <= non_missing.max()
+
+
+@pytest.mark.parametrize(
+    "Tree",
+    [
+        DecisionTreeClassifier,
+        DecisionTreeRegressor,
+        ExtraTreeClassifier,
+        ExtraTreeRegressor,
+    ],
+)
+def test_categorical_tree_string_dtype(numpy_string_dtype, Tree):
+    X = np.array([["a"], ["a"], ["a"], ["b"], ["b"], ["c"]], dtype=numpy_string_dtype)
+    y = np.array([0, 0, 0, 1, 1, 2])
+    if Tree in (DecisionTreeClassifier, ExtraTreeClassifier):
+        y = y > 0
+    estimator = Tree(categorical_features=[0], random_state=0).fit(X, y)
+    reference = Tree(categorical_features=[0], random_state=0).fit(X.astype(object), y)
+    assert_array_equal(
+        estimator._categorical_encoder.categories_[0],
+        reference._categorical_encoder.categories_[0],
+    )
+    assert_array_equal(estimator.predict(X), reference.predict(X.astype(object)))
+    X_test = np.array([["a"], ["b"], ["c"], ["unseen"]], dtype=numpy_string_dtype)
+    assert_array_equal(
+        estimator.predict(X_test), reference.predict(X_test.astype(object))
+    )

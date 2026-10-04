@@ -2545,3 +2545,25 @@ def test_neighbors_classifier_with_string_labels(metric, Estimator):
 
     assert y_pred.shape == (5,)
     assert all(label in y for label in y_pred)
+
+
+@pytest.mark.parametrize(
+    "Estimator", [neighbors.KNeighborsClassifier, neighbors.RadiusNeighborsClassifier]
+)
+@pytest.mark.parametrize("algorithm", ["brute", "kd_tree", "ball_tree"])
+def test_neighbors_string_dtype(numpy_string_dtype, Estimator, algorithm):
+    X = np.array([[0.0], [0.1], [2.0], [2.1], [4.0], [4.1]])
+    y = np.array(["z", "z", "", "", "é", "é"], dtype=numpy_string_dtype)
+    params = (
+        {"n_neighbors": 2}
+        if Estimator is neighbors.KNeighborsClassifier
+        else {"radius": 0.5}
+    )
+    classifier = Estimator(algorithm=algorithm, **params).fit(X, y)
+    reference = Estimator(algorithm=algorithm, **params).fit(X, y.astype(object))
+    assert_array_equal(classifier.classes_, reference.classes_)
+    assert_array_equal(classifier.predict(X), y)
+    assert_allclose(classifier.predict_proba(X), reference.predict_proba(X))
+    assert_array_equal(
+        classifier.classes_[classifier.predict_proba(X).argmax(axis=1)], y
+    )

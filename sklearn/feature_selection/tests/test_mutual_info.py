@@ -268,3 +268,16 @@ def test_mutual_info_n_jobs(global_random_seed, mutual_info_func, data_generator
     single_job = mutual_info_func(X, y, random_state=global_random_seed, n_jobs=1)
     multi_job = mutual_info_func(X, y, random_state=global_random_seed, n_jobs=2)
     assert_allclose(single_job, multi_job)
+
+
+@pytest.mark.parametrize("discrete_features", [False, True])
+def test_mutual_info_string_dtype(numpy_string_dtype, discrete_features):
+    X = np.tile(np.eye(3), (10, 1))
+    y = np.tile(np.array(["z", "", "é"], dtype=numpy_string_dtype), 10)
+    result = mutual_info_classif(
+        X, y, discrete_features=discrete_features, random_state=0
+    )
+    reference = mutual_info_classif(
+        X, y.astype(object), discrete_features=discrete_features, random_state=0
+    )
+    assert_allclose(result, reference)

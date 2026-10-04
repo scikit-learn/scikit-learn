@@ -332,3 +332,18 @@ def test_compute_sample_weight_sparse(csc_container):
     y = csc_container(np.asarray([[0], [1], [1]]))
     sample_weight = compute_sample_weight("balanced", y)
     assert_allclose(sample_weight, [1.5, 0.75, 0.75])
+
+
+@pytest.mark.parametrize("class_weight", ["balanced", {"a": 2.0, "b": 0.5, "c": 3.0}])
+def test_class_and_sample_weight_string_dtype(numpy_string_dtype, class_weight):
+    y = np.array(["a", "a", "a", "b", "b", "c"], dtype=numpy_string_dtype)
+    classes = np.array(["c", "a", "b"], dtype=numpy_string_dtype)
+    reference = y.astype(object)
+    assert_allclose(
+        compute_class_weight(class_weight, classes=classes, y=y),
+        compute_class_weight(class_weight, classes=classes.astype(object), y=reference),
+    )
+    assert_allclose(
+        compute_sample_weight(class_weight, y),
+        compute_sample_weight(class_weight, reference),
+    )

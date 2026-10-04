@@ -535,3 +535,16 @@ def test_contingency_matrix_array_api_sparse():
             sparse=True,
         )
         assert isinstance(res, sp.csr_matrix)
+
+
+@pytest.mark.parametrize("score", score_funcs)
+@pytest.mark.parametrize("mixed_labels", [False, True])
+def test_clustering_string_dtype(numpy_string_dtype, score, mixed_labels):
+    labels = np.array(["z", "", "é"], dtype=numpy_string_dtype)
+    true = labels[[0, 0, 1, 1, 2, 2]]
+    predicted = labels[[0, 1, 1, 1, 2, 0]]
+    if mixed_labels:
+        predicted = predicted.astype(object)
+    assert_allclose(
+        score(true, predicted), score(true.astype(object), predicted.astype(object))
+    )

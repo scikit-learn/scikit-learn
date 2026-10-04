@@ -982,3 +982,15 @@ def test_multiclass_estimator_attribute_error():
         clf.partial_fit(iris.data, iris.target)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+@pytest.mark.parametrize("Wrapper", [OneVsRestClassifier, OneVsOneClassifier])
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_multiclass_wrapper_string_dtype(numpy_string_dtype, Wrapper, n_classes):
+    X = np.eye(n_classes).repeat(3, axis=0)
+    y = np.repeat(np.array(["a", "b", "c"][:n_classes], dtype=numpy_string_dtype), 3)
+    classifier = Wrapper(LinearSVC(random_state=0)).fit(X, y)
+    reference = Wrapper(LinearSVC(random_state=0)).fit(X, y.astype(object))
+    assert_array_equal(classifier.classes_, reference.classes_)
+    assert_array_equal(classifier.predict(X), y)
+    assert_allclose(classifier.decision_function(X), reference.decision_function(X))

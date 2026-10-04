@@ -832,7 +832,16 @@ def test_early_stopping_stratified():
         mlp.fit(X, y)
 
 
-def test_mlp_early_stopping_string_labels():
+@pytest.mark.parametrize(
+    "numpy_string_dtype",
+    [
+        "U",
+        "O",
+        "T",
+    ],
+    indirect=True,
+)
+def test_mlp_early_stopping_string_labels(numpy_string_dtype):
     """Check that labels can be strings when `early_stopping=True`.
 
     Non-regression test for:
@@ -845,7 +854,7 @@ def test_mlp_early_stopping_string_labels():
         n_informative=5,
         random_state=42,
     )
-    labels = np.array(["class_a", "class_b", "class_c"], dtype=object)
+    labels = np.array(["class_a", "class_b", "class_c"], dtype=numpy_string_dtype)
     y = labels[y]
 
     mlp = MLPClassifier(early_stopping=True, max_iter=50, random_state=42)
@@ -854,6 +863,12 @@ def test_mlp_early_stopping_string_labels():
     assert mlp.validation_scores_ is not None
     assert len(mlp.validation_scores_) == mlp.n_iter_
     assert np.isfinite(mlp.validation_scores_).all()
+    reference = MLPClassifier(early_stopping=True, max_iter=50, random_state=42)
+    reference.fit(X, y.astype(object))
+    assert_array_equal(mlp.classes_, reference.classes_)
+    assert_array_equal(mlp.predict(X), reference.predict(X))
+    assert_allclose(mlp.predict_proba(X), reference.predict_proba(X))
+    assert_allclose(mlp.validation_scores_, reference.validation_scores_)
 
 
 def test_mlp_classifier_dtypes_casting():

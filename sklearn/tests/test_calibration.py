@@ -1003,11 +1003,10 @@ def test_calibration_display_ref_line(pyplot, iris_data_binary):
     assert labels.count("Perfectly calibrated") == 1
 
 
-@pytest.mark.parametrize("dtype_y_str", [str, object])
-def test_calibration_curve_pos_label_error_str(dtype_y_str):
+def test_calibration_curve_pos_label_error_str(numpy_string_dtype):
     """Check error message when a `pos_label` is not specified with `str` targets."""
     rng = np.random.RandomState(42)
-    y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=dtype_y_str)
+    y1 = np.array(["spam"] * 3 + ["eggs"] * 2, dtype=numpy_string_dtype)
     y2 = rng.randint(0, 2, size=y1.size)
 
     err_msg = (
@@ -1019,11 +1018,10 @@ def test_calibration_curve_pos_label_error_str(dtype_y_str):
         calibration_curve(y1, y2)
 
 
-@pytest.mark.parametrize("dtype_y_str", [str, object])
-def test_calibration_curve_pos_label(dtype_y_str):
+def test_calibration_curve_pos_label(numpy_string_dtype):
     """Check the behaviour when passing explicitly `pos_label`."""
     y_true = np.array([0, 0, 0, 1, 1, 1, 1, 1, 1])
-    classes = np.array(["spam", "egg"], dtype=dtype_y_str)
+    classes = np.array(["spam", "egg"], dtype=numpy_string_dtype)
     y_true_str = classes[y_true]
     y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.65, 0.7, 0.8, 0.9, 1.0])
 
@@ -1490,3 +1488,23 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         )
         pred_xp = cal_clf_xp.predict(X_xp)
         assert_array_equal(pred_xp, pred_np)
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_calibrated_classifier_string_dtype(numpy_string_dtype, method, n_classes):
+    X = np.tile(np.eye(n_classes), (9, 1))
+    y = np.tile(np.array(["z", "", "é"][:n_classes], dtype=numpy_string_dtype), 9)
+    classifier = CalibratedClassifierCV(LogisticRegression(), method=method, cv=3).fit(
+        X, y
+    )
+    reference = CalibratedClassifierCV(LogisticRegression(), method=method, cv=3).fit(
+        X, y.astype(object)
+    )
+    np.testing.assert_array_equal(classifier.classes_, reference.classes_)
+    np.testing.assert_array_equal(classifier.predict(X), reference.predict(X))
+    assert_allclose(classifier.predict_proba(X), reference.predict_proba(X))
+    np.testing.assert_array_equal(
+        classifier.classes_[classifier.predict_proba(X).argmax(axis=1)],
+        classifier.predict(X),
+    )

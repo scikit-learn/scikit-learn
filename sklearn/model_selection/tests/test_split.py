@@ -2115,3 +2115,28 @@ def test_stratified_splitter_without_y(cv):
     msg = "missing 1 required positional argument: 'y'"
     with pytest.raises(TypeError, match=msg):
         cv.split(X)
+
+
+@pytest.mark.parametrize(
+    "CV", [StratifiedKFold, StratifiedShuffleSplit, GroupKFold, StratifiedGroupKFold]
+)
+def test_split_string_dtype(numpy_string_dtype, CV):
+    X = np.arange(48).reshape(24, 2)
+    y = np.array(["a", "b", "b", "b"] * 6, dtype=object)
+    groups = np.repeat(np.array(["g1", "g2", "g3", "g4", "g5", "g6"], dtype=object), 4)
+    cv = CV(n_splits=3)
+    if CV is StratifiedShuffleSplit:
+        cv = CV(n_splits=3, random_state=0)
+    uses_groups = CV in (GroupKFold, StratifiedGroupKFold)
+    reference = list(cv.split(X, y, groups if uses_groups else None))
+    actual = list(
+        cv.split(
+            X,
+            y.astype(numpy_string_dtype),
+            groups.astype(numpy_string_dtype) if uses_groups else None,
+        )
+    )
+    assert len(actual) == len(reference)
+    for (train, test), (ref_train, ref_test) in zip(actual, reference):
+        assert_array_equal(train, ref_train)
+        assert_array_equal(test, ref_test)

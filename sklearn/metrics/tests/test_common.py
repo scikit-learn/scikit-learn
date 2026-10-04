@@ -1223,16 +1223,25 @@ def test_classification_with_invalid_sample_weight(metric):
 
 
 @pytest.mark.parametrize(
+    "numpy_string_dtype",
+    [
+        "U",
+        "O",
+        "T",
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize(
     "name", sorted(set(CLASSIFICATION_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS)
 )
-def test_classification_invariance_string_vs_numbers_labels(name):
+def test_classification_invariance_string_vs_numbers_labels(name, numpy_string_dtype):
     # Ensure that classification metrics with string labels are invariant
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20,))
     y2 = random_state.randint(0, 2, size=(20,))
 
-    y1_str = np.array(["eggs", "spam"])[y1]
-    y2_str = np.array(["eggs", "spam"])[y2]
+    y1_str = np.array(["eggs", "spam"], dtype=numpy_string_dtype)[y1]
+    y2_str = np.array(["eggs", "spam"], dtype=numpy_string_dtype)[y2]
 
     pos_label_str = "spam"
     labels_str = ["eggs", "spam"]
@@ -1254,13 +1263,6 @@ def test_classification_invariance_string_vs_numbers_labels(name):
             err_msg="{0} failed string vs number invariance test".format(name),
         )
 
-        measure_with_strobj = metric_str(y1_str.astype("O"), y2_str.astype("O"))
-        assert_array_equal(
-            measure_with_number,
-            measure_with_strobj,
-            err_msg="{0} failed string object vs number invariance test".format(name),
-        )
-
         if name in METRICS_WITH_LABELS:
             metric_str = partial(metric_str, labels=labels_str)
             measure_with_str = metric_str(y1_str, y2_str)
@@ -1270,23 +1272,18 @@ def test_classification_invariance_string_vs_numbers_labels(name):
                 err_msg="{0} failed string vs number  invariance test".format(name),
             )
 
-            measure_with_strobj = metric_str(y1_str.astype("O"), y2_str.astype("O"))
-            assert_array_equal(
-                measure_with_number,
-                measure_with_strobj,
-                err_msg="{0} failed string vs number  invariance test".format(name),
-            )
-
 
 @pytest.mark.parametrize("name", CONTINUOUS_CLASSIFICATION_METRICS)
-def test_continuous_classification_invariance_string_vs_numbers_labels(name):
+def test_continuous_classification_invariance_string_vs_numbers_labels(
+    name, numpy_string_dtype
+):
     # Ensure that continuous metrics with string labels are invariant under
     # class relabeling.
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20,))
     y2 = random_state.randint(0, 2, size=(20,))
 
-    y1_str = np.array(["eggs", "spam"])[y1]
+    y1_str = np.array(["eggs", "spam"], dtype=numpy_string_dtype)[y1]
 
     pos_label_str = "spam"
 
@@ -1306,20 +1303,10 @@ def test_continuous_classification_invariance_string_vs_numbers_labels(name):
                 err_msg="{0} failed string vs number invariance test".format(name),
             )
 
-            measure_with_strobj = metric_str(y1_str.astype("O"), y2)
-            assert_array_equal(
-                measure_with_number,
-                measure_with_strobj,
-                err_msg="{0} failed string object vs number invariance test".format(
-                    name
-                ),
-            )
         else:
             # TODO those metrics doesn't support string label yet
             with pytest.raises(ValueError):
                 metric(y1_str, y2)
-            with pytest.raises(ValueError):
-                metric(y1_str.astype("O"), y2)
 
 
 invalids_nan_inf = [

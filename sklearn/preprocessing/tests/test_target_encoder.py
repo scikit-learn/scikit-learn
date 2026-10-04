@@ -772,3 +772,30 @@ def test_target_encoder_shuffle_random_state_deprecated():
     with pytest.warns(FutureWarning, match=msg):
         encoder = TargetEncoder(random_state=0)
         encoder.fit_transform(X, y)
+
+
+@pytest.mark.parametrize("target_type", ["continuous", "binary", "multiclass"])
+def test_target_encoder_string_dtype(numpy_string_dtype, target_type):
+    labels = np.array(["a", "b", "c"] * 12, dtype=numpy_string_dtype)
+    X = labels.reshape(-1, 1)
+    if target_type == "continuous":
+        y = np.linspace(0, 1, len(X))
+        cv = KFold(3)
+    else:
+        n_classes = 2 if target_type == "binary" else 3
+        y = np.array(["no", "yes", "other"], dtype=numpy_string_dtype)[
+            np.arange(len(X)) % n_classes
+        ]
+        cv = StratifiedKFold(3)
+    reference_y = y.astype(object) if target_type != "continuous" else y
+    encoder = TargetEncoder(target_type=target_type, cv=cv)
+    reference = TargetEncoder(target_type=target_type, cv=cv)
+    assert_allclose(
+        encoder.fit_transform(X, y),
+        reference.fit_transform(X.astype(object), reference_y),
+    )
+    X_test = np.array([["a"], ["b"], ["c"], ["unseen"]], dtype=numpy_string_dtype)
+    assert_allclose(
+        encoder.transform(X_test), reference.transform(X_test.astype(object))
+    )
+    assert_array_equal(encoder.categories_[0], reference.categories_[0])

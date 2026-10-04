@@ -1017,3 +1017,21 @@ def test_metadata_routing_error_for_stacking_estimators(Estimator, Child):
 
 # End of Metadata Routing Tests
 # =============================
+
+
+def test_stacking_string_dtype(numpy_string_dtype):
+    X = np.tile(np.eye(3), (6, 1))
+    y = np.tile(np.array(["z", "", "é"], dtype=numpy_string_dtype), 6)
+    estimators = [
+        ("lr", LogisticRegression()),
+        ("knn", KNeighborsClassifier(n_neighbors=3)),
+    ]
+    classifier = StackingClassifier(estimators, cv=3).fit(X, y)
+    reference = StackingClassifier(estimators, cv=3).fit(X, y.astype(object))
+    assert_array_equal(classifier.classes_, reference.classes_)
+    assert_array_equal(classifier.predict(X), reference.predict(X))
+    assert_allclose(classifier.predict_proba(X), reference.predict_proba(X))
+    assert_array_equal(
+        classifier.classes_[classifier.predict_proba(X).argmax(axis=1)],
+        classifier.predict(X),
+    )

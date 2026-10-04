@@ -704,3 +704,20 @@ def test_shuffle_dont_convert_to_array(csc_container):
     assert type(d_s) == MockDataFrame
 
     assert_array_equal(e_s.toarray(), np.array([[4, 5], [2, 3], [0, 1]]))
+
+
+@pytest.mark.parametrize("replace", [True, False])
+def test_resample_string_dtype(numpy_string_dtype, replace):
+    X = np.arange(24).reshape(12, 2)
+    y = np.array(["a"] * 4 + ["b"] * 8, dtype=numpy_string_dtype)
+    actual = resample(X, y, stratify=y, n_samples=6, replace=replace, random_state=0)
+    reference = resample(
+        X,
+        y.astype(object),
+        stratify=y.astype(object),
+        n_samples=6,
+        replace=replace,
+        random_state=0,
+    )
+    for result, expected in zip(actual, reference):
+        assert_array_equal(result, expected)

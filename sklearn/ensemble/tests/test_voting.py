@@ -794,3 +794,22 @@ def test_metadata_routing_error_for_voting_estimators(Estimator, Child):
 
 # End of Metadata Routing Tests
 # =============================
+
+
+@pytest.mark.parametrize("voting", ["hard", "soft"])
+def test_voting_string_dtype(numpy_string_dtype, voting):
+    X = np.tile(np.eye(3), (6, 1))
+    y = np.tile(np.array(["z", "", "é"], dtype=numpy_string_dtype), 6)
+    estimators = [("lr", LogisticRegression()), ("nb", GaussianNB())]
+    classifier = VotingClassifier(estimators, voting=voting).fit(X, y)
+    reference = VotingClassifier(estimators, voting=voting).fit(X, y.astype(object))
+    assert_array_equal(classifier.classes_, reference.classes_)
+    assert_array_equal(classifier.predict(X), reference.predict(X))
+    if voting == "soft":
+        assert_array_almost_equal(
+            classifier.predict_proba(X), reference.predict_proba(X)
+        )
+        assert_array_equal(
+            classifier.classes_[classifier.predict_proba(X).argmax(axis=1)],
+            classifier.predict(X),
+        )

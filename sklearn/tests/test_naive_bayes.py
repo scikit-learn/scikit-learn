@@ -1049,3 +1049,38 @@ def test_gnb_array_api_compliance(
         assert_allclose(
             move_to(y_pred_log_proba_xp, xp=np, device="cpu"), y_pred_log_proba_np
         )
+
+
+@pytest.mark.parametrize("n_classes", [2, 3])
+@pytest.mark.parametrize("mixed_batch", [False, True])
+@pytest.mark.parametrize(
+    "numpy_string_dtype",
+    [
+        "U",
+        "O",
+        "T",
+    ],
+    indirect=True,
+)
+def test_partial_fit_string_dtype(numpy_string_dtype, n_classes, mixed_batch):
+    X = np.tile(np.eye(n_classes), (6, 1))
+    labels = np.array(["z", "", "é"][:n_classes], dtype=numpy_string_dtype)
+    y = np.tile(labels, 6)
+    original = y.copy()
+    classifier = GaussianNB()
+    reference = GaussianNB()
+    middle = len(y) // 2
+    for start, stop in [(0, middle), (middle, len(y))]:
+        batch = y[start:stop]
+        if start and mixed_batch:
+            batch = batch.astype(object)
+        classifier.partial_fit(X[start:stop], batch, classes=labels)
+        reference.partial_fit(
+            X[start:stop], y[start:stop].astype(object), classes=labels.astype(object)
+        )
+    assert_array_equal(classifier.classes_, np.sort(labels))
+    assert_array_equal(classifier.predict(X), reference.predict(X))
+    assert_allclose(classifier.predict_proba(X), reference.predict_proba(X))
+    assert_array_equal(y, original)
+    with pytest.raises(ValueError, match="class|label"):
+        classifier.partial_fit(X[:1], np.array(["unseen"], dtype=numpy_string_dtype))

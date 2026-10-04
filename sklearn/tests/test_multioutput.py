@@ -865,3 +865,20 @@ def test_multioutput_regressor_has_partial_fit():
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
         getattr(est, "partial_fit")
+
+
+def test_multioutput_string_dtype(numpy_string_dtype):
+    X = np.tile(np.eye(3), (6, 1))
+    labels = np.array(["z", "", "é"], dtype=numpy_string_dtype)
+    y = np.column_stack([np.tile(labels, 6), np.tile(labels[:2], 9)])
+    original = y.copy()
+    classifier = MultiOutputClassifier(LogisticRegression()).fit(X, y)
+    reference = MultiOutputClassifier(LogisticRegression()).fit(X, y.astype(object))
+    assert_array_equal(classifier.predict(X), reference.predict(X))
+    for classes, expected in zip(classifier.classes_, reference.classes_):
+        assert_array_equal(classes, expected)
+    for probabilities, expected in zip(
+        classifier.predict_proba(X), reference.predict_proba(X)
+    ):
+        assert_array_almost_equal(probabilities, expected)
+    assert_array_equal(y, original)
