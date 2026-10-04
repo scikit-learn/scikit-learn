@@ -1086,12 +1086,18 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
-          obtain a closed-form solution.
+          obtain a closed-form solution. When `n_features > n_samples`, the
+          dual formulation (based on the `n_samples x n_samples` kernel
+          matrix `X @ X.T`) is solved instead of the primal formulation
+          (based on the `n_features x n_features` covariance matrix
+          `X.T @ X`), which is more efficient for such data shapes.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
           more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          (possibility to set `tol` and `max_iter`). Like 'cholesky', it
+          solves the dual formulation when `n_features > n_samples` and the
+          primal formulation otherwise.
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
@@ -1437,12 +1443,18 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
-          obtain a closed-form solution.
+          obtain a closed-form solution. When `n_features > n_samples`, the
+          dual formulation (based on the `n_samples x n_samples` kernel
+          matrix `X @ X.T`) is solved instead of the primal formulation
+          (based on the `n_features x n_features` covariance matrix
+          `X.T @ X`), which is more efficient for such data shapes.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
           more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          (possibility to set `tol` and `max_iter`). Like 'cholesky', it
+          solves the dual formulation when `n_features > n_samples` and the
+          primal formulation otherwise.
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
