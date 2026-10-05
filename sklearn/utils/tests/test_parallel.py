@@ -211,11 +211,11 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
 )
 @pytest.mark.parametrize("n_jobs", [None, 1, 2, -1])
 def test_parallel_thread_map_results(func, arguments, n_jobs):
-    """Test that `_parallel_thread_map()` gives the same results as `map()`."""
+    """Test that `_parallel_thread_map()` gives a list with same results as `map()`."""
     expected = list(map(func, *arguments))
     actual = _parallel_thread_map(n_jobs, func, *arguments)
-    assert not isinstance(actual, list)
-    assert expected == list(actual)
+    assert isinstance(actual, list)
+    assert expected == actual
 
 
 @pytest.mark.skipif(joblib.effective_n_jobs(-1) > 1, reason="Single core test")
