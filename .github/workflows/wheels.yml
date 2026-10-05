@@ -61,9 +61,6 @@ jobs:
         include:
           # Window 64 bit
           - os: windows-latest
-            python: 311
-            platform_id: win_amd64
-          - os: windows-latest
             python: 312
             platform_id: win_amd64
           - os: windows-latest
@@ -78,9 +75,6 @@ jobs:
 
           # Windows on ARM64 (WoA)
           - os: windows-11-arm
-            python: 311
-            platform_id: win_arm64
-          - os: windows-11-arm
             python: 312
             platform_id: win_arm64
           - os: windows-11-arm
@@ -94,10 +88,6 @@ jobs:
             platform_id: win_arm64
 
           # Linux
-          - os: ubuntu-latest
-            python: 311
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux_2_28
           - os: ubuntu-latest
             python: 312
             platform_id: manylinux_x86_64
@@ -117,10 +107,6 @@ jobs:
 
           # Linux arm
           - os: ubuntu-24.04-arm
-            python: 311
-            platform_id: manylinux_aarch64
-            manylinux_image: manylinux_2_28
-          - os: ubuntu-24.04-arm
             python: 312
             platform_id: manylinux_aarch64
             manylinux_image: manylinux_2_28
@@ -139,9 +125,6 @@ jobs:
 
           # MacOS x86_64
           - os: macos-15-intel
-            python: 311
-            platform_id: macosx_x86_64
-          - os: macos-15-intel
             python: 312
             platform_id: macosx_x86_64
           - os: macos-15-intel
@@ -155,9 +138,6 @@ jobs:
             platform_id: macosx_x86_64
 
           # MacOS arm64
-          - os: macos-14
-            python: 311
-            platform_id: macosx_arm64
           - os: macos-14
             python: 312
             platform_id: macosx_arm64
@@ -178,7 +158,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11" # update once build dependencies are available
+          python-version: "3.12" # update once build dependencies are available
 
       - uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(matrix.platform_id, 'macosx') }}
