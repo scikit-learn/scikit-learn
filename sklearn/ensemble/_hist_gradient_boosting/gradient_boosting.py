@@ -616,7 +616,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         n_samples, n_features = X_binned_train.shape
 
-        n_threads = self._get_heurirstic_optimal_n_threads(
+        n_threads = self._get_heuristic_optimal_n_threads(
             max_n_threads,
             n_samples,
             n_features,
@@ -967,7 +967,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return self
 
     @staticmethod
-    def _get_heurirstic_optimal_n_threads(max_n_threads, n_samples, n_features):
+    def _get_heuristic_optimal_n_threads(max_n_threads, n_samples, n_features):
         """
         Using the maximum number of available threads regardless of the size of
         the workload can be counter-productive: parallelizing over very few
@@ -976,13 +976,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         threads are not left idle or unevenly loaded) and against ``n_samples``
         (so that small datasets use fewer threads).
         """
-        active_wait = _openmp_uses_active_wait()
-        # For very small problems, multi-threading is always counter-productively
-        min_workload = 20_000 if active_wait else 2_000_000
-        if n_samples * n_features <= min_workload:
+        # For very small problems, multi-threading is always counter-productive.
+        # Checked before calling _openmp_uses_active_wait, which spawns a
+        # subprocess on its first call.
+        if max_n_threads == 1 or n_samples * n_features <= 20_000:
             return 1
 
-        # Empircally, HGB almost always scales counter-productively past 64 threads
+        active_wait = _openmp_uses_active_wait()
+        if not active_wait and n_samples * n_features <= 2_000_000:
+            return 1
+
+        # Empirically, HGB almost always scales counter-productively past 64 threads
         max_n_threads = min(max_n_threads, 64)
         if not active_wait and n_samples * n_features <= 20_000_000:
             max_n_threads = min(max_n_threads, 4)

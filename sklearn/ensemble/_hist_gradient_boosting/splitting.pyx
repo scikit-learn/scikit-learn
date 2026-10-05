@@ -185,7 +185,6 @@ cdef class Splitter:
         unsigned int [::1] right_indices_buffer
         int n_threads
         bint active_wait
-        int min_samples_per_thread_to_split
 
     def __init__(self,
                  const X_BINNED_DTYPE_C [::1, :] X_binned,
@@ -218,7 +217,9 @@ cdef class Splitter:
         self.feature_fraction_per_split = feature_fraction_per_split
         self.rng = rng
         self.n_threads = n_threads
-        self.active_wait = _openmp_uses_active_wait()
+        # Only relevant with more than one thread: skip the detection, which
+        # spawns a subprocess on its first call, when it can't matter.
+        self.active_wait = n_threads > 1 and _openmp_uses_active_wait()
 
         # The partition array maps each sample index into the leaves of the
         # tree (a leaf in this context is a node that isn't split yet, not
@@ -327,7 +328,8 @@ cdef class Splitter:
             # waiting one needs a much bigger workload to amortize that cost.
             int min_samples_per_thread_to_split = 500 if self.active_wait else 5000
             bint use_threads = (
-                (n_threads * min_samples_per_thread_to_split < n_samples)
+                n_threads > 1
+                and n_threads * min_samples_per_thread_to_split < n_samples
             )
 
             int right_child_position

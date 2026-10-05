@@ -1769,7 +1769,7 @@ def test_pandas_nullable_dtype():
 
 
 def _get_heuristic_n_threads(max_n_threads, n_samples, n_features):
-    return hgb_module.BaseHistGradientBoosting._get_heurirstic_optimal_n_threads(
+    return hgb_module.BaseHistGradientBoosting._get_heuristic_optimal_n_threads(
         max_n_threads, n_samples, n_features
     )
 
