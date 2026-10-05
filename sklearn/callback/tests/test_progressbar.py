@@ -219,3 +219,15 @@ def test_estimator_without_subtasks(capsys):
     captured = capsys.readouterr()
     assert re.search(r"NoSubtaskEstimator - fit", captured.out)
     assert re.search(r"100%", captured.out)
+
+
+def test_two_progressbars_error(capsys):
+    """Check that only the last progress bar is active."""
+    pytest.importorskip("rich")
+    from sklearn.callback._progressbar import ProgressBar
+
+    est = MaxIterEstimator()
+    with pytest.raises(
+        ValueError, match=r"Only one ProgressBar can be registered to an estimator."
+    ):
+        est.set_callbacks(ProgressBar(), ProgressBar())
