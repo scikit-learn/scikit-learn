@@ -3178,3 +3178,15 @@ def test_search_callbacks_with_partial_fit_failures():
     expected_n_tasks = 1 + 1 + 4  # root + search + 4 candidate-split evaluations
     assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
     assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
+
+
+def test_model_selection_star_import():
+    import subprocess
+
+    code = """
+from sklearn.model_selection import *
+assert "HalvingGridSearchCV" not in dir()
+assert "HalvingRandomSearchCV" not in dir()
+"""
+
+    subprocess.run([sys.executable, "-c", code], check=True)
