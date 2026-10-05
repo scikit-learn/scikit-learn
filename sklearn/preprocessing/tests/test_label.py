@@ -15,13 +15,11 @@ from sklearn.utils._array_api import (
     _atol_for_type,
     _convert_to_numpy,
     _is_numpy_namespace,
+    array_device,
     get_namespace,
     indexing_dtype,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_api_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -286,14 +284,14 @@ def test_label_binarizer_array_api_compliance(
         binarized = lb_xp.fit_transform(y)
         assert get_namespace(binarized)[0].__name__ == xp.__name__
         assert "int" in str(binarized.dtype)
-        assert array_api_device(binarized) == array_api_device(y)
+        assert array_device(binarized) == array_device(y)
         assert_array_equal(
             move_to(binarized, xp=np, device="cpu"), np.asarray(expected)
         )
 
         fitted_classes = lb_xp.classes_
         assert get_namespace(fitted_classes)[0].__name__ == xp.__name__
-        assert array_api_device(fitted_classes) == array_api_device(y)
+        assert array_device(fitted_classes) == array_device(y)
         assert "int" in str(fitted_classes.dtype)
         assert_array_equal(
             move_to(fitted_classes, xp=np, device="cpu"), np.asarray(classes)
@@ -303,7 +301,7 @@ def test_label_binarizer_array_api_compliance(
         binarized_inverse = lb_xp.inverse_transform(expected_xp)
         assert get_namespace(binarized_inverse)[0].__name__ == xp.__name__
         assert "int" in str(binarized_inverse.dtype)
-        assert array_api_device(binarized_inverse) == array_api_device(y)
+        assert array_device(binarized_inverse) == array_device(y)
         assert_array_equal(
             move_to(binarized_inverse, xp=np, device="cpu"),
             move_to(y, xp=np, device="cpu"),
@@ -803,7 +801,7 @@ def test_label_binarize_array_api_compliance(
             expected = np.asarray(expected, dtype=int)
 
             assert get_namespace(binarized)[0].__name__ == xp.__name__
-            assert array_api_device(binarized) == array_api_device(y)
+            assert array_device(binarized) == array_device(y)
             assert "int" in str(binarized.dtype)
             assert_array_equal(move_to(binarized, xp=np, device="cpu"), expected)
 

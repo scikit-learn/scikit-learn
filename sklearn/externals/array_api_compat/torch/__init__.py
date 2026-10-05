@@ -10,10 +10,10 @@ from ._aliases import * # noqa: F403
 from ._info import __array_namespace_info__  # noqa: F401
 
 # See the comment in the numpy __init__.py
-__import__(__package__ + '.linalg')
-__import__(__package__ + '.fft')
+__import__(__spec__.parent + '.linalg')
+__import__(__spec__.parent + '.fft')
 
-__array_api_version__: Final = '2024.12'
+__array_api_version__: Final = '2025.12'
 
 __all__ = sorted(
     set(__all__)

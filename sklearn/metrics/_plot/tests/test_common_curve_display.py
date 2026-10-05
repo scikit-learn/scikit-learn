@@ -261,7 +261,7 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
             pytest.skip(f"`from_cv_results` not implemented in {Display}")
 
     # TODO: Clean-up once `estimator_name` deprecated in all displays
-    if Display in (PrecisionRecallDisplay, RocCurveDisplay):
+    if Display in (PrecisionRecallDisplay, RocCurveDisplay, DetCurveDisplay):
         assert disp.name == clf_name
     else:
         assert disp.estimator_name == clf_name
@@ -306,7 +306,7 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     disp = Display.from_estimator(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
     # TODO: Clean-up once `estimator_name` deprecated in all displays
-    if Display in (PrecisionRecallDisplay, RocCurveDisplay):
+    if Display in (PrecisionRecallDisplay, RocCurveDisplay, DetCurveDisplay):
         assert disp.name == model.__class__.__name__
     else:
         assert disp.estimator_name == model.__class__.__name__
@@ -802,6 +802,11 @@ def test_display_from_cv_results_curve_kwargs_default_kwargs(
             PrecisionRecallDisplay,
             {"precision": np.array([1, 0.5, 0]), "recall": np.array([0, 0.5, 1])},
         ),
+        # TODO(1.12): Remove
+        (
+            DetCurveDisplay,
+            {"fpr": np.array([0, 0.5, 1]), "fnr": np.array([1, 0.5, 0])},
+        ),
     ],
 )
 def test_display_estimator_name_deprecation(pyplot, Display, display_kwargs):
@@ -817,6 +822,11 @@ def test_display_estimator_name_deprecation(pyplot, Display, display_kwargs):
         (
             PrecisionRecallDisplay,
             {"precision": np.array([1, 0.5, 0]), "recall": np.array([0, 0.5, 1])},
+        ),
+        # TODO(1.12): Remove
+        (
+            DetCurveDisplay,
+            {"fpr": np.array([0, 0.5, 1]), "fnr": np.array([1, 0.5, 0])},
         ),
     ],
 )

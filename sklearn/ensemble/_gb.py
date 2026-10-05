@@ -19,7 +19,6 @@ The module structure is the following:
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import math
 import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
@@ -68,27 +67,6 @@ _LOSSES.update(
         "huber": HuberLoss,
     }
 )
-
-
-def _safe_divide(numerator, denominator):
-    """Prevents overflow and division by zero."""
-    # This is used for classifiers where the denominator might become zero exactly.
-    # For instance for log loss, HalfBinomialLoss, if proba=0 or proba=1 exactly, then
-    # denominator = hessian = 0, and we should set the node value in the line search to
-    # zero as there is no improvement of the loss possible.
-    # For numerical safety, we do this already for extremely tiny values.
-    if abs(denominator) < 1e-150:
-        return 0.0
-    else:
-        # Cast to Python float to trigger Python errors, e.g. ZeroDivisionError,
-        # without relying on `np.errstate` that is not supported by Pyodide.
-        result = float(numerator) / float(denominator)
-        # Cast to Python float to trigger a ZeroDivisionError without relying
-        # on `np.errstate` that is not supported by Pyodide.
-        result = float(numerator) / float(denominator)
-        if math.isinf(result):
-            warnings.warn("overflow encountered in _safe_divide", RuntimeWarning)
-        return result
 
 
 def _init_raw_predictions(X, estimator, loss, use_predict_proba):
@@ -190,79 +168,82 @@ def _update_terminal_regions(
     # compute leaf for each sample in ``X``.
     terminal_regions = tree.apply(X)
 
-    if not isinstance(loss, HalfSquaredError):
+    if isinstance(loss, HalfSquaredError):
+        # the leaf values don't need an update for the squared error.
+        pass
+    elif isinstance(loss, (HalfBinomialLoss, HalfMultinomialLoss, ExponentialLoss)):
+        if sample_mask.all():
+            idx = terminal_regions
+        else:
+            neg_gradient = neg_gradient[sample_mask]
+            sample_weight = (
+                None if sample_weight is None else sample_weight[sample_mask]
+            )
+            y = y[sample_mask]
+            idx = terminal_regions[sample_mask]
+
+        n_nodes = tree.node_count
+
+        # Make a single Newton-Raphson step, see "Additive Logistic Regression:
+        # A Statistical View of Boosting" FHT00 and note that we use a slightly
+        # different version (factor 2) of "F" with proba=expit(raw_prediction).
+        # Our node estimate is given by:
+        #    sum(w * neg_gradient) / sum(w * hessian)
+        weighted_neg_grad = (
+            neg_gradient if sample_weight is None else neg_gradient * sample_weight
+        )
+        numerator = np.bincount(idx, weights=weighted_neg_grad, minlength=n_nodes)
+
+        if isinstance(loss, HalfMultinomialLoss):
+            K = loss.n_classes
+            # numerator = negative gradient * (k - 1) / k
+            # Note: The factor (k - 1)/k appears in the original papers "Greedy
+            # Function Approximation" by Friedman and "Additive Logistic
+            # Regression" by Friedman, Hastie, Tibshirani. This factor is, however,
+            # wrong or at least arbitrary as it directly multiplies the
+            # learning_rate. We keep it for backward compatibility.
+            numerator *= (K - 1) / K
+
+        if isinstance(loss, ExponentialLoss):
+            # denominator = hessian = y * exp(-raw) + (1-y) * exp(raw)
+            # if y=0: hessian = exp(raw) = -neg_g
+            #    y=1: hessian = exp(-raw) = neg_g
+            hessian = weighted_neg_grad.copy()
+            hessian[y == 0] *= -1
+        else:
+            # (loss is HalfBinomialLoss or HalfMultinomialLoss)
+            # denominator = hessian = w * prob * (1 - prob)
+            # with prob = y - neg_gradient
+            prob = y - neg_gradient
+            hessian = prob * (1 - prob)
+            if sample_weight is not None:
+                hessian *= sample_weight
+
+        denominator = np.bincount(idx, weights=hessian, minlength=n_nodes)
+
+        # For the log-loss, if proba=0 or proba=1 exactly, then
+        # denominator = hessian = 0, and we should set the node value in the
+        # line search to zero as there is no improvement of the loss possible.
+        # For numerical safety, we do this already for extremely tiny values.
+        nz = np.abs(denominator) > 1e-150
+        tree.value[:, 0, 0] = 0
+        tree.value[nz, 0, 0] = numerator[nz] / denominator[nz]
+    else:
+        # regression losses other than the squared error.
+        # As of now: absolute error, pinball loss, huber loss.
+
         # mask all which are not in sample mask.
         masked_terminal_regions = terminal_regions.copy()
         masked_terminal_regions[~sample_mask] = -1
-
-        if isinstance(loss, HalfBinomialLoss):
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                # Make a single Newton-Raphson step, see "Additive Logistic Regression:
-                # A Statistical View of Boosting" FHT00 and note that we use a slightly
-                # different version (factor 2) of "F" with proba=expit(raw_prediction).
-                # Our node estimate is given by:
-                #    sum(w * (y - prob)) / sum(w * prob * (1 - prob))
-                # we take advantage that: y - prob = neg_gradient
-                neg_g = neg_gradient.take(indices, axis=0)
-                prob = y_ - neg_g
-                # numerator = negative gradient = y - prob
-                numerator = np.average(neg_g, weights=sw)
-                # denominator = hessian = prob * (1 - prob)
-                denominator = np.average(prob * (1 - prob), weights=sw)
-                return _safe_divide(numerator, denominator)
-
-        elif isinstance(loss, HalfMultinomialLoss):
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                # we take advantage that: y - prob = neg_gradient
-                neg_g = neg_gradient.take(indices, axis=0)
-                prob = y_ - neg_g
-                K = loss.n_classes
-                # numerator = negative gradient * (k - 1) / k
-                # Note: The factor (k - 1)/k appears in the original papers "Greedy
-                # Function Approximation" by Friedman and "Additive Logistic
-                # Regression" by Friedman, Hastie, Tibshirani. This factor is, however,
-                # wrong or at least arbitrary as it directly multiplies the
-                # learning_rate. We keep it for backward compatibility.
-                numerator = np.average(neg_g, weights=sw)
-                numerator *= (K - 1) / K
-                # denominator = (diagonal) hessian = prob * (1 - prob)
-                denominator = np.average(prob * (1 - prob), weights=sw)
-                return _safe_divide(numerator, denominator)
-
-        elif isinstance(loss, ExponentialLoss):
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                neg_g = neg_gradient.take(indices, axis=0)
-                # numerator = negative gradient = y * exp(-raw) - (1-y) * exp(raw)
-                numerator = np.average(neg_g, weights=sw)
-                # denominator = hessian = y * exp(-raw) + (1-y) * exp(raw)
-                # if y=0: hessian = exp(raw) = -neg_g
-                #    y=1: hessian = exp(-raw) = neg_g
-                hessian = neg_g.copy()
-                hessian[y_ == 0] *= -1
-                denominator = np.average(hessian, weights=sw)
-                return _safe_divide(numerator, denominator)
-
-        else:
-
-            def compute_update(y_, indices, neg_gradient, raw_prediction, k):
-                return loss.fit_intercept_only(
-                    y_true=y_ - raw_prediction[indices, k],
-                    sample_weight=sw,
-                )
-
         # update each leaf (= perform line search)
         for leaf in np.nonzero(tree.children_left == TREE_LEAF)[0]:
-            indices = np.nonzero(masked_terminal_regions == leaf)[
-                0
-            ]  # of terminal regions
-            y_ = y.take(indices, axis=0)
+            (indices,) = np.nonzero(masked_terminal_regions == leaf)
             sw = None if sample_weight is None else sample_weight[indices]
-            update = compute_update(y_, indices, neg_gradient, raw_prediction, k)
+            update = loss.fit_intercept_only(
+                y_true=y[indices] - raw_prediction[indices, k],
+                sample_weight=sw,
+            )
 
-            # TODO: Multiply here by learning rate instead of everywhere else.
             tree.value[leaf, 0, 0] = update
 
     # update predictions (both in-bag and out-of-bag)
@@ -378,6 +359,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     }
     _parameter_constraints.pop("splitter")
     _parameter_constraints.pop("monotonic_cst")
+    _parameter_constraints.pop("categorical_features")
 
     @abstractmethod
     def __init__(
@@ -614,10 +596,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _is_fitted(self):
         return len(getattr(self, "estimators_", [])) > 0
-
-    def _check_initialized(self):
-        """Check that the estimator is initialized, raising an error if not."""
-        check_is_fitted(self)
 
     @_fit_context(
         # GradientBoosting*.init is not validated yet
@@ -966,7 +944,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _raw_predict_init(self, X):
         """Check input and compute raw predictions of the init estimator."""
-        self._check_initialized()
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
         if self.init_ == "zero":
             raw_predictions = np.zeros(
@@ -1009,6 +986,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
+        check_is_fitted(self)
         if check_input:
             X = validate_data(
                 self, X, dtype=np.float32, order="C", accept_sparse="csr", reset=False
@@ -1038,7 +1016,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             trees consisting of only the root node, in which case it will be an
             array of zeros.
         """
-        self._check_initialized()
+        check_is_fitted(self)
 
         relevant_trees = [
             tree
@@ -1104,8 +1082,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def apply(self, X):
         """Apply trees in the ensemble to X, return leaf indices.
 
-        .. versionadded:: 0.17
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -1121,7 +1097,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             In the case of binary classification n_classes is 1.
         """
 
-        self._check_initialized()
+        check_is_fitted(self)
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
 
         # n_classes will be equal to 1 in the binary classification or the
@@ -1192,8 +1168,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
         This parameter has no effect.
 
-        .. versionadded:: 0.18
-
         .. deprecated:: 1.9
            `criterion` is deprecated and will be removed in 1.11.
 
@@ -1203,9 +1177,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         - If int, values must be in the range `[2, inf)`.
         - If float, values must be in the range `(0.0, 1.0]` and `min_samples_split`
           will be `ceil(min_samples_split * n_samples)`.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
@@ -1217,9 +1188,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         - If int, values must be in the range `[1, inf)`.
         - If float, values must be in the range `(0.0, 1.0)` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1252,8 +1220,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-
-        .. versionadded:: 0.19
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
@@ -1310,8 +1276,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         early stopping. Values must be in the range `(0.0, 1.0)`.
         Only used if ``n_iter_no_change`` is set to an integer.
 
-        .. versionadded:: 0.20
-
     n_iter_no_change : int, default=None
         ``n_iter_no_change`` is used to decide if early stopping will be used
         to terminate training when validation score is not improving. By
@@ -1324,15 +1288,11 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         See
         :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
-        .. versionadded:: 0.20
-
     tol : float, default=1e-4
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
         Values must be in the range `[0.0, inf)`.
-
-        .. versionadded:: 0.20
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -1343,16 +1303,12 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
 
-        .. versionadded:: 0.22
-
     Attributes
     ----------
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
         ``n_iter_no_change`` is specified). Otherwise it is set to
         ``n_estimators``.
-
-        .. versionadded:: 0.20
 
     n_trees_per_iteration_ : int
         The number of trees that are built at each iteration. For binary classifiers,
@@ -1409,8 +1365,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1803,8 +1757,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
         This parameter has no effect.
 
-        .. versionadded:: 0.18
-
         .. deprecated:: 1.9
            `criterion` is deprecated and will be removed in 1.11.
 
@@ -1814,9 +1766,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         - If int, values must be in the range `[2, inf)`.
         - If float, values must be in the range `(0.0, 1.0]` and `min_samples_split`
           will be `ceil(min_samples_split * n_samples)`.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
@@ -1828,9 +1777,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         - If int, values must be in the range `[1, inf)`.
         - If float, values must be in the range `(0.0, 1.0)` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1863,8 +1809,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-
-        .. versionadded:: 0.19
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
@@ -1927,8 +1871,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         early stopping. Values must be in the range `(0.0, 1.0)`.
         Only used if ``n_iter_no_change`` is set to an integer.
 
-        .. versionadded:: 0.20
-
     n_iter_no_change : int, default=None
         ``n_iter_no_change`` is used to decide if early stopping will be used
         to terminate training when validation score is not improving. By
@@ -1941,15 +1883,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         See
         :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
-        .. versionadded:: 0.20
-
     tol : float, default=1e-4
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
         Values must be in the range `[0.0, inf)`.
-
-        .. versionadded:: 0.20
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -1959,8 +1897,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         See :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -2019,8 +1955,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2191,8 +2125,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     def apply(self, X):
         """Apply trees in the ensemble to X, return leaf indices.
-
-        .. versionadded:: 0.17
 
         Parameters
         ----------

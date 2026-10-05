@@ -30,13 +30,13 @@ def test_pandas_adapter():
     X_ser_orig = pd.Series([2, 3], index=index)
 
     adapter = ADAPTERS_MANAGER.adapters["pandas"]
-    X_container = adapter.create_container(X_np, X_df_orig, columns=lambda: columns)
+    X_container = adapter.create_container(X_np, X_df_orig, columns=columns)
     assert isinstance(X_container, pd.DataFrame)
     assert_array_equal(X_container.columns, columns)
     assert_array_equal(X_container.index, index)
 
     # use original index when the original is a series
-    X_container = adapter.create_container(X_np, X_ser_orig, columns=lambda: columns)
+    X_container = adapter.create_container(X_np, X_ser_orig, columns=columns)
     assert isinstance(X_container, pd.DataFrame)
     assert_array_equal(X_container.columns, columns)
     assert_array_equal(X_container.index, index)
@@ -98,7 +98,7 @@ def test_polars_adapter():
     X_df_orig = pl.DataFrame(X_np, schema=columns, orient="row")
 
     adapter = ADAPTERS_MANAGER.adapters["polars"]
-    X_container = adapter.create_container(X_np, X_df_orig, columns=lambda: columns)
+    X_container = adapter.create_container(X_np, X_df_orig, columns=columns)
 
     assert isinstance(X_container, pl.DataFrame)
     assert_array_equal(X_container.columns, columns)

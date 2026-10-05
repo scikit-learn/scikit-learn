@@ -371,7 +371,7 @@ def test_same_multiple_output_sparse_dense(coo_container):
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_sparse_enet_coordinate_descent(csc_container):
+def test_enet_coordinate_descent_sparse(csc_container):
     """Test that a warning is issued if model does not converge"""
     clf = Lasso(
         alpha=1e-10, fit_intercept=False, warm_start=True, max_iter=2, tol=1e-10

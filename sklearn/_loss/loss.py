@@ -1270,6 +1270,7 @@ class ArrayAPILossMixin:
     - loss(...)
     - loss_gradient(...)
     - gradient(...)
+    - gradient_hessian(...)
 
     such that they work according to the array API specification.
     It uses the attributes self.xp and self.device from BaseLoss and it assumes that
@@ -1426,6 +1427,45 @@ class ArrayAPILossMixin:
             sample_weight=sample_weight,
         )
 
+    def gradient_hessian(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        gradient_out=None,
+        hessian_out=None,
+        n_threads=1,
+    ):
+        """Compute gradient and hessian of loss w.r.t. raw_prediction.
+
+        Parameters
+        ----------
+        y_true : array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : array of shape (n_samples,)
+            Raw prediction values (in link space).
+        sample_weight : None or array of shape (n_samples,)
+            Sample weights.
+        gradient_out : None or array of shape (n_samples,)
+            Ignored by the array API implementation.
+        hessian_out : None or array of shape (n_samples,)
+            Ignored by the array API implementation.
+        n_threads : int, default=1
+            Ignored by the array API implementation.
+
+        Returns
+        -------
+        gradient : array of shape (n_samples,)
+            Element-wise gradients.
+
+        hessian : array of shape (n_samples,)
+            Element-wise hessians.
+        """
+        gradient, hessian = self._compute_gradient_hessian(
+            y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight
+        )
+        return gradient, hessian
+
 
 def _log1pexp(raw_prediction, raw_prediction_exp, xp):
     """Numerically stable version of log(1 + exp(x)) that is compatible with
@@ -1569,6 +1609,32 @@ class HalfBinomialLossArrayAPI(ArrayAPILossMixin, HalfBinomialLoss):
             grad *= sample_weight
         return grad
 
+    def _compute_gradient_hessian(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+    ):
+        # with y_pred = expit(raw)
+        # hessian = y_pred * (1 - y_pred) = exp( raw) / (1 + exp( raw))**2
+        #                                 = exp(-raw) / (1 + exp(-raw))**2
+        raw_prediction_exp = self.xp.exp(raw_prediction)
+        grad = self._compute_gradient(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            raw_prediction_exp=raw_prediction_exp,
+        )
+        neg_raw_prediction_exp = 1 / raw_prediction_exp
+        hess = self.xp.where(
+            raw_prediction_exp > 0,
+            neg_raw_prediction_exp / (1 + neg_raw_prediction_exp) ** 2,
+            raw_prediction_exp / (1 + raw_prediction_exp) ** 2,
+        )
+        if sample_weight is not None:
+            hess *= sample_weight
+        return grad, hess
+
 
 class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
     """A version of the HalfMultinomialLoss that is compatible with the array API.
@@ -1601,6 +1667,48 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
         # Used when computing the gradient.
         self.y_true_one_hot = None
 
+    def gradient_proba(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        gradient_out=None,
+        proba_out=None,
+        n_threads=1,
+    ):
+        """Compute gradient and class probabilities for raw_prediction.
+
+        Parameters
+        ----------
+        y_true : array of shape (n_samples,)
+            Observed, true target values.
+        raw_prediction : array of shape (n_samples, n_classes)
+            Raw prediction values (in link space).
+        sample_weight : None or array of shape (n_samples,)
+            Sample weights.
+        gradient_out : None or array of shape (n_samples, n_classes)
+            Ignored by the array API implementation.
+        proba_out : None or array of shape (n_samples, n_classes)
+            Ignored by the array API implementation.
+        n_threads : int, default=1
+            Ignored by the array API implementation.
+
+        Returns
+        -------
+        gradient : array of shape (n_samples, n_classes)
+            Element-wise gradients.
+
+        proba : array of shape (n_samples, n_classes)
+            Element-wise class probabilities.
+        """
+        proba = self._compute_proba(
+            y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight
+        )
+        grad = proba - self.y_true_one_hot
+        if sample_weight is not None:
+            grad *= sample_weight[:, None]
+        return grad, proba
+
     def _compute_loss(
         self,
         y_true,
@@ -1625,24 +1733,34 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
             loss *= sample_weight
         return loss
 
-    def _compute_gradient(
+    def _compute_proba(
         self,
         y_true,
         raw_prediction,
         sample_weight=None,
     ):
-        xp = self.xp
-        device_ = self.device
         if self.y_true_one_hot is None:
             if self.y_true_int is None:
-                self.y_true_int = xp.asarray(y_true, dtype=xp.int64, device=device_)
+                self.y_true_int = self.xp.asarray(
+                    y_true, dtype=self.xp.int64, device=self.device
+                )
 
             self.y_true_one_hot = one_hot(
                 self.y_true_int,
                 num_classes=self.n_classes,
                 dtype=raw_prediction.dtype,
             )
-        grad = softmax(raw_prediction)
+        return softmax(raw_prediction)
+
+    def _compute_gradient(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+    ):
+        grad = self._compute_proba(
+            y_true=y_true, raw_prediction=raw_prediction, sample_weight=sample_weight
+        )
         # TODO: once incremental assignment for multiple integer array
         # indices is part of a released version of the array API
         # spec and array-api-strict has been updated accordingly,
@@ -1656,6 +1774,24 @@ class HalfMultinomialLossArrayAPI(ArrayAPILossMixin, HalfMultinomialLoss):
         if sample_weight is not None:
             grad *= sample_weight[:, None]
         return grad
+
+    def _compute_gradient_hessian(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+    ):
+        proba = self._compute_proba(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+        )
+        grad = proba - self.y_true_one_hot
+        hess = proba * (1.0 - proba)
+        if sample_weight is not None:
+            grad *= sample_weight[:, None]
+            hess *= sample_weight[:, None]
+        return grad, hess
 
 
 class HalfPoissonLossArrayAPI(ArrayAPILossMixin, HalfPoissonLoss):
@@ -1712,3 +1848,21 @@ class HalfPoissonLossArrayAPI(ArrayAPILossMixin, HalfPoissonLoss):
         if sample_weight is not None:
             grad *= sample_weight
         return grad
+
+    def _compute_gradient_hessian(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+    ):
+        raw_prediction_exp = self.xp.exp(raw_prediction)
+        grad = self._compute_gradient(
+            y_true=y_true,
+            raw_prediction=raw_prediction,
+            sample_weight=sample_weight,
+            raw_prediction_exp=raw_prediction_exp,
+        )
+        hess = raw_prediction_exp
+        if sample_weight is not None:
+            hess *= sample_weight
+        return grad, hess

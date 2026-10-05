@@ -9,7 +9,7 @@ Developing callbacks
 The callback protocol
 ---------------------
 
-To be compatible with scikit-learn estimators, callbacks must implement the
+To be compatible with scikit-learn estimators, :term:`callbacks` must implement the
 :class:`FitCallback` `protocol
 <https://typing.python.org/en/latest/spec/protocol.html>`__:
 
@@ -43,8 +43,9 @@ To be compatible with scikit-learn estimators, callbacks must implement the
 
         def teardown(self, estimator, context) -> None: ...
 
-The methods of the protocol, referred to as callback hooks, will be called at specific
-steps during the fitting process of the estimator the callback is registered on:
+The methods of the protocol, referred to as callback :term:`hooks`, will be called at
+specific steps during the fitting process of the estimator the callback is registered
+on:
 
 - :meth:`~FitCallback.setup` and :meth:`~FitCallback.teardown`
 
@@ -96,8 +97,8 @@ attributes. See :class:`~CallbackContext` for more details.
 Auto-propagated callbacks
 -------------------------
 
-Auto-propagated callbacks, i.e. callbacks that are expected to be propagated from
-meta-estimators to their sub-estimators, must implement the
+:term:`Auto-propagated <auto-propagated>` callbacks, i.e. callbacks that are expected to
+be propagated from meta-estimators to their sub-estimators, must implement the
 :class:`~AutoPropagatedCallback` protocol, an extension of the :class:`~FitCallback`
 protocol:
 

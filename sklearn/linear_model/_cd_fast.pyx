@@ -2,19 +2,30 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from libc.math cimport fabs, sqrt
+from libc.stdlib cimport free, malloc
+from libc.string cimport memset
 import numpy as np
 
 from cython cimport floating
 import warnings
+from scipy import sparse
 from sklearn.exceptions import ConvergenceWarning
 
+# Note: The use of BLAS can cause random results within floating point
+# arithmetic, e.g. the summation order is not deterministic.
 from sklearn.utils._cython_blas cimport (
     _axpy, _dot, _asum, _gemv, _nrm2, _copy, _scal
 )
 from sklearn.utils._cython_blas cimport ColMajor, Trans, NoTrans
-from sklearn.utils._typedefs cimport int32_t, uint8_t, uint32_t
+from sklearn.utils._typedefs cimport float64_t, int32_t, uint8_t, uint32_t
 from sklearn.utils._random cimport our_rand_r
 
+from sklearn.linear_model._linear_loss import Multinomial_LDL_Decomposition
+
+
+cdef extern from "<float.h>":
+    const float FLT_EPSILON
+    const double DBL_EPSILON
 
 # The following two functions are shamelessly copied from the tree code.
 
@@ -135,6 +146,40 @@ message_ridge = (
 )
 
 
+def R_and_X_colnorm2(
+    const floating[::1] w,
+    const floating[::1, :] X,
+    const floating[::1] y,
+):
+    """Compute residuals and squared column norms of X.
+
+    Returns
+    -------
+    R : memoryview of shape (n_samples,)
+        Residuals: R = y - X @ w
+
+    norm2_cols_X : memoryview of shape (n_features,)
+        Column norms of X: norm2_cols_X = np.sum(X**2, axis=0)
+    """
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+    cdef unsigned int n_samples = y.shape[0]
+    cdef unsigned int n_features = w.shape[0]
+
+    cdef floating[::1] R = np.empty_like(y)
+    cdef floating[::1] norm2_cols_X = np.einsum(
+        "ij,ij->j", X, X, dtype=dtype, order="C"
+    )
+    # R = y - np.dot(X, w)
+    _copy(n_samples, &y[0], 1, &R[0], 1)
+    _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0],
+          n_samples, &w[0], 1, 1.0, &R[0], 1)
+
+    return R, norm2_cols_X
+
+
 cdef inline floating dual_gap_formulation_A(
     floating alpha,  # L1 penalty
     floating beta,  # L1 penalty
@@ -143,19 +188,27 @@ cdef inline floating dual_gap_formulation_A(
     floating R_norm2,  # R @ R
     floating Ry,  # R @ y
     floating dual_norm_XtA,
+    bint gap_smaller_eps,
 ) noexcept nogil:
     """Compute dual gap according to formulation A."""
     cdef floating gap, primal, dual
     cdef floating scale  # Scaling factor to achieve dual feasible point.
 
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
+
     primal = 0.5 * (R_norm2 + beta * w_l2_norm2) + alpha * w_l1_norm
 
-    if (dual_norm_XtA > alpha):
+    if dual_norm_XtA > alpha:
         scale = alpha / dual_norm_XtA
     else:
         scale = 1.0
     dual = -0.5 * (scale ** 2) * (R_norm2 + beta * w_l2_norm2) + scale * Ry
     gap = primal - dual
+    if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+        gap = 0.0
     return gap
 
 
@@ -170,19 +223,30 @@ cdef (floating, floating) gap_enet(
     const floating[::1] R,  # current residuals = y - X @ w
     floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
     bint positive,
+    bint gap_smaller_eps,
 ) noexcept nogil:
     """Compute dual gap for use in enet_coordinate_descent.
 
     alpha > 0:            formulation A of the duality gap
     alpha = 0 & beta > 0: formulation B of the duality gap
     alpha = beta = 0:     OLS first order condition (=gradient)
+
+    gap_smaller_eps: If 1 (True), set the dual gap to zero when the gap is around
+        machine precision compared to primal. As gap = primal - dual, we might get
+        gap != 0 in floating point arithmetic, while exact arithmetic would yield
+        gap = 0.
     """
-    cdef floating gap = 0.0
+    cdef floating gap, primal, dual
     cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating Ry
     cdef floating w_l1_norm
     cdef floating w_l2_norm2 = 0.0
+
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
 
     # w_l2_norm2 = w @ w
     if beta > 0:
@@ -209,8 +273,11 @@ cdef (floating, floating) gap_enet(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
-        gap += 1 / (2 * beta) * dual_norm_XtA
+        primal = 0.5 * (R_norm2 + beta * w_l2_norm2)
+        dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
+        gap = primal - dual
+        if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+            gap = 0.0
         return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * w
@@ -236,6 +303,7 @@ cdef (floating, floating) gap_enet(
         R_norm2=R_norm2,
         Ry=Ry,
         dual_norm_XtA=dual_norm_XtA,
+        gap_smaller_eps=gap_smaller_eps,
     )
     return gap, dual_norm_XtA
 
@@ -252,6 +320,9 @@ def enet_coordinate_descent(
     bint random=0,
     bint positive=0,
     bint do_screening=1,
+    bint early_stopping=1,
+    floating[::1] R=None,
+    floating[::1] norm2_cols_X=None,
 ):
     """
     Cython version of the coordinate descent algorithm for Elastic-Net regression.
@@ -306,6 +377,23 @@ def enet_coordinate_descent(
     The dual feasible set is v element real numbers. It requires beta > 0, but
     alpha = 0 is allowed. Strong duality holds and at optimum, v* = y - X w*.
 
+    Further Parameters
+    ------------------
+    random : bint, default=0 (False)
+        If False, uses cyclic coordinate descent. If True, pick features at random.
+    positive : bint, default=0 (False)
+        If set to True, forces coefficients w to be positive.
+    do_screening : bint, default=1 (True)
+        If set to True, use gap safe screening rules to screen coefficients
+        (exclude early based on dual gap).
+    early_stopping : bint, default=1 (True)
+        If set to True, check for convergence (with the dual gap) before entering the
+        main iteration loop.
+    R : memoryview or ndarray of shape (n_samples,) or None, default=None
+        Initial value of the residual `R = y - X @ w`. If None, it will be computed.
+    norm2_cols_X : memoryview or ndarray of shape (n_features,) or None, default=None
+        Squared column norms of X. If None, it will be computed.
+
     Returns
     -------
     w : ndarray of shape (n_features,)
@@ -344,14 +432,6 @@ def enet_coordinate_descent(
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
 
-    # compute squared norms of the columns of X
-    # same as norm2_cols_X = np.square(X).sum(axis=0)
-    cdef floating[::1] norm2_cols_X = np.einsum(
-        "ij,ij->j", X, X, dtype=dtype, order="C"
-    )
-
-    # initial value of the residuals
-    cdef floating[::1] R = np.empty(n_samples, dtype=dtype)
     cdef floating[::1] XtA = np.empty(n_features, dtype=dtype)
 
     cdef floating d_j
@@ -382,20 +462,22 @@ def enet_coordinate_descent(
         active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
         excluded_set = np.empty(n_features, dtype=np.uint8)
 
+    if R is None:
+        # Initial value of the residuals. Will be kept up to date in the iterations.
+        R, norm2_cols_X = R_and_X_colnorm2(w=w, X=X, y=y)
+
     with nogil:
-        # R = y - np.dot(X, w)
-        _copy(n_samples, &y[0], 1, &R[0], 1)
-        _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0],
-              n_samples, &w[0], 1, 1.0, &R[0], 1)
 
         # tol *= np.dot(y, y)
         tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
 
         # Check convergence before entering the main loop.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet(
-            n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive
+            n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive,
+            gap_smaller_eps=False,
         )
-        if gap <= tol:
+        if early_stopping and gap <= tol:
             with gil:
                 return np.asarray(w), gap, tol, 0
 
@@ -461,12 +543,16 @@ def enet_coordinate_descent(
                 w_max == 0.0
                 or d_w_max / w_max <= d_w_tol
                 or n_iter == max_iter - 1
+                or n_active <= 1  # We have an analytical exact solution.
             ):
-                # the biggest coordinate update of this iteration was smaller
-                # than the tolerance: check the duality gap as ultimate
-                # stopping criterion
+                # The biggest coordinate update of this iteration was smaller than the
+                # tolerance: check the duality gap as ultimate stopping criterion.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet(
-                    n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive
+                    n_samples, n_features, w, alpha, beta, X, y, R, XtA, positive,
+                    gap_smaller_eps=True,
                 )
                 if gap <= tol:
                     # return if we reached desired tolerance
@@ -504,6 +590,99 @@ def enet_coordinate_descent(
                 warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
+
+
+def R_and_X_colnorm2_sparse(
+    const floating[::1] w,
+    const floating[::1] X_data,
+    const int32_t[::1] X_indices,
+    const int32_t[::1] X_indptr,
+    const floating[::1] y,
+    const floating[::1] sample_weight,
+    const floating[::1] X_mean,
+):
+    """Compute residuals and squared column norms of X.
+
+    Z = X - X_mean
+    sw = sample_weight
+
+    Returns
+    -------
+    R : memoryview of shape (n_samples,)
+        Residuals:
+        - unweighted: R = y - Z @ w
+        - weighted:   R = sw * (y - Z @ w)
+
+    norm2_cols_X : memoryview of shape (n_samples,)
+        Column norms of X:
+        - unweighted: norm2_cols_X = np.sum((X - X_mean)**2, axis=0)
+        - weighted:   norm2_cols_X = np.sum(sw * (X - X_mean)**2, axis=0)
+    """
+    cdef unsigned int n_samples = y.shape[0]
+    cdef unsigned int n_features = w.shape[0]
+    cdef floating tmp
+    cdef floating w_j
+    cdef floating X_mean_j
+    cdef floating normalize_sum
+    cdef floating sw_sum
+    cdef int32_t i, i_ind
+    cdef unsigned int j
+    cdef int32_t startptr = X_indptr[0]
+    cdef int32_t endptr
+    cdef bint center = False
+    cdef bint no_sample_weights = sample_weight is None
+
+    cdef floating[::1] R = np.empty_like(y)
+    cdef floating[::1] norm2_cols_X = np.empty_like(w)
+
+    if X_mean is not None:
+        # center = (X_mean != 0).any()
+        for j in range(n_features):
+            if X_mean[j]:
+                center = True
+                break
+        if center and not no_sample_weights:
+            sw_sum = np.sum(sample_weight)
+
+    _copy(n_samples, &y[0], 1, &R[0], 1)
+    if not no_sample_weights:
+        for i in range(n_samples):
+            R[i] *= sample_weight[i]
+
+    for j in range(n_features):
+        endptr = X_indptr[j + 1]
+        normalize_sum = 0.0
+        w_j = w[j]
+        X_mean_j = X_mean[j]
+
+        if no_sample_weights:
+            for i_ind in range(startptr, endptr):
+                i = X_indices[i_ind]
+                normalize_sum += (X_data[i_ind] - X_mean_j) ** 2
+                R[i] -= X_data[i_ind] * w_j
+            norm2_cols_X[j] = normalize_sum
+            if center:
+                norm2_cols_X[j] += (n_samples - endptr + startptr) * X_mean_j ** 2
+                for i in range(n_samples):
+                    R[i] += X_mean_j * w_j
+        else:
+            # R = sw * (y - np.dot(X, w))
+            for i_ind in range(startptr, endptr):
+                i = X_indices[i_ind]
+                tmp = sample_weight[i]
+                # second term will be subtracted by loop over range(n_samples)
+                normalize_sum += (
+                    tmp * (X_data[i_ind] - X_mean_j) ** 2 - tmp * X_mean_j ** 2
+                )
+                R[i] -= tmp * X_data[i_ind] * w_j
+            if center:
+                normalize_sum += sw_sum * X_mean_j ** 2
+                for i in range(n_samples):
+                    R[i] += sample_weight[i] * X_mean_j * w_j
+            norm2_cols_X[j] = normalize_sum
+        startptr = endptr
+
+    return R, norm2_cols_X
 
 
 cdef inline void R_plus_wj_Xj(
@@ -560,20 +739,26 @@ cdef (floating, floating) gap_enet_sparse(
     floating R_sum,
     floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
     bint positive,
+    bint gap_smaller_eps,
 ) noexcept nogil:
-    """Compute dual gap for use in sparse_enet_coordinate_descent.
+    """Compute dual gap for use in enet_coordinate_descent_sparse.
 
     alpha > 0:            formulation A of the duality gap
     alpha = 0 & beta > 0: formulation B of the duality gap
     alpha = beta = 0:     OLS first order condition (=gradient)
     """
-    cdef floating gap = 0.0
+    cdef floating gap, primal, dual
     cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating Ry
     cdef floating w_l1_norm
     cdef floating w_l2_norm2 = 0.0
     cdef int32_t i, i_ind, j
+
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
 
     # w_l2_norm2 = w @ w
     if beta > 0:
@@ -613,8 +798,11 @@ cdef (floating, floating) gap_enet_sparse(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
-        gap += 1 / (2 * beta) * dual_norm_XtA
+        primal = 0.5 * (R_norm2 + beta * w_l2_norm2)
+        dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
+        gap = primal - dual
+        if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+            gap = 0.0
         return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * w
@@ -646,11 +834,12 @@ cdef (floating, floating) gap_enet_sparse(
         R_norm2=R_norm2,
         Ry=Ry,
         dual_norm_XtA=dual_norm_XtA,
+        gap_smaller_eps=gap_smaller_eps,
     )
     return gap, dual_norm_XtA
 
 
-def sparse_enet_coordinate_descent(
+def enet_coordinate_descent_sparse(
     floating[::1] w,
     floating alpha,
     floating beta,
@@ -666,6 +855,9 @@ def sparse_enet_coordinate_descent(
     bint random=0,
     bint positive=0,
     bint do_screening=1,
+    bint early_stopping=1,
+    floating[::1] R=None,
+    floating[::1] norm2_cols_X=None,
 ):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
@@ -682,6 +874,25 @@ def sparse_enet_coordinate_descent(
     and X_mean is the weighted average of X (per column).
 
     The rest is the same as enet_coordinate_descent, but for sparse X.
+
+    Further Parameters
+    ------------------
+    random : bint, default=0 (False)
+        If False, uses cyclic coordinate descent. If True, pick features at random.
+    positive : bint, default=0 (False)
+        If set to True, forces coefficients w to be positive.
+    do_screening : bint, default=1 (True)
+        If set to True, use gap safe screening rules to screen coefficients
+        (exclude early based on dual gap).
+    early_stopping : bint, default=1 (True)
+        If set to True, check for convergence (with the dual gap) before entering the
+        main iteration loop.
+    R : memoryview or ndarray of shape (n_samples,) or None, default=None
+        Initial value of the residual `R = y - X @ w`. If None, it will be computed.
+        See `R_and_X_colnorm2_sparse` for how sample_weight and X_mean are taken
+        into account.
+    norm2_cols_X : memoryview or ndarray of shape (n_features,) or None, default=None
+        Squared column norms of X. If None, it will be computed.
 
     Returns
     -------
@@ -713,12 +924,6 @@ def sparse_enet_coordinate_descent(
     cdef unsigned int n_samples = y.shape[0]
     cdef unsigned int n_features = w.shape[0]
 
-    # compute squared norms of the columns of X
-    cdef floating[::1] norm2_cols_X = np.zeros(n_features, dtype=dtype)
-
-    # initial value of the residuals
-    # R = y - Zw, weighted version R = sample_weight * (y - Zw)
-    cdef floating[::1] R
     cdef floating[::1] XtA = np.empty(n_features, dtype=dtype)
     cdef const floating[::1] yw
 
@@ -734,7 +939,6 @@ def sparse_enet_coordinate_descent(
     cdef floating dual_norm_XtA
     cdef floating X_mean_j
     cdef floating R_sum = 0.0
-    cdef floating normalize_sum
     cdef unsigned int n_active = n_features
     cdef uint32_t[::1] active_set
     # TODO: use binset instead of array of bools
@@ -760,62 +964,40 @@ def sparse_enet_coordinate_descent(
 
     if no_sample_weights:
         yw = y
-        R = y.copy()
     else:
         yw = np.multiply(sample_weight, y)
-        R = yw.copy()
 
-    with nogil:
-        # center = (X_mean != 0).any()
+    # center = (X_mean != 0).any()
+    if X_mean is not None:
         for j in range(n_features):
             if X_mean[j]:
                 center = True
                 break
 
-        # R = y - np.dot(X, w)
-        for j in range(n_features):
-            X_mean_j = X_mean[j]
-            endptr = X_indptr[j + 1]
-            normalize_sum = 0.0
-            w_j = w[j]
+    if R is None:
+        # Initial value of the residuals. Will be kept up to date in the iterations.
+        R, norm2_cols_X = R_and_X_colnorm2_sparse(
+            w=w,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            y=y,
+            sample_weight=sample_weight,
+            X_mean=X_mean,
+        )
+    R_sum = np.sum(R)
+    # Note: No need to update R_sum from here on because the update terms cancel each
+    # other: w_j * np.sum(X[:,j] - X_mean[j]) = 0. R_sum is only ever needed and
+    # calculated if X_mean is provided.
 
-            if no_sample_weights:
-                for i_ind in range(startptr, endptr):
-                    i = X_indices[i_ind]
-                    normalize_sum += (X_data[i_ind] - X_mean_j) ** 2
-                    R[i] -= X_data[i_ind] * w_j
-                norm2_cols_X[j] = normalize_sum
-                if center:
-                    norm2_cols_X[j] += (n_samples - endptr + startptr) * X_mean_j ** 2
-                    for i in range(n_samples):
-                        R[i] += X_mean_j * w_j
-                        R_sum += R[i]
-            else:
-                # R = sw * (y - np.dot(X, w))
-                for i_ind in range(startptr, endptr):
-                    i = X_indices[i_ind]
-                    tmp = sample_weight[i]
-                    # second term will be subtracted by loop over range(n_samples)
-                    normalize_sum += (tmp * (X_data[i_ind] - X_mean_j) ** 2
-                                      - tmp * X_mean_j ** 2)
-                    R[i] -= tmp * X_data[i_ind] * w_j
-                if center:
-                    for i in range(n_samples):
-                        normalize_sum += sample_weight[i] * X_mean_j ** 2
-                        R[i] += sample_weight[i] * X_mean_j * w_j
-                        R_sum += R[i]
-                norm2_cols_X[j] = normalize_sum
-            startptr = endptr
-
-        # Note: No need to update R_sum from here on because the update terms cancel
-        # each other: w_j * np.sum(X[:,j] - X_mean[j]) = 0. R_sum is only ever
-        # needed and calculated if X_mean is provided.
+    with nogil:
 
         # tol *= np.dot(y, y)
         # with sample weights: tol *= y @ (sw * y)
         tol *= _dot(n_samples, &y[0], 1, &yw[0], 1)
 
         # Check convergence before entering the main loop.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet_sparse(
             n_samples,
             n_features,
@@ -834,8 +1016,9 @@ def sparse_enet_coordinate_descent(
             R_sum,
             XtA,
             positive,
+            gap_smaller_eps=False,
         )
-        if gap <= tol:
+        if early_stopping and gap <= tol:
             with gil:
                 return np.asarray(w), gap, tol, 0
 
@@ -931,10 +1114,17 @@ def sparse_enet_coordinate_descent(
 
                 w_max = fmax(w_max, fabs(w[j]))
 
-            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
-                # the biggest coordinate update of this iteration was smaller than
-                # the tolerance: check the duality gap as ultimate stopping
-                # criterion
+            if (
+                w_max == 0.0
+                or d_w_max / w_max <= d_w_tol
+                or n_iter == max_iter - 1
+                or n_active <= 1  # We have an analytical exact solution.
+            ):
+                # The biggest coordinate update of this iteration was smaller than the
+                # tolerance: check the duality gap as ultimate stopping criterion.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet_sparse(
                     n_samples,
                     n_features,
@@ -953,6 +1143,7 @@ def sparse_enet_coordinate_descent(
                     R_sum,
                     XtA,
                     positive,
+                    gap_smaller_eps=True,
                 )
 
                 if gap <= tol:
@@ -1015,6 +1206,7 @@ cdef (floating, floating) gap_enet_gram(
     const floating y_norm2,
     floating[::1] XtA,  # XtA = X.T @ R - beta * w is calculated inplace
     bint positive,
+    bint gap_smaller_eps,
 ) noexcept nogil:
     """Compute dual gap for use in enet_coordinate_descent.
 
@@ -1022,7 +1214,7 @@ cdef (floating, floating) gap_enet_gram(
     alpha = 0 & beta > 0: formulation B of the duality gap
     alpha = beta = 0:     OLS first order condition (=gradient)
     """
-    cdef floating gap = 0.0
+    cdef floating gap, primal, dual
     cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating Ry
@@ -1031,6 +1223,11 @@ cdef (floating, floating) gap_enet_gram(
     cdef floating q_dot_w
     cdef floating wQw
     cdef unsigned int j
+
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
 
     # w_l2_norm2 = w @ w
     if beta > 0:
@@ -1060,8 +1257,11 @@ cdef (floating, floating) gap_enet_gram(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
-        gap += 1 / (2 * beta) * dual_norm_XtA
+        primal = 0.5 * (R_norm2 + beta * w_l2_norm2)
+        dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
+        gap = primal - dual
+        if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+            gap = 0.0
         return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * w = X.T @ y - X.T @ X @ w - beta * w
@@ -1085,6 +1285,7 @@ cdef (floating, floating) gap_enet_gram(
         R_norm2=R_norm2,
         Ry=Ry,
         dual_norm_XtA=dual_norm_XtA,
+        gap_smaller_eps=gap_smaller_eps,
     )
     return gap, dual_norm_XtA
 
@@ -1102,6 +1303,8 @@ def enet_coordinate_descent_gram(
     bint random=0,
     bint positive=0,
     bint do_screening=1,
+    bint early_stopping=1,
+    floating[::1] Qw=None,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
@@ -1114,6 +1317,21 @@ def enet_coordinate_descent_gram(
         which amount to the Elastic-Net problem when:
         Q = X^T X (Gram matrix)
         q = X^T y
+
+    Further Parameters
+    ------------------
+    random : bint, default=0 (False)
+        If False, uses cyclic coordinate descent. If True, pick features at random.
+    positive : bint, default=0 (False)
+        If set to True, forces coefficients w to be positive.
+    do_screening : bint, default=1 (True)
+        If set to True, use gap safe screening rules to screen coefficients
+        (exclude early based on dual gap).
+    early_stopping : bint, default=1 (True)
+        If set to True, check for convergence (with the dual gap) before entering the
+        main iteration loop.
+    Qw : memoryview or ndarray of shape (n_features,) or None, default=None
+        Initial value of `Q @ w`. If None, it will be computed.
 
     Returns
     -------
@@ -1135,8 +1353,6 @@ def enet_coordinate_descent_gram(
     # get the data information into easy vars
     cdef unsigned int n_features = Q.shape[0]
 
-    # initial value "Q w" which will be kept of up to date in the iterations
-    cdef floating[::1] Qw = np.dot(Q, w)
     cdef floating[::1] XtA = np.zeros(n_features, dtype=dtype)
     cdef floating y_norm2 = np.dot(y, y)
 
@@ -1169,14 +1385,20 @@ def enet_coordinate_descent_gram(
         active_set = np.empty(n_features, dtype=np.uint32)  # map [:n_active] -> j
         excluded_set = np.empty(n_features, dtype=np.uint8)
 
+    if Qw is None:
+        # Initial value of Qw. Will be kept up to date in the iterations.
+        Qw = np.dot(Q, w)
+
     with nogil:
         tol *= y_norm2
 
         # Check convergence before entering the main loop.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet_gram(
-            n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
+            n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive,
+            gap_smaller_eps=False,
         )
-        if 0 <= gap <= tol:
+        if early_stopping and 0 <= gap <= tol:
             # Only if gap >=0 as singular Q may cause dubious values of gap.
             with gil:
                 return np.asarray(w), gap, tol, 0
@@ -1243,12 +1465,20 @@ def enet_coordinate_descent_gram(
                 if fabs(w[j]) > w_max:
                     w_max = fabs(w[j])
 
-            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
-                # the biggest coordinate update of this iteration was smaller than
-                # the tolerance: check the duality gap as ultimate stopping
-                # criterion
+            if (
+                w_max == 0.0
+                or d_w_max / w_max <= d_w_tol
+                or n_iter == max_iter - 1
+                or n_active <= 1  # We have an analytical exact solution.
+            ):
+                # The biggest coordinate update of this iteration was smaller than the
+                # tolerance: check the duality gap as ultimate stopping criterion.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet_gram(
-                    n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive
+                    n_features, w, alpha, beta, Qw, q, y_norm2, XtA, positive,
+                    gap_smaller_eps=True,
                 )
 
                 if gap <= tol:
@@ -1291,6 +1521,123 @@ def enet_coordinate_descent_gram(
     return np.asarray(w), gap, tol, n_iter + 1
 
 
+def R_and_X_colnorm2_multi_task(
+    const floating[::1, :] W,
+    const floating[::1, :] X,
+    bint X_is_sparse,
+    const floating[::1] X_data,
+    const int32_t[::1] X_indices,
+    const int32_t[::1] X_indptr,
+    const floating[::1, :] Y,
+    const floating[::1] sample_weight,
+    const floating[::1] X_mean,
+):
+    """Compute residuals and squared column norms of X.
+
+    Z = X - X_mean
+    sw = sample_weight
+
+    Returns
+    -------
+    R : memoryview of shape (n_samples, n_tasks)
+        Residuals:
+        - unweighted: R = Y - Z @ W.T
+        - weighted:   R = sw * (Y - Z @ W.T)
+
+    norm2_cols_X : memoryview of shape (n_samples,)
+        Column norms of X:
+        - unweighted: norm2_cols_X = np.sum((X - X_mean)**2, axis=0)
+        - weighted:   norm2_cols_X = np.sum(sw * (X - X_mean)**2, axis=0)
+    """
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
+    cdef unsigned int n_samples = Y.shape[0]
+    cdef unsigned int n_features = W.shape[1]
+    cdef unsigned int n_tasks = Y.shape[1]
+    cdef floating X_mean_j
+    cdef floating normalize_sum
+    cdef floating sw_sum
+    cdef int32_t i, i_ind
+    cdef unsigned int j
+    cdef int32_t startptr
+    cdef int32_t endptr
+    cdef bint center = False
+    cdef bint no_sample_weights = sample_weight is None
+
+    cdef floating[::1, :] R = np.empty_like(Y, order="F")  # shape (n_samples, n_tasks)
+    norm2_cols_X_array = np.empty(shape=n_features, dtype=dtype)
+    cdef floating[::1] norm2_cols_X = norm2_cols_X_array
+
+    if X_is_sparse and X_mean is not None:
+        # center = (X_mean != 0).any()
+        for j in range(n_features):
+            if X_mean[j]:
+                center = True
+                break
+        if center and not no_sample_weights:
+            sw_sum = np.sum(sample_weight)
+
+    if not X_is_sparse:
+        np.einsum("ij,ij->j", X, X, dtype=dtype, out=norm2_cols_X_array)
+    else:
+        for j in range(n_features):
+            startptr = X_indptr[j]
+            endptr = X_indptr[j + 1]
+            normalize_sum = 0.0
+            X_mean_j = X_mean[j]
+
+            if no_sample_weights:
+                for i_ind in range(startptr, endptr):
+                    normalize_sum += (X_data[i_ind] - X_mean_j) ** 2
+                if center:
+                    normalize_sum += (n_samples - endptr + startptr) * X_mean_j ** 2
+            else:
+                for i_ind in range(startptr, endptr):
+                    i = X_indices[i_ind]
+                    normalize_sum += sample_weight[i] * (
+                        (X_data[i_ind] - X_mean_j) ** 2 - X_mean_j ** 2
+                    )
+                if center:
+                    normalize_sum += sw_sum * X_mean_j ** 2
+            norm2_cols_X[j] = normalize_sum
+
+    _copy(n_samples * n_tasks, &Y[0, 0], 1, &R[0, 0], 1)
+    if not no_sample_weights and X_is_sparse:
+        for t in range(n_tasks):
+            for i in range(n_samples):
+                R[i, t] *= sample_weight[i]
+    for j in range(n_features):
+        for t in range(n_tasks):
+            if W[t, j] != 0:
+                if not X_is_sparse:
+                    _axpy(n_samples, -W[t, j], &X[0, j], 1, &R[0, t], 1)
+                else:
+                    if no_sample_weights:
+                        sparse_axpy(j, -W[t, j], X_data, X_indices, X_indptr, R[:, t])
+                    else:
+                        startptr = X_indptr[j]
+                        endptr = X_indptr[j + 1]
+                        for i_ind in range(startptr, endptr):
+                            i = X_indices[i_ind]
+                            R[i, t] -= sample_weight[i] * X_data[i_ind] * W[t, j]
+
+        if X_is_sparse and center:
+            # R = Y - (X - X_mean) @ W.T
+            X_mean_j = X_mean[j]
+            if no_sample_weights:
+                for i in range(n_samples):
+                    for t in range(n_tasks):
+                        R[i, t] += X_mean_j * W[t, j]
+            else:
+                for i in range(n_samples):
+                    for t in range(n_tasks):
+                        R[i, t] += sample_weight[i] * X_mean_j * W[t, j]
+
+    return R, norm2_cols_X
+
+
 cdef (floating, floating) gap_enet_multi_task(
     int n_samples,
     int n_features,
@@ -1308,10 +1655,11 @@ cdef (floating, floating) gap_enet_multi_task(
     bint no_sample_weights,
     const floating[::1] X_mean,
     bint center,
-    const floating[::1, :] R,  # current residuals = y - X @ w
+    const floating[::1, :] R,  # current residuals = y - X @ W.T
     const floating[::1] R_sum,
     floating[:, ::1] XtA,  # out
     floating[::1] XtA_row_norms,  # out
+    bint gap_smaller_eps,
 ) noexcept nogil:
     """Compute dual gap for use in enet_coordinate_descent_multi_task.
 
@@ -1327,7 +1675,7 @@ cdef (floating, floating) gap_enet_multi_task(
     XtA_row_norms : memoryview of shape n_features
         Inplace calculated as np.sqrt(np.sum(XtA ** 2, axis=1))
     """
-    cdef floating gap = 0.0
+    cdef floating gap, primal, dual
     cdef floating dual_norm_XtA
     cdef floating R_norm2
     cdef floating Ry
@@ -1335,6 +1683,11 @@ cdef (floating, floating) gap_enet_multi_task(
     cdef floating w_l2_norm2 = 0.0
     cdef unsigned int t, j
     cdef int32_t i
+
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
 
     # w_l2_norm2 = linalg.norm(W, ord="fro") ** 2
     if beta > 0:
@@ -1375,8 +1728,11 @@ cdef (floating, floating) gap_enet_multi_task(
             gap = dual_norm_XtA
             return gap, dual_norm_XtA
         # This is Ridge regression, we use formulation B for the dual gap.
-        gap = R_norm2 + 0.5 * beta * w_l2_norm2 - Ry
-        gap += 1 / (2 * beta) * dual_norm_XtA
+        primal = 0.5 * (R_norm2 + beta * w_l2_norm2)
+        dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
+        gap = primal - dual
+        if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+            gap = 0.0
         return gap, dual_norm_XtA
 
     # XtA = X.T @ R - beta * W.T
@@ -1411,6 +1767,7 @@ cdef (floating, floating) gap_enet_multi_task(
         R_norm2=R_norm2,
         Ry=Ry,
         dual_norm_XtA=dual_norm_XtA,
+        gap_smaller_eps=gap_smaller_eps,
     )
     return gap, dual_norm_XtA
 
@@ -1432,6 +1789,9 @@ def enet_coordinate_descent_multi_task(
     object rng,
     bint random=0,
     bint do_screening=1,
+    bint early_stopping=1,
+    floating[::1, :] R=None,
+    floating[::1] norm2_cols_X=None,
 ):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net multi-task regression
@@ -1445,6 +1805,23 @@ def enet_coordinate_descent_multi_task(
     A Blockwise Descent Algorithm for Group-penalized Multiresponse and Multinomial
     Regression
     https://doi.org/10.48550/arXiv.1311.6529
+
+    Further Parameters
+    ------------------
+    random : bint, default=0 (False)
+        If False, uses cyclic coordinate descent. If True, pick features at random.
+    do_screening : bint, default=1 (True)
+        If set to True, use gap safe screening rules to screen coefficients
+        (exclude early based on dual gap).
+    early_stopping : bint, default=1 (True)
+        If set to True, check for convergence (with the dual gap) before entering the
+        main iteration loop.
+    R : memoryview or ndarray of shape (n_samples, n_tasks) or None, default=None
+        Initial value of the residual `R = y - X @ W.T`. If None, it will be computed.
+        See `R_and_X_colnorm2_multi_task` for how sample_weight and X_mean are taken
+        into account.
+    norm2_cols_X : memoryview or ndarray of shape (n_features,) or None, default=None
+        Squared column norms of X. If None, it will be computed.
 
     Returns
     -------
@@ -1477,12 +1854,6 @@ def enet_coordinate_descent_multi_task(
     cdef unsigned int n_features = W.shape[1]
     cdef unsigned int n_tasks = Y.shape[1]
 
-    # compute squared norms of the columns of X
-    norm2_cols_X_array = np.empty(shape=n_features, dtype=dtype)
-    cdef floating[::1] norm2_cols_X = norm2_cols_X_array
-
-    # initial value of the residuals
-    cdef floating[::1, :] R  # shape (n_samples, n_tasks)
     cdef floating[:, ::1] XtA = np.empty((n_features, n_tasks), dtype=dtype)
     cdef floating[::1] XtA_row_norms = np.empty(n_features, dtype=dtype)
     cdef const floating[::1, :] Yw
@@ -1506,7 +1877,6 @@ def enet_coordinate_descent_multi_task(
     cdef uint8_t[::1] excluded_set
     cdef unsigned int j
     cdef unsigned int t
-    cdef int32_t i, i_ind, startptr, endptr
     cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef uint32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
@@ -1524,83 +1894,43 @@ def enet_coordinate_descent_multi_task(
 
     if no_sample_weights or not X_is_sparse:
         Yw = Y
-        R = np.copy(Y, order="F")
     else:
         Yw = np.multiply(sample_weight[:, None], Y)
-        R = np.copy(Yw, order="F")
 
-    if X_is_sparse:
-        R_sum = np.zeros(n_tasks, dtype=dtype)
+    if R is None:
+        # Initial value of the residuals. Will be kept up to date in the iterations.
+        R, norm2_cols_X = R_and_X_colnorm2_multi_task(
+            W=W,
+            X=X,
+            X_is_sparse=X_is_sparse,
+            X_data=X_data,
+            X_indices=X_indices,
+            X_indptr=X_indptr,
+            Y=Y,
+            sample_weight=sample_weight,
+            X_mean=X_mean,
+        )
+
+    if X_is_sparse and X_mean is not None:
         # center = (X_mean != 0).any()
         for j in range(n_features):
             if X_mean[j]:
                 center = True
                 break
 
-    # compute squared norms of the columns of X
-    # same as norm2_cols_X = np.square(X).sum(axis=0)
-    if not X_is_sparse:
-        np.einsum("ij,ij->j", X, X, dtype=dtype, out=norm2_cols_X_array)
-    else:
-        for j in range(n_features):
-            norm2_cols_X[j] = 0
-            startptr = X_indptr[j]
-            endptr = X_indptr[j + 1]
-            if no_sample_weights:
-                for i_ind in range(startptr, endptr):
-                    norm2_cols_X[j] += (X_data[i_ind] - X_mean[j]) ** 2
-                if center:
-                    norm2_cols_X[j] += (n_samples - endptr + startptr) * X_mean[j] ** 2
-            else:
-                for i_ind in range(startptr, endptr):
-                    i = X_indices[i_ind]
-                    norm2_cols_X[j] += sample_weight[i] * (
-                        (X_data[i_ind] - X_mean[j]) ** 2 - X_mean[j] ** 2
-                    )
-                if center:
-                    for i in range(n_samples):
-                        norm2_cols_X[j] += sample_weight[i] * X_mean[j] ** 2
+        R_sum = np.sum(R, axis=0)
+    # Note: No need to update R_sum from here on because the update terms cancel each
+    # other: w_j[t] * np.sum(X[:,j] - X_mean[j]) = 0. R_sum is only ever needed and
+    # calculated if X_mean is provided.
 
     with nogil:
-        # R = Y - X @ W.T
-        # R = Y was already set above.
-        for j in range(n_features):
-            for t in range(n_tasks):
-                if W[t, j] != 0:
-                    if not X_is_sparse:
-                        _axpy(n_samples, -W[t, j], &X[0, j], 1, &R[0, t], 1)
-                    else:
-                        if no_sample_weights:
-                            sparse_axpy(j, -W[t, j], X_data, X_indices, X_indptr, R[:, t])
-                        else:
-                            startptr = X_indptr[j]
-                            endptr = X_indptr[j + 1]
-                            for i_ind in range(startptr, endptr):
-                                i = X_indices[i_ind]
-                                R[i, t] -= sample_weight[i] * X_data[i_ind] * W[t, j]
-
-            if X_is_sparse and center:
-                # R = Y - (X - X_mean) @ W.T
-                if no_sample_weights:
-                    for i in range(n_samples):
-                        for t in range(n_tasks):
-                            R[i, t] += X_mean[j] * W[t, j]
-                            R_sum[t] += R[i, t]
-                else:
-                    for i in range(n_samples):
-                        for t in range(n_tasks):
-                            R[i, t] += sample_weight[i] * X_mean[j] * W[t, j]
-                            R_sum[t] += R[i, t]
-
-        # Note: No need to update R_sum from here on because the update terms cancel
-        # each other: w_j[t] * np.sum(X[:,j] - X_mean[j]) = 0. R_sum is only ever
-        # needed and calculated if X_mean is provided.
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
         # with sample weights: tol *= y @ (sw * y)
         tol *= _dot(n_samples * n_tasks, &Y[0, 0], 1, &Yw[0, 0], 1)
 
         # Check convergence before entering the main loop.
+        # We want to avoid stopping too early and set gap_smaller_eps=False.
         gap, dual_norm_XtA = gap_enet_multi_task(
             n_samples=n_samples,
             n_features=n_features,
@@ -1622,8 +1952,9 @@ def enet_coordinate_descent_multi_task(
             R_sum=R_sum,
             XtA=XtA,
             XtA_row_norms=XtA_row_norms,
+            gap_smaller_eps=False,
         )
-        if gap <= tol:
+        if early_stopping and gap <= tol:
             with gil:
                 return np.asarray(W), gap, tol, 0
 
@@ -1750,10 +2081,17 @@ def enet_coordinate_descent_multi_task(
                 if W_j_abs_max > w_max:
                     w_max = W_j_abs_max
 
-            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
-                # the biggest coordinate update of this iteration was smaller than
-                # the tolerance: check the duality gap as ultimate stopping
-                # criterion
+            if (
+                w_max == 0.0
+                or d_w_max / w_max <= d_w_tol
+                or n_iter == max_iter - 1
+                or n_active <= 1  # We have an analytical exact solution.
+            ):
+                # The biggest coordinate update of this iteration was smaller than the
+                # tolerance: check the duality gap as ultimate stopping criterion.
+                # We want to stop in case the gap is small enough but not exactly 0
+                # only because of floating point arithmetic, and therefore set
+                # gap_smaller_eps=True.
                 gap, dual_norm_XtA = gap_enet_multi_task(
                     n_samples=n_samples,
                     n_features=n_features,
@@ -1775,6 +2113,7 @@ def enet_coordinate_descent_multi_task(
                     R_sum=R_sum,
                     XtA=XtA,
                     XtA_row_norms=XtA_row_norms,
+                    gap_smaller_eps=True,
                 )
                 if gap <= tol:
                     # return if we reached desired tolerance
@@ -1830,3 +2169,1013 @@ def enet_coordinate_descent_multi_task(
                 warnings.warn(message, ConvergenceWarning)
 
     return np.asarray(W), gap, tol, n_iter + 1
+
+
+cdef void inverse_L_sqrt_D_matmul(
+    const floating[::1, :] p,  # in
+    const floating[::1, :] q_inv,  # in
+    const floating[::1, :] sqrt_d,  # in
+    floating[::1, :] x,  # out
+    floating[::1] buffer,  # temporary memory buffer
+) noexcept nogil:
+    """Compute 1 / sqrt(D) L^(-1) x from the multinomial LDL' decomposition.
+
+    Same as Multinomial_LDL_Decomposition.inverse_L_sqrt_D_matmul
+
+    L^(-1) is again lower triangular and given by:
+        L^(-1)_ij = f[:, i] = p[:, i] / q[:, i-1]
+
+    For n_classes = 4, L^(-1) looks like:: text
+
+        L^(-1) = (1   0  0  0)
+                 (f1  1  0  0)
+                 (f2  f2 1  0)
+                 (f3  f3 f3 1)
+
+    Note that (L sqrt(D))^(-1) = 1/sqrt(D) L^(-1).
+
+    Parameters
+    ----------
+    p : memoryview of shape (n_samples, n_classes)
+        Probabilities.
+
+    q_inv : memoryview of shape (n_samples, n_classes)
+        Inverse of `q = 1 - np.cumsum(self.p, axis=1)`.
+
+    sqrt_d : memoryview of shape (n_samples, n_classes)
+        Square root of diagonal D, with D_ii = p_i * q_i / q_{i-1}.
+
+    x : memoryview of shape (n_samples, n_classes)
+        This array is overwritten with the result.
+
+    buffer : memoryview of shape (n_samples)
+        Used as temporary memory buffer.
+    """
+    cdef unsigned int n_samples = p.shape[0]
+    cdef unsigned int n_classes = p.shape[1]
+    cdef unsigned int i, k, t
+    cdef bint mask
+    cdef floating fj
+    cdef floating[::1] x_sum = buffer
+
+    # x_sum = np.sum(x[:, :-1], axis=1)  # precomputation
+    _copy(n_samples, &x[0, 0], 1, &x_sum[0], 1)
+    for k in range(1, n_classes - 1):
+        for t in range(n_samples):
+            x_sum[t] += x[t, k]
+
+    for i in range(n_classes - 1, 0, -1):  # row i, here i > 0.
+        # fj = p[:, i] * q_inv[:, i - 1]
+        # Using precomputation
+        # x[:, i] += fj * x_sum
+        # if i > 1:
+        #     x_sum -= x[:, i - 1]
+        for t in range(n_samples):
+            fj = p[t, i] * q_inv[t, i - 1]
+            x[t, i] += fj * x_sum[t]
+        if i > 1:
+            for t in range(n_samples):
+                x_sum[t] -= x[t, i - 1]
+
+    # x[:, :-1] /= sqrt_d[:, :-1]
+    for k in range(n_classes - 1):
+        for t in range(n_samples):
+            mask = (sqrt_d[t, k] == 0)
+            x[t, k] *= (not mask) / (sqrt_d[t, k] + mask)
+    # Important Note:
+    # Strictly speaking, the inverse of D does not exist.
+    # We use 0 as the inverse of 0 and just set:
+    # x[:, -1] = 0
+    memset(&x[0, n_classes - 1], 0, n_samples * sizeof(floating))
+
+
+cdef (floating, floating) gap_enet_multinomial(
+    const floating[::1, :] w,
+    floating alpha,  # L1 penalty
+    floating beta,  # L2 penalty
+    const floating[::1, :] X,
+    bint X_is_sparse,
+    floating[::1] X_data,
+    int32_t[::1] X_indices,
+    int32_t[::1] X_indptr,
+    const floating[::1, :] y,
+    const floating[::1, :] R,  # current residual b - A @ w
+    const floating[::1, :] LD_R,  # LD_R = LDL.L_sqrt_D_matmul(R.copy()) * sqrt_sw[:, None]
+    const floating[::1, :] H00_pinv_H0,
+    bint fit_intercept,
+    floating[::1, :] XtA,  # XtA = (X.T @ LD_R).T - beta * w is calculated inplace
+    bint gap_smaller_eps,
+) noexcept nogil:
+    """Compute dual gap for use in enet_coordinate_descent.
+
+    Note that X must always be replaced by A = sqrt(D) L' X
+    """
+    cdef floating gap, primal, dual
+    cdef floating dual_norm_XtA
+    cdef floating R_norm2
+    cdef floating Ry
+    cdef floating w_l1_norm = 0.0
+    cdef floating w_l2_norm2 = 0.0
+    cdef unsigned int n_classes = w.shape[0]
+    cdef unsigned int n_features = w.shape[1]
+    cdef unsigned int n_samples = R.shape[0]
+    cdef floating* LD_R_sum0
+    cdef unsigned int i, j, k
+    cdef int32_t i_ind
+
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
+
+    # l2_norm2 = w @ w
+    if beta > 0:
+        w_l2_norm2 = _dot(n_classes * n_features, &w[0, 0], 1, &w[0, 0], 1)
+    # R_norm2 = np.linalg.norm(R, ord="fro") ** 2
+    R_norm2 = _dot(n_classes * n_samples, &R[0, 0], 1, &R[0, 0], 1)
+    if not (alpha == 0 and beta == 0):
+        # Ry = R.ravel(order="F") @ y.ravel(order="F")
+        Ry = _dot(n_classes * n_samples, &R[0, 0], 1, &y[0, 0], 1)
+
+    # Begin XtA = X'R -> A'R = X' L sqrt(D) R
+    # XtA[:, :] = (X.T @ LD_R).T
+    if not X_is_sparse:
+        for k in range(n_classes):
+            # XtA[k, :] = X.T @ LD_R[:, k]
+            _gemv(
+                ColMajor, Trans, n_samples, n_features, 1.0, &X[0, 0],
+                n_samples, &LD_R[0, k], 1, 0.0, &XtA[k, 0], n_classes,
+            )
+    else:
+        # XtA[:, :] = 0
+        memset(&XtA[0, 0], 0, n_classes * n_features * sizeof(floating))
+        # XtA[:, :] = X.T @ LD_R
+        for j in range(n_features):
+            for i_ind in range(X_indptr[j], X_indptr[j + 1]):
+                for k in range(n_classes):
+                    XtA[k, j] += X_data[i_ind] * LD_R[X_indices[i_ind], k]
+
+    if fit_intercept:
+        # temporary memory
+        LD_R_sum0 = <floating *> malloc(sizeof(floating) * (n_classes - 1))
+        # XtA -= (H00_pinv_H0.T @ LD_R[:, :-1].sum(axis=0)).reshape(
+        #     n_classes, -1, order="F"
+        # )
+        for k in  range(n_classes - 1):
+            LD_R_sum0[k] = 0
+            for i in range(n_samples):
+                LD_R_sum0[k] += LD_R[i, k]
+        _gemv(
+            ColMajor, Trans, n_classes - 1, n_classes * n_features,
+            -1.0, &H00_pinv_H0[0, 0],
+            n_classes - 1, &LD_R_sum0[0], 1, 1.0, &XtA[0, 0], 1,
+        )
+        free(LD_R_sum0)
+    # End XtA
+
+    if alpha == 0:
+        # ||X'R||_2^2
+        # dual_norm_XtA = np.linalg.norm(XtA, ord="fro") ** 2
+        dual_norm_XtA = _dot(n_classes * n_features, &XtA[0, 0], 1, &XtA[0, 0], 1)
+        if beta == 0:
+            # This is OLS, no dual gap available. Resort to first order condition
+            #     X'R = 0
+            #     gap = ||X'R||_2^2
+            # Compare with stopping criterion of LSQR.
+            gap = dual_norm_XtA
+            return gap, dual_norm_XtA
+        # This is Ridge regression, we use formulation B for the dual gap.
+        primal = 0.5 * (R_norm2 + beta * w_l2_norm2)
+        dual = -0.5 * R_norm2 + Ry - 1 / (2 * beta) * dual_norm_XtA
+        gap = primal - dual
+        if gap_smaller_eps and abs(gap) <= 2 * eps * primal:
+            gap = 0.0
+        return gap, dual_norm_XtA
+
+    # XtA = (X.T @ LD_R).T - beta * w
+    # XtA -= beta * w
+    _axpy(n_classes * n_features, -beta, &w[0, 0], 1, &XtA[0, 0], 1)
+    dual_norm_XtA = abs_max(n_classes * n_features, &XtA[0, 0])
+
+    # w_l1_norm = np.sum(np.abs(w))
+    w_l1_norm = _asum(n_classes * n_features, &w[0, 0], 1)
+
+    gap = dual_gap_formulation_A(
+        alpha=alpha,
+        beta=beta,
+        w_l1_norm=w_l1_norm,
+        w_l2_norm2=w_l2_norm2,
+        R_norm2=R_norm2,
+        Ry=Ry,
+        dual_norm_XtA=dual_norm_XtA,
+        gap_smaller_eps=gap_smaller_eps,
+    )
+    return gap, dual_norm_XtA
+
+
+cdef inline void update_LD_R(
+    unsigned int k,
+    unsigned int j,
+    const floating w_kj,
+    const floating[::1, :] X,
+    bint X_is_sparse,
+    floating[::1] X_data,
+    int32_t[::1] X_indices,
+    int32_t[::1] X_indptr,
+    const floating[::1, :] sw_proba,
+    const floating[::1, :] proba,
+    const floating[::1, :] H00_pinv_H0,
+    bint fit_intercept,
+    floating[::1, :] LD_R,
+    floating[::1] x_k,
+    floating[::1, :] xx,
+) noexcept nogil:
+    """Update LD_R by LDL[:, k] * X[:, j] * w_kj for class k and feature j.
+
+    Note:
+        - LDL = diag(proba) - proba proba', the last term being the outer product.
+        - LD_R = L sqrt(D) R
+        - We multiply by sample weights because we want the full hessian,
+          sw_proba = sample_weight * proba.
+    """
+    cdef unsigned int n_samples = LD_R.shape[0]
+    cdef unsigned int n_classes = LD_R.shape[1]
+    cdef int32_t i, l, i_ind
+    cdef int32_t startptr
+    cdef int32_t endptr
+
+    if X_is_sparse:
+        startptr = X_indptr[j]
+        endptr = X_indptr[j + 1]
+
+    # L sqrt(D) R += w * LDL[:, k] * X[:, j]
+    if not fit_intercept:
+        # numpy:
+        #   x_k[:] = w_kj * X[:, j] * sw_proba[:, k]
+        #   LD_R[:, k] += x_k
+        #   LD_R -= proba * x_k[:, None]
+        if not X_is_sparse:
+            for i in range(n_samples):
+                x_k[i] = w_kj * X[i, j] * sw_proba[i, k]
+                LD_R[i, k] += (1 - proba[i, k]) * x_k[i]
+        else:
+            memset(&x_k[0], 0, n_samples * sizeof(floating))
+            for i_ind in range(startptr, endptr):
+                i = X_indices[i_ind]
+                x_k[i] = X_data[i_ind] * w_kj * sw_proba[i, k]
+                LD_R[i, k] += (1 - proba[i, k]) * x_k[i]
+
+        for l in range(n_classes):
+            if l != k:
+                for i in range(n_samples):
+                    LD_R[i, l] -= proba[i, l] * x_k[i]
+    else:
+        # numpy:
+        #   xx[:, :-1] = -H00_pinv_H0[:, jn + k][None, :]
+        #   xx[:, -1] = 0
+        #   xx[:, k] += X[:, j]
+        #   xx *= w_kj * sw_proba
+        #   LD_R -= proba * np.sum(xx, axis=1)[:, None]
+        #   LD_R += xx
+
+        # x_k[:] = 0
+        memset(&x_k[0], 0, n_samples * sizeof(floating))
+        # xx[:, :] = 0
+        memset(&xx[0, 0], 0, n_samples * n_classes * sizeof(floating))
+        # xx[:, k] += X[:, j]
+        if not X_is_sparse:
+            _copy(n_samples, &X[0, j], 1, &xx[0, k], 1)
+        else:
+            for i_ind in range(startptr, endptr):
+                i = X_indices[i_ind]
+                xx[i, k] = X_data[i_ind]
+        for l in range(n_classes - 1):
+            for i in range(n_samples):
+                xx[i, l] -= H00_pinv_H0[l, k + n_classes * j]
+                xx[i, l] *= w_kj * sw_proba[i, l]
+                LD_R[i, l] += xx[i, l]
+                x_k[i] += xx[i, l]  # x_k = np.sum(xx, axis=1)
+        if k == n_classes - 1:  # H00_pinv_H0[k, :] == 0
+            l = n_classes - 1
+            for i in range(n_samples):
+                xx[i, l] *= w_kj * sw_proba[i, l]
+                LD_R[i, l] += xx[i, l]
+                x_k[i] += xx[i, l]  # x_k = np.sum(xx, axis=1)
+        for l in range(n_classes):
+            for i in range(n_samples):
+                LD_R[i, l] -= proba[i, l] * x_k[i]
+
+
+def enet_coordinate_descent_multinomial(
+    W,
+    float64_t alpha,
+    float64_t beta,
+    X,
+    sample_weight,
+    raw_prediction,
+    grad_pointwise,
+    proba,
+    bint fit_intercept,
+    unsigned int max_iter,
+    float64_t tol,
+    bint do_screening=True,
+    bint early_stopping=True,
+    int verbose=False,
+):
+    """Cython coordinate descent algorithm for Elastic-Net multinomial regression.
+
+    This function is used as inner solver in class NewtonCDSolver.
+    The basic algorithm is the same as function enet_coordinate_descent.
+    We minimize the primal
+
+        P(w) = 1/2 ||y - X w||_2^2 + alpha ||w||_1 + beta/2 ||w||_2^2
+
+    But we replace the variables y and X such that P(w) corresponds to the 2nd order
+    approximation of the multinomial loss
+
+        1/2 w' H w + (G' - coef' H) w + alpha ||w||_1 + beta/2 ||w||_2^2
+
+    - w = W.ravel(order="F"), coefficients to optimize for
+    - coef = current coefficients (equal to W at function entry)
+    - G = gradient = X.T @ (proba - Y)  with Y_k = (y==k)
+    - H = X' * (diag(p) - pp') * X, the full multinomial hessian
+      (* is kind of a Kronecker multiplication)
+
+    We use the analytical LDL decomposition (in classes) of h = diag(p) - pp' = L D L'
+    of Tanabe & Sagae (1992) for each of the n_samples rows of h to replace
+
+        X -> A = sqrt(D) L' * X
+        y -> b = (L sqrt(D))^-1 (LDL' * X coef - g)
+               = A coef - (L sqrt(D))^-1 g
+
+    The LDL decomposition is done for all n_samples, therefore has same shape as
+    h.shape = (n_samples, n_classes, n_classes). Up to a constant, this gives
+
+        P(w) = 1/2 ||b - A w||_2^2 + alpha ||w||_1 + beta/2 ||w||_2^2
+
+    As the matrix A has n_samples * n_features * n_classes * n_classes entries, we
+    avoid to explicitly build it.
+
+    Note:
+        - H = A'A
+        - A'b = (coef' H - G') w
+
+    Intercepts
+    ----------
+    If intercepts w0 of shape (n_classes,) are included, we have
+
+        P(w) = 1/2 ||b - A w - A0 w0||_2^2 + alpha ||w||_1 + beta/2 ||w||_2^2
+
+    with A0 = sqrt(D) L' 1 and 1 = 1_{n_samples, n_classes} for the n_classes intercept
+    columns.
+
+    Minimizing for w0 gives
+
+        w0 = (A0' A0)^(-1) (A0' b - A0' A w)
+
+        P(w) = 1/2 ||(I - A0 (A0' A0)^(-1) A0') (b - A w)||_2^2 + ...
+             = 1/2 ||(b - A0 H00^(-1) q0) - (A - A0 H00^(-1) H0) w||_2^2 + ...
+
+    We therefore replace
+
+        A -> A - A0 H00^(-1) H0 = sqrt(D) L' (X - 1 H00^(-1) H0)
+
+        b -> b - A0 H00^(-1) q0 = sqrt(D) L' (X - 1 H00^(-1) H0) coef
+                                - (L sqrt(D))^-1 (I - LDL' 1 H00^(-1) 1') g
+
+    Note:
+        - A0 = sqrt(D) L' 1_{n_samples, n_classes}
+        - H00 = A0' A0, i.e. the part of the hessian for the intercept alone
+        - H0 = A0' A, i.e. the part of the hessian mixing intercepts with the features:
+          H[-n_classes, :-n_classes]
+        - q0 = A0' b = 1' (LDL' X coef - g)
+        - coef is the current coefficient (of the last Newton iteration) and includes
+          the intercept; X coef = raw_prediction = X @ coef[:, :-1].T + coef[:, -1]
+
+    Tracking the Residual
+    ---------------------
+    Usually, CD tracks the residual R = y - X w -> b - Aw. In the multinomial case, it
+    is advantageous to track the rotated residual instead:
+
+        LD_R = L sqrt(D) R
+
+    This makes the coordinate update simple and fast involving just
+
+        X[:, j] @ LD_R[:, k]
+
+    The update of the rotated residual involves basically multiplying by the full
+    LDL = diag(p) - pp', i.e.
+
+        L sqrt(D) R -= (w_new_kj - w_old_kj) * LDL[:, k] * X[:, j]
+
+    where LDL[:, k] is the k-th column of the LDL matrix, i.e. LDL[:, k] has shape
+    (n_sampels, n_classes).
+
+    Parameters
+    ----------
+    W : ndarray of shape (n_classes, n_features + fit_intercept)
+        Initial coefficients.
+    alpha : float
+        L1 penalty strength.
+    beta : float
+        L2 penalty strength.
+    X : ndarray or sparse array
+    sample_weight : ndarray or None
+    raw_prediction : ndarray of shape (n_samples, n_classes)
+        Without intercept: `raw_prediction = X @ W.T`
+        With intercept: `raw_prediction = X @ W[:, :-1].T + W[:, -1]`
+    grad_pointwise : ndarray of shape (n_samples, n_classes)
+    proba : ndarray of shape (n_samples, n_classes)
+        Predicted probabilities with current `raw_prediction`.
+    fit_intercept : bint (bool)
+        Whether to calculate with or without intercept terms.
+    max_iter : unsigned int
+        The maximum number of outer iterations (full cycles over features and classes).
+    tol : float
+        The tolerance for the stopping criterion.
+    do_screening : bint (bool)
+        Whether to you gap safe screening rules.
+    early_stopping : bint (bool)
+        Whether early stopping before the main loop is allowed. Setting it to False
+        guarantees at least one single update loop over the coefficients.
+    verbose : int
+        Value of 0 prints additional information. All other value do not print.
+
+    Returns
+    -------
+    W : ndarray of shape (n_classes, n_features + fit_intercept)
+        ElasticNet coefficients.
+    gap : float
+        Achieved dual gap.
+    tol : float
+        Equals input `tol` times `np.dot(b, b)`. The tolerance used for the dual gap.
+    n_iter : int
+        Number of coordinate descent iterations.
+    """
+    dtype = X.dtype
+
+    # get the data information into easy vars
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+    cdef unsigned int n_classes = W.shape[0]
+    cdef bint X_is_sparse = sparse.issparse(X)
+
+    if not W.flags["F_CONTIGUOUS"]:
+        raise ValueError("Coefficient W must be F-contiguous.")
+
+    if sample_weight is None:
+        sw_sum = n_samples
+        sw = np.full(fill_value=1 / sw_sum, shape=n_samples, dtype=dtype)
+    else:
+        sw_sum = np.sum(sample_weight)
+        sw = sample_weight / sw_sum
+    sqrt_sw = np.sqrt(sw)
+    norm2_cols_X = np.empty((n_classes, n_features), dtype=dtype, order="C")
+    # Note: Full hessian H of LinearModelLoss.gradient_hessian(coef=W, X=X, y=y)
+    # divides by sw_sum. So each LDL.XXX_matmul computation must be multiplied by
+    # sqrt(samples_weight / sw_sum) = sqrt_sw, i.e. as if sqrt(D) would have
+    # been multiplied by sqrt_sw.
+    LDL = Multinomial_LDL_Decomposition(proba=proba)
+    XtA = np.zeros((n_classes, n_features), dtype=dtype, order="F")  # TODO: best order?
+    R = np.empty((n_samples, n_classes), dtype=dtype, order="F")
+    LD_R = np.empty_like(R, order="F")  # memory buffer for LDL.L_sqrt_D_matmul(R)
+    sw_proba = sw[:, None] * proba  # precompute this one
+    # memory buffers for temporaries
+    x_k = np.empty(n_samples, dtype=dtype)
+    xx = np.empty((n_samples, n_classes), dtype=dtype, order="F")
+    t_k = np.empty(n_samples, dtype=dtype)
+    if fit_intercept:
+        tt = np.empty((n_samples, n_classes), dtype=dtype, order="F")
+
+    cdef float64_t d_j
+    cdef float64_t Xj_theta
+    cdef float64_t tmp
+    cdef float64_t w_kj
+    cdef float64_t d_w_max
+    cdef float64_t w_max
+    cdef float64_t d_w_j
+    cdef float64_t gap = tol + 1.0
+    cdef float64_t d_w_tol = tol
+    cdef float64_t dual_norm_XtA
+    cdef uint32_t[::1] n_active = np.full(shape=n_classes, fill_value=n_features, dtype=np.uint32)
+    cdef uint32_t[:, ::1] active_set
+    # TODO: use binset instead of array of bools
+    cdef uint8_t[:, ::1] excluded_set
+    cdef unsigned int i, j, k, jn, l
+    cdef int32_t endptr, startptr, i_ind  # indexing sparse X
+    cdef unsigned int n_iter = 0
+    cdef bint at_least_one_feature_updated
+
+    if alpha <= 0:
+        do_screening = False
+
+    if do_screening:
+        # active_set maps [k, :n_active[k]] -> j
+        active_set = np.empty((n_classes, n_features), dtype=np.uint32)
+        excluded_set = np.empty((n_classes, n_features), dtype=np.uint8)
+
+    W_original = W
+    H00_pinv_H0 = None
+    if fit_intercept:
+        # See LinearModelLoss.gradient_hessian and NewtonCDGramSolver.inner_solve.
+        # We set the intercept of the last class to zero, loops and shapes often
+        # have n_classes - 1 instead of n_classes. The missing entries are all zeros,
+        # but we often do not add those zeros explicitly.
+        W0 = W[:, -1]  # intercepts, shape (n_classes,)
+        # W0[-1] = 0  # intercept of last class
+        W0[n_classes - 1] = 0  # Cython does not like negative indices
+        W = W[:, :-1]  # coefficients (w/o intercepts), shape (n_classes, n_features)
+        # H00 = H[-n_classes:-1, -n_classes:-1] = Hessian part of intercepts
+        H00 = np.zeros((n_classes - 1, n_classes - 1), dtype=dtype)
+        # H0 = H[-n_classes:-1, :-n_classes] = Hessian part mixing intercepts with
+        # features
+        H0 = np.zeros((n_classes - 1, n_classes * n_features), dtype=dtype)
+        H0_coef = np.zeros((n_classes - 1,), dtype=dtype)  # 1' LDL raw_prediction
+        h = x_k  # h = temporary for entries of the pointwise hessian
+        for k in range(n_classes - 1):
+            # Diagonal terms (in classes) hess_kk.
+            h[:] = proba[:, k] * (1 - proba[:, k]) * sw
+            H00[k, k] = h.sum()
+            H0[k, k::n_classes] = X.T @ h
+            H0_coef[k] += (h * raw_prediction[:, k]).sum()
+            # Off diagonal terms (in classes) hess_kl.
+            for l in range(k + 1, n_classes - 1):
+                # Upper triangle (in classes).
+                h[:] = -proba[:, k] * proba[:, l] * sw
+                H00[k, l] = h.sum()
+                H00[l, k] = H00[k, l]
+                H0[k, l::n_classes] = X.T @ h
+                H0[l, k::n_classes] = H0[k, l::n_classes]
+                H0_coef[k] += (h * raw_prediction[:, l]).sum()
+                H0_coef[l] += (h * raw_prediction[:, k]).sum()
+            # Inclusion of the term for the last class which was omitted so far,
+            # so it is present only where we need it:
+            l = n_classes - 1
+            h[:] = -proba[:, k] * proba[:, l] * sw
+            H0[k, l::n_classes] = X.T @ h
+            H0_coef[k] += (h * raw_prediction[:, l]).sum()
+
+        H00_pinv = np.linalg.pinv(H00, hermitian=True)
+        # H0_coef is the same as:
+        # H0_coef = H0 @ W.ravel(order="F") + H00 @ W0
+        grad_p_sum = grad_pointwise[:, :-1].sum(axis=0)
+        q0 = H0_coef - grad_p_sum
+        # H00_pinv_H0 = H00_pinv @ H0  # shape (n_classes - 1, n_classes * n_features)
+        H00_pinv_H0 = np.zeros(
+            (n_classes - 1, n_classes * n_features), dtype=dtype, order="F"
+        )
+        # Double transpose to make the result F-contiguous.
+        np.dot(H0.T, H00_pinv.T, out=H00_pinv_H0.T)
+
+        # Centering X as
+        #   X -= (H00_pinv_H0)[None, :]
+        # is not an option because it would mean n_classes^2 copies of X.
+        # To proceed, we need to compute b, residual R and rotated residual LD_R.
+        # The change with intercepts amounts to modifying raw_prediction and
+        # grad_pointwise. Then in the main loop, updates of LD_R get more involved.
+        # Center raw_prediction: += -intercepts - 1 H00^(-1) H0) coef
+        raw_prediction = np.subtract(raw_prediction, W0, order="F")  # creates a copy
+        raw_prediction[:, :-1] -= (H00_pinv_H0 @ W.ravel(order="F"))[None, :]
+        # Center grad_pointwise: g -= LDL' 1 H00^(-1) 1' g
+        t = H00_pinv @ grad_p_sum  # H00^(-1) 1' g
+        for k in range(n_classes - 1):
+            h = proba[:, k] * (1 - proba[:, k]) * sw
+            grad_pointwise[:, k] -= h * t[k]
+            for l in range(k + 1, n_classes - 1):
+                h = -proba[:, k] * proba[:, l] * sw
+                grad_pointwise[:, k] -= h * t[l]
+                grad_pointwise[:, l] -= h * t[k]
+    else:
+        # Avoid to modify the original raw_prediction inplace in LDL.sqrt_D_Lt_matmul.
+        raw_prediction = raw_prediction.copy(order="F")
+
+    # A w = sqrt(D) L' X w = sqrt(D) L' raw = sqrt_D_Lt_raw
+    sqrt_D_Lt_raw = LDL.sqrt_D_Lt_matmul(raw_prediction) * sqrt_sw[:, None]
+
+    # residual R = b - A w = -(L sqrt(D))^-1 g
+    # R[:, :] = LDL.inverse_L_sqrt_D_matmul(-grad_pointwise / sqrt_sw[:, None])
+    np.divide(-grad_pointwise, sqrt_sw[:, None], out=R)
+    LDL.inverse_L_sqrt_D_matmul(R)
+
+    # b = A w - (L sqrt(D))^-1 g
+    b = sqrt_D_Lt_raw + R  # shape (n_samples, n_classes)
+
+    tol = tol * np.linalg.norm(b, ord="fro") ** 2
+
+    # Rotated residual: L sqrt(D) R sqrt(sw)
+    # LD_R[:, :] = LDL.L_sqrt_D_matmul(R * sqrt_sw[:, None])
+    np.multiply(R, sqrt_sw[:, None], out=LD_R)
+    LDL.L_sqrt_D_matmul(LD_R)
+    # IMPORTANT NOTE: With fit_intercept=True, np.sum(LD_R, axis=0) == 0.
+
+    # Convention: memoryviews have a trailing underscore.
+    cdef float64_t[::1, :] W_ = W
+    cdef const float64_t[::1, :] X_
+    cdef float64_t[::1] X_data
+    cdef int32_t[::1] X_indices
+    cdef int32_t[::1] X_indptr
+    cdef float64_t[::1, :] b_ = b
+    cdef float64_t[::1] sqrt_sw_ = sqrt_sw
+    cdef float64_t[:, ::1] norm2_cols_X_ = norm2_cols_X
+    cdef float64_t[::1, :] R_ = R
+    cdef float64_t[::1, :] LD_R_ = LD_R
+    cdef float64_t[::1, :] proba_ = proba
+    cdef float64_t[::1, :] XtA_ = XtA
+    cdef float64_t[::1, :] H00_pinv_H0_ = H00_pinv_H0
+    cdef float64_t[::1, :] sw_proba_ = sw_proba
+    cdef float64_t[::1, :] q_inv_ = LDL.q_inv
+    cdef float64_t[::1, :] sqrt_d_ = LDL.sqrt_d
+    cdef float64_t[::1] t_k_ = t_k
+    cdef float64_t[::1] x_k_ = x_k
+    cdef float64_t[::1, :] tt_
+    cdef float64_t[::1, :] xx_ = xx
+    if fit_intercept:
+        tt_ = tt
+
+    if X_is_sparse:
+        if not (
+            X.data.flags.c_contiguous
+            and X.indices.flags.c_contiguous
+            and X.indptr.flags.c_contiguous
+        ):
+            raise ValueError("Sparse X must have contiguous underlying arrays.")
+        X_data = X.data
+        X_indices = X.indices
+        X_indptr = X.indptr
+    else:
+        X_ = X
+
+    # Check convergence before entering the main loop.
+    gap, dual_norm_XtA = gap_enet_multinomial(
+        w=W_,
+        alpha=alpha,
+        beta=beta,
+        X=X_,
+        X_is_sparse=X_is_sparse,
+        X_data=X_data,
+        X_indices=X_indices,
+        X_indptr=X_indptr,
+        y=b_,
+        R=R_,
+        LD_R=LD_R_,
+        H00_pinv_H0=H00_pinv_H0_,
+        fit_intercept=fit_intercept,
+        XtA=XtA_,
+        gap_smaller_eps=False,
+    )
+    if early_stopping and gap <= tol:
+        if verbose:
+            print(
+                f"  inner coordinate descent solver stops early with gap={float(gap)}"
+                f"  <= tol={float(tol)}"
+            )
+        return np.asarray(W), gap, tol, 0
+
+    # Compute squared norms of the columns of X.
+    # Same as norm2_cols_X = np.square(X).sum(axis=0)
+    # norm2_cols_X = np.einsum(
+    #     "ij,ij->j", X, X, dtype=dtype, order="C"
+    # )
+    # X -> sqrt(D) L' X = A
+    # sum_{i} X_{ij} X_{ij} -> sum_i X_{ij} diag(LDL)_i X_{ij}
+    # These are just the diagonal elements of the full hessian H.
+    # for k in range(n_classes):
+    #     h = proba[:, k] * (1 - proba[:, k]) * sw
+    #     norm2_cols_X[k, :] = np.einsum("ij, i, ij -> j", X, h, X)
+    np.subtract(1, proba, out=xx)  # xx = 1 - proba
+    xx *= sw_proba
+    if not X_is_sparse:
+        np.einsum("ij, ik, ij -> kj", X, xx, X, order="C", out=norm2_cols_X)
+    else:
+        memset(&norm2_cols_X_[0, 0], 0, n_classes * n_features * sizeof(float64_t))
+        for j in range(n_features):
+            startptr = X_indptr[j]
+            endptr = X_indptr[j + 1]
+            for i_ind in range(startptr, endptr):
+                i = X_indices[i_ind]
+                tmp = X_data[i_ind] ** 2
+                for k in range(n_classes):
+                    norm2_cols_X_[k, j] += tmp * xx_[i, k]
+    if fit_intercept:
+        # See Q_centered = Q - Q0.T @ Q00_inv @ Q0 in NewtonCDGramSolve.
+        norm2_cols_X -= np.einsum("ji, ji -> i", H0, H00_pinv_H0).reshape(
+            n_classes, -1, order="F"
+        )
+        # Guarantee norm2_cols_X >= 0:
+        norm2_cols_X[norm2_cols_X < 0] = 0
+
+    # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+    if do_screening:
+        for k in range(n_classes):
+            n_active[k] = 0
+            for j in range(n_features):
+                if norm2_cols_X_[k, j] == 0:
+                    W_[k, j] = 0
+                    excluded_set[k, j] = 1
+                    continue
+                Xj_theta = XtA_[k, j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+                d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X_[k, j] + beta)
+                if d_j <= sqrt(2 * gap) / alpha:
+                    # include feature j of class k
+                    active_set[k, n_active[k]] = j
+                    excluded_set[k, j] = 0
+                    n_active[k] += 1
+                else:
+                    if W_[k, j] != 0:
+                        # R += w[j] * X[:,j] -> w[k, j] A[:, kj]
+                        # LD_R += w[k, j] * LDL[:, k] * X[:, j]
+                        update_LD_R(
+                            k=k, j=j, w_kj=W_[k, j], X=X_,
+                            X_is_sparse=X_is_sparse, X_data=X_data,
+                            X_indices=X_indices, X_indptr=X_indptr,
+                            sw_proba=sw_proba_,
+                            proba=proba_, H00_pinv_H0=H00_pinv_H0_,
+                            fit_intercept=fit_intercept, LD_R=LD_R_, x_k=x_k_, xx=xx_,
+                        )
+                        W_[k, j] = 0
+                    excluded_set[k, j] = 1
+        if np.sum(n_active) == 0:
+            # We want to guarantee at least one CD step.
+            # n_active[:] = n_features
+            # active_set[:, :] = np.arange(n_features, dtype=np.uint32)[None, :]
+            # excluded_set[:, :] = 0
+            for k in range(n_classes):
+                n_active[k] = n_features
+                for j in range(n_features):
+                    active_set[k, j] = j
+                    excluded_set[k, j] = 0
+
+    with nogil:
+        for n_iter in range(max_iter):
+            w_max = 0.0
+            d_w_max = 0.0
+            for k in range(n_classes):  # Loop over classes
+                at_least_one_feature_updated = False
+                # t_k[:] = 0
+                memset(&t_k_[0], 0, n_samples * sizeof(float64_t))
+                if fit_intercept:
+                    # tt[:, :] = 0
+                    memset(&tt_[0, 0], 0, n_samples * n_classes * sizeof(float64_t))
+
+                for j in range(n_active[k]):  # Loop over coordinates
+                    if do_screening:
+                        j = active_set[k, j]
+
+                    if norm2_cols_X_[k, j] == 0.0:
+                        continue
+                    w_kj = W_[k, j]  # Store previous value
+
+                    if X_is_sparse:
+                        startptr = X_indptr[j]
+                        endptr = X_indptr[j + 1]
+
+                    # tmp = X[:,j].T @ (R + w_j * X[:,j])
+                    #    -> A[:,jk].T @ (R + w_kj * A[:,kj])
+                    # With precomputed LD_R: A'R = X' L sqrt(D) R
+                    # tmp = X[:, j] @ LD_R[:, k] + w_kj * norm2_cols_X[k, j]
+                    if not X_is_sparse:
+                        tmp = _dot(n_samples, &X_[0, j], 1, &LD_R_[0, k], 1)
+                    else:
+                        tmp = 0.0
+                        for i_ind in range(startptr, endptr):
+                            i = X_indices[i_ind]
+                            tmp += LD_R_[i, k] * X_data[i_ind]
+                    tmp += w_kj * norm2_cols_X_[k, j]
+                    # Note: With fit_intercept=True, np.sum(LD_R, axis=0) == 0. So the
+                    # additional term
+                    #   tmp -= H00_pinv_H0[:, n_classes * j + k].T @ np.sum(LD_R, axis=0)
+                    # is zero.
+
+                    W_[k, j] = (
+                        fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
+                        / (norm2_cols_X_[k, j] + beta)
+                    )
+
+                    if W_[k, j] != w_kj:
+                        at_least_one_feature_updated = True
+                        # Update residual
+                        # R -= (w[j] - w_j) * X[:,j] -> (w[kj] - w_kj) * A[:,kj]
+                        # We could call update_LD_R, but we use the fact that we can
+                        # postpone certain operations to gain some performance:
+                        # We only update LD_R[:, k] which is needed for the next
+                        # coordinate iteration j, but we postpone LD_R[:, l] with l != k
+                        # to after the end of the j-loop (features), at the end of the
+                        # k-loop (classes). This is one main reason for the loop order.
+                        if not fit_intercept:
+                            # Update rotated residual LD_R instead of R
+                            # L sqrt(D) R -= (w[kj] - w_kj) * LDL[:, k] * X[:, j]
+                            # numpy:
+                            #   x_k[:] = (w_kj - W[k, j]) * X[:, j] * sw_proba[:, k]
+                            #   LD_R[:, k] += (1 - proba[:, k]) * x_k  # diagonal LDL
+                            #   for l in range(n_classes):
+                            #       if l != k:
+                            #           LD_R[:, l] -= proba[:, l] * x_k
+                            # numpy faster version:
+                            #   LD_R[:, k] += x_k
+                            #   LD_R -= proba * x_k[:, None]
+                            if not X_is_sparse:
+                                for i in range(n_samples):
+                                    tmp = (w_kj - W_[k, j]) * X_[i, j] * sw_proba_[i, k]
+                                    t_k_[i] += tmp  # accumulation for postponed update
+                                    LD_R_[i, k] += (1 - proba_[i, k]) * tmp
+                            else:
+                                for i_ind in range(startptr, endptr):
+                                    i = X_indices[i_ind]
+                                    tmp = (w_kj - W_[k, j]) * X_data[i_ind] * sw_proba_[i, k]
+                                    t_k_[i] += tmp
+                                    LD_R_[i, k] += (1 - proba_[i, k]) * tmp
+                            # Postpone updates of LD_R for classes != k,
+                            # given x_k as in numpy code above (we instead used tmp).
+                            # for l in range(n_classes):
+                            #     if l != k:
+                            #         for i in range(n_samples):
+                            #             LD_R_[i, l] -= proba_[i, l] * x_k_[i]
+                        else:
+                            # Update rotated residual LD_R instead of R
+                            jn = n_classes * j
+                            # numpy:
+                            #   xx[:, :-1] = -H00_pinv_H0[:, jn + k][None, :]
+                            #   xx[:, -1] = 0
+                            #   xx[:, k] += X[:, j]
+                            #   xx *= (w_kj - W[k, j]) * sw_proba
+                            # L sqrt(D) R += LDL xx
+                            # numpy:
+                            #   for l in range(n_classes):
+                            #       LD_R[:, l] += (1 - proba[:, l]) * xx[:, l]
+                            #       for m in range(l + 1, n_classes):
+                            #           LD_R[:, l] -= proba[:, l] * xx[:, m]
+                            #           LD_R[:, m] -= proba[:, m] * xx[:, l]
+                            # numpy faster version:
+                            #   LD_R -= proba * np.sum(xx, axis=1)[:, None]
+                            #   LD_R += xx
+                            # But instead of materializing the dense (n_samples,
+                            # n_classes) array xx for every single coordinate update j
+                            # (which needs an O(n_samples * n_classes) memset and
+                            # fill each time), we exploit that H00_pinv_H0[:, jn + k]
+                            # does not depend on the sample i. This decomposes xx's
+                            # column sum, x_k = np.sum(xx, axis=1), into
+                            #   x_k = d_w_j * (X[:, j] * sw_proba[:, k] - cross)
+                            #   cross = sw_proba[:, :-1] @ H00_pinv_H0[:, jn + k]
+                            # On top, cross can be computed with a single BLAS
+                            # matrix-vector product.
+                            # Only the accumulator tt (needed for the update of
+                            # LD_R[:, l], classes l != k, and postponed to after the
+                            # whole coordinate loop) still needs an O(n_samples) update
+                            # per class l, done via BLAS axpy instead of a hand written
+                            # for loop.
+                            # Note that tt[:, k] is never read in the postponed update
+                            # of LD_R[:, l] which always excludes l == k. We therefore
+                            # reused it below as scratch space.
+                            d_w_j = w_kj - W_[k, j]
+
+                            # tt[:, k] = d_w_j * X[:, j] * sw_proba[:, k]  (scratch)
+                            if not X_is_sparse:
+                                for i in range(n_samples):
+                                    tt_[i, k] = d_w_j * X_[i, j] * sw_proba_[i, k]
+                            else:
+                                memset(&tt_[0, k], 0, n_samples * sizeof(float64_t))
+                                for i_ind in range(startptr, endptr):
+                                    i = X_indices[i_ind]
+                                    tt_[i, k] = d_w_j * X_data[i_ind] * sw_proba_[i, k]
+                            if k < n_classes - 1:
+                                tmp = -d_w_j * H00_pinv_H0_[k, jn + k]
+                                # tt[:, k] += tmp * sw_proba[:, k]
+                                _axpy(n_samples, tmp, &sw_proba_[0, k], 1, &tt_[0, k], 1)
+
+                            # cross = sw_proba[:, :-1] @ H00_pinv_H0[:, jn + k]
+                            # we use x_k as buffer to compute cross
+                            _gemv(
+                                ColMajor, NoTrans, n_samples, n_classes - 1,
+                                1.0, &sw_proba_[0, 0], n_samples,
+                                &H00_pinv_H0_[0, jn + k], 1,
+                                0.0, &x_k_[0], 1,
+                            )
+                            # x_k = d_w_j * (X[:, j] * sw_proba[:, k] - cross)
+                            if not X_is_sparse:
+                                for i in range(n_samples):
+                                    x_k_[i] = d_w_j * (X_[i, j] * sw_proba_[i, k] - x_k_[i])
+                            else:
+                                for i in range(n_samples):
+                                    x_k_[i] = -d_w_j * x_k_[i]
+                                for i_ind in range(startptr, endptr):
+                                    i = X_indices[i_ind]
+                                    x_k_[i] += d_w_j * X_data[i_ind] * sw_proba_[i, k]
+
+                            # Accumulate tt[:, l] for classes l != k (used after the
+                            # whole coordinate loop, in the postponed update).
+                            for l in range(n_classes - 1):
+                                if l == k:
+                                    continue
+                                tmp = -d_w_j * H00_pinv_H0_[l, jn + k]
+                                # tt[:, l] += tmp * sw_proba[:, l]
+                                _axpy(n_samples, tmp, &sw_proba_[0, l], 1, &tt_[0, l], 1)
+
+                            for i in range(n_samples):
+                                LD_R_[i, k] += tt_[i, k] - proba_[i, k] * x_k_[i]
+                                t_k_[i] += x_k_[i]
+                            # Postpone updates of LD_R for classes != k.
+
+                    # update the maximum absolute coefficient update
+                    d_w_j = fabs(W_[k, j] - w_kj)
+                    d_w_max = fmax(d_w_max, d_w_j)
+                    w_max = fmax(w_max, fabs(W_[k, j]))
+
+                # Postponed updates of LD_R for classes != k .
+                if at_least_one_feature_updated:
+                    if not fit_intercept:
+                        # We accumulated t_k_ = (X @ (w_k - W[k, :])) * sw_proba[:, k]
+                        for l in range(n_classes):
+                            if l == k:
+                                continue
+                            for i in range(n_samples):
+                                LD_R_[i, l] -= proba_[i, l] * t_k_[i]
+                    else:
+                        for l in range(n_classes):
+                            if l == k:
+                                continue
+                            for i in range(n_samples):
+                                LD_R_[i, l] += tt_[i, l] - proba_[i, l] * t_k_[i]
+
+                # time_r += time(NULL) - tic
+
+            if w_max == 0.0 or d_w_max / w_max <= d_w_tol or n_iter == max_iter - 1:
+                # The biggest coordinate update of this iteration was smaller than the
+                # tolerance: check the duality gap as ultimate stopping criterion.
+                for k in range(n_classes):
+                    for i in range(n_samples):
+                        R_[i, k] = LD_R_[i, k] / sqrt_sw_[i]
+                # LDL.inverse_L_sqrt_D_matmul(R)
+                inverse_L_sqrt_D_matmul(p=proba_, q_inv=q_inv_, sqrt_d=sqrt_d_, x=R_, buffer=x_k_)
+                gap, dual_norm_XtA = gap_enet_multinomial(
+                    w=W_,
+                    alpha=alpha,
+                    beta=beta,
+                    X=X_,
+                    X_is_sparse=X_is_sparse,
+                    X_data=X_data,
+                    X_indices=X_indices,
+                    X_indptr=X_indptr,
+                    y=b_,
+                    R=R_,
+                    LD_R=LD_R_,
+                    H00_pinv_H0=H00_pinv_H0_,
+                    fit_intercept=fit_intercept,
+                    XtA=XtA_,
+                    gap_smaller_eps=True,
+                )
+                if verbose:
+                    with gil:
+                        print(
+                            f"  inner coordinate descent solver at iter {n_iter} "
+                            f"checks for gap={float(gap)} <= tol={float(tol)} ? {gap <= tol}"
+                        )
+                if gap <= tol:
+                    # return if we reached desired tolerance
+                    break
+
+                # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
+                if do_screening:
+                    for k in range(n_classes):
+                        n_active[k] = 0
+                        for j in range(n_features):
+                            if excluded_set[k, j]:
+                                continue
+                            Xj_theta = XtA_[k, j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
+                            d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X_[k, j] + beta)
+                            if d_j <= sqrt(2 * gap) / alpha:
+                                # include feature j of class k
+                                active_set[k, n_active[k]] = j
+                                excluded_set[k, j] = 0
+                                n_active[k] += 1
+                            else:
+                                if W_[k, j] != 0:
+                                    # R += w[j] * X[:,j] -> w[k, j] A[:, kj]
+                                    # LD_R += w[k, j] * LDL[:, k] * X[:, j]
+                                    update_LD_R(
+                                        k=k, j=j, w_kj=W_[k, j], X=X_,
+                                        X_is_sparse=X_is_sparse, X_data=X_data,
+                                        X_indices=X_indices, X_indptr=X_indptr,
+                                        sw_proba=sw_proba_,
+                                        proba=proba_, H00_pinv_H0=H00_pinv_H0_,
+                                        fit_intercept=fit_intercept, LD_R=LD_R_, x_k=x_k_, xx=xx_,
+                                    )
+                                W_[k, j] = 0
+                                excluded_set[k, j] = 1
+
+        else:
+            # for/else, runs if for doesn't end with a `break`
+            with gil:
+                message = (
+                    message_conv +
+                    f" Duality gap: {gap:.6e}, tolerance: {tol:.3e}"
+                )
+                if alpha < np.finfo(np.float64).eps:
+                    message += "\n" + message_ridge
+                warnings.warn(message, ConvergenceWarning)
+
+    if fit_intercept:
+        # W0[:-1] = H00_pinv @ (q0 - H0 @ W.ravel(order="F"))
+        W0[:n_classes - 1] = H00_pinv @ (q0 - H0 @ W.ravel(order="F"))
+        # W0[-1] = 0  # was already set at the beginning.
+
+    return np.asarray(W_original), gap, tol, n_iter + 1

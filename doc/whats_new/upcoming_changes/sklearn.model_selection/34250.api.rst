@@ -1,0 +1,6 @@
+- :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` now expose the
+  cross-validation results of the last halving iteration in ``cv_results_``.
+  The full per-iteration history is available in the new ``all_cv_results_``
+  attribute.
+  By :user:`Guillaume Lemaitre <glemaitre>`.

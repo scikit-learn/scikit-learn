@@ -9,10 +9,11 @@ from sklearn.base import BaseEstimator, RegressorMixin, _fit_context, clone
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils import Bunch, _safe_indexing, check_array
+from sklearn.utils import _safe_indexing, check_array
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _routing_enabled,
     process_routing,
 )
@@ -49,8 +50,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         transformer.inverse_transform(regressor.predict(X))
 
     Read more in the :ref:`User Guide <transformed_target_regressor>`.
-
-    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -96,8 +95,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying regressor exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -289,7 +286,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch(regressor=Bunch(fit=fit_params))
+            routed_params = _manual_routing({"regressor": {"fit": fit_params}})
 
         self.regressor_.fit(X, y_trans, **routed_params.regressor.fit)
 
@@ -329,7 +326,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         if _routing_enabled():
             routed_params = process_routing(self, "predict", **predict_params)
         else:
-            routed_params = Bunch(regressor=Bunch(predict=predict_params))
+            routed_params = _manual_routing({"regressor": {"predict": predict_params}})
 
         pred = self.regressor_.predict(X, **routed_params.regressor.predict)
         if pred.ndim == 1:
@@ -393,7 +390,10 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     def _get_regressor(self, get_clone=False):
         if self.regressor is None:
-            return LinearRegression()
+            if _routing_enabled():
+                return LinearRegression().set_fit_request(sample_weight=True)
+            else:
+                return LinearRegression()
 
         return clone(self.regressor) if get_clone else self.regressor
 

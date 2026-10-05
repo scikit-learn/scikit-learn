@@ -29,6 +29,11 @@
      Sylvain Marie, Schneider Electric
      See <https://github.com/scikit-learn/scikit-learn/pull/13511#issuecomment-481729756>
 
+   Modified 2026:
+   - Fixed a memory leak due to conditional deallocation of `newprob` attributes;
+     see <https://github.com/scikit-learn/scikit-learn/pull/34256>
+   - Fixed an out-of-bound read when solver_type=MCSVM_CS;
+     see <https://github.com/scikit-learn/scikit-learn/pull/34273>
  */
 
 #include <math.h>
@@ -2453,7 +2458,7 @@ static void remove_zero_weight(problem *newprob, const problem *prob)
 model* train(const problem *prob, const parameter *param, BlasFunctions *blas_functions)
 {
 	problem newprob;
-	remove_zero_weight(&newprob, prob);
+	remove_zero_weight(&newprob, prob);  // This allocates memory for newprob
 	prob = &newprob;
 	int i,j;
 	int l = prob->l;
@@ -2587,10 +2592,10 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 		free(sub_prob.y);
 		free(sub_prob.W);
 		free(weighted_C);
-		free(newprob.x);
-		free(newprob.y);
-		free(newprob.W);
 	}
+	free(newprob.x);
+	free(newprob.y);
+	free(newprob.W);
 	return model_;
 }
 
@@ -2938,7 +2943,7 @@ void get_n_iter(const model *model_, int* n_iter)
 {
     int labels;
     labels = model_->nr_class;
-    if (labels == 2)
+    if (labels == 2 || model_->param.solver_type == MCSVM_CS)
         labels = 1;
 
     if (model_->n_iter != NULL)

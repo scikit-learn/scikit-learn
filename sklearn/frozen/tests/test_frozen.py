@@ -29,35 +29,25 @@ from sklearn.utils._testing import set_random_state
 from sklearn.utils.validation import check_is_fitted
 
 
-@pytest.fixture
-def regression_dataset():
-    return make_regression()
-
-
-@pytest.fixture
-def classification_dataset():
-    return make_classification()
-
-
 @pytest.mark.parametrize(
-    "estimator, dataset",
+    "estimator, make_dataset",
     [
-        (LinearRegression(), "regression_dataset"),
-        (LogisticRegression(), "classification_dataset"),
-        (make_pipeline(StandardScaler(), LinearRegression()), "regression_dataset"),
+        (LinearRegression(), make_regression),
+        (LogisticRegression(), make_classification),
+        (make_pipeline(StandardScaler(), LinearRegression()), make_regression),
         (
             make_pipeline(StandardScaler(), LogisticRegression()),
-            "classification_dataset",
+            make_classification,
         ),
-        (StandardScaler(), "regression_dataset"),
-        (KMeans(), "regression_dataset"),
-        (LocalOutlierFactor(), "regression_dataset"),
+        (StandardScaler(), make_regression),
+        (KMeans(), make_regression),
+        (LocalOutlierFactor(), make_regression),
         (
             make_column_transformer(
                 (StandardScaler(), [0]),
                 (RobustScaler(), [1]),
             ),
-            "regression_dataset",
+            make_regression,
         ),
     ],
 )
@@ -65,12 +55,12 @@ def classification_dataset():
     "method",
     ["predict", "predict_proba", "predict_log_proba", "decision_function", "transform"],
 )
-def test_frozen_methods(estimator, dataset, request, method):
+def test_frozen_methods(estimator, make_dataset, method):
     """Test that frozen.fit doesn't do anything, and that all other methods are
     exposed by the frozen estimator and return the same values as the estimator.
     """
     estimator = clone(estimator)
-    X, y = request.getfixturevalue(dataset)
+    X, y = make_dataset()
     set_random_state(estimator)
     estimator.fit(X, y)
     frozen = FrozenEstimator(estimator)
@@ -87,7 +77,7 @@ def test_frozen_methods(estimator, dataset, request, method):
 
 
 @config_context(enable_metadata_routing=True)
-def test_frozen_metadata_routing(regression_dataset):
+def test_frozen_metadata_routing():
     """Test that metadata routing works with frozen estimators."""
 
     class ConsumesMetadata(BaseEstimator):
@@ -106,7 +96,7 @@ def test_frozen_metadata_routing(regression_dataset):
                 assert metadata is not None
             return np.ones(len(X))
 
-    X, y = regression_dataset
+    X, y = make_regression()
     pipeline = make_pipeline(
         ConsumesMetadata(on_fit=True, on_predict=True)
         .set_fit_request(metadata=True)
@@ -133,7 +123,7 @@ def test_frozen_metadata_routing(regression_dataset):
         frozen.predict(X, metadata="test")
 
 
-def test_composite_fit(classification_dataset):
+def test_composite_fit():
     """Test that calling fit_transform and fit_predict doesn't call fit."""
 
     class Estimator(BaseEstimator):
@@ -152,7 +142,7 @@ def test_composite_fit(classification_dataset):
             # only here to test that it doesn't get called
             ...  # pragma: no cover
 
-    X, y = classification_dataset
+    X, y = make_classification()
     est = Estimator().fit(X, y)
     frozen = FrozenEstimator(est)
 
@@ -164,18 +154,18 @@ def test_composite_fit(classification_dataset):
     assert frozen._fit_counter == 1
 
 
-def test_clone_frozen(regression_dataset):
+def test_clone_frozen():
     """Test that cloning a frozen estimator keeps the frozen state."""
-    X, y = regression_dataset
+    X, y = make_regression()
     estimator = LinearRegression().fit(X, y)
     frozen = FrozenEstimator(estimator)
     cloned = clone(frozen)
     assert cloned.estimator is estimator
 
 
-def test_check_is_fitted(regression_dataset):
+def test_check_is_fitted():
     """Test that check_is_fitted works on frozen estimators."""
-    X, y = regression_dataset
+    X, y = make_regression()
 
     estimator = LinearRegression()
     frozen = FrozenEstimator(estimator)

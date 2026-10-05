@@ -17,8 +17,8 @@ def fftn(
     x: Array,
     /,
     *,
-    s: Sequence[int] = None,
-    axes: Sequence[int] = None,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
     norm: Literal["backward", "ortho", "forward"] = "backward",
     **kwargs: object,
 ) -> Array:
@@ -28,8 +28,8 @@ def ifftn(
     x: Array,
     /,
     *,
-    s: Sequence[int] = None,
-    axes: Sequence[int] = None,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
     norm: Literal["backward", "ortho", "forward"] = "backward",
     **kwargs: object,
 ) -> Array:
@@ -39,8 +39,8 @@ def rfftn(
     x: Array,
     /,
     *,
-    s: Sequence[int] = None,
-    axes: Sequence[int] = None,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
     norm: Literal["backward", "ortho", "forward"] = "backward",
     **kwargs: object,
 ) -> Array:
@@ -50,8 +50,8 @@ def irfftn(
     x: Array,
     /,
     *,
-    s: Sequence[int] = None,
-    axes: Sequence[int] = None,
+    s: Sequence[int] | None = None,
+    axes: Sequence[int] | None = None,
     norm: Literal["backward", "ortho", "forward"] = "backward",
     **kwargs: object,
 ) -> Array:
@@ -61,7 +61,7 @@ def fftshift(
     x: Array,
     /,
     *,
-    axes: int | Sequence[int] = None,
+    axes: int | Sequence[int] | None = None,
     **kwargs: object,
 ) -> Array:
     return torch.fft.fftshift(x, dim=axes, **kwargs)
@@ -70,7 +70,7 @@ def ifftshift(
     x: Array,
     /,
     *,
-    axes: int | Sequence[int] = None,
+    axes: int | Sequence[int] | None = None,
     **kwargs: object,
 ) -> Array:
     return torch.fft.ifftshift(x, dim=axes, **kwargs)

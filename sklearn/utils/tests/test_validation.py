@@ -7,6 +7,7 @@ from itertools import product
 from operator import itemgetter
 from tempfile import NamedTemporaryFile
 
+import narwhals.stable.v2 as nw
 import numpy as np
 import pytest
 import scipy.sparse as sp
@@ -31,6 +32,7 @@ from sklearn.utils import (
     check_symmetric,
     check_X_y,
     deprecated,
+    indexable,
 )
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
@@ -152,6 +154,7 @@ def test_as_float_array():
         assert not np.isnan(M).any()
 
 
+@pytest.mark.filterwarnings("ignore::scipy.sparse.SparseEfficiencyWarning")
 @pytest.mark.parametrize(
     "X", [np.random.random((10, 2)), _sparse_random_array((10, 2), format="csr")]
 )
@@ -213,8 +216,9 @@ def test_ordering():
 )
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_array, sp.csr_matrix])
 def test_check_array_ensure_all_finite_valid(value, ensure_all_finite, retype):
-    X = retype(np.arange(4).reshape(2, 2).astype(float))
+    X = np.array(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
+    X = retype(X)
     X_checked = check_array(X, ensure_all_finite=ensure_all_finite, accept_sparse=True)
     assert_allclose_dense_sparse(X, X_checked)
 
@@ -242,8 +246,9 @@ def test_check_array_ensure_all_finite_valid(value, ensure_all_finite, retype):
 def test_check_array_ensure_all_finite_invalid(
     value, input_name, ensure_all_finite, match_msg, retype
 ):
-    X = retype(np.arange(4).reshape(2, 2).astype(np.float64))
+    X = np.array(np.arange(4).reshape(2, 2).astype(np.float64))
     X[0, 0] = value
+    X = retype(X)
     with pytest.raises(ValueError, match=match_msg):
         check_array(
             X,
@@ -256,8 +261,9 @@ def test_check_array_ensure_all_finite_invalid(
 @pytest.mark.parametrize("input_name", ["X", "y", "sample_weight"])
 @pytest.mark.parametrize("retype", [np.asarray, sp.csr_array, sp.csr_matrix])
 def test_check_array_links_to_imputer_doc_only_for_X(input_name, retype):
-    data = retype(np.arange(4).reshape(2, 2).astype(np.float64))
+    data = np.array(np.arange(4).reshape(2, 2).astype(np.float64))
     data[0, 0] = np.nan
+    data = retype(data)
     estimator = SVR()
     extended_msg = (
         f"\n{estimator.__class__.__name__} does not accept missing values"
@@ -550,10 +556,6 @@ def test_check_array_pandas_string_dtype_numeric_error():
 def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     # Test pandas numerical extension arrays with pd.NA
     pd = pytest.importorskip("pandas")
-
-    if pd_dtype in {"Float32", "Float64"}:
-        # Extension dtypes with Floats was added in 1.2
-        pd = pytest.importorskip("pandas", minversion="1.2")
 
     X_np = np.array(
         [[1, 2, 3, np.nan, np.nan], [np.nan, np.nan, 8, 4, 6], [1, 2, 3, 4, 5]]
@@ -1904,13 +1906,16 @@ def test_check_method_params(indices):
     )
 
 
+@pytest.mark.parametrize("convert_to_narwhals", [False, True])
 @pytest.mark.parametrize("sp_format", [True, "csr", "csc", "coo", "bsr"])
-def test_check_sparse_pandas_sp_format(sp_format):
+def test_check_sparse_pandas_sp_format(convert_to_narwhals, sp_format):
     # check_array converts pandas.DataFrame with only sparse arrays into sparse matrix
     pd = pytest.importorskip("pandas")
     sp_mat = _sparse_random_matrix(10, 3)
 
     sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
+    if convert_to_narwhals:
+        sdf = nw.from_native(sdf)
     result = check_array(sdf, accept_sparse=sp_format)
 
     if sp_format is True:
@@ -2079,17 +2084,12 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
     assert names is None
 
 
-@pytest.mark.parametrize(
-    "constructor_name, minversion",
-    [("pyarrow", "13.0.0"), ("pandas", "1.5.0"), ("polars", "0.18.2")],
-)
-def test_get_feature_names_4_dataframes(constructor_name, minversion):
+@pytest.mark.parametrize("constructor_name", ["pyarrow", "pandas", "polars"])
+def test_get_feature_names_4_dataframes(constructor_name):
     """Test _get_features_names on dataframes."""
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
-    df = _convert_container(
-        data, constructor_name, column_names=columns, minversion=minversion
-    )
+    df = _convert_container(data, constructor_name, column_names=columns)
     feature_names = _get_feature_names(df)
 
     assert_array_equal(feature_names, columns)
@@ -2530,3 +2530,31 @@ def test_num_samples_pa_chunked_array():
 
     result = _num_samples(chunked_array([[0.1, 0.2, 0.3]]))
     assert result == 3
+
+
+@pytest.mark.parametrize(
+    "constructor_name",
+    [
+        "list",
+        "tuple",
+        "array",
+        "series",
+        "polars_series",
+        "pyarrow_array",
+        "sparse_csr",
+        "sparse_csc_array",
+        "pandas",
+        "polars",
+        "pyarrow",
+        "index",
+    ],
+)
+def test_indexable_return_type(constructor_name):
+    """Test that indexable returns objects of expected type."""
+    X = _convert_container(list(range(3)), constructor_name)
+    if constructor_name == "sparse_csc_array":
+        expected_type = sp.csr_array
+    else:
+        expected_type = type(X)
+    X = indexable(X)[0]
+    assert isinstance(X, expected_type)

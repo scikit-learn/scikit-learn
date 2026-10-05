@@ -1,0 +1,2 @@
+- Fitting in :class:`sklearn.ensemble.HistGradientBoostingClassifier` and :class:`sklearn.ensemble.HistGradientBoostingRegressor` was optimized to be faster, by speeding up assignment of bins.
+  By :user:`Itamar Turner-Trauring <itamarst>`.

@@ -12,6 +12,7 @@ from warnings import warn
 
 import numpy as np
 from scipy.optimize import minimize
+from scipy.sparse import issparse
 
 from sklearn.base import (
     BaseEstimator,
@@ -24,7 +25,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import pairwise_distances
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils.extmath import softmax
+from sklearn.utils.extmath import safe_sparse_dot, softmax
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.random import check_random_state
@@ -131,8 +132,6 @@ class NeighborhoodComponentsAnalysis(
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     n_iter_ : int
         Counts the number of iterations performed by the optimizer.
 
@@ -228,8 +227,9 @@ class NeighborhoodComponentsAnalysis(
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The training samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training samples. Sparse matrices are only supported for
+            ``init`` in ``['pca', 'random', 'identity']``.
 
         y : array-like of shape (n_samples,)
             The corresponding training labels.
@@ -240,7 +240,15 @@ class NeighborhoodComponentsAnalysis(
             Fitted estimator.
         """
         # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = validate_data(self, X, y, ensure_min_samples=2)
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            validate_separately=(
+                {"accept_sparse": True, "ensure_min_samples": 2},
+                {"accept_sparse": False, "ensure_2d": False},
+            ),
+        )
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
@@ -350,8 +358,9 @@ class NeighborhoodComponentsAnalysis(
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Data samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training samples. Sparse matrices are only supported for
+            ``init`` in ``['pca', 'random', 'identity']``.
 
         Returns
         -------
@@ -365,17 +374,18 @@ class NeighborhoodComponentsAnalysis(
         """
 
         check_is_fitted(self)
-        X = validate_data(self, X, reset=False)
+        X = validate_data(self, X, reset=False, accept_sparse=True)
 
-        return np.dot(X, self.components_.T)
+        return safe_sparse_dot(X, self.components_.T, dense_output=True)
 
     def _initialize(self, X, y, init):
         """Initialize the transformation.
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The training samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training samples. Sparse matrices are only supported for
+            ``init`` in ``['pca', 'random', 'identity']``.
 
         y : array-like of shape (n_samples,)
             The training labels.
@@ -396,6 +406,11 @@ class NeighborhoodComponentsAnalysis(
         elif isinstance(init, np.ndarray):
             pass
         else:
+            if issparse(X) and init not in ("pca", "random", "identity"):
+                raise ValueError(
+                    "Sparse input is only supported for init in "
+                    "['pca', 'random', 'identity']"
+                )
             n_samples, n_features = X.shape
             n_components = self.n_components or n_features
             if init == "auto":
@@ -491,7 +506,9 @@ class NeighborhoodComponentsAnalysis(
         t_funcall = time.time()
 
         transformation = transformation.reshape(-1, X.shape[1])
-        X_embedded = np.dot(X, transformation.T)  # (n_samples, n_components)
+        X_embedded = safe_sparse_dot(
+            X, transformation.T, dense_output=True
+        )  # (n_samples, n_components)
 
         # Compute softmax distances
         p_ij = pairwise_distances(X_embedded, squared=True)
@@ -507,7 +524,9 @@ class NeighborhoodComponentsAnalysis(
         weighted_p_ij = masked_p_ij - p_ij * p
         weighted_p_ij_sym = weighted_p_ij + weighted_p_ij.T
         np.fill_diagonal(weighted_p_ij_sym, -weighted_p_ij.sum(axis=0))
-        gradient = 2 * X_embedded.T.dot(weighted_p_ij_sym).dot(X)
+        gradient = 2 * safe_sparse_dot(
+            X_embedded.T.dot(weighted_p_ij_sym), X, dense_output=True
+        )
         # time complexity of the gradient: O(n_components x n_samples x (
         # n_samples + n_features))
 
@@ -526,6 +545,11 @@ class NeighborhoodComponentsAnalysis(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.target_tags.required = True
+        tags.input_tags.sparse = isinstance(self.init, str) and self.init in (
+            "pca",
+            "random",
+            "identity",
+        )
         return tags
 
     @property

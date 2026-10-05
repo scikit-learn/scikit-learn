@@ -82,3 +82,8 @@ def setup(app):
     # Need to be triggered after `pydata_sphinx_theme.toctree.add_toctree_functions`,
     # and since default priority is 500 we set 900 for safety
     app.connect("html-page-context", override_pst_pagetoc, priority=900)
+    return {
+        "version": "0.1",
+        "parallel_read_safe": True,
+        "parallel_write_safe": True,
+    }

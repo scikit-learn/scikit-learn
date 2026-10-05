@@ -12,17 +12,18 @@ from sklearn.callback._callback_context import (
     _from_reconstruction_attributes,
     get_context_path,
 )
-from sklearn.callback.tests._utils import (
+from sklearn.callback.tests._common.callbacks import (
+    NotRequiredKwargsCallback,
+    RecordingAutoPropagatedCallback,
+    RecordingCallback,
+    StopFitCallback,
+)
+from sklearn.callback.tests._common.estimators import (
     MaxIterEstimator,
     MetaEstimator,
     NoCallbackEstimator,
     NoSubtaskEstimator,
-    NotRequiredKwargsCallback,
-    NotValidHookCallback,
     ParentFitEstimator,
-    RecordingAutoPropagatedCallback,
-    RecordingCallback,
-    StopFitCallback,
     ThirdPartyEstimator,
 )
 
@@ -253,23 +254,6 @@ def test_callback_ctx_removed_after_fit(estimator_class):
     assert not hasattr(estimator, "_callback_fit_ctx")
 
 
-def test_inner_estimator_no_callback_support():
-    """Check that meta estimators can have sub estimators without callback support.
-
-    No error is raised when the sub-estimator does not support callbacks. If callbacks
-    would be propagated, a warning is raised instead.
-    """
-    estimator = NoCallbackEstimator()
-    meta_estimator = MetaEstimator(estimator)
-    meta_estimator.set_callbacks(RecordingAutoPropagatedCallback())
-
-    with pytest.warns(
-        UserWarning,
-        match="The estimator NoCallbackEstimator does not support callbacks.",
-    ):
-        meta_estimator.fit()
-
-
 def test_estimator_without_subtask():
     """Check that callback support works for an estimator without subtasks.
 
@@ -351,7 +335,8 @@ def test_autopropagation_to_callback_agnostic_subestimator():
     """Check the number of hook calls when the sub-estimator doesn't support callbacks.
 
     The number of task begins and ends is just the number of nodes in the context tree
-    of the meta-estimator.
+    of the meta-estimator. Also check that the warning for no callback support in
+    sub-estimator is raised once.
     """
     n_outer, n_inner = 2, 3
     callback = RecordingAutoPropagatedCallback()
@@ -361,26 +346,17 @@ def test_autopropagation_to_callback_agnostic_subestimator():
 
     with pytest.warns(
         UserWarning,
-        match="The estimator NoCallbackEstimator does not support callbacks.",
-    ):
+        match="will not be propagated to NoCallbackEstimator",
+    ) as caught_warnings:
         meta_estimator.fit()
+
+    assert len(caught_warnings) == 1
 
     assert callback.count_hooks("setup") == 1
     expected_n_tasks = np.sum(np.cumprod([1, n_outer, n_inner]))
     assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
     assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
     assert callback.count_hooks("teardown") == 1
-
-
-# TODO(callbacks): should be a common test in a dev test suite instead of a check
-# in the hook calls to avoid repeating the same check for each call of the same hook.
-def test_hook_calling_invalid_kwargs_out():
-    """Check that a callback with invalid kwargs in its signatures raises an error."""
-    estimator = MaxIterEstimator()
-    context = estimator.set_callbacks(NotValidHookCallback())._init_callback_context()
-    msg = r"on_fit_task_begin .* has parameters that are not valid"
-    with pytest.raises(TypeError, match=msg):
-        context.call_on_fit_task_begin(estimator=estimator, X=1, y=2)
 
 
 def test_hook_calling_return_value():

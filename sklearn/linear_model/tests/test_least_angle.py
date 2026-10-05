@@ -206,7 +206,7 @@ def test_no_path_all_precomputed():
 
 
 @pytest.mark.parametrize(
-    "classifier", [linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC]
+    "classifier", (linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC)
 )
 def test_lars_precompute(classifier):
     # Check for different values of precompute

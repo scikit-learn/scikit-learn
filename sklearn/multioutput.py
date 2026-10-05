@@ -24,7 +24,7 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.model_selection import cross_val_predict
-from sklearn.utils import Bunch, check_random_state, get_tags
+from sklearn.utils import check_random_state, get_tags
 from sklearn.utils._param_validation import HasMethods, StrOptions
 from sklearn.utils._response import _get_response_values
 from sklearn.utils._sparse import _align_api_if_sparse
@@ -32,6 +32,7 @@ from sklearn.utils._user_interface import _print_elapsed_time
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -179,12 +180,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                     "Underlying estimator does not support sample weights."
                 )
 
-            if sample_weight is not None:
-                routed_params = Bunch(
-                    estimator=Bunch(partial_fit=Bunch(sample_weight=sample_weight))
-                )
-            else:
-                routed_params = Bunch(estimator=Bunch(partial_fit=Bunch()))
+            sw = {"sample_weight": sample_weight} if sample_weight is not None else {}
+            routed_params = _manual_routing({"estimator": {"partial_fit": sw}})
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_estimator)(
@@ -229,8 +226,6 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
 
-            .. versionadded:: 0.23
-
         Returns
         -------
         self : object
@@ -266,10 +261,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                     "Underlying estimator does not support sample weights."
                 )
 
-            fit_params_validated = _check_method_params(X, params=fit_params)
-            routed_params = Bunch(estimator=Bunch(fit=fit_params_validated))
+            fit_kwargs = dict(_check_method_params(X, params=fit_params))
             if sample_weight is not None:
-                routed_params.estimator.fit["sample_weight"] = sample_weight
+                fit_kwargs["sample_weight"] = sample_weight
+            routed_params = _manual_routing({"estimator": {"fit": fit_kwargs}})
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
@@ -346,8 +341,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     simple strategy for extending regressors that do not natively support
     multi-target regression.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     estimator : estimator object
@@ -366,9 +359,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         ``-1`` means using all available processes / threads.
         See :term:`Glossary <n_jobs>` for more details.
 
-        .. versionchanged:: 0.20
-            `n_jobs` default changed from `1` to `None`.
-
     Attributes
     ----------
     estimators_ : list of ``n_output`` estimators
@@ -377,8 +367,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying `estimator` exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -469,9 +457,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         ``-1`` means using all available processes / threads.
         See :term:`Glossary <n_jobs>` for more details.
 
-        .. versionchanged:: 0.20
-            `n_jobs` default changed from `1` to `None`.
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -483,8 +468,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying `estimator` exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -533,8 +516,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
 
-            .. versionadded:: 0.23
-
         Returns
         -------
         self : object
@@ -573,11 +554,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
                 such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
-
-            .. versionchanged:: 0.19
-                This function now returns a list of arrays where the length of
-                the list is ``n_outputs``, and each array is (``n_samples``,
-                ``n_classes``) for that particular output.
         """
         check_is_fitted(self)
         results = [estimator.predict_proba(X) for estimator in self.estimators_]
@@ -719,8 +695,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method of each step.
 
-            .. versionadded:: 0.23
-
         Returns
         -------
         self : object
@@ -776,7 +750,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch(estimator=Bunch(fit=fit_params))
+            routed_params = _manual_routing({"estimator": {"fit": fit_params}})
 
         if hasattr(self, "chain_method"):
             chain_method = _check_response_method(
@@ -855,8 +829,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     <sphx_glr_auto_examples_multioutput_plot_classifier_chain_yeast.py>` example.
 
     Read more in the :ref:`User Guide <classifierchain>`.
-
-    .. versionadded:: 0.19
 
     Parameters
     ----------
@@ -937,8 +909,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Number of features seen during :term:`fit`. Only defined if the
         underlying `base_estimator` exposes such an attribute when fit.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -968,7 +938,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> X_train, X_test, Y_train, Y_test = train_test_split(
     ...    X, Y, random_state=0
     ... )
-    >>> base_lr = LogisticRegression(solver='lbfgs', random_state=0)
+    >>> base_lr = LogisticRegression()
     >>> chain = ClassifierChain(base_lr, order='random', random_state=0)
     >>> chain.fit(X_train, Y_train).predict(X_test)
     array([[1., 1., 0.],
@@ -1131,8 +1101,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     Read more in the :ref:`User Guide <regressorchain>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     estimator : estimator
@@ -1191,8 +1159,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         Number of features seen during :term:`fit`. Only defined if the
         underlying `base_estimator` exposes such an attribute when fit.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1236,8 +1202,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method at each step
             of the regressor chain.
-
-            .. versionadded:: 0.23
 
         Returns
         -------

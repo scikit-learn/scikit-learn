@@ -120,7 +120,7 @@ def best_low_complexity(cv_results):
 pipe = Pipeline(
     [
         ("reduce_dim", PCA(random_state=42)),
-        ("classify", LogisticRegression(random_state=42, C=0.01, max_iter=1000)),
+        ("classify", LogisticRegression(C=0.01, max_iter=1000)),
     ]
 )
 

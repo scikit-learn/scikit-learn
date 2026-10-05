@@ -387,7 +387,7 @@ def pytest_generate_tests(metafunc):
     See the documentation for the SKLEARN_TESTS_GLOBAL_RANDOM_SEED
     variable for instructions on how to use this fixture.
 
-    https://scikit-learn.org/dev/computing/parallelism.html#sklearn-tests-global-random-seed
+    https://scikit-learn.org/dev/developers/global_configuration.html#sklearn-tests-global-random-seed
 
     """
     # When using pytest-xdist this function is called in the xdist workers.
@@ -496,6 +496,19 @@ def hide_available_pandas(monkeypatch):
 
     def mocked_import(name, *args, **kwargs):
         if name == "pandas":
+            raise ImportError()
+        return import_orig(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mocked_import)
+
+
+@pytest.fixture
+def hide_available_matplotlib(monkeypatch):
+    """Pretend matplotlib was not installed."""
+    import_orig = builtins.__import__
+
+    def mocked_import(name, *args, **kwargs):
+        if name == "matplotlib":
             raise ImportError()
         return import_orig(name, *args, **kwargs)
 

@@ -93,7 +93,7 @@ def _brute_mst(mutual_reachability, min_samples):
 
     Parameters
     ----------
-    mututal_reachability_graph: {ndarray, sparse matrix} of shape \
+    mutual_reachability : {ndarray, sparse matrix} of shape \
             (n_samples, n_samples)
         Weighted adjacency matrix of the mutual reachability graph.
 

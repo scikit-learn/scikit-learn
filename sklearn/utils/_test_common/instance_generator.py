@@ -171,6 +171,7 @@ from sklearn.preprocessing import (
     Normalizer,
     OneHotEncoder,
     PolynomialFeatures,
+    QuantileTransformer,
     SplineTransformer,
     StandardScaler,
     TargetEncoder,
@@ -702,6 +703,17 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="highs-ipm"),
         ],
     },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            # Using subsample != None leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence_on_dense_data test.
+            dict(n_quantiles=2, subsample=None),
+            dict(n_quantiles=5, subsample=None),
+            dict(n_quantiles=1000, subsample=None),
+        ],
+        # Force subsampling to happen so that the weighted subsampling branch is covered
+        "check_sample_weights_not_overwritten": dict(n_quantiles=5, subsample=8),
+    },
     QuadraticDiscriminantAnalysis: {"check_array_api_input": dict(reg_param=1.0)},
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
     Ridge: {
@@ -898,7 +910,7 @@ def _yield_instances_for_check(check, estimator_orig):
         yield estimator
 
 
-PER_ESTIMATOR_XFAIL_CHECKS = {
+PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     AdaBoostClassifier: {
         # TODO: replace by a statistical test, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
@@ -951,9 +963,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    CalibratedClassifierCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-    },
     ColumnTransformer: {
         "check_estimators_empty_data_messages": "FIXME",
         "check_estimators_nan_inf": "FIXME",
@@ -987,11 +996,11 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    GaussianMixture: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
-    },
     GaussianNB: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
+        # TODO: Remove once fixed: https://github.com/pytorch/pytorch/issues/188128
+        "check_array_api_mixed_inputs": (
+            "PyTorch bug when asarray used on array-api-strict boolean array"
+        ),
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     GradientBoostingClassifier: {
@@ -1017,7 +1026,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_requires_y_none": "Doesn't fail gracefully",
     },
     HalvingGridSearchCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1028,7 +1036,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_requires_y_none": "Doesn't fail gracefully",
     },
     HalvingRandomSearchCV: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_fit2d_1sample": (
             "Fail during parameter check since min/max resources requires more samples"
         ),
@@ -1084,9 +1091,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
-    },
-    LinearDiscriminantAnalysis: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
     },
     LabelEncoder: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
@@ -1162,7 +1166,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     Nystroem: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
-        "check_transformer_preserves_dtypes": (
+        "check_transformer_preserve_dtypes": (
             "dtypes are preserved but not at a close enough precision"
         ),
     },
@@ -1176,10 +1180,8 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     PCA: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         # TODO: see gh-33205 for details
         "check_array_api_input": "`linalg.inv` fails because input is singular",
-        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298
@@ -1201,11 +1203,15 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
     },
     PoissonRegressor: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     PolynomialFeatures: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "QuantileTransformer does not yet support sample_weight on sparse data."
+        ),
     },
     RadiusNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
@@ -1263,7 +1269,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         )
     },
     RidgeClassifier: {
-        "check_array_api_mixed_inputs": "mixed array API input support not added yet",
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
         ),
@@ -1354,14 +1359,6 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
 }
 
-# TODO: remove when scipy min version >= 1.11
-if sp_base_version < parse_version("1.11"):
-    PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
-        "check_estimators_pickle": (
-            "scipy < 1.11 implementation of _bsplines does not"
-            "support const memory views."
-        ),
-    }
 
 linear_svr_not_thread_safe = "LinearSVR is not thread-safe https://github.com/scikit-learn/scikit-learn/issues/31883"
 if "pytest_run_parallel" in sys.modules:

@@ -183,8 +183,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <isotonic>`.
 
-    .. versionadded:: 0.13
-
     Parameters
     ----------
     y_min : float, default=None
@@ -221,13 +219,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         Unique ascending `X` values used to interpolate
         the y = f(X) monotonic function.
 
-        .. versionadded:: 0.24
-
     y_thresholds_ : ndarray of shape (n_thresholds,)
         De-duplicated `y` values suitable to interpolate the y = f(X)
         monotonic function.
-
-        .. versionadded:: 0.24
 
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.
@@ -367,9 +361,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples,) or (n_samples, 1)
             Training data.
 
-            .. versionchanged:: 0.24
-               Also accepts 2d array with 1 feature.
-
         y : array-like of shape (n_samples,)
             Training target.
 
@@ -445,9 +436,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         ----------
         T : array-like of shape (n_samples,) or (n_samples, 1)
             Data to transform.
-
-            .. versionchanged:: 0.24
-               Also accepts 2d array with 1 feature.
 
         Returns
         -------

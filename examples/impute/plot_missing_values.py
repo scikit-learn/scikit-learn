@@ -92,9 +92,6 @@ X_miss_california, y_miss_california = add_missing_values(
 #
 
 from sklearn.ensemble import RandomForestRegressor
-
-# To use the experimental IterativeImputer, we need to explicitly ask for it:
-from sklearn.experimental import enable_iterative_imputer  # noqa: F401
 from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline

@@ -16,11 +16,10 @@ from sklearn.utils._array_api import (
     _average,
     _is_numpy_namespace,
     _max_precision_float_dtype,
-    _nanmean,
-    _nansum,
-    device,
+    array_device,
     get_namespace,
     get_namespace_and_device,
+    xpx,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.deprecation import deprecated
@@ -45,8 +44,8 @@ def squared_norm(x):
         The Euclidean norm when x is a vector, the Frobenius norm when x
         is a matrix (2-d array).
     """
-    x = np.ravel(x, order="K")
-    if np.issubdtype(x.dtype, np.integer):
+    xp, _ = get_namespace(x)
+    if _is_numpy_namespace(xp) and np.issubdtype(x.dtype, np.integer):
         warnings.warn(
             (
                 "Array type is integer, np.dot may overflow. "
@@ -54,7 +53,7 @@ def squared_norm(x):
             ),
             UserWarning,
         )
-    return np.dot(x, x)
+    return xp.tensordot(x, x, axes=x.ndim)
 
 
 def row_norms(X, squared=False):
@@ -262,8 +261,6 @@ def randomized_range_finder(
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-        .. versionadded:: 0.18
-
     random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data, i.e. getting the random vectors to initialize the algorithm.
@@ -323,7 +320,7 @@ def _randomized_range_finder(
     Q = random_state.normal(size=(A.shape[1], size))
     if A.dtype == xp.float32 or (
         is_array_api_compliant
-        and _max_precision_float_dtype(xp, device=device(A)) == xp.float32
+        and _max_precision_float_dtype(xp, device=array_device(A)) == xp.float32
     ):
         # Use float32 computation and components if A has a float32 dtype
         # or if A has integer dtype and device doesn't not support float64.
@@ -334,7 +331,7 @@ def _randomized_range_finder(
         Q = Q.astype(np.float32, copy=False)
 
     if is_array_api_compliant:
-        Q = xp.asarray(Q, device=device(A))
+        Q = xp.asarray(Q, device=array_device(A))
     else:
         Q = xp.asarray(Q)
 
@@ -417,7 +414,7 @@ def randomized_svd(
     (problem (1.5), p5).
 
     Refer to
-    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    :ref:`sphx_glr_auto_examples_applications_plot_wikipedia_principal_eigenvector.py`
     for a typical example where the power iteration algorithm is used to rank web pages.
     This algorithm is also known to be used as a building block in Google's PageRank
     algorithm.
@@ -453,8 +450,6 @@ def randomized_svd(
         present a slow decay, `n_iter=0` or `1` should even work fine in theory
         (see [1]_ page 9).
 
-        .. versionchanged:: 0.18
-
     power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
@@ -463,8 +458,6 @@ def randomized_svd(
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-        .. versionadded:: 0.18
-
     transpose : bool or 'auto', default='auto'
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
@@ -472,15 +465,13 @@ def randomized_svd(
         implementation of randomized SVD tend to be a little faster in that
         case.
 
-        .. versionchanged:: 0.18
-
     flip_sign : bool, default=True
         The output of a singular value decomposition is only unique up to a
         permutation of the signs of the singular vectors. If `flip_sign` is
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, default='warn'
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when
         shuffling the data, i.e. getting the random vectors to initialize
         the algorithm. Pass an int for reproducible results across multiple
@@ -650,8 +641,6 @@ def _randomized_eigsh(
 
     The choice of which components to select can be tuned with the `selection`
     parameter.
-
-    .. versionadded:: 0.24
 
     Parameters
     ----------
@@ -964,7 +953,7 @@ def svd_flip(u, v, u_based_decision=True):
     if u_based_decision:
         # columns of u, rows of v, or equivalently rows of u.T and v
         max_abs_u_cols = xp.argmax(xp.abs(u.T), axis=1)
-        shift = xp.arange(u.T.shape[0], device=device(u))
+        shift = xp.arange(u.T.shape[0], device=array_device(u))
         indices = max_abs_u_cols + shift * u.T.shape[1]
         signs = xp.sign(xp.take(xp.reshape(u.T, (-1,)), indices, axis=0))
         u *= signs[np.newaxis, :]
@@ -973,7 +962,7 @@ def svd_flip(u, v, u_based_decision=True):
     else:
         # rows of v, columns of u
         max_abs_v_rows = xp.argmax(xp.abs(v), axis=1)
-        shift = xp.arange(v.shape[0], device=device(v))
+        shift = xp.arange(v.shape[0], device=array_device(v))
         indices = max_abs_v_rows + shift * v.shape[1]
         signs = xp.sign(xp.take(xp.reshape(v, (-1,)), indices, axis=0))
         if u is not None:
@@ -1183,7 +1172,7 @@ def _incremental_mean_and_var(
     last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
-        sum_op = _nansum
+        sum_op = xpx.nansum
     else:
         sum_op = xp.sum
     if sample_weight is not None:
@@ -1367,7 +1356,7 @@ def _nanaverage(a, weights=None):
         return xp.nan
 
     if weights is None:
-        return _nanmean(a, xp=xp)
+        return xpx.nanmean(a, xp=xp)
 
     weights = xp.asarray(weights)
     a, weights = a[~mask], weights[~mask]

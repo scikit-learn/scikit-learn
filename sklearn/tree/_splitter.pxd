@@ -6,9 +6,10 @@
 from sklearn.utils._typedefs cimport (
     float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
 )
+
 from sklearn.tree._criterion cimport Criterion
 from sklearn.tree._tree cimport ParentInfo
-
+from sklearn.utils._bitset cimport BITSET_DTYPE_C
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -16,7 +17,24 @@ cdef struct SplitRecord:
     intp_t pos             # Split samples array at the given position,
     #                      # i.e. count of samples below threshold for feature.
     #                      # pos is >= end if the node is a leaf.
-    float64_t threshold       # Threshold to split at.
+
+    # Threshold for numerical features splits:
+    # - feature values less than or equal to the threshold go left, and values greater than the threshold go right.
+    float64_t threshold
+
+    # Threshold, or hash seed for categorical features splits:
+    # - for SPLIT_CATEGORICAL_BITSET: left_cat_bitset stores the set of
+    #   categories that go to the left child;
+    # - for SPLIT_CATEGORICAL_HASH: left_cat_bitset[0] stores the hash seed.
+    BITSET_DTYPE_C left_cat_bitset
+
+    # The kind of split:
+    # - SPLIT_NUMERIC: numerical split
+    # - SPLIT_CATEGORICAL_BITSET: categorical split using bitset
+    # - SPLIT_CATEGORICAL_HASH: categorical split using hash
+    # - SPLIT_LEAF: no split, the node is a leaf
+    int8_t split_kind
+
     float64_t improvement     # Impurity improvement given parent node.
     float64_t impurity_left   # Impurity of the left split.
     float64_t impurity_right  # Impurity of the right split.
@@ -42,7 +60,7 @@ cdef class Splitter:
 
     cdef intp_t[::1] samples             # Sample indices in X, y
     cdef intp_t n_samples                # X.shape[0]
-    cdef float64_t weighted_n_samples       # Weighted number of samples
+    cdef float64_t weighted_n_samples    # Weighted number of samples
     cdef intp_t[::1] features            # Feature indices in X
     cdef intp_t[::1] constant_features   # Constant features indices
     cdef intp_t n_features               # X.shape[1]
@@ -60,6 +78,9 @@ cdef class Splitter:
     cdef const int8_t[:] monotonic_cst
     cdef bint with_monotonic_cst
     cdef const float64_t[:] sample_weight
+
+    # Per-feature number of categories; -1 means the feature is numerical.
+    cdef const intp_t[:] n_categories
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -84,6 +105,7 @@ cdef class Splitter:
         const float64_t[:, ::1] y,
         const float64_t[:] sample_weight,
         const uint8_t[::1] missing_values_in_feature_mask,
+        const intp_t[::1] n_categories,
     ) except -1
 
     cdef int node_reset(

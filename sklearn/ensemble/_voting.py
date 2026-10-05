@@ -30,6 +30,7 @@ from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -88,13 +89,12 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch()
-            for name in names:
-                routed_params[name] = Bunch(fit={})
-                if "sample_weight" in fit_params:
-                    routed_params[name].fit["sample_weight"] = fit_params[
-                        "sample_weight"
-                    ]
+            sw = (
+                {"sample_weight": fit_params["sample_weight"]}
+                if "sample_weight" in fit_params
+                else {}
+            )
+            routed_params = _manual_routing({name: {"fit": sw} for name in names})
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_single_estimator)(
@@ -196,8 +196,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     Read more in the :ref:`User Guide <voting_classifier>`.
 
-    .. versionadded:: 0.17
-
     Parameters
     ----------
     estimators : list of (str, estimator) tuples
@@ -205,10 +203,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
         :meth:`set_params`.
-
-        .. versionchanged:: 0.21
-            ``'drop'`` is accepted. Using None was deprecated in 0.22 and
-            support was removed in 0.24.
 
     voting : {'hard', 'soft'}, default='hard'
         If 'hard', uses predicted class labels for majority rule voting.
@@ -227,8 +221,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionadded:: 0.18
-
     flatten_transform : bool, default=True
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
@@ -239,8 +231,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     verbose : bool, default=False
         If True, the time elapsed while fitting will be printed as it
         is completed.
-
-        .. versionadded:: 0.23
 
     Attributes
     ----------
@@ -254,8 +244,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
-        .. versionadded:: 0.20
-
     le_ : :class:`~sklearn.preprocessing.LabelEncoder`
         Transformer used to encode the labels during fit and decode during
         prediction. Sub-estimators in ``estimators_`` are fitted on the
@@ -267,8 +255,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying classifier exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -286,7 +272,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-    >>> clf1 = LogisticRegression(random_state=1)
+    >>> clf1 = LogisticRegression()
     >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
     >>> clf3 = GaussianNB()
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
@@ -555,8 +541,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
     Read more in the :ref:`User Guide <voting_regressor>`.
 
-    .. versionadded:: 0.21
-
     Parameters
     ----------
     estimators : list of (str, estimator) tuples
@@ -564,10 +548,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
         :meth:`set_params`.
-
-        .. versionchanged:: 0.21
-            ``'drop'`` is accepted. Using None was deprecated in 0.22 and
-            support was removed in 0.24.
 
     weights : array-like of shape (n_regressors,), default=None
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -583,8 +563,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         If True, the time elapsed while fitting will be printed as it
         is completed.
 
-        .. versionadded:: 0.23
-
     Attributes
     ----------
     estimators_ : list of regressors
@@ -594,13 +572,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
-        .. versionadded:: 0.20
-
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying regressor exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the

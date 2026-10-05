@@ -1085,43 +1085,76 @@ Solvers
 -------
 
 The solvers implemented in the class :class:`LogisticRegression`
-are "lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag" and "saga":
+are "lbfgs", "liblinear", "newton-cholesky", "newton-cd", "newton-cd-gram",
+"newton-cg", "sag" and "saga":
 
-The following table summarizes the penalties and multinomial multiclass supported by each solver:
+The following table summarizes the penalties and multinomial multiclass supported by
+each solver:
 
-+------------------------------+-----------------+-------------+-----------------+-----------------------+-----------+------------+
-|                              |                       **Solvers**                                                                |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cg'** | **'newton-cholesky'** | **'sag'** | **'saga'** |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| L2 penalty                   |     yes     |       yes       |       yes       |     yes               |    yes    |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| L1 penalty                   |     no      |       yes       |       no        |     no                |    no     |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Elastic-Net (L1 + L2)        |     no      |       no        |       no        |     no                |    no     |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| No penalty                   |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| **Multiclass support**       |                                                                                                  |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| multinomial multiclass       |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| **Behaviors**                |                                                                                                  |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Penalize the intercept (bad) |     no      |       yes       |       no        |     no                |    no     |    no      |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Faster for large datasets    |     no      |       no        |       no        |     no                |    yes    |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Robust to unscaled datasets  |     yes     |       yes       |       yes       |     yes               |    no     |    no      |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+|                              |                       **Solvers**                                                                                                         |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cholesky'** | **'newton-cd'** | **'newton-cd-gram'** | **'newton-cg'** | **'sag'** | **'saga'** |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| L2 penalty                   |     yes     |       yes       |     yes               |     yes         |     yes              |       yes       |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| L1 penalty                   |     no      |       yes       |     no                |     yes         |     yes              |       no        |    no     |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| Elastic-Net (L1 + L2)        |     no      |       no        |     no                |     yes         |     yes              |       no        |    no     |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| No penalty                   |     yes     |       no        |     yes               |     yes         |     yes              |       yes       |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| **Multiclass support**       |                                                                                                                                           |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| multinomial multiclass       |     yes     |       no        |     yes               |     yes         |     yes              |       yes       |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| **Behaviors**                |                                                                                                                                           |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| Penalize the intercept (bad) |     no      |       yes       |     no                |     no          |     no               |       no        |    no     |    no      |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| Faster for large datasets    |     no      |       no        |     no                |     no          |     no               |       no        |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| Robust to unscaled datasets  |     yes     |       yes       |     yes               |     yes         |     yes              |       yes       |    no     |    no      |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
 
 The "lbfgs" solver is used by default for its robustness. For
 `n_samples >> n_features`, "newton-cholesky" is a good choice and can reach high
-precision (tiny `tol` values). For large datasets
-the "saga" solver is usually faster (than "lbfgs"), in particular for low precision
-(high `tol`).
+precision (tiny `tol` values). With L1 or Elastic-Net penalty, "newton-cd-gram" is
+a good choice for `n_samples >> n_features`, while "newton-cd" is a good choice for
+`n_features > n_samples` (or both large).
+For large datasets the "saga" solver is usually faster (than "lbfgs"), in particular
+for low precision (high `tol`).
 For large dataset, you may also consider using :class:`SGDClassifier`
 with `loss="log_loss"`, which might be even faster but requires more tuning.
+
+.. dropdown:: References
+
+  The following references explain some of the solvers.
+
+  * For "lbfgs", see documentation of
+    :func:`SciPy minimize <scipy:scipy.optimize.minimize>`
+
+  * "liblinear"
+
+    * Fan, R. E., Chang, K. W., Hsieh, C. J., Wang, X. R., & Lin, C. J. (2008).
+      LIBLINEAR: A library for large linear classification.
+      the Journal of machine Learning research, 9, 1871-1874.
+      https://www.jmlr.org/papers/volume9/fan08a/fan08a.pdf
+
+    * :doi:`Yu, H. F., Huang, F. L., & Lin, C. J. (2011).
+      Dual coordinate descent methods for logistic regression and maximum entropy
+      models. Machine Learning, 85(1), 41-75.
+      <10.1007/s10994-010-5221-8>`
+
+  * SAG -- :arxiv:`Schmidt, M., Le Roux, N., & Bach, F. (2017).
+    Minimizing finite sums with the stochastic average gradient.
+    Mathematical Programming, 162(1), 83-112.
+    <1309.2388>`
+
+  * SAGA -- :arxiv:`Defazio, A., Bach, F., & Lacoste-Julien, S. (2014).
+    SAGA: A fast incremental gradient method with support for non-strongly convex
+    composite objectives. Advances in neural information processing systems, 27.
+    <1407.0202>`
 
 .. _liblinear_differences:
 
@@ -1600,7 +1633,7 @@ estimated only from the determined inliers.
     <https://www.cs.ait.ac.th/~mdailey/cvreadings/Fischler-RANSAC.pdf>`_
     Martin A. Fischler and Robert C. Bolles - SRI International (1981)
   * `"Performance Evaluation of RANSAC Family"
-    <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
+    <https://bmva-archive.org.uk/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
     Sunglok Choi, Taemin Kim and Wonpil Yu - BMVC (2009)
 
 .. _theil_sen_regression:
