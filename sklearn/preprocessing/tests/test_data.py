@@ -11,10 +11,7 @@ from scipy import sparse, stats
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
-from sklearn.callback.tests._utils import (
-    RecordingCallback,
-    skip_callback_test_if_wasm,
-)
+from sklearn.callback.tests._common.callbacks import RecordingCallback
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
@@ -55,6 +52,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
+    skip_callback_test_if_wasm,
     skip_if_32bit,
 )
 from sklearn.utils.estimator_checks import (
@@ -1382,13 +1380,6 @@ def test_quantile_transform_check_error(csc_container):
     # check that an error is raised if input is scalar
     with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         transformer.transform(10)
-    # check that a warning is raised is n_quantiles > n_samples
-    transformer = QuantileTransformer(n_quantiles=100)
-    warn_msg = "n_quantiles is set to n_samples"
-    with pytest.warns(UserWarning, match=warn_msg) as record:
-        transformer.fit(X)
-    assert len(record) == 1
-    assert transformer.n_quantiles_ == X.shape[0]
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
@@ -1545,7 +1536,9 @@ def test_quantile_transform_subsampling_disabled():
 
     expected_references = np.linspace(0, 1, n_quantiles)
     assert_allclose(transformer.references_, expected_references)
-    expected_quantiles = np.quantile(X.ravel(), expected_references)
+    expected_quantiles = np.quantile(
+        X.ravel(), expected_references, method="averaged_inverted_cdf"
+    )
     assert_allclose(transformer.quantiles_.ravel(), expected_quantiles)
 
 
@@ -1674,6 +1667,69 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     quantiles = qt.quantiles_[:, 0]
     assert len(quantiles) == 100
     assert all(np.diff(quantiles) >= 0)
+
+
+def test_quantile_transformer_sample_weight_nans():
+    """Check that NaNs are ignored, regardless of their weight."""
+    # Compare quantiles estimated from X with no NaNs and X extended with additional
+    # rows of NaNs
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(20, 2))
+    sample_weight = rng.uniform(0, 5, size=20)
+    X_nan = np.vstack([X, np.full((5, 2), np.nan)])
+    sample_weight_nan = np.hstack([sample_weight, rng.uniform(0, 5, size=5)])
+
+    params = {"n_quantiles": 10, "subsample": None}
+    qt = QuantileTransformer(**params).fit(X, sample_weight=sample_weight)
+    qt_nan = QuantileTransformer(**params).fit(X_nan, sample_weight=sample_weight_nan)
+    assert_allclose(qt.quantiles_, qt_nan.quantiles_)
+
+
+def test_quantile_transformer_sparse_subsampling():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/32585
+
+    subsample = 500
+    qt = QuantileTransformer(
+        ignore_implicit_zeros=True,
+        subsample=subsample,
+        n_quantiles=50,
+        random_state=0,
+    )
+
+    # create a very sparse X matrix with two very similar columns:
+    # (`n` bigger than `subsample ** 2`)
+    n, d = 2 * subsample**2, 2
+    # one column has size `subsample - 1`, the other one has size `subsample + 1`
+    col = np.repeat([0, 1], [subsample - 1, subsample + 1])
+    # choose some row indices (doesn't matter in this example):
+    row = np.arange(subsample * 2)
+    # uniform data:
+    data = np.concatenate(
+        (
+            np.linspace(1, 2, num=subsample - 1),
+            np.linspace(1, 2, num=subsample + 1),
+        )
+    )
+
+    X = sparse.csc_array((data, (row, col)), shape=(n, d))
+
+    qt.fit(X)
+    quantiles = qt.quantiles_.T
+    # we ignore zeros, and values are strictly positive so:
+    assert (qt.quantiles_ > 0).all()
+    # guard against the historical failure mode where one sparse column
+    # could end up with degenerate fitted quantiles under subsampling:
+    assert not np.all(quantiles[1] == quantiles[1][0])
+
+    # given that X[:, 0] and X[:, 1] are very similar,
+    # you would expect similar quantiles:
+    assert np.allclose(quantiles[0], quantiles[1], rtol=0.1)
+
+    # if we don't ignore implicit zeros, most quantiles are zeros:
+    qt = clone(qt).set_params(ignore_implicit_zeros=False)
+    quantiles = qt.fit(X).quantiles_
+    assert np.isclose(quantiles, 0).mean() > 0.9
 
 
 def test_robust_scaler_invalid_range():

@@ -14,6 +14,7 @@ import joblib
 import narwhals.stable.v2 as nw
 import numpy as np
 import scipy.sparse as sp
+from numpy.exceptions import ComplexWarning
 
 from sklearn import get_config as _get_config
 from sklearn.exceptions import (
@@ -32,11 +33,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
-from sklearn.utils.fixes import (
-    ComplexWarning,
-    _object_dtype_isnan,
-    _preserve_dia_indices_dtype,
-)
+from sklearn.utils.fixes import _object_dtype_isnan, _preserve_dia_indices_dtype
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -563,12 +560,6 @@ def _ensure_sparse_format(
         - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
           be infinite.
 
-        .. versionadded:: 0.20
-           ``ensure_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
     accept_large_sparse : bool
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse will cause it to be accepted only
@@ -775,8 +766,6 @@ def check_array(
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse=False will cause it to be accepted
         only if its indices are stored with a 32-bit dtype.
-
-        .. versionadded:: 0.20
 
     dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
@@ -1243,8 +1232,6 @@ def check_X_y(
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse will cause it to be accepted only
         if its indices are stored with a 32-bit dtype.
-
-        .. versionadded:: 0.20
 
     dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
