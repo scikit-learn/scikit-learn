@@ -254,10 +254,10 @@ def test_parallel_thread_map_preserves_config() -> None:
     """
     with config_context(working_memory=123):
         results = set(
-            _parallel_thread_map(-1, lambda _: get_working_memory(), range(100))
+            _parallel_thread_map(2, lambda _: get_working_memory(), range(100))
         )
 
-    assert_array_equal(results, {123})
+    assert results == {123}
 
 
 def test_parallel_thread_map_warnings_settings():
@@ -267,4 +267,4 @@ def test_parallel_thread_map_warnings_settings():
     warnings.simplefilter("error", category=ConvergenceWarning)
 
     with pytest.raises(ConvergenceWarning):
-        list(_parallel_thread_map(-1, lambda _: raise_warning(), range(2)))
+        list(_parallel_thread_map(2, lambda _: raise_warning(), range(2)))
