@@ -59,7 +59,12 @@ from sklearn.utils._array_api import (
 from sklearn.utils._indexing import _array_indexing
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.extmath import row_norms, softmax
-from sklearn.utils.fixes import _get_additional_lbfgs_options_dict, _is_gil_enabled
+from sklearn.utils.fixes import (
+    _get_additional_lbfgs_options_dict,
+    _is_gil_enabled,
+    parse_version,
+    sp_version,
+)
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -391,9 +396,6 @@ def _logistic_regression_path(
     -----
     You might get slightly different results with the solver liblinear than
     with the others since this uses LIBLINEAR which penalizes the intercept.
-
-    .. versionchanged:: 0.19
-        The "copy" parameter was removed.
     """
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
@@ -431,13 +433,6 @@ def _logistic_regression_path(
             " (n_classes >= 3). Either use another solver or wrap the "
             "estimator in a OneVsRestClassifier to keep applying a "
             "one-versus-rest scheme."
-        )
-
-    # TODO(newton-cd): add multiclass support
-    if solver == "newton-cd" and not is_binary:
-        raise ValueError(
-            f"The '{solver}' solver does not support multiclass classification"
-            f" (n_classes >= 3); got {n_classes=}."
         )
 
     random_state = check_random_state(random_state)
@@ -1077,9 +1072,6 @@ class LogisticRegression(
            `solver` below, to know the compatibility between the penalty and
            solver.
 
-        .. versionadded:: 0.19
-           l1 penalty with SAGA solver (allowing 'multinomial' + L1)
-
         .. deprecated:: 1.8
            `penalty` was deprecated in version 1.8 and will be removed in 1.10.
            Use `l1_ratio` and `C` instead. `l1_ratio=0` for `penalty='l2'`,
@@ -1151,9 +1143,6 @@ class LogisticRegression(
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-        .. versionadded:: 0.17
-           *class_weight='balanced'*
-
     random_state : int, RandomState instance, default=None
         Only used for `solver` == 'sag', 'saga' or 'liblinear' to shuffle the
         data. It has no effect on the other solvers.
@@ -1191,7 +1180,7 @@ class LogisticRegression(
            ================= ======================== ======================
            'lbfgs'           l1_ratio=0               yes
            'liblinear'       l1_ratio=1 or l1_ratio=0 no
-           'newton-cd'       0<=l1_ratio<=1           no
+           'newton-cd'       0<=l1_ratio<=1           yes
            'newton-cd-gram'  0<=l1_ratio<=1           yes
            'newton-cg'       l1_ratio=0               yes
            'newton-cholesky' l1_ratio=0               yes
@@ -1210,13 +1199,6 @@ class LogisticRegression(
            :ref:`Table <logistic_regression_solvers>`
            summarizing solver/penalty supports.
 
-        .. versionadded:: 0.17
-           Stochastic Average Gradient (SAG) descent solver. Multinomial support in
-           version 0.18.
-        .. versionadded:: 0.19
-           SAGA solver.
-        .. versionchanged:: 0.22
-           The default solver changed from 'liblinear' to 'lbfgs' in 0.22.
         .. versionadded:: 1.2
            newton-cholesky solver. Multinomial support in version 1.6.
 
@@ -1231,9 +1213,6 @@ class LogisticRegression(
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
-
-        .. versionadded:: 0.17
-           *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
     n_jobs : int, default=None
         Does not have any effect.
@@ -1266,8 +1245,6 @@ class LogisticRegression(
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1276,11 +1253,6 @@ class LogisticRegression(
 
     n_iter_ : ndarray of shape (1, )
         Actual number of iterations for all classes.
-
-        .. versionchanged:: 0.20
-
-            In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
-            ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
     See Also
     --------
@@ -1424,9 +1396,6 @@ class LogisticRegression(
             Array of weights that are assigned to individual samples.
             If not provided, then each sample is given unit weight.
 
-            .. versionadded:: 0.17
-               *sample_weight* support to LogisticRegression.
-
         Returns
         -------
         self
@@ -1550,6 +1519,15 @@ class LogisticRegression(
             )
             # Avoid overriding the input sample_weight.
             sample_weight = sample_weight * class_weight_
+
+        if solver == "newton-cd" and n_classes >= 3 and sparse.issparse(X):
+            # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+            if sp_version < parse_version("1.17.0"):
+                raise ValueError(
+                    "Solver 'newton-cd' supports sparse X in a multiclass setting "
+                    "(n_classes >= 3) only with scipy >= 1.17."
+                )
+            X = sparse.csc_array(X)
 
         # With lbfgs, the fit task will have a subtask even if max_iter is 0.
         # There's also always one extra empty subtask due to the scipy.optimize.minimize
@@ -1789,9 +1767,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     dual : bool, default=False
         Dual (constrained) or primal (regularized, see also
         :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
@@ -1862,7 +1837,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            ================= ======================== ======================
            'lbfgs'           l1_ratio=0               yes
            'liblinear'       l1_ratio=1 or l1_ratio=0 no
-           'newton-cd'       0<=l1_ratio<=1           no
+           'newton-cd'       0<=l1_ratio<=1           yes
            'newton-cd-gram'  0<=l1_ratio<=1           yes
            'newton-cg'       l1_ratio=0               yes
            'newton-cholesky' l1_ratio=0               yes
@@ -1875,11 +1850,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            with approximately the same scale. You can preprocess the data with
            a scaler from :mod:`sklearn.preprocessing`.
 
-        .. versionadded:: 0.17
-           Stochastic Average Gradient (SAG) descent solver. Multinomial support in
-           version 0.18.
-        .. versionadded:: 0.19
-           SAGA solver.
         .. versionadded:: 1.2
            newton-cholesky solver. Multinomial support in version 1.6.
 
@@ -1899,9 +1869,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
-
-        .. versionadded:: 0.17
-           class_weight == 'balanced'
 
     n_jobs : int, default=None
         Number of CPU cores used during the cross-validation loop.
@@ -2033,8 +2000,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2320,11 +2285,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         class_labels = move_to(class_labels, xp=np, device="cpu")
 
-        if n_classes >= 3 and solver == "newton-cd" and sparse.issparse(X):
-            raise ValueError(
-                f"Solver 'newton-cd' does not support sparse X for multiclass settings"
-                f" (n_classes >= 3); got {n_classes=}."
-            )
+        if solver == "newton-cd" and n_classes >= 3 and sparse.issparse(X):
+            # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+            if sp_version < parse_version("1.17.0"):
+                raise ValueError(
+                    "Solver 'newton-cd' supports sparse X in a multiclass setting "
+                    "(n_classes >= 3) only with scipy >= 1.17."
+                )
+            X = sparse.csr_array(X)
 
         if solver in ["sag", "saga"]:
             max_squared_sum = row_norms(X, squared=True).max()
