@@ -419,10 +419,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         X_val : array-like of shape (n_val, n_features)
             Additional sample of features for validation used in early stopping.
 
-            In a :class:`~pipeline.Pipeline`, `X_val` is transformed like `X` by default
-            (`transform_input`). Passing it through the pipeline requires metadata
-            routing; with auto-requests also enabled, `X_val`, `y_val` and
-            `sample_weight_val` are requested automatically
+            To pass `X_val` through a :class:`~pipeline.Pipeline`, enable metadata
+            routing. The pipeline then transforms `X_val` like `X` by default (see
+            `transform_input`). Enable auto-requests as well if you want `X_val`,
+            `y_val` and `sample_weight_val` requested without `set_fit_request`
             (:func:`~sklearn.set_config`). See
             :ref:`metadata_routing_auto_request_user`.
 
