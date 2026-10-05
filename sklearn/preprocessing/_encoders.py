@@ -115,10 +115,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 local_decoder = {}
                 count_sort_idx = np.argsort(counts)
                 sorted_unique_vals = unique_vals[count_sort_idx]
+                np.flip(sorted_unique_vals)
                 encoder_mapping = dict()
                 for idx, val in enumerate(sorted_unique_vals):
                     encoder_mapping[val] = idx
                     local_decoder[idx] = val
+                
                 if compute_counts:
                     cats =  np.array(list(encoder_mapping.keys()))
                     category_counts.append(counts)
@@ -1297,9 +1299,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
-        - 'frequency' : Determine categories automatically based on the most
-          frequency of the samples.The least frequent is encoded 0 the second
-          lest frequent is encoded 1 and so on. 
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values, and should be sorted in case of numeric values.
