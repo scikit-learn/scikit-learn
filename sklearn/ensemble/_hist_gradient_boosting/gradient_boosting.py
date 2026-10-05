@@ -414,8 +414,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         sample_weight : array-like of shape (n_samples,) default=None
             Weights of training data.
 
-            .. versionadded:: 0.23
-
         X_val : array-like of shape (n_val, n_features)
             Additional sample of features for validation used in early stopping.
 
@@ -1399,8 +1397,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
-    .. versionadded:: 0.21
-
     Parameters
     ----------
     loss : {'squared_error', 'absolute_error', 'gamma', 'poisson', 'quantile'}, \
@@ -1412,9 +1408,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         "gamma" and "poisson" losses internally use a log-link, "gamma"
         requires ``y > 0`` and "poisson" requires ``y >= 0``.
         "quantile" uses the pinball loss.
-
-        .. versionchanged:: 0.23
-           Added option 'poisson'.
 
         .. versionchanged:: 1.1
            Added option 'quantile'.
@@ -1488,8 +1481,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Read more in the :ref:`User Guide <categorical_support_gbdt>` and
         :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
 
-        .. versionadded:: 0.24
-
         .. versionchanged:: 1.2
            Added support for feature names.
 
@@ -1512,8 +1503,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         :ref:`monotonic_cst_features_names` for a usage example.
 
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
-
-        .. versionadded:: 0.23
 
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
@@ -1549,8 +1538,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         If 'auto', early stopping is enabled if the sample size is larger than
         10000 or if `X_val` and `y_val` are passed to `fit`. If True, early stopping
         is enabled, otherwise early stopping is disabled.
-
-        .. versionadded:: 0.23
 
     scoring : str or callable or None, default='loss'
         Scoring method to use for early stopping. Only used if `early_stopping`
@@ -1617,7 +1604,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1739,8 +1725,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
 
-        .. versionadded:: 0.24
-
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -1801,8 +1785,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     `LightGBM <https://github.com/lightgbm-org/LightGBM>`_.
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
-
-    .. versionadded:: 0.21
 
     Parameters
     ----------
@@ -1882,8 +1864,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
-        .. versionadded:: 0.24
-
         .. versionchanged:: 1.2
            Added support for feature names.
 
@@ -1908,8 +1888,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
-
-        .. versionadded:: 0.23
 
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
@@ -1945,8 +1923,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         If 'auto', early stopping is enabled if the sample size is larger than
         10000 or if `X_val` and `y_val` are passed to `fit`. If True, early stopping
         is enabled, otherwise early stopping is disabled.
-
-        .. versionadded:: 0.23
 
     scoring : str or callable or None, default='loss'
         Scoring method to use for early stopping. Only used if `early_stopping`
@@ -2025,7 +2001,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -2151,8 +2126,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
-
-        .. versionadded:: 0.24
 
         Parameters
         ----------
