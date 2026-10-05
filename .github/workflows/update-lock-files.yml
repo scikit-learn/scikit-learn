@@ -41,7 +41,8 @@ jobs:
           conda update -n base --all
           conda install -n base conda conda-libmamba-solver -y
           conda config --set solver libmamba
-          conda install -c conda-forge "$(get_dep conda-lock min)" -y
+          conda create -n lock -c conda-forge "$(get_dep conda-lock min)" -y
+          conda activate lock
 
           python build_tools/update_environments_and_lock_files.py ${{ matrix.update_script_args }}
 
