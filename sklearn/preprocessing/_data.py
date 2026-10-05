@@ -351,8 +351,6 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             sensitive to out-of-range inputs (e.g. linear models). Use with care,
             as clipping can distort the distribution of test data.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     min_ : ndarray of shape (n_features,)
@@ -363,31 +361,17 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Per feature relative scaling of the data. Equivalent to
         ``(max - min) / (X.max(axis=0) - X.min(axis=0))``
 
-        .. versionadded:: 0.17
-           *scale_* attribute.
-
     data_min_ : ndarray of shape (n_features,)
         Per feature minimum seen in the data
-
-        .. versionadded:: 0.17
-           *data_min_*
 
     data_max_ : ndarray of shape (n_features,)
         Per feature maximum seen in the data
 
-        .. versionadded:: 0.17
-           *data_max_*
-
     data_range_ : ndarray of shape (n_features,)
         Per feature range ``(data_max_ - data_min_)`` seen in the data
 
-        .. versionadded:: 0.17
-           *data_range_*
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     n_samples_seen_ : int
         The number of samples processed by the estimator.
@@ -654,10 +638,6 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
-    .. versionadded:: 0.17
-       *minmax_scale* function interface
-       to :class:`~sklearn.preprocessing.MinMaxScaler`.
-
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
@@ -812,9 +792,6 @@ class StandardScaler(
         as-is, giving a scaling factor of 1. `scale_` is equal to `None`
         when `with_std=False`.
 
-        .. versionadded:: 0.17
-           *scale_*
-
     mean_ : ndarray of shape (n_features,) or None
         The mean value for each feature in the training set.
         Equal to ``None`` when ``with_mean=False`` and ``with_std=False``.
@@ -826,8 +803,6 @@ class StandardScaler(
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -917,9 +892,6 @@ class StandardScaler(
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample.
 
-            .. versionadded:: 0.24
-               parameter *sample_weight* support to StandardScaler.
-
         Returns
         -------
         self : object
@@ -953,9 +925,6 @@ class StandardScaler(
 
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample.
-
-            .. versionadded:: 0.24
-               parameter *sample_weight* support to StandardScaler.
 
         Returns
         -------
@@ -1203,8 +1172,6 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     scales them down. For an example visualization, refer to :ref:`Compare
     MaxAbsScaler with other scalers <plot_all_scaling_max_abs_scaler_section>`.
 
-    .. versionadded:: 0.17
-
     Parameters
     ----------
     copy : bool, default=True
@@ -1228,16 +1195,11 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     scale_ : ndarray of shape (n_features,)
         Per feature relative scaling of the data.
 
-        .. versionadded:: 0.17
-           *scale_* attribute.
-
     max_abs_ : ndarray of shape (n_features,)
         Per feature maximum absolute value.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1572,8 +1534,6 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     and comparison to other scalers, refer to :ref:`Compare RobustScaler with
     other scalers <plot_all_scaling_robust_scaler_section>`.
 
-    .. versionadded:: 0.17
-
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     Parameters
@@ -1594,8 +1554,6 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         the IQR, i.e., `q_min` is the first quantile and `q_max` is the third
         quantile.
 
-        .. versionadded:: 0.18
-
     copy : bool, default=True
         If `False`, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
@@ -1609,8 +1567,6 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         than 1, the dataset will be scaled down. If less than 1, the dataset
         will be scaled up.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     center_ : array of floats
@@ -1619,13 +1575,8 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     scale_ : array of floats
         The (scaled) interquartile range for each feature in the training set.
 
-        .. versionadded:: 0.17
-           *scale_* attribute.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1870,8 +1821,6 @@ def robust_scale(
         the IQR, i.e., `q_min` is the first quantile and `q_max` is the third
         quantile.
 
-        .. versionadded:: 0.18
-
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
         This is not guaranteed to always work in place; e.g. if the data is
@@ -1884,8 +1833,6 @@ def robust_scale(
         `q_max` and `q_min` for a standard normal distribution is greater
         than 1, the dataset will be scaled down. If less than 1, the dataset
         will be scaled up.
-
-        .. versionadded:: 0.24
 
     Returns
     -------
@@ -2130,8 +2077,6 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -2326,8 +2271,6 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -2472,8 +2415,6 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2692,8 +2633,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
-    .. versionadded:: 0.19
-
     Parameters
     ----------
     n_quantiles : int, default=1000
@@ -2748,8 +2687,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -3247,9 +3184,6 @@ def quantile_transform(
         a numpy array with an int dtype, a copy will be returned even with
         copy=False.
 
-        .. versionchanged:: 0.23
-            The default value of `copy` changed from False to True in 0.23.
-
     Returns
     -------
     Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
@@ -3339,8 +3273,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     method : {'yeo-johnson', 'box-cox'}, default='yeo-johnson'
@@ -3363,8 +3295,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -3745,10 +3675,6 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
 
         - 'yeo-johnson' [1]_, works with positive and negative values
         - 'box-cox' [2]_, only works with strictly positive values
-
-        .. versionchanged:: 0.23
-            The default value of the `method` parameter changed from
-            'box-cox' to 'yeo-johnson' in 0.23.
 
     standardize : bool, default=True
         Set to True to apply zero-mean, unit-variance normalization to the

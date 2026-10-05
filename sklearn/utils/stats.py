@@ -74,9 +74,6 @@ def _weighted_percentile(
     is done in a column-isolated manner: a `NaN` in the second column, does not impact
     the percentile computed for the first column even if `sample_weight` is 1D.
 
-        .. versionchanged:: 0.24
-            Accepts 2D `array`.
-
         .. versionchanged:: 1.7
             Supports handling of `NaN` values.
 
