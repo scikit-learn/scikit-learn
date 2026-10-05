@@ -126,7 +126,7 @@ def _openmp_uses_active_wait():
                 capture_output=True,
                 env=env,
                 text=True,
-                timeout=30,
+                timeout=5,
             )
         except Exception:
             pass
