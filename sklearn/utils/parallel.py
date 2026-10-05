@@ -215,6 +215,10 @@ def _parallel_thread_map(n_jobs, func, *iterables):
     # backend may not support threads (e.g. loky in a daemonic process).
     with joblib.parallel_config(backend="threading"):
         n_jobs = joblib.effective_n_jobs(n_jobs)
+
+    # We use a list so that the config doesn't change, as it might with lazy
+    # generation, and to ensure that calling code doesn't forget to iterate
+    # over the results.
     if n_jobs == 1:
         return list(map(func, *iterables))
 
