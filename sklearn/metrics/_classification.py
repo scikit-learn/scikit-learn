@@ -764,19 +764,34 @@ def multilabel_confusion_matrix(
                 "multilabel classification."
             )
 
-        K = int(present_labels.shape[0])
-        if (
-            _is_numpy_namespace(xp)
-            and K > 0
-            and xp.isdtype(y_true.dtype, ("bool", "signed integer", "unsigned integer"))
-            and xp.isdtype(y_pred.dtype, ("bool", "signed integer", "unsigned integer"))
-            and int(present_labels[0]) == 0
-            and int(present_labels[-1]) == K - 1
-            and int(xp.min(labels)) >= 0
-        ):
-            y_true = y_true.astype(np.int64)
-            y_pred = y_pred.astype(np.int64)
-            sorted_labels = present_labels
+        n_present = int(present_labels.shape[0])
+        integral_kinds = ("bool", "signed integer", "unsigned integer")
+        # Fast path: when present labels are already a dense [0, n_present - 1]
+        # integer range, y_true/y_pred can index a bincount directly and we can
+        # skip the LabelEncoder fit/transform passes. `labels` must be integral
+        # too, otherwise the searchsorted below would map an absent label such
+        # as 0.5 onto the bin of class 1.
+        use_fast_path = (
+            n_present > 0
+            and xp.isdtype(y_true.dtype, integral_kinds)
+            and xp.isdtype(y_pred.dtype, integral_kinds)
+            and xp.isdtype(labels.dtype, integral_kinds)
+        )
+        if use_fast_path:
+            # Cast to int64 so that bool labels can be compared with ints and
+            # passed to searchsorted in every array API namespace.
+            int_labels = xp.astype(labels, xp.int64)
+            int_present_labels = xp.astype(present_labels, xp.int64)
+            use_fast_path = (
+                int_present_labels[0] == 0
+                and int_present_labels[-1] == n_present - 1
+                and xp.min(int_labels) >= 0
+            )
+        if use_fast_path:
+            y_true = xp.astype(y_true, xp.int64)
+            y_pred = xp.astype(y_pred, xp.int64)
+            labels = int_labels
+            sorted_labels = int_present_labels
         else:
             le = LabelEncoder()
             le.fit(labels)
