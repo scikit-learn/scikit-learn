@@ -328,8 +328,6 @@ def fetch_lfw_people(
         object. See below for more information about the `dataset.data` and
         `dataset.target` object.
 
-        .. versionadded:: 0.20
-
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
@@ -368,8 +366,6 @@ def fetch_lfw_people(
         shape (n_samples, n_features) with each row representing one
         sample and each column representing the features. The second
         ndarray of shape (n_samples,) containing the target samples.
-
-        .. versionadded:: 0.20
 
     Examples
     --------

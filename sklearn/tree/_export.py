@@ -178,8 +178,6 @@ def plot_tree(
 
     Read more in the :ref:`User Guide <tree>`.
 
-    .. versionadded:: 0.21
-
     Parameters
     ----------
     decision_tree : decision tree regressor or classifier
@@ -942,9 +940,6 @@ def export_graphviz(
         Handle or name of the output file. If ``None``, the result is
         returned as a string.
 
-        .. versionchanged:: 0.20
-            Default of out_file changed from "tree.dot" to None.
-
     max_depth : int, default=None
         The maximum depth of the representation. If None, the tree is fully
         generated.
@@ -1010,8 +1005,6 @@ def export_graphviz(
     dot_data : str
         String representation of the input tree in GraphViz dot format.
         Only returned if ``out_file`` is None.
-
-        .. versionadded:: 0.18
 
     Examples
     --------

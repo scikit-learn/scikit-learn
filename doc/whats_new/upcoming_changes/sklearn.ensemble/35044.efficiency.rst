@@ -1,0 +1,2 @@
+- Parallelism in :class:`sklearn.ensemble.BaggingClassifier` and :class:`sklearn.ensemble.BaggingRegressor` now uses threads in some cases where this is faster than the default process pool.
+  By :user:`Itamar Turner-Trauring <itamarst>`
