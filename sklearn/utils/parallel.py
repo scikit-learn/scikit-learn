@@ -223,7 +223,6 @@ def _parallel_thread_map(n_jobs, func, *iterables):
         n_jobs, initializer=lambda: set_config(**config)
     ) as executor:
         return list(executor.map(func, *iterables))
-    return gen()
 
 
 def _get_threadpool_controller():
