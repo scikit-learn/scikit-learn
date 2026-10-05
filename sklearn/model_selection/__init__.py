@@ -50,8 +50,8 @@ if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. pyrefly) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
     from sklearn.model_selection._search_successive_halving import (
-        HalvingGridSearchCV,
-        HalvingRandomSearchCV,
+        HalvingGridSearchCV,  # noqa: F401
+        HalvingRandomSearchCV,  # noqa: F401
     )
 
 
