@@ -38,11 +38,15 @@ from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
 from sklearn.utils import check_random_state, shuffle
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (
+    _openmp_effective_n_threads,
+    _openmp_uses_active_wait,
+)
 from sklearn.utils._testing import _convert_container
 from sklearn.utils.fixes import _IS_32BIT
 
 n_threads = _openmp_effective_n_threads()
+active_wait = _openmp_uses_active_wait()
 
 X_classification, y_classification = make_classification(random_state=0)
 X_regression, y_regression = make_regression(random_state=0)
@@ -820,6 +824,7 @@ def test_sum_hessians_are_sample_weight(Loss):
         hessians[:, 0],
         n_bins=bin_mapper.n_bins,
         n_threads=n_threads,
+        active_wait=active_wait,
     )
     histograms = grower.histogram_builder.compute_histograms_brute(
         grower.root.sample_indices

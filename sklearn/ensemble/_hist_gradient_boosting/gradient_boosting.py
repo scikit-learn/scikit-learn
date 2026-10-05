@@ -621,6 +621,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             n_samples,
             n_features,
         )
+        # Only matters with several threads, in which case the heuristic above
+        # already ran the (cached) detection.
+        active_wait = n_threads > 1 and _openmp_uses_active_wait()
 
         # Uses binned data to check for missing values
         has_missing_values = (
@@ -848,6 +851,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     rng=self._feature_subsample_rng,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
+                    active_wait=active_wait,
                 )
                 grower.grow()
 

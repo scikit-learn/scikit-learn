@@ -18,10 +18,14 @@ from sklearn.ensemble._hist_gradient_boosting.splitting import (
     Splitter,
     compute_node_value,
 )
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (
+    _openmp_effective_n_threads,
+    _openmp_uses_active_wait,
+)
 from sklearn.utils._testing import _convert_container
 
 n_threads = _openmp_effective_n_threads()
+active_wait = _openmp_uses_active_wait()
 
 
 def is_increasing(a):
@@ -183,6 +187,7 @@ def test_nodes_values(monotonic_cst, seed):
         monotonic_cst=[monotonic_cst],
         shrinkage=0.1,
         n_threads=n_threads,
+        active_wait=active_wait,
     )
     grower.grow()
 

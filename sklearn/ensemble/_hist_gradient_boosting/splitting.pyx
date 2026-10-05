@@ -18,7 +18,6 @@ from libc.string cimport memcpy
 
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C
 from sklearn.utils._bitset cimport in_bitset, init_bitset, set_bitset
-from sklearn.utils._openmp_helpers import _openmp_uses_active_wait
 from sklearn.utils._typedefs cimport uint8_t
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
@@ -163,6 +162,10 @@ cdef class Splitter:
     rng : Generator
     n_threads : int, default=1
         Number of OpenMP threads to use.
+    active_wait : bool, default=False
+        Whether idle OpenMP threads spin rather than sleep while waiting for
+        work (see `_openmp_uses_active_wait`), which makes multi-threading
+        worth it on smaller workloads.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
@@ -200,7 +203,8 @@ cdef class Splitter:
                  uint8_t hessians_are_constant=False,
                  Y_DTYPE_C feature_fraction_per_split=1.0,
                  rng=np.random.RandomState(),
-                 unsigned int n_threads=1):
+                 unsigned int n_threads=1,
+                 bint active_wait=False):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -217,9 +221,7 @@ cdef class Splitter:
         self.feature_fraction_per_split = feature_fraction_per_split
         self.rng = rng
         self.n_threads = n_threads
-        # Only relevant with more than one thread: skip the detection, which
-        # spawns a subprocess on its first call, when it can't matter.
-        self.active_wait = n_threads > 1 and _openmp_uses_active_wait()
+        self.active_wait = active_wait
 
         # The partition array maps each sample index into the leaves of the
         # tree (a leaf in this context is a node that isn't split yet, not

@@ -217,6 +217,10 @@ class TreeGrower:
         and for sizing it down to avoid parallelizing workloads that are too
         small to benefit from it (e.g. few features or samples) before calling
         this class.
+    active_wait : bool
+        Whether idle OpenMP threads spin rather than sleep while waiting for
+        work (see `_openmp_uses_active_wait`), which makes multi-threading
+        worth it on smaller workloads.
 
     Attributes
     ----------
@@ -263,6 +267,7 @@ class TreeGrower:
         shrinkage=1.0,
         *,
         n_threads,
+        active_wait,
     ):
         self._validate_parameters(
             X_binned,
@@ -329,6 +334,7 @@ class TreeGrower:
             feature_fraction_per_split=feature_fraction_per_split,
             rng=rng,
             n_threads=n_threads,
+            active_wait=active_wait,
         )
         self.X_binned = X_binned
         self.max_leaf_nodes = max_leaf_nodes
