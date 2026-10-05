@@ -208,7 +208,7 @@ def _parallel_thread_map(n_jobs, func, *iterables):
     Returns
     -------
     results : list
-        Results of calling `func(*values)` for each set of values from the input
+        Results of calling ``func(*values)`` for each set of values from the input
         iterables.
     """
     # Resolve n_jobs like `Parallel(require="sharedmem")` would: the active
