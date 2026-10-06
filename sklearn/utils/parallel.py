@@ -135,6 +135,11 @@ def delayed(function):
 class _FuncWrapper:
     """Load the global configuration before calling the function."""
 
+    # Set by sklearn's Parallel. They stay None when the task is dispatched by
+    # joblib's Parallel.
+    config = None
+    warning_filters = None
+
     # Cleared when pickled: an unpickled task may run in another process (or
     # interpreter), with its own warning filters.
     _in_caller_process = True
@@ -154,9 +159,8 @@ class _FuncWrapper:
         return self
 
     def __call__(self, *args, **kwargs):
-        config = getattr(self, "config", {})
-        warning_filters = getattr(self, "warning_filters", [])
-        if not config or not warning_filters:
+        config = self.config
+        if config is None:
             warnings.warn(
                 (
                     "`sklearn.utils.parallel.delayed` should be used with"
@@ -166,25 +170,31 @@ class _FuncWrapper:
                 ),
                 UserWarning,
             )
+            config = {}
 
-        if self._has_caller_warning_filters(warning_filters):
-            warning_filters_context = nullcontext()
-        else:
-            warning_filters_context = _set_warning_filters(warning_filters)
-        with config_context(**config), warning_filters_context:
+        with config_context(**config), self._warning_filters_context():
             return self.function(*args, **kwargs)
 
-    def _has_caller_warning_filters(self, warning_filters):
-        """Whether the task already runs with the caller's warning filters."""
+    def _warning_filters_context(self):
+        """Context that sets the caller's warning filters if the task needs them."""
+        if self.warning_filters is None:
+            # The caller's filters are unknown.
+            return nullcontext()
         if _CONTEXT_AWARE_WARNINGS:
-            # True in the caller's thread, and in threads that inherit the
-            # caller's context (the default on free-threaded builds).
-            return warnings._get_filters() is warning_filters
-        # The filters are shared by all the threads of the process. Setting them
-        # in a task would need catch_warnings, which isn't thread-safe: tasks of
-        # other threads (or other callers) leaving it out of order leave stale or
-        # partially reset filters behind.
-        return self._in_caller_process
+            # Each context has its own filters. The caller's thread, and threads
+            # that inherit the caller's context (the default on free-threaded
+            # builds), already have the caller's filters.
+            if warnings._get_filters() is self.warning_filters:
+                return nullcontext()
+        elif self._in_caller_process:
+            # The filters are shared by all the threads of the process. Setting
+            # them in a task would need catch_warnings, which isn't thread-safe:
+            # tasks of other threads (or other callers) leaving it out of order
+            # leave stale or partially reset filters behind. So the task uses the
+            # filters active when it runs, even if the caller changed them since
+            # Parallel was called (e.g. with a generator output).
+            return nullcontext()
+        return _set_warning_filters(self.warning_filters)
 
 
 @contextmanager
