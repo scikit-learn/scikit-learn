@@ -14,6 +14,7 @@ from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose, assert_array_equal
 
 import sklearn.ensemble._hist_gradient_boosting.gradient_boosting as hgb_module
+from sklearn import config_context
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -44,6 +45,7 @@ from sklearn.utils._openmp_helpers import (
 )
 from sklearn.utils._testing import _convert_container
 from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.metadata_routing import get_routing_for_object
 
 n_threads = _openmp_effective_n_threads()
 active_wait = _openmp_uses_active_wait()
@@ -1025,10 +1027,7 @@ def test_staged_predict(HistGradientBoosting, X, y):
     "Est", (HistGradientBoostingRegressor, HistGradientBoostingClassifier)
 )
 @pytest.mark.parametrize("bool_categorical_parameter", [True, False])
-@pytest.mark.parametrize("missing_value", [np.nan, -1])
-def test_unknown_categories_nan(
-    insert_missing, Est, bool_categorical_parameter, missing_value
-):
+def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter):
     # Make sure no error is raised at predict if a category wasn't seen during
     # fit. We also make sure they're treated as nans.
 
@@ -1048,7 +1047,7 @@ def test_unknown_categories_nan(
     if insert_missing:
         mask = rng.binomial(1, 0.01, size=X.shape).astype(bool)
         assert mask.sum() > 0
-        X[mask] = missing_value
+        X[mask] = np.nan
 
     est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
     assert_array_equal(est.is_categorical_, [False, True])
@@ -1057,7 +1056,7 @@ def test_unknown_categories_nan(
     # unknown categories will be treated as nans
     X_test = np.zeros((10, X.shape[1]), dtype=float)
     X_test[:5, 1] = 30
-    X_test[5:, 1] = missing_value
+    X_test[5:, 1] = np.nan
     assert len(np.unique(est.predict(X_test))) == 1
 
 
@@ -1438,10 +1437,12 @@ def test_class_weights():
     )
 
 
-def test_unknown_category_that_are_negative():
-    """Check that unknown categories that are negative does not error.
+def test_unknown_category_at_predict_time_is_treated_as_missing():
+    """Check that categories unseen at fit time do not error, and are treated
+    like a missing category regardless of their sign.
 
-    Non-regression test for #24274.
+    We used to have a special treatment for negative value:
+    see https://github.com/scikit-learn/scikit-learn/pull/34663/
     """
     rng = np.random.RandomState(42)
     n_samples = 1000
@@ -1455,12 +1456,14 @@ def test_unknown_category_that_are_negative():
         max_iter=10,
     ).fit(X, y)
 
-    # Check that negative values from the second column are treated like a
-    # missing category
+    # Categories unseen at fit time (whether negative or positive) are
+    # treated like a missing category.
     X_test_neg = np.asarray([[1, -2], [3, -4]])
+    X_test_pos = np.asarray([[1, 99], [3, 77]])
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+    assert_allclose(hist.predict(X_test_pos), hist.predict(X_test_nan))
 
 
 @pytest.mark.parametrize(
@@ -1554,6 +1557,20 @@ def test_X_val_raises_with_early_stopping_false():
     ):
         HistGradientBoostingRegressor(early_stopping=False).fit(
             X, y, X_val=X_val, y_val=y_val
+        )
+
+
+@pytest.mark.parametrize(
+    "HistGradientBoosting",
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
+)
+def test_X_val_auto_request_hgb(HistGradientBoosting):
+    """Test that HGB* correctly sets auto-requests on the validation set."""
+    with config_context(enable_metadata_auto_requests=True):
+        hist = HistGradientBoosting()
+        assert all(
+            get_routing_for_object(hist).fit.requests[k] is True
+            for k in ("X_val", "y_val", "sample_weight_val")
         )
 
 
