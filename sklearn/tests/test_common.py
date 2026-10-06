@@ -164,7 +164,7 @@ def test_root_import_all_completeness():
 
 
 @pytest.mark.xfail(_IS_WASM, reason="cannot start subprocess")
-def test_star_import_for_public_modules():
+def test_wildcard_import_for_public_modules():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     modules = [
         name
@@ -172,11 +172,20 @@ def test_star_import_for_public_modules():
         if not name.startswith("_") and name not in {"tests", "conftest"}
     ]
     # Run in a fresh interpreter: this test module imports
-    # sklearn.experimental.enable_halving_search_cv, which would hide
-    # star-import failures. One line per module so the traceback shows which
-    # module failed.
-    # Regression test for https://github.com/scikit-learn/scikit-learn/pull/35038
+    # sklearn.experimental.enable_halving_search_cv, which could hide wildcard
+    # import failures, see for example
+    # https://github.com/scikit-learn/scikit-learn/pull/35038
     code = "\n".join(f"from sklearn.{name} import *" for name in modules)
+    # sanity check to make sure that nothing is imported from deeper than
+    # sklearn.experimental as an import side-effect
+    code += """
+import sys
+
+experimental_modules = [
+    name for name in sys.modules if name.startswith("sklearn.experimental.")
+]
+assert not experimental_modules, experimental_modules
+"""
     assert_run_python_script_without_output(code)
 
 
