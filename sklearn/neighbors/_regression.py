@@ -26,8 +26,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
     Read more in the :ref:`User Guide <regression>`.
 
-    .. versionadded:: 0.9
-
     Parameters
     ----------
     n_neighbors : int, default=5
@@ -120,8 +118,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -259,12 +255,15 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         if weights is None:
             y_pred = np.mean(_y[neigh_ind], axis=1)
         else:
-            y_pred = np.empty((neigh_dist.shape[0], _y.shape[1]), dtype=np.float64)
+            # Weighted sum of the neighbors' targets over the neighbor axis,
+            # for every query and output column. Equivalent to
+            #     np.sum(_y[neigh_ind] * weights[:, :, None], axis=1)
+            # but the einsum avoids materializing that full product. Here
+            # _y[neigh_ind] is (n_queries, n_neighbors, n_outputs) and weights
+            # is (n_queries, n_neighbors).
             denom = np.sum(weights, axis=1)
-
-            for j in range(_y.shape[1]):
-                num = np.sum(_y[neigh_ind, j] * weights, axis=1)
-                y_pred[:, j] = num / denom
+            num = np.einsum("ijk,ij->ik", _y[neigh_ind], weights)
+            y_pred = num / denom[:, None]
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()
@@ -279,8 +278,6 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
     associated of the nearest neighbors in the training set.
 
     Read more in the :ref:`User Guide <regression>`.
-
-    .. versionadded:: 0.9
 
     Parameters
     ----------
@@ -367,8 +364,6 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

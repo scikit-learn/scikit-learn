@@ -85,7 +85,7 @@ def test_estimator_html_repr_total_feature_names(pandas, total_output_features):
     out = estimator_html_repr(ct_cloned)
 
     assert "<div class='total_features'>" in out
-    assert "3 features</div>" in out
+    assert "3 features</span>" in out
     for feature_name in total_output_features:
         assert feature_name in out
 
@@ -166,7 +166,7 @@ def test_get_feature_names_out_exception():
     Xt = union.fit_transform(X)
     html = estimator_html_repr(union)
     assert "1 feature" in html
-    assert "<div> 0 features</div>" not in html
+    assert "<span>0 features</span>" not in html
     assert "identity" in html
 
 
@@ -230,5 +230,38 @@ def test_features_html_structure():
     assert '<table class="features-table">' in html
     assert "<tbody>" in html
     assert "</tbody>" in html
-    assert '<i class="copy-paste-icon"' in html
+    assert '<button type="button" class="copy-paste-icon"' in html
     assert "copyFeatureNamesToClipboard" in html
+
+
+@pytest.mark.parametrize(
+    "num_features, expected_count",
+    [
+        (101, "101"),
+        (200, "200"),
+        (10000, "10,000"),
+        (123456, "123,456"),
+        (1000000, "1,000,000"),
+    ],
+)
+def test_features_html_truncation_format(num_features, expected_count):
+    """Test expected feature count in summary."""
+    from sklearn.utils._repr_html.features import _MAX_DISPLAY_FEATURES
+
+    features = [f"feat{feature_id}" for feature_id in range(num_features)]
+    result = _features_html(features)
+
+    assert f"{_MAX_DISPLAY_FEATURES} of {expected_count} features" in result
+    assert f"feat{_MAX_DISPLAY_FEATURES - 1}" in result
+    assert f"feat{_MAX_DISPLAY_FEATURES}" not in result
+
+
+def test_features_html_at_max_display_limit():
+    """Test that exactly _MAX_DISPLAY_FEATURES features are not truncated."""
+    from sklearn.utils._repr_html.features import _MAX_DISPLAY_FEATURES
+
+    features = [f"feat{feature_id}" for feature_id in range(_MAX_DISPLAY_FEATURES)]
+    result = _features_html(features)
+
+    assert f"{_MAX_DISPLAY_FEATURES} features" in result
+    assert " of " not in result

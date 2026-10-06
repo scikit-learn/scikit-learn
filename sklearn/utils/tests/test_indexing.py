@@ -11,9 +11,7 @@ import sklearn
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils import _safe_indexing, resample, shuffle
 from sklearn.utils._array_api import (
-    device as array_api_device,
-)
-from sklearn.utils._array_api import (
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
@@ -39,7 +37,7 @@ X_toy = np.arange(9).reshape((3, 3))
 
 def test_polars_indexing():
     """Check _safe_indexing for polars as expected."""
-    pl = pytest.importorskip("polars", minversion="0.18.2")
+    pl = pytest.importorskip("polars")
     df = pl.DataFrame(
         {"a": [1, 2, 3, 4], "b": [4, 5, 6, 8], "c": [1, 4, 1, 10]}, orient="row"
     )
@@ -161,12 +159,13 @@ def test_safe_indexing_array_api_support(
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     array_to_index_np = np.arange(16).reshape(4, 4)
-    expected_result = _safe_indexing(array_to_index_np, indexing_key, axis=axis)
+    with sklearn.config_context(array_api_dispatch=False):
+        expected_result = _safe_indexing(array_to_index_np, indexing_key, axis=axis)
     array_to_index_xp = move_to(array_to_index_np, xp=xp, device=device)
 
     with sklearn.config_context(array_api_dispatch=True):
         indexed_array_xp = _safe_indexing(array_to_index_xp, indexing_key, axis=axis)
-        assert array_api_device(indexed_array_xp) == array_api_device(array_to_index_xp)
+        assert array_device(indexed_array_xp) == array_device(array_to_index_xp)
         assert indexed_array_xp.dtype == array_to_index_xp.dtype
 
     assert_allclose(move_to(indexed_array_xp, xp=np, device="cpu"), expected_result)
@@ -419,13 +418,8 @@ def test_safe_indexing_pandas_no_settingwithcopy_warning():
 
     X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
     subset = _safe_indexing(X, [0, 1], axis=0)
-    if hasattr(pd.errors, "SettingWithCopyWarning"):
-        SettingWithCopyWarning = pd.errors.SettingWithCopyWarning
-    else:
-        # backward compatibility for pandas < 1.5
-        SettingWithCopyWarning = pd.core.common.SettingWithCopyWarning
     with warnings.catch_warnings():
-        warnings.simplefilter("error", SettingWithCopyWarning)
+        warnings.simplefilter("error", pd.errors.SettingWithCopyWarning)
         subset.iloc[0, 0] = 10
     # The original dataframe is unaffected by the assignment on the subset:
     assert X.iloc[0, 0] == 1

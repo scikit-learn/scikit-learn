@@ -13,7 +13,12 @@ from sklearn.base import (
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
 )
-from sklearn.utils._array_api import _add_to_diagonal, device, get_namespace
+from sklearn.utils._array_api import (
+    _add_to_diagonal,
+    array_device,
+    check_same_namespace,
+    get_namespace,
+)
 from sklearn.utils.validation import check_array, check_is_fitted, validate_data
 
 
@@ -48,7 +53,7 @@ class _BasePCA(
         exp_var_diff = xp.where(
             exp_var > self.noise_variance_,
             exp_var_diff,
-            xp.asarray(0.0, device=device(exp_var), dtype=exp_var.dtype),
+            xp.asarray(0.0, device=array_device(exp_var), dtype=exp_var.dtype),
         )
         cov = (components_.T * exp_var_diff) @ components_
         _add_to_diagonal(cov, self.noise_variance_, xp)
@@ -90,7 +95,7 @@ class _BasePCA(
         exp_var_diff = xp.where(
             exp_var > self.noise_variance_,
             exp_var_diff,
-            xp.asarray(0.0, device=device(exp_var)),
+            xp.asarray(0.0, device=array_device(exp_var)),
         )
         precision = components_ @ components_.T / self.noise_variance_
         _add_to_diagonal(precision, 1.0 / exp_var_diff, xp)
@@ -135,7 +140,8 @@ class _BasePCA(
             Projection of X in the first principal components, where `n_samples`
             is the number of samples and `n_components` is the number of the components.
         """
-        xp, _ = get_namespace(X, self.components_, self.explained_variance_)
+        check_same_namespace(X, self, attribute="components_", method="transform")
+        xp, _ = get_namespace(X)
 
         check_is_fitted(self)
 
@@ -190,7 +196,10 @@ class _BasePCA(
         If whitening is enabled, inverse_transform will compute the
         exact inverse operation, which includes reversing whitening.
         """
-        xp, _ = get_namespace(X, self.components_, self.explained_variance_)
+        check_same_namespace(
+            X, self, attribute="components_", method="inverse_transform"
+        )
+        xp, _ = get_namespace(X)
 
         check_is_fitted(self)
 

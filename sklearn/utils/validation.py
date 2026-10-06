@@ -14,6 +14,7 @@ import joblib
 import narwhals.stable.v2 as nw
 import numpy as np
 import scipy.sparse as sp
+from numpy.exceptions import ComplexWarning
 
 from sklearn import get_config as _get_config
 from sklearn.exceptions import (
@@ -32,16 +33,12 @@ from sklearn.utils._array_api import (
 from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
-from sklearn.utils.fixes import (
-    ComplexWarning,
-    _object_dtype_isnan,
-    _preserve_dia_indices_dtype,
-)
+from sklearn.utils.fixes import _object_dtype_isnan, _preserve_dia_indices_dtype
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 
-def _nw_into_df_or_series(x):
+def _nw_is_into_df_or_series(x):
     return nw.dependencies.is_into_dataframe(x) or nw.dependencies.is_into_series(x)
 
 
@@ -380,7 +377,7 @@ def _num_samples(x):
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
 
-    if _nw_into_df_or_series(x):
+    if _nw_is_into_df_or_series(x):
         return nw.from_native(x, allow_series=True).shape[0]
 
     if not hasattr(x, "__len__") and not hasattr(x, "shape"):
@@ -464,8 +461,8 @@ def check_consistent_length(*arrays):
 def _make_indexable(iterable):
     """Ensure iterable supports indexing or convert to an indexable variant.
 
-    Convert sparse matrices to csr and other non-indexable iterable to arrays.
-    Let `None` and indexable objects (e.g. pandas dataframes) pass unchanged.
+    Convert sparse matrices to csr, dataframes to narwhals.DataFrame and other
+    non-indexable iterable to arrays. Let `None` and indexable objects pass unchanged.
 
     Parameters
     ----------
@@ -474,7 +471,12 @@ def _make_indexable(iterable):
     """
     if sp.issparse(iterable):
         return iterable.tocsr()
-    elif hasattr(iterable, "__getitem__") or hasattr(iterable, "iloc"):
+    elif _nw_is_into_df_or_series(iterable):
+        # Even if dataframe has __getitem__, semantics are quite different, examples:
+        # pandas: df[0] -> KeyError if 0 is not a column name
+        # polars: df[0] -> returns the 0th row
+        return iterable
+    elif hasattr(iterable, "__getitem__"):
         return iterable
     elif iterable is None:
         return iterable
@@ -557,12 +559,6 @@ def _ensure_sparse_format(
         - False: accepts np.inf, np.nan, pd.NA in X.
         - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
           be infinite.
-
-        .. versionadded:: 0.20
-           ``ensure_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
 
     accept_large_sparse : bool
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
@@ -771,8 +767,6 @@ def check_array(
         accept_sparse, accept_large_sparse=False will cause it to be accepted
         only if its indices are stored with a 32-bit dtype.
 
-        .. versionadded:: 0.20
-
     dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
         If "numeric", dtype is preserved unless array.dtype is object.
@@ -885,7 +879,7 @@ def check_array(
     # track if we have a Series-like object to raise a better error message
     type_if_series = None
     # For dataframes, use narwhals
-    if _nw_into_df_or_series(array):
+    if _nw_is_into_df_or_series(array):
         array_df = nw.from_native(array, allow_series=True)
     else:
         array_df = None
@@ -1230,8 +1224,6 @@ def check_X_y(
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse will cause it to be accepted only
         if its indices are stored with a 32-bit dtype.
-
-        .. versionadded:: 0.20
 
     dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
@@ -2454,7 +2446,7 @@ def _generate_get_feature_names_out(estimator, n_features_out, input_features=No
     estimator : estimator instance
         Estimator producing output feature names.
 
-    n_feature_out : int
+    n_features_out : int
         Number of feature names out.
 
     input_features : array-like of str or None, default=None

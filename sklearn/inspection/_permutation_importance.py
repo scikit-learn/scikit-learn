@@ -187,7 +187,7 @@ def permutation_importance(
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         Passing multiple scores to `scoring` is more efficient than calling
         `permutation_importance` for each of the scores as it reuses
@@ -211,8 +211,6 @@ def permutation_importance(
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights used in scoring.
-
-        .. versionadded:: 0.24
 
     max_samples : int or float, default=1.0
         The number of samples to draw from X to compute feature importance

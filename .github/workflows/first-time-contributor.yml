@@ -1,0 +1,41 @@
+name: First-time contributor workflow
+# Workflow to run when a first-time contributor opens a pull request.
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+on:
+  pull_request_target:
+    types:
+      - opened
+
+jobs:
+  first-time-contributor-pr:
+    name: first-time contributor workflow
+    if: |
+      github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' ||
+      github.event.pull_request.author_association == 'FIRST_TIMER' ||
+      github.event.pull_request.author_association == 'NONE'
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install PyGithub
+        run: pip install -Uq PyGithub
+      - name: Checkout workflow script
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github/scripts/first-time-contributor.py
+          sparse-checkout-cone-mode: false # false for files/ true for directories
+      - name: first-time contributor workflow
+        run: python .github/scripts/first-time-contributor.py

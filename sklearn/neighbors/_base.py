@@ -49,12 +49,6 @@ SCIPY_METRICS = [
 if sp_base_version < parse_version("1.17"):
     # Deprecated in SciPy 1.15 and removed in SciPy 1.17
     SCIPY_METRICS += ["sokalmichener"]
-if sp_base_version < parse_version("1.11"):
-    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
-    SCIPY_METRICS += ["kulsinski"]
-if sp_base_version < parse_version("1.9"):
-    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
-    SCIPY_METRICS += ["matching"]
 
 VALID_METRICS = dict(
     ball_tree=BallTree.valid_metrics,
@@ -1115,8 +1109,6 @@ class RadiusNeighborsMixin:
             be sorted. If `return_distance=False`, setting `sort_results=True`
             will result in an error.
 
-            .. versionadded:: 0.22
-
         Returns
         -------
         neigh_dist : ndarray of shape (n_samples,) of arrays
@@ -1268,7 +1260,12 @@ class RadiusNeighborsMixin:
             n_jobs = effective_n_jobs(self.n_jobs)
             delayed_query = delayed(self._tree.query_radius)
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed_query(X[s], radius, return_distance, sort_results=sort_results)
+                delayed_query(
+                    X[s],
+                    radius[s] if np.ndim(radius) > 0 else radius,
+                    return_distance,
+                    sort_results=sort_results,
+                )
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
             if return_distance:
@@ -1331,8 +1328,6 @@ class RadiusNeighborsMixin:
             If True, in each row of the result, the non-zero entries will be
             sorted by increasing distances. If False, the non-zero entries may
             not be sorted. Only used with mode='distance'.
-
-            .. versionadded:: 0.22
 
         Returns
         -------
