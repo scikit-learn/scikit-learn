@@ -1272,9 +1272,6 @@ def calibration_curve(
         .. versionadded:: 1.10
            The "cube_root" option was added.
 
-        .. versionchanged:: 1.12
-           The default value will change from 5 to "cube_root" in 1.12.
-
     strategy : {'uniform', 'quantile'}, default='uniform'
         Strategy used to define the widths of the bins.
 
@@ -1569,9 +1566,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             .. versionadded:: 1.10
                The "cube_root" option was added.
 
-            .. versionchanged:: 1.12
-               The default value will change from 5 to "cube_root" in 1.12.
-
         strategy : {'uniform', 'quantile'}, default='uniform'
             Strategy used to define the widths of the bins.
 
@@ -1706,9 +1700,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
             .. versionadded:: 1.10
                The "cube_root" option was added.
-
-            .. versionchanged:: 1.12
-               The default value will change from 5 to "cube_root" in 1.12.
 
         strategy : {'uniform', 'quantile'}, default='uniform'
             Strategy used to define the widths of the bins.
