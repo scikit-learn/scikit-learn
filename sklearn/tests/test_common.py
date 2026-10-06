@@ -171,13 +171,13 @@ def test_star_import_for_public_modules():
         for _, name, _ in pkgutil.iter_modules(sklearn_path)
         if not name.startswith("_") and name not in {"tests", "conftest"}
     ]
-    # We run star import in a separate process for each module, to isolate each
-    # import from test collection and other modules' import effects.
-    # This could in principle matter with sklearn.experimental packages import
-    # that enables experimental imports.
+    # Run in a fresh interpreter: this test module imports
+    # sklearn.experimental.enable_halving_search_cv, which would hide
+    # star-import failures. One line per module so the traceback shows which
+    # module failed.
     # Regression test for https://github.com/scikit-learn/scikit-learn/pull/35038
-    for name in modules:
-        assert_run_python_script_without_output(f"from sklearn.{name} import *")
+    code = "\n".join(f"from sklearn.{name} import *" for name in modules)
+    assert_run_python_script_without_output(code)
 
 
 @pytest.mark.thread_unsafe  # import side-effects
