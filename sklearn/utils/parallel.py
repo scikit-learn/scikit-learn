@@ -27,6 +27,10 @@ _threadpool_controller = None
 # process-wide.
 _CONTEXT_AWARE_WARNINGS = getattr(sys.flags, "context_aware_warnings", False)
 
+# Identifies the process (and interpreter) that dispatched a task: a pickled
+# task gets a new object when unpickled, even in a process with the same pid.
+_PROCESS_TOKEN = object()
+
 
 def _get_warning_filters():
     """Return the warning filters of the current context."""
@@ -142,23 +146,16 @@ class _FuncWrapper:
     # joblib's Parallel.
     config = None
     warning_filters = None
-
-    # Cleared when pickled: an unpickled task may run in another process (or
-    # interpreter), with its own warning filters.
-    _in_caller_process = True
+    _process_token = None
 
     def __init__(self, function):
         self.function = function
         update_wrapper(self, self.function)
 
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        state["_in_caller_process"] = False
-        return state
-
     def with_config_and_warning_filters(self, config, warning_filters):
         self.config = config
         self.warning_filters = warning_filters
+        self._process_token = _PROCESS_TOKEN
         return self
 
     def __call__(self, *args, **kwargs):
@@ -189,7 +186,7 @@ class _FuncWrapper:
             # builds), already have the caller's filters.
             if _get_warning_filters() is self.warning_filters:
                 return nullcontext()
-        elif self._in_caller_process:
+        elif self._process_token is _PROCESS_TOKEN:
             # The filters are shared by all the threads of the process. Setting
             # them in a task would need catch_warnings, which isn't thread-safe:
             # tasks of other threads (or other callers) leaving it out of order

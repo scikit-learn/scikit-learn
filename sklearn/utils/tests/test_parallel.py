@@ -20,7 +20,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import (
+    _CONTEXT_AWARE_WARNINGS,
     Parallel,
+    _get_warning_filters,
     _with_config_and_warning_filters,
     delayed,
 )
@@ -142,19 +144,9 @@ def test_filter_warning_propagates(n_jobs, backend):
 
 # With context-aware warnings, worker threads have the caller's warning filters
 # only if they inherit the caller's context.
-_THREADS_INHERIT_WARNING_FILTERS = not getattr(
-    sys.flags, "context_aware_warnings", False
-) or getattr(sys.flags, "thread_inherit_context", False)
-
-
-def get_warning_filters():
-    # In free-threading Python >= 3.14, warnings filters are managed through a
-    # ContextVar and warnings.filters is not modified inside a
-    # warnings.catch_warnings context. You need to use warnings._get_filters().
-    # For more details, see
-    # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
-    filters_func = getattr(warnings, "_get_filters", None)
-    return filters_func() if filters_func is not None else warnings.filters
+_THREADS_INHERIT_WARNING_FILTERS = not _CONTEXT_AWARE_WARNINGS or getattr(
+    sys.flags, "thread_inherit_context", False
+)
 
 
 def test_check_warnings_threading():
@@ -162,12 +154,12 @@ def test_check_warnings_threading():
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)
 
-        main_warning_filters = get_warning_filters()
+        main_warning_filters = _get_warning_filters()
 
         assert ("error", None, ConvergenceWarning, None, 0) in main_warning_filters
 
         all_worker_warning_filters = Parallel(n_jobs=2, backend="threading")(
-            delayed(get_warning_filters)() for _ in range(2)
+            delayed(_get_warning_filters)() for _ in range(2)
         )
 
         def normalize_main_module(filters):
@@ -204,9 +196,9 @@ def test_warning_filters_not_reset_in_caller_process(n_jobs, backend):
 
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)
-        main_warning_filters = get_warning_filters()
+        main_warning_filters = _get_warning_filters()
         worker_warning_filters = Parallel(n_jobs=n_jobs, backend=backend)(
-            delayed(get_warning_filters)() for _ in range(4)
+            delayed(_get_warning_filters)() for _ in range(4)
         )
     assert all(filters is main_warning_filters for filters in worker_warning_filters)
 
@@ -218,7 +210,7 @@ def test_pickled_task_sets_warning_filters():
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)
         task = _with_config_and_warning_filters(
-            task, get_config(), get_warning_filters()
+            task, get_config(), _get_warning_filters()
         )
     # Unpickled in the same process, with filters that differ from the caller's.
     task = pickle.loads(pickle.dumps(task))
