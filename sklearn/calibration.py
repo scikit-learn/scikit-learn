@@ -1104,6 +1104,7 @@ def _convert_to_logits(decision_values, eps=1e-12, xp=None):
     return logits
 
 
+
 class _SigmoidCalibration(RegressorMixin, BaseEstimator):
     """Sigmoid regression model.
 
