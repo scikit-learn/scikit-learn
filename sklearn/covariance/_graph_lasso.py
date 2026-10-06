@@ -477,8 +477,6 @@ class GraphicalLasso(BaseGraphicalLasso):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -754,9 +752,6 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped. Range is (0, inf].
@@ -849,8 +844,6 @@ class GraphicalLassoCV(BaseGraphicalLasso):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

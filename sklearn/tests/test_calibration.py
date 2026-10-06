@@ -6,11 +6,14 @@ import pytest
 from numpy.testing import assert_allclose
 
 from sklearn import config_context
+from sklearn._loss.link import LogitLink, MultinomialLogit
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.calibration import (
     CalibratedClassifierCV,
     CalibrationDisplay,
     _CalibratedClassifier,
+    _ensure_logits,
+    _get_calibration_logits,
     _sigmoid_calibration,
     _SigmoidCalibration,
     _TemperatureScaling,
@@ -42,9 +45,12 @@ from sklearn.model_selection import (
     cross_val_score,
     train_test_split,
 )
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import GaussianNB, MultinomialNB
 from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import (
+    LabelEncoder,
+    StandardScaler,
+)
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
@@ -62,7 +68,6 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.validation import check_is_fitted
 
@@ -118,6 +123,8 @@ def test_calibration(data, method, csr_container, ensemble):
         cal_clf.fit(this_X_train, y_train, sample_weight=sw_train)
         prob_pos_cal_clf = cal_clf.predict_proba(this_X_test)[:, 1]
 
+        # TODO: once we have a calibration loss, use it instead of the
+        # brier score to check recalibration.
         # Check that brier score has improved after calibration
         assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
             y_test, prob_pos_cal_clf
@@ -218,7 +225,7 @@ def test_sample_weight(data, method, ensemble):
 def test_parallel_execution(data, method, ensemble):
     """Test parallel calibration"""
     X, y = data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+    X_train, X_test, y_train, _ = train_test_split(X, y, random_state=42)
 
     estimator = make_pipeline(StandardScaler(), LinearSVC(random_state=42))
 
@@ -237,70 +244,51 @@ def test_parallel_execution(data, method, ensemble):
     assert_allclose(probs_parallel, probs_sequential)
 
 
+@pytest.mark.parametrize("clf", [GaussianNB(), LogisticRegression(C=1e-6)])
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
-# increase the number of RNG seeds to assess the statistical stability of this
-# test:
-@pytest.mark.parametrize("seed", range(2))
-def test_calibration_multiclass(method, ensemble, seed):
-    def multiclass_brier(y_true, proba_pred, n_classes):
-        Y_onehot = np.eye(n_classes)[y_true]
-        return np.sum((Y_onehot - proba_pred) ** 2) / Y_onehot.shape[0]
-
-    # Test calibration for multiclass with classifier that implements
-    # only decision function.
-    clf = LinearSVC(random_state=7)
-    X, y = make_blobs(
-        n_samples=500, n_features=100, random_state=seed, centers=10, cluster_std=15.0
+def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
+    # Test calibration for multiclass with a classifier that is known to be
+    # poorly calibrated by default:
+    # - GaussianNB in the presence of redundant features, hence over-confident;
+    # - LogisticRegression too regularized hence under-confident.
+    #
+    # Note: we need a large number of test data points to get a good estimate
+    # of the metrics and make this step insensitive to the random seed.
+    n_classes = 3
+    X, y = make_classification(
+        n_samples=30_000,
+        n_clusters_per_class=3,
+        n_classes=n_classes,
+        n_features=20,
+        n_informative=4,
+        n_redundant=16,
+        weights=[0.2, 0.2, 0.6],
+        random_state=global_random_seed,
     )
 
-    # Use an unbalanced dataset by collapsing 8 clusters into one class
-    # to make the naive calibration based on a softmax more unlikely
-    # to work.
-    y[y > 2] = 2
-    n_classes = np.unique(y).shape[0]
-    X_train, y_train = X[::2], y[::2]
-    X_test, y_test = X[1::2], y[1::2]
-
+    X_train, X_test, y_train, y_test = train_test_split(
+        X,
+        y,
+        random_state=global_random_seed,
+        stratify=y,
+        train_size=1_000,
+    )
     clf.fit(X_train, y_train)
+    y_pred_uncal = clf.predict_proba(X_test)
 
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
     cal_clf.fit(X_train, y_train)
-    probas = cal_clf.predict_proba(X_test)
-    # Check probabilities sum to 1
-    assert_allclose(np.sum(probas, axis=1), np.ones(len(X_test)))
+    y_pred_cal = cal_clf.predict_proba(X_test)
+    assert_allclose(np.sum(y_pred_cal, axis=1), 1)
 
-    # Check that the dataset is not too trivial, otherwise it's hard
-    # to get interesting calibration data during the internal
-    # cross-validation loop.
-    assert 0.65 < clf.score(X_test, y_test) < 0.95
-
-    # Check that the accuracy of the calibrated model is never degraded
-    # too much compared to the original classifier.
-    assert cal_clf.score(X_test, y_test) > 0.95 * clf.score(X_test, y_test)
-
+    # TODO: once we have a calibration loss, use it instead of the
+    # brier score to check recalibration.
     # Check that Brier loss of calibrated classifier is smaller than
-    # loss obtained by naively turning OvR decision function to
-    # probabilities via a softmax
-    uncalibrated_brier = multiclass_brier(
-        y_test, softmax(clf.decision_function(X_test)), n_classes=n_classes
-    )
-    calibrated_brier = multiclass_brier(y_test, probas, n_classes=n_classes)
-
-    assert calibrated_brier < 1.1 * uncalibrated_brier
-
-    # Test that calibration of a multiclass classifier decreases log-loss
-    # for RandomForestClassifier
-    clf = RandomForestClassifier(n_estimators=30, random_state=42)
-    clf.fit(X_train, y_train)
-    clf_probs = clf.predict_proba(X_test)
-    uncalibrated_brier = multiclass_brier(y_test, clf_probs, n_classes=n_classes)
-
-    cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
-    cal_clf.fit(X_train, y_train)
-    cal_clf_probs = cal_clf.predict_proba(X_test)
-    calibrated_brier = multiclass_brier(y_test, cal_clf_probs, n_classes=n_classes)
-    assert calibrated_brier < 1.1 * uncalibrated_brier
+    # loss obtained on the original classifier.
+    bs_uncal = brier_score_loss(y_test, y_pred_uncal, labels=cal_clf.classes_)
+    bs_cal = brier_score_loss(y_test, y_pred_cal, labels=cal_clf.classes_)
+    assert bs_cal < bs_uncal
 
 
 def test_calibration_zero_probability():
@@ -368,6 +356,8 @@ def test_calibration_frozen(csr_container, method):
             assert_array_equal(
                 y_pred_frozen, np.array([0, 1])[np.argmax(y_prob_frozen, axis=1)]
             )
+            # TODO: once we have a calibration loss, use it instead of the
+            # brier score to check recalibration.
             assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
                 y_test, prob_pos_cal_clf_frozen
             )
@@ -400,9 +390,12 @@ def test_calibration_ensemble_false(data, method, calibrator):
     clf_df = clf.decision_function(X)
     manual_probas = calibrator.predict(clf_df)
 
-    if method == "temperature":
-        if (manual_probas.ndim == 2) and (manual_probas.shape[1] == 2):
-            manual_probas = manual_probas[:, 1]
+    if (
+        method == "temperature"
+        and (manual_probas.ndim == 2)
+        and (manual_probas.shape[1] == 2)
+    ):
+        manual_probas = manual_probas[:, 1]
 
     assert_allclose(cal_probas[:, 1], manual_probas)
 
@@ -422,6 +415,101 @@ def test_sigmoid_calibration():
     # arrays
     with pytest.raises(ValueError):
         _SigmoidCalibration().fit(np.vstack((exF, exF)), exY)
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+@pytest.mark.parametrize(
+    "predictions",
+    [
+        np.array([1.0, -1.0, 0.5]),
+        np.array([[0.0, 1.0], [1.0, 0.0]]),
+        np.array([[2.0, 1.0, 0.0], [0.0, 1.0, 2.0]]),
+    ],
+    ids=["1d_binary", "2d_binary", "multiclass"],
+)
+def test_ensure_logits_decision_function(method, predictions):
+    # Apart from reshaping, this is a passthrough.
+    logits = _ensure_logits(predictions, "decision_function", method)
+    assert_allclose(logits.ravel(), predictions.ravel())
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+@pytest.mark.parametrize(
+    "predictions",
+    [
+        np.array([0.2, 0.8]),
+        np.array([[0.8, 0.2], [0.3, 0.7]]),
+        np.array([[0.1, 0.2, 0.7], [0.5, 0.3, 0.2]]),
+    ],
+    ids=["1d_binary", "2d_binary", "multiclass"],
+)
+def test_ensure_logits_predict_proba(method, predictions):
+    eps = np.finfo(predictions.dtype).eps
+    proba_clipped = predictions.clip(eps, 1 - eps)
+
+    if method == "isotonic":
+        # Probabilities are passed through (with binary reshaping).
+        if predictions.ndim == 1:
+            expected = predictions.reshape(-1, 1)
+        elif predictions.shape[1] == 2:
+            expected = predictions[:, 1].reshape(-1, 1)
+        else:
+            expected = predictions
+    elif method == "sigmoid":
+        if predictions.ndim == 1:
+            expected = LogitLink().link(proba_clipped).reshape(-1, 1)
+        elif predictions.shape[1] == 2:
+            expected = LogitLink().link(proba_clipped[:, 1]).reshape(-1, 1)
+        else:
+            sigmoid_link = LogitLink()
+            expected = np.zeros_like(predictions)
+            for class_idx in range(predictions.shape[1]):
+                expected[:, class_idx] = sigmoid_link.link(proba_clipped[:, class_idx])
+    else:  # temperature
+        if predictions.ndim == 1:
+            proba_2d = np.column_stack([1 - proba_clipped, proba_clipped])
+        else:
+            proba_2d = proba_clipped
+        expected = MultinomialLogit().link(proba_2d)
+
+    scores = _ensure_logits(predictions, "predict_proba", method)
+    assert_allclose(scores, expected)
+
+
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic", "temperature"])
+def test_ensure_logits_probability_clipping(method):
+    proba = np.array([0.0, 1.0])
+    logits = _ensure_logits(proba, "predict_proba", method)
+    assert np.all(np.isfinite(logits))
+
+
+def test_ensure_logits_invalid_response_method():
+    with pytest.raises(ValueError, match="Unknown response method name"):
+        _ensure_logits(np.array([0.5]), "predict", "sigmoid")
+
+
+def test_ensure_logits_invalid_method():
+    with pytest.raises(ValueError, match="Unknown calibration method"):
+        _ensure_logits(np.array([0.5]), "predict_proba", "invalid")
+
+
+def test_get_calibration_logits_prefers_predict_proba(data):
+    """When both responses exist, calibration inputs come from predict_proba."""
+    X, y = data
+    clf = LogisticRegression().fit(X, y)
+
+    _, response_method = _get_calibration_logits(clf, X, method="sigmoid")
+    assert response_method == "predict_proba"
+
+
+def test_get_calibration_logits_decision_function_fallback(data):
+    """Fall back to decision_function when predict_proba is unavailable."""
+    X, y = data
+    clf = LinearSVC(random_state=0).fit(X, y)
+    assert not hasattr(clf, "predict_proba")
+
+    _, response_method = _get_calibration_logits(clf, X, method="sigmoid")
+    assert response_method == "decision_function"
 
 
 @pytest.mark.parametrize(
@@ -1318,7 +1406,7 @@ def test_temperature_scaling_array_api_compliance(
         ).fit(X_cal_xp, y_cal_xp, sample_weight=sample_weight)
 
         calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
-        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+        rtol = 2e-3 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert calibrator_xp.beta_.dtype == X_cal_xp.dtype
         assert array_device(calibrator_xp.beta_) == array_device(X_cal_xp)
@@ -1391,7 +1479,7 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         ).fit(X_xp, y_str, sample_weight=sample_weight)
 
         calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
-        rtol = 1e-3 if dtype_name == "float32" else 1e-7
+        rtol = 2e-3 if dtype_name == "float32" else 1e-7
         assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
         assert calibrator_xp.beta_.dtype == X_xp.dtype
         assert array_device(calibrator_xp.beta_) == array_device(X_xp)

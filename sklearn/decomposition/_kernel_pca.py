@@ -144,22 +144,16 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-        .. versionadded:: 0.18
-
     copy_X : bool, default=True
         If True, input X is copied and stored by the model in the `X_fit_`
         attribute. If no further changes will be done to X, setting
         `copy_X=False` saves memory by storing a reference.
-
-        .. versionadded:: 0.18
 
     n_jobs : int, default=None
         The number of parallel jobs to run when computing the kernel matrix.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-
-        .. versionadded:: 0.18
 
     Attributes
     ----------
@@ -186,8 +180,6 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

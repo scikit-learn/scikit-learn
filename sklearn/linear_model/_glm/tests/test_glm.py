@@ -973,7 +973,6 @@ def test_poisson_glmnet_enet(solver):
         solver=solver,
     )
     glm.fit(X, y)
-    print(glm.coef_)
     assert_allclose(glm.intercept_, -0.03550976074, rtol=1e-6)
     assert_allclose(glm.coef_, [0.16936420181, 0], rtol=1e-6)
 

@@ -72,8 +72,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     Read more in the :ref:`User Guide <column_transformer>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     transformers : list of tuples
@@ -205,8 +203,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying transformers expose such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
