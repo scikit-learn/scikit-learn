@@ -274,7 +274,6 @@ for i, (clf, name) in enumerate(clf_list):
         X_test,
         y_test,
         n_bins=10,
-        strategy="uniform",
         name=name,
         strategy="quantile",
         ax=ax_calibration_curve,
