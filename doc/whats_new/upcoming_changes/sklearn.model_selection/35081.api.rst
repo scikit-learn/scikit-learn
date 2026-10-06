@@ -1,0 +1,4 @@
+- :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` are no longer included in
+  ``from sklearn.model_selection import *``.
+  By :user:`Satyam Prajapati <Satyamprajapati2004>`.
