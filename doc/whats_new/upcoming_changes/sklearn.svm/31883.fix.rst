@@ -1,6 +1,0 @@
-- Fitting liblinear based estimators such as :class:`svm.LinearSVR`,
-  :class:`svm.LinearSVC` or :class:`linear_model.LogisticRegression` with
-  `solver="liblinear"` concurrently in different threads no longer yields
-  randomly corrupted results: the internal random number generator is no longer
-  shared between threads.
-  By :user:`Higgs32584`.
