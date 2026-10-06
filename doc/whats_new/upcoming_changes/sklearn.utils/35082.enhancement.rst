@@ -1,0 +1,5 @@
+- Improve support for NumPy ``StringDType`` arrays in input validation, label
+  binarization and categorical encoding, including missing-value handling.
+  Reuse unique values within read-only label validation operations when dtype
+  metadata cannot be attached.
+  By :user:`Lucas Morin <lcrmorin>`.
