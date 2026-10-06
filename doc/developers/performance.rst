@@ -169,34 +169,22 @@ Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
 us install ``line_profiler`` and wire it to IPython:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  pip install line_profiler
-
-**Under IPython 0.13+**, first create a configuration profile:
-
-.. prompt:: bash $
-
-  ipython profile create
-
-Then register the line_profiler extension in
-``~/.ipython/profile_default/ipython_config.py``::
-
-    c.TerminalIPythonApp.extensions.append('line_profiler')
-    c.InteractiveShellApp.extensions.append('line_profiler')
-
-This will register the ``%lprun`` magic command in the IPython terminal application and the other frontends such as qtconsole and notebook.
+  $ pip install line_profiler
 
 Now restart IPython and let us use this new toy::
 
-  In [1]: from sklearn.datasets import load_digits
+  In [1]: %load_ext line_profiler
 
-  In [2]: from sklearn.decomposition import NMF
+  In [2]: from sklearn.datasets import load_digits
+
+  In [3]: from sklearn.decomposition import NMF
     ... : from sklearn.decomposition._nmf import _nls_subproblem
 
-  In [3]: X, _ = load_digits(return_X_y=True)
+  In [4]: X, _ = load_digits(return_X_y=True)
 
-  In [4]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
+  In [5]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
   Timer unit: 1e-06 s
 
   File: sklearn/decomposition/nmf.py
@@ -241,29 +229,63 @@ pin-point the most expensive expressions that would deserve additional care.
 Memory usage profiling
 ======================
 
-You can analyze in detail the memory usage of any Python code with the help of
-`memory_profiler <https://pypi.org/project/memory_profiler/>`_. First,
-install the latest version:
+Peak memory
+-----------
 
-.. prompt:: bash $
+Peak memory, i.e. the highest level of memory usage for a program, can be a
+bottleneck when processing large amounts of data. You can use `memray
+<https://bloomberg.github.io/memray/>`_ to measure peak memory, and discover the
+responsible code. In particular, it will tell you which Python callstacks were
+responsible for allocating the various allocations that led to peak memory.
 
-  pip install -U memory_profiler
+First, install the latest version:
 
-Then, setup the magics in a manner similar to ``line_profiler``.
+.. code-block:: console
 
-**Under IPython 0.11+**, first create a configuration profile:
+  $ pip install -U memray
 
-.. prompt:: bash $
+Then, run a script using the relevant code under ``memray``:
 
-    ipython profile create
+.. code-block:: console
+
+  $ memray run example.py
+
+It will tell you where it wrote the resulting data::
+
+  Writing profile results into memray-example.py.123.bin
+
+You can then convert this data into an HTML report:
+
+.. code-block:: console
+
+  $ memray flamegraph memray-example.py.123.bin
+
+In this case it will generate a file called
+"memray-flamegraph-example.py.123.html" which you can then open in a browser. If
+you are not familiar with flamegraphs, see `Memray's docs
+<https://bloomberg.github.io/memray/flamegraph.html>`_ for an introduction.
 
 
-Then register the extension in
-``~/.ipython/profile_default/ipython_config.py``
-alongside the line profiler::
+Memory leaks
+------------
 
-    c.TerminalIPythonApp.extensions.append('memory_profiler')
-    c.InteractiveShellApp.extensions.append('memory_profiler')
+You can analyze the memory usage changes of any Python code with the help of
+`memory_profiler <https://pypi.org/project/memory_profiler/>`_. It works by
+measuring how much memory usage has changed between the start of a line of code
+and the end of a line of code. As a result, it is less useful for discovering
+peak memory usage: it cannot detect any memory that is allocated and then
+immediately released while the line of code is executing, even if it's a large
+amount.
+
+First, install the latest version:
+
+.. code-block:: console
+
+  $ pip install -U memory_profiler
+
+Then, setup the magics in a manner similar to ``line_profiler``::
+
+    In [1] %load_ext memory_profiler
 
 This will register the ``%memit`` and ``%mprun`` magic commands in the
 IPython terminal application and the other frontends such as qtconsole and   notebook.
@@ -273,9 +295,9 @@ functions in your program. It is very similar to ``%lprun``, discussed in the
 previous section. For example, from the ``memory_profiler`` ``examples``
 directory::
 
-    In [1] from example import my_func
+    In [2] from example import my_func
 
-    In [2] %mprun -f my_func my_func()
+    In [3] %mprun -f my_func my_func()
     Filename: example.py
 
     Line #    Mem usage  Increment   Line Contents
@@ -290,9 +312,11 @@ directory::
 Another useful magic that ``memory_profiler`` defines is ``%memit``, which is
 analogous to ``%timeit``. It can be used as follows::
 
-    In [1]: import numpy as np
+    In [1] %load_ext memory_profiler
 
-    In [2]: %memit np.zeros(1e7)
+    In [2]: import numpy as np
+
+    In [3]: %memit np.zeros(1e7)
     maximum of 3: 76.402344 MB per loop
 
 For more details, see the docstrings of the magics, using ``%memit?`` and
@@ -377,15 +401,15 @@ kcachegrind
 ``yep`` can be used to create a profiling report.
 ``kcachegrind`` provides a graphical environment to visualize this report:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  # Run yep to profile some python script
-  python -m yep -c my_file.py
+  $ # Run yep to profile some python script
+  $ python -m yep -c my_file.py
 
-.. prompt:: bash $
+.. code-block:: console
 
-  # open my_file.py.callgrin with kcachegrind
-  kcachegrind my_file.py.prof
+  $ # open my_file.py.callgrin with kcachegrind
+  $ kcachegrind my_file.py.prof
 
 .. note::
 

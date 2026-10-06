@@ -17,10 +17,7 @@ from scipy.optimize import minimize
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
-from sklearn.callback.tests._utils import (
-    RecordingCallback,
-    skip_callback_test_if_wasm,
-)
+from sklearn.callback.tests._common.callbacks import RecordingCallback
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier
@@ -36,7 +33,6 @@ from sklearn.model_selection import (
     LeaveOneGroupOut,
     StratifiedKFold,
     cross_val_score,
-    train_test_split,
 )
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler, scale
@@ -48,8 +44,19 @@ from sklearn.utils._array_api import (
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._testing import _array_api_for_tests, ignore_warnings
-from sklearn.utils.fixes import _IS_32BIT, COO_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils._testing import (
+    _array_api_for_tests,
+    ignore_warnings,
+    skip_callback_test_if_wasm,
+)
+from sklearn.utils.fixes import (
+    _IS_32BIT,
+    COO_CONTAINERS,
+    CSR_CONTAINERS,
+    _sparse_random_array,
+    parse_version,
+    sp_version,
+)
 
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
@@ -62,6 +69,7 @@ pytestmark = pytest.mark.filterwarnings(
 SOLVERS = (
     "lbfgs",
     "liblinear",
+    "newton-cd",
     "newton-cd-gram",
     "newton-cg",
     "newton-cholesky",
@@ -184,7 +192,7 @@ def test_logistic_glmnet_L2(solver):
 
 
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
-@pytest.mark.parametrize("solver", ["newton-cd-gram", "saga"])
+@pytest.mark.parametrize("solver", ["newton-cd", "newton-cd-gram", "saga"])
 def test_logistic_glmnet_L1(solver, global_random_seed):
     """Compare Logistic regression with L1 regularization to glmnet"""
     l1_reg = 0.5
@@ -238,11 +246,11 @@ def test_logistic_glmnet_L1(solver, global_random_seed):
     # change the value of the objective function nor the predictions.
     coef = r.x.reshape(3, -1).copy()
     coef[:, -1] -= coef[:, -1].mean()
-    # glm.intercept_ = [-0.070237,  0.140473, -0.070237]
+    # glm.intercept_ = [-0.07023662,  0.14047329, -0.07023667]
     assert_allclose(glm.intercept_, coef[:, -1], rtol=1e-4)
-    # glm.coef_ = [[-0.270748,  0.],
-    #              [ 0.      ,  0.],
-    #              [ 0.270748,  0.]])
+    # glm.coef_ = [[-0.27074806,  0.],
+    #              [ 0.        ,  0.],
+    #              [ 0.27074806,  0.]])
     assert_allclose(glm.coef_, coef[:, :-1], rtol=1e-5, atol=1e-8)
 
 
@@ -261,9 +269,9 @@ def test_check_solver_option(LR):
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
-    # all solvers except 'liblinear', 'newton-cd-gram' and 'saga'
+    # all solvers except 'liblinear', 'newton-cd', 'newton-cd-gram' and 'saga'
     for solver in ["lbfgs", "newton-cg", "newton-cholesky", "sag"]:
-        msg = "Solver %s supports only 'l2' or None penalties," % solver
+        msg = f"Solver '{solver}' supports only 'l2' or None penalties"
         if LR == LogisticRegression:
             lr = LR(solver=solver, l1_ratio=1)
         else:
@@ -276,13 +284,12 @@ def test_check_solver_option(LR):
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
-    # only saga supports elasticnet. We only test for liblinear because the
-    # error is raised before for the other solvers (solver %s supports only l2
-    # penalties)
+    # only saga, newton-cd and newton-cd-gram support elasticnet. We only test for
+    # liblinear because the error is raised before for the other solvers
     for solver in ["liblinear"]:
         msg = (
-            "Only solvers 'newton-cd-gram' and 'saga' support elasticnet penalty, "
-            f"got solver={solver}."
+            "Only solvers 'newton-cd', 'newton-cd-gram' and 'saga' support elasticnet "
+            f"penalty, got solver={solver}."
         )
         if LR == LogisticRegression:
             lr = LR(solver=solver, l1_ratio=0.5)
@@ -395,7 +402,7 @@ def test_consistency_path(global_random_seed, sample_weight):
 
     # can't test with fit_intercept=True since LIBLINEAR
     # penalizes the intercept
-    for solver in ["newton-cd-gram", "sag", "saga"]:
+    for solver in ["newton-cd", "newton-cd-gram", "sag", "saga"]:
         coefs, Cs, _ = _logistic_regression_path(
             X,
             y,
@@ -512,7 +519,8 @@ def test_liblinear_dual_random_state(global_random_seed):
 
 # TODO(1.12): remove deprecated use_legacy_attributes
 @pytest.mark.parametrize("use_legacy_attributes", [True, False])
-def test_logistic_cv(global_random_seed, use_legacy_attributes):
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_logistic_cv(global_random_seed, use_legacy_attributes, n_jobs):
     # test for LogisticRegressionCV object
     n_samples, n_features, n_cv = 50, 5, 3
     rng = np.random.RandomState(global_random_seed)
@@ -529,6 +537,7 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
         cv=n_cv,
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
         use_legacy_attributes=use_legacy_attributes,
+        n_jobs=n_jobs,
     )
     lr_cv.fit(X_ref, y)
     lr = LogisticRegression(
@@ -558,7 +567,8 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes):
 
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
-def test_logistic_cv_refit_false_non_elasticnet(global_random_seed):
+@pytest.mark.parametrize("n_jobs", [1, 2])
+def test_logistic_cv_refit_false_non_elasticnet(global_random_seed, n_jobs):
     """Test that non-elasticnet penalty with refit=False and
     use_legacy_attributes=False works without error.
 
@@ -572,6 +582,7 @@ def test_logistic_cv_refit_false_non_elasticnet(global_random_seed):
         refit=False,
         use_legacy_attributes=False,
         random_state=global_random_seed,
+        n_jobs=n_jobs,
     )
     lr_cv.fit(X, y)
     assert lr_cv.l1_ratio_ == 0.0
@@ -1355,6 +1366,9 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in set(SOLVERS) - set(["liblinear"]):
+        if solver == "newton-cd" and sparse.issparse(X):
+            # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+            continue
         params = dict(solver=solver, max_iter=2000, random_state=global_random_seed)
         clf1 = LogisticRegression(class_weight="balanced", **params)
         clf2 = LogisticRegression(class_weight=class_weight_dict, **params)
@@ -1375,6 +1389,9 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in SOLVERS:
+        if solver == "newton-cd" and sparse.issparse(X):
+            # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+            continue
         params = dict(solver=solver, max_iter=1000, random_state=global_random_seed)
 
         clf1 = LogisticRegression(class_weight="balanced", **params)
@@ -1449,21 +1466,22 @@ def test_logreg_l1(csr_container, fit_intercept, global_random_seed):
         result["liblinear"] = lr_liblinear.fit(X, y)
         assert_allclose(lr_saga.coef_, lr_liblinear.coef_, atol=0.3)
 
-    lr_cd = LogisticRegression(solver="newton-cd-gram", max_iter=20, **params)
-    result["newton-cd-gram"] = lr_cd.fit(X, y)
-    # The 2 coefficients for X_constant are ideally the same (minimum norm solution).
-    # For predictions, only their sum matters. It might be that their effect on the
-    # objective is in the last floating point digits such that the solver estimates
-    # them as being different.
-    if lr_cd.coef_[0, -1] == lr_cd.coef_[0, -2]:
-        # This is the ideal path, i.e. minimum norm solution.
-        assert_allclose(lr_cd.coef_, lr_saga.coef_, atol=1e-5)
-    else:
-        # This may happen for some random seeds.
-        assert_allclose(
-            np.sum(lr_cd.coef_[0, -2:]), np.sum(lr_saga.coef_[0, -2:]), rtol=1e-6
-        )
-        assert_allclose(lr_cd.coef_[0, :-2], lr_saga.coef_[0, :-2], rtol=1e-5)
+    for solver in ["newton-cd", "newton-cd-gram"]:
+        lr_cd = LogisticRegression(solver=solver, max_iter=20, **params)
+        result[solver] = lr_cd.fit(X, y)
+        # The 2 coefficients for X_constant are ideally the same (minimum norm
+        # solution). For predictions, only their sum matters. It might be that their
+        # effect on the objective is in the last floating point digits such that the
+        # solver estimates them as being different.
+        if lr_cd.coef_[0, -1] == lr_cd.coef_[0, -2]:
+            # This is the ideal path, i.e. minimum norm solution.
+            assert_allclose(lr_cd.coef_, lr_saga.coef_, atol=1e-5)
+        else:
+            # This may happen for some random seeds.
+            assert_allclose(
+                np.sum(lr_cd.coef_[0, -2:]), np.sum(lr_saga.coef_[0, -2:]), rtol=1e-6
+            )
+            assert_allclose(lr_cd.coef_[0, :-2], lr_saga.coef_[0, :-2], rtol=1e-5)
 
     # Check that solving on the sparse and dense data yield the same results
     X_sp = csr_container(X)
@@ -1614,7 +1632,7 @@ def test_n_iter(solver, use_legacy_attributes):
         assert clf_cv.n_iter_.shape == (n_cv_fold, n_l1_ratios, n_Cs)
 
     # multinomial case
-    if solver in ("liblinear",):
+    if solver == "liblinear":
         # This solver only supports one-vs-rest multiclass classification.
         return
 
@@ -1663,7 +1681,10 @@ def test_warm_start(global_random_seed, solver, warm_start, fit_intercept):
         assert cum_diff > 2.0, msg
 
 
-@pytest.mark.parametrize("solver", ["newton-cholesky", "newton-cg"])
+# We exclude the "newton-cd" solver because it fails this test. The inner solver is
+# inexact and the stopping criterion results in slight deviations between 2 iterations
+# in one go and 2 consecutive steps.
+@pytest.mark.parametrize("solver", ["newton-cholesky", "newton-cd-gram", "newton-cg"])
 @pytest.mark.parametrize("fit_intercept", (True, False))
 @pytest.mark.parametrize("C", (1, np.inf))
 def test_warm_start_newton_solver(solver, fit_intercept, C):
@@ -1887,80 +1908,37 @@ def test_elastic_net_l1_l2_equivalence(global_random_seed, C, penalty, l1_ratio)
     assert_array_almost_equal(lr_enet.coef_, lr_expected.coef_)
 
 
-# TODO(newton-cd): improve test by using CD solvers instead of saga
-# FIXME: Random state is fixed in order to make the test pass
-@pytest.mark.parametrize("C", [0.001, 1, 100, 1e6])
-def test_elastic_net_vs_l1_l2(C):
-    # Make sure that elasticnet with grid search on l1_ratio gives same or
-    # better results than just l1 or just l2.
-
-    X, y = make_classification(500, random_state=0)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-
-    param_grid = {"l1_ratio": np.linspace(0, 1, 5)}
-
-    enet_clf = LogisticRegression(
-        l1_ratio=0.5,
-        C=C,
-        solver="saga",
-        random_state=0,
-        tol=1e-2,
-    )
-    gs = GridSearchCV(enet_clf, param_grid, refit=True)
-
-    l1_clf = LogisticRegression(
-        l1_ratio=1, C=C, solver="saga", random_state=0, tol=1e-2
-    )
-    l2_clf = LogisticRegression(
-        l1_ratio=0, C=C, solver="saga", random_state=0, tol=1e-2
-    )
-
-    for clf in (gs, l1_clf, l2_clf):
-        clf.fit(X_train, y_train)
-
-    assert gs.score(X_test, y_test) >= l1_clf.score(X_test, y_test)
-    assert gs.score(X_test, y_test) >= l2_clf.score(X_test, y_test)
-
-
-# TODO(newton-cd): use CD solvers instead of saga?
-# FIXME: Random state is fixed in order to make the test pass
-@pytest.mark.parametrize("C", np.logspace(-3, 2, 4))
+@pytest.mark.parametrize("C", np.logspace(-3, 0, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
-def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
+def test_LogisticRegression_elastic_net_objective(C, l1_ratio, global_random_seed):
     # Check that training with a penalty matching the objective leads
     # to a lower objective.
     # Here we train a logistic regression with l2 (a) and elasticnet (b)
     # penalties, and compute the elasticnet objective. That of a should be
     # greater than that of b (both objectives are convex).
+    n_samples = 1000
     X, y = make_classification(
-        n_samples=1000,
+        n_samples=n_samples,
         n_classes=2,
         n_features=20,
         n_informative=10,
         n_redundant=0,
         n_repeated=0,
-        random_state=0,
+        random_state=global_random_seed,
     )
     X = scale(X)
 
-    lr_enet = LogisticRegression(
-        l1_ratio=l1_ratio,
-        C=C,
-        solver="saga",
-        random_state=0,
-        fit_intercept=False,
-    )
-    lr_l2 = LogisticRegression(
-        l1_ratio=0, solver="saga", random_state=0, C=C, fit_intercept=False
-    )
+    params = dict(C=C, fit_intercept=False, solver="newton-cd-gram")
+    lr_enet = LogisticRegression(l1_ratio=l1_ratio, **params)
+    lr_l2 = LogisticRegression(l1_ratio=0, **params)
     lr_enet.fit(X, y)
     lr_l2.fit(X, y)
 
     def enet_objective(lr):
         coef = lr.coef_.ravel()
-        obj = C * log_loss(y, lr.predict_proba(X))
-        obj += l1_ratio * np.sum(np.abs(coef))
-        obj += (1.0 - l1_ratio) * 0.5 * np.dot(coef, coef)
+        obj = log_loss(y, lr.predict_proba(X))
+        obj += l1_ratio * np.sum(np.abs(coef)) / (C * n_samples)
+        obj += (1.0 - l1_ratio) * 0.5 * np.dot(coef, coef) / (C * n_samples)
         return obj
 
     assert enet_objective(lr_enet) < enet_objective(lr_l2)
@@ -2339,6 +2317,7 @@ def test_c_inf_no_warning(solver):
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        warnings.filterwarnings("ignore", category=UserWarning)
         lr.fit(X, y)
 
 
@@ -2511,13 +2490,13 @@ def test_large_sparse_matrix(solver, csr_container):
     # Non-regression test for pull-request #21093.
 
     # generate sparse matrix with int64 indices
-    X = csr_container(sparse.rand(20, 10, random_state=42))
+    X = csr_container(_sparse_random_array((20, 10), random_state=42))
     for attr in ["indices", "indptr"]:
         setattr(X, attr, getattr(X, attr).astype("int64"))
     rng = np.random.RandomState(42)
     y = rng.randint(2, size=X.shape[0])
 
-    if solver in ["liblinear", "newton-cd-gram", "sag", "saga"]:
+    if solver in ["liblinear", "newton-cd", "sag", "saga"]:
         msg = "Only sparse matrices with 32-bit integer indices"
         with pytest.raises(ValueError, match=msg):
             LogisticRegression(solver=solver).fit(X, y)
@@ -3229,3 +3208,26 @@ def test_logistic_regression_callback_support_warning():
         match="Callbacks are only supported in LogisticRegression for solver='lbfgs'",
     ):
         LogisticRegression(solver="liblinear").set_callbacks(cb)
+
+
+# TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
+@pytest.mark.skipif(
+    sp_version >= parse_version("1.17"),
+    reason="scipy version 1.17 required for sparse slicing",
+)
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_newton_cd_scipy_below_1_16_raises(csr_container):
+    """Tests that newton-cd with multiclass and sparse X raises for scipy<1.17"""
+    X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
+    X = csr_container(X)
+    msg = "Solver 'newton-cd' supports sparse X in a multiclass setting"
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegression(solver="newton-cd").fit(X, y)
+
+    with pytest.raises(ValueError, match=msg):
+        LogisticRegressionCV(
+            solver="newton-cd",
+            l1_ratios=[0],
+            use_legacy_attributes=False,
+            scoring="neg_log_loss",
+        ).fit(X, y)

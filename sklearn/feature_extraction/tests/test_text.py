@@ -33,7 +33,12 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     skip_if_32bit,
 )
-from sklearn.utils.fixes import _IS_WASM, CSC_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.fixes import (
+    _IS_WASM,
+    CSC_CONTAINERS,
+    CSR_CONTAINERS,
+    _sparse_random_array,
+)
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -1239,7 +1244,7 @@ def test_vectorizer_string_object_as_input(Vectorizer):
 
 @pytest.mark.parametrize("X_dtype", [np.float32, np.float64])
 def test_tfidf_transformer_type(X_dtype):
-    X = sparse.rand(10, 20000, dtype=X_dtype, random_state=42)
+    X = _sparse_random_array((10, 20000), dtype=X_dtype, random_state=42)
     X_trans = TfidfTransformer().fit_transform(X)
     assert X_trans.dtype == X.dtype
 
@@ -1248,7 +1253,7 @@ def test_tfidf_transformer_type(X_dtype):
     "csc_container, csr_container", product(CSC_CONTAINERS, CSR_CONTAINERS)
 )
 def test_tfidf_transformer_sparse(csc_container, csr_container):
-    X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
+    X = _sparse_random_array((10, 20000), dtype=np.float64, random_state=42)
     X_csc = csc_container(X)
     X_csr = csr_container(X)
 
@@ -1600,7 +1605,7 @@ def test_vectorizers_do_not_have_set_output(Estimator):
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_tfidf_transformer_copy(csr_container):
     """Check the behaviour of TfidfTransformer.transform with the copy parameter."""
-    X = sparse.rand(10, 20000, dtype=np.float64, random_state=42)
+    X = _sparse_random_array((10, 20000), dtype=np.float64, random_state=42)
     X_csr = csr_container(X)
 
     # keep a copy of the original matrix for later comparison
