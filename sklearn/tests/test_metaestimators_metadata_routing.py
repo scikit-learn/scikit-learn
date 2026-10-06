@@ -75,7 +75,7 @@ from sklearn.tests.metadata_routing_common import (
     assert_request_is_empty,
     check_recorded_metadata,
 )
-from sklearn.utils.metadata_routing import MetadataRouter
+from sklearn.utils.metadata_routing import MetadataRouter, get_routing_for_object
 
 rng = np.random.RandomState(42)
 N, M = 100, 4
@@ -116,6 +116,7 @@ METAESTIMATORS: list = [
         "y": y,
         "estimator_routing_methods": ["fit"],
         "preserves_metadata": "subset",
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": ClassifierChain,
@@ -147,6 +148,7 @@ METAESTIMATORS: list = [
         "scorer_routing_methods": ["fit", "score"],
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
+        "self_request_sample_weight_methods": ["fit"],
     },
     {
         "metaestimator": GridSearchCV,
@@ -234,6 +236,7 @@ METAESTIMATORS: list = [
         "y": y,
         "estimator_routing_methods": ["fit", "partial_fit"],
         "method_args": {"partial_fit": {"classes": classes}},
+        "self_request_sample_weight_methods": ["score"],
     },
     {
         "metaestimator": OneVsOneClassifier,
@@ -244,6 +247,7 @@ METAESTIMATORS: list = [
         "estimator_routing_methods": ["fit", "partial_fit"],
         "preserves_metadata": "subset",
         "method_args": {"partial_fit": {"classes": classes}},
+        "self_request_sample_weight_methods": ["score"],
     },
     {
         "metaestimator": OutputCodeClassifier,
@@ -276,6 +280,7 @@ METAESTIMATORS: list = [
         "y": y,
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": LassoCV,
@@ -283,6 +288,7 @@ METAESTIMATORS: list = [
         "y": y,
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": MultiTaskElasticNetCV,
@@ -290,6 +296,7 @@ METAESTIMATORS: list = [
         "y": y_multi,
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": MultiTaskLassoCV,
@@ -297,6 +304,7 @@ METAESTIMATORS: list = [
         "y": y_multi,
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": LarsCV,
@@ -367,6 +375,7 @@ METAESTIMATORS: list = [
         "y": y,
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit"],
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": RidgeClassifierCV,
@@ -374,6 +383,7 @@ METAESTIMATORS: list = [
         "y": y,
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit"],
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": RidgeCV,
@@ -383,6 +393,7 @@ METAESTIMATORS: list = [
         "scorer_routing_methods": ["fit"],
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": RidgeClassifierCV,
@@ -392,6 +403,7 @@ METAESTIMATORS: list = [
         "scorer_routing_methods": ["fit"],
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": GraphicalLassoCV,
@@ -510,10 +522,19 @@ The keys are as follows:
 - filter_registry: if _Registry to run `check_recorded_metadata` on needs to be filtered
   for certain methods (for instance `RFE` `fits` several clones of the sub-estimator,
   but discards them for `predict` and `score`).
+- self_request_sample_weight_methods: methods on which the meta-estimator itself
+  consumes `sample_weight` (via `add_self_request`) and therefore can auto-request it.
 """
 
 # IDs used by pytest to get meaningful verbose messages when running the tests
 METAESTIMATOR_IDS = [str(row["metaestimator"].__name__) for row in METAESTIMATORS]
+SELF_REQUEST_SAMPLE_WEIGHT_METAESTIMATORS = [
+    row for row in METAESTIMATORS if "self_request_sample_weight_methods" in row
+]
+SELF_REQUEST_SAMPLE_WEIGHT_IDS = [
+    str(row["metaestimator"].__name__)
+    for row in SELF_REQUEST_SAMPLE_WEIGHT_METAESTIMATORS
+]
 
 UNSUPPORTED_ESTIMATORS = [
     AdaBoostClassifier(),
@@ -876,6 +897,36 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                     preserves_metadata=preserves_metadata,
                     **method_kwargs,
                 )
+
+
+@pytest.mark.parametrize(
+    "metaestimator",
+    SELF_REQUEST_SAMPLE_WEIGHT_METAESTIMATORS,
+    ids=SELF_REQUEST_SAMPLE_WEIGHT_IDS,
+)
+@config_context(enable_metadata_routing=True)
+def test_metaestimator_adds_auto_request_to_self_request(metaestimator):
+    # Check that consuming routers auto-request `sample_weight` on their self-request,
+    # when auto requests are enabled.
+    metaestimator_class = metaestimator["metaestimator"]
+    methods = metaestimator["self_request_sample_weight_methods"]
+    kwargs, *_ = get_init_args(metaestimator, sub_estimator_consumes=True)
+    instance = metaestimator_class(**kwargs)
+
+    routing = get_routing_for_object(instance)
+
+    # with `enable_metadata_auto_requests=False` (the default), `sample_weight` is not
+    # requested
+    for method_name in methods:
+        method_request = getattr(routing._self_request, method_name)
+        assert method_request.requests.get("sample_weight") is None
+
+    # enabling auto-requests adds a request for `sample_weight` on the meta-estimator:
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(instance)
+        for method_name in methods:
+            method_request = getattr(routing._self_request, method_name)
+            assert method_request.requests.get("sample_weight") is True
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)

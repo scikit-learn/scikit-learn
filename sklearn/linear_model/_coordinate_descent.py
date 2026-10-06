@@ -2030,9 +2030,12 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
+        self_request = self._get_metadata_request()
+        self_request.fit.add_auto_request("sample_weight")
+        self_request.score.add_auto_request("sample_weight")
         router = (
             MetadataRouter(owner=self)
-            .add_self_request(self)
+            .add_self_request(self_request)
             .add(
                 splitter=check_cv(self.cv),
                 method_mapping=MethodMapping().add(caller="fit", callee="split"),
