@@ -1282,9 +1282,6 @@ def calibration_curve(
         quantile
             The bins have the same number of samples and depend on `y_prob`.
 
-        .. versionchanged:: 1.12
-            The default value will change from 'uniform' to 'quantile' in 1.12.
-
     Returns
     -------
     prob_true : ndarray of shape (n_bins,) or smaller
@@ -1580,9 +1577,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
-
-            .. versionchanged:: 1.12
-                The default value will change from 'uniform' to 'quantile' in 1.12.
 
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
