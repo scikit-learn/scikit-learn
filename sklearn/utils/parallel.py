@@ -28,6 +28,17 @@ _threadpool_controller = None
 _CONTEXT_AWARE_WARNINGS = getattr(sys.flags, "context_aware_warnings", False)
 
 
+def _get_warning_filters():
+    """Return the warning filters of the current context."""
+    # In free-threading Python >= 3.14, warnings filters are managed through a
+    # ContextVar and warnings.filters is not modified inside a
+    # warnings.catch_warnings context. You need to use warnings._get_filters().
+    # For more details, see
+    # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
+    filters_func = getattr(warnings, "_get_filters", None)
+    return filters_func() if filters_func is not None else warnings.filters
+
+
 def _with_config_and_warning_filters(delayed_func, config, warning_filters):
     """Helper function that intends to attach a config to a delayed function."""
     if hasattr(delayed_func, "with_config_and_warning_filters"):
@@ -77,15 +88,7 @@ class Parallel(joblib.Parallel):
         # in a different thread depending on the backend and on the value of
         # pre_dispatch and n_jobs.
         config = get_config()
-        # In free-threading Python >= 3.14, warnings filters are managed through a
-        # ContextVar and warnings.filters is not modified inside a
-        # warnings.catch_warnings context. You need to use warnings._get_filters().
-        # For more details, see
-        # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
-        filters_func = getattr(warnings, "_get_filters", None)
-        warning_filters = (
-            filters_func() if filters_func is not None else warnings.filters
-        )
+        warning_filters = _get_warning_filters()
 
         iterable_with_config_and_warning_filters = (
             (
@@ -184,7 +187,7 @@ class _FuncWrapper:
             # Each context has its own filters. The caller's thread, and threads
             # that inherit the caller's context (the default on free-threaded
             # builds), already have the caller's filters.
-            if warnings._get_filters() is self.warning_filters:
+            if _get_warning_filters() is self.warning_filters:
                 return nullcontext()
         elif self._in_caller_process:
             # The filters are shared by all the threads of the process. Setting

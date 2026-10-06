@@ -232,6 +232,9 @@ def test_pickled_task_sets_warning_filters():
 def test_no_warning_with_empty_warning_filters(n_jobs, backend):
     """An empty list of warning filters is a valid caller's state, not a sign that
     the task was dispatched by joblib's Parallel."""
+    if backend == "threading" and not _THREADS_INHERIT_WARNING_FILTERS:
+        pytest.skip("Worker threads don't inherit the caller's warning filters")
+
     with warnings.catch_warnings(record=True) as records:
         warnings.resetwarnings()
         Parallel(n_jobs=n_jobs, backend=backend)(delayed(len)([1]) for _ in range(2))

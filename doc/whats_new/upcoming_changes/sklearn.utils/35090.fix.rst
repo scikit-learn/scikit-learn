@@ -5,8 +5,9 @@
   warnings about `sklearn.utils.parallel.delayed`) on Python without
   context-aware warnings, and was costly on free-threaded Python. On Python
   without context-aware warnings, these tasks now use the filters active when
-  they run (which can differ from the caller's ones for a generator output), and
-  a warning repeated in several tasks is shown once instead of once per task.
+  they run (which can differ from the caller's ones for a generator output). A
+  warning repeated in several tasks running in the caller's process is now shown
+  once instead of once per task.
   The spurious warning is also no longer raised when the caller's warning
   filters are empty.
   By :user:`Arthur Lacote <cakedev0>`.
