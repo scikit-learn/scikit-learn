@@ -416,8 +416,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         X_val : array-like of shape (n_val, n_features)
             Additional sample of features for validation used in early stopping.
-            In a `Pipeline`, `X_val` can be transformed the same way as `X` with
-            `Pipeline(..., transform_input=["X_val"])`.
+
+            To pass `X_val` through a :class:`~pipeline.Pipeline`, enable metadata
+            routing. The pipeline then transforms `X_val` like `X` by default (see
+            `transform_input`). Enable auto-requests as well if you want `X_val`,
+            `y_val` and `sample_weight_val` requested without `set_fit_request`
+            (:func:`~sklearn.set_config`). See
+            :ref:`metadata_routing_auto_request_user`.
 
             .. versionadded:: 1.7
 
@@ -1352,6 +1357,22 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """Number of iterations of the boosting process."""
         check_is_fitted(self)
         return len(self._predictors)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing mechanism
+        works.
+
+        Returns
+        -------
+        routing : MetadataRequest
+            A :class:`~sklearn.utils.metadata_routing.MetadataRequest` encapsulating
+            routing information.
+        """
+        requests = super().get_metadata_routing()
+        requests.fit.add_auto_request("X_val", "y_val", "sample_weight_val")
+        return requests
 
 
 class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
