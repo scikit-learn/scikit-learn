@@ -190,7 +190,6 @@ fig.supxlabel("Mean Predicted Probability")
 fig.supylabel("Fraction of Class")
 fig.legend(*axes[0].get_legend_handles_labels(), loc=(0.72, 0.5))
 plt.subplots_adjust(right=0.7)
-
 _ = fig.show()
 
 # %%
