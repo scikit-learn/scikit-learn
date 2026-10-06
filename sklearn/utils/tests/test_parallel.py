@@ -212,7 +212,7 @@ def test_warning_filters_not_reset_in_caller_process(n_jobs, backend):
 
 def test_pickled_task_sets_warning_filters():
     """A pickled task sets the caller's warning filters: it can run in another
-    process with the same pid (e.g. in a container)."""
+    process."""
     task, args, kwargs = delayed(raise_warning)()
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)

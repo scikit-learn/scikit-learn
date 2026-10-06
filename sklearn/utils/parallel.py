@@ -135,9 +135,8 @@ def delayed(function):
 class _FuncWrapper:
     """Load the global configuration before calling the function."""
 
-    # Cleared when pickled: an unpickled task can run in another process (or
-    # interpreter) with its own warning filters, even with the same pid (e.g. in
-    # a container).
+    # Cleared when pickled: an unpickled task may run in another process (or
+    # interpreter), with its own warning filters.
     _in_caller_process = True
 
     def __init__(self, function):
