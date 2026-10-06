@@ -58,6 +58,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.validation import has_fit_parameter
 
 
@@ -153,31 +154,31 @@ def test_import_all_consistency():
             )
 
 
-def test_star_import_public_modules():
-    # Non-regression test for gh-35038: `from module import *` resolves every name
-    # in `__all__`, so names that are only available after importing an experimental
-    # module must not be listed there. This runs in a fresh interpreter because this
-    # test module enables the experimental estimators on import.
+@pytest.mark.xfail(_IS_WASM, reason="cannot start subprocess")
+def test_root_import_all_completeness():
+    # Check that __all__ is correctly defined on top-level packages (e.g.
+    # sklearn.model_selection or sklearn.tree) and that we can do from
+    # 'sklearn.top_level_package import *'. We run in a subprocess to make sure
+    # that we don't have import side-effects of one top-level package to
+    # another one. We do not use pkgutil.walk_packages either because it also
+    # has import side-effects and we don't have control of the walk/import
+    # order. This could matter for enabling experimental features which is done
+    # by importing from sklearn.experimental
     code = """
-import importlib.util
+from pathlib import Path
+
 import sklearn
 
-for name in sklearn.__all__:
-    if importlib.util.find_spec(f"sklearn.{name}") is not None:
-        exec(f"from sklearn.{name} import *", {})
+for path in Path(sklearn.__file__).parent.iterdir():
+    if not path.is_dir():
+        continue
+    name = path.name
+    if name.startswith("_") or name in {"utils", "tests"}:
+        continue
+    assert name in sklearn.__all__, name
+    exec(f"from sklearn.{name} import *", {})
 """
-    assert_run_python_script_without_output(code, timeout=120)
-
-
-def test_root_import_all_completeness():
-    sklearn_path = [os.path.dirname(sklearn.__file__)]
-    EXCEPTIONS = ("utils", "tests", "base", "conftest")
-    for _, modname, _ in pkgutil.walk_packages(
-        path=sklearn_path, onerror=lambda _: None
-    ):
-        if "." in modname or modname.startswith("_") or modname in EXCEPTIONS:
-            continue
-        assert modname in sklearn.__all__
+    assert_run_python_script_without_output(code)
 
 
 @pytest.mark.thread_unsafe  # import side-effects
