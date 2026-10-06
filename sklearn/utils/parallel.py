@@ -27,8 +27,8 @@ _threadpool_controller = None
 # process-wide.
 _CONTEXT_AWARE_WARNINGS = getattr(sys.flags, "context_aware_warnings", False)
 
-# Identifies the process (and interpreter) that dispatched a task: a pickled
-# task gets a new object when unpickled, even in a process with the same pid.
+# Tells whether a task runs where it was dispatched: unpickling a task gives it
+# a new object, so pickled tasks never match.
 _PROCESS_TOKEN = object()
 
 

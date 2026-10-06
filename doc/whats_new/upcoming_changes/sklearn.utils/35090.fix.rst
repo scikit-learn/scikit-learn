@@ -6,9 +6,11 @@
   context-aware warnings, and was costly on free-threaded Python. On Python
   without context-aware warnings, these tasks now use the filters active when
   they run (which can differ from the caller's ones for a generator output). A
-  warning repeated in several tasks running in the caller's process is now shown
-  once instead of once per task, and filter changes made by these tasks outside
-  of :class:`warnings.catch_warnings` are no longer undone when the task ends.
+  warning repeated in several of these tasks is now shown once instead of once
+  per task, and filter changes made by these tasks outside of
+  :class:`warnings.catch_warnings` are no longer undone when the task ends.
   The spurious warning is also no longer raised when the caller's warning
-  filters are empty.
+  filters are empty, and tasks of :func:`utils.parallel.delayed` run by
+  :class:`joblib.Parallel` keep their warning filters instead of running with
+  none.
   By :user:`Arthur Lacote <cakedev0>`.
