@@ -6,9 +6,9 @@ usage.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
-import os
 import sys
 import warnings
+from contextlib import contextmanager, nullcontext
 from functools import update_wrapper
 
 import joblib
@@ -21,6 +21,11 @@ from sklearn._config import config_context, get_config
 # It should not be accessed directly and _get_threadpool_controller should be used
 # instead.
 _threadpool_controller = None
+
+# With context-aware warnings (Python >= 3.14, on by default on free-threaded
+# builds), each context has its own warning filters. Otherwise, they are
+# process-wide.
+_CONTEXT_AWARE_WARNINGS = getattr(sys.flags, "context_aware_warnings", False)
 
 
 def _with_config_and_warning_filters(delayed_func, config, warning_filters):
@@ -130,14 +135,23 @@ def delayed(function):
 class _FuncWrapper:
     """Load the global configuration before calling the function."""
 
+    # Cleared when pickled: an unpickled task can run in another process (or
+    # interpreter) with its own warning filters, even with the same pid (e.g. in
+    # a container).
+    _in_caller_process = True
+
     def __init__(self, function):
         self.function = function
         update_wrapper(self, self.function)
 
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state["_in_caller_process"] = False
+        return state
+
     def with_config_and_warning_filters(self, config, warning_filters):
         self.config = config
         self.warning_filters = warning_filters
-        self.process_id = os.getpid()
         return self
 
     def __call__(self, *args, **kwargs):
@@ -154,54 +168,58 @@ class _FuncWrapper:
                 UserWarning,
             )
 
-        if getattr(sys.flags, "context_aware_warnings", False):
-            # Each context has its own filters (free-threaded Python >= 3.14 by
-            # default): a worker thread inheriting the caller's context already
-            # has the caller's filters.
-            filters_already_set = warnings._get_filters() is warning_filters
+        if self._has_caller_warning_filters(warning_filters):
+            warning_filters_context = nullcontext()
         else:
-            # The filters are process-wide: a thread of the caller's process
-            # already has them.
-            filters_already_set = getattr(self, "process_id", None) == os.getpid()
-        if filters_already_set:
-            # Setting the filters again is useless and, with many threads,
-            # costly (warnings module lock) or racy: catch_warnings swaps
-            # process-wide filters, so threads leaving it out of order can leave
-            # stale or partially reset filters behind.
-            with config_context(**config):
-                return self.function(*args, **kwargs)
-
-        with config_context(**config), warnings.catch_warnings():
-            # TODO is there a simpler way that resetwarnings+ filterwarnings?
-            warnings.resetwarnings()
-            warning_filter_keys = ["action", "message", "category", "module", "lineno"]
-            for filter_args in warning_filters:
-                this_warning_filter_dict = {
-                    k: v
-                    for k, v in zip(warning_filter_keys, filter_args)
-                    if v is not None
-                }
-
-                # Some small discrepancy between warnings filters and what
-                # filterwarnings expect. simplefilter is more lenient, e.g.
-                # accepts a tuple as category. We try simplefilter first and
-                # use filterwarnings in more complicated cases
-                if (
-                    "message" not in this_warning_filter_dict
-                    and "module" not in this_warning_filter_dict
-                ):
-                    warnings.simplefilter(**this_warning_filter_dict, append=True)
-                else:
-                    # 'message' and 'module' are most of the time regex.Pattern but
-                    # can be str as well and filterwarnings wants a str
-                    for special_key in ["message", "module"]:
-                        this_value = this_warning_filter_dict.get(special_key)
-                        if this_value is not None and not isinstance(this_value, str):
-                            this_warning_filter_dict[special_key] = this_value.pattern
-
-                    warnings.filterwarnings(**this_warning_filter_dict, append=True)
-
+            warning_filters_context = _set_warning_filters(warning_filters)
+        with config_context(**config), warning_filters_context:
             return self.function(*args, **kwargs)
+
+    def _has_caller_warning_filters(self, warning_filters):
+        """Whether the task already runs with the caller's warning filters."""
+        if _CONTEXT_AWARE_WARNINGS:
+            # True in the caller's thread, and in threads that inherit the
+            # caller's context (the default on free-threaded builds).
+            return warnings._get_filters() is warning_filters
+        # The filters are shared by all the threads of the process. Setting them
+        # in a task would need catch_warnings, which isn't thread-safe: tasks of
+        # other threads (or other callers) leaving it out of order leave stale or
+        # partially reset filters behind.
+        return self._in_caller_process
+
+
+@contextmanager
+def _set_warning_filters(warning_filters):
+    """Set the warning filters for the duration of the context."""
+    with warnings.catch_warnings():
+        # TODO is there a simpler way that resetwarnings+ filterwarnings?
+        warnings.resetwarnings()
+        warning_filter_keys = ["action", "message", "category", "module", "lineno"]
+        for filter_args in warning_filters:
+            this_warning_filter_dict = {
+                k: v for k, v in zip(warning_filter_keys, filter_args) if v is not None
+            }
+
+            # Some small discrepancy between warnings filters and what
+            # filterwarnings expect. simplefilter is more lenient, e.g.
+            # accepts a tuple as category. We try simplefilter first and
+            # use filterwarnings in more complicated cases
+            if (
+                "message" not in this_warning_filter_dict
+                and "module" not in this_warning_filter_dict
+            ):
+                warnings.simplefilter(**this_warning_filter_dict, append=True)
+            else:
+                # 'message' and 'module' are most of the time regex.Pattern but
+                # can be str as well and filterwarnings wants a str
+                for special_key in ["message", "module"]:
+                    this_value = this_warning_filter_dict.get(special_key)
+                    if this_value is not None and not isinstance(this_value, str):
+                        this_warning_filter_dict[special_key] = this_value.pattern
+
+                warnings.filterwarnings(**this_warning_filter_dict, append=True)
+
+        yield
 
 
 def _get_threadpool_controller():

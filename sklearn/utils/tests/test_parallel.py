@@ -1,4 +1,5 @@
 import itertools
+import pickle
 import re
 import sys
 import time
@@ -18,7 +19,11 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.fixes import _IS_WASM
-from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import (
+    Parallel,
+    _with_config_and_warning_filters,
+    delayed,
+)
 
 
 def get_working_memory():
@@ -182,22 +187,44 @@ def test_check_warnings_threading():
             ) == normalize_main_module(main_warning_filters)
 
 
-@pytest.mark.skipif(
-    getattr(sys.flags, "context_aware_warnings", False)
-    and not getattr(sys.flags, "thread_inherit_context", False),
-    reason="Worker threads don't inherit the caller's warning filters",
+@pytest.mark.parametrize(
+    "n_jobs, backend", [(2, "threading"), (1, "sequential"), (1, "loky")]
 )
-def test_warning_filters_not_reset_in_threads():
-    """Tasks of the threading backend run with the caller's warning filters
+def test_warning_filters_not_reset_in_caller_process(n_jobs, backend):
+    """Tasks running in the caller's process use the caller's warning filters
     themselves, not a copy: resetting them in each task is racy with
     process-wide filters (and costly with many threads)."""
+    if (
+        backend == "threading"
+        and getattr(sys.flags, "context_aware_warnings", False)
+        and not getattr(sys.flags, "thread_inherit_context", False)
+    ):
+        pytest.skip("Worker threads don't inherit the caller's warning filters")
+
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)
         main_warning_filters = get_warning_filters()
-        worker_warning_filters = Parallel(n_jobs=2, backend="threading")(
+        worker_warning_filters = Parallel(n_jobs=n_jobs, backend=backend)(
             delayed(get_warning_filters)() for _ in range(4)
         )
     assert all(filters is main_warning_filters for filters in worker_warning_filters)
+
+
+def test_pickled_task_sets_warning_filters():
+    """A pickled task sets the caller's warning filters: it can run in another
+    process with the same pid (e.g. in a container)."""
+    task, args, kwargs = delayed(raise_warning)()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConvergenceWarning)
+        task = _with_config_and_warning_filters(
+            task, get_config(), get_warning_filters()
+        )
+    # Unpickled in the same process, with filters that differ from the caller's.
+    task = pickle.loads(pickle.dumps(task))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConvergenceWarning)
+        with pytest.raises(ConvergenceWarning):
+            task(*args, **kwargs)
 
 
 @pytest.mark.xfail(_IS_WASM, reason="Pyodide always use the sequential backend")
