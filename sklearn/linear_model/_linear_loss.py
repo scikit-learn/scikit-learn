@@ -19,6 +19,28 @@ from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 
 
+def _multiclass_raw_prediction(X, weights):
+    """Compute X @ weights.T for weights of shape (n_classes, n_features).
+
+    For F-contiguous X, BLAS is much faster at computing the equivalent
+    (weights @ X.T).T than X @ weights.T (up to 4x with MKL, float32 and a
+    single thread).
+    """
+    if isinstance(X, np.ndarray) and X.flags.f_contiguous:
+        return (weights @ X.T).T
+    return X @ weights.T
+
+
+def _multiclass_X_t_dot(G, X):
+    """Compute G.T @ X for G of shape (n_samples, n_classes).
+
+    See `_multiclass_raw_prediction` for why F-contiguous X uses (X.T @ G).T.
+    """
+    if isinstance(X, np.ndarray) and X.flags.f_contiguous:
+        return (X.T @ G).T
+    return G.T @ X
+
+
 def sandwich_dot(X, W):
     """Compute the sandwich product X.T @ diag(W) @ X."""
     # TODO: This "sandwich product" is the main computational bottleneck for solvers
@@ -229,7 +251,7 @@ class LinearModelLoss:
             raw_prediction = X @ weights_xp + intercept_xp
         else:
             # weights has shape (n_classes, n_dof)
-            raw_prediction = X @ weights_xp.T + intercept_xp
+            raw_prediction = _multiclass_raw_prediction(X, weights_xp) + intercept_xp
 
         return weights, intercept, raw_prediction
 
@@ -399,7 +421,7 @@ class LinearModelLoss:
             # support the array API.
             grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             # grad_pointwise.shape = (n_samples, n_classes)
-            grad_X = grad_pointwise.T @ X
+            grad_X = _multiclass_X_t_dot(grad_pointwise, X)
             grad[:, :n_features] = (
                 move_to(grad_X, xp=np, device="cpu") + l2_reg_strength * weights
             )
@@ -486,7 +508,9 @@ class LinearModelLoss:
             else:
                 grad = xp.empty((n_classes, n_dof), dtype=weights.dtype, device=device)
             # gradient.shape = (n_samples, n_classes)
-            grad[:, :n_features] = grad_pointwise.T @ X + l2_reg_strength * weights
+            grad[:, :n_features] = (
+                _multiclass_X_t_dot(grad_pointwise, X) + l2_reg_strength * weights
+            )
             if self.fit_intercept:
                 grad[:, -1] = xp.sum(grad_pointwise, axis=0)
             if coef.ndim == 1:
@@ -665,7 +689,9 @@ class LinearModelLoss:
             )
             grad_pointwise /= sw_sum
             grad = grad.reshape((n_classes, n_dof), order="F")
-            grad[:, :n_features] = grad_pointwise.T @ X + l2_reg_strength * weights
+            grad[:, :n_features] = (
+                _multiclass_X_t_dot(grad_pointwise, X) + l2_reg_strength * weights
+            )
             if self.fit_intercept:
                 grad[:, -1] = grad_pointwise.sum(axis=0)
             if coef.ndim == 1:
@@ -890,7 +916,9 @@ class LinearModelLoss:
                 grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             else:
                 grad = xp.empty((n_classes, n_dof), dtype=weights.dtype, device=device)
-            grad[:, :n_features] = grad_pointwise.T @ X + l2_reg_strength * weights
+            grad[:, :n_features] = (
+                _multiclass_X_t_dot(grad_pointwise, X) + l2_reg_strength * weights
+            )
             if self.fit_intercept:
                 grad[:, -1] = xp.sum(grad_pointwise, axis=0)
 
@@ -927,7 +955,7 @@ class LinearModelLoss:
                     s = s[:, :-1]  # shape = (n_classes, n_features)
                 else:
                     s_intercept = 0
-                tmp = X @ s.T + s_intercept  # X_{im} * s_k_m
+                tmp = _multiclass_raw_prediction(X, s) + s_intercept  # X_{im} * s_k_m
                 tmp -= xp.sum(proba * tmp, axis=1)[:, None]  # - sum_l ..
                 tmp *= proba  # * p_i_k
                 if sample_weight is not None:
@@ -942,7 +970,9 @@ class LinearModelLoss:
                     hess_prod = xp.empty(
                         (n_classes, n_dof), dtype=weights.dtype, device=device
                     )
-                hess_prod[:, :n_features] = (tmp.T @ X) / sw_sum + l2_reg_strength * s
+                hess_prod[:, :n_features] = (
+                    _multiclass_X_t_dot(tmp, X) / sw_sum + l2_reg_strength * s
+                )
                 if self.fit_intercept:
                     hess_prod[:, -1] = xp.sum(tmp, axis=0) / sw_sum
                 if coef.ndim == 1:
