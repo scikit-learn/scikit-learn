@@ -916,13 +916,13 @@ def test_metaestimator_adds_auto_request_to_self_request(metaestimator):
     routing = get_routing_for_object(instance)
 
     with config_context(enable_metadata_auto_requests=False):
-        # with `sample_weight` should not be requested
+        # `sample_weight` should not be auto-requested:
         for method_name in methods:
             method_request = getattr(routing._self_request, method_name)
             assert method_request.requests.get("sample_weight") is None
 
     with config_context(enable_metadata_auto_requests=True):
-        # `sample_weight` should be requested on the meta-estimator:
+        # `sample_weight` should be auto-requested on the meta-estimator:
         routing = get_routing_for_object(instance)
         for method_name in methods:
             method_request = getattr(routing._self_request, method_name)
