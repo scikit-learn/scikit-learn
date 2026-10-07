@@ -57,8 +57,6 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
 
     Read more in the :ref:`User Guide <FA>`.
 
-    .. versionadded:: 0.13
-
     Parameters
     ----------
     n_components : int, default=None
@@ -100,8 +98,6 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         <https://link.springer.com/article/10.1007%2FBF02289233>`_
         H. F. Kaiser, 1958.
 
-        .. versionadded:: 0.24
-
     random_state : int or RandomState instance, default=0
         Only used when ``svd_method`` equals 'randomized'. Pass an int for
         reproducible results across multiple function calls.
@@ -126,8 +122,6 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
