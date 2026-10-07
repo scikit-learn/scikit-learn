@@ -1644,7 +1644,7 @@ class AutoRequestMixin:
     Inherit from this mixin (typically to the left of
     :class:`~sklearn.base.BaseEstimator`) to opt into auto-requesting `sample_weight` on
     methods that accept it. scikit-learn's own estimators get the same policy
-    automatically via their `__auto_request_sample_weight__` class attribute;
+    automatically via their `_auto_request_sample_weight` class attribute;
     third-party estimators that only inherit from :class:`~sklearn.base.BaseEstimator`
     do not.
 
@@ -1655,11 +1655,11 @@ class AutoRequestMixin:
     Examples
     --------
     >>> from sklearn.utils.metadata_routing import AutoRequestMixin
-    >>> AutoRequestMixin.__auto_request_sample_weight__
+    >>> AutoRequestMixin._auto_request_sample_weight
     True
     """
 
-    __auto_request_sample_weight__ = True
+    _auto_request_sample_weight = True
 
 
 class _MetadataRequester:
@@ -1750,10 +1750,10 @@ class _MetadataRequester:
         # not.
         if (
             cls.__module__.startswith("sklearn.")
-            and "__auto_request_sample_weight__" not in cls.__dict__
+            and "_auto_request_sample_weight" not in cls.__dict__
             and any(base.__name__ == "BaseEstimator" for base in cls.__mro__[1:])
         ):
-            cls.__auto_request_sample_weight__ = True
+            cls._auto_request_sample_weight = True
 
         super().__init_subclass__(**kwargs)
 
@@ -1894,8 +1894,8 @@ class _MetadataRequester:
         # This adds auto-requests for `sample_weight` for all consuming methods of
         # scikit-learn estimators:
         if (
-            hasattr(self, "__auto_request_sample_weight__")
-            and self.__auto_request_sample_weight__
+            hasattr(self, "_auto_request_sample_weight")
+            and self._auto_request_sample_weight
         ):
             for method in SIMPLE_METHODS:
                 method_request = getattr(requests, method)

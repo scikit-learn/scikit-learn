@@ -1138,7 +1138,7 @@ def test_baseestimator_sample_weight_auto_request():
 
     class MyEstimator(BaseEstimator):
         """This class lives in a sklearn module and therefore creates the
-        `__auto_request_sample_weight__` class attribute in __init_subclass__."""
+        `_auto_request_sample_weight` class attribute in `__init_subclass__`."""
 
         def fit(self, X, y, sample_weight=None):
             return self
@@ -1146,7 +1146,7 @@ def test_baseestimator_sample_weight_auto_request():
         def predict(self, X, y=None):
             return y
 
-    assert MyEstimator.__auto_request_sample_weight__
+    assert MyEstimator._auto_request_sample_weight
     est = MyEstimator()
 
     with config_context(enable_metadata_auto_requests=True):
@@ -1175,14 +1175,14 @@ def test_third_party_baseestimator_no_sample_weight_auto_request():
         return self
 
     # This class lives in 'third_party.pkg' and therefore doesn't have a
-    # `__auto_request_sample_weight__` class attribute.
+    # `_auto_request_sample_weight` class attribute.
     ThirdPartyEstimator = type(
         "ThirdPartyEstimator",
         (BaseEstimator,),
         {"__module__": "third_party.pkg", "fit": fit},
     )
 
-    assert "__auto_request_sample_weight__" not in ThirdPartyEstimator.__dict__
+    assert "_auto_request_sample_weight" not in ThirdPartyEstimator.__dict__
 
     with config_context(enable_metadata_auto_requests=True):
         routing = get_routing_for_object(ThirdPartyEstimator())
@@ -1201,7 +1201,7 @@ def test_auto_request_mixin_opts_in_sample_weight():
         (AutoRequestMixin, BaseEstimator),
         {"__module__": "third_party.pkg", "fit": fit},
     )
-    assert ThirdPartyEstimator.__auto_request_sample_weight__
+    assert ThirdPartyEstimator._auto_request_sample_weight
 
     with config_context(enable_metadata_auto_requests=True):
         routing = get_routing_for_object(ThirdPartyEstimator())
