@@ -636,6 +636,17 @@ def test_calibration_curve():
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
 
+# TODO(1.12): remove, see PR #34326
+def test_calibration_curve_n_bins_future_warning():
+    y_true = np.array([0, 0, 0, 1, 1, 1])
+    y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
+    with pytest.warns(FutureWarning, match="n_bins"):
+        prob_true_default, prob_pred_default = calibration_curve(y_true, y_pred)
+    prob_true_explicit, prob_pred_explicit = calibration_curve(y_true, y_pred, n_bins=5)
+    assert_allclose(prob_true_default, prob_true_explicit)
+    assert_allclose(prob_pred_default, prob_pred_explicit)
+
+
 # TODO(1.12): remove with change of default strategy
 def test_calibration_curve_strategy_future_warning():
     y_true = np.array([0, 0, 0, 1, 1, 1])
@@ -925,6 +936,10 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
 # TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings(
     "ignore:The default value of `strategy` will change.*:FutureWarning"
@@ -982,6 +997,10 @@ def test_calibration_display_label_class_plot(pyplot):
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
 # TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings(
     "ignore:The default value of `strategy` will change.*:FutureWarning"
@@ -1021,6 +1040,10 @@ def test_calibration_display_name_multiple_calls(
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
 # TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings(
     "ignore:The default value of `strategy` will change.*:FutureWarning"
@@ -1085,6 +1108,10 @@ def test_calibration_curve_pos_label(dtype_y_str):
     assert_allclose(prob_true, [0, 0, 0.5, 1])
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
 # TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings(
     "ignore:The default value of `strategy` will change.*:FutureWarning"
@@ -1108,6 +1135,10 @@ def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
     assert viz.line_.get_linestyle() == "-."
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
 # TODO(1.12): remove warning filter with change of default strategy
 @pytest.mark.filterwarnings(
     "ignore:The default value of `strategy` will change.*:FutureWarning"

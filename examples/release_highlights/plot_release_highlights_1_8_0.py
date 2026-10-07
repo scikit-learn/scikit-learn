@@ -160,6 +160,7 @@ for i, c in enumerate(ts.classes_):
     CalibrationDisplay.from_predictions(
         y == c,
         clf.predict_proba(X)[:, i],
+        n_bins=5,
         strategy="uniform",
         name="Uncalibrated",
         ax=axes[i],
@@ -168,6 +169,7 @@ for i, c in enumerate(ts.classes_):
     CalibrationDisplay.from_predictions(
         y == c,
         ts.predict_proba(X)[:, i],
+        n_bins=5,
         strategy="uniform",
         name="Temperature scaling",
         ax=axes[i],
@@ -176,6 +178,7 @@ for i, c in enumerate(ts.classes_):
     CalibrationDisplay.from_predictions(
         y == c,
         sig.predict_proba(X)[:, i],
+        n_bins=5,
         strategy="uniform",
         name="Sigmoid",
         ax=axes[i],
