@@ -1141,10 +1141,10 @@ def test_baseestimator_sample_weight_auto_request():
         `_auto_request_sample_weight` class attribute in `__init_subclass__`."""
 
         def fit(self, X, y, sample_weight=None):
-            return self
+            return self  # pragma: no cover
 
         def predict(self, X, y=None):
-            return y
+            return y  # pragma: no cover
 
     assert MyEstimator._auto_request_sample_weight
     est = MyEstimator()
@@ -1172,7 +1172,7 @@ def test_third_party_baseestimator_no_sample_weight_auto_request():
     # sample_weight.
 
     def fit(self, X, y, sample_weight=None):
-        return self
+        return self  # pragma: no cover
 
     # This class lives in 'third_party.pkg' and therefore doesn't have a
     # `_auto_request_sample_weight` class attribute.
@@ -1194,7 +1194,7 @@ def test_auto_request_mixin_opts_in_sample_weight():
     from sklearn.utils.metadata_routing import AutoRequestMixin
 
     def fit(self, X, y, sample_weight=None):
-        return self
+        return self  # pragma: no cover
 
     ThirdPartyEstimator = type(
         "ThirdPartyEstimator",
