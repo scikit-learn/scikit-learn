@@ -1252,25 +1252,57 @@ class LogisticRegression(
 
     solver : {'lbfgs', 'liblinear', 'newton-cd', 'newton-cd-gram', 'newton-cg', \
             'newton-cholesky', 'sag', 'saga'}, default='lbfgs'
+        Algorithm to use in the optimization problem:
 
-        Algorithm to use in the optimization problem. Default is 'lbfgs'.
-        To choose a solver, you might want to consider the following aspects:
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer. It works reasonably well for a wide
+            class of problems.
 
-        - 'lbfgs' is a good default solver because it works reasonably well for a wide
-          class of problems.
-        - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
-          'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-          error.
-        - 'newton-cholesky' is a good choice for
-          `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
-          categorical features with rare categories. Be aware that the memory usage
-          of this solver has a quadratic dependency on `n_features * n_classes`
-          because it explicitly computes the full Hessian matrix.
-        - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-          and 'saga' are faster for large ones;
-        - 'liblinear' can only handle binary classification by default. To apply a
-          one-versus-rest scheme for the multiclass setting one can wrap it with the
-          :class:`~sklearn.multiclass.OneVsRestClassifier`.
+        'liblinear':
+            This solver can only handle binary classification by default and will raise
+            an error for `n_classes >= 3`. To apply a one-versus-rest scheme for the
+            multiclass setting one can wrap it with the
+            :class:`~sklearn.multiclass.OneVsRestClassifier`.
+
+        'newton-cd'
+            Uses Newton-Raphson steps in an iterated reweighted least squares fashion:
+            The normal equations are cast as a weighted least squares problem with
+            elastic-net penalty. The inner solver then uses a coordinate descent based
+            solver. This way the full Hessian is used but never explicitly constructed.
+            It can solve for all values of `l1_ratio`.
+            This solver is a good choice for `n_features * n_classes` > `n_samples`.
+
+            .. versionadded:: 1.10
+
+        'newton-cd-gram'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner coordinate descent based
+            solver that uses the full Hessian/Gram matrix. It can solve for all
+            values of `l1_ratio`.
+            This solver is a good choice for `n_samples` >> `n_features * n_classes`.
+            Be aware that the memory usage of this solver has a quadratic dependency on
+            `n_features * n_classes` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.10
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is a good choice for `n_samples` >> `n_features * n_classes`.
+            Be aware that the memory usage of this solver has a quadratic dependency on
+            `n_features * n_classes` because it explicitly computes the Hessian matrix.
+
+        'sag' / 'saga'
+            Stochastic Average Gradient (SAG) and refined method (SAGA) that also
+            supports `l1_ratio > 0`. Both are incremental gradient methods, i.e. first
+            order methods.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen (`l1_ratio=0`
@@ -1954,23 +1986,55 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
 
-        - 'lbfgs' is a good default solver because it works reasonably well for a wide
-          class of problems.
-        - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
-          'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-          error.
-        - 'newton-cholesky' is a good choice for
-          `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
-          categorical features with rare categories. Be aware that the memory usage
-          of this solver has a quadratic dependency on `n_features * n_classes`
-          because it explicitly computes the full Hessian matrix.
-        - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-          and 'saga' are faster for large ones;
-        - 'liblinear' might be slower in :class:`LogisticRegressionCV`
-          because it does not handle warm-starting.
-        - 'liblinear' can only handle binary classification by default. To apply a
-          one-versus-rest scheme for the multiclass setting one can wrap it with the
-          :class:`~sklearn.multiclass.OneVsRestClassifier`.
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer. It works reasonably well for a wide
+            class of problems.
+
+        'liblinear':
+            This solver can only handle binary classification by default and will raise
+            an error for `n_classes >= 3`. To apply a one-versus-rest scheme for the
+            multiclass setting one can wrap it with the
+            :class:`~sklearn.multiclass.OneVsRestClassifier`.
+
+        'newton-cd'
+            Uses Newton-Raphson steps in an iterated reweighted least squares fashion:
+            The normal equations are cast as a weighted least squares problem with
+            elastic-net penalty. The inner solver then uses a coordinate descent based
+            solver. This way the full Hessian is used but never explicitly constructed.
+            It can solve for all values of `l1_ratio`.
+            This solver is a good choice for `n_features * n_classes` > `n_samples`.
+
+            .. versionadded:: 1.10
+
+        'newton-cd-gram'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner coordinate descent based
+            solver that uses the full Hessian/Gram matrix. It can solve for all
+            values of `l1_ratio`.
+            This solver is a good choice for `n_samples` >> `n_features * n_classes`.
+            Be aware that the memory usage of this solver has a quadratic dependency on
+            `n_features * n_classes` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.10
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is a good choice for `n_samples` >> `n_features * n_classes`.
+            Be aware that the memory usage of this solver has a quadratic dependency on
+            `n_features * n_classes` because it explicitly computes the Hessian matrix.
+
+        'sag' / 'saga'
+            Stochastic Average Gradient (SAG) and a refined version (SAGA) that also
+            supports `l1_ratio > 0`. Both are incremental gradient methods, i.e. first
+            order methods.
 
         .. warning::
            The choice of the algorithm depends on the penalty (`l1_ratio=0` for
