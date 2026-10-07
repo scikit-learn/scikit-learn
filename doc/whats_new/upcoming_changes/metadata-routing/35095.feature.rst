@@ -1,0 +1,14 @@
+- |Feature| The following consuming :term:`routers <router>` auto-request
+  `sample_weight` on their methods when metadata routing and auto-requests
+  are enabled via :func:`~sklearn.set_config`:
+  :class:`~linear_model.LogisticRegressionCV`,
+  :class:`~linear_model.RidgeCV`,
+  :class:`~linear_model.RidgeClassifierCV`,
+  :class:`~linear_model.ElasticNetCV`,
+  :class:`~linear_model.LassoCV`,
+  :class:`~linear_model.MultiTaskElasticNetCV`,
+  :class:`~linear_model.MultiTaskLassoCV`,
+  :class:`~calibration.CalibratedClassifierCV`,
+  :class:`~multiclass.OneVsRestClassifier` and
+  :class:`~multiclass.OneVsOneClassifier`.
+  By :user:`Stefanie Senger <StefanieSenger>`.
