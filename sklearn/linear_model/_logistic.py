@@ -1883,9 +1883,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         multiplies the penalty term (both L1 and L2). In this case, values must be in
         the range `[0.0, inf)`.
         If `alphas` is an integer, then a grid of `alpha` values is chosen on a
-        logarithmic scale between 1e-4 and 1e4. If the computed attribute `alpha_` is
+        logarithmic scale between 1e4 and 1e-4. If the computed attribute `alpha_` is
         on the boundary (either 1e-4 or 1e4), it might be a good idea to use a larger
         search space.
+        For maximum efficiency, pass `alphas` in decreasing order, e.g.
+        `alphas=np.logspace(6, -6, 13)`. The most strongly regularized model, which is
+        the easiest to fit, is then trained first, and each subsequent `alpha`-fit is
+        warm-started from the previous solution.
 
         .. warning::
            In order to already use `alphas` during the deprecation period of `Cs`, just
