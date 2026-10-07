@@ -600,7 +600,9 @@ def test_temperature_scaling_input_validation(global_dtype):
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 def test_calibration_curve():
     """Check calibration_curve function"""
     y_true = np.array([0, 0, 0, 1, 1, 1])
@@ -924,7 +926,9 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     # Ensure pipelines are supported by CalibrationDisplay.from_estimator
     X, y = iris_data_binary
@@ -979,7 +983,9 @@ def test_calibration_display_label_class_plot(pyplot):
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_calibration_display_name_multiple_calls(
     constructor_name, pyplot, iris_data_binary
@@ -1016,7 +1022,9 @@ def test_calibration_display_name_multiple_calls(
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 def test_calibration_display_ref_line(pyplot, iris_data_binary):
     # Check that `ref_line` only appears once
     X, y = iris_data_binary
@@ -1047,7 +1055,9 @@ def test_calibration_curve_pos_label_error_str(dtype_y_str):
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize("dtype_y_str", [str, object])
 def test_calibration_curve_pos_label(dtype_y_str):
     """Check the behaviour when passing explicitly `pos_label`."""
@@ -1076,7 +1086,9 @@ def test_calibration_curve_pos_label(dtype_y_str):
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -1097,7 +1109,9 @@ def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize("pos_label, expected_pos_label", [(None, 1), (0, 0), (1, 1)])
 def test_calibration_display_pos_label(
     pyplot, iris_data_binary, pos_label, expected_pos_label

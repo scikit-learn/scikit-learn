@@ -129,7 +129,9 @@ def _check_pos_label_statistics(
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -157,7 +159,9 @@ def test_display_curve_error_binary_classifier(pyplot, data, data_binary, Displa
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -233,7 +237,9 @@ def test_display_curve_error_no_response_method(
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -287,7 +293,9 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "clf",
     [
@@ -321,7 +329,9 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -361,7 +371,9 @@ def test_display_curve_error_pos_label(pyplot, data_binary, Display):
 
 
 # TODO(1.12): remove warning filter with change of default strategy
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display",
     [

@@ -1727,15 +1727,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
         )
 
-        # TODO(1.12): remove with change of default strategy.
-        if strategy == "warn":
-            warnings.warn(
-                "The default value of `strategy` will change "
-                "from 'uniform' to 'quantile' in 1.12",
-                FutureWarning,
-            )
-            strategy = "uniform"
-
         return cls.from_predictions(
             y,
             y_prob,
@@ -1859,15 +1850,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label_validated, name = cls._validate_from_predictions_params(
             y_true, y_prob, sample_weight=None, pos_label=pos_label, name=name
         )
-
-        # TODO(1.12): remove with change of default strategy.
-        if strategy == "warn":
-            warnings.warn(
-                "The default value of `strategy` will change "
-                "from 'uniform' to 'quantile' in 1.12",
-                FutureWarning,
-            )
-            strategy = "uniform"
 
         prob_true, prob_pred = calibration_curve(
             y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
