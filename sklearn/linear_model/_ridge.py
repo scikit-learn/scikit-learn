@@ -773,8 +773,8 @@ def _ridge_regression(
                 coef = _solve_cholesky(X, y, alpha, X_offset=X_offset)
             except linalg.LinAlgError:
                 if X_offset is not None:
-                    # X was left uncentered to avoid materializing a copy on
-                    # the svd fallback needs centered X:
+                    # X was left uncentered to avoid a copy, but the svd
+                    # solver needs a centered X.
                     X = X - X_offset
                 # use SVD solver if matrix is singular
                 solver = "svd"
@@ -987,10 +987,14 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         # X with n_features <= n_samples, no sample weights, and a
         # resolved "cholesky" solver hits _solve_cholesky's primal branch,
         # which can apply an algebraically-centering optimization.
+        # The algebraic centering loses about 2 * log10(|mean| / std) more
+        # digits than explicit centering (amplified by the conditioning of the
+        # Gram matrix), which float32 cannot afford: only use it for float64.
         use_no_center_cholesky = (
             self.fit_intercept
             and sample_weight is None
             and solver == "cholesky"
+            and X.dtype == xp.float64
             and X.shape[0] >= X.shape[1]
         )
 
