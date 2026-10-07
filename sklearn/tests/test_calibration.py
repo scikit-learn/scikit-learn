@@ -274,6 +274,7 @@ def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
         stratify=y,
         train_size=1_000,
     )
+    clf = clone(clf)
     clf.fit(X_train, y_train)
     y_pred_uncal = clf.predict_proba(X_test)
 
