@@ -1163,7 +1163,7 @@ def test_baseestimator_sample_weight_auto_request():
                     getattr(get_routing_for_object(est), method).requests.get(
                         "sample_weight"
                     )
-                    is not True
+                    is None
                 )
 
 
@@ -1186,7 +1186,7 @@ def test_third_party_baseestimator_no_sample_weight_auto_request():
 
     with config_context(enable_metadata_auto_requests=True):
         routing = get_routing_for_object(ThirdPartyEstimator())
-        assert routing.fit.requests.get("sample_weight") is not True
+        assert routing.fit.requests.get("sample_weight") is None
 
 
 def test_auto_request_mixin_opts_in_sample_weight():

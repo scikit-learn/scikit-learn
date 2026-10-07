@@ -2595,26 +2595,12 @@ def test_sample_weight_routing_auto_request():
     pipe = make_pipeline(scaler, est)
 
     with config_context(enable_metadata_auto_requests=True):
-        assert (
-            getattr(get_routing_for_object(est), "fit").requests.get("sample_weight")
-            is True
-        )
-        assert (
-            getattr(get_routing_for_object(est), "transform").requests.get(
-                "sample_weight"
-            )
-            is True
-        )
-        assert (
-            getattr(get_routing_for_object(est), "predict").requests.get(
-                "sample_weight"
-            )
-            is True
-        )
-        assert (
-            getattr(get_routing_for_object(scaler), "fit").requests.get("sample_weight")
-            is True
-        )
+        est_routing = get_routing_for_object(est)
+        scaler_routing = get_routing_for_object(scaler)
+        assert est_routing.fit.requests.get("sample_weight") is True
+        assert est_routing.transform.requests.get("sample_weight") is True
+        assert est_routing.predict.requests.get("sample_weight") is True
+        assert scaler_routing.fit.requests.get("sample_weight") is True
 
         pipe.fit(X, y, sample_weight=sample_weight)
         assert_allclose(pipe[-1].sample_weight_, sample_weight)
@@ -2623,24 +2609,13 @@ def test_sample_weight_routing_auto_request():
         pipe.transform(X, sample_weight=sample_weight)
         pipe.predict(X, sample_weight=sample_weight)
 
-    # check that with teh default `enable_metadata_auto_requests=False` the
-    # auto-requests are unset
-    assert (
-        getattr(get_routing_for_object(est), "fit").requests.get("sample_weight")
-        is not True
-    )
-    assert (
-        getattr(get_routing_for_object(est), "transform").requests.get("sample_weight")
-        is not True
-    )
-    assert (
-        getattr(get_routing_for_object(est), "predict").requests.get("sample_weight")
-        is not True
-    )
-    assert (
-        getattr(get_routing_for_object(scaler), "fit").requests.get("sample_weight")
-        is not True
-    )
+    with config_context(enable_metadata_auto_requests=False):
+        est_routing = get_routing_for_object(est)
+        scaler_routing = get_routing_for_object(scaler)
+        assert est_routing.fit.requests.get("sample_weight") is None
+        assert est_routing.transform.requests.get("sample_weight") is None
+        assert est_routing.predict.requests.get("sample_weight") is None
+        assert scaler_routing.fit.requests.get("sample_weight") is None
 
     with pytest.raises(UnsetMetadataPassedError):
         pipe.fit(X, y, sample_weight=sample_weight)
