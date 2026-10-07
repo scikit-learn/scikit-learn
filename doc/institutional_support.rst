@@ -38,7 +38,7 @@ its success and sustainability.
     Today, Probabl employs the following core and non-core contributors: Anne
     Beyer, Antoine Baker, Arturo Amor, François Goupil, Francois Paugam,
     Guillaume Lemaitre, Jérémie du Boisberranger, Loïc Estève, Olivier Grisel,
-    Shruti Nath and Stefanie Senger, as well as Gaël Varoquaux.
+    Arthur Lacote, Shruti Nath and Stefanie Senger, as well as Gaël Varoquaux.
 
 The above financial commitments mean that Inria initially and now Probabl have
 been and are the main source of financial support for scikit-learn, completed
