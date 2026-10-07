@@ -641,7 +641,9 @@ def test_calibration_curve_n_bins_future_warning():
     y_true = np.array([0, 0, 0, 1, 1, 1])
     y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
     with pytest.warns(FutureWarning, match="n_bins"):
-        prob_true_default, prob_pred_default = calibration_curve(y_true, y_pred, strategy="uniform")
+        prob_true_default, prob_pred_default = calibration_curve(
+            y_true, y_pred, strategy="uniform"
+        )
     prob_true_explicit, prob_pred_explicit = calibration_curve(
         y_true, y_pred, n_bins=5, strategy="uniform"
     )
@@ -654,7 +656,9 @@ def test_calibration_curve_strategy_future_warning():
     y_true = np.array([0, 0, 0, 1, 1, 1])
     y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
     with pytest.warns(FutureWarning, match="strategy"):
-        prob_true_default, prob_pred_default = calibration_curve(y_true, y_pred, n_bins=5)
+        prob_true_default, prob_pred_default = calibration_curve(
+            y_true, y_pred, n_bins=5
+        )
     prob_true_explicit, prob_pred_explicit = calibration_curve(
         y_true, y_pred, n_bins=5, strategy="uniform"
     )
