@@ -1532,6 +1532,148 @@ cdef class Tree:
                 raise ValueError("Total weight should be 1.0 but was %.9f" %
                                  total_weight)
 
+    def compute_partial_dependence_tree_accurate(
+        self,
+        float32_t[:, ::1] X_bg,
+        float32_t[::1] grid,
+        intp_t required_feature,
+        float64_t[:, ::1] out,
+    ):
+        """Partial dependence via background-data tree traversal (tree_accurate).
+
+        Two traversals are performed, both routing through ``goes_left`` --
+        the same split test as prediction -- so numeric, categorical and
+        missing-value routing stay consistent automatically:
+
+        * Background pass -- the heavy, ``O(n_background * depth)`` part. Each
+          sample is routed through the tree, branching both ways at splits on
+          ``required_feature`` and following the sample everywhere else; the
+          number of arrivals per leaf is accumulated into ``count``.
+          ``count[leaf]`` is thus the number of background samples routed to
+          that leaf when ``required_feature`` is treated as a wildcard.
+
+        * Grid pass -- ``O(n_grid * node_count)``. Each grid value is routed
+          through the tree, following it at ``required_feature`` splits and
+          branching both ways elsewhere; ``value * count`` is accumulated at
+          every leaf reached. The result for grid value ``g`` equals
+          ``n_background * PDP(g)``.
+
+        ``required_feature`` of each sample is never read -- marginalising it is
+        exactly the both-ways branching above. Working memory is
+        ``O(node_count)``.
+
+        Accumulates raw sums into ``out``; the caller divides by the number of
+        background samples (and, for forests, by n_estimators).
+
+        Parameters
+        ----------
+        X_bg : float32 C-contiguous array of shape (n_background, n_features)
+            Background dataset used for marginalisation.
+        grid : float32 C-contiguous array of shape (n_grid,)
+            Grid values for the required feature.
+        required_feature : intp
+            Global index of the feature whose PDP is being computed.
+        out : float64 array of shape (n_outputs, n_grid)
+            Output array; sums are accumulated in-place.
+        """
+        cdef:
+            intp_t n_grid = grid.shape[0]
+            intp_t n_background = X_bg.shape[0]
+            intp_t _TREE_LEAF_SENTINEL = TREE_LEAF
+            intp_t K = out.shape[0]
+            intp_t stack_size, sample_idx, node_idx, j, k, cnt
+            float32_t g
+            bint go_left
+            Node* node
+            float64_t[:, ::1] node_values
+
+        if n_background == 0 or n_grid == 0 or self.node_count == 0:
+            return
+
+        node_values = self._tree_accurate_node_values()
+
+        # ---- Pass A: wildcard routing counts (heavy, m-dependent) -----------
+        cdef intp_t[::1] count = np.zeros(self.node_count, dtype=np.intp)
+        cdef intp_t stack_capacity = 2 * (self.max_depth + 2) + 4
+        cdef intp_t[::1] stack_node = np.empty(stack_capacity, dtype=np.intp)
+
+        for sample_idx in range(n_background):
+            stack_size = 1
+            stack_node[0] = 0
+            while stack_size > 0:
+                stack_size -= 1
+                node_idx = stack_node[stack_size]
+                node = &self.nodes[node_idx]
+                if node.left_child == _TREE_LEAF_SENTINEL:
+                    count[node_idx] += 1
+                elif node.feature == required_feature:
+                    stack_node[stack_size] = node.left_child
+                    stack_size += 1
+                    stack_node[stack_size] = node.right_child
+                    stack_size += 1
+                else:
+                    go_left = goes_left(
+                        node.threshold,
+                        node.left_cat_bitset,
+                        node.missing_go_to_left,
+                        node.split_kind,
+                        X_bg[sample_idx, node.feature],
+                    )
+                    if go_left:
+                        stack_node[stack_size] = node.left_child
+                    else:
+                        stack_node[stack_size] = node.right_child
+                    stack_size += 1
+
+        # ---- Pass B: per grid value, accumulate value * count ---------------
+        for j in range(n_grid):
+            g = grid[j]
+            stack_size = 1
+            stack_node[0] = 0
+            while stack_size > 0:
+                stack_size -= 1
+                node_idx = stack_node[stack_size]
+                node = &self.nodes[node_idx]
+                if node.left_child == _TREE_LEAF_SENTINEL:
+                    cnt = count[node_idx]
+                    if cnt != 0:
+                        for k in range(K):
+                            out[k, j] += node_values[node_idx, k] * cnt
+                elif node.feature == required_feature:
+                    go_left = goes_left(
+                        node.threshold,
+                        node.left_cat_bitset,
+                        node.missing_go_to_left,
+                        node.split_kind,
+                        g,
+                    )
+                    if go_left:
+                        stack_node[stack_size] = node.left_child
+                    else:
+                        stack_node[stack_size] = node.right_child
+                    stack_size += 1
+                else:
+                    stack_node[stack_size] = node.left_child
+                    stack_size += 1
+                    stack_node[stack_size] = node.right_child
+                    stack_size += 1
+
+    def _tree_accurate_node_values(self):
+        """Per-node output values matching predict / decision_function.
+
+        Returns a C-contiguous ``(node_count, K)`` float64 array: regression
+        values, all class probabilities for multiclass, or the positive-class
+        probability only for binary classification.
+        """
+        value_3d = np.asarray(self._get_value_ndarray())
+        if self.max_n_classes > 1:
+            class_counts = value_3d[:, 0, :]
+            probs = class_counts / class_counts.sum(axis=1, keepdims=True)
+            if self.max_n_classes == 2:
+                return np.ascontiguousarray(probs[:, 1:2])
+            return np.ascontiguousarray(probs)
+        return np.ascontiguousarray(value_3d[:, :, 0])
+
 
 def _check_n_classes(n_classes, expected_dtype):
     if n_classes.ndim != 1:
