@@ -244,14 +244,14 @@ subtle parameter.
 .. note:: Recommendation summary
 
     For an optimal robustness of cross-validation (CV) results, pass
-    `RandomState` instances when creating estimators, or leave `random_state`
-    to `None`. Passing integers to CV splitters is usually the safest option
-    and is preferable; passing `RandomState` instances to splitters may
-    sometimes be useful to achieve very specific use-cases.
-    For both estimators and splitters, passing an integer vs passing an
-    instance (or `None`) leads to subtle but significant differences,
-    especially for CV procedures. These differences are important to
-    understand when reporting results.
+    `RandomState` instances when creating estimators. Pass integers to CV
+    splitters.
+
+    Passing `RandomState` instances to splitters may sometimes be useful to
+    achieve very specific use-cases. For both estimators and splitters,
+    passing an integer vs passing an instance (or `None`) leads to subtle but
+    significant differences, especially for CV procedures. These differences
+    are important to understand when reporting results.
 
     For reproducible results across executions, remove any use of
     `random_state=None`.
