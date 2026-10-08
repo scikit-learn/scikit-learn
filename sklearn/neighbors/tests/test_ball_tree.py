@@ -1,4 +1,5 @@
 import itertools
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pytest
@@ -7,6 +8,7 @@ from numpy.testing import assert_allclose, assert_array_almost_equal, assert_equ
 from sklearn.neighbors._ball_tree import BallTree, BallTree32, BallTree64
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import _convert_container
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.validation import check_array
 
 rng = np.random.RandomState(10)
@@ -38,6 +40,27 @@ BALL_TREE_CLASSES = [
     BallTree32,
 ]
 
+THREAD_SAFE_METRICS = [
+    "euclidean",
+    "manhattan",
+    "minkowski",
+    "weighted_minkowski",
+    "chebyshev",
+    "seuclidean",
+    "mahalanobis",
+    "hamming",
+    "canberra",
+    "braycurtis",
+    "jaccard",
+    "dice",
+    "rogerstanimoto",
+    "russellrao",
+    "sokalsneath",
+    "haversine",
+]
+if "sokalmichener" in BallTree64.valid_metrics:
+    THREAD_SAFE_METRICS.append("sokalmichener")
+
 
 def brute_force_neighbors(X, Y, k, metric, **kwargs):
     from sklearn.metrics import DistanceMetric
@@ -49,8 +72,46 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     return dist, ind
 
 
+def _metric_and_params(metric, n_features):
+    if metric == "weighted_minkowski":
+        return "minkowski", {"p": 3, "w": np.arange(1, n_features + 1)}
+    if metric == "minkowski":
+        return metric, {"p": 3}
+    if metric == "seuclidean":
+        return metric, {"V": np.arange(1, n_features + 1)}
+    if metric == "mahalanobis":
+        return metric, {"VI": np.eye(n_features)}
+    return metric, {}
+
+
 def test_BallTree_is_BallTree64_subclass():
     assert issubclass(BallTree, BallTree64)
+
+
+@pytest.mark.xfail(_IS_WASM, reason="cannot start threads")
+@pytest.mark.parametrize("metric", THREAD_SAFE_METRICS)
+@pytest.mark.parametrize("BallTreeImplementation", BALL_TREE_CLASSES)
+def test_query_thread_safety(metric, BallTreeImplementation):
+    """Check that distance metric instances can be shared by query threads."""
+    rng = np.random.RandomState(42)
+    n_features = 2 if metric == "haversine" else 10
+    X = rng.random_sample((100, n_features))
+    metric, metric_params = _metric_and_params(metric, n_features)
+    tree = BallTreeImplementation(X, metric=metric, **metric_params)
+
+    expected_dist, expected_ind = tree.query(X, k=20)
+    X_chunks = np.array_split(X, 4)
+
+    def query(X_chunk):
+        return tree.query(X_chunk, k=20)
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        for _ in range(10):
+            chunks = list(executor.map(query, X_chunks))
+            actual_dist = np.vstack([dist for dist, _ in chunks])
+            actual_ind = np.vstack([ind for _, ind in chunks])
+            assert_allclose(actual_dist, expected_dist)
+            assert_equal(actual_ind, expected_ind)
 
 
 @pytest.mark.parametrize("metric", itertools.chain(BOOLEAN_METRICS, DISCRETE_METRICS))
