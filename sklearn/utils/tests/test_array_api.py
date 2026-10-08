@@ -1,5 +1,6 @@
 import os
 from functools import partial
+from types import SimpleNamespace
 
 import numpy
 import pytest
@@ -165,6 +166,60 @@ def test_move_to_array_api_conversions(array_input, reference):
         array_out = move_to(array_in, xp=xp_to, device=device_reference)
         assert get_namespace(array_out)[0] == xp_to
         assert array_device(array_out) == device_reference
+
+
+@skip_if_array_api_compat_not_configured
+def test_move_to_dpnp_array_api_strict():
+    array_api_strict = pytest.importorskip("array_api_strict")
+    xp_dpnp, _ = _array_api_for_tests("dpnp", device_name="cpu")
+
+    with config_context(array_api_dispatch=True):
+        xp_strict, _, device_strict = get_namespace_and_device(
+            array_api_strict.asarray(1)
+        )
+        array_dpnp = xp_dpnp.asarray([1, 2, 3], device="cpu")
+        array_strict = move_to(array_dpnp, xp=xp_strict, device=device_strict)
+        assert_array_equal(array_strict, [1, 2, 3])
+        assert get_namespace(array_strict)[0] == xp_strict
+
+
+def test_move_to_dpnp_array_api_strict_dlpack_fallback(monkeypatch):
+    array = object()
+
+    def from_dlpack(*args, **kwargs):
+        raise RuntimeError("Unsupported device in DLTensor")
+
+    xp_dpnp = SimpleNamespace(__name__="array_api_compat.dpnp")
+    xp_strict = SimpleNamespace(
+        __name__="array_api_compat.array_api_strict",
+        float32=numpy.float32,
+        from_dlpack=from_dlpack,
+        asarray=lambda array, device: array,
+    )
+    monkeypatch.setattr(
+        "sklearn.utils._array_api._max_precision_float_dtype",
+        lambda xp, device: None,
+    )
+    monkeypatch.setattr(
+        "sklearn.utils._array_api.get_namespace_and_device",
+        lambda array: (xp_dpnp, True, "cpu"),
+    )
+    monkeypatch.setattr(
+        "sklearn.utils._array_api._convert_to_numpy",
+        lambda array, xp: numpy.asarray([1, 2, 3]),
+    )
+
+    result = move_to(array, xp=xp_strict, device="cpu")
+
+    assert_array_equal(result, [1, 2, 3])
+
+    xp_other = SimpleNamespace(__name__="array_api_compat.other")
+    monkeypatch.setattr(
+        "sklearn.utils._array_api.get_namespace_and_device",
+        lambda array: (xp_other, True, "cpu"),
+    )
+    with pytest.raises(RuntimeError, match="Unsupported device in DLTensor"):
+        move_to(array, xp=xp_strict, device="cpu")
 
 
 def test_move_to_sparse():

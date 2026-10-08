@@ -605,6 +605,16 @@ def move_to(*arrays, xp, device):
                     # https://github.com/pytorch/pytorch/issues/188023 is fixed.
                     # See also https://github.com/scikit-learn/scikit-learn/issues/34307
                     array = numpy.ascontiguousarray(array)
+                # `AttributeError` occurs when `__dlpack__` and `__dlpack_device__`
+                # methods are not present on the input array.
+                # `TypeError` and `NotImplementedError` occur for packages that do
+                # not yet support dlpack 1.0 (i.e., the `device`/`copy` kwargs,
+                # e.g., torch <= 2.8.0).
+                # See https://github.com/data-apis/array-api/pull/741 for more
+                # details about the introduction of the `copy` and `device` kwargs.
+                # TODO: try removing this once DLPack v1 is more widely supported.
+                # TODO: ValueError not needed once min NumPy >=2.4.0:
+                # https://github.com/numpy/numpy/issues/30341
                 try:
                     # The dlpack protocol is the future proof and library agnostic
                     # method to transfer arrays across namespace and device boundaries
@@ -613,18 +623,20 @@ def move_to(*arrays, xp, device):
                     # Note: copy=None is the default since array-api 2023.12. Namespace
                     # libraries should only trigger a copy automatically if needed.
                     array_converted = xp.from_dlpack(array, device=device)
-                    # `AttributeError` occurs when `__dlpack__` and `__dlpack_device__`
-                    # methods are not present on the input array
-                    # `TypeError` and `NotImplementedError` for packages that do not
-                    # yet support dlpack 1.0
-                    # (i.e. the `device`/`copy` kwargs, e.g., torch <= 2.8.0)
-                    # See https://github.com/data-apis/array-api/pull/741 for
-                    # more details about the introduction of the `copy` and `device`
-                    # kwargs in the from_dlpack method and their expected
-                    # meaning by namespaces implementing the array API spec.
-                    # TODO: try removing this once DLPack v1 more widely supported
-                    # TODO: ValueError not needed once min NumPy >=2.4.0:
-                    # https://github.com/numpy/numpy/issues/30341
+                # DLPack consumers may report unsupported device types as a
+                # RuntimeError. Limit the fallback to this known error and pair.
+                except RuntimeError as exc:
+                    if not (
+                        _is_xp_namespace(xp_array, "dpnp")
+                        and _is_xp_namespace(xp, "array_api_strict")
+                        and "Unsupported device in DLTensor" in str(exc)
+                    ):
+                        raise
+
+                    # array_api_strict cannot import DPNP's DLPack device type, so
+                    # convert through DPNP's CPU conversion API instead.
+                    array_np = _convert_to_numpy(array, xp_array)
+                    array_converted = xp.asarray(array_np, device=device)
                 except (
                     AttributeError,
                     TypeError,
