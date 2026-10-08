@@ -1533,6 +1533,16 @@ class LogisticRegression(
             )
             raise ValueError(msg)
         is_binary = n_classes == 2
+        if (
+            solver == "lbfgs"
+            and not is_binary
+            and _is_numpy_namespace(xp)
+            and not sparse.issparse(X)
+        ):
+            # The multinomial loss computes X @ coef.T and gradient.T @ X with
+            # n_classes columns: BLAS can be several times slower on these with
+            # F-ordered X (up to ~4x with MKL, float32 and a single thread).
+            X = np.ascontiguousarray(X)
         y_encoded = move_to(le.transform(y), xp=xp, device=device)
         y_encoded = xp.astype(y_encoded, X.dtype, copy=False)
 

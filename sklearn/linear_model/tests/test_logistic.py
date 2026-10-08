@@ -3249,3 +3249,19 @@ def test_logistic_regression_callback_support_warning():
         match="Callbacks are only supported in LogisticRegression for solver='lbfgs'",
     ):
         LogisticRegression(solver="liblinear").set_callbacks(cb)
+
+
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_lbfgs_same_fit_for_c_and_f_ordered_X(n_classes, global_random_seed):
+    """lbfgs keeps F-ordered X for binary problems: the fit must not change."""
+    X, y = make_classification(
+        n_samples=200,
+        n_features=10,
+        n_informative=5,
+        n_classes=n_classes,
+        random_state=global_random_seed,
+    )
+    lr_c = LogisticRegression(solver="lbfgs").fit(np.ascontiguousarray(X), y)
+    lr_f = LogisticRegression(solver="lbfgs").fit(np.asfortranarray(X), y)
+    assert_allclose(lr_f.coef_, lr_c.coef_, rtol=1e-6)
+    assert_allclose(lr_f.intercept_, lr_c.intercept_, rtol=1e-6)
