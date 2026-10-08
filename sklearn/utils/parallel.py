@@ -213,7 +213,7 @@ def _parallel_thread_map(n_jobs, func, *iterables):
     """
     # Resolve n_jobs like `Parallel(require="sharedmem")` would: the active
     # backend may not support threads (e.g. loky in a daemonic process).
-    with joblib.parallel_config(backend="threading"):
+    with joblib.parallel_config(require="sharedmem"):
         n_jobs = joblib.effective_n_jobs(n_jobs)
 
     # We use a list so that the config doesn't change, as it might with lazy
