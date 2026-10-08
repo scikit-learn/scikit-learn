@@ -30,7 +30,7 @@ class ProgressBar:
 
     Notes
     -----
-    This callback requires rich to be installed.
+    This callback requires `rich <https://rich.readthedocs.io>`_ to be installed.
     """
 
     @validate_params(
