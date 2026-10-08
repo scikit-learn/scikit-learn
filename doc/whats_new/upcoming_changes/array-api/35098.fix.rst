@@ -1,0 +1,2 @@
+- Fixed moving DPNP arrays to the ``array_api_strict`` namespace.
+  By :user:`zemamba <zemamba>`.
