@@ -1,14 +1,16 @@
 """Unsupervised nearest neighbors learner"""
-from ..base import _fit_context
-from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from sklearn.base import _fit_context
+from sklearn.neighbors._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin
 
 
 class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
-
-    .. versionadded:: 0.9
 
     Parameters
     ----------
@@ -55,7 +57,7 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
 
-    p : float, default=2
+    p : float (positive), default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -80,8 +82,6 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

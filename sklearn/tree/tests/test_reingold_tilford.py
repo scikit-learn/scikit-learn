@@ -43,7 +43,7 @@ def test_buchheim(tree, n_nodes):
     while True:
         x_at_this_depth = [node[0] for node in coordinates if node[1] == depth]
         if not x_at_this_depth:
-            # reached all leafs
+            # reached all leaves
             break
         assert len(np.unique(x_at_this_depth)) == len(x_at_this_depth)
         depth += 1

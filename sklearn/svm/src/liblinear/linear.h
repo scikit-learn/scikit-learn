@@ -84,4 +84,3 @@ void set_print_string_function(void (*print_func) (const char*));
 #endif
 
 #endif /* _LIBLINEAR_H */
-

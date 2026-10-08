@@ -5,21 +5,30 @@ BinMapper is used for mapping a real-valued dataset into integer-valued bins.
 Bin thresholds are computed with the quantiles so that each bin contains
 approximately the same number of samples.
 """
-# Author: Nicolas Hug
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+from numpy.lib.stride_tricks import sliding_window_view
 
-from ...base import BaseEstimator, TransformerMixin
-from ...utils import check_array, check_random_state
-from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils.fixes import percentile
-from ...utils.validation import check_is_fitted
-from ._binning import _map_to_bins
-from ._bitset import set_bitset_memoryview
-from .common import ALMOST_INF, X_BINNED_DTYPE, X_BITSET_INNER_DTYPE, X_DTYPE
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.ensemble._hist_gradient_boosting._binning import _map_to_bins
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    ALMOST_INF,
+    X_BINNED_DTYPE,
+    X_BITSET_INNER_DTYPE,
+    X_DTYPE,
+)
+from sklearn.utils import check_array, check_random_state
+from sklearn.utils._bitset import set_bitset_memoryview
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.stats import _weighted_percentile_1d_sorted
+from sklearn.utils.validation import check_is_fitted
 
 
-def _find_binning_thresholds(col_data, max_bins):
+def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     """Extract quantiles from a continuous feature.
 
     Missing values are ignored for finding the thresholds.
@@ -41,30 +50,67 @@ def _find_binning_thresholds(col_data, max_bins):
         A given value x will be mapped into bin value i iff
         bining_thresholds[i - 1] < x <= binning_thresholds[i]
     """
-    # ignore missing values when computing bin thresholds
-    missing_mask = np.isnan(col_data)
-    if missing_mask.any():
-        col_data = col_data[~missing_mask]
-    col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
-    distinct_values = np.unique(col_data)
-    if len(distinct_values) <= max_bins:
-        midpoints = distinct_values[:-1] + distinct_values[1:]
-        midpoints *= 0.5
+    # The data will be sorted anyway to find distinct values and again in percentile,
+    # so we do it here, like once and for all. Sorting also returns a contiguous array.
+    if sample_weight is None:
+        col_data = np.sort(col_data)
+        # ignore missing values when computing bin thresholds
+        idx_nan = np.searchsorted(col_data, np.nan)
+        col_data = col_data[:idx_nan]
     else:
-        # We sort again the data in this case. We could compute
-        # approximate midpoint percentiles using the output of
-        # np.unique(col_data, return_counts) instead but this is more
-        # work and the performance benefit will be limited because we
-        # work on a fixed-size subsample of the full data.
+        # First, remove missing values because argsort is much slower when missing
+        # values are present (which is not the case for sort).
+        missing_mask = np.isnan(col_data)
+        if missing_mask.any():
+            col_data = col_data[~missing_mask]
+            sample_weight = sample_weight[~missing_mask]
+
+        # If 0-weighted values exist, we need to remove those
+        # before calculating the distinct points.
+        nnz_sw = sample_weight != 0
+        col_data = col_data[nnz_sw]
+        sample_weight = sample_weight[nnz_sw]
+
+        sort_idx = np.argsort(col_data)
+        col_data = col_data[sort_idx]
+        sample_weight = sample_weight[sort_idx]
+
+    # fast way for n_distinct = len(np.unique(col_data))
+    distinct_mask = np.empty(len(col_data), dtype=bool)
+    distinct_mask[0] = True
+    distinct_mask[1:] = col_data[1:] != col_data[:-1]
+    n_distincts = distinct_mask.sum()
+
+    if n_distincts == 1:
+        return np.asarray([])
+    elif n_distincts <= max_bins:
+        # Calculate midpoints if distinct values <= max_bins
+        distinct_values = col_data[distinct_mask]
+        bin_thresholds = sliding_window_view(distinct_values, 2).mean(axis=1)
+    elif sample_weight is None:
+        # We compute bin edges using the output of np.percentile with
+        # the "averaged_inverted_cdf" interpolation method that is consistent
+        # with the code for the sample_weight != None case.
         percentiles = np.linspace(0, 100, num=max_bins + 1)
         percentiles = percentiles[1:-1]
-        midpoints = percentile(col_data, percentiles, method="midpoint").astype(X_DTYPE)
-        assert midpoints.shape[0] == max_bins - 1
+        bin_thresholds = np.percentile(
+            col_data, percentiles, method="averaged_inverted_cdf"
+        )
+        assert bin_thresholds.shape[0] == max_bins - 1
+    else:
+        percentiles = np.linspace(0, 100, num=max_bins + 1)
+        percentiles = percentiles[1:-1]
+        bin_thresholds = _weighted_percentile_1d_sorted(
+            col_data, sample_weight, percentiles
+        )
+        assert bin_thresholds.shape[0] == max_bins - 1
+    # Remove duplicated thresholds if they exist.
+    bin_thresholds = np.unique(bin_thresholds)
 
     # We avoid having +inf thresholds: +inf thresholds are only allowed in
     # a "split on nan" situation.
-    np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)
-    return midpoints
+    np.clip(bin_thresholds, a_min=None, a_max=ALMOST_INF, out=bin_thresholds)
+    return bin_thresholds
 
 
 class _BinMapper(TransformerMixin, BaseEstimator):
@@ -144,7 +190,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
     missing_values_bin_idx_ : np.uint8
         The index of the bin where missing values are mapped. This is a
         constant across all features. This corresponds to the last bin, and
-        it is always equal to ``n_bins - 1``. Note that if ``n_bins_missing_``
+        it is always equal to ``n_bins - 1``. Note that if ``n_bins_non_missing_``
         is less than ``n_bins - 1`` for a given feature, then there are
         empty (and unused) bins.
     """
@@ -165,7 +211,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.random_state = random_state
         self.n_threads = n_threads
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit data X by computing the binning thresholds.
 
         The last bin is reserved for missing values, whether missing values
@@ -190,13 +236,26 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 )
             )
 
-        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
+        X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         max_bins = self.n_bins - 1
-
         rng = check_random_state(self.random_state)
         if self.subsample is not None and X.shape[0] > self.subsample:
-            subset = rng.choice(X.shape[0], self.subsample, replace=False)
+            subsampling_probabilities = None
+            if sample_weight is not None:
+                subsampling_probabilities = sample_weight / np.sum(sample_weight)
+            # Sampling with replacement to implement frequency semantics
+            # for sample weights. Note that we need `replace=True` even when
+            # `sample_weight is None` to make sure that passing no weights is
+            # statistically equivalent to passing unit weights.
+            subset = rng.choice(
+                X.shape[0], self.subsample, p=subsampling_probabilities, replace=True
+            )
             X = X.take(subset, axis=0)
+
+            # Add a switch to replace sample weights with None
+            # since sample weights were already used in subsampling
+            # and should not then be propagated to _find_binning_thresholds
+            sample_weight = None
 
         if self.is_categorical is None:
             self.is_categorical_ = np.zeros(X.shape[1], dtype=np.uint8)
@@ -224,22 +283,30 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         self.missing_values_bin_idx_ = self.n_bins - 1
 
-        self.bin_thresholds_ = []
-        n_bins_non_missing = []
+        self.bin_thresholds_ = [None] * n_features
+        n_bins_non_missing = [None] * n_features
 
+        non_cat_thresholds = Parallel(n_jobs=self.n_threads, backend="threading")(
+            delayed(_find_binning_thresholds)(
+                X[:, f_idx], max_bins, sample_weight=sample_weight
+            )
+            for f_idx in range(n_features)
+            if not self.is_categorical_[f_idx]
+        )
+        non_cat_idx = 0
         for f_idx in range(n_features):
-            if not self.is_categorical_[f_idx]:
-                thresholds = _find_binning_thresholds(X[:, f_idx], max_bins)
-                n_bins_non_missing.append(thresholds.shape[0] + 1)
-            else:
+            if self.is_categorical_[f_idx]:
                 # Since categories are assumed to be encoded in
                 # [0, n_cats] and since n_cats <= max_bins,
                 # the thresholds *are* the unique categorical values. This will
                 # lead to the correct mapping in transform()
                 thresholds = known_categories[f_idx]
-                n_bins_non_missing.append(thresholds.shape[0])
-
-            self.bin_thresholds_.append(thresholds)
+                n_bins_non_missing[f_idx] = thresholds.shape[0]
+                self.bin_thresholds_[f_idx] = thresholds
+            else:
+                self.bin_thresholds_[f_idx] = non_cat_thresholds[non_cat_idx]
+                n_bins_non_missing[f_idx] = self.bin_thresholds_[f_idx].shape[0] + 1
+                non_cat_idx += 1
 
         self.n_bins_non_missing_ = np.array(n_bins_non_missing, dtype=np.uint32)
         return self
@@ -264,7 +331,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X_binned : array-like of shape (n_samples, n_features)
             The binned data (fortran-aligned).
         """
-        X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
+        X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         check_is_fitted(self)
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
             raise ValueError(
@@ -277,7 +344,6 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         _map_to_bins(
             X,
             self.bin_thresholds_,
-            self.is_categorical_,
             self.missing_values_bin_idx_,
             n_threads,
             binned,

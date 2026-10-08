@@ -2,9 +2,8 @@
 Testing for Neighborhood Component Analysis module (sklearn.neighbors.nca)
 """
 
-# Authors: William de Vazelhes <wdevazelhes@gmail.com>
-#          John Chiotellis <ioannis.chiotellis@in.tum.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import re
 
@@ -20,13 +19,19 @@ from sklearn.metrics import pairwise_distances
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.validation import validate_data
 
 rng = check_random_state(0)
-# load and shuffle iris dataset
+# Load and shuffle the iris dataset.
 iris = load_iris()
 perm = rng.permutation(iris.target.size)
 iris_data = iris.data[perm]
 iris_target = iris.target[perm]
+# Avoid having test data introducing dependencies between tests.
+iris_data.flags.writeable = False
+iris_target.flags.writeable = False
 EPS = np.finfo(float).eps
 
 
@@ -71,7 +76,7 @@ def test_toy_example_collapse_points():
             # Initialize a fake NCA and variables needed to compute the loss:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y = self.fake_nca._validate_data(X, y, ensure_min_samples=2)
+            self.X, y = validate_data(self.fake_nca, X, y, ensure_min_samples=2)
             y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 
@@ -260,6 +265,29 @@ def test_init_transformation():
         nca.fit(X, y)
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("init", ["lda", "pca", "random", "identity"])
+def test_init_sparse_matrix(csr_container, init):
+    # NCA with any init other than "lda" should accept sparse input and produce
+    # results consistent with those obtained on the equivalent dense matrix.
+    rng = check_random_state(0)
+    X = rng.randn(50, 10)
+    X[(rng.randint(0, 50, 25), rng.randint(0, 10, 25))] = 0.0
+    y = np.array([0] * 25 + [1] * 25)
+    nca = NeighborhoodComponentsAnalysis(n_components=2, init=init, random_state=0)
+    if init == "lda":
+        msg = "Sparse input is only supported for init in ['pca', 'random', 'identity']"
+        with pytest.raises(ValueError, match=re.escape(msg)):
+            nca.fit(csr_container(X), y)
+    else:
+        X_embedded_sparse = nca.fit_transform(csr_container(X), y)
+        X_embedded_dense = nca.fit_transform(X, y)
+        sparse_components = nca.fit(csr_container(X), y).components_
+        dense_components = nca.fit(X, y).components_
+        assert_allclose(X_embedded_sparse, X_embedded_dense, rtol=1e-6, atol=1e-6)
+        assert_allclose(sparse_components, dense_components)
+
+
 @pytest.mark.parametrize("n_samples", [3, 5, 7, 11])
 @pytest.mark.parametrize("n_features", [3, 5, 7, 11])
 @pytest.mark.parametrize("n_classes", [5, 7, 11])
@@ -398,7 +426,7 @@ def test_verbose(init_name, capsys):
             line,
         )
     assert re.match(
-        r"\[NeighborhoodComponentsAnalysis\] Training took\ *" r"\d+\.\d{2}s\.",
+        r"\[NeighborhoodComponentsAnalysis\] Training took\ *\d+\.\d{2}s\.",
         lines[-2],
     )
     assert lines[-1] == ""
@@ -414,8 +442,8 @@ def test_no_verbose(capsys):
 
 
 def test_singleton_class():
-    X = iris_data
-    y = iris_target
+    X = iris_data.copy()
+    y = iris_target.copy()
 
     # one singleton class
     singleton_class = 1
@@ -488,7 +516,7 @@ def test_expected_transformation_shape():
             # function:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y = self.fake_nca._validate_data(X, y, ensure_min_samples=2)
+            self.X, y = validate_data(self.fake_nca, X, y, ensure_min_samples=2)
             y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 
@@ -531,18 +559,30 @@ def test_parameters_valid_types(param, value):
     nca.fit(X, y)
 
 
-def test_nca_feature_names_out():
-    """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`."""
+@pytest.mark.parametrize("n_components", [None, 2])
+def test_nca_feature_names_out(n_components):
+    """Check `get_feature_names_out` for `NeighborhoodComponentsAnalysis`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/28293
+    """
 
     X = iris_data
     y = iris_target
 
-    est = NeighborhoodComponentsAnalysis().fit(X, y)
+    est = NeighborhoodComponentsAnalysis(n_components=n_components).fit(X, y)
     names_out = est.get_feature_names_out()
 
     class_name_lower = est.__class__.__name__.lower()
+
+    if n_components is not None:
+        expected_n_features = n_components
+    else:
+        expected_n_features = X.shape[1]
+
     expected_names_out = np.array(
-        [f"{class_name_lower}{i}" for i in range(est.components_.shape[1])],
+        [f"{class_name_lower}{i}" for i in range(expected_n_features)],
         dtype=object,
     )
+
     assert_array_equal(names_out, expected_names_out)

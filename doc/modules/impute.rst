@@ -6,15 +6,61 @@ Imputation of missing values
 
 .. currentmodule:: sklearn.impute
 
-For various reasons, many real world datasets contain missing values, often
-encoded as blanks, NaNs or other placeholders. Such datasets however are
-incompatible with scikit-learn estimators which assume that all values in an
-array are numerical, and that all have and hold meaning. A basic strategy to
-use incomplete datasets is to discard entire rows and/or columns containing
-missing values. However, this comes at the price of losing data which may be
-valuable (even though incomplete). A better strategy is to impute the missing
-values, i.e., to infer them from the known part of the data. See the
-glossary entry on :term:`imputation`.
+
+.. topic:: Key points for machine-learning with missing values
+
+   * Avoid dropping rows with missing values; it risks creating bias.
+   * :ref:`Some supervised learning methods <estimators_that_handle_nan>` (typically
+     tree-based learners) can natively predict on data with missing values
+     and work fairly well with no additional cost.
+   * Imputation can be very computationaly costly, and quickly hits
+     diminishing returns to improve subsequent prediction performance [3]_.
+
+For various reasons, many real-world datasets contain missing values, often
+encoded as blanks, NaNs or other placeholders. They arise from faulty
+measurements, unanswered questionnaire items, or information that was simply
+never recorded, and can affect both the data ``X`` and the target ``y``. Most
+scikit-learn estimators assume that every entry of an array is numerical and
+holds meaning, and therefore cannot be trained directly on incomplete data.
+
+A naive way to meet that requirement is to discard every row or column that
+contains a missing value. This is detrimental on two counts: valuable
+information from those cases is lost, and it generally introduces bias, since the
+remaining samples are rarely representative of the original population (unless
+values are missing completely at random). The same caution applies to the
+target: silently dropping samples whose outcome ``y`` is unknown biases the
+analysis. In particular, when an outcome has not been observed yet, it is a
+`censoring
+problem <https://en.wikipedia.org/wiki/Survival_analysis#Censoring>`_
+and should be handled with dedicated methods from `survival
+analysis <https://en.wikipedia.org/wiki/Survival_analysis>`_ rather than by
+discarding data.
+
+The tools described on this page address missing values in ``X``. A better
+strategy than discarding data is to impute the missing values, i.e. to infer
+them from the known part of the data (see the glossary entry on
+:term:`imputation`). scikit-learn provides simple column statistics with
+:class:`SimpleImputer`, as well as the model-based :class:`IterativeImputer`
+and :class:`KNNImputer`.
+
+Invest in imputation quality mainly when reconstructing the data itself, not
+prediction, is the objective.
+When the goal is prediction rather than reconstructing the data, a few
+high-level guidelines help choose among these tools [3]_:
+
+- Start simple: constant or mean / most-frequent imputation with
+  :class:`SimpleImputer` is a strong and cheap baseline, and more elaborate
+  imputation often brings only marginal gains in predictive performance.
+- Flag missing entries: adding a missingness indicator (the ``add_indicator``
+  option of the imputers, or :class:`MissingIndicator`) tends to help
+  prediction, even when values are missing completely at random.
+- Prefer expressive models for the supervised-learner step: flexible estimators
+  benefit even less from sophisticated imputation, and some handle missing
+  values natively without any imputation (see :ref:`estimators_that_handle_nan`).
+- Sophisticated imputation can help prediction, but it can be very
+  computationally cost (it scales poorly with data size).
+- Invest heavily in imputation quality mainly when reconstructing the data
+  itself, not prediction, is the objective.
 
 
 Univariate vs. Multivariate Imputation
@@ -22,9 +68,9 @@ Univariate vs. Multivariate Imputation
 
 One type of imputation algorithm is univariate, which imputes values in the
 i-th feature dimension using only non-missing values in that feature dimension
-(e.g. :class:`impute.SimpleImputer`). By contrast, multivariate imputation
+(e.g. :class:`SimpleImputer`). By contrast, multivariate imputation
 algorithms use the entire set of available feature dimensions to estimate the
-missing values (e.g. :class:`impute.IterativeImputer`).
+missing values (e.g. :class:`IterativeImputer`).
 
 
 .. _single_imputer:
@@ -50,17 +96,17 @@ that contain the missing values::
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
     >>> print(imp.transform(X))
     [[4.          2.        ]
-     [6.          3.666...]
+     [6.          3.666]
      [7.          6.        ]]
 
 The :class:`SimpleImputer` class also supports sparse matrices::
 
     >>> import scipy.sparse as sp
-    >>> X = sp.csc_matrix([[1, 2], [0, -1], [8, 4]])
+    >>> X = sp.csc_array([[1, 2], [0, -1], [8, 4]])
     >>> imp = SimpleImputer(missing_values=-1, strategy='mean')
     >>> imp.fit(X)
     SimpleImputer(missing_values=-1)
-    >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
+    >>> X_test = sp.csc_array([[-1, 2], [6, -1], [7, 6]])
     >>> print(imp.transform(X_test).toarray())
     [[3. 2.]
      [6. 3.]
@@ -87,6 +133,8 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
      ['a' 'y']
      ['b' 'y']]
 
+For another example on usage, see :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
+
 .. _iterative_imputer:
 
 
@@ -103,19 +151,9 @@ of ``y``.  This is done for each feature in an iterative fashion, and then is
 repeated for ``max_iter`` imputation rounds. The results of the final
 imputation round are returned.
 
-.. note::
-
-   This estimator is still **experimental** for now: default parameters or
-   details of behaviour might change without any deprecation cycle. Resolving
-   the following issues would help stabilize :class:`IterativeImputer`:
-   convergence criteria (:issue:`14338`), default estimators (:issue:`13286`),
-   and use of random state (:issue:`15611`). To use it, you need to explicitly
-   import ``enable_iterative_imputer``.
-
 ::
 
     >>> import numpy as np
-    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp = IterativeImputer(max_iter=10, random_state=0)
     >>> imp.fit([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
@@ -130,6 +168,29 @@ imputation round are returned.
 Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a
 Pipeline as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
+
+.. _iterative_imputer_convergence:
+
+Convergence and diminishing returns
+-----------------------------------
+
+:class:`IterativeImputer` repeats the round-robin imputation for ``max_iter`` rounds and
+stops early when the change between two consecutive rounds falls below ``tol`` (when
+``sample_posterior=False``). In practice, the imputed values often do not converge: the
+round-robin scheme is not guaranteed to reach a fixed point, so the number of iterations
+is best seen as a trade-off against the available time budget rather than a target to be
+met.
+
+This is rarely a problem when the goal is prediction. Le Morvan and Varoquaux [3]_
+report strongly diminishing returns: better imputation accuracy yields only small gains
+in downstream predictive performance, especially with an expressive model and a
+missingness indicator (``add_indicator``).
+
+In practice, prefer a small, fixed ``max_iter`` (i.e. `max_iter=10`) together with a
+missingness indicator and an expressive downstream model over investing in convergence.
+When imputation itself is the goal (e.i. for *reconstructing data*) rather than
+predicting, the number of iterations (i.e. `max_iter>50`) and the choice of imputer
+matter more and should be assessed on the task at hand.
 
 Flexibility of IterativeImputer
 -------------------------------
@@ -173,15 +234,19 @@ Note that a call to the ``transform`` method of :class:`IterativeImputer` is
 not allowed to change the number of samples. Therefore multiple imputations
 cannot be achieved by a single call to ``transform``.
 
-References
-----------
+.. rubric:: References
 
-.. [1] Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate
+.. [1] `Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate
    Imputation by Chained Equations in R". Journal of Statistical Software 45:
-   1-67.
+   1-67. <https://www.jstatsoft.org/article/view/v045i03>`_
 
 .. [2] Roderick J A Little and Donald B Rubin (1986). "Statistical Analysis
    with Missing Data". John Wiley & Sons, Inc., New York, NY, USA.
+
+.. [3] `Marine Le Morvan, Gaël Varoquaux (2025). "Imputation for prediction:
+   beware of diminishing returns". International Conference on Learning
+   Representations (ICLR).
+   <https://arxiv.org/abs/2407.19804>`_
 
 .. _knnimpute:
 
@@ -190,19 +255,20 @@ Nearest neighbors imputation
 
 The :class:`KNNImputer` class provides imputation for filling in missing values
 using the k-Nearest Neighbors approach. By default, a euclidean distance metric
-that supports missing values, :func:`~sklearn.metrics.nan_euclidean_distances`,
-is used to find the nearest neighbors. Each missing feature is imputed using
-values from ``n_neighbors`` nearest neighbors that have a value for the
-feature. The feature of the neighbors are averaged uniformly or weighted by
-distance to each neighbor. If a sample has more than one feature missing, then
-the neighbors for that sample can be different depending on the particular
-feature being imputed. When the number of available neighbors is less than
-`n_neighbors` and there are no defined distances to the training set, the
-training set average for that feature is used during imputation. If there is at
-least one neighbor with a defined distance, the weighted or unweighted average
-of the remaining neighbors will be used during imputation. If a feature is
-always missing in training, it is removed during `transform`. For more
-information on the methodology, see ref. [OL2001]_.
+that supports missing values,
+:func:`~sklearn.metrics.pairwise.nan_euclidean_distances`, is used to find the
+nearest neighbors. Each missing feature is imputed using values from
+``n_neighbors`` nearest neighbors that have a value for the feature. The
+feature of the neighbors are averaged uniformly or weighted by distance to each
+neighbor. If a sample has more than one feature missing, then the neighbors for
+that sample can be different depending on the particular feature being imputed.
+When the number of available neighbors is less than `n_neighbors` and there are
+no defined distances to the training set, the training set average for that
+feature is used during imputation. If there is at least one neighbor with a
+defined distance, the weighted or unweighted average of the remaining neighbors
+will be used during imputation. If a feature is always missing in training, it
+is removed during `transform`. For more information on the methodology, see
+ref. [OL2001]_.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean feature value of the two nearest
@@ -219,12 +285,15 @@ neighbors of samples with missing values::
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
 
-.. topic:: References
+For another example on usage, see :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
 
-  .. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
-      Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
-      Missing value estimation methods for DNA microarrays, BIOINFORMATICS
-      Vol. 17 no. 6, 2001 Pages 520-525.
+.. rubric:: References
+
+.. [OL2001] `Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
+    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
+    Missing value estimation methods for DNA microarrays, BIOINFORMATICS
+    Vol. 17 no. 6, 2001 Pages 520-525.
+    <https://academic.oup.com/bioinformatics/article/17/6/520/272365>`_
 
 Keeping the number of features constant
 =======================================
@@ -244,7 +313,7 @@ imputation. While this feature will not help in predictive setting, dropping
 the columns will change the shape of `X` which could be problematic when using
 imputers in a more complex machine-learning pipeline. The parameter
 `keep_empty_features` offers the option to keep the empty features by imputing
-with a constant values. In most of the cases, this constant value is zero::
+with a constant value. In most of the cases, this constant value is zero::
 
   >>> imputer.set_params(keep_empty_features=True)
   SimpleImputer(keep_empty_features=True)
@@ -303,10 +372,12 @@ whether or not they contain missing values::
   >>> indicator.features_
   array([0, 1, 2, 3])
 
-When using the :class:`MissingIndicator` in a :class:`Pipeline`, be sure to use
-the :class:`FeatureUnion` or :class:`ColumnTransformer` to add the indicator
-features to the regular features. First we obtain the `iris` dataset, and add
-some missing values to it.
+When using the :class:`MissingIndicator` in a
+:class:`~sklearn.pipeline.Pipeline`, be sure to use the
+:class:`~sklearn.pipeline.FeatureUnion` or
+:class:`~sklearn.compose.ColumnTransformer` to add the indicator features to
+the regular features. First we obtain the `iris` dataset, and add some missing
+values to it.
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.impute import SimpleImputer, MissingIndicator
@@ -319,9 +390,9 @@ some missing values to it.
   >>> X_train, X_test, y_train, _ = train_test_split(X, y, test_size=100,
   ...                                                random_state=0)
 
-Now we create a :class:`FeatureUnion`. All features will be imputed using
-:class:`SimpleImputer`, in order to enable classifiers to work with this data.
-Additionally, it adds the indicator variables from
+Now we create a :class:`~sklearn.pipeline.FeatureUnion`. All features will be
+imputed using :class:`SimpleImputer`, in order to enable classifiers to work
+with this data. Additionally, it adds the indicator variables from
 :class:`MissingIndicator`.
 
   >>> transformer = FeatureUnion(
@@ -334,14 +405,16 @@ Additionally, it adds the indicator variables from
   (100, 8)
 
 Of course, we cannot use the transformer to make any predictions. We should
-wrap this in a :class:`Pipeline` with a classifier (e.g., a
-:class:`DecisionTreeClassifier`) to be able to make predictions.
+wrap this in a :class:`~sklearn.pipeline.Pipeline` with a classifier (e.g., a
+:class:`~sklearn.tree.DecisionTreeClassifier`) to be able to make predictions.
 
   >>> clf = make_pipeline(transformer, DecisionTreeClassifier())
   >>> clf = clf.fit(X_train, y_train)
   >>> results = clf.predict(X_test)
   >>> results.shape
   (100,)
+
+.. _estimators_that_handle_nan:
 
 Estimators that handle NaN values
 =================================

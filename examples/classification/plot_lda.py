@@ -3,10 +3,13 @@
 Normal, Ledoit-Wolf and OAS Linear Discriminant Analysis for classification
 ===========================================================================
 
-This example illustrates how the Ledoit-Wolf and Oracle Shrinkage
-Approximating (OAS) estimators of covariance can improve classification.
+This example illustrates how the Ledoit-Wolf and Oracle Approximating
+Shrinkage (OAS) estimators of covariance can improve classification.
 
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -95,10 +98,10 @@ plt.ylabel("Classification accuracy")
 plt.legend(loc="lower left")
 plt.ylim((0.65, 1.0))
 plt.suptitle(
-    "LDA (Linear Discriminant Analysis) vs. "
-    + "\n"
-    + "LDA with Ledoit Wolf vs. "
-    + "\n"
-    + "LDA with OAS (1 discriminative feature)"
+    "LDA (Linear Discriminant Analysis) vs."
+    "\n"
+    "LDA with Ledoit Wolf vs."
+    "\n"
+    "LDA with OAS (1 discriminative feature)"
 )
 plt.show()

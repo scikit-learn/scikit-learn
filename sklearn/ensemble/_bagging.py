@@ -1,8 +1,7 @@
 """Bagging meta-estimator."""
 
-# Author: Gilles Louppe <g.louppe@gmail.com>
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
 import numbers
@@ -13,18 +12,36 @@ from warnings import warn
 
 import numpy as np
 
-from ..base import ClassifierMixin, RegressorMixin, _fit_context
-from ..metrics import accuracy_score, r2_score
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, column_or_1d, indices_to_mask
-from ..utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
-from ..utils._tags import _safe_tags
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import Parallel, delayed
-from ..utils.random import sample_without_replacement
-from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
-from ._base import BaseEnsemble, _partition_estimators
+from sklearn.base import ClassifierMixin, RegressorMixin, _fit_context
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
+from sklearn.ensemble._bootstrap import _get_n_samples_bootstrap
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.tree import BaseDecisionTree, DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import _safe_indexing, check_random_state, column_or_1d
+from sklearn.utils._mask import indices_to_mask
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _manual_routing,
+    _raise_for_params,
+    _routing_enabled,
+    get_routing_for_object,
+    process_routing,
+)
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import (
+    _check_method_params,
+    _check_sample_weight,
+    _estimator_has,
+    check_is_fitted,
+    has_fit_parameter,
+    validate_data,
+)
 
 __all__ = ["BaggingClassifier", "BaggingRegressor"]
 
@@ -52,6 +69,7 @@ def _generate_bagging_indices(
     n_samples,
     max_features,
     max_samples,
+    sample_weight,
 ):
     """Randomly draw feature and sample indices."""
     # Get valid random state
@@ -61,11 +79,29 @@ def _generate_bagging_indices(
     feature_indices = _generate_indices(
         random_state, bootstrap_features, n_features, max_features
     )
-    sample_indices = _generate_indices(
-        random_state, bootstrap_samples, n_samples, max_samples
-    )
+    if sample_weight is None:
+        sample_indices = _generate_indices(
+            random_state, bootstrap_samples, n_samples, max_samples
+        )
+    else:
+        normalized_sample_weight = sample_weight / np.sum(sample_weight)
+        sample_indices = random_state.choice(
+            n_samples,
+            max_samples,
+            replace=bootstrap_samples,
+            p=normalized_sample_weight,
+        )
 
     return feature_indices, sample_indices
+
+
+def _consumes_sample_weight(estimator):
+    if _routing_enabled():
+        request_or_router = get_routing_for_object(estimator)
+        consumes_sample_weight = request_or_router.consumes("fit", ("sample_weight",))
+    else:
+        consumes_sample_weight = has_fit_parameter(estimator, "sample_weight")
+    return consumes_sample_weight
 
 
 def _parallel_build_estimators(
@@ -78,6 +114,7 @@ def _parallel_build_estimators(
     total_n_estimators,
     verbose,
     check_input,
+    fit_params,
 ):
     """Private function used to build a batch of estimators within a job."""
     # Retrieve settings
@@ -86,12 +123,9 @@ def _parallel_build_estimators(
     max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
-    support_sample_weight = has_fit_parameter(ensemble.estimator_, "sample_weight")
     has_check_input = has_fit_parameter(ensemble.estimator_, "check_input")
     requires_feature_indexing = bootstrap_features or max_features != n_features
-
-    if not support_sample_weight and sample_weight is not None:
-        raise ValueError("The base estimator doesn't support sample weight")
+    consumes_sample_weight = _consumes_sample_weight(ensemble.estimator_)
 
     # Build estimators
     estimators = []
@@ -112,7 +146,8 @@ def _parallel_build_estimators(
         else:
             estimator_fit = estimator.fit
 
-        # Draw random feature, sample indices
+        # Draw random feature, sample indices (using normalized sample_weight
+        # as probabilities if provided).
         features, indices = _generate_bagging_indices(
             random_state,
             bootstrap_features,
@@ -121,27 +156,28 @@ def _parallel_build_estimators(
             n_samples,
             max_features,
             max_samples,
+            sample_weight,
         )
 
-        # Draw samples, using sample weights, and then fit
-        if support_sample_weight:
-            if sample_weight is None:
-                curr_sample_weight = np.ones((n_samples,))
-            else:
-                curr_sample_weight = sample_weight.copy()
+        fit_params_ = fit_params.copy()
 
-            if bootstrap:
-                sample_counts = np.bincount(indices, minlength=n_samples)
-                curr_sample_weight *= sample_counts
-            else:
-                not_indices_mask = ~indices_to_mask(indices, n_samples)
-                curr_sample_weight[not_indices_mask] = 0
-
+        # Note: Row sampling can be achieved either through setting sample_weight or
+        # by indexing. The former is more memory efficient. Therefore, use this method
+        # if possible, otherwise use indexing.
+        if consumes_sample_weight:
+            # Row sampling by setting sample_weight
+            indices_as_sample_weight = np.bincount(indices, minlength=n_samples)
+            fit_params_["sample_weight"] = indices_as_sample_weight
             X_ = X[:, features] if requires_feature_indexing else X
-            estimator_fit(X_, y, sample_weight=curr_sample_weight)
+            estimator_fit(X_, y, **fit_params_)
         else:
-            X_ = X[indices][:, features] if requires_feature_indexing else X[indices]
-            estimator_fit(X_, y[indices])
+            # Row sampling by indexing
+            y_ = _safe_indexing(y, indices)
+            X_ = _safe_indexing(X, indices)
+            fit_params_ = _check_method_params(X, params=fit_params_, indices=indices)
+            if requires_feature_indexing:
+                X_ = X_[:, features]
+            estimator_fit(X_, y_, **fit_params_)
 
         estimators.append(estimator)
         estimators_features.append(features)
@@ -149,14 +185,23 @@ def _parallel_build_estimators(
     return estimators, estimators_features
 
 
-def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
+def _parallel_predict_proba(
+    estimators,
+    estimators_features,
+    X,
+    n_classes,
+    predict_params=None,
+    predict_proba_params=None,
+):
     """Private function used to compute (proba-)predictions within a job."""
     n_samples = X.shape[0]
     proba = np.zeros((n_samples, n_classes))
 
     for estimator, features in zip(estimators, estimators_features):
         if hasattr(estimator, "predict_proba"):
-            proba_estimator = estimator.predict_proba(X[:, features])
+            proba_estimator = estimator.predict_proba(
+                X[:, features], **(predict_proba_params or {})
+            )
 
             if n_classes == len(estimator.classes_):
                 proba += proba_estimator
@@ -168,7 +213,7 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
 
         else:
             # Resort to voting
-            predictions = estimator.predict(X[:, features])
+            predictions = estimator.predict(X[:, features], **(predict_params or {}))
 
             for i in range(n_samples):
                 proba[i, predictions[i]] += 1
@@ -176,7 +221,7 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
     return proba
 
 
-def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
+def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes, params):
     """Private function used to compute log probabilities within a job."""
     n_samples = X.shape[0]
     log_proba = np.empty((n_samples, n_classes))
@@ -184,7 +229,7 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
     all_classes = np.arange(n_classes, dtype=int)
 
     for estimator, features in zip(estimators, estimators_features):
-        log_proba_estimator = estimator.predict_log_proba(X[:, features])
+        log_proba_estimator = estimator.predict_log_proba(X[:, features], **params)
 
         if n_classes == len(estimator.classes_):
             log_proba = np.logaddexp(log_proba, log_proba_estimator)
@@ -201,38 +246,20 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
     return log_proba
 
 
-def _parallel_decision_function(estimators, estimators_features, X):
+def _parallel_decision_function(estimators, estimators_features, X, params):
     """Private function used to compute decisions within a job."""
     return sum(
-        estimator.decision_function(X[:, features])
+        estimator.decision_function(X[:, features], **params)
         for estimator, features in zip(estimators, estimators_features)
     )
 
 
-def _parallel_predict_regression(estimators, estimators_features, X):
+def _parallel_predict_regression(estimators, estimators_features, X, params):
     """Private function used to compute predictions within a job."""
     return sum(
-        estimator.predict(X[:, features])
+        estimator.predict(X[:, features], **params)
         for estimator, features in zip(estimators, estimators_features)
     )
-
-
-def _estimator_has(attr):
-    """Check if we can delegate a method to the underlying estimator.
-
-    First, we check the first fitted estimator if available, otherwise we
-    check the estimator attribute.
-    """
-
-    def check(self):
-        if hasattr(self, "estimators_"):
-            return hasattr(self.estimators_[0], attr)
-        elif self.estimator is not None:
-            return hasattr(self.estimator, attr)
-        else:  # TODO(1.4): Remove when the base_estimator deprecation cycle ends
-            return hasattr(self.base_estimator, attr)
-
-    return check
 
 
 class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
@@ -246,6 +273,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "estimator": [HasMethods(["fit", "predict"]), None],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
+            None,
             Interval(Integral, 1, None, closed="left"),
             Interval(RealNotInt, 0, 1, closed="right"),
         ],
@@ -260,11 +288,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "verbose": ["verbose"],
-        "base_estimator": [
-            HasMethods(["fit", "predict"]),
-            StrOptions({"deprecated"}),
-            None,
-        ],
     }
 
     @abstractmethod
@@ -273,7 +296,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         estimator=None,
         n_estimators=10,
         *,
-        max_samples=1.0,
+        max_samples=None,
         max_features=1.0,
         bootstrap=True,
         bootstrap_features=False,
@@ -282,12 +305,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         n_jobs=None,
         random_state=None,
         verbose=0,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
-            base_estimator=base_estimator,
         )
         self.max_samples = max_samples
         self.max_features = max_features
@@ -303,7 +324,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # BaseBagging.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Build a Bagging ensemble of estimators from the training set (X, y).
 
         Parameters
@@ -317,28 +338,58 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             regression).
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weighting.
+            Sample weights. If None, then samples are equally weighted. Used as
+            probabilities to sample the training set. Note that the expected
+            frequency semantics for the `sample_weight` parameter are only
+            fulfilled when sampling with replacement `bootstrap=True` and using
+            a float or integer `max_samples` (instead of the default
+            `max_samples=None`).
+
+        **fit_params : dict
+            Parameters to pass to the underlying estimators.
+
+            .. versionadded:: 1.5
+
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
+        _raise_for_params(fit_params, self, "fit")
+
         # Convert data (X is required to be 2d and indexable)
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             multi_output=True,
         )
-        return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
-    def _parallel_args(self):
-        return {}
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
+
+            if not self.bootstrap:
+                warn(
+                    f"When fitting {self.__class__.__name__} with sample_weight "
+                    f"it is recommended to use bootstrap=True, got {self.bootstrap}."
+                )
+
+        return self._fit(
+            X,
+            y,
+            max_samples=self.max_samples,
+            sample_weight=sample_weight,
+            **fit_params,
+        )
 
     def _fit(
         self,
@@ -346,8 +397,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         y,
         max_samples=None,
         max_depth=None,
-        sample_weight=None,
         check_input=True,
+        sample_weight=None,
+        **fit_params,
     ):
         """Build a Bagging ensemble of estimators from the training
            set (X, y).
@@ -369,14 +421,18 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Override value used when constructing base estimator. Only
             supported if the base estimator has a max_depth parameter.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if the base estimator supports
-            sample weighting.
-
         check_input : bool, default=True
             Override value used when fitting base estimator. Only supported
             if the base estimator has a check_input parameter for fit function.
+            If the meta-estimator already checks the input, set this value to
+            False to prevent redundant input validation.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+
+        **fit_params : dict, default=None
+            Parameters to pass to the :term:`fit` method of the underlying
+            estimator.
 
         Returns
         -------
@@ -385,16 +441,18 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """
         random_state = check_random_state(self.random_state)
 
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
-
         # Remap output
         n_samples = X.shape[0]
         self._n_samples = n_samples
         y = self._validate_y(y)
 
         # Check parameters
-        self._validate_estimator()
+        self._validate_estimator(self._get_estimator())
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
+        else:
+            routed_params = _manual_routing({"estimator": {"fit": fit_params}})
 
         if max_depth is not None:
             self.estimator_.max_depth = max_depth
@@ -402,11 +460,13 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Validate max_samples
         if max_samples is None:
             max_samples = self.max_samples
-        elif not isinstance(max_samples, numbers.Integral):
-            max_samples = int(max_samples * X.shape[0])
 
-        if max_samples > X.shape[0]:
-            raise ValueError("max_samples must be <= n_samples")
+        max_samples = _get_n_samples_bootstrap(X.shape[0], max_samples, sample_weight)
+        if not self.bootstrap and max_samples > X.shape[0]:
+            raise ValueError(
+                f"Effective max_samples={max_samples} must be <= n_samples="
+                f"{X.shape[0]} to be able to sample without replacement."
+            )
 
         # Store validated integer row sampling value
         self._max_samples = max_samples
@@ -424,6 +484,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         # Store validated integer feature sampling value
         self._max_features = max_features
+
+        # Store sample_weight (needed in _get_estimators_indices). Note that
+        # we intentionally do not materialize `sample_weight=None` as an array
+        # of ones to avoid unnecessarily cluttering trained estimator pickles.
+        self._sample_weight = sample_weight
 
         # Other checks
         if not self.bootstrap and self.oob_score:
@@ -483,6 +548,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 total_n_estimators,
                 verbose=self.verbose,
                 check_input=check_input,
+                fit_params=routed_params.estimator.fit,
             )
             for i in range(n_jobs)
         )
@@ -522,6 +588,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 self._n_samples,
                 self._max_features,
                 self._max_samples,
+                self._sample_weight,
             )
 
             yield feature_indices, sample_indices
@@ -540,6 +607,81 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         data. Thus fetching the property may be slower than expected.
         """
         return [sample_indices for _, sample_indices in self._get_estimators_indices()]
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self)
+
+        method_mapping = MethodMapping()
+        method_mapping.add(caller="fit", callee="fit").add(
+            caller="decision_function", callee="decision_function"
+        )
+
+        # the router needs to be built depending on whether the sub-estimator has a
+        # `predict_proba` method (as BaggingClassifier decides dynamically at runtime):
+        if hasattr(self._get_estimator(), "predict_proba"):
+            (
+                method_mapping.add(caller="predict", callee="predict_proba").add(
+                    caller="predict_proba", callee="predict_proba"
+                )
+            )
+
+        else:
+            (
+                method_mapping.add(caller="predict", callee="predict").add(
+                    caller="predict_proba", callee="predict"
+                )
+            )
+
+        # the router needs to be built depending on whether the sub-estimator has a
+        # `predict_log_proba` method (as BaggingClassifier decides dynamically at
+        # runtime):
+        if hasattr(self._get_estimator(), "predict_log_proba"):
+            method_mapping.add(caller="predict_log_proba", callee="predict_log_proba")
+
+        else:
+            # if `predict_log_proba` is not available in BaggingClassifier's
+            # sub-estimator, the routing should go to its `predict_proba` if it is
+            # available or else to its `predict` method; according to how
+            # `sample_weight` is passed to the respective methods dynamically at
+            # runtime:
+            if hasattr(self._get_estimator(), "predict_proba"):
+                method_mapping.add(caller="predict_log_proba", callee="predict_proba")
+
+            else:
+                method_mapping.add(caller="predict_log_proba", callee="predict")
+
+        router.add(estimator=self._get_estimator(), method_mapping=method_mapping)
+        return router
+
+    def _parallel_args(self):
+        if isinstance(self.estimator_, BaseDecisionTree):
+            # Subclasses of BaseDecisionTree are known to be faster with
+            # threads.
+            return {"prefer": "threads"}
+        return {}
+
+    @abstractmethod
+    def _get_estimator(self):
+        """Resolve which estimator to return."""
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        tags.input_tags.allow_nan = get_tags(self._get_estimator()).input_tags.allow_nan
+        return tags
 
 
 class BaggingClassifier(ClassifierMixin, BaseBagging):
@@ -564,8 +706,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <bagging>`.
 
-    .. versionadded:: 0.15
-
     Parameters
     ----------
     estimator : object, default=None
@@ -579,12 +719,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, default=1.0
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator (with
         replacement by default, see `bootstrap` for more details).
 
+        - If None, then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples or
+          `max_samples * sample_weight.sum()` weighted samples.
 
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator (
@@ -595,8 +737,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
     bootstrap : bool, default=True
-        Whether samples are drawn with replacement. If False, sampling
-        without replacement is performed.
+        Whether samples are drawn with replacement. If False, sampling without
+        replacement is performed. If fitting with `sample_weight`, it is
+        strongly recommended to choose True, as only drawing with replacement
+        will ensure the expected frequency semantics of `sample_weight`.
 
     bootstrap_features : bool, default=False
         Whether features are drawn with replacement.
@@ -609,9 +753,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         When set to True, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit
         a whole new ensemble. See :term:`the Glossary <warm_start>`.
-
-        .. versionadded:: 0.17
-           *warm_start* constructor parameter.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel for both :meth:`fit` and
@@ -630,13 +771,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
 
-    base_estimator : object, default="deprecated"
-        Use `estimator` instead.
-
-        .. deprecated:: 1.2
-            `base_estimator` is deprecated and will be removed in 1.4.
-            Use `estimator` instead.
-
     Attributes
     ----------
     estimator_ : estimator
@@ -645,17 +779,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    base_estimator_ : estimator
-        The base estimator from which the ensemble is grown.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -729,7 +854,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         estimator=None,
         n_estimators=10,
         *,
-        max_samples=1.0,
+        max_samples=None,
         max_features=1.0,
         bootstrap=True,
         bootstrap_features=False,
@@ -738,7 +863,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         n_jobs=None,
         random_state=None,
         verbose=0,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
@@ -752,12 +876,13 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            base_estimator=base_estimator,
         )
 
-    def _validate_estimator(self):
-        """Check the estimator and set the estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeClassifier())
+    def _get_estimator(self):
+        """Resolve which estimator to return (default is DecisionTreeClassifier)"""
+        if self.estimator is None:
+            return DecisionTreeClassifier()
+        return self.estimator
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -806,7 +931,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         return y
 
-    def predict(self, X):
+    def predict(self, X, **params):
         """Predict class for X.
 
         The predicted class of an input sample is computed as the class with
@@ -819,15 +944,28 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
+        **params : dict
+            Parameters routed to the `predict_proba` (if available) or the `predict`
+            method (otherwise) of the sub-estimators via the metadata routing API.
+
+            .. versionadded:: 1.7
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
+
         Returns
         -------
         y : ndarray of shape (n_samples,)
             The predicted classes.
         """
-        predicted_probabilitiy = self.predict_proba(X)
+        _raise_for_params(params, self, "predict")
+
+        predicted_probabilitiy = self.predict_proba(X, **params)
         return self.classes_.take((np.argmax(predicted_probabilitiy, axis=1)), axis=0)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, **params):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
@@ -843,21 +981,40 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
+        **params : dict
+            Parameters routed to the `predict_proba` (if available) or the `predict`
+            method (otherwise) of the sub-estimators via the metadata routing API.
+
+            .. versionadded:: 1.7
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
+
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
+        _raise_for_params(params, self, "predict_proba")
+
         check_is_fitted(self)
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict_proba", **params)
+        else:
+            routed_params = _manual_routing({"estimator": {}})
 
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
@@ -870,6 +1027,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                 self.estimators_features_[starts[i] : starts[i + 1]],
                 X,
                 self.n_classes_,
+                predict_params=routed_params.estimator.get("predict", None),
+                predict_proba_params=routed_params.estimator.get("predict_proba", None),
             )
             for i in range(n_jobs)
         )
@@ -879,7 +1038,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         return proba
 
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **params):
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
@@ -892,32 +1051,57 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
+        **params : dict
+            Parameters routed to the `predict_log_proba`, the `predict_proba` or the
+            `proba` method of the sub-estimators via the metadata routing API. The
+            routing is tried in the mentioned order depending on whether this method is
+            available on the sub-estimator.
+
+            .. versionadded:: 1.7
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
+
         Returns
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
+        _raise_for_params(params, self, "predict_log_proba")
+
         check_is_fitted(self)
+
         if hasattr(self.estimator_, "predict_log_proba"):
             # Check data
-            X = self._validate_data(
+            X = validate_data(
+                self,
                 X,
                 accept_sparse=["csr", "csc"],
                 dtype=None,
-                force_all_finite=False,
+                ensure_all_finite=False,
                 reset=False,
             )
+
+            if _routing_enabled():
+                routed_params = process_routing(self, "predict_log_proba", **params)
+            else:
+                routed_params = _manual_routing({"estimator": {}})
 
             # Parallel loop
             n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-            all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            all_log_proba = Parallel(
+                n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+            )(
                 delayed(_parallel_predict_log_proba)(
                     self.estimators_[starts[i] : starts[i + 1]],
                     self.estimators_features_[starts[i] : starts[i + 1]],
                     X,
                     self.n_classes_,
+                    params=routed_params.estimator.predict_log_proba,
                 )
                 for i in range(n_jobs)
             )
@@ -931,12 +1115,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             log_proba -= np.log(self.n_estimators)
 
         else:
-            log_proba = np.log(self.predict_proba(X))
+            log_proba = np.log(self.predict_proba(X, **params))
 
         return log_proba
 
-    @available_if(_estimator_has("decision_function"))
-    def decision_function(self, X):
+    @available_if(
+        _estimator_has("decision_function", delegates=("estimators_", "estimator"))
+    )
+    def decision_function(self, X, **params):
         """Average of the decision functions of the base classifiers.
 
         Parameters
@@ -944,6 +1130,17 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
+
+        **params : dict
+            Parameters routed to the `decision_function` method of the sub-estimators
+            via the metadata routing API.
+
+            .. versionadded:: 1.7
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -953,25 +1150,36 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             ``classes_``. Regression and binary classification are special
             cases with ``k == 1``, otherwise ``k==n_classes``.
         """
+        _raise_for_params(params, self, "decision_function")
+
         check_is_fitted(self)
 
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "decision_function", **params)
+        else:
+            routed_params = _manual_routing({"estimator": {}})
 
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_decisions = Parallel(
+            n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+        )(
             delayed(_parallel_decision_function)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
                 X,
+                params=routed_params.estimator.decision_function,
             )
             for i in range(n_jobs)
         )
@@ -980,14 +1188,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         decisions = sum(all_decisions) / self.n_estimators
 
         return decisions
-
-    def _more_tags(self):
-        if self.estimator is None:
-            estimator = DecisionTreeClassifier()
-        else:
-            estimator = self.estimator
-
-        return {"allow_nan": _safe_tags(estimator, "allow_nan")}
 
 
 class BaggingRegressor(RegressorMixin, BaseBagging):
@@ -1012,8 +1212,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <bagging>`.
 
-    .. versionadded:: 0.15
-
     Parameters
     ----------
     estimator : object, default=None
@@ -1027,12 +1225,14 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, default=1.0
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator (with
         replacement by default, see `bootstrap` for more details).
 
+        - If None, then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples or
+          `max_samples * sample_weight.sum()` weighted samples.
 
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator (
@@ -1043,8 +1243,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
     bootstrap : bool, default=True
-        Whether samples are drawn with replacement. If False, sampling
-        without replacement is performed.
+        Whether samples are drawn with replacement. If False, sampling without
+        replacement is performed. If fitting with `sample_weight`, it is
+        strongly recommended to choose True, as only drawing with replacement
+        will ensure the expected frequency semantics of `sample_weight`.
 
     bootstrap_features : bool, default=False
         Whether features are drawn with replacement.
@@ -1075,13 +1277,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     verbose : int, default=0
         Controls the verbosity when fitting and predicting.
 
-    base_estimator : object, default="deprecated"
-        Use `estimator` instead.
-
-        .. deprecated:: 1.2
-            `base_estimator` is deprecated and will be removed in 1.4.
-            Use `estimator` instead.
-
     Attributes
     ----------
     estimator_ : estimator
@@ -1090,17 +1285,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    base_estimator_ : estimator
-        The base estimator from which the ensemble is grown.
-
-        .. deprecated:: 1.2
-            `base_estimator_` is deprecated and will be removed in 1.4.
-            Use `estimator_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1160,7 +1346,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     >>> regr = BaggingRegressor(estimator=SVR(),
     ...                         n_estimators=10, random_state=0).fit(X, y)
     >>> regr.predict([[0, 0, 0, 0]])
-    array([-2.8720...])
+    array([-2.8720])
     """
 
     def __init__(
@@ -1168,7 +1354,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         estimator=None,
         n_estimators=10,
         *,
-        max_samples=1.0,
+        max_samples=None,
         max_features=1.0,
         bootstrap=True,
         bootstrap_features=False,
@@ -1177,7 +1363,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         n_jobs=None,
         random_state=None,
         verbose=0,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator=estimator,
@@ -1191,10 +1376,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
-            base_estimator=base_estimator,
         )
 
-    def predict(self, X):
+    def predict(self, X, **params):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
@@ -1206,29 +1390,51 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
+        **params : dict
+            Parameters routed to the `predict` method of the sub-estimators via the
+            metadata routing API.
+
+            .. versionadded:: 1.7
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
+
         Returns
         -------
         y : ndarray of shape (n_samples,)
             The predicted values.
         """
+        _raise_for_params(params, self, "predict")
+
         check_is_fitted(self)
         # Check data
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             dtype=None,
-            force_all_finite=False,
+            ensure_all_finite=False,
             reset=False,
         )
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "predict", **params)
+        else:
+            routed_params = _manual_routing({"estimator": {}})
 
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_y_hat = Parallel(
+            n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+        )(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
                 X,
+                params=routed_params.estimator.predict,
             )
             for i in range(n_jobs)
         )
@@ -1237,10 +1443,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         y_hat = sum(all_y_hat) / self.n_estimators
 
         return y_hat
-
-    def _validate_estimator(self):
-        """Check the estimator and set the estimator_ attribute."""
-        super()._validate_estimator(default=DecisionTreeRegressor())
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
@@ -1270,9 +1472,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         self.oob_prediction_ = predictions
         self.oob_score_ = r2_score(y, predictions)
 
-    def _more_tags(self):
+    def _get_estimator(self):
+        """Resolve which estimator to return (default is DecisionTreeClassifier)"""
         if self.estimator is None:
-            estimator = DecisionTreeRegressor()
-        else:
-            estimator = self.estimator
-        return {"allow_nan": _safe_tags(estimator, "allow_nan")}
+            return DecisionTreeRegressor()
+        return self.estimator

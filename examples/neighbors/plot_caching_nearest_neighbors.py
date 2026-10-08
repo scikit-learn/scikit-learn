@@ -3,7 +3,7 @@
 Caching nearest neighbors
 =========================
 
-This examples demonstrates how to precompute the k nearest neighbors before
+This example demonstrates how to precompute the k nearest neighbors before
 using them in KNeighborsClassifier. KNeighborsClassifier can compute the
 nearest neighbors internally, but precomputing them can have several benefits,
 such as finer parameter control, caching for multiple use, or custom
@@ -11,16 +11,16 @@ implementations.
 
 Here we use the caching property of pipelines to cache the nearest neighbors
 graph between multiple fits of KNeighborsClassifier. The first call is slow
-since it computes the neighbors graph, while subsequent call are faster as they
+since it computes the neighbors graph, while subsequent calls are faster as they
 do not need to recompute the graph. Here the durations are small since the
 dataset is small, but the gain can be more substantial when the dataset grows
 larger, or when the grid of parameter to search is large.
 
 """
 
-# Author: Tom Dupre la Tour
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from tempfile import TemporaryDirectory
 
 import matplotlib.pyplot as plt

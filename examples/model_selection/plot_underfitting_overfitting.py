@@ -21,6 +21,9 @@ training data.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -48,7 +51,8 @@ for i in range(len(degrees)):
     plt.setp(ax, xticks=(), yticks=())
 
     polynomial_features = PolynomialFeatures(degree=degrees[i], include_bias=False)
-    linear_regression = LinearRegression()
+    # Avoid truncating small singular values (tol is used as cond in lstsq since v1.9)
+    linear_regression = LinearRegression(tol=np.finfo(float).eps)
     pipeline = Pipeline(
         [
             ("polynomial_features", polynomial_features),

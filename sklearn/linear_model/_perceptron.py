@@ -1,13 +1,22 @@
-# Author: Mathieu Blondel
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 from numbers import Real
 
-from ..utils._param_validation import Interval, StrOptions
-from ._stochastic_gradient import BaseSGDClassifier
+from sklearn.linear_model._stochastic_gradient import BaseSGDClassifier
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 class Perceptron(BaseSGDClassifier):
     """Linear perceptron classifier.
+
+    The implementation is a wrapper around :class:`~sklearn.linear_model.SGDClassifier`
+    by fixing the `loss` and `learning_rate` parameters as::
+
+        SGDClassifier(loss="perceptron", learning_rate="constant")
+
+    Other available parameters are described below and are forwarded to
+    :class:`~sklearn.linear_model.SGDClassifier`.
 
     Read more in the :ref:`User Guide <perceptron>`.
 
@@ -26,8 +35,6 @@ class Perceptron(BaseSGDClassifier):
         `l1_ratio=0` corresponds to L2 penalty, `l1_ratio=1` to L1.
         Only used if `penalty='elasticnet'`.
 
-        .. versionadded:: 0.24
-
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
@@ -37,13 +44,9 @@ class Perceptron(BaseSGDClassifier):
         It only impacts the behavior in the ``fit`` method, and not the
         :meth:`partial_fit` method.
 
-        .. versionadded:: 0.19
-
     tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol).
-
-        .. versionadded:: 0.19
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -68,25 +71,19 @@ class Perceptron(BaseSGDClassifier):
         See :term:`Glossary <random_state>`.
 
     early_stopping : bool, default=False
-        Whether to use early stopping to terminate training when validation.
+        Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
         a stratified fraction of training data as validation and terminate
-        training when validation score is not improving by at least tol for
-        n_iter_no_change consecutive epochs.
-
-        .. versionadded:: 0.20
+        training when validation score is not improving by at least `tol` for
+        `n_iter_no_change` consecutive epochs.
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
 
-        .. versionadded:: 0.20
-
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
 
     class_weight : dict, {class_label: weight} or "balanced", default=None
         Preset for the class_weight fit parameter.
@@ -115,14 +112,8 @@ class Perceptron(BaseSGDClassifier):
     intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
 
-    loss_function_ : concrete LossFunction
-        The function that determines the loss, or difference between the
-        output of the algorithm and the target values.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -174,7 +165,7 @@ class Perceptron(BaseSGDClassifier):
             "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
             "alpha": [Interval(Real, 0, None, closed="left")],
             "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-            "eta0": [Interval(Real, 0, None, closed="left")],
+            "eta0": [Interval(Real, 0, None, closed="neither")],
         }
     )
 

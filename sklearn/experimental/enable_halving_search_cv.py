@@ -19,13 +19,16 @@ The ``# noqa`` comment comment can be removed: it just tells linters like
 flake8 to ignore the import, which appears as unused.
 """
 
-from .. import model_selection
-from ..model_selection._search_successive_halving import (
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from sklearn import model_selection
+from sklearn.model_selection._search_successive_halving import (
     HalvingGridSearchCV,
     HalvingRandomSearchCV,
 )
 
-# use settattr to avoid mypy errors when monkeypatching
+# use settattr to avoid typing errors when monkeypatching
 setattr(model_selection, "HalvingRandomSearchCV", HalvingRandomSearchCV)
 setattr(model_selection, "HalvingGridSearchCV", HalvingGridSearchCV)
 

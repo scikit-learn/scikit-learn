@@ -1,20 +1,13 @@
-"""
-Graph utilities and algorithms
+"""Graph utilities and algorithms."""
 
-Graphs are represented with their adjacency matrices, preferably using
-sparse matrices.
-"""
-
-# Authors: Aric Hagberg <hagberg@lanl.gov>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Jake Vanderplas <vanderplas@astro.washington.edu>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from scipy import sparse
 
-from ..metrics.pairwise import pairwise_distances
-from ._param_validation import Integral, Interval, validate_params
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.utils._param_validation import Integral, Interval, validate_params
 
 
 ###############################################################################
@@ -63,10 +56,10 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
     >>> sorted(single_source_shortest_path_length(graph, 2).items())
     [(0, 1), (1, 1), (2, 0), (3, 1), (4, 1), (5, 1)]
     """
-    if sparse.isspmatrix(graph):
+    if sparse.issparse(graph):
         graph = graph.tolil()
     else:
-        graph = sparse.lil_matrix(graph)
+        graph = sparse.lil_array(graph)
     seen = {}  # level (number of hops) when seen in BFS
     level = 0  # the current level
     next_level = [source]  # dict of nodes to check at next level

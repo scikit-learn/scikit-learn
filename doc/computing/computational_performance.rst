@@ -1,7 +1,3 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
 .. _computational_performance:
 
 .. currentmodule:: sklearn
@@ -19,9 +15,9 @@ scikit-learn estimators in different contexts and provide some tips and
 tricks for overcoming performance bottlenecks.
 
 Prediction latency is measured as the elapsed time necessary to make a
-prediction (e.g. in micro-seconds). Latency is often viewed as a distribution
+prediction (e.g. in microseconds). Latency is often viewed as a distribution
 and operations engineers often focus on the latency at a given percentile of
-this distribution (e.g. the 90 percentile).
+this distribution (e.g. the 90th percentile).
 
 Prediction throughput is defined as the number of predictions the software can
 deliver in a given amount of time (e.g. in predictions per second).
@@ -34,15 +30,16 @@ to take into account the same exact properties of the data as more complex ones.
 Prediction Latency
 ------------------
 
-One of the most straight-forward concerns one may have when using/choosing a
+One of the most straightforward concerns one may have when using/choosing a
 machine learning toolkit is the latency at which predictions can be made in a
 production environment.
 
 The main factors that influence the prediction latency are
-  1. Number of features
-  2. Input data representation and sparsity
-  3. Model complexity
-  4. Feature extraction
+
+1. Number of features
+2. Input data representation and sparsity
+3. Model complexity
+4. Feature extraction
 
 A last major parameter is also the possibility to do predictions in bulk or
 one-at-a-time mode.
@@ -80,8 +77,8 @@ Scikit-learn does some validation on data that increases the overhead per
 call to ``predict`` and similar functions. In particular, checking that
 features are finite (not NaN or infinite) involves a full pass over the
 data. If you ensure that your data is acceptable, you may suppress
-checking for finiteness by setting the environment variable
-``SKLEARN_ASSUME_FINITE`` to a non-empty string before importing
+checking for finiteness by setting
+:ref:`SKLEARN_ASSUME_FINITE <envvar_SKLEARN_ASSUME_FINITE>` before importing
 scikit-learn, or configure it in Python with :func:`set_config`.
 For more control than these global settings, a :func:`config_context`
 allows you to set this configuration within a specified context::
@@ -157,10 +154,9 @@ prediction latency too much. We will now review this idea for different
 families of supervised models.
 
 For :mod:`sklearn.linear_model` (e.g. Lasso, ElasticNet,
-SGDClassifier/Regressor, Ridge & RidgeClassifier,
-PassiveAggressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
-decision function that is applied at prediction time is the same (a dot product)
-, so latency should be equivalent.
+SGDClassifier/Regressor, Ridge & RidgeClassifier, LinearSVC, LogisticRegression...) the
+decision function that is applied at prediction time is the same (a dot product), so
+latency should be equivalent.
 
 Here is an example using
 :class:`~linear_model.SGDClassifier` with the
@@ -182,7 +178,7 @@ non-zero coefficients.
 For the :mod:`sklearn.svm` family of algorithms with a non-linear kernel,
 the latency is tied to the number of support vectors (the fewer the faster).
 Latency and throughput should (asymptotically) grow linearly with the number
-of support vectors in a SVC or SVR model. The kernel will also influence the
+of support vectors in an SVC or SVR model. The kernel will also influence the
 latency as it is used to compute the projection of the input vector once per
 support vector. In the following graph the ``nu`` parameter of
 :class:`~svm.NuSVR` was used to influence the number of
@@ -224,9 +220,9 @@ files, tokenizing the text and hashing it into a common vector space) is
 taking 100 to 500 times more time than the actual prediction code, depending on
 the chosen model.
 
- .. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
-    :target: ../auto_examples/applications/plot_out_of_core_classification.html
-    :scale: 80
+.. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
+  :target: ../auto_examples/applications/plot_out_of_core_classification.html
+  :scale: 80
 
 .. centered:: |prediction_time|
 
@@ -283,10 +279,10 @@ scikit-learn install with the following command::
     python -c "import sklearn; sklearn.show_versions()"
 
 Optimized BLAS / LAPACK implementations include:
- - Atlas (need hardware specific tuning by rebuilding on the target machine)
- - OpenBLAS
- - MKL
- - Apple Accelerate and vecLib frameworks (OSX only)
+
+- OpenBLAS (e.g. default in Numpy and SciPy PyPI wheels)
+- MKL
+- Apple Accelerate and vecLib frameworks (OSX only)
 
 More information can be found on the `NumPy install page <https://numpy.org/install/>`_
 and in this
@@ -304,8 +300,10 @@ involve using a large amount of temporary memory.  This may potentially exhaust
 system memory.  Where computations can be performed in fixed-memory chunks, we
 attempt to do so, and allow the user to hint at the maximum size of this
 working memory (defaulting to 1GB) using :func:`set_config` or
-:func:`config_context`.  The following suggests to limit temporary working
-memory to 128 MiB::
+:func:`config_context`. See :ref:`SKLEARN_WORKING_MEMORY <envvar_SKLEARN_WORKING_MEMORY>`
+which can be used to change the global default.
+
+The following suggests to limit temporary working memory to 128 MiB::
 
   >>> import sklearn
   >>> with sklearn.config_context(working_memory=128):
@@ -354,7 +352,7 @@ feature selection components in a pipeline once we know which features to
 keep from a previous run. Finally, it can help reduce processing time and I/O
 usage upstream in the data access and feature extraction layers by not
 collecting and building features that are discarded by the model. For instance
-if the raw data come from a database, it can make it possible to write simpler
+if the raw data come from a database, it is possible to write simpler
 and faster queries or reduce I/O usage by making the queries return lighter
 records.
 At the moment, reshaping needs to be performed manually in scikit-learn.
@@ -364,5 +362,5 @@ sufficient to not generate the relevant features, leaving their columns empty.
 Links
 ......
 
-  - :ref:`scikit-learn developer performance documentation <performance-howto>`
-  - `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
+- :ref:`scikit-learn developer performance documentation <performance-howto>`
+- `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -x
 
 # Decide what kind of documentation build to run, and run it.
 #
@@ -19,20 +20,10 @@ set -e
 # defines the get_dep and show_installed_libraries functions
 source build_tools/shared.sh
 
-if [ -n "$GITHUB_ACTION" ]
+if [[ -n "$CI_PULL_REQUEST" && -z "$CI_TARGET_BRANCH" ]]
 then
-    # Map the variables from Github Action to CircleCI
-    CIRCLE_SHA1=$(git log -1 --pretty=format:%H)
-
-    CIRCLE_JOB=$GITHUB_JOB
-
-    if [ "$GITHUB_EVENT_NAME" == "pull_request" ]
-    then
-        CIRCLE_BRANCH=$GITHUB_HEAD_REF
-        CI_PULL_REQUEST=true
-    else
-        CIRCLE_BRANCH=$GITHUB_REF_NAME
-    fi
+    # CircleCI does not expose the PR base branch as an environment variable.
+    CI_TARGET_BRANCH=$(curl -s "https://api.github.com/repos/scikit-learn/scikit-learn/pulls/$CIRCLE_PR_NUMBER" | jq -r .base.ref)
 fi
 
 get_build_type() {
@@ -132,10 +123,22 @@ then
     exit 0
 fi
 
-if [[ "$CIRCLE_BRANCH" =~ ^main$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
+# ZIP, image optimization and version listing are only useful for the
+# documentation that is deployed to the website (the "doc" CircleCI job).
+deploy_docs=false
+if [[ "$CIRCLE_BRANCH" =~ ^main$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" && "$CIRCLE_JOB" == "doc" ]]
+then
+    deploy_docs=true
+fi
+
+if [[ "$deploy_docs" == "true" ]]
 then
     # ZIP linked into HTML
     make_args=dist
+    # PR builds only fail on Sphinx warnings in files touched by the PR.
+    # On pushes to main and maintenance branches, treat all Sphinx warnings from the
+    # "doc" job as errors.
+    export SPHINXOPTS="-T -W"
 elif [[ "$build_type" =~ ^QUICK ]]
 then
     make_args=html-noplot
@@ -148,67 +151,83 @@ else
     make_args=html
 fi
 
-make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
-
 # Installing required system packages to support the rendering of math
-# notation in the HTML documentation and to optimize the image files
+# notation in the HTML documentation. zip and optipng are only needed when
+# building the downloadable documentation archive for the website.
+apt_packages="dvipng gsfonts ccache"
+if [[ "$make_args" == "dist" ]]
+then
+    apt_packages="$apt_packages zip optipng"
+fi
 sudo -E apt-get -yq update --allow-releaseinfo-change
-sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
-    install dvipng gsfonts ccache zip optipng
+sudo -E apt-get -yq --no-install-suggests --no-install-recommends install $apt_packages
 
 # deactivate circleci virtualenv and setup a conda env instead
 if [[ `type -t deactivate` ]]; then
   deactivate
 fi
 
-MAMBAFORGE_PATH=$HOME/mambaforge
-# Install dependencies with mamba
-wget -q https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-x86_64.sh \
-    -O mambaforge.sh
-chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MAMBAFORGE_PATH
-export PATH="/usr/lib/ccache:$MAMBAFORGE_PATH/bin:$PATH"
+# Install Miniforge
+MINIFORGE_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-x86_64.sh"
+curl -L --retry 10 $MINIFORGE_URL -o miniconda.sh
+MINIFORGE_PATH=$HOME/miniforge3
+bash ./miniconda.sh -b -p $MINIFORGE_PATH
+source $MINIFORGE_PATH/etc/profile.d/conda.sh
+conda activate
 
+
+create_conda_environment_from_lock_file $CONDA_ENV_NAME $LOCK_FILE
+conda activate $CONDA_ENV_NAME
+
+# Keep pkg-config inside the env: meson's Cython sanity check resolves `python3`
+# through it, and the host's python3.pc points the build at the wrong Python
+export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig"
+export PKG_CONFIG_LIBDIR="$CONDA_PREFIX/lib/pkgconfig"
+
+# Sets up ccache. CCACHE_DIR is pinned because ccache only defaults there when
+# the legacy ~/.ccache is absent, and save_cache needs a fixed path (compression
+# is on by default, so it needs no setting here)
+export PATH="/usr/lib/ccache:$PATH"
+export CCACHE_DIR=$HOME/.cache/ccache
 ccache -M 512M
-export CCACHE_COMPRESS=1
-
-# pin conda-lock to latest released version (needs manual update from time to time)
-mamba install "$(get_dep conda-lock min)" -y
-
-conda-lock install --log-level DEBUG --name $CONDA_ENV_NAME $LOCK_FILE
-source activate $CONDA_ENV_NAME
+# Zeroing statistics so that ccache statistics are shown only for this build
+ccache -z
 
 show_installed_libraries
 
-# Set parallelism to 3 to overlap IO bound tasks with CPU bound tasks on CI
-# workers with 2 cores when building the compiled extensions of scikit-learn.
-export SKLEARN_BUILD_PARALLEL=3
-pip install -e . --no-build-isolation
+# CPU_COUNT comes from .circleci/config.yml rather than CPU detection, see
+# https://github.com/scikit-learn/scikit-learn/pull/30333
+pip install -e . -v --no-build-isolation --config-settings=compile-args="-j $CPU_COUNT"
 
-echo "ccache build summary:"
-ccache -s
+if [[ "$CIRCLE_BRANCH" == "main" || "$CI_TARGET_BRANCH" == "main" ]]
+then
+    towncrier build --yes
+fi
 
-export OMP_NUM_THREADS=1
-
-if [[ "$CIRCLE_BRANCH" =~ ^main$ && -z "$CI_PULL_REQUEST" ]]
+if [[ "$CIRCLE_BRANCH" == "main" && "$deploy_docs" == "true" ]]
 then
     # List available documentation versions if on main
-    python build_tools/circle/list_versions.py > doc/versions.rst
+    python build_tools/circle/list_versions.py --json doc/js/versions.json --rst doc/versions.rst
 fi
 
 
 # The pipefail is requested to propagate exit code
-set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
-
-# Insert the version warning for deployment
-find _build/html/stable -name "*.html" | xargs sed -i '/<\/body>/ i \
-\    <script src="https://scikit-learn.org/versionwarning.js"></script>'
+set -o pipefail && cd doc && make SPHINX_NUMJOBS=$CPU_COUNT $make_args 2>&1 | tee ~/log.txt
 
 cd -
 set +o pipefail
 
 affected_doc_paths() {
+    scikit_learn_version=$(python -c 'import re; import sklearn; print(re.sub(r"(\d+\.\d+).+", r"\1", sklearn.__version__))')
     files=$(git diff --name-only origin/main...$CIRCLE_SHA1)
-    echo "$files" | grep ^doc/.*\.rst | sed 's/^doc\/\(.*\)\.rst$/\1.html/'
+    # use sed to replace files ending by .rst or .rst.template by .html
+    echo "$files" | grep -vP 'upcoming_changes/.*/\d+.*\.rst' | grep ^doc/.*\.rst | \
+        sed 's/^doc\/\(.*\)\.rst$/\1.html/; s/^doc\/\(.*\)\.rst\.template$/\1.html/'
+    # replace towncrier fragment files by link to changelog. uniq is used
+    # because in some edge cases multiple fragments can be added and we want a
+    # single link to the changelog.
+    echo "$files" | grep -P 'upcoming_changes/.*/\d+.*\.rst' | sed "s@.*@whats_new/v${scikit_learn_version}.html@" | uniq
+
     echo "$files" | grep ^examples/.*.py | sed 's/^\(.*\)\.py$/auto_\1.html/'
     sklearn_files=$(echo "$files" | grep '^sklearn/')
     if [ -n "$sklearn_files" ]
@@ -224,15 +243,16 @@ affected_doc_warnings() {
     then
         for af in ${files[@]}
         do
-          warn+=`grep WARNING ~/log.txt | grep $af`
+          match=`grep -E "(^|: )(WARNING|ERROR|CRITICAL): " ~/log.txt | grep $af`
+          [ -n "$match" ] && warn+=$'\n'"$match"
         done
     fi
-    echo "$warn"
+    echo "${warn#$'\n'}"
 }
 
 if [ -n "$CI_PULL_REQUEST" ]
 then
-    echo "The following documentation warnings may have been generated by PR #$CI_PULL_REQUEST:"
+    echo "The following documentation warnings and errors may have been generated by PR #$CI_PULL_REQUEST:"
     warnings=$(affected_doc_warnings)
     if [ -z "$warnings" ]
     then
@@ -246,15 +266,15 @@ then
     (
     echo '<html><body><ul>'
     echo "$affected" | sed 's|.*|<li><a href="&">&</a> [<a href="https://scikit-learn.org/dev/&">dev</a>, <a href="https://scikit-learn.org/stable/&">stable</a>]</li>|'
-    echo '</ul><p>General: <a href="index.html">Home</a> | <a href="modules/classes.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p>'
-    echo '<strong>Sphinx Warnings in affected files</strong><ul>'
+    echo '</ul><p>General: <a href="index.html">Home</a> | <a href="api/index.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p>'
+    echo '<strong>Sphinx warnings and errors in affected files</strong><ul>'
     echo "$warnings" | sed 's/\/home\/circleci\/project\//<li>/g'
     echo '</ul></body></html>'
     ) > 'doc/_build/html/stable/_changed.html'
 
     if [ "$warnings" != "/home/circleci/project/ no warnings" ]
     then
-        echo "Sphinx generated warnings when building the documentation related to files modified in this PR."
+        echo "Sphinx generated warnings or errors when building the documentation related to files modified in this PR."
         echo "Please check doc/_build/html/stable/_changed.html"
         exit 1
     fi

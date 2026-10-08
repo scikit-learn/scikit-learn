@@ -12,6 +12,9 @@ for comparison.
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
@@ -99,9 +102,10 @@ visualize_groups(y, groups, "no groups")
 
 def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
     """Create a sample plot for indices of a cross-validation object."""
-
+    use_groups = "Group" in type(cv).__name__
+    groups = group if use_groups else None
     # Generate the training/testing visualizations for each CV split
-    for ii, (tr, tt) in enumerate(cv.split(X=X, y=y, groups=group)):
+    for ii, (tr, tt) in enumerate(cv.split(X=X, y=y, groups=groups)):
         # Fill in indices with the training/test groups
         indices = np.array([np.nan] * len(X))
         indices[tt] = 1

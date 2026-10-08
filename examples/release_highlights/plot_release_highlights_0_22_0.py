@@ -8,7 +8,7 @@ Release Highlights for scikit-learn 0.22
 We are pleased to announce the release of scikit-learn 0.22, which comes
 with many bug fixes and new features! We detail below a few of the major
 features of this release. For an exhaustive list of all the changes, please
-refer to the :ref:`release notes <changes_0_22>`.
+refer to the :ref:`release notes <release_notes_0_22>`.
 
 To install the latest version (with pip)::
 
@@ -20,6 +20,9 @@ or with conda::
 
 """
 
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 # New plotting API
 # ----------------
@@ -27,13 +30,14 @@ or with conda::
 # A new plotting API is available for creating visualizations. This new API
 # allows for quickly adjusting the visuals of a plot without involving any
 # recomputation. It is also possible to add different plots to the same
-# figure. The following example illustrates :class:`~metrics.plot_roc_curve`,
+# figure. The following example illustrates `plot_roc_curve`,
 # but other plots utilities are supported like
-# :class:`~inspection.plot_partial_dependence`,
-# :class:`~metrics.plot_precision_recall_curve`, and
-# :class:`~metrics.plot_confusion_matrix`. Read more about this new API in the
+# `plot_partial_dependence`,
+# `plot_precision_recall_curve`, and
+# `plot_confusion_matrix`. Read more about this new API in the
 # :ref:`User Guide <visualizations>`.
 
+import matplotlib
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
@@ -43,6 +47,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import RocCurveDisplay
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
+from sklearn.utils.fixes import parse_version
 
 X, y = make_classification(random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
@@ -89,7 +94,7 @@ from sklearn.svm import LinearSVC
 X, y = load_iris(return_X_y=True)
 estimators = [
     ("rf", RandomForestClassifier(n_estimators=10, random_state=42)),
-    ("svr", make_pipeline(StandardScaler(), LinearSVC(random_state=42))),
+    ("svr", make_pipeline(StandardScaler(), LinearSVC(dual="auto", random_state=42))),
 ]
 clf = StackingClassifier(estimators=estimators, final_estimator=LogisticRegression())
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
@@ -117,9 +122,28 @@ result = permutation_importance(rf, X, y, n_repeats=10, random_state=0, n_jobs=2
 
 fig, ax = plt.subplots()
 sorted_idx = result.importances_mean.argsort()
-ax.boxplot(
-    result.importances[sorted_idx].T, vert=False, labels=feature_names[sorted_idx]
+
+# `labels` argument in boxplot is deprecated in matplotlib 3.9 and has been
+# renamed to `tick_labels`. The following code handles this, but as a
+# scikit-learn user you probably can write simpler code by using `labels=...`
+# (matplotlib < 3.9) or `tick_labels=...` (matplotlib >= 3.9).
+tick_labels_parameter_name = (
+    "tick_labels"
+    if parse_version(matplotlib.__version__) >= parse_version("3.9")
+    else "labels"
 )
+tick_labels_dict = {tick_labels_parameter_name: feature_names[sorted_idx]}
+# `vert` was deprecated in matplotlib 3.11 and is replaced by `orientation`,
+# which is available since matplotlib 3.10. The following code handles this, but
+# as a scikit-learn user you probably can write simpler code by using
+# `vert=False` (matplotlib < 3.11) or `orientation="horizontal"`
+# (matplotlib >= 3.10).
+orientation_dict = (
+    {"orientation": "horizontal"}
+    if parse_version(matplotlib.__version__) >= parse_version("3.10")
+    else {"vert": False}
+)
+ax.boxplot(result.importances[sorted_idx].T, **orientation_dict, **tick_labels_dict)
 ax.set_title("Permutation Importance of each feature")
 ax.set_ylabel("Features")
 fig.tight_layout()
@@ -187,7 +211,7 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
 # close if the features that neither is missing are close.
 # By default, a euclidean distance metric
 # that supports missing values,
-# :func:`~metrics.nan_euclidean_distances`, is used to find the nearest
+# :func:`~sklearn.metrics.pairwise.nan_euclidean_distances`, is used to find the nearest
 # neighbors.
 #
 # Read more in the :ref:`User Guide <knnimpute>`.
@@ -260,7 +284,7 @@ def test_sklearn_compatible_estimator(estimator, check):
 # %%
 # ROC AUC now supports multiclass classification
 # ----------------------------------------------
-# The :func:`roc_auc_score` function can also be used in multi-class
+# The :func:`~sklearn.metrics.roc_auc_score` function can also be used in multi-class
 # classification. Two averaging strategies are currently supported: the
 # one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
 # the one-vs-rest algorithm computes the average of the ROC AUC scores for each
@@ -274,9 +298,9 @@ def test_sklearn_compatible_estimator(estimator, check):
 
 
 from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
-from sklearn.svm import SVC
 
 X, y = make_classification(n_classes=4, n_informative=16)
-clf = SVC(decision_function_shape="ovo", probability=True).fit(X, y)
-print(roc_auc_score(y, clf.predict_proba(X), multi_class="ovo"))
+clf = LogisticRegression().fit(X, y)
+print(roc_auc_score(y, clf.predict_proba(X), multi_class="ovr"))

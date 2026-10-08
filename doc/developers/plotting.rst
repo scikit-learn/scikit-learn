@@ -5,10 +5,10 @@ Developing with the Plotting API
 ================================
 
 Scikit-learn defines a simple API for creating visualizations for machine
-learning. The key features of this API is to run calculations once and to have
+learning. The key features of this API are to run calculations once and to have
 the flexibility to adjust the visualizations after the fact. This section is
 intended for developers who wish to develop or maintain plotting tools. For
-usage, users should refer to the :ref`User Guide <visualizations>`.
+usage, users should refer to the :ref:`User Guide <visualizations>`.
 
 Plotting API Overview
 ---------------------
@@ -20,7 +20,7 @@ The `plot` method takes in parameters that only have to do with visualization,
 such as a matplotlib axes. The `plot` method will store the matplotlib artists
 as attributes allowing for style adjustments through the display object. The
 `Display` class should define one or both class methods: `from_estimator` and
-`from_predictions`. These methods allows to create the `Display` object from
+`from_predictions`. These methods allow creating the `Display` object from
 the estimator and some data or from the true and predicted values. After these
 class methods create the display object with the computed values, then call the
 display's plot method. Note that the `plot` method defines attributes related
@@ -87,11 +87,29 @@ be placed. In this case, we suggest using matplotlib's
 By default, the `ax` keyword in `plot` is `None`. In this case, the single
 axes is created and the gridspec api is used to create the regions to plot in.
 
-See for example, :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator
+See for example, :meth:`~sklearn.inspection.PartialDependenceDisplay.from_estimator`
 which plots multiple lines and contours using this API. The axes defining the
-bounding box is saved in a `bounding_ax_` attribute. The individual axes
+bounding box are saved in a `bounding_ax_` attribute. The individual axes
 created are stored in an `axes_` ndarray, corresponding to the axes position on
 the grid. Positions that are not used are set to `None`. Furthermore, the
 matplotlib Artists are stored in `lines_` and `contours_` where the key is the
 position on the grid. When a list of axes is passed in, the `axes_`, `lines_`,
-and `contours_` is a 1d ndarray corresponding to the list of axes passed in.
+and `contours_` are a 1d ndarray corresponding to the list of axes passed in.
+
+Using `matplotlib`
+------------------
+
+To keep `scikit-learn` as lightweight as possible, `matplotlib` is not a required
+dependency for building and using the package (it is only required for building the
+docs). Therefore, it is also not imported globally in the display classes, but only
+within the plotting functions where it is actually needed. Before importing it, use
+`check_matplotlib_support` from `_optional_dependencies.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_optional_dependencies.py>`_.
+This will check if it is installed, and if not, also raises a comprehensive error
+message including the caller that requested it, for reference.
+
+For testing, use the `pyplot` fixture from `conftest.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/conftest.py>`_ as
+the first argument in every test that requires it. This imports `matplotlib.pyplot` (or
+skips the test, if it is not installed) and also takes care of closing all figures
+before and after running the test.

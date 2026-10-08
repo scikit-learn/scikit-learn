@@ -11,8 +11,8 @@ classification as well**.
 The comparison is made by varying the parameters that control the number of
 trees according to each estimator:
 
-- `n_estimators` controls the number of trees in the forest. It's a fixed numer.
-- `max_iter` is the the maximum number of iterations in a gradient boosting
+- `n_estimators` controls the number of trees in the forest. It's a fixed number.
+- `max_iter` is the maximum number of iterations in a gradient boosting
   based model. The number of iterations corresponds to the number of trees for
   regression and binary classification problems. Furthermore, the actual number
   of trees required by the model depends on the stopping criteria.
@@ -22,11 +22,13 @@ fitting each tree to the negative gradient of the loss function with respect to
 the predicted value. RFs, on the other hand, are based on bagging and use a
 majority vote to predict the outcome.
 
-For more information on ensemble models, see the :ref:`User Guide <ensemble>`.
+See the :ref:`User Guide <ensemble>` for more information on ensemble models or
+see :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
+example showcasing some other features of HGBT models.
 """
 
-# Author:  Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Load dataset
@@ -141,7 +143,7 @@ colors_list = colors.qualitative.Plotly * (
 for idx, result in enumerate(results):
     cv_results = result["cv_results"].round(3)
     model_name = result["model"]
-    param_name = list(param_grids[model_name].keys())[0]
+    param_name = next(iter(param_grids[model_name].keys()))
     cv_results[param_name] = cv_results["param_" + param_name]
     cv_results["model"] = model_name
 
@@ -202,7 +204,7 @@ fig.update_layout(
 # makes fitting and scoring slower. The RF model reaches such plateau earlier
 # and can never reach the test score of the largest HGBDT model.
 #
-# Note that the results shown on the above plot can change sightly across runs
+# Note that the results shown on the above plot can change slightly across runs
 # and even more significantly when running on other machines: try to run this
 # example on your own local machine.
 #
@@ -210,7 +212,7 @@ fig.update_layout(
 # models uniformly dominate the Random Forest models in the "test score vs
 # training speed trade-off" (the HGBDT curve should be on the top left of the RF
 # curve, without ever crossing). The "test score vs prediction speed" trade-off
-# can also be more disputed but it's most often favorable to HGBDT. It's always
+# can also be more disputed, but it's most often favorable to HGBDT. It's always
 # a good idea to check both kinds of model (with hyper-parameter tuning) and
 # compare their performance on your specific problem to determine which model is
 # the best fit but **HGBT almost always offers a more favorable speed-accuracy

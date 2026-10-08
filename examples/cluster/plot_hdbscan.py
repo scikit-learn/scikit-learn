@@ -12,6 +12,10 @@ HDBSCAN's sensitivity to certain hyperparameters.
 
 We first define a couple utility functions for convenience.
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,7 +40,7 @@ def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=
             # Black used for noise.
             col = [0, 0, 0, 1]
 
-        class_index = np.where(labels == k)[0]
+        class_index = (labels == k).nonzero()[0]
         for ci in class_index:
             ax.plot(
                 X[ci, 0],
@@ -84,7 +88,7 @@ plot(X, labels=labels_true, ground_truth=True)
 # rescaled versions of the dataset.
 fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 dbs = DBSCAN(eps=0.3)
-for idx, scale in enumerate((1, 0.5, 3)):
+for idx, scale in enumerate([1, 0.5, 3]):
     dbs.fit(X * scale)
     plot(X * scale, dbs.labels_, parameters={"scale": scale, "eps": 0.3}, ax=axes[idx])
 
@@ -104,16 +108,22 @@ plot(3 * X, dbs.labels_, parameters={"scale": 3, "eps": 0.9}, ax=axis)
 # clusters from all possible clusters (see :ref:`User Guide <HDBSCAN>`).
 # One immediate advantage is that HDBSCAN is scale-invariant.
 fig, axes = plt.subplots(3, 1, figsize=(10, 12))
-hdb = HDBSCAN()
-for idx, scale in enumerate((1, 0.5, 3)):
-    hdb.fit(X)
-    plot(X, hdb.labels_, hdb.probabilities_, ax=axes[idx], parameters={"scale": scale})
+hdb = HDBSCAN(copy=True)
+for idx, scale in enumerate([1, 0.5, 3]):
+    hdb.fit(X * scale)
+    plot(
+        X * scale,
+        hdb.labels_,
+        hdb.probabilities_,
+        ax=axes[idx],
+        parameters={"scale": scale},
+    )
 # %%
 # Multi-Scale Clustering
 # ----------------------
 # HDBSCAN is much more than scale invariant though -- it is capable of
 # multi-scale clustering, which accounts for clusters with varying density.
-# Traditional DBSCAN assumes that any potential clusters are homogenous in
+# Traditional DBSCAN assumes that any potential clusters are homogeneous in
 # density. HDBSCAN is free from such constraints. To demonstrate this we
 # consider the following dataset
 centers = [[-0.85, -0.85], [-0.85, 0.85], [3, 3], [3, -3]]
@@ -149,7 +159,7 @@ plot(X, dbs.labels_, parameters=params, ax=axes[1])
 # that DBSCAN is incapable of simultaneously separating the two dense clusters
 # while preventing the sparse clusters from fragmenting. Let's compare with
 # HDBSCAN.
-hdb = HDBSCAN().fit(X)
+hdb = HDBSCAN(copy=True).fit(X)
 plot(X, hdb.labels_, hdb.probabilities_)
 
 # %%
@@ -186,7 +196,7 @@ plot(X, hdb.labels_, hdb.probabilities_)
 PARAM = ({"min_cluster_size": 5}, {"min_cluster_size": 3}, {"min_cluster_size": 25})
 fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 for i, param in enumerate(PARAM):
-    hdb = HDBSCAN(**param).fit(X)
+    hdb = HDBSCAN(copy=True, **param).fit(X)
     labels = hdb.labels_
 
     plot(X, labels, hdb.probabilities_, param, ax=axes[i])
@@ -209,7 +219,7 @@ PARAM = (
 )
 fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 for i, param in enumerate(PARAM):
-    hdb = HDBSCAN(**param).fit(X)
+    hdb = HDBSCAN(copy=True, **param).fit(X)
     labels = hdb.labels_
 
     plot(X, labels, hdb.probabilities_, param, ax=axes[i])
@@ -230,7 +240,7 @@ PARAM = (
     {"cut_distance": 0.5},
     {"cut_distance": 1.0},
 )
-hdb = HDBSCAN()
+hdb = HDBSCAN(copy=True)
 hdb.fit(X)
 fig, axes = plt.subplots(len(PARAM), 1, figsize=(10, 12))
 for i, param in enumerate(PARAM):

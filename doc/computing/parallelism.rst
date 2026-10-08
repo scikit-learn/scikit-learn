@@ -1,9 +1,5 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
-
-Parallelism, resource management, and configuration
-===================================================
+Parallelism and resource management
+===================================
 
 .. _parallelism:
 
@@ -29,7 +25,7 @@ is always controlled by environment variables or `threadpoolctl` as explained be
 Note that some estimators can leverage all three kinds of parallelism at different
 points of their training and prediction methods.
 
-We describe these 3 types of parallelism in the following subsections in more details.
+We describe these 3 types of parallelism in the following subsections in more detail.
 
 Higher-level parallelism with joblib
 ....................................
@@ -37,6 +33,15 @@ Higher-level parallelism with joblib
 When the underlying implementation uses joblib, the number of workers
 (threads or processes) that are spawned in parallel can be controlled via the
 ``n_jobs`` parameter.
+
+.. note::
+
+    **Startup Overhead**
+
+    When using ``n_jobs > 1`` (or ``n_jobs=-1``), you may observe a delay
+    the first time a parallel function is called. This is expected behavior
+    caused by the overhead of starting the Python worker processes.
+    Subsequent calls will be faster as they reuse the existing pool of workers.
 
 .. note::
 
@@ -76,7 +81,9 @@ In practice, whether parallelism is helpful at improving runtime depends on
 many factors. It is usually a good idea to experiment rather than assuming
 that increasing the number of workers is always a good thing. In some cases
 it can be highly detrimental to performance to run multiple copies of some
-estimators or functions in parallel (see oversubscription below).
+estimators or functions in parallel (see :ref:`oversubscription<oversubscription>` below).
+
+.. _lower-level-parallelism-with-openmp:
 
 Lower-level parallelism with OpenMP
 ...................................
@@ -87,15 +94,19 @@ will use as many threads as possible, i.e. as many threads as logical cores.
 
 You can control the exact number of threads that are used either:
 
- - via the ``OMP_NUM_THREADS`` environment variable, for instance when:
-   running a python script:
+- via the ``OMP_NUM_THREADS`` environment variable, for instance when:
+  running a python script:
 
-   .. prompt:: bash $
+  .. code-block:: console
 
-        OMP_NUM_THREADS=4 python my_script.py
+      $ OMP_NUM_THREADS=4 python my_script.py
 
- - or via `threadpoolctl` as explained by `this piece of documentation
-   <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
+- or via `threadpoolctl` as explained by `this piece of documentation
+  <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
+
+:ref:`SKLEARN_PAIRWISE_DIST_CHUNK_SIZE <envvar_SKLEARN_PAIRWISE_DIST_CHUNK_SIZE>`
+tunes chunk size for OpenMP-parallel pairwise distance kernels in Cython (e.g.
+nearest neighbors). This is an advanced setting.
 
 Parallel NumPy and SciPy routines from numerical libraries
 ..........................................................
@@ -107,29 +118,31 @@ such as MKL, OpenBLAS or BLIS.
 You can control the exact number of threads used by BLAS for each library
 using environment variables, namely:
 
-  - ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
-  - ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
-  - ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
+- ``MKL_NUM_THREADS`` sets the number of threads MKL uses,
+- ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
+- ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
 
 Note that BLAS & LAPACK implementations can also be impacted by
 `OMP_NUM_THREADS`. To check whether this is the case in your environment,
 you can inspect how the number of threads effectively used by those libraries
-is affected when running the the following command in a bash or zsh terminal
-for different values of `OMP_NUM_THREADS`::
+is affected when running the following command in a bash or zsh terminal
+for different values of `OMP_NUM_THREADS`:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    OMP_NUM_THREADS=2 python -m threadpoolctl -i numpy scipy
+    $ OMP_NUM_THREADS=2 python -m threadpoolctl -i numpy scipy
 
 .. note::
     At the time of writing (2022), NumPy and SciPy packages which are
     distributed on pypi.org (i.e. the ones installed via ``pip install``)
     and on the conda-forge channel (i.e. the ones installed via
     ``conda install --channel conda-forge``) are linked with OpenBLAS, while
-    NumPy and SciPy packages packages shipped on the ``defaults`` conda
+    NumPy and SciPy packages shipped on the ``defaults`` conda
     channel from Anaconda.org (i.e. the ones installed via ``conda install``)
     are linked by default with MKL.
 
+
+.. _oversubscription:
 
 Oversubscription: spawning too many threads
 ...........................................
@@ -185,134 +198,3 @@ in `joblib documentation
 
 You will find additional details about parallelism in numerical python libraries
 in `this document from Thomas J. Fan <https://thomasjpfan.github.io/parallelism-python-libraries-design/>`_.
-
-Configuration switches
------------------------
-
-Python API
-..........
-
-:func:`sklearn.set_config` and :func:`sklearn.config_context` can be used to change
-parameters of the configuration which control aspect of parallelism.
-
-.. _environment_variable:
-
-Environment variables
-.....................
-
-These environment variables should be set before importing scikit-learn.
-
-`SKLEARN_ASSUME_FINITE`
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Sets the default value for the `assume_finite` argument of
-:func:`sklearn.set_config`.
-
-`SKLEARN_WORKING_MEMORY`
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Sets the default value for the `working_memory` argument of
-:func:`sklearn.set_config`.
-
-`SKLEARN_SEED`
-~~~~~~~~~~~~~~
-
-Sets the seed of the global random generator when running the tests, for
-reproducibility.
-
-Note that scikit-learn tests are expected to run deterministically with
-explicit seeding of their own independent RNG instances instead of relying on
-the numpy or Python standard library RNG singletons to make sure that test
-results are independent of the test execution order. However some tests might
-forget to use explicit seeding and this variable is a way to control the initial
-state of the aforementioned singletons.
-
-`SKLEARN_TESTS_GLOBAL_RANDOM_SEED`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Controls the seeding of the random number generator used in tests that rely on
-the `global_random_seed`` fixture.
-
-All tests that use this fixture accept the contract that they should
-deterministically pass for any seed value from 0 to 99 included.
-
-If the `SKLEARN_TESTS_GLOBAL_RANDOM_SEED` environment variable is set to
-`"any"` (which should be the case on nightly builds on the CI), the fixture
-will choose an arbitrary seed in the above range (based on the BUILD_NUMBER or
-the current day) and all fixtured tests will run for that specific seed. The
-goal is to ensure that, over time, our CI will run all tests with different
-seeds while keeping the test duration of a single run of the full test suite
-limited. This will check that the assertions of tests written to use this
-fixture are not dependent on a specific seed value.
-
-The range of admissible seed values is limited to [0, 99] because it is often
-not possible to write a test that can work for any possible seed and we want to
-avoid having tests that randomly fail on the CI.
-
-Valid values for `SKLEARN_TESTS_GLOBAL_RANDOM_SEED`:
-
-- `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="42"`: run tests with a fixed seed of 42
-- `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="40-42"`: run the tests with all seeds
-  between 40 and 42 included
-- `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"`: run the tests with an arbitrary
-  seed selected between 0 and 99 included
-- `SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"`: run the tests with all seeds
-  between 0 and 99 included. This can take a long time: only use for individual
-  tests, not the full test suite!
-
-If the variable is not set, then 42 is used as the global seed in a
-deterministic manner. This ensures that, by default, the scikit-learn test
-suite is as deterministic as possible to avoid disrupting our friendly
-third-party package maintainers. Similarly, this variable should not be set in
-the CI config of pull-requests to make sure that our friendly contributors are
-not the first people to encounter a seed-sensitivity regression in a test
-unrelated to the changes of their own PR. Only the scikit-learn maintainers who
-watch the results of the nightly builds are expected to be annoyed by this.
-
-When writing a new test function that uses this fixture, please use the
-following command to make sure that it passes deterministically for all
-admissible seeds on your local machine:
-
-.. prompt:: bash $
-
-    SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
-
-`SKLEARN_SKIP_NETWORK_TESTS`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When this environment variable is set to a non zero value, the tests that need
-network access are skipped. When this environment variable is not set then
-network tests are skipped.
-
-`SKLEARN_RUN_FLOAT32_TESTS`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When this environment variable is set to '1', the tests using the
-`global_dtype` fixture are also run on float32 data.
-When this environment variable is not set, the tests are only run on
-float64 data.
-
-`SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When this environment variable is set to a non zero value, the `Cython`
-derivative, `boundscheck` is set to `True`. This is useful for finding
-segfaults.
-
-`SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When this environment variable is set to a non zero value, the debug symbols
-will be included in the compiled C extensions. Only debug symbols for POSIX
-systems is configured.
-
-`SKLEARN_PAIRWISE_DIST_CHUNK_SIZE`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This sets the size of chunk to be used by the underlying `PairwiseDistancesReductions`
-implementations. The default value is `256` which has been showed to be adequate on
-most machines.
-
-Users looking for the best performance might want to tune this variable using
-powers of 2 so as to get the best parallelism behavior for their hardware,
-especially with respect to their caches' sizes.

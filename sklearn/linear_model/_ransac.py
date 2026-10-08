@@ -1,13 +1,12 @@
-# Author: Johannes Schönberger
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     MetaEstimatorMixin,
     MultiOutputMixin,
@@ -15,18 +14,32 @@ from ..base import (
     _fit_context,
     clone,
 )
-from ..exceptions import ConvergenceWarning
-from ..utils import check_consistent_length, check_random_state
-from ..utils._param_validation import (
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearRegression
+from sklearn.utils import check_consistent_length, check_random_state, get_tags
+from sklearn.utils._param_validation import (
     HasMethods,
     Interval,
     Options,
     RealNotInt,
     StrOptions,
 )
-from ..utils.random import sample_without_replacement
-from ..utils.validation import _check_sample_weight, check_is_fitted, has_fit_parameter
-from ._base import LinearRegression
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _manual_routing,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import (
+    _check_method_params,
+    _check_sample_weight,
+    check_is_fitted,
+    has_fit_parameter,
+    validate_data,
+)
 
 _EPSILON = np.spacing(1)
 
@@ -66,7 +79,10 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
 
 
 class RANSACRegressor(
-    MetaEstimatorMixin, RegressorMixin, MultiOutputMixin, BaseEstimator
+    MetaEstimatorMixin,
+    RegressorMixin,
+    MultiOutputMixin,
+    BaseEstimator,
 ):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
@@ -80,13 +96,13 @@ class RANSACRegressor(
     estimator : object, default=None
         Base estimator object which implements the following methods:
 
-         * `fit(X, y)`: Fit model to given training data and target values.
-         * `score(X, y)`: Returns the mean accuracy on the given test data,
-           which is used for the stop criterion defined by `stop_score`.
-           Additionally, the score is used to decide which of two equally
-           large consensus sets is chosen as the better one.
-         * `predict(X)`: Returns predicted values using the linear model,
-           which is used to compute residual error using loss function.
+        * `fit(X, y)`: Fit model to given training data and target values.
+        * `score(X, y)`: Returns the mean accuracy on the given test data,
+          which is used for the stop criterion defined by `stop_score`.
+          Additionally, the score is used to decide which of two equally
+          large consensus sets is chosen as the better one.
+        * `predict(X)`: Returns predicted values using the linear model,
+          which is used to compute residual error using loss function.
 
         If `estimator` is None, then
         :class:`~sklearn.linear_model.LinearRegression` is used for
@@ -101,10 +117,11 @@ class RANSACRegressor(
         relative number `ceil(min_samples * X.shape[0])` for
         `min_samples < 1`. This is typically chosen as the minimal number of
         samples necessary to estimate the given `estimator`. By default a
-        ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
+        :class:`~sklearn.linear_model.LinearRegression` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``. This parameter is highly
         dependent upon the model, so if a `estimator` other than
-        :class:`linear_model.LinearRegression` is used, the user must provide a value.
+        :class:`~sklearn.linear_model.LinearRegression` is used, the user must
+        provide a value.
 
     residual_threshold : float, default=None
         Maximum residual for a data sample to be classified as an inlier.
@@ -132,8 +149,6 @@ class RANSACRegressor(
         Maximum number of iterations that can be skipped due to finding zero
         inliers or invalid data defined by ``is_data_valid`` or invalid models
         defined by ``is_model_valid``.
-
-        .. versionadded:: 0.19
 
     stop_n_inliers : int, default=np.inf
         Stop iteration if at least this number of inliers are found.
@@ -164,8 +179,6 @@ class RANSACRegressor(
         If the loss on a sample is greater than the ``residual_threshold``,
         then this sample is classified as an outlier.
 
-        .. versionadded:: 0.18
-
     random_state : int, RandomState instance, default=None
         The generator used to initialize the centers.
         Pass an int for reproducible output across multiple function calls.
@@ -174,7 +187,8 @@ class RANSACRegressor(
     Attributes
     ----------
     estimator_ : object
-        Best fitted model (copy of the `estimator` object).
+        Final model fitted on the inliers predicted by the "best" model found
+        during RANSAC sampling (copy of the `estimator` object).
 
     n_trials_ : int
         Number of random selection trials until one of the stop criteria is
@@ -186,24 +200,16 @@ class RANSACRegressor(
     n_skips_no_inliers_ : int
         Number of iterations skipped due to finding zero inliers.
 
-        .. versionadded:: 0.19
-
     n_skips_invalid_data_ : int
         Number of iterations skipped due to invalid data defined by
         ``is_data_valid``.
-
-        .. versionadded:: 0.19
 
     n_skips_invalid_model_ : int
         Number of iterations skipped due to an invalid model defined by
         ``is_model_valid``.
 
-        .. versionadded:: 0.19
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -221,7 +227,7 @@ class RANSACRegressor(
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
     .. [2] https://www.sri.com/wp-content/uploads/2021/12/ransac-publication.pdf
-    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
+    .. [3] https://bmva-archive.org.uk/bmvc/2009/Papers/Paper355/Paper355.pdf
 
     Examples
     --------
@@ -231,10 +237,13 @@ class RANSACRegressor(
     ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = RANSACRegressor(random_state=0).fit(X, y)
     >>> reg.score(X, y)
-    0.9885...
+    0.9885
     >>> reg.predict(X[:1,])
-    array([-31.9417...])
-    """  # noqa: E501
+    array([-31.9417])
+
+    For a more detailed example, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_ransac.py`
+    """
 
     _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit", "score", "predict"]), None],
@@ -297,7 +306,7 @@ class RANSACRegressor(
         # RansacRegressor.estimator is not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit estimator using RANSAC algorithm.
 
         Parameters
@@ -313,7 +322,16 @@ class RANSACRegressor(
             raises error if sample_weight is passed and estimator
             fit method does not support it.
 
-            .. versionadded:: 0.18
+        **fit_params : dict
+            Parameters routed to the `fit` method of the sub-estimator via the
+            metadata routing API.
+
+            .. versionadded:: 1.5
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -330,10 +348,11 @@ class RANSACRegressor(
         # Need to validate separately here. We can't pass multi_output=True
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.
-        check_X_params = dict(accept_sparse="csr", force_all_finite=False)
+        _raise_for_params(fit_params, self, "fit")
+        check_X_params = dict(accept_sparse="csr", ensure_all_finite=False)
         check_y_params = dict(ensure_2d=False)
-        X, y = self._validate_data(
-            X, y, validate_separately=(check_X_params, check_y_params)
+        X, y = validate_data(
+            self, X, y, validate_separately=(check_X_params, check_y_params)
         )
         check_consistent_length(X, y)
 
@@ -394,12 +413,23 @@ class RANSACRegressor(
         estimator_name = type(estimator).__name__
         if sample_weight is not None and not estimator_fit_has_sample_weight:
             raise ValueError(
-                "%s does not support sample_weight. Samples"
+                "%s does not support sample_weight. Sample"
                 " weights are only used for the calibration"
                 " itself." % estimator_name
             )
+
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
+            fit_params["sample_weight"] = sample_weight
+
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
+        else:
+            sw = (
+                {"sample_weight": _check_sample_weight(sample_weight, X)}
+                if sample_weight is not None
+                else {}
+            )
+            routed_params = _manual_routing({"estimator": {"fit": sw}})
 
         n_inliers_best = 1
         score_best = -np.inf
@@ -441,13 +471,13 @@ class RANSACRegressor(
                 self.n_skips_invalid_data_ += 1
                 continue
 
+            # cut `fit_params` down to `subset_idxs`
+            fit_params_subset = _check_method_params(
+                X, params=routed_params.estimator.fit, indices=subset_idxs
+            )
+
             # fit model for current random sample set
-            if sample_weight is None:
-                estimator.fit(X_subset, y_subset)
-            else:
-                estimator.fit(
-                    X_subset, y_subset, sample_weight=sample_weight[subset_idxs]
-                )
+            estimator.fit(X_subset, y_subset, **fit_params_subset)
 
             # check if estimated model is valid
             if self.is_model_valid is not None and not self.is_model_valid(
@@ -474,8 +504,17 @@ class RANSACRegressor(
             X_inlier_subset = X[inlier_idxs_subset]
             y_inlier_subset = y[inlier_idxs_subset]
 
+            # cut `fit_params` down to `inlier_idxs_subset`
+            score_params_inlier_subset = _check_method_params(
+                X, params=routed_params.estimator.score, indices=inlier_idxs_subset
+            )
+
             # score of inlier data set
-            score_subset = estimator.score(X_inlier_subset, y_inlier_subset)
+            score_subset = estimator.score(
+                X_inlier_subset,
+                y_inlier_subset,
+                **score_params_inlier_subset,
+            )
 
             # same number of inliers but worse score -> skip current random
             # sample
@@ -539,20 +578,17 @@ class RANSACRegressor(
                 )
 
         # estimate final model using all inliers
-        if sample_weight is None:
-            estimator.fit(X_inlier_best, y_inlier_best)
-        else:
-            estimator.fit(
-                X_inlier_best,
-                y_inlier_best,
-                sample_weight=sample_weight[inlier_best_idxs_subset],
-            )
+        fit_params_best_idxs_subset = _check_method_params(
+            X, params=routed_params.estimator.fit, indices=inlier_best_idxs_subset
+        )
+
+        estimator.fit(X_inlier_best, y_inlier_best, **fit_params_best_idxs_subset)
 
         self.estimator_ = estimator
         self.inlier_mask_ = inlier_mask_best
         return self
 
-    def predict(self, X):
+    def predict(self, X, **params):
         """Predict using the estimated model.
 
         This is a wrapper for `estimator_.predict(X)`.
@@ -562,32 +598,65 @@ class RANSACRegressor(
         X : {array-like or sparse matrix} of shape (n_samples, n_features)
             Input data.
 
+        **params : dict
+            Parameters routed to the `predict` method of the sub-estimator via
+            the metadata routing API.
+
+            .. versionadded:: 1.5
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
+
         Returns
         -------
         y : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             accept_sparse=True,
             reset=False,
         )
-        return self.estimator_.predict(X)
 
-    def score(self, X, y):
+        _raise_for_params(params, self, "predict")
+
+        if _routing_enabled():
+            predict_params = process_routing(self, "predict", **params).estimator[
+                "predict"
+            ]
+        else:
+            predict_params = {}
+
+        return self.estimator_.predict(X, **predict_params)
+
+    def score(self, X, y, **params):
         """Return the score of the prediction.
 
         This is a wrapper for `estimator_.score(X, y)`.
 
         Parameters
         ----------
-        X : (array-like or sparse matrix} of shape (n_samples, n_features)
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
+
+        **params : dict
+            Parameters routed to the `score` method of the sub-estimator via
+            the metadata routing API.
+
+            .. versionadded:: 1.5
+
+                Only available if
+                `sklearn.set_config(enable_metadata_routing=True)` is set. See
+                :ref:`Metadata Routing User Guide <metadata_routing>` for more
+                details.
 
         Returns
         -------
@@ -595,19 +664,50 @@ class RANSACRegressor(
             Score of the prediction.
         """
         check_is_fitted(self)
-        X = self._validate_data(
+        X = validate_data(
+            self,
             X,
-            force_all_finite=False,
+            ensure_all_finite=False,
             accept_sparse=True,
             reset=False,
         )
-        return self.estimator_.score(X, y)
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "zero sample_weight is not equivalent to removing samples"
-                ),
-            }
-        }
+        _raise_for_params(params, self, "score")
+        if _routing_enabled():
+            score_params = process_routing(self, "score", **params).estimator["score"]
+        else:
+            score_params = {}
+
+        return self.estimator_.score(X, y, **score_params)
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self).add(
+            estimator=self.estimator,
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="fit", callee="score")
+            .add(caller="score", callee="score")
+            .add(caller="predict", callee="predict"),
+        )
+        return router
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        if self.estimator is None:
+            tags.input_tags.sparse = True  # default estimator is LinearRegression
+        else:
+            tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
+        return tags

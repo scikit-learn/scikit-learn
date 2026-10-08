@@ -9,8 +9,8 @@ implementation_specific_values = [
 ]
 
 }}
-from ...utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
-from ...metrics._dist_metrics cimport DistanceMetric64, DistanceMetric32, DistanceMetric
+from sklearn.utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
+from sklearn.metrics._dist_metrics cimport DistanceMetric64, DistanceMetric32, DistanceMetric
 
 {{for name_suffix, DistanceMetric, INPUT_DTYPE_t in implementation_specific_values}}
 
@@ -38,22 +38,22 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef:
         const {{INPUT_DTYPE_t}}[:] X_data
-        const int32_t[:] X_indices
-        const int32_t[:] X_indptr
+        const int32_t[::1] X_indices
+        const int32_t[::1] X_indptr
 
         const {{INPUT_DTYPE_t}}[:] Y_data
-        const int32_t[:] Y_indices
-        const int32_t[:] Y_indptr
+        const int32_t[::1] Y_indices
+        const int32_t[::1] Y_indptr
 
 
 cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef:
         const {{INPUT_DTYPE_t}}[:] X_data
-        const int32_t[:] X_indices
-        const int32_t[:] X_indptr
+        const int32_t[::1] X_indices
+        const int32_t[::1] X_indptr
 
         const {{INPUT_DTYPE_t}}[:] Y_data
-        const int32_t[:] Y_indices
+        const int32_t[::1] Y_indices
         intp_t n_Y
 
 

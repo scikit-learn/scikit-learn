@@ -18,6 +18,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
+
 import re
 
 from docutils import nodes, utils
@@ -53,23 +54,6 @@ def user_role(name, rawtext, text, lineno, inliner, options=None, content=None):
     else:
         text = "@{0}".format(target)
 
-    link = nodes.reference(text=text, refuri=ref, **options)
-    return [link], []
-
-
-def cve_role(name, rawtext, text, lineno, inliner, options=None, content=None):
-    """Sphinx role for linking to a CVE on https://cve.mitre.org.
-    Examples: ::
-        :cve:`CVE-2018-17175`
-    """
-    options = options or {}
-    content = content or []
-    has_explicit_title, title, target = split_explicit_title(text)
-
-    target = utils.unescape(target).strip()
-    title = utils.unescape(title).strip()
-    ref = "https://cve.mitre.org/cgi-bin/cvename.cgi?name={0}".format(target)
-    text = title if has_explicit_title else target
     link = nodes.reference(text=text, refuri=ref, **options)
     return [link], []
 
@@ -209,7 +193,6 @@ def setup(app):
     app.add_role("pr", pr_role)
     app.add_role("user", user_role)
     app.add_role("commit", commit_role)
-    app.add_role("cve", cve_role)
     return {
         "version": __version__,
         "parallel_read_safe": True,

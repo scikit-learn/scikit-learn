@@ -1,28 +1,35 @@
-from libc.math cimport isnan
 from libcpp.vector cimport vector
 
-cimport numpy as cnp
+from sklearn.utils._typedefs cimport (
+    float32_t,
+    float64_t,
+    int32_t,
+    int64_t,
+    intp_t,
+    inlinable_isnan,
+)
+
 import numpy as np
 
-cnp.import_array()
 
 ctypedef fused INT_DTYPE:
-    cnp.int64_t
-    cnp.int32_t
+    int64_t
+    int32_t
 
 ctypedef fused Y_DTYPE:
-    cnp.int64_t
-    cnp.int32_t
-    cnp.float64_t
-    cnp.float32_t
+    int64_t
+    int32_t
+    float64_t
+    float32_t
 
 
 def _fit_encoding_fast(
-    INT_DTYPE[:, ::1] X_int,
-    Y_DTYPE[:] y,
-    cnp.int64_t[::1] n_categories,
+    INT_DTYPE[::1, :] X_int,
+    const Y_DTYPE[:] y,
+    int64_t[::1] n_categories,
     double smooth,
     double y_mean,
+    const intp_t[::1] X_indices=None,
 ):
     """Fit a target encoding on X_int and y.
 
@@ -33,18 +40,25 @@ def _fit_encoding_fast(
          categorical attributes in classification and prediction problems"
     """
     cdef:
-        cnp.int64_t sample_idx, feat_idx, cat_idx, n_cats
+        intp_t sample_idx, row_idx
+        int64_t feat_idx, cat_idx, n_cats
         INT_DTYPE X_int_tmp
-        int n_samples = X_int.shape[0]
+        bint use_X_indices = X_indices is not None
+        intp_t n_samples
         int n_features = X_int.shape[1]
         double smooth_sum = smooth * y_mean
-        cnp.int64_t max_n_cats = np.max(n_categories)
+        int64_t max_n_cats = np.max(n_categories)
         double[::1] sums = np.empty(max_n_cats, dtype=np.float64)
         double[::1] counts = np.empty(max_n_cats, dtype=np.float64)
         list encodings = []
         double[::1] current_encoding
         # Gives access to encodings without gil
         vector[double*] encoding_vec
+
+    if use_X_indices:
+        n_samples = X_indices.shape[0]
+    else:
+        n_samples = X_int.shape[0]
 
     encoding_vec.resize(n_features)
     for feat_idx in range(n_features):
@@ -61,7 +75,11 @@ def _fit_encoding_fast(
                 counts[cat_idx] = smooth
 
             for sample_idx in range(n_samples):
-                X_int_tmp = X_int[sample_idx, feat_idx]
+                if use_X_indices:
+                    row_idx = X_indices[sample_idx]
+                else:
+                    row_idx = sample_idx
+                X_int_tmp = X_int[row_idx, feat_idx]
                 # -1 are unknown categories, which are not counted
                 if X_int_tmp == -1:
                     continue
@@ -78,11 +96,12 @@ def _fit_encoding_fast(
 
 
 def _fit_encoding_fast_auto_smooth(
-    INT_DTYPE[:, ::1] X_int,
-    Y_DTYPE[:] y,
-    cnp.int64_t[::1] n_categories,
+    INT_DTYPE[::1, :] X_int,
+    const Y_DTYPE[:] y,
+    int64_t[::1] n_categories,
     double y_mean,
     double y_variance,
+    const intp_t[::1] X_indices=None,
 ):
     """Fit a target encoding on X_int and y with auto smoothing.
 
@@ -92,20 +111,27 @@ def _fit_encoding_fast_auto_smooth(
          categorical attributes in classification and prediction problems"
     """
     cdef:
-        cnp.int64_t sample_idx, feat_idx, cat_idx, n_cats
+        intp_t sample_idx, row_idx
+        int64_t feat_idx, cat_idx, n_cats
         INT_DTYPE X_int_tmp
         double diff
-        int n_samples = X_int.shape[0]
+        bint use_X_indices = X_indices is not None
+        intp_t n_samples
         int n_features = X_int.shape[1]
-        cnp.int64_t max_n_cats = np.max(n_categories)
+        int64_t max_n_cats = np.max(n_categories)
         double[::1] means = np.empty(max_n_cats, dtype=np.float64)
-        cnp.int64_t[::1] counts = np.empty(max_n_cats, dtype=np.int64)
+        int64_t[::1] counts = np.empty(max_n_cats, dtype=np.int64)
         double[::1] sum_of_squared_diffs = np.empty(max_n_cats, dtype=np.float64)
         double lambda_
         list encodings = []
         double[::1] current_encoding
         # Gives access to encodings without gil
         vector[double*] encoding_vec
+
+    if use_X_indices:
+        n_samples = X_indices.shape[0]
+    else:
+        n_samples = X_int.shape[0]
 
     encoding_vec.resize(n_features)
     for feat_idx in range(n_features):
@@ -129,7 +155,11 @@ def _fit_encoding_fast_auto_smooth(
 
             # first pass to compute the mean
             for sample_idx in range(n_samples):
-                X_int_tmp = X_int[sample_idx, feat_idx]
+                if use_X_indices:
+                    row_idx = X_indices[sample_idx]
+                else:
+                    row_idx = sample_idx
+                X_int_tmp = X_int[row_idx, feat_idx]
 
                 # -1 are unknown categories, which are not counted
                 if X_int_tmp == -1:
@@ -142,7 +172,11 @@ def _fit_encoding_fast_auto_smooth(
 
             # second pass to compute the sum of squared differences
             for sample_idx in range(n_samples):
-                X_int_tmp = X_int[sample_idx, feat_idx]
+                if use_X_indices:
+                    row_idx = X_indices[sample_idx]
+                else:
+                    row_idx = sample_idx
+                X_int_tmp = X_int[row_idx, feat_idx]
                 if X_int_tmp == -1:
                     continue
                 diff = y[sample_idx] - means[X_int_tmp]
@@ -154,7 +188,7 @@ def _fit_encoding_fast_auto_smooth(
                     (y_variance * counts[cat_idx] + sum_of_squared_diffs[cat_idx] /
                      counts[cat_idx])
                 )
-                if isnan(lambda_):
+                if inlinable_isnan(lambda_):
                     # A nan can happen when:
                     # 1. counts[cat_idx] == 0
                     # 2. y_variance == 0 and sum_of_squared_diffs[cat_idx] == 0

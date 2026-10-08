@@ -1,6 +1,5 @@
-# Authors: Lars Buitinck
-#          Dan Blanchard <dblanchard@ets.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from array import array
 from collections.abc import Iterable, Mapping
@@ -10,9 +9,9 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils import check_array
-from ..utils.validation import check_is_fitted
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils import _align_api_if_sparse, check_array, metadata_routing
+from sklearn.utils.validation import check_is_fitted
 
 
 class DictVectorizer(TransformerMixin, BaseEstimator):
@@ -41,6 +40,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     Features that do not occur in a sample (mapping) will have a zero value
     in the resulting array/matrix.
+
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
     Read more in the :ref:`User Guide <dict_feature_extraction>`.
 
@@ -88,6 +90,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
     """
+
+    # This isn't something that people should be routing / using in a pipeline.
+    __metadata_request__inverse_transform = {"dict_type": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "dtype": "no_validation",  # validation delegated to numpy,
@@ -142,9 +147,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
-
-            .. versionchanged:: 0.24
-               Accepts multiple string values for one categorical feature.
 
         y : (ignored)
             Ignored parameter.
@@ -262,7 +264,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         indices = np.frombuffer(indices, dtype=np.intc)
         shape = (len(indptr) - 1, len(vocab))
 
-        result_matrix = sp.csr_matrix(
+        result_matrix = sp.csr_array(
             (values, indices, indptr), shape=shape, dtype=dtype
         )
 
@@ -284,7 +286,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             self.feature_names_ = feature_names
             self.vocabulary_ = vocab
 
-        return result_matrix
+        return _align_api_if_sparse(result_matrix)
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
@@ -298,9 +300,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
-
-            .. versionchanged:: 0.24
-               Accepts multiple string values for one categorical feature.
 
         y : (ignored)
             Ignored parameter.
@@ -332,9 +331,11 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        D : list of dict_type objects of shape (n_samples,)
+        X_original : list of dict_type objects of shape (n_samples,)
             Feature mappings for the samples in X.
         """
+        check_is_fitted(self, "feature_names_")
+
         # COO matrix is not subscriptable
         X = check_array(X, accept_sparse=["csr", "csc"])
         n_samples = X.shape[0]
@@ -370,6 +371,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
         """
+        check_is_fitted(self, ["feature_names_", "vocabulary_"])
         return self._transform(X, fitting=False)
 
     def get_feature_names_out(self, input_features=None):
@@ -425,6 +427,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         >>> v.get_feature_names_out()
         array(['bar', 'foo'], ...)
         """
+        check_is_fitted(self, "feature_names_")
+
         if not indices:
             support = np.where(support)[0]
 
@@ -440,5 +444,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         return self
 
-    def _more_tags(self):
-        return {"X_types": ["dict"]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.dict = True
+        tags.input_tags.two_d_array = False
+        return tags

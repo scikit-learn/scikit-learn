@@ -1,22 +1,21 @@
 """Nearest Neighbor Regression."""
 
-# Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
-#          Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck
-#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
-#          Empty radius support by Andreas Bjerre-Nielsen
-#
-# License: BSD 3 clause (C) INRIA, University of Amsterdam,
-#                           University of Copenhagen
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
 import numpy as np
 
-from ..base import RegressorMixin, _fit_context
-from ..utils._param_validation import StrOptions
-from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.metrics import DistanceMetric
+from sklearn.neighbors._base import (
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+    _get_weights,
+)
+from sklearn.utils._param_validation import StrOptions
 
 
 class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
@@ -26,8 +25,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
     associated of the nearest neighbors in the training set.
 
     Read more in the :ref:`User Guide <regression>`.
-
-    .. versionadded:: 0.9
 
     Parameters
     ----------
@@ -48,6 +45,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
         Uniform weights are used by default.
 
+        See the following example for a demonstration of the impact of
+        different weighting schemes on predictions:
+        :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
@@ -66,12 +67,12 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric : str or callable, default='minkowski'
+    metric : str, DistanceMetric object or callable, default='minkowski'
         Metric to use for distance computation. Default is "minkowski", which
         results in the standard Euclidean distance when p = 2. See the
         documentation of `scipy.spatial.distance
@@ -88,6 +89,9 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         vectors as inputs and must return one value indicating the distance
         between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
+
+        If metric is a DistanceMetric object, it will be passed directly to
+        the underlying computation routines.
 
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
@@ -114,8 +118,6 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -164,6 +166,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         **NeighborsBase._parameter_constraints,
         "weights": [StrOptions({"uniform", "distance"}), callable, None],
     }
+    _parameter_constraints["metric"].append(DistanceMetric)
     _parameter_constraints.pop("radius")
 
     def __init__(
@@ -189,9 +192,11 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         )
         self.weights = weights
 
-    def _more_tags(self):
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
         # For cross-validation routines to split data correctly
-        return {"pairwise": self.metric == "precomputed"}
+        tags.input_tags.pairwise = self.metric == "precomputed"
+        return tags
 
     @_fit_context(
         # KNeighborsRegressor.metric is not validated yet
@@ -223,8 +228,10 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
-            Test samples.
+                or (n_queries, n_indexed) if metric == 'precomputed', or None
+            Test samples. If `None`, predictions for all indexed points are
+            returned; in this case, points are not considered their own
+            neighbors.
 
         Returns
         -------
@@ -248,12 +255,15 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
         if weights is None:
             y_pred = np.mean(_y[neigh_ind], axis=1)
         else:
-            y_pred = np.empty((neigh_dist.shape[0], _y.shape[1]), dtype=np.float64)
+            # Weighted sum of the neighbors' targets over the neighbor axis,
+            # for every query and output column. Equivalent to
+            #     np.sum(_y[neigh_ind] * weights[:, :, None], axis=1)
+            # but the einsum avoids materializing that full product. Here
+            # _y[neigh_ind] is (n_queries, n_neighbors, n_outputs) and weights
+            # is (n_queries, n_neighbors).
             denom = np.sum(weights, axis=1)
-
-            for j in range(_y.shape[1]):
-                num = np.sum(_y[neigh_ind, j] * weights, axis=1)
-                y_pred[:, j] = num / denom
+            num = np.einsum("ijk,ij->ik", _y[neigh_ind], weights)
+            y_pred = num / denom[:, None]
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()
@@ -268,8 +278,6 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
     associated of the nearest neighbors in the training set.
 
     Read more in the :ref:`User Guide <regression>`.
-
-    .. versionadded:: 0.9
 
     Parameters
     ----------
@@ -309,7 +317,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : int, default=2
+    p : float, default=2
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
@@ -356,8 +364,6 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -453,8 +459,10 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
-            Test samples.
+                or (n_queries, n_indexed) if metric == 'precomputed', or None
+            Test samples. If `None`, predictions for all indexed points are
+            returned; in this case, points are not considered their own
+            neighbors.
 
         Returns
         -------

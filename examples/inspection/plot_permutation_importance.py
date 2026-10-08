@@ -18,14 +18,15 @@ variable, as long as the model has the capacity to use them to overfit.
 This example shows how to use Permutation Importances as an alternative that
 can mitigate those limitations.
 
-.. topic:: References:
+.. rubric:: References
 
-   * :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-     2001. <10.1023/A:1010933404324>`
+* :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+  2001. <10.1023/A:1010933404324>`
 
 """
-# %%
-import numpy as np
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data Loading and Feature Engineering
@@ -40,12 +41,12 @@ import numpy as np
 #   values as records).
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
 #   values).
+import numpy as np
+
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 
-X, y = fetch_openml(
-    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
-)
+X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 rng = np.random.RandomState(seed=42)
 X["random_cat"] = rng.randint(3, size=X.shape[0])
 X["random_num"] = rng.randn(X.shape[0])
@@ -94,11 +95,15 @@ rf.fit(X_train, y_train)
 # %%
 # Accuracy of the Model
 # ---------------------
-# Prior to inspecting the feature importances, it is important to check that
-# the model predictive performance is high enough. Indeed there would be little
-# interest of inspecting the important features of a non-predictive model.
-#
-# Here one can observe that the train accuracy is very high (the forest model
+# Before inspecting the feature importances, it is important to check that
+# the model predictive performance is high enough. Indeed, there would be little
+# interest in inspecting the important features of a non-predictive model.
+
+print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
+print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
+
+# %%
+# Here, one can observe that the train accuracy is very high (the forest model
 # has enough capacity to completely memorize the training set) but it can still
 # generalize well enough to the test set thanks to the built-in bagging of
 # random forests.
@@ -109,12 +114,9 @@ rf.fit(X_train, y_train)
 # ``min_samples_leaf=10``) so as to limit overfitting while not introducing too
 # much underfitting.
 #
-# However let's keep our high capacity random forest model for now so as to
-# illustrate some pitfalls with feature importance on variables with many
+# However, let us keep our high capacity random forest model for now so that we can
+# illustrate some pitfalls about feature importance on variables with many
 # unique values.
-print(f"RF train accuracy: {rf.score(X_train, y_train):.3f}")
-print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
-
 
 # %%
 # Tree's Feature Importance from Mean Decrease in Impurity (MDI)
@@ -134,7 +136,7 @@ print(f"RF test accuracy: {rf.score(X_test, y_test):.3f}")
 #
 # The bias towards high cardinality features explains why the `random_num` has
 # a really large importance in comparison with `random_cat` while we would
-# expect both random features to have a null importance.
+# expect that both random features have a null importance.
 #
 # The fact that we use training set statistics explains why both the
 # `random_num` and `random_cat` features have a non-null importance.
@@ -154,13 +156,50 @@ ax.figure.tight_layout()
 # %%
 # As an alternative, the permutation importances of ``rf`` are computed on a
 # held out test set. This shows that the low cardinality categorical feature,
-# `sex` and `pclass` are the most important feature. Indeed, permuting the
-# values of these features will lead to most decrease in accuracy score of the
+# `sex` and `pclass` are the most important features. Indeed, permuting the
+# values of these features will lead to the most decrease in accuracy score of the
 # model on the test set.
 #
-# Also note that both random features have very low importances (close to 0) as
+# Also, note that both random features have very low importances (close to 0) as
 # expected.
+import matplotlib
+import matplotlib.pyplot as plt
+
 from sklearn.inspection import permutation_importance
+from sklearn.utils.fixes import parse_version
+
+# `pandas.DataFrame.plot.box` forwards its `vert` and `labels` arguments to matplotlib.
+# These arguments are deprecated and removed in version 3.11 and 3.9, respectively. We
+# therefore draw the horizontal boxplots directly with matplotlib in a way that is
+# compatible with the matplotlib versions we support. As a user you probably can write
+# simpler code by using `pandas.DataFrame.plot.box` directly with the appropriate
+# arguments.
+tick_labels_parameter_name = (
+    "tick_labels"
+    if parse_version(matplotlib.__version__) >= parse_version("3.9")
+    else "labels"
+)
+orientation_dict = (
+    {"orientation": "horizontal"}
+    if parse_version(matplotlib.__version__) >= parse_version("3.10")
+    else {"vert": False}
+)
+
+
+def plot_importances_box(importances, title):
+    fig, ax = plt.subplots()
+    ax.boxplot(
+        importances.values,
+        whis=10,
+        **orientation_dict,
+        **{tick_labels_parameter_name: importances.columns},
+    )
+    ax.set_title(title)
+    ax.axvline(x=0, color="k", linestyle="--")
+    ax.set_xlabel("Decrease in accuracy score")
+    fig.tight_layout()
+    return ax
+
 
 result = permutation_importance(
     rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
@@ -171,11 +210,7 @@ importances = pd.DataFrame(
     result.importances[sorted_importances_idx].T,
     columns=X.columns[sorted_importances_idx],
 )
-ax = importances.plot.box(vert=False, whis=10)
-ax.set_title("Permutation Importances (test set)")
-ax.axvline(x=0, color="k", linestyle="--")
-ax.set_xlabel("Decrease in accuracy score")
-ax.figure.tight_layout()
+plot_importances_box(importances, "Permutation Importances (test set)")
 
 # %%
 # It is also possible to compute the permutation importances on the training
@@ -192,11 +227,7 @@ importances = pd.DataFrame(
     result.importances[sorted_importances_idx].T,
     columns=X.columns[sorted_importances_idx],
 )
-ax = importances.plot.box(vert=False, whis=10)
-ax.set_title("Permutation Importances (train set)")
-ax.axvline(x=0, color="k", linestyle="--")
-ax.set_xlabel("Decrease in accuracy score")
-ax.figure.tight_layout()
+plot_importances_box(importances, "Permutation Importances (train set)")
 
 # %%
 # We can further retry the experiment by limiting the capacity of the trees
@@ -231,11 +262,7 @@ test_importances = pd.DataFrame(
 
 # %%
 for name, importances in zip(["train", "test"], [train_importances, test_importances]):
-    ax = importances.plot.box(vert=False, whis=10)
-    ax.set_title(f"Permutation Importances ({name} set)")
-    ax.set_xlabel("Decrease in accuracy score")
-    ax.axvline(x=0, color="k", linestyle="--")
-    ax.figure.tight_layout()
+    plot_importances_box(importances, f"Permutation Importances ({name} set)")
 
 # %%
 # Now, we can observe that on both sets, the `random_num` and `random_cat`

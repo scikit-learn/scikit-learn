@@ -10,29 +10,29 @@ The dataset page is available from UCI Machine Learning Repository
 Courtesy of Jock A. Blackard and Colorado State University.
 """
 
-# Author: Lars Buitinck
-#         Peter Prettenhofer <peter.prettenhofer@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import logging
 import os
 from gzip import GzipFile
+from numbers import Integral, Real
 from os.path import exists, join
 from tempfile import TemporaryDirectory
 
 import joblib
 import numpy as np
 
-from ..utils import Bunch, check_random_state
-from ..utils._param_validation import validate_params
-from . import get_data_home
-from ._base import (
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _convert_data_dataframe,
     _fetch_remote,
     _pkl_filepath,
     load_descr,
 )
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._param_validation import Interval, validate_params
 
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
@@ -65,12 +65,14 @@ TARGET_NAMES = ["Cover_Type"]
 
 @validate_params(
     {
-        "data_home": [str, None],
+        "data_home": [str, os.PathLike, None],
         "download_if_missing": ["boolean"],
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
         "return_X_y": ["boolean"],
         "as_frame": ["boolean"],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
     },
     prefer_skip_nested_validation=True,
 )
@@ -82,6 +84,8 @@ def fetch_covtype(
     shuffle=False,
     return_X_y=False,
     as_frame=False,
+    n_retries=3,
+    delay=1.0,
 ):
     """Load the covertype dataset (classification).
 
@@ -98,7 +102,7 @@ def fetch_covtype(
 
     Parameters
     ----------
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -118,8 +122,6 @@ def fetch_covtype(
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
-        .. versionadded:: 0.20
-
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric). The target is a pandas DataFrame or
@@ -127,7 +129,15 @@ def fetch_covtype(
         True, then (`data`, `target`) will be pandas DataFrames or Series as
         described below.
 
-        .. versionadded:: 0.24
+    n_retries : int, default=3
+        Number of retries when HTTP errors are encountered.
+
+        .. versionadded:: 1.5
+
+    delay : float, default=1.0
+        Number of seconds between retries.
+
+        .. versionadded:: 1.5
 
     Returns
     -------
@@ -155,7 +165,17 @@ def fetch_covtype(
         sample and each column representing the features. The second
         ndarray of shape (n_samples,) containing the target samples.
 
-        .. versionadded:: 0.20
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_covtype
+    >>> cov_type = fetch_covtype()
+    >>> cov_type.data.shape
+    (581012, 54)
+    >>> cov_type.target.shape
+    (581012,)
+    >>> # Let's check the 4 first feature names
+    >>> cov_type.feature_names[:4]
+    ['Elevation', 'Aspect', 'Slope', 'Horizontal_Distance_To_Hydrology']
     """
     data_home = get_data_home(data_home=data_home)
     covtype_dir = join(data_home, "covertype")
@@ -171,7 +191,9 @@ def fetch_covtype(
         # os.rename to atomically move the data files to their target location.
         with TemporaryDirectory(dir=covtype_dir) as temp_dir:
             logger.info(f"Downloading {ARCHIVE.url}")
-            archive_path = _fetch_remote(ARCHIVE, dirname=temp_dir)
+            archive_path = _fetch_remote(
+                ARCHIVE, dirname=temp_dir, n_retries=n_retries, delay=delay
+            )
             Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=",")
 
             X = Xy[:, :-1]

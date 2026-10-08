@@ -1,6 +1,5 @@
-# Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 import pytest
@@ -15,6 +14,7 @@ from sklearn.feature_extraction.image import (
     img_to_graph,
     reconstruct_from_patches_2d,
 )
+from sklearn.utils._testing import assert_allclose
 
 
 def test_img_to_graph():
@@ -224,13 +224,37 @@ def test_reconstruct_patches_perfect_color(orange_face):
     np.testing.assert_array_almost_equal(face, face_reconstructed)
 
 
-def test_patch_extractor_fit(downsampled_face_collection):
+@pytest.mark.parametrize(
+    "image_size, patch_size",
+    [
+        ((128, 256), (128, 128)),  # patch_h == image_h
+        ((256, 128), (128, 128)),  # patch_w == image_w
+        ((128, 128), (128, 128)),  # patch == image
+        ((128, 256, 3), (128, 128)),  # patch_h == image_h, with channels
+    ],
+)
+def test_reconstruct_patches_edge_patch_size(image_size, patch_size):
+    """Check that reconstruct_from_patches_2d works when a patch dimension
+    equals the corresponding image dimension.
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/10910
+    """
+    rng = np.random.RandomState(0)
+    image = rng.rand(*image_size)
+    patches = extract_patches_2d(image, patch_size)
+    reconstructed = reconstruct_from_patches_2d(patches, image_size)
+    assert_allclose(image, reconstructed)
+
+
+def test_patch_extractor_fit(downsampled_face_collection, global_random_seed):
     faces = downsampled_face_collection
-    extr = PatchExtractor(patch_size=(8, 8), max_patches=100, random_state=0)
+    extr = PatchExtractor(
+        patch_size=(8, 8), max_patches=100, random_state=global_random_seed
+    )
     assert extr == extr.fit(faces)
 
 
-def test_patch_extractor_max_patches(downsampled_face_collection):
+def test_patch_extractor_max_patches(downsampled_face_collection, global_random_seed):
     faces = downsampled_face_collection
     i_h, i_w = faces.shape[1:3]
     p_h, p_w = 8, 8
@@ -238,7 +262,7 @@ def test_patch_extractor_max_patches(downsampled_face_collection):
     max_patches = 100
     expected_n_patches = len(faces) * max_patches
     extr = PatchExtractor(
-        patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
+        patch_size=(p_h, p_w), max_patches=max_patches, random_state=global_random_seed
     )
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
@@ -248,35 +272,37 @@ def test_patch_extractor_max_patches(downsampled_face_collection):
         (i_h - p_h + 1) * (i_w - p_w + 1) * max_patches
     )
     extr = PatchExtractor(
-        patch_size=(p_h, p_w), max_patches=max_patches, random_state=0
+        patch_size=(p_h, p_w), max_patches=max_patches, random_state=global_random_seed
     )
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
-def test_patch_extractor_max_patches_default(downsampled_face_collection):
+def test_patch_extractor_max_patches_default(
+    downsampled_face_collection, global_random_seed
+):
     faces = downsampled_face_collection
-    extr = PatchExtractor(max_patches=100, random_state=0)
+    extr = PatchExtractor(max_patches=100, random_state=global_random_seed)
     patches = extr.transform(faces)
     assert patches.shape == (len(faces) * 100, 19, 25)
 
 
-def test_patch_extractor_all_patches(downsampled_face_collection):
+def test_patch_extractor_all_patches(downsampled_face_collection, global_random_seed):
     faces = downsampled_face_collection
     i_h, i_w = faces.shape[1:3]
     p_h, p_w = 8, 8
     expected_n_patches = len(faces) * (i_h - p_h + 1) * (i_w - p_w + 1)
-    extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
+    extr = PatchExtractor(patch_size=(p_h, p_w), random_state=global_random_seed)
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
 
-def test_patch_extractor_color(orange_face):
+def test_patch_extractor_color(orange_face, global_random_seed):
     faces = _make_images(orange_face)
     i_h, i_w = faces.shape[1:3]
     p_h, p_w = 8, 8
     expected_n_patches = len(faces) * (i_h - p_h + 1) * (i_w - p_w + 1)
-    extr = PatchExtractor(patch_size=(p_h, p_w), random_state=0)
+    extr = PatchExtractor(patch_size=(p_h, p_w), random_state=global_random_seed)
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w, 3)
 

@@ -128,12 +128,21 @@ def test_plot_prediction_error_ax(pyplot, regressor_fitted, class_method):
 
 
 @pytest.mark.parametrize("class_method", ["from_estimator", "from_predictions"])
-def test_prediction_error_custom_artist(pyplot, regressor_fitted, class_method):
-    """Check that we can tune the style of the lines."""
+@pytest.mark.parametrize(
+    "scatter_kwargs",
+    [None, {"color": "blue", "alpha": 0.9}, {"c": "blue", "alpha": 0.9}],
+)
+@pytest.mark.parametrize(
+    "line_kwargs", [None, {"color": "red", "linestyle": "-"}, {"c": "red", "ls": "-"}]
+)
+def test_prediction_error_custom_artist(
+    pyplot, regressor_fitted, class_method, scatter_kwargs, line_kwargs
+):
+    """Check that we can tune the style of the line and the scatter."""
     extra_params = {
         "kind": "actual_vs_predicted",
-        "scatter_kwargs": {"color": "red"},
-        "line_kwargs": {"color": "black"},
+        "scatter_kwargs": scatter_kwargs,
+        "line_kwargs": line_kwargs,
     }
     if class_method == "from_estimator":
         display = PredictionErrorDisplay.from_estimator(
@@ -145,17 +154,16 @@ def test_prediction_error_custom_artist(pyplot, regressor_fitted, class_method):
             y_true=y, y_pred=y_pred, **extra_params
         )
 
-    assert display.line_.get_color() == "black"
-    assert_allclose(display.scatter_.get_edgecolor(), [[1.0, 0.0, 0.0, 0.8]])
-
-    # create a display with the default values
-    if class_method == "from_estimator":
-        display = PredictionErrorDisplay.from_estimator(regressor_fitted, X, y)
+    if line_kwargs is not None:
+        assert display.line_.get_linestyle() == "-"
+        assert display.line_.get_color() == "red"
     else:
-        y_pred = regressor_fitted.predict(X)
-        display = PredictionErrorDisplay.from_predictions(y_true=y, y_pred=y_pred)
-    pyplot.close("all")
+        assert display.line_.get_linestyle() == "--"
+        assert display.line_.get_color() == "black"
+        assert display.line_.get_alpha() == 0.7
 
-    display.plot(**extra_params)
-    assert display.line_.get_color() == "black"
-    assert_allclose(display.scatter_.get_edgecolor(), [[1.0, 0.0, 0.0, 0.8]])
+    if scatter_kwargs is not None:
+        assert_allclose(display.scatter_.get_facecolor(), [[0.0, 0.0, 1.0, 0.9]])
+        assert_allclose(display.scatter_.get_edgecolor(), [[0.0, 0.0, 1.0, 0.9]])
+    else:
+        assert display.scatter_.get_alpha() == 0.8

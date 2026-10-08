@@ -13,11 +13,8 @@ http://www.cs.ucl.ac.uk/staff/d.barber/brml,
 Algorithm 21.1
 """
 
-# Author: Christian Osendorfer <osendorf@gmail.com>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
-
-# License: BSD3
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from math import log, sqrt
@@ -26,17 +23,17 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
-from ..utils.validation import check_is_fitted
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import _randomized_svd, fast_logdet, squared_norm
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -59,8 +56,6 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
     observed ones, using SVD based approach.
 
     Read more in the :ref:`User Guide <FA>`.
-
-    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -103,8 +98,6 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         <https://link.springer.com/article/10.1007%2FBF02289233>`_
         H. F. Kaiser, 1958.
 
-        .. versionadded:: 0.24
-
     random_state : int or RandomState instance, default=0
         Only used when ``svd_method`` equals 'randomized'. Pass an int for
         reproducible results across multiple function calls.
@@ -129,8 +122,6 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -219,7 +210,9 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         self : object
             FactorAnalysis class instance.
         """
-        X = self._validate_data(X, copy=self.copy, dtype=np.float64)
+        X = validate_data(
+            self, X, copy=self.copy, dtype=np.float64, force_writeable=True
+        )
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -265,7 +258,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             random_state = check_random_state(self.random_state)
 
             def my_svd(X):
-                _, s, Vt = randomized_svd(
+                _, s, Vt = _randomized_svd(
                     X,
                     n_components,
                     random_state=random_state,
@@ -296,8 +289,8 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         else:
             warnings.warn(
                 "FactorAnalysis did not converge."
-                + " You might want"
-                + " to increase the number of iterations.",
+                " You might want"
+                " to increase the number of iterations.",
                 ConvergenceWarning,
             )
 
@@ -327,7 +320,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         Ih = np.eye(len(self.components_))
 
         X_transformed = X - self.mean_
@@ -397,7 +390,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]

@@ -22,9 +22,8 @@ hyperparameters used in the first figure by black dots.
 
 """
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from matplotlib import pyplot as plt

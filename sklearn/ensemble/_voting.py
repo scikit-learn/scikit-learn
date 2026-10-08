@@ -6,35 +6,43 @@ This module contains:
  - A Voting regressor for regression estimators.
 """
 
-# Authors: Sebastian Raschka <se.raschka@gmail.com>,
-#          Gilles Louppe <g.louppe@gmail.com>,
-#          Ramil Nugmanov <stsouko@live.ru>
-#          Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import abstractmethod
 from numbers import Integral
 
 import numpy as np
 
-from ..base import (
+from sklearn.base import (
     ClassifierMixin,
     RegressorMixin,
     TransformerMixin,
     _fit_context,
     clone,
 )
-from ..exceptions import NotFittedError
-from ..preprocessing import LabelEncoder
-from ..utils import Bunch
-from ..utils._estimator_html_repr import _VisualBlock
-from ..utils._param_validation import StrOptions
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import _check_feature_names_in, check_is_fitted, column_or_1d
-from ._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
+from sklearn.ensemble._base import _BaseHeterogeneousEnsemble, _fit_single_estimator
+from sklearn.exceptions import NotFittedError
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import Bunch
+from sklearn.utils._param_validation import StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    _manual_routing,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
+    _check_feature_names_in,
+    check_is_fitted,
+    column_or_1d,
+)
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -68,7 +76,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         return np.asarray([est.predict(X) for est in self.estimators_]).T
 
     @abstractmethod
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, **fit_params):
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
 
@@ -78,16 +86,26 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 f" {len(self.weights)} weights, {len(self.estimators)} estimators"
             )
 
+        if _routing_enabled():
+            routed_params = process_routing(self, "fit", **fit_params)
+        else:
+            sw = (
+                {"sample_weight": fit_params["sample_weight"]}
+                if "sample_weight" in fit_params
+                else {}
+            )
+            routed_params = _manual_routing({name: {"fit": sw} for name in names})
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_single_estimator)(
                 clone(clf),
                 X,
                 y,
-                sample_weight=sample_weight,
+                fit_params=routed_params[name]["fit"],
                 message_clsname="Voting",
-                message=self._log_message(names[idx], idx + 1, len(clfs)),
+                message=self._log_message(name, idx + 1, len(clfs)),
             )
-            for idx, clf in enumerate(clfs)
+            for idx, (name, clf) in enumerate(zip(names, clfs))
             if clf != "drop"
         )
 
@@ -131,7 +149,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     @property
     def n_features_in_(self):
         """Number of features seen during :term:`fit`."""
-        # For consistency with other estimators we raise a AttributeError so
+        # For consistency with other estimators we raise an AttributeError so
         # that hasattr() fails if the estimator isn't fitted.
         try:
             check_is_fitted(self)
@@ -148,16 +166,35 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         names, estimators = zip(*self.estimators)
         return _VisualBlock("parallel", estimators, names=names)
 
-    def _more_tags(self):
-        return {"preserves_dtype": []}
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        .. versionadded:: 1.5
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self)
+
+        # `self.estimators` is a list of (name, est) tuples
+        for name, estimator in self.estimators:
+            router.add(
+                **{name: estimator},
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+        return router
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     Read more in the :ref:`User Guide <voting_classifier>`.
-
-    .. versionadded:: 0.17
 
     Parameters
     ----------
@@ -166,10 +203,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
         :meth:`set_params`.
-
-        .. versionchanged:: 0.21
-            ``'drop'`` is accepted. Using None was deprecated in 0.22 and
-            support was removed in 0.24.
 
     voting : {'hard', 'soft'}, default='hard'
         If 'hard', uses predicted class labels for majority rule voting.
@@ -188,8 +221,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionadded:: 0.18
-
     flatten_transform : bool, default=True
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
@@ -201,22 +232,22 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         If True, the time elapsed while fitting will be printed as it
         is completed.
 
-        .. versionadded:: 0.23
-
     Attributes
     ----------
     estimators_ : list of classifiers
         The collection of fitted sub-estimators as defined in ``estimators``
-        that are not 'drop'.
+        that are not 'drop'. Note that sub-estimators are always fitted on
+        integer-encoded labels (see ``le_`` attribute). When ``y`` contains
+        non-integer class labels (e.g. strings), use ``le_.inverse_transform``
+        to map predictions back to the original label space.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
-        .. versionadded:: 0.20
-
     le_ : :class:`~sklearn.preprocessing.LabelEncoder`
         Transformer used to encode the labels during fit and decode during
-        prediction.
+        prediction. Sub-estimators in ``estimators_`` are fitted on the
+        integer-encoded labels produced by this encoder.
 
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
@@ -224,8 +255,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying classifier exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -243,7 +272,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-    >>> clf1 = LogisticRegression(multi_class='multinomial', random_state=1)
+    >>> clf1 = LogisticRegression()
     >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
     >>> clf3 = GaussianNB()
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
@@ -312,7 +341,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         # estimators in VotingClassifier.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -324,29 +353,46 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
+        **fit_params : dict
+            Parameters to pass to the underlying estimators.
 
-            .. versionadded:: 0.18
+            .. versionadded:: 1.5
+
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        check_classification_targets(y)
-        if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+
+        y_type = type_of_target(y, input_name="y")
+        if y_type in ("unknown", "continuous"):
+            # raise a specific ValueError for non-classification tasks
+            raise ValueError(
+                f"Unknown label type: {y_type}. Maybe you are trying to fit a "
+                "classifier, which expects discrete classes on a "
+                "regression target with continuous values."
+            )
+        elif y_type not in ("binary", "multiclass"):
+            # raise a NotImplementedError for backward compatibility for non-supported
+            # classification tasks
             raise NotImplementedError(
-                "Multilabel and multi-output classification is not supported."
+                f"{self.__class__.__name__} only supports binary or multiclass "
+                "classification. Multilabel and multi-output classification are not "
+                "supported."
             )
 
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
 
-        return super().fit(X, transformed_y, sample_weight)
+        return super().fit(X, transformed_y, **fit_params)
 
     def predict(self, X):
         """Predict class labels for X.
@@ -384,7 +430,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     def _check_voting(self):
         if self.voting == "hard":
             raise AttributeError(
-                f"predict_proba is not available when voting={repr(self.voting)}"
+                f"predict_proba is not available when voting={self.voting!r}"
             )
         return True
 
@@ -477,6 +523,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ]
         return np.asarray(names_out, dtype=object)
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = []
+        return tags
+
 
 class VotingRegressor(RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
@@ -485,9 +536,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     regressors, each on the whole dataset. Then it averages the individual
     predictions to form a final prediction.
 
-    Read more in the :ref:`User Guide <voting_regressor>`.
+    For a detailed example, refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor.py`.
 
-    .. versionadded:: 0.21
+    Read more in the :ref:`User Guide <voting_regressor>`.
 
     Parameters
     ----------
@@ -496,10 +548,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
         :meth:`set_params`.
-
-        .. versionchanged:: 0.21
-            ``'drop'`` is accepted. Using None was deprecated in 0.22 and
-            support was removed in 0.24.
 
     weights : array-like of shape (n_regressors,), default=None
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -515,8 +563,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         If True, the time elapsed while fitting will be printed as it
         is completed.
 
-        .. versionadded:: 0.23
-
     Attributes
     ----------
     estimators_ : list of regressors
@@ -526,13 +572,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
-        .. versionadded:: 0.20
-
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying regressor exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -558,7 +600,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> y = np.array([2, 6, 12, 20, 30, 42])
     >>> er = VotingRegressor([('lr', r1), ('rf', r2), ('r3', r3)])
     >>> print(er.fit(X, y).predict(X))
-    [ 6.8...  8.4... 12.5... 17.8... 26...  34...]
+    [ 6.8  8.4 12.5 17.8 26  34]
 
     In the following example, we drop the `'lr'` estimator with
     :meth:`~VotingRegressor.set_params` and fit the remaining two estimators:
@@ -579,7 +621,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         # estimators in VotingRegressor.estimators are not validated yet
         prefer_skip_nested_validation=False
     )
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, **fit_params):
         """Fit the estimators.
 
         Parameters
@@ -591,18 +633,27 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
+        **fit_params : dict
+            Parameters to pass to the underlying estimators.
+
+            .. versionadded:: 1.5
+
+                Only available if `enable_metadata_routing=True`,
+                which can be set by using
+                ``sklearn.set_config(enable_metadata_routing=True)``.
+                See :ref:`Metadata Routing User Guide <metadata_routing>` for
+                more details.
 
         Returns
         -------
         self : object
             Fitted estimator.
         """
+        _raise_for_params(fit_params, self, "fit", allow=["sample_weight"])
+
         y = column_or_1d(y, warn=True)
-        return super().fit(X, y, sample_weight)
+
+        return super().fit(X, y, **fit_params)
 
     def predict(self, X):
         """Predict regression target for X.

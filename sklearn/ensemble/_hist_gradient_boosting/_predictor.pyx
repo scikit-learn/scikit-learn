@@ -1,16 +1,16 @@
-# Author: Nicolas Hug
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from cython.parallel import prange
-from libc.math cimport isnan
 import numpy as np
 
-from .common cimport X_DTYPE_C
-from .common cimport Y_DTYPE_C
-from .common import Y_DTYPE
-from .common cimport X_BINNED_DTYPE_C
-from .common cimport BITSET_INNER_DTYPE_C
-from .common cimport node_struct
-from ._bitset cimport in_bitset_2d_memoryview
+from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset_2d_memoryview
+from sklearn.utils._typedefs cimport intp_t, uint8_t, inlinable_isnan
+from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport node_struct
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
@@ -54,16 +54,13 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
 
         data_val = numeric_data[row, node.feature_idx]
 
-        if isnan(data_val):
+        if inlinable_isnan(data_val):
             if node.missing_go_to_left:
                 node_idx = node.left
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            if data_val < 0:
-                # data_val is not in the accepted range, so it is treated as missing value
-                node_idx = node.left if node.missing_go_to_left else node.right
-            elif in_bitset_2d_memoryview(
+            if in_bitset_2d_memoryview(
                     raw_left_cat_bitsets,
                     <X_BINNED_DTYPE_C>data_val,
                     node.bitset_idx):
@@ -88,7 +85,7 @@ def _predict_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
-        const unsigned char missing_values_bin_idx,
+        const uint8_t missing_values_bin_idx,
         int n_threads,
         Y_DTYPE_C [:] out):
 
@@ -108,7 +105,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const int row,
-        const unsigned char missing_values_bin_idx) noexcept nogil:
+        const uint8_t missing_values_bin_idx) noexcept nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
@@ -147,7 +144,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 def _compute_partial_dependence(
     node_struct [:] nodes,
     const X_DTYPE_C [:, ::1] X,
-    int [:] target_features,
+    const intp_t [:] target_features,
     Y_DTYPE_C [:] out
 ):
     """Partial dependence of the response on the ``target_features`` set.
@@ -172,7 +169,7 @@ def _compute_partial_dependence(
     X : view on 2d ndarray, shape (n_samples, n_target_features)
         The grid points on which the partial dependence should be
         evaluated.
-    target_features : view on 1d ndarray, shape (n_target_features)
+    target_features : view on 1d ndarray of intp_t, shape (n_target_features)
         The set of target features for which the partial dependence
         should be evaluated.
     out : view on 1d ndarray, shape (n_samples)
@@ -189,7 +186,7 @@ def _compute_partial_dependence(
         node_struct * current_node  # pointer to avoid copying attributes
 
         unsigned int sample_idx
-        unsigned feature_idx
+        intp_t feature_idx
         unsigned stack_size
         Y_DTYPE_C left_sample_frac
         Y_DTYPE_C current_weight

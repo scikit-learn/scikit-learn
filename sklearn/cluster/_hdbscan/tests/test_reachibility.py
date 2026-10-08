@@ -45,12 +45,12 @@ def test_mutual_reachability_graph_equivalence_dense_sparse():
     mr_graph_dense = mutual_reachability_graph(X_dense, min_samples=3)
     mr_graph_sparse = mutual_reachability_graph(X_sparse, min_samples=3)
 
-    assert_allclose(mr_graph_dense, mr_graph_sparse.A)
+    assert_allclose(mr_graph_dense, mr_graph_sparse.toarray())
 
 
 @pytest.mark.parametrize("array_type", ["array", "sparse_csr"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_mutual_reachability_graph_preserve_dtype(array_type, dtype):
+def test_mutual_reachability_graph_preserves_dtype(array_type, dtype):
     """Check that the computation preserve dtype thanks to fused types."""
     rng = np.random.RandomState(0)
     X = rng.randn(10, 10)

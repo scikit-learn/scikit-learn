@@ -46,45 +46,31 @@ Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
 following:
 
-  1. **Profile** the Python implementation to find the main bottleneck and
-     isolate it in a **dedicated module level function**. This function
-     will be reimplemented as a compiled extension module.
+1. **Profile** the Python implementation to find the main bottleneck and
+   isolate it in a **dedicated module level function**. This function
+   will be reimplemented as a compiled extension module.
 
-  2. If there exists a well maintained BSD or MIT **C/C++** implementation
-     of the same algorithm that is not too big, you can write a
-     **Cython wrapper** for it and include a copy of the source code
-     of the library in the scikit-learn source tree: this strategy is
-     used for the classes :class:`svm.LinearSVC`, :class:`svm.SVC` and
-     :class:`linear_model.LogisticRegression` (wrappers for liblinear
-     and libsvm).
+2. If there exists a well maintained BSD or MIT **C/C++** implementation
+   of the same algorithm that is not too big, you can write a
+   **Cython wrapper** for it and include a copy of the source code
+   of the library in the scikit-learn source tree: this strategy is
+   used for the classes :class:`svm.LinearSVC`, :class:`svm.SVC` and
+   :class:`linear_model.LogisticRegression` (wrappers for liblinear
+   and libsvm).
 
-  3. Otherwise, write an optimized version of your Python function using
-     **Cython** directly. This strategy is used
-     for the :class:`linear_model.ElasticNet` and
-     :class:`linear_model.SGDClassifier` classes for instance.
+3. Otherwise, write an optimized version of your Python function using
+   **Cython** directly. This strategy is used
+   for the :class:`linear_model.ElasticNet` and
+   :class:`linear_model.SGDClassifier` classes for instance.
 
-  4. **Move the Python version of the function in the tests** and use
-     it to check that the results of the compiled extension are consistent
-     with the gold standard, easy to debug Python version.
+4. **Move the Python version of the function in the tests** and use
+   it to check that the results of the compiled extension are consistent
+   with the gold standard, easy to debug Python version.
 
-  5. Once the code is optimized (not simple bottleneck spottable by
-     profiling), check whether it is possible to have **coarse grained
-     parallelism** that is amenable to **multi-processing** by using the
-     ``joblib.Parallel`` class.
-
-When using Cython, use either
-
-.. prompt:: bash $
-
-  python setup.py build_ext -i
-  python setup.py install
-
-to generate C files. You are responsible for adding .c/.cpp extensions along
-with build parameters in each submodule ``setup.py``.
-
-C/C++ generated files are embedded in distributed stable packages. The goal is
-to make it possible to install scikit-learn stable version
-on any machine with Python, Numpy, Scipy and C/C++ compiler.
+5. Once the code is optimized (not simple bottleneck spottable by
+   profiling), check whether it is possible to have **coarse grained
+   parallelism** that is amenable to **multi-processing** by using the
+   ``joblib.Parallel`` class.
 
 .. _profiling-python-code:
 
@@ -133,14 +119,14 @@ magic command::
           1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
           1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
 
-The ``tottime`` column is the most interesting: it gives to total time spent
+The ``tottime`` column is the most interesting: it gives the total time spent
 executing the code of a given function ignoring the time spent in executing the
 sub-functions. The real total time (local code + sub-function calls) is given by
 the ``cumtime`` column.
 
 Note the use of the ``-l nmf.py`` that restricts the output to lines that
-contains the "nmf.py" string. This is useful to have a quick look at the hotspot
-of the nmf Python module it-self ignoring anything else.
+contain the "nmf.py" string. This is useful to have a quick look at the hotspot
+of the nmf Python module itself ignoring anything else.
 
 Here is the beginning of the output of the same command without the ``-l nmf.py``
 filter::
@@ -164,7 +150,7 @@ filter::
   ...
 
 The above results show that the execution is largely dominated by
-dot products operations (delegated to blas). Hence there is probably
+dot product operations (delegated to blas). Hence there is probably
 no huge gain to expect by rewriting this code in Cython or C/C++: in
 this case out of the 1.7s total execution time, almost 0.7s are spent
 in compiled code we can consider optimal. By rewriting the rest of the
@@ -173,8 +159,8 @@ Python code and assuming we could achieve a 1000% boost on this portion
 we would not gain more than a 2.4x speed-up globally.
 
 Hence major improvements can only be achieved by **algorithmic
-improvements** in this particular example (e.g. trying to find operation
-that are both costly and useless to avoid computing then rather than
+improvements** in this particular example (e.g. trying to find operations
+that are both costly and useless to avoid computing them rather than
 trying to optimize their implementation).
 
 It is however still interesting to check what's happening inside the
@@ -183,34 +169,22 @@ Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
 us install ``line_profiler`` and wire it to IPython:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  pip install line_profiler
-
-- **Under IPython 0.13+**, first create a configuration profile:
-
-.. prompt:: bash $
-
-  ipython profile create
-
-Then register the line_profiler extension in
-``~/.ipython/profile_default/ipython_config.py``::
-
-    c.TerminalIPythonApp.extensions.append('line_profiler')
-    c.InteractiveShellApp.extensions.append('line_profiler')
-
-This will register the ``%lprun`` magic command in the IPython terminal application and the other frontends such as qtconsole and notebook.
+  $ pip install line_profiler
 
 Now restart IPython and let us use this new toy::
 
-  In [1]: from sklearn.datasets import load_digits
+  In [1]: %load_ext line_profiler
 
-  In [2]: from sklearn.decomposition import NMF
+  In [2]: from sklearn.datasets import load_digits
+
+  In [3]: from sklearn.decomposition import NMF
     ... : from sklearn.decomposition._nmf import _nls_subproblem
 
-  In [3]: X, _ = load_digits(return_X_y=True)
+  In [4]: X, _ = load_digits(return_X_y=True)
 
-  In [4]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
+  In [5]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
   Timer unit: 1e-06 s
 
   File: sklearn/decomposition/nmf.py
@@ -255,29 +229,63 @@ pin-point the most expensive expressions that would deserve additional care.
 Memory usage profiling
 ======================
 
-You can analyze in detail the memory usage of any Python code with the help of
-`memory_profiler <https://pypi.org/project/memory_profiler/>`_. First,
-install the latest version:
+Peak memory
+-----------
 
-.. prompt:: bash $
+Peak memory, i.e. the highest level of memory usage for a program, can be a
+bottleneck when processing large amounts of data. You can use `memray
+<https://bloomberg.github.io/memray/>`_ to measure peak memory, and discover the
+responsible code. In particular, it will tell you which Python callstacks were
+responsible for allocating the various allocations that led to peak memory.
 
-  pip install -U memory_profiler
+First, install the latest version:
 
-Then, setup the magics in a manner similar to ``line_profiler``.
+.. code-block:: console
 
-- **Under IPython 0.11+**, first create a configuration profile:
+  $ pip install -U memray
 
-.. prompt:: bash $
+Then, run a script using the relevant code under ``memray``:
 
-    ipython profile create
+.. code-block:: console
+
+  $ memray run example.py
+
+It will tell you where it wrote the resulting data::
+
+  Writing profile results into memray-example.py.123.bin
+
+You can then convert this data into an HTML report:
+
+.. code-block:: console
+
+  $ memray flamegraph memray-example.py.123.bin
+
+In this case it will generate a file called
+"memray-flamegraph-example.py.123.html" which you can then open in a browser. If
+you are not familiar with flamegraphs, see `Memray's docs
+<https://bloomberg.github.io/memray/flamegraph.html>`_ for an introduction.
 
 
-Then register the extension in
-``~/.ipython/profile_default/ipython_config.py``
-alongside the line profiler::
+Memory leaks
+------------
 
-    c.TerminalIPythonApp.extensions.append('memory_profiler')
-    c.InteractiveShellApp.extensions.append('memory_profiler')
+You can analyze the memory usage changes of any Python code with the help of
+`memory_profiler <https://pypi.org/project/memory_profiler/>`_. It works by
+measuring how much memory usage has changed between the start of a line of code
+and the end of a line of code. As a result, it is less useful for discovering
+peak memory usage: it cannot detect any memory that is allocated and then
+immediately released while the line of code is executing, even if it's a large
+amount.
+
+First, install the latest version:
+
+.. code-block:: console
+
+  $ pip install -U memory_profiler
+
+Then, setup the magics in a manner similar to ``line_profiler``::
+
+    In [1] %load_ext memory_profiler
 
 This will register the ``%memit`` and ``%mprun`` magic commands in the
 IPython terminal application and the other frontends such as qtconsole and   notebook.
@@ -287,9 +295,9 @@ functions in your program. It is very similar to ``%lprun``, discussed in the
 previous section. For example, from the ``memory_profiler`` ``examples``
 directory::
 
-    In [1] from example import my_func
+    In [2] from example import my_func
 
-    In [2] %mprun -f my_func my_func()
+    In [3] %mprun -f my_func my_func()
     Filename: example.py
 
     Line #    Mem usage  Increment   Line Contents
@@ -304,9 +312,11 @@ directory::
 Another useful magic that ``memory_profiler`` defines is ``%memit``, which is
 analogous to ``%timeit``. It can be used as follows::
 
-    In [1]: import numpy as np
+    In [1] %load_ext memory_profiler
 
-    In [2]: %memit np.zeros(1e7)
+    In [2]: import numpy as np
+
+    In [3]: %memit np.zeros(1e7)
     maximum of 3: 76.402344 MB per loop
 
 For more details, see the docstrings of the magics, using ``%memit?`` and
@@ -325,7 +335,7 @@ standalone function in a ``.pyx`` file, add static type declarations and
 then use Cython to generate a C program suitable to be compiled as a
 Python extension module.
 
-The `Cython's documentation <http://docs.cython.org/>`_ contains a tutorial and
+The `Cython's documentation <https://docs.cython.org/>`_ contains a tutorial and
 reference guide for developing such a module.
 For more information about developing in Cython for scikit-learn, see :ref:`cython`.
 
@@ -338,7 +348,7 @@ Profiling compiled extensions
 When working with compiled extensions (written in C/C++ with a wrapper or
 directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to introspect what's happening inside the
-compiled extension it-self.
+compiled extension itself.
 
 Using yep and gperftools
 ------------------------
@@ -391,15 +401,15 @@ kcachegrind
 ``yep`` can be used to create a profiling report.
 ``kcachegrind`` provides a graphical environment to visualize this report:
 
-.. prompt:: bash $
+.. code-block:: console
 
-  # Run yep to profile some python script
-  python -m yep -c my_file.py
+  $ # Run yep to profile some python script
+  $ python -m yep -c my_file.py
 
-.. prompt:: bash $
+.. code-block:: console
 
-  # open my_file.py.callgrin with kcachegrind
-  kcachegrind my_file.py.prof
+  $ # open my_file.py.callgrin with kcachegrind
+  $ kcachegrind my_file.py.prof
 
 .. note::
 

@@ -23,6 +23,8 @@ from sklearn.metrics import (
     mean_tweedie_deviance,
     median_absolute_error,
     r2_score,
+    root_mean_squared_error,
+    root_mean_squared_log_error,
 )
 from sklearn.metrics._regression import _check_reg_targets
 from sklearn.model_selection import GridSearchCV
@@ -123,12 +125,12 @@ def test_regression_metrics(n_samples=50):
     )
 
 
-def test_mean_squared_error_multioutput_raw_value_squared():
+def test_root_mean_squared_error_multioutput_raw_value():
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/16323
-    mse1 = mean_squared_error([[1]], [[10]], multioutput="raw_values", squared=True)
-    mse2 = mean_squared_error([[1]], [[10]], multioutput="raw_values", squared=False)
-    assert np.sqrt(mse1) == pytest.approx(mse2)
+    mse = mean_squared_error([[1]], [[10]], multioutput="raw_values")
+    rmse = root_mean_squared_error([[1]], [[10]], multioutput="raw_values")
+    assert np.sqrt(mse) == pytest.approx(rmse)
 
 
 def test_multioutput_regression():
@@ -138,11 +140,14 @@ def test_multioutput_regression():
     error = mean_squared_error(y_true, y_pred)
     assert_almost_equal(error, (1.0 / 3 + 2.0 / 3 + 2.0 / 3) / 4.0)
 
-    error = mean_squared_error(y_true, y_pred, squared=False)
+    error = root_mean_squared_error(y_true, y_pred)
     assert_almost_equal(error, 0.454, decimal=2)
 
     error = mean_squared_log_error(y_true, y_pred)
     assert_almost_equal(error, 0.200, decimal=2)
+
+    error = root_mean_squared_log_error(y_true, y_pred)
+    assert_almost_equal(error, 0.315, decimal=2)
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
@@ -219,7 +224,7 @@ def test_regression_metrics_at_limits():
     # Single-sample case
     # Note: for r2 and d2_tweedie see also test_regression_single_sample
     assert_almost_equal(mean_squared_error([0.0], [0.0]), 0.0)
-    assert_almost_equal(mean_squared_error([0.0], [0.0], squared=False), 0.0)
+    assert_almost_equal(root_mean_squared_error([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_squared_log_error([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_absolute_error([0.0], [0.0]), 0.0)
     assert_almost_equal(mean_pinball_loss([0.0], [0.0]), 0.0)
@@ -240,23 +245,33 @@ def test_regression_metrics_at_limits():
         assert_almost_equal(s([1, 1], [1, 1]), 1.0)
         assert_almost_equal(s([1, 1], [1, 1], force_finite=False), np.nan)
     msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([-1.0], [-1.0])
     msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, 2.0, 3.0], [1.0, -2.0, 3.0])
     msg = (
-        "Mean Squared Logarithmic Error cannot be used when targets "
-        "contain negative values."
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
     )
     with pytest.raises(ValueError, match=msg):
         mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
+    msg = (
+        "Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
+    )
+    with pytest.raises(ValueError, match=msg):
+        root_mean_squared_log_error([1.0, -2.0, 3.0], [1.0, 2.0, 3.0])
+    msg = (
+        "Root Mean Squared Logarithmic Error cannot be used when "
+        "targets contain values less than or equal to -1."
+    )
 
     # Tweedie deviance error
     power = -1.2
@@ -315,7 +330,9 @@ def test__check_reg_targets():
 
     for (type1, y1, n_out1), (type2, y2, n_out2) in product(EXAMPLES, repeat=2):
         if type1 == type2 and n_out1 == n_out2:
-            y_type, y_check1, y_check2, multioutput = _check_reg_targets(y1, y2, None)
+            y_type, y_check1, y_check2, _, _ = _check_reg_targets(
+                y1, y2, sample_weight=None, multioutput=None
+            )
             assert type1 == y_type
             if type1 == "continuous":
                 assert_array_equal(y_check1, np.reshape(y1, (-1, 1)))
@@ -325,7 +342,7 @@ def test__check_reg_targets():
                 assert_array_equal(y_check2, y2)
         else:
             with pytest.raises(ValueError):
-                _check_reg_targets(y1, y2, None)
+                _check_reg_targets(y1, y2, sample_weight=None, multioutput=None)
 
 
 def test__check_reg_targets_exception():
@@ -336,7 +353,15 @@ def test__check_reg_targets_exception():
         )
     )
     with pytest.raises(ValueError, match=expected_message):
-        _check_reg_targets([1, 2, 3], [[1], [2], [3]], invalid_multioutput)
+        _check_reg_targets([1, 2, 3], [[1], [2], [3]], None, invalid_multioutput)
+
+
+def test__check_reg_targets_single_output_error():
+    """Test that custom weights raise an error for single-output data."""
+    msg = "Custom weights are useful only in multi-output cases."
+
+    with pytest.raises(ValueError, match=msg):
+        _check_reg_targets([1, 2, 3, 4], [1.5, 2.5, 3.5, 4.5], None, multioutput=[0.5])
 
 
 def test_regression_multioutput_array():
@@ -438,7 +463,7 @@ def test_regression_custom_weights():
     y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]
 
     msew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6])
-    rmsew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6], squared=False)
+    rmsew = root_mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6])
     maew = mean_absolute_error(y_true, y_pred, multioutput=[0.4, 0.6])
     mapew = mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.4, 0.6])
     rw = r2_score(y_true, y_pred, multioutput=[0.4, 0.6])
@@ -479,42 +504,44 @@ def test_regression_single_sample(metric):
         assert np.isnan(score)
 
 
-def test_tweedie_deviance_continuity():
+def test_tweedie_deviance_continuity(global_random_seed):
     n_samples = 100
 
-    y_true = np.random.RandomState(0).rand(n_samples) + 0.1
-    y_pred = np.random.RandomState(1).rand(n_samples) + 0.1
+    rng = np.random.RandomState(global_random_seed)
+
+    y_true = rng.rand(n_samples) + 0.1
+    y_pred = rng.rand(n_samples) + 0.1
 
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=0 - 1e-10),
         mean_tweedie_deviance(y_true, y_pred, power=0),
     )
 
-    # Ws we get closer to the limit, with 1e-12 difference the absolute
+    # Ws we get closer to the limit, with 1e-12 difference the
     # tolerance to pass the below check increases. There are likely
     # numerical precision issues on the edges of different definition
     # regions.
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=1 + 1e-10),
         mean_tweedie_deviance(y_true, y_pred, power=1),
-        atol=1e-6,
+        rtol=1e-5,
     )
 
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=2 - 1e-10),
         mean_tweedie_deviance(y_true, y_pred, power=2),
-        atol=1e-6,
+        rtol=1e-5,
     )
 
     assert_allclose(
         mean_tweedie_deviance(y_true, y_pred, power=2 + 1e-10),
         mean_tweedie_deviance(y_true, y_pred, power=2),
-        atol=1e-6,
+        rtol=1e-5,
     )
 
 
-def test_mean_absolute_percentage_error():
-    random_number_generator = np.random.RandomState(42)
+def test_mean_absolute_percentage_error(global_random_seed):
+    random_number_generator = np.random.RandomState(global_random_seed)
     y_true = random_number_generator.exponential(size=100)
     y_pred = 1.2 * y_true
     assert mean_absolute_percentage_error(y_true, y_pred) == pytest.approx(0.2)
@@ -524,7 +551,9 @@ def test_mean_absolute_percentage_error():
     "distribution", ["normal", "lognormal", "exponential", "uniform"]
 )
 @pytest.mark.parametrize("target_quantile", [0.05, 0.5, 0.75])
-def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile):
+def test_mean_pinball_loss_on_constant_predictions(
+    distribution, target_quantile, global_random_seed
+):
     if not hasattr(np, "quantile"):
         pytest.skip(
             "This test requires a more recent version of numpy "
@@ -533,7 +562,7 @@ def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile
 
     # Check that the pinball loss is minimized by the empirical quantile.
     n_samples = 3000
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     data = getattr(rng, distribution)(size=n_samples)
 
     # Compute the best possible pinball loss for any constant predictor:
@@ -551,7 +580,7 @@ def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile
         # Check that the loss of this constant predictor is greater or equal
         # than the loss of using the optimal quantile (up to machine
         # precision):
-        assert pbl >= best_pbl - np.finfo(best_pbl.dtype).eps
+        assert pbl >= best_pbl - np.finfo(np.float64).eps
 
         # Check that the value of the pinball loss matches the analytical
         # formula.
@@ -567,20 +596,22 @@ def test_mean_pinball_loss_on_constant_predictions(distribution, target_quantile
         constant_pred = np.full(n_samples, fill_value=x)
         return mean_pinball_loss(data, constant_pred, alpha=target_quantile)
 
-    result = optimize.minimize(objective_func, data.mean(), method="Nelder-Mead")
+    result = optimize.minimize(objective_func, data.mean())
     assert result.success
     # The minimum is not unique with limited data, hence the large tolerance.
-    assert result.x == pytest.approx(best_pred, rel=1e-2)
+    # For the normal distribution and the 0.5 quantile, the expected result is close to
+    # 0, hence the additional use of absolute tolerance.
+    assert_allclose(result.x, best_pred, rtol=1e-1, atol=1e-3)
     assert result.fun == pytest.approx(best_pbl)
 
 
-def test_dummy_quantile_parameter_tuning():
+def test_dummy_quantile_parameter_tuning(global_random_seed):
     # Integration test to check that it is possible to use the pinball loss to
     # tune the hyperparameter of a quantile regressor. This is conceptually
     # similar to the previous test but using the scikit-learn estimator and
     # scoring API instead.
     n_samples = 1000
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.normal(size=(n_samples, 5))  # Ignored
     y = rng.exponential(size=n_samples)
 
@@ -601,9 +632,9 @@ def test_dummy_quantile_parameter_tuning():
         assert grid_search.best_params_["quantile"] == pytest.approx(alpha)
 
 
-def test_pinball_loss_relation_with_mae():
+def test_pinball_loss_relation_with_mae(global_random_seed):
     # Test that mean_pinball loss with alpha=0.5 if half of mean absolute error
-    rng = np.random.RandomState(714)
+    rng = np.random.RandomState(global_random_seed)
     n = 100
     y_true = rng.normal(size=n)
     y_pred = y_true.copy() + rng.uniform(n)

@@ -117,7 +117,7 @@ static void info(const char *fmt,...)
 	char buf[BUFSIZ];
 	va_list ap;
 	va_start(ap,fmt);
-	vsprintf(buf,fmt,ap);
+	vsnprintf(buf,sizeof buf,fmt,ap);
 	va_end(ap);
 	(*svm_print_string)(buf);
 }
@@ -527,7 +527,10 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			return 0;  // Unreachable
 	}
 }
-// An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
+// An SMO algorithm based on:
+// R.-E. Fan, P.-H. Chen, and C.-J. Lin. Working set selection using second
+// order information for training support vector machines. Journal of Machine
+// Learning Research 6(2005), p. 1889--1918.
 // Solves:
 //
 //	min 0.5(\alpha^T Q \alpha) + p^T \alpha
@@ -3137,7 +3140,8 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	if(svm_type == C_SVC ||
 	   svm_type == EPSILON_SVR ||
 	   svm_type == NU_SVR ||
-	   svm_type == ONE_CLASS)
+	   svm_type == ONE_CLASS ||
+	   svm_type == NU_SVC)
 	{
 		PREFIX(problem) newprob;
 		// filter samples with negative and null weights

@@ -1,19 +1,18 @@
 """Solvers for Ridge and LogisticRegression using SAG algorithm"""
 
-# Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 
 import numpy as np
 
-from ..exceptions import ConvergenceWarning
-from ..utils import check_array
-from ..utils.extmath import row_norms
-from ..utils.validation import _check_sample_weight
-from ._base import make_dataset
-from ._sag_fast import sag32, sag64
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import make_dataset
+from sklearn.linear_model._sag_fast import sag32, sag64
+from sklearn.utils import check_array
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import _check_sample_weight
 
 
 def get_auto_step_size(
@@ -119,8 +118,6 @@ def sag_solver(
     The regularizer is a penalty added to the loss function that shrinks model
     parameters towards the zero vector using the squared euclidean norm L2.
 
-    .. versionadded:: 0.17
-
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -128,7 +125,7 @@ def sag_solver(
 
     y : ndarray of shape (n_samples,)
         Target values. With loss='multinomial', y must be label encoded
-        (see preprocessing.LabelEncoder).
+        (see preprocessing.LabelEncoder). For loss='log' it must be in [0, 1].
 
     sample_weight : array-like of shape (n_samples,), default=None
         Weights applied to individual samples (1. for unweighted).
@@ -139,9 +136,6 @@ def sag_solver(
         -'squared' is the squared loss, as used in Ridge.
         -'multinomial' is the multinomial logistic loss, as used in
          LogisticRegression.
-
-        .. versionadded:: 0.18
-           *loss='multinomial'*
 
     alpha : float, default=1.
         L2 regularization term in the objective function
@@ -220,10 +214,9 @@ def sag_solver(
 
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
-    >>> clf = linear_model.LogisticRegression(
-    ...     solver='sag', multi_class='multinomial')
+    >>> clf = linear_model.LogisticRegression(solver='sag')
     >>> clf.fit(X, y)
-    LogisticRegression(multi_class='multinomial', solver='sag')
+    LogisticRegression(solver='sag')
 
     References
     ----------

@@ -1,0 +1,6 @@
+- :class:`linear_model.ElasticNetCV`, :class:`linear_model.LassoCV` and
+  :class:`linear_model.MultiTaskElasticNetCV` as well as :func:`enet_path` and
+  :func:`lasso_path` are now faster. The (relative) speed-up is larger for lower
+  tolerance (larger values of `tol`) and achieved by avoiding to re-calculate the
+  residuals and the column norms of `X` for each penalty `alpha` along the path.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

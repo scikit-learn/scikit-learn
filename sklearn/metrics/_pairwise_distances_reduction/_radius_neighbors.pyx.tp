@@ -4,33 +4,29 @@ import warnings
 
 from libcpp.memory cimport shared_ptr, make_shared
 from libcpp.vector cimport vector
+from libcpp.algorithm cimport move
 from cython cimport final
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
 
-from ...utils._sorting cimport simultaneous_sort
-from ...utils._typedefs cimport intp_t, float64_t
-from ...utils._vector_sentinel cimport vector_to_nd_array
+from sklearn.utils._sorting cimport simultaneous_sort
+from sklearn.utils._typedefs cimport intp_t, float64_t
+from sklearn.utils._vector_sentinel cimport vector_to_nd_array
 
 from numbers import Real
 from scipy.sparse import issparse
-from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
-from ...utils.fixes import threadpool_limits
+from sklearn.utils import check_array, check_scalar
+from sklearn.utils.fixes import _in_unstable_openblas_configuration
+from sklearn.utils.parallel import _get_threadpool_controller
 
 cnp.import_array()
-
-# TODO: change for `libcpp.algorithm.move` once Cython 3 is used
-# Introduction in Cython:
-# https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L47 #noqa
-cdef extern from "<algorithm>" namespace "std" nogil:
-    OutputIt move[InputIt, OutputIt](InputIt first, InputIt last, OutputIt d_first) except + #noqa
 
 ######################
 
 cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
     shared_ptr[vector_vector_double_intp_t] vecs
 ):
-    """Coerce a std::vector of std::vector to a ndarray of ndarray."""
+    """Coerce a std::vector of std::vector to an ndarray of ndarray."""
     cdef:
         intp_t n = deref(vecs).size()
         cnp.ndarray[object, ndim=1] nd_arrays_of_nd_arrays = np.empty(n, dtype=np.ndarray)
@@ -43,14 +39,14 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 #####################
 {{for name_suffix in ['64', '32']}}
 
-from ._base cimport (
+from sklearn.metrics._pairwise_distances_reduction._base cimport (
     BaseDistancesReduction{{name_suffix}},
     _sqeuclidean_row_norms{{name_suffix}}
 )
 
-from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+from sklearn.metrics._pairwise_distances_reduction._datasets_pair cimport DatasetsPair{{name_suffix}}
 
-from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
+from sklearn.metrics._pairwise_distances_reduction._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
 
 cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
@@ -114,7 +110,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
 
         # Limit the number of threads in second level of nested parallelism for BLAS
         # to avoid threads over-subscription (in GEMM for instance).
-        with threadpool_limits(limits=1, user_api="blas"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             if pda.execute_in_parallel_on_Y:
                 pda._parallel_on_Y()
             else:
@@ -300,7 +296,8 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
     cdef void compute_exact_distances(self) noexcept nogil:
         """Convert rank-preserving distances to pairwise distances in parallel."""
         cdef:
-            intp_t i, j
+            intp_t i
+            vector[intp_t].size_type j
 
         for i in prange(self.n_samples_X, nogil=True, schedule='static',
                         num_threads=self.effective_n_threads):

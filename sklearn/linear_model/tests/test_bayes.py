@@ -1,7 +1,5 @@
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Fabian Pedregosa <fabian.pedregosa@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from math import log
 
@@ -12,6 +10,8 @@ from sklearn import datasets
 from sklearn.linear_model import ARDRegression, BayesianRidge, Ridge
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (
+    _convert_container,
+    assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_less,
@@ -95,6 +95,22 @@ def test_bayesian_ridge_parameter():
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
 
+@pytest.mark.parametrize("n_samples, n_features", [(10, 20), (20, 10)])
+def test_bayesian_covariance_matrix(n_samples, n_features, global_random_seed):
+    """Check the posterior covariance matrix sigma_
+
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/31093
+    """
+    X, y = datasets.make_regression(
+        n_samples, n_features, random_state=global_random_seed
+    )
+    reg = BayesianRidge(fit_intercept=False).fit(X, y)
+    covariance_matrix = np.linalg.inv(
+        reg.lambda_ * np.identity(n_features) + reg.alpha_ * np.dot(X.T, X)
+    )
+    assert_allclose(reg.sigma_, covariance_matrix, rtol=1e-6)
+
+
 def test_bayesian_sample_weights():
     # Test correctness of the sample_weights method
     X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
@@ -136,12 +152,12 @@ def test_bayesian_initial_params():
     assert_almost_equal(r2, 1.0)
 
 
-def test_prediction_bayesian_ridge_ard_with_constant_input():
+def test_prediction_bayesian_ridge_ard_with_constant_input(global_random_seed):
     # Test BayesianRidge and ARDRegression predictions for edge case of
     # constant target vectors
     n_samples = 4
     n_features = 5
-    random_state = check_random_state(42)
+    random_state = check_random_state(global_random_seed)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
     y = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
@@ -152,13 +168,13 @@ def test_prediction_bayesian_ridge_ard_with_constant_input():
         assert_array_almost_equal(y_pred, expected)
 
 
-def test_std_bayesian_ridge_ard_with_constant_input():
+def test_std_bayesian_ridge_ard_with_constant_input(global_random_seed):
     # Test BayesianRidge and ARDRegression standard dev. for edge case of
     # constant target vector
     # The standard dev. should be relatively small (< 0.01 is tested here)
     n_samples = 10
     n_features = 5
-    random_state = check_random_state(42)
+    random_state = check_random_state(global_random_seed)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
     y = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
@@ -167,6 +183,21 @@ def test_std_bayesian_ridge_ard_with_constant_input():
     for clf in [BayesianRidge(), ARDRegression()]:
         _, y_std = clf.fit(X, y).predict(X, return_std=True)
         assert_array_less(y_std, expected_upper_boundary)
+
+
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_std_bayesian_ridge_noncentered(Estimator, global_random_seed):
+    # Test BayesianRidge and ARDRegression std when data is not centered.
+    # The std should be smallest at the center of the data, not at the origin.
+    # Non-regression test for issue #33757
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 4
+    X_train = np.linspace(80, 100, n_samples).reshape(-1, 1)
+    y_train = X_train.reshape(-1) + 10 * rng.standard_normal(n_samples)
+    model = Estimator(fit_intercept=True).fit(X_train, y_train)
+    X = np.array([[0.0], [90.0]])
+    _, y_std = model.predict(X, return_std=True)
+    assert y_std[1] < y_std[0]
 
 
 def test_update_of_sigma_in_ard():
@@ -209,13 +240,16 @@ def test_ard_accuracy_on_easy_problem(global_random_seed, n_samples, n_features)
     assert abs_coef_error < 1e-10
 
 
-def test_return_std():
+@pytest.mark.parametrize("constructor_name", ["array", "pandas"])
+def test_return_std(constructor_name, global_random_seed):
     # Test return_std option for both Bayesian regressors
+    rng = np.random.RandomState(global_random_seed)
+
     def f(X):
         return np.dot(X, w) + b
 
     def f_noise(X, noise_mult):
-        return f(X) + np.random.randn(X.shape[0]) * noise_mult
+        return f(X) + rng.randn(X.shape[0]) * noise_mult
 
     d = 5
     n_train = 50
@@ -224,8 +258,11 @@ def test_return_std():
     w = np.array([1.0, 0.0, 1.0, -1.0, 0.0])
     b = 1.0
 
-    X = np.random.random((n_train, d))
-    X_test = np.random.random((n_test, d))
+    X = rng.random_sample((n_train, d))
+    X = _convert_container(X, constructor_name)
+
+    X_test = rng.random_sample((n_test, d))
+    X_test = _convert_container(X_test, constructor_name)
 
     for decimal, noise_mult in enumerate([1, 0.1, 0.01]):
         y = f_noise(X, noise_mult)
@@ -292,33 +329,3 @@ def test_dtype_correctness(Estimator):
     coef_32 = model.fit(X.astype(np.float32), y).coef_
     coef_64 = model.fit(X.astype(np.float64), y).coef_
     np.testing.assert_allclose(coef_32, coef_64, rtol=1e-4)
-
-
-# TODO(1.5) remove
-@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
-def test_bayesian_ridge_ard_n_iter_deprecated(Estimator):
-    """Check the deprecation warning of `n_iter`."""
-    depr_msg = (
-        "'n_iter' was renamed to 'max_iter' in version 1.3 and will be removed in 1.5"
-    )
-    X, y = diabetes.data, diabetes.target
-    model = Estimator(n_iter=5)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        model.fit(X, y)
-
-
-# TODO(1.5) remove
-@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
-def test_bayesian_ridge_ard_max_iter_and_n_iter_both_set(Estimator):
-    """Check that a ValueError is raised when both `max_iter` and `n_iter` are set."""
-    err_msg = (
-        "Both `n_iter` and `max_iter` attributes were set. Attribute"
-        " `n_iter` was deprecated in version 1.3 and will be removed in"
-        " 1.5. To avoid this error, only set the `max_iter` attribute."
-    )
-    X, y = diabetes.data, diabetes.target
-    model = Estimator(n_iter=5, max_iter=5)
-
-    with pytest.raises(ValueError, match=err_msg):
-        model.fit(X, y)

@@ -1,3 +1,6 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import gzip
 import hashlib
 import json
@@ -7,29 +10,34 @@ import time
 from contextlib import closing
 from functools import wraps
 from os.path import join
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from warnings import warn
 
 import numpy as np
 
-from ..utils import (
-    Bunch,
-    check_pandas_support,  # noqa
+from sklearn.datasets import get_data_home
+from sklearn.datasets._arff_parser import load_arff_from_gzip_file
+from sklearn.utils import Bunch
+from sklearn.utils._optional_dependencies import check_pandas_support
+from sklearn.utils._param_validation import (
+    Integral,
+    Interval,
+    Real,
+    StrOptions,
+    validate_params,
 )
-from . import get_data_home
-from ._arff_parser import load_arff_from_gzip_file
 
 __all__ = ["fetch_openml"]
 
-_OPENML_PREFIX = "https://api.openml.org/"
-_SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
-_DATA_INFO = "api/v1/json/data/{}"
-_DATA_FEATURES = "api/v1/json/data/features/{}"
-_DATA_QUALITIES = "api/v1/json/data/qualities/{}"
-_DATA_FILE = "data/v1/download/{}"
+_SEARCH_NAME = "https://www.openml.org/api/v1/json/data/list/data_name/{}/limit/2"
+_DATA_INFO = "https://www.openml.org/api/v1/json/data/{}"
+_DATA_FEATURES = "https://www.openml.org/api/v1/json/data/features/{}"
+_DATA_QUALITIES = "https://www.openml.org/api/v1/json/data/qualities/{}"
 
 OpenmlQualitiesType = List[Dict[str, str]]
 OpenmlFeaturesType = List[Dict[str, str]]
@@ -39,22 +47,35 @@ def _get_local_path(openml_path: str, data_home: str) -> str:
     return os.path.join(data_home, "openml.org", openml_path + ".gz")
 
 
+def _openml_path_from_url(url: str) -> str:
+    """Return the OpenML cache-relative path encoded in a download/API ``url``.
+
+    This is the path component of the URL, used both to download the resource
+    and to mirror it as sub-folders of the local cache folder.
+
+    >>> from sklearn.datasets._openml import _openml_path_from_url
+    >>> _openml_path_from_url("https://www.openml.org/data/v1/download/42/iris.arff")
+    'data/v1/download/42/iris.arff'
+    """
+    return urlparse(url).path.lstrip("/")
+
+
 def _retry_with_clean_cache(
     openml_path: str,
     data_home: Optional[str],
-    no_retry_exception: Optional[Exception] = None,
+    no_retry_exception: Optional[type[Exception]] = None,
 ) -> Callable:
-    """If the first call to the decorated function fails, the local cached
-    file is removed, and the function is called again. If ``data_home`` is
-    ``None``, then the function is called once. We can provide a specific
-    exception to not retry on using `no_retry_exception` parameter.
+    """If the first call to the decorated function fails, the local cached file
+    (if any) is removed and the function is called again. The retry happens
+    whether or not ``data_home`` is set: when caching is disabled there is no
+    file to remove and the function is simply called a second time. We can
+    provide a specific exception to not retry on using `no_retry_exception`
+    parameter.
     """
 
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kw):
-            if data_home is None:
-                return f(*args, **kw)
             try:
                 return f(*args, **kw)
             except URLError:
@@ -64,10 +85,18 @@ def _retry_with_clean_cache(
                     exc, no_retry_exception
                 ):
                     raise
-                warn("Invalid cache, redownloading file", RuntimeWarning)
-                local_path = _get_local_path(openml_path, data_home)
-                if os.path.exists(local_path):
-                    os.unlink(local_path)
+                if data_home is None:
+                    warn(
+                        "Downloaded file could have been corrupted, redownloading.",
+                        RuntimeWarning,
+                    )
+                else:
+                    local_path = _get_local_path(openml_path, data_home)
+                    warn(
+                        f"Invalid cache, redownloading file to {local_path}",
+                        RuntimeWarning,
+                    )
+                    Path(local_path).unlink(missing_ok=True)
                 return f(*args, **kw)
 
         return wrapper
@@ -102,6 +131,10 @@ def _retry_on_network_error(
                     warn(
                         f"A network error occurred while downloading {url}. Retrying..."
                     )
+                    # Avoid a ResourceWarning on Python 3.14 and later.
+                    if isinstance(e, HTTPError):
+                        e.close()
+
                     retry_counter -= 1
                     time.sleep(delay)
 
@@ -111,16 +144,17 @@ def _retry_on_network_error(
 
 
 def _open_openml_url(
-    openml_path: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
+    url: str, data_home: Optional[str], n_retries: int = 3, delay: float = 1.0
 ):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
 
     Parameters
     ----------
-    openml_path : str
-        OpenML URL that will be accessed. This will be prefixes with
-        _OPENML_PREFIX.
+    url : str
+        OpenML URL that will be downloaded and cached locally. The path component
+        of the URL is used to replicate the tree structure as sub-folders of the local
+        cache folder.
 
     data_home : str
         Directory to which the files will be cached. If None, no caching will
@@ -142,7 +176,7 @@ def _open_openml_url(
     def is_gzip_encoded(_fsrc):
         return _fsrc.info().get("Content-Encoding", "") == "gzip"
 
-    req = Request(_OPENML_PREFIX + openml_path)
+    req = Request(url)
     req.add_header("Accept-encoding", "gzip")
 
     if data_home is None:
@@ -151,6 +185,7 @@ def _open_openml_url(
             return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
 
+    openml_path = _openml_path_from_url(url)
     local_path = _get_local_path(openml_path, data_home)
     dir_name, file_name = os.path.split(local_path)
     if not os.path.exists(local_path):
@@ -227,7 +262,7 @@ def _get_json_content_from_openml_api(
         An exception otherwise.
     """
 
-    @_retry_with_clean_cache(url, data_home=data_home)
+    @_retry_with_clean_cache(_openml_path_from_url(url), data_home=data_home)
     def _load_json():
         with closing(
             _open_openml_url(url, data_home, n_retries=n_retries, delay=delay)
@@ -300,12 +335,19 @@ def _get_data_info_by_name(
         )
         res = json_data["data"]["dataset"]
         if len(res) > 1:
-            warn(
+            first_version = version = res[0]["version"]
+            warning_msg = (
                 "Multiple active versions of the dataset matching the name"
-                " {name} exist. Versions may be fundamentally different, "
-                "returning version"
-                " {version}.".format(name=name, version=res[0]["version"])
+                f" {name} exist. Versions may be fundamentally different, "
+                f"returning version {first_version}. "
+                "Available versions:\n"
             )
+            for r in res:
+                warning_msg += f"- version {r['version']}, status: {r['status']}\n"
+                warning_msg += (
+                    f"  url: https://www.openml.org/search?type=data&id={r['did']}\n"
+                )
+            warn(warning_msg)
         return res[0]
 
     # an integer version has been provided
@@ -509,11 +551,15 @@ def _load_arff_response(
         actual_md5_checksum = md5.hexdigest()
 
     if actual_md5_checksum != md5_checksum:
+        location = f"downloaded from {url}"
+        if data_home is not None:
+            local_path = _get_local_path(_openml_path_from_url(url), data_home)
+            location += f" and cached at {local_path}"
         raise ValueError(
-            f"md5 checksum of local file for {url} does not match description: "
-            f"expected: {md5_checksum} but got {actual_md5_checksum}. "
-            "Downloaded file could have been modified / corrupted, clean cache "
-            "and retry..."
+            f"The md5 checksum of the file {location} does not match the expected "
+            f"checksum from the dataset description: expected {md5_checksum} but "
+            f"got {actual_md5_checksum}. The downloaded file could have been "
+            "modified or corrupted; clean the cache and retry."
         )
 
     def _open_url_and_load_gzip_file(url, data_home, n_retries, delay, arff_params):
@@ -667,7 +713,7 @@ def _download_data_to_bunch(
         no_retry_exception = ParserError
 
     X, y, frame, categories = _retry_with_clean_cache(
-        url, data_home, no_retry_exception
+        _openml_path_from_url(url), data_home, no_retry_exception
     )(_load_arff_response)(
         url,
         data_home,
@@ -736,19 +782,38 @@ def _valid_data_column_names(features_list, target_columns):
     return valid_data_column_names
 
 
+@validate_params(
+    {
+        "name": [str, None],
+        "version": [Interval(Integral, 1, None, closed="left"), StrOptions({"active"})],
+        "data_id": [Interval(Integral, 1, None, closed="left"), None],
+        "data_home": [str, os.PathLike, None],
+        "target_column": [str, list, None],
+        "cache": [bool],
+        "return_X_y": [bool],
+        "as_frame": [bool, StrOptions({"auto"})],
+        "n_retries": [Interval(Integral, 1, None, closed="left")],
+        "delay": [Interval(Real, 0.0, None, closed="neither")],
+        "parser": [
+            StrOptions({"auto", "pandas", "liac-arff"}),
+        ],
+        "read_csv_kwargs": [dict, None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def fetch_openml(
     name: Optional[str] = None,
     *,
     version: Union[str, int] = "active",
     data_id: Optional[int] = None,
-    data_home: Optional[str] = None,
+    data_home: Optional[Union[str, os.PathLike]] = None,
     target_column: Optional[Union[str, List]] = "default-target",
     cache: bool = True,
     return_X_y: bool = False,
     as_frame: Union[str, bool] = "auto",
     n_retries: int = 3,
     delay: float = 1.0,
-    parser: Optional[str] = "warn",
+    parser: str = "auto",
     read_csv_kwargs: Optional[Dict] = None,
 ):
     """Fetch dataset from openml by name or dataset id.
@@ -760,8 +825,6 @@ def fetch_openml(
     provided.
 
     Read more in the :ref:`User Guide <openml>`.
-
-    .. versionadded:: 0.20
 
     .. note:: EXPERIMENTAL
 
@@ -787,7 +850,7 @@ def fetch_openml(
         dataset. If data_id is not given, name (and potential version) are
         used to obtain a dataset.
 
-    data_home : str, default=None
+    data_home : str or path-like, default=None
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -823,10 +886,6 @@ def fetch_openml(
         where the categories are provided in the attribute `categories` of the
         `Bunch` instance. When `parser="pandas"`, no ordinal encoding is made.
 
-        .. versionchanged:: 0.24
-           The default value of `as_frame` changed from `False` to `'auto'`
-           in 0.24.
-
     n_retries : int, default=3
         Number of retries when HTTP errors or network timeouts are encountered.
         Error with status code 412 won't be retried as they represent OpenML
@@ -835,28 +894,25 @@ def fetch_openml(
     delay : float, default=1.0
         Number of seconds between retries.
 
-    parser : {"auto", "pandas", "liac-arff"}, default="liac-arff"
+    parser : {"auto", "pandas", "liac-arff"}, default="auto"
         Parser used to load the ARFF file. Two parsers are implemented:
 
         - `"pandas"`: this is the most efficient parser. However, it requires
           pandas to be installed and can only open dense datasets.
         - `"liac-arff"`: this is a pure Python ARFF parser that is much less
-          memory- and CPU-efficient. It deals with sparse ARFF dataset.
+          memory- and CPU-efficient. It deals with sparse ARFF datasets.
 
-        If `"auto"` (future default), the parser is chosen automatically such that
-        `"liac-arff"` is selected for sparse ARFF datasets, otherwise
-        `"pandas"` is selected.
+        If `"auto"`, the parser is chosen automatically such that `"liac-arff"`
+        is selected for sparse ARFF datasets, otherwise `"pandas"` is selected.
 
         .. versionadded:: 1.2
         .. versionchanged:: 1.4
-           The default value of `parser` will change from `"liac-arff"` to
-           `"auto"` in 1.4. You can set `parser="auto"` to silence this
-           warning. Therefore, an `ImportError` will be raised from 1.4 if
-           the dataset is dense and pandas is not installed.
+           The default value of `parser` changes from `"liac-arff"` to
+           `"auto"`.
 
     read_csv_kwargs : dict, default=None
         Keyword arguments passed to :func:`pandas.read_csv` when loading the data
-        from a ARFF file and using the pandas parser. It can allows to
+        from an ARFF file and using the pandas parser. It can allow to
         overwrite some default parameters.
 
         .. versionadded:: 1.3
@@ -878,8 +934,6 @@ def fetch_openml(
             The names of the dataset columns.
         target_names: list
             The names of the target columns.
-
-        .. versionadded:: 0.22
 
         categories : dict or None
             Maps each categorical feature name to a list of values, such
@@ -929,6 +983,34 @@ def fetch_openml(
     returns ordinally encoded data where the categories are provided in the
     attribute `categories` of the `Bunch` instance. Instead, `"pandas"` returns
     a NumPy array were the categories are not encoded.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import fetch_openml
+    >>> adult = fetch_openml("adult", version=2)  # doctest: +SKIP
+    >>> adult.frame.info()  # doctest: +SKIP
+    <class 'pandas.core.frame.DataFrame'>
+    RangeIndex: 48842 entries, 0 to 48841
+    Data columns (total 15 columns):
+     #   Column          Non-Null Count  Dtype
+    ---  ------          --------------  -----
+     0   age             48842 non-null  int64
+     1   workclass       46043 non-null  category
+     2   fnlwgt          48842 non-null  int64
+     3   education       48842 non-null  category
+     4   education-num   48842 non-null  int64
+     5   marital-status  48842 non-null  category
+     6   occupation      46033 non-null  category
+     7   relationship    48842 non-null  category
+     8   race            48842 non-null  category
+     9   sex             48842 non-null  category
+     10  capital-gain    48842 non-null  int64
+     11  capital-loss    48842 non-null  int64
+     12  hours-per-week  48842 non-null  int64
+     13  native-country  47985 non-null  category
+     14  class           48842 non-null  category
+    dtypes: category(9), int64(6)
+    memory usage: 2.7 MB
     """
     if cache is False:
         # no caching will be applied
@@ -988,34 +1070,6 @@ def fetch_openml(
             "unusable. Warning: {}".format(data_description["warning"])
         )
 
-    # TODO(1.4): remove "warn" from the valid parser
-    valid_parsers = ("auto", "pandas", "liac-arff", "warn")
-    if parser not in valid_parsers:
-        raise ValueError(
-            f"`parser` must be one of {', '.join(repr(p) for p in valid_parsers)}. Got"
-            f" {parser!r} instead."
-        )
-
-    if parser == "warn":
-        # TODO(1.4): remove this warning
-        parser = "liac-arff"
-        warn(
-            (
-                "The default value of `parser` will change from `'liac-arff'` to"
-                " `'auto'` in 1.4. You can set `parser='auto'` to silence this warning."
-                " Therefore, an `ImportError` will be raised from 1.4 if the dataset is"
-                " dense and pandas is not installed. Note that the pandas parser may"
-                " return different data types. See the Notes Section in fetch_openml's"
-                " API doc for details."
-            ),
-            FutureWarning,
-        )
-
-    if as_frame not in ("auto", True, False):
-        raise ValueError(
-            f"`as_frame` must be one of 'auto', True, or False. Got {as_frame} instead."
-        )
-
     return_sparse = data_description["format"].lower() == "sparse_arff"
     as_frame = not return_sparse if as_frame == "auto" else as_frame
     if parser == "auto":
@@ -1023,7 +1077,7 @@ def fetch_openml(
     else:
         parser_ = parser
 
-    if as_frame or parser_ == "pandas":
+    if parser_ == "pandas":
         try:
             check_pandas_support("`fetch_openml`")
         except ImportError as exc:
@@ -1033,26 +1087,12 @@ def fetch_openml(
                     "Alternatively, explicitly set `as_frame=False` and "
                     "`parser='liac-arff'`."
                 )
-                raise ImportError(err_msg) from exc
             else:
                 err_msg = (
-                    f"Using `parser={parser_!r}` requires pandas to be installed. "
-                    "Alternatively, explicitly set `parser='liac-arff'`."
+                    f"Using `parser={parser!r}` with dense data requires pandas to be "
+                    "installed. Alternatively, explicitly set `parser='liac-arff'`."
                 )
-                if parser == "auto":
-                    # TODO(1.4): In version 1.4, we will raise an error instead of
-                    # a warning.
-                    warn(
-                        (
-                            "From version 1.4, `parser='auto'` with `as_frame=False` "
-                            "will use pandas. Either install pandas or set explicitly "
-                            "`parser='liac-arff'` to preserve the current behavior."
-                        ),
-                        FutureWarning,
-                    )
-                    parser_ = "liac-arff"
-                else:
-                    raise ImportError(err_msg) from exc
+            raise ImportError(err_msg) from exc
 
     if return_sparse:
         if as_frame:
@@ -1093,14 +1133,9 @@ def fetch_openml(
         target_columns = [target_column]
     elif target_column is None:
         target_columns = []
-    elif isinstance(target_column, list):
-        target_columns = target_column
     else:
-        raise TypeError(
-            "Did not recognize type of target_column"
-            "Should be str, list or None. Got: "
-            "{}".format(type(target_column))
-        )
+        # target_column already is of type list
+        target_columns = target_column
     data_columns = _valid_data_column_names(features_list, target_columns)
 
     shape: Optional[Tuple[int, int]]
@@ -1114,7 +1149,7 @@ def fetch_openml(
         shape = None
 
     # obtain the data
-    url = _DATA_FILE.format(data_description["file_id"])
+    url = data_description["url"]
     bunch = _download_data_to_bunch(
         url,
         return_sparse,

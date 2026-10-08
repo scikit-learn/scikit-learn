@@ -82,7 +82,7 @@ def test_corrupted_file_error_message(fetch_kddcup99_fxt, tmp_path):
 
     msg = (
         "The cache for fetch_kddcup99 is invalid, please "
-        f"delete {str(kddcup99_dir)} and run the fetch_kddcup99 again"
+        f"delete {kddcup99_dir} and run the fetch_kddcup99 again"
     )
 
     with pytest.raises(OSError, match=msg):

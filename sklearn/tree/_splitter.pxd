@@ -1,37 +1,47 @@
-# Authors: Gilles Louppe <g.louppe@gmail.com>
-#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#          Brian Holt <bdholt1@gmail.com>
-#          Joel Nothman <joel.nothman@gmail.com>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#          Jacob Schreiber <jmschreiber91@gmail.com>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # See _splitter.pyx for details.
-cimport numpy as cnp
 
-from ._criterion cimport Criterion
+from sklearn.utils._typedefs cimport (
+    float32_t, float64_t, int8_t, int32_t, intp_t, uint8_t, uint32_t
+)
 
-from ._tree cimport DTYPE_t          # Type of X
-from ._tree cimport DOUBLE_t         # Type of y, sample_weight
-from ._tree cimport SIZE_t           # Type for indices and counters
-from ._tree cimport INT32_t          # Signed 32 bit integer
-from ._tree cimport UINT32_t         # Unsigned 32 bit integer
+from sklearn.tree._criterion cimport Criterion
+from sklearn.tree._tree cimport ParentInfo
+from sklearn.utils._bitset cimport BITSET_DTYPE_C
 
 cdef struct SplitRecord:
     # Data to track sample split
-    SIZE_t feature         # Which feature to split on.
-    SIZE_t pos             # Split samples array at the given position,
+    intp_t feature         # Which feature to split on.
+    intp_t pos             # Split samples array at the given position,
     #                      # i.e. count of samples below threshold for feature.
     #                      # pos is >= end if the node is a leaf.
-    double threshold       # Threshold to split at.
-    double improvement     # Impurity improvement given parent node.
-    double impurity_left   # Impurity of the left split.
-    double impurity_right  # Impurity of the right split.
-    double lower_bound     # Lower bound on value of both children for monotonicity
-    double upper_bound     # Upper bound on value of both children for monotonicity
-    unsigned char missing_go_to_left  # Controls if missing values go to the left node.
-    SIZE_t n_missing       # Number of missing values for the feature being split on
+
+    # Threshold for numerical features splits:
+    # - feature values less than or equal to the threshold go left, and values greater than the threshold go right.
+    float64_t threshold
+
+    # Threshold, or hash seed for categorical features splits:
+    # - for SPLIT_CATEGORICAL_BITSET: left_cat_bitset stores the set of
+    #   categories that go to the left child;
+    # - for SPLIT_CATEGORICAL_HASH: left_cat_bitset[0] stores the hash seed.
+    BITSET_DTYPE_C left_cat_bitset
+
+    # The kind of split:
+    # - SPLIT_NUMERIC: numerical split
+    # - SPLIT_CATEGORICAL_BITSET: categorical split using bitset
+    # - SPLIT_CATEGORICAL_HASH: categorical split using hash
+    # - SPLIT_LEAF: no split, the node is a leaf
+    int8_t split_kind
+
+    float64_t improvement     # Impurity improvement given parent node.
+    float64_t impurity_left   # Impurity of the left split.
+    float64_t impurity_right  # Impurity of the right split.
+    float64_t lower_bound     # Lower bound on value of both children for monotonicity
+    float64_t upper_bound     # Upper bound on value of both children for monotonicity
+    uint8_t missing_go_to_left  # Controls if missing values go to the left node.
+
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
@@ -41,33 +51,36 @@ cdef class Splitter:
 
     # Internal structures
     cdef public Criterion criterion      # Impurity criterion
-    cdef public SIZE_t max_features      # Number of features to test
-    cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
-    cdef public double min_weight_leaf   # Minimum weight in a leaf
+    cdef public intp_t max_features      # Number of features to test
+    cdef public intp_t min_samples_leaf  # Min samples in a leaf
+    cdef public float64_t min_weight_leaf   # Minimum weight in a leaf
 
     cdef object random_state             # Random state
-    cdef UINT32_t rand_r_state           # sklearn_rand_r random number state
+    cdef uint32_t rand_r_state           # sklearn_rand_r random number state
 
-    cdef SIZE_t[::1] samples             # Sample indices in X, y
-    cdef SIZE_t n_samples                # X.shape[0]
-    cdef double weighted_n_samples       # Weighted number of samples
-    cdef SIZE_t[::1] features            # Feature indices in X
-    cdef SIZE_t[::1] constant_features   # Constant features indices
-    cdef SIZE_t n_features               # X.shape[1]
-    cdef DTYPE_t[::1] feature_values     # temp. array holding feature values
+    cdef intp_t[::1] samples             # Sample indices in X, y
+    cdef intp_t n_samples                # X.shape[0]
+    cdef float64_t weighted_n_samples    # Weighted number of samples
+    cdef intp_t[::1] features            # Feature indices in X
+    cdef intp_t[::1] constant_features   # Constant features indices
+    cdef intp_t n_features               # X.shape[1]
+    cdef float32_t[::1] feature_values   # temp. array holding feature values
 
-    cdef SIZE_t start                    # Start position for the current node
-    cdef SIZE_t end                      # End position for the current node
+    cdef intp_t start                    # Start position for the current node
+    cdef intp_t end                      # End position for the current node
 
-    cdef const DOUBLE_t[:, ::1] y
+    cdef const float64_t[:, ::1] y
     # Monotonicity constraints for each feature.
     # The encoding is as follows:
     #   -1: monotonic decrease
     #    0: no constraint
     #   +1: monotonic increase
-    cdef const cnp.int8_t[:] monotonic_cst
+    cdef const int8_t[:] monotonic_cst
     cdef bint with_monotonic_cst
-    cdef const DOUBLE_t[:] sample_weight
+    cdef const float64_t[:] sample_weight
+
+    # Per-feature number of categories; -1 means the feature is numerical.
+    cdef const intp_t[:] n_categories
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -89,29 +102,27 @@ cdef class Splitter:
     cdef int init(
         self,
         object X,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight,
-        const unsigned char[::1] missing_values_in_feature_mask,
+        const float64_t[:, ::1] y,
+        const float64_t[:] sample_weight,
+        const uint8_t[::1] missing_values_in_feature_mask,
+        const intp_t[::1] n_categories,
     ) except -1
 
     cdef int node_reset(
         self,
-        SIZE_t start,
-        SIZE_t end,
-        double* weighted_n_node_samples
+        intp_t start,
+        intp_t end,
+        float64_t* weighted_n_node_samples
     ) except -1 nogil
 
     cdef int node_split(
         self,
-        double impurity,   # Impurity of the node
+        ParentInfo* parent,
         SplitRecord* split,
-        SIZE_t* n_constant_features,
-        double lower_bound,
-        double upper_bound,
     ) except -1 nogil
 
-    cdef void node_value(self, double* dest) noexcept nogil
+    cdef void node_value(self, float64_t* dest) noexcept nogil
 
-    cdef void clip_node_value(self, double* dest, double lower_bound, double upper_bound) noexcept nogil
+    cdef void clip_node_value(self, float64_t* dest, float64_t lower_bound, float64_t upper_bound) noexcept nogil
 
-    cdef double node_impurity(self) noexcept nogil
+    cdef float64_t node_impurity(self) noexcept nogil

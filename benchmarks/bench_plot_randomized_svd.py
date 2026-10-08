@@ -63,7 +63,8 @@ References
     A. Szlam et al. 2014
 """
 
-# Author: Giorgio Patrini
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import gc
 import os.path
@@ -187,12 +188,12 @@ def get_data(dataset_name):
         data = np.repeat(data, 10)
         row = np.random.uniform(0, small_size, sparsity)
         col = np.random.uniform(0, small_size, sparsity)
-        X = sp.sparse.csr_matrix((data, (row, col)), shape=(size, small_size))
+        X = sp.sparse.csr_array((data, (row, col)), shape=(size, small_size))
         del data
         del row
         del col
     else:
-        X = fetch_openml(dataset_name, parser="auto").data
+        X = fetch_openml(dataset_name).data
     return X
 
 

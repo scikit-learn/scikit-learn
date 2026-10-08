@@ -1,7 +1,7 @@
 """Testing for kernels for Gaussian processes."""
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from inspect import signature
 
@@ -37,6 +37,10 @@ from sklearn.utils._testing import (
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
 Y = np.random.RandomState(0).normal(0, 1, (6, 2))
+# Set shared test data as read-only to avoid unintentional in-place
+# modifications that would introduce side-effects between tests.
+X.flags.writeable = False
+Y.flags.writeable = False
 
 kernel_rbf_plus_white = RBF(length_scale=2.0) + WhiteKernel(noise_level=3.0)
 kernels = [
@@ -70,6 +74,7 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
 @pytest.mark.parametrize("kernel", kernels)
 def test_kernel_gradient(kernel):
     # Compare analytic and numeric gradient of kernels.
+    kernel = clone(kernel)  # make tests independent of one-another
     K, K_gradient = kernel(X, eval_gradient=True)
 
     assert K_gradient.shape[0] == X.shape[0]
@@ -97,6 +102,7 @@ def test_kernel_gradient(kernel):
 )
 def test_kernel_theta(kernel):
     # Check that parameter vector theta of kernel is set correctly.
+    kernel = clone(kernel)  # make tests independent of one-another
     theta = kernel.theta
     _, K_gradient = kernel(X, eval_gradient=True)
 
@@ -154,6 +160,7 @@ def test_kernel_theta(kernel):
     ],
 )
 def test_auto_vs_cross(kernel):
+    kernel = clone(kernel)  # make tests independent of one-another
     # Auto-correlation and cross-correlation should be consistent.
     K_auto = kernel(X)
     K_cross = kernel(X, X)
@@ -162,6 +169,7 @@ def test_auto_vs_cross(kernel):
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_kernel_diag(kernel):
+    kernel = clone(kernel)  # make tests independent of one-another
     # Test that diag method of kernel returns consistent results.
     K_call_diag = np.diag(kernel(X))
     K_diag = kernel.diag(X)
@@ -182,12 +190,12 @@ def test_kernel_anisotropic():
     kernel = 3.0 * RBF([0.5, 2.0])
 
     K = kernel(X)
-    X1 = np.array(X)
+    X1 = X.copy()
     X1[:, 0] *= 4
     K1 = 3.0 * RBF(2.0)(X1)
     assert_almost_equal(K, K1)
 
-    X2 = np.array(X)
+    X2 = X.copy()
     X2[:, 1] /= 4
     K2 = 3.0 * RBF(0.5)(X2)
     assert_almost_equal(K, K2)
@@ -202,6 +210,7 @@ def test_kernel_anisotropic():
     "kernel", [kernel for kernel in kernels if kernel.is_stationary()]
 )
 def test_kernel_stationary(kernel):
+    kernel = clone(kernel)  # make tests independent of one-another
     # Test stationarity of kernels.
     K = kernel(X, X + 1)
     assert_almost_equal(K[0, 0], np.diag(K))
@@ -209,6 +218,7 @@ def test_kernel_stationary(kernel):
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_kernel_input_type(kernel):
+    kernel = clone(kernel)  # make tests independent of one-another
     # Test whether kernels is for vectors or structured data
     if isinstance(kernel, Exponentiation):
         assert kernel.requires_vector_input == kernel.kernel.requires_vector_input
@@ -237,6 +247,7 @@ def check_hyperparameters_equal(kernel1, kernel2):
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_kernel_clone(kernel):
+    kernel = clone(kernel)  # make tests independent of one-another
     # Test that sklearn's clone works correctly on kernels.
     kernel_cloned = clone(kernel)
 
@@ -254,6 +265,7 @@ def test_kernel_clone(kernel):
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_kernel_clone_after_set_params(kernel):
+    kernel = clone(kernel)  # make tests independent of one-another
     # This test is to verify that using set_params does not
     # break clone on kernels.
     # This used to break because in kernels such as the RBF, non-trivial
@@ -312,6 +324,7 @@ def test_matern_kernel():
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_kernel_versus_pairwise(kernel):
+    kernel = clone(kernel)  # make tests independent of one-another
     # Check that GP kernels can also be used as pairwise kernels.
 
     # Test auto-kernel
@@ -330,6 +343,7 @@ def test_kernel_versus_pairwise(kernel):
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_set_get_params(kernel):
+    kernel = clone(kernel)  # make tests independent of one-another
     # Check that set_params()/get_params() is consistent with kernel.theta.
 
     # Test get_params()
@@ -372,6 +386,7 @@ def test_set_get_params(kernel):
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_repr_kernels(kernel):
+    kernel = clone(kernel)  # make tests independent of one-another
     # Smoke-test for repr in kernels.
 
     repr(kernel)

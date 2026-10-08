@@ -1,5 +1,5 @@
-# Author: Lars Buitinck
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from itertools import chain
 from numbers import Integral
@@ -7,9 +7,10 @@ from numbers import Integral
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._param_validation import Interval, StrOptions
-from ._hashing_fast import transform as _hashing_transform
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.feature_extraction._hashing_fast import transform as _hashing_transform
+from sklearn.utils import _align_api_if_sparse, metadata_routing
+from sklearn.utils._param_validation import Interval, StrOptions
 
 
 def _iteritems(d):
@@ -34,9 +35,10 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     where memory is tight, e.g. when running prediction code on embedded
     devices.
 
-    Read more in the :ref:`User Guide <feature_hashing>`.
+    For an efficiency comparison of the different feature extractors, see
+    :ref:`sphx_glr_auto_examples_text_plot_hashing_vs_dict_vectorizer.py`.
 
-    .. versionadded:: 0.13
+    Read more in the :ref:`User Guide <feature_hashing>`.
 
     Parameters
     ----------
@@ -62,10 +64,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
-
-        .. versionchanged:: 0.19
-            ``alternate_sign`` replaces the now deprecated ``non_negative``
-            parameter.
 
     See Also
     --------
@@ -100,6 +98,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
            [ 0.,  0.,  0., -1.,  0., -1.,  0.,  0.],
            [ 0., -1.,  0.,  0.,  0.,  0.,  0.,  1.]])
     """
+
+    # raw_X should have been called X
+    __metadata_request__transform = {"raw_X": metadata_routing.UNUSED}
 
     _parameter_constraints: dict = {
         "n_features": [Interval(Integral, 1, np.iinfo(np.int32).max, closed="both")],
@@ -181,14 +182,21 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
 
-        X = sp.csr_matrix(
+        X = sp.csr_array(
             (values, indices, indptr),
             dtype=self.dtype,
             shape=(n_samples, self.n_features),
         )
         X.sum_duplicates()  # also sorts the indices
 
-        return X
+        return _align_api_if_sparse(X)
 
-    def _more_tags(self):
-        return {"X_types": [self.input_type]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.two_d_array = False
+        if self.input_type == "string":
+            tags.input_tags.string = True
+        elif self.input_type == "dict":
+            tags.input_tags.dict = True
+        tags.requires_fit = False
+        return tags

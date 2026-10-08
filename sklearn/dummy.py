@@ -1,7 +1,7 @@
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-#         Arnaud Joly <a.joly@ulg.ac.be>
-#         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
-# License: BSD 3 clause
+"""Dummy estimators that implement simple rules of thumb."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
 from numbers import Integral, Real
@@ -9,24 +9,25 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MultiOutputMixin,
     RegressorMixin,
     _fit_context,
 )
-from .utils import check_random_state
-from .utils._param_validation import Interval, StrOptions
-from .utils.multiclass import class_distribution
-from .utils.random import _random_choice_csc
-from .utils.stats import _weighted_percentile
-from .utils.validation import (
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import class_distribution
+from sklearn.utils.random import _random_choice_csc
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_array,
     check_consistent_length,
     check_is_fitted,
+    validate_data,
 )
 
 
@@ -50,8 +51,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     for any value of `X`.
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
-
-    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -82,10 +81,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
           the user. This is useful for metrics that evaluate a non-majority
           class.
 
-          .. versionchanged:: 0.24
-             The default value of `strategy` has changed to "prior" in version
-             0.24.
-
     random_state : int, RandomState instance or None, default=None
         Controls the randomness to generate the predictions when
         ``strategy='stratified'`` or ``strategy='uniform'``.
@@ -109,6 +104,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     class_prior_ : ndarray of shape (n_classes,) or list of such arrays
         Frequency of each class observed in `y`. For multioutput classification
         problems, this is computed independently for each output.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X` has
+        feature names that are all strings.
 
     n_outputs_ : int
         Number of outputs.
@@ -170,6 +172,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        validate_data(self, X, skip_check_array=True)
+
         self._strategy = self.strategy
 
         if self._strategy == "uniform" and sp.issparse(y):
@@ -227,7 +231,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                         "The constant target value must be present in "
                         "the training data. You provided constant={}. "
                         "Possible values are: {}.".format(
-                            self.constant, list(self.classes_[k])
+                            self.constant, self.classes_[k].tolist()
                         )
                     )
                     raise ValueError(err_msg)
@@ -411,15 +415,12 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         else:
             return [np.log(p) for p in proba]
 
-    def _more_tags(self):
-        return {
-            "poor_score": True,
-            "no_validation": True,
-            "_xfail_checks": {
-                "check_methods_subset_invariance": "fails for the predict method",
-                "check_methods_sample_order_invariance": "fails for the predict method",
-            },
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.classifier_tags.poor_score = True
+        tags.no_validation = True
+        return tags
 
     def score(self, X, y, sample_weight=None):
         """Return the mean accuracy on the given test data and labels.
@@ -459,8 +460,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
-    .. versionadded:: 0.13
-
     Parameters
     ----------
     strategy : {"mean", "median", "quantile", "constant"}, default="mean"
@@ -487,6 +486,13 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     constant_ : ndarray of shape (1, n_outputs)
         Mean or median or quantile of the training targets or constant value
         given by the user.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X` has
+        feature names that are all strings.
 
     n_outputs_ : int
         Number of outputs.
@@ -527,7 +533,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
-        """Fit the random regressor.
+        """Fit the baseline regressor.
 
         Parameters
         ----------
@@ -545,6 +551,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        validate_data(self, X, skip_check_array=True)
+
         y = check_array(y, ensure_2d=False, input_name="y")
         if len(y) == 0:
             raise ValueError("y must not be empty.")
@@ -565,10 +573,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             if sample_weight is None:
                 self.constant_ = np.median(y, axis=0)
             else:
-                self.constant_ = [
-                    _weighted_percentile(y[:, k], sample_weight, percentile=50.0)
-                    for k in range(self.n_outputs_)
-                ]
+                self.constant_ = _weighted_percentile(
+                    y, sample_weight, percentile_rank=50.0
+                )
 
         elif self.strategy == "quantile":
             if self.quantile is None:
@@ -576,14 +583,13 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     "When using `strategy='quantile', you have to specify the desired "
                     "quantile in the range [0, 1]."
                 )
-            percentile = self.quantile * 100.0
+            percentile_rank = self.quantile * 100.0
             if sample_weight is None:
-                self.constant_ = np.percentile(y, axis=0, q=percentile)
+                self.constant_ = np.percentile(y, axis=0, q=percentile_rank)
             else:
-                self.constant_ = [
-                    _weighted_percentile(y[:, k], sample_weight, percentile=percentile)
-                    for k in range(self.n_outputs_)
-                ]
+                self.constant_ = _weighted_percentile(
+                    y, sample_weight, percentile_rank=percentile_rank
+                )
 
         elif self.strategy == "constant":
             if self.constant is None:
@@ -619,8 +625,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Whether to return the standard deviation of posterior prediction.
             All zeros in this case.
 
-            .. versionadded:: 0.20
-
         Returns
         -------
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -645,8 +649,12 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         return (y, y_std) if return_std else y
 
-    def _more_tags(self):
-        return {"poor_score": True, "no_validation": True}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.regressor_tags.poor_score = True
+        tags.no_validation = True
+        return tags
 
     def score(self, X, y, sample_weight=None):
         """Return the coefficient of determination R^2 of the prediction.

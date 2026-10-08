@@ -1,5 +1,8 @@
-"""Global configuration state and functions for management
-"""
+"""Global configuration state and functions for management"""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import os
 import threading
 from contextlib import contextmanager as contextmanager
@@ -16,7 +19,9 @@ _global_config = {
     "array_api_dispatch": False,
     "transform_output": "default",
     "enable_metadata_routing": False,
+    "enable_metadata_auto_requests": False,
     "skip_parameter_validation": False,
+    "sparse_interface": "spmatrix",
 }
 _threadlocal = threading.local()
 
@@ -30,7 +35,10 @@ def _get_threadlocal_config():
 
 
 def get_config():
-    """Retrieve current values for configuration set by :func:`set_config`.
+    """Retrieve the current scikit-learn configuration.
+
+    This reflects the effective global configurations as established by default upon
+    library import, or modified via :func:`set_config` or :func:`config_context`.
 
     Returns
     -------
@@ -41,6 +49,13 @@ def get_config():
     --------
     config_context : Context manager for global scikit-learn configuration.
     set_config : Set global scikit-learn configuration.
+
+    Examples
+    --------
+    >>> import sklearn
+    >>> config = sklearn.get_config()
+    >>> config.keys()
+    dict_keys([...])
     """
     # Return a copy of the threadlocal configuration so that users will
     # not be able to modify the configuration with the returned dict.
@@ -57,11 +72,20 @@ def set_config(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
+    enable_metadata_auto_requests=None,
     skip_parameter_validation=None,
+    sparse_interface=None,
 ):
-    """Set global scikit-learn configuration
+    """Set global scikit-learn configuration.
 
-    .. versionadded:: 0.19
+    These settings control the behaviour of scikit-learn functions during a library
+    usage session. Global configuration defaults (as described in the parameter list
+    below) take effect when scikit-learn is imported.
+
+    This function can be used to modify the global scikit-learn configuration at
+    runtime. Passing `None` as an argument (the default) leaves the corresponding
+    setting unchanged. This allows users to selectively update the global configuration
+    values without affecting the others.
 
     Parameters
     ----------
@@ -69,9 +93,7 @@ def set_config(
         If True, validation for finiteness will be skipped,
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
-        avoiding error.  Global default: False.
-
-        .. versionadded:: 0.19
+        avoiding error. Global default: False.
 
     working_memory : int, default=None
         If set, scikit-learn will attempt to limit the size of temporary arrays
@@ -79,27 +101,21 @@ def set_config(
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
 
-        .. versionadded:: 0.20
-
     print_changed_only : bool, default=None
         If True, only the parameters that were set to non-default
         values will be printed when printing an estimator. For example,
         ``print(SVC())`` while True will only print 'SVC()' while the default
         behaviour would be to print 'SVC(C=1.0, cache_size=200, ...)' with
-        all the non-changed parameters.
-
-        .. versionadded:: 0.21
+        all the non-changed parameters. Global default: True.
 
     display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
-        text. Default is 'diagram'.
-
-        .. versionadded:: 0.23
+        text. Global default: 'diagram'.
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
-        distances reduction backend. Default is 256 (suitable for most of
+        distances reduction backend. Global default: 256 (suitable for most of
         modern laptops' caches and architectures).
 
         Intended for easier benchmarking and testing of scikit-learn internals.
@@ -120,7 +136,7 @@ def set_config(
 
     array_api_dispatch : bool, default=None
         Use Array API dispatching when inputs follow the Array API standard.
-        Default is False.
+        Global default: False.
 
         See the :ref:`User Guide <array_api>` for more details.
 
@@ -129,14 +145,20 @@ def set_config(
     transform_output : str, default=None
         Configure output of `transform` and `fit_transform`.
 
-        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-        for an example on how to use the API.
+        Refer to the :ref:`user guide <df_output_transform>` for more details
+        and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+        example on how to use the API.
 
         - `"default"`: Default output format of a transformer
         - `"pandas"`: DataFrame output
+        - `"polars"`: Polars output
         - `None`: Transform configuration is unchanged
 
+        Global default: "default".
+
         .. versionadded:: 1.2
+        .. versionadded:: 1.4
+            `"polars"` option was added.
 
     enable_metadata_routing : bool, default=None
         Enable metadata routing. By default this feature is disabled.
@@ -148,23 +170,62 @@ def set_config(
         - `False`: Metadata routing is disabled, use the old syntax.
         - `None`: Configuration is unchanged
 
+        Global default: False.
+
         .. versionadded:: 1.3
+
+    enable_metadata_auto_requests : bool, default=None
+        Configure the auto metadata request policy.
+
+        Consumer objects, i.e. estimators, splitters, and scorers, can automatically
+        request metadata for convenience. Note that these are subject to change and
+        stability guarantees applied to the rest of the scikit-learn API do not apply
+        here. If you want these to be enabled, you set the value to `True` on this
+        config.
+
+        - `False`: auto-requests are not enabled
+        - `True`: Metadata are requested per each consumer's internal policy
+        - `None`: configuration is unchanged
+
+        Global default: `False`.
+
+        Refer to the :ref:`Metadata Routing User Guide
+        <metadata_routing_auto_request_user>` for usage, and to
+        :ref:`metadata_routing_auto_request` for the developer API.
+
+        .. versionadded:: 1.10
 
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
         the fit method of estimators and for arguments passed to public helper
         functions. It can save time in some situations but can lead to low level
         crashes and exceptions with confusing error messages.
+        Global default: False.
 
         Note that for data parameters, such as `X` and `y`, only type validation is
         skipped but validation with `check_array` will continue to run.
 
         .. versionadded:: 1.3
 
+    sparse_interface : str, default="spmatrix"
+
+        The sparse interface used for every sparse object that scikit-learn produces,
+        e.g., function returns, estimator attributes, estimator properties, etc.
+
+        - `"sparray"`: Return sparse as SciPy sparse array
+        - `"spmatrix"`: Return sparse as SciPy sparse matrix
+
+        .. versionadded:: 1.9
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
     get_config : Retrieve current values of the global configuration.
+
+    Examples
+    --------
+    >>> from sklearn import set_config
+    >>> set_config(display='diagram')  # doctest: +SKIP
     """
     local_config = _get_threadlocal_config()
 
@@ -181,7 +242,7 @@ def set_config(
     if enable_cython_pairwise_dist is not None:
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
     if array_api_dispatch is not None:
-        from .utils._array_api import _check_array_api_dispatch
+        from sklearn.utils._array_api import _check_array_api_dispatch
 
         _check_array_api_dispatch(array_api_dispatch)
         local_config["array_api_dispatch"] = array_api_dispatch
@@ -189,8 +250,12 @@ def set_config(
         local_config["transform_output"] = transform_output
     if enable_metadata_routing is not None:
         local_config["enable_metadata_routing"] = enable_metadata_routing
+    if enable_metadata_auto_requests is not None:
+        local_config["enable_metadata_auto_requests"] = enable_metadata_auto_requests
     if skip_parameter_validation is not None:
         local_config["skip_parameter_validation"] = skip_parameter_validation
+    if sparse_interface is not None:
+        local_config["sparse_interface"] = sparse_interface
 
 
 @contextmanager
@@ -205,9 +270,18 @@ def config_context(
     array_api_dispatch=None,
     transform_output=None,
     enable_metadata_routing=None,
+    enable_metadata_auto_requests=None,
     skip_parameter_validation=None,
+    sparse_interface=None,
 ):
-    """Context manager for global scikit-learn configuration.
+    """Context manager to temporarily change the global scikit-learn configuration.
+
+    This context manager can be used to apply scikit-learn configuration changes within
+    the scope of the with statement. Once the context exits, the global configuration is
+    restored again.
+
+    The default global configurations (which take effect when scikit-learn is imported)
+    are defined below in the parameter list.
 
     Parameters
     ----------
@@ -215,38 +289,33 @@ def config_context(
         If True, validation for finiteness will be skipped,
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
-        avoiding error. If None, the existing value won't change.
-        The default value is False.
+        avoiding error. If None, the existing configuration won't change.
+        Global default: False.
 
     working_memory : int, default=None
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
-        performed in chunks. If None, the existing value won't change.
-        The default value is 1024.
+        performed in chunks. If None, the existing configuration won't change.
+        Global default: 1024.
 
     print_changed_only : bool, default=None
         If True, only the parameters that were set to non-default
         values will be printed when printing an estimator. For example,
         ``print(SVC())`` while True will only print 'SVC()', but would print
         'SVC(C=1.0, cache_size=200, ...)' with all the non-changed parameters
-        when False. If None, the existing value won't change.
-        The default value is True.
-
-        .. versionchanged:: 0.23
-           Default changed from False to True.
+        when False. If None, the existing configuration won't change.
+        Global default: True.
 
     display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
-        text. If None, the existing value won't change.
-        The default value is 'diagram'.
-
-        .. versionadded:: 0.23
+        text. If None, the existing configuration won't change.
+        Global default: 'diagram'.
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
-        distances reduction backend. Default is 256 (suitable for most of
+        distances reduction backend. Global default: 256 (suitable for most of
         modern laptops' caches and architectures).
 
         Intended for easier benchmarking and testing of scikit-learn internals.
@@ -267,7 +336,7 @@ def config_context(
 
     array_api_dispatch : bool, default=None
         Use Array API dispatching when inputs follow the Array API standard.
-        Default is False.
+        Global default: False.
 
         See the :ref:`User Guide <array_api>` for more details.
 
@@ -276,14 +345,20 @@ def config_context(
     transform_output : str, default=None
         Configure output of `transform` and `fit_transform`.
 
-        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-        for an example on how to use the API.
+        Refer to the :ref:`user guide <df_output_transform>` for more details
+        and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+        example on how to use the API.
 
         - `"default"`: Default output format of a transformer
         - `"pandas"`: DataFrame output
+        - `"polars"`: Polars output
         - `None`: Transform configuration is unchanged
 
+        Global default: "default".
+
         .. versionadded:: 1.2
+        .. versionadded:: 1.4
+            `"polars"` option was added.
 
     enable_metadata_routing : bool, default=None
         Enable metadata routing. By default this feature is disabled.
@@ -295,18 +370,52 @@ def config_context(
         - `False`: Metadata routing is disabled, use the old syntax.
         - `None`: Configuration is unchanged
 
+        Global default: False.
+
         .. versionadded:: 1.3
+
+    enable_metadata_auto_requests : bool, default=None
+        Configure the auto metadata request policy.
+
+        Consumer objects, i.e. estimators, splitters, and scorers, can automatically
+        request metadata for convenience. Note that these are subject to change and
+        stability guarantees applied to the rest of the scikit-learn API do not apply
+        here. If you want these to be enabled, you set the value to `True` on this
+        config.
+
+        - `False`: auto-requests are not enabled
+        - `True`: Metadata are requested per each consumer's internal policy
+        - `None`: configuration is unchanged
+
+        Global default: `False`.
+
+        Refer to the :ref:`Metadata Routing User Guide
+        <metadata_routing_auto_request_user>` for usage, and to
+        :ref:`metadata_routing_auto_request` for the developer API.
+
+        .. versionadded:: 1.10
 
     skip_parameter_validation : bool, default=None
         If `True`, disable the validation of the hyper-parameters' types and values in
         the fit method of estimators and for arguments passed to public helper
         functions. It can save time in some situations but can lead to low level
         crashes and exceptions with confusing error messages.
+        Global default: False.
 
         Note that for data parameters, such as `X` and `y`, only type validation is
         skipped but validation with `check_array` will continue to run.
 
         .. versionadded:: 1.3
+
+    sparse_interface : str, default="spmatrix"
+
+        The sparse interface used for every sparse object that scikit-learn produces,
+        e.g., function returns, estimator attributes, estimator properties, etc.
+
+        - `"sparray"`: Return sparse as SciPy sparse array
+        - `"spmatrix"`: Return sparse as SciPy sparse matrix
+
+        .. versionadded:: 1.8
 
     Yields
     ------
@@ -346,7 +455,9 @@ def config_context(
         array_api_dispatch=array_api_dispatch,
         transform_output=transform_output,
         enable_metadata_routing=enable_metadata_routing,
+        enable_metadata_auto_requests=enable_metadata_auto_requests,
         skip_parameter_validation=skip_parameter_validation,
+        sparse_interface=sparse_interface,
     )
 
     try:

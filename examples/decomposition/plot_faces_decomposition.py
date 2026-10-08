@@ -5,13 +5,12 @@ Faces dataset decompositions
 
 This example applies to :ref:`olivetti_faces_dataset` different unsupervised
 matrix decomposition (dimension reduction) methods from the module
-:py:mod:`sklearn.decomposition` (see the documentation chapter
+:mod:`sklearn.decomposition` (see the documentation chapter
 :ref:`decompositions`).
-
-
-- Authors: Vlad Niculae, Alexandre Gramfort
-- License: BSD 3 clause
 """
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Dataset preparation
@@ -59,7 +58,7 @@ def plot_gallery(title, images, n_col=n_col, n_row=n_row, cmap=plt.cm.gray):
         facecolor="white",
         constrained_layout=True,
     )
-    fig.set_constrained_layout_pads(w_pad=0.01, h_pad=0.02, hspace=0, wspace=0)
+    fig.get_layout_engine().set(w_pad=0.01, h_pad=0.02, hspace=0, wspace=0)
     fig.set_edgecolor("black")
     fig.suptitle(title, size=16)
     for ax, vec in zip(axs.flat, images):
@@ -146,9 +145,10 @@ plot_gallery(
 # Sparse components - MiniBatchSparsePCA
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# Mini-batch sparse PCA (`MiniBatchSparsePCA`) extracts the set of sparse
-# components that best reconstruct the data. This variant is faster but
-# less accurate than the similar :py:mod:`sklearn.decomposition.SparsePCA`.
+# Mini-batch sparse PCA (:class:`~sklearn.decomposition.MiniBatchSparsePCA`)
+# extracts the set of sparse components that best reconstruct the data. This
+# variant is faster but less accurate than the similar
+# :class:`~sklearn.decomposition.SparsePCA`.
 
 # %%
 batch_pca_estimator = decomposition.MiniBatchSparsePCA(
@@ -164,9 +164,9 @@ plot_gallery(
 # Dictionary learning
 # ^^^^^^^^^^^^^^^^^^^
 #
-# By default, :class:`MiniBatchDictionaryLearning` divides the data into
-# mini-batches and optimizes in an online manner by cycling over the
-# mini-batches for the specified number of iterations.
+# By default, :class:`~sklearn.decomposition.MiniBatchDictionaryLearning`
+# divides the data into mini-batches and optimizes in an online manner by
+# cycling over the mini-batches for the specified number of iterations.
 
 # %%
 batch_dict_estimator = decomposition.MiniBatchDictionaryLearning(
@@ -179,9 +179,11 @@ plot_gallery("Dictionary learning", batch_dict_estimator.components_[:n_componen
 # Cluster centers - MiniBatchKMeans
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# `MiniBatchKMeans` is computationally efficient and implements on-line
-# learning with a `partial_fit` method. That is why it could be beneficial
-# to enhance some time-consuming algorithms with  `MiniBatchKMeans`.
+# :class:`sklearn.cluster.MiniBatchKMeans` is computationally efficient and
+# implements on-line learning with a
+# :meth:`~sklearn.cluster.MiniBatchKMeans.partial_fit` method. That is
+# why it could be beneficial to enhance some time-consuming algorithms with
+# :class:`~sklearn.cluster.MiniBatchKMeans`.
 
 # %%
 kmeans_estimator = cluster.MiniBatchKMeans(
@@ -190,7 +192,6 @@ kmeans_estimator = cluster.MiniBatchKMeans(
     batch_size=20,
     max_iter=50,
     random_state=rng,
-    n_init="auto",
 )
 kmeans_estimator.fit(faces_centered)
 plot_gallery(
@@ -203,10 +204,10 @@ plot_gallery(
 # Factor Analysis components - FA
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# `Factor Analysis` is similar to `PCA` but has the advantage of modelling the
-# variance in every direction of the input space independently
-# (heteroscedastic noise).
-# Read more in the :ref:`User Guide <FA>`.
+# :class:`~sklearn.decomposition.FactorAnalysis` is similar to
+# :class:`~sklearn.decomposition.PCA` but has the advantage of modelling the
+# variance in every direction of the input space independently (heteroscedastic
+# noise). Read more in the :ref:`User Guide <FA>`.
 
 # %%
 fa_estimator = decomposition.FactorAnalysis(n_components=n_components, max_iter=20)
@@ -239,9 +240,10 @@ plt.show()
 # a dictionary. It is possible to constrain the dictionary and/or coding coefficients
 # to be positive to match constraints that may be present in the data.
 #
-# :class:`MiniBatchDictionaryLearning` implements a faster, but less accurate
-# version of the dictionary learning algorithm that is better suited for large
-# datasets. Read more in the :ref:`User Guide <MiniBatchDictionaryLearning>`.
+# :class:`~sklearn.decomposition.MiniBatchDictionaryLearning` implements a
+# faster, but less accurate version of the dictionary learning algorithm that
+# is better suited for large datasets. Read more in the :ref:`User Guide
+# <MiniBatchDictionaryLearning>`.
 
 # %%
 # Plot the same samples from our dataset but with another colormap.
@@ -252,11 +254,11 @@ plot_gallery("Faces from dataset", faces_centered[:n_components], cmap=plt.cm.Rd
 
 # %%
 # Similar to the previous examples, we change parameters and train
-# `MiniBatchDictionaryLearning` estimator on all images. Generally,
-# the dictionary learning and sparse encoding decompose input data
-# into the dictionary and the coding coefficients matrices.
-# :math:`X \approx UV`, where :math:`X = [x_1, . . . , x_n]`,
-# :math:`X \in \mathbb{R}^{m×n}`, dictionary :math:`U \in \mathbb{R}^{m×k}`, coding
+# :class:`~sklearn.decomposition.MiniBatchDictionaryLearning` estimator on all
+# images. Generally, the dictionary learning and sparse encoding decompose
+# input data into the dictionary and the coding coefficients matrices. :math:`X
+# \approx UV`, where :math:`X = [x_1, . . . , x_n]`, :math:`X \in
+# \mathbb{R}^{m×n}`, dictionary :math:`U \in \mathbb{R}^{m×k}`, coding
 # coefficients :math:`V \in \mathbb{R}^{k×n}`.
 #
 # Also below are the results when the dictionary and coding

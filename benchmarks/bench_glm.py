@@ -4,6 +4,7 @@ A comparison of different methods in GLM
 Data comes from a random square matrix.
 
 """
+
 from datetime import datetime
 
 import numpy as np
