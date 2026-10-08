@@ -1,0 +1,2 @@
+- ``from sklearn.model_selection import *`` no longer raises an ``ImportError``.
+  By :user:`Pranav Negi <825pranav>`.
