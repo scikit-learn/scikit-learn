@@ -244,6 +244,28 @@ def test_decision_boundary_display_classifier(
     assert disp.xx1.min() == pytest.approx(x1_min)
     assert disp.xx1.max() == pytest.approx(x1_max)
 
+    expected_title = (
+        f'{type(fitted_clf).__name__} using "{disp.response_method_used}" method'
+    )
+    assert ax.get_title() == expected_title
+
+    # custom name override to be reflected in the title
+    fig_custom, ax_custom = pyplot.subplots()
+    disp_custom = DecisionBoundaryDisplay.from_estimator(
+        fitted_clf,
+        X,
+        grid_resolution=5,
+        response_method=response_method,
+        plot_method=plot_method,
+        eps=eps,
+        name="CustomName",
+        ax=ax_custom,
+    )
+    assert (
+        ax_custom.get_title()
+        == f'CustomName using "{disp_custom.response_method_used}" method'
+    )
+
     fig2, ax2 = pyplot.subplots()
     # change plotting method for second plot
     disp.plot(plot_method="pcolormesh", ax=ax2, shading="auto")
