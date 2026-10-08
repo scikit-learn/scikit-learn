@@ -1,0 +1,4 @@
+* :class:`linear_model.RidgeClassifierCV` with `cv=None` (Leave One Out
+  cross validation) and `scoring="accuracy"` no longer always returns a
+  `best_score_` of 1.0 for binary classification targets.
+  By :user:`Virgil Chan <virchan>`.
