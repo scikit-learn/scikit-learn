@@ -6,6 +6,7 @@ from numbers import Integral
 from queue import Queue
 from threading import Thread
 
+from sklearn.callback import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import close_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_rich_support
@@ -18,7 +19,7 @@ _run_queues = {}
 _run_monitors = {}
 
 
-class ProgressBar:
+class ProgressBar(FitCallback, AutoPropagatedCallback):
     """Callback that displays progress bars for each iterative step of an estimator.
 
     Parameters
@@ -40,7 +41,7 @@ class ProgressBar:
     def __init__(self, max_propagation_depth=1):
         check_rich_support("Progressbar")
 
-        self.max_propagation_depth = max_propagation_depth
+        self._max_propagation_depth = max_propagation_depth
 
         # Handles to the main-process per-fit listeners, keyed by `root_uuid`.
         self._listener_handles = {}
@@ -65,6 +66,16 @@ class ProgressBar:
         _run_monitors[context.root_uuid] = progress_monitor
 
     def on_fit_task_begin(self, estimator, context):
+        """Method called at the beginning of each fit task of the estimator.
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
+        context : `sklearn.callback.CallbackContext` instance
+            Context of the corresponding task.
+        """
         # A new progress bar is created at the beginning of each task that is not a
         # leaf, except if it's also the root task of an estimator.
         if (
@@ -90,6 +101,16 @@ class ProgressBar:
             )
 
     def on_fit_task_end(self, estimator, context):
+        """Method called at the end of each fit task of the estimator.
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
+        context : `sklearn.callback.CallbackContext` instance
+            Context of the corresponding task.
+        """
         # The path is enough to update the progress of the task and its ancestors.
         send(
             self._listener_handles[context.root_uuid],
