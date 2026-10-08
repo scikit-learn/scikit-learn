@@ -30,6 +30,7 @@ from sklearn.utils import metadata_routing
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.fixes import _IS_32BIT, SCIPY_VERSION_BELOW_1_12
+from sklearn.utils.parallel import _is_gil_enabled, parallel_thread_map
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     check_array,
@@ -716,6 +717,15 @@ class HashingVectorizer(
     dtype : type, default=np.float64
         Type of the matrix returned by fit_transform() or transform().
 
+    n_jobs : int, default=None
+        The number of parallel jobs to use for the computation.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 1.10
+
     See Also
     --------
     CountVectorizer : Convert a collection of text documents to a matrix of
@@ -762,6 +772,7 @@ class HashingVectorizer(
         "norm": [StrOptions({"l1", "l2"}), None],
         "alternate_sign": ["boolean"],
         "dtype": "no_validation",  # delegate to numpy
+        "n_jobs": [Integral, None],
     }
 
     def __init__(
@@ -783,6 +794,7 @@ class HashingVectorizer(
         norm="l2",
         alternate_sign=True,
         dtype=np.float64,
+        n_jobs=None,
     ):
         self.input = input
         self.encoding = encoding
@@ -800,6 +812,7 @@ class HashingVectorizer(
         self.norm = norm
         self.alternate_sign = alternate_sign
         self.dtype = dtype
+        self.n_jobs = n_jobs
 
     @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
@@ -878,7 +891,10 @@ class HashingVectorizer(
         self._validate_ngram_range()
 
         analyzer = self.build_analyzer()
-        X = self._get_hasher().transform(analyzer(doc) for doc in X)
+        # The analyze() callable doesn't release the GIL, so there's no point
+        # in using parallelism if there's a GIL.
+        n_jobs = 1 if _is_gil_enabled() else self.n_jobs
+        X = self._get_hasher().transform(parallel_thread_map(n_jobs, analyzer, X))
         if self.binary:
             X.data.fill(1)
         if self.norm is not None:
@@ -1073,6 +1089,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     dtype : dtype, default=np.int64
         Type of the matrix returned by fit_transform() or transform().
 
+    n_jobs : int, default=None
+        The number of parallel jobs to use for the computation.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     vocabulary_ : dict
@@ -1151,6 +1176,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         "vocabulary": [Mapping, HasMethods("__iter__"), None],
         "binary": ["boolean"],
         "dtype": "no_validation",  # delegate to numpy
+        "n_jobs": [Integral, None],
     }
 
     def __init__(
@@ -1173,6 +1199,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         vocabulary=None,
         binary=False,
         dtype=np.int64,
+        n_jobs=None,
     ):
         self.input = input
         self.encoding = encoding
@@ -1191,6 +1218,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         self.vocabulary = vocabulary
         self.binary = binary
         self.dtype = dtype
+        self.n_jobs = n_jobs
 
     def _sort_features(self, X, vocabulary):
         """Sort features by name
@@ -1260,9 +1288,12 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         values = _make_int_array()
         indptr.append(0)
-        for doc in raw_documents:
+        # The analyze() callable doesn't release the GIL, so there's no point
+        # in using parallelism if there's a GIL.
+        n_jobs = 1 if _is_gil_enabled() else self.n_jobs
+        for doc in parallel_thread_map(n_jobs, analyze, raw_documents):
             feature_counter = {}
-            for feature in analyze(doc):
+            for feature in doc:
                 try:
                     feature_idx = vocabulary[feature]
                     if feature_idx not in feature_counter:
@@ -1890,6 +1921,15 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : bool, default=False
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    n_jobs : int, default=None
+        The number of parallel jobs to use for the computation.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     vocabulary_ : dict
@@ -1962,6 +2002,7 @@ class TfidfVectorizer(CountVectorizer):
         use_idf=True,
         smooth_idf=True,
         sublinear_tf=False,
+        n_jobs=None,
     ):
         super().__init__(
             input=input,
@@ -1981,6 +2022,7 @@ class TfidfVectorizer(CountVectorizer):
             vocabulary=vocabulary,
             binary=binary,
             dtype=dtype,
+            n_jobs=n_jobs,
         )
         self.norm = norm
         self.use_idf = use_idf
