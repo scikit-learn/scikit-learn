@@ -154,14 +154,34 @@ See the examples below and the docstring of
 Regression
 ==========
 
-Class :class:`MLPRegressor` implements a multi-layer perceptron (MLP) that
-trains using backpropagation with no activation function in the output layer,
-which can also be seen as using the identity function as activation function.
-Therefore, it uses the square error as the loss function, and the output is a
-set of continuous values.
-
 :class:`MLPRegressor` also supports multi-output regression, in
 which a sample can have more than one target.
+
+An :class:`MLPRegressor` can also be used as a simple autoencoder by
+using the input data as both the input and target. In this setting,
+the network learns to reconstruct its input, and a hidden layer with
+fewer neurons than the input features can provide a lower-dimensional
+representation.
+
+For example, a two-neuron hidden layer can be used to learn a
+reconstruction of four-dimensional input data::
+
+    >>> from sklearn.neural_network import MLPRegressor
+    >>> X = [[0., 0., 1., 1.],
+    ...      [1., 1., 0., 0.],
+    ...      [0., 1., 0., 1.],
+    ...      [1., 0., 1., 0.]]
+    >>> autoencoder = MLPRegressor(
+    ...     hidden_layer_sizes=(2,), activation="relu",
+    ...     solver="lbfgs", random_state=0)
+    >>> autoencoder.fit(X, X)
+    MLPRegressor(...)
+    >>> X_reconstructed = autoencoder.predict(X)
+
+The reconstruction error, such as the mean squared error between
+``X`` and ``X_reconstructed``, can also be used as a signal for
+detecting samples that differ substantially from the data used to
+train the autoencoder.
 
 Regularization
 ==============
