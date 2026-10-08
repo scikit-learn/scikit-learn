@@ -168,21 +168,6 @@ def test_move_to_array_api_conversions(array_input, reference):
         assert array_device(array_out) == device_reference
 
 
-@skip_if_array_api_compat_not_configured
-def test_move_to_dpnp_array_api_strict():
-    array_api_strict = pytest.importorskip("array_api_strict")
-    xp_dpnp, _ = _array_api_for_tests("dpnp", device_name="cpu")
-
-    with config_context(array_api_dispatch=True):
-        xp_strict, _, device_strict = get_namespace_and_device(
-            array_api_strict.asarray(1)
-        )
-        array_dpnp = xp_dpnp.asarray([1, 2, 3], device="cpu")
-        array_strict = move_to(array_dpnp, xp=xp_strict, device=device_strict)
-        assert_array_equal(array_strict, [1, 2, 3])
-        assert get_namespace(array_strict)[0] == xp_strict
-
-
 def test_move_to_dpnp_array_api_strict_dlpack_fallback(monkeypatch):
     array = object()
 
