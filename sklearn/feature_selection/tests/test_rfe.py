@@ -776,3 +776,21 @@ def test_rfe_sparse_coef(feature_importance):
 
     assert_array_equal(selector_sparse.support_, selector_dense.support_)
     assert_array_equal(selector_sparse.ranking_, selector_dense.ranking_)
+
+
+def test_rfecv_elimination_order():
+    # Check that elimination_order_ exists and has the correct length after fit.
+    X, y = make_classification(
+        n_samples=100, n_features=8, n_informative=4, n_redundant=0, random_state=0
+    )
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3)
+    rfecv.fit(X, y)
+
+    assert hasattr(rfecv, "elimination_order_")
+    n_eliminated = X.shape[1] - rfecv.n_features_
+    assert len(rfecv.elimination_order_) == n_eliminated
+    # All eliminated indices must be valid original feature indices
+    assert all(0 <= idx < X.shape[1] for idx in rfecv.elimination_order_)
+    # Eliminated features must not overlap with selected features
+    selected = set(np.where(rfecv.support_)[0])
+    assert not selected.intersection(rfecv.elimination_order_)
