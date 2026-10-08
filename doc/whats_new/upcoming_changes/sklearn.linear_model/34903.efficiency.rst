@@ -1,0 +1,4 @@
+- :class:`linear_model.LogisticRegression` with `solver="lbfgs"` no longer forces
+  the input `X` to C-order. If `X` is already Fortran-contiguous, this avoids an
+  unnecessary copy and lets the gradient computation use a better-parallelizing
+  BLAS kernel. By :user:`Arthur Lacote <cakedev0>`.
