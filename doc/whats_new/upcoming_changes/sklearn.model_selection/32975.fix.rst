@@ -1,0 +1,1 @@
+Fixed an issue in :class:`~sklearn.model_selection.HalvingRandomSearchCV` where the calculation of the number of samples was incorrect when handling small test sets.
