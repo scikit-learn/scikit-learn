@@ -1,0 +1,4 @@
+- Add test coverage for :class:`ensemble.AdaBoostClassifier` and
+  :class:`ensemble.AdaBoostRegressor` when computing ``feature_importances_``
+  with non-tree base estimators.
+  By :user:`shipitdev <shipitdev>`.
