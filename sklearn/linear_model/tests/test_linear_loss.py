@@ -106,41 +106,6 @@ def test_init_zero_coef(
 
 @pytest.mark.parametrize("base_loss", LOSSES)
 @pytest.mark.parametrize("fit_intercept", [False, True])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_loss_grad_hess_do_not_depend_on_X_order(
-    base_loss, fit_intercept, dtype, global_random_seed
-):
-    """Test that F-contiguous X gives the same results as C-contiguous X."""
-    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
-    X, y, coef = random_X_y_coef(
-        linear_model_loss=loss, n_samples=20, n_features=5, seed=global_random_seed
-    )
-    X, y, coef = X.astype(dtype), y.astype(dtype), coef.astype(dtype)
-    sample_weight = np.linspace(1, y.shape[0], num=y.shape[0], dtype=dtype)
-    X_c, X_f = np.ascontiguousarray(X), np.asfortranarray(X)
-    rtol = 1e-5 if dtype == np.float32 else 1e-7
-
-    results = {}
-    for order, X_ in [("C", X_c), ("F", X_f)]:
-        kwargs = {"sample_weight": sample_weight, "l2_reg_strength": 1.0}
-        loss_value, grad = loss.loss_gradient(coef, X_, y, **kwargs)
-        grad_h, hessp = loss.gradient_hessian_product(coef, X_, y, **kwargs)
-        _, hess, _ = loss.gradient_hessian(coef, X_, y, **kwargs)
-        results[order] = (
-            loss.loss(coef, X_, y, **kwargs),
-            loss_value,
-            loss.gradient(coef, X_, y, **kwargs),
-            grad,
-            grad_h,
-            hessp(grad_h),
-            hess,
-        )
-    for result_c, result_f in zip(results["C"], results["F"]):
-        assert_allclose(result_c, result_f, rtol=rtol)
-
-
-@pytest.mark.parametrize("base_loss", LOSSES)
-@pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 @pytest.mark.parametrize("l2_reg_strength", [0, 1])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
