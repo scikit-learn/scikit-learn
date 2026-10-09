@@ -104,7 +104,7 @@ from sklearn.naive_bayes import GaussianNB
 # classifiers but we don't do it here for the sake of keeping the example code
 # concise and fast to execute.
 lr = LogisticRegressionCV(
-    Cs=np.logspace(-6, 6, 101),
+    alphas=np.logspace(6, -6, 101),
     cv=10,
     l1_ratios=(0,),
     scoring="neg_log_loss",
@@ -193,7 +193,7 @@ plt.show()
 # setting, optimizing the log-loss can still lead to poorly calibrated models
 # because of overfitting. To mitigate this, the
 # :class:`~sklearn.linear_model.LogisticRegressionCV` class was configured to
-# tune the `C` regularization parameter to also minimize the log-loss via inner
+# tune the `alpha` regularization parameter to also minimize the log-loss via inner
 # cross-validation so as to find the best compromise for this model in the
 # small training set setting.
 #
