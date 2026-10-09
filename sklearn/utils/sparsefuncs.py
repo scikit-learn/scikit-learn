@@ -607,7 +607,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
     X : sparse matrix of shape (n_samples, n_labels)
         Input data. It should be of CSR format.
 
-    axis : {0, 1}, default=None
+    axis : {-2, -1, 0, 1}, default=None
         The axis on which the data is aggregated.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -623,7 +623,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
         axis = 1
     elif axis == -2:
         axis = 0
-    elif X.format != "csr":
+    if X.format != "csr":
         raise TypeError("Expected CSR sparse format, got {0}".format(X.format))
 
     # We rely here on the fact that np.diff(Y.indptr) for a CSR
