@@ -10,6 +10,7 @@ import warnings
 import numpy as np
 from scipy import sparse
 
+from sklearn.externals import array_api_compat
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _ravel,
@@ -151,7 +152,7 @@ class LinearModelLoss:
         if xp is None:
             xp, device = self.base_loss.xp, self.base_loss.device
         if xp is None:
-            xp = np
+            xp = array_api_compat.numpy
         if self.fit_intercept:
             n_dof = n_features + 1
         else:

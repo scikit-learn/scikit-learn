@@ -19,6 +19,7 @@ from sklearn._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.externals import array_api_compat
 from sklearn.linear_model._glm._newton_solver import (
     NewtonCDGramSolver,
     NewtonCDSolver,
@@ -329,7 +330,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         #     obj = LinearModelLoss.loss(...)
 
         loss_dtype = X.dtype if coef_as_xp else _matching_numpy_dtype(X, xp=xp)
-        xp_coef = xp if coef_as_xp else np
+        xp_coef = xp if coef_as_xp else array_api_compat.numpy
         device_coef = device if coef_as_xp else "cpu"
         if self.warm_start and hasattr(self, "coef_"):
             coef = move_to(self.coef_, xp=xp_coef, device=device_coef)
