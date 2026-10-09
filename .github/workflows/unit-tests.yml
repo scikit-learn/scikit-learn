@@ -304,12 +304,14 @@ jobs:
       - name: Update tracking issue
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
         shell: bash
+        env:
+          BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
         run: |
           set -ex
 
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
-            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$BOT_GITHUB_TOKEN" \
             "$GITHUB_WORKFLOW $JOB_NAME" \
             "$GITHUB_REPOSITORY" \
             https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
@@ -462,12 +464,14 @@ jobs:
 
       - name: Update tracking issue
         if: ${{ always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')}}
+        env:
+          BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
         run: |
           set -ex
 
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
-            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$BOT_GITHUB_TOKEN" \
             "$GITHUB_WORKFLOW $JOB_NAME" \
             "$GITHUB_REPOSITORY" \
             https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
