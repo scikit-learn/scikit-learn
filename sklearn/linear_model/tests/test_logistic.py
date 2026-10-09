@@ -290,7 +290,7 @@ def test_check_solver_option(LR):
 
     # all solvers except 'liblinear', 'newton-cd', 'newton-cd-gram' and 'saga'
     for solver in ["lbfgs", "newton-cg", "newton-cholesky", "sag"]:
-        msg = f"Solver '{solver}' supports only 'l2' or None penalties"
+        msg = f"Solver '{solver}' supports only 'l2' penalties"
         if LR == LogisticRegression:
             lr = LR(solver=solver, l1_ratio=1)
         else:
@@ -308,7 +308,7 @@ def test_check_solver_option(LR):
     for solver in ["liblinear"]:
         msg = (
             "Only solvers 'newton-cd', 'newton-cd-gram' and 'saga' support elasticnet "
-            f"penalty, got solver={solver}."
+            f"penalty.*, got solver={solver}."
         )
         if LR == LogisticRegression:
             lr = LR(solver=solver, l1_ratio=0.5)
@@ -317,10 +317,9 @@ def test_check_solver_option(LR):
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
-    # liblinear does not support penalty='none'
-    # (LogisticRegressionCV does not supports penalty='none' at all)
+    # liblinear does not support alpha=0 (penalty=None)
     if LR is LogisticRegression:
-        msg = "penalty=None is not supported for the liblinear solver"
+        msg = r"Using alpha=0 \(C=np\.inf\) is not supported for the liblinear solver"
         lr = LR(alpha=0, solver="liblinear")
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
@@ -374,22 +373,6 @@ def test_tags(estimator):
     else:
         estimator.set_params(solver="auto", l1_ratios=(1,))
     assert estimator.__sklearn_tags__().array_api_support is False
-
-
-# TODO(1.11): remove filterwarnings with change of default scoring
-@pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
-# TODO(1.10): remove test with removal of penalty
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize(
-    ["LR", "arg"],
-    [(LogisticRegression, "l1_ratio"), (LogisticRegressionCV, "l1_ratios")],
-)
-def test_elasticnet_l1_ratio_err_helpful(LR, arg):
-    # Check that an informative error message is raised when penalty="elasticnet"
-    # but l1_ratio is not specified.
-    model = LR(penalty="elasticnet", solver="saga", **{arg: None})
-    with pytest.raises(ValueError, match=r".*l1_ratio.*"):
-        model.fit(np.array([[1, 2], [3, 4]]), np.array([0, 1]))
 
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
@@ -746,11 +729,6 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
     train, test = np.arange(80), np.arange(80, 100)
     lr = LogisticRegression(alpha=1.0, solver="lbfgs")
     params = lr.get_params()
-    # Replace default penalty='deprecated' in 1.8 by the equivalent value that
-    # can be used by _log_reg_scoring_path
-    # TODO(1.10) for consistency we may want to adapt _log_reg_scoring_path to
-    # use only l1_ratio rather than penalty + l1_ratio
-    params["penalty"] = "l2"
     # TODO(1.12) for consistency we may want to adapt _log_reg_scoring_path to
     # use only alpha rather than C.
     del params["alpha"]
@@ -1607,8 +1585,8 @@ def test_logreg_l1(csr_container, fit_intercept, global_random_seed):
     lr_saga = LogisticRegression(solver="saga", max_iter=10_000, **params)
     result["saga"] = lr_saga.fit(X, y)
 
-    # Check that not all coefficients are zero. Otherwise we should choose a larger
-    # (anti-)penalty C.
+    # Check that not all coefficients are zero. Otherwise we should choose a smaller
+    # penalty alpha.
     assert np.sum(np.abs(lr_saga.coef_)) > 1e-2
 
     if not fit_intercept:
@@ -2037,38 +2015,6 @@ def test_elastic_net_coeffs(global_random_seed, solver):
     assert not np.allclose(l2_coeffs, l1_coeffs, rtol=0, atol=1e-3)
 
 
-# TODO(1.10): remove whole test with the removal of penalty
-@pytest.mark.filterwarnings("ignore:.*'penalty' was deprecated.*:FutureWarning")
-@pytest.mark.filterwarnings("ignore:.*'C' was deprecated.*:FutureWarning")
-@pytest.mark.parametrize("C", [0.001, 0.1, 1, 10, 100, 1000, 1e6])
-@pytest.mark.parametrize("penalty, l1_ratio", [("l1", 1), ("l2", 0)])
-def test_elastic_net_l1_l2_equivalence(global_random_seed, C, penalty, l1_ratio):
-    # Make sure elasticnet is equivalent to l1 when l1_ratio=1 and to l2 when
-    # l1_ratio=0.
-    X, y = make_classification(random_state=global_random_seed)
-
-    lr_enet = LogisticRegression(
-        penalty="elasticnet",
-        C=C,
-        l1_ratio=l1_ratio,
-        solver="saga",
-        random_state=global_random_seed,
-        tol=1e-2,
-    )
-    lr_expected = LogisticRegression(
-        penalty=penalty,
-        C=C,
-        l1_ratio=l1_ratio,  # avoid warning
-        solver="saga",
-        random_state=global_random_seed,
-        tol=1e-2,
-    )
-    lr_enet.fit(X, y)
-    lr_expected.fit(X, y)
-
-    assert_array_almost_equal(lr_enet.coef_, lr_expected.coef_)
-
-
 @pytest.mark.parametrize("alpha", np.logspace(3, 0, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
 def test_LogisticRegression_elastic_net_objective(alpha, l1_ratio, global_random_seed):
@@ -2279,20 +2225,6 @@ def test_LogisticRegressionCV_on_folds():
             )
 
 
-# TODO(1.10): remove whole test with the removal of penalty
-@pytest.mark.filterwarnings("ignore:Inconsistent values.*:UserWarning")
-@pytest.mark.filterwarnings("ignore:.*'penalty' was deprecated.*:FutureWarning")
-def test_l1_ratio_non_elasticnet():
-    msg = (
-        r"l1_ratio parameter is only used when penalty is"
-        r" 'elasticnet'\. Got \(penalty=l1\)"
-    )
-    with pytest.warns(UserWarning, match=msg):
-        LogisticRegression(
-            alpha=1e-1, penalty="l1", solver="saga", l1_ratio=0.5, tol=0.5
-        ).fit(X, Y1)
-
-
 @pytest.mark.parametrize("alpha", np.logspace(2, -3, 4))
 @pytest.mark.parametrize("l1_ratio", [0.1, 0.5, 0.9])
 def test_elastic_net_versus_sgd(global_random_seed, alpha, l1_ratio):
@@ -2353,8 +2285,8 @@ def test_logistic_regression_path_coefs_multinomial():
         X,
         y.astype(X.dtype),
         classes=np.unique(y),
-        penalty="l1",
         alphas=alphas,
+        l1_ratio=1,
         solver="saga",
         max_iter=1000,
         random_state=0,
@@ -2451,53 +2383,16 @@ def test_logistic_regression_path_init_coefs():
         )
 
 
-# TODO(1.10): remove whole test with the removal of penalty
-@pytest.mark.filterwarnings("ignore:.*'C' was deprecated.*:FutureWarning")
-@pytest.mark.filterwarnings("ignore:.*'penalty' was deprecated.*:FutureWarning")
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
-def test_penalty_none(global_random_seed, solver):
-    # - Make sure warning is raised if penalty=None and C is set to a
-    #   non-default value.
-    # - Make sure setting penalty=None is equivalent to setting C=np.inf with
-    #   l2 penalty.
-    X, y = make_classification(
-        n_samples=1000, n_redundant=0, random_state=global_random_seed
-    )
-
-    msg = "Setting penalty=None will ignore the alpha, C"
-    lr = LogisticRegression(penalty=None, solver=solver, C=4)
-    with pytest.warns(UserWarning, match=msg):
-        lr.fit(X, y)
-
-    lr_none = LogisticRegression(
-        penalty=None, solver=solver, max_iter=300, random_state=global_random_seed
-    )
-    lr_l2_C_inf = LogisticRegression(
-        penalty="l2",
-        C=np.inf,
-        solver=solver,
-        max_iter=300,
-        random_state=global_random_seed,
-    )
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=UserWarning)
-        pred_none = lr_none.fit(X, y).predict(X)
-        pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
-    assert_array_equal(pred_none, pred_l2_C_inf)
-
-
-# TODO(1.10): remove whole test with the removal of penalty
-@pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
-def test_c_inf_no_warning(solver):
-    """Test that C=np.inf (recommended approach) produces no warnings.
+def test_alpha_zero_no_warning(solver):
+    """Test that alpha=0 produces no warnings.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/32927
     """
     X, y = make_classification(n_samples=100, n_redundant=0, random_state=42)
 
-    lr = LogisticRegression(C=np.inf, solver=solver)
+    lr = LogisticRegression(alpha=0, solver=solver)
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
@@ -2938,21 +2833,6 @@ def test_liblinear_multiclass_raises(Estimator):
         Estimator(solver="liblinear").fit(iris.data, iris.target)
 
 
-# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
-@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
-# TODO(1.10): remove after deprecation cycle of penalty.
-@pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
-@pytest.mark.filterwarnings("ignore:.*default.*use_legacy_attributes.*:FutureWarning")
-@pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
-def test_penalty_deprecated(est):
-    """Check that penalty in LogisticRegression and *CV is deprecated."""
-    X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
-    lr = est(penalty="l2")
-    msg = "'penalty' was deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        lr.fit(X, y)
-
-
 # TODO(1.10): use_legacy_attributes gets deprecated
 def test_logisticregressioncv_warns_with_use_legacy_attributes():
     X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
@@ -3269,21 +3149,6 @@ def test_logistic_regression_cv_array_api_compliance(
         assert_allclose(score_xp, score_np, rtol=rtol, atol=atol)
 
 
-# TODO(1.10): remove when penalty is removed
-@pytest.mark.filterwarnings("ignore:'penalty' was deprecated")
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
-@pytest.mark.parametrize("penalty, l1_ratio", [("l1", 0.0), ("l2", 1.0)])
-def test_lr_penalty_l1ratio_incompatible(penalty, l1_ratio):
-    """Check that incompatible penalty and l1_ratio raise a warning."""
-    X, y = make_classification(n_samples=20)
-    lr = LogisticRegression(
-        solver="saga", penalty=penalty, l1_ratio=l1_ratio, alpha=1e-1
-    )
-    msg = f"Inconsistent values: penalty={penalty} with l1_ratio={l1_ratio}"
-    with pytest.warns(UserWarning, match=msg):
-        lr.fit(X, y)
-
-
 # TODO(1.11): remove when default of scoring has changed
 @pytest.mark.filterwarnings("ignore:.*default.*use_legacy_attributes.*:FutureWarning")
 def test_lr_scoring_warns():
@@ -3330,8 +3195,8 @@ def test_equivalence_of_default_C_and_alpha(n_classes, sample_weight, solver):
 
     for alpha, C in ((0, np.inf), (0.1, 10), (1.0, 1.0), (10, 0.1), (1e5, 1e-5)):
         if solver == "liblinear" and (alpha == 0 or alpha > 1e3):
-            # C=np.inf as well as penalty=None is not supported for the liblinear
-            # solver. For huge alpha / tiny C, liblinear freezes.
+            # C=np.inf as well as alpha=0 (penalty=None) is not supported for the
+            # liblinear solver. For huge alpha / tiny C, liblinear freezes.
             continue
         clf_C = LogisticRegression(C=C, **params).fit(X, y, sample_weight)
         # alpha=1/C
