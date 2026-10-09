@@ -100,7 +100,7 @@ def test_spectral_coclustering(global_random_seed, csr_container):
         ("mini_batch", True),
     ],
 )
-@pytest.mark.parametrize("csr_container", [lambda x: x] + CSR_CONTAINERS)
+@pytest.mark.parametrize("csr_container", [np.array] + CSR_CONTAINERS)
 def test_spectral_biclustering(
     global_random_seed, param_name, param_value, csr_container
 ):
@@ -111,19 +111,19 @@ def test_spectral_biclustering(
     mat = csr_container(S)
     model = SpectralBiclustering(
         n_clusters=3,
-        n_init=5,
+        n_init=4,
         init="k-means++",
         random_state=global_random_seed,
     )
     model.set_params(**{param_name: param_value})
 
-    if issparse(mat) and model.get_params().get("method") == "log":
+    if issparse(mat) and param_value == "log":
         # cannot take log of sparse matrix
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Cannot compute log of a sparse matrix"):
             model.fit(mat)
         return
-    else:
-        model.fit(mat)
+
+    model.fit(mat)
 
     assert model.rows_.shape == (9, 30)
     assert model.columns_.shape == (9, 30)
