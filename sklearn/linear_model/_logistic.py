@@ -1663,11 +1663,19 @@ class LogisticRegression(
             )
             intercept_scaling = self.intercept_scaling
 
+        # Suppress TypeError from _num_features and _num_samples, validate_data
+        # will later raise the right/better error.
+        try:
+            n_features = _num_features(X)
+            n_samples = _num_samples(X)
+        except TypeError:
+            n_features = 1
+            n_samples = 1
         self.solver_, dual = _check_solver(
             solver=self.solver,
             penalty=penalty,
-            n_features=_num_features(X),
-            n_samples=_num_samples(X),
+            n_features=n_features,
+            n_samples=n_samples,
             dual=self.dual,
         )
 
@@ -1711,7 +1719,6 @@ class LogisticRegression(
             accept_large_sparse=self.solver_
             not in ("liblinear", "newton-cd", "sag", "saga"),
         )
-        n_samples, n_features = X.shape
         check_classification_targets(y)
         le = LabelEncoder().fit(y)
         self.classes_ = le.classes_
@@ -2582,11 +2589,19 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
             intercept_scaling = self.intercept_scaling
 
+        # Suppress TypeError from _num_features and _num_samples, validate_data
+        # will later raise the right/better error.
+        try:
+            n_features = _num_features(X)
+            n_samples = _num_samples(X)
+        except TypeError:
+            n_features = 1
+            n_samples = 1
         self.solver_, dual = _check_solver(
             solver=self.solver,
             penalty=penalty,
-            n_features=_num_features(X),
-            n_samples=_num_samples(X),
+            n_features=n_features,
+            n_samples=n_samples,
             dual=self.dual,
         )
 

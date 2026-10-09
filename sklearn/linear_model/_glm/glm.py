@@ -295,7 +295,15 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             if self.l1_ratio == 0:
                 self.solver_ = "lbfgs"
             else:
-                if _num_samples(X) >= _num_features(X):
+                # Suppress TypeError from _num_features and _num_samples, validate_data
+                # will later raise the right/better error.
+                try:
+                    n_features = _num_features(X)
+                    n_samples = _num_samples(X)
+                except TypeError:
+                    n_features = 1
+                    n_samples = 1
+                if n_samples >= n_features:
                     self.solver_ = "newton-cd-gram"
                 else:
                     self.solver_ = "newton-cd"
