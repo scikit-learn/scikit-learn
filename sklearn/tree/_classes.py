@@ -733,8 +733,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def apply(self, X, check_input=True):
         """Return the index of the leaf that each sample is predicted as.
 
-        .. versionadded:: 0.17
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -760,8 +758,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     def decision_path(self, X, check_input=True):
         """Return the decision path in the tree.
-
-        .. versionadded:: 0.18
 
         Parameters
         ----------
@@ -915,9 +911,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -929,9 +922,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -985,8 +975,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. versionadded:: 0.19
-
     class_weight : dict, list of dict or "balanced", default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If None, all classes are supposed to have weight one. For
@@ -1015,8 +1003,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -1088,8 +1074,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1330,12 +1314,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         node, and "poisson" which uses reduction in Poisson deviance to find splits,
         also using the mean of each terminal node.
 
-        .. versionadded:: 0.18
-           Mean Absolute Error (MAE) criterion.
-
-        .. versionadded:: 0.24
-            Poisson deviance criterion.
-
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
@@ -1360,9 +1338,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -1374,9 +1349,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1430,8 +1402,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. versionadded:: 0.19
-
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
@@ -1439,8 +1409,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -1501,8 +1469,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1735,9 +1701,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -1749,9 +1712,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1800,8 +1760,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. versionadded:: 0.19
-
     class_weight : dict, list of dict or "balanced", default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If None, all classes are supposed to have weight one. For
@@ -1830,8 +1788,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -1903,8 +1859,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2029,12 +1983,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         node, and "poisson" which uses reduction in Poisson deviance to find splits,
         also using the mean of each terminal node.
 
-        .. versionadded:: 0.18
-           Mean Absolute Error (MAE) criterion.
-
-        .. versionadded:: 0.24
-            Poisson deviance criterion.
-
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
@@ -2056,9 +2004,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -2070,9 +2015,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -2116,8 +2058,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. versionadded:: 0.19
-
     max_leaf_nodes : int, default=None
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -2130,8 +2070,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -2180,8 +2118,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

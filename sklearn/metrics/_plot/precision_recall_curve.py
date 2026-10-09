@@ -79,8 +79,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         The class considered the positive class when precision and recall metrics
         computed. If not `None`, this value is displayed in the x- and y-axes labels.
 
-        .. versionadded:: 0.24
-
     prevalence_pos_label : float or list of floats, default=None
         The prevalence of the positive label. It is used for plotting the
         chance level lines. If None, no chance level line will be plotted

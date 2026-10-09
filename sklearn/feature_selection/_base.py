@@ -19,6 +19,7 @@ from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils._tags import get_tags
 from sklearn.utils.validation import (
     _check_feature_names_in,
+    assert_all_finite,
     check_is_fitted,
     validate_data,
 )
@@ -108,15 +109,18 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
         # note: we use get_tags instead of __sklearn_tags__ because this is a
         # public Mixin.
+        allow_nan = get_tags(self).input_tags.allow_nan
         X = validate_data(
             self,
             X,
             dtype=None,
             accept_sparse="csr",
-            ensure_all_finite=not get_tags(self).input_tags.allow_nan,
+            ensure_all_finite=not allow_nan,
             skip_check_array=preserve_X,
             reset=False,
         )
+        if preserve_X and not allow_nan:
+            assert_all_finite(X, input_name="X")
         return self._transform(X)
 
     def _transform(self, X):

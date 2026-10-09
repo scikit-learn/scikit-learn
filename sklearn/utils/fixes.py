@@ -9,6 +9,7 @@ at which the fix is no longer needed.
 
 import platform
 import struct
+import sys
 
 import numpy as np
 import scipy
@@ -35,30 +36,9 @@ DOK_CONTAINERS = [scipy.sparse.dok_matrix, scipy.sparse.dok_array]
 BSR_CONTAINERS = [scipy.sparse.bsr_matrix, scipy.sparse.bsr_array]
 DIA_CONTAINERS = [scipy.sparse.dia_matrix, scipy.sparse.dia_array]
 
-# Remove when minimum scipy version is 1.11.0
-try:
-    from scipy.sparse import sparray  # noqa: F401
-
-    SPARRAY_PRESENT = True
-except ImportError:
-    SPARRAY_PRESENT = False
-
 
 def _object_dtype_isnan(X):
     return X != X
-
-
-# TODO: Remove when SciPy 1.11 is the minimum supported version
-def _mode(a, axis=0):
-    import scipy.stats  # lazy import, speeds up `import sklearn`
-
-    mode = scipy.stats.mode(a, axis=axis, keepdims=True)
-    if sp_version >= parse_version("1.10.999"):
-        # scipy.stats.mode has changed returned array shape with axis=None
-        # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
-        if axis is None:
-            mode = np.ravel(mode)
-    return mode
 
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
@@ -82,114 +62,6 @@ else:
         if "atol" not in kwargs:
             kwargs["atol"] = "legacy"
         return scipy.sparse.linalg.cg(A, b, **kwargs)
-
-
-# TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
-# into the public min_max_axis function when SciPy 1.11 is the minimum supported
-# version and delete the backport in the else branch below.
-if sp_base_version >= parse_version("1.11.0"):
-
-    def _sparse_min_max(X, axis):
-        the_min = X.min(axis=axis)
-        the_max = X.max(axis=axis)
-
-        if axis is not None:
-            the_min = the_min.toarray().ravel()
-            the_max = the_max.toarray().ravel()
-
-        return the_min, the_max
-
-    def _sparse_nan_min_max(X, axis):
-        the_min = X.nanmin(axis=axis)
-        the_max = X.nanmax(axis=axis)
-
-        if axis is not None:
-            the_min = the_min.toarray().ravel()
-            the_max = the_max.toarray().ravel()
-
-        return the_min, the_max
-
-else:
-    # This code is mostly taken from scipy 0.14 and extended to handle nans, see
-    # https://github.com/scikit-learn/scikit-learn/pull/11196
-    def _minor_reduce(X, ufunc):
-        major_index = np.flatnonzero(np.diff(X.indptr))
-
-        # reduceat tries casts X.indptr to intp, which errors
-        # if it is int64 on a 32 bit system.
-        # Reinitializing prevents this where possible, see #13737
-        X = type(X)((X.data, X.indices, X.indptr), shape=X.shape)
-        value = ufunc.reduceat(X.data, X.indptr[major_index])
-        return major_index, value
-
-    def _min_or_max_axis(X, axis, min_or_max):
-        N = X.shape[axis]
-        if N == 0:
-            raise ValueError("zero-size array to reduction operation")
-        M = X.shape[1 - axis]
-        mat = X.tocsc() if axis == 0 else X.tocsr()
-        mat.sum_duplicates()
-        major_index, value = _minor_reduce(mat, min_or_max)
-        not_full = np.diff(mat.indptr)[major_index] < N
-        value[not_full] = min_or_max(value[not_full], 0)
-        mask = value != 0
-        major_index = np.compress(mask, major_index)
-        value = np.compress(mask, value)
-
-        if axis == 0:
-            res = scipy.sparse.coo_array(
-                (value, (np.zeros(len(value)), major_index)),
-                dtype=X.dtype,
-                shape=(1, M),
-            )
-        else:
-            res = scipy.sparse.coo_array(
-                (value, (major_index, np.zeros(len(value)))),
-                dtype=X.dtype,
-                shape=(M, 1),
-            )
-        return res.toarray().ravel()
-
-    def _sparse_min_or_max(X, axis, min_or_max):
-        if axis is None:
-            if 0 in X.shape:
-                raise ValueError("zero-size array to reduction operation")
-            zero = X.dtype.type(0)
-            if X.nnz == 0:
-                return zero
-            m = min_or_max.reduce(X.data.ravel())
-            if X.nnz != np.prod(X.shape):
-                m = min_or_max(zero, m)
-            return m
-        if axis < 0:
-            axis += 2
-        if (axis == 0) or (axis == 1):
-            return _min_or_max_axis(X, axis, min_or_max)
-        else:
-            raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
-
-    def _sparse_min_max(X, axis):
-        return (
-            _sparse_min_or_max(X, axis, np.minimum),
-            _sparse_min_or_max(X, axis, np.maximum),
-        )
-
-    def _sparse_nan_min_max(X, axis):
-        return (
-            _sparse_min_or_max(X, axis, np.fmin),
-            _sparse_min_or_max(X, axis, np.fmax),
-        )
-
-
-# For +1.25 NumPy versions exceptions and warnings are being moved
-# to a dedicated submodule.
-if np_version >= parse_version("1.25.0"):
-    from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
-else:
-    from numpy import (  # noqa: F401
-        ComplexWarning,
-        VisibleDeprecationWarning,
-    )
 
 
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
@@ -333,17 +205,6 @@ else:
     from scipy.sparse.csgraph import (
         laplacian,  # noqa: F401  # pragma: no cover
     )
-
-
-# TODO: Remove when Python min version >= 3.12.
-def tarfile_extractall(tarfile, path):
-    try:
-        # Use filter="data" to prevent the most dangerous security issues.
-        # For more details, see
-        # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extractall
-        tarfile.extractall(path, filter="data")
-    except TypeError:
-        tarfile.extractall(path)
 
 
 def _in_unstable_openblas_configuration():
@@ -541,3 +402,19 @@ PETROFF_COLORS = [
     "#717581",
     "#92dadd",
 ]
+
+
+# TODO Remove when Python 3.13 is the minimal supported version.
+if hasattr(sys, "_is_gil_enabled"):
+    _is_gil_enabled = sys._is_gil_enabled
+else:
+    # Support older versions of Python:
+    def _is_gil_enabled() -> bool:
+        """Return whether Python has the GIL enabled.
+
+        Returns
+        -------
+        bool
+            Whether the GIL is enabled.
+        """
+        return True

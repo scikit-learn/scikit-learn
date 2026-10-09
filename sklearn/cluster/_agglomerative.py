@@ -846,9 +846,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         - 'single' uses the minimum of the distances between all observations
           of the two sets.
 
-        .. versionadded:: 0.20
-            Added the 'single' option
-
         For examples comparing different `linkage` criteria, see
         :ref:`sphx_glr_auto_examples_cluster_plot_linkage_comparison.py`.
 
@@ -857,14 +854,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
 
-        .. versionadded:: 0.21
-
     compute_distances : bool, default=False
         Computes distances between clusters even if `distance_threshold` is not
         used. This can be used to make dendrogram visualization, but introduces
         a computational and memory overhead.
-
-        .. versionadded:: 0.24
 
         For an example of dendrogram visualization, see
         :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_dendrogram.py`.
@@ -885,13 +878,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     n_connected_components_ : int
         The estimated number of connected components in the graph.
 
-        .. versionadded:: 0.21
-            ``n_connected_components_`` was added to replace ``n_components_``.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1193,14 +1181,10 @@ class FeatureAgglomeration(
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
 
-        .. versionadded:: 0.21
-
     compute_distances : bool, default=False
         Computes distances between clusters even if `distance_threshold` is not
         used. This can be used to make dendrogram visualization, but introduces
         a computational and memory overhead.
-
-        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -1218,13 +1202,8 @@ class FeatureAgglomeration(
     n_connected_components_ : int
         The estimated number of connected components in the graph.
 
-        .. versionadded:: 0.21
-            ``n_connected_components_`` was added to replace ``n_components_``.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

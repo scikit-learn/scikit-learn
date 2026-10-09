@@ -119,8 +119,6 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
 
     Read more in the :ref:`User Guide <pipeline>`.
 
-    .. versionadded:: 0.5
-
     Parameters
     ----------
     steps : list of tuples
@@ -179,8 +177,6 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         Number of features seen during :term:`fit`. Only defined if the
         underlying first estimator in `steps` exposes such an attribute
         when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -776,8 +772,6 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
               steps. Each step must have requested certain metadata for these parameters
               to be forwarded to them.
 
-            .. versionadded:: 0.20
-
             .. versionchanged:: 1.4
                 Parameters are now passed to the ``transform`` method of the
                 intermediate steps as well, if requested, and if
@@ -841,8 +835,6 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             - If `enable_metadata_routing=True`: Parameters requested and accepted by
               steps. Each step must have requested certain metadata for these parameters
               to be forwarded to them.
-
-            .. versionadded:: 0.20
 
             .. versionchanged:: 1.4
                 Parameters are now passed to the ``transform`` method of the
@@ -912,8 +904,6 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             - If `enable_metadata_routing=True`: Parameters requested and accepted by
               steps. Each step must have requested certain metadata for these parameters
               to be forwarded to them.
-
-            .. versionadded:: 0.20
 
             .. versionchanged:: 1.4
                 Parameters are now passed to the ``transform`` method of the
@@ -1040,8 +1030,6 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             - If `enable_metadata_routing=True`: Parameters requested and accepted by
               steps. Each step must have requested certain metadata for these parameters
               to be forwarded to them.
-
-            .. versionadded:: 0.20
 
             .. versionchanged:: 1.4
                 Parameters are now passed to the ``transform`` method of the
@@ -1638,8 +1626,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Read more in the :ref:`User Guide <feature_union>`.
 
-    .. versionadded:: 0.13
-
     Parameters
     ----------
     transformer_list : list of (str, transformer) tuples
@@ -1650,9 +1636,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         .. versionadded:: 1.1
            Added the option `"passthrough"`.
-
-        .. versionchanged:: 0.22
-           Deprecated `None` as a transformer in favor of 'drop'.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel.
@@ -1694,8 +1677,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         Number of features seen during :term:`fit`. Only defined if the
         underlying first transformer in `transformer_list` exposes such an
         attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when
