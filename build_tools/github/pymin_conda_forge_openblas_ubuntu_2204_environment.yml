@@ -4,11 +4,11 @@
 channels:
   - conda-forge
 dependencies:
-  - python=3.11
+  - python=3.12
   - numpy
   - blas[build=openblas]
   - scipy
-  - cython!=3.2.6,!=3.2.7,!=3.2.8
+  - cython!=3.2.6,!=3.2.7,!=3.2.8,!=3.2.9
   - joblib
   - narwhals
   - threadpoolctl

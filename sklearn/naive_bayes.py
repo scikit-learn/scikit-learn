@@ -180,8 +180,6 @@ class GaussianNB(_BaseNB):
         Portion of the largest variance of all features that is added to
         variances for calculation stability.
 
-        .. versionadded:: 0.20
-
     Attributes
     ----------
     class_count_ : ndarray of shape (n_classes,)
@@ -198,8 +196,6 @@ class GaussianNB(_BaseNB):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -264,9 +260,6 @@ class GaussianNB(_BaseNB):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
-
-            .. versionadded:: 0.17
-               Gaussian Naive Bayes supports fitting with *sample_weight*.
 
         Returns
         -------
@@ -392,8 +385,6 @@ class GaussianNB(_BaseNB):
         sample_weight : array-like of shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
 
-            .. versionadded:: 0.17
-
         Returns
         -------
         self : object
@@ -437,7 +428,7 @@ class GaussianNB(_BaseNB):
 
         first_call = _check_partial_fit_first_call(self, classes)
         X, y = validate_data(self, X, y, reset=first_call)
-        xp, _, device_ = get_namespace_and_device(X)
+        xp, _, device = get_namespace_and_device(X)
         float_dtype = _find_matching_floating_dtype(X, xp=xp)
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=float_dtype)
@@ -455,18 +446,18 @@ class GaussianNB(_BaseNB):
             n_features = X.shape[1]
             n_classes = self.classes_.shape[0]
             self.theta_ = xp.zeros(
-                (n_classes, n_features), dtype=float_dtype, device=device_
+                (n_classes, n_features), dtype=float_dtype, device=device
             )
             self.var_ = xp.zeros(
-                (n_classes, n_features), dtype=float_dtype, device=device_
+                (n_classes, n_features), dtype=float_dtype, device=device
             )
 
-            self.class_count_ = xp.zeros(n_classes, dtype=float_dtype, device=device_)
+            self.class_count_ = xp.zeros(n_classes, dtype=float_dtype, device=device)
 
             # Initialise the class prior
             # Take into account the priors
             if self.priors is not None:
-                priors = xp.asarray(self.priors, dtype=float_dtype, device=device_)
+                priors = xp.asarray(self.priors, dtype=float_dtype, device=device)
                 # Check that the provided prior matches the number of classes
                 if priors.shape[0] != n_classes:
                     raise ValueError("Number of priors must match number of classes.")
@@ -480,7 +471,7 @@ class GaussianNB(_BaseNB):
             else:
                 # Initialize the priors to zeros for each class
                 self.class_prior_ = xp.zeros(
-                    self.classes_.shape[0], dtype=float_dtype, device=device_
+                    self.classes_.shape[0], dtype=float_dtype, device=device
                 )
         else:
             if X.shape[1] != self.theta_.shape[1]:
@@ -502,7 +493,7 @@ class GaussianNB(_BaseNB):
 
         for y_i in unique_y:
             i = int(xp_y.searchsorted(classes, y_i))
-            y_i_mask = xp.asarray(y == y_i, device=device_)
+            y_i_mask = xp.asarray(y == y_i, device=device)
             X_i = X[y_i_mask]
 
             if sample_weight is not None:
@@ -865,8 +856,6 @@ class MultinomialNB(_BaseDiscreteNB):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -944,8 +933,6 @@ class ComplementNB(_BaseDiscreteNB):
 
     Read more in the :ref:`User Guide <complement_naive_bayes>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     alpha : float or array-like of shape (n_features,), default=1.0
@@ -999,8 +986,6 @@ class ComplementNB(_BaseDiscreteNB):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1148,8 +1133,6 @@ class BernoulliNB(_BaseDiscreteNB):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1302,8 +1285,6 @@ class CategoricalNB(_BaseDiscreteNB):
         - None (default): Determines the number of categories automatically
           from the training data.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     category_count_ : list of arrays of shape (n_features,)
@@ -1329,8 +1310,6 @@ class CategoricalNB(_BaseDiscreteNB):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1340,8 +1319,6 @@ class CategoricalNB(_BaseDiscreteNB):
     n_categories_ : ndarray of shape (n_features,), dtype=np.int64
         Number of categories for each feature. This value is
         inferred from the data or set by the minimum number of categories.
-
-        .. versionadded:: 0.24
 
     See Also
     --------

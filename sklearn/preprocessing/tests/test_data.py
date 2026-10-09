@@ -11,10 +11,7 @@ from scipy import sparse, stats
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
-from sklearn.callback.tests._utils import (
-    RecordingCallback,
-    skip_callback_test_if_wasm,
-)
+from sklearn.callback.tests._common.callbacks import RecordingCallback
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
@@ -55,6 +52,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_array_less,
+    skip_callback_test_if_wasm,
     skip_if_32bit,
 )
 from sklearn.utils.estimator_checks import (
@@ -189,11 +187,12 @@ def test_standard_scaler_sample_weight_array_api(
     yw = np.ones(Xw.shape[0]).astype(dtype_name, copy=False)
     X_test = np.array([[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]).astype(dtype_name, copy=False)
 
-    scaler = StandardScaler()
-    scaler.fit(X, y)
+    with config_context(array_api_dispatch=False):
+        scaler = StandardScaler()
+        scaler.fit(X, y)
 
-    scaler_w = StandardScaler()
-    scaler_w.fit(Xw, yw, sample_weight=sample_weight)
+        scaler_w = StandardScaler()
+        scaler_w.fit(Xw, yw, sample_weight=sample_weight)
 
     # Test array-api support and correctness.
     X_xp = xp.asarray(X, device=device)
@@ -1191,7 +1190,7 @@ def test_scale_input_finiteness_validation():
 
 
 def test_robust_scaler_error_sparse():
-    X_sparse = sparse.rand(1000, 10)
+    X_sparse = _sparse_random_array((1000, 10))
     scaler = RobustScaler(with_centering=True)
     err_msg = "Cannot center sparse matrices"
     with pytest.raises(ValueError, match=err_msg):
@@ -1200,7 +1199,9 @@ def test_robust_scaler_error_sparse():
 
 @pytest.mark.parametrize("with_centering", [True, False])
 @pytest.mark.parametrize("with_scaling", [True, False])
-@pytest.mark.parametrize("X", [np.random.randn(10, 3), sparse.rand(10, 3, density=0.5)])
+@pytest.mark.parametrize(
+    "X", [np.random.randn(10, 3), _sparse_random_array((10, 3), density=0.5)]
+)
 def test_robust_scaler_attributes(X, with_centering, with_scaling):
     # check consistent type of attributes
     if with_centering and sparse.issparse(X):
@@ -1252,7 +1253,7 @@ def test_robust_scaler_2d_arrays():
 @pytest.mark.parametrize("strictly_signed", ["positive", "negative", "zeros", None])
 def test_robust_scaler_equivalence_dense_sparse(density, strictly_signed):
     # Check the equivalence of the fitting with dense and sparse matrices
-    X_sparse = sparse.rand(1000, 5, density=density).tocsc()
+    X_sparse = _sparse_random_array((1000, 5), density=density).tocsc()
     if strictly_signed == "positive":
         X_sparse.data = np.abs(X_sparse.data)
     elif strictly_signed == "negative":
@@ -1379,13 +1380,6 @@ def test_quantile_transform_check_error(csc_container):
     # check that an error is raised if input is scalar
     with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         transformer.transform(10)
-    # check that a warning is raised is n_quantiles > n_samples
-    transformer = QuantileTransformer(n_quantiles=100)
-    warn_msg = "n_quantiles is set to n_samples"
-    with pytest.warns(UserWarning, match=warn_msg) as record:
-        transformer.fit(X)
-    assert len(record) == 1
-    assert transformer.n_quantiles_ == X.shape[0]
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
@@ -1515,7 +1509,7 @@ def test_quantile_transform_subsampling():
 
     # sparse support
 
-    X = sparse.rand(n_samples, 1, density=0.99, format="csc", random_state=0)
+    X = _sparse_random_array((n_samples, 1), density=0.99, format="csc", random_state=0)
     inf_norm_arr = []
     for random_state in range(ROUND):
         transformer = QuantileTransformer(
@@ -1542,7 +1536,9 @@ def test_quantile_transform_subsampling_disabled():
 
     expected_references = np.linspace(0, 1, n_quantiles)
     assert_allclose(transformer.references_, expected_references)
-    expected_quantiles = np.quantile(X.ravel(), expected_references)
+    expected_quantiles = np.quantile(
+        X.ravel(), expected_references, method="averaged_inverted_cdf"
+    )
     assert_allclose(transformer.quantiles_.ravel(), expected_quantiles)
 
 
@@ -1671,6 +1667,69 @@ def test_quantile_transformer_sorted_quantiles(array_type):
     quantiles = qt.quantiles_[:, 0]
     assert len(quantiles) == 100
     assert all(np.diff(quantiles) >= 0)
+
+
+def test_quantile_transformer_sample_weight_nans():
+    """Check that NaNs are ignored, regardless of their weight."""
+    # Compare quantiles estimated from X with no NaNs and X extended with additional
+    # rows of NaNs
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(20, 2))
+    sample_weight = rng.uniform(0, 5, size=20)
+    X_nan = np.vstack([X, np.full((5, 2), np.nan)])
+    sample_weight_nan = np.hstack([sample_weight, rng.uniform(0, 5, size=5)])
+
+    params = {"n_quantiles": 10, "subsample": None}
+    qt = QuantileTransformer(**params).fit(X, sample_weight=sample_weight)
+    qt_nan = QuantileTransformer(**params).fit(X_nan, sample_weight=sample_weight_nan)
+    assert_allclose(qt.quantiles_, qt_nan.quantiles_)
+
+
+def test_quantile_transformer_sparse_subsampling():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/32585
+
+    subsample = 500
+    qt = QuantileTransformer(
+        ignore_implicit_zeros=True,
+        subsample=subsample,
+        n_quantiles=50,
+        random_state=0,
+    )
+
+    # create a very sparse X matrix with two very similar columns:
+    # (`n` bigger than `subsample ** 2`)
+    n, d = 2 * subsample**2, 2
+    # one column has size `subsample - 1`, the other one has size `subsample + 1`
+    col = np.repeat([0, 1], [subsample - 1, subsample + 1])
+    # choose some row indices (doesn't matter in this example):
+    row = np.arange(subsample * 2)
+    # uniform data:
+    data = np.concatenate(
+        (
+            np.linspace(1, 2, num=subsample - 1),
+            np.linspace(1, 2, num=subsample + 1),
+        )
+    )
+
+    X = sparse.csc_array((data, (row, col)), shape=(n, d))
+
+    qt.fit(X)
+    quantiles = qt.quantiles_.T
+    # we ignore zeros, and values are strictly positive so:
+    assert (qt.quantiles_ > 0).all()
+    # guard against the historical failure mode where one sparse column
+    # could end up with degenerate fitted quantiles under subsampling:
+    assert not np.all(quantiles[1] == quantiles[1][0])
+
+    # given that X[:, 0] and X[:, 1] are very similar,
+    # you would expect similar quantiles:
+    assert np.allclose(quantiles[0], quantiles[1], rtol=0.1)
+
+    # if we don't ignore implicit zeros, most quantiles are zeros:
+    qt = clone(qt).set_params(ignore_implicit_zeros=False)
+    quantiles = qt.fit(X).quantiles_
+    assert np.isclose(quantiles, 0).mean() > 0.9
 
 
 def test_robust_scaler_invalid_range():
@@ -2159,7 +2218,8 @@ def test_binarizer_array_api_int(array_namespace, device_name, dtype_name):
     for dtype_name_ in [dtype_name, "int32", "int64"]:
         X_np = np.reshape(np.asarray([0, 1, 2, 3, 4], dtype=dtype_name_), (-1, 1))
         X_xp = xp.asarray(X_np, device=device)
-        binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
+        with config_context(array_api_dispatch=False):
+            binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
         with config_context(array_api_dispatch=True):
             binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
         assert_array_equal(move_to(binarized_xp, xp=np, device="cpu"), binarized_np)

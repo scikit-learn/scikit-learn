@@ -251,6 +251,10 @@ multiplying the gradients (and the hessians) by the sample weights. Note that
 the binning stage (specifically the quantiles computation) does not take the
 weights into account.
 
+`min_samples_leaf` is applied to the sample count (number of data rows) and ignores
+`sample_weight`. As a consequence, the repeated/weighted equivalence described in
+:term:`sample_weight` only holds when `min_samples_leaf=1`.
+
 .. _categorical_support_gbdt:
 
 Categorical Features Support
@@ -1477,7 +1481,7 @@ Optionally, weights can be provided for the individual classifiers::
     ...     voting='soft'
     ... )
 
-    >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200]}
+    >>> params = {'lr__alpha': [1.0, 1e-2], 'rf__n_estimators': [20, 200]}
 
     >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
     >>> grid = grid.fit(iris.data, iris.target)

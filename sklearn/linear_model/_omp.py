@@ -314,15 +314,20 @@ def orthogonal_mp(
 ):
     r"""Orthogonal Matching Pursuit (OMP).
 
-    Solves n_targets Orthogonal Matching Pursuit problems.
-    An instance of the problem has the form:
+    Solves `n_targets` Orthogonal Matching Pursuit problems.
+    Each instance of the problem fits a linear model with constraints
+    imposed on the number of non-zero coefficients
+    (i.e. the :math:`\\ell_0` pseudo-norm) using `n_nonzero_coefs`:
 
-    When parametrized by the number of non-zero coefficients using
-    `n_nonzero_coefs`:
-    argmin ||y - X\gamma||^2 subject to ||\gamma||_0 <= n_{nonzero coefs}
+    .. math::
+        \underset{w}{\operatorname{arg\,min\,}} ||y - Xw||^2_2
+            \text{ subject to } ||w||_0 \leq n_{\text{nonzero_coefs}}
 
     When parametrized by error using the parameter `tol`:
-    argmin ||\gamma||_0 subject to ||y - X\gamma||^2 <= tol
+
+    .. math::
+        \underset{w}{\operatorname{arg\,min\,}} ||w||_0
+            \text{ subject to } ||y - Xw||^2_2 \leq tol
 
     Read more in the :ref:`User Guide <omp>`.
 
@@ -335,7 +340,7 @@ def orthogonal_mp(
         Input targets.
 
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. If None (by
+        Maximum number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
@@ -493,8 +498,15 @@ def orthogonal_mp_gram(
 ):
     """Gram Orthogonal Matching Pursuit (OMP).
 
-    Solves n_targets Orthogonal Matching Pursuit problems using only
-    the Gram matrix X.T * X and the product X.T * y.
+    Solves `n_targets` Orthogonal Matching Pursuit problems using only
+    the precomputed Gram matrix ``X.T * X`` and the product ``X.T * y``.
+    This implementation efficiently computes the solution using the
+    Cholesky decomposition.
+
+    Each instance of the problem fits a linear model with constraints
+    imposed on the number of non-zero coefficients (i.e. the
+    :math:`\\ell_0` pseudo-norm) using `n_nonzero_coefs` or
+    on the error using the parameter `tol`.
 
     Read more in the :ref:`User Guide <omp>`.
 
@@ -507,7 +519,7 @@ def orthogonal_mp_gram(
         Input targets multiplied by `X`: `X.T * y`.
 
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. If `None` (by
+        Maximum number of non-zero entries in the solution. If `None` (by
         default) this value is set to 10% of n_features.
 
     tol : float, default=None
@@ -646,12 +658,25 @@ def orthogonal_mp_gram(
 class OrthogonalMatchingPursuit(RegressorMixin, MultiOutputLinearModel):
     """Orthogonal Matching Pursuit model (OMP).
 
+    Fits a linear model with constraints imposed on the number of non-zero coefficients
+    (i.e. the :math:`\\ell_0` pseudo-norm) using `n_nonzero_coefs`:
+
+    .. math::
+        \\underset{w}{\\operatorname{arg\\,min\\,}} ||y - Xw||^2_2
+            \\text{ subject to } ||w||_0 \\leq n_{\\text{nonzero_coefs}}
+
+    When parametrized by error using the parameter `tol`:
+
+    .. math::
+        \\underset{w}{\\operatorname{arg\\,min\\,}} ||w||_0
+            \\text{ subject to } ||y - Xw||^2_2 \\leq tol
+
     Read more in the :ref:`User Guide <omp>`.
 
     Parameters
     ----------
     n_nonzero_coefs : int, default=None
-        Desired number of non-zero entries in the solution. Ignored if `tol` is set.
+        Maximum number of non-zero entries in the solution. Ignored if `tol` is set.
         When `None` and `tol` is also `None`, this value is either set to 10% of
         `n_features` or 1, whichever is greater.
 
@@ -686,8 +711,6 @@ class OrthogonalMatchingPursuit(RegressorMixin, MultiOutputLinearModel):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -936,9 +959,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -966,8 +986,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

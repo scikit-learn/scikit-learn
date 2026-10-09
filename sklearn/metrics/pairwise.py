@@ -121,8 +121,6 @@ def check_pairwise_arrays(
         appropriate float type selected by _return_float_dtype. If None, the
         dtype of the input is preserved.
 
-        .. versionadded:: 0.18
-
     accept_sparse : str, bool or list/tuple of str, default='csr'
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc. If the input is sparse but not in the allowed format,
@@ -152,8 +150,6 @@ def check_pairwise_arrays(
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
-
-        .. versionadded:: 0.22
 
     Returns
     -------
@@ -382,7 +378,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     float32, norms needs to be recomputed on upcast chunks.
     TODO: use a float64 accumulator in row_norms to avoid the latter.
     """
-    xp, _, device_ = get_namespace_and_device(X, Y)
+    xp, _, device = get_namespace_and_device(X, Y)
     if X_norm_squared is not None and X_norm_squared.dtype != xp.float32:
         XX = xp.reshape(X_norm_squared, (-1, 1))
     elif X.dtype != xp.float32:
@@ -410,7 +406,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
         distances += XX
         distances += YY
 
-    xp_zero = xp.asarray(0, device=device_, dtype=distances.dtype)
+    xp_zero = xp.asarray(0, device=device, dtype=distances.dtype)
     distances = _modify_in_place_if_numpy(
         xp, xp.maximum, distances, xp_zero, out=distances
     )
@@ -467,8 +463,6 @@ def nan_euclidean_distances(
     coordinates then NaN is returned for that pair.
 
     Read more in the :ref:`User Guide <metrics>`.
-
-    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -575,12 +569,12 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
     X and Y are upcast to float64 by chunks, which size is chosen to limit
     memory increase by approximately 10% (at least 10MiB).
     """
-    xp, _, device_ = get_namespace_and_device(X, Y)
+    xp, _, device = get_namespace_and_device(X, Y)
     n_samples_X = X.shape[0]
     n_samples_Y = Y.shape[0]
     n_features = X.shape[1]
 
-    distances = xp.empty((n_samples_X, n_samples_Y), dtype=xp.float32, device=device_)
+    distances = xp.empty((n_samples_X, n_samples_Y), dtype=xp.float32, device=device)
 
     if batch_size is None:
         x_density = X.nnz / np.prod(X.shape) if issparse(X) else 1
@@ -608,7 +602,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(n_samples_X, batch_size)
-    xp_max_float = _max_precision_float_dtype(xp=xp, device=device_)
+    xp_max_float = _max_precision_float_dtype(xp=xp, device=device)
     for i, x_slice in enumerate(x_batches):
         X_chunk = xp.astype(X[x_slice, :], xp_max_float)
         if XX is None:
@@ -672,7 +666,6 @@ _VALID_METRICS = [
     "hamming",
     "jaccard",
     "mahalanobis",
-    "matching",
     "minkowski",
     "rogerstanimoto",
     "russellrao",
@@ -687,12 +680,6 @@ _VALID_METRICS = [
 if sp_base_version < parse_version("1.17"):  # pragma: no cover
     # Deprecated in SciPy 1.15 and removed in SciPy 1.17
     _VALID_METRICS += ["sokalmichener"]
-if sp_base_version < parse_version("1.11"):  # pragma: no cover
-    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
-    _VALID_METRICS += ["kulsinski"]
-if sp_base_version < parse_version("1.9"):
-    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
-    _VALID_METRICS += ["matching"]
 
 _NAN_METRICS = ["nan_euclidean"]
 
@@ -755,19 +742,12 @@ def pairwise_distances_argmin_min(
           'manhattan', 'nan_euclidean']
 
         - from :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'mahalanobis', 'minkowski',
+          'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         See the documentation for :mod:`scipy.spatial.distance` for details on these
         metrics.
-
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
-
-        .. note::
-           `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -903,19 +883,12 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
           'manhattan', 'nan_euclidean']
 
         - from :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
+          'correlation', 'dice', 'hamming', 'jaccard', 'mahalanobis', 'minkowski',
+          'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+          'sqeuclidean', 'yule']
 
         See the documentation for :mod:`scipy.spatial.distance` for details on these
         metrics.
-
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
-
-        .. note::
-           `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -1105,14 +1078,14 @@ def manhattan_distances(X, Y=None):
         _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
         return D
 
-    xp, _, device_ = get_namespace_and_device(X, Y)
+    xp, _, device = get_namespace_and_device(X, Y)
 
     if _is_numpy_namespace(xp):
         return distance.cdist(X, Y, "cityblock")
 
     # array API support
     float_dtype = _find_matching_floating_dtype(X, Y, xp=xp)
-    out = xp.empty((n_x, n_y), dtype=float_dtype, device=device_)
+    out = xp.empty((n_x, n_y), dtype=float_dtype, device=device)
     batch_size = 1024
     for i in range(0, n_x, batch_size):
         i_end = min(i + batch_size, n_x)
@@ -1419,8 +1392,6 @@ def linear_kernel(X, Y=None, dense_output=True):
         Whether to return dense output even when the input is sparse. If
         ``False``, the output is sparse if both input arrays are sparse.
 
-        .. versionadded:: 0.20
-
     Returns
     -------
     kernel : ndarray of shape (n_samples_X, n_samples_Y)
@@ -1654,8 +1625,6 @@ def laplacian_kernel(X, Y=None, gamma=None):
     for each pair of rows x in X and y in Y.
     Read more in the :ref:`User Guide <laplacian_kernel>`.
 
-    .. versionadded:: 0.17
-
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
@@ -1729,9 +1698,6 @@ def cosine_similarity(X, Y=None, dense_output=True):
     dense_output : bool, default=True
         Whether to return dense output even when the input is sparse. If
         ``False``, the output is sparse if both input arrays are sparse.
-
-        .. versionadded:: 0.17
-           parameter ``dense_output`` for dense output.
 
     Returns
     -------
@@ -1823,7 +1789,7 @@ def additive_chi2_kernel(X, Y=None):
     array([[-1., -2.],
            [-2., -1.]])
     """
-    xp, _, device_ = get_namespace_and_device(X, Y)
+    xp, _, device = get_namespace_and_device(X, Y)
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False)
     if xp.any(X < 0):
         raise ValueError("X contains negative values.")
@@ -1840,8 +1806,8 @@ def additive_chi2_kernel(X, Y=None):
         yb = Y[None, :, :]
         nom = -((xb - yb) ** 2)
         denom = xb + yb
-        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype, device=device_), nom)
-        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype, device=device_), denom)
+        nom = xp.where(denom == 0, xp.asarray(0, dtype=dtype, device=device), nom)
+        denom = xp.where(denom == 0, xp.asarray(1, dtype=dtype, device=device), denom)
         return xp.sum(nom / denom, axis=2)
 
 
@@ -2346,16 +2312,10 @@ def pairwise_distances(
       inputs except 'nan_euclidean'.
 
     - From :mod:`scipy.spatial.distance`: ['braycurtis', 'canberra', 'chebyshev',
-      'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
-      'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
-      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule'].
+      'correlation', 'dice', 'hamming', 'jaccard', 'mahalanobis', 'minkowski',
+      'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
+      'sqeuclidean', 'yule'].
       These metrics do not support sparse matrix inputs.
-
-    .. note::
-        `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
-
-    .. note::
-        `'matching'` has been removed in SciPy 1.9 (use `'hamming'` instead).
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid :mod:`scipy.spatial.distance` metrics), the scikit-learn implementation
@@ -2508,12 +2468,6 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
 if sp_base_version < parse_version("1.17"):
     # Deprecated in SciPy 1.15 and removed in SciPy 1.17
     PAIRWISE_BOOLEAN_FUNCTIONS += ["sokalmichener"]
-if sp_base_version < parse_version("1.11"):
-    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
-    PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
-if sp_base_version < parse_version("1.9"):
-    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
-    PAIRWISE_BOOLEAN_FUNCTIONS += ["matching"]
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {
