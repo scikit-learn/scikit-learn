@@ -37,9 +37,15 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=1.0):
         clf = LogisticRegression(l1_ratio=1, solver="newton-cd", **params)
         clf.alpha = 1 / min_c
     else:
-        clf = LinearSVC(loss="squared_hinge", penalty="l1", dual=False, intercept_scaling=intercept_scaling, **params)
+        clf = LinearSVC(
+            loss="squared_hinge",
+            penalty="l1",
+            dual=False,
+            intercept_scaling=intercept_scaling,
+            **params,
+        )
         clf.C = min_c
-    
+
     clf.fit(X, y)
     assert (np.asarray(clf.coef_) == 0).all()
     if loss == "squared_hinge":
