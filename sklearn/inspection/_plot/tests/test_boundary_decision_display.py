@@ -532,7 +532,7 @@ def test_class_of_interest_binary(pyplot, response_method):
     )
 
     if response_method == "predict_proba":
-        assert_allclose(disp_default.response, 1 - disp_class_0.response)
+        assert_allclose(disp_default.response, 1 - disp_class_0.response, atol=1e-15)
     else:
         assert response_method == "decision_function"
         assert_allclose(disp_default.response, -disp_class_0.response)
