@@ -1,0 +1,9 @@
+- The `solver="liblinear"` as well as the two parameters `dual` and
+  `intercept_scaling`, that only affect liblinear, are deprecated
+  for :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV`. There are many good
+  solvers to choose from, for L1 and ElasticNet penalties there are, for instance, the
+  newly introduced `"newton-cd"` and `"newton-cd-gram"`.
+  Note that liblinear is the only solver that does not support the multinomial loss
+  for multiclass problems and we vendor a very old version of it.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

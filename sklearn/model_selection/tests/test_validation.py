@@ -999,7 +999,7 @@ def test_cross_val_predict(coo_container):
     )
     with pytest.warns(RuntimeWarning, match=warning_message):
         cross_val_predict(
-            LogisticRegression(solver="liblinear"),
+            LogisticRegression(),
             X,
             y,
             method="predict_proba",
