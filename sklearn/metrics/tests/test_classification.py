@@ -46,6 +46,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelBinarizer, label_binarize
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
+    _convert_to_numpy,
     array_device,
     get_namespace,
     yield_namespace_device_dtype_combinations,
@@ -605,6 +606,103 @@ def test_multilabel_confusion_matrix_errors():
     err_msg = "multiclass-multioutput is not supported"
     with pytest.raises(ValueError, match=err_msg):
         multilabel_confusion_matrix([[0, 1, 2], [2, 1, 0]], [[1, 2, 0], [1, 0, 2]])
+
+
+@pytest.mark.parametrize(
+    "dtype, n_classes, kwargs",
+    [
+        # dtype coverage on binary inputs
+        (np.uint8, 2, {}),
+        (np.int32, 2, {}),
+        (np.int64, 2, {}),
+        (bool, 2, {}),
+        # multiclass with varying number of classes
+        (np.uint8, 3, {}),
+        (np.int32, 5, {}),
+        (np.int64, 20, {}),
+        # labels subset / reorder
+        (np.uint8, 2, {"labels": [1, 0]}),
+        (np.uint8, 2, {"labels": [0]}),
+        (np.uint8, 2, {"labels": [1]}),
+    ],
+)
+def test_multilabel_confusion_matrix_fastpath_matches_slowpath(
+    dtype, n_classes, kwargs
+):
+    """Integer/bool inputs (fast path) must match float inputs (slow path)
+    bit-for-bit."""
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, n_classes, size=1000).astype(dtype)
+    y_pred = rng.randint(0, n_classes, size=1000).astype(dtype)
+    result_fast = multilabel_confusion_matrix(y_true, y_pred, **kwargs)
+    result_slow = multilabel_confusion_matrix(
+        y_true.astype(np.float64), y_pred.astype(np.float64), **kwargs
+    )
+    np.testing.assert_array_equal(result_fast, result_slow)
+
+
+def test_multilabel_confusion_matrix_fastpath_single_class():
+    """Single-class data (all zeros) returns a 1x2x2 matrix with TN=n_samples."""
+    y_true = np.zeros(100, dtype=np.uint8)
+    y_pred = np.zeros(100, dtype=np.uint8)
+    result = multilabel_confusion_matrix(y_true, y_pred)
+    assert result.shape == (1, 2, 2)
+    np.testing.assert_array_equal(result[0], np.array([[0, 0], [0, 100]]))
+
+
+@pytest.mark.parametrize(
+    "labels, absent_idx",
+    [
+        # extra class absent from data — fast path
+        ([0, 1, 99], 2),
+        # negative label triggers slow-path fallthrough
+        ([-1, 0, 1], 0),
+        # non-integral label triggers slow-path fallthrough
+        ([0.5, 1], 0),
+    ],
+)
+def test_multilabel_confusion_matrix_absent_label(labels, absent_idx):
+    """Labels absent from the data give all-zero TP/FP/FN and TN = n_samples."""
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=100).astype(np.int64)
+    y_pred = rng.randint(0, 2, size=100).astype(np.int64)
+    result = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+    assert result.shape == (len(labels), 2, 2)
+    np.testing.assert_array_equal(result[absent_idx], np.array([[100, 0], [0, 0]]))
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred, kwargs",
+    [
+        # dense [0, n_classes - 1] integer labels — fast path
+        ([0, 1, 2, 2, 1, 0], [0, 2, 2, 1, 1, 0], {}),
+        ([True, False, True, True], [True, True, False, True], {}),
+        ([0, 1, 1, 0], [1, 1, 0, 0], {"labels": [1, 0, 5]}),
+        # non-dense labels — slow-path fallthrough
+        ([3, 7, 3, 7], [3, 7, 7, 3], {}),
+    ],
+)
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_multilabel_confusion_matrix_fastpath_array_api(
+    y_true, y_pred, kwargs, array_namespace, device_name, dtype_name
+):
+    """Array API inputs give the same result as numpy on both the fast path and
+    the slow-path fallthrough."""
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    expected = multilabel_confusion_matrix(
+        np.asarray(y_true), np.asarray(y_pred), **kwargs
+    )
+
+    y_true_xp = xp.asarray(y_true, device=device)
+    y_pred_xp = xp.asarray(y_pred, device=device)
+    with config_context(array_api_dispatch=True):
+        result = multilabel_confusion_matrix(y_true_xp, y_pred_xp, **kwargs)
+        assert get_namespace(result)[0] == get_namespace(y_pred_xp)[0]
+        assert array_device(result) == array_device(y_pred_xp)
+    np.testing.assert_array_equal(_convert_to_numpy(result, xp=xp), expected)
 
 
 @pytest.mark.parametrize(
