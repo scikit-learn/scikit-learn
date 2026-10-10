@@ -374,14 +374,17 @@ def test_gpr_multioutput_alpha_in_scaled_target_units(alpha):
         kernel=kernel, alpha=alpha, optimizer=None
     ).fit(X, Y)
     mean, std = gpr_multi.predict(X2, return_std=True)
+    _, cov = gpr_multi.predict(X2, return_cov=True)
 
     for j in range(Y.shape[1]):
         gpr_j = GaussianProcessRegressor(
             kernel=kernel, alpha=alpha, optimizer=None
         ).fit(X, (Y[:, j] - y_min[j]) / y_range[j])
         mean_j, std_j = gpr_j.predict(X2, return_std=True)
+        _, cov_j = gpr_j.predict(X2, return_cov=True)
         assert_allclose(mean[:, j], mean_j * y_range[j] + y_min[j])
         assert_allclose(std[:, j], std_j * y_range[j])
+        assert_allclose(cov[:, :, j], cov_j * y_range[j] ** 2)
 
 
 @pytest.mark.parametrize("normalize_y", [False, True])
