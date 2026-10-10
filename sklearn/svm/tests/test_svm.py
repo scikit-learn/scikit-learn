@@ -34,6 +34,7 @@ from sklearn.svm import (
 from sklearn.svm._classes import _validate_dual_parameter
 from sklearn.utils import check_random_state, shuffle
 from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, LIL_CONTAINERS
+from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import _num_samples
 
 # toy sample
@@ -1311,8 +1312,32 @@ def test_gamma_scale():
     assert_almost_equal(clf._gamma, 4)
 
 
-# XXX: https://github.com/scikit-learn/scikit-learn/issues/31883
-@pytest.mark.thread_unsafe
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
+@pytest.mark.parametrize(
+    "Estimator, make_data",
+    [(LinearSVR, make_regression), (LinearSVC, make_classification)],
+)
+def test_liblinear_concurrent_fit(Estimator, make_data):
+    """Check that fitting liblinear models in concurrent threads is deterministic.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/31883
+    """
+    X, y = make_data(n_samples=100, n_features=20, random_state=0)
+    C_range = np.logspace(-6, 6, 13)
+
+    def fit_coef(C):
+        return Estimator(C=C, dual=True, random_state=0).fit(X, y).coef_
+
+    sequential_coefs = [fit_coef(C) for C in C_range]
+    # Repeat to make it very unlikely to miss a race condition.
+    for _ in range(3):
+        concurrent_coefs = Parallel(n_jobs=4, backend="threading")(
+            delayed(fit_coef)(C) for C in C_range
+        )
+        assert_array_equal(concurrent_coefs, sequential_coefs)
+
+
 @pytest.mark.parametrize(
     "SVM, params",
     [
