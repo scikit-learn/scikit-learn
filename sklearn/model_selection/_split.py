@@ -1001,6 +1001,11 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         #   or multiclass, checking passed random state, checking that number
         #   of splits is less than number of members in each class, checking
         #   that least populated class has more members than there are splits.
+        if y is None:
+            raise ValueError("The 'y' parameter should not be None.")
+        if groups is None:
+            raise ValueError("The 'groups' parameter should not be None.")
+        groups = check_array(groups, input_name="groups", ensure_2d=False, dtype=None)
         rng = check_random_state(self.random_state)
         y = np.asarray(y)
         type_of_target_y = type_of_target(y)
@@ -1099,6 +1104,33 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
                 min_samples_in_fold = samples_in_fold
                 best_fold = i
         return best_fold
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
+
+        groups : array-like of shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super().split(X, y, groups)
 
 
 class TimeSeriesSplit(_BaseKFold):
