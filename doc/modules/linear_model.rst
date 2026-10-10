@@ -385,6 +385,22 @@ the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
 features, it is often faster than :class:`LassoCV`.
 
+.. _lasso_cv_preproc_leakage:
+
+.. warning::
+    :class:`LassoCV` and :class:`LassoLarsCV` run cross-validation *inside*
+    the estimator. Placing a preprocessor such as
+    :class:`~sklearn.preprocessing.StandardScaler` in a pipeline *before*
+    these estimators fits the preprocessor on the full training set, so
+    fold-wise scaling can leak information across CV folds.
+
+    That shortcut is reasonable when features already share similar units.
+    Otherwise, select ``alpha`` with
+    :class:`~sklearn.model_selection.GridSearchCV` /
+    :class:`~sklearn.model_selection.RandomizedSearchCV` over a pipeline that
+    includes the scaler and a non-CV estimator (for example
+    :class:`Lasso`), so preprocessing is refit within each fold.
+
 .. |lasso_cv_1| image:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_model_selection_002.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
     :scale: 48%
