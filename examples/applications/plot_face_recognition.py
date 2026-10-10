@@ -119,7 +119,7 @@ t0 = time()
 param_distributions = {
     "nystroem__gamma": loguniform(1e-4, 1e-1),
     "nystroem__n_components": randint(50, 200),
-    "logreg__C": loguniform(1e-2, 1e2),
+    "logreg__alpha": loguniform(1e-2, 1e2),
 }
 clf = HalvingRandomSearchCV(
     model,
