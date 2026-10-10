@@ -648,7 +648,7 @@ def test_estimator_html_repr_table():
     assert "parameters-table" in estimator_html_repr(est)
 
 def test_estimator_html_repr_non_utf8_locale(set_non_utf8_locale):
-    """Regression test for GH-35093: estimator_html_repr must work under 
+    """Regression test for GH-35093: estimator_html_repr must work under
     non-UTF-8 locale.
 
     Non-regression test for https://github.com/scikit-learn/scikit-learn/pull/35093
