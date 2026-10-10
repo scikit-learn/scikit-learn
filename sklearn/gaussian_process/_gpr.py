@@ -115,6 +115,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         implementation, the normalisation is reversed before the GP predictions
         are reported.
 
+        When `y` has several targets,
+        each target is additionally rescaled to the range [0, 1] before fitting,
+        regardless of the value of `normalize_y`,
+        so that all targets contribute comparably
+        to the log-marginal likelihood used for hyperparameter optimization.
+        This rescaling is also reversed before predictions are reported.
+
+        .. versionchanged:: 1.9
+        Multiple targets are now rescaled to [0, 1] before fitting.
+
     copy_X_train : bool, default=True
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
