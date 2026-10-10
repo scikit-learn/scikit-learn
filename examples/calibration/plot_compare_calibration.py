@@ -106,7 +106,6 @@ from sklearn.naive_bayes import GaussianNB
 lr = LogisticRegressionCV(
     alphas=np.logspace(6, -6, 101),
     cv=10,
-    l1_ratios=(0,),
     scoring="neg_log_loss",
     max_iter=1_000,
     use_legacy_attributes=False,

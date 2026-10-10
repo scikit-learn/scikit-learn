@@ -61,10 +61,6 @@ from sklearn.utils.fixes import (
 pytestmark = pytest.mark.filterwarnings(
     "error::sklearn.exceptions.ConvergenceWarning:sklearn.*"
 )
-# TODO(1.10): remove filterwarnings for l1_ratios after default changed.
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:The default value for l1_ratios.*:FutureWarning"
-)
 
 SOLVERS = (
     "lbfgs",
@@ -122,7 +118,6 @@ def test_predict_3_classes(csr_container):
     check_predictions(LogisticRegression(alpha=1e-1), csr_container(X), Y2)
 
 
-@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", ["lbfgs", "newton-cholesky"])
 def test_logistic_glmnet_L2(solver):
     """Compare Logistic regression with L2 regularization to glmnet.
@@ -199,7 +194,6 @@ def test_logistic_glmnet_L2(solver):
     )
 
 
-@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("solver", ["newton-cd", "newton-cd-gram", "saga"])
 def test_logistic_glmnet_L1(solver, global_random_seed):
     """Compare Logistic regression with L1 regularization to glmnet.
@@ -543,7 +537,6 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes, n_jobs):
     X_ref /= X_ref.std()
     lr_cv = LogisticRegressionCV(
         alphas=[1.0],
-        l1_ratios=(0.0,),  # TODO(1.10): remove because it is default now.
         fit_intercept=False,
         random_state=global_random_seed,
         solver="liblinear",
@@ -624,7 +617,6 @@ def test_logistic_cv_mock_scorer():
 
     lr = LogisticRegressionCV(
         alphas=alphas,
-        l1_ratios=(0,),  # TODO(1.10): remove with new default of l1_ratios
         scoring=mock_scorer,
         cv=cv,
         use_legacy_attributes=False,
@@ -788,10 +780,10 @@ def test_multinomial_cv_iris(use_legacy_attributes):
     assert clf.coef_.shape == (3, n_features)
     assert_array_equal(clf.classes_, [0, 1, 2])
     coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
-    assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
+    assert coefs_paths.shape == (3, n_cv, 10, 1, n_features + 1)
     assert clf.alphas_.shape == (10,)
     scores = np.asarray(list(clf.scores_.values()))
-    assert scores.shape == (3, n_cv, 10)
+    assert scores.shape == (3, n_cv, 10, 1)
 
     # Test that for the iris data multinomial gives a better accuracy than OvR
     clf_ovr = GridSearchCV(
@@ -825,10 +817,10 @@ def test_multinomial_cv_iris(use_legacy_attributes):
         assert_array_equal(clf_multi.classes_, [0, 1, 2])
         if use_legacy_attributes:
             coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
-            assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
+            assert coefs_paths.shape == (3, n_cv, 10, 1, n_features + 1)
             assert clf_multi.alphas_.shape == (10,)
             scores = np.asarray(list(clf_multi.scores_.values()))
-            assert scores.shape == (3, n_cv, 10)
+            assert scores.shape == (3, n_cv, 10, 1)
 
             # Norm of coefficients should increase with increasing C.
             for fold in range(clf_multi.coefs_paths_[0].shape[0]):
@@ -932,7 +924,6 @@ def test_logistic_cv_folds_with_classes_missing(enable_metadata_routing, n_class
 
         clf = LogisticRegressionCV(
             alphas=10,
-            l1_ratios=(0,),
             cv=cv,
             scoring="neg_brier_score",
             use_legacy_attributes=False,
@@ -1672,7 +1663,6 @@ def test_n_iter(solver, use_legacy_attributes):
         tol=1e-2,
         solver=solver,
         alphas=n_alphas,
-        l1_ratios=(0.0,),  # TODO(1.10): remove l1_ratios because it is default now.
         cv=n_cv_fold,
         random_state=42,
         use_legacy_attributes=use_legacy_attributes,
@@ -2115,7 +2105,7 @@ def test_LogisticRegressionCV_on_folds():
     cv = StratifiedKFold(5)
     folds = list(cv.split(X, y))
 
-    # Some combinations of fold and value of C.
+    # Some combinations of fold and value of alpha.
     for idx_fold, idx_alpha in [[0, 0], [0, 1], [3, 6]]:
         train_fold_0 = folds[idx_fold][0]  # 0 is training fold
         lr = LogisticRegression(
@@ -2127,14 +2117,14 @@ def test_LogisticRegressionCV_on_folds():
         for cl in np.unique(y):
             # Coefficients without intercept
             assert_allclose(
-                lrcv.coefs_paths_[cl][idx_fold, idx_alpha, :-1],
+                lrcv.coefs_paths_[cl][idx_fold, idx_alpha, 0, :-1],
                 lr.coef_[cl],
                 rtol=1e-5,
             )
 
             # Intercepts
             assert_allclose(
-                lrcv.coefs_paths_[cl][idx_fold, idx_alpha, -1],
+                lrcv.coefs_paths_[cl][idx_fold, idx_alpha, 0, -1],
                 lr.intercept_[cl],
                 rtol=1e-5,
             )
@@ -2320,7 +2310,6 @@ def test_alpha_zero_no_warning(solver):
 # XXX: investigate thread-safety bug that might be related to:
 # https://github.com/scikit-learn/scikit-learn/issues/31883
 @pytest.mark.thread_unsafe
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize(
     "params",
     [
@@ -2746,36 +2735,6 @@ def test_logisticregressioncv_warns_with_use_legacy_attributes():
         lr.fit(X, y)
 
 
-# TODO(1.10): remove after deprecation cycle.
-@pytest.mark.filterwarnings("ignore:l1_ratios parameter is only us.*:UserWarning")
-@pytest.mark.filterwarnings("ignore:.*default.*use_legacy_attributes.*:FutureWarning")
-def test_l1_ratio_None_deprecated():
-    """Check that l1_ratio=None in LogisticRegression is deprecated."""
-    X, y = make_classification(n_classes=2, n_samples=20, n_informative=6)
-
-    lr = LogisticRegression(l1_ratio=None, alpha=1e-1)
-    msg = "'l1_ratio=None' was deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        lr.fit(X, y)
-
-    lr = LogisticRegressionCV(
-        alphas=10,
-        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
-    )
-    msg = "The default value for l1_ratios will change"
-    with pytest.warns(FutureWarning, match=msg):
-        lr.fit(X, y)
-
-    lr = LogisticRegressionCV(
-        alphas=10,
-        l1_ratios=None,
-        scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
-    )
-    msg = "'l1_ratios=None' was deprecated"
-    with pytest.warns(FutureWarning, match=msg):
-        lr.fit(X, y)
-
-
 # TODO(1.10): remove this test when n_jobs gets removed
 def test_logisticregression_warns_with_n_jobs():
     X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
@@ -2794,7 +2753,6 @@ def test_logisticregression_warns_with_n_jobs():
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
-@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_array_api_compliance(
     solver,
     binary,
@@ -2936,7 +2894,6 @@ def test_logistic_regression_array_api_compliance(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
-@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_cv_array_api_compliance(
     solver,
     refit,
@@ -3159,7 +3116,6 @@ def test_Cs_deprecated():
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
-@pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_logistic_regression_array_api_warm_start(
     binary,
     array_namespace,
@@ -3211,7 +3167,6 @@ def test_logistic_regression_callback_support(max_iter):
 # TODO(callbacks): also test for other solvers when they get supported.
 @pytest.mark.parametrize("n_classes", [2, 3])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @skip_callback_test_if_wasm
 def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept):
     """Check the fitted_estimator in callback hooks.
@@ -3250,14 +3205,16 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
 
         if i > 0:
             est = iter_begin["kwargs"]["fitted_estimator"]
-            expected_lr = LogisticRegression(**lr_params, max_iter=i).fit(X, y)
+            with ignore_warnings(category=ConvergenceWarning):
+                expected_lr = LogisticRegression(**lr_params, max_iter=i).fit(X, y)
             assert_allclose(est.coef_, expected_lr.coef_)
             assert_allclose(est.intercept_, expected_lr.intercept_)
             assert_allclose(est.predict_proba(X), expected_lr.predict_proba(X))
 
         if i < n_iter:
             est = iter_end["kwargs"]["fitted_estimator"]
-            expected_lr = LogisticRegression(**lr_params, max_iter=i + 1).fit(X, y)
+            with ignore_warnings(category=ConvergenceWarning):
+                expected_lr = LogisticRegression(**lr_params, max_iter=i + 1).fit(X, y)
             assert_allclose(est.coef_, expected_lr.coef_)
             assert_allclose(est.intercept_, expected_lr.intercept_)
             assert_allclose(est.predict_proba(X), expected_lr.predict_proba(X))

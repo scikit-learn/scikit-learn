@@ -1155,10 +1155,6 @@ class LogisticRegression(
         .. versionchanged:: 1.8
             Default value changed from None to 0.0.
 
-        .. deprecated:: 1.8
-            `None` is deprecated and will be removed in version 1.10. Always use
-            `l1_ratio` to specify the penalty type.
-
     dual : bool, default=False
         Dual (constrained) or primal (regularized, see also
         :ref:`this equation <regularized-logistic-loss>`) formulation. Dual formulation
@@ -1350,7 +1346,7 @@ class LogisticRegression(
             Interval(Real, 0, None, closed="right"),
             Hidden(StrOptions({"deprecated"})),
         ],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "dual": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
         "fit_intercept": ["boolean"],
@@ -1473,21 +1469,10 @@ class LogisticRegression(
                 msg = "You must set either 'alpha' or the deprecated 'C', but not both."
                 raise ValueError(msg)
 
-        if self.l1_ratio == 0 or self.l1_ratio is None:
-            if self.l1_ratio is None:
-                warnings.warn(
-                    (
-                        "'l1_ratio=None' was deprecated in version 1.8 and will "
-                        "trigger an error in 1.10. Use 0<=l1_ratio<=1 instead."
-                    ),
-                    FutureWarning,
-                )
+        if self.C == np.inf or (self.C == "deprecated" and self.alpha == 0):
             l1_ratio = 0
         else:
             l1_ratio = self.l1_ratio
-
-        if self.C == np.inf or (self.C == "deprecated" and self.alpha == 0):
-            l1_ratio = 0
 
         solver = _check_solver(self.solver, l1_ratio, self.dual)
 
@@ -1787,7 +1772,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            Note that the new `alphas` is equivalent to `Cs=1/alphas` (for array-likes
            of floats).
 
-    l1_ratios : array-like of shape (n_l1_ratios), default=None
+    l1_ratios : array-like of shape (n_l1_ratios), default=(0.0,)
         Floats between 0 and 1 passed as Elastic-Net mixing parameter (scaling between
         L1 and L2 penalties). For `l1_ratio = 0` the penalty is an L2 penalty. For
         `l1_ratio = 1` it is an L1 penalty. Any value between 0 and 1 gives
@@ -1800,10 +1785,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            solvers. See the parameter `solver` below, to know the compatibility between
            the penalty and solver.
 
-        .. deprecated:: 1.8
-            `l1_ratios=None` is deprecated in 1.8 and will raise an error
-            in version 1.10. Default value will change from `None` to `(0.0,)`
-            in version 1.10.
+        .. versionchanged:: 1.10
+            Default value changed from None to `(0.0,)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -1993,28 +1976,22 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            Use the new attribute `alphas_` instead.
 
     l1_ratios_ : ndarray of shape (n_l1_ratios)
-        Array of l1_ratios used for cross-validation. If l1_ratios=None is used,
-        this is set to ``[None]``.
+        Array of l1_ratios used for cross-validation.
 
-    coefs_paths_ : dict of ndarray of shape (n_folds, n_alphas, n_dof) or \
-            (n_folds, n_alphas, n_l1_ratios, n_dof)
+    coefs_paths_ : dict of ndarray of shape (n_folds, n_alphas, n_l1_ratios, n_dof)
         A dict with classes as the keys, and the path of coefficients obtained
         during cross-validating across each fold (`n_folds`) and then across each alphas
         (`n_alphas`).
         The size of the coefficients is the number of degrees of freedom (`n_dof`),
         i.e. without intercept `n_dof=n_features` and with intercept
         `n_dof=n_features+1`.
-        If `l1_ratios` is not None, there is an additional dimension for the number of
-        l1_ratio values (`n_l1_ratios`), which gives a shape of
-        ``(n_folds, n_alphas, n_l1_ratios_, n_dof)``.
         See also parameter `use_legacy_attributes`.
 
-    scores_ : dict or ndarray of shape (n_folds, n_l1_ratios, n_alphas)
+    scores_ : dict or ndarray of shape (n_folds, n_alphas, n_l1_ratios)
         A dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold.
         The same score is repeated across all classes. Each dict value
-        has shape ``(n_folds, n_alphas)`` or ``(n_folds, n_alphas, n_l1_ratios)`` if
-        ``l1_ratios`` is not None.
+        has shape ``(n_folds, n_alphas, n_l1_ratios)``.
         See also parameter `use_legacy_attributes`.
 
     alpha_ : float
@@ -2040,10 +2017,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         `l1_ratio_` is of shape (1,) when the problem is binary.
         See also parameter `use_legacy_attributes`.
 
-    n_iter_ : ndarray of shape (1, n_folds, n_alphas) or \
-            (1, n_folds, n_alphas, n_l1_ratios)
+    n_iter_ : ndarray of shape (1, n_folds, n_alphas, n_l1_ratios)
         Actual number of iterations for all classes, folds and alphas.
-        If `l1_ratios` is not None, the shape is `(1, n_folds, n_alphas, n_l1_ratios)`.
         See also parameter `use_legacy_attributes`.
 
     n_features_in_ : int
@@ -2068,7 +2043,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     ...     alphas=10,
     ...     cv=5,
     ...     use_legacy_attributes=False,
-    ...     l1_ratios=(0,),
     ...     scoring="neg_log_loss",
     ...     solver="newton-cholesky",
     ... ).fit(X, y)
@@ -2096,7 +2070,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 "array-like",
                 Hidden(StrOptions({"deprecated"})),
             ],
-            "l1_ratios": ["array-like", None, Hidden(StrOptions({"warn"}))],
+            "l1_ratios": ["array-like"],
             "cv": ["cv_object"],
             "scoring": [
                 StrOptions(set(get_scorer_names())),
@@ -2114,7 +2088,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         *,
         alphas=10,
         Cs="deprecated",
-        l1_ratios="warn",
+        l1_ratios=(0.0,),
         fit_intercept=True,
         cv=None,
         dual=False,
@@ -2199,31 +2173,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             alphas_ = self.alphas
             Cs_ = None
 
-        if isinstance(self.l1_ratios, str) and self.l1_ratios == "warn":
-            l1_ratios = None
-            warnings.warn(
-                (
-                    "The default value for l1_ratios will change from None to (0.0,) "
-                    "in version 1.10. From version 1.10 onwards, only array-like "
-                    "with values in [0, 1] will be allowed, None will be forbidden. "
-                    "To avoid this warning, explicitly set a value, "
-                    "e.g. l1_ratios=(0,)."
-                ),
-                FutureWarning,
-            )
-        else:
-            l1_ratios = self.l1_ratios
-
-        if self.l1_ratios is None:
-            warnings.warn(
-                (
-                    "'l1_ratios=None' was deprecated in version 1.8 and will "
-                    "trigger an error in 1.10. Use an array-like with values"
-                    "in [0, 1] instead."
-                ),
-                FutureWarning,
-            )
-
         if self.scoring == "warn":
             warnings.warn(
                 "The default value of the parameter 'scoring' will change from None, "
@@ -2253,9 +2202,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             use_legacy_attributes = self.use_legacy_attributes
 
-        if np.all(np.asarray(l1_ratios) == 0) or l1_ratios is None:
+        if np.max(np.asarray(self.l1_ratios)) == 0:
             l1_ratio_type = 0  # only L2 penalty
-        elif np.all(np.asarray(l1_ratios) == 1):
+        elif np.min(np.asarray(self.l1_ratios)) == 1:
             l1_ratio_type = 1  # only L1 penalty
         else:
             l1_ratio_type = 0.5  # Elastic-Net penalty
@@ -2269,27 +2218,18 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
 
         if l1_ratio_type == 0.5:
-            if (
-                l1_ratios is None
-                or len(l1_ratios) == 0
-                or any(
-                    (
-                        not isinstance(l1_ratio, numbers.Number)
-                        or l1_ratio < 0
-                        or l1_ratio > 1
-                    )
-                    for l1_ratio in l1_ratios
+            if len(self.l1_ratios) == 0 or any(
+                (
+                    not isinstance(l1_ratio, numbers.Number)
+                    or l1_ratio < 0
+                    or l1_ratio > 1
                 )
+                for l1_ratio in self.l1_ratios
             ):
                 raise ValueError(
                     "l1_ratios must be an array-like of numbers between "
-                    "0 and 1; got (l1_ratios=%r)" % l1_ratios
+                    "0 and 1; got (l1_ratios=%r)" % self.l1_ratios
                 )
-            l1_ratios_ = l1_ratios
-        elif l1_ratios is None:
-            l1_ratios_ = [0]
-        else:
-            l1_ratios_ = l1_ratios
 
         xp, _, device = get_namespace_and_device(X)
         sample_weight = move_to(sample_weight, xp=xp, device=device)
@@ -2409,7 +2349,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 score_params=routed_params.scorer.score,
             )
             for train, test in folds
-            for l1_ratio in l1_ratios_
+            for l1_ratio in self.l1_ratios
         )
 
         # fold_coefs_ is a list and would have shape (n_folds * n_l1_ratios, ..)
@@ -2437,7 +2377,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             self.alphas_[~mask] = 0
         n_folds = len(folds)
         n_alphas = size(self.alphas_)
-        n_l1_ratios = len(l1_ratios_)
+        n_l1_ratios = len(self.l1_ratios)
         coefs_paths = xp.stack(coefs_paths)
         n_iter_ = xp.stack(n_iter_)
         if is_binary:
@@ -2487,7 +2427,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 C_ = self._Cs_[best_index_int[0]]
                 self._C_.append(C_)
 
-            l1_ratio_ = l1_ratios_[best_index_int[1]]
+            l1_ratio_ = self.l1_ratios[best_index_int[1]]
             self.l1_ratio_.append(l1_ratio_)
 
             if is_binary:
@@ -2562,7 +2502,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
             if l1_ratio_type == 0.5:
                 best_indices_l1 = best_indices[:, 1]
-                self.l1_ratio_.append(xp.mean(l1_ratios_[best_indices_l1]))
+                self.l1_ratio_.append(xp.mean(self.l1_ratios[best_indices_l1]))
             else:
                 self.l1_ratio_.append(0.0)
 
@@ -2591,16 +2531,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             self._C_ = xp.asarray(self._C_)
             self.alpha_ = 1 / self._C_
-        self.l1_ratio_ = np.asarray(self.l1_ratio_)
-        self.l1_ratios_ = np.asarray(l1_ratios_)
-        if l1_ratios is None:
-            # if elasticnet was not used, remove the l1_ratios dimension of some
-            # attributes
-            for cls, coefs_path in self.coefs_paths_.items():
-                self.coefs_paths_[cls] = coefs_path[:, :, 0, :]
-            for cls, score in self.scores_.items():
-                self.scores_[cls] = score[:, :, 0]
-            self.n_iter_ = self.n_iter_[:, :, :, 0]
+        self.l1_ratio_ = xp.asarray(self.l1_ratio_)
+        self.l1_ratios_ = xp.asarray(self.l1_ratios, device=device, dtype=X.dtype)
 
         if not use_legacy_attributes:
             n_dof = X.shape[1] + int(self.fit_intercept)
@@ -2609,30 +2541,16 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             newpaths = xp.concat(tuple(self.coefs_paths_.values()), axis=0)
             newscores = self.scores_[class_labels[0]]  # same for all classes
             newniter = self.n_iter_[0, ...]
-            if l1_ratios is None:
-                if n_classes <= 2:
-                    newpaths = xp.reshape(newpaths, (1, n_folds, n_alphas, 1, n_dof))
-                else:
-                    newpaths = xp.reshape(
-                        newpaths, (n_classes, n_folds, n_alphas, 1, n_dof)
-                    )
-                newscores = xp.reshape(newscores, (n_folds, n_alphas, 1))
-                newniter = xp.reshape(newniter, (n_folds, n_alphas, 1))
-                if l1_ratio_type == 1:
-                    self.l1_ratio_ = 1.0
-                else:
-                    self.l1_ratio_ = 0.0
+            n_l1_ratios = self.l1_ratios_.shape[0]
+            self.l1_ratio_ = float(self.l1_ratio_[0])
+            if n_classes <= 2:
+                newpaths = xp.reshape(
+                    newpaths, (1, n_folds, n_alphas, n_l1_ratios, n_dof)
+                )
             else:
-                n_l1_ratios = self.l1_ratios_.shape[0]
-                self.l1_ratio_ = float(self.l1_ratio_[0])
-                if n_classes <= 2:
-                    newpaths = xp.reshape(
-                        newpaths, (1, n_folds, n_alphas, n_l1_ratios, n_dof)
-                    )
-                else:
-                    newpaths = xp.reshape(
-                        newpaths, (n_classes, n_folds, n_alphas, n_l1_ratios, n_dof)
-                    )
+                newpaths = xp.reshape(
+                    newpaths, (n_classes, n_folds, n_alphas, n_l1_ratios, n_dof)
+                )
             # newpaths.shape = (n_classes, n_folds, n_alphas, n_l1_ratios, n_dof)
             # self.coefs_paths_.shape should be
             # (n_folds, n_l1_ratios, n_alphas, n_classes, n_dof)
