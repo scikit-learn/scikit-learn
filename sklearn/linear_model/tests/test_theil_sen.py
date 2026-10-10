@@ -43,8 +43,8 @@ def no_stdout_stderr():
         sys.stderr = old_stderr
 
 
-def gen_toy_problem_1d(intercept=True):
-    random_state = np.random.RandomState(0)
+def gen_toy_problem_1d(random_seed, intercept=True):
+    random_state = np.random.RandomState(random_seed)
     # Linear model y = 3*x + N(2, 0.1**2)
     w = 3.0
     if intercept:
@@ -58,10 +58,13 @@ def gen_toy_problem_1d(intercept=True):
     y = w * x + c + noise
     # Add some outliers
     if intercept:
-        x[42], y[42] = (-2, 4)
-        x[43], y[43] = (-2.5, 8)
-        x[33], y[33] = (2.5, 1)
-        x[49], y[49] = (2.1, 2)
+        # Four points out of 50. The responses are far enough from y = 3x + 2
+        # that least squares is biased for every seed in 0..99, and few enough
+        # that Theil-Sen's median slope still recovers the line.
+        x[42], y[42] = (-2, 12)
+        x[43], y[43] = (-2.5, 18)
+        x[33], y[33] = (2.5, -8)
+        x[49], y[49] = (2.1, -6)
     else:
         x[42], y[42] = (-2, 4)
         x[43], y[43] = (-2.5, 8)
@@ -71,8 +74,8 @@ def gen_toy_problem_1d(intercept=True):
     return x[:, np.newaxis], y, w, c
 
 
-def gen_toy_problem_2d():
-    random_state = np.random.RandomState(0)
+def gen_toy_problem_2d(random_seed):
+    random_state = np.random.RandomState(random_seed)
     n_samples = 100
     # Linear model y = 5*x_1 + 10*x_2 + N(1, 0.1**2)
     X = random_state.normal(size=(n_samples, 2))
@@ -80,15 +83,18 @@ def gen_toy_problem_2d():
     c = 1.0
     noise = 0.1 * random_state.normal(size=n_samples)
     y = np.dot(X, w) + c + noise
-    # Add some outliers
+    # Ten rows, under the breakdown point of about 20% for this shape.
+    # (4, 4) would have response 61 on the line; y = -100 pulls the
+    # least-squares slope on every seed, and Theil-Sen ignores them.
     n_outliers = n_samples // 10
-    ix = random_state.randint(0, n_samples, size=n_outliers)
-    y[ix] = 50 * random_state.normal(size=n_outliers)
+    ix = random_state.choice(n_samples, size=n_outliers, replace=False)
+    X[ix] = np.array([4.0, 4.0])
+    y[ix] = -100.0
     return X, y, w, c
 
 
-def gen_toy_problem_4d():
-    random_state = np.random.RandomState(0)
+def gen_toy_problem_4d(random_seed):
+    random_state = np.random.RandomState(random_seed)
     n_samples = 10000
     # Linear model y = 5*x_1 + 10*x_2  + 42*x_3 + 7*x_4 + N(1, 0.1**2)
     X = random_state.normal(size=(n_samples, 4))
@@ -140,13 +146,13 @@ def test_modweiszfeld_step_2d():
     assert_array_almost_equal(new_y, y)
 
 
-def test_spatial_median_1d():
+def test_spatial_median_1d(global_random_seed):
     X = np.array([1.0, 2.0, 3.0]).reshape(3, 1)
     true_median = 2.0
     _, median = _spatial_median(X)
     assert_array_almost_equal(median, true_median)
     # Test larger problem and for exact solution in 1d case
-    random_state = np.random.RandomState(0)
+    random_state = np.random.RandomState(global_random_seed)
     X = random_state.randint(100, size=(1000, 1))
     true_median = np.median(X.ravel())
     _, median = _spatial_median(X)
@@ -170,38 +176,43 @@ def test_spatial_median_2d():
         _spatial_median(X, max_iter=30, tol=0.0)
 
 
-def test_theil_sen_1d():
-    X, y, w, c = gen_toy_problem_1d()
+def test_theil_sen_1d(global_random_seed):
+    X, y, w, c = gen_toy_problem_1d(global_random_seed)
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
     assert np.abs(lstq.coef_ - w) > 0.9
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(random_state=0).fit(X, y)
+    theil_sen = TheilSenRegressor(random_state=global_random_seed).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_array_almost_equal(theil_sen.intercept_, c, 1)
 
 
-def test_theil_sen_1d_no_intercept():
-    X, y, w, c = gen_toy_problem_1d(intercept=False)
+def test_theil_sen_1d_no_intercept(global_random_seed):
+    X, y, w, c = gen_toy_problem_1d(global_random_seed, intercept=False)
     # Check that Least Squares fails
     lstq = LinearRegression(fit_intercept=False).fit(X, y)
-    assert np.abs(lstq.coef_ - w - c) > 0.5
+    # The model cannot fit c, so the population slope is w, not w + c.
+    assert np.abs(lstq.coef_ - w) > 0.5
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(fit_intercept=False, random_state=0).fit(X, y)
-    assert_array_almost_equal(theil_sen.coef_, w + c, 1)
+    theil_sen = TheilSenRegressor(
+        fit_intercept=False, random_state=global_random_seed
+    ).fit(X, y)
+    assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_almost_equal(theil_sen.intercept_, 0.0)
 
     # non-regression test for #18104
     theil_sen.score(X, y)
 
 
-def test_theil_sen_2d():
-    X, y, w, c = gen_toy_problem_2d()
+def test_theil_sen_2d(global_random_seed):
+    X, y, w, c = gen_toy_problem_2d(global_random_seed)
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(max_subpopulation=1e3, random_state=0).fit(X, y)
+    theil_sen = TheilSenRegressor(
+        max_subpopulation=1e3, random_state=global_random_seed
+    ).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_array_almost_equal(theil_sen.intercept_, c, 1)
 
@@ -227,7 +238,7 @@ def test_calc_breakdown_point():
     ],
 )
 def test_checksubparams_invalid_input(param, ExceptionCls, match):
-    X, y, w, c = gen_toy_problem_1d()
+    X, y, w, c = gen_toy_problem_1d(0)
     theil_sen = TheilSenRegressor(**param, random_state=0)
     with pytest.raises(ExceptionCls, match=match):
         theil_sen.fit(X, y)
@@ -243,16 +254,20 @@ def test_checksubparams_n_subsamples_if_less_samples_than_features():
         theil_sen.fit(X, y)
 
 
-def test_subpopulation():
-    X, y, w, c = gen_toy_problem_4d()
-    theil_sen = TheilSenRegressor(max_subpopulation=250, random_state=0).fit(X, y)
+def test_subpopulation(global_random_seed):
+    X, y, w, c = gen_toy_problem_4d(global_random_seed)
+    theil_sen = TheilSenRegressor(
+        max_subpopulation=250, random_state=global_random_seed
+    ).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_array_almost_equal(theil_sen.intercept_, c, 1)
 
 
-def test_subsamples():
-    X, y, w, c = gen_toy_problem_4d()
-    theil_sen = TheilSenRegressor(n_subsamples=X.shape[0], random_state=0).fit(X, y)
+def test_subsamples(global_random_seed):
+    X, y, w, c = gen_toy_problem_4d(global_random_seed)
+    theil_sen = TheilSenRegressor(
+        n_subsamples=X.shape[0], random_state=global_random_seed
+    ).fit(X, y)
     lstq = LinearRegression().fit(X, y)
     # Check for exact the same results as Least Squares
     assert_array_almost_equal(theil_sen.coef_, lstq.coef_, 9)
@@ -260,37 +275,41 @@ def test_subsamples():
 
 @pytest.mark.thread_unsafe  # manually captured stdout
 def test_verbosity():
-    X, y, w, c = gen_toy_problem_1d()
+    X, y, w, c = gen_toy_problem_1d(0)
     # Check that Theil-Sen can be verbose
     with no_stdout_stderr():
         TheilSenRegressor(verbose=True, random_state=0).fit(X, y)
         TheilSenRegressor(verbose=True, max_subpopulation=10, random_state=0).fit(X, y)
 
 
-def test_theil_sen_parallel():
-    X, y, w, c = gen_toy_problem_2d()
+def test_theil_sen_parallel(global_random_seed):
+    X, y, w, c = gen_toy_problem_2d(global_random_seed)
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theil_sen = TheilSenRegressor(n_jobs=2, random_state=0, max_subpopulation=2e3).fit(
-        X, y
-    )
+    theil_sen = TheilSenRegressor(
+        n_jobs=2, random_state=global_random_seed, max_subpopulation=2e3
+    ).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, w, 1)
     assert_array_almost_equal(theil_sen.intercept_, c, 1)
 
 
-def test_less_samples_than_features():
-    random_state = np.random.RandomState(0)
+def test_less_samples_than_features(global_random_seed):
+    random_state = np.random.RandomState(global_random_seed)
     n_samples, n_features = 10, 20
     X = random_state.normal(size=(n_samples, n_features))
     y = random_state.normal(size=n_samples)
     # Check that Theil-Sen falls back to Least Squares if fit_intercept=False
-    theil_sen = TheilSenRegressor(fit_intercept=False, random_state=0).fit(X, y)
+    theil_sen = TheilSenRegressor(
+        fit_intercept=False, random_state=global_random_seed
+    ).fit(X, y)
     lstq = LinearRegression(fit_intercept=False).fit(X, y)
     assert_array_almost_equal(theil_sen.coef_, lstq.coef_, 12)
     # Check fit_intercept=True case. This will not be equal to the Least
     # Squares solution since the intercept is calculated differently.
-    theil_sen = TheilSenRegressor(fit_intercept=True, random_state=0).fit(X, y)
+    theil_sen = TheilSenRegressor(
+        fit_intercept=True, random_state=global_random_seed
+    ).fit(X, y)
     y_pred = theil_sen.predict(X)
     assert_array_almost_equal(y_pred, y, 12)
