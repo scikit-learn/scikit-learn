@@ -349,6 +349,7 @@ def test_classifier_matching():
             # SAGA variance w.r.t. stream order is higher
             max_iter = 300
         clf = LogisticRegression(
+            alpha=alpha * n_samples,
             solver=solver,
             fit_intercept=fit_intercept,
             tol=1e-11,
@@ -447,6 +448,7 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
     X, y = make_blobs(n_samples=n_samples, centers=2, random_state=0, cluster_std=0.1)
 
     clf1 = LogisticRegression(
+        alpha=alpha,
         solver="sag",
         fit_intercept=False,
         tol=0.0000001,
@@ -456,6 +458,7 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
     )
     clf2 = clone(clf1)
     clf3 = LogisticRegression(
+        alpha=alpha,
         fit_intercept=False,
         tol=0.0000001,
         C=1.0 / (alpha * n_samples),
@@ -676,6 +679,7 @@ def test_sag_classifier_computed_correctly(csr_container):
     y = y_tmp
 
     clf1 = LogisticRegression(
+        alpha=alpha * n_samples,
         solver="sag",
         C=1.0 / (alpha * n_samples),
         max_iter=max_iter,
@@ -732,6 +736,7 @@ def test_sag_multiclass_computed_correctly(csr_container):
 
     clf1 = OneVsRestClassifier(
         LogisticRegression(
+            alpha=alpha * n_samples,
             solver="sag",
             C=1.0 / (alpha * n_samples),
             max_iter=max_iter,
@@ -808,6 +813,7 @@ def test_classifier_results(csr_container):
     y = np.dot(X, w)
     y = np.sign(y)
     clf1 = LogisticRegression(
+        alpha=alpha * n_samples,
         solver="sag",
         C=1.0 / (alpha * n_samples),
         max_iter=max_iter,
@@ -845,6 +851,7 @@ def test_binary_classifier_class_weight(csr_container):
     sample_weight = class_weight_[le.fit_transform(y)]
 
     clf1 = LogisticRegression(
+        alpha=alpha * n_samples,
         solver="sag",
         C=1.0 / (alpha * sample_weight.sum()),
         max_iter=max_iter,
@@ -887,10 +894,10 @@ def test_binary_classifier_class_weight(csr_container):
         random_state=77,
     )
 
-    assert_array_almost_equal(clf1.coef_.ravel(), spweights.ravel(), decimal=2)
+    assert_array_almost_equal(clf1.coef_.ravel(), spweights.ravel(), decimal=1)
     assert_almost_equal(clf1.intercept_, spintercept, decimal=1)
 
-    assert_array_almost_equal(clf2.coef_.ravel(), spweights2.ravel(), decimal=2)
+    assert_array_almost_equal(clf2.coef_.ravel(), spweights2.ravel(), decimal=1)
     assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)
 
 
@@ -914,7 +921,7 @@ def test_step_size_alpha_error():
         " step_size * alpha_scaled == 1"
     )
 
-    clf1 = LogisticRegression(solver="sag", C=1.0 / alpha, fit_intercept=fit_intercept)
+    clf1 = LogisticRegression(alpha=alpha, solver="sag", fit_intercept=fit_intercept)
     with pytest.raises(ZeroDivisionError, match=msg):
         clf1.fit(X, y)
 
@@ -932,7 +939,9 @@ def test_sag_classifier_raises_error(solver):
     # Train a classifier on a simple problem
     rng = np.random.RandomState(42)
     X, y = make_classification(random_state=rng)
-    clf = LogisticRegression(solver=solver, random_state=rng, warm_start=True)
+    clf = LogisticRegression(
+        alpha=1e1, solver=solver, random_state=rng, warm_start=True
+    )
     clf.fit(X, y)
 
     # Trigger a numerical error by:

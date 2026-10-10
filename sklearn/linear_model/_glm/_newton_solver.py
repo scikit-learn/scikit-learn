@@ -1517,7 +1517,7 @@ class NewtonCDSolver(NewtonSolver):
             # Unfortunately, these strategies fail even for simple datasets such as
             #     X, y = make_classification(n_samples=20, n_features=20,
             #         n_informative=10, n_classes=3)
-            #     LogisticRegression(C=1).fit(X, y)
+            #     LogisticRegression(alpha=1).fit(X, y)
             # Therefore, we take a more sophisticated approach:
             # Tanabe & Sagae (1992) https://doi.org/10.1111/J.2517-6161.1992.TB01875.X
             # derive an analytical LDL' decomposition for the matrix
