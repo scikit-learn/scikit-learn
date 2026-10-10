@@ -920,12 +920,20 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
 `TimeSeriesSplit` also supports a walk-forward mode where split boundaries are
 driven by window sizes rather than by a fixed number of folds:
 
-- ``n_splits="walk_forward"`` enables walk-forward splitting.
+- ``n_splits="walk_forward"`` enables walk-forward splitting; the number of
+  splits is then derived from the data and can be queried with
+  ``get_n_splits(X)``.
 - ``min_train_size`` defines the initial train size in expanding mode.
 - ``max_train_size`` defines the fixed train size in rolling mode.
 - ``test_size`` defines the width of each test window.
-- ``step`` controls how many samples the test window advances each split.
+- ``step`` controls how many samples the test window advances each split. It
+  defaults to ``test_size`` so that test windows are contiguous and do not
+  overlap.
 - ``gap`` excludes samples between each train and test window.
+
+The first test window starts right after the initial train window and the gap.
+Only complete test windows are produced, so trailing samples that do not fill a
+test window are left unused.
 
 Expanding walk-forward example::
 

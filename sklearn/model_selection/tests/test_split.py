@@ -1925,20 +1925,15 @@ def test_time_series_gap():
 
 def test_time_series_walk_forward_expanding():
     X = np.zeros((10, 1))
-    splits = list(
-        TimeSeriesSplit(
-            n_splits="walk_forward",
-            min_train_size=4,
-            test_size=2,
-            gap=1,
-            step=2,
-        ).split(X)
+    cv = TimeSeriesSplit(
+        n_splits="walk_forward", min_train_size=4, test_size=2, gap=1, step=2
     )
-
+    splits = list(cv.split(X))
     expected = [
-        (np.array([0, 1, 2, 3]), np.array([5, 6])),
-        (np.array([0, 1, 2, 3, 4, 5]), np.array([7, 8])),
+        ([0, 1, 2, 3], [5, 6]),
+        ([0, 1, 2, 3, 4, 5], [7, 8]),
     ]
+    assert len(splits) == len(expected) == cv.get_n_splits(X)
     for (train, test), (expected_train, expected_test) in zip(splits, expected):
         assert_array_equal(train, expected_train)
         assert_array_equal(test, expected_test)
@@ -1946,65 +1941,155 @@ def test_time_series_walk_forward_expanding():
 
 def test_time_series_walk_forward_rolling():
     X = np.zeros((10, 1))
-    splits = list(
-        TimeSeriesSplit(
-            n_splits="walk_forward",
-            max_train_size=3,
-            test_size=2,
-            gap=1,
-            step=2,
-        ).split(X)
+    cv = TimeSeriesSplit(
+        n_splits="walk_forward", max_train_size=3, test_size=2, gap=1, step=2
     )
-
+    splits = list(cv.split(X))
     expected = [
-        (np.array([0, 1, 2]), np.array([4, 5])),
-        (np.array([2, 3, 4]), np.array([6, 7])),
-        (np.array([4, 5, 6]), np.array([8, 9])),
+        ([0, 1, 2], [4, 5]),
+        ([2, 3, 4], [6, 7]),
+        ([4, 5, 6], [8, 9]),
     ]
+    assert len(splits) == len(expected) == cv.get_n_splits(X)
     for (train, test), (expected_train, expected_test) in zip(splits, expected):
         assert_array_equal(train, expected_train)
         assert_array_equal(test, expected_test)
 
 
-def test_time_series_walk_forward_get_n_splits():
-    X = np.zeros((10, 1))
+def test_time_series_walk_forward_default_step():
+    # By default `step` is `test_size`: test windows are contiguous and do not
+    # overlap, and only complete test windows are produced.
+    X = np.zeros((15, 1))
+    cv = TimeSeriesSplit(n_splits="walk_forward", min_train_size=4, test_size=3)
+    assert cv.step is None  # stored as passed
+    splits = list(cv.split(X))
+    expected_tests = [[4, 5, 6], [7, 8, 9], [10, 11, 12]]
+    assert len(splits) == len(expected_tests) == cv.get_n_splits(X)
+    for (train, test), expected_test in zip(splits, expected_tests):
+        assert_array_equal(test, expected_test)
+        assert_array_equal(train, np.arange(expected_test[0]))
+    # samples 13 and 14 do not fill a test window and are left unused
+    assert_array_equal(np.concatenate([test for _, test in splits]), np.arange(4, 13))
+
+
+@pytest.mark.parametrize("n_samples", [7, 20, 33])
+@pytest.mark.parametrize("test_size", [1, 2, 3])
+@pytest.mark.parametrize("step", [None, 1, 5])
+@pytest.mark.parametrize("gap", [0, 2])
+@pytest.mark.parametrize("window", ["expanding", "rolling"])
+def test_time_series_walk_forward_invariants(n_samples, test_size, step, gap, window):
+    train_size = 3
+    if window == "expanding":
+        kwargs = {"min_train_size": train_size}
+    else:
+        kwargs = {"max_train_size": train_size}
     cv = TimeSeriesSplit(
-        n_splits="walk_forward", min_train_size=3, test_size=2, gap=1, step=2
+        n_splits="walk_forward", test_size=test_size, step=step, gap=gap, **kwargs
     )
+    X = np.zeros((n_samples, 1))
+    effective_step = test_size if step is None else step
 
-    assert cv.get_n_splits(X) == 3
-    assert cv.get_n_splits(X[:5]) == 0
-    assert len(list(cv.split(X))) == cv.get_n_splits(X)
+    if n_samples < train_size + gap + test_size:
+        with pytest.raises(ValueError, match="Not enough samples"):
+            cv.get_n_splits(X)
+        with pytest.raises(ValueError, match="Not enough samples"):
+            next(cv.split(X))
+        return
 
+    splits = list(cv.split(X))
+    assert len(splits) == cv.get_n_splits(X) >= 1
+    previous_test_start = None
+    for train, test in splits:
+        # Each test window has exactly `test_size` contiguous in-bound samples.
+        assert_array_equal(test, np.arange(test[0], test[0] + test_size))
+        assert test[-1] < n_samples
+        # The train window is contiguous and ends `gap` samples before the test.
+        assert_array_equal(train, np.arange(train[0], train[-1] + 1))
+        assert train[-1] + 1 + gap == test[0]
+        if window == "expanding":
+            assert train[0] == 0
+            assert len(train) >= train_size
+        else:
+            assert len(train) == train_size
+        if previous_test_start is None:
+            assert test[0] == train_size + gap
+        else:
+            assert test[0] - previous_test_start == effective_step
+        previous_test_start = test[0]
+    # One more step would not leave room for a complete test window.
+    assert previous_test_start + effective_step + test_size > n_samples
+
+
+@pytest.mark.parametrize("kwargs", [{"min_train_size": 4}, {"max_train_size": 4}])
+def test_time_series_walk_forward_not_enough_samples(kwargs):
+    cv = TimeSeriesSplit(n_splits="walk_forward", test_size=2, gap=1, **kwargs)
+    msg = "Not enough samples for a single walk-forward split"
+    # 4 + 1 + 2 = 7 samples are needed; `split` and `get_n_splits` agree.
+    X = np.zeros((6, 1))
+    with pytest.raises(ValueError, match=msg):
+        cv.get_n_splits(X)
+    with pytest.raises(ValueError, match=msg):
+        next(cv.split(X))
+    X = np.zeros((7, 1))
+    assert cv.get_n_splits(X) == 1
+    ((train, test),) = list(cv.split(X))
+    assert_array_equal(train, [0, 1, 2, 3])
+    assert_array_equal(test, [5, 6])
+
+
+def test_time_series_walk_forward_get_n_splits_requires_X():
+    cv = TimeSeriesSplit(n_splits="walk_forward", min_train_size=3, test_size=2)
     with pytest.raises(ValueError, match="The 'X' parameter should not be None"):
         cv.get_n_splits()
+    # the regular mode does not need X
+    assert TimeSeriesSplit(n_splits=3).get_n_splits() == 3
 
 
-@pytest.mark.parametrize(
-    "cv",
-    [
-        TimeSeriesSplit(n_splits="walk_forward", min_train_size=4, test_size=2, gap=1),
-        TimeSeriesSplit(n_splits="walk_forward", max_train_size=4, test_size=2, gap=1),
-    ],
-)
-def test_time_series_walk_forward_not_enough_samples(cv):
-    X = np.zeros((6, 1))
+def test_time_series_walk_forward_params_stored_unchanged():
+    # Parameters are stored as passed (no default resolved or cast applied in
+    # __init__), and NumPy integers are accepted.
+    min_train_size, test_size = np.int64(3), np.int32(2)
+    cv = TimeSeriesSplit(
+        n_splits="walk_forward", min_train_size=min_train_size, test_size=test_size
+    )
+    assert cv.n_splits == "walk_forward"
+    assert cv.step is None
+    assert cv.min_train_size is min_train_size
+    assert cv.test_size is test_size
+    X = np.zeros((9, 1))
+    assert cv.get_n_splits(X) == 3
+    assert_array_equal(
+        np.concatenate([test for _, test in cv.split(X)]), np.arange(3, 9)
+    )
 
-    assert cv.get_n_splits(X) == 0
-    with pytest.raises(ValueError, match="Not enough samples for a single split"):
-        list(cv.split(X))
+
+def test_time_series_walk_forward_grid_search():
+    # The number of splits is taken from the data by the search object.
+    X = np.arange(40).reshape(20, 2)
+    y = np.arange(20) % 2
+    cv = TimeSeriesSplit(n_splits="walk_forward", min_train_size=6, test_size=2, gap=1)
+    search = GridSearchCV(
+        DummyClassifier(), {"strategy": ["most_frequent", "prior"]}, cv=cv
+    ).fit(X, y)
+    assert search.n_splits_ == cv.get_n_splits(X) == 6
 
 
 @pytest.mark.parametrize(
     "kwargs, expected_msg",
     [
-        (
-            {"n_splits": "walk_forward"},
-            "`test_size` must be provided when n_splits='walk_forward'",
-        ),
+        ({"n_splits": "walk_forward"}, "`test_size` must be provided"),
         (
             {"n_splits": "walk_forward", "test_size": 2},
             "`min_train_size` must be provided when n_splits='walk_forward'",
+        ),
+        (
+            {
+                "n_splits": "walk_forward",
+                "min_train_size": 3,
+                "max_train_size": 4,
+                "test_size": 2,
+            },
+            "Only one of `max_train_size` and `min_train_size` can be provided",
         ),
         (
             {
@@ -2022,32 +2107,45 @@ def test_time_series_walk_forward_not_enough_samples(cv):
                 "test_size": 2,
                 "step": 1.5,
             },
-            "The step must be of Integral type",
+            "`step` must be of Integral type",
         ),
         (
-            {
-                "n_splits": "walk_forward",
-                "min_train_size": 1.5,
-                "test_size": 2,
-            },
-            "The min_train_size must be of Integral type",
+            {"n_splits": "walk_forward", "min_train_size": 1.5, "test_size": 2},
+            "`min_train_size` must be of Integral type",
         ),
         (
-            {
-                "n_splits": "walk_forward",
-                "min_train_size": 0,
-                "test_size": 2,
-            },
+            {"n_splits": "walk_forward", "min_train_size": 0, "test_size": 2},
             "`min_train_size` must be > 0",
+        ),
+        (
+            {"n_splits": "walk_forward", "max_train_size": 2.5, "test_size": 2},
+            "`max_train_size` must be of Integral type",
+        ),
+        (
+            {"n_splits": "walk_forward", "min_train_size": 3, "test_size": 0.5},
+            "`test_size` must be of Integral type",
+        ),
+        (
+            {"n_splits": "walk_forward", "min_train_size": 3, "test_size": 0},
+            "`test_size` must be > 0",
         ),
         (
             {
                 "n_splits": "walk_forward",
                 "min_train_size": 3,
-                "max_train_size": 4,
                 "test_size": 2,
+                "gap": -1,
             },
-            "Only one of `max_train_size` and `min_train_size` can be provided",
+            "`gap` must be a non-negative integer",
+        ),
+        (
+            {
+                "n_splits": "walk_forward",
+                "min_train_size": 3,
+                "test_size": 2,
+                "gap": 1.0,
+            },
+            "`gap` must be a non-negative integer",
         ),
         (
             {"n_splits": 3, "step": 2},
@@ -2057,10 +2155,11 @@ def test_time_series_walk_forward_not_enough_samples(cv):
             {"n_splits": 3, "min_train_size": 3},
             "`min_train_size` can only be used when n_splits='walk_forward'",
         ),
+        ({"n_splits": "rolling"}, "n_splits must be an integer or 'walk_forward'"),
     ],
 )
 def test_time_series_walk_forward_bad_params(kwargs, expected_msg):
-    with pytest.raises(ValueError, match=expected_msg):
+    with pytest.raises(ValueError, match=re.escape(expected_msg)):
         TimeSeriesSplit(**kwargs)
 
 
