@@ -151,7 +151,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         required for prediction).
 
     y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
-        Target values in training data (also required for prediction).
+        Target values in training data, as used to fit the model.
+        If `y` has several targets, each one is first rescaled to [0, 1];
+        if `normalize_y=True`, they are then standardized.
 
     kernel_ : kernel instance
         The kernel used for prediction. The structure of the kernel is the
