@@ -1070,6 +1070,9 @@ def _estimator_with_converted_arrays(estimator, converter):
 
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
+        if key == "classes_":
+            setattr(new_estimator, key, attribute)
+            continue
         attribute = _estimator_with_converted_arrays(attribute, converter)
         setattr(new_estimator, key, attribute)
     return new_estimator
