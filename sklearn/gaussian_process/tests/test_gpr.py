@@ -359,6 +359,7 @@ def test_large_variance_y():
     # made by GPy.
     assert_allclose(y_pred_std, y_pred_std_gpy, rtol=0.15, atol=0)
 
+
 @pytest.mark.parametrize("alpha", [1e-10, 1e-2, 1e-1])
 def test_gpr_multioutput_alpha_in_scaled_target_units(alpha):
     """With normalize_y=False, a scalar `alpha` is expressed in the units of the
@@ -381,6 +382,8 @@ def test_gpr_multioutput_alpha_in_scaled_target_units(alpha):
         mean_j, std_j = gpr_j.predict(X2, return_std=True)
         assert_allclose(mean[:, j], mean_j * y_range[j] + y_min[j])
         assert_allclose(std[:, j], std_j * y_range[j])
+
+
 @pytest.mark.parametrize("normalize_y", [False, True])
 def test_y_multioutput(normalize_y):
     # Test that GPR can deal with multi-dimensional target values
