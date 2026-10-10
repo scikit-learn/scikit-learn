@@ -1,0 +1,16 @@
+- :class:`utils.parallel.Parallel` no longer resets the warning filters in tasks
+  that already have the caller's filters, such as tasks of thread-based backends
+  or with `n_jobs=1`. With many threads, resetting them could corrupt the
+  process-wide warning filters (losing the user's filters and raising spurious
+  warnings about `sklearn.utils.parallel.delayed`) on Python without
+  context-aware warnings, and was costly on free-threaded Python. On Python
+  without context-aware warnings, these tasks now use the filters active when
+  they run (which can differ from the caller's ones for a generator output). A
+  warning repeated in several of these tasks is now shown once instead of once
+  per task, and filter changes made by these tasks outside of
+  :class:`warnings.catch_warnings` are no longer undone when the task ends.
+  The spurious warning is also no longer raised when the caller's warning
+  filters are empty, and tasks of :func:`utils.parallel.delayed` run by
+  :class:`joblib.Parallel` keep their warning filters instead of running with
+  none.
+  By :user:`Arthur Lacote <cakedev0>`.
