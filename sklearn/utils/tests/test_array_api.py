@@ -567,6 +567,23 @@ def test_convert_estimator_to_array_api_strict():
 
 
 @skip_if_array_api_compat_not_configured
+def test_move_estimator_to_ignores_classes_():
+    # Non-regression test for #35109
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = SimpleEstimator().fit(X_np)
+    est.classes_ = numpy.array(["cat", "dog"])
+
+    with config_context(array_api_dispatch=True):
+        new_est = move_estimator_to(est, xp, device=None)
+
+        # classes_ should remain exactly the same (numpy), not moved to the new namespace
+        assert getattr(new_est.classes_, "__array_namespace__", None) is None
+        numpy.testing.assert_array_equal(new_est.classes_, est.classes_)
+
+
+@skip_if_array_api_compat_not_configured
 def test_check_fitted_attribute():
     xp = pytest.importorskip("array_api_strict")
 
