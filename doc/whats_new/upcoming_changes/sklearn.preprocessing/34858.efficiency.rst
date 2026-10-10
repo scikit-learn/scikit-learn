@@ -1,0 +1,5 @@
+- :class:`preprocessing.QuantileTransformer` and
+  :class:`preprocessing.RobustScaler` no longer densify the columns of sparse
+  data into arrays of size `n_samples` to compute quantiles. This avoids
+  slowdowns and out-of-memory errors when fitting on very sparse matrices.
+  By :user:`Saad Shabbir <Stag51>` and :user:`Arthur Lacote <cakedev0>`.
