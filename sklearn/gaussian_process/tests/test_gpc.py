@@ -203,6 +203,7 @@ def test_multi_class(kernel):
 @pytest.mark.parametrize("kernel", kernels)
 def test_multi_class_n_jobs(kernel):
     # Test that multi-class GPC produces identical results with n_jobs>1.
+    kernel = clone(kernel)
     gpc = GaussianProcessClassifier(kernel=kernel)
     gpc.fit(X, y_mc)
 
