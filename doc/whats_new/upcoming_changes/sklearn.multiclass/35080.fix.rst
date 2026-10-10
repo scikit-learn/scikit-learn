@@ -1,0 +1,4 @@
+- :meth:`multiclass.OneVsRestClassifier.partial_fit` now accepts a multilabel indicator
+  matrix as `y`, like :meth:`~multiclass.OneVsRestClassifier.fit`. Each column is a class
+  labelled by its index, so `classes` can be omitted.
+  By :user:`Parth Maniar <officialpm>`.
