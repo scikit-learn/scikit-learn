@@ -265,7 +265,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         which,
         if True,
         then standardizes the rescaled targets.
-        A constant target is left unscaled.
+        A constant target becomes all zeros.
         The transformation is stored internally and inverted in :meth:`predict`.
         """
         self.kernel_ = (
