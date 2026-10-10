@@ -1,0 +1,6 @@
+- :func:`metrics.ndcg_score` now supports a ``replaced_undefined_by``
+  parameter (default ``np.nan``) that controls the return value for samples
+  where all true relevance values are zero (IDCG = 0). When ``np.nan`` is
+  used, an :class:`~sklearn.exceptions.UndefinedMetricWarning` is raised and
+  undefined samples are excluded from the average.
+  By :user:`Keshav Dube <dubekeshav>`.
