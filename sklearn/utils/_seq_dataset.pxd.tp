@@ -73,4 +73,20 @@ cdef class CSRDataset{{name_suffix}}(SequentialDataset{{name_suffix}}):
     cdef {{c_type}} *Y_data_ptr
     cdef {{c_type}} *sample_weight_data
 
+
+# The two classes below are only used for testing. They make it possible to
+# fully control the sequence of indices drawn by ``next``/``random`` so that
+# a Cython solver relying on a ``SequentialDataset`` can be compared exactly
+# (and not only up to convergence) to a pure Python reference implementation
+# fed with the same sequence of indices.
+
+cdef class MockArrayDataset{{name_suffix}}(ArrayDataset{{name_suffix}}):
+    cdef const int[::1] index_sequence
+    cdef Py_ssize_t sequence_position
+
+
+cdef class MockCSRDataset{{name_suffix}}(CSRDataset{{name_suffix}}):
+    cdef const int[::1] index_sequence
+    cdef Py_ssize_t sequence_position
+
 {{endfor}}

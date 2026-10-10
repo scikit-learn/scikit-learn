@@ -1,0 +1,4 @@
+- Fixed the step size computation for the ``"sag"`` and ``"saga"`` solvers in
+  :class:`linear_model.LogisticRegression` and :class:`linear_model.Ridge` to
+  have better convergence when fitting with sample weights.
+  By :user:`Shruti Nath <snath-xoc>` and :user:`Antoine Baker <antoinebaker>`.

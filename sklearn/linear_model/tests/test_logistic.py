@@ -1223,7 +1223,15 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
     with ignore_warnings(category=ConvergenceWarning):
         clf_lbfgs.fit(X, y)
 
-    for solver in set(SOLVERS) - set(["lbfgs", "liblinear"]):
+    COMPARED_SOLVERS = set(SOLVERS) - {"lbfgs"}
+    if n_classes >= 3:
+        # 'liblinear' does not support multiclass classification
+        COMPARED_SOLVERS.remove("liblinear")
+        # 'newton-cd' does not support multiclass classification with class weights
+        # TODO(1.12): remove this when multiclass support is added through PR #34681
+        COMPARED_SOLVERS.remove("newton-cd")
+
+    for solver in COMPARED_SOLVERS:
         clf = LogisticRegressionCV(
             solver=solver,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
