@@ -498,6 +498,18 @@ def test_check_array():
         np.array([["1", "2"], ["3", "4"]], dtype="S"),
         [[b"1", b"2"], [b"3", b"4"]],
         np.array([[b"1", b"2"], [b"3", b"4"]], dtype="V1"),
+    ]
+    + [
+        pytest.param(
+            np.array(values, dtype="T"),
+            marks=pytest.mark.xfail(
+                strict=True,
+                raises=(TypeError, pytest.fail.Exception),
+                reason="StringDType numeric validation is unsupported (#34946)",
+            ),
+        )
+        for values in [[["1", "2"]], [["short", "longer"]]]
+        if hasattr(np.dtypes, "StringDType")
     ],
 )
 def test_check_array_numeric_error(X):
