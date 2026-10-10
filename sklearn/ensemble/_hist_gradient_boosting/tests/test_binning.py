@@ -561,3 +561,83 @@ def test_categorical_parameters(is_categorical, known_categories, match):
     )
     with pytest.raises(ValueError, match=match):
         bin_mapper.fit(X)
+
+
+def test_find_binning_thresholds_midpoint_rounding_tie():
+    # Test that adjacent distinct floating-point values whose arithmetic
+    # midpoint rounds upward to the upper value due to IEEE-754 tie-breaking
+    # have their threshold replaced by the lower value, guaranteeing separation.
+    x_base = np.array([1, 2], dtype=np.float64)
+    x = 1.0 + (2.0**-52) * x_base
+    # x[0] = 1 + 2**-52, x[1] = 1 + 2 * 2**-52
+    # In float64, (x[0] + x[1]) / 2 rounds to x[1]
+    assert (x[0] + x[1]) / 2 == x[1]
+
+    thresholds = _find_binning_thresholds(x, max_bins=255)
+    assert len(thresholds) == 1
+    # Threshold should equal the lower value x[0] rather than upper x[1]
+    assert thresholds[0] == x[0]
+
+    # Check mapping into bins
+    mapper = _BinMapper(n_bins=256)
+    binned = mapper.fit_transform(x.reshape(-1, 1))
+    assert_array_equal(binned.ravel(), [0, 1])
+
+
+def test_find_binning_thresholds_consecutive_floats():
+    # Test a sequence of consecutive distinct floating-point numbers where
+    # alternating pairs round up and down.
+    x = 1.0 + np.arange(10, dtype=np.float64) * (2.0**-52)
+    thresholds = _find_binning_thresholds(x, max_bins=255)
+
+    assert len(thresholds) == 9
+    # Thresholds must be strictly increasing
+    assert np.all(np.diff(thresholds) > 0)
+
+    # Every distinct value must fall into its own bin
+    mapper = _BinMapper(n_bins=256)
+    binned = mapper.fit_transform(x.reshape(-1, 1))
+    assert_array_equal(binned.ravel(), np.arange(10))
+
+
+def test_find_binning_thresholds_negative_floats():
+    # Test with negative values
+    x = -(1.0 + np.arange(10, dtype=np.float64) * (2.0**-52))
+    # Note: after negation, values need to be sorted
+    x = np.sort(x)
+    thresholds = _find_binning_thresholds(x, max_bins=255)
+
+    assert len(thresholds) == 9
+    assert np.all(np.diff(thresholds) > 0)
+
+    mapper = _BinMapper(n_bins=256)
+    binned = mapper.fit_transform(x.reshape(-1, 1))
+    assert_array_equal(binned.ravel(), np.arange(10))
+
+
+def test_hist_gradient_boosting_midpoint_rounding_tie_reproducer():
+    from sklearn.ensemble import (
+        HistGradientBoostingClassifier,
+        HistGradientBoostingRegressor,
+    )
+
+    x_base = np.array([1, 2], dtype=np.float64)
+    x_transformed = 1.0 + (2.0**-52) * x_base
+
+    # 20 samples of each distinct value
+    X = np.repeat(x_transformed, 20).reshape(-1, 1)
+    y = np.repeat([0.0, 1.0], 20)
+
+    reg = HistGradientBoostingRegressor(
+        max_iter=1, learning_rate=1.0, min_samples_leaf=20
+    )
+    reg.fit(X, y)
+    preds = reg.predict(X)
+    assert_allclose(preds[:20], 0.0)
+    assert_allclose(preds[20:], 1.0)
+
+    clf = HistGradientBoostingClassifier(
+        max_iter=1, learning_rate=1.0, min_samples_leaf=20
+    )
+    clf.fit(X, y.astype(int))
+    assert_array_equal(clf.predict(X), y.astype(int))

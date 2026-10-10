@@ -87,6 +87,13 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         # Calculate midpoints if distinct values <= max_bins
         distinct_values = col_data[distinct_mask]
         bin_thresholds = sliding_window_view(distinct_values, 2).mean(axis=1)
+        # In floating-point arithmetic, the computed midpoint of two adjacent
+        # distinct values can round upward to equal the upper value.
+        # Since bin assignment is upper-inclusive (x <= threshold), this would
+        # place both values into the same bin. In that case, replace the
+        # threshold with the lower value so the values are properly separated.
+        round_up = (bin_thresholds == distinct_values[1:]) & np.isfinite(bin_thresholds)
+        bin_thresholds[round_up] = distinct_values[:-1][round_up]
     elif sample_weight is None:
         # We compute bin edges using the output of np.percentile with
         # the "averaged_inverted_cdf" interpolation method that is consistent
