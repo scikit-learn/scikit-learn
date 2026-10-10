@@ -7,7 +7,7 @@ from queue import Queue
 from threading import Thread
 
 from sklearn.callback._callback_context import get_context_path
-from sklearn.callback._transport import close_listener, open_listener, send
+from sklearn.callback._transport import Channel
 from sklearn.utils._optional_dependencies import check_rich_support
 from sklearn.utils._param_validation import Interval, validate_params
 
@@ -42,21 +42,21 @@ class ProgressBar:
 
         self.max_propagation_depth = max_propagation_depth
 
-        # Handles to the main-process per-fit listeners, keyed by `root_uuid`.
-        self._listener_handles = {}
+        # Per-fit channels, keyed by `root_uuid`.
+        self._channels = {}
 
     def setup(self, estimator, context):
         # Lazily create the per-fit transport state. `setup` runs on the main
         # process for the common case where `ProgressBar` is registered on (or
         # auto-propagated from) the outermost estimator. In the degraded case
         # where the outer function does not support callbacks, this may run
-        # inside a worker process; that worker will then open its own local
-        # listener and the events will be process-local — the callback runs in
-        # slightly degraded mode but does not crash.
+        # inside a worker process; that worker will then open its own channel
+        # and the events will be process-local — the callback runs in slightly
+        # degraded mode but does not crash.
         queue = Queue()
-        # `queue.put` is the message consumer that `send` calls will use to forward
+        # `queue.put` is the message consumer that the channel will use to forward
         # information to the rich monitor thread.
-        self._listener_handles[context.root_uuid] = open_listener(queue.put)
+        self._channels[context.root_uuid] = Channel(message_consumer=queue.put)
 
         progress_monitor = RichProgressMonitor(queue=queue)
         progress_monitor.start()
@@ -75,8 +75,7 @@ class ProgressBar:
             # We pass the minimal information to the queue that is necessary to create a
             # progress bar and not the context to avoid pickling the whole context tree.
             path = [ctx.task_id for ctx in get_context_path(context)]
-            send(
-                self._listener_handles[context.root_uuid],
+            self._channels[context.root_uuid].send(
                 {
                     "event": "begin",
                     "path": path,
@@ -91,8 +90,7 @@ class ProgressBar:
 
     def on_fit_task_end(self, estimator, context):
         # The path is enough to update the progress of the task and its ancestors.
-        send(
-            self._listener_handles[context.root_uuid],
+        self._channels[context.root_uuid].send(
             {
                 "event": "end",
                 "path": [ctx.task_id for ctx in get_context_path(context)],
@@ -101,10 +99,10 @@ class ProgressBar:
 
     def teardown(self, estimator, context):
         # Fit is finished. Signal that the queue won't receive any more tasks, close
-        # the monitor thread and the listener.
+        # the monitor thread and the channel.
         _run_queues.pop(context.root_uuid).put(None)
         _run_monitors.pop(context.root_uuid).join()
-        close_listener(self._listener_handles.pop(context.root_uuid))
+        self._channels.pop(context.root_uuid).close()
 
 
 try:
