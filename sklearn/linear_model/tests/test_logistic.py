@@ -668,7 +668,7 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
     del params["alpha"]
 
     # we store the params to set them further in _log_reg_scoring_path
-    for key in ["C", "n_jobs", "warm_start", "class_weight"]:
+    for key in ["C", "warm_start", "class_weight"]:
         del params[key]
     lr.fit(X[train], y[train])
     for averaging in multiclass_agg_list:
@@ -2731,15 +2731,6 @@ def test_logisticregressioncv_warns_with_use_legacy_attributes():
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
     )
     msg = "The default value of use_legacy_attributes will change from True"
-    with pytest.warns(FutureWarning, match=msg):
-        lr.fit(X, y)
-
-
-# TODO(1.10): remove this test when n_jobs gets removed
-def test_logisticregression_warns_with_n_jobs():
-    X, y = make_classification(n_classes=3, n_samples=50, n_informative=6)
-    lr = LogisticRegression(n_jobs=1, alpha=1e-1)
-    msg = "'n_jobs' has no effect"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
 
