@@ -254,6 +254,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         -------
         self : object
             GaussianProcessRegressor class instance.
+
         Notes
         -----
         If `y` has several targets,
