@@ -161,11 +161,14 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         Pass an int for reproducible output across multiple
         function calls.
         See :term:`Glossary <random_state>`.
-    n_threads : int, default=None
-        Number of OpenMP threads to use. `_openmp_effective_n_threads` is called
-        to determine the effective number of threads use, which takes cgroups CPU
-        quotes into account. See the docstring of `_openmp_effective_n_threads`
-        for details.
+    max_n_threads : int, default=None
+        Upper bound on the number of OpenMP threads to use.
+        `_openmp_effective_n_threads` is called with this value to determine
+        the effective number of threads available, which takes cgroups CPU
+        quotas into account (see its docstring for details). The number of
+        threads actually used is then sized down further based on the amount
+        of data to bin, to avoid parallelizing workloads too small to
+        benefit from it.
 
     Attributes
     ----------
@@ -202,14 +205,14 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         is_categorical=None,
         known_categories=None,
         random_state=None,
-        n_threads=None,
+        max_n_threads=None,
     ):
         self.n_bins = n_bins
         self.subsample = subsample
         self.is_categorical = is_categorical
         self.known_categories = known_categories
         self.random_state = random_state
-        self.n_threads = n_threads
+        self.max_n_threads = max_n_threads
 
     def fit(self, X, y=None, sample_weight=None):
         """Fit data X by computing the binning thresholds.
@@ -286,7 +289,20 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.bin_thresholds_ = [None] * n_features
         n_bins_non_missing = [None] * n_features
 
-        non_cat_thresholds = Parallel(n_jobs=self.n_threads, backend="threading")(
+        n_features_to_bin = sum(
+            not self.is_categorical_[f_idx] for f_idx in range(n_features)
+        )
+        max_n_threads = _openmp_effective_n_threads(self.max_n_threads)
+        n_threads = max(
+            1,
+            min(
+                # starting joblib threads is expensive
+                (n_features_to_bin * X.shape[0]) // 1_000_000,
+                max_n_threads,
+            ),
+        )
+
+        non_cat_thresholds = Parallel(n_jobs=n_threads, backend="threading")(
             delayed(_find_binning_thresholds)(
                 X[:, f_idx], max_bins, sample_weight=sample_weight
             )
@@ -339,7 +355,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 "to transform()".format(self.n_bins_non_missing_.shape[0], X.shape[1])
             )
 
-        n_threads = _openmp_effective_n_threads(self.n_threads)
+        max_n_threads = _openmp_effective_n_threads(self.max_n_threads)
+        n_threads = max(1, min(round(X.shape[0] / 2000), max_n_threads))
+
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
         _map_to_bins(
             X,
