@@ -286,11 +286,7 @@ def _encode(values, *, uniques, return_diff=False):
     if not xp.isdtype(values.dtype, "numeric"):
         encoded = _map_to_integer(values, uniques)
     else:
-        # same agian problem here with search sopr
-        sorter = xp.argsort(uniques)
-        sorted_uniques = xp.take(uniques, sorter)
-        idx = xp.searchsorted(sorted_uniques, values)
-        encoded = xp.take(sorter, idx)
+        encoded = _map_to_integer(values, uniques)
         if size(uniques):
             # Post-process the results to collect unknown values and encode them
             # as -1. Since xp.searchsorted can assign indices larger than the
