@@ -244,7 +244,7 @@ def test_parallel_execution(data, method, ensemble):
     assert_allclose(probs_parallel, probs_sequential)
 
 
-@pytest.mark.parametrize("clf", [GaussianNB(), LogisticRegression(C=1e-6)])
+@pytest.mark.parametrize("clf", [GaussianNB(), LogisticRegression(alpha=1e6)])
 @pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
 @pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
@@ -274,6 +274,7 @@ def test_calibration_multiclass(clf, method, ensemble, global_random_seed):
         stratify=y,
         train_size=1_000,
     )
+    clf = clone(clf)
     clf.fit(X_train, y_train)
     y_pred_uncal = clf.predict_proba(X_test)
 
@@ -533,7 +534,7 @@ def test_temperature_scaling(n_classes, ensemble):
         random_state=42,
     )
     X_train, X_cal, y_train, y_cal = train_test_split(X, y, random_state=42)
-    clf = LogisticRegression(C=np.inf, tol=1e-8, max_iter=200)
+    clf = LogisticRegression(alpha=0, tol=1e-8, max_iter=200)
     clf.fit(X_train, y_train)
     # Train the calibrator on the calibrating set
     cal_clf = CalibratedClassifierCV(
@@ -628,6 +629,17 @@ def test_calibration_curve():
     # Check that error is raised when invalid strategy is selected
     with pytest.raises(ValueError):
         calibration_curve(y_true2, y_pred2, strategy="percentile")
+
+
+# TODO(1.12): remove, see PR #34326
+def test_calibration_curve_n_bins_future_warning():
+    y_true = np.array([0, 0, 0, 1, 1, 1])
+    y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
+    with pytest.warns(FutureWarning, match="n_bins"):
+        prob_true_default, prob_pred_default = calibration_curve(y_true, y_pred)
+    prob_true_explicit, prob_pred_explicit = calibration_curve(y_true, y_pred, n_bins=5)
+    assert_allclose(prob_true_default, prob_true_explicit)
+    assert_allclose(prob_pred_default, prob_pred_explicit)
 
 
 @pytest.mark.parametrize(
@@ -902,6 +914,10 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
 def test_plot_calibration_curve_pipeline(pyplot, iris_data_binary):
     # Ensure pipelines are supported by CalibrationDisplay.from_estimator
     X, y = iris_data_binary
@@ -955,6 +971,10 @@ def test_calibration_display_label_class_plot(pyplot):
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 def test_calibration_display_name_multiple_calls(
     constructor_name, pyplot, iris_data_binary
@@ -990,6 +1010,10 @@ def test_calibration_display_name_multiple_calls(
         assert labels.get_text() in expected_legend_labels
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
 def test_calibration_display_ref_line(pyplot, iris_data_binary):
     # Check that `ref_line` only appears once
     X, y = iris_data_binary
@@ -1040,6 +1064,10 @@ def test_calibration_curve_pos_label(dtype_y_str):
     assert_allclose(prob_true, [0, 0, 0.5, 1])
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -1059,6 +1087,10 @@ def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
     assert viz.line_.get_linestyle() == "-."
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize("pos_label, expected_pos_label", [(None, 1), (0, 0), (1, 1)])
 def test_calibration_display_pos_label(
     pyplot, iris_data_binary, pos_label, expected_pos_label

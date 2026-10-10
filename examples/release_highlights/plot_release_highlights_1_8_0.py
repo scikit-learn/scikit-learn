@@ -158,17 +158,28 @@ fig, axes = plt.subplots(
 )
 for i, c in enumerate(ts.classes_):
     CalibrationDisplay.from_predictions(
-        y == c, clf.predict_proba(X)[:, i], name="Uncalibrated", ax=axes[i], marker="s"
+        y == c,
+        clf.predict_proba(X)[:, i],
+        n_bins=5,
+        name="Uncalibrated",
+        ax=axes[i],
+        marker="s",
     )
     CalibrationDisplay.from_predictions(
         y == c,
         ts.predict_proba(X)[:, i],
+        n_bins=5,
         name="Temperature scaling",
         ax=axes[i],
         marker="o",
     )
     CalibrationDisplay.from_predictions(
-        y == c, sig.predict_proba(X)[:, i], name="Sigmoid", ax=axes[i], marker="v"
+        y == c,
+        sig.predict_proba(X)[:, i],
+        n_bins=5,
+        name="Sigmoid",
+        ax=axes[i],
+        marker="v",
     )
     axes[i].set_title(f"Class {c}")
     axes[i].set_xlabel(None)
@@ -215,7 +226,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-clf = make_pipeline(StandardScaler(), LogisticRegression(C=10))
+clf = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-1))
 
 # %%
 # Expand the estimator diagram below by clicking on "LogisticRegression" and then on
