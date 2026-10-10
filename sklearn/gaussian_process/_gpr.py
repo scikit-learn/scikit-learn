@@ -122,7 +122,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         to the log-marginal likelihood used for hyperparameter optimization.
         This rescaling is also reversed before predictions are reported.
 
-        .. versionchanged:: 1.9
+        .. versionchanged:: 1.10
            Multiple targets are now rescaled to [0, 1] before fitting.
 
     copy_X_train : bool, default=True
