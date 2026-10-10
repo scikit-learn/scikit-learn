@@ -12,9 +12,9 @@ iniconfig==2.3.0
     # via pytest
 joblib==1.4.0
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
-meson==1.12.0
+meson==1.12.1
     # via meson-python
-meson-python==0.21.1
+meson-python==0.22.1
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
 narwhals==2.0.1
     # via -r build_tools/github/ubuntu_atlas_requirements.txt
