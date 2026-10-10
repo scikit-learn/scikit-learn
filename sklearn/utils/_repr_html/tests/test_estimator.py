@@ -642,16 +642,15 @@ def test_function_transformer_show_caption(func, expected_name):
     assert re_compiled.search(html_output)
 
 
+def test_estimator_html_repr_non_utf8_locale(set_non_utf8_locale):
+    """
+    estimator_html_repr must work under non-UTF-8 locale.
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/pull/35093
+    """
+    assert "✔" in estimator_html_repr(LinearRegression())
+
+
 def test_estimator_html_repr_table():
     """Check that we add the table of parameters in the HTML representation."""
     est = LogisticRegression(alpha=0.1, fit_intercept=False)
     assert "parameters-table" in estimator_html_repr(est)
-
-
-def test_estimator_html_repr_non_utf8_locale(set_non_utf8_locale):
-    """Regression test for GH-35093: estimator_html_repr must work under
-    non-UTF-8 locale.
-
-    Non-regression test for https://github.com/scikit-learn/scikit-learn/pull/35093
-    """
-    estimator_html_repr(LinearRegression())

@@ -562,10 +562,7 @@ def estimator_html_repr(estimator):
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
         )
-        with open(
-            str(Path(__file__).parent / "estimator.js"), "r", encoding="utf-8"
-        ) as f:
-            script = f.read()
+        script = (Path(__file__).parent / "estimator.js").read_text(encoding="utf-8")
 
         html_end = (
             f"</div></div><script>{script}"
