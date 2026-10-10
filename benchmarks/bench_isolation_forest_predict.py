@@ -149,6 +149,7 @@ def bench(args):
     # Loop over all datasets for fitting and scoring the estimator:
     n_samples_train = 1000
     for n_samples_test in [
+        100,
         1000,
         10000,
         50000,
