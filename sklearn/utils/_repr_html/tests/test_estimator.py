@@ -641,7 +641,6 @@ def test_function_transformer_show_caption(func, expected_name):
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)
 
-
 def test_estimator_html_repr_table():
     """Check that we add the table of parameters in the HTML representation."""
     est = LogisticRegression(alpha=0.1, fit_intercept=False)
