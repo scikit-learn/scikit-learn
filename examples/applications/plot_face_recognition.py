@@ -101,7 +101,7 @@ model
 # -------------------------------------------
 #
 # We tune the ``gamma`` and ``n_components`` of the Nystroem approximation and
-# the ``C`` regularization of the logistic regression with a successive halving
+# the ``alpha`` regularization of the logistic regression with a successive halving
 # search (:class:`~sklearn.model_selection.HalvingRandomSearchCV`). The search
 # minimizes the log loss (``neg_log_loss``) and screens many candidates on small
 # training subsets before investing compute in the most promising ones. We set
