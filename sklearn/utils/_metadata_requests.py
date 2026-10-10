@@ -1638,6 +1638,30 @@ class RequestMethod:
         return func
 
 
+class AutoRequestMixin:
+    """Mixin to auto-request `sample_weight` when auto-requests are enabled.
+
+    Inherit from this mixin (typically to the left of
+    :class:`~sklearn.base.BaseEstimator`) to opt into auto-requesting `sample_weight` on
+    methods that accept it. scikit-learn's own estimators get the same policy
+    automatically via their `_auto_request_sample_weight` class attribute;
+    third-party estimators that only inherit from :class:`~sklearn.base.BaseEstimator`
+    do not.
+
+    See :ref:`metadata_routing_auto_request` for more details.
+
+    .. versionadded:: 1.10
+
+    Examples
+    --------
+    >>> from sklearn.utils.metadata_routing import AutoRequestMixin
+    >>> AutoRequestMixin._auto_request_sample_weight
+    True
+    """
+
+    _auto_request_sample_weight = True
+
+
 class _MetadataRequester:
     """Mixin class for adding metadata request functionality.
 
@@ -1720,6 +1744,17 @@ class _MetadataRequester:
             # ``get_metadata_routing`` is called. Here we are going to ignore
             # all the issues and make sure class definition does not fail.
             pass
+
+        # scikit-learn estimators that inherit from `BaseEstimator` auto-request
+        # sample_weight; third-party estimators that only inherit from BaseEstimator do
+        # not.
+        if (
+            cls.__module__.startswith("sklearn.")
+            and "_auto_request_sample_weight" not in cls.__dict__
+            and any(base.__name__ == "BaseEstimator" for base in cls.__mro__[1:])
+        ):
+            cls._auto_request_sample_weight = True
+
         super().__init_subclass__(**kwargs)
 
     @classmethod
@@ -1855,6 +1890,18 @@ class _MetadataRequester:
                         ),
                     ),
                 )
+
+        # This adds auto-requests for `sample_weight` for all consuming methods of
+        # scikit-learn estimators:
+        if (
+            hasattr(self, "_auto_request_sample_weight")
+            and self._auto_request_sample_weight
+        ):
+            for method in SIMPLE_METHODS:
+                method_request = getattr(requests, method)
+                if "sample_weight" in method_request.requests:
+                    method_request.add_auto_request("sample_weight")
+
         return requests
 
     def get_metadata_routing(self):

@@ -31,12 +31,14 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import deprecated
+from sklearn.utils._metadata_requests import SIMPLE_METHODS
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._set_output import _get_output_config
 from sklearn.utils._testing import (
     _convert_container,
     assert_array_equal,
 )
+from sklearn.utils.metadata_routing import get_routing_for_object
 from sklearn.utils.validation import _check_n_features, validate_data
 
 
@@ -1129,3 +1131,78 @@ def test_param_is_default(default_value, test_value):
     estimator = make_estimator_with_param(default_value)(param=test_value)
     non_default = estimator._get_params_html().non_default
     assert "param" not in non_default
+
+
+def test_baseestimator_sample_weight_auto_request():
+    """Test that sklearn estimators auto-request `sample_weight`."""
+
+    class MyEstimator(BaseEstimator):
+        """This class lives in a sklearn module and therefore creates the
+        `_auto_request_sample_weight` class attribute in `__init_subclass__`."""
+
+        def fit(self, X, y, sample_weight=None):
+            return self  # pragma: no cover
+
+        def predict(self, X, y=None):
+            return y  # pragma: no cover
+
+    assert MyEstimator._auto_request_sample_weight
+    est = MyEstimator()
+
+    with config_context(enable_metadata_auto_requests=True):
+        for method in SIMPLE_METHODS:
+            if method == "fit":
+                assert (
+                    getattr(get_routing_for_object(est), method).requests.get(
+                        "sample_weight"
+                    )
+                    is True
+                )
+            else:
+                assert (
+                    getattr(get_routing_for_object(est), method).requests.get(
+                        "sample_weight"
+                    )
+                    is None
+                )
+
+
+def test_third_party_baseestimator_no_sample_weight_auto_request():
+    # Test that third-party subclasses of `BaseEstimator` do not auto-request
+    # sample_weight.
+
+    def fit(self, X, y, sample_weight=None):
+        return self  # pragma: no cover
+
+    # This class lives in 'third_party.pkg' and therefore doesn't have a
+    # `_auto_request_sample_weight` class attribute.
+    ThirdPartyEstimator = type(
+        "ThirdPartyEstimator",
+        (BaseEstimator,),
+        {"__module__": "third_party.pkg", "fit": fit},
+    )
+
+    assert "_auto_request_sample_weight" not in ThirdPartyEstimator.__dict__
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(ThirdPartyEstimator())
+        assert routing.fit.requests.get("sample_weight") is None
+
+
+def test_auto_request_mixin_opts_in_sample_weight():
+    """AutoRequestMixin opts third-party estimators into sample_weight auto-requests."""
+    from sklearn.utils.metadata_routing import AutoRequestMixin
+
+    def fit(self, X, y, sample_weight=None):
+        return self  # pragma: no cover
+
+    ThirdPartyEstimator = type(
+        "ThirdPartyEstimator",
+        (AutoRequestMixin, BaseEstimator),
+        {"__module__": "third_party.pkg", "fit": fit},
+    )
+    assert ThirdPartyEstimator._auto_request_sample_weight
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(ThirdPartyEstimator())
+        assert routing.fit.requests.get("sample_weight") is True
