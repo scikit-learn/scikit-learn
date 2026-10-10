@@ -120,9 +120,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 for idx, val in enumerate(sorted_unique_vals):
                     encoder_mapping[val] = idx
                     local_decoder[idx] = val
-                
                 if compute_counts:
-                    cats =  np.array(list(encoder_mapping.keys()))
+                    cats = np.array(list(encoder_mapping.keys()))
                     category_counts.append(counts)
                 else:
                     cats = np.array(list(encoder_mapping.keys()))
@@ -1458,7 +1457,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
 
     _parameter_constraints: dict = {
-        "categories": [StrOptions({"auto","frequency"}), list],
+        "categories": [StrOptions({"auto", "frequency"}), list],
         "dtype": "no_validation",  # validation delegated to numpy
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
