@@ -626,8 +626,6 @@ def test_non_utf8_locale(set_non_utf8_locale):
         (np.vectorize(partial(dummy_function, y=1)), re.escape("vectorize(...)")),
     ],
 )
-
-
 def test_function_transformer_show_caption(func, expected_name):
     # Test that function name is shown as the name and "FunctionTransformer" is shown
     # in the caption
