@@ -323,6 +323,56 @@ def test_check_solver_option(LR):
             lr.fit(X, y)
 
 
+@pytest.mark.parametrize("n_classes", [2, 3])
+@pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
+@pytest.mark.parametrize("long_data", [True, False])
+def test_solver_auto(n_classes, l1_ratio, long_data):
+    """Test that solver='auto' works for all penalties."""
+    X, y = make_classification(
+        n_samples=20 if long_data else 6,
+        n_features=5 if long_data else 20,
+        n_classes=n_classes,
+        n_informative=3,
+        random_state=42,
+    )
+    LogisticRegression(solver="auto", l1_ratio=l1_ratio).fit(X, y)
+    LogisticRegressionCV(
+        solver="auto",
+        l1_ratios=[0, l1_ratio],
+        alphas=[1],  # only a single alpha to save computation time
+        cv=2,
+        scoring="neg_log_loss",
+        use_legacy_attributes=True,
+    ).fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [LogisticRegression(), LogisticRegressionCV()],
+)
+def test_tags(estimator):
+    """Test that tags are set correctly for different estimators."""
+    assert estimator.__sklearn_tags__().input_tags.sparse
+    assert estimator.__sklearn_tags__().classifier_tags.multi_class
+
+    estimator.set_params(solver="liblinear")
+    assert estimator.__sklearn_tags__().classifier_tags.multi_class is False
+
+    # array_api_support
+    for solver in ["auto", "lbfgs", "newton-cg"]:
+        if hasattr(estimator, "l1_ratio"):
+            estimator.set_params(solver=solver, l1_ratio=0)
+        else:
+            estimator.set_params(solver=solver, l1_ratios=(0,))
+        assert estimator.__sklearn_tags__().array_api_support is True
+
+    if hasattr(estimator, "l1_ratio"):
+        estimator.set_params(solver="auto", l1_ratio=1)
+    else:
+        estimator.set_params(solver="auto", l1_ratios=(1,))
+    assert estimator.__sklearn_tags__().array_api_support is False
+
+
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
 # TODO(1.10): remove test with removal of penalty
@@ -2905,7 +2955,7 @@ def test_logisticregression_warns_with_n_jobs():
         lr.fit(X, y)
 
 
-@pytest.mark.parametrize("solver", ["lbfgs", "newton-cg"])
+@pytest.mark.parametrize("solver", ["auto", "lbfgs", "newton-cg"])
 @pytest.mark.parametrize("binary", [False, True])
 @pytest.mark.parametrize("use_str_y", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
@@ -2997,7 +3047,7 @@ def test_logistic_regression_array_api_compliance(
         preditct_log_proba_np = lr_np.predict_log_proba(X_np)
         prediction_np = lr_np.predict(X_np)
 
-    if solver == "lbfgs":
+    if solver in ("auto", "lbfgs"):
         atol = _atol_for_type(dtype_name) * 10
         rtol = 5e-3 if dtype_name == "float32" else 1e-7
     else:
