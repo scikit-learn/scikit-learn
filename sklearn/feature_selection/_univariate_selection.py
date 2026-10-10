@@ -372,7 +372,9 @@ def r_regression(X, y, *, center=True, force_finite=True):
         # Sparse matrices return a 2d np.matrix; dense and sparse arrays a 1d ndarray.
         X_means = np.asarray(X.mean(axis=0)).ravel()
         # Compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
+        X_norms_squared = row_norms(X.T, squared=True) - n_samples * X_means**2
+        # Roundoff can make the centered sum of squares slightly negative.
+        X_norms = np.sqrt(np.maximum(X_norms_squared, 0.0))
     else:
         X_norms = row_norms(X.T)
 
