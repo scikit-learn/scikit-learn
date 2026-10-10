@@ -256,7 +256,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             GaussianProcessRegressor class instance.
         Notes
         -----
-        If `y` has several targets, each one is rescaled to [0, 1] (min-max) before the kernel hyperparameters are optimized, so that no target dominates the sum of the log-marginal likelihoods. This is independent of `normalize_y`, which, if True, then standardizes the rescaled targets. A constant target is left unscaled. The transformation is stored internally and inverted in :meth:`predict`.
+        If `y` has several targets,
+        each one is rescaled to [0, 1] (min-max)
+        before the kernel hyperparameters are optimized,
+        so that no target dominates the sum of the log-marginal likelihoods.
+        This is independent of `normalize_y`,
+        which,
+        if True,
+        then standardizes the rescaled targets.
+        A constant target is left unscaled.
+        The transformation is stored internally and inverted in :meth:`predict`.
         """
         self.kernel_ = (
             self._create_default_kernel() if self.kernel is None else clone(self.kernel)
