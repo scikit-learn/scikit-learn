@@ -75,7 +75,6 @@ from sklearn.utils.fixes import CSR_CONTAINERS
         LogisticRegressionCV(
             alphas=10,
             tol=1e-6,
-            use_legacy_attributes=False,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
         ),
         MultiTaskElasticNet(),
@@ -222,7 +221,6 @@ def test_linear_model_regressor_coef_shape(Regressor, ndim):
             {
                 "alphas": 10,
                 "solver": "newton-cholesky",
-                "use_legacy_attributes": False,
                 "scoring": "neg_log_loss",  # TODO(1.11): remove
             },
         ),

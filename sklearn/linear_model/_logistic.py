@@ -1905,7 +1905,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Note that this only applies to the solver and not the cross-validation
         generator. See :term:`Glossary <random_state>` for details.
 
-    use_legacy_attributes : bool, default=True
+    use_legacy_attributes : bool, default=False
         If True, use legacy values for attributes:
 
         - `C_` is an ndarray of shape (n_classes,) with the same value repeated
@@ -1925,7 +1925,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         - `n_iter_` is an ndarray of shape (n_folds, n_l1_ratios, n_alphas)
 
         .. versionchanged:: 1.10
-           The default will change from True to False in version 1.10.
+           Default value changed from True to False.
         .. deprecated:: 1.10
            `use_legacy_attributes` will be deprecated in version 1.10 and be removed in
            1.12.
@@ -2026,7 +2026,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     >>> clf = LogisticRegressionCV(
     ...     alphas=10,
     ...     cv=5,
-    ...     use_legacy_attributes=False,
     ...     scoring="neg_log_loss",
     ...     solver="newton-cholesky",
     ... ).fit(X, y)
@@ -2064,7 +2063,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             ],
             "n_jobs": [None, Integral],
             "refit": ["boolean"],
-            "use_legacy_attributes": ["boolean", Hidden(StrOptions({"warn"}))],
+            "use_legacy_attributes": ["boolean", Hidden(StrOptions({"deprecated"}))],
         }
     )
 
@@ -2087,7 +2086,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         refit=True,
         intercept_scaling=1.0,
         random_state=None,
-        use_legacy_attributes="warn",
+        use_legacy_attributes="deprecated",
     ):
         self.alphas = alphas
         self.Cs = Cs
@@ -2171,20 +2170,15 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             scoring = self.scoring
 
-        if self.use_legacy_attributes == "warn":
+        if self.use_legacy_attributes == "deprecated":
+            use_legacy_attributes = False
+        else:
             warnings.warn(
-                f"The fitted attributes of {self.__class__.__name__} will be "
-                "simplified in scikit-learn 1.10 to remove redundancy. Set"
-                "`use_legacy_attributes=False` to enable the new behavior now, or "
-                "set it to `True` to silence this warning during the transition period "
-                "while keeping the deprecated behavior for the time being. The default "
-                "value of use_legacy_attributes will change from True to False in "
-                f"scikit-learn 1.10. See the docstring of {self.__class__.__name__} "
-                "for more details.",
+                "The parameter 'use_legacy_attributes' was deprecated and will be "
+                "removed in version 1.12. To silence this warning, leave it to its "
+                "default value.",
                 FutureWarning,
             )
-            use_legacy_attributes = True
-        else:
             use_legacy_attributes = self.use_legacy_attributes
 
         if np.max(np.asarray(self.l1_ratios)) == 0:
