@@ -34,7 +34,7 @@ from sklearn.datasets import (
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.exceptions import FitFailedWarning
+from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
 from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
@@ -87,6 +87,8 @@ from sklearn.preprocessing import (
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
+    NonConsumingClassifier,
+    WeightedMetaClassifier,
     _Registry,
     check_recorded_metadata,
 )
@@ -111,6 +113,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.metadata_routing import get_routing_for_object
 from sklearn.utils.validation import _num_samples
 
 
@@ -2759,6 +2762,47 @@ def test_score_rejects_params_with_no_routing_enabled(SearchCV, param_search):
 
     with pytest.raises(ValueError, match="is only supported if"):
         gs.score(X, y, metadata=1)
+
+
+@config_context(enable_metadata_routing=True)
+def test_search_sample_weight_auto_request():
+    # Check that auto-requesting `sample_weight` works on consuming routers if passed
+    # through `GridSearchCV`.
+    X, y = make_classification(random_state=42)
+    sample_weight = np.ones(len(y))
+    meta_est = WeightedMetaClassifier(estimator=NonConsumingClassifier())
+    search = GridSearchCV(meta_est, param_grid={"estimator__alpha": [0.0]}, cv=2)
+
+    with config_context(enable_metadata_auto_requests=False):
+        assert (
+            get_routing_for_object(search)
+            ._route_mappings["estimator"]
+            .router._self_request.fit.requests.get("sample_weight")
+            is None
+        )
+        assert (
+            get_routing_for_object(search)
+            ._route_mappings["estimator"]
+            .router._self_request.score.requests.get("sample_weight")
+            is None
+        )
+        with pytest.raises(UnsetMetadataPassedError, match="sample_weight"):
+            search.fit(X, y, sample_weight=sample_weight)
+
+    with config_context(enable_metadata_auto_requests=True):
+        assert (
+            get_routing_for_object(search)
+            ._route_mappings["estimator"]
+            .router._self_request.fit.requests.get("sample_weight")
+            is True
+        )
+        assert (
+            get_routing_for_object(search)
+            ._route_mappings["estimator"]
+            .router._self_request.score.requests.get("sample_weight")
+            is True
+        )
+        search.fit(X, y, sample_weight=sample_weight)
 
 
 # End of Metadata Routing Tests
