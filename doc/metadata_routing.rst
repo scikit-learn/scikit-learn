@@ -102,7 +102,6 @@ method and in :func:`~metrics.make_scorer`'s `set_score_request()` method. Both
   ...     alphas=10,
   ...     cv=GroupKFold(),
   ...     scoring=weighted_acc,
-  ...     use_legacy_attributes=False,
   ... ).set_fit_request(sample_weight=True)
   >>> cv_results = cross_validate(
   ...     lr,
@@ -135,7 +134,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
+  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc
   ... ).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
@@ -166,7 +165,7 @@ to it::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
+  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc
   ... ).set_fit_request(sample_weight=True)
   >>> sel = SelectKBest(k=2)
   >>> pipe = make_pipeline(sel, lr)
@@ -192,7 +191,7 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
   ...    sample_weight="scoring_weight"
   ... )
   >>> lr = LogisticRegressionCV(
-  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
+  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc
   ... ).set_fit_request(sample_weight="fitting_weight")
   >>> cv_results = cross_validate(
   ...     lr,

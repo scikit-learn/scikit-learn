@@ -214,7 +214,6 @@ unscaled_clf = make_pipeline(
     pca,
     LogisticRegressionCV(
         alphas=alphas,
-        use_legacy_attributes=False,
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
     ),
 )
@@ -225,7 +224,6 @@ scaled_clf = make_pipeline(
     pca,
     LogisticRegressionCV(
         alphas=alphas,
-        use_legacy_attributes=False,
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now,
     ),
 )

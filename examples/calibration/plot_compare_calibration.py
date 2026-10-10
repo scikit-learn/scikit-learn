@@ -108,7 +108,6 @@ lr = LogisticRegressionCV(
     cv=10,
     scoring="neg_log_loss",
     max_iter=1_000,
-    use_legacy_attributes=False,
 )
 gnb = GaussianNB()
 svc = NaivelyCalibratedLinearSVC(C=1.0)
