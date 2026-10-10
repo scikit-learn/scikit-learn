@@ -359,7 +359,28 @@ def test_large_variance_y():
     # made by GPy.
     assert_allclose(y_pred_std, y_pred_std_gpy, rtol=0.15, atol=0)
 
+@pytest.mark.parametrize("alpha", [1e-10, 1e-2, 1e-1])
+def test_gpr_multioutput_alpha_in_scaled_target_units(alpha):
+    """With normalize_y=False, a scalar `alpha` is expressed in the units of the
+    min-max scaled targets: each column of a multioutput fit matches a
+    single-output fit on the scaled target with the same `alpha`."""
+    Y = np.column_stack([y, 100 * np.cos(X.ravel()) + 7])
+    y_min = Y.min(axis=0)
+    y_range = Y.max(axis=0) - y_min
 
+    kernel = RBF(length_scale=1.0)
+    gpr_multi = GaussianProcessRegressor(
+        kernel=kernel, alpha=alpha, optimizer=None
+    ).fit(X, Y)
+    mean, std = gpr_multi.predict(X2, return_std=True)
+
+    for j in range(Y.shape[1]):
+        gpr_j = GaussianProcessRegressor(
+            kernel=kernel, alpha=alpha, optimizer=None
+        ).fit(X, (Y[:, j] - y_min[j]) / y_range[j])
+        mean_j, std_j = gpr_j.predict(X2, return_std=True)
+        assert_allclose(mean[:, j], mean_j * y_range[j] + y_min[j])
+        assert_allclose(std[:, j], std_j * y_range[j])
 @pytest.mark.parametrize("normalize_y", [False, True])
 def test_y_multioutput(normalize_y):
     # Test that GPR can deal with multi-dimensional target values
