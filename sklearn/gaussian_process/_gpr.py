@@ -115,6 +115,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         implementation, the normalisation is reversed before the GP predictions
         are reported.
 
+        When `y` has several targets,
+        each target is additionally rescaled to the range [0, 1] before fitting,
+        regardless of the value of `normalize_y`,
+        so that all targets contribute comparably
+        to the log-marginal likelihood used for hyperparameter optimization.
+        This rescaling is also reversed before predictions are reported.
+
+        .. versionchanged:: 1.10
+           Multiple targets are now rescaled to [0, 1] before fitting.
+
     copy_X_train : bool, default=True
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
@@ -141,7 +151,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         required for prediction).
 
     y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
-        Target values in training data (also required for prediction).
+        Target values in training data, as used to fit the model.
+        If `y` has several targets, each one is first rescaled to [0, 1];
+        if `normalize_y=True`, they are then standardized.
 
     kernel_ : kernel instance
         The kernel used for prediction. The structure of the kernel is the
@@ -188,7 +200,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> gpr.score(X, y)
     0.3680...
     >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.0, 592.1]), array([316.6, 316.6]))
+    (array([653.08792288, 592.16905327]), array([316.68016218, 316.65121679]))
     """
 
     _parameter_constraints: dict = {
@@ -223,6 +235,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.n_targets = n_targets
         self.random_state = random_state
 
+    @staticmethod
+    def _create_default_kernel():
+        """Create a default kernel."""
+        return C() * RBF()
+
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit Gaussian process regression model.
@@ -239,8 +256,23 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         -------
         self : object
             GaussianProcessRegressor class instance.
+
+        Notes
+        -----
+        If `y` has several targets,
+        each one is rescaled to [0, 1] (min-max)
+        before the kernel hyperparameters are optimized,
+        so that no target dominates the sum of the log-marginal likelihoods.
+        This is independent of `normalize_y`,
+        which,
+        if True,
+        then standardizes the rescaled targets.
+        A constant target becomes all zeros.
+        The transformation is stored internally and inverted in :meth:`predict`.
         """
-        self.kernel_ = C() * RBF() if self.kernel is None else clone(self.kernel)
+        self.kernel_ = (
+            self._create_default_kernel() if self.kernel is None else clone(self.kernel)
+        )
 
         self._rng = check_random_state(self.random_state)
 
@@ -265,18 +297,24 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 f"`n_targets`. Got {n_targets_seen} != {self.n_targets}."
             )
 
-        # Normalize target value
+        n_targets = 1 if y.ndim == 1 else y.shape[1]
+        if n_targets == 1:
+            self._y_min = 0
+            self._y_range = 1
+        else:
+            self._y_min = y.min(0)
+            self._y_range = _handle_zeros_in_scale(y.max(0) - self._y_min)
+            y = (y - self._y_min) / self._y_range
+
         if self.normalize_y:
             self._y_train_mean = np.mean(y, axis=0)
             self._y_train_std = _handle_zeros_in_scale(np.std(y, axis=0), copy=False)
 
             # Remove mean and make unit variance
             y = (y - self._y_train_mean) / self._y_train_std
-
         else:
-            shape_y_stats = (y.shape[1],) if y.ndim == 2 else 1
-            self._y_train_mean = np.zeros(shape=shape_y_stats)
-            self._y_train_std = np.ones(shape=shape_y_stats)
+            self._y_train_mean = np.zeros(n_targets)
+            self._y_train_std = np.ones(n_targets)
 
         if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
             if self.alpha.shape[0] == 1:
@@ -441,7 +479,8 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_mean = K_trans @ self.alpha_
 
             # undo normalisation
-            y_mean = self._y_train_std * y_mean + self._y_train_mean
+            y_mean = y_mean * self._y_train_std + self._y_train_mean
+            y_mean = y_mean * self._y_range + self._y_min
 
             # if y_mean has shape (n_samples, 1), reshape to (n_samples,)
             if y_mean.ndim > 1 and y_mean.shape[1] == 1:
@@ -460,7 +499,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 y_cov = self.kernel_(X) - V.T @ V
 
                 # undo normalisation
-                y_cov = np.outer(y_cov, self._y_train_std**2).reshape(*y_cov.shape, -1)
+                y_cov = np.outer(
+                    y_cov, self._y_train_std**2 * self._y_range**2
+                ).reshape(*y_cov.shape, -1)
                 # if y_cov has shape (n_samples, n_samples, 1), reshape to
                 # (n_samples, n_samples)
                 if y_cov.shape[2] == 1:
@@ -485,7 +526,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_var[y_var_negative] = 0.0
 
                 # undo normalisation
-                y_var = np.outer(y_var, self._y_train_std**2).reshape(*y_var.shape, -1)
+                y_var = np.outer(
+                    y_var, self._y_train_std**2 * self._y_range**2
+                ).reshape(*y_var.shape, -1)
 
                 # if y_var has shape (n_samples, 1), reshape to (n_samples,)
                 if y_var.shape[1] == 1:
