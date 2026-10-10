@@ -663,13 +663,6 @@ def parametrize_with_checks(
     estimators : list of estimators instances
         Estimators to generated checks for.
 
-        .. versionchanged:: 0.24
-           Passing a class was deprecated in version 0.23, and support for
-           classes was removed in 0.24. Pass an instance instead.
-
-        .. versionadded:: 0.24
-
-
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
         and move them into their specific category.

@@ -35,8 +35,6 @@ class Perceptron(BaseSGDClassifier):
         `l1_ratio=0` corresponds to L2 penalty, `l1_ratio=1` to L1.
         Only used if `penalty='elasticnet'`.
 
-        .. versionadded:: 0.24
-
     fit_intercept : bool, default=True
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
@@ -46,13 +44,9 @@ class Perceptron(BaseSGDClassifier):
         It only impacts the behavior in the ``fit`` method, and not the
         :meth:`partial_fit` method.
 
-        .. versionadded:: 0.19
-
     tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol).
-
-        .. versionadded:: 0.19
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -83,19 +77,13 @@ class Perceptron(BaseSGDClassifier):
         training when validation score is not improving by at least `tol` for
         `n_iter_no_change` consecutive epochs.
 
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
 
-        .. versionadded:: 0.20
-
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
 
     class_weight : dict, {class_label: weight} or "balanced", default=None
         Preset for the class_weight fit parameter.
@@ -126,8 +114,6 @@ class Perceptron(BaseSGDClassifier):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

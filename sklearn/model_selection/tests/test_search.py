@@ -1218,7 +1218,7 @@ def test_random_search_cv_results_multimetric():
     n_splits = 3
     n_search_iter = 30
 
-    params = dict(C=np.logspace(-4, 1, 3))
+    params = dict(alpha=np.logspace(4, -1, 3))
     for refit in (True, False):
         random_searches = []
         for scoring in (("accuracy", "recall"), "accuracy", "recall"):
@@ -1341,7 +1341,9 @@ def test_unsupported_sample_weight_scorer():
 
     X, y = make_classification(n_samples=10, n_features=4, random_state=42)
     sw = np.ones_like(y)
-    search_cv = GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10]})
+    search_cv = GridSearchCV(
+        estimator=LogisticRegression(), param_grid={"alpha": [1, 0.1]}
+    )
     # function
     search_cv.set_params(scoring=fake_score_func)
     with pytest.warns(UserWarning, match="does not support sample_weight"):
@@ -1364,9 +1366,11 @@ def test_unsupported_sample_weight_scorer():
 @pytest.mark.parametrize(
     "estimator",
     [
-        GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10, 100]}),
+        GridSearchCV(
+            estimator=LogisticRegression(), param_grid={"alpha": [1, 0.1, 0.01]}
+        ),
         RandomizedSearchCV(
-            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}
+            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}, n_iter=3
         ),
     ],
 )
@@ -2676,21 +2680,21 @@ def test_search_html_repr():
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<div>DummyClassifier</div>" in repr_html
+        assert "<span>DummyClassifier</span>" in repr_html
 
     # Fitted with `refit=False` shows the original pipeline
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<div>DummyClassifier</div>" in repr_html
+        assert "<span>DummyClassifier</span>" in repr_html
 
     # Fitted with `refit=True` shows the best estimator
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=True)
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<div>DummyClassifier</div>" not in repr_html
-        assert "<div>LogisticRegression</div>" in repr_html
+        assert "<span>DummyClassifier</span>" not in repr_html
+        assert "<span>LogisticRegression</span>" in repr_html
 
 
 # Metadata Routing Tests

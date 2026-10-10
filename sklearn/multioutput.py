@@ -226,8 +226,6 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
 
-            .. versionadded:: 0.23
-
         Returns
         -------
         self : object
@@ -343,8 +341,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     simple strategy for extending regressors that do not natively support
     multi-target regression.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     estimator : estimator object
@@ -363,9 +359,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         ``-1`` means using all available processes / threads.
         See :term:`Glossary <n_jobs>` for more details.
 
-        .. versionchanged:: 0.20
-            `n_jobs` default changed from `1` to `None`.
-
     Attributes
     ----------
     estimators_ : list of ``n_output`` estimators
@@ -374,8 +367,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying `estimator` exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -466,9 +457,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         ``-1`` means using all available processes / threads.
         See :term:`Glossary <n_jobs>` for more details.
 
-        .. versionchanged:: 0.20
-            `n_jobs` default changed from `1` to `None`.
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -480,8 +468,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying `estimator` exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -500,9 +486,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> import numpy as np
     >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
-    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.svm import LinearSVC
     >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
-    >>> clf = MultiOutputClassifier(LogisticRegression()).fit(X, y)
+    >>> clf = MultiOutputClassifier(LinearSVC()).fit(X, y)
     >>> clf.predict(X[-2:])
     array([[1, 1, 1],
            [1, 0, 1]])
@@ -529,8 +515,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
-
-            .. versionadded:: 0.23
 
         Returns
         -------
@@ -570,11 +554,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
                 such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
-
-            .. versionchanged:: 0.19
-                This function now returns a list of arrays where the length of
-                the list is ``n_outputs``, and each array is (``n_samples``,
-                ``n_classes``) for that particular output.
         """
         check_is_fitted(self)
         results = [estimator.predict_proba(X) for estimator in self.estimators_]
@@ -716,8 +695,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method of each step.
 
-            .. versionadded:: 0.23
-
         Returns
         -------
         self : object
@@ -853,8 +830,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     Read more in the :ref:`User Guide <classifierchain>`.
 
-    .. versionadded:: 0.19
-
     Parameters
     ----------
     estimator : estimator
@@ -933,8 +908,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying `base_estimator` exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1128,8 +1101,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     Read more in the :ref:`User Guide <regressorchain>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     estimator : estimator
@@ -1188,8 +1159,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         Number of features seen during :term:`fit`. Only defined if the
         underlying `base_estimator` exposes such an attribute when fit.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1206,7 +1175,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     --------
     >>> from sklearn.multioutput import RegressorChain
     >>> from sklearn.linear_model import LogisticRegression
-    >>> logreg = LogisticRegression(solver='lbfgs')
+    >>> logreg = LogisticRegression()
     >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
     >>> chain = RegressorChain(logreg, order=[0, 1]).fit(X, Y)
     >>> chain.predict(X)
@@ -1233,8 +1202,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method at each step
             of the regressor chain.
-
-            .. versionadded:: 0.23
 
         Returns
         -------

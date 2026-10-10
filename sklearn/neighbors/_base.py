@@ -1109,8 +1109,6 @@ class RadiusNeighborsMixin:
             be sorted. If `return_distance=False`, setting `sort_results=True`
             will result in an error.
 
-            .. versionadded:: 0.22
-
         Returns
         -------
         neigh_dist : ndarray of shape (n_samples,) of arrays
@@ -1330,8 +1328,6 @@ class RadiusNeighborsMixin:
             If True, in each row of the result, the non-zero entries will be
             sorted by increasing distances. If False, the non-zero entries may
             not be sorted. Only used with mode='distance'.
-
-            .. versionadded:: 0.22
 
         Returns
         -------

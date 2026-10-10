@@ -1029,8 +1029,6 @@ class ElasticNet(RegressorMixin, MultiOutputLinearModel):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1145,8 +1143,6 @@ class ElasticNet(RegressorMixin, MultiOutputLinearModel):
         sample_weight : float or array-like of shape (n_samples,), default=None
             Sample weights. Internally, the `sample_weight` vector will be
             rescaled to sum to `n_samples`.
-
-            .. versionadded:: 0.23
 
         check_input : bool, default=True
             Allow to bypass several input checking.
@@ -1448,8 +1444,6 @@ class Lasso(ElasticNet):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1475,8 +1469,7 @@ class Lasso(ElasticNet):
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
     regularization. Alpha corresponds to `1 / (2C)` in other linear
-    models such as :class:`~sklearn.linear_model.LogisticRegression` or
-    :class:`~sklearn.svm.LinearSVC`.
+    models such as :class:`~sklearn.svm.LinearSVC`.
 
     The precise stopping criteria based on `tol` are the following: First, check that
     the maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
@@ -2119,9 +2112,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     verbose : bool or int, default=False
         Amount of verbosity.
 
@@ -2173,8 +2163,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2375,9 +2363,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
@@ -2436,8 +2421,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2676,8 +2659,6 @@ class MultiTaskElasticNet(ElasticNet):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2970,8 +2951,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -3052,8 +3031,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     Read more in the :ref:`User Guide <multi_task_elastic_net>`.
 
-    .. versionadded:: 0.15
-
     Parameters
     ----------
     l1_ratio : float or list of float, default=0.5
@@ -3107,9 +3084,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -3167,8 +3141,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -3270,8 +3242,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     Read more in the :ref:`User Guide <multi_task_lasso>`.
 
-    .. versionadded:: 0.15
-
     Parameters
     ----------
     eps : float, default=1e-3
@@ -3316,9 +3286,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     verbose : bool or int, default=False
         Amount of verbosity.
@@ -3369,8 +3336,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
