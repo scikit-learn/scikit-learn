@@ -1,0 +1,5 @@
+- |Feature| Scorers created with :func:`~metrics.make_scorer` and
+  :func:`~metrics.get_scorer` auto-request `sample_weight` when the underlying
+  metric accepts it and metadata routing and auto-requests are enabled via
+  :func:`~sklearn.set_config`.
+  By :user:`Stefanie Senger <StefanieSenger>`.
