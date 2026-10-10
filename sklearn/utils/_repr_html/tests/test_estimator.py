@@ -626,6 +626,8 @@ def test_non_utf8_locale(set_non_utf8_locale):
         (np.vectorize(partial(dummy_function, y=1)), re.escape("vectorize(...)")),
     ],
 )
+
+
 def test_function_transformer_show_caption(func, expected_name):
     # Test that function name is shown as the name and "FunctionTransformer" is shown
     # in the caption
@@ -641,10 +643,12 @@ def test_function_transformer_show_caption(func, expected_name):
     re_compiled = re.compile(p)
     assert re_compiled.search(html_output)
 
+
 def test_estimator_html_repr_table():
     """Check that we add the table of parameters in the HTML representation."""
     est = LogisticRegression(alpha=0.1, fit_intercept=False)
     assert "parameters-table" in estimator_html_repr(est)
+
 
 def test_estimator_html_repr_non_utf8_locale(set_non_utf8_locale):
     """Regression test for GH-35093: estimator_html_repr must work under
