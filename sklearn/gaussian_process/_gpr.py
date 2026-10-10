@@ -123,7 +123,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         This rescaling is also reversed before predictions are reported.
 
         .. versionchanged:: 1.9
-        Multiple targets are now rescaled to [0, 1] before fitting.
+           Multiple targets are now rescaled to [0, 1] before fitting.
 
     copy_X_train : bool, default=True
         If True, a persistent copy of the training data is stored in the
