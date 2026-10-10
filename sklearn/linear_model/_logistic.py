@@ -1345,12 +1345,6 @@ class LogisticRegression(
         initialization, otherwise, just erase the previous solution.
         Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
 
-    n_jobs : int, default=None
-        Does not have any effect.
-
-        .. deprecated:: 1.8
-           `n_jobs` is deprecated in version 1.8 and will be removed in 1.10.
-
     Attributes
     ----------
 
@@ -1459,7 +1453,6 @@ class LogisticRegression(
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
-        "n_jobs": [None, Integral],
     }
 
     def __init__(
@@ -1478,7 +1471,6 @@ class LogisticRegression(
         max_iter=100,
         verbose=0,
         warm_start=False,
-        n_jobs=None,
     ):
         self.alpha = alpha
         self.C = C
@@ -1493,7 +1485,6 @@ class LogisticRegression(
         self.max_iter = max_iter
         self.verbose = verbose
         self.warm_start = warm_start
-        self.n_jobs = n_jobs
 
     # TODO(callbacks): update/remove as more solvers get supported.
     def set_callbacks(self, *callbacks):
@@ -1596,13 +1587,6 @@ class LogisticRegression(
         xp, _, device = get_namespace_and_device(X)
         sample_weight = move_to(sample_weight, xp=xp, device=device)
         xp_y, _ = get_namespace(y)
-
-        msg = (
-            "'n_jobs' has no effect since 1.8 and will be removed in 1.10. "
-            f"You provided 'n_jobs={self.n_jobs}', please leave it unspecified."
-        )
-        if self.n_jobs is not None:
-            warnings.warn(msg, category=FutureWarning)
 
         X, y = validate_data(
             self,
@@ -2257,6 +2241,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 None,
                 Hidden(StrOptions({"warn"})),
             ],
+            "n_jobs": [None, Integral],
             "refit": ["boolean"],
             "use_legacy_attributes": ["boolean", Hidden(StrOptions({"warn"}))],
         }
