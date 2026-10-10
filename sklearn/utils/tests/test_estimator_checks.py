@@ -1740,7 +1740,7 @@ def test_estimator_with_set_output():
                     "this check is expected to fail because pandas and polars"
                     " are not compatible with the array api."
                 ),
-                "check_array_api_same_namespace": (
+                "check_array_api_cross_namespace_inference": (
                     "this check is expected to fail because pandas and polars"
                     " are not compatible with the array api."
                 ),
