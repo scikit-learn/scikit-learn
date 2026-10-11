@@ -30,7 +30,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     neighbors, one can identify samples that have a substantially lower density
     than their neighbors. These are considered outliers.
 
-    .. versionadded:: 0.19
+    Read more in the :ref:`User Guide <local_outlier_factor>`.
 
     Parameters
     ----------
@@ -93,10 +93,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
           original paper,
         - if a float, the contamination should be in the range (0, 0.5].
 
-        .. versionchanged:: 0.22
-           The default value of ``contamination`` changed from 0.1
-           to ``'auto'``.
-
     novelty : bool, default=False
         By default, LocalOutlierFactor is only meant to be used for outlier
         detection (novelty=False). Set novelty to True if you want to use
@@ -104,8 +100,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set; and note that the
         results obtained this way may differ from the standard LOF results.
-
-        .. versionadded:: 0.20
 
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
@@ -138,8 +132,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         case, the offset is defined in such a way we obtain the expected
         number of outliers in training.
 
-        .. versionadded:: 0.20
-
     effective_metric_ : str
         The effective metric used for the distance computation.
 
@@ -148,8 +140,6 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -168,7 +158,10 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     References
     ----------
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
-           LOF: identifying density-based local outliers. In ACM sigmod record.
+           `LOF: identifying density-based local outliers.
+           <https://dl.acm.org/doi/pdf/10.1145/342009.335388>`_
+           In Proceedings of the 2000 ACM SIGMOD International Conference on
+           Management of Data, pp. 93-104.
 
     Examples
     --------

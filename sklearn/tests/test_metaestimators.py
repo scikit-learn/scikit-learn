@@ -7,7 +7,7 @@ from inspect import signature
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, is_regressor
+from sklearn.base import BaseEstimator, clone, is_regressor
 from sklearn.datasets import make_classification
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
@@ -208,8 +208,8 @@ def _get_instance_with_pipeline(meta_estimator, init_params):
             estimator = make_pipeline(TfidfVectorizer(), Ridge())
             param_grid = {"ridge__alpha": [0.1, 1.0]}
         else:
-            estimator = make_pipeline(TfidfVectorizer(), LogisticRegression())
-            param_grid = {"logisticregression__C": [0.1, 1.0]}
+            estimator = make_pipeline(TfidfVectorizer(), LogisticRegression(alpha=1e-4))
+            param_grid = {"logisticregression__alpha": [0.1, 1.0]}
 
         if init_params.intersection(
             {"param_grid", "param_distributions"}
@@ -241,9 +241,12 @@ def _get_instance_with_pipeline(meta_estimator, init_params):
             estimator = [
                 (
                     "est1",
-                    make_pipeline(TfidfVectorizer(), LogisticRegression(C=0.1)),
+                    make_pipeline(TfidfVectorizer(), LogisticRegression(alpha=0.1)),
                 ),
-                ("est2", make_pipeline(TfidfVectorizer(), LogisticRegression(C=1))),
+                (
+                    "est2",
+                    make_pipeline(TfidfVectorizer(), LogisticRegression(alpha=1)),
+                ),
             ]
         return type(meta_estimator)(estimator)
 
@@ -307,12 +310,17 @@ def _get_meta_estimator_id(estimator):
     return estimator.__class__.__name__
 
 
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "estimator", DATA_VALIDATION_META_ESTIMATORS, ids=_get_meta_estimator_id
 )
 def test_meta_estimators_delegate_data_validation(estimator):
     # Check that meta-estimators delegate data validation to the inner
     # estimator(s).
+
+    # clone to avoid side effects and ensure thread-safe test execution.
+    estimator = clone(estimator)
     rng = np.random.RandomState(0)
     set_random_state(estimator)
 

@@ -3,7 +3,7 @@
 
 from libc.math cimport exp, lgamma
 
-from ...utils._typedefs cimport float64_t, int64_t
+from sklearn.utils._typedefs cimport float64_t, int64_t
 
 import numpy as np
 from scipy.special import gammaln

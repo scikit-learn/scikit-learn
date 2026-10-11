@@ -515,8 +515,6 @@ class PLSRegression(_PLS):
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
-    .. versionadded:: 0.8
-
     Parameters
     ----------
     n_components : int, default=2
@@ -664,8 +662,6 @@ class PLSCanonical(_PLS):
     :ref:`sphx_glr_auto_examples_cross_decomposition_plot_compare_cross_decomposition.py`.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
-
-    .. versionadded:: 0.8
 
     Parameters
     ----------
@@ -903,14 +899,12 @@ class CCA(_PLS):
 class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Partial Least Square SVD.
 
-    This transformer simply performs a SVD on the cross-covariance matrix
+    This transformer simply performs an SVD on the cross-covariance matrix
     `X'y`. It is able to project both the training data `X` and the targets
     `y`. The training data `X` is projected on the left singular vectors, while
     the targets are projected on the right singular vectors.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
-
-    .. versionadded:: 0.8
 
     Parameters
     ----------

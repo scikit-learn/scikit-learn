@@ -3,10 +3,13 @@
 
 
 import re
+import sys
 import warnings
 from contextlib import suppress
 from functools import partial
 from inspect import isfunction
+
+import numpy as np
 
 from sklearn import clone, config_context
 from sklearn.calibration import CalibratedClassifierCV
@@ -43,7 +46,10 @@ from sklearn.decomposition import (
     SparsePCA,
     TruncatedSVD,
 )
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis,
+    QuadraticDiscriminantAnalysis,
+)
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import (
     AdaBoostClassifier,
@@ -76,6 +82,7 @@ from sklearn.feature_selection import (
     SequentialFeatureSelector,
 )
 from sklearn.frozen import FrozenEstimator
+from sklearn.impute import SimpleImputer
 from sklearn.kernel_approximation import (
     Nystroem,
     PolynomialCountSketch,
@@ -144,6 +151,7 @@ from sklearn.multioutput import (
     MultiOutputRegressor,
     RegressorChain,
 )
+from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import (
     KernelDensity,
     KNeighborsClassifier,
@@ -155,8 +163,15 @@ from sklearn.neighbors import (
 from sklearn.neural_network import BernoulliRBM, MLPClassifier, MLPRegressor
 from sklearn.pipeline import FeatureUnion, Pipeline
 from sklearn.preprocessing import (
+    Binarizer,
     KBinsDiscretizer,
+    KernelCenterer,
+    LabelEncoder,
+    MinMaxScaler,
+    Normalizer,
     OneHotEncoder,
+    PolynomialFeatures,
+    QuantileTransformer,
     SplineTransformer,
     StandardScaler,
     TargetEncoder,
@@ -176,6 +191,8 @@ from sklearn.utils.fixes import _IS_32BIT, parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 
+rng = np.random.RandomState(0)
+
 # The following dictionary is to indicate constructor arguments suitable for the test
 # suite, which uses very small datasets, and is intended to run rather quickly.
 INIT_PARAMS = {
@@ -191,9 +208,9 @@ INIT_PARAMS = {
     BernoulliRBM: dict(n_iter=5, batch_size=10),
     Birch: dict(n_clusters=2),
     BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
-    CalibratedClassifierCV: dict(estimator=LogisticRegression(C=1), cv=3),
+    CalibratedClassifierCV: dict(estimator=LogisticRegression(), cv=3),
     CCA: dict(n_components=1, max_iter=5),
-    ClassifierChain: dict(estimator=LogisticRegression(C=1), cv=3),
+    ClassifierChain: dict(estimator=LogisticRegression(), cv=3),
     ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0, 1])]),
     DictionaryLearning: dict(max_iter=20, transform_algorithm="lasso_lars"),
     # the default strategy prior would output constant predictions and fail
@@ -207,7 +224,7 @@ INIT_PARAMS = {
     FastICA: dict(max_iter=5),
     FeatureAgglomeration: dict(n_clusters=2),
     FeatureUnion: dict(transformer_list=[("trans1", StandardScaler())]),
-    FixedThresholdClassifier: dict(estimator=LogisticRegression(C=1)),
+    FixedThresholdClassifier: dict(estimator=LogisticRegression()),
     GammaRegressor: dict(max_iter=5),
     GaussianMixture: dict(n_init=2, max_iter=5),
     # Due to the jl lemma and often very few samples, the number
@@ -230,7 +247,7 @@ INIT_PARAMS = {
             cv=2,
             error_score="raise",
             estimator=LogisticRegression(),
-            param_grid={"C": [0.1, 1.0]},
+            param_grid={"alpha": [0.1, 1.0]},
         ),
         dict(
             cv=2,
@@ -242,9 +259,12 @@ INIT_PARAMS = {
             cv=2,
             error_score="raise",
             estimator=Pipeline(
-                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+                steps=[
+                    ("pca", PCA()),
+                    ("logisticregression", LogisticRegression()),
+                ]
             ),
-            param_grid={"logisticregression__C": [0.1, 1.0]},
+            param_grid={"logisticregression__alpha": [0.1, 1.0]},
         ),
     ],
     HalvingGridSearchCV: [
@@ -261,7 +281,7 @@ INIT_PARAMS = {
             error_score="raise",
             estimator=LogisticRegression(),
             min_resources="smallest",
-            param_grid={"C": [0.1, 1.0]},
+            param_grid={"alpha": [0.1, 1.0]},
             random_state=0,
         ),
         dict(
@@ -276,10 +296,13 @@ INIT_PARAMS = {
             cv=2,
             error_score="raise",
             estimator=Pipeline(
-                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+                steps=[
+                    ("pca", PCA()),
+                    ("logisticregression", LogisticRegression()),
+                ]
             ),
             min_resources="smallest",
-            param_grid={"logisticregression__C": [0.1, 1.0]},
+            param_grid={"logisticregression__alpha": [0.1, 1.0]},
             random_state=0,
         ),
     ],
@@ -295,7 +318,7 @@ INIT_PARAMS = {
             cv=2,
             error_score="raise",
             estimator=LogisticRegression(),
-            param_distributions={"C": [0.1, 1.0]},
+            param_distributions={"alpha": [0.1, 1.0]},
             random_state=0,
         ),
         dict(
@@ -309,9 +332,12 @@ INIT_PARAMS = {
             cv=2,
             error_score="raise",
             estimator=Pipeline(
-                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+                steps=[
+                    ("pca", PCA()),
+                    ("logisticregression", LogisticRegression()),
+                ]
             ),
-            param_distributions={"logisticregression__C": [0.1, 1.0]},
+            param_distributions={"logisticregression__alpha": [0.1, 1.0]},
             random_state=0,
         ),
     ],
@@ -340,7 +366,11 @@ INIT_PARAMS = {
     LinearSVC: dict(max_iter=20),
     LinearSVR: dict(max_iter=20),
     LocallyLinearEmbedding: dict(max_iter=5),
-    LogisticRegressionCV: dict(max_iter=5, cv=3),
+    # TODO(1.11): remove scoring because it is default now
+    # TODO(1.14): remove alphas=10 because it is default now
+    LogisticRegressionCV: dict(
+        alphas=10, max_iter=7, cv=3, use_legacy_attributes=False, scoring="neg_log_loss"
+    ),
     LogisticRegression: dict(max_iter=5),
     MDS: dict(n_init=2, max_iter=5),
     # In the case of check_fit2d_1sample, bandwidth is set to None and
@@ -353,7 +383,7 @@ INIT_PARAMS = {
     MiniBatchSparsePCA: dict(max_iter=5, batch_size=10),
     MLPClassifier: dict(max_iter=100),
     MLPRegressor: dict(max_iter=100),
-    MultiOutputClassifier: dict(estimator=LogisticRegression(C=1)),
+    MultiOutputClassifier: dict(estimator=LogisticRegression()),
     MultiOutputRegressor: dict(estimator=Ridge()),
     MultiTaskElasticNetCV: dict(max_iter=5, cv=3),
     MultiTaskElasticNet: dict(max_iter=5),
@@ -365,10 +395,10 @@ INIT_PARAMS = {
     NuSVR: dict(max_iter=-1),
     OneClassSVM: dict(max_iter=-1),
     OneHotEncoder: dict(handle_unknown="ignore"),
-    OneVsOneClassifier: dict(estimator=LogisticRegression(C=1)),
-    OneVsRestClassifier: dict(estimator=LogisticRegression(C=1)),
+    OneVsOneClassifier: dict(estimator=LogisticRegression()),
+    OneVsRestClassifier: dict(estimator=LogisticRegression()),
     OrthogonalMatchingPursuitCV: dict(cv=3),
-    OutputCodeClassifier: dict(estimator=LogisticRegression(C=1)),
+    OutputCodeClassifier: dict(estimator=LogisticRegression()),
     PassiveAggressiveClassifier: dict(max_iter=5),
     PassiveAggressiveRegressor: dict(max_iter=5),
     Perceptron: dict(max_iter=5),
@@ -399,7 +429,7 @@ INIT_PARAMS = {
             cv=2,
             error_score="raise",
             estimator=LogisticRegression(),
-            param_distributions={"C": [0.1, 1.0]},
+            param_distributions={"alpha": [0.1, 1.0]},
             random_state=0,
         ),
         dict(
@@ -413,9 +443,12 @@ INIT_PARAMS = {
             cv=2,
             error_score="raise",
             estimator=Pipeline(
-                steps=[("pca", PCA()), ("logisticregression", LogisticRegression())]
+                steps=[
+                    ("pca", PCA()),
+                    ("logisticregression", LogisticRegression()),
+                ]
             ),
-            param_distributions={"logisticregression__C": [0.1, 1.0]},
+            param_distributions={"logisticregression__alpha": [0.1, 1.0]},
             random_state=0,
         ),
     ],
@@ -426,8 +459,8 @@ INIT_PARAMS = {
     # is the default estimator in `RANSACRegressor` instead of `Ridge`.
     RANSACRegressor: dict(estimator=LinearRegression(), max_trials=10),
     RegressorChain: dict(estimator=Ridge(), cv=3),
-    RFECV: dict(estimator=LogisticRegression(C=1), cv=3),
-    RFE: dict(estimator=LogisticRegression(C=1)),
+    RFECV: dict(estimator=LogisticRegression(), cv=3),
+    RFE: dict(estimator=LogisticRegression()),
     # be tolerant of noisy datasets (not actually speed)
     SelectFdr: dict(alpha=0.5),
     # Increases coverage because SGDRegressor has partial_fit
@@ -435,11 +468,12 @@ INIT_PARAMS = {
     # SelectKBest has a default of k=10
     # which is more feature than we have in most case.
     SelectKBest: dict(k=1),
-    SelfTrainingClassifier: dict(estimator=LogisticRegression(C=1), max_iter=5),
-    SequentialFeatureSelector: dict(estimator=LogisticRegression(C=1), cv=3),
+    SelfTrainingClassifier: dict(estimator=LogisticRegression(), max_iter=5),
+    SequentialFeatureSelector: dict(estimator=LogisticRegression(), cv=3),
     SGDClassifier: dict(max_iter=5),
     SGDOneClassSVM: dict(max_iter=5),
     SGDRegressor: dict(max_iter=5),
+    SparseCoder: dict(dictionary=rng.normal(size=(5, 3))),
     SparsePCA: dict(max_iter=5),
     # Due to the jl lemma and often very few samples, the number
     # of components of the random matrix projection will be probably
@@ -452,6 +486,10 @@ INIT_PARAMS = {
     # Default "auto" parameter can lead to different ordering of eigenvalues on
     # windows: #24105
     SpectralEmbedding: dict(eigen_tol=1e-05),
+    # SplineTransformer supports NaN only with handle_missing="zeros", so we
+    # need this additional parameter set for the allow_nan_estimators Sphinx
+    # directive to detect it.
+    SplineTransformer: [dict(), dict(handle_missing="zeros")],
     StackingClassifier: dict(
         estimators=[
             ("est1", DecisionTreeClassifier(max_depth=3, random_state=0)),
@@ -473,7 +511,7 @@ INIT_PARAMS = {
     # TruncatedSVD doesn't run with n_components = n_features
     TruncatedSVD: dict(n_iter=5, n_components=1),
     TSNE: dict(perplexity=2),
-    TunedThresholdClassifierCV: dict(estimator=LogisticRegression(C=1), cv=3),
+    TunedThresholdClassifierCV: dict(estimator=LogisticRegression(), cv=3),
     TweedieRegressor: dict(max_iter=5),
     VotingClassifier: dict(
         estimators=[
@@ -505,13 +543,11 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(criterion="squared_error"),
             dict(criterion="absolute_error"),
-            dict(criterion="friedman_mse"),
             dict(criterion="poisson"),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(criterion="squared_error"),
             dict(criterion="absolute_error"),
-            dict(criterion="friedman_mse"),
             dict(criterion="poisson"),
         ],
     },
@@ -553,12 +589,16 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="lbfgs"),
         ],
     },
-    GaussianMixture: {"check_dict_unchanged": dict(max_iter=5, n_init=2)},
+    GaussianMixture: {
+        "check_dict_unchanged": dict(max_iter=5, n_init=2),
+        "check_array_api_input": dict(
+            max_iter=5, n_init=2, init_params="random_from_data"
+        ),
+    },
     GaussianRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
+    GraphicalLasso: {"check_array_api_input": dict(max_iter=5, alpha=1.0)},
     IncrementalPCA: {"check_dict_unchanged": dict(batch_size=10, n_components=1)},
     Isomap: {"check_dict_unchanged": dict(n_components=1)},
-    KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
-    # TODO(1.9) simplify when averaged_inverted_cdf is the default
     KBinsDiscretizer: {
         "check_sample_weight_equivalence_on_dense_data": [
             # Using subsample != None leads to a stochastic fit that is not
@@ -573,23 +613,12 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             # The "kmeans" strategy leads to a stochastic fit that is not
             # handled by the check_sample_weight_equivalence test.
         ],
-        "check_sample_weights_list": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_pandas_series": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_shape": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_not_an_array": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
-        "check_sample_weights_not_overwritten": dict(
-            strategy="quantile", quantile_method="averaged_inverted_cdf"
-        ),
     },
-    KernelPCA: {"check_dict_unchanged": dict(n_components=1)},
+    KernelPCA: {
+        "check_dict_unchanged": dict(n_components=1),
+        "check_array_api_input": dict(fit_inverse_transform=True),
+    },
+    KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
     LatentDirichletAllocation: {
         "check_dict_unchanged": dict(batch_size=10, max_iter=5, n_components=1)
@@ -626,9 +655,13 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LogisticRegressionCV: {
         "check_sample_weight_equivalence": [
-            dict(solver="lbfgs"),
-            dict(solver="newton-cholesky"),
-            dict(solver="newton-cholesky", class_weight="balanced"),
+            dict(solver="lbfgs", use_legacy_attributes=False),
+            dict(solver="newton-cholesky", use_legacy_attributes=False),
+            dict(
+                solver="newton-cholesky",
+                class_weight="balanced",
+                use_legacy_attributes=False,
+            ),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
             dict(solver="liblinear"),
@@ -683,6 +716,18 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="highs-ipm"),
         ],
     },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_dense_data": [
+            # Using subsample != None leads to a stochastic fit that is not
+            # handled by the check_sample_weight_equivalence_on_dense_data test.
+            dict(n_quantiles=2, subsample=None),
+            dict(n_quantiles=5, subsample=None),
+            dict(n_quantiles=1000, subsample=None),
+        ],
+        # Force subsampling to happen so that the weighted subsampling branch is covered
+        "check_sample_weights_not_overwritten": dict(n_quantiles=5, subsample=8),
+    },
+    QuadraticDiscriminantAnalysis: {"check_array_api_input": dict(reg_param=1.0)},
     RBFSampler: {"check_dict_unchanged": dict(n_components=1)},
     Ridge: {
         "check_sample_weight_equivalence_on_dense_data": [
@@ -710,6 +755,40 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         ],
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
+    SimpleImputer: {"check_array_api_input": dict(add_indicator=True)},
+    SparseCoder: {
+        "check_array_api_input": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_estimators_dtypes": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_dtype_object": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_transformers_unfitted_stateless": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_fit_idempotent": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_transformer_preserve_dtypes": dict(
+            dictionary=rng.normal(size=(5, 3)).astype(np.float32)
+        ),
+        "check_set_output_transform": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_output_transform_pandas": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_set_output_transform_pandas": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_set_output_transform_polars": dict(dictionary=rng.normal(size=(5, 5))),
+        "check_global_set_output_transform_polars": dict(
+            dictionary=rng.normal(size=(5, 5))
+        ),
+        "check_dataframe_column_names_consistency": dict(
+            dictionary=rng.normal(size=(5, 8))
+        ),
+        "check_estimators_overwrite_params": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_estimators_fit_returns_self": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_readonly_memmap_input": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in_after_fitting": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit_check_is_fitted": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_n_features_in": dict(dictionary=rng.normal(size=(5, 2))),
+        "check_positive_only_tag_during_fit": dict(dictionary=rng.normal(size=(5, 4))),
+        "check_fit2d_1sample": dict(dictionary=rng.normal(size=(5, 10))),
+        "check_fit2d_1feature": dict(dictionary=rng.normal(size=(5, 1))),
+    },
     SparsePCA: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     SparseRandomProjection: {"check_dict_unchanged": dict(n_components=1)},
     SpectralBiclustering: {
@@ -747,7 +826,7 @@ def _tested_estimators(type_filter=None):
                 yield estimator
 
 
-SKIPPED_ESTIMATORS = [SparseCoder, FrozenEstimator]
+SKIPPED_ESTIMATORS = [FrozenEstimator]
 
 
 def _construct_instances(Estimator):
@@ -844,7 +923,7 @@ def _yield_instances_for_check(check, estimator_orig):
         yield estimator
 
 
-PER_ESTIMATOR_XFAIL_CHECKS = {
+PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     AdaBoostClassifier: {
         # TODO: replace by a statistical test, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (
@@ -881,6 +960,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
+    Binarizer: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
     BernoulliRBM: {
         "check_methods_subset_invariance": ("fails for the decision_function method"),
         "check_methods_sample_order_invariance": ("fails for the score_samples method"),
@@ -909,6 +991,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_methods_sample_order_invariance": "fails for the predict method",
     },
     FeatureUnion: {
+        # Fails because StandardScaler, which gets wrapped by FeatureUnion, supports
+        # array API but FeatureUnion itself does not
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
         "check_estimators_overwrite_params": "FIXME",
         "check_estimators_nan_inf": "FIXME",
         "check_dont_overwrite_parameters": "FIXME",
@@ -923,6 +1008,13 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    GaussianNB: {
+        # TODO: Remove once fixed: https://github.com/pytorch/pytorch/issues/188128
+        "check_array_api_mixed_inputs": (
+            "PyTorch bug when asarray used on array-api-strict boolean array"
+        ),
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     GradientBoostingClassifier: {
         # TODO: investigate failure see meta-issue #16298
@@ -993,6 +1085,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
+    KernelCenterer: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
     KernelDensity: {
         "check_sample_weight_equivalence_on_dense_data": (
             "sample_weight must have positive values"
@@ -1009,6 +1104,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
+    },
+    LabelEncoder: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     LinearSVC: {
         # TODO: replace by a statistical test when _dual=True, see meta-issue #16298
@@ -1039,6 +1137,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    MinMaxScaler: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     MiniBatchKMeans: {
         # TODO: replace by a statistical test, see meta-issue #16298
@@ -1073,10 +1174,14 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
+    Normalizer: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
     Nystroem: {
-        "check_transformer_preserves_dtypes": (
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+        "check_transformer_preserve_dtypes": (
             "dtypes are preserved but not at a close enough precision"
-        )
+        ),
     },
     OneClassSVM: {
         # TODO: fix sample_weight handling of this estimator, see meta-issue #16298
@@ -1086,6 +1191,10 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    PCA: {
+        # TODO: see gh-33205 for details
+        "check_array_api_input": "`linalg.inv` fails because input is singular",
     },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298
@@ -1106,6 +1215,17 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "Therefore this test is x-fail until we fix this."
         ),
     },
+    PoissonRegressor: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
+    PolynomialFeatures: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
+    QuantileTransformer: {
+        "check_sample_weight_equivalence_on_sparse_data": (
+            "QuantileTransformer does not yet support sample_weight on sparse data."
+        ),
+    },
     RadiusNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
     },
@@ -1116,6 +1236,10 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         ),
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
+        ),
+        # TODO: error raised by all zero sample weights will be addressed by PR #31529
+        "check_classifiers_one_label_sample_weights": (
+            "failed when fitted on one label after sample_weight trimming."
         ),
     },
     RandomForestRegressor: {
@@ -1149,6 +1273,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
+    RBFSampler: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
     Ridge: {
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
@@ -1157,7 +1284,7 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     RidgeClassifier: {
         "check_non_transformer_estimators_n_iter": (
             "n_iter_ cannot be easily accessed."
-        )
+        ),
     },
     SelfTrainingClassifier: {
         "check_non_transformer_estimators_n_iter": "n_iter_ can be 0."
@@ -1212,6 +1339,9 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
         "check_dont_overwrite_parameters": "empty array passed inside",
         "check_fit2d_predict1d": "empty array passed inside",
     },
+    StandardScaler: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
+    },
     SVC: {
         # TODO: fix sample_weight handling of this estimator when probability=False
         # TODO: replace by a statistical test when probability=True
@@ -1242,13 +1372,16 @@ PER_ESTIMATOR_XFAIL_CHECKS = {
     },
 }
 
-# TODO: remove when scipy min version >= 1.11
-if sp_base_version < parse_version("1.11"):
-    PER_ESTIMATOR_XFAIL_CHECKS[SplineTransformer] = {
-        "check_estimators_pickle": (
-            "scipy < 1.11 implementation of _bsplines does not"
-            "support const memory views."
-        ),
+
+linear_svr_not_thread_safe = "LinearSVR is not thread-safe https://github.com/scikit-learn/scikit-learn/issues/31883"
+if "pytest_run_parallel" in sys.modules:
+    PER_ESTIMATOR_XFAIL_CHECKS[LinearSVR] = {
+        "check_supervised_y_2d": linear_svr_not_thread_safe,
+        "check_regressors_int": linear_svr_not_thread_safe,
+        "check_fit_idempotent": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_dense_data": linear_svr_not_thread_safe,
+        "check_sample_weight_equivalence_on_sparse_data": linear_svr_not_thread_safe,
+        "check_regressor_data_not_an_array": linear_svr_not_thread_safe,
     }
 
 

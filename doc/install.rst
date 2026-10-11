@@ -16,11 +16,14 @@ There are different ways to install scikit-learn:
   distributions that distribute scikit-learn.
   It might not provide the latest release version.
 
-* :ref:`Building the package from source
-  <install_bleeding_edge>`. This is best for users who want the
-  latest-and-greatest features and aren't afraid of running
-  brand-new code. This is also needed for users who wish to contribute to the
-  project.
+* :ref:`Install a nightly build <install_nightly_builds>`. This is the quickest way to
+  try a new feature that will be shipped in the next release (that is, a
+  feature from a pull-request that was recently merged to the main branch); or to check
+  whether a bug you encountered has been fixed since the last release.
+
+* :ref:`Building the package from source <setup_development_environment>`.
+  This is mainly needed by users who wish to contribute to the project, as this allows
+  to install an editable version of the project.
 
 
 .. _install_official_release:
@@ -70,19 +73,19 @@ Installing the latest release
           Note that the virtual environment is optional but strongly recommended, in
           order to avoid potential conflicts with other packages.
 
-          .. prompt:: powershell
+          .. code-block:: ps1con
 
-            python -m venv sklearn-env
-            sklearn-env\Scripts\activate  # activate
-            pip install -U scikit-learn
+            PS C:\> python -m venv sklearn-env
+            PS C:\> sklearn-env\Scripts\activate  # activate
+            PS C:\> pip install -U scikit-learn
 
           In order to check your installation, you can use:
 
-          .. prompt:: powershell
+          .. code-block:: ps1con
 
-            python -m pip show scikit-learn  # show scikit-learn version and location
-            python -m pip freeze             # show all installed packages in the environment
-            python -c "import sklearn; sklearn.show_versions()"
+            PS C:\> python -m pip show scikit-learn  # show scikit-learn version and location
+            PS C:\> python -m pip freeze             # show all installed packages in the environment
+            PS C:\> python -c "import sklearn; sklearn.show_versions()"
 
         .. tab-item:: conda
           :class-label: tab-6
@@ -109,19 +112,19 @@ Installing the latest release
           Note that the virtual environment is optional but strongly recommended, in
           order to avoid potential conflicts with other packages.
 
-          .. prompt:: bash
+          .. code-block:: console
 
-            python -m venv sklearn-env
-            source sklearn-env/bin/activate  # activate
-            pip install -U scikit-learn
+            $ python -m venv sklearn-env
+            $ source sklearn-env/bin/activate  # activate
+            $ pip install -U scikit-learn
 
           In order to check your installation, you can use:
 
-          .. prompt:: bash
+          .. code-block:: console
 
-            python -m pip show scikit-learn  # show scikit-learn version and location
-            python -m pip freeze             # show all installed packages in the environment
-            python -c "import sklearn; sklearn.show_versions()"
+            $ python -m pip show scikit-learn  # show scikit-learn version and location
+            $ python -m pip freeze             # show all installed packages in the environment
+            $ python -c "import sklearn; sklearn.show_versions()"
 
         .. tab-item:: conda
           :class-label: tab-6
@@ -142,10 +145,10 @@ Installing the latest release
           Python 3 is usually installed by default on most Linux distributions. To
           check if you have it installed, try:
 
-          .. prompt:: bash
+          .. code-block:: console
 
-            python3 --version
-            pip3 --version
+            $ python3 --version
+            $ pip3 --version
 
           If you don't have Python 3 installed, please install `python3` and
           `python3-pip` from your distribution's package manager.
@@ -155,19 +158,19 @@ Installing the latest release
           Note that the virtual environment is optional but strongly recommended, in
           order to avoid potential conflicts with other packages.
 
-          .. prompt:: bash
+          .. code-block:: console
 
-            python3 -m venv sklearn-env
-            source sklearn-env/bin/activate  # activate
-            pip3 install -U scikit-learn
+            $ python3 -m venv sklearn-env
+            $ source sklearn-env/bin/activate  # activate
+            $ pip3 install -U scikit-learn
 
           In order to check your installation, you can use:
 
-          .. prompt:: bash
+          .. code-block:: console
 
-            python3 -m pip show scikit-learn  # show scikit-learn version and location
-            python3 -m pip freeze             # show all installed packages in the environment
-            python3 -c "import sklearn; sklearn.show_versions()"
+            $ python3 -m pip show scikit-learn  # show scikit-learn version and location
+            $ python3 -m pip freeze             # show all installed packages in the environment
+            $ python3 -c "import sklearn; sklearn.show_versions()"
 
         .. tab-item:: conda
           :class-label: tab-6
@@ -219,7 +222,11 @@ purpose.
 
     Scikit-learn 1.6 supported Python 3.9—3.13.
 
-    Scikit-learn 1.7 requires Python 3.10 or newer.
+    Scikit-learn 1.7 supported Python 3.10—3.13.
+
+    Scikit-learn 1.8 supported Python 3.11—3.14.
+
+    Scikit-learn 1.9 requires Python 3.11 or newer.
 
 .. _install_by_distribution:
 
@@ -244,9 +251,9 @@ Alpine Linux's package is provided through the `official repositories
 ``py3-scikit-learn`` for Python.
 It can be installed by typing the following command:
 
-.. prompt:: bash
+.. code-block:: console
 
-  sudo apk add py3-scikit-learn
+  $ sudo apk add py3-scikit-learn
 
 
 Arch Linux
@@ -257,9 +264,9 @@ Arch Linux's package is provided through the `official repositories
 ``python-scikit-learn`` for Python.
 It can be installed by typing the following command:
 
-.. prompt:: bash
+.. code-block:: console
 
-  sudo pacman -S python-scikit-learn
+  $ sudo pacman -S python-scikit-learn
 
 
 Debian/Ubuntu
@@ -272,9 +279,9 @@ Note that scikit-learn requires Python 3, hence the need to use the `python3-`
 suffixed package names.
 Packages can be installed using ``apt-get``:
 
-.. prompt:: bash
+.. code-block:: console
 
-  sudo apt-get install python3-sklearn python3-sklearn-lib python-sklearn-doc
+  $ sudo apt-get install python3-sklearn python3-sklearn-lib python-sklearn-doc
 
 
 Fedora
@@ -284,29 +291,29 @@ The Fedora package is called ``python3-scikit-learn`` for the python 3 version,
 the only one available in Fedora.
 It can be installed using ``dnf``:
 
-.. prompt:: bash
+.. code-block:: console
 
-  sudo dnf install python3-scikit-learn
+  $ sudo dnf install python3-scikit-learn
 
 
 NetBSD
 ------
 
-scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
+scikit-learn is available via `pkgsrc-wip <https://pkgsrc-wip.sourceforge.net/>`_:
 https://pkgsrc.se/math/py-scikit-learn
 
 
 MacPorts for Mac OSX
 --------------------
 
-The MacPorts package is named ``py<XY>-scikits-learn``,
+The MacPorts package is named ``py<XY>-scikit-learn``,
 where ``XY`` denotes the Python version.
 It can be installed by typing the following
 command:
 
-.. prompt:: bash
+.. code-block:: console
 
-  sudo port install py312-scikit-learn
+  $ sudo port install py312-scikit-learn
 
 
 Anaconda and Enthought Deployment Manager for all supported platforms
@@ -326,9 +333,9 @@ Intel Extension for Scikit-learn
 Intel maintains an optimized x86_64 package, available in PyPI (via `pip`),
 and in the `main`, `conda-forge` and `intel` conda channels:
 
-.. prompt:: bash
+.. code-block:: console
 
-  conda install scikit-learn-intelex
+  $ conda install scikit-learn-intelex
 
 This package has an Intel optimized version of many estimators. Whenever
 an alternative implementation doesn't exist, scikit-learn implementation
@@ -337,10 +344,10 @@ C++ library and are optimized for the x86_64 architecture, and are
 optimized for multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-`scikit-learn-intelex <https://intel.github.io/scikit-learn-intelex/latest/what-is-patching.html>`_
+`scikit-learn-intelex <https://uxlfoundation.github.io/scikit-learn-intelex/latest/patching.html>`_
 documentation for more details on usage scenarios. Direct export example:
 
-.. prompt:: python >>>
+.. code-block:: python
 
   from sklearnex.neighbors import NearestNeighbors
 
@@ -394,6 +401,26 @@ using the ``regedit`` tool:
 
 #. Reinstall scikit-learn (ignoring the previous broken installation):
 
-   .. prompt:: powershell
+   .. code-block:: ps1con
 
-      pip install --exists-action=i scikit-learn
+      PS C:\> pip install --exists-action=i scikit-learn
+
+
+.. _install_nightly_builds:
+
+Installing nightly builds
+=========================
+
+The continuous integration servers of the scikit-learn project build, test
+and upload wheel packages for the most recent Python version on a nightly
+basis.
+
+You can install the nightly build of scikit-learn using the `scientific-python-nightly-wheels`
+index from the PyPI registry of `anaconda.org`:
+
+.. code-block:: console
+
+  $ pip install --pre --extra-index https://pypi.anaconda.org/scientific-python-nightly-wheels/simple scikit-learn
+
+Note that first uninstalling scikit-learn might be required to be able to
+install nightly builds of scikit-learn.

@@ -244,12 +244,7 @@ def test_isotonic_regression_auto_decreasing():
 
     # Create model and fit_transform
     ir = IsotonicRegression(increasing="auto")
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        y_ = ir.fit_transform(x, y)
-        # work-around for pearson divide warnings in scipy <= 0.17.0
-        assert all(["invalid value encountered in " in str(warn.message) for warn in w])
-
+    y_ = ir.fit_transform(x, y)
     # Check that relationship decreases
     is_increasing = y_[0] < y_[-1]
     assert not is_increasing
@@ -262,11 +257,7 @@ def test_isotonic_regression_auto_increasing():
 
     # Create model and fit_transform
     ir = IsotonicRegression(increasing="auto")
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        y_ = ir.fit_transform(x, y)
-        # work-around for pearson divide warnings in scipy <= 0.17.0
-        assert all(["invalid value encountered in " in str(warn.message) for warn in w])
+    y_ = ir.fit_transform(x, y)
 
     # Check that relationship increases
     is_increasing = y_[0] < y_[-1]

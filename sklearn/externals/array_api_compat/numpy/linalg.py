@@ -7,25 +7,10 @@ from __future__ import annotations
 
 import numpy as np
 
-# intersection of `np.linalg.__all__` on numpy 1.22 and 2.2, minus `_linalg.__all__`
-from numpy.linalg import (
-    LinAlgError,
-    cond,
-    det,
-    eig,
-    eigvals,
-    eigvalsh,
-    inv,
-    lstsq,
-    matrix_power,
-    multi_dot,
-    norm,
-    tensorinv,
-    tensorsolve,
-)
-
-from .._internal import get_xp
+from .._internal import clone_module, get_xp
 from ..common import _linalg
+
+__all__ = clone_module("numpy.linalg", globals())
 
 # These functions are in both the main and linalg namespaces
 from ._aliases import matmul, matrix_transpose, tensordot, vecdot  # noqa: F401
@@ -34,6 +19,7 @@ from ._typing import Array
 cross = get_xp(np)(_linalg.cross)
 outer = get_xp(np)(_linalg.outer)
 EighResult = _linalg.EighResult
+EigResult = _linalg.EigResult
 QRResult = _linalg.QRResult
 SlogdetResult = _linalg.SlogdetResult
 SVDResult = _linalg.SVDResult
@@ -65,7 +51,7 @@ trace = get_xp(np)(_linalg.trace)
 # https://github.com/cupy/cupy/blob/main/cupy/cublas.py#L43).
 def solve(x1: Array, x2: Array, /) -> Array:
     try:
-        from numpy.linalg._linalg import (
+        from numpy.linalg._linalg import (  # type: ignore[attr-defined]
             _assert_stacked_2d,
             _assert_stacked_square,
             _commonType,
@@ -74,7 +60,7 @@ def solve(x1: Array, x2: Array, /) -> Array:
             isComplexType,
         )
     except ImportError:
-        from numpy.linalg.linalg import (
+        from numpy.linalg.linalg import (  # type: ignore[attr-defined]
             _assert_stacked_2d,
             _assert_stacked_square,
             _commonType,
@@ -112,6 +98,85 @@ def solve(x1: Array, x2: Array, /) -> Array:
     return wrap(r.astype(result_t, copy=False))
 
 
+# Unlike numpy.linalg.eig, Array API version always returns complex results
+
+def eig(x: Array, /) -> tuple[Array, Array]:
+    try:
+        from numpy.linalg._linalg import (  # type: ignore[attr-defined]
+            _assert_stacked_square,
+            _assert_finite,
+            _commonType,
+            _makearray,
+            _raise_linalgerror_eigenvalues_nonconvergence,
+            isComplexType,
+            _complexType,
+        )
+    except ImportError:
+        from numpy.linalg.linalg import (  # type: ignore[attr-defined]
+            _assert_stacked_square,
+            _assert_finite,
+            _commonType,
+            _makearray,
+            _raise_linalgerror_eigenvalues_nonconvergence,
+            isComplexType,
+            _complexType,
+        )
+    from numpy.linalg import _umath_linalg
+
+    x, wrap = _makearray(x)
+    _assert_stacked_square(x)
+    _assert_finite(x)
+    t, result_t = _commonType(x)
+
+    signature = 'D->DD' if isComplexType(t) else 'd->DD'
+    with np.errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
+                  invalid='call', over='ignore', divide='ignore',
+                  under='ignore'):
+        w, vt = _umath_linalg.eig(x, signature=signature)
+
+    result_t = _complexType(result_t)
+    vt = vt.astype(result_t, copy=False)
+    return EigResult(w.astype(result_t, copy=False), wrap(vt))
+
+
+def eigvals(x: Array, /) -> Array:
+    try:
+        from numpy.linalg._linalg import (  # type: ignore[attr-defined]
+            _assert_stacked_square,
+            _assert_finite,
+            _commonType,
+            _makearray,
+            _raise_linalgerror_eigenvalues_nonconvergence,
+            isComplexType,
+            _complexType,
+        )
+    except ImportError:
+        from numpy.linalg.linalg import (  # type: ignore[attr-defined]
+            _assert_stacked_square,
+            _assert_finite,
+            _commonType,
+            _makearray,
+            _raise_linalgerror_eigenvalues_nonconvergence,
+            isComplexType,
+            _complexType,
+        )
+    from numpy.linalg import _umath_linalg
+
+    x, wrap = _makearray(x)
+    _assert_stacked_square(x)
+    _assert_finite(x)
+    t, result_t = _commonType(x)
+
+    signature = 'D->D' if isComplexType(t) else 'd->D'
+    with np.errstate(call=_raise_linalgerror_eigenvalues_nonconvergence,
+                  invalid='call', over='ignore', divide='ignore',
+                  under='ignore'):
+        w = _umath_linalg.eigvals(x, signature=signature)
+
+    result_t = _complexType(result_t)
+    return w.astype(result_t, copy=False)
+
+
 # These functions are completely new here. If the library already has them
 # (i.e., numpy 2.0), use the library version instead of our wrapper.
 if hasattr(np.linalg, "vector_norm"):
@@ -120,7 +185,7 @@ else:
     vector_norm = get_xp(np)(_linalg.vector_norm)
 
 
-__all__ = [
+_all = [
     "LinAlgError",
     "cond",
     "det",
@@ -132,12 +197,12 @@ __all__ = [
     "matrix_power",
     "multi_dot",
     "norm",
+    "solve", 
     "tensorinv",
     "tensorsolve",
+    "vector_norm",
 ]
-__all__ += _linalg.__all__
-__all__ += ["solve", "vector_norm"]
-
+__all__ = sorted(set(__all__) | set(_linalg.__all__) | set(_all))
 
 def __dir__() -> list[str]:
     return __all__

@@ -43,8 +43,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
     Read more in the :ref:`User Guide <sequential_feature_selection>`.
 
-    .. versionadded:: 0.24
-
     Parameters
     ----------
     estimator : estimator instance
@@ -92,14 +90,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass,
@@ -124,8 +122,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -353,7 +349,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self)
         router.add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),

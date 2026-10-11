@@ -49,7 +49,7 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
         The number of degrees of freedom on the covariance Wishart
         distributions.
 
-    log_det_precision_chol : array-like of shape (n_components,)
+    log_det_precisions_chol : array-like of shape (n_components,)
          The determinant of the precision matrix for each component.
 
     n_features : int
@@ -84,8 +84,6 @@ class BayesianGaussianMixture(BaseMixture):
     algorithm is approximated and uses a truncated distribution with a fixed
     maximum number of components (called the Stick-breaking representation).
     The number of components actually used almost always depends on the data.
-
-    .. versionadded:: 0.18
 
     Read more in the :ref:`User Guide <bgmm>`.
 
@@ -230,7 +228,7 @@ class BayesianGaussianMixture(BaseMixture):
             (n_components, n_features, n_features) if 'full'
 
     precisions_cholesky_ : array-like
-        The cholesky decomposition of the precision matrices of each mixture
+        The Cholesky decomposition of the precision matrices of each mixture
         component. A precision matrix is the inverse of a covariance matrix.
         A covariance matrix is symmetric positive definite so the mixture of
         Gaussian can be equivalently parameterized by the precision matrices.
@@ -307,8 +305,6 @@ class BayesianGaussianMixture(BaseMixture):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -329,7 +325,7 @@ class BayesianGaussianMixture(BaseMixture):
     .. [2] `Hagai Attias. (2000). "A Variational Bayesian Framework for
        Graphical Models". In Advances in Neural Information Processing
        Systems 12.
-       <https://citeseerx.ist.psu.edu/doc_view/pid/ee844fd96db7041a9681b5a18bff008912052c7e>`_
+       <https://proceedings.neurips.cc/paper_files/paper/1999/file/74563ba21a90da13dacf2a73e3ddefa7-Paper.pdf>`_
 
     .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
@@ -596,8 +592,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -632,8 +626,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -666,8 +658,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -696,8 +686,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         nk : array-like of shape (n_components,)
 
         xk : array-like of shape (n_components, n_features)
@@ -787,8 +775,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-
         log_resp : array, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.

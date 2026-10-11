@@ -164,17 +164,12 @@ class LatentDirichletAllocation(
 
     The implementation is based on [1]_ and [2]_.
 
-    .. versionadded:: 0.17
-
     Read more in the :ref:`User Guide <LatentDirichletAllocation>`.
 
     Parameters
     ----------
     n_components : int, default=10
         Number of topics.
-
-        .. versionchanged:: 0.19
-            ``n_topics`` was renamed to ``n_components``
 
     doc_topic_prior : float, default=None
         Prior of document topic distribution `theta`. If the value is None,
@@ -199,9 +194,6 @@ class LatentDirichletAllocation(
           of training data to update the ``components_`` variable incrementally. The
           learning rate is controlled by the ``learning_decay`` and the
           ``learning_offset`` parameters.
-
-        .. versionchanged:: 0.20
-            The default learning method is now ``"batch"``.
 
     learning_decay : float, default=0.7
         It is a parameter that control learning rate in the online learning
@@ -279,8 +271,6 @@ class LatentDirichletAllocation(
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -314,11 +304,12 @@ class LatentDirichletAllocation(
     References
     ----------
     .. [1] "Online Learning for Latent Dirichlet Allocation", Matthew D.
-           Hoffman, David M. Blei, Francis Bach, 2010
+           Hoffman, David M. Blei, Francis Bach, 2010.
            https://github.com/blei-lab/onlineldavb
 
     .. [2] "Stochastic Variational Inference", Matthew D. Hoffman,
-           David M. Blei, Chong Wang, John Paisley, 2013
+           David M. Blei, Chong Wang, John Paisley, 2013.
+           https://jmlr.org/papers/volume14/hoffman13a/hoffman13a.pdf
 
     Examples
     --------
@@ -723,9 +714,6 @@ class LatentDirichletAllocation(
     def transform(self, X, *, normalize=True):
         """Transform data X according to the fitted model.
 
-        .. versionchanged:: 0.18
-            `doc_topic_distr` is now normalized.
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -925,10 +913,6 @@ class LatentDirichletAllocation(
         """Calculate approximate perplexity for data X.
 
         Perplexity is defined as exp(-1. * log-likelihood per word)
-
-        .. versionchanged:: 0.19
-           *doc_topic_distr* argument has been deprecated and is ignored
-           because user no longer has access to unnormalized distribution
 
         Parameters
         ----------

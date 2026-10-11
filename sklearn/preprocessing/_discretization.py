@@ -11,7 +11,7 @@ from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.preprocessing._encoders import OneHotEncoder
 from sklearn.utils import resample
 from sklearn.utils._param_validation import Interval, Options, StrOptions
-from sklearn.utils.stats import _averaged_weighted_percentile, _weighted_percentile
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_feature_names_in,
     _check_sample_weight,
@@ -26,8 +26,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     Bin continuous data into intervals.
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
-
-    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -59,7 +57,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     quantile_method : {"inverted_cdf", "averaged_inverted_cdf",
             "closest_observation", "interpolated_inverted_cdf", "hazen",
             "weibull", "linear", "median_unbiased", "normal_unbiased"},
-            default="linear"
+            default="averaged_inverted_cdf"
             Method to pass on to np.percentile calculation when using
             strategy="quantile". Only `averaged_inverted_cdf` and `inverted_cdf`
             support the use of `sample_weight != None` when subsampling is not
@@ -67,12 +65,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             .. versionadded:: 1.7
 
+            .. versionchanged:: 1.9
+                The default value changed from `"linear"` to `"averaged_inverted_cdf"`.
+
     dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
         consistent with input dtype. Only np.float32 and np.float64 are
         supported.
-
-        .. versionadded:: 0.24
 
     subsample : int or None, default=200_000
         Maximum number of samples, used to fit the model, for computational
@@ -112,8 +111,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -179,6 +176,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [-0.5,  2.5, -2.5, -0.5],
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
+
+    While this preprocessing step can be an optimization, it is important
+    to note the array returned by ``inverse_transform`` will have an internal type
+    of ``np.float64`` or ``np.float32``, denoted by the ``dtype`` input argument.
+    This can drastically increase the memory usage of the array. See the
+    :ref:`sphx_glr_auto_examples_cluster_plot_face_compress.py`
+    where `KBinsDescretizer` is used to cluster the image into bins and increases
+    the size of the image by 8x.
     """
 
     _parameter_constraints: dict = {
@@ -188,7 +193,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         "quantile_method": [
             StrOptions(
                 {
-                    "warn",
                     "inverted_cdf",
                     "averaged_inverted_cdf",
                     "closest_observation",
@@ -212,7 +216,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         *,
         encode="onehot",
         strategy="quantile",
-        quantile_method="warn",
+        quantile_method="averaged_inverted_cdf",
         dtype=None,
         subsample=200_000,
         random_state=None,
@@ -289,20 +293,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         bin_edges = np.zeros(n_features, dtype=object)
 
-        # TODO(1.9): remove and switch to quantile_method="averaged_inverted_cdf"
-        # by default.
         quantile_method = self.quantile_method
-        if self.strategy == "quantile" and quantile_method == "warn":
-            warnings.warn(
-                "The current default behavior, quantile_method='linear', will be "
-                "changed to quantile_method='averaged_inverted_cdf' in "
-                "scikit-learn version 1.9 to naturally support sample weight "
-                "equivalence properties by default. Pass "
-                "quantile_method='averaged_inverted_cdf' explicitly to silence this "
-                "warning.",
-                FutureWarning,
-            )
-            quantile_method = "linear"
 
         if (
             self.strategy == "quantile"
@@ -357,20 +348,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         dtype=np.float64,
                     )
                 else:
-                    # TODO: make _weighted_percentile and
-                    # _averaged_weighted_percentile accept an array of
-                    # quantiles instead of calling it multiple times and
-                    # sorting the column multiple times as a result.
-                    percentile_func = {
-                        "inverted_cdf": _weighted_percentile,
-                        "averaged_inverted_cdf": _averaged_weighted_percentile,
-                    }[quantile_method]
-                    bin_edges[jj] = np.asarray(
-                        [
-                            percentile_func(column, sample_weight, percentile_rank=p)
-                            for p in percentile_levels
-                        ],
-                        dtype=np.float64,
+                    average = (
+                        True if quantile_method == "averaged_inverted_cdf" else False
+                    )
+                    bin_edges[jj] = _weighted_percentile(
+                        column, sample_weight, percentile_levels, average=average
                     )
             elif self.strategy == "kmeans":
                 from sklearn.cluster import KMeans  # fixes import loops

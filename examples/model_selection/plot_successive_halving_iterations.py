@@ -47,10 +47,10 @@ rsh = HalvingRandomSearchCV(
 rsh.fit(X, y)
 
 # %%
-# We can now use the `cv_results_` attribute of the search estimator to inspect
+# We can now use the `all_cv_results_` attribute of the search estimator to inspect
 # and plot the evolution of the search.
 
-results = pd.DataFrame(rsh.cv_results_)
+results = pd.DataFrame(rsh.all_cv_results_)
 results["params_str"] = results.params.apply(str)
 results.drop_duplicates(subset=("params_str", "iter"), inplace=True)
 mean_scores = results.pivot(

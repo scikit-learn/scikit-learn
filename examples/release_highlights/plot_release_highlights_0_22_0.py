@@ -133,7 +133,17 @@ tick_labels_parameter_name = (
     else "labels"
 )
 tick_labels_dict = {tick_labels_parameter_name: feature_names[sorted_idx]}
-ax.boxplot(result.importances[sorted_idx].T, vert=False, **tick_labels_dict)
+# `vert` was deprecated in matplotlib 3.11 and is replaced by `orientation`,
+# which is available since matplotlib 3.10. The following code handles this, but
+# as a scikit-learn user you probably can write simpler code by using
+# `vert=False` (matplotlib < 3.11) or `orientation="horizontal"`
+# (matplotlib >= 3.10).
+orientation_dict = (
+    {"orientation": "horizontal"}
+    if parse_version(matplotlib.__version__) >= parse_version("3.10")
+    else {"vert": False}
+)
+ax.boxplot(result.importances[sorted_idx].T, **orientation_dict, **tick_labels_dict)
 ax.set_title("Permutation Importance of each feature")
 ax.set_ylabel("Features")
 fig.tight_layout()
@@ -288,9 +298,9 @@ def test_sklearn_compatible_estimator(estimator, check):
 
 
 from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
-from sklearn.svm import SVC
 
 X, y = make_classification(n_classes=4, n_informative=16)
-clf = SVC(decision_function_shape="ovo", probability=True).fit(X, y)
-print(roc_auc_score(y, clf.predict_proba(X), multi_class="ovo"))
+clf = LogisticRegression().fit(X, y)
+print(roc_auc_score(y, clf.predict_proba(X), multi_class="ovr"))

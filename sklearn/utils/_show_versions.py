@@ -58,6 +58,7 @@ def _get_deps_info():
         "matplotlib",
         "joblib",
         "threadpoolctl",
+        "narwhals",
     ]
 
     deps_info = {
@@ -75,9 +76,7 @@ def _get_deps_info():
 
 
 def show_versions():
-    """Print useful debugging information"
-
-    .. versionadded:: 0.20
+    """Print useful debugging information.
 
     Examples
     --------

@@ -99,9 +99,9 @@ need to override, but it works for simple consumers as is.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import inspect
-from collections import namedtuple
+from collections import defaultdict, namedtuple
 from copy import deepcopy
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Callable, Iterable, Optional, Union
 from warnings import warn
 
 from sklearn import get_config
@@ -137,6 +137,26 @@ COMPOSITE_METHODS = {
 METHODS = SIMPLE_METHODS + list(COMPOSITE_METHODS.keys())
 
 
+def _routing_repr(obj):
+    """Get a representation suitable for messages printed in the routing machinery.
+
+    This is different than `repr(obj)`, since repr(estimator) can be verbose when
+    there are many constructor arguments set by the user.
+
+    This is most suitable for Scorers as it gives a nice representation of what they
+    are. This is done by implementing a `_routing_repr` method on the object.
+
+    Since the `owner` object could be the type name (str), we return that string if the
+    given `obj` is a string, otherwise we return the object's type name.
+
+    .. versionadded:: 1.8
+    """
+    try:
+        return obj._routing_repr()
+    except AttributeError:
+        return obj if isinstance(obj, str) else type(obj).__name__
+
+
 def _routing_enabled():
     """Return whether metadata routing is enabled.
 
@@ -149,6 +169,19 @@ def _routing_enabled():
         defaults to False.
     """
     return get_config().get("enable_metadata_routing", False)
+
+
+def _auto_requests_enabled():
+    """Return whether auto-requesting metadata is enabled.
+
+    .. versionadded:: 1.10
+
+    Returns
+    -------
+    enabled : bool
+        Whether auto-requesting metadata is enabled.
+    """
+    return get_config().get("enable_metadata_auto_requests", False)
 
 
 def _raise_for_params(params, owner, method, allow=None):
@@ -176,9 +209,7 @@ def _raise_for_params(params, owner, method, allow=None):
     ValueError
         If metadata routing is not enabled and params are passed.
     """
-    caller = (
-        f"{owner.__class__.__name__}.{method}" if method else owner.__class__.__name__
-    )
+    caller = f"{_routing_repr(owner)}.{method}" if method else _routing_repr(owner)
 
     allow = allow if allow is not None else {}
 
@@ -214,7 +245,7 @@ def _raise_for_unsupported_routing(obj, method, **kwargs):
     """
     kwargs = {key: value for key, value in kwargs.items() if value is not None}
     if _routing_enabled() and kwargs:
-        cls_name = obj.__class__.__name__
+        cls_name = _routing_repr(obj)
         raise NotImplementedError(
             f"{cls_name}.{method} cannot accept given metadata ({set(kwargs.keys())})"
             f" since metadata routing is not yet implemented for {cls_name}."
@@ -236,7 +267,7 @@ class _RoutingNotSupportedMixin:
 
         This estimator does not support metadata routing yet."""
         raise NotImplementedError(
-            f"{self.__class__.__name__} has not implemented metadata routing yet."
+            f"{_routing_repr(self)} has not implemented metadata routing yet."
         )
 
 
@@ -317,20 +348,42 @@ class MethodMetadataRequest:
 
     Parameters
     ----------
-    owner : str
-        A display name for the object owning these requests.
+    owner : object
+        The object owning these requests.
 
     method : str
         The name of the method to which these requests belong.
 
     requests : dict of {str: bool, None or str}, default=None
         The initial requests for this method.
+
+    auto_requests : set of str, default=None
+        The auto-requests set on instance level.
+
+        .. versionadded:: 1.10
     """
 
-    def __init__(self, owner, method, requests=None):
-        self._requests = requests or dict()
+    def __init__(self, owner, method, requests=None, auto_requests=None):
         self.owner = owner
         self.method = method
+        self._requests = requests or dict()
+        self._auto_requests = auto_requests or set()
+        # Metadata requested via `add_request`, i.e. by the user through
+        # `set_{method}_request`. Auto-requests never override these.
+        self._explicit_requests = set()
+
+    def __sklearn_clone__(self):
+        # `owner` is a reference to the estimator and is only used by
+        # `_routing_repr` for display; deep-copying it would drag the full
+        # estimator state (and fail for non-picklable attributes) for no benefit.
+        new = MethodMetadataRequest(
+            owner=self.owner,
+            method=self.method,
+            requests=deepcopy(self._requests),
+            auto_requests=deepcopy(self._auto_requests),
+        )
+        new._explicit_requests = set(self._explicit_requests)
+        return new
 
     @property
     def requests(self):
@@ -344,6 +397,9 @@ class MethodMetadataRequest:
         alias,
     ):
         """Add request info for a metadata.
+
+        Requests added this way are explicit: they take precedence over the
+        class-level requests and are never overridden by auto-requests.
 
         Parameters
         ----------
@@ -376,6 +432,7 @@ class MethodMetadataRequest:
         if alias == UNUSED:
             if param in self._requests:
                 del self._requests[param]
+                self._explicit_requests.discard(param)
             else:
                 raise ValueError(
                     f"Trying to remove parameter {param} with UNUSED which doesn't"
@@ -383,7 +440,41 @@ class MethodMetadataRequest:
                 )
         else:
             self._requests[param] = alias
+            self._explicit_requests.add(param)
 
+        return self
+
+    def add_auto_request(self, *params):
+        """Request metadata when auto-requests are enabled.
+
+        This method is used by estimator developers. To learn how to enable and use the
+        auto-request policy refer to :ref:`metadata_routing_auto_request`.
+
+        Auto-requests can also be set on a composite method such as `fit_transform`
+        or `fit_predict`, but only for metadata which is not already present in the
+        requests of any of its component methods (`fit` and `transform`, or `fit` and
+        `predict`). For such metadata, set the auto-request on the component method
+        instead; the composite method then inherits it.
+
+        Parameters
+        ----------
+        *params : str
+            Names of metadata to auto-request for this method, passed as separate
+            arguments (e.g. `add_auto_request("groups", "sample_weight")`).
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        self._auto_requests.update(params)
+        return self
+
+    def _actualize_auto_requests(self):
+        """Request the auto-requested metadata if enabled, unless explicitly set."""
+        if _auto_requests_enabled():
+            for param in self._auto_requests - self._explicit_requests:
+                self._requests[param] = True
         return self
 
     def _get_param_names(self, return_alias):
@@ -427,7 +518,7 @@ class MethodMetadataRequest:
         }
         for param in warn_params:
             warn(
-                f"Support for {param} has recently been added to this class. "
+                f"Support for {param} has recently been added to {self.owner} class. "
                 "To maintain backward compatibility, it is ignored now. "
                 f"Using `set_{self.method}_request({param}={{True, False}})` "
                 "on this method of the class, you can set the request value "
@@ -485,8 +576,8 @@ class MethodMetadataRequest:
             message = (
                 f"[{', '.join([key for key in unrequested])}] are passed but are not"
                 " explicitly set as requested or not requested for"
-                f" {self.owner}.{self.method}, which is used within"
-                f" {parent}.{caller}. Call `{self.owner}"
+                f" {_routing_repr(self.owner)}.{self.method}, which is used within"
+                f" {_routing_repr(parent)}.{caller}. Call `{_routing_repr(self.owner)}"
                 + set_requests_on
                 + "` for each metadata you want to request/ignore. See the"
                 " Metadata Routing User guide"
@@ -540,20 +631,45 @@ class MethodMetadataRequest:
 
 
 class MetadataRequest:
-    """Contains the metadata request info of a consumer.
+    """Container for storing metadata request info and an associated consumer (`owner`).
 
-    Instances of `MethodMetadataRequest` are used in this class for each
-    available method under `metadatarequest.{method}`.
+    Instances of `MethodMetadataRequest` are used in this class for each available
+    method under `MetadataRequest(owner=obj).{method}`.
 
-    Consumer-only classes such as simple estimators return a serialized
-    version of this class as the output of `get_metadata_routing()`.
+    Every :term:`consumer` in scikit-learn has a `_metadata_request` attribute that is a
+    `MetadataRequest`.
+
+    Note that requests on composite methods (`fit_transform`, `fit_predict`) are not
+    stored as attributes. Accessing them, for example `request.fit_predict`, builds
+    their requests from the component methods (`fit` and `predict` in this case), plus
+    auto-requests set on them. Auto-requests are included only when
+    `set_config(enable_metadata_auto_requests=True)`.
+
+    Read more on developing custom estimators that can route metadata in the
+    :ref:`Metadata Routing Developing Guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
 
     .. versionadded:: 1.3
 
     Parameters
     ----------
-    owner : str
-        The name of the object to which these requests belong.
+    owner : object
+        The object to which these requests belong.
+
+    Examples
+    --------
+    >>> from sklearn import set_config
+    >>> set_config(enable_metadata_routing=True)
+    >>> from pprint import pprint
+    >>> from sklearn.utils.metadata_routing import MetadataRequest
+    >>> r = MetadataRequest(owner="any_object")
+    >>> r.fit.add_request(param="sample_weight", alias=True)
+    {'sample_weight': True}
+    >>> r.score.add_request(param="sample_weight", alias=False)
+    {'sample_weight': False}
+    >>> pprint(r)
+    {'fit': {'sample_weight': True}, 'score': {'sample_weight': False}}
+    >>> set_config(enable_metadata_routing=False)
     """
 
     # this is here for us to use this attribute's value instead of doing
@@ -563,12 +679,34 @@ class MetadataRequest:
 
     def __init__(self, owner):
         self.owner = owner
+        # Composite methods (e.g. `fit_transform`) are not attributes, see
+        # `__getattr__`. This only stores what is set directly on them.
+        self._composite_requests = {}
         for method in SIMPLE_METHODS:
             setattr(
                 self,
                 method,
                 MethodMetadataRequest(owner=owner, method=method),
             )
+
+    def __sklearn_clone__(self):
+        # `owner` is a reference to the estimator and is only used by
+        # `_routing_repr` for display; see MethodMetadataRequest.__sklearn_clone__.
+        new = MetadataRequest(owner=self.owner)
+        for method in SIMPLE_METHODS:
+            setattr(new, method, getattr(self, method).__sklearn_clone__())
+        new._composite_requests = {
+            name: mmr.__sklearn_clone__()
+            for name, mmr in self._composite_requests.items()
+        }
+        return new
+
+    def _actualize_auto_requests(self):
+        for method in SIMPLE_METHODS:
+            getattr(self, method)._actualize_auto_requests()
+        for mmr in self._composite_requests.values():
+            mmr._actualize_auto_requests()
+        return self
 
     def consumes(self, method, params):
         """Return params consumed as metadata in a :term:`consumer`.
@@ -596,18 +734,21 @@ class MetadataRequest:
         return getattr(self, method)._consumes(params=params)
 
     def __getattr__(self, name):
-        # Called when the default attribute access fails with an AttributeError
-        # (either __getattribute__() raises an AttributeError because name is
-        # not an instance attribute or an attribute in the class tree for self;
-        # or __get__() of a name property raises AttributeError). This method
-        # should either return the (computed) attribute value or raise an
-        # AttributeError exception.
-        # https://docs.python.org/3/reference/datamodel.html#object.__getattr__
+        # Composite methods are not stored as attributes; build them on access.
         if name not in COMPOSITE_METHODS:
             raise AttributeError(
                 f"'{self.__class__.__name__}' object has no attribute '{name}'"
             )
 
+        # Store mmr with auto-requests on this composite method:
+        if name not in self._composite_requests:
+            self._composite_requests[name] = MethodMetadataRequest(
+                owner=self.owner, method=name
+            )
+        stored_mmr = self._composite_requests[name]
+
+        # Rebuild fit_predict/fit_transform from fit+predict / fit+transform on every
+        # access so that they stay up to date:
         requests = {}
         for method in COMPOSITE_METHODS[name]:
             mmr = getattr(self, method)
@@ -623,7 +764,29 @@ class MetadataRequest:
                     " same request value."
                 )
             requests.update(mmr._requests)
-        return MethodMetadataRequest(owner=self.owner, method=name, requests=requests)
+
+        # Auto-requests on a composite method may only add metadata which none of
+        # its component methods have a request for, so that they never override the
+        # component methods' request values, e.g. the ones set by the user.
+        overlap = sorted(stored_mmr._auto_requests & set(requests))
+        if overlap:
+            raise ValueError(
+                f"Auto-requests can only be set on the composite method {name} for"
+                " metadata which is not already present in the requests of its"
+                f" component methods ({', '.join(COMPOSITE_METHODS[name])}). Set the"
+                f" auto-request for {', '.join(overlap)} on the component method"
+                " instead."
+            )
+
+        requests.update(stored_mmr._requests)
+
+        composed = MethodMetadataRequest(
+            owner=self.owner, method=name, requests=requests
+        )
+        # The returned object shares the stored auto-requests, so that calling
+        # `add_auto_request` on it is persisted for later accesses.
+        composed._auto_requests = stored_mmr._auto_requests
+        return composed
 
     def _get_param_names(self, method, return_alias, ignore_self_request=None):
         """Get names of all metadata that can be consumed or routed by specified \
@@ -736,7 +899,7 @@ MethodPair = namedtuple("MethodPair", ["caller", "callee"])
 
 
 class MethodMapping:
-    """Stores the mapping between caller and callee methods for a :term:`router`.
+    """Stores the mapping between `caller` and `callee` methods for a :term:`router`.
 
     This class is primarily used in a ``get_metadata_routing()`` of a router
     object when defining the mapping between the router's methods and a sub-object (a
@@ -745,7 +908,17 @@ class MethodMapping:
     Iterating through an instance of this class yields
     ``MethodPair(caller, callee)`` instances.
 
+    Read more on developing custom estimators that can route metadata in the
+    :ref:`Metadata Routing Developing Guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
+
     .. versionadded:: 1.3
+
+    Examples
+    --------
+    >>> from sklearn.utils.metadata_routing import MethodMapping
+    >>> MethodMapping().add(caller="fit", callee="split")
+    [{'caller': 'fit', 'callee': 'split'}]
     """
 
     def __init__(self):
@@ -816,12 +989,40 @@ class MetadataRouter:
     :class:`~sklearn.utils.metadata_routing.MetadataRequest` or another
     :class:`~sklearn.utils.metadata_routing.MetadataRouter` instance.
 
+    Read more on developing custom estimators that can route metadata in the
+    :ref:`Metadata Routing Developing Guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
+
     .. versionadded:: 1.3
 
     Parameters
     ----------
-    owner : str
-        The name of the object to which these requests belong.
+    owner : object
+        The object to which these requests belong.
+
+    Examples
+    --------
+    >>> from pprint import pprint
+    >>> from sklearn import set_config
+    >>> from sklearn.feature_selection import SelectFromModel
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
+    >>> set_config(enable_metadata_routing=True)
+    >>> meta_estimator = SelectFromModel(
+    ...     estimator=LinearRegression().set_fit_request(sample_weight=True)
+    ... )
+    >>> router = MetadataRouter(owner=meta_estimator).add(
+    ...     estimator=meta_estimator.estimator,
+    ...     method_mapping=MethodMapping()
+    ...     .add(caller="partial_fit", callee="partial_fit")
+    ...     .add(caller="fit", callee="fit"),
+    ... )
+    >>> pprint(router)
+    {'estimator': {'mapping': [{'caller': 'partial_fit', 'callee': 'partial_fit'},
+                           {'caller': 'fit', 'callee': 'fit'}],
+               'router': {'fit': {'sample_weight': True},
+                          'score': {'sample_weight': None}}}}
+    >>> set_config(enable_metadata_routing=False)
     """
 
     # this is here for us to use this attribute's value instead of doing
@@ -837,6 +1038,31 @@ class MetadataRouter:
         # _route_mappings.
         self._self_request = None
         self.owner = owner
+
+    def __sklearn_clone__(self):
+        # `owner` is a reference to the estimator and is only used by
+        # `_routing_repr` for display; see MethodMetadataRequest.__sklearn_clone__.
+        new = MetadataRouter(owner=self.owner)
+        new._self_request = (
+            self._self_request.__sklearn_clone__()
+            if self._self_request is not None
+            else None
+        )
+        new._route_mappings = {
+            name: RouterMappingPair(
+                mapping=deepcopy(pair.mapping),
+                router=pair.router.__sklearn_clone__(),
+            )
+            for name, pair in self._route_mappings.items()
+        }
+        return new
+
+    def _actualize_auto_requests(self):
+        # Actualize self-requests on the router; requests on sub-estimators are already
+        # actualized in `add`.
+        if self._self_request is not None:
+            self._self_request._actualize_auto_requests()
+        return self
 
     def add_self_request(self, obj):
         """Add `self` (as a :term:`consumer`) to the `MetadataRouter`.
@@ -862,10 +1088,10 @@ class MetadataRouter:
         self : MetadataRouter
             Returns `self`.
         """
-        if getattr(obj, "_type", None) == "metadata_request":
-            self._self_request = deepcopy(obj)
-        elif hasattr(obj, "_get_metadata_request"):
-            self._self_request = deepcopy(obj._get_metadata_request())
+        if isinstance(obj, MetadataRequest):
+            self._self_request = obj.__sklearn_clone__()
+        elif isinstance(obj, _MetadataRequester):
+            self._self_request = obj._get_metadata_request().__sklearn_clone__()
         else:
             raise ValueError(
                 "Given `obj` is neither a `MetadataRequest` nor does it implement the"
@@ -978,7 +1204,13 @@ class MetadataRouter:
 
         for name, route_mapping in self._route_mappings.items():
             for caller, callee in route_mapping.mapping:
-                if caller == method:
+                # A composite method (e.g. ``fit_transform``) routes metadata for
+                # each of its component methods (``fit`` and ``transform``), but a
+                # route mapping may also be declared directly on the composite
+                # method itself (e.g. ``TargetEncoder`` maps ``fit_transform`` to
+                # its splitter's ``split``). We therefore match the composite
+                # method as well as its components.
+                if (caller == method) or (caller in COMPOSITE_METHODS.get(method, ())):
                     res = res.union(
                         route_mapping.router._get_param_names(
                             method=callee, return_alias=True, ignore_self_request=False
@@ -1038,10 +1270,10 @@ class MetadataRouter:
             # an issue if they're different objects.
             if child_params[key] is not res[key]:
                 raise ValueError(
-                    f"In {self.owner}, there is a conflict on {key} between what is"
-                    " requested for this estimator and what is requested by its"
-                    " children. You can resolve this conflict by using an alias for"
-                    " the child estimators' requested metadata."
+                    f"In {_routing_repr(self.owner)}, there is a conflict on {key}"
+                    " between what is requested for this estimator and what is"
+                    " requested by its children. You can resolve this conflict by"
+                    " using an alias for the child estimators' requested metadata."
                 )
 
         res.update(child_params)
@@ -1119,8 +1351,8 @@ class MetadataRouter:
         extra_keys = set(params.keys()) - param_names - self_params
         if extra_keys:
             raise TypeError(
-                f"{self.owner}.{method} got unexpected argument(s) {extra_keys}, which"
-                " are not routed to any object."
+                f"{_routing_repr(self.owner)}.{method} got unexpected argument(s)"
+                f" {extra_keys}, which are not routed to any object."
             )
 
     def _serialize(self):
@@ -1167,7 +1399,7 @@ def get_routing_for_object(obj=None):
     :class:`~sklearn.utils.metadata_routing.MetadataRouter` or a
     :class:`~sklearn.utils.metadata_routing.MetadataRequest` from the given input.
 
-    This function always returns a copy or an instance constructed from the
+    This function always returns a copy or a new instance constructed from the
     input, such that changing the output of this function will not change the
     original object.
 
@@ -1177,7 +1409,8 @@ def get_routing_for_object(obj=None):
     ----------
     obj : object
         - If the object provides a `get_metadata_routing` method, return a copy
-            of the output of that method.
+            of the output of that method, with auto-requests actualized if they
+            are enabled.
         - If the object is already a
             :class:`~sklearn.utils.metadata_routing.MetadataRequest` or a
             :class:`~sklearn.utils.metadata_routing.MetadataRouter`, return a copy
@@ -1190,14 +1423,35 @@ def get_routing_for_object(obj=None):
     obj : MetadataRequest or MetadataRouter
         A ``MetadataRequest`` or a ``MetadataRouter`` taken or created from
         the given object.
-    """
-    # doing this instead of a try/except since an AttributeError could be raised
-    # for other reasons.
-    if hasattr(obj, "get_metadata_routing"):
-        return deepcopy(obj.get_metadata_routing())
 
-    elif getattr(obj, "_type", None) in ["metadata_request", "metadata_router"]:
-        return deepcopy(obj)
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.linear_model import LogisticRegressionCV
+    >>> from sklearn.utils.metadata_routing import get_routing_for_object
+    >>> X, y = make_classification()
+    >>> pipe = Pipeline(
+    ...     [("scaler", StandardScaler()), ("lr_cv", LogisticRegressionCV(alphas=10))]
+    ... )
+    >>> pipe.fit(X, y) # doctest: +SKIP
+    Pipeline(steps=[('scaler', StandardScaler()), ('lr_cv', LogisticRegressionCV(...))])
+    >>> type(get_routing_for_object(pipe))
+    <class 'sklearn.utils._metadata_requests.MetadataRouter'>
+    >>> type(get_routing_for_object(pipe.named_steps.scaler))
+    <class 'sklearn.utils._metadata_requests.MetadataRequest'>
+    >>> type(get_routing_for_object(pipe.named_steps.lr_cv))
+    <class 'sklearn.utils._metadata_requests.MetadataRouter'>
+    """
+    # Doing hasattr instead of try/except since get_metadata_routing() may raise
+    # AttributeError itself:
+    if hasattr(obj, "get_metadata_routing"):
+        # Auto-requests are actualized here, since they are added inside
+        # `get_metadata_routing` implementations.
+        return obj.get_metadata_routing().__sklearn_clone__()._actualize_auto_requests()
+    if isinstance(obj, (MetadataRequest, MetadataRouter)):
+        return obj.__sklearn_clone__()
 
     return MetadataRequest(owner=None)
 
@@ -1209,6 +1463,11 @@ def get_routing_for_object(obj=None):
 # mixin class.
 
 # These strings are used to dynamically generate the docstrings for the methods.
+REQUESTER_DOC_EMPTY = """        No-op.
+
+        Calling this method has no effect.
+
+"""
 REQUESTER_DOC = """        Configure whether metadata should be requested to be \
 passed to the ``{method}`` method.
 
@@ -1239,7 +1498,8 @@ this given alias instead of the original name.
 
         .. versionadded:: 1.3
 
-        Parameters
+"""
+REQUESTER_DOC_PARAMS_SECTION = """        Parameters
         ----------
 """
 REQUESTER_DOC_PARAM = """        {metadata} : str, True, False, or None, \
@@ -1366,9 +1626,13 @@ class RequestMethod:
             params,
             return_annotation=owner,
         )
-        doc = REQUESTER_DOC.format(method=self.name)
-        for metadata in self.keys:
-            doc += REQUESTER_DOC_PARAM.format(metadata=metadata, method=self.name)
+        if self.keys:
+            doc = REQUESTER_DOC.format(method=self.name)
+            doc += REQUESTER_DOC_PARAMS_SECTION
+            for metadata in self.keys:
+                doc += REQUESTER_DOC_PARAM.format(metadata=metadata, method=self.name)
+        else:
+            doc = REQUESTER_DOC_EMPTY
         doc += REQUESTER_DOC_RETURN
         func.__doc__ = doc
         return func
@@ -1420,108 +1684,149 @@ class _MetadataRequester:
         ----------
         .. [1] https://www.python.org/dev/peps/pep-0487
         """
-        try:
-            requests = cls._get_default_requests()
-        except Exception:
-            # if there are any issues in the default values, it will be raised
-            # when ``get_metadata_routing`` is called. Here we are going to
-            # ignore all the issues such as bad defaults etc.
-            super().__init_subclass__(**kwargs)
-            return
 
-        for method in SIMPLE_METHODS:
-            mmr = getattr(requests, method)
-            # set ``set_{method}_request`` methods
-            if not len(mmr.requests):
-                continue
-            setattr(
-                cls,
-                f"set_{method}_request",
-                RequestMethod(method, sorted(mmr.requests.keys())),
-            )
+        def is_RequestMethod(obj, name: str):
+            """Check if obj.name is a RequestMethod"""
+            value = inspect.getattr_static(obj, name)
+            return isinstance(value, RequestMethod)
+
+        def _has_explicit_set_method_request(cls, name):
+            # True if this class has a set_method_request defined or inherited
+            # which is not a descriptor
+            return hasattr(cls, name) and not is_RequestMethod(cls, name)
+
+        def _needs_generated_set_request(cls, name, requests):
+            # True if this class has requestable metadata or requests is empty but
+            # a parent class hands down a RequestMethod
+            if requests:
+                return True
+            return hasattr(cls, name) and is_RequestMethod(cls, name)
+
+        try:
+            for method in SIMPLE_METHODS:
+                set_method_name = f"set_{method}_request"
+                requests = cls._get_class_level_metadata_request_values(method)
+
+                if _has_explicit_set_method_request(cls, set_method_name):
+                    continue
+
+                if _needs_generated_set_request(cls, set_method_name, requests):
+                    setattr(
+                        cls, set_method_name, RequestMethod(method, sorted(requests))
+                    )
+
+        except Exception:
+            # if there are any issues here, it will be raised when
+            # ``get_metadata_routing`` is called. Here we are going to ignore
+            # all the issues and make sure class definition does not fail.
+            pass
         super().__init_subclass__(**kwargs)
 
     @classmethod
-    def _build_request_for_signature(cls, router, method):
-        """Build the `MethodMetadataRequest` for a method using its signature.
+    def _get_class_level_metadata_request_values(
+        cls,
+        method_name: str,
+        method: Callable | None = None,
+        ignore_params: Iterable[str] | None = None,
+    ):
+        """Get class level metadata request values.
 
-        This method takes all arguments from the method signature and uses
-        ``None`` as their default request value, except ``X``, ``y``, ``Y``,
-        ``Xt``, ``yt``, ``*args``, and ``**kwargs``.
+        Potential metadata per method is discovered in two steps:
+        1. Creating metadata requests by checking method signatures for passable
+        metadata.
+        2. Overriding metadata requests with the metadata request values set at
+        class level via the `__metadata_request__{method}` class attributes.
 
         Parameters
         ----------
-        router : MetadataRequest
-            The parent object for the created `MethodMetadataRequest`.
-        method : str
-            The name of the method.
+        method_name : str
+            The name of the method to get the metadata request values for.
+
+        method : callable, default=None
+            The method to get the metadata request values for. If None, the method
+            from the class with the name `method_name` is used.
+
+        ignore_params : set, default=None
+            A set of parameter names to ignore. The usual parameters
+            `X`, `y`, `Y`, `Xt`, `yt` are always ignored.
 
         Returns
         -------
-        method_request : MethodMetadataRequest
-            The prepared request using the method's signature.
+        requests : dict
+            A dictionary of metadata request values.
+
+        This method (being a class-method), does not take request values set at
+        instance level into account.
         """
-        mmr = MethodMetadataRequest(owner=cls.__name__, method=method)
         # Here we use `isfunction` instead of `ismethod` because calling `getattr`
         # on a class instead of an instance returns an unbound function.
-        if not hasattr(cls, method) or not inspect.isfunction(getattr(cls, method)):
-            return mmr
-        # ignore the first parameter of the method, which is usually "self"
-        params = list(inspect.signature(getattr(cls, method)).parameters.items())[1:]
-        for pname, param in params:
-            if pname in {"X", "y", "Y", "Xt", "yt"}:
-                continue
-            if param.kind in {param.VAR_POSITIONAL, param.VAR_KEYWORD}:
-                continue
-            mmr.add_request(
-                param=pname,
-                alias=None,
-            )
-        return mmr
+        # If the given method doesn't exist or is not a function on the class, we simply
+        # return early with an empty dict.
+        if method is None and (
+            not hasattr(cls, method_name)
+            or not inspect.isfunction(getattr(cls, method_name))
+        ):
+            return dict()
 
-    @classmethod
-    def _get_default_requests(cls):
-        """Collect default request values.
+        resolved_method: Callable = (
+            method if method is not None else getattr(cls, method_name)
+        )
 
-        This method combines the information present in ``__metadata_request__*``
-        class attributes, as well as determining request keys from method
-        signatures.
-        """
-        requests = MetadataRequest(owner=cls.__name__)
+        # ignore the first parameter of the method, which is usually "self".
+        # In case of a callable which is usually passed from a scorer, we can still
+        # safely ignore the first argument which is "y_true"
+        signature_items = list(inspect.signature(resolved_method).parameters.items())[
+            1:
+        ]
 
-        for method in SIMPLE_METHODS:
-            setattr(
-                requests,
-                method,
-                cls._build_request_for_signature(router=requests, method=method),
-            )
+        ignore_params = set() if ignore_params is None else set(ignore_params)
+        ignore_params.update({"X", "y", "Y", "Xt", "yt"})
 
+        params: defaultdict[str, Optional[Union[bool, str]]] = defaultdict(
+            str,
+            {
+                param_name: None
+                for param_name, param_info in signature_items
+                if param_name not in ignore_params
+                and param_info.kind
+                not in {param_info.VAR_POSITIONAL, param_info.VAR_KEYWORD}
+            },
+        )
         # Then overwrite those defaults with the ones provided in
-        # __metadata_request__* attributes. Defaults set in
-        # __metadata_request__* attributes take precedence over signature
-        # sniffing.
+        # `__metadata_request__{method}` class attributes, which take precedence over
+        # signature sniffing.
 
-        # need to go through the MRO since this is a class attribute and
+        # need to go through the MRO since this is a classmethod and
         # ``vars`` doesn't report the parent class attributes. We go through
         # the reverse of the MRO so that child classes have precedence over
         # their parents.
-        substr = "__metadata_request__"
+        substr = f"__metadata_request__{method_name}"
         for base_class in reversed(inspect.getmro(cls)):
-            for attr, value in vars(base_class).items():
+            # Copy is needed with free-threaded context to avoid
+            # RuntimeError: dictionary changed size during iteration.
+            # copy.deepcopy applied on an instance of base_class adds
+            # __slotnames__ attribute to base_class.
+            base_class_items = vars(base_class).copy().items()
+            for attr, value in base_class_items:
+                # we don't check for equivalence since python prefixes attrs
+                # starting with __ with the `_ClassName`.
                 if substr not in attr:
                     continue
-                # we don't check for attr.startswith() since python prefixes attrs
-                # starting with __ with the `_ClassName`.
-                method = attr[attr.index(substr) + len(substr) :]
                 for prop, alias in value.items():
                     # Here we add request values specified via those class attributes
-                    # to the `MetadataRequest` object. Adding a request which already
+                    # to the result dictionary (params). Adding a request which already
                     # exists will override the previous one. Since we go through the
                     # MRO in reverse order, the one specified by the lowest most classes
                     # in the inheritance tree are the ones which take effect.
-                    getattr(requests, method).add_request(param=prop, alias=alias)
+                    if prop not in params and alias == UNUSED:
+                        raise ValueError(
+                            f"Trying to remove parameter {prop} with UNUSED which"
+                            " doesn't exist."
+                        )
 
-        return requests
+                    params[prop] = alias
+
+        return {param: alias for param, alias in params.items() if alias is not UNUSED}
 
     def _get_metadata_request(self):
         """Get requested metadata for the instance.
@@ -1537,8 +1842,19 @@ class _MetadataRequester:
         if hasattr(self, "_metadata_request"):
             requests = get_routing_for_object(self._metadata_request)
         else:
-            requests = self._get_default_requests()
-
+            requests = MetadataRequest(owner=self)
+            for method_name in SIMPLE_METHODS:
+                setattr(
+                    requests,
+                    method_name,
+                    MethodMetadataRequest(
+                        owner=self,
+                        method=method_name,
+                        requests=self._get_class_level_metadata_request_values(
+                            method_name
+                        ),
+                    ),
+                )
         return requests
 
     def get_metadata_routing(self):
@@ -1577,9 +1893,27 @@ def process_routing(_obj, _method, /, **kwargs):
     a call to this function would be:
     ``process_routing(self, "fit", sample_weight=sample_weight, **fit_params)``.
 
+    Internally, the function uses the router's `MetadataRouter` object (as
+    returned by a call to its `get_metadata_routing` method) to validate
+    per method that the routed metadata had been requested by the underlying
+    estimator, and extracts a mapping of the given metadata to the requested
+    metadata based on the routing information defined by the `MetadataRouter`.
+
     Note that if routing is not enabled and ``kwargs`` is empty, then it
     returns an empty routing where ``process_routing(...).ANYTHING.ANY_METHOD``
     is always an empty dictionary.
+
+    The output of this function is a :class:`~sklearn.utils.Bunch` that has a key for
+    each consuming object and those hold keys for their consuming methods, which then
+    contain keys for the metadata which should be routed to them. Consumers should
+    use item access (``routed_params[child][method]``) rather than attribute access,
+    so that the structure remains usable after crossing process boundaries (e.g.
+    :class:`joblib.Parallel` with the dask backend), where serializers may downgrade
+    :class:`~sklearn.utils.Bunch` to plain :class:`dict`.
+
+    Read more on developing custom estimators that can route metadata in the
+    :ref:`Metadata Routing Developing Guide
+    <sphx_glr_auto_examples_miscellaneous_plot_metadata_routing.py>`.
 
     .. versionadded:: 1.3
 
@@ -1598,12 +1932,26 @@ def process_routing(_obj, _method, /, **kwargs):
     Returns
     -------
     routed_params : Bunch
-        A :class:`~utils.Bunch` of the form ``{"object_name": {"method_name":
-        {metadata: value}}}`` which can be used to pass the required metadata to
-        A :class:`~sklearn.utils.Bunch` of the form ``{"object_name": {"method_name":
-        {metadata: value}}}`` which can be used to pass the required metadata to
-        corresponding methods or corresponding child objects. The object names
-        are those defined in `obj.get_metadata_routing()`.
+        A :class:`~sklearn.utils.Bunch` of the form ``{"object_name":
+        {"method_name": {metadata: value}}}`` which can be used to pass the
+        required metadata to corresponding methods or corresponding child objects.
+        The object names are those defined in `obj.get_metadata_routing()`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn import set_config
+    >>> from sklearn.utils.metadata_routing import process_routing
+    >>> from sklearn.linear_model import Ridge
+    >>> from sklearn.feature_selection import SelectFromModel
+    >>> set_config(enable_metadata_routing=True)
+    >>> process_routing(
+    ...     SelectFromModel(Ridge().set_fit_request(sample_weight=True)),
+    ...     "fit",
+    ...     sample_weight=np.array([1, 1, 2]),
+    ... )
+    {'estimator': {'fit': {'sample_weight': array([1, 1, 2])}}}
+    >>> set_config(enable_metadata_routing=False)
     """
     if not kwargs:
         # If routing is not enabled and kwargs are empty, then we don't have to
@@ -1623,7 +1971,7 @@ def process_routing(_obj, _method, /, **kwargs):
 
     if not (hasattr(_obj, "get_metadata_routing") or isinstance(_obj, MetadataRouter)):
         raise AttributeError(
-            f"The given object ({_obj.__class__.__name__!r}) needs to either"
+            f"The given object ({_routing_repr(_obj)}) needs to either"
             " implement the routing method `get_metadata_routing` or be a"
             " `MetadataRouter` instance."
         )
@@ -1638,3 +1986,42 @@ def process_routing(_obj, _method, /, **kwargs):
     routed_params = request_routing.route_params(params=kwargs, caller=_method)
 
     return routed_params
+
+
+def _manual_routing(routing):
+    """Manually build a routed_params Bunch outside the ``process_routing`` path.
+
+    Use in meta-estimators that need to construct routing by hand — typically in
+    the ``else`` branch of ``if _routing_enabled()``, where pre-SLEP6 forwarding
+    behaviour is preserved. Returns the same nested ``Bunch`` shape that
+    :func:`process_routing` produces, so consumer code doesn't need to branch
+    on which path produced ``routed_params``.
+
+    Every child in ``routing`` is populated with a :class:`~sklearn.utils.Bunch`
+    containing every name in ``METHODS``. Methods listed in the per-child
+    sub-mapping carry the provided kwargs; methods not listed default to ``{}``.
+
+    Parameters
+    ----------
+    routing : dict[str, dict[str, dict] | None]
+        Mapping ``child_name -> (method_name -> kwargs)``. Pass ``{}`` (or
+        ``None``) for a child with no methods to forward to; every method in
+        the returned Bunch will be an empty dict.
+
+    Returns
+    -------
+    routed_params : Bunch
+        A :class:`~sklearn.utils.Bunch` of the form
+        ``{"child_name": {"method_name": {metadata: value}}}``. Consumers must
+        use item access (``result[child][method]``); attribute access is not
+        guaranteed to survive cross-process serialization (e.g. the joblib
+        dask backend downgrades :class:`Bunch` to plain :class:`dict`).
+    """
+    return Bunch(
+        **{
+            child: Bunch(
+                **{method: dict((methods or {}).get(method, {})) for method in METHODS}
+            )
+            for child, methods in routing.items()
+        }
+    )

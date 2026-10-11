@@ -8,30 +8,18 @@ from sklearn.svm._bounds import l1_min_c
 from sklearn.svm._newrand import bounded_rand_int_wrap, set_seed_wrap
 from sklearn.utils.fixes import CSR_CONTAINERS
 
-dense_X = [[-1, 0], [0, 1], [1, 1], [1, 1]]
 
-Y1 = [0, 1, 1, 1]
-Y2 = [2, 1, 0, 0]
-
-
-# TODO(1.8): remove filterwarnings after the deprecation of liblinear multiclass
-#            and maybe remove LogisticRegression from this test
-@pytest.mark.filterwarnings(
-    "ignore:.*'liblinear' solver for multiclass classification is deprecated.*"
-)
 @pytest.mark.parametrize("X_container", CSR_CONTAINERS + [np.array])
 @pytest.mark.parametrize("loss", ["squared_hinge", "log"])
-@pytest.mark.parametrize("Y_label", ["two-classes", "multi-class"])
 @pytest.mark.parametrize("intercept_label", ["no-intercept", "fit-intercept"])
-def test_l1_min_c(X_container, loss, Y_label, intercept_label):
-    Ys = {"two-classes": Y1, "multi-class": Y2}
+def test_l1_min_c(X_container, loss, intercept_label):
     intercepts = {
         "no-intercept": {"fit_intercept": False},
         "fit-intercept": {"fit_intercept": True, "intercept_scaling": 10},
     }
 
-    X = X_container(dense_X)
-    Y = Ys[Y_label]
+    X = X_container([[-1, 0], [0, 1], [1, 1], [1, 1]])
+    Y = [0, 1, 1, 1]
     intercept_params = intercepts[intercept_label]
     check_l1_min_c(X, Y, loss, **intercept_params)
 
@@ -44,21 +32,22 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=1.0):
         fit_intercept=fit_intercept,
         intercept_scaling=intercept_scaling,
     )
+    params = dict(fit_intercept=fit_intercept, intercept_scaling=intercept_scaling)
+    if loss == "log":
+        clf = LogisticRegression(l1_ratio=1, solver="liblinear", **params)
+        clf.alpha = 1 / min_c
+    else:
+        clf = LinearSVC(loss="squared_hinge", penalty="l1", dual=False, **params)
+        clf.C = min_c
 
-    clf = {
-        "log": LogisticRegression(penalty="l1", solver="liblinear"),
-        "squared_hinge": LinearSVC(loss="squared_hinge", penalty="l1", dual=False),
-    }[loss]
-
-    clf.fit_intercept = fit_intercept
-    clf.intercept_scaling = intercept_scaling
-
-    clf.C = min_c
     clf.fit(X, y)
     assert (np.asarray(clf.coef_) == 0).all()
     assert (np.asarray(clf.intercept_) == 0).all()
 
-    clf.C = min_c * 1.01
+    if loss == "log":
+        clf.alpha = 1 / (min_c * 1.01)
+    else:
+        clf.C = min_c * 1.01
     clf.fit(X, y)
     assert (np.asarray(clf.coef_) != 0).any() or (np.asarray(clf.intercept_) != 0).any()
 
@@ -85,6 +74,7 @@ def test_newrand_default():
     assert not all(x == generated[0] for x in generated)
 
 
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("seed, expected", [(0, 54), (_MAX_UNSIGNED_INT, 9)])
 def test_newrand_set_seed(seed, expected):
     """Test that `set_seed` produces deterministic results"""
@@ -100,6 +90,7 @@ def test_newrand_set_seed_overflow(seed):
         set_seed_wrap(seed)
 
 
+@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("range_, n_pts", [(_MAX_UNSIGNED_INT, 10000), (100, 25)])
 def test_newrand_bounded_rand_int(range_, n_pts):
     """Test that `bounded_rand_int` follows a uniform distribution"""
@@ -115,7 +106,7 @@ def test_newrand_bounded_rand_int(range_, n_pts):
         sample = [bounded_rand_int_wrap(range_) for _ in range(n_pts)]
         res = stats.kstest(sample, uniform_dist.cdf)
         ks_pvals.append(res.pvalue)
-    # Null hypothesis = samples come from an uniform distribution.
+    # Null hypothesis = samples come from a uniform distribution.
     # Under the null hypothesis, p-values should be uniformly distributed
     # and not concentrated on low values
     # (this may seem counter-intuitive but is backed by multiple refs)

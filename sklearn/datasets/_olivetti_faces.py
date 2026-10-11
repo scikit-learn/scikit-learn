@@ -14,7 +14,7 @@ web page of Sam Roweis:
 # SPDX-License-Identifier: BSD-3-Clause
 
 from numbers import Integral, Real
-from os import PathLike, makedirs, remove
+from os import PathLike, remove
 from os.path import exists
 
 import joblib
@@ -96,9 +96,7 @@ def fetch_olivetti_faces(
 
     return_X_y : bool, default=False
         If True, returns `(data, target)` instead of a `Bunch` object. See
-        below for more information about the `data` and `target` object.
-
-        .. versionadded:: 0.22
+        below for more information about the `data` and `target` objects.
 
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
@@ -131,8 +129,6 @@ def fetch_olivetti_faces(
     (data, target) : tuple if `return_X_y=True`
         Tuple with the `data` and `target` objects described above.
 
-        .. versionadded:: 0.22
-
     Examples
     --------
     >>> from sklearn.datasets import fetch_olivetti_faces
@@ -145,8 +141,6 @@ def fetch_olivetti_faces(
     (400, 64, 64)
     """
     data_home = get_data_home(data_home=data_home)
-    if not exists(data_home):
-        makedirs(data_home)
     filepath = _pkl_filepath(data_home, "olivetti.pkz")
     if not exists(filepath):
         if not download_if_missing:

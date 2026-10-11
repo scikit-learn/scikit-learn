@@ -16,11 +16,10 @@ models: :ref:`Logistic_regression`, :ref:`gaussian_naive_bayes`,
 
 """
 
-# %%
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-#
+# %%
 # Dataset
 # -------
 #
@@ -105,7 +104,12 @@ from sklearn.naive_bayes import GaussianNB
 # classifiers but we don't do it here for the sake of keeping the example code
 # concise and fast to execute.
 lr = LogisticRegressionCV(
-    Cs=np.logspace(-6, 6, 101), cv=10, scoring="neg_log_loss", max_iter=1_000
+    alphas=np.logspace(6, -6, 101),
+    cv=10,
+    l1_ratios=(0,),
+    scoring="neg_log_loss",
+    max_iter=1_000,
+    use_legacy_attributes=False,
 )
 gnb = GaussianNB()
 svc = NaivelyCalibratedLinearSVC(C=1.0)
@@ -182,14 +186,14 @@ plt.show()
 # sufficient to guarantee a well-calibrated model by itself: even with a very
 # large training set, logistic regression could still be poorly calibrated, if
 # it was too strongly regularized or if the choice and preprocessing of input
-# features made this model mis-specified (e.g. if the true decision boundary of
+# features made this model misspecified (e.g. if the true decision boundary of
 # the dataset is a highly non-linear function of the input features).
 #
 # In this example the training set was intentionally kept very small. In this
 # setting, optimizing the log-loss can still lead to poorly calibrated models
 # because of overfitting. To mitigate this, the
 # :class:`~sklearn.linear_model.LogisticRegressionCV` class was configured to
-# tune the `C` regularization parameter to also minimize the log-loss via inner
+# tune the `alpha` regularization parameter to also minimize the log-loss via inner
 # cross-validation so as to find the best compromise for this model in the
 # small training set setting.
 #

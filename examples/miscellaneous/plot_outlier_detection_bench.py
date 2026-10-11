@@ -13,7 +13,7 @@ The algorithms are trained (without labels) on the whole dataset assumed to
 contain outliers.
 
 1. The ROC curves are computed using knowledge of the ground-truth labels
-and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
+   and displayed using :class:`~sklearn.metrics.RocCurveDisplay`.
 
 2. The performance is assessed in terms of the ROC-AUC.
 """
@@ -257,7 +257,7 @@ for model_name in model_names:
 # %%
 X, y = fetch_openml(name="cardiotocography", version=1, return_X_y=True, as_frame=False)
 X_cardiotocography = X  # save X for later use
-s = y == "3"
+s = y.astype(str) == "3"
 y = s.astype(np.int32)
 
 n_samples, anomaly_frac = X.shape[0], y.mean()

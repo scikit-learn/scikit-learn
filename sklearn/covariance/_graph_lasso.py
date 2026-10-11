@@ -17,16 +17,14 @@ from scipy import linalg
 from sklearn.base import _fit_context
 from sklearn.covariance import EmpiricalCovariance, empirical_covariance, log_likelihood
 from sklearn.exceptions import ConvergenceWarning
-
-# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model import _cd_fast as cd_fast
 from sklearn.linear_model import lars_path_gram
 from sklearn.model_selection import check_cv, cross_val_score
-from sklearn.utils import Bunch
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -138,16 +136,23 @@ def _graphical_lasso(
                             / (precision_[idx, idx] + 1000 * eps)
                         )
                         coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
-                            coefs,
-                            alpha,
-                            0,
-                            sub_covariance,
-                            row,
-                            row,
-                            max_iter,
-                            enet_tol,
-                            check_random_state(None),
-                            False,
+                            w=coefs,
+                            alpha=alpha,
+                            beta=0,
+                            Q=sub_covariance,
+                            q=row,
+                            y=row,
+                            # TODO: It is not ideal that the max_iter of the outer
+                            # solver (graphical lasso) is coupled with the max_iter of
+                            # the inner solver (CD). Ideally, CD has its own parameter
+                            # enet_max_iter (like enet_tol). A minimum of 20 is rather
+                            # arbitrary, but not unreasonable.
+                            max_iter=max(20, max_iter),
+                            tol=enet_tol,
+                            rng=check_random_state(None),
+                            random=False,
+                            positive=False,
+                            do_screening=True,
                         )
                     else:  # mode == "lars"
                         _, _, coefs = lars_path_gram(
@@ -472,8 +477,6 @@ class GraphicalLasso(BaseGraphicalLasso):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -740,17 +743,14 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.20
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
@@ -843,8 +843,6 @@ class GraphicalLassoCV(BaseGraphicalLasso):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1003,7 +1001,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **params)
         else:
-            routed_params = Bunch(splitter=Bunch(split={}))
+            routed_params = _manual_routing({"splitter": {}})
 
         t0 = time.time()
         for i in range(n_refinements):
@@ -1138,7 +1136,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             splitter=check_cv(self.cv),
             method_mapping=MethodMapping().add(callee="split", caller="fit"),
         )

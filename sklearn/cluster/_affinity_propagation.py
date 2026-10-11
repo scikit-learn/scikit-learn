@@ -100,7 +100,7 @@ def _affinity_propagation(
         R += tmp
 
         # tmp = Rp; compute availabilities
-        np.maximum(R, 0, tmp)
+        np.maximum(R, 0, out=tmp)
         tmp.flat[:: n_samples + 1] = R.flat[:: n_samples + 1]
 
         # tmp = -Anew
@@ -241,9 +241,6 @@ def affinity_propagation(
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
 
-        .. versionadded:: 0.23
-            this parameter was previously hardcoded as 0.
-
     Returns
     -------
     cluster_centers_indices : ndarray of shape (n_clusters,)
@@ -263,7 +260,7 @@ def affinity_propagation(
     You may also check out,
     :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py`
 
-    When the algorithm does not converge, it will still return a arrays of
+    When the algorithm does not converge, it will still return an array of
     ``cluster_center_indices`` and labels if there are any exemplars/clusters,
     however they may be degenerate and should be used with caution.
 
@@ -353,9 +350,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
 
-        .. versionadded:: 0.23
-            this parameter was previously hardcoded as 0.
-
     Attributes
     ----------
     cluster_centers_indices_ : ndarray of shape (n_clusters,)
@@ -375,8 +369,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -401,7 +393,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
 
-    When the algorithm does not converge, it will still return a arrays of
+    When the algorithm does not converge, it will still return an array of
     ``cluster_center_indices`` and labels if there are any exemplars/clusters,
     however they may be degenerate and should be used with caution.
 

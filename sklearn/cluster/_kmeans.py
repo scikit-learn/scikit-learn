@@ -42,7 +42,7 @@ from sklearn.metrics.pairwise import _euclidean_distances, euclidean_distances
 from sklearn.utils import check_array, check_random_state
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.extmath import row_norms, stable_cumsum
+from sklearn.utils.extmath import row_norms
 from sklearn.utils.parallel import (
     _get_threadpool_controller,
     _threadpool_controller_decorator,
@@ -81,8 +81,6 @@ def kmeans_plusplus(
     n_local_trials=None,
 ):
     """Init n_clusters seeds according to k-means++.
-
-    .. versionadded:: 0.24
 
     Parameters
     ----------
@@ -248,7 +246,7 @@ def _kmeans_plusplus(
         # to the squared distance to the closest existing center
         rand_vals = random_state.uniform(size=n_local_trials) * current_pot
         candidate_ids = np.searchsorted(
-            stable_cumsum(sample_weight * closest_dist_sq), rand_vals
+            np.cumsum(sample_weight * closest_dist_sq), rand_vals
         )
         # XXX: numerical imprecision can result in a candidate_id out of range
         np.clip(candidate_ids, None, closest_dist_sq.size - 1, out=candidate_ids)
@@ -397,9 +395,6 @@ def k_means(
         well-defined clusters, by using the triangle inequality. However it's
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
-
-        .. versionchanged:: 0.18
-            Added Elkan algorithm
 
         .. versionchanged:: 1.1
             Renamed "full" to "lloyd", and deprecated "auto" and "full".
@@ -772,10 +767,6 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
     sample_weight : ndarray of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : ndarray of shape (n_samples,)
-        Precomputed squared euclidean norm of each data point, to speed up
-        computations.
-
     centers : ndarray of shape (n_clusters, n_features)
         The cluster centers.
 
@@ -933,12 +924,15 @@ class _BaseKMeans(
             if has_vcomp and has_mkl:
                 self._warn_mkl_vcomp(n_active_threads)
 
-    def _validate_center_shape(self, X, centers):
-        """Check if centers is compatible with X and n_clusters."""
-        if centers.shape[0] != self.n_clusters:
+    def _validate_center_shape(self, X, centers, n_centroids=None):
+        """Check if the shape of the centers is correct."""
+        if n_centroids is None:
+            n_centroids = self.n_clusters
+
+        if centers.shape[0] != n_centroids:
             raise ValueError(
                 f"The shape of the initial centers {centers.shape} does not "
-                f"match the number of clusters {self.n_clusters}."
+                f"match the number of clusters {n_centroids}."
             )
         if centers.shape[1] != X.shape[1]:
             raise ValueError(
@@ -1037,7 +1031,7 @@ class _BaseKMeans(
         elif callable(init):
             centers = init(X, n_clusters, random_state=random_state)
             centers = check_array(centers, dtype=X.dtype, copy=False, order="C")
-            self._validate_center_shape(X, centers)
+            self._validate_center_shape(X, centers, n_centroids=n_clusters)
 
         if sp.issparse(centers):
             centers = centers.toarray()
@@ -1280,9 +1274,6 @@ class KMeans(_BaseKMeans):
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
 
-        .. versionchanged:: 0.18
-            Added Elkan algorithm
-
         .. versionchanged:: 1.1
             Renamed "full" to "lloyd", and deprecated "auto" and "full".
             Changed "auto" to use "lloyd" instead of "elkan".
@@ -1306,8 +1297,6 @@ class KMeans(_BaseKMeans):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1450,8 +1439,6 @@ class KMeans(_BaseKMeans):
             are assigned equal weight. `sample_weight` is not used during
             initialization if `init` is a callable or a user provided array.
 
-            .. versionadded:: 0.20
-
         Returns
         -------
         self : object
@@ -1579,9 +1566,6 @@ def _mini_batch_step(
 
     X : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The original data array. If sparse, must be in CSR format.
-
-    x_squared_norms : ndarray of shape (n_samples,)
-        Squared euclidean norm of each data point.
 
     sample_weight : ndarray of shape (n_samples,)
         The weights for each observation in `X`.
@@ -1723,8 +1707,9 @@ class MiniBatchKMeans(_BaseKMeans):
 
     batch_size : int, default=1024
         Size of the mini batches.
-        For faster computations, you can set the ``batch_size`` greater than
-        256 * number of cores to enable parallelism on all cores.
+        For faster computations, you can set `batch_size > 256 * number_of_cores`
+        to enable :ref:`parallelism <lower-level-parallelism-with-openmp>`
+        on all cores.
 
         .. versionchanged:: 1.0
            `batch_size` default changed from 100 to 1024.
@@ -1821,8 +1806,6 @@ class MiniBatchKMeans(_BaseKMeans):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1875,8 +1858,8 @@ class MiniBatchKMeans(_BaseKMeans):
     ...                          max_iter=10,
     ...                          n_init="auto").fit(X)
     >>> kmeans.cluster_centers_
-    array([[3.55102041, 2.48979592],
-           [1.06896552, 1.        ]])
+    array([[3.20967742, 3.56451613],
+           [1.32758621, 0.77586207]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
 
@@ -2069,8 +2052,6 @@ class MiniBatchKMeans(_BaseKMeans):
             are assigned equal weight. `sample_weight` is not used during
             initialization if `init` is a callable or a user provided array.
 
-            .. versionadded:: 0.20
-
         Returns
         -------
         self : object
@@ -2152,18 +2133,32 @@ class MiniBatchKMeans(_BaseKMeans):
         # Initialize number of samples seen since last reassignment
         self._n_since_last_reassign = 0
 
+        sum_of_weights = np.sum(sample_weight)
+
         n_steps = (self.max_iter * n_samples) // self._batch_size
+        normalized_sample_weight = sample_weight / sum_of_weights
+        unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
 
         with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
                 # Sample a minibatch from the full dataset
-                minibatch_indices = random_state.randint(0, n_samples, self._batch_size)
-
+                minibatch_indices = random_state.choice(
+                    n_samples,
+                    self._batch_size,
+                    p=normalized_sample_weight,
+                    replace=True,
+                )
                 # Perform the actual update step on the minibatch data
+                # Note: since the sampling of the minibatch is sample_weight aware,
+                # we pass fixed unit weights to the `_mini_batch_step` call to avoid
+                # accounting for the weights twice. Also note that `_mini_batch_step`
+                # can be called with non-unit weights when the caller constructs
+                # the batches explicitly by calling the public `partial_fit` method
+                # instead.
                 batch_inertia = _mini_batch_step(
                     X=X[minibatch_indices],
-                    sample_weight=sample_weight[minibatch_indices],
+                    sample_weight=unit_sample_weight,
                     centers=centers,
                     centers_new=centers_new,
                     weight_sums=self._counts,
@@ -2201,7 +2196,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 n_threads=self._n_threads,
             )
         else:
-            self.inertia_ = self._ewa_inertia * n_samples
+            self.inertia_ = self._ewa_inertia * sum_of_weights
 
         return self
 

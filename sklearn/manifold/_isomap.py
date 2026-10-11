@@ -21,6 +21,7 @@ from sklearn.metrics.pairwise import _VALID_METRICS
 from sklearn.neighbors import NearestNeighbors, kneighbors_graph, radius_neighbors_graph
 from sklearn.preprocessing import KernelCenterer
 from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.fixes import _ensure_sparse_index_int32
 from sklearn.utils.graph import _fix_connected_components
 from sklearn.utils.validation import check_is_fitted
 
@@ -93,20 +94,14 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a :term:`Glossary <sparse graph>`.
 
-        .. versionadded:: 0.22
-
     p : float, default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-        .. versionadded:: 0.22
-
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
-
-        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -126,8 +121,6 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -297,6 +290,7 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 **self.nbrs_.effective_metric_params_,
             )
 
+        _ensure_sparse_index_int32(nbg)
         self.dist_matrix_ = shortest_path(nbg, method=self.path_method, directed=False)
 
         if self.nbrs_._fit_X.dtype == np.float32:

@@ -366,4 +366,4 @@ class __array_namespace_info__:
                     break
                 i += 1
 
-        return devices
+        return tuple(devices)

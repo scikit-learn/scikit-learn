@@ -1185,7 +1185,7 @@ cdef class CyHalfMultinomialLoss():
             Raw prediction values (in link space).
         sample_weight : double
             Sample weight.
-        gradient_out : array of shape (n_classs,)
+        gradient_out : array of shape (n_classes,)
             A location into which the gradient is stored.
 
         Returns

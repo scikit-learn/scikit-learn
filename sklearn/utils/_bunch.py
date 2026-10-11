@@ -59,7 +59,7 @@ class Bunch(dict):
             raise AttributeError(key)
 
     def __setstate__(self, state):
-        # Bunch pickles generated with scikit-learn 0.16.* have an non
+        # Bunch pickles generated with scikit-learn 0.16.* have a non
         # empty __dict__. This causes a surprising behaviour when
         # loading these pickles scikit-learn 0.17: reading bunch.key
         # uses __dict__ but assigning to bunch.key use __setattr__ and

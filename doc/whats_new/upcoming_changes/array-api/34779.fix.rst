@@ -1,0 +1,4 @@
+- Fixed classification metrics to accept pandas labels when array API dispatch
+  is enabled and predictions are from a different array API namespace or
+  device.
+  By :user:`Olivier Grisel <ogrisel>`.

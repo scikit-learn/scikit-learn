@@ -1,4 +1,4 @@
-"""Compatibility fixes for older version of python, numpy and scipy
+"""Compatibility fixes for older version of the dependencies
 
 If you add content to this file, please give the version of the package
 at which the fix is no longer needed.
@@ -9,17 +9,11 @@ at which the fix is no longer needed.
 
 import platform
 import struct
+import sys
 
 import numpy as np
 import scipy
 import scipy.sparse.linalg
-import scipy.stats
-from scipy import optimize
-
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
 
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.utils.parallel import _get_threadpool_controller
@@ -42,30 +36,19 @@ DOK_CONTAINERS = [scipy.sparse.dok_matrix, scipy.sparse.dok_array]
 BSR_CONTAINERS = [scipy.sparse.bsr_matrix, scipy.sparse.bsr_array]
 DIA_CONTAINERS = [scipy.sparse.dia_matrix, scipy.sparse.dia_array]
 
-# Remove when minimum scipy version is 1.11.0
-try:
-    from scipy.sparse import sparray  # noqa: F401
-
-    SPARRAY_PRESENT = True
-except ImportError:
-    SPARRAY_PRESENT = False
-
 
 def _object_dtype_isnan(X):
     return X != X
 
 
-# TODO: Remove when SciPy 1.11 is the minimum supported version
-def _mode(a, axis=0):
-    if sp_version >= parse_version("1.9.0"):
-        mode = scipy.stats.mode(a, axis=axis, keepdims=True)
-        if sp_version >= parse_version("1.10.999"):
-            # scipy.stats.mode has changed returned array shape with axis=None
-            # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
-            if axis is None:
-                mode = np.ravel(mode)
-        return mode
-    return scipy.stats.mode(a, axis=axis)
+# TODO: Remove when Scipy 1.12 is the minimum supported version
+#       Use git grep to see where this is used and update them too.
+SCIPY_VERSION_BELOW_1_12 = sp_base_version < parse_version("1.12.0")
+
+
+# TODO: Remove when Scipy 1.15 is the minimum supported version
+#       Use git grep to see where this is used and update them too.
+SCIPY_VERSION_BELOW_1_15 = sp_base_version < parse_version("1.15.0")
 
 
 # TODO: Remove when Scipy 1.12 is the minimum supported version
@@ -81,146 +64,6 @@ else:
         return scipy.sparse.linalg.cg(A, b, **kwargs)
 
 
-# TODO : remove this when required minimum version of scipy >= 1.9.0
-def _yeojohnson_lambda(_neg_log_likelihood, x):
-    """Estimate the optimal Yeo-Johnson transformation parameter (lambda).
-
-    This function provides a compatibility workaround for versions of SciPy
-    older than 1.9.0, where `scipy.stats.yeojohnson` did not return
-    the estimated lambda directly.
-
-    Parameters
-    ----------
-    _neg_log_likelihood : callable
-        A function that computes the negative log-likelihood of the Yeo-Johnson
-        transformation for a given lambda. Used only for SciPy versions < 1.9.0.
-
-    x : array-like
-        Input data to estimate the Yeo-Johnson transformation parameter.
-
-    Returns
-    -------
-    lmbda : float
-        The estimated lambda parameter for the Yeo-Johnson transformation.
-    """
-    min_scipy_version = "1.9.0"
-
-    if sp_version < parse_version(min_scipy_version):
-        # choosing bracket -2, 2 like for boxcox
-        return optimize.brent(_neg_log_likelihood, brack=(-2, 2))
-
-    _, lmbda = scipy.stats.yeojohnson(x, lmbda=None)
-    return lmbda
-
-
-# TODO: Fuse the modern implementations of _sparse_min_max and _sparse_nan_min_max
-# into the public min_max_axis function when Scipy 1.11 is the minimum supported
-# version and delete the backport in the else branch below.
-if sp_base_version >= parse_version("1.11.0"):
-
-    def _sparse_min_max(X, axis):
-        the_min = X.min(axis=axis)
-        the_max = X.max(axis=axis)
-
-        if axis is not None:
-            the_min = the_min.toarray().ravel()
-            the_max = the_max.toarray().ravel()
-
-        return the_min, the_max
-
-    def _sparse_nan_min_max(X, axis):
-        the_min = X.nanmin(axis=axis)
-        the_max = X.nanmax(axis=axis)
-
-        if axis is not None:
-            the_min = the_min.toarray().ravel()
-            the_max = the_max.toarray().ravel()
-
-        return the_min, the_max
-
-else:
-    # This code is mostly taken from scipy 0.14 and extended to handle nans, see
-    # https://github.com/scikit-learn/scikit-learn/pull/11196
-    def _minor_reduce(X, ufunc):
-        major_index = np.flatnonzero(np.diff(X.indptr))
-
-        # reduceat tries casts X.indptr to intp, which errors
-        # if it is int64 on a 32 bit system.
-        # Reinitializing prevents this where possible, see #13737
-        X = type(X)((X.data, X.indices, X.indptr), shape=X.shape)
-        value = ufunc.reduceat(X.data, X.indptr[major_index])
-        return major_index, value
-
-    def _min_or_max_axis(X, axis, min_or_max):
-        N = X.shape[axis]
-        if N == 0:
-            raise ValueError("zero-size array to reduction operation")
-        M = X.shape[1 - axis]
-        mat = X.tocsc() if axis == 0 else X.tocsr()
-        mat.sum_duplicates()
-        major_index, value = _minor_reduce(mat, min_or_max)
-        not_full = np.diff(mat.indptr)[major_index] < N
-        value[not_full] = min_or_max(value[not_full], 0)
-        mask = value != 0
-        major_index = np.compress(mask, major_index)
-        value = np.compress(mask, value)
-
-        if axis == 0:
-            res = scipy.sparse.coo_matrix(
-                (value, (np.zeros(len(value)), major_index)),
-                dtype=X.dtype,
-                shape=(1, M),
-            )
-        else:
-            res = scipy.sparse.coo_matrix(
-                (value, (major_index, np.zeros(len(value)))),
-                dtype=X.dtype,
-                shape=(M, 1),
-            )
-        return res.toarray().ravel()
-
-    def _sparse_min_or_max(X, axis, min_or_max):
-        if axis is None:
-            if 0 in X.shape:
-                raise ValueError("zero-size array to reduction operation")
-            zero = X.dtype.type(0)
-            if X.nnz == 0:
-                return zero
-            m = min_or_max.reduce(X.data.ravel())
-            if X.nnz != np.prod(X.shape):
-                m = min_or_max(zero, m)
-            return m
-        if axis < 0:
-            axis += 2
-        if (axis == 0) or (axis == 1):
-            return _min_or_max_axis(X, axis, min_or_max)
-        else:
-            raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
-
-    def _sparse_min_max(X, axis):
-        return (
-            _sparse_min_or_max(X, axis, np.minimum),
-            _sparse_min_or_max(X, axis, np.maximum),
-        )
-
-    def _sparse_nan_min_max(X, axis):
-        return (
-            _sparse_min_or_max(X, axis, np.fmin),
-            _sparse_min_or_max(X, axis, np.fmax),
-        )
-
-
-# For +1.25 NumPy versions exceptions and warnings are being moved
-# to a dedicated submodule.
-if np_version >= parse_version("1.25.0"):
-    from numpy.exceptions import ComplexWarning, VisibleDeprecationWarning
-else:
-    from numpy import (  # noqa: F401
-        ComplexWarning,
-        VisibleDeprecationWarning,
-    )
-
-
 # TODO: Adapt when Pandas > 2.2 is the minimum supported version
 def pd_fillna(pd, frame):
     pd_version = parse_version(pd.__version__).base_version
@@ -230,7 +73,10 @@ def pd_fillna(pd, frame):
         infer_objects_kwargs = (
             {} if parse_version(pd_version) >= parse_version("3") else {"copy": False}
         )
-        with pd.option_context("future.no_silent_downcasting", True):
+        if parse_version(pd_version) < parse_version("3.0"):
+            with pd.option_context("future.no_silent_downcasting", True):
+                frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
+        else:
             frame = frame.fillna(value=np.nan).infer_objects(**infer_objects_kwargs)
     return frame
 
@@ -352,24 +198,13 @@ def _smallest_admissible_index_dtype(arrays=(), maxval=None, check_contents=Fals
     return np.int32
 
 
-# TODO: Remove when Scipy 1.12 is the minimum supported version
+# TODO: Remove when SciPy 1.12 is the minimum supported version
 if sp_version < parse_version("1.12"):
     from sklearn.externals._scipy.sparse.csgraph import laplacian
 else:
     from scipy.sparse.csgraph import (
         laplacian,  # noqa: F401  # pragma: no cover
     )
-
-
-# TODO: Remove when Python min version >= 3.12.
-def tarfile_extractall(tarfile, path):
-    try:
-        # Use filter="data" to prevent the most dangerous security issues.
-        # For more details, see
-        # https://docs.python.org/3/library/tarfile.html#tarfile.TarFile.extractall
-        tarfile.extractall(path, filter="data")
-    except TypeError:
-        tarfile.extractall(path)
 
 
 def _in_unstable_openblas_configuration():
@@ -415,13 +250,171 @@ def _get_additional_lbfgs_options_dict(key, value):
     return {} if sp_version >= parse_version("1.15") else {key: value}
 
 
-# TODO(pyarrow): Remove when minimum pyarrow version is 17.0.0
-PYARROW_VERSION_BELOW_17 = False
-try:
-    import pyarrow
+# TODO: Replace when Scipy 1.12 is the minimum supported version
+#       fixes for transitioning scipy.sparse function names
+if not SCIPY_VERSION_BELOW_1_12:
+    _sparse_eye_array = scipy.sparse.eye_array
+    _sparse_diags_array = scipy.sparse.diags_array
 
-    pyarrow_version = parse_version(pyarrow.__version__)
-    if pyarrow_version < parse_version("17.0.0"):
-        PYARROW_VERSION_BELOW_17 = True
-except ModuleNotFoundError:  # pragma: no cover
-    pass
+    def _sparse_random_array(
+        shape,
+        *,
+        density=0.01,
+        format="coo",
+        dtype=None,
+        random_state=None,
+        rng=None,
+        data_sampler=None,
+    ):
+        X = scipy.sparse.random_array(
+            shape,
+            density=density,
+            format=format,
+            dtype=dtype,
+            random_state=rng or random_state,
+            data_sampler=data_sampler,
+        )
+        _ensure_sparse_index_int32(X)
+        return X
+
+else:
+
+    def _sparse_eye_array(m, n=None, *, k=0, dtype=float, format=None):
+        A = scipy.sparse.eye(m, n, k=k, dtype=dtype)
+        return scipy.sparse.dia_array(A).asformat(format)
+
+    def _sparse_diags_array(
+        diagonals, /, *, offsets=0, shape=None, format=None, dtype=None
+    ):
+        A = scipy.sparse.diags(diagonals, offsets=offsets, shape=shape, dtype=dtype)
+        return scipy.sparse.dia_array(A).asformat(format)
+
+    def _sparse_random_array(
+        shape,
+        *,
+        density=0.01,
+        format="coo",
+        dtype=None,
+        random_state=None,
+        rng=None,
+        data_sampler=None,
+    ):
+        A = scipy.sparse.random(
+            *shape,
+            density=density,
+            dtype=dtype,
+            random_state=rng or random_state,
+            data_rvs=data_sampler,
+        )
+        return scipy.sparse.coo_array(A).asformat(format)
+
+
+# TODO: remove when SciPy 1.15 is minimal supported version
+# fix for casting index arrays
+def _ensure_sparse_index_int32(A):
+    """Safely ensure that index arrays are int32."""
+    if A.format in ("csc", "csr", "bsr"):
+        A.indices, A.indptr = _safely_cast_index_arrays(A)
+    elif A.format == "coo":
+        if hasattr(A, "coords"):
+            A.coords = _safely_cast_index_arrays(A)
+        elif hasattr(A, "indices"):
+            A.indices = _safely_cast_index_arrays(A)
+        else:
+            A.row, A.col = _safely_cast_index_arrays(A)
+    elif A.format == "dia":
+        A.offsets = _safely_cast_index_arrays(A)
+
+
+# TODO: remove when SciPy 1.15 is minimal supported version
+#       (based on scipy.sparse._sputils.py function with same name)
+def _safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
+    """Safely cast sparse array indices to `idx_dtype`.
+
+    Check the shape of `A` to determine if it is safe to cast its index
+    arrays to dtype `idx_dtype`. If any dimension in shape is larger than
+    fits in the dtype, casting is unsafe so raise ``ValueError``.
+    If safe, cast the index arrays to `idx_dtype` and return the result
+    without changing the input `A`. The caller can assign results to `A`
+    attributes if desired or use the recast index arrays directly.
+
+    Unless downcasting is needed, the original index arrays are returned.
+    You can test e.g. ``A.indptr is new_indptr`` to see if downcasting occurred.
+
+    See SciPy: scipy.sparse._sputils.py for more info on safely_cast_index_arrays()
+    """
+    max_value = np.iinfo(idx_dtype).max
+
+    if A.format in ("csc", "csr"):
+        if A.indptr[-1] > max_value:
+            raise ValueError(f"indptr values too large for {msg}")
+        # check shape vs dtype
+        if max(*A.shape) > max_value:
+            if (A.indices > max_value).any():
+                raise ValueError(f"indices values too large for {msg}")
+
+        indices = A.indices.astype(idx_dtype, copy=False)
+        indptr = A.indptr.astype(idx_dtype, copy=False)
+        return indices, indptr
+
+    elif A.format == "coo":
+        coords = getattr(A, "coords", None)
+        if coords is None:
+            coords = getattr(A, "indices", None)
+            if coords is None:
+                coords = (A.row, A.col)
+        if max(*A.shape) > max_value:
+            if any((co > max_value).any() for co in coords):
+                raise ValueError(f"coords values too large for {msg}")
+        return tuple(co.astype(idx_dtype, copy=False) for co in coords)
+
+    elif A.format == "dia":
+        if max(*A.shape) > max_value:
+            if (A.offsets > max_value).any():
+                raise ValueError(f"offsets values too large for {msg}")
+        offsets = A.offsets.astype(idx_dtype, copy=False)
+        return offsets
+
+    elif A.format == "bsr":
+        R, C = A.blocksize
+        if A.indptr[-1] * R > max_value:
+            raise ValueError("indptr values too large for {msg}")
+        if max(*A.shape) > max_value:
+            if (A.indices * C > max_value).any():
+                raise ValueError(f"indices values too large for {msg}")
+        indices = A.indices.astype(idx_dtype, copy=False)
+        indptr = A.indptr.astype(idx_dtype, copy=False)
+        return indices, indptr
+    # DOK and LIL formats are not associated with index arrays.
+
+
+# TODO remove when matplotlib 3.10 is the minimal supported version
+# and replace usage with `mpl.color_sequences['petroff10']`
+PETROFF_COLORS = [
+    "#3f90da",
+    "#ffa90e",
+    "#bd1f01",
+    "#94a4a2",
+    "#832db6",
+    "#a96b59",
+    "#e76300",
+    "#b9ac70",
+    "#717581",
+    "#92dadd",
+]
+
+
+# TODO Remove when Python 3.13 is the minimal supported version.
+if hasattr(sys, "_is_gil_enabled"):
+    _is_gil_enabled = sys._is_gil_enabled
+else:
+    # Support older versions of Python:
+    def _is_gil_enabled() -> bool:
+        """Return whether Python has the GIL enabled.
+
+        Returns
+        -------
+        bool
+            Whether the GIL is enabled.
+        """
+        return True

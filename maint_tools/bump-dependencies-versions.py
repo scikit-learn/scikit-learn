@@ -8,16 +8,12 @@ import pandas as pd
 import requests
 from packaging import version
 
-df_list = pd.read_html("https://devguide.python.org/versions/")
-df = pd.concat(df_list).astype({"Branch": str})
-release_dates = {}
+response = requests.get("https://peps.python.org/api/release-cycle.json")
+response.raise_for_status()
+release_cycle = response.json()
 python_version_info = {
-    version: release_date
-    for version, release_date in zip(df["Branch"], df["First release"])
-}
-python_version_info = {
-    version: pd.to_datetime(release_date)
-    for version, release_date in python_version_info.items()
+    version: pd.to_datetime(info["first_release"])
+    for version, info in release_cycle.items()
 }
 
 
@@ -74,7 +70,9 @@ def get_min_python_version(scikit_learn_release_date_str="today"):
     ]
 
 
-def get_min_version_pure_python(package_name, scikit_learn_release_date_str="today"):
+def get_min_version_pure_python_or_example_dependency(
+    package_name, scikit_learn_release_date_str="today"
+):
     # for pure Python dependencies we want the most recent minor release that
     # is at least 2 years old
     if scikit_learn_release_date_str == "today":
@@ -136,7 +134,15 @@ def get_current_min_python_version():
 def show_versions_update(scikit_learn_release_date="today"):
     future_versions = {"python": get_min_python_version(scikit_learn_release_date)}
 
-    compiled_dependencies = ["numpy", "scipy", "pandas", "matplotlib", "pyamg"]
+    compiled_dependencies = [
+        "numpy",
+        "scipy",
+        "pandas",
+        "matplotlib",
+        "pyamg",
+        "polars",
+        "pyarrow",
+    ]
     future_versions.update(
         {
             dep: get_min_version_with_wheel(dep, future_versions["python"])
@@ -144,11 +150,23 @@ def show_versions_update(scikit_learn_release_date="today"):
         }
     )
 
-    pure_python_dependencies = ["joblib", "threadpoolctl"]
+    pure_python_or_example_dependencies = [
+        "joblib",
+        "narwhals",
+        "threadpoolctl",
+        "scikit-image",
+        "seaborn",
+        "polars",
+        "Pillow",
+        "pooch",
+        "plotly",
+    ]
     future_versions.update(
         {
-            dep: get_min_version_pure_python(dep, scikit_learn_release_date)
-            for dep in pure_python_dependencies
+            dep: get_min_version_pure_python_or_example_dependency(
+                dep, scikit_learn_release_date
+            )
+            for dep in pure_python_or_example_dependencies
         }
     )
 
@@ -156,7 +174,7 @@ def show_versions_update(scikit_learn_release_date="today"):
     current_versions.update(
         {
             dep: get_current_dependencies_version(dep)
-            for dep in compiled_dependencies + pure_python_dependencies
+            for dep in compiled_dependencies + pure_python_or_example_dependencies
         }
     )
 

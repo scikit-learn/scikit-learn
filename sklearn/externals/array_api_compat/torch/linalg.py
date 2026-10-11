@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import torch
-from typing import Optional, Union, Tuple
+import torch.linalg
 
-from torch.linalg import * # noqa: F403
+from .._internal import clone_module
 
-# torch.linalg doesn't define __all__
-# from torch.linalg import __all__ as linalg_all
-from torch import linalg as torch_linalg
-linalg_all = [i for i in dir(torch_linalg) if not i.startswith('_')]
+__all__ = clone_module("torch.linalg", globals())
 
 # outer is implemented in torch but aren't in the linalg namespace
 from torch import outer
@@ -30,9 +27,9 @@ def cross(x1: Array, x2: Array, /, *, axis: int = -1) -> Array:
     if not (x1.shape[axis] == x2.shape[axis] == 3):
         raise ValueError(f"cross product axis must have size 3, got {x1.shape[axis]} and {x2.shape[axis]}")
     x1, x2 = torch.broadcast_tensors(x1, x2)
-    return torch_linalg.cross(x1, x2, dim=axis)
+    return torch.linalg.cross(x1, x2, dim=axis)
 
-def vecdot(x1: Array, x2: Array, /, *, axis: int = -1, **kwargs) -> Array:
+def vecdot(x1: Array, x2: Array, /, *, axis: int = -1, **kwargs: object) -> Array:
     from ._aliases import isdtype
 
     x1, x2 = _fix_promotion(x1, x2, only_scalar=False)
@@ -54,7 +51,7 @@ def vecdot(x1: Array, x2: Array, /, *, axis: int = -1, **kwargs) -> Array:
         return res[..., 0, 0]
     return torch.linalg.vecdot(x1, x2, dim=axis, **kwargs)
 
-def solve(x1: Array, x2: Array, /, **kwargs) -> Array:
+def solve(x1: Array, x2: Array, /, **kwargs: object) -> Array:
     x1, x2 = _fix_promotion(x1, x2, only_scalar=False)
     # Torch tries to emulate NumPy 1 solve behavior by using batched 1-D solve
     # whenever
@@ -75,7 +72,7 @@ def solve(x1: Array, x2: Array, /, **kwargs) -> Array:
     return torch.linalg.solve(x1, x2, **kwargs)
 
 # torch.trace doesn't support the offset argument and doesn't support stacking
-def trace(x: Array, /, *, offset: int = 0, dtype: Optional[DType] = None) -> Array:
+def trace(x: Array, /, *, offset: int = 0, dtype: DType | None = None) -> Array:
     # Use our wrapped sum to make sure it does upcasting correctly
     return sum(torch.diagonal(x, offset=offset, dim1=-2, dim2=-1), axis=-1, dtype=dtype)
 
@@ -83,11 +80,11 @@ def vector_norm(
     x: Array,
     /,
     *,
-    axis: Optional[Union[int, Tuple[int, ...]]] = None,
+    axis: int | tuple[int, ...] | None = None,
     keepdims: bool = False,
     # JustFloat stands for inf | -inf, which are not valid for Literal
     ord: JustInt | JustFloat = 2,
-    **kwargs,
+    **kwargs: object,
 ) -> Array:
     # torch.vector_norm incorrectly treats axis=() the same as axis=None
     if axis == ():
@@ -110,12 +107,8 @@ def vector_norm(
         return out
     return torch.linalg.vector_norm(x, ord=ord, axis=axis, keepdim=keepdims, **kwargs)
 
-__all__ = linalg_all + ['outer', 'matmul', 'matrix_transpose', 'tensordot',
-                        'cross', 'vecdot', 'solve', 'trace', 'vector_norm']
-
-_all_ignore = ['torch_linalg', 'sum']
-
-del linalg_all
+__all__ += ['outer', 'matmul', 'matrix_transpose', 'tensordot',
+            'cross', 'vecdot', 'solve', 'trace', 'vector_norm']
 
 def __dir__() -> list[str]:
     return __all__

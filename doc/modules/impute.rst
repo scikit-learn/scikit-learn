@@ -6,15 +6,61 @@ Imputation of missing values
 
 .. currentmodule:: sklearn.impute
 
-For various reasons, many real world datasets contain missing values, often
-encoded as blanks, NaNs or other placeholders. Such datasets however are
-incompatible with scikit-learn estimators which assume that all values in an
-array are numerical, and that all have and hold meaning. A basic strategy to
-use incomplete datasets is to discard entire rows and/or columns containing
-missing values. However, this comes at the price of losing data which may be
-valuable (even though incomplete). A better strategy is to impute the missing
-values, i.e., to infer them from the known part of the data. See the
-glossary entry on :term:`imputation`.
+
+.. topic:: Key points for machine-learning with missing values
+
+   * Avoid dropping rows with missing values; it risks creating bias.
+   * :ref:`Some supervised learning methods <estimators_that_handle_nan>` (typically
+     tree-based learners) can natively predict on data with missing values
+     and work fairly well with no additional cost.
+   * Imputation can be very computationaly costly, and quickly hits
+     diminishing returns to improve subsequent prediction performance [3]_.
+
+For various reasons, many real-world datasets contain missing values, often
+encoded as blanks, NaNs or other placeholders. They arise from faulty
+measurements, unanswered questionnaire items, or information that was simply
+never recorded, and can affect both the data ``X`` and the target ``y``. Most
+scikit-learn estimators assume that every entry of an array is numerical and
+holds meaning, and therefore cannot be trained directly on incomplete data.
+
+A naive way to meet that requirement is to discard every row or column that
+contains a missing value. This is detrimental on two counts: valuable
+information from those cases is lost, and it generally introduces bias, since the
+remaining samples are rarely representative of the original population (unless
+values are missing completely at random). The same caution applies to the
+target: silently dropping samples whose outcome ``y`` is unknown biases the
+analysis. In particular, when an outcome has not been observed yet, it is a
+`censoring
+problem <https://en.wikipedia.org/wiki/Survival_analysis#Censoring>`_
+and should be handled with dedicated methods from `survival
+analysis <https://en.wikipedia.org/wiki/Survival_analysis>`_ rather than by
+discarding data.
+
+The tools described on this page address missing values in ``X``. A better
+strategy than discarding data is to impute the missing values, i.e. to infer
+them from the known part of the data (see the glossary entry on
+:term:`imputation`). scikit-learn provides simple column statistics with
+:class:`SimpleImputer`, as well as the model-based :class:`IterativeImputer`
+and :class:`KNNImputer`.
+
+Invest in imputation quality mainly when reconstructing the data itself, not
+prediction, is the objective.
+When the goal is prediction rather than reconstructing the data, a few
+high-level guidelines help choose among these tools [3]_:
+
+- Start simple: constant or mean / most-frequent imputation with
+  :class:`SimpleImputer` is a strong and cheap baseline, and more elaborate
+  imputation often brings only marginal gains in predictive performance.
+- Flag missing entries: adding a missingness indicator (the ``add_indicator``
+  option of the imputers, or :class:`MissingIndicator`) tends to help
+  prediction, even when values are missing completely at random.
+- Prefer expressive models for the supervised-learner step: flexible estimators
+  benefit even less from sophisticated imputation, and some handle missing
+  values natively without any imputation (see :ref:`estimators_that_handle_nan`).
+- Sophisticated imputation can help prediction, but it can be very
+  computationally cost (it scales poorly with data size).
+- Invest heavily in imputation quality mainly when reconstructing the data
+  itself, not prediction, is the objective.
 
 
 Univariate vs. Multivariate Imputation
@@ -56,11 +102,11 @@ that contain the missing values::
 The :class:`SimpleImputer` class also supports sparse matrices::
 
     >>> import scipy.sparse as sp
-    >>> X = sp.csc_matrix([[1, 2], [0, -1], [8, 4]])
+    >>> X = sp.csc_array([[1, 2], [0, -1], [8, 4]])
     >>> imp = SimpleImputer(missing_values=-1, strategy='mean')
     >>> imp.fit(X)
     SimpleImputer(missing_values=-1)
-    >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
+    >>> X_test = sp.csc_array([[-1, 2], [6, -1], [7, 6]])
     >>> print(imp.transform(X_test).toarray())
     [[3. 2.]
      [6. 3.]
@@ -105,19 +151,9 @@ of ``y``.  This is done for each feature in an iterative fashion, and then is
 repeated for ``max_iter`` imputation rounds. The results of the final
 imputation round are returned.
 
-.. note::
-
-   This estimator is still **experimental** for now: default parameters or
-   details of behaviour might change without any deprecation cycle. Resolving
-   the following issues would help stabilize :class:`IterativeImputer`:
-   convergence criteria (:issue:`14338`) and default estimators
-   (:issue:`13286`). To use it, you need to explicitly import
-   ``enable_iterative_imputer``.
-
 ::
 
     >>> import numpy as np
-    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp = IterativeImputer(max_iter=10, random_state=0)
     >>> imp.fit([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
@@ -132,6 +168,29 @@ imputation round are returned.
 Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a
 Pipeline as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
+
+.. _iterative_imputer_convergence:
+
+Convergence and diminishing returns
+-----------------------------------
+
+:class:`IterativeImputer` repeats the round-robin imputation for ``max_iter`` rounds and
+stops early when the change between two consecutive rounds falls below ``tol`` (when
+``sample_posterior=False``). In practice, the imputed values often do not converge: the
+round-robin scheme is not guaranteed to reach a fixed point, so the number of iterations
+is best seen as a trade-off against the available time budget rather than a target to be
+met.
+
+This is rarely a problem when the goal is prediction. Le Morvan and Varoquaux [3]_
+report strongly diminishing returns: better imputation accuracy yields only small gains
+in downstream predictive performance, especially with an expressive model and a
+missingness indicator (``add_indicator``).
+
+In practice, prefer a small, fixed ``max_iter`` (i.e. `max_iter=10`) together with a
+missingness indicator and an expressive downstream model over investing in convergence.
+When imputation itself is the goal (e.i. for *reconstructing data*) rather than
+predicting, the number of iterations (i.e. `max_iter>50`) and the choice of imputer
+matter more and should be assessed on the task at hand.
 
 Flexibility of IterativeImputer
 -------------------------------
@@ -183,6 +242,11 @@ cannot be achieved by a single call to ``transform``.
 
 .. [2] Roderick J A Little and Donald B Rubin (1986). "Statistical Analysis
    with Missing Data". John Wiley & Sons, Inc., New York, NY, USA.
+
+.. [3] `Marine Le Morvan, Gaël Varoquaux (2025). "Imputation for prediction:
+   beware of diminishing returns". International Conference on Learning
+   Representations (ICLR).
+   <https://arxiv.org/abs/2407.19804>`_
 
 .. _knnimpute:
 
@@ -349,6 +413,8 @@ wrap this in a :class:`~sklearn.pipeline.Pipeline` with a classifier (e.g., a
   >>> results = clf.predict(X_test)
   >>> results.shape
   (100,)
+
+.. _estimators_that_handle_nan:
 
 Estimators that handle NaN values
 =================================

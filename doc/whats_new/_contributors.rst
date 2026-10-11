@@ -22,11 +22,11 @@
 
 .. _Olivier Grisel: https://bsky.app/profile/ogrisel.bsky.social
 
-.. _Gael Varoquaux: http://gael-varoquaux.info
+.. _Gael Varoquaux: https://gael-varoquaux.info
 
-.. _Alexandre Gramfort: http://alexandre.gramfort.net
+.. _Alexandre Gramfort: https://alexandre.gramfort.net
 
-.. _Fabian Pedregosa: http://fa.bianp.net
+.. _Fabian Pedregosa: https://fa.bianp.net
 
 .. _Mathieu Blondel: http://www.mblondel.org
 
@@ -42,7 +42,7 @@
 
 .. _Peter Prettenhofer: https://sites.google.com/site/peterprettenhofer/
 
-.. _Alexandre Passos: http://atpassos.me
+.. _Alexandre Passos: https://atpassos.me
 
 .. _Nicolas Pinto: https://twitter.com/npinto
 
@@ -54,7 +54,7 @@
 
 .. _Jake Vanderplas: https://staff.washington.edu/jakevdp/
 
-.. _Gilles Louppe: http://www.montefiore.ulg.ac.be/~glouppe/
+.. _Gilles Louppe: https://www.montefiore.ulg.ac.be/~glouppe/
 
 .. _INRIA: https://www.inria.fr/
 
@@ -90,13 +90,13 @@
 
 .. _Kyle Kastner: https://kastnerkyle.github.io/
 
-.. _Daniel Nouri: http://danielnouri.org
+.. _Daniel Nouri: https://danielnouri.org
 
 .. _Manoj Kumar: https://manojbits.wordpress.com
 
-.. _Luis Pedro Coelho: http://luispedro.org
+.. _Luis Pedro Coelho: https://luispedro.org
 
-.. _Fares Hedyati: http://www.eecs.berkeley.edu/~fareshed
+.. _Fares Hedyati: https://www.eecs.berkeley.edu/~fareshed
 
 .. _Antony Lee: https://www.ocf.berkeley.edu/~antonyl/
 
@@ -104,7 +104,7 @@
 
 .. _Matteo Visconti di Oleggio Castello: http://www.mvdoc.me
 
-.. _Trevor Stephens: http://trevorstephens.com/
+.. _Trevor Stephens: https://trevorstephens.com/
 
 .. _Jan Hendrik Metzen: https://jmetzen.github.io/
 
@@ -156,7 +156,7 @@
 
 .. _Vincent Pham: https://github.com/vincentpham1991
 
-.. _Denis Engemann: http://denis-engemann.de
+.. _Denis Engemann: https://denis-engemann.de
 
 .. _Anish Shah: https://github.com/AnishShah
 

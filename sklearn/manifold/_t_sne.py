@@ -11,7 +11,7 @@ from time import time
 
 import numpy as np
 from scipy import linalg
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_array, issparse
 from scipy.spatial.distance import pdist, squareform
 
 from sklearn.base import (
@@ -21,13 +21,10 @@ from sklearn.base import (
     _fit_context,
 )
 from sklearn.decomposition import PCA
-
-# mypy error: Module 'sklearn.manifold' has no attribute '_utils'
-# mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from sklearn.manifold import _barnes_hut_tsne, _utils  # type: ignore[attr-defined]
+from sklearn.manifold import _barnes_hut_tsne, _utils
 from sklearn.metrics.pairwise import _VALID_METRICS, pairwise_distances
 from sklearn.neighbors import NearestNeighbors
-from sklearn.utils import check_random_state
+from sklearn.utils import _align_api_if_sparse, check_random_state
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.validation import _num_samples, check_non_negative, validate_data
@@ -108,7 +105,7 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     assert np.all(np.isfinite(conditional_P)), "All probabilities should be finite"
 
     # Symmetrize the joint probability distribution using sparse operations
-    P = csr_matrix(
+    P = csr_array(
         (conditional_P.ravel(), distances.indices, distances.indptr),
         shape=(n_samples, n_samples),
     )
@@ -122,7 +119,7 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     if verbose >= 2:
         duration = time() - t0
         print("[t-SNE] Computed conditional probabilities in {:.3f}s".format(duration))
-    return P
+    return _align_api_if_sparse(P)
 
 
 def _kl_divergence(
@@ -493,8 +490,6 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
         `sklearn.metrics.pairwise.PAIRWISE_DISTANCE_FUNCTIONS`. Note that the
         "cosine" metric uses :func:`~sklearn.metrics.pairwise.cosine_distances`.
 
-        .. versionadded:: 0.20
-
     Returns
     -------
     trustworthiness : float
@@ -628,9 +623,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         exaggeration. Note that progress is only checked every 50 iterations so
         this value is rounded to the next multiple of 50.
 
-        .. versionadded:: 0.17
-           parameter *n_iter_without_progress* to control stopping criteria.
-
     min_grad_norm : float, default=1e-7
         If the gradient norm is below this threshold, the optimization will
         be stopped.
@@ -678,9 +670,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         to be better than 3%. However, the exact method cannot scale to
         millions of examples.
 
-        .. versionadded:: 0.17
-           Approximate optimization *method* via the Barnes-Hut.
-
     angle : float, default=0.5
         Only used if method='barnes_hut'
         This is the trade-off between speed and accuracy for Barnes-Hut T-SNE.
@@ -699,8 +688,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionadded:: 0.22
-
     Attributes
     ----------
     embedding_ : array-like of shape (n_samples, n_components)
@@ -711,8 +698,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -851,13 +836,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
-
-        if isinstance(self.init, str) and self.init == "pca" and issparse(X):
-            raise TypeError(
-                "PCA initialization is currently not supported "
-                "with the sparse input matrix. Use "
-                'init="random" instead.'
-            )
 
         if self.learning_rate == "auto":
             # See issue #18018
@@ -1009,7 +987,6 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         elif self.init == "pca":
             pca = PCA(
                 n_components=self.n_components,
-                svd_solver="randomized",
                 random_state=random_state,
             )
             # Always output a numpy array, no matter what is configured globally
@@ -1181,4 +1158,5 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.pairwise = self.metric == "precomputed"
+        tags.input_tags.sparse = True
         return tags

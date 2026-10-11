@@ -2,6 +2,8 @@ import copyreg
 import io
 import pickle
 import re
+import sys
+import sysconfig
 import warnings
 from unittest.mock import Mock
 
@@ -11,7 +13,8 @@ import pytest
 from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose, assert_array_equal
 
-import sklearn
+import sklearn.ensemble._hist_gradient_boosting.gradient_boosting as hgb_module
+from sklearn import config_context
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -39,6 +42,7 @@ from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
 from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.metadata_routing import get_routing_for_object
 
 n_threads = _openmp_effective_n_threads()
 
@@ -59,10 +63,10 @@ def _make_dumb_dataset(n_samples):
 
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
+    ),
 )
 @pytest.mark.parametrize(
     "params, err_msg",
@@ -522,7 +526,7 @@ def test_small_trainset():
 
 
 def test_missing_values_minmax_imputation():
-    # Compare the buit-in missing value handling of Histogram GBC with an
+    # Compare the built-in missing value handling of Histogram GBC with an
     # a-priori missing value imputation strategy that should yield the same
     # results in terms of decision function.
     #
@@ -706,6 +710,7 @@ def test_zero_sample_weights_classification():
 
     X = [[1, 0], [1, 0], [1, 0], [0, 1], [1, 1]]
     y = [0, 0, 1, 0, 2]
+
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1, 1]
     gb = HistGradientBoostingClassifier(loss="log_loss", min_samples_leaf=1)
@@ -716,16 +721,19 @@ def test_zero_sample_weights_classification():
 @pytest.mark.parametrize(
     "problem", ("regression", "binary_classification", "multiclass_classification")
 )
-@pytest.mark.parametrize("duplication", ("half", "all"))
-def test_sample_weight_effect(problem, duplication):
+def test_sample_weight_effect(problem, global_random_seed):
     # High level test to make sure that duplicating a sample is equivalent to
     # giving it weight of 2.
 
-    # fails for n_samples > 255 because binning does not take sample weights
-    # into account. Keeping n_samples <= 255 makes
-    # sure only unique values are used so SW have no effect on binning.
-    n_samples = 255
+    # This test assumes that subsampling in `_BinMapper` is disabled
+    # (when `n_samples < 2e5`) and therefore the binning results should be
+    # deterministic.
+    # Otherwise, this test would require being rewritten as a statistical test.
+    # We also set `n_samples` large enough to ensure that columns have more than
+    # 255 distinct values and that we test the impact of weight-aware binning.
+    n_samples = 300
     n_features = 2
+    rng = np.random.RandomState(global_random_seed)
     if problem == "regression":
         X, y = make_regression(
             n_samples=n_samples,
@@ -753,21 +761,17 @@ def test_sample_weight_effect(problem, duplication):
     # duplicated samples.
     est = Klass(min_samples_leaf=1)
 
-    # Create dataset with duplicate and corresponding sample weights
-    if duplication == "half":
-        lim = n_samples // 2
-    else:
-        lim = n_samples
-    X_dup = np.r_[X, X[:lim]]
-    y_dup = np.r_[y, y[:lim]]
-    sample_weight = np.ones(shape=(n_samples))
-    sample_weight[:lim] = 2
+    # Create dataset with repetitions and corresponding sample weights
+    sample_weight = rng.randint(0, 3, size=X.shape[0])
+    X_repeated = np.repeat(X, sample_weight, axis=0)
+    assert X_repeated.shape[0] < 2e5
+    y_repeated = np.repeat(y, sample_weight, axis=0)
 
-    est_sw = clone(est).fit(X, y, sample_weight=sample_weight)
-    est_dup = clone(est).fit(X_dup, y_dup)
+    est_weighted = clone(est).fit(X, y, sample_weight=sample_weight)
+    est_repeated = clone(est).fit(X_repeated, y_repeated)
 
     # checking raw_predict is stricter than just predict for classification
-    assert np.allclose(est_sw._raw_predict(X_dup), est_dup._raw_predict(X_dup))
+    assert_allclose(est_weighted._raw_predict(X), est_repeated._raw_predict(X))
 
 
 @pytest.mark.parametrize("Loss", (HalfSquaredError, AbsoluteError))
@@ -870,11 +874,7 @@ def test_early_stopping_with_sample_weights(monkeypatch):
         assert scoring == "neg_median_absolute_error"
         return mock_scorer
 
-    monkeypatch.setattr(
-        sklearn.ensemble._hist_gradient_boosting.gradient_boosting,
-        "check_scoring",
-        mock_check_scoring,
-    )
+    monkeypatch.setattr(hgb_module, "check_scoring", mock_check_scoring)
 
     X, y = make_regression(random_state=0)
     sample_weight = np.ones_like(y)
@@ -945,7 +945,7 @@ def test_single_node_trees(Est):
 
 @pytest.mark.parametrize(
     "Est, loss, X, y",
-    [
+    (
         (
             HistGradientBoostingClassifier,
             HalfBinomialLoss(sample_weight=None),
@@ -958,7 +958,7 @@ def test_single_node_trees(Est):
             X_regression,
             y_regression,
         ),
-    ],
+    ),
 )
 def test_custom_loss(Est, loss, X, y):
     est = Est(loss=loss, max_iter=20)
@@ -967,7 +967,7 @@ def test_custom_loss(Est, loss, X, y):
 
 @pytest.mark.parametrize(
     "HistGradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
         (
@@ -975,7 +975,7 @@ def test_custom_loss(Est, loss, X, y):
             X_multi_classification,
             y_multi_classification,
         ),
-    ],
+    ),
 )
 def test_staged_predict(HistGradientBoosting, X, y):
     # Test whether staged predictor eventually gives
@@ -1018,10 +1018,7 @@ def test_staged_predict(HistGradientBoosting, X, y):
     "Est", (HistGradientBoostingRegressor, HistGradientBoostingClassifier)
 )
 @pytest.mark.parametrize("bool_categorical_parameter", [True, False])
-@pytest.mark.parametrize("missing_value", [np.nan, -1])
-def test_unknown_categories_nan(
-    insert_missing, Est, bool_categorical_parameter, missing_value
-):
+def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter):
     # Make sure no error is raised at predict if a category wasn't seen during
     # fit. We also make sure they're treated as nans.
 
@@ -1041,7 +1038,7 @@ def test_unknown_categories_nan(
     if insert_missing:
         mask = rng.binomial(1, 0.01, size=X.shape).astype(bool)
         assert mask.sum() > 0
-        X[mask] = missing_value
+        X[mask] = np.nan
 
     est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
     assert_array_equal(est.is_categorical_, [False, True])
@@ -1050,7 +1047,7 @@ def test_unknown_categories_nan(
     # unknown categories will be treated as nans
     X_test = np.zeros((10, X.shape[1]), dtype=float)
     X_test[:5, 1] = 30
-    X_test[5:, 1] = missing_value
+    X_test[5:, 1] = np.nan
     assert len(np.unique(est.predict(X_test))) == 1
 
 
@@ -1203,7 +1200,7 @@ def test_categorical_spec_errors_with_feature_names(Est):
 
     est = Est(categorical_features=["f0", "f1", "f3"])
     expected_msg = re.escape(
-        "categorical_features has a item value 'f3' which is not a valid "
+        "categorical_features has an item value 'f3' which is not a valid "
         "feature name of the training data."
     )
     with pytest.raises(ValueError, match=expected_msg):
@@ -1305,7 +1302,7 @@ def test_check_interaction_cst(interaction_cst, n_features, result):
 def test_interaction_cst_numerically():
     """Check that interaction constraints have no forbidden interactions."""
     rng = np.random.RandomState(42)
-    n_samples = 1000
+    n_samples = 2000
     X = rng.uniform(size=(n_samples, 2))
     # Construct y with a strong interaction term
     # y = x0 + x1 + 5 * x0 * x1
@@ -1353,6 +1350,12 @@ def test_interaction_cst_numerically():
     )
 
 
+@pytest.mark.xfail(
+    sysconfig.get_config_var("Py_GIL_DISABLED") == 1
+    and sys.version_info[:2] == (3, 13),
+    reason="Fails intermittently in the CI for Python 3.13 free-threaded,"
+    " see https://github.com/scikit-learn/scikit-learn/issues/32631",
+)
 def test_no_user_warning_with_scoring():
     """Check that no UserWarning is raised when scoring is set.
 
@@ -1425,10 +1428,12 @@ def test_class_weights():
     )
 
 
-def test_unknown_category_that_are_negative():
-    """Check that unknown categories that are negative does not error.
+def test_unknown_category_at_predict_time_is_treated_as_missing():
+    """Check that categories unseen at fit time do not error, and are treated
+    like a missing category regardless of their sign.
 
-    Non-regression test for #24274.
+    We used to have a special treatment for negative value:
+    see https://github.com/scikit-learn/scikit-learn/pull/34663/
     """
     rng = np.random.RandomState(42)
     n_samples = 1000
@@ -1442,20 +1447,22 @@ def test_unknown_category_that_are_negative():
         max_iter=10,
     ).fit(X, y)
 
-    # Check that negative values from the second column are treated like a
-    # missing category
+    # Categories unseen at fit time (whether negative or positive) are
+    # treated like a missing category.
     X_test_neg = np.asarray([[1, -2], [3, -4]])
+    X_test_pos = np.asarray([[1, 99], [3, 77]])
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+    assert_allclose(hist.predict(X_test_pos), hist.predict(X_test_nan))
 
 
 @pytest.mark.parametrize(
     ("GradientBoosting", "make_X_y"),
-    [
+    (
         (HistGradientBoostingClassifier, make_classification),
         (HistGradientBoostingRegressor, make_regression),
-    ],
+    ),
 )
 @pytest.mark.parametrize("sample_weight", [False, True])
 def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight, global_random_seed):
@@ -1544,10 +1551,24 @@ def test_X_val_raises_with_early_stopping_false():
         )
 
 
+@pytest.mark.parametrize(
+    "HistGradientBoosting",
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
+)
+def test_X_val_auto_request_hgb(HistGradientBoosting):
+    """Test that HGB* correctly sets auto-requests on the validation set."""
+    with config_context(enable_metadata_auto_requests=True):
+        hist = HistGradientBoosting()
+        assert all(
+            get_routing_for_object(hist).fit.requests[k] is True
+            for k in ("X_val", "y_val", "sample_weight_val")
+        )
+
+
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
-    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
 )
 def test_dataframe_categorical_results_same_as_ndarray(
     dataframe_lib, HistGradientBoosting
@@ -1602,7 +1623,7 @@ def test_dataframe_categorical_results_same_as_ndarray(
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
-    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
 )
 def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
     """Check error cases for pandas categorical feature."""

@@ -171,7 +171,7 @@ kernel_ridge.kernel
 # being :math:`1`, it explains the high frequency observed in the predictions of
 # our model.
 # Similar conclusions could be drawn with the length-scale parameter. Thus, it
-# tell us that the kernel parameters need to be tuned. We will use a randomized
+# tells us that the kernel parameters need to be tuned. We will use a randomized
 # search to tune the different parameters the kernel ridge model: the `alpha`
 # parameter and the kernel parameters.
 

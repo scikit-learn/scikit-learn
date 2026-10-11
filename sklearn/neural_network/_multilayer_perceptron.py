@@ -60,8 +60,6 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
 
     Warning: This class should not be used directly.
     Use derived classes instead.
-
-    .. versionadded:: 0.18
     """
 
     _parameter_constraints: dict = {
@@ -865,7 +863,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
         # Input validation would remove feature names, so we disable it
         y_pred = self._predict(X, check_input=False)
 
-        if np.isnan(y_pred).any() or np.isinf(y_pred).any():
+        if np.issubdtype(y_pred.dtype, np.floating) and not np.isfinite(y_pred).all():
             return np.nan
 
         return score_function(y, y_pred, sample_weight=sample_weight)
@@ -881,8 +879,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     This model optimizes the log-loss function using LBFGS or stochastic
     gradient descent.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -1005,14 +1001,14 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
-        score is not improving. If set to true, it will automatically set
-        aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least ``tol`` for
-        ``n_iter_no_change`` consecutive epochs. The split is stratified,
-        except in a multilabel setting.
+        score is not improving. If set to True, it will automatically set
+        aside ``validation_fraction`` of training data as validation and
+        terminate training when validation score is not improving by at least
+        ``tol`` for ``n_iter_no_change`` consecutive epochs. The split is
+        stratified, except in a multilabel setting.
         If early stopping is False, then the training stops when the training
-        loss does not improve by more than tol for n_iter_no_change consecutive
-        passes over the training set.
+        loss does not improve by more than ``tol`` for ``n_iter_no_change``
+        consecutive passes over the training set.
         Only effective when solver='sgd' or 'adam'.
 
     validation_fraction : float, default=0.1
@@ -1035,16 +1031,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Maximum number of epochs to not meet ``tol`` improvement.
         Only effective when solver='sgd' or 'adam'.
 
-        .. versionadded:: 0.20
-
     max_fun : int, default=15000
         Only used when solver='lbfgs'. Maximum number of loss function calls.
         The solver iterates until convergence (determined by 'tol'), number
         of iterations reaches max_iter, or this number of loss function calls.
         Note that number of loss function calls will be greater than or equal
         to the number of iterations for the `MLPClassifier`.
-
-        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1085,8 +1077,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1389,8 +1379,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     This model optimizes the squared error using LBFGS or stochastic gradient
     descent.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     loss : {'squared_error', 'poisson'}, default='squared_error'
@@ -1546,16 +1534,12 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         Maximum number of epochs to not meet ``tol`` improvement.
         Only effective when solver='sgd' or 'adam'.
 
-        .. versionadded:: 0.20
-
     max_fun : int, default=15000
         Only used when solver='lbfgs'. Maximum number of function calls.
         The solver iterates until convergence (determined by ``tol``), number
         of iterations reaches max_iter, or this number of function calls.
         Note that number of function calls will be greater than or equal to
         the number of iterations for the MLPRegressor.
-
-        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1600,8 +1584,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
