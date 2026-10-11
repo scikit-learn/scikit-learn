@@ -18,7 +18,7 @@ pluggy==1.6.0
     # via pytest
 polib==1.2.0
     # via sphinx-lint
-pycodestyle==2.14.0
+pycodestyle==2.15.0
     # via cython-lint
 pygments==2.21.0
     # via pytest
@@ -26,7 +26,7 @@ pyrefly==1.2.0
     # via -r build_tools/github/lint_requirements.txt
 pytest==9.1.0
     # via -r build_tools/github/lint_requirements.txt
-regex==2026.9.10
+regex==2026.9.29
     # via sphinx-lint
 ruff==0.12.2
     # via -r build_tools/github/lint_requirements.txt

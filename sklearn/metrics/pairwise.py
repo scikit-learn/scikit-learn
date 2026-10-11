@@ -121,8 +121,6 @@ def check_pairwise_arrays(
         appropriate float type selected by _return_float_dtype. If None, the
         dtype of the input is preserved.
 
-        .. versionadded:: 0.18
-
     accept_sparse : str, bool or list/tuple of str, default='csr'
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc. If the input is sparse but not in the allowed format,
@@ -152,8 +150,6 @@ def check_pairwise_arrays(
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
         be triggered by a conversion.
-
-        .. versionadded:: 0.22
 
     Returns
     -------
@@ -467,8 +463,6 @@ def nan_euclidean_distances(
     coordinates then NaN is returned for that pair.
 
     Read more in the :ref:`User Guide <metrics>`.
-
-    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -1398,8 +1392,6 @@ def linear_kernel(X, Y=None, dense_output=True):
         Whether to return dense output even when the input is sparse. If
         ``False``, the output is sparse if both input arrays are sparse.
 
-        .. versionadded:: 0.20
-
     Returns
     -------
     kernel : ndarray of shape (n_samples_X, n_samples_Y)
@@ -1633,8 +1625,6 @@ def laplacian_kernel(X, Y=None, gamma=None):
     for each pair of rows x in X and y in Y.
     Read more in the :ref:`User Guide <laplacian_kernel>`.
 
-    .. versionadded:: 0.17
-
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
@@ -1708,9 +1698,6 @@ def cosine_similarity(X, Y=None, dense_output=True):
     dense_output : bool, default=True
         Whether to return dense output even when the input is sparse. If
         ``False``, the output is sparse if both input arrays are sparse.
-
-        .. versionadded:: 0.17
-           parameter ``dense_output`` for dense output.
 
     Returns
     -------

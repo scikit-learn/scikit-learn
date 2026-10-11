@@ -126,8 +126,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         Order of output array in the dense case. `'F'` order is faster to
         compute, but may slow down subsequent estimators.
 
-        .. versionadded:: 0.21
-
     Attributes
     ----------
     powers_ : ndarray of shape (`n_output_features_`, `n_features_in_`)
@@ -135,8 +133,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
