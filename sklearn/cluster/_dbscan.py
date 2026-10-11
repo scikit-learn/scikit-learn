@@ -87,8 +87,6 @@ def dbscan(
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-        .. versionadded:: 0.19
-
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
         to compute pointwise distances and find nearest neighbors.
@@ -241,13 +239,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         must be square. X may be a :term:`sparse graph`, in which
         case only "nonzero" elements may be considered neighbors for DBSCAN.
 
-        .. versionadded:: 0.17
-           metric *precomputed* to accept precomputed sparse matrix.
-
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
-
-        .. versionadded:: 0.19
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         The algorithm to be used by the NearestNeighbors module
@@ -289,8 +282,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

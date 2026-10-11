@@ -31,9 +31,6 @@ that of representing a flat map of the Earth, as with
 from time import time
 
 import matplotlib.pyplot as plt
-
-# Unused but required import for doing 3d projections with matplotlib < 3.2
-import mpl_toolkits.mplot3d  # noqa: F401
 import numpy as np
 from matplotlib.ticker import NullFormatter
 

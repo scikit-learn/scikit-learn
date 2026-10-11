@@ -369,13 +369,8 @@ def r_regression(X, y, *, center=True, force_finite=True):
     # need not center X
     if center:
         y = y - np.mean(y)
-        # TODO: for Scipy <= 1.10, `isspmatrix(X)` returns `True` for sparse arrays.
-        # Here, we check the output of the `.mean` operation that returns a `np.matrix`
-        # for sparse matrices while a `np.array` for dense and sparse arrays.
-        # We can reconsider using `isspmatrix` when the minimum version is
-        # SciPy >= 1.11
-        X_means = X.mean(axis=0)
-        X_means = X_means.getA1() if isinstance(X_means, np.matrix) else X_means
+        # Sparse matrices return a 2d np.matrix; dense and sparse arrays a 1d ndarray.
+        X_means = np.asarray(X.mean(axis=0)).ravel()
         # Compute the scaled standard deviations via moments
         X_norms_squared = row_norms(X.T, squared=True) - n_samples * X_means**2
         # Roundoff can make the centered sum of squares slightly negative.
@@ -605,8 +600,6 @@ class SelectPercentile(_BaseFilter):
         Default is f_classif (see below "See Also"). The default function only
         works with classification tasks.
 
-        .. versionadded:: 0.18
-
     percentile : int, default=10
         Percent of features to keep.
 
@@ -620,8 +613,6 @@ class SelectPercentile(_BaseFilter):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -710,8 +701,6 @@ class SelectKBest(_BaseFilter):
         Default is f_classif (see below "See Also"). The default function only
         works with classification tasks.
 
-        .. versionadded:: 0.18
-
     k : int or "all", default=10
         Number of top features to select.
         The "all" option bypasses selection, for use in a parameter search.
@@ -726,8 +715,6 @@ class SelectKBest(_BaseFilter):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -838,8 +825,6 @@ class SelectFpr(_BaseFilter):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -917,8 +902,6 @@ class SelectFdr(_BaseFilter):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1006,8 +989,6 @@ class SelectFwe(_BaseFilter):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1090,8 +1071,6 @@ class GenericUnivariateSelect(_BaseFilter):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

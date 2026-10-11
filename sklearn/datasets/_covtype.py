@@ -122,16 +122,12 @@ def fetch_covtype(
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
-        .. versionadded:: 0.20
-
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric). The target is a pandas DataFrame or
         Series depending on the number of target columns. If `return_X_y` is
         True, then (`data`, `target`) will be pandas DataFrames or Series as
         described below.
-
-        .. versionadded:: 0.24
 
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
@@ -168,8 +164,6 @@ def fetch_covtype(
         shape (n_samples, n_features) with each row representing one
         sample and each column representing the features. The second
         ndarray of shape (n_samples,) containing the target samples.
-
-        .. versionadded:: 0.20
 
     Examples
     --------

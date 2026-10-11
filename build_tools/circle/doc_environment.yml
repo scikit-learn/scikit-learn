@@ -30,7 +30,6 @@ dependencies:
   - sphinx-gallery
   - sphinx-copybutton
   - numpydoc
-  - sphinx-prompt
   - plotly
   - polars
   - pooch

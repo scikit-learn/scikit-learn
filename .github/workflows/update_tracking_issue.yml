@@ -34,6 +34,8 @@ jobs:
         with:
           python-version: '3.9'
       - name: Update tracking issue on GitHub
+        env:
+          BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
         run: |
           set -ex
           if [[ ${{ inputs.job_status }} == "success" ]]; then
@@ -44,7 +46,7 @@ jobs:
 
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
-            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$BOT_GITHUB_TOKEN" \
             "$GITHUB_WORKFLOW" \
             "$GITHUB_REPOSITORY" \
             https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
