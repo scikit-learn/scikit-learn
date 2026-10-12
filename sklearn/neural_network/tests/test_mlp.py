@@ -526,9 +526,9 @@ def test_nonfinite_params():
             clf.fit(X, y)
 
 
-def test_predict_proba_binary():
+def test_predict_proba_binary(global_dtype):
     # Test that predict_proba works as expected for binary class.
-    X = X_digits_binary[:50]
+    X = X_digits_binary[:50].astype(global_dtype, copy=False)
     y = y_digits_binary[:50]
 
     clf = MLPClassifier(hidden_layer_sizes=5, activation="logistic", random_state=1)
@@ -536,6 +536,11 @@ def test_predict_proba_binary():
         clf.fit(X, y)
     y_proba = clf.predict_proba(X)
     y_log_proba = clf.predict_log_proba(X)
+
+    for weights in clf.coefs_ + clf.intercepts_:
+        assert weights.dtype == global_dtype
+    assert y_proba.dtype == global_dtype
+    assert y_log_proba.dtype == global_dtype
 
     (n_samples, n_classes) = y.shape[0], 2
 
@@ -549,9 +554,9 @@ def test_predict_proba_binary():
     assert roc_auc_score(y, y_proba[:, 1]) == 1.0
 
 
-def test_predict_proba_multiclass():
+def test_predict_proba_multiclass(global_dtype):
     # Test that predict_proba works as expected for multi class.
-    X = X_digits_multi[:10]
+    X = X_digits_multi[:10].astype(global_dtype, copy=False)
     y = y_digits_multi[:10]
 
     clf = MLPClassifier(hidden_layer_sizes=5)
@@ -559,6 +564,11 @@ def test_predict_proba_multiclass():
         clf.fit(X, y)
     y_proba = clf.predict_proba(X)
     y_log_proba = clf.predict_log_proba(X)
+
+    for weights in clf.coefs_ + clf.intercepts_:
+        assert weights.dtype == global_dtype
+    assert y_proba.dtype == global_dtype
+    assert y_log_proba.dtype == global_dtype
 
     (n_samples, n_classes) = y.shape[0], np.unique(y).size
 
