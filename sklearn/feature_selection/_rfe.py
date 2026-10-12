@@ -100,9 +100,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         to select. If float between 0 and 1, it is the fraction of features to
         select.
 
-        .. versionchanged:: 0.24
-           Added float values for fractions.
-
     step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
         (integer) number of features to remove at each iteration.
@@ -127,8 +124,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -143,8 +138,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -608,8 +601,6 @@ class RFECV(RFE):
         feature count and ``min_features_to_select`` isn't divisible by
         ``step``.
 
-        .. versionadded:: 0.20
-
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -626,9 +617,6 @@ class RFECV(RFE):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value of None changed from 3-fold to 5-fold.
 
     scoring : str or callable, default=None
         Scoring method to evaluate the :class:`RFE` selectors' performance. Options:
@@ -648,8 +636,6 @@ class RFECV(RFE):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionadded:: 0.18
-
     importance_getter : str or callable, default='auto'
         If 'auto', uses the feature importance either through a `coef_`
         or `feature_importances_` attributes of estimator.
@@ -664,8 +650,6 @@ class RFECV(RFE):
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
-
-        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -719,8 +703,6 @@ class RFECV(RFE):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

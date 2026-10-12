@@ -525,8 +525,6 @@ def partial_dependence(
         dependencies and doing weighted averages requires using the slower
         `method='brute'`.
 
-        .. versionadded:: 0.24
-
     Returns
     -------
     predictions : :class:`~sklearn.utils.Bunch`

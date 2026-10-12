@@ -560,12 +560,6 @@ def _ensure_sparse_format(
         - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
           be infinite.
 
-        .. versionadded:: 0.20
-           ``ensure_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
     accept_large_sparse : bool
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse will cause it to be accepted only
@@ -772,8 +766,6 @@ def check_array(
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse=False will cause it to be accepted
         only if its indices are stored with a 32-bit dtype.
-
-        .. versionadded:: 0.20
 
     dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
@@ -1232,8 +1224,6 @@ def check_X_y(
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse will cause it to be accepted only
         if its indices are stored with a 32-bit dtype.
-
-        .. versionadded:: 0.20
 
     dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.

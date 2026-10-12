@@ -59,18 +59,11 @@ class NotFittedError(ValueError, AttributeError):
     ...     print(repr(e))
     NotFittedError("This LinearSVC instance is not fitted yet. Call 'fit' with
     appropriate arguments before using this estimator."...)
-
-    .. versionchanged:: 0.18
-       Moved from sklearn.utils.validation.
     """
 
 
 class ConvergenceWarning(UserWarning):
-    """Custom warning to capture convergence problems
-
-    .. versionchanged:: 0.18
-       Moved from sklearn.utils.
-    """
+    """Custom warning to capture convergence problems."""
 
 
 class DataConversionWarning(UserWarning):
@@ -85,9 +78,6 @@ class DataConversionWarning(UserWarning):
         - requests a non-copying operation, but a copy is required to meet the
           implementation's data-type expectations;
         - passes an input whose shape can be interpreted ambiguously.
-
-    .. versionchanged:: 0.18
-       Moved from sklearn.utils.validation.
     """
 
 
@@ -99,9 +89,6 @@ class DataDimensionalityWarning(UserWarning):
     projection space, is higher than the number of features, which quantifies
     the dimensionality of the original source space, to imply that the
     dimensionality of the problem will not be reduced.
-
-    .. versionchanged:: 0.18
-       Moved from sklearn.utils.
     """
 
 
@@ -111,8 +98,6 @@ class EfficiencyWarning(UserWarning):
     This warning notifies the user that the efficiency may not be optimal due
     to some reason which may be included as a part of the warning message.
     This may be subclassed into a more specific Warning class.
-
-    .. versionadded:: 0.18
     """
 
 
@@ -122,9 +107,6 @@ class FitFailedWarning(RuntimeWarning):
     This Warning is used in meta estimators GridSearchCV and RandomizedSearchCV
     and the cross-validation helper function cross_val_score to warn when there
     is an error while fitting the estimator.
-
-    .. versionchanged:: 0.18
-       Moved from sklearn.cross_validation.
     """
 
 
@@ -138,11 +120,7 @@ class SkipTestWarning(UserWarning):
 
 
 class UndefinedMetricWarning(UserWarning):
-    """Warning used when the metric is invalid
-
-    .. versionchanged:: 0.18
-       Moved from sklearn.base.
-    """
+    """Warning used when the metric is invalid."""
 
 
 class PositiveSpectrumWarning(UserWarning):
@@ -152,8 +130,6 @@ class PositiveSpectrumWarning(UserWarning):
     eigenvalues of a positive semidefinite (PSD) matrix such as a gram matrix
     (kernel) present significant negative eigenvalues, or bad conditioning i.e.
     very small non-zero eigenvalues compared to the largest eigenvalue.
-
-    .. versionadded:: 0.22
     """
 
 

@@ -24,8 +24,6 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     For guidance on interpreting these plots, refer to the
     :ref:`Model Evaluation Guide <det_curve>`.
 
-    .. versionadded:: 0.24
-
     Parameters
     ----------
     fpr : ndarray

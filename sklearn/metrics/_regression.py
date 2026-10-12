@@ -455,8 +455,6 @@ def mean_absolute_percentage_error(
 
     Read more in the :ref:`User Guide <mean_absolute_percentage_error>`.
 
-    .. versionadded:: 0.24
-
     Parameters
     ----------
     y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -921,8 +919,6 @@ def median_absolute_error(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-        .. versionadded:: 0.24
-
     Returns
     -------
     loss : float or ndarray of floats
@@ -1232,9 +1228,6 @@ def r2_score(
         'variance_weighted' :
             Scores of all outputs are averaged, weighted by the variances
             of each individual output.
-
-        .. versionchanged:: 0.19
-            Default value of multioutput is 'uniform_average'.
 
     force_finite : bool, default=True
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
