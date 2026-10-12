@@ -55,7 +55,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         Separator string used when constructing new features for one-hot
         coding.
     sparse : bool, default=True
-        Whether transform should produce scipy.sparse matrices.
+        Whether transform should produce scipy.sparse matrices. Explicit zeros are
+        not stored in the sparse output, but zero-valued features are still
+        included in the vocabulary.
     sort : bool, default=True
         Whether ``feature_names_`` and ``vocabulary_`` should be
         sorted when fitting.
@@ -278,6 +280,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             result_matrix = result_matrix[:, map_index]
 
         if self.sparse:
+            result_matrix.eliminate_zeros()
             result_matrix.sort_indices()
         else:
             result_matrix = result_matrix.toarray()
