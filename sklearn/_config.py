@@ -87,8 +87,6 @@ def set_config(
     setting unchanged. This allows users to selectively update the global configuration
     values without affecting the others.
 
-    .. versionadded:: 0.19
-
     Parameters
     ----------
     assume_finite : bool, default=None
@@ -97,15 +95,11 @@ def set_config(
         False, validation for finiteness will be performed,
         avoiding error. Global default: False.
 
-        .. versionadded:: 0.19
-
     working_memory : int, default=None
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
-
-        .. versionadded:: 0.20
 
     print_changed_only : bool, default=None
         If True, only the parameters that were set to non-default
@@ -114,16 +108,10 @@ def set_config(
         behaviour would be to print 'SVC(C=1.0, cache_size=200, ...)' with
         all the non-changed parameters. Global default: True.
 
-        .. versionadded:: 0.21
-        .. versionchanged:: 0.23
-           Global default configuration changed from False to True.
-
     display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
         text. Global default: 'diagram'.
-
-        .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
@@ -201,7 +189,9 @@ def set_config(
 
         Global default: `False`.
 
-        Refer to :ref:`metadata_routing_auto_request` for more details.
+        Refer to the :ref:`Metadata Routing User Guide
+        <metadata_routing_auto_request_user>` for usage, and to
+        :ref:`metadata_routing_auto_request` for the developer API.
 
         .. versionadded:: 1.10
 
@@ -317,16 +307,11 @@ def config_context(
         when False. If None, the existing configuration won't change.
         Global default: True.
 
-        .. versionchanged:: 0.23
-           Global default configuration changed from False to True.
-
     display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
         text. If None, the existing configuration won't change.
         Global default: 'diagram'.
-
-        .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
         The number of row vectors per chunk for the accelerated pairwise-
@@ -404,7 +389,9 @@ def config_context(
 
         Global default: `False`.
 
-        Refer to :ref:`metadata_routing_auto_request` for more details.
+        Refer to the :ref:`Metadata Routing User Guide
+        <metadata_routing_auto_request_user>` for usage, and to
+        :ref:`metadata_routing_auto_request` for the developer API.
 
         .. versionadded:: 1.10
 

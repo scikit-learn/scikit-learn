@@ -598,8 +598,6 @@ class SelectPercentile(_BaseFilter):
         Default is f_classif (see below "See Also"). The default function only
         works with classification tasks.
 
-        .. versionadded:: 0.18
-
     percentile : int, default=10
         Percent of features to keep.
 
@@ -613,8 +611,6 @@ class SelectPercentile(_BaseFilter):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -703,8 +699,6 @@ class SelectKBest(_BaseFilter):
         Default is f_classif (see below "See Also"). The default function only
         works with classification tasks.
 
-        .. versionadded:: 0.18
-
     k : int or "all", default=10
         Number of top features to select.
         The "all" option bypasses selection, for use in a parameter search.
@@ -719,8 +713,6 @@ class SelectKBest(_BaseFilter):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -831,8 +823,6 @@ class SelectFpr(_BaseFilter):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -910,8 +900,6 @@ class SelectFdr(_BaseFilter):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -999,8 +987,6 @@ class SelectFwe(_BaseFilter):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1083,8 +1069,6 @@ class GenericUnivariateSelect(_BaseFilter):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

@@ -175,10 +175,6 @@ class SimpleImputer(_BaseImputer):
 
     Read more in the :ref:`User Guide <impute>`.
 
-    .. versionadded:: 0.20
-       `SimpleImputer` replaces the previous `sklearn.preprocessing.Imputer`
-       estimator which is now removed.
-
     Parameters
     ----------
     missing_values : int, float, str, np.nan, None or pandas.NA, default=np.nan
@@ -202,9 +198,6 @@ class SimpleImputer(_BaseImputer):
         - If an instance of Callable, then replace missing values using the
           scalar statistic returned by running the callable over a dense 1d
           array containing non-missing values of each column.
-
-        .. versionadded:: 0.20
-           strategy="constant" for fixed value imputation.
 
         .. versionadded:: 1.5
            strategy=callable for custom value imputation.
@@ -255,8 +248,6 @@ class SimpleImputer(_BaseImputer):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -699,8 +690,6 @@ class SimpleImputer(_BaseImputer):
         indicator, and the imputation done at `transform` time won't be
         inverted.
 
-        .. versionadded:: 0.24
-
         Parameters
         ----------
         X : array-like of shape \
@@ -794,8 +783,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <impute>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     missing_values : int, float, str, np.nan or None, default=np.nan
@@ -834,8 +821,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
