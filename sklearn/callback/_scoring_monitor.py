@@ -6,7 +6,6 @@ import uuid
 from collections import defaultdict
 from dataclasses import dataclass
 
-from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import can_reuse_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
@@ -144,23 +143,22 @@ class ScoringMonitor:
         if fitted_estimator is None:
             return
 
-        context_path = get_context_path(context)
-
-        root_context = context_path[0]
-        run_id = root_context.root_uuid
+        run_id = context.root_uuid
         run_info = {
-            "timestamp": root_context.init_time.strftime("UTC%Y-%m-%d-%H:%M:%S.%f"),
-            "estimator_name": root_context.estimator_name,
+            "timestamp": context.task_path[0].init_time.strftime(
+                "UTC%Y-%m-%d-%H:%M:%S.%f"
+            ),
+            "estimator_name": context.task_path[0].estimator_name,
         }
 
         task_info_path = [
             {
-                "estimator_name": ctx.estimator_name,
-                "task_name": ctx.task_name,
-                "task_id": ctx.task_id,
-                "sequential_subtasks": ctx.sequential_subtasks,
+                "estimator_name": step.estimator_name,
+                "task_name": step.task_name,
+                "task_id": step.task_id,
+                "sequential_subtasks": step.sequential_subtasks,
             }
-            for ctx in context_path
+            for step in context.task_path
         ]
 
         scores = {}
