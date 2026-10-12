@@ -3,9 +3,9 @@
 
 import numpy as np
 from cython cimport floating
-from cython.parallel cimport prange
+from cython.parallel cimport parallel, prange
 from libc.math cimport INFINITY, sqrt
-from libc.stdlib cimport free, malloc
+from libc.stdlib cimport calloc, free
 
 from sklearn.utils._cython_blas cimport _gemm
 from sklearn.utils._cython_blas cimport RowMajor, Trans, NoTrans
@@ -168,6 +168,24 @@ cpdef floating _inertia_sparse(
     return inertia
 
 
+cdef inline floating _recompute_threshold(floating dummy) noexcept nogil:
+    """Relative threshold below which a squared distance is recomputed directly.
+
+    ||x||² - 2 x.c + ||c||² has an absolute error of a few eps * (||x||² + ||c||²),
+    which is large relative to the distance when x is close to c, in particular in
+    float32. Distances below `threshold * (||x||² + ||c||²)` are recomputed, which
+    bounds the relative error by about eps / threshold. In particular, a sample
+    identical to an existing center gets a zero distance and is never sampled
+    again. The threshold is lower in float64 because recomputing is costly when the
+    data is far from the origin, where most distances are small relative to the
+    norms.
+    """
+    if floating is float:
+        return 1e-2
+    else:
+        return 1e-8
+
+
 def _kmeans_plusplus_trials_dense(
         const floating[:, ::1] X,                       # IN
         const floating[::1] x_squared_norms,            # IN
@@ -203,6 +221,7 @@ def _kmeans_plusplus_trials_dense(
         int n_blocks = min(n_threads, n_chunks)
         int block_idx, first_chunk, last_chunk, chunk_idx, start, end, i, j
         floating dist, norms
+        floating threshold = _recompute_threshold(<floating> 0)
         double pot
 
     for block_idx in prange(n_blocks, nogil=True, num_threads=n_blocks,
@@ -225,12 +244,7 @@ def _kmeans_plusplus_trials_dense(
                 for i in range(start, end):
                     norms = x_squared_norms[i] + candidates_squared_norms[j]
                     dist = trials_dist_sq[j, i] + norms
-                    # ||x||² - 2 x.c + ||c||² suffers from catastrophic
-                    # cancellation when x is close to c (especially in float32),
-                    # so small distances are recomputed directly. In particular,
-                    # a sample identical to an existing center must get a zero
-                    # distance to never be sampled again.
-                    if dist < 1e-2 * norms:
+                    if dist < threshold * norms:
                         dist = _euclidean_dense_dense(
                             &X[i, 0], &candidates[j, 0], n_features, True)
                     if closest_dist_sq[i] < dist:
@@ -242,6 +256,7 @@ def _kmeans_plusplus_trials_dense(
 
 def _kmeans_plusplus_trials_sparse(
         X,                                              # IN
+        const floating[::1] x_squared_norms,            # IN
         const floating[::1] sample_weight,              # IN
         const floating[:, ::1] candidates,              # IN
         const floating[::1] candidates_squared_norms,   # IN
@@ -254,34 +269,52 @@ def _kmeans_plusplus_trials_sparse(
     See `_kmeans_plusplus_trials_dense` for details.
     """
     cdef:
-        floating[::1] X_data = X.data
-        int[::1] X_indices = X.indices
-        int[::1] X_indptr = X.indptr
+        const floating[::1] X_data = X.data
+        const int[::1] X_indices = X.indices
+        const int[::1] X_indptr = X.indptr
 
         int n_samples = X.shape[0]
+        int n_features = X.shape[1]
         int n_trials = candidates.shape[0]
         int n_chunks = trials_chunk_pot.shape[1]
         int chunk_size = CHUNK_SIZE
-        int chunk_idx, start, end, i, j
-        floating dist
-        double pot
+        int chunk_idx, start, end, i, j, k
+        floating dist, norms, c_k, diff
+        floating threshold = _recompute_threshold(<floating> 0)
+        # Dense copy of a sample, for the direct computation of small distances
+        floating *x_dense
 
-    for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_threads,
-                            schedule='static'):
-        start = chunk_idx * chunk_size
-        end = min(start + chunk_size, n_samples)
-        for j in range(n_trials):
-            pot = 0.0
+    with nogil, parallel(num_threads=min(n_threads, n_chunks)):
+        x_dense = <floating*> calloc(n_features, sizeof(floating))
+
+        for chunk_idx in prange(n_chunks, schedule='static'):
+            start = chunk_idx * chunk_size
+            end = min(start + chunk_size, n_samples)
+            for j in range(n_trials):
+                trials_chunk_pot[j, chunk_idx] = 0.0
             for i in range(start, end):
-                dist = _euclidean_sparse_dense(
-                    X_data[X_indptr[i]: X_indptr[i + 1]],
-                    X_indices[X_indptr[i]: X_indptr[i + 1]],
-                    candidates[j], candidates_squared_norms[j], True)
-                if closest_dist_sq[i] < dist:
-                    dist = closest_dist_sq[i]
-                trials_dist_sq[j, i] = dist
-                pot = pot + sample_weight[i] * dist
-            trials_chunk_pot[j, chunk_idx] = pot
+                for j in range(n_trials):
+                    # ||c||² + sum over the non-zeros of x of (x_k - c_k)² - c_k²
+                    dist = candidates_squared_norms[j]
+                    for k in range(X_indptr[i], X_indptr[i + 1]):
+                        c_k = candidates[j, X_indices[k]]
+                        diff = X_data[k] - c_k
+                        dist = dist + diff * diff - c_k * c_k
+                    norms = x_squared_norms[i] + candidates_squared_norms[j]
+                    if dist < threshold * norms:
+                        for k in range(X_indptr[i], X_indptr[i + 1]):
+                            x_dense[X_indices[k]] = x_dense[X_indices[k]] + X_data[k]
+                        dist = _euclidean_dense_dense(
+                            x_dense, &candidates[j, 0], n_features, True)
+                        for k in range(X_indptr[i], X_indptr[i + 1]):
+                            x_dense[X_indices[k]] = 0.0
+                    if closest_dist_sq[i] < dist:
+                        dist = closest_dist_sq[i]
+                    trials_dist_sq[j, i] = dist
+                    trials_chunk_pot[j, chunk_idx] = (
+                        trials_chunk_pot[j, chunk_idx] + sample_weight[i] * dist)
+
+        free(x_dense)
 
 
 def _kmeans_plusplus_sample_candidates(
@@ -298,26 +331,20 @@ def _kmeans_plusplus_sample_candidates(
     the potentials per chunk, then a sample within that chunk.
     """
     cdef:
+        const double[::1] chunk_pot_cumsum = np.cumsum(chunk_pot)
         int n_samples = closest_dist_sq.shape[0]
         int n_chunks = chunk_pot.shape[0]
         int n_candidates = rand_vals.shape[0]
         int chunk_size = CHUNK_SIZE
         int j, chunk_idx, lo, hi, start, end, i
-        double rand_val, cumsum
-        double *chunk_pot_cumsum
+        intp_t candidate
+        double rand_val, cumsum, pot
 
     with nogil:
-        chunk_pot_cumsum = <double*> malloc(n_chunks * sizeof(double))
-        cumsum = 0.0
-        for chunk_idx in range(n_chunks):
-            cumsum += chunk_pot[chunk_idx]
-            chunk_pot_cumsum[chunk_idx] = cumsum
-
         for j in range(n_candidates):
             rand_val = rand_vals[j] * chunk_pot_cumsum[n_chunks - 1]
 
-            # First chunk whose cumulative potential reaches rand_val. Numerical
-            # imprecision can make rand_val larger than the total potential.
+            # First chunk whose cumulative potential reaches rand_val
             lo, hi = 0, n_chunks - 1
             while lo < hi:
                 chunk_idx = (lo + hi) // 2
@@ -328,16 +355,22 @@ def _kmeans_plusplus_sample_candidates(
             if lo > 0:
                 rand_val -= chunk_pot_cumsum[lo - 1]
 
+            # First sample of the chunk with a positive potential whose cumulative
+            # potential reaches rand_val. Rounding errors can make rand_val larger
+            # than the potential of the chunk: then take its last sample with a
+            # positive potential.
             start = lo * chunk_size
             end = min(start + chunk_size, n_samples)
+            candidate = start
             cumsum = 0.0
             for i in range(start, end):
-                cumsum += sample_weight[i] * closest_dist_sq[i]
-                if cumsum >= rand_val:
-                    break
-            candidate_ids[j] = i
-
-        free(chunk_pot_cumsum)
+                pot = sample_weight[i] * closest_dist_sq[i]
+                if pot > 0:
+                    candidate = i
+                    cumsum += pot
+                    if cumsum >= rand_val:
+                        break
+            candidate_ids[j] = candidate
 
 
 def _kmeans_plusplus_best_candidate(const double[:, ::1] trials_chunk_pot):

@@ -1253,16 +1253,63 @@ def test_kmeans_plusplus_dense_sparse(csr_container, global_random_seed):
     assert_allclose(centers_dense, centers_sparse)
 
 
-def test_kmeans_plusplus_float32_far_from_origin(global_random_seed):
-    # Check that a sample identical to a chosen center is never chosen again, in
-    # float32 and far from the origin, where ||x||² - 2 x.c + ||c||² is dominated
-    # by rounding errors for the distances between samples.
+@pytest.mark.parametrize("array_constr", [np.asarray] + CSR_CONTAINERS)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_kmeans_plusplus_far_from_origin(array_constr, dtype, global_random_seed):
+    # Check that a sample identical to a chosen center is never chosen again far
+    # from the origin, where ||x||² - 2 x.c + ||c||² is dominated by rounding
+    # errors for the distances between samples (in float32).
     rng = np.random.RandomState(global_random_seed)
-    X = np.repeat(rng.uniform(size=(10, 2)) + 1e3, 50, axis=0).astype(np.float32)
+    X = np.repeat(rng.uniform(size=(10, 2)) + 1e3, 50, axis=0).astype(dtype)
 
-    centers, _ = kmeans_plusplus(X, 10, random_state=global_random_seed)
+    centers, _ = kmeans_plusplus(array_constr(X), 10, random_state=global_random_seed)
 
     assert np.unique(centers, axis=0).shape[0] == 10
+
+
+@pytest.mark.parametrize("array_constr", [np.asarray] + CSR_CONTAINERS)
+@pytest.mark.parametrize("shape", [(30_000, 10), (600, 2_000)])
+def test_kmeans_plusplus_n_threads(array_constr, shape, global_random_seed):
+    # Check that k-means++ gives the same centers with 1 and 4 threads. The data
+    # is large enough to use several threads, with more chunks of samples than
+    # threads or the opposite.
+    X, _ = make_blobs(
+        n_samples=shape[0],
+        n_features=shape[1],
+        centers=10,
+        random_state=global_random_seed,
+    )
+    X = array_constr(X)
+
+    indices = []
+    for n_threads in [1, 4]:
+        with _get_threadpool_controller().limit(limits=n_threads, user_api="openmp"):
+            indices.append(kmeans_plusplus(X, 10, random_state=global_random_seed)[1])
+
+    assert_array_equal(indices[0], indices[1])
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_kmeans_plusplus_sparse_read_only(csr_container):
+    # Check that k-means++ accepts read-only sparse data.
+    X = csr_container(np.random.RandomState(0).uniform(size=(100, 5)))
+    for array in (X.data, X.indices, X.indptr):
+        array.setflags(write=False)
+
+    centers, _ = kmeans_plusplus(X, 3, random_state=0)
+
+    assert centers.shape == (3, 5)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_kmeans_plusplus_sparse_int64_indices(csr_container):
+    # Check that sparse data with 64-bit indices is rejected, as in KMeans.
+    X = csr_container(np.random.RandomState(0).uniform(size=(100, 5)))
+    X.indices = X.indices.astype(np.int64)
+    X.indptr = X.indptr.astype(np.int64)
+
+    with pytest.raises(ValueError, match="32-bit integer indices"):
+        kmeans_plusplus(X, 3, random_state=0)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
@@ -1287,6 +1334,25 @@ def test_kmeans_plusplus_sample_candidates(global_random_seed, dtype):
     expected = np.searchsorted(pot_cumsum, rand_vals * pot_cumsum[-1])
     assert_array_equal(candidate_ids, expected)
     assert np.all(closest_dist_sq[candidate_ids] > 0)
+
+
+def test_kmeans_plusplus_sample_candidates_rounding():
+    # Check that the sampling of the k-means++ candidates never picks a sample with
+    # a zero potential, when the random value is 0 or larger than the cumulative
+    # potential of the samples of the chunk because of rounding errors.
+    closest_dist_sq = np.ones(CHUNK_SIZE)
+    closest_dist_sq[:3] = 0
+    closest_dist_sq[-3:] = 0
+    sample_weight = np.ones(CHUNK_SIZE)
+    chunk_pot = np.array([closest_dist_sq.sum() * (1 + 1e-12)])
+    rand_vals = np.array([0, 1 - 1e-15])
+
+    candidate_ids = np.empty(2, dtype=np.intp)
+    _kmeans_plusplus_sample_candidates(
+        rand_vals, chunk_pot, closest_dist_sq, sample_weight, candidate_ids
+    )
+
+    assert_array_equal(candidate_ids, [3, CHUNK_SIZE - 4])
 
 
 def test_is_same_clustering():

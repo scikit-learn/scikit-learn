@@ -149,7 +149,13 @@ def kmeans_plusplus(
     array([3, 2])
     """
     # Check data
-    X = check_array(X, accept_sparse="csr", dtype=[np.float64, np.float32], order="C")
+    X = check_array(
+        X,
+        accept_sparse="csr",
+        dtype=[np.float64, np.float32],
+        order="C",
+        accept_large_sparse=False,
+    )
     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
     if X.shape[0] < n_clusters:
@@ -317,6 +323,7 @@ def _kmeans_plusplus_trials(
     if sp.issparse(X):
         _kmeans_plusplus_trials_sparse(
             X,
+            x_squared_norms,
             sample_weight,
             candidates.toarray(),
             candidates_squared_norms,
