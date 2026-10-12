@@ -3156,7 +3156,7 @@ def test_search_callbacks_with_partial_fit_failures():
 def test_search_callback_metadata():
     """Test the metadata routing to callbacks."""
     cb = RecordingCallback().set_on_fit_task_begin_request(requested_arg_begin=True)
-    GridSearchCV(LogisticRegression(), {"C": [1, 10]}, cv=2).set_callbacks(cb).fit(
+    GridSearchCV(LogisticRegression(), {"alpha": [1, 0.1]}, cv=2).set_callbacks(cb).fit(
         X, y, requested_arg_begin="value"
     )
     task_begin_metadatas = [
