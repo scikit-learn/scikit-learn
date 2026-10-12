@@ -116,16 +116,17 @@ def test_kmeans_relocated_clusters(array_constr, algo):
 
 
 @pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
-@pytest.mark.parametrize("n_clusters", [2, 200])
+@pytest.mark.parametrize("n_clusters", [2, 500])
 @pytest.mark.parametrize("n_threads", [2, 64])
 def test_lloyd_iter_several_chunks_per_thread(
     array_constr, n_clusters, n_threads, global_random_seed
 ):
     # Check one Lloyd iteration against a NumPy implementation when each thread
-    # processes several chunks of 256 samples, with a remainder, so that the
-    # buffers of all the threads are summed.
+    # processes several chunks, with a remainder, so that the buffers of all
+    # the threads are summed. With n_clusters=500, the sum of the buffers is
+    # done by several blocks.
     rng = np.random.RandomState(global_random_seed)
-    n_samples = 3 * 256 * n_threads + 7
+    n_samples = 3 * 1024 * n_threads + 7
     X = rng.uniform(size=(n_samples, 5))
     sample_weight = rng.uniform(size=n_samples)
     # The centers are samples, so that no cluster is empty.
@@ -139,16 +140,18 @@ def test_lloyd_iter_several_chunks_per_thread(
         lloyd_iter = lloyd_iter_chunked_dense
     else:
         lloyd_iter = lloyd_iter_chunked_sparse
-    lloyd_iter(
-        array_constr(X),
-        sample_weight,
-        centers,
-        centers_new,
-        weight_in_clusters,
-        labels,
-        center_shift,
-        n_threads=n_threads,
-    )
+    # As in KMeans.fit, so that BLAS doesn't start threads in each OpenMP thread.
+    with _get_threadpool_controller().limit(limits=1, user_api="blas"):
+        lloyd_iter(
+            array_constr(X),
+            sample_weight,
+            centers,
+            centers_new,
+            weight_in_clusters,
+            labels,
+            center_shift,
+            n_threads=n_threads,
+        )
 
     expected_labels = pairwise_distances_argmin(X, centers)
     expected_weights = np.bincount(

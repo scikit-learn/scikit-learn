@@ -14,6 +14,9 @@ from sklearn.utils.extmath import row_norms
 # Number of samples per data chunk defined as a global constant.
 CHUNK_SIZE = 256
 
+# Number of values per block in the reduction of the thread buffers.
+cdef int REDUCE_BLOCK_SIZE = 2048
+
 
 cdef floating _euclidean_dense_dense(
         const floating* a,  # IN
@@ -323,12 +326,12 @@ cdef void _reduce_thread_buffers(
     """Sum the buffers of each thread into the result, then free them.
 
     `centers_new_chunks` and `weight_in_clusters_chunks` hold one buffer per
-    thread, of size n_clusters * n_features and n_clusters. If `update_centers`
-    is False, the buffers are only freed.
+    thread, of size n_clusters * n_features and n_clusters, or NULL. If
+    `update_centers` is False, the buffers are only freed.
     """
     cdef:
-        int thread_idx, i
-        int n_clusters, n_centers_values
+        int thread_idx, i, block_idx, start, end
+        int n_clusters, n_centers_values, n_blocks
         floating *centers_new_ptr
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
@@ -337,22 +340,31 @@ cdef void _reduce_thread_buffers(
         n_clusters = centers_new.shape[0]
         n_centers_values = n_clusters * centers_new.shape[1]
         centers_new_ptr = &centers_new[0, 0]
-        memset(centers_new_ptr, 0, n_centers_values * sizeof(floating))
-        memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-        # The order of the threads is fixed, so that the result doesn't depend
-        # on the order in which they finish.
+        # If the OpenMP runtime gives fewer threads than requested, the buffers
+        # of the missing threads stay NULL. The order of the threads is fixed,
+        # so that the result doesn't depend on the order in which they finish.
+        memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
         for thread_idx in range(n_threads):
-            centers_new_chunk = centers_new_chunks[thread_idx]
             weight_in_clusters_chunk = weight_in_clusters_chunks[thread_idx]
-            # A thread of the team doesn't run if the OpenMP runtime gives
-            # fewer threads than requested.
-            if centers_new_chunk == NULL:
-                continue
-            for i in range(n_clusters):
-                weight_in_clusters[i] += weight_in_clusters_chunk[i]
-            for i in range(n_centers_values):
-                centers_new_ptr[i] += centers_new_chunk[i]
+            if weight_in_clusters_chunk != NULL:
+                for i in range(n_clusters):
+                    weight_in_clusters[i] += weight_in_clusters_chunk[i]
+
+        # The sum over n_threads buffers of n_clusters * n_features values is
+        # done in parallel, by blocks that fit in the L1 cache. The team has
+        # n_threads threads even if there are fewer blocks: changing the size of
+        # the team from one parallel region to the next is slow.
+        n_blocks = (n_centers_values + REDUCE_BLOCK_SIZE - 1) // REDUCE_BLOCK_SIZE
+        for block_idx in prange(n_blocks, schedule='static', num_threads=n_threads):
+            start = block_idx * REDUCE_BLOCK_SIZE
+            end = min(start + REDUCE_BLOCK_SIZE, n_centers_values)
+            memset(&centers_new_ptr[start], 0, (end - start) * sizeof(floating))
+            for thread_idx in range(n_threads):
+                centers_new_chunk = centers_new_chunks[thread_idx]
+                if centers_new_chunk != NULL:
+                    for i in range(start, end):
+                        centers_new_ptr[i] += centers_new_chunk[i]
 
     for thread_idx in range(n_threads):
         free(centers_new_chunks[thread_idx])

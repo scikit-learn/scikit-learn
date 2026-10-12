@@ -117,8 +117,11 @@ def lloyd_iter_chunked_dense(
 
     with nogil, parallel(num_threads=n_threads):
         thread_idx = omp_get_thread_num()
-        centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
-        weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
+        centers_new_chunk = NULL
+        weight_in_clusters_chunk = NULL
+        if update_centers:
+            centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
+            weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
         pairwise_distances_chunk = <floating*> malloc(n_samples_chunk * n_clusters * sizeof(floating))
         centers_new_chunks[thread_idx] = centers_new_chunk
         weight_in_clusters_chunks[thread_idx] = weight_in_clusters_chunk
@@ -321,8 +324,11 @@ def lloyd_iter_chunked_sparse(
 
     with nogil, parallel(num_threads=n_threads):
         thread_idx = omp_get_thread_num()
-        centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
-        weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
+        centers_new_chunk = NULL
+        weight_in_clusters_chunk = NULL
+        if update_centers:
+            centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
+            weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
         centers_new_chunks[thread_idx] = centers_new_chunk
         weight_in_clusters_chunks[thread_idx] = weight_in_clusters_chunk
 
