@@ -1563,6 +1563,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         self.estimator_name = estimator_name
         self.pos_label = pos_label
 
+
     def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
         """Plot visualization.
 
