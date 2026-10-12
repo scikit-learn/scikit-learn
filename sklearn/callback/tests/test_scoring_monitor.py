@@ -607,3 +607,33 @@ def test_accept_sample_weight():
         assert ScoringMonitor(scoring_train=["r2", "rand_score"])._accept_sample_weight(
             "on_fit_task_end"
         )
+
+
+@config_context(enable_metadata_routing=True)
+def test_val_scorer_with_alias_request():
+    """Test that the validation scorer with alias request is working."""
+    cb_no_alias = ScoringMonitor(scoring_val="r2")
+    cb_alias = ScoringMonitor(scoring_val="r2")
+    X, y = make_regression(n_samples=10, n_features=2)
+    X_val_1, y_val_1 = make_regression(n_samples=10, n_features=2)
+    X_val_2, y_val_2 = make_regression(n_samples=10, n_features=2)
+    cb_alias.set_on_fit_task_end_request(X_val="X_val_alias", y_val="y_val_alias")
+    MaxIterEstimator().set_callbacks(cb_no_alias, cb_alias).fit(
+        X, y, X_val=X_val_1, y_val=y_val_1, X_val_alias=X_val_2, y_val_alias=y_val_2
+    )
+    alias_score_values = [log_item["r2"] for log_item in cb_alias.get_logs().val_scores]
+    no_alias_score_values = [
+        log_item["r2"] for log_item in cb_no_alias.get_logs().val_scores
+    ]
+    # Verify that the callback with alias request is not using the same data
+    assert not np.array_equal(alias_score_values, no_alias_score_values)
+
+    cb_no_alias = ScoringMonitor(scoring_val="r2")
+    MaxIterEstimator().set_callbacks(cb_no_alias).fit(
+        X, y, X_val=X_val_2, y_val=y_val_2
+    )
+    no_alias_score_values = [
+        log_item["r2"] for log_item in cb_no_alias.get_logs().val_scores
+    ]
+    # Verify that with or without alias give the same score with the same data
+    assert np.array_equal(no_alias_score_values, alias_score_values)
