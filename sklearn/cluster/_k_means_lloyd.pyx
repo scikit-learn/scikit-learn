@@ -1,10 +1,11 @@
 # Licence: BSD 3 clause
 
 from cython cimport floating
-from cython.parallel import prange, parallel, threadid
+from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, calloc, free
 from libc.float cimport DBL_MAX, FLT_MAX
 
+from sklearn.utils._openmp_helpers cimport omp_get_thread_num
 from sklearn.utils.extmath import row_norms
 from sklearn.utils._cython_blas cimport _gemm
 from sklearn.utils._cython_blas cimport RowMajor, Trans, NoTrans
@@ -12,32 +13,7 @@ from sklearn.cluster._k_means_common import CHUNK_SIZE
 from sklearn.cluster._k_means_common cimport _relocate_empty_clusters_dense
 from sklearn.cluster._k_means_common cimport _relocate_empty_clusters_sparse
 from sklearn.cluster._k_means_common cimport _average_centers, _center_shift
-
-
-cdef void _reduce_thread_buffers(
-        floating **centers_new_chunks,         # IN
-        floating **weight_in_clusters_chunks,  # IN
-        int n_threads,
-        floating[:, ::1] centers_new,          # INOUT
-        floating[::1] weight_in_clusters,      # INOUT
-        bint update_centers) noexcept nogil:
-    """Add the buffers of each thread to the result and free them."""
-    cdef int thread_idx, j, k
-    cdef int n_clusters, n_features
-    for thread_idx in range(n_threads):
-        # A thread of the team may not have run, e.g. if the OpenMP runtime gave
-        # fewer threads than requested.
-        if centers_new_chunks[thread_idx] != NULL and update_centers:
-            n_clusters = centers_new.shape[0]
-            n_features = centers_new.shape[1]
-            for j in range(n_clusters):
-                weight_in_clusters[j] += weight_in_clusters_chunks[thread_idx][j]
-                for k in range(n_features):
-                    centers_new[j, k] += centers_new_chunks[thread_idx][j * n_features + k]
-        free(centers_new_chunks[thread_idx])
-        free(weight_in_clusters_chunks[thread_idx])
-    free(centers_new_chunks)
-    free(weight_in_clusters_chunks)
+from sklearn.cluster._k_means_common cimport _reduce_thread_buffers
 
 
 def lloyd_iter_chunked_dense(
@@ -129,14 +105,18 @@ def lloyd_iter_chunked_dense(
     # number of threads should not be bigger than number of chunks
     n_threads = min(n_threads, n_chunks)
 
-    # Each thread allocates its own buffers, and they are reduced after the
-    # parallel region instead of under a lock inside it: threads waiting for each
-    # other inside the parallel region scale badly with the number of threads.
+    # Each thread allocates its own buffers and the main thread sums them after
+    # the parallel region, so that the threads never wait for each other inside
+    # it, which scales badly with the number of threads.
     centers_new_chunks = <floating **> calloc(n_threads, sizeof(floating *))
     weight_in_clusters_chunks = <floating **> calloc(n_threads, sizeof(floating *))
+    if centers_new_chunks == NULL or weight_in_clusters_chunks == NULL:
+        free(centers_new_chunks)
+        free(weight_in_clusters_chunks)
+        raise MemoryError()
 
     with nogil, parallel(num_threads=n_threads):
-        thread_idx = threadid()
+        thread_idx = omp_get_thread_num()
         centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
         weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
         pairwise_distances_chunk = <floating*> malloc(n_samples_chunk * n_clusters * sizeof(floating))
@@ -167,11 +147,10 @@ def lloyd_iter_chunked_dense(
 
         free(pairwise_distances_chunk)
 
-    if update_centers:
-        centers_new[...] = 0
-        weight_in_clusters[...] = 0
-    _reduce_thread_buffers(centers_new_chunks, weight_in_clusters_chunks, n_threads,
-                           centers_new, weight_in_clusters, update_centers)
+    with nogil:
+        _reduce_thread_buffers(centers_new_chunks, weight_in_clusters_chunks,
+                               n_threads, centers_new, weight_in_clusters,
+                               update_centers)
 
     if update_centers:
         _relocate_empty_clusters_dense(
@@ -335,9 +314,13 @@ def lloyd_iter_chunked_sparse(
     # Thread local buffers, see lloyd_iter_chunked_dense.
     centers_new_chunks = <floating **> calloc(n_threads, sizeof(floating *))
     weight_in_clusters_chunks = <floating **> calloc(n_threads, sizeof(floating *))
+    if centers_new_chunks == NULL or weight_in_clusters_chunks == NULL:
+        free(centers_new_chunks)
+        free(weight_in_clusters_chunks)
+        raise MemoryError()
 
     with nogil, parallel(num_threads=n_threads):
-        thread_idx = threadid()
+        thread_idx = omp_get_thread_num()
         centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
         weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
         centers_new_chunks[thread_idx] = centers_new_chunk
@@ -364,11 +347,10 @@ def lloyd_iter_chunked_sparse(
                 weight_in_clusters_chunk,
                 update_centers)
 
-    if update_centers:
-        centers_new[...] = 0
-        weight_in_clusters[...] = 0
-    _reduce_thread_buffers(centers_new_chunks, weight_in_clusters_chunks, n_threads,
-                           centers_new, weight_in_clusters, update_centers)
+    with nogil:
+        _reduce_thread_buffers(centers_new_chunks, weight_in_clusters_chunks,
+                               n_threads, centers_new, weight_in_clusters,
+                               update_centers)
 
     if update_centers:
         _relocate_empty_clusters_sparse(

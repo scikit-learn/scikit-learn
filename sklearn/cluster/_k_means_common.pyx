@@ -5,6 +5,8 @@ import numpy as np
 from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport sqrt
+from libc.stdlib cimport free
+from libc.string cimport memset
 
 from sklearn.utils.extmath import row_norms
 
@@ -309,6 +311,54 @@ cdef void _center_shift(
     for j in range(n_clusters):
         center_shift[j] = _euclidean_dense_dense(
             &centers_new[j, 0], &centers_old[j, 0], n_features, False)
+
+
+cdef void _reduce_thread_buffers(
+        floating **centers_new_chunks,         # IN, freed
+        floating **weight_in_clusters_chunks,  # IN, freed
+        int n_threads,
+        floating[:, ::1] centers_new,          # OUT
+        floating[::1] weight_in_clusters,      # OUT
+        bint update_centers) noexcept nogil:
+    """Sum the buffers of each thread into the result, then free them.
+
+    `centers_new_chunks` and `weight_in_clusters_chunks` hold one buffer per
+    thread, of size n_clusters * n_features and n_clusters. If `update_centers`
+    is False, the buffers are only freed.
+    """
+    cdef:
+        int thread_idx, i
+        int n_clusters, n_centers_values
+        floating *centers_new_ptr
+        floating *centers_new_chunk
+        floating *weight_in_clusters_chunk
+
+    if update_centers:
+        n_clusters = centers_new.shape[0]
+        n_centers_values = n_clusters * centers_new.shape[1]
+        centers_new_ptr = &centers_new[0, 0]
+        memset(centers_new_ptr, 0, n_centers_values * sizeof(floating))
+        memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
+
+        # The order of the threads is fixed, so that the result doesn't depend
+        # on the order in which they finish.
+        for thread_idx in range(n_threads):
+            centers_new_chunk = centers_new_chunks[thread_idx]
+            weight_in_clusters_chunk = weight_in_clusters_chunks[thread_idx]
+            # A thread of the team doesn't run if the OpenMP runtime gives
+            # fewer threads than requested.
+            if centers_new_chunk == NULL:
+                continue
+            for i in range(n_clusters):
+                weight_in_clusters[i] += weight_in_clusters_chunk[i]
+            for i in range(n_centers_values):
+                centers_new_ptr[i] += centers_new_chunk[i]
+
+    for thread_idx in range(n_threads):
+        free(centers_new_chunks[thread_idx])
+        free(weight_in_clusters_chunks[thread_idx])
+    free(centers_new_chunks)
+    free(weight_in_clusters_chunks)
 
 
 def _is_same_clustering(

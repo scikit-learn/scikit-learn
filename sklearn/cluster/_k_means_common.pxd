@@ -46,3 +46,12 @@ cdef void _center_shift(
     const floating[:, ::1],
     floating[::1]
 )
+
+cdef void _reduce_thread_buffers(
+    floating **,
+    floating **,
+    int,
+    floating[:, ::1],
+    floating[::1],
+    bint
+) noexcept nogil
