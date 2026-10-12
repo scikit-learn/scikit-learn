@@ -22,6 +22,8 @@ from sklearn.cluster._k_means_common import (
     _inertia_dense,
     _inertia_sparse,
     _is_same_clustering,
+    _kmeans_plusplus_best_candidate,
+    _kmeans_plusplus_sample_candidates,
     _kmeans_plusplus_trials_dense,
     _kmeans_plusplus_trials_sparse,
 )
@@ -237,10 +239,10 @@ def _kmeans_plusplus(
 
     # Squared distances from each sample to its closest center for each
     # candidate, and their weighted sums per chunk of samples. Steps write
-    # alternately in the 2 buffers: the distances of the best candidate of a
-    # step are read as the closest distances by the next step.
+    # alternately in the 2 halves of the buffers: the distances of the best
+    # candidate of a step are read as the closest distances by the next step.
     trials_dist_sq = np.empty((2, n_local_trials, n_samples), dtype=X.dtype)
-    trials_chunk_pot = np.empty((n_local_trials, n_chunks), dtype=np.float64)
+    trials_chunk_pot = np.empty((2, n_local_trials, n_chunks), dtype=np.float64)
 
     # Pick first center randomly and track index of point
     center_id = random_state.choice(n_samples, p=sample_weight / sample_weight.sum())
@@ -255,37 +257,39 @@ def _kmeans_plusplus(
         np.array([center_id]),
         np.full(n_samples, np.inf, dtype=X.dtype),
         trials_dist_sq[0, :1],
-        trials_chunk_pot[:1],
+        trials_chunk_pot[0, :1],
         n_threads,
     )
     closest_dist_sq = trials_dist_sq[0, 0]
-    chunk_pot = trials_chunk_pot[0].copy()
+    chunk_pot = trials_chunk_pot[0, 0]
+
+    rand_vals = random_state.uniform(size=(n_clusters - 1, n_local_trials))
+    candidate_ids = np.empty(n_local_trials, dtype=np.intp)
 
     # Pick the remaining n_clusters-1 points
     for c in range(1, n_clusters):
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
-        candidate_ids = _sample_candidates(
-            random_state, n_local_trials, chunk_pot, closest_dist_sq, sample_weight
+        _kmeans_plusplus_sample_candidates(
+            rand_vals[c - 1], chunk_pot, closest_dist_sq, sample_weight, candidate_ids
         )
 
         # Compute closest distances and potential for each candidate
-        trials_dist_sq_c = trials_dist_sq[c % 2]
         _kmeans_plusplus_trials(
             X,
             x_squared_norms,
             sample_weight,
             candidate_ids,
             closest_dist_sq,
-            trials_dist_sq_c,
-            trials_chunk_pot,
+            trials_dist_sq[c % 2],
+            trials_chunk_pot[c % 2],
             n_threads,
         )
 
         # Decide which candidate is the best
-        best_candidate = np.argmin(trials_chunk_pot.sum(axis=1))
-        closest_dist_sq = trials_dist_sq_c[best_candidate]
-        chunk_pot = trials_chunk_pot[best_candidate].copy()
+        best_candidate = _kmeans_plusplus_best_candidate(trials_chunk_pot[c % 2])
+        closest_dist_sq = trials_dist_sq[c % 2, best_candidate]
+        chunk_pot = trials_chunk_pot[c % 2, best_candidate]
 
         # Permanently add best center candidate found in local tries
         indices[c] = candidate_ids[best_candidate]
@@ -333,38 +337,6 @@ def _kmeans_plusplus_trials(
             trials_chunk_pot,
             n_threads,
         )
-
-
-def _sample_candidates(
-    random_state, n_candidates, chunk_pot, closest_dist_sq, sample_weight
-):
-    """Sample candidate centers for k-means++.
-
-    The probability of a sample is proportional to its weighted squared
-    distance to the closest center. A chunk of `CHUNK_SIZE` samples is first
-    sampled from the potentials per chunk, then a sample within that chunk.
-    """
-    n_samples = closest_dist_sq.shape[0]
-    chunk_pot_cumsum = np.cumsum(chunk_pot)
-    rand_vals = random_state.uniform(size=n_candidates) * chunk_pot_cumsum[-1]
-    chunk_ids = np.searchsorted(chunk_pot_cumsum, rand_vals)
-    # Numerical imprecision can result in a chunk_id out of range
-    np.clip(chunk_ids, None, chunk_pot.shape[0] - 1, out=chunk_ids)
-
-    candidate_ids = np.empty(n_candidates, dtype=np.intp)
-    for i, (chunk_id, rand_val) in enumerate(zip(chunk_ids, rand_vals)):
-        start = chunk_id * CHUNK_SIZE
-        end = min(start + CHUNK_SIZE, n_samples)
-        if chunk_id > 0:
-            rand_val -= chunk_pot_cumsum[chunk_id - 1]
-        chunk_cumsum = np.cumsum(
-            sample_weight[start:end] * closest_dist_sq[start:end], dtype=np.float64
-        )
-        candidate_ids[i] = start + min(
-            np.searchsorted(chunk_cumsum, rand_val), end - start - 1
-        )
-
-    return candidate_ids
 
 
 ###############################################################################

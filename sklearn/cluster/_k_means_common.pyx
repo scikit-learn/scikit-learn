@@ -4,10 +4,12 @@
 import numpy as np
 from cython cimport floating
 from cython.parallel cimport prange
-from libc.math cimport sqrt
+from libc.math cimport INFINITY, sqrt
+from libc.stdlib cimport free, malloc
 
 from sklearn.utils._cython_blas cimport _gemm
 from sklearn.utils._cython_blas cimport RowMajor, Trans, NoTrans
+from sklearn.utils._typedefs cimport intp_t
 from sklearn.utils.extmath import row_norms
 
 
@@ -280,6 +282,81 @@ def _kmeans_plusplus_trials_sparse(
                 trials_dist_sq[j, i] = dist
                 pot = pot + sample_weight[i] * dist
             trials_chunk_pot[j, chunk_idx] = pot
+
+
+def _kmeans_plusplus_sample_candidates(
+        const double[::1] rand_vals,            # IN
+        const double[::1] chunk_pot,            # IN
+        const floating[::1] closest_dist_sq,    # IN
+        const floating[::1] sample_weight,      # IN
+        intp_t[::1] candidate_ids):             # OUT
+    """Sample k-means++ candidate centers.
+
+    The probability of a sample is proportional to its weighted squared
+    distance to the closest center. For each value of `rand_vals`, drawn
+    uniformly in [0, 1), a chunk of `CHUNK_SIZE` samples is first sampled from
+    the potentials per chunk, then a sample within that chunk.
+    """
+    cdef:
+        int n_samples = closest_dist_sq.shape[0]
+        int n_chunks = chunk_pot.shape[0]
+        int n_candidates = rand_vals.shape[0]
+        int chunk_size = CHUNK_SIZE
+        int j, chunk_idx, lo, hi, start, end, i
+        double rand_val, cumsum
+        double *chunk_pot_cumsum
+
+    with nogil:
+        chunk_pot_cumsum = <double*> malloc(n_chunks * sizeof(double))
+        cumsum = 0.0
+        for chunk_idx in range(n_chunks):
+            cumsum += chunk_pot[chunk_idx]
+            chunk_pot_cumsum[chunk_idx] = cumsum
+
+        for j in range(n_candidates):
+            rand_val = rand_vals[j] * chunk_pot_cumsum[n_chunks - 1]
+
+            # First chunk whose cumulative potential reaches rand_val. Numerical
+            # imprecision can make rand_val larger than the total potential.
+            lo, hi = 0, n_chunks - 1
+            while lo < hi:
+                chunk_idx = (lo + hi) // 2
+                if chunk_pot_cumsum[chunk_idx] < rand_val:
+                    lo = chunk_idx + 1
+                else:
+                    hi = chunk_idx
+            if lo > 0:
+                rand_val -= chunk_pot_cumsum[lo - 1]
+
+            start = lo * chunk_size
+            end = min(start + chunk_size, n_samples)
+            cumsum = 0.0
+            for i in range(start, end):
+                cumsum += sample_weight[i] * closest_dist_sq[i]
+                if cumsum >= rand_val:
+                    break
+            candidate_ids[j] = i
+
+        free(chunk_pot_cumsum)
+
+
+def _kmeans_plusplus_best_candidate(const double[:, ::1] trials_chunk_pot):
+    """Index of the k-means++ candidate with the smallest potential."""
+    cdef:
+        int n_trials = trials_chunk_pot.shape[0]
+        int n_chunks = trials_chunk_pot.shape[1]
+        int best = 0
+        int j, chunk_idx
+        double pot, best_pot = INFINITY
+
+    with nogil:
+        for j in range(n_trials):
+            pot = 0.0
+            for chunk_idx in range(n_chunks):
+                pot += trials_chunk_pot[j, chunk_idx]
+            if pot < best_pot:
+                best, best_pot = j, pot
+    return best
 
 
 cpdef void _relocate_empty_clusters_dense(

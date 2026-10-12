@@ -11,11 +11,13 @@ from threadpoolctl import threadpool_info
 from sklearn.base import clone
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
 from sklearn.cluster._k_means_common import (
+    CHUNK_SIZE,
     _euclidean_dense_dense_wrapper,
     _euclidean_sparse_dense_wrapper,
     _inertia_dense,
     _inertia_sparse,
     _is_same_clustering,
+    _kmeans_plusplus_sample_candidates,
     _relocate_empty_clusters_dense,
     _relocate_empty_clusters_sparse,
 )
@@ -1261,6 +1263,30 @@ def test_kmeans_plusplus_float32_far_from_origin(global_random_seed):
     centers, _ = kmeans_plusplus(X, 10, random_state=global_random_seed)
 
     assert np.unique(centers, axis=0).shape[0] == 10
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_kmeans_plusplus_sample_candidates(global_random_seed, dtype):
+    # Check the sampling of the k-means++ candidates, done per chunk of samples,
+    # against a search in the cumulative sum of the potential over all samples.
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_candidates = 1000, 50
+    closest_dist_sq = rng.uniform(size=n_samples).astype(dtype)
+    closest_dist_sq[rng.uniform(size=n_samples) < 0.3] = 0
+    sample_weight = rng.uniform(size=n_samples).astype(dtype)
+    sample_pot = (sample_weight * closest_dist_sq).astype(np.float64)
+    chunk_pot = np.add.reduceat(sample_pot, np.arange(0, n_samples, CHUNK_SIZE))
+    rand_vals = rng.uniform(size=n_candidates)
+
+    candidate_ids = np.empty(n_candidates, dtype=np.intp)
+    _kmeans_plusplus_sample_candidates(
+        rand_vals, chunk_pot, closest_dist_sq, sample_weight, candidate_ids
+    )
+
+    pot_cumsum = np.cumsum(sample_pot)
+    expected = np.searchsorted(pot_cumsum, rand_vals * pot_cumsum[-1])
+    assert_array_equal(candidate_ids, expected)
+    assert np.all(closest_dist_sq[candidate_ids] > 0)
 
 
 def test_is_same_clustering():
