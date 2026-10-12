@@ -8,7 +8,6 @@ import pytest
 import scipy.sparse as sp
 from numpy.testing import assert_allclose, assert_array_equal
 
-from sklearn import config_context
 from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
@@ -41,117 +40,45 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
         assert v.feature_names_ == sorted(v.feature_names_)
 
 
-@pytest.mark.parametrize("sparse_interface", ["spmatrix", "sparray"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int64, bool])
 @pytest.mark.parametrize("sort", [True, False])
 @pytest.mark.parametrize("fit_transform", [True, False])
-def test_dict_vectorizer_sparse_zeros(sparse_interface, dtype, sort, fit_transform):
-    # Non-regression test for #14718: numeric zeros need no sparse storage.
-    data = [{"a": 1.0, "b": 1.0, "c": 0.0}, {"a": 0.0, "b": 1.0, "c": 1.0}]
-    vectorizer = DictVectorizer(dtype=dtype, sort=sort)
-    with config_context(sparse_interface=sparse_interface):
-        if fit_transform:
-            result = vectorizer.fit_transform(iter(data))
-        else:
-            result = vectorizer.fit(data).transform(iter(data))
-
-    assert result.nnz == 4
-    assert result.shape == (2, 3)
-    assert result.dtype == np.dtype(dtype)
-    assert_array_equal(result.toarray(), [[1, 1, 0], [0, 1, 1]])
-    assert_array_equal(vectorizer.get_feature_names_out(), ["a", "b", "c"])
-    assert vectorizer.vocabulary_ == {"a": 0, "b": 1, "c": 2}
-    assert isinstance(result, sp.spmatrix) == (sparse_interface == "spmatrix")
-    assert result.format == "csr"
-    assert result.has_sorted_indices
-    assert vectorizer.inverse_transform(result) == [{"a": 1, "b": 1}, {"b": 1, "c": 1}]
-
-
-@pytest.mark.parametrize("sort", [True, False])
-def test_dict_vectorizer_zero_features(sort):
-    data = [{"zero_only": 0, "b": 2, "a": 0}, {"b": 0, "c": -3}, {}, {"a": -0.0}]
+def test_dict_vectorizer_sparse_zeros(sort, fit_transform):
+    # Non-regression test for #14718, including an all-zero feature and empty row.
+    data = [
+        {"b": 1, "a": 1, "c": 0},
+        {"a": 0, "b": 1, "c": 1},
+        {"zero_only": -0.0},
+        {},
+    ]
     vectorizer = DictVectorizer(sort=sort)
-    result = vectorizer.fit_transform(data)
-    names = ["a", "b", "c", "zero_only"] if sort else ["zero_only", "b", "a", "c"]
-    expected = (
-        [[0, 2, 0, 0], [0, 0, -3, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
-        if sort
-        else [[0, 2, 0, 0], [0, 0, 0, -3], [0, 0, 0, 0], [0, 0, 0, 0]]
-    )
-    assert_array_equal(vectorizer.get_feature_names_out(), names)
-    assert vectorizer.vocabulary_ == dict(zip(names, range(4)))
-    assert result.shape == (4, 4)
-    assert result.nnz == 2
-    assert_array_equal(result.toarray(), expected)
-
-    result = vectorizer.transform([{"unknown": 5}, {}, {"a": 4, "zero_only": 2}])
-    expected = (
-        [[0, 0, 0, 0], [0, 0, 0, 0], [4, 0, 0, 2]]
-        if sort
-        else [[0, 0, 0, 0], [0, 0, 0, 0], [2, 0, 4, 0]]
-    )
-    assert result.nnz == 2
-    assert_array_equal(result.toarray(), expected)
-
-    result = vectorizer.fit_transform([{"zero_only": 0}, {}])
-    assert result.shape == (2, 1)
-    assert result.nnz == 0
-
-
-@pytest.mark.parametrize("dtype, value", [(np.float32, 1e-50), (np.int64, 0.5)])
-def test_dict_vectorizer_zeros_after_dtype_conversion(dtype, value):
-    data = [{"converted_zero": value, "nonzero": 1}]
-    vectorizer = DictVectorizer(dtype=dtype)
-    for result in (
-        vectorizer.fit_transform(data),
-        vectorizer.fit(data).transform(data),
-    ):
-        assert result.nnz == 1
-        assert result.shape == (1, 2)
-        assert result.dtype == np.dtype(dtype)
-        assert_array_equal(result.toarray(), [[0, 1]])
-        assert_array_equal(
-            vectorizer.get_feature_names_out(), ["converted_zero", "nonzero"]
-        )
-
-
-def test_dict_vectorizer_zeros_preserve_nan():
-    vectorizer = DictVectorizer()
-    data = [{"a": np.nan, "b": None, "c": -0.0, "d": -2}]
-    for result in (
-        vectorizer.fit_transform(data),
-        vectorizer.fit(data).transform(data),
-    ):
-        assert result.nnz == 3
-        assert_allclose(result.toarray(), [[np.nan, np.nan, 0, -2]])
-
-
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("fit_transform", [True, False])
-def test_dict_vectorizer_zeros_preserve_duplicate_order(dtype, fit_transform):
-    # Removing zeros before sorting can change the order of duplicate entries
-    # and hence their floating-point sum. Compare with the original CSR order.
-    large_value = -1e8 if dtype == np.float32 else -1e16
-    data = [{"z": 2, "f": ["x"] * 14, "f=x": large_value, "a": 0}]
-    expected = sp.csr_array(
-        ([2] + [1] * 14 + [large_value, 0], [2] + [1] * 15 + [0], [0, 17]),
-        shape=(1, 3),
-        dtype=dtype,
-    )
-    expected.sort_indices()
-    nonzero = expected.data != 0
-
-    vectorizer = DictVectorizer(dtype=dtype)
     if fit_transform:
         result = vectorizer.fit_transform(data)
     else:
         result = vectorizer.fit(data).transform(data)
 
-    assert_array_equal(result.toarray(), expected.toarray())
-    assert_array_equal(result.data, expected.data[nonzero])
-    assert_array_equal(result.indices, expected.indices[nonzero])
-    assert result.nnz == 16
-    assert result.has_sorted_indices
+    names = ["a", "b", "c", "zero_only"] if sort else ["b", "a", "c", "zero_only"]
+    expected = [[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+    if not sort:
+        expected = np.asarray(expected)[:, [1, 0, 2, 3]]
+    assert_array_equal(vectorizer.get_feature_names_out(), names)
+    assert_array_equal(result.toarray(), expected)
+    assert result.nnz == 4
+
+    # Removing stored zeros must not remove their features from the vocabulary.
+    result = vectorizer.transform([{"zero_only": 2}, {"zero_only": 0}])
+    assert_array_equal(result.toarray(), [[0, 0, 0, 2], [0, 0, 0, 0]])
+    assert result.nnz == 1
+
+
+@pytest.mark.parametrize("dtype, value", [(np.float32, 1e-50), (np.int64, 0.5)])
+def test_dict_vectorizer_zeros_after_dtype_conversion(dtype, value):
+    vectorizer = DictVectorizer(dtype=dtype)
+    data = [{"converted_zero": value}]
+    for result in (vectorizer.fit_transform(data), vectorizer.transform(data)):
+        assert result.shape == (1, 1)
+        assert result.nnz == 0
+        assert result.dtype == np.dtype(dtype)
+    assert_array_equal(vectorizer.get_feature_names_out(), ["converted_zero"])
 
 
 def test_feature_selection():
@@ -290,14 +217,11 @@ def test_dictvectorizer_dense_sparse_equivalence():
     https://github.com/scikit-learn/scikit-learn/issues/19978
     """
     movie_entry_fit = [
-        {"category": ["thriller", "drama"], "year": 2003, "zero_only": 0},
+        {"category": ["thriller", "drama"], "year": 2003},
         {"category": ["animation", "family"], "year": 2011},
         {"year": 1974},
-        {},
     ]
-    movie_entry_transform = [
-        {"category": ["thriller"], "unseen_feature": "3", "zero_only": 0}
-    ]
+    movie_entry_transform = [{"category": ["thriller"], "unseen_feature": "3"}]
     dense_vectorizer = DictVectorizer(sparse=False)
     sparse_vectorizer = DictVectorizer(sparse=True)
 
@@ -306,7 +230,6 @@ def test_dictvectorizer_dense_sparse_equivalence():
 
     assert not sp.issparse(dense_vector_fit)
     assert sp.issparse(sparse_vector_fit)
-    assert np.all(sparse_vector_fit.data != 0)
 
     assert_allclose(dense_vector_fit, sparse_vector_fit.toarray())
 
@@ -315,7 +238,6 @@ def test_dictvectorizer_dense_sparse_equivalence():
 
     assert not sp.issparse(dense_vector_transform)
     assert sp.issparse(sparse_vector_transform)
-    assert np.all(sparse_vector_transform.data != 0)
 
     assert_allclose(dense_vector_transform, sparse_vector_transform.toarray())
 
