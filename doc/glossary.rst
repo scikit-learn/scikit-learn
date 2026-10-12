@@ -1487,7 +1487,7 @@ Methods
         Output conventions:
 
         classifier
-            An array of shape ``(n_samples,)`` ``(n_samples, n_outputs)``.
+            An array of shape ``(n_samples,)`` or ``(n_samples, n_outputs)``.
             :term:`Multilabel <multilabel>` data may be represented as a sparse
             matrix if a sparse matrix was used in fitting. Each element should
             be one of the values in the classifier's :term:`classes_`
@@ -1572,7 +1572,7 @@ Methods
         parameters (:term:`X`, :term:`y`, :term:`groups`), where all may be
         optional, and returns an iterator over ``(train_idx, test_idx)``
         pairs.  Each of {train,test}_idx is a 1d integer array, with values
-        from 0 from ``X.shape[0] - 1`` of any length, such that no values
+        from 0 to ``X.shape[0] - 1`` of any length, such that no values
         appear in both some ``train_idx`` and its corresponding ``test_idx``.
 
     ``transform``
@@ -1868,7 +1868,7 @@ See concept :term:`attribute`.
 
     ``classes_``
         A list of class labels known to the :term:`classifier`, mapping each
-        label to a numerical index used in the model representation our output.
+        label to a numerical index used in the model representation or output.
         For instance, the array output from :term:`predict_proba` has columns
         aligned with ``classes_``. For :term:`multi-output` classifiers,
         ``classes_`` should be a list of lists, with one class listing for

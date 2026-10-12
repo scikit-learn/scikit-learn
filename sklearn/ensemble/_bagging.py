@@ -16,7 +16,7 @@ from sklearn.base import ClassifierMixin, RegressorMixin, _fit_context
 from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
 from sklearn.ensemble._bootstrap import _get_n_samples_bootstrap
 from sklearn.metrics import accuracy_score, r2_score
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.tree import BaseDecisionTree, DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import _safe_indexing, check_random_state, column_or_1d
 from sklearn.utils._mask import indices_to_mask
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
@@ -391,9 +391,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             **fit_params,
         )
 
-    def _parallel_args(self):
-        return {}
-
     def _fit(
         self,
         X,
@@ -668,6 +665,13 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         router.add(estimator=self._get_estimator(), method_mapping=method_mapping)
         return router
+
+    def _parallel_args(self):
+        if isinstance(self.estimator_, BaseDecisionTree):
+            # Subclasses of BaseDecisionTree are known to be faster with
+            # threads.
+            return {"prefer": "threads"}
+        return {}
 
     @abstractmethod
     def _get_estimator(self):
@@ -1089,7 +1093,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             # Parallel loop
             n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-            all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            all_log_proba = Parallel(
+                n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+            )(
                 delayed(_parallel_predict_log_proba)(
                     self.estimators_[starts[i] : starts[i + 1]],
                     self.estimators_features_[starts[i] : starts[i + 1]],
@@ -1166,7 +1172,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_decisions = Parallel(
+            n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+        )(
             delayed(_parallel_decision_function)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
@@ -1419,7 +1427,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_y_hat = Parallel(
+            n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+        )(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
