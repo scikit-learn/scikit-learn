@@ -399,9 +399,10 @@ def _plain_sgd{{name_suffix}}(
 
     References
     ----------
-    .. [1] Online Passive-Aggressive Algorithms
-       <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>
-       K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
+    .. [1] Crammer, K., Ofer Dekel, Keshet, J., Shalev-Shwartz, S. and Singer, Y. (2006).
+       `"Online Passive-Aggressive Algorithms"
+       <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>`_
+       JMLR, 7(19), 551-585
     """
 
     # get the data information into easy vars
