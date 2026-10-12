@@ -280,8 +280,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             result_matrix = result_matrix[:, map_index]
 
         if self.sparse:
-            result_matrix.eliminate_zeros()
             result_matrix.sort_indices()
+            result_matrix.eliminate_zeros()
         else:
             result_matrix = result_matrix.toarray()
 

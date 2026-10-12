@@ -126,6 +126,34 @@ def test_dict_vectorizer_zeros_preserve_nan():
         assert_allclose(result.toarray(), [[np.nan, np.nan, 0, -2]])
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("fit_transform", [True, False])
+def test_dict_vectorizer_zeros_preserve_duplicate_order(dtype, fit_transform):
+    # Removing zeros before sorting can change the order of duplicate entries
+    # and hence their floating-point sum. Compare with the original CSR order.
+    large_value = -1e8 if dtype == np.float32 else -1e16
+    data = [{"z": 2, "f": ["x"] * 14, "f=x": large_value, "a": 0}]
+    expected = sp.csr_array(
+        ([2] + [1] * 14 + [large_value, 0], [2] + [1] * 15 + [0], [0, 17]),
+        shape=(1, 3),
+        dtype=dtype,
+    )
+    expected.sort_indices()
+    nonzero = expected.data != 0
+
+    vectorizer = DictVectorizer(dtype=dtype)
+    if fit_transform:
+        result = vectorizer.fit_transform(data)
+    else:
+        result = vectorizer.fit(data).transform(data)
+
+    assert_array_equal(result.toarray(), expected.toarray())
+    assert_array_equal(result.data, expected.data[nonzero])
+    assert_array_equal(result.indices, expected.indices[nonzero])
+    assert result.nnz == 16
+    assert result.has_sorted_indices
+
+
 def test_feature_selection():
     # make two feature dicts with two useful features and a bunch of useless
     # ones, in terms of chi2
