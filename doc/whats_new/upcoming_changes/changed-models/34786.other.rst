@@ -1,0 +1,6 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now draw the subset of
+  features considered at each split differently when `max_features < 1.0`.
+  For a fixed `random_state`, the selected features, and hence the fitted
+  trees, may differ from previous versions.
+  By :user:`Arthur Lacote <cakedev0>`.
