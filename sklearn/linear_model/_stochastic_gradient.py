@@ -1223,11 +1223,11 @@ class SGDClassifier(BaseSGDClassifier):
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.pipeline import make_pipeline
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> Y = np.array([1, 1, 2, 2])
+    >>> y = np.array([1, 1, 2, 2])
     >>> # Always scale the input. The most convenient way is to use a pipeline.
     >>> clf = make_pipeline(StandardScaler(),
     ...                     SGDClassifier(max_iter=1000, tol=1e-3))
-    >>> clf.fit(X, Y)
+    >>> clf.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdclassifier', SGDClassifier())])
     >>> print(clf.predict([[-0.8, -1]]))
@@ -1242,7 +1242,7 @@ class SGDClassifier(BaseSGDClassifier):
     ...         learning_rate="pa1",  # or "pa2"
     ...         eta0=1.0,  # for PA parameter C
     ...     )
-    ... )
+    ... ).fit(X, y)
     """
 
     _parameter_constraints: dict = {
@@ -2042,13 +2042,13 @@ class SGDRegressor(BaseSGDRegressor):
     To fit with the passive-aggressive algorithm, use
     >>> reg = make_pipeline(
     ...     StandardScaler(),
-    ...     reg = SGDRegressor(
+    ...     SGDRegressor(
     ...         loss="epsilon_insensitive",
     ...         penalty=None,
     ...         learning_rate="pa1",  # or "pa2"
     ...         eta0=1.0,  # for PA parameter C
     ...     )
-    ... )
+    ... ).fit(X, y)
     """
 
     _parameter_constraints: dict = {
