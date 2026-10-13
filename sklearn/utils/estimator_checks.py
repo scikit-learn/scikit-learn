@@ -13,6 +13,7 @@ from copy import deepcopy
 from functools import partial, wraps
 from hashlib import md5
 from inspect import signature
+from io import BytesIO
 from numbers import Integral, Real
 from typing import Callable, Literal
 
@@ -59,6 +60,7 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 from sklearn.metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
 from sklearn.model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
 from sklearn.model_selection._validation import _safe_split
+from sklearn.neighbors import BallTree, KDTree
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, scale
 from sklearn.utils import _safe_indexing, shuffle
@@ -5745,13 +5747,33 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         estimator.fit(X, y)
 
 
-def object_hash(obj: object) -> bytes:
+class _HashingPickler(cloudpickle.Pickler):
+    """Add some extra pickling logic to work around edge cases."""
+
+    def reducer_override(self, obj: object) -> tuple:
+        if isinstance(obj, (KDTree, BallTree)):
+            # This should be removed in 1.12 when these deprecated stats are
+            # removed. These are not really thread-safe, but they're also just
+            # deprecated stats, so they don't meaningfully affect anything.
+            state = obj.__getstate__()
+            assert len(state) == 13
+            # Specifically we're overwriting int(self.n_trims),
+            # int(self.n_leaves), int(self.n_splits), int(self.n_calls):
+            state = state[:-6] + (0, 0, 0, 0) + state[-2:]
+            return (obj.__class__.__setstate__, state)
+
+        return NotImplemented
+
+
+def _object_hash(obj: object) -> bytes:
     """
     Hash a Python object; mutating the object should change the result.
 
     ``joblib.hash`` has issues with some of the estimators, so we use our own.
     """
-    return md5(cloudpickle.dumps(obj)).digest()
+    f = BytesIO()
+    _HashingPickler(f).dump(obj)
+    return md5(f.getvalue()).digest()
 
 
 def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
@@ -5770,9 +5792,9 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
         "score_samples",
     ]
 
-    before_hash = object_hash(estimator)
+    before_hash = _object_hash(estimator)
     attr_hashes = {
-        key: object_hash(value) for (key, value) in estimator.__dict__.items()
+        key: _object_hash(value) for (key, value) in estimator.__dict__.items()
     }
     for method_name in check_methods:
         if not hasattr(estimator, method_name):
@@ -5782,9 +5804,9 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
             method(X_test, y_test)
         else:
             method(X_test)
-        after_hash = object_hash(estimator)
+        after_hash = _object_hash(estimator)
         after_attr_hashes = {
-            key: object_hash(value) for (key, value) in estimator.__dict__.items()
+            key: _object_hash(value) for (key, value) in estimator.__dict__.items()
         }
         err_message = (
             f"Hash of {estimator} changed when running {method_name}(),"
