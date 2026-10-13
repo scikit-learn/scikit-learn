@@ -11,6 +11,7 @@ from threadpoolctl import threadpool_info
 from sklearn.base import clone
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
 from sklearn.cluster._k_means_common import (
+    CHUNK_SIZE,
     _euclidean_dense_dense_wrapper,
     _euclidean_sparse_dense_wrapper,
     _inertia_dense,
@@ -26,7 +27,11 @@ from sklearn.cluster._k_means_lloyd import (
 from sklearn.cluster._kmeans import _labels_inertia, _mini_batch_step
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.metrics import pairwise_distances, pairwise_distances_argmin
+from sklearn.metrics import (
+    pairwise_distances,
+    pairwise_distances_argmin,
+    pairwise_distances_argmin_min,
+)
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils._testing import (
@@ -116,26 +121,28 @@ def test_kmeans_relocated_clusters(array_constr, algo):
 
 
 @pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("n_clusters", [2, 500])
 @pytest.mark.parametrize("n_threads", [2, 64])
 def test_lloyd_iter_several_chunks_per_thread(
-    array_constr, n_clusters, n_threads, global_random_seed
+    array_constr, dtype, n_clusters, n_threads, global_random_seed
 ):
     # Check one Lloyd iteration against a NumPy implementation when each thread
     # processes several chunks, with a remainder, so that the buffers of all
     # the threads are summed. With n_clusters=500, the sum of the buffers is
     # done by several blocks.
     rng = np.random.RandomState(global_random_seed)
-    n_samples = 3 * 1024 * n_threads + 7
-    X = rng.uniform(size=(n_samples, 5))
-    sample_weight = rng.uniform(size=n_samples)
+    n_samples = 3 * CHUNK_SIZE * n_threads + 7
+    X = rng.uniform(size=(n_samples, 5)).astype(dtype)
+    sample_weight = rng.uniform(size=n_samples).astype(dtype)
     # The centers are samples, so that no cluster is empty.
     centers = X[rng.choice(n_samples, n_clusters, replace=False)]
 
     centers_new = np.zeros_like(centers)
-    weight_in_clusters = np.zeros(n_clusters)
+    weight_in_clusters = np.zeros(n_clusters, dtype=dtype)
     labels = np.full(n_samples, -1, dtype=np.int32)
-    center_shift = np.zeros(n_clusters)
+    labels_predict = np.full(n_samples, -1, dtype=np.int32)
+    center_shift = np.zeros(n_clusters, dtype=dtype)
     if array_constr is np.array:
         lloyd_iter = lloyd_iter_chunked_dense
     else:
@@ -152,17 +159,37 @@ def test_lloyd_iter_several_chunks_per_thread(
             center_shift,
             n_threads=n_threads,
         )
+        # As in predict: the centers are not updated and have no buffers.
+        lloyd_iter(
+            array_constr(X),
+            sample_weight,
+            centers,
+            None,
+            None,
+            labels_predict,
+            center_shift,
+            n_threads=n_threads,
+            update_centers=False,
+        )
+    assert_array_equal(labels_predict, labels)
 
-    expected_labels = pairwise_distances_argmin(X, centers)
-    expected_weights = np.bincount(
-        expected_labels, weights=sample_weight, minlength=n_clusters
+    # The labels can differ from an exact computation on near ties in float32,
+    # so check that each sample is assigned to one of its closest centers.
+    X_64, centers_64 = X.astype(np.float64), centers.astype(np.float64)
+    _, min_distances = pairwise_distances_argmin_min(X_64, centers_64)
+    assert_allclose(
+        row_norms(X_64 - centers_64[labels], squared=True),
+        min_distances**2,
+        atol=1e-5 if dtype == np.float32 else 1e-12,
     )
-    expected_centers = np.zeros_like(centers)
-    np.add.at(expected_centers, expected_labels, X * sample_weight[:, None])
+
+    expected_weights = np.bincount(labels, weights=sample_weight, minlength=n_clusters)
+    expected_centers = np.zeros_like(centers_64)
+    np.add.at(expected_centers, labels, X_64 * sample_weight[:, None])
     expected_centers /= expected_weights[:, None]
-    assert_array_equal(labels, expected_labels)
-    assert_allclose(weight_in_clusters, expected_weights)
-    assert_allclose(centers_new, expected_centers)
+    rtol = 1e-4 if dtype == np.float32 else 1e-7
+    assert_allclose(weight_in_clusters, expected_weights, rtol=rtol)
+    assert_allclose(centers_new, expected_centers, rtol=rtol)
 
 
 @pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)

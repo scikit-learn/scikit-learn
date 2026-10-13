@@ -2,7 +2,7 @@
 
 from cython cimport floating
 from cython.parallel import prange, parallel
-from libc.stdlib cimport malloc, calloc, free
+from libc.stdlib cimport malloc, free
 from libc.float cimport DBL_MAX, FLT_MAX
 
 from sklearn.utils._openmp_helpers cimport omp_get_thread_num
@@ -13,6 +13,8 @@ from sklearn.cluster._k_means_common import CHUNK_SIZE
 from sklearn.cluster._k_means_common cimport _relocate_empty_clusters_dense
 from sklearn.cluster._k_means_common cimport _relocate_empty_clusters_sparse
 from sklearn.cluster._k_means_common cimport _average_centers, _center_shift
+from sklearn.cluster._k_means_common cimport _alloc_thread_buffers_arrays
+from sklearn.cluster._k_means_common cimport _alloc_thread_buffers
 from sklearn.cluster._k_means_common cimport _reduce_thread_buffers
 
 
@@ -105,26 +107,20 @@ def lloyd_iter_chunked_dense(
     # number of threads should not be bigger than number of chunks
     n_threads = min(n_threads, n_chunks)
 
-    # Each thread allocates its own buffers and the main thread sums them after
-    # the parallel region, so that the threads never wait for each other inside
-    # it, which scales badly with the number of threads.
-    centers_new_chunks = <floating **> calloc(n_threads, sizeof(floating *))
-    weight_in_clusters_chunks = <floating **> calloc(n_threads, sizeof(floating *))
-    if centers_new_chunks == NULL or weight_in_clusters_chunks == NULL:
-        free(centers_new_chunks)
-        free(weight_in_clusters_chunks)
-        raise MemoryError()
+    # Each thread allocates its own buffers, and they are summed after the
+    # parallel region, so that the threads never wait for each other inside it,
+    # which scales badly with the number of threads.
+    _alloc_thread_buffers_arrays(
+        &centers_new_chunks, &weight_in_clusters_chunks, n_threads)
 
     with nogil, parallel(num_threads=n_threads):
         thread_idx = omp_get_thread_num()
-        centers_new_chunk = NULL
-        weight_in_clusters_chunk = NULL
         if update_centers:
-            centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
-            weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
+            _alloc_thread_buffers(centers_new_chunks, weight_in_clusters_chunks,
+                                  thread_idx, n_clusters, n_features)
+        centers_new_chunk = centers_new_chunks[thread_idx]
+        weight_in_clusters_chunk = weight_in_clusters_chunks[thread_idx]
         pairwise_distances_chunk = <floating*> malloc(n_samples_chunk * n_clusters * sizeof(floating))
-        centers_new_chunks[thread_idx] = centers_new_chunk
-        weight_in_clusters_chunks[thread_idx] = weight_in_clusters_chunk
 
         for chunk_idx in prange(n_chunks, schedule='static'):
             start = chunk_idx * n_samples_chunk
@@ -315,22 +311,16 @@ def lloyd_iter_chunked_sparse(
     n_threads = min(n_threads, n_chunks)
 
     # Thread local buffers, see lloyd_iter_chunked_dense.
-    centers_new_chunks = <floating **> calloc(n_threads, sizeof(floating *))
-    weight_in_clusters_chunks = <floating **> calloc(n_threads, sizeof(floating *))
-    if centers_new_chunks == NULL or weight_in_clusters_chunks == NULL:
-        free(centers_new_chunks)
-        free(weight_in_clusters_chunks)
-        raise MemoryError()
+    _alloc_thread_buffers_arrays(
+        &centers_new_chunks, &weight_in_clusters_chunks, n_threads)
 
     with nogil, parallel(num_threads=n_threads):
         thread_idx = omp_get_thread_num()
-        centers_new_chunk = NULL
-        weight_in_clusters_chunk = NULL
         if update_centers:
-            centers_new_chunk = <floating*> calloc(n_clusters * n_features, sizeof(floating))
-            weight_in_clusters_chunk = <floating*> calloc(n_clusters, sizeof(floating))
-        centers_new_chunks[thread_idx] = centers_new_chunk
-        weight_in_clusters_chunks[thread_idx] = weight_in_clusters_chunk
+            _alloc_thread_buffers(centers_new_chunks, weight_in_clusters_chunks,
+                                  thread_idx, n_clusters, n_features)
+        centers_new_chunk = centers_new_chunks[thread_idx]
+        weight_in_clusters_chunk = weight_in_clusters_chunks[thread_idx]
 
         for chunk_idx in prange(n_chunks, schedule='static'):
             start = chunk_idx * n_samples_chunk

@@ -5,7 +5,7 @@ import numpy as np
 from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport sqrt
-from libc.stdlib cimport free
+from libc.stdlib cimport calloc, free
 from libc.string cimport memset
 
 from sklearn.utils.extmath import row_norms
@@ -318,6 +318,42 @@ cdef void _center_shift(
     for j in range(n_clusters):
         center_shift[j] = _euclidean_dense_dense(
             &centers_new[j, 0], &centers_old[j, 0], n_features, False)
+
+
+cdef int _alloc_thread_buffers_arrays(
+        floating ***centers_new_chunks,         # OUT
+        floating ***weight_in_clusters_chunks,  # OUT
+        int n_threads) except -1:
+    """Allocate the arrays of pointers to the buffers of each thread.
+
+    The pointers are NULL until each thread allocates its buffers with
+    `_alloc_thread_buffers` in the parallel region. `_reduce_thread_buffers`
+    frees the arrays and the buffers.
+    """
+    centers_new_chunks[0] = <floating **> calloc(n_threads, sizeof(floating *))
+    weight_in_clusters_chunks[0] = <floating **> calloc(n_threads, sizeof(floating *))
+    if centers_new_chunks[0] == NULL or weight_in_clusters_chunks[0] == NULL:
+        free(centers_new_chunks[0])
+        free(weight_in_clusters_chunks[0])
+        raise MemoryError()
+    return 0
+
+
+cdef void _alloc_thread_buffers(
+        floating **centers_new_chunks,         # INOUT
+        floating **weight_in_clusters_chunks,  # INOUT
+        int thread_idx,
+        int n_clusters,
+        int n_features) noexcept nogil:
+    """Allocate the zeroed buffers of the thread `thread_idx`.
+
+    Called by each thread in the parallel region, so that its buffers are first
+    touched by the thread that uses them, on its NUMA node.
+    """
+    centers_new_chunks[thread_idx] = <floating *> calloc(
+        n_clusters * n_features, sizeof(floating))
+    weight_in_clusters_chunks[thread_idx] = <floating *> calloc(
+        n_clusters, sizeof(floating))
 
 
 cdef void _reduce_thread_buffers(
