@@ -214,7 +214,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
             ravel = True
 
         copy = self.kernel == "precomputed"
-        self.dual_coef_ = _solve_cholesky_kernel(K, y, alpha, sample_weight, copy)
+        self.dual_coef_, _ = _solve_cholesky_kernel(K, y, alpha, sample_weight, copy)
         if ravel:
             self.dual_coef_ = self.dual_coef_.ravel()
 

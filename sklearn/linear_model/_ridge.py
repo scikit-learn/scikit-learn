@@ -751,9 +751,7 @@ def _ridge_regression(
         if n_features > n_samples:
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
-                dual_coef, solver = _solve_cholesky_kernel(
-                    K, y, alpha, return_solver=True
-                )
+                dual_coef, solver = _solve_cholesky_kernel(K, y, alpha)
 
                 coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
             except linalg.LinAlgError:
