@@ -1176,7 +1176,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     solver_ : str
         The solver that was used at fit time by the computational
-        routines.
+        routines. This can differ from the `solver` parameter when a
+        fallback occurs, for example "lstsq" if the "cholesky" solver
+        fails on a singular matrix. It is therefore not limited to the
+        values accepted by `solver`.
 
         .. versionadded:: 1.5
 
