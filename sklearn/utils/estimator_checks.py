@@ -14,9 +14,9 @@ from functools import partial, wraps
 from inspect import signature
 from io import BytesIO
 from numbers import Integral, Real
+from pickle import Pickler
 from typing import Callable, Literal
 
-import cloudpickle
 import joblib
 import numpy as np
 from scipy import sparse
@@ -5769,7 +5769,7 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         estimator.fit(X, y)
 
 
-class _HashingPickler(cloudpickle.Pickler):
+class _HashingPickler(Pickler):
     """Add some extra pickling logic to work around edge cases."""
 
     def reducer_override(self, obj: object) -> tuple:
