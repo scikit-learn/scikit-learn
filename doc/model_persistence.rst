@@ -73,6 +73,21 @@ The other solutions assume you absolutely trust the source of the file to be
 loaded, as they are all susceptible to arbitrary code execution upon loading
 the persisted file since they all use the pickle protocol under the hood.
 
+Whichever solution you use, the fitted attributes of the loaded model are not
+verified when loading it. Some of them are read by compiled code without bounds
+checking, e.g. the node arrays of tree-based models, so a corrupted file can
+make the model crash or hang at prediction time instead of raising an
+exception. :func:`~sklearn.utils.validate_model` checks that the fitted state
+of a loaded model is consistent, and raises a `ValueError` otherwise::
+
+    from sklearn.utils import validate_model
+
+    validate_model(loaded_model)
+
+This check runs after the file is loaded, so it cannot protect against code
+executed while loading a pickle file: it complements, and does not replace,
+loading the file with :mod:`skops.io`.
+
 3. Do you care about the performance of loading the model, and sharing it
    between processes where a memory mapped object on disk is beneficial?
 

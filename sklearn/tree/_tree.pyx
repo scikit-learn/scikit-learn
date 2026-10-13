@@ -909,6 +909,22 @@ cdef class Tree:
         memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
                self.capacity * self.value_stride * sizeof(float64_t))
 
+    def check_state(self):
+        """Check that the node array is consistent and safe to traverse.
+
+        The traversals in `apply`, `decision_path` and
+        `compute_feature_importances` read `left_child`, `right_child` and
+        `feature` without bounds checking. This raises a `ValueError` if a
+        corrupted node array (for instance loaded from a damaged persisted
+        model) would make them access memory out of bounds or loop forever.
+        See `_check_node_ndarray_values` for the exact invariants.
+        """
+        _check_node_ndarray_values(
+            self._get_node_ndarray(),
+            n_features=self.n_features,
+            max_depth=self.max_depth,
+        )
+
     cdef int _resize(self, intp_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
@@ -1659,6 +1675,110 @@ def _check_node_ndarray(node_ndarray, expected_dtype):
         )
 
     return node_ndarray.astype(expected_dtype, casting="same_kind")
+
+
+def _check_node_ndarray_values(node_ndarray, n_features, max_depth):
+    """Validate the values of a node array.
+
+    `_check_node_ndarray` only validates the structure of the array; this
+    function validates the node values so that a corrupted node array cannot
+    make the cython traversals access memory out of bounds or loop forever
+    (see `Tree.check_state`).
+
+    The traversals treat a node as a leaf iff `left_child == TREE_LEAF`, and
+    only dereference `left_child` / `right_child` (as node ids) and `feature`
+    (as a column index into `X` and into the feature importances) for the
+    remaining, internal nodes. We therefore only check those fields on
+    internal nodes, and require each child to be strictly greater than the
+    node's own index: this keeps children in `[0, n_nodes)` and, matching the
+    `children_left[i] > i` invariant documented on `Tree`, rules out cycles
+    that would make the traversal loop forever. Requiring on top of that that
+    a node is the child of at most one node makes the array a tree rather
+    than a DAG, which bounds the number of paths the traversals that visit
+    both children have to walk.
+
+    `max_depth` is not a node value, but it sizes a buffer that
+    `decision_path` writes node ids into, so it is checked against the node
+    array here as well.
+    """
+    n_nodes = node_ndarray.shape[0]
+    left_child = node_ndarray["left_child"]
+    right_child = node_ndarray["right_child"]
+    feature = node_ndarray["feature"]
+    node_index = np.arange(n_nodes)
+
+    # A node is internal iff its `left_child` is not the `TREE_LEAF` sentinel;
+    # only internal nodes have the fields below dereferenced.
+    is_internal = left_child != TREE_LEAF
+
+    # Each child must be a node id strictly greater than the own index.
+    for field, children in (("left_child", left_child), ("right_child", right_child)):
+        if np.any(is_internal & ((children <= node_index) | (children >= n_nodes))):
+            raise ValueError(
+                f"node array has out-of-bounds '{field}' values: every internal "
+                f"node's '{field}' must be a node id greater than the node's own "
+                f"index and less than {n_nodes} (or {TREE_LEAF} for a leaf), got "
+                f"{children}"
+            )
+
+    # `feature` is dereferenced as a column index into `X` and into the
+    # feature importances.
+    if np.any(is_internal & ((feature < 0) | (feature >= n_features))):
+        raise ValueError(
+            f"node array has out-of-bounds 'feature' values: every internal "
+            f"node's 'feature' must be in [0, {n_features}), got {feature}"
+        )
+
+    # `compute_partial_dependence` visits both children of an internal node and
+    # sizes its stacks from the node count, so a node reachable through several
+    # paths makes it do work exponential in the number of nodes.
+    children = np.concatenate((left_child[is_internal], right_child[is_internal]))
+    if children.size and np.bincount(children, minlength=n_nodes).max() > 1:
+        raise ValueError(
+            "node array is inconsistent: expected each node to be the child of "
+            "at most one node, got several nodes sharing a child"
+        )
+
+    _check_max_depth(left_child, right_child, max_depth)
+
+
+def _check_max_depth(const intp_t[:] left_child, const intp_t[:] right_child,
+                     max_depth):
+    """Validate `max_depth` against the actual depth of the node array.
+
+    `decision_path` sizes its `indices` buffer as `n_samples * (1 + max_depth)`
+    and writes one entry per node it walks through, without bounds checking, so
+    a `max_depth` smaller than the real depth of the tree overflows that buffer.
+
+    Children are strictly greater than their parent (enforced by the caller), so
+    every node comes after all of its parents and a single forward pass gives
+    each node its final depth.
+    """
+    cdef:
+        intp_t n_nodes = left_child.shape[0]
+        intp_t[::1] depth = np.zeros(n_nodes, dtype=np.intp)
+        intp_t i, child_depth, max_depth_seen = 0
+
+    with nogil:
+        for i in range(n_nodes):
+            if depth[i] > max_depth_seen:
+                max_depth_seen = depth[i]
+
+            if left_child[i] == _TREE_LEAF:
+                continue
+
+            child_depth = depth[i] + 1
+            if depth[left_child[i]] < child_depth:
+                depth[left_child[i]] = child_depth
+            if depth[right_child[i]] < child_depth:
+                depth[right_child[i]] = child_depth
+
+    if max_depth < max_depth_seen:
+        raise ValueError(
+            f"node array is inconsistent: max_depth "
+            f"({max_depth}) is smaller than the depth of the node array "
+            f"({max_depth_seen})"
+        )
 
 
 # =============================================================================

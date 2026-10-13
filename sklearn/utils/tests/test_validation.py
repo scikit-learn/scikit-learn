@@ -2,6 +2,7 @@
 
 import numbers
 import re
+import tracemalloc
 import warnings
 from itertools import product
 from operator import itemgetter
@@ -90,6 +91,7 @@ from sklearn.utils.validation import (
     column_or_1d,
     has_fit_parameter,
     validate_data,
+    validate_model,
 )
 
 
@@ -2558,3 +2560,139 @@ def test_indexable_return_type(constructor_name):
         expected_type = type(X)
     X = indexable(X)[0]
     assert isinstance(X, expected_type)
+
+
+class _ValidatedEstimator(BaseEstimator):
+    """Estimator recording whether `__sklearn_validate_model__` was called."""
+
+    def __init__(self, fail=False):
+        self.fail = fail
+
+    def fit(self, X, y=None):
+        self.fitted_ = True
+        return self
+
+    def __sklearn_validate_model__(self):
+        self.validated_ = True
+        if self.fail:
+            raise ValueError("invalid state")
+
+
+def test_validate_model():
+    """`validate_model` calls `__sklearn_validate_model__` and propagates errors."""
+    est = _ValidatedEstimator()
+    validate_model(est)
+    assert est.validated_
+
+    with pytest.raises(ValueError, match="invalid state"):
+        validate_model(_ValidatedEstimator(fail=True))
+
+    # Estimators without the method, fitted or not, and non-estimators pass.
+    validate_model(BaseEstimator())
+    validate_model(KNeighborsClassifier().fit([[0], [1]], [0, 1]))
+    validate_model(np.arange(3))
+
+    with pytest.raises(TypeError, match="is a class, not an instance"):
+        validate_model(_ValidatedEstimator)
+
+
+def test_validate_model_nested():
+    """`validate_model` checks estimators nested in attributes and containers."""
+
+    class Outer(BaseEstimator):
+        def __init__(self, inner=None):
+            self.inner = inner
+
+    leaves = [_ValidatedEstimator() for _ in range(7)]
+    outer = Outer(inner=leaves[0])
+    outer.estimator_ = leaves[1]
+    outer.steps_ = [("name", leaves[2])]
+    outer.mapping_ = {"key": leaves[3]}
+    outer.estimators_ = np.array([[leaves[4], leaves[5]]], dtype=object)
+    outer.nested_ = (Outer(inner=leaves[6]),)
+    # Attributes that hold no estimator are walked through or skipped.
+    outer.coef_ = np.arange(3.0)
+    outer.names_ = np.array(["a", "b"], dtype=object)
+    outer.vocabulary_ = {"a": 0, "b": 1}
+    # Reference cycles, through an estimator or through a bare container, must
+    # not make the walk loop forever.
+    outer.self_ = outer
+    outer.cycle_ = cycle = []
+    cycle.append(cycle)
+
+    validate_model(outer)
+    assert all(hasattr(leaf, "validated_") for leaf in leaves)
+
+    leaves[5].fail = True
+    with pytest.raises(ValueError, match="invalid state"):
+        validate_model(outer)
+
+
+class _SynthesizesAttributes:
+    """Answers every lookup of a missing attribute with a new instance.
+
+    Mimics `unittest.mock.Mock` and lazy proxies: a walk probing such an
+    object with `hasattr` creates attributes forever.
+    """
+
+    def __init__(self):
+        self.lookups = 0
+
+    def __getattr__(self, name):
+        self.lookups += 1
+        return _SynthesizesAttributes()
+
+
+class _RaisesOnLookup:
+    """A `__getattr__` raising the wrong exception type for missing names."""
+
+    def __getattr__(self, name):
+        raise KeyError(name)
+
+
+def test_validate_model_looks_attributes_up_statically():
+    """`validate_model` never runs `__getattr__` on the objects it meets.
+
+    Non-regression test for a walk probing objects with `hasattr`, which made
+    it create attributes endlessly on objects synthesizing them on access
+    (e.g. `unittest.mock.Mock`), and let a `__getattr__` raising anything but
+    `AttributeError` escape.
+    """
+    est = BaseEstimator()
+    est.synthesizing_ = _SynthesizesAttributes()
+    est.raising_ = _RaisesOnLookup()
+    validate_model(est)
+    assert est.synthesizing_.lookups == 0
+
+    # A method assigned on the instance rather than the class still counts.
+    def mark_validated():
+        leaf.validated_ = True
+
+    est.leaf_ = leaf = _RaisesOnLookup()
+    leaf.__dict__["__sklearn_validate_model__"] = mark_validated
+    validate_model(est)
+    assert leaf.validated_
+
+
+def test_validate_model_does_not_copy_large_attributes():
+    """`validate_model` walks large containers lazily and tracks few objects.
+
+    Non-regression test for the walk recording every visited leaf and copying
+    every container it went through, which cost memory linear in the size of
+    e.g. the vocabulary of a text vectorizer.
+    """
+    est = BaseEstimator()
+    est.vocabulary_ = {f"w{i}": i for i in range(200_000)}
+    est.categories_ = [np.array([f"c{i}" for i in range(100_000)], dtype=object)]
+    est.estimator_ = _ValidatedEstimator()
+
+    tracemalloc.start()
+    try:
+        validate_model(est)
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+
+    assert est.estimator_.validated_
+    # A copy of either container, or an id per leaf, would take megabytes.
+    assert peak < 100_000

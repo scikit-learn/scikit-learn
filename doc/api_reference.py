@@ -1213,6 +1213,7 @@ API_REFERENCE = {
                     "check_consistent_length",
                     "check_random_state",
                     "check_scalar",
+                    "validate_model",
                     "validation.check_is_fitted",
                     "validation.check_memory",
                     "validation.check_symmetric",
