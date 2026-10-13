@@ -65,7 +65,7 @@ def _params_html_repr(params):
             style="anchor-name: --doc-link-{param_name};"
             rel="noreferrer" target="_blank" href="{link}">
             {param_name}
-            <span class="param-doc-description"
+            <span class="param-doc-description" tabindex="-1"
             style="position-anchor: --doc-link-{param_name};">
             {param_description}</span>
         </a>

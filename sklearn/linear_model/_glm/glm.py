@@ -69,8 +69,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
-    .. versionadded:: 0.23
-
     Parameters
     ----------
     alpha : float, default=1
@@ -596,8 +594,6 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
     Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
-    .. versionadded:: 0.23
-
     Parameters
     ----------
     alpha : float, default=1
@@ -715,8 +711,6 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -793,8 +787,6 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     This regressor uses the 'log' link function.
 
     Read more in the :ref:`User Guide <Generalized_linear_models>`.
-
-    .. versionadded:: 0.23
 
     Parameters
     ----------
@@ -913,8 +905,6 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     n_iter_ : int
         Actual number of iterations used in the solver.
 
@@ -985,8 +975,6 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     ``power`` parameter, which determines the underlying distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_models>`.
-
-    .. versionadded:: 0.23
 
     Parameters
     ----------
@@ -1136,8 +1124,6 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

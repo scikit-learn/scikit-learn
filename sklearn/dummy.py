@@ -52,8 +52,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
-    .. versionadded:: 0.13
-
     Parameters
     ----------
     strategy : {"most_frequent", "prior", "stratified", "uniform", \
@@ -82,10 +80,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         * "constant": always predicts a constant label that is provided by
           the user. This is useful for metrics that evaluate a non-majority
           class.
-
-          .. versionchanged:: 0.24
-             The default value of `strategy` has changed to "prior" in version
-             0.24.
 
     random_state : int, RandomState instance or None, default=None
         Controls the randomness to generate the predictions when
@@ -466,8 +460,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
-    .. versionadded:: 0.13
-
     Parameters
     ----------
     strategy : {"mean", "median", "quantile", "constant"}, default="mean"
@@ -632,8 +624,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return_std : bool, default=False
             Whether to return the standard deviation of posterior prediction.
             All zeros in this case.
-
-            .. versionadded:: 0.20
 
         Returns
         -------

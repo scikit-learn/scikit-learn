@@ -101,7 +101,7 @@ model
 # -------------------------------------------
 #
 # We tune the ``gamma`` and ``n_components`` of the Nystroem approximation and
-# the ``C`` regularization of the logistic regression with a successive halving
+# the ``alpha`` regularization of the logistic regression with a successive halving
 # search (:class:`~sklearn.model_selection.HalvingRandomSearchCV`). The search
 # minimizes the log loss (``neg_log_loss``) and screens many candidates on small
 # training subsets before investing compute in the most promising ones. We set
@@ -119,7 +119,7 @@ t0 = time()
 param_distributions = {
     "nystroem__gamma": loguniform(1e-4, 1e-1),
     "nystroem__n_components": randint(50, 200),
-    "logreg__C": loguniform(1e-2, 1e2),
+    "logreg__alpha": loguniform(1e-2, 1e2),
 }
 clf = HalvingRandomSearchCV(
     model,
