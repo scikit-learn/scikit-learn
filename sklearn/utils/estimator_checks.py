@@ -2071,6 +2071,27 @@ def check_complex_data(name, estimator_orig):
         estimator.fit(X, y)
 
 
+_POST_FIT_METHODS = [
+    "apply",
+    "decision_function",
+    "decision_path",
+    "kneighbors",
+    "kneighbors_graph",
+    "predict",
+    "predict_joint_log_proba",
+    "predict_log_proba",
+    "predict_proba",
+    "radius_neighbors",
+    "score",
+    "score_samples",
+    "staged_predict",
+    "staged_predict_proba",
+    "transform",
+    # TODO figure out inputs
+    # "inverse_transform",
+]
+
+
 @ignore_warnings
 def check_dict_unchanged(name, estimator_orig):
     rnd = np.random.RandomState(0)
@@ -5781,21 +5802,12 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
     order to ensure thread safety.
     """
     estimator, X_train, y_train, X_test, y_test = _fit_estimator(estimator_orig)
-    check_methods = [
-        "transform",
-        "predict",
-        "decision_function",
-        "predict_proba",
-        "predict_log_proba",
-        "score",
-        "score_samples",
-    ]
 
     before_hash = _object_hash(estimator)
     attr_hashes = {
         key: _object_hash(value) for (key, value) in estimator.__dict__.items()
     }
-    for method_name in check_methods:
+    for method_name in _POST_FIT_METHODS:
         if not hasattr(estimator, method_name):
             continue
         method = getattr(estimator, method_name)
