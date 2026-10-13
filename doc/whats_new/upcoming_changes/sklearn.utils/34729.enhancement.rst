@@ -1,0 +1,5 @@
+- Added a new check for estimators
+  :func:`utils.estimator_checks.check_estimator_internal_state_unchanged` that
+  validates more thoroughly that estimation methods don't change the estimator's
+  internal state. This is important to ensure thread safety.
+  By :user:`Itamar Turner-Trauring <itamarst>`.
