@@ -161,6 +161,7 @@ for i, c in enumerate(ts.classes_):
         y == c,
         clf.predict_proba(X)[:, i],
         n_bins=5,
+        strategy="uniform",
         name="Uncalibrated",
         ax=axes[i],
         marker="s",
@@ -169,6 +170,7 @@ for i, c in enumerate(ts.classes_):
         y == c,
         ts.predict_proba(X)[:, i],
         n_bins=5,
+        strategy="uniform",
         name="Temperature scaling",
         ax=axes[i],
         marker="o",
@@ -177,6 +179,7 @@ for i, c in enumerate(ts.classes_):
         y == c,
         sig.predict_proba(X)[:, i],
         n_bins=5,
+        strategy="uniform",
         name="Sigmoid",
         ax=axes[i],
         marker="v",
@@ -226,7 +229,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-clf = make_pipeline(StandardScaler(), LogisticRegression(C=10))
+clf = make_pipeline(StandardScaler(), LogisticRegression(alpha=1e-1))
 
 # %%
 # Expand the estimator diagram below by clicking on "LogisticRegression" and then on
