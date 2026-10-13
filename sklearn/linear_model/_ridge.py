@@ -299,7 +299,7 @@ def _solve_cholesky_kernel(
 
         result = dual_coefs.T
 
-    return (result, solver) if return_solver else result
+    return (result, solver)
 
 
 def _solve_svd(X, y, alpha, xp=None):
