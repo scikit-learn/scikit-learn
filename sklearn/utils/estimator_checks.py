@@ -5827,8 +5827,19 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
         after_attr_hashes = {
             key: _object_hash(value) for (key, value) in estimator.__dict__.items()
         }
+        missing = object()
+        mismatching_attrs = {
+            k
+            for k in after_attr_hashes
+            if attr_hashes.get(k, missing) != after_attr_hashes[k]
+        }
+        mismatching_attrs |= {
+            k
+            for k in attr_hashes
+            if after_attr_hashes.get(k, missing) != attr_hashes[k]
+        }
         err_message = (
             f"Hash of {estimator} changed when running {method_name}(),"
-            + f" {attr_hashes} != {after_attr_hashes}"
+            + f" mismatching attributes are {mismatching_attrs}"
         )
         assert after_hash == before_hash, err_message
