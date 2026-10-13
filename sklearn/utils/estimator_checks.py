@@ -11,7 +11,6 @@ import warnings
 from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
-from hashlib import md5
 from inspect import signature
 from io import BytesIO
 from numbers import Integral, Real
@@ -5773,7 +5772,7 @@ def _object_hash(obj: object) -> bytes:
     """
     f = BytesIO()
     _HashingPickler(f).dump(obj)
-    return md5(f.getvalue()).digest()
+    return f.getvalue()
 
 
 def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
