@@ -226,6 +226,7 @@ def _kmeans_plusplus_trials_dense(
 
     for block_idx in prange(n_blocks, nogil=True, num_threads=n_blocks,
                             schedule='static'):
+        # Samples X[start:end] of the chunks first_chunk to last_chunk - 1
         first_chunk = block_idx * n_chunks // n_blocks
         last_chunk = (block_idx + 1) * n_chunks // n_blocks
         start = first_chunk * chunk_size
@@ -240,8 +241,10 @@ def _kmeans_plusplus_trials_dense(
             start = chunk_idx * chunk_size
             end = min(start + chunk_size, n_samples)
             for j in range(n_trials):
+                # pot = sum over the chunk of sample_weight[i] * trials_dist_sq[j, i]
                 pot = 0.0
                 for i in range(start, end):
+                    # dist = ||x||² - 2 x.c + ||c||²
                     norms = x_squared_norms[i] + candidates_squared_norms[j]
                     dist = trials_dist_sq[j, i] + norms
                     if dist < threshold * norms:
@@ -249,6 +252,7 @@ def _kmeans_plusplus_trials_dense(
                         # relative error is a few eps, whatever the norms.
                         dist = _euclidean_dense_dense(
                             &X[i, 0], &candidates[j, 0], n_features, True)
+                    # trials_dist_sq[j, i] = min(closest_dist_sq[i], dist)
                     if closest_dist_sq[i] < dist:
                         dist = closest_dist_sq[i]
                     trials_dist_sq[j, i] = dist
@@ -296,7 +300,8 @@ def _kmeans_plusplus_trials_sparse(
                 trials_chunk_pot[j, chunk_idx] = 0.0
             for i in range(start, end):
                 for j in range(n_trials):
-                    # ||c||² + sum over the non-zeros of x of (x_k - c_k)² - c_k²
+                    # dist = ||x - c||² = ||c||² + sum over the non-zeros of x of
+                    # (x_k - c_k)² - c_k²
                     dist = candidates_squared_norms[j]
                     for k in range(X_indptr[i], X_indptr[i + 1]):
                         c_k = candidates[j, X_indices[k]]
@@ -304,12 +309,16 @@ def _kmeans_plusplus_trials_sparse(
                         dist = dist + diff * diff - c_k * c_k
                     norms = x_squared_norms[i] + candidates_squared_norms[j]
                     if dist < threshold * norms:
+                        # Same direct computation as for dense input, with
+                        # x_dense = X[i].toarray()
                         for k in range(X_indptr[i], X_indptr[i + 1]):
                             x_dense[X_indices[k]] = X_data[k]
                         dist = _euclidean_dense_dense(
                             x_dense, &candidates[j, 0], n_features, True)
+                        # Reset x_dense to zeros for the next sample
                         for k in range(X_indptr[i], X_indptr[i + 1]):
                             x_dense[X_indices[k]] = 0.0
+                    # trials_dist_sq[j, i] = min(closest_dist_sq[i], dist)
                     if closest_dist_sq[i] < dist:
                         dist = closest_dist_sq[i]
                     trials_dist_sq[j, i] = dist
