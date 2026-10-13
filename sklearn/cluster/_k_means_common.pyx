@@ -60,18 +60,24 @@ def _euclidean_dense_dense_wrapper(
 cdef floating _euclidean_sparse_dense(
         const floating[::1] a_data,  # IN
         const int[::1] a_indices,    # IN
+        int a_start,
+        int a_end,
         const floating[::1] b,       # IN
         floating b_squared_norm,
         bint squared
 ) noexcept nogil:
-    """Euclidean distance between a sparse and b dense"""
+    """Euclidean distance between a sparse and b dense
+
+    The non-zero values of a are a_data[a_start:a_end], at the indices
+    a_indices[a_start:a_end]. They are passed as indices because slicing
+    memoryviews in a parallel region makes Cython take the GIL in every thread.
+    """
     cdef:
-        int nnz = a_indices.shape[0]
         int i
         floating tmp, bi
         floating result = 0.0
 
-    for i in range(nnz):
+    for i in range(a_start, a_end):
         bi = b[a_indices[i]]
         tmp = a_data[i] - bi
         result += tmp * tmp - bi * bi
@@ -93,7 +99,7 @@ def _euclidean_sparse_dense_wrapper(
 ):
     """Wrapper of _euclidean_sparse_dense for testing purpose"""
     return _euclidean_sparse_dense(
-        a_data, a_indices, b, b_squared_norm, squared)
+        a_data, a_indices, 0, a_indices.shape[0], b, b_squared_norm, squared)
 
 
 cpdef floating _inertia_dense(
@@ -161,8 +167,7 @@ cpdef floating _inertia_sparse(
         j = labels[i]
         if single_label < 0 or single_label == j:
             sq_dist = _euclidean_sparse_dense(
-                X_data[X_indptr[i]: X_indptr[i + 1]],
-                X_indices[X_indptr[i]: X_indptr[i + 1]],
+                X_data, X_indices, X_indptr[i], X_indptr[i + 1],
                 centers[j], centers_squared_norms[j], True)
             inertia += sq_dist * sample_weight[i]
 
@@ -244,8 +249,7 @@ cpdef void _relocate_empty_clusters_sparse(
     for i in range(n_samples):
         j = labels[i]
         distances[i] = _euclidean_sparse_dense(
-            X_data[X_indptr[i]: X_indptr[i + 1]],
-            X_indices[X_indptr[i]: X_indptr[i + 1]],
+            X_data, X_indices, X_indptr[i], X_indptr[i + 1],
             centers_old[j], centers_squared_norms[j], True)
 
     if np.max(distances) == 0:
