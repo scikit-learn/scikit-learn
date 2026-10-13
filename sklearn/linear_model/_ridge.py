@@ -235,7 +235,7 @@ def _solve_cholesky(X, y, alpha):
 
 
 def _solve_cholesky_kernel(
-    K, y, alpha, sample_weight=None, copy=False, return_solver=False
+    K, y, alpha, sample_weight=None, copy=False
 ):
     # dual_coef = inv(X X^t + alpha*Id) y
     n_samples = K.shape[0]
