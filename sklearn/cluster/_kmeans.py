@@ -63,18 +63,6 @@ from sklearn.utils.validation import (
 # Initialization heuristic
 
 
-def _sum_duplicates(X):
-    """Sum the duplicate entries of a sparse X, without modifying it in place.
-
-    `row_norms` and the Cython kernels iterate over the stored entries of each row
-    and assume that each column appears at most once.
-    """
-    if sp.issparse(X) and not X.has_canonical_format:
-        X = X.copy()
-        X.sum_duplicates()
-    return X
-
-
 @validate_params(
     {
         "X": ["array-like", "sparse matrix"],
@@ -167,7 +155,6 @@ def kmeans_plusplus(
         order="C",
         accept_large_sparse=False,
     )
-    X = _sum_duplicates(X)
     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
     if X.shape[0] < n_clusters:
@@ -1032,7 +1019,7 @@ class _BaseKMeans(
             order="C",
             accept_large_sparse=False,
         )
-        return _sum_duplicates(X)
+        return X
 
     def _init_centroids(
         self,
@@ -1535,7 +1522,6 @@ class KMeans(_BaseKMeans):
             copy=self.copy_x,
             accept_large_sparse=False,
         )
-        X = _sum_duplicates(X)
 
         self._check_params_vs_input(X)
 
@@ -2148,7 +2134,6 @@ class MiniBatchKMeans(_BaseKMeans):
             order="C",
             accept_large_sparse=False,
         )
-        X = _sum_duplicates(X)
 
         self._check_params_vs_input(X)
         random_state = check_random_state(self.random_state)
@@ -2321,7 +2306,6 @@ class MiniBatchKMeans(_BaseKMeans):
             accept_large_sparse=False,
             reset=not has_centers,
         )
-        X = _sum_duplicates(X)
 
         self._random_state = getattr(
             self, "_random_state", check_random_state(self.random_state)
