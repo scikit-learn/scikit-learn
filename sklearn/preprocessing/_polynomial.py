@@ -968,6 +968,11 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         )
         self._unique_knot_mask = n_unique_knots == 1
 
+        # Make sure the array passed to BSpline.construct_fast() is contiguous,
+        # to ensure no mutation happens as a side-effect. Without this
+        # `check_estimator_internal_state_unchanged_by_inference()` fails.
+        knots = check_array(knots, order="F")
+
         bsplines = [
             BSpline.construct_fast(
                 knots[:, i], coef, self.degree, extrapolate=extrapolate
