@@ -2338,3 +2338,137 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
 
     assert_allclose(model.coef_, expected_coef, rtol=5e-3)
     assert_allclose(model.offset_, expected_offset, rtol=1e-2)
+
+
+###############################################################################
+# GLM loss tests (Poisson, Gamma, Tweedie)
+
+
+@pytest.mark.parametrize("loss", ["poisson", "gamma"])
+def test_sgd_regressor_glm_losses_fit(loss):
+    """poisson and gamma losses learn a log-linear model."""
+    rng = np.random.RandomState(42)
+    n, p = 500, 5
+    X = rng.randn(n, p)
+    coef_true = 0.5 * rng.randn(p)
+    y = np.exp(X @ coef_true)
+
+    reg = linear_model.SGDRegressor(
+        loss=loss,
+        learning_rate="constant",
+        eta0=0.005,
+        max_iter=300,
+        random_state=42,
+        fit_intercept=True,
+        tol=None,
+    )
+    reg.fit(X, y)
+    y_pred = np.exp(reg.predict(X))
+    assert np.all(np.isfinite(y_pred))
+    ss_res = np.sum((y - y_pred) ** 2)
+    ss_tot = np.sum((y - y.mean()) ** 2)
+    assert 1 - ss_res / ss_tot > 0.3
+
+
+def test_sgd_regressor_tweedie_loss():
+    """tweedie loss accepts power and learns a log-linear model."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(200, 4)
+    y = np.exp(X @ rng.randn(4))
+
+    for power in [1.2, 1.5, 1.9]:
+        reg = linear_model.SGDRegressor(
+            loss="tweedie",
+            power=power,
+            learning_rate="constant",
+            eta0=0.005,
+            max_iter=100,
+            random_state=0,
+            tol=None,
+        )
+        reg.fit(X, y)
+        assert reg.power == power
+        assert np.all(np.isfinite(reg.predict(X)))
+
+
+def test_sgd_regressor_tweedie_invalid_power():
+    """TweedieLoss raises ValueError for power outside (1, 2)."""
+    for bad_power in [0.5, 1.0, 2.0, 3.0]:
+        reg = linear_model.SGDRegressor(loss="tweedie", power=bad_power)
+        with pytest.raises(ValueError, match="power"):
+            reg.fit([[1.0], [2.0]], [1.0, 2.0])
+
+
+@pytest.mark.parametrize("loss", ["poisson", "gamma", "tweedie"])
+def test_sgd_regressor_glm_partial_fit(loss):
+    """GLM losses work with partial_fit for incremental learning."""
+    X_pf = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]])
+    y_pf = np.array([2.0, 3.0, 5.0])
+    reg = linear_model.SGDRegressor(loss=loss, max_iter=1, random_state=0, tol=None)
+    reg.partial_fit(X_pf, y_pf)
+    reg.partial_fit(X_pf, y_pf)
+    assert hasattr(reg, "coef_")
+    assert reg.coef_.shape == (2,)
+
+
+def test_sgd_regressor_glm_loss_functions():
+    """poisson, gamma, tweedie are registered in BaseSGDRegressor.loss_functions."""
+    for name in ("poisson", "gamma", "tweedie"):
+        assert name in linear_model.SGDRegressor.loss_functions
+
+
+def test_loss_poisson():
+    """PoissonLoss: verify loss and gradient against closed-form values."""
+    loss = sgd_fast.PoissonLoss()
+    import math
+
+    cases = [
+        # (p, y, expected_loss, expected_dloss)
+        # loss = exp(p) - y*p,  dloss = exp(p) - y
+        (0.0, 1.0, 1.0 - 0.0, math.exp(0.0) - 1.0),  # exp(0)-1*0=1, grad=1-1=0
+        (0.0, 2.0, 1.0 - 0.0, math.exp(0.0) - 2.0),
+        (1.0, 1.0, math.exp(1.0) - 1.0, math.exp(1.0) - 1.0),
+        (0.0, 0.0, 1.0, 1.0),
+    ]
+    _test_loss_common(loss, cases)
+
+
+def test_loss_gamma():
+    """GammaLoss: verify loss and gradient against closed-form values."""
+    loss = sgd_fast.GammaLoss()
+    import math
+
+    cases = [
+        # loss = p + y*exp(-p),  dloss = 1 - y*exp(-p)
+        (0.0, 1.0, 0.0 + 1.0 * 1.0, 1.0 - 1.0 * 1.0),
+        (1.0, 1.0, 1.0 + math.exp(-1.0), 1.0 - math.exp(-1.0)),
+        (0.0, 2.0, 0.0 + 2.0, 1.0 - 2.0),
+    ]
+    _test_loss_common(loss, cases)
+
+
+def test_loss_tweedie():
+    """TweedieLoss: verify loss and gradient for power=1.5."""
+    import math
+
+    power = 1.5
+    loss = sgd_fast.TweedieLoss(power)
+
+    def expected_loss(p, y):
+        return math.exp(p * (2 - power)) / (2 - power) - y * math.exp(
+            p * (1 - power)
+        ) / (1 - power)
+
+    def expected_dloss(p, y):
+        return math.exp(p * (2 - power)) - y * math.exp(p * (1 - power))
+
+    for p, y in [(0.0, 1.0), (1.0, 2.0), (0.5, 3.0)]:
+        cases = [(p, y, expected_loss(p, y), expected_dloss(p, y))]
+        _test_loss_common(loss, cases)
+
+
+def test_loss_tweedie_pickle():
+    """TweedieLoss survives a pickle round-trip."""
+    loss = sgd_fast.TweedieLoss(1.7)
+    loss2 = pickle.loads(pickle.dumps(loss))
+    assert loss2.power == loss.power
