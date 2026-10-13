@@ -92,18 +92,19 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 )
 
 
-def _check_solver(solver, penalty, dual, warn_dual=False):
-    if solver == "liblinear":
+def _check_solver(solver, penalty, dual, warn_depr=False):
+    if solver == "liblinear" and warn_depr:
         warnings.warn(
             (
                 "The solver 'liblinear' was deprecated in version 1.10 and will "
-                "be removed in 1.12."
+                "be removed in 1.12. For 'l1_ratio > 0', the new solvers 'newton-cd' "
+                "and 'newton-cd-gram' are good replacements."
             ),
             FutureWarning,
         )
     if isinstance(dual, str) and dual == "deprecated":
         dual = False
-    elif warn_dual:
+    elif warn_depr:
         warnings.warn(
             (
                 "The parameter 'dual' was deprecated in version 1.10 and will "
@@ -1291,8 +1292,7 @@ class LogisticRegression(
           categorical features with rare categories. Be aware that the memory usage
           of this solver has a quadratic dependency on `n_features * n_classes`
           because it explicitly computes the full Hessian matrix.
-        - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-          and 'saga' are faster for large ones;
+        - For very large datasets 'sag' and 'saga' are a good choice.
         - 'liblinear' can only handle binary classification by default. To apply a
           one-versus-rest scheme for the multiclass setting one can wrap it with the
           :class:`~sklearn.multiclass.OneVsRestClassifier`.
@@ -1604,7 +1604,7 @@ class LogisticRegression(
             )
             intercept_scaling = self.intercept_scaling
 
-        solver, dual = _check_solver(self.solver, penalty, self.dual, warn_dual=True)
+        solver, dual = _check_solver(self.solver, penalty, self.dual, warn_depr=True)
 
         if penalty != "elasticnet" and (
             self.l1_ratio is not None and 0 < self.l1_ratio < 1
@@ -2463,7 +2463,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
             intercept_scaling = self.intercept_scaling
 
-        solver, dual = _check_solver(self.solver, penalty, self.dual, warn_dual=True)
+        solver, dual = _check_solver(self.solver, penalty, self.dual, warn_depr=True)
 
         if penalty == "elasticnet":
             if (
