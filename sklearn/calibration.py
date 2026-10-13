@@ -41,6 +41,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._param_validation import (
     HasMethods,
+    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -1305,6 +1306,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         return tags
 
 
+# TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -1313,6 +1315,7 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         "n_bins": [
             Interval(Integral, 1, None, closed="left"),
             StrOptions({"cube_root"}),
+            Hidden(StrOptions({"warn"})),
         ],
         "strategy": [StrOptions({"uniform", "quantile"})],
     },
@@ -1323,7 +1326,7 @@ def calibration_curve(
     y_prob,
     *,
     pos_label=None,
-    n_bins=5,
+    n_bins="warn",
     strategy="uniform",
 ):
     """Compute true and predicted probabilities for a calibration curve.
@@ -1424,6 +1427,14 @@ def calibration_curve(
             f"Only binary classification is supported. Provided labels {labels}."
         )
     y_true = y_true == pos_label
+
+    # TODO(1.12): remove block, see PR #34326.
+    if n_bins == "warn":
+        warnings.warn(
+            "The default value of `n_bins` will change from 5 to 'cube_root' in 1.12.",
+            FutureWarning,
+        )
+        n_bins = 5
 
     if n_bins == "cube_root":
         n_bins = ceil(len(y_true) ** (1 / 3))
@@ -1591,6 +1602,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return self
 
+    # TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
     @classmethod
     def from_estimator(
         cls,
@@ -1598,7 +1610,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         X,
         y,
         *,
-        n_bins=5,
+        n_bins="warn",
         strategy="uniform",
         pos_label=None,
         name=None,
@@ -1697,7 +1709,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
-        >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
+        >>> disp = CalibrationDisplay.from_estimator(
+        ...     clf, X_test, y_test, n_bins='cube_root')
         >>> plt.show()
         """
         y_prob, pos_label, name = cls._validate_and_get_response_values(
@@ -1721,13 +1734,14 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             **kwargs,
         )
 
+    # TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
     @classmethod
     def from_predictions(
         cls,
         y_true,
         y_prob,
         *,
-        n_bins=5,
+        n_bins="warn",
         strategy="uniform",
         pos_label=None,
         name=None,
@@ -1821,7 +1835,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
-        >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
+        >>> disp = CalibrationDisplay.from_predictions(
+        ...     y_test, y_prob, n_bins='cube_root')
         >>> plt.show()
         """
         pos_label_validated, name = cls._validate_from_predictions_params(
