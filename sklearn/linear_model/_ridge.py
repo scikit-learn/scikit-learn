@@ -215,9 +215,9 @@ def _solve_lsqr(
 def _solve_cholesky(X, y, alpha, X_offset=None):
     # w = inv(X^t X + alpha*Id) * X.T y
     #
-    # If X_offset is given, X is assumed to *not* be centered (unlike y, which
-    # is always assumed centered) and the Gram matrix is corrected
-    # algebraically instead of materializing a centered copy of X:
+    # If X_offset is given, X is assumed to not be centered unlike y, which
+    # is always assumed centered. The Gram matrix of the centered Xc = X - X_offset
+    # is computed without materializing Xc, thereby saving a copy of X, as follows:
     #   Xc.T @ Xc = X.T @ X - n_samples * outer(X_offset, X_offset)
     # Xy needs no such correction: Xc.T @ yc = X.T @ yc - X_offset * yc.sum(0),
     # and yc.sum(0) is 0 because yc is centered.
