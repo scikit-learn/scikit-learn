@@ -4,7 +4,7 @@
 import numpy as np
 from cython cimport floating
 from cython.parallel cimport parallel, prange
-from libc.math cimport INFINITY, sqrt
+from libc.math cimport sqrt
 from libc.stdlib cimport calloc, free
 
 from sklearn.utils._cython_blas cimport _gemm
@@ -231,7 +231,7 @@ def _kmeans_plusplus_trials_dense(
         start = first_chunk * chunk_size
         end = min(last_chunk * chunk_size, n_samples)
 
-        # trials_dist_sq[:, start:end] = -2 candidates.X[start:end].T
+        # trials_dist_sq[:, start:end] = -2 candidates @ X[start:end].T
         _gemm(RowMajor, NoTrans, Trans, n_trials, end - start, n_features,
               -2.0, &candidates[0, 0], n_features, &X[start, 0], n_features,
               0.0, &trials_dist_sq[0, start], ld_trials)
@@ -245,6 +245,8 @@ def _kmeans_plusplus_trials_dense(
                     norms = x_squared_norms[i] + candidates_squared_norms[j]
                     dist = trials_dist_sq[j, i] + norms
                     if dist < threshold * norms:
+                        # The sum of squared differences has no cancellation: its
+                        # relative error is a few eps, whatever the norms.
                         dist = _euclidean_dense_dense(
                             &X[i, 0], &candidates[j, 0], n_features, True)
                     if closest_dist_sq[i] < dist:
@@ -303,7 +305,7 @@ def _kmeans_plusplus_trials_sparse(
                     norms = x_squared_norms[i] + candidates_squared_norms[j]
                     if dist < threshold * norms:
                         for k in range(X_indptr[i], X_indptr[i + 1]):
-                            x_dense[X_indices[k]] = x_dense[X_indices[k]] + X_data[k]
+                            x_dense[X_indices[k]] = X_data[k]
                         dist = _euclidean_dense_dense(
                             x_dense, &candidates[j, 0], n_features, True)
                         for k in range(X_indptr[i], X_indptr[i + 1]):
@@ -371,25 +373,6 @@ def _kmeans_plusplus_sample_candidates(
                     if cumsum >= rand_val:
                         break
             candidate_ids[j] = candidate
-
-
-def _kmeans_plusplus_best_candidate(const double[:, ::1] trials_chunk_pot):
-    """Index of the k-means++ candidate with the smallest potential."""
-    cdef:
-        int n_trials = trials_chunk_pot.shape[0]
-        int n_chunks = trials_chunk_pot.shape[1]
-        int best = 0
-        int j, chunk_idx
-        double pot, best_pot = INFINITY
-
-    with nogil:
-        for j in range(n_trials):
-            pot = 0.0
-            for chunk_idx in range(n_chunks):
-                pot += trials_chunk_pot[j, chunk_idx]
-            if pot < best_pot:
-                best, best_pot = j, pot
-    return best
 
 
 cpdef void _relocate_empty_clusters_dense(

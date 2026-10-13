@@ -22,7 +22,6 @@ from sklearn.cluster._k_means_common import (
     _inertia_dense,
     _inertia_sparse,
     _is_same_clustering,
-    _kmeans_plusplus_best_candidate,
     _kmeans_plusplus_sample_candidates,
     _kmeans_plusplus_trials_dense,
     _kmeans_plusplus_trials_sparse,
@@ -62,6 +61,18 @@ from sklearn.utils.validation import (
 
 ###############################################################################
 # Initialization heuristic
+
+
+def _sum_duplicates(X):
+    """Sum the duplicate entries of a sparse X, without modifying it in place.
+
+    `row_norms` and the Cython kernels iterate over the stored entries of each row
+    and assume that each column appears at most once.
+    """
+    if sp.issparse(X) and not X.has_canonical_format:
+        X = X.copy()
+        X.sum_duplicates()
+    return X
 
 
 @validate_params(
@@ -156,6 +167,7 @@ def kmeans_plusplus(
         order="C",
         accept_large_sparse=False,
     )
+    X = _sum_duplicates(X)
     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
     if X.shape[0] < n_clusters:
@@ -293,7 +305,7 @@ def _kmeans_plusplus(
         )
 
         # Decide which candidate is the best
-        best_candidate = _kmeans_plusplus_best_candidate(trials_chunk_pot[c % 2])
+        best_candidate = np.argmin(trials_chunk_pot[c % 2].sum(axis=1))
         closest_dist_sq = trials_dist_sq[c % 2, best_candidate]
         chunk_pot = trials_chunk_pot[c % 2, best_candidate]
 
@@ -1020,7 +1032,7 @@ class _BaseKMeans(
             order="C",
             accept_large_sparse=False,
         )
-        return X
+        return _sum_duplicates(X)
 
     def _init_centroids(
         self,
@@ -1523,6 +1535,7 @@ class KMeans(_BaseKMeans):
             copy=self.copy_x,
             accept_large_sparse=False,
         )
+        X = _sum_duplicates(X)
 
         self._check_params_vs_input(X)
 
@@ -2135,6 +2148,7 @@ class MiniBatchKMeans(_BaseKMeans):
             order="C",
             accept_large_sparse=False,
         )
+        X = _sum_duplicates(X)
 
         self._check_params_vs_input(X)
         random_state = check_random_state(self.random_state)
@@ -2307,6 +2321,7 @@ class MiniBatchKMeans(_BaseKMeans):
             accept_large_sparse=False,
             reset=not has_centers,
         )
+        X = _sum_duplicates(X)
 
         self._random_state = getattr(
             self, "_random_state", check_random_state(self.random_state)
