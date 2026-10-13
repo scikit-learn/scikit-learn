@@ -73,7 +73,7 @@ class ProgressBar:
         ):
             # We pass the minimal information to the queue that is necessary to create a
             # progress bar and not the context to avoid pickling the whole context tree.
-            path = [step.task_id for step in context.task_path]
+            path = [task.task_id for task in context.task_path]
             send(
                 self._listener_handles[context.root_uuid],
                 {

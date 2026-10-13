@@ -153,12 +153,12 @@ class ScoringMonitor:
 
         task_info_path = [
             {
-                "estimator_name": step.estimator_name,
-                "task_name": step.task_name,
-                "task_id": step.task_id,
-                "sequential_subtasks": step.sequential_subtasks,
+                "estimator_name": task.estimator_name,
+                "task_name": task.task_name,
+                "task_id": task.task_id,
+                "sequential_subtasks": task.sequential_subtasks,
             }
-            for step in context.task_path
+            for task in context.task_path
         ]
 
         scores = {}
