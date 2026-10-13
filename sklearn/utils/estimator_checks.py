@@ -2071,10 +2071,11 @@ def check_complex_data(name, estimator_orig):
         estimator.fit(X, y)
 
 
-_POST_FIT_METHODS = [
+_INFERENCE_METHODS = [
     "apply",
     "decision_function",
     "decision_path",
+    "invert_transform",
     "kneighbors",
     "kneighbors_graph",
     "predict",
@@ -2087,8 +2088,6 @@ _POST_FIT_METHODS = [
     "staged_predict",
     "staged_predict_proba",
     "transform",
-    # TODO figure out inputs
-    # "inverse_transform",
 ]
 
 
@@ -4672,8 +4671,11 @@ def _fit_estimator(estimator_orig):
 
     estimator = clone(estimator_orig)
     set_random_state(estimator)
-    if "warm_start" in estimator.get_params().keys():
+    param_keys = estimator.get_params().keys()
+    if "warm_start" in param_keys:
         estimator.set_params(warm_start=False)
+    if "add_indicator" in param_keys:
+        estimator.set_params(add_indicator=True)
 
     n_samples = 100
     X = rng.normal(loc=100, size=(n_samples, 2))
@@ -5800,6 +5802,9 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
     """
     Estimators' internal state should not be changed by inference methods, in
     order to ensure thread safety.
+
+    Bit like ``check_dict_unchanged`` but hopefully covers many more edge
+    cases.
     """
     estimator, X_train, y_train, X_test, y_test = _fit_estimator(estimator_orig)
 
@@ -5807,12 +5812,15 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
     attr_hashes = {
         key: _object_hash(value) for (key, value) in estimator.__dict__.items()
     }
-    for method_name in _POST_FIT_METHODS:
+    for method_name in _INFERENCE_METHODS:
         if not hasattr(estimator, method_name):
             continue
         method = getattr(estimator, method_name)
         if method_name == "score":
             method(X_test, y_test)
+        elif method_name == "inverse_transform":
+            result = estimator.transform(X_test)
+            method(result)
         else:
             method(X_test)
         after_hash = _object_hash(estimator)
