@@ -433,8 +433,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     Read more in the :ref:`User Guide <stacking>`.
 
-    .. versionadded:: 0.22
-
     Parameters
     ----------
     estimators : list of (str, estimator)
@@ -531,8 +529,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -852,8 +848,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     Read more in the :ref:`User Guide <stacking>`.
 
-    .. versionadded:: 0.22
-
     Parameters
     ----------
     estimators : list of (str, estimator)
@@ -930,8 +924,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the

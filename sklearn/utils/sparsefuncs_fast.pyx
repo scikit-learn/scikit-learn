@@ -3,13 +3,13 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from libc.math cimport fabs, sqrt, isnan
+from libc.math cimport fabs, sqrt
 from libc.stdint cimport intptr_t
 
 import numpy as np
 from cython cimport floating
 from sklearn.utils.fixes import _ensure_sparse_index_int32
-from sklearn.utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, uint64_t
+from sklearn.utils._typedefs cimport float64_t, int32_t, int64_t, intp_t, inlinable_isnan, uint64_t
 
 
 ctypedef fused integral:
@@ -127,7 +127,7 @@ def _csr_mean_variance_axis0(
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
             col_ind = X_indices[i]
-            if not isnan(X_data[i]):
+            if not inlinable_isnan(X_data[i]):
                 means[col_ind] += <float64_t>(X_data[i]) * weights[row_ind]
                 # sum of weights where X[:, col_ind] is non-zero
                 sum_weights_nz[col_ind] += weights[row_ind]
@@ -145,7 +145,7 @@ def _csr_mean_variance_axis0(
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
             col_ind = X_indices[i]
-            if not isnan(X_data[i]):
+            if not inlinable_isnan(X_data[i]):
                 diff = X_data[i] - means[col_ind]
                 # correction term of the corrected 2 pass algorithm.
                 # See "Algorithms for computing the sample variance: analysis
@@ -260,7 +260,7 @@ def _csc_mean_variance_axis0(
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
             row_ind = X_indices[i]
-            if not isnan(X_data[i]):
+            if not inlinable_isnan(X_data[i]):
                 means[col_ind] += <float64_t>(X_data[i]) * weights[row_ind]
                 # sum of weights where X[:, col_ind] is non-zero
                 sum_weights_nz[col_ind] += weights[row_ind]
@@ -278,7 +278,7 @@ def _csc_mean_variance_axis0(
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
             row_ind = X_indices[i]
-            if not isnan(X_data[i]):
+            if not inlinable_isnan(X_data[i]):
                 diff = X_data[i] - means[col_ind]
                 # correction term of the corrected 2 pass algorithm.
                 # See "Algorithms for computing the sample variance: analysis

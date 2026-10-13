@@ -225,19 +225,42 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     columns_with_unknown.append(i)
 
         if columns_with_unknown:
-            if handle_unknown == "infrequent_if_exist":
-                msg = (
-                    "Found unknown categories in columns "
-                    f"{columns_with_unknown} during transform. These "
-                    "unknown categories will be encoded as the "
+            # Whether an unknown category is encoded as the infrequent category
+            # is decided per column by `_map_infrequent_categories` below: a
+            # column only has an infrequent category if its
+            # `_infrequent_indices` entry is not None. Unknown categories in
+            # columns where it is None are encoded as all zeros, as documented
+            # for `handle_unknown`.
+            if handle_unknown == "infrequent_if_exist" and self._infrequent_enabled:
+                infrequent_columns = [
+                    i
+                    for i in columns_with_unknown
+                    if self._infrequent_indices[i] is not None
+                ]
+            else:
+                infrequent_columns = []
+            all_zeros_columns = [
+                i for i in columns_with_unknown if i not in infrequent_columns
+            ]
+
+            msg = (
+                "Found unknown categories in columns "
+                f"{columns_with_unknown} during transform. "
+            )
+            if infrequent_columns and all_zeros_columns:
+                msg += (
+                    f"The unknown categories in columns {infrequent_columns} "
+                    "will be encoded as the infrequent category. Those in "
+                    f"columns {all_zeros_columns} will be encoded as all "
+                    "zeros, because these columns have no infrequent category."
+                )
+            elif infrequent_columns:
+                msg += (
+                    "These unknown categories will be encoded as the "
                     "infrequent category."
                 )
             else:
-                msg = (
-                    "Found unknown categories in columns "
-                    f"{columns_with_unknown} during transform. These "
-                    "unknown categories will be encoded as all zeros"
-                )
+                msg += "These unknown categories will be encoded as all zeros"
             warnings.warn(msg, UserWarning)
 
         self._map_infrequent_categories(X_int, X_mask, ignore_category_indices)
@@ -488,8 +511,6 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
-        .. versionadded:: 0.20
-
     drop : {'first', 'if_binary'} or an array-like of shape (n_features,), \
             default=None
         Specifies a methodology to use to drop one of the categories per
@@ -513,12 +534,6 @@ class OneHotEncoder(_BaseEncoder):
         When `max_categories` or `min_frequency` is configured to group
         infrequent categories, the dropping behavior is handled after the
         grouping.
-
-        .. versionadded:: 0.21
-           The parameter `drop` was added in 0.21.
-
-        .. versionchanged:: 0.23
-           The option `drop='if_binary'` was added in 0.23.
 
         .. versionchanged:: 1.1
             Support for dropping infrequent categories.
@@ -619,9 +634,6 @@ class OneHotEncoder(_BaseEncoder):
         `max_categories` to a non-default value and `drop_idx[i]` corresponds
         to an infrequent category, then the entire infrequent category is
         dropped.
-
-        .. versionchanged:: 0.23
-           Added the possibility to contain `None` values.
 
     infrequent_categories_ : list of ndarray
         Defined only if infrequent categories are enabled by setting
@@ -1252,8 +1264,6 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     For a comparison of different encoders, refer to:
     :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     categories : 'auto' or a list of array-like, default='auto'
@@ -1276,16 +1286,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         set to the value given for the parameter `unknown_value`. In
         :meth:`inverse_transform`, an unknown category will be denoted as None.
 
-        .. versionadded:: 0.24
-
     unknown_value : int or np.nan, default=None
         When the parameter handle_unknown is set to 'use_encoded_value', this
         parameter is required and will set the encoded value of unknown
         categories. It has to be distinct from the values used to encode any of
         the categories in `fit`. If set to np.nan, the `dtype` parameter must
         be a float dtype.
-
-        .. versionadded:: 0.24
 
     encoded_missing_value : int or np.nan, default=np.nan
         Encoded value of missing categories. If set to `np.nan`, then the `dtype`

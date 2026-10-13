@@ -69,8 +69,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
 
-        .. versionadded:: 0.20
-
     raw_location_ : ndarray of shape (n_features,)
         The raw robust estimated location before correction and re-weighting.
 
@@ -88,8 +86,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

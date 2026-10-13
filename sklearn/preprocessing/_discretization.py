@@ -27,8 +27,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     n_bins : int or array-like of shape (n_features,), default=5
@@ -75,8 +73,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         consistent with input dtype. Only np.float32 and np.float64 are
         supported.
 
-        .. versionadded:: 0.24
-
     subsample : int or None, default=200_000
         Maximum number of samples, used to fit the model, for computational
         efficiency.
@@ -115,8 +111,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

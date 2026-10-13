@@ -60,8 +60,6 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
 
     Warning: This class should not be used directly.
     Use derived classes instead.
-
-    .. versionadded:: 0.18
     """
 
     _parameter_constraints: dict = {
@@ -882,8 +880,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     This model optimizes the log-loss function using LBFGS or stochastic
     gradient descent.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     hidden_layer_sizes : array-like of shape(n_layers - 2,), default=(100,)
@@ -1035,16 +1031,12 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Maximum number of epochs to not meet ``tol`` improvement.
         Only effective when solver='sgd' or 'adam'.
 
-        .. versionadded:: 0.20
-
     max_fun : int, default=15000
         Only used when solver='lbfgs'. Maximum number of loss function calls.
         The solver iterates until convergence (determined by 'tol'), number
         of iterations reaches max_iter, or this number of loss function calls.
         Note that number of loss function calls will be greater than or equal
         to the number of iterations for the `MLPClassifier`.
-
-        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1085,8 +1077,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1389,8 +1379,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     This model optimizes the squared error using LBFGS or stochastic gradient
     descent.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     loss : {'squared_error', 'poisson'}, default='squared_error'
@@ -1546,16 +1534,12 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         Maximum number of epochs to not meet ``tol`` improvement.
         Only effective when solver='sgd' or 'adam'.
 
-        .. versionadded:: 0.20
-
     max_fun : int, default=15000
         Only used when solver='lbfgs'. Maximum number of function calls.
         The solver iterates until convergence (determined by ``tol``), number
         of iterations reaches max_iter, or this number of function calls.
         Note that number of function calls will be greater than or equal to
         the number of iterations for the MLPRegressor.
-
-        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1600,8 +1584,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

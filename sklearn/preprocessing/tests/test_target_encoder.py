@@ -719,7 +719,7 @@ def test_pandas_copy_on_write():
     The numpy array underlying df["y"] is read-only when copy-on-write is enabled.
     Non-regression test for gh-27879.
     """
-    pd = pytest.importorskip("pandas", minversion="2.0")
+    pd = pytest.importorskip("pandas")
     # Pandas currently warns that setting copy_on_write will be removed in pandas 4
     # (and copy-on-write will always be enabled).
     # see https://github.com/scikit-learn/scikit-learn/issues/32829
