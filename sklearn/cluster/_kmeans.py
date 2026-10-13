@@ -291,7 +291,8 @@ def _kmeans_plusplus(
             n_threads,
         )
 
-        # Decide which candidate is the best
+        # Pick the candidate with the smallest potential. The kernel only sums
+        # within each chunk of samples, finish the sum over the chunks here.
         best_candidate = np.argmin(trials_chunk_pot[c % 2].sum(axis=1))
         closest_dist_sq = trials_dist_sq[c % 2, best_candidate]
         chunk_pot = trials_chunk_pot[c % 2, best_candidate]

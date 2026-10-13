@@ -203,10 +203,16 @@ def _kmeans_plusplus_trials_dense(
     `trials_dist_sq[j, i] = min(closest_dist_sq[i], ||X[i] - candidates[j]||²)`.
 
     `trials_chunk_pot[j, chunk_idx]` is the sum of these distances weighted by
-    `sample_weight` over the chunk of `CHUNK_SIZE` samples `chunk_idx`. Summing
-    over the chunks gives the potential of each candidate, and the per-chunk
-    sums allow sampling the next candidates without a cumulative sum over all
-    the samples.
+    `sample_weight` over the chunk of `CHUNK_SIZE` samples `chunk_idx`. This is
+    the parallel part of the sum over all the samples: each chunk is summed by a
+    single thread, without synchronization, and the caller finishes the sum over
+    the chunks (only `n_samples / CHUNK_SIZE` values per candidate). The chunks
+    have a fixed size, so the result doesn't depend on the number of threads.
+    The caller uses these sums to:
+
+    - pick the candidate with the smallest potential `trials_chunk_pot[j].sum()`,
+    - sample the next candidates without a cumulative sum over all the samples
+      (see `_kmeans_plusplus_sample_candidates`).
     """
     cdef:
         int n_samples = X.shape[0]
