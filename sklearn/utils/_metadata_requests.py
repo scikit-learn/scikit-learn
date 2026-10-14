@@ -1745,9 +1745,10 @@ class _MetadataRequester:
             # all the issues and make sure class definition does not fail.
             pass
 
-        # scikit-learn estimators that inherit from `BaseEstimator` auto-request
-        # sample_weight; third-party estimators that only inherit from BaseEstimator do
-        # not.
+        # Set the `_auto_request_sample_weight` attribute on scikit-learn estimators
+        # that inherit from `BaseEstimator` (unless they already define it). Note that
+        # third-party do not set this attribute but they can opt in by inheriting from
+        # `AutoRequestMixin`.
         if (
             cls.__module__.startswith("sklearn.")
             and "_auto_request_sample_weight" not in cls.__dict__

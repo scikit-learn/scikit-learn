@@ -1150,21 +1150,11 @@ def test_baseestimator_sample_weight_auto_request():
     est = MyEstimator()
 
     with config_context(enable_metadata_auto_requests=True):
-        for method in SIMPLE_METHODS:
-            if method == "fit":
-                assert (
-                    getattr(get_routing_for_object(est), method).requests.get(
-                        "sample_weight"
-                    )
-                    is True
-                )
-            else:
-                assert (
-                    getattr(get_routing_for_object(est), method).requests.get(
-                        "sample_weight"
-                    )
-                    is None
-                )
+        routing = get_routing_for_object(est)
+        assert routing.fit.requests.get("sample_weight") is True
+        methods = [m for m in SIMPLE_METHODS if m != "fit"]
+        for method in methods:
+            assert getattr(routing, method).requests.get("sample_weight") is None
 
 
 def test_third_party_baseestimator_no_sample_weight_auto_request():
