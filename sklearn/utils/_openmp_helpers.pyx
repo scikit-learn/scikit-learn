@@ -65,7 +65,9 @@ def _openmp_uses_active_wait():
     support ``OMP_DISPLAY_ENV``.
 
     Spawning a subprocess is too costly to redo on every call, so the result is cached
-    at the module level after the first call. The subprocess itself is kept as cheap as
+    at the module level after the first call, and written to ``SKLEARN_OMP_WAIT_POLICY``
+    in ``os.environ`` so that subprocesses started later (e.g. joblib workers) inherit
+    it instead of probing again. The subprocess itself is kept as cheap as
     possible: rather than ``import sklearn`` (which pulls in the whole package, ~0.3s on
     its own), it loads only this compiled extension module directly from its file,
     stubbing out its parent packages in ``sys.modules`` (with the ``__path__`` they
@@ -173,7 +175,7 @@ def _openmp_uses_active_wait():
     # Avoid redundant runtime inspection in joblib workers spawned in the
     # future, assuming this policy state will not change during the life of
     # this Python process.
-    env[SKLEARN_OMP_WAIT_POLICY_ENV_VAR] = "active" if active_wait else "passive"
+    os.environ[_WAIT_POLICY_ENV_VAR] = "active" if active_wait else "passive"
     return _ACTIVE_WAIT_CACHE
 
 
