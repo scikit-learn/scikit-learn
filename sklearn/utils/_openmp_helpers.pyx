@@ -97,10 +97,7 @@ def _openmp_uses_active_wait():
 
     env = os.environ.copy()
     env["OMP_DISPLAY_ENV"] = "VERBOSE"
-    # If the executable is not an interpreter after all, the application it
-    # launches must not probe again in turn, or an application fitting a HGB
-    # model on startup would keep relaunching itself. "active" matches the
-    # fallback used below when the probe fails.
+    # Protect against accidental recursive inspections.
     env[_WAIT_POLICY_ENV_VAR] = "active"
     # Forces the OpenMP runtime to actually initialize (and thus dump its
     # resolved environment) in this fresh subprocess: GNU libgomp
