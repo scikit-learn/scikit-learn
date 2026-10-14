@@ -975,13 +975,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     @staticmethod
     def _get_heuristic_optimal_n_threads(max_n_threads, n_samples, n_features):
-        """
+        """Number of threads for all the OpenMP parallel regions of `fit`.
+
+        A `fit` call uses the same thread count in all its parallel regions
+        (gradients and hessians, histograms, split finding, sample partitioning,
+        raw predictions updates): changing it from one region to the next has
+        been observed to be much slower. A single value must therefore suit both
+        feature-wise regions (e.g. building histograms) and sample-wise regions
+        (e.g. partitioning samples after a split).
+
         Using the maximum number of available threads regardless of the size of
         the workload can be counter-productive: parallelizing over very few
         features or samples adds thread-management overhead that outweighs the
         benefit. This balances ``max_n_threads`` against ``n_features`` (so that
         threads are not left idle or unevenly loaded) and against ``n_samples``
         (so that small datasets use fewer threads).
+
+        Within that fixed thread count, `Splitter.split_indices` and
+        `Splitter.find_node_split` still run serially when the workload of the
+        node at hand is too small, a cheap per-node decision.
         """
         # For very small problems, multi-threading is always counter-productive.
         # Checked before calling _openmp_uses_active_wait, which spawns a
