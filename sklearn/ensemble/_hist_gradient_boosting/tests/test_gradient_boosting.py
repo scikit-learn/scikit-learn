@@ -1850,7 +1850,10 @@ def test_feature_thread_count_preserves_static_chunk_size(max_n_threads):
     # The feature term chooses the smallest team whose static schedule has the
     # same maximum features-per-thread as a team of max_n_threads. This is not
     # monotonic: 10 features need 10 threads, while 11 features need only 6.
-    n_samples = 50_000_000
+    # n_samples is chosen so that only the feature term matters: with active
+    # wait, few enough samples that the samples term stays below it; with
+    # passive wait, enough samples that the number of threads is not capped.
+    n_samples = 5_000 if active_wait else 50_000_000
 
     for n_features in range(5, 41):
         n_threads = _get_heuristic_n_threads(max_n_threads, n_samples, n_features)

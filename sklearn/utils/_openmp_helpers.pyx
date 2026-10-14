@@ -14,8 +14,8 @@ _CPU_COUNTS = {}
 # a subprocess. None means "not computed yet".
 _ACTIVE_WAIT_CACHE = None
 
-# Set in the environment of the subprocess spawned by _openmp_uses_active_wait.
-_ACTIVE_WAIT_PROBE_ENV_VAR = "_SKLEARN_OPENMP_ACTIVE_WAIT_PROBE"
+# Lets users tell _openmp_uses_active_wait the answer instead of detecting it.
+_WAIT_POLICY_ENV_VAR = "SKLEARN_OMP_WAIT_POLICY"
 
 
 # Patterns matched against the block an OpenMP runtime prints on stderr when
@@ -47,9 +47,14 @@ def _openmp_uses_active_wait():
     smaller workloads. This is controlled by ``GOMP_SPINCOUNT`` (GNU's ``libgomp``) and
     ``KMP_BLOCKTIME`` (Intel's and LLVM's OpenMP runtimes).
 
-    This asks the runtime for its own resolved settings: it spawns a short-lived
-    subprocess with ``OMP_DISPLAY_ENV=VERBOSE``, which makes the OpenMP runtime print
-    the settings scans that output for ``_PASSIVE_WAIT_PATTERNS`` above.
+    If the ``SKLEARN_OMP_WAIT_POLICY`` environment variable is set to ``"active"`` or
+    ``"passive"`` (case-insensitive), its value is used without any detection. It does
+    not change the wait policy of the OpenMP runtime itself.
+
+    Otherwise, this asks the runtime for its own resolved settings: it spawns a
+    short-lived subprocess with ``OMP_DISPLAY_ENV=VERBOSE``, which makes the OpenMP
+    runtime print its settings, then scans that output for ``_PASSIVE_WAIT_PATTERNS``
+    above.
 
     If no Python interpreter is available to run the subprocess (e.g. in a frozen
     application), or if it fails, times out, or none of these patterns are found, this
@@ -65,11 +70,19 @@ def _openmp_uses_active_wait():
     """
     global _ACTIVE_WAIT_CACHE
 
-    if _ACTIVE_WAIT_CACHE is not None:
-        return _ACTIVE_WAIT_CACHE
-
     if not SKLEARN_OPENMP_PARALLELISM_ENABLED:
-        _ACTIVE_WAIT_CACHE = False
+        return False
+
+    wait_policy = os.environ.get(_WAIT_POLICY_ENV_VAR)
+    if wait_policy is not None:
+        if wait_policy.lower() not in ("active", "passive"):
+            raise ValueError(
+                f"{_WAIT_POLICY_ENV_VAR} should be 'active' or 'passive', got "
+                f"{wait_policy!r}."
+            )
+        return wait_policy.lower() == "active"
+
+    if _ACTIVE_WAIT_CACHE is not None:
         return _ACTIVE_WAIT_CACHE
 
     # Only a Python interpreter can run the script below. A frozen application
@@ -81,15 +94,14 @@ def _openmp_uses_active_wait():
         executable = None
     else:
         executable = multiprocessing.spawn.get_executable()
-    # If the executable is not an interpreter after all, the application it
-    # launches must not probe again in turn, or an application fitting a HGB
-    # model on startup would keep relaunching itself.
-    if os.environ.get(_ACTIVE_WAIT_PROBE_ENV_VAR):
-        executable = None
 
     env = os.environ.copy()
     env["OMP_DISPLAY_ENV"] = "VERBOSE"
-    env[_ACTIVE_WAIT_PROBE_ENV_VAR] = "1"
+    # If the executable is not an interpreter after all, the application it
+    # launches must not probe again in turn, or an application fitting a HGB
+    # model on startup would keep relaunching itself. "active" matches the
+    # fallback used below when the probe fails.
+    env[_WAIT_POLICY_ENV_VAR] = "active"
     # Forces the OpenMP runtime to actually initialize (and thus dump its
     # resolved environment) in this fresh subprocess: GNU libgomp
     # initializes eagerly on load, but the LLVM/Intel libomp runtime only

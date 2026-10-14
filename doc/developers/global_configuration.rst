@@ -42,6 +42,23 @@ Users looking for the best performance might want to tune this variable using
 powers of 2 so as to get the best :ref:`parallelism` behavior for their hardware,
 especially with respect to their caches' sizes.
 
+.. _envvar_SKLEARN_OMP_WAIT_POLICY:
+
+`SKLEARN_OMP_WAIT_POLICY`
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Tells scikit-learn whether idle OpenMP threads spin (`"active"`) or sleep
+(`"passive"`) while waiting for work, which some estimators such as
+:class:`~sklearn.ensemble.HistGradientBoostingClassifier` use to pick how many
+threads to use. When unset, scikit-learn detects it by asking the OpenMP
+runtime for its settings in a short-lived subprocess, and assumes `"active"` if
+that fails.
+
+This variable does not change the behavior of the OpenMP runtime: to do so, set
+`OMP_WAIT_POLICY` or a runtime-specific variable such as `GOMP_SPINCOUNT`
+(GNU libgomp) or `KMP_BLOCKTIME` (LLVM and Intel OpenMP), and set
+`SKLEARN_OMP_WAIT_POLICY` to match if you want to skip the detection.
+
 Testing and CI
 --------------
 

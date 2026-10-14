@@ -7,5 +7,7 @@
   noticeably when the number of threads is left unconstrained (e.g. no
   `OMP_NUM_THREADS` or similar limit set), or on machines where idle
   OpenMP threads sleep rather than spin, which is the default for most
-  conda-forge builds on hybrid CPUs (laptops).
+  conda-forge builds on hybrid CPUs (laptops). The detection can be skipped by
+  setting the :ref:`SKLEARN_OMP_WAIT_POLICY <envvar_SKLEARN_OMP_WAIT_POLICY>`
+  environment variable to `"active"` or `"passive"`.
   By :user:`Arthur Lacote <cakedev0>`.
