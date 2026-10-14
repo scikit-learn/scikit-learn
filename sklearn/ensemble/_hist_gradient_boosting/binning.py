@@ -298,6 +298,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             min(
                 # starting joblib threads is expensive
                 (n_features_to_bin * X.shape[0]) // 1_000_000,
+                n_features_to_bin,
                 max_n_threads,
             ),
         )
