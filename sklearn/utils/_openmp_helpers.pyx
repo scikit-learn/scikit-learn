@@ -91,9 +91,9 @@ def _openmp_uses_active_wait():
     # to an interpreter with `multiprocessing.set_executable`, which this honors
     # like multiprocessing does.
     if getattr(sys, "frozen", False):
-        executable = None
-    else:
-        executable = multiprocessing.spawn.get_executable()
+        _ACTIVE_WAIT_CACHE = True  # conservative fallback
+        return _ACTIVE_WAIT_CACHE
+    executable = multiprocessing.spawn.get_executable()
 
     env = os.environ.copy()
     env["OMP_DISPLAY_ENV"] = "VERBOSE"
@@ -126,21 +126,18 @@ def _openmp_uses_active_wait():
     )
 
     active_wait = True  # conservative fallback
-    completed = None
-    if executable:
-        try:
-            completed = subprocess.run(
-                [os.fsdecode(executable), "-c", import_script],
-                check=False,
-                capture_output=True,
-                env=env,
-                text=True,
-                timeout=5,
-            )
-        except Exception:
-            pass
-
-    if completed is not None:
+    try:
+        completed = subprocess.run(
+            [os.fsdecode(executable), "-c", import_script],
+            check=False,
+            capture_output=True,
+            env=env,
+            text=True,
+            timeout=5,
+        )
+    except Exception:
+        pass
+    else:
         output = completed.stdout + "\n" + completed.stderr
         if any(pattern.search(output) for pattern in _PASSIVE_WAIT_PATTERNS):
             active_wait = False

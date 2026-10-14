@@ -1,4 +1,5 @@
 import subprocess
+import sys
 
 import pytest
 
@@ -58,3 +59,10 @@ def test_openmp_uses_active_wait_probe_env(monkeypatch):
     assert len(probe_envs) == 1
     assert probe_envs[0]["SKLEARN_OMP_WAIT_POLICY"] == "active"
     assert probe_envs[0]["OMP_DISPLAY_ENV"] == "VERBOSE"
+
+
+def test_openmp_uses_active_wait_frozen(monkeypatch, no_probe):
+    # A frozen application would relaunch itself instead of running the probe.
+    monkeypatch.delenv("SKLEARN_OMP_WAIT_POLICY", raising=False)
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    assert _openmp_uses_active_wait() is True
