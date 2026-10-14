@@ -52,7 +52,7 @@ Tells scikit-learn whether idle OpenMP threads spin (`"active"`) or sleep
 :class:`~sklearn.ensemble.HistGradientBoostingClassifier` use to pick how many
 threads to use. When unset, scikit-learn detects it by asking the OpenMP
 runtime for its settings in a short-lived subprocess, and assumes `"active"` if
-that fails.
+that fails (with a warning when the subprocess itself fails or times out).
 
 This variable does not change the behavior of the OpenMP runtime: to do so, set
 `OMP_WAIT_POLICY` or a runtime-specific variable such as `GOMP_SPINCOUNT`

@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import sys
+import warnings
 
 
 # Module level cache for cpu_count as we do not expect this to change during
@@ -58,7 +59,10 @@ def _openmp_uses_active_wait():
 
     If no Python interpreter is available to run the subprocess (e.g. in a frozen
     application), or if it fails, times out, or none of these patterns are found, this
-    conservatively assumes active waiting is enabled.
+    conservatively assumes active waiting is enabled. When the subprocess fails or
+    times out, it also warns and points to ``SKLEARN_OMP_WAIT_POLICY``. Finding none of
+    the patterns is not a failure: some runtimes, such as MSVC's ``vcomp``, do not
+    support ``OMP_DISPLAY_ENV``.
 
     Spawning a subprocess is too costly to redo on every call, so the result is cached
     at the module level after the first call. The subprocess itself is kept as cheap as
@@ -126,6 +130,8 @@ def _openmp_uses_active_wait():
     )
 
     active_wait = True  # conservative fallback
+    failure = None
+    timeout = 5
     try:
         completed = subprocess.run(
             [os.fsdecode(executable), "-c", import_script],
@@ -133,14 +139,31 @@ def _openmp_uses_active_wait():
             capture_output=True,
             env=env,
             text=True,
-            timeout=5,
+            timeout=timeout,
         )
-    except Exception:
-        pass
+    except subprocess.TimeoutExpired:
+        failure = f"timed out after {timeout} s"
+    except Exception as exc:
+        failure = f"failed with {type(exc).__name__}: {exc}"
     else:
-        output = completed.stdout + "\n" + completed.stderr
-        if any(pattern.search(output) for pattern in _PASSIVE_WAIT_PATTERNS):
-            active_wait = False
+        if completed.returncode != 0:
+            # The last line of a traceback names the exception. Not indexed with
+            # [-1], which is invalid under the wraparound=False directive.
+            last_line = completed.stderr.strip().rpartition("\n")[2]
+            failure = f"exited with code {completed.returncode}: {last_line}"
+        else:
+            output = completed.stdout + "\n" + completed.stderr
+            if any(pattern.search(output) for pattern in _PASSIVE_WAIT_PATTERNS):
+                active_wait = False
+
+    if failure is not None:
+        warnings.warn(
+            "Could not detect whether idle OpenMP threads spin or sleep, assuming "
+            f"they spin (the detection subprocess {failure}). Set the "
+            f"{_WAIT_POLICY_ENV_VAR} environment variable to 'active' or 'passive' "
+            "to skip this detection.",
+            UserWarning,
+        )
 
     _ACTIVE_WAIT_CACHE = active_wait
     return _ACTIVE_WAIT_CACHE
