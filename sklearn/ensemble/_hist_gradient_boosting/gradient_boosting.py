@@ -1002,22 +1002,26 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             return 1
 
         # For slightly larger problems on runtime environments without
-        # activate wait, multi-threading has also be shown to be counter-
+        # active wait, multi-threading has also been shown to be counter-
         # productive.
         active_wait = _openmp_uses_active_wait()
         if not active_wait and n_samples * n_features <= 2_000_000:
             return 1
 
-        # Empirically, HGB almost always scales counter-productively past 64 threads
-        max_n_threads = min(max_n_threads, 64)
+        # Without active wait, idle threads sleep between parallel regions and
+        # waking them up is costly: on medium-sized problems, the work per
+        # region only pays for a few threads.
         if not active_wait and n_samples * n_features <= 20_000_000:
             max_n_threads = min(max_n_threads, 4)
 
+        # Empirically, HGB almost always scales counter-productively past 64 threads
+        max_n_threads = min(max_n_threads, 64)
+
         # Compute the per-thread chunk size first, then derive how many threads
         # are actually needed to cover n_features with that chunk size: this can
-        # intentionally be lower than min(n_fetures, max_n_threads),
+        # intentionally be lower than min(n_features, max_n_threads),
         # avoiding threads with little to no work. This strategy has been
-        # empirically show to yield up to 10-20% improvements, in
+        # empirically shown to yield up to 10-20% improvements, in
         # particular when active wait is enabled.
         n_features_per_thread = math.ceil(n_features / max_n_threads)
         n_threads_for_features = math.ceil(n_features / n_features_per_thread)
