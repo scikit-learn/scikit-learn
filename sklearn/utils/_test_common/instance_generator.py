@@ -77,7 +77,9 @@ from sklearn.feature_selection import (
     RFE,
     RFECV,
     SelectFdr,
+    SelectFpr,
     SelectFromModel,
+    SelectFwe,
     SelectKBest,
     SequentialFeatureSelector,
 )
@@ -617,6 +619,9 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     KernelPCA: {
         "check_dict_unchanged": dict(n_components=1),
         "check_array_api_input": dict(fit_inverse_transform=True),
+        "check_estimator_internal_state_unchanged_by_inference": dict(
+            fit_inverse_transform=True
+        ),
     },
     KMeans: {"check_dict_unchanged": dict(max_iter=5, n_clusters=1, n_init=2)},
     LassoLars: {"check_non_transformer_estimators_n_iter": dict(alpha=0.0)},
@@ -753,6 +758,15 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="sparse_cg"),
             dict(solver="lsqr"),
         ],
+    },
+    SelectFdr: {
+        "check_estimator_internal_state_unchanged_by_inference": dict(alpha=1.0)
+    },
+    SelectFpr: {
+        "check_estimator_internal_state_unchanged_by_inference": dict(alpha=1.0)
+    },
+    SelectFwe: {
+        "check_estimator_internal_state_unchanged_by_inference": dict(alpha=1.0)
     },
     SkewedChi2Sampler: {"check_dict_unchanged": dict(n_components=1)},
     SimpleImputer: {"check_array_api_input": dict(add_indicator=True)},
