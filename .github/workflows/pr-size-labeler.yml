@@ -32,6 +32,12 @@ jobs:
           message_if_xl: >
             This PR exceeds the recommended size of 500 lines changed. Consider
             splitting it into smaller PRs to ease the review process.
+
+
+            Please make sure you read our
+            [Contributing guide](https://scikit-learn.org/stable/developers/contributing.html)
+            and in particular our
+            [Pull Request guidelines](https://scikit-learn.org/dev/developers/contributing.html#pull-request-checklist)
           # For the diff size computation, ignore lock-files and externals Array API changes
           files_to_ignore: |
              build_tools/**/*.lock
