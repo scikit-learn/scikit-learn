@@ -6,7 +6,6 @@ This file contains preprocessing tools based on polynomials.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import collections
-import copy
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
 from numbers import Integral
@@ -1007,10 +1006,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             ensure_2d=True,
             ensure_all_finite=(self.handle_missing != "zeros"),
         )
-        # The logic below ends up mutating the bsplines, somehow:
-        bsplines = copy.deepcopy(self.bsplines_)
         n_samples, n_features = X.shape
-        n_splines = bsplines[0].c.shape[1]
+        n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
 
         # Note that scipy BSpline returns float64 arrays and converts input
