@@ -2,8 +2,8 @@ import re
 
 import numpy as np
 import pytest
-from scipy import sparse
 from joblib import cpu_count
+from scipy import sparse
 
 from sklearn import datasets
 from sklearn.base import ClassifierMixin, clone
