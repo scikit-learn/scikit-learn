@@ -5823,7 +5823,11 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
             result = estimator.transform(X_test)
             method(result)
         else:
-            method(X_test)
+            result = method(X_test)
+            if hasattr(result, "__iter__"):
+                # Call list() to handle methods that return generators or other
+                # lazy iterables.
+                list(result)
         after_hash = _pickled_bytes(estimator)
         after_attr_hashes = {
             key: _pickled_bytes(value) for (key, value) in estimator.__dict__.items()
