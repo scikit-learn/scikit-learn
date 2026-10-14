@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture
-def no_probe(monkeypatch):
+def raise_on_subprocess_probe(monkeypatch):
     # Fail if the active wait detection spawns its subprocess.
     def run(*args, **kwargs):
         raise AssertionError("the OpenMP runtime should not have been probed")
@@ -30,12 +30,16 @@ def no_probe(monkeypatch):
     "wait_policy, expected",
     [("active", True), ("passive", False), ("ACTIVE", True), ("Passive", False)],
 )
-def test_openmp_uses_active_wait_env_var(monkeypatch, no_probe, wait_policy, expected):
+def test_openmp_uses_active_wait_env_var(
+    monkeypatch, raise_on_subprocess_probe, wait_policy, expected
+):
     monkeypatch.setenv("SKLEARN_OMP_WAIT_POLICY", wait_policy)
     assert _openmp_uses_active_wait() is expected
 
 
-def test_openmp_uses_active_wait_env_var_invalid(monkeypatch, no_probe):
+def test_openmp_uses_active_wait_env_var_invalid(
+    monkeypatch, raise_on_subprocess_probe
+):
     monkeypatch.setenv("SKLEARN_OMP_WAIT_POLICY", "spin")
     with pytest.raises(ValueError, match="should be 'active' or 'passive'"):
         _openmp_uses_active_wait()
@@ -104,7 +108,7 @@ def test_openmp_uses_active_wait_probe_failure(monkeypatch, result, reason):
     assert reason in str(record[0].message)
 
 
-def test_openmp_uses_active_wait_frozen(monkeypatch, no_probe):
+def test_openmp_uses_active_wait_frozen(monkeypatch, raise_on_subprocess_probe):
     # A frozen application would relaunch itself instead of running the probe.
     monkeypatch.delenv("SKLEARN_OMP_WAIT_POLICY", raising=False)
     monkeypatch.setattr(sys, "frozen", True, raising=False)
