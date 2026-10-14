@@ -5,23 +5,30 @@ Routing a validation set through a Pipeline to HistGradientBoosting
 
 .. currentmodule:: sklearn
 
-This example shows how to pass a custom validation set (`X_val`, `y_val`) for early
-stopping of :class:`~ensemble.HistGradientBoostingRegressor` through a
-:class:`~pipeline.Pipeline` and a :class:`~model_selection.GridSearchCV`.
+This example shows how to pass a validation set (`X_val`, `y_val`) for early stopping of
+:class:`~ensemble.HistGradientBoostingRegressor` through a :class:`~pipeline.Pipeline`
+and a :class:`~model_selection.GridSearchCV`.
 
-The pipeline encodes categorical features with :class:`~preprocessing.TargetEncoder` and
-leaves numerical features unchanged. With metadata routing and auto-requests enabled,
-`X_val` and `y_val` are requested by the gradient boosting estimator automatically. The
-pipeline's default `transform_input=("X_val",)` transforms `X_val` with the same steps
-as `X` before it reaches the final estimator.
+Estimators such as :class:`~ensemble.HistGradientBoostingRegressor` can use a validation
+set inside :term:`fit` for early stopping. If that set is split off from `X` after
+preprocessing fitted on the full training set, information from the validation samples
+can leak into the transformers (for example target statistics in
+:class:`~preprocessing.TargetEncoder`). A safer pattern is to hold out validation data
+and then run it through the same pipeline steps as `X`.
+
+:ref:`Metadata routing <metadata_routing>` makes that possible:
+:class:`~pipeline.Pipeline` can transform selected metadata listed in `transform_input`
+(by default `X_val`) until a later step consumes it. With auto-requests enabled, the
+gradient boosting estimator requests `X_val` and `y_val` without an explicit
+`set_fit_request`.
 """
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
 # %%
-# We enable metadata routing and auto-requests, load a small subset of the Ames
-# housing data, and hold out a validation set for early stopping:
+# We enable metadata routing and auto-requests, load a subset of the Ames housing
+# data, and hold out a validation set for early stopping *before* fitting the pipeline:
 from sklearn import set_config
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import fetch_openml
