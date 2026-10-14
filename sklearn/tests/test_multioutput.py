@@ -2,6 +2,7 @@ import re
 
 import numpy as np
 import pytest
+from scipy import sparse
 from joblib import cpu_count
 
 from sklearn import datasets
@@ -38,6 +39,8 @@ from sklearn.multioutput import (
     MultiOutputClassifier,
     MultiOutputRegressor,
     RegressorChain,
+    _hstack_pandas_regressor_chain,
+    _regressor_chain_feature_names,
 )
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -640,6 +643,18 @@ def test_regressor_chain_preserves_dataframe_for_column_transformer(cv):
         "feature_b",
         "regressorchain_y_0",
     ]
+
+
+def test_regressor_chain_pandas_helpers_sparse_target_and_name_collision():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"regressorchain_y_0": [0, 1]})
+    Y = sparse.csr_array([[2], [3]])
+
+    feature_names = _regressor_chain_feature_names(X, n_outputs=1)
+    X_aug = _hstack_pandas_regressor_chain(X, Y, feature_names)
+
+    assert feature_names == ["_regressorchain_y_0"]
+    assert_array_equal(X_aug["_regressorchain_y_0"], [2, 3])
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
