@@ -1823,10 +1823,15 @@ def test_get_heuristic_optimal_n_threads_max_n_threads_one():
         assert _get_heuristic_n_threads(1, n_samples, n_features) == 1
 
 
-def test_get_heuristic_optimal_n_threads_tiny_workload():
-    # A single sample and a single feature is as small as a workload gets:
-    # thread management overhead would dominate, whatever the thread budget.
-    assert _get_heuristic_n_threads(64, 1, 1) == 1
+@pytest.mark.parametrize(
+    "max_n_threads, n_samples, n_features", [(64, 1, 1), (32, 100, 5), (16, 1000, 1)]
+)
+def test_get_heuristic_optimal_n_threads_tiny_workload(
+    max_n_threads, n_samples, n_features
+):
+    # On such small workloads, thread management overhead would dominate,
+    # whatever the thread budget and the OpenMP wait policy.
+    assert _get_heuristic_n_threads(max_n_threads, n_samples, n_features) == 1
 
 
 @pytest.mark.parametrize(
