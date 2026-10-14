@@ -1894,10 +1894,7 @@ class _MetadataRequester:
 
         # This adds auto-requests for `sample_weight` for all consuming methods of
         # scikit-learn estimators:
-        if (
-            hasattr(self, "_auto_request_sample_weight")
-            and self._auto_request_sample_weight
-        ):
+        if getattr(self, "_auto_request_sample_weight", False):
             for method in SIMPLE_METHODS:
                 method_request = getattr(requests, method)
                 if "sample_weight" in method_request.requests:
