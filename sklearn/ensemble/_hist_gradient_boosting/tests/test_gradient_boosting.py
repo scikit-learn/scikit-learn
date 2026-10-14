@@ -1,5 +1,6 @@
 import copyreg
 import io
+import math
 import pickle
 import re
 import sys
@@ -1828,22 +1829,39 @@ def test_get_heuristic_optimal_n_threads_tiny_workload():
     assert _get_heuristic_n_threads(64, 1, 1) == 1
 
 
-def test_get_heuristic_optimal_n_threads_monotonic_in_n_features(monkeypatch):
-    # More features to parallelize over should never make the heuristic
-    # recommend fewer threads, and it should saturate at max_n_threads once
-    # there is at least one feature per thread.
-    # Force the active-wait branch of the heuristic: without it, OpenMP
-    # runtimes using a passive wait policy (e.g. macOS's libomp) make the
-    # heuristic cap the number of threads well below max_n_threads for this
-    # workload size, which would break the saturation assertion below.
-    monkeypatch.setattr(hgb_module, "_openmp_uses_active_wait", lambda: True)
-    max_n_threads = 8
-    n_threads_by_n_features = [
-        _get_heuristic_n_threads(max_n_threads, n_samples=10**5, n_features=n_features)
-        for n_features in [1, 2, 4, 8, 16, 100]
+@pytest.mark.parametrize(
+    "n_samples, n_features",
+    [(10**4, 9), (10**5, 17), (10**5, 100), (10**6, 9), (10**6, 100)],
+)
+def test_get_heuristic_optimal_n_threads_monotonic_in_max_n_threads(
+    n_samples, n_features
+):
+    # Making more threads available should never make the heuristic
+    # recommend fewer threads.
+    n_threads_by_max_n_threads = [
+        _get_heuristic_n_threads(max_n_threads, n_samples, n_features)
+        for max_n_threads in range(1, 129)
     ]
-    assert n_threads_by_n_features == sorted(n_threads_by_n_features)
-    assert n_threads_by_n_features[-1] == max_n_threads
+    assert n_threads_by_max_n_threads == sorted(n_threads_by_max_n_threads)
+
+
+@pytest.mark.parametrize("max_n_threads", [3, 10, 17, 32, 64])
+def test_feature_thread_count_preserves_static_chunk_size(max_n_threads):
+    # The feature term chooses the smallest team whose static schedule has the
+    # same maximum features-per-thread as a team of max_n_threads. This is not
+    # monotonic: 10 features need 10 threads, while 11 features need only 6.
+    n_samples = 50_000_000
+
+    for n_features in range(5, 41):
+        n_threads = _get_heuristic_n_threads(max_n_threads, n_samples, n_features)
+        full_team_chunk = math.ceil(n_features / max_n_threads)
+        assert math.ceil(n_features / n_threads) == full_team_chunk
+        if n_threads > 1:
+            assert math.ceil(n_features / (n_threads - 1)) > full_team_chunk
+
+    if max_n_threads == 10:
+        assert _get_heuristic_n_threads(max_n_threads, n_samples, 10) == 10
+        assert _get_heuristic_n_threads(max_n_threads, n_samples, 11) == 6
 
 
 def test_get_heuristic_optimal_n_threads_monotonic_in_n_samples():
