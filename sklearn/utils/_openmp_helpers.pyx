@@ -129,7 +129,11 @@ def _openmp_uses_active_wait():
         "mod._force_openmp_runtime_init()\n"
     )
 
-    active_wait = True  # conservative fallback
+    # Assume active wait by default and use that as a conservative fallback
+    # when runtime detection fails. Note that on Windows, the `vcomp`
+    # implementation does not offer a verbose inspection option but its
+    # default behavior is aligned with that assumption.
+    active_wait = True
     failure = None
     timeout = 5
     try:
@@ -166,6 +170,10 @@ def _openmp_uses_active_wait():
         )
 
     _ACTIVE_WAIT_CACHE = active_wait
+    # Avoid redundant runtime inspection in joblib workers spawned in the
+    # future, assuming this policy state will not change during the life of
+    # this Python process.
+    env[SKLEARN_OMP_WAIT_POLICY_ENV_VAR] = "active" if active_wait else "passive"
     return _ACTIVE_WAIT_CACHE
 
 

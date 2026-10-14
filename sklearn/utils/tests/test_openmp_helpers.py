@@ -105,7 +105,8 @@ def test_openmp_uses_active_wait_probe_failure(monkeypatch, result, reason):
 
 
 def test_openmp_uses_active_wait_frozen(monkeypatch, no_probe):
-    # A frozen application would relaunch itself instead of running the probe.
+    # A frozen application never attempt to run the subprocess probe to avoid
+    # accidentally relaunching itself instead of running the probe.
     monkeypatch.delenv("SKLEARN_OMP_WAIT_POLICY", raising=False)
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     assert _openmp_uses_active_wait() is True

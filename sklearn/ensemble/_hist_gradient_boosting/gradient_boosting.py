@@ -1014,7 +1014,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if not active_wait and n_samples * n_features <= 20_000_000:
             max_n_threads = min(max_n_threads, 4)
 
-        # Empirically, HGB almost always scales counter-productively past 64 threads
+        # Empirically, HGB always scales with strongly diminishing
+        # returns and often very counter-productively past 64 threads.
         max_n_threads = min(max_n_threads, 64)
 
         # Compute the per-thread chunk size first, then derive how many threads
