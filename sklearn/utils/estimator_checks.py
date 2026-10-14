@@ -2071,26 +2071,6 @@ def check_complex_data(name, estimator_orig):
         estimator.fit(X, y)
 
 
-_INFERENCE_METHODS = [
-    "apply",
-    "decision_function",
-    "decision_path",
-    "invert_transform",
-    "kneighbors",
-    "kneighbors_graph",
-    "predict",
-    "predict_joint_log_proba",
-    "predict_log_proba",
-    "predict_proba",
-    "radius_neighbors",
-    "score",
-    "score_samples",
-    "staged_predict",
-    "staged_predict_proba",
-    "transform",
-]
-
-
 @ignore_warnings
 def check_dict_unchanged(name, estimator_orig):
     rnd = np.random.RandomState(0)
@@ -5769,7 +5749,7 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         estimator.fit(X, y)
 
 
-class _HashingPickler(Pickler):
+class _StatePickler(Pickler):
     """Add some extra pickling logic to work around edge cases."""
 
     def reducer_override(self, obj: object) -> tuple:
@@ -5787,15 +5767,36 @@ class _HashingPickler(Pickler):
         return NotImplemented
 
 
-def _object_hash(obj: object) -> bytes:
+def _pickled_bytes(obj: object) -> bytes:
     """
-    Hash a Python object; mutating the object should change the result.
+    Pickled bytes of a Python object; effectively a verbose hash, since
+    dictionary and set order iteration is stables.
 
-    ``joblib.hash`` has issues with some of the estimators, so we use our own.
+    Mutating the object should change the result.
     """
     f = BytesIO()
-    _HashingPickler(f).dump(obj)
+    _StatePickler(f).dump(obj)
     return f.getvalue()
+
+
+_INFERENCE_METHODS = [
+    "apply",
+    "decision_function",
+    "decision_path",
+    "inverse_transform",
+    "kneighbors",
+    "kneighbors_graph",
+    "predict",
+    "predict_joint_log_proba",
+    "predict_log_proba",
+    "predict_proba",
+    "radius_neighbors",
+    "score",
+    "score_samples",
+    "staged_predict",
+    "staged_predict_proba",
+    "transform",
+]
 
 
 def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
@@ -5808,9 +5809,9 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
     """
     estimator, X_train, y_train, X_test, y_test = _fit_estimator(estimator_orig)
 
-    before_hash = _object_hash(estimator)
+    before_hash = _pickled_bytes(estimator)
     attr_hashes = {
-        key: _object_hash(value) for (key, value) in estimator.__dict__.items()
+        key: _pickled_bytes(value) for (key, value) in estimator.__dict__.items()
     }
     for method_name in _INFERENCE_METHODS:
         if not hasattr(estimator, method_name):
@@ -5823,9 +5824,9 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
             method(result)
         else:
             method(X_test)
-        after_hash = _object_hash(estimator)
+        after_hash = _pickled_bytes(estimator)
         after_attr_hashes = {
-            key: _object_hash(value) for (key, value) in estimator.__dict__.items()
+            key: _pickled_bytes(value) for (key, value) in estimator.__dict__.items()
         }
         missing = object()
         mismatching_attrs = {
