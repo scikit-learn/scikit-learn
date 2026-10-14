@@ -989,6 +989,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if max_n_threads == 1 or n_samples * n_features <= 20_000:
             return 1
 
+        # For slightly larger problems on runtime environments without
+        # activate wait, multi-threading has also be shown to be counter-
+        # productive.
         active_wait = _openmp_uses_active_wait()
         if not active_wait and n_samples * n_features <= 2_000_000:
             return 1
