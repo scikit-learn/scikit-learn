@@ -1007,7 +1007,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if not active_wait:
             return n_threads_for_features
 
-        # Very empirical: more samples warrant more threads:
+        # Very empirical: more samples warrant more threads when
+        # sample-wise parallel regions start to dominate which could be the
+        # case on datasets with small number of features but very large
+        # numbers of data points.
         n_threads_for_samples = min(0.1 * math.pow(n_samples, 1 / 3), max_n_threads)
         heuristic_n_threads = max(n_threads_for_features, n_threads_for_samples)
 
