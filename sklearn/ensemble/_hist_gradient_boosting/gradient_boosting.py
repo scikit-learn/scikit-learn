@@ -1000,7 +1000,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # Compute the per-thread chunk size first, then derive how many threads
         # are actually needed to cover n_features with that chunk size: this can
-        # be lower than max_n_threads, avoiding threads with little to no work.
+        # intentionally be lower than min(n_fetures, max_n_threads),
+        # avoiding threads with little to no work. This strategy has been
+        # empirically show to yield up to 10-20% improvements, in
+        # particular when active wait is enabled.
         n_features_per_thread = math.ceil(n_features / max_n_threads)
         n_threads_for_features = math.ceil(n_features / n_features_per_thread)
 

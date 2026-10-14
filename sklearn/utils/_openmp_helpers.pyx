@@ -209,6 +209,8 @@ cpdef _openmp_effective_n_threads(n_threads=None, only_physical_cores=True):
         try:
             n_cpus = _CPU_COUNTS[only_physical_cores]
         except KeyError:
+            # lazy important so that just importing `_force_openmp_runtime_init` above
+            # doesn't require to import joblib
             from joblib import cpu_count
 
             n_cpus = cpu_count(only_physical_cores=only_physical_cores)
