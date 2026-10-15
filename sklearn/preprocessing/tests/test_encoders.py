@@ -2160,6 +2160,87 @@ def test_ordinal_encoder_infrequent_three_levels(kwargs):
     assert_array_equal(X_inverse, expected_inverse)
 
 
+@pytest.mark.parametrize(
+    "kwargs, expected_infrequent_categories, expected_trans, expected_inverse",
+    [
+        (
+            {"max_categories": [3, 3, 3]},
+            [["a", "d"], ["e", "h"], ["i", "l"]],
+            [[2] * 3, [0] * 3, [1] * 3, [2] * 3, [-1] * 3],
+            [
+                ["infrequent_sklearn"] * 3,
+                ["b", "f", "j"],
+                ["c", "g", "k"],
+                ["infrequent_sklearn"] * 3,
+                [None] * 3,
+            ],
+        ),
+        (
+            {"max_categories": [3, None, None]},
+            [["a", "d"], None, None],
+            [[2, 0, 0], [0, 1, 1], [1, 2, 2], [2, 3, 3], [-1] * 3],
+            [
+                ["infrequent_sklearn", "e", "i"],
+                ["b", "f", "j"],
+                ["c", "g", "k"],
+                ["infrequent_sklearn", "h", "l"],
+                [None] * 3,
+            ],
+        ),
+        (
+            {"max_categories": [3, 2, 1]},
+            [["a", "d"], ["e", "g", "h"], ["i", "j", "k", "l"]],
+            [[2, 1, 0], [0, 0, 0], [1, 1, 0], [2, 1, 0], [-1] * 3],
+            [
+                ["infrequent_sklearn"] * 3,
+                ["b", "f", "infrequent_sklearn"],
+                ["c", "infrequent_sklearn", "infrequent_sklearn"],
+                ["infrequent_sklearn"] * 3,
+                [None] * 3,
+            ],
+        ),
+    ],
+)
+def test_ordinal_encoder_infrequent_three_levels_multiple_features(
+    kwargs, expected_infrequent_categories, expected_trans, expected_inverse
+):
+    """Test parameters for grouping multiple features into the infrequent category."""
+
+    X_train = (
+        [["a", "e", "i"]] * 5
+        + [["b", "f", "j"]] * 20
+        + [["c", "g", "k"]] * 10
+        + [["d", "h", "l"]] * 3
+    )
+    ordinal = OrdinalEncoder(
+        handle_unknown="use_encoded_value", unknown_value=-1, **kwargs
+    ).fit(X_train)
+    assert_array_equal(
+        ordinal.categories_,
+        [["a", "b", "c", "d"], ["e", "f", "g", "h"], ["i", "j", "k", "l"]],
+    )
+
+    assert len(ordinal.infrequent_categories_) == len(expected_infrequent_categories)
+    for expected, actual in zip(
+        ordinal.infrequent_categories_, expected_infrequent_categories
+    ):
+        assert_array_equal(expected, actual)
+
+    X_test = [
+        ["a", "e", "i"],
+        ["b", "f", "j"],
+        ["c", "g", "k"],
+        ["d", "h", "l"],
+        ["x", "y", "z"],
+    ]
+
+    X_trans = ordinal.transform(X_test)
+    assert_allclose(X_trans, expected_trans)
+
+    X_inverse = ordinal.inverse_transform(X_trans)
+    assert_array_equal(X_inverse, expected_inverse)
+
+
 def test_ordinal_encoder_infrequent_three_levels_user_cats():
     """Test that the order of the categories provided by a user is respected.
 
@@ -2217,7 +2298,34 @@ def test_ordinal_encoder_infrequent_mixed():
     assert_array_equal(X_inverse, expected_inverse)
 
 
-def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
+@pytest.mark.parametrize(
+    "kwargs, expected_infrequent_categories, expected_trans",
+    [
+        (
+            {"max_categories": 3},
+            [["a", "b"], [0, 3, 12], ["bird", "snake"]],
+            [[2, 2, 0], [2, 2, 2], [1, 1, 2], [0, 0, 1]],
+        ),
+        (
+            {"max_categories": [3, None, None]},
+            [["a", "b"], None, None],
+            [[2, 4, 1], [2, 0, 3], [1, 3, 0], [0, 2, 2]],
+        ),
+        (
+            {"max_categories": {"str": 3}},
+            [["a", "b"], None, None],
+            [[2, 4, 1], [2, 0, 3], [1, 3, 0], [0, 2, 2]],
+        ),
+        (
+            {"max_categories": {"str": 3, "int": 2, "categorical": 1}},
+            [["a", "b"], [0, 3, 5, 12], ["bird", "cat", "dog", "snake"]],
+            [[2, 1, 0], [2, 1, 0], [1, 0, 0], [0, 1, 0]],
+        ),
+    ],
+)
+def test_ordinal_encoder_infrequent_multiple_categories_dtypes(
+    kwargs, expected_infrequent_categories, expected_trans
+):
     """Test infrequent categories with a pandas DataFrame with multiple dtypes."""
 
     pd = pytest.importorskip("pandas")
@@ -2234,7 +2342,7 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
         columns=["str", "int", "categorical"],
     )
 
-    ordinal = OrdinalEncoder(max_categories=3).fit(X)
+    ordinal = OrdinalEncoder(**kwargs).fit(X)
     # X[:, 0] 'a', 'b', 'c' have the same frequency. 'a' and 'b' will be
     # considered infrequent because they appear first when sorted
 
@@ -2244,9 +2352,11 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
 
     # X[:, 2] "snake" and "bird" or infrequent
 
-    assert_array_equal(ordinal.infrequent_categories_[0], ["a", "b"])
-    assert_array_equal(ordinal.infrequent_categories_[1], [0, 3, 12])
-    assert_array_equal(ordinal.infrequent_categories_[2], ["bird", "snake"])
+    assert len(ordinal.infrequent_categories_) == len(expected_infrequent_categories)
+    for expected, actual in zip(
+        ordinal.infrequent_categories_, expected_infrequent_categories
+    ):
+        assert_array_equal(expected, actual)
 
     X_test = pd.DataFrame(
         {
@@ -2259,7 +2369,6 @@ def test_ordinal_encoder_infrequent_multiple_categories_dtypes():
         },
         columns=["str", "int", "categorical"],
     )
-    expected_trans = [[2, 2, 0], [2, 2, 2], [1, 1, 2], [0, 0, 1]]
 
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, expected_trans)
@@ -2372,6 +2481,158 @@ def test_ordinal_encoder_missing_appears_infrequent():
     )
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, [[2, 1], [2, 0], [np.nan, 0], [1, 0], [0, 1]])
+
+
+def test_ordinal_encoder_missing_feature_names():
+    """Check behavior when max_categories specifies features on a dataset without
+    feature names."""
+    X = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object).T
+    ordinal = OrdinalEncoder(max_categories={"x0": 3})
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "OrdinalEncoder was not fitted on data with feature names. Pass"
+            " max_categories as an integer array instead."
+        ),
+    ):
+        ordinal.fit(X)
+
+
+@pytest.mark.parametrize(
+    "max_categories, unexpected_features, n_unexpected_features",
+    [
+        ({"str": 3, "int": 2, "categorical": 1, "unexpected": 13}, ["unexpected"], 1),
+        (
+            {
+                "str": 3,
+                "int": 2,
+                "categorical": 1,
+                "unexpected": 13,
+                "unexpected_2": 13,
+                "unexpected_3": 13,
+                "unexpected_4": 13,
+                "unexpected_5": 13,
+                "unexpected_6": 13,
+            },
+            [
+                "unexpected",
+                "unexpected_2",
+                "unexpected_3",
+                "unexpected_4",
+                "unexpected_5",
+                "...",
+            ],
+            6,
+        ),
+    ],
+)
+def test_ordinal_encoder_unexpected_feature_names(
+    max_categories, unexpected_features, n_unexpected_features
+):
+    """Check behavior when max_categories specifies features that are not present on a
+    dataset."""
+    pd = pytest.importorskip("pandas")
+    categorical_dtype = pd.CategoricalDtype(["bird", "cat", "dog", "snake"])
+    X = pd.DataFrame(
+        {
+            "str": ["a", "f", "c", "f", "f", "a", "c", "b", "b"],
+            "int": [5, 3, 0, 10, 10, 12, 0, 3, 5],
+            "categorical": pd.Series(
+                ["dog"] * 4 + ["cat"] * 3 + ["snake"] + ["bird"],
+                dtype=categorical_dtype,
+            ),
+        },
+        columns=["str", "int", "categorical"],
+    )
+
+    ordinal = OrdinalEncoder(max_categories=max_categories)
+
+    msg = re.escape(
+        f"max_categories contains {n_unexpected_features} unexpected feature names:"
+        f" {unexpected_features}."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        ordinal.fit(X)
+
+
+@pytest.mark.parametrize(
+    "max_categories, incorrect_feature, incorrect_value",
+    [
+        ({"str": 3, "int": None, "categorical": 1}, "int", None),
+        ({"str": 3, "int": 2, "categorical": 0}, "categorical", 0),
+    ],
+)
+def test_ordinal_encoder_max_categories_dict_invalid_types(
+    max_categories, incorrect_feature, incorrect_value
+):
+    """Check behavior when max_categories as a dictionary contains values that are
+    invalid."""
+    pd = pytest.importorskip("pandas")
+    categorical_dtype = pd.CategoricalDtype(["bird", "cat", "dog", "snake"])
+    X = pd.DataFrame(
+        {
+            "str": ["a", "f", "c", "f", "f", "a", "c", "b", "b"],
+            "int": [5, 3, 0, 10, 10, 12, 0, 3, 5],
+            "categorical": pd.Series(
+                ["dog"] * 4 + ["cat"] * 3 + ["snake"] + ["bird"],
+                dtype=categorical_dtype,
+            ),
+        },
+        columns=["str", "int", "categorical"],
+    )
+
+    ordinal = OrdinalEncoder(max_categories=max_categories)
+
+    msg = re.escape(
+        f"max_categories['{incorrect_feature}'] must be an integer at least 1. "
+        f"Got {incorrect_value}."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        ordinal.fit(X)
+
+
+@pytest.mark.parametrize("max_categories", [[], [3, 2], [[3, 2, 1]]])
+def test_ordinal_encoder_max_categories_array_like_invalid_shape(max_categories):
+    """Check behavior when max_categories as an array_like has an invalid shape."""
+    X = (
+        [["a", "e", "i"]] * 5
+        + [["b", "f", "j"]] * 20
+        + [["c", "g", "k"]] * 10
+        + [["d", "h", "l"]] * 3
+    )
+
+    ordinal = OrdinalEncoder(max_categories=max_categories)
+
+    msg = re.escape(
+        f"max_categories has shape {np.asarray(max_categories).shape} but the "
+        "input data X has 3 features."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        ordinal.fit(X)
+
+
+def test_ordinal_encoder_max_categories_array_like_invalid_types():
+    """Check behavior when max_categories as an array_like contains values that
+    are invalid."""
+    X = (
+        [["a", "e", "i"]] * 5
+        + [["b", "f", "j"]] * 20
+        + [["c", "g", "k"]] * 10
+        + [["d", "h", "l"]] * 3
+    )
+
+    ordinal = OrdinalEncoder(max_categories=[3, None, 0])
+
+    msg = re.escape(
+        "max_categories must be an array-like of None or integers at least 1."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        ordinal.fit(X)
 
 
 @pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
