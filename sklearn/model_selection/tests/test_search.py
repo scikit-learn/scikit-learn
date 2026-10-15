@@ -2760,8 +2760,12 @@ def test_score_rejects_params_with_no_routing_enabled(SearchCV, param_search):
         gs.score(X, y, metadata=1)
 
 
+@pytest.mark.parametrize(
+    "auto_request, expected",
+    [(False, None), (True, True)],
+)
 @config_context(enable_metadata_routing=True)
-def test_search_sample_weight_auto_request():
+def test_search_sample_weight_auto_request(auto_request, expected):
     # Check that auto-requesting `sample_weight` works on consuming routers if passed
     # through `GridSearchCV`.
     X, y = make_classification(random_state=42)
@@ -2769,36 +2773,25 @@ def test_search_sample_weight_auto_request():
     meta_est = WeightedMetaClassifier(estimator=NonConsumingClassifier())
     search = GridSearchCV(meta_est, param_grid={"estimator__alpha": [0.0]}, cv=2)
 
-    with config_context(enable_metadata_auto_requests=False):
+    with config_context(enable_metadata_auto_requests=auto_request):
         assert (
             get_routing_for_object(search)
             ._route_mappings["estimator"]
             .router._self_request.fit.requests.get("sample_weight")
-            is None
+            is expected
         )
         assert (
             get_routing_for_object(search)
             ._route_mappings["estimator"]
             .router._self_request.score.requests.get("sample_weight")
-            is None
+            is expected
         )
-        with pytest.raises(UnsetMetadataPassedError, match="sample_weight"):
-            search.fit(X, y, sample_weight=sample_weight)
 
-    with config_context(enable_metadata_auto_requests=True):
-        assert (
-            get_routing_for_object(search)
-            ._route_mappings["estimator"]
-            .router._self_request.fit.requests.get("sample_weight")
-            is True
-        )
-        assert (
-            get_routing_for_object(search)
-            ._route_mappings["estimator"]
-            .router._self_request.score.requests.get("sample_weight")
-            is True
-        )
-        search.fit(X, y, sample_weight=sample_weight)
+        if auto_request:
+            search.fit(X, y, sample_weight=sample_weight)
+        else:
+            with pytest.raises(UnsetMetadataPassedError, match="sample_weight"):
+                search.fit(X, y, sample_weight=sample_weight)
 
 
 # End of Metadata Routing Tests
