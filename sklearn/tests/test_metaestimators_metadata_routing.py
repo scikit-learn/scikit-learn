@@ -900,12 +900,18 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
 
 
 @pytest.mark.parametrize(
+    "auto_request, expected",
+    [(False, None), (True, True)],
+)
+@pytest.mark.parametrize(
     "metaestimator",
     SELF_REQUEST_SAMPLE_WEIGHT_METAESTIMATORS,
     ids=SELF_REQUEST_SAMPLE_WEIGHT_IDS,
 )
 @config_context(enable_metadata_routing=True)
-def test_metaestimator_adds_auto_request_to_self_request(metaestimator):
+def test_metaestimator_adds_auto_request_to_self_request(
+    auto_request, expected, metaestimator
+):
     # Check that consuming routers auto-request `sample_weight` on their self-request,
     # when auto requests are enabled.
     metaestimator_class = metaestimator["metaestimator"]
@@ -915,18 +921,10 @@ def test_metaestimator_adds_auto_request_to_self_request(metaestimator):
 
     routing = get_routing_for_object(instance)
 
-    with config_context(enable_metadata_auto_requests=False):
-        # `sample_weight` should not be auto-requested:
+    with config_context(enable_metadata_auto_requests=auto_request):
         for method_name in methods:
             method_request = getattr(routing._self_request, method_name)
-            assert method_request.requests.get("sample_weight") is None
-
-    with config_context(enable_metadata_auto_requests=True):
-        # `sample_weight` should be auto-requested on the meta-estimator:
-        routing = get_routing_for_object(instance)
-        for method_name in methods:
-            method_request = getattr(routing._self_request, method_name)
-            assert method_request.requests.get("sample_weight") is True
+            assert method_request.requests.get("sample_weight") is expected
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
