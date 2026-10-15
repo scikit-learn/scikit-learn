@@ -201,9 +201,6 @@ def average_precision_score(
 
     Notes
     -----
-    .. versionchanged:: 0.19
-      Instead of linearly interpolating between operating points, precisions
-      are weighted by the change in recall since the last operating point.
 
     References
     ----------
@@ -322,8 +319,6 @@ def det_curve(
     classification tasks.
 
     Read more in the :ref:`User Guide <det_curve>`.
-
-    .. versionadded:: 0.24
 
     .. versionchanged:: 1.7
        An arbitrary threshold at infinity is added to represent a classifier
@@ -1261,9 +1256,6 @@ def roc_curve(
         its neighbors in ROC space. This has no effect on the ROC AUC or visual
         shape of the curve, but reduces the number of plotted points.
 
-        .. versionadded:: 0.17
-           parameter *drop_intermediate*.
-
     Returns
     -------
     fpr : ndarray of shape (>2,)
@@ -1424,8 +1416,6 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-        .. versionadded:: 0.20
-
     Returns
     -------
     score : float
@@ -1584,9 +1574,6 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     a ranking loss of zero.
 
     Read more in the :ref:`User Guide <label_ranking_loss>`.
-
-    .. versionadded:: 0.17
-       A function *label_ranking_loss*
 
     Parameters
     ----------
