@@ -4,6 +4,7 @@ from types import GeneratorType
 import numpy as np
 import pytest
 from numpy import linalg
+from scipy import sparse
 from scipy.sparse import issparse
 from scipy.spatial.distance import (
     cdist,
@@ -54,6 +55,7 @@ from sklearn.utils._array_api import (
     xpx,
     yield_namespace_device_dtype_combinations,
 )
+from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.utils._testing import (
     _array_api_for_tests,
     assert_allclose,
@@ -1509,6 +1511,49 @@ def test_rbf_kernel():
     K = rbf_kernel(X, X)
     # the diagonal elements of an rbf kernel are 1
     assert_allclose(K.flat[::6], np.ones(5))
+
+
+@pytest.mark.parametrize(
+    "gamma, expected_gamma",
+    [
+        ("auto", 1.0 / 2),
+        ("scale", 1.0 / (2 * np.var([[0, 1], [2, 3]]))),
+    ],
+)
+def test_rbf_kernel_gamma_string_options(gamma, expected_gamma):
+    X = np.array([[0, 1], [2, 3]])
+    K = rbf_kernel(X, gamma=gamma)
+
+    expected_K = np.exp(-expected_gamma * np.sum((X[:, None] - X) ** 2, axis=2))
+    assert_allclose(K, expected_K)
+
+
+def test_rbf_kernel_gamma_scale_zero_variance():
+    X = np.ones((3, 2))
+
+    K = rbf_kernel(X, gamma="scale")
+
+    assert_allclose(K, np.ones((3, 3)))
+
+
+def test_rbf_kernel_gamma_scale_sparse():
+    X = sparse.csr_matrix([[0, 1], [2, 3]])
+
+    K = rbf_kernel(X, gamma="scale")
+
+    X_dense = X.toarray()
+    expected_gamma = 1.0 / (X.shape[1] * np.var(X_dense))
+    expected_K = np.exp(
+        -expected_gamma * np.sum((X_dense[:, None] - X_dense) ** 2, axis=2)
+    )
+    assert_allclose(K, expected_K)
+
+
+def test_rbf_kernel_gamma_invalid_string():
+    X = np.array([[0, 1], [2, 3]])
+
+    with pytest.raises(InvalidParameterError):
+        rbf_kernel(X, gamma="invalid")
 
 
 def test_laplacian_kernel():

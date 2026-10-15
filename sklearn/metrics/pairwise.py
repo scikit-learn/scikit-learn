@@ -1547,6 +1547,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
         "Y": ["array-like", "sparse matrix", None],
         "gamma": [
             Interval(Real, 0, None, closed="left"),
+            StrOptions({"scale", "auto"}),
             None,
             Hidden(np.ndarray),
         ],
@@ -1572,8 +1573,12 @@ def rbf_kernel(X, Y=None, gamma=None):
     Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), default=None
         An optional second feature array. If `None`, uses `Y=X`.
 
-    gamma : float, default=None
-        If None, defaults to 1.0 / n_features.
+    gamma : float or {"scale", "auto"}, default=None
+        Kernel coefficient.
+        If None or "auto", defaults to 1.0 / n_features.
+        If "scale", uses 1.0 / (n_features * X.var()).
+        If the variance is zero, defaults to 1.0.
+        If a float is provided, uses that value directly.
 
     Returns
     -------
@@ -1589,14 +1594,24 @@ def rbf_kernel(X, Y=None, gamma=None):
     array([[0.71, 0.51],
            [0.51, 0.71]])
     """
+
     xp, _ = get_namespace(X, Y)
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma is None:
+
+    if gamma is None or (isinstance(gamma, str) and gamma == "auto"):
         gamma = 1.0 / X.shape[1]
+    elif isinstance(gamma, str) and gamma == "scale":
+        if issparse(X):
+            X_var = (X.multiply(X)).mean() - (X.mean()) ** 2
+        else:
+            X_var = xp.var(X)
+
+        gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
-    # exponentiate K in-place when using numpy
+
+    # Exponentiate K in-place when using NumPy.
     K = _modify_in_place_if_numpy(xp, xp.exp, K, out=K)
     return K
 
@@ -1607,8 +1622,8 @@ def rbf_kernel(X, Y=None, gamma=None):
         "Y": ["array-like", "sparse matrix", None],
         "gamma": [
             Interval(Real, 0, None, closed="neither"),
-            Hidden(np.ndarray),
             None,
+            Hidden(np.ndarray),
         ],
     },
     prefer_skip_nested_validation=True,
