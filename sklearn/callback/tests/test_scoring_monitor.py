@@ -637,3 +637,23 @@ def test_val_scorer_with_alias_request():
     ]
     # Verify that with or without alias give the same score with the same data
     assert np.array_equal(no_alias_score_values, alias_score_values)
+
+
+@config_context(enable_metadata_routing=True)
+def test_val_scorer_only_X():
+    """Smoke test for the validation scorer on a scorer that only requires X."""
+
+    def score_func(estimator, X, y=None):
+        return estimator.predict(X).sum()
+
+    cb = ScoringMonitor(scoring_val=score_func)
+
+    X, _ = make_regression(n_samples=10, n_features=2)
+    X_val, _ = make_regression(n_samples=10, n_features=2)
+
+    # without alias
+    MaxIterEstimator().set_callbacks(cb).fit(X, X_val=X_val)
+
+    # with alias
+    cb.set_on_fit_task_end_request(X_val="X_val_alias")
+    MaxIterEstimator().set_callbacks(cb).fit(X, X_val_alias=X_val)
