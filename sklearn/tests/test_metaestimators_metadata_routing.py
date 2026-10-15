@@ -919,9 +919,8 @@ def test_metaestimator_adds_auto_request_to_self_request(
     kwargs, *_ = get_init_args(metaestimator, sub_estimator_consumes=True)
     instance = metaestimator_class(**kwargs)
 
-    routing = get_routing_for_object(instance)
-
     with config_context(enable_metadata_auto_requests=auto_request):
+        routing = get_routing_for_object(instance)
         for method_name in methods:
             method_request = getattr(routing._self_request, method_name)
             assert method_request.requests.get("sample_weight") is expected
