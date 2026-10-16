@@ -1555,7 +1555,7 @@ class RandomForestClassifier(ForestClassifier):
         estimator. Each subset is defined by an array of the indices selected.
 
         .. versionadded:: 1.4
-        
+
     is_categorical_ : ndarray of shape (n_features,) or None
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
@@ -1948,7 +1948,7 @@ class RandomForestRegressor(ForestRegressor):
         estimator. Each subset is defined by an array of the indices selected.
 
         .. versionadded:: 1.4
-    
+
     is_categorical_ : ndarray of shape (n_features,) or None
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
@@ -2374,7 +2374,7 @@ class ExtraTreesClassifier(ForestClassifier):
         estimator. Each subset is defined by an array of the indices selected.
 
         .. versionadded:: 1.4
-       
+
     is_categorical_ : ndarray of shape (n_features,) or None
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
