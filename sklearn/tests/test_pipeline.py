@@ -2608,7 +2608,7 @@ def test_sample_weight_routing_auto_request():
         assert est_routing.fit.requests.get("sample_weight") is True
         assert est_routing.transform.requests.get("sample_weight") is True
         assert est_routing.predict.requests.get("sample_weight") is True
-        assert scaler_routing.fit.requests.get("sample_weight") is True
+        assert scaler_routing._self_request.fit.requests.get("sample_weight") is True
 
         pipe.fit(X, y, sample_weight=sample_weight)
         assert_allclose(pipe[-1].sample_weight_, sample_weight)
@@ -2623,7 +2623,7 @@ def test_sample_weight_routing_auto_request():
         assert est_routing.fit.requests.get("sample_weight") is None
         assert est_routing.transform.requests.get("sample_weight") is None
         assert est_routing.predict.requests.get("sample_weight") is None
-        assert scaler_routing.fit.requests.get("sample_weight") is None
+        assert scaler_routing._self_request.fit.requests.get("sample_weight") is None
 
     with pytest.raises(UnsetMetadataPassedError):
         pipe.fit(X, y, sample_weight=sample_weight)
