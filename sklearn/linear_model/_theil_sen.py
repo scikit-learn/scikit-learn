@@ -256,7 +256,8 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         See :term:`Glossary <random_state>`.
 
     n_jobs : int, default=None
-        Number of CPUs to use during the cross validation.
+        Number of CPUs to use when fitting the independent least-squares
+        problems used to compute the regression estimate.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

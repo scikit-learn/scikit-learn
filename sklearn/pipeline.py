@@ -1638,7 +1638,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
            Added the option `"passthrough"`.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel when fitting and transforming the
+        transformers.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
