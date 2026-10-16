@@ -180,7 +180,13 @@ def kmeans_plusplus(
 
     # Call private k-means++
     centers, indices = _kmeans_plusplus(
-        X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials
+        X,
+        n_clusters,
+        x_squared_norms,
+        sample_weight,
+        random_state,
+        n_local_trials,
+        n_threads=_openmp_effective_n_threads(),
     )
 
     return centers, indices
@@ -190,7 +196,13 @@ def kmeans_plusplus(
 # nested parallelism (i.e. BLAS) to avoid oversubscription.
 @_threadpool_controller_decorator(limits=1, user_api="blas")
 def _kmeans_plusplus(
-    X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials=None
+    X,
+    n_clusters,
+    x_squared_norms,
+    sample_weight,
+    random_state,
+    n_local_trials=None,
+    n_threads=1,
 ):
     """Computational component for initialization of n_clusters by
     k-means++. Prior validation of data is assumed.
@@ -219,6 +231,11 @@ def _kmeans_plusplus(
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
 
+    n_threads : int, default=1
+        The maximum number of OpenMP threads to use. It must be computed by the
+        caller: with OpenBLAS's OpenMP threading layer, the BLAS limit of this
+        function also sets the default number of OpenMP threads to 1.
+
     Returns
     -------
     centers : ndarray of shape (n_clusters, n_features)
@@ -233,7 +250,7 @@ def _kmeans_plusplus(
     # Each k-means++ step is a parallel region with little work for small
     # datasets, where starting and synchronizing many threads would dominate:
     # use at most one thread per 2**16 elements of X (or non-zero values).
-    n_threads = min(_openmp_effective_n_threads(), max(1, X.size // 2**16))
+    n_threads = min(n_threads, max(1, X.size // 2**16))
 
     # Set the number of local seeding trials if none is given
     if n_local_trials is None:
@@ -1045,6 +1062,7 @@ class _BaseKMeans(
         sample_weight,
         init_size=None,
         n_centroids=None,
+        n_threads=1,
     ):
         """Compute the initial centroids.
 
@@ -1079,6 +1097,9 @@ class _BaseKMeans(
             If left to 'None' the number of centroids will be equal to
             number of clusters to form (self.n_clusters).
 
+        n_threads : int, default=1
+            The number of OpenMP threads to use for the k-means++ init.
+
         Returns
         -------
         centers : ndarray of shape (n_clusters, n_features)
@@ -1101,6 +1122,7 @@ class _BaseKMeans(
                 random_state=random_state,
                 x_squared_norms=x_squared_norms,
                 sample_weight=sample_weight,
+                n_threads=n_threads,
             )
         elif isinstance(init, str) and init == "random":
             seeds = random_state.choice(
@@ -1579,6 +1601,7 @@ class KMeans(_BaseKMeans):
                 init=init,
                 random_state=random_state,
                 sample_weight=sample_weight,
+                n_threads=self._n_threads,
             )
             if self.verbose:
                 print("Initialization complete")
@@ -2187,6 +2210,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 random_state=random_state,
                 init_size=self._init_size,
                 sample_weight=sample_weight,
+                n_threads=self._n_threads,
             )
 
             # Compute inertia on a validation set.
@@ -2352,6 +2376,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 random_state=self._random_state,
                 init_size=self._init_size,
                 sample_weight=sample_weight,
+                n_threads=self._n_threads,
             )
 
             # Initialize counts
