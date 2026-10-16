@@ -71,7 +71,11 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    get_routing_for_object,
+)
 from sklearn.utils.multiclass import type_of_target
 
 REGRESSION_SCORERS = [
@@ -1260,58 +1264,50 @@ def test_scorer_set_score_request_raises(name):
 
 @pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
 @config_context(enable_metadata_routing=True)
-def test_scorer_metadata_request(name):
-    """Testing metadata requests for scorers.
-
-    This test checks many small things in a large test, to reduce the
-    boilerplate required for each section.
-    """
-    # Make sure they expose the routing methods.
+def test_scorer_metadata_request_empty_without_auto_requests(name):
+    """Test that scorers expose routing API and request nothing when auto-request is
+    off."""
     scorer = get_scorer(name)
     assert hasattr(scorer, "set_score_request")
     assert hasattr(scorer, "get_metadata_routing")
 
-    # Check that by default no metadata is requested.
-    assert_request_is_empty(scorer.get_metadata_routing())
+    with config_context(enable_metadata_auto_requests=False):
+        assert_request_is_empty(scorer.get_metadata_routing())
 
+
+@config_context(enable_metadata_routing=True)
+def test_scorer_set_score_request_mutates_and_requests():
+    """Check that `set_score_request` mutates object in place and only requests on
+    `score`."""
+    scorer = get_scorer("accuracy")
     weighted_scorer = scorer.set_score_request(sample_weight=True)
-    # set_score_request should mutate the instance, rather than returning a
-    # new instance
     assert weighted_scorer is scorer
 
-    # make sure the scorer doesn't request anything on methods other than
-    # `score`, and that the requested value on `score` is correct.
     assert_request_is_empty(weighted_scorer.get_metadata_routing(), exclude="score")
     assert (
         weighted_scorer.get_metadata_routing().score.requests["sample_weight"] is True
     )
 
-    # Some scoring functions accept sample_weight, some don't. We need to cover both
-    # cases.
-    scorer = get_scorer(name)
-    accepts_sample_weight = "sample_weight" in signature(scorer._score_func).parameters
 
-    router = MetadataRouter(owner="test").add(
+def _scorer_in_router(scorer):
+    # helper to create a metadata router routing to a scorer
+    return MetadataRouter(owner="test").add(
         scorer=scorer,
         method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
 
+
+@pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
+@config_context(enable_metadata_routing=True)
+def test_scorer_validate_metadata_sample_weight(name):
+    """Test that `validate_metadata` accepts `sample_weight` only if the metric does."""
+    scorer = get_scorer(name)
+    accepts_sample_weight = "sample_weight" in signature(scorer._score_func).parameters
+    router = _scorer_in_router(scorer)
+
     if accepts_sample_weight:
-        # When sample_weight is accepted, `validate_data` passes and `route_params`
-        # raises
         router.validate_metadata(params={"sample_weight": 1}, method="score")
-        scorer_repr = repr(scorer)
-        err_msg = (
-            "[sample_weight] are passed but are not explicitly set as requested or not"
-            f" requested for {scorer_repr}.score, which is used within test.score."
-            f" Call `{scorer_repr}.set_score_request({{metadata}}=True/False)` for each"
-            " metadata you want to request/ignore."
-        )
-        with pytest.raises(UnsetMetadataPassedError, match=re.escape(err_msg)):
-            router.route_params(params={"sample_weight": 1}, caller="score")
     else:
-        # When sample_weight is not accepted, `validate_data` raises and `route_params`
-        # is never called
         err_msg = re.escape(
             "test.score got unexpected argument(s) {'sample_weight'}, which are not"
             " routed to any object."
@@ -1319,14 +1315,64 @@ def test_scorer_metadata_request(name):
         with pytest.raises(TypeError, match=err_msg):
             router.validate_metadata(params={"sample_weight": 1}, method="score")
 
-    # make sure putting weighted_scorer in a router requests sample_weight
-    router = MetadataRouter(owner="test").add(
-        scorer=weighted_scorer,
-        method_mapping=MethodMapping().add(caller="score", callee="score"),
-    )
+
+@pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
+@config_context(enable_metadata_routing=True)
+def test_scorer_sample_weight_requests(name):
+    """Test that scorers accepting `sample_weight` auto-request it depending on
+    whether auto-requests are enabled or disabled."""
+    scorer = get_scorer(name)
+    accepts_sample_weight = scorer._accept_sample_weight()
+
+    with config_context(enable_metadata_auto_requests=False):
+        assert (
+            get_routing_for_object(scorer).score.requests.get("sample_weight") is None
+        )
+
+        if accepts_sample_weight:
+            # `route_params` raises when `sample_weight` is accepted but not requested
+            router = _scorer_in_router(scorer)
+            scorer_repr = repr(scorer)
+            err_msg = (
+                "[sample_weight] are passed but are not explicitly set as requested or"
+                f" not requested for {scorer_repr}.score, which is used within"
+                f" test.score."
+                f" Call `{scorer_repr}.set_score_request({{metadata}}=True/False)` for"
+                " each metadata you want to request/ignore."
+            )
+            with pytest.raises(UnsetMetadataPassedError, match=re.escape(err_msg)):
+                router.route_params(params={"sample_weight": 1}, caller="score")
+
+    with config_context(enable_metadata_auto_requests=True):
+        request = get_routing_for_object(scorer).score.requests.get("sample_weight")
+        if accepts_sample_weight:
+            assert request is True
+            routed_params = _scorer_in_router(scorer).route_params(
+                params={"sample_weight": 1}, caller="score"
+            )
+            assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
+        else:
+            assert request is None
+
+
+@config_context(enable_metadata_routing=True)
+def test_scorer_requested_sample_weight_routed():
+    """Test that a scorer with `sample_weight` requested receives it through a
+    router."""
+    weighted_scorer = get_scorer("accuracy").set_score_request(sample_weight=True)
+    router = _scorer_in_router(weighted_scorer)
     router.validate_metadata(params={"sample_weight": 1}, method="score")
     routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
     assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
+
+
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
+def test_scorer_set_score_request_false_opts_out_of_auto_request():
+    """Check that explicitly requesting `sample_weight=False` overrides the
+    auto-request."""
+    with config_context(enable_metadata_auto_requests=True):
+        scorer = get_scorer("accuracy").set_score_request(sample_weight=False)
+        assert get_routing_for_object(scorer).score.requests["sample_weight"] is False
 
 
 @config_context(enable_metadata_routing=True)
