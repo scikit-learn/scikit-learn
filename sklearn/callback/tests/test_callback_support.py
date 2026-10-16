@@ -65,7 +65,7 @@ def test_validate_callbacks_invalid_setup_kwarg():
 def test_validate_callbacks_invalid_hook_kwargs():
     """Check that a callback with invalid keyword-only parameters raises an error."""
     estimator = MaxIterEstimator()
-    msg = r"'on_fit_task_begin' .* has parameters that are not valid"
+    msg = r"'on_fit_task_begin' .* must have exactly the positional parameters"
     with pytest.raises(TypeError, match=msg):
         estimator.set_callbacks(NotValidFitTaskBeginCallback())
 
