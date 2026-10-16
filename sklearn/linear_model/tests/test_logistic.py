@@ -1197,6 +1197,8 @@ def test_logistic_cv_sparse(global_random_seed, solver, csr_container):
     assert clfs.alpha_ == clf.alpha_
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.parametrize("weight", [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}])
 @pytest.mark.parametrize("class_weight", ["weight", "balanced"])
 def test_logistic_regressioncv_class_weights(weight, class_weight, global_random_seed):
