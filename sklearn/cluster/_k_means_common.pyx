@@ -5,7 +5,7 @@ import numpy as np
 from cython cimport floating
 from cython.parallel cimport parallel, prange
 from libc.math cimport sqrt
-from libc.stdlib cimport calloc, free
+from libc.stdlib cimport calloc, free, malloc
 
 from sklearn.utils._cython_blas cimport _gemm
 from sklearn.utils._cython_blas cimport RowMajor, Trans, NoTrans
@@ -284,6 +284,10 @@ def _kmeans_plusplus_trials_sparse(
         const floating[::1] X_data = X.data
         const int[::1] X_indices = X.indices
         const int[::1] X_indptr = X.indptr
+        # candidates_t[k, j] = candidates[j, k], so that the inner loop over the
+        # candidates reads contiguous memory
+        const floating[:, ::1] candidates_t = np.ascontiguousarray(
+            np.asarray(candidates).T)
 
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
@@ -291,13 +295,16 @@ def _kmeans_plusplus_trials_sparse(
         int n_chunks = trials_chunk_pot.shape[1]
         int chunk_size = CHUNK_SIZE
         int chunk_idx, start, end, i, j, k
-        floating dist, norms, c_k, diff
+        floating dist, norms, x_k
         floating threshold = _recompute_threshold(<floating> 0)
         # Dense copy of a sample, for the direct computation of small distances
         floating *x_dense
+        # Dot products of a sample with the candidates
+        floating *dot
 
     with nogil, parallel(num_threads=min(n_threads, n_chunks)):
         x_dense = <floating*> calloc(n_features, sizeof(floating))
+        dot = <floating*> malloc(n_trials * sizeof(floating))
 
         for chunk_idx in prange(n_chunks, schedule='static'):
             start = chunk_idx * chunk_size
@@ -305,15 +312,20 @@ def _kmeans_plusplus_trials_sparse(
             for j in range(n_trials):
                 trials_chunk_pot[j, chunk_idx] = 0.0
             for i in range(start, end):
+                # dot[j] = x.c_j, summed over the non-zeros of x. The loop over the
+                # candidates is the inner one: the n_trials sums are independent,
+                # while a single sum per candidate would be one long chain of
+                # dependent additions (much slower, especially on one thread).
                 for j in range(n_trials):
-                    # dist = ||x - c||² = ||c||² + sum over the non-zeros of x of
-                    # (x_k - c_k)² - c_k²
-                    dist = candidates_squared_norms[j]
-                    for k in range(X_indptr[i], X_indptr[i + 1]):
-                        c_k = candidates[j, X_indices[k]]
-                        diff = X_data[k] - c_k
-                        dist = dist + diff * diff - c_k * c_k
+                    dot[j] = 0.0
+                for k in range(X_indptr[i], X_indptr[i + 1]):
+                    x_k = X_data[k]
+                    for j in range(n_trials):
+                        dot[j] += x_k * candidates_t[X_indices[k], j]
+                for j in range(n_trials):
+                    # dist = ||x||² - 2 x.c + ||c||²
                     norms = x_squared_norms[i] + candidates_squared_norms[j]
+                    dist = norms - 2 * dot[j]
                     if dist < threshold * norms:
                         # Same direct computation as for dense input, with
                         # x_dense = X[i].toarray()
@@ -332,6 +344,7 @@ def _kmeans_plusplus_trials_sparse(
                         trials_chunk_pot[j, chunk_idx] + sample_weight[i] * dist)
 
         free(x_dense)
+        free(dot)
 
 
 def _kmeans_plusplus_sample_candidates(
