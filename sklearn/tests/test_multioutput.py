@@ -3,9 +3,11 @@ import re
 import numpy as np
 import pytest
 from joblib import cpu_count
+from scipy import sparse
 
 from sklearn import datasets
 from sklearn.base import ClassifierMixin, clone
+from sklearn.compose import ColumnTransformer
 from sklearn.datasets import (
     load_linnerud,
     make_classification,
@@ -37,8 +39,11 @@ from sklearn.multioutput import (
     MultiOutputClassifier,
     MultiOutputRegressor,
     RegressorChain,
+    _hstack_pandas_regressor_chain,
+    _regressor_chain_feature_names,
 )
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import shuffle
@@ -600,6 +605,56 @@ def test_regressor_chain_fit_and_predict():
     assert [c.coef_.size for c in chain.estimators_] == list(
         range(X.shape[1], X.shape[1] + Y.shape[1])
     )
+
+
+@pytest.mark.parametrize("cv", [None, 3])
+def test_regressor_chain_preserves_dataframe_for_column_transformer(cv):
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(
+        {
+            "feature_a": np.arange(8, dtype=np.float64),
+            "feature_b": np.linspace(1, 4, num=8),
+        },
+        index=np.arange(8) // 2,
+    )
+    Y = np.column_stack(
+        [
+            X["feature_a"] + X["feature_b"],
+            X["feature_a"] - X["feature_b"],
+        ]
+    )
+    estimator = make_pipeline(
+        ColumnTransformer(
+            [("scale_feature_a", StandardScaler(), ["feature_a"])],
+            remainder="passthrough",
+        ),
+        LinearRegression(),
+    )
+    chain = RegressorChain(estimator, cv=cv)
+
+    chain.fit(X, Y)
+    Y_pred = chain.predict(X)
+
+    assert Y_pred.shape == Y.shape
+    column_transformer = chain.estimators_[1].named_steps["columntransformer"]
+    assert list(column_transformer.feature_names_in_) == [
+        "feature_a",
+        "feature_b",
+        "regressorchain_y_0",
+    ]
+
+
+def test_regressor_chain_pandas_helpers_sparse_target_and_name_collision():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"regressorchain_y_0": [0, 1]})
+    Y = sparse.csr_array([[2], [3]])
+
+    feature_names = _regressor_chain_feature_names(X, n_outputs=1)
+    X_aug = _hstack_pandas_regressor_chain(X, Y, feature_names)
+
+    assert feature_names == ["_regressorchain_y_0"]
+    assert_array_equal(X_aug["_regressorchain_y_0"], [2, 3])
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
