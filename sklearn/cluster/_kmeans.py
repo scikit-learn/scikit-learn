@@ -249,6 +249,12 @@ def _kmeans_plusplus(
     trials_dist_sq = np.empty((2, n_local_trials, n_samples), dtype=X.dtype)
     trials_chunk_pot = np.empty((2, n_local_trials, n_chunks), dtype=np.float64)
 
+    # The sparse kernel reads the columns of X: convert it once for all the steps
+    X_csc = None
+    if sp.issparse(X):
+        X_csc = X.tocsc()
+        X_csc.sort_indices()
+
     # Pick first center randomly and track index of point
     center_id = random_state.choice(n_samples, p=sample_weight / sample_weight.sum())
     indices = np.full(n_clusters, -1, dtype=int)
@@ -257,9 +263,10 @@ def _kmeans_plusplus(
     # Initialize list of closest distances and potential per chunk
     _kmeans_plusplus_trials(
         X,
+        X_csc,
         x_squared_norms,
         sample_weight,
-        np.array([center_id]),
+        np.array([center_id], dtype=np.intp),
         np.full(n_samples, np.inf, dtype=X.dtype),
         trials_dist_sq[0, :1],
         trials_chunk_pot[0, :1],
@@ -282,6 +289,7 @@ def _kmeans_plusplus(
         # Compute closest distances and potential for each candidate
         _kmeans_plusplus_trials(
             X,
+            X_csc,
             x_squared_norms,
             sample_weight,
             candidate_ids,
@@ -309,6 +317,7 @@ def _kmeans_plusplus(
 
 def _kmeans_plusplus_trials(
     X,
+    X_csc,
     x_squared_norms,
     sample_weight,
     candidate_ids,
@@ -317,14 +326,19 @@ def _kmeans_plusplus_trials(
     trials_chunk_pot,
     n_threads,
 ):
-    """Evaluate k-means++ candidate centers, see `_kmeans_plusplus_trials_dense`."""
+    """Evaluate k-means++ candidate centers, see `_kmeans_plusplus_trials_dense`.
+
+    `X_csc` is X in CSC format if X is sparse, None otherwise.
+    """
     candidates = X[candidate_ids]
     candidates_squared_norms = x_squared_norms[candidate_ids]
     if sp.issparse(X):
         _kmeans_plusplus_trials_sparse(
             X,
+            X_csc,
             x_squared_norms,
             sample_weight,
+            candidate_ids,
             candidates.toarray(),
             candidates_squared_norms,
             closest_dist_sq,

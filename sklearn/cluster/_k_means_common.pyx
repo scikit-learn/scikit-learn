@@ -5,7 +5,7 @@ import numpy as np
 from cython cimport floating
 from cython.parallel cimport parallel, prange
 from libc.math cimport sqrt
-from libc.stdlib cimport calloc, free, malloc
+from libc.stdlib cimport calloc, free
 
 from sklearn.utils._cython_blas cimport _gemm
 from sklearn.utils._cython_blas cimport RowMajor, Trans, NoTrans
@@ -266,10 +266,25 @@ def _kmeans_plusplus_trials_dense(
                 trials_chunk_pot[j, chunk_idx] = pot
 
 
+cdef inline int _lower_bound(
+        const int[::1] a, int lo, int hi, int value) noexcept nogil:
+    """First index of the sorted a[lo:hi] whose value is >= value, or hi."""
+    cdef int mid
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if a[mid] < value:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+
 def _kmeans_plusplus_trials_sparse(
         X,                                              # IN
+        X_csc,                                          # IN
         const floating[::1] x_squared_norms,            # IN
         const floating[::1] sample_weight,              # IN
+        const intp_t[::1] candidate_ids,                # IN
         const floating[:, ::1] candidates,              # IN
         const floating[::1] candidates_squared_norms,   # IN
         const floating[::1] closest_dist_sq,            # IN
@@ -278,73 +293,90 @@ def _kmeans_plusplus_trials_sparse(
         int n_threads):
     """Evaluate k-means++ candidate centers for sparse input data.
 
-    See `_kmeans_plusplus_trials_dense` for details.
+    `X` is in CSR format and `X_csc` is the same matrix in CSC format, with
+    sorted row indices. `candidates` are the rows `candidate_ids` of `X`, as a
+    dense array. See `_kmeans_plusplus_trials_dense` for details.
     """
     cdef:
         const floating[::1] X_data = X.data
         const int[::1] X_indices = X.indices
         const int[::1] X_indptr = X.indptr
-        # candidates_t[k, j] = candidates[j, k], so that the inner loop over the
-        # candidates reads contiguous memory
-        const floating[:, ::1] candidates_t = np.ascontiguousarray(
-            np.asarray(candidates).T)
+        const floating[::1] Xc_data = X_csc.data
+        const int[::1] Xc_indices = X_csc.indices
+        const int[::1] Xc_indptr = X_csc.indptr
 
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
         int n_trials = candidates.shape[0]
         int n_chunks = trials_chunk_pot.shape[1]
         int chunk_size = CHUNK_SIZE
-        int chunk_idx, start, end, i, j, k
-        floating dist, norms, x_k
+        int n_blocks = min(n_threads, n_chunks)
+        int block_idx, first_chunk, last_chunk, chunk_idx, start, end, i, j, k
+        int p, q, q_end, col
+        intp_t candidate_id
+        floating dist, norms, c_k
         floating threshold = _recompute_threshold(<floating> 0)
+        double pot
         # Dense copy of a sample, for the direct computation of small distances
         floating *x_dense
-        # Dot products of a sample with the candidates
-        floating *dot
 
-    with nogil, parallel(num_threads=min(n_threads, n_chunks)):
+    with nogil, parallel(num_threads=n_blocks):
         x_dense = <floating*> calloc(n_features, sizeof(floating))
-        dot = <floating*> malloc(n_trials * sizeof(floating))
 
-        for chunk_idx in prange(n_chunks, schedule='static'):
-            start = chunk_idx * chunk_size
-            end = min(start + chunk_size, n_samples)
+        for block_idx in prange(n_blocks, schedule='static'):
+            # Samples X[start:end] of the chunks first_chunk to last_chunk - 1
+            first_chunk = block_idx * n_chunks // n_blocks
+            last_chunk = (block_idx + 1) * n_chunks // n_blocks
+            start = first_chunk * chunk_size
+            end = min(last_chunk * chunk_size, n_samples)
+
+            # trials_dist_sq[j, start:end] = X[start:end] @ candidates[j]. The
+            # candidates are rows of X, so they are sparse too: only the columns
+            # of their non-zeros are read, which is much less work than a pass
+            # over all the non-zeros of X[start:end] per candidate.
             for j in range(n_trials):
-                trials_chunk_pot[j, chunk_idx] = 0.0
-            for i in range(start, end):
-                # dot[j] = x.c_j, summed over the non-zeros of x. The loop over the
-                # candidates is the inner one: the n_trials sums are independent,
-                # while a single sum per candidate would be one long chain of
-                # dependent additions (much slower, especially on one thread).
+                for i in range(start, end):
+                    trials_dist_sq[j, i] = 0.0
+                candidate_id = candidate_ids[j]
+                for p in range(X_indptr[candidate_id], X_indptr[candidate_id + 1]):
+                    # trials_dist_sq[j, start:end] += c_k * X[start:end, col]
+                    col = X_indices[p]
+                    c_k = X_data[p]
+                    q_end = Xc_indptr[col + 1]
+                    q = _lower_bound(Xc_indices, Xc_indptr[col], q_end, start)
+                    while q < q_end and Xc_indices[q] < end:
+                        trials_dist_sq[j, Xc_indices[q]] = (
+                            trials_dist_sq[j, Xc_indices[q]] + c_k * Xc_data[q])
+                        q = q + 1
+
+            for chunk_idx in range(first_chunk, last_chunk):
+                start = chunk_idx * chunk_size
+                end = min(start + chunk_size, n_samples)
                 for j in range(n_trials):
-                    dot[j] = 0.0
-                for k in range(X_indptr[i], X_indptr[i + 1]):
-                    x_k = X_data[k]
-                    for j in range(n_trials):
-                        dot[j] += x_k * candidates_t[X_indices[k], j]
-                for j in range(n_trials):
-                    # dist = ||x||² - 2 x.c + ||c||²
-                    norms = x_squared_norms[i] + candidates_squared_norms[j]
-                    dist = norms - 2 * dot[j]
-                    if dist < threshold * norms:
-                        # Same direct computation as for dense input, with
-                        # x_dense = X[i].toarray()
-                        for k in range(X_indptr[i], X_indptr[i + 1]):
-                            x_dense[X_indices[k]] = X_data[k]
-                        dist = _euclidean_dense_dense(
-                            x_dense, &candidates[j, 0], n_features, True)
-                        # Reset x_dense to zeros for the next sample
-                        for k in range(X_indptr[i], X_indptr[i + 1]):
-                            x_dense[X_indices[k]] = 0.0
-                    # trials_dist_sq[j, i] = min(closest_dist_sq[i], dist)
-                    if closest_dist_sq[i] < dist:
-                        dist = closest_dist_sq[i]
-                    trials_dist_sq[j, i] = dist
-                    trials_chunk_pot[j, chunk_idx] = (
-                        trials_chunk_pot[j, chunk_idx] + sample_weight[i] * dist)
+                    # pot = sum over the chunk of sample_weight[i] * trials_dist_sq[j, i]
+                    pot = 0.0
+                    for i in range(start, end):
+                        # dist = ||x||² - 2 x.c + ||c||²
+                        norms = x_squared_norms[i] + candidates_squared_norms[j]
+                        dist = norms - 2 * trials_dist_sq[j, i]
+                        if dist < threshold * norms:
+                            # Same direct computation as for dense input, with
+                            # x_dense = X[i].toarray()
+                            for k in range(X_indptr[i], X_indptr[i + 1]):
+                                x_dense[X_indices[k]] = X_data[k]
+                            dist = _euclidean_dense_dense(
+                                x_dense, &candidates[j, 0], n_features, True)
+                            # Reset x_dense to zeros for the next sample
+                            for k in range(X_indptr[i], X_indptr[i + 1]):
+                                x_dense[X_indices[k]] = 0.0
+                        # trials_dist_sq[j, i] = min(closest_dist_sq[i], dist)
+                        if closest_dist_sq[i] < dist:
+                            dist = closest_dist_sq[i]
+                        trials_dist_sq[j, i] = dist
+                        pot = pot + sample_weight[i] * dist
+                    trials_chunk_pot[j, chunk_idx] = pot
 
         free(x_dense)
-        free(dot)
 
 
 def _kmeans_plusplus_sample_candidates(
