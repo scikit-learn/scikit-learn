@@ -2332,7 +2332,11 @@ static void svm_group_classes(const PREFIX(problem) *prob, int *nr_class_ret, in
 
 // Remove zero weighed data as libsvm and some liblinear solvers require C > 0.
 //
-static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *prob)
+// If `kept_idx` is not NULL, it must point to an array of at least `prob->l`
+// ints. It is filled with the position in `prob` of each retained sample, so
+// that `kept_idx[j]` is the index in `prob` of the j-th sample of `newprob`.
+//
+static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *prob, int *kept_idx)
 {
 	int i;
 	int l = 0;
@@ -2355,6 +2359,8 @@ static void remove_zero_weight(PREFIX(problem) *newprob, const PREFIX(problem) *
 			newprob->x[j] = prob->x[i];
 			newprob->y[j] = prob->y[i];
 			newprob->W[j] = prob->W[i];
+			if(kept_idx != NULL)
+				kept_idx[j] = i;
 			j++;
 		}
 }
@@ -2366,7 +2372,13 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
         int *status, BlasFunctions *blas_functions)
 {
 	PREFIX(problem) newprob;
-	remove_zero_weight(&newprob, prob);
+	// `prob` is replaced below by the problem without the samples that have a
+	// null or negative weight. `orig_prob` is kept to know which classes are
+	// present in the training data and `kept_idx` to report the position of the
+	// support vectors in the original problem.
+	const PREFIX(problem) *orig_prob = prob;
+	int *kept_idx = Malloc(int, orig_prob->l);
+	remove_zero_weight(&newprob, orig_prob, kept_idx);
 	prob = &newprob;
 
 	PREFIX(model) *model = Malloc(PREFIX(model),1);
@@ -2420,7 +2432,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 			if(fabs(f.alpha[i]) > 0)
 			{
 				model->SV[j] = prob->x[i];
-                                model->sv_ind[j] = i;
+				model->sv_ind[j] = kept_idx[i];
 				model->sv_coef[0][j] = f.alpha[i];
 				++j;
 			}
@@ -2453,6 +2465,42 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 			W[i] = prob->W[perm[i]];
                 }
 
+		// A class whose samples all have a null or negative weight is missing
+		// from `label`, but it must still be described by the model: the
+		// attributes exposed by scikit-learn are indexed by the classes of the
+		// original problem. Such a class has no support vector, and the
+		// classifiers involving it are not trained.
+		//
+		// label_all: sorted labels of all the classes of the original problem
+		// all_to_kept: position among the retained classes of each class of
+		//              label_all, or -1 if the class has been removed
+		// kept_to_all: position in label_all of each retained class
+		int nr_class_all;
+		int *label_all = NULL;
+		int *start_all = NULL;
+		int *count_all = NULL;
+		int *perm_all = Malloc(int,orig_prob->l);
+		NAMESPACE::svm_group_classes(orig_prob,&nr_class_all,&label_all,&start_all,&count_all,perm_all);
+		free(start_all);
+		free(count_all);
+		free(perm_all);
+
+		int *all_to_kept = Malloc(int,nr_class_all);
+		int *kept_to_all = Malloc(int,nr_class);
+		int n_kept = 0;
+		for(i=0;i<nr_class_all;i++)
+		{
+			// the retained labels are a sorted subset of label_all
+			if(n_kept < nr_class && label[n_kept] == label_all[i])
+			{
+				all_to_kept[i] = n_kept;
+				kept_to_all[n_kept] = i;
+				++n_kept;
+			}
+			else
+				all_to_kept[i] = -1;
+		}
+
 		// calculate weighted C
 
 		double *weighted_C = Malloc(double, nr_class);
@@ -2461,13 +2509,13 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		for(i=0;i<param->nr_weight;i++)
 		{
 			int j;
-			for(j=0;j<nr_class;j++)
-				if(param->weight_label[i] == label[j])
+			for(j=0;j<nr_class_all;j++)
+				if(param->weight_label[i] == label_all[j])
 					break;
-			if(j == nr_class)
+			if(j == nr_class_all)
 				fprintf(stderr,"warning: class label %d specified in weight is not found\n", param->weight_label[i]);
-			else
-				weighted_C[j] *= param->weight[i];
+			else if(all_to_kept[j] >= 0)
+				weighted_C[all_to_kept[j]] *= param->weight[i];
 		}
 
 		// train k*(k-1)/2 models
@@ -2531,29 +2579,19 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 
 		// build output
 
-		model->nr_class = nr_class;
+		model->nr_class = nr_class_all;
+		int nr_pair_all = nr_class_all*(nr_class_all-1)/2;
 
-		model->label = Malloc(int,nr_class);
-		for(i=0;i<nr_class;i++)
-			model->label[i] = label[i];
+		model->label = Malloc(int,nr_class_all);
+		for(i=0;i<nr_class_all;i++)
+			model->label[i] = label_all[i];
 
-		model->rho = Malloc(double,nr_class*(nr_class-1)/2);
-		model->n_iter = Malloc(int,nr_class*(nr_class-1)/2);
-		for(i=0;i<nr_class*(nr_class-1)/2;i++)
-		{
-			model->rho[i] = f[i].rho;
-			model->n_iter[i] = f[i].n_iter;
-		}
-
+		model->rho = Malloc(double,nr_pair_all);
+		model->n_iter = Malloc(int,nr_pair_all);
 		if(param->probability)
 		{
-			model->probA = Malloc(double,nr_class*(nr_class-1)/2);
-			model->probB = Malloc(double,nr_class*(nr_class-1)/2);
-			for(i=0;i<nr_class*(nr_class-1)/2;i++)
-			{
-				model->probA[i] = probA[i];
-				model->probB[i] = probB[i];
-			}
+			model->probA = Malloc(double,nr_pair_all);
+			model->probB = Malloc(double,nr_pair_all);
 		}
 		else
 		{
@@ -2561,9 +2599,56 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 			model->probB=NULL;
 		}
 
+		// The classifiers trained on pairs of retained classes are stored in f
+		// in the same order as the corresponding pairs of classes in the model.
+		// For a pair (i, j) with i < j and a class without any retained sample,
+		// the classifier is not trained. It is given a constant decision
+		// value of +1 or -1 (the coefficients of the support vectors are null)
+		// so that the class that has samples always gets the vote, and the
+		// class that has none is never predicted.
+		p = 0;
+		int q_all = 0;
+		for(i=0;i<nr_class_all;i++)
+			for(int j=i+1;j<nr_class_all;j++)
+			{
+				if(all_to_kept[i] >= 0 && all_to_kept[j] >= 0)
+				{
+					model->rho[q_all] = f[p].rho;
+					model->n_iter[q_all] = f[p].n_iter;
+					if(param->probability)
+					{
+						model->probA[q_all] = probA[p];
+						model->probB[q_all] = probB[p];
+					}
+					++p;
+				}
+				else
+				{
+					double decision_value = 0;
+					if(all_to_kept[i] >= 0)
+						decision_value = +1;
+					else if(all_to_kept[j] >= 0)
+						decision_value = -1;
+					// decision value of the classifier is -rho
+					model->rho[q_all] = -decision_value;
+					model->n_iter[q_all] = 0;
+					if(param->probability)
+					{
+						// not used: the probabilities of the classes without
+						// support vectors are not estimated from the pairwise
+						// probabilities, see predict_probability
+						model->probA[q_all] = 0;
+						model->probB[q_all] = 0;
+					}
+				}
+				++q_all;
+			}
+
 		int total_sv = 0;
-		int *nz_count = Malloc(int,nr_class);
-		model->nSV = Malloc(int,nr_class);
+		int *nz_count = Malloc(int,nr_class_all);
+		model->nSV = Malloc(int,nr_class_all);
+		for(i=0;i<nr_class_all;i++)
+			nz_count[i] = 0;
 		for(i=0;i<nr_class;i++)
 		{
 			int nSV = 0;
@@ -2573,9 +2658,10 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 					++nSV;
 					++total_sv;
 				}
-			model->nSV[i] = nSV;
-			nz_count[i] = nSV;
+			nz_count[kept_to_all[i]] = nSV;
 		}
+		for(i=0;i<nr_class_all;i++)
+			model->nSV[i] = nz_count[i];
 
                 info("Total nSV = %d\n",total_sv);
 
@@ -2590,19 +2676,26 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 		for(i=0;i<l;i++) {
 			if(nonzero[i]) {
                                 model->SV[p] = x[i];
-                                model->sv_ind[p] = perm[i];
+                                // index in the original problem, `perm` is the
+                                // index in the problem without removed samples
+                                model->sv_ind[p] = kept_idx[perm[i]];
                                 ++p;
                         }
                 }
 
-		int *nz_start = Malloc(int,nr_class);
+		int *nz_start = Malloc(int,nr_class_all);
 		nz_start[0] = 0;
-		for(i=1;i<nr_class;i++)
+		for(i=1;i<nr_class_all;i++)
 			nz_start[i] = nz_start[i-1]+nz_count[i-1];
 
-		model->sv_coef = Malloc(double *,nr_class-1);
-		for(i=0;i<nr_class-1;i++)
+		model->sv_coef = Malloc(double *,nr_class_all-1);
+		for(i=0;i<nr_class_all-1;i++)
+		{
 			model->sv_coef[i] = Malloc(double,total_sv);
+			// coefficients of the classifiers that are not trained are null
+			for(int k=0;k<total_sv;k++)
+				model->sv_coef[i][k] = 0;
+		}
 
 		p = 0;
 		for(i=0;i<nr_class;i++)
@@ -2611,25 +2704,32 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 				// classifier (i,j): coefficients with
 				// i are in sv_coef[j-1][nz_start[i]...],
 				// j are in sv_coef[i][nz_start[j]...]
+				// where i and j are the positions of the classes in the model,
+				// and not among the retained classes
 
 				int si = start[i];
 				int sj = start[j];
 				int ci = count[i];
 				int cj = count[j];
+				int mi = kept_to_all[i];
+				int mj = kept_to_all[j];
 
-				int q = nz_start[i];
+				int q = nz_start[mi];
 				int k;
 				for(k=0;k<ci;k++)
 					if(nonzero[si+k])
-						model->sv_coef[j-1][q++] = f[p].alpha[k];
-				q = nz_start[j];
+						model->sv_coef[mj-1][q++] = f[p].alpha[k];
+				q = nz_start[mj];
 				for(k=0;k<cj;k++)
 					if(nonzero[sj+k])
-						model->sv_coef[i][q++] = f[p].alpha[ci+k];
+						model->sv_coef[mi][q++] = f[p].alpha[ci+k];
 				++p;
 			}
 
 		free(label);
+		free(label_all);
+		free(all_to_kept);
+		free(kept_to_all);
 		free(probA);
 		free(probB);
 		free(count);
@@ -2648,6 +2748,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 	free(newprob.x);
 	free(newprob.y);
 	free(newprob.W);
+	free(kept_idx);
 	return model;
 }
 
@@ -2929,26 +3030,45 @@ double PREFIX(predict_probability)(
 		double *dec_values = Malloc(double, nr_class*(nr_class-1)/2);
 		PREFIX(predict_values)(model, x, dec_values, blas_functions);
 
+		// A class without any support vector was not trained because all its
+		// training samples had a null or negative weight. Its probability is
+		// null, and the probabilities of the other classes are estimated as if
+		// the model had been trained without it.
+		int *active = Malloc(int,nr_class);
+		int n_active = 0;
+		for(i=0;i<nr_class;i++)
+			if(model->nSV[i] > 0)
+				active[n_active++] = i;
+
 		double min_prob=1e-7;
-		double **pairwise_prob=Malloc(double *,nr_class);
-		for(i=0;i<nr_class;i++)
-			pairwise_prob[i]=Malloc(double,nr_class);
-		int k=0;
-		for(i=0;i<nr_class;i++)
-			for(int j=i+1;j<nr_class;j++)
+		double **pairwise_prob=Malloc(double *,n_active);
+		for(i=0;i<n_active;i++)
+			pairwise_prob[i]=Malloc(double,n_active);
+		for(i=0;i<n_active;i++)
+			for(int j=i+1;j<n_active;j++)
 			{
+				// position of the classifier (active[i], active[j])
+				int ci = active[i], cj = active[j];
+				int k = ci*nr_class - ci*(ci+1)/2 + cj - ci - 1;
                             pairwise_prob[i][j]=min(max(NAMESPACE::sigmoid_predict(dec_values[k],model->probA[k],model->probB[k]),min_prob),1-min_prob);
 				pairwise_prob[j][i]=1-pairwise_prob[i][j];
-				k++;
 			}
-                NAMESPACE::multiclass_probability(nr_class,pairwise_prob,prob_estimates);
+		double *active_prob_estimates=Malloc(double,n_active);
+                NAMESPACE::multiclass_probability(n_active,pairwise_prob,active_prob_estimates);
 
-		int prob_max_idx = 0;
-		for(i=1;i<nr_class;i++)
-			if(prob_estimates[i] > prob_estimates[prob_max_idx])
-				prob_max_idx = i;
 		for(i=0;i<nr_class;i++)
+			prob_estimates[i] = 0;
+		for(i=0;i<n_active;i++)
+			prob_estimates[active[i]] = active_prob_estimates[i];
+
+		int prob_max_idx = active[0];
+		for(i=1;i<n_active;i++)
+			if(prob_estimates[active[i]] > prob_estimates[prob_max_idx])
+				prob_max_idx = active[i];
+		for(i=0;i<n_active;i++)
 			free(pairwise_prob[i]);
+		free(active_prob_estimates);
+		free(active);
 		free(dec_values);
 		free(pairwise_prob);
 		return model->label[prob_max_idx];
@@ -3145,7 +3265,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	{
 		PREFIX(problem) newprob;
 		// filter samples with negative and null weights
-		remove_zero_weight(&newprob, prob);
+		remove_zero_weight(&newprob, prob, NULL);
 
 		// all samples were removed
 		if(newprob.l == 0) {

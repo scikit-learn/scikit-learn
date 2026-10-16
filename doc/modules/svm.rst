@@ -282,9 +282,11 @@ with and without weight correction.
 individual samples in the `fit` method through the ``sample_weight`` parameter.
 Similar to ``class_weight``, this sets the parameter ``C`` for the i-th
 example to ``C * sample_weight[i]``, which will encourage the classifier to
-get these samples right. The figure below illustrates the effect of sample
-weighting on the decision boundary. The size of the circles is proportional
-to the sample weights:
+get these samples right. Samples with a null or negative weight are ignored.
+If all the samples of a class are ignored in :class:`SVC`, the class remains
+in the `classes_` attribute but has no support vector and is never predicted.
+The figure below illustrates the effect of sample weighting on the decision
+boundary. The size of the circles is proportional to the sample weights:
 
 .. figure:: ../auto_examples/svm/images/sphx_glr_plot_weighted_samples_001.png
    :target: ../auto_examples/svm/plot_weighted_samples.html

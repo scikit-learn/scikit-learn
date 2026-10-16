@@ -678,6 +678,169 @@ def test_negative_weight_equal_coeffs(Estimator, sample_weight):
     assert coef[0] == pytest.approx(coef[1], rel=1e-3)
 
 
+@pytest.mark.parametrize(
+    "Estimator, params",
+    [
+        (svm.SVC, {}),
+        (svm.NuSVC, {"nu": 0.2}),
+        (svm.SVR, {}),
+        (svm.NuSVR, {}),
+        (svm.OneClassSVM, {}),
+    ],
+    ids=["SVC", "NuSVC", "SVR", "NuSVR", "OneClassSVM"],
+)
+@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
+def test_zero_sample_weight_support_indices(
+    Estimator, params, X_container, global_random_seed
+):
+    """Check that `support_` indexes the samples passed to `fit`.
+
+    The samples with a null weight are ignored by libsvm. The indices of the
+    support vectors must nevertheless refer to the original training set.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/25380
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X, y = make_blobs(n_samples=60, centers=3, random_state=global_random_seed)
+    sample_weight = rng.uniform(0.5, 2, size=X.shape[0])
+    # Remove some samples of each class, including the very first one.
+    removed = np.zeros(X.shape[0], dtype=bool)
+    removed[0] = True
+    removed[rng.choice(X.shape[0], size=15, replace=False)] = True
+    sample_weight[removed] = 0.0
+    # Real-valued targets for the regressors.
+    if Estimator in (svm.SVR, svm.NuSVR):
+        y = y + rng.normal(size=y.shape)
+
+    # `gamma="scale"` depends on the variance of the data passed to `fit`.
+    params = {**params, "gamma": 0.05}
+    est = Estimator(**params).fit(X_container(X), y, sample_weight=sample_weight)
+
+    assert not removed[est.support_].any()
+    support_vectors = est.support_vectors_
+    if hasattr(support_vectors, "toarray"):
+        support_vectors = support_vectors.toarray()
+    assert_allclose(support_vectors, X[est.support_])
+
+    # Removing the samples is equivalent to giving them a null weight, up to the
+    # indices of the support vectors.
+    kept = np.flatnonzero(~removed)
+    ref = Estimator(**params).fit(
+        X_container(X[kept]), y[kept], sample_weight=sample_weight[kept]
+    )
+    assert_array_equal(est.support_, kept[ref.support_])
+    # `dual_coef_` is sparse when `X` is sparse.
+    est_dual_coef = getattr(est.dual_coef_, "toarray", lambda: est.dual_coef_)()
+    ref_dual_coef = getattr(ref.dual_coef_, "toarray", lambda: ref.dual_coef_)()
+    assert_allclose(est_dual_coef, ref_dual_coef)
+
+
+@pytest.mark.parametrize("dropped", [(0,), (2,), (3,), (1, 2)])
+@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
+def test_svc_zero_sample_weight_for_all_samples_of_a_class(
+    dropped, X_container, global_random_seed
+):
+    """Check the fitted attributes of an SVC when some classes have null weights.
+
+    The attributes of the classifier must still be described for all the classes
+    in `classes_`. The classes whose samples are all ignored have no support
+    vectors, are never predicted, and the other classes behave as if they had
+    been trained alone.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/25380
+    """
+    # The labels are not consecutive integers on purpose.
+    labels = np.array([-3, 5, 7, 11])
+    X, y = make_blobs(
+        n_samples=80, centers=4, cluster_std=2.0, random_state=global_random_seed
+    )
+    y = labels[y]
+    n_classes = labels.size
+    is_dropped = np.isin(np.arange(n_classes), dropped)
+    kept_labels = labels[~is_dropped]
+    kept = np.isin(y, kept_labels)
+    sample_weight = np.where(kept, 1.0, 0.0)
+
+    class_weight = dict(zip(labels, [1.0, 2.0, 0.5, 3.0]))
+    kwargs = dict(
+        gamma=0.1,
+        class_weight=class_weight,
+        decision_function_shape="ovo",
+    )
+    clf = svm.SVC(**kwargs).fit(X_container(X), y, sample_weight=sample_weight)
+    ref = svm.SVC(
+        **{**kwargs, "class_weight": {c: class_weight[c] for c in kept_labels}}
+    ).fit(X_container(X[kept]), y[kept])
+
+    assert_array_equal(clf.classes_, labels)
+
+    # Indices of the support vectors refer to the original samples.
+    kept_idx = np.flatnonzero(kept)
+    assert_array_equal(clf.support_, kept_idx[ref.support_])
+    assert_array_equal(clf.n_support_[~is_dropped], ref.n_support_)
+    assert_array_equal(clf.n_support_[is_dropped], 0)
+    assert clf.dual_coef_.shape == (n_classes - 1, clf.support_.size)
+
+    # The classes with null weights are never predicted.
+    X_test = X_container(X)
+    y_pred = clf.predict(X_test)
+    assert not np.isin(y_pred, labels[is_dropped]).any()
+    assert_array_equal(y_pred, ref.predict(X_test))
+
+    # The classifiers between two classes with samples are not modified.
+    pairs = [(i, j) for i in range(n_classes) for j in range(i + 1, n_classes)]
+    trained = [not is_dropped[i] and not is_dropped[j] for i, j in pairs]
+    assert clf.intercept_.shape == (len(pairs),)
+    # The sign of the intercept and of the decision function of a binary
+    # problem is flipped compared to the one of a multiclass problem.
+    sign = -1 if kept_labels.size == 2 else 1
+    assert_allclose(clf.intercept_[trained], sign * ref.intercept_)
+    assert_allclose(
+        clf.decision_function(X_test)[:, trained],
+        sign * ref.decision_function(X_test).reshape(X.shape[0], -1),
+    )
+    # The others have a constant decision function in favor of the remaining class.
+    for (i, j), is_trained in zip(pairs, trained):
+        if is_trained:
+            continue
+        dec = clf.decision_function(X_test)[:, pairs.index((i, j))]
+        expected = (
+            0 if is_dropped[i] and is_dropped[j] else (-1 if is_dropped[i] else 1)
+        )
+        assert_allclose(dec, expected)
+
+
+@pytest.mark.filterwarnings("ignore:.*probability.*deprecated:FutureWarning")
+@pytest.mark.parametrize("X_container", [np.asarray] + CSR_CONTAINERS)
+def test_svc_zero_sample_weight_for_a_class_predict_proba(
+    X_container, global_random_seed
+):
+    """Check `predict_proba` when all the samples of a class have a null weight.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/5150
+    """
+    X, y = make_blobs(
+        n_samples=60, centers=3, cluster_std=2.0, random_state=global_random_seed
+    )
+    sample_weight = (y != 1).astype(np.float64)
+
+    params = dict(gamma=0.1, probability=True, random_state=global_random_seed)
+    clf = svm.SVC(**params).fit(X_container(X), y, sample_weight=sample_weight)
+    kept = y != 1
+    ref = svm.SVC(**params)
+    ref.fit(X_container(X[kept]), y[kept])
+
+    proba = clf.predict_proba(X_container(X))
+    assert proba.shape == (X.shape[0], 3)
+    assert_array_equal(proba[:, 1], 0)
+    # The other classes are the same as without the class.
+    assert_allclose(proba[:, [0, 2]], ref.predict_proba(X_container(X)))
+    assert (clf.predict(X_container(X)) != 1).all()
+
+
 # TODO: rework this test to be independent of the random seeds.
 def test_auto_weight():
     # Test class weights for imbalanced data
