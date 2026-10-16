@@ -422,7 +422,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             `transform_input`). Enable auto-requests as well if you want `X_val`,
             `y_val` and `sample_weight_val` requested without `set_fit_request`
             (:func:`~sklearn.set_config`). See
-            :ref:`metadata_routing_auto_request_user`.
+            :ref:`metadata_routing_auto_request_user` and
+            :ref:`sphx_glr_auto_examples_ensemble_plot_metadata_routing_validation_set.py`.
 
             .. versionadded:: 1.7
 
