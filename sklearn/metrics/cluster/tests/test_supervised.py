@@ -45,6 +45,7 @@ score_funcs = [
     v_measure_score,
     adjusted_mutual_info_score,
     normalized_mutual_info_score,
+    fowlkes_mallows_score,
 ]
 
 
