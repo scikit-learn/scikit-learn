@@ -33,6 +33,8 @@ class ProgressBar:
     This callback requires rich to be installed.
     """
 
+    _one_per_estimator = True
+
     @validate_params(
         {"max_propagation_depth": [Interval(Integral, 0, None, closed="left"), None]},
         prefer_skip_nested_validation=True,

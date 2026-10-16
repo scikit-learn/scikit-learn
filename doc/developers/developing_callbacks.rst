@@ -127,6 +127,15 @@ sub-estimators and are expected to work, though possibly not at full capacity.
     top-level estimator's `fit` method. They are not called for any of its
     sub-estimators.
 
+One per estimator callbacks
+---------------------------
+
+Some callbacks require to have only one instance registered per estimator. This is for
+example the case of :class:`~sklearn.callback.ProgressBar`. This can be achieved by
+adding a the `_one_per_estimator` class attribute to the callback's class and setting it
+to `True`. This will make the :meth:`~CallbackSupportMixin.set_callbacks` method raise a
+`ValueError` if two callbacks of that class are passed to the same estimator.
+
 Callback shared state
 ---------------------
 
