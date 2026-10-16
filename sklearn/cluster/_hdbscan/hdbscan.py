@@ -55,6 +55,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics._dist_metrics import DistanceMetric
 from sklearn.metrics.pairwise import _VALID_METRICS
 from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
+from sklearn.utils._chunking import gen_batches, get_chunk_n_rows
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.validation import (
     _allclose_dense_sparse,
@@ -82,6 +83,41 @@ _OUTLIER_ENCODING: dict = {
         "prob": np.nan,
     },
 }
+
+
+def _chunked_row_slices(n_samples, row_bytes):
+    """Slices of rows whose temporaries fit in `working_memory`.
+
+    Checks on a dense precomputed distance matrix are run block of rows by
+    block of rows, so that they do not allocate temporaries as large as the
+    distance matrix itself.
+    """
+    chunk_n_rows = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=n_samples)
+    return gen_batches(n_samples, chunk_n_rows)
+
+
+def _is_symmetric_dense(X):
+    """Whether the dense square `X` is close to its transpose.
+
+    Equivalent to ``_allclose_dense_sparse(X, X.T)`` for a dense `X`, but
+    without allocating temporaries as large as `X`.
+    """
+    n_samples = X.shape[0]
+    # Comparing a block of rows against the matching block of columns builds a
+    # few temporaries of one float64 row each, plus the boolean mask.
+    for sl in _chunked_row_slices(n_samples, row_bytes=4 * 8 * n_samples):
+        if not _allclose_dense_sparse(X[sl], X.T[sl]):
+            return False
+    return True
+
+
+def _has_nan_dense(X):
+    """Whether the dense `X` contains `np.nan`, without a full boolean mask."""
+    # `np.isnan` on a block allocates one boolean mask element per entry.
+    for sl in _chunked_row_slices(X.shape[0], row_bytes=X.shape[1]):
+        if np.isnan(X[sl]).any():
+            return True
+    return False
 
 
 def _brute_mst(mutual_reachability, min_samples):
@@ -239,7 +275,11 @@ def _hdbscan_brute(
                 f" it has shape {X.shape}. Please verify that the"
                 " distance matrix was constructed correctly."
             )
-        if not _allclose_dense_sparse(X, X.T):
+        if issparse(X):
+            symmetric = _allclose_dense_sparse(X, X.T)
+        else:
+            symmetric = _is_symmetric_dense(X)
+        if not symmetric:
             raise ValueError(
                 "The precomputed distance matrix is expected to be symmetric, however"
                 " its values appear to be asymmetric. Please verify that the distance"
@@ -788,7 +828,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             X = validate_data(
                 self, X, ensure_all_finite=False, dtype=np.float64, force_writeable=True
             )
-            if np.isnan(X).any():
+            if _has_nan_dense(X):
                 # TODO: Support np.nan in Cython implementation for precomputed
                 # dense HDBSCAN
                 raise ValueError("np.nan values found in precomputed-dense")
