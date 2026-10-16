@@ -314,7 +314,7 @@ def _kmeans_plusplus_trials_sparse(
         int block_idx, first_chunk, last_chunk, chunk_idx, start, end, i, j, k
         int p, q, q_end, col
         intp_t candidate_id
-        floating dist, norms, c_k
+        floating dist, norms, minus_2_c_k
         floating threshold = _recompute_threshold(<floating> 0)
         double pot
         # Dense copy of a sample, for the direct computation of small distances
@@ -330,7 +330,7 @@ def _kmeans_plusplus_trials_sparse(
             start = first_chunk * chunk_size
             end = min(last_chunk * chunk_size, n_samples)
 
-            # trials_dist_sq[j, start:end] = X[start:end] @ candidates[j]. The
+            # trials_dist_sq[:, start:end] = -2 candidates @ X[start:end].T. The
             # candidates are rows of X, so they are sparse too: only the columns
             # of their non-zeros are read, which is much less work than a pass
             # over all the non-zeros of X[start:end] per candidate.
@@ -339,14 +339,15 @@ def _kmeans_plusplus_trials_sparse(
                     trials_dist_sq[j, i] = 0.0
                 candidate_id = candidate_ids[j]
                 for p in range(X_indptr[candidate_id], X_indptr[candidate_id + 1]):
-                    # trials_dist_sq[j, start:end] += c_k * X[start:end, col]
+                    # trials_dist_sq[j, start:end] += -2 c_k * X[start:end, col]
                     col = X_indices[p]
-                    c_k = X_data[p]
+                    minus_2_c_k = -2 * X_data[p]
                     q_end = Xc_indptr[col + 1]
                     q = _lower_bound(Xc_indices, Xc_indptr[col], q_end, start)
                     while q < q_end and Xc_indices[q] < end:
-                        trials_dist_sq[j, Xc_indices[q]] = (
-                            trials_dist_sq[j, Xc_indices[q]] + c_k * Xc_data[q])
+                        i = Xc_indices[q]
+                        trials_dist_sq[j, i] = (
+                            trials_dist_sq[j, i] + minus_2_c_k * Xc_data[q])
                         q = q + 1
 
             for chunk_idx in range(first_chunk, last_chunk):
@@ -358,7 +359,7 @@ def _kmeans_plusplus_trials_sparse(
                     for i in range(start, end):
                         # dist = ||x||² - 2 x.c + ||c||²
                         norms = x_squared_norms[i] + candidates_squared_norms[j]
-                        dist = norms - 2 * trials_dist_sq[j, i]
+                        dist = trials_dist_sq[j, i] + norms
                         if dist < threshold * norms:
                             # Same direct computation as for dense input, with
                             # x_dense = X[i].toarray()
