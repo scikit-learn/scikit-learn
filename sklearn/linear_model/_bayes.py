@@ -5,7 +5,7 @@ Various bayesian regression
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from math import log
+from math import lgamma, log
 from numbers import Integral, Real
 
 import numpy as np
@@ -71,8 +71,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
         If not set, lambda_init is 1.
 
     compute_score : bool, default=False
-        If True, compute the log marginal likelihood at each iteration of the
-        optimization.
+        If True, compute the log marginal likelihood plus Gamma-prior terms
+        for alpha and lambda at each iteration. See `scores_` for details.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model.
@@ -106,11 +106,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Estimated variance-covariance matrix of the weights
 
     scores_ : array-like of shape (n_iter_+1,)
-        If computed_score is True, value of the log marginal likelihood (to be
-        maximized) at each iteration of the optimization. The array starts
-        with the value of the log marginal likelihood obtained for the initial
-        values of alpha and lambda and ends with the value obtained for the
-        estimated alpha and lambda.
+        When `compute_score=True`, each entry is the log marginal likelihood
+        plus the log Gamma-prior terms for alpha and lambda, starting from
+        the initial values and ending with the estimated ones. It is a
+        normalized log density of y, log(alpha), and log(lambda) only when
+        `fit_intercept=False`, `sample_weight=None`, and both priors are proper.
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
@@ -304,8 +304,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
                 X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
             )
             if self.compute_score:
-                # compute the log marginal likelihood
-                s = self._log_marginal_likelihood(
+                # compute the training objective
+                s = self._log_joint_score(
                     n_samples,
                     n_features,
                     sw_sum,
@@ -332,22 +332,22 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.n_iter_ = iter_ + 1
 
         # return regularization parameters and corresponding posterior mean,
-        # log marginal likelihood and posterior covariance
+        # score and posterior covariance
         self.alpha_ = alpha_
         self.lambda_ = lambda_
         self.coef_, sse_ = self._update_coef_(
             X, y, n_samples, n_features, XT_y, U, Vh, eigen_vals_, alpha_, lambda_
         )
         if self.compute_score:
-            # compute the log marginal likelihood
-            s = self._log_marginal_likelihood(
+            # compute the training objective
+            s = self._log_joint_score(
                 n_samples,
                 n_features,
                 sw_sum,
                 eigen_vals_,
                 alpha_,
                 lambda_,
-                coef_,
+                self.coef_,
                 sse_,
             )
             self.scores_.append(s)
@@ -418,10 +418,10 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         return coef_, sse_
 
-    def _log_marginal_likelihood(
+    def _log_joint_score(
         self, n_samples, n_features, sw_sum, eigen_vals, alpha_, lambda_, coef, sse
     ):
-        """Log marginal likelihood."""
+        """Score based on log evidence and Gamma prior terms."""
         alpha_1 = self.alpha_1
         alpha_2 = self.alpha_2
         lambda_1 = self.lambda_1
@@ -439,6 +439,12 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         score = lambda_1 * log(lambda_) - lambda_2 * lambda_
         score += alpha_1 * log(alpha_) - alpha_2 * alpha_
+        # The prior terms above include the Jacobian for log-precision
+        # coordinates. Add Gamma normalizers only for proper priors.
+        if lambda_1 > 0 and lambda_2 > 0:
+            score += lambda_1 * log(lambda_2) - lgamma(lambda_1)
+        if alpha_1 > 0 and alpha_2 > 0:
+            score += alpha_1 * log(alpha_2) - lgamma(alpha_1)
         score += 0.5 * (
             n_features * log(lambda_)
             + sw_sum * log(alpha_)

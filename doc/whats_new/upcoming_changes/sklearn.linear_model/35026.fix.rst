@@ -1,0 +1,4 @@
+- :class:`linear_model.BayesianRidge` now includes the normalization
+  constants of proper Gamma priors in ``scores_``. This corrects the
+  reported scores without changing the fitted model.
+  By :user:`Luis A. Ortega <Ludvins>`.
