@@ -15,7 +15,7 @@ from sklearn.tree import ExtraTreeRegressor
 from sklearn.utils import check_array, check_random_state, gen_batches
 from sklearn.utils._chunking import get_chunk_n_rows
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
-from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import _parallel_thread_map
 from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
@@ -598,11 +598,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # https://github.com/scikit-learn/scikit-learn/pull/28622 for more
         # details.
         lock = threading.Lock()
-        Parallel(
-            verbose=self.verbose,
-            require="sharedmem",
-        )(
-            delayed(_parallel_compute_tree_depths)(
+
+        def compute_tree_depths(tree_idx, tree, features):
+            _parallel_compute_tree_depths(
                 tree,
                 X,
                 features if subsample_features else None,
@@ -611,9 +609,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 depths,
                 lock,
             )
-            for tree_idx, (tree, features) in enumerate(
-                zip(self.estimators_, self.estimators_features_)
-            )
+
+        # Results are written in-place in `depths`.
+        _parallel_thread_map(
+            self.n_jobs,
+            compute_tree_depths,
+            range(len(self.estimators_)),
+            self.estimators_,
+            self.estimators_features_,
         )
 
         denominator = len(self.estimators_) * average_path_length_max_samples
