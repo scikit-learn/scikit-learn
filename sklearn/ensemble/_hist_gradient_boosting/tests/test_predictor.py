@@ -20,9 +20,13 @@ from sklearn.utils._bitset import (
     set_bitset_memoryview,
     set_raw_bitset_from_binned_bitset,
 )
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (
+    _openmp_effective_n_threads,
+    _openmp_uses_active_wait,
+)
 
 n_threads = _openmp_effective_n_threads()
+active_wait = _openmp_uses_active_wait()
 
 
 @pytest.mark.parametrize("n_bins", [200, 256])
@@ -49,6 +53,8 @@ def test_regression_dataset(n_bins):
         max_leaf_nodes=max_leaf_nodes,
         n_bins=n_bins,
         n_bins_non_missing=mapper.n_bins_non_missing_,
+        n_threads=n_threads,
+        active_wait=active_wait,
     )
     grower.grow()
 

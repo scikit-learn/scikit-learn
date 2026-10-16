@@ -1,5 +1,6 @@
 import copyreg
 import io
+import math
 import pickle
 import re
 import sys
@@ -39,12 +40,16 @@ from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
 from sklearn.utils import check_random_state, shuffle
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (
+    _openmp_effective_n_threads,
+    _openmp_uses_active_wait,
+)
 from sklearn.utils._testing import _convert_container
 from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.metadata_routing import get_routing_for_object
 
 n_threads = _openmp_effective_n_threads()
+active_wait = _openmp_uses_active_wait()
 
 X_classification, y_classification = make_classification(random_state=0)
 X_regression, y_regression = make_regression(random_state=0)
@@ -817,7 +822,12 @@ def test_sum_hessians_are_sample_weight(Loss):
 
     # Build histogram
     grower = TreeGrower(
-        X_binned, gradients[:, 0], hessians[:, 0], n_bins=bin_mapper.n_bins
+        X_binned,
+        gradients[:, 0],
+        hessians[:, 0],
+        n_bins=bin_mapper.n_bins,
+        n_threads=n_threads,
+        active_wait=active_wait,
     )
     histograms = grower.histogram_builder.compute_histograms_brute(
         grower.root.sample_indices
@@ -1779,3 +1789,95 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+def _get_heuristic_n_threads(max_n_threads, n_samples, n_features):
+    return hgb_module.BaseHistGradientBoosting._get_heuristic_optimal_n_threads(
+        max_n_threads, n_samples, n_features
+    )
+
+
+@pytest.mark.parametrize(
+    "max_n_threads, n_samples, n_features",
+    [
+        (1, 1, 1),
+        (1, 10**7, 1000),
+        (64, 1, 1),
+        (8, 10, 2),
+        (8, 10**7, 2),
+        (32, 10**5, 500),
+    ],
+)
+def test_get_heuristic_optimal_n_threads_bounds(max_n_threads, n_samples, n_features):
+    # The heuristic should never recommend using fewer than 1 thread, nor more
+    # than the threads actually available.
+    n_threads = _get_heuristic_n_threads(max_n_threads, n_samples, n_features)
+    assert isinstance(n_threads, int)
+    assert 1 <= n_threads <= max_n_threads
+
+
+def test_get_heuristic_optimal_n_threads_max_n_threads_one():
+    # However large the workload, there is nothing to parallelize over when
+    # only one thread is available.
+    for n_samples, n_features in [(1, 1), (10**7, 1), (1, 1000), (10**7, 1000)]:
+        assert _get_heuristic_n_threads(1, n_samples, n_features) == 1
+
+
+@pytest.mark.parametrize(
+    "max_n_threads, n_samples, n_features", [(64, 1, 1), (32, 100, 5), (16, 1000, 1)]
+)
+def test_get_heuristic_optimal_n_threads_tiny_workload(
+    max_n_threads, n_samples, n_features
+):
+    # On such small workloads, thread management overhead would dominate,
+    # whatever the thread budget and the OpenMP wait policy.
+    assert _get_heuristic_n_threads(max_n_threads, n_samples, n_features) == 1
+
+
+@pytest.mark.parametrize(
+    "n_samples, n_features",
+    [(10**4, 9), (10**5, 17), (10**5, 100), (10**6, 9), (10**6, 100)],
+)
+def test_get_heuristic_optimal_n_threads_monotonic_in_max_n_threads(
+    n_samples, n_features
+):
+    # Making more threads available should never make the heuristic
+    # recommend fewer threads.
+    n_threads_by_max_n_threads = [
+        _get_heuristic_n_threads(max_n_threads, n_samples, n_features)
+        for max_n_threads in range(1, 129)
+    ]
+    assert n_threads_by_max_n_threads == sorted(n_threads_by_max_n_threads)
+
+
+@pytest.mark.parametrize("max_n_threads", [3, 10, 17, 32, 64])
+def test_feature_thread_count_preserves_static_chunk_size(max_n_threads):
+    # The feature term chooses the smallest team whose static schedule has the
+    # same maximum features-per-thread as a team of max_n_threads. This is not
+    # monotonic: 10 features need 10 threads, while 11 features need only 6.
+    # n_samples is chosen so that only the feature term matters: with active
+    # wait, few enough samples that the samples term stays below it; with
+    # passive wait, enough samples that the number of threads is not capped.
+    n_samples = 5_000 if active_wait else 50_000_000
+
+    for n_features in range(5, 41):
+        n_threads = _get_heuristic_n_threads(max_n_threads, n_samples, n_features)
+        full_team_chunk = math.ceil(n_features / max_n_threads)
+        assert math.ceil(n_features / n_threads) == full_team_chunk
+        if n_threads > 1:
+            assert math.ceil(n_features / (n_threads - 1)) > full_team_chunk
+
+    if max_n_threads == 10:
+        assert _get_heuristic_n_threads(max_n_threads, n_samples, 10) == 10
+        assert _get_heuristic_n_threads(max_n_threads, n_samples, 11) == 6
+
+
+def test_get_heuristic_optimal_n_threads_monotonic_in_n_samples():
+    # More samples to parallelize over should never make the heuristic
+    # recommend fewer threads.
+    max_n_threads = 8
+    n_threads_by_n_samples = [
+        _get_heuristic_n_threads(max_n_threads, n_samples=n_samples, n_features=2)
+        for n_samples in [1, 10, 100, 1000, 10**4, 10**5, 10**6, 10**7]
+    ]
+    assert n_threads_by_n_samples == sorted(n_threads_by_n_samples)
