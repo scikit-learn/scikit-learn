@@ -375,7 +375,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 X,
                 y,
                 multi_output=True,
-                accept_sparse="csc",
                 dtype=np.float32,
                 ensure_all_finite=False,
                 reset=False,
@@ -1478,9 +1477,9 @@ class RandomForestClassifier(ForestClassifier):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
         categories. Missing values for categorical features should be
@@ -1883,9 +1882,9 @@ class RandomForestRegressor(ForestRegressor):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
         categories. Missing values for categorical features should be
@@ -2298,9 +2297,9 @@ class ExtraTreesClassifier(ForestClassifier):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, about 16 million unique categories are
         supported. Missing values for categorical features should be represented
@@ -2685,9 +2684,9 @@ class ExtraTreesRegressor(ForestRegressor):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, about 16 million unique categories are
         supported. Missing values for categorical features should be represented
