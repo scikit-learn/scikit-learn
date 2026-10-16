@@ -16,7 +16,12 @@ from sklearn.linear_model._base import (
     make_dataset,
 )
 from sklearn.preprocessing import add_dummy_feature
-from sklearn.utils._array_api import get_namespace_and_device, move_estimator_to
+from sklearn.utils._array_api import (
+    get_namespace,
+    get_namespace_and_device,
+    move_estimator_to,
+    move_to,
+)
 from sklearn.utils._testing import (
     _array_api_for_tests,
     assert_allclose,
@@ -884,15 +889,25 @@ def test_array_api_move_estimator_to():
     y = rng.normal(size=10)
 
     reg = LinearRegression().fit(X, y)
+    expected = reg.predict(X)
     X_xp = xp.asarray(X)
     reg.predict(X_xp)
 
     with config_context(array_api_dispatch=True):
-        with pytest.raises(ValueError, match=".*must use the same namespace"):
-            reg.predict(X_xp)
         xp_target, _, device = get_namespace_and_device(X_xp)
+
+        # Inference moves the fitted attributes to the namespace and device of
+        # its input, so an estimator fitted on NumPy accepts an array API `X`.
+        y_pred = reg.predict(X_xp)
+        assert get_namespace(y_pred)[0] == xp_target
+        assert_allclose(move_to(y_pred, xp=np, device="cpu"), expected)
+
+        # `move_estimator_to` stays the way to keep the attributes themselves on
+        # the target namespace and device rather than moving them per call.
         reg = move_estimator_to(reg, xp_target, device)
-        reg.predict(X_xp)
+        y_pred = reg.predict(X_xp)
+        assert get_namespace(y_pred)[0] == xp_target
+        assert_allclose(move_to(y_pred, xp=np, device="cpu"), expected)
 
 
 def test_predict_proba_lr_large_values():
