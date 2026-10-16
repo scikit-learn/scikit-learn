@@ -310,7 +310,6 @@ def test_classifier_matching():
             solver=solver,
             fit_intercept=fit_intercept,
             tol=1e-11,
-            C=1.0 / (alpha * n_samples),
             max_iter=max_iter,
             random_state=10,
         )
@@ -409,7 +408,6 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
         solver="sag",
         fit_intercept=False,
         tol=0.0000001,
-        C=1.0 / (alpha * n_samples),
         max_iter=max_iter,
         random_state=10,
     )
@@ -418,7 +416,6 @@ def test_sag_pobj_matches_logistic_regression(csr_container):
         alpha=alpha,
         fit_intercept=False,
         tol=0.0000001,
-        C=1.0 / (alpha * n_samples),
         max_iter=max_iter,
         random_state=10,
     )
@@ -638,7 +635,6 @@ def test_sag_classifier_computed_correctly(csr_container):
     clf1 = LogisticRegression(
         alpha=alpha * n_samples,
         solver="sag",
-        C=1.0 / (alpha * n_samples),
         max_iter=max_iter,
         tol=tol,
         random_state=77,
@@ -695,7 +691,6 @@ def test_sag_multiclass_computed_correctly(csr_container):
         LogisticRegression(
             alpha=alpha * n_samples,
             solver="sag",
-            C=1.0 / (alpha * n_samples),
             max_iter=max_iter,
             tol=tol,
             random_state=77,
@@ -772,7 +767,6 @@ def test_classifier_results(csr_container):
     clf1 = LogisticRegression(
         alpha=alpha * n_samples,
         solver="sag",
-        C=1.0 / (alpha * n_samples),
         max_iter=max_iter,
         tol=tol,
         random_state=77,
@@ -808,9 +802,8 @@ def test_binary_classifier_class_weight(csr_container):
     sample_weight = class_weight_[le.fit_transform(y)]
 
     clf1 = LogisticRegression(
-        alpha=alpha * n_samples,
+        alpha=alpha * sample_weight.sum(),
         solver="sag",
-        C=1.0 / (alpha * sample_weight.sum()),
         max_iter=max_iter,
         tol=tol,
         random_state=77,
@@ -934,7 +927,7 @@ def test_sag_weighted_classification_convergence(solver, saga, fit_intercept):
         tol=tol,
         fit_intercept=fit_intercept,
         solver="lbfgs",
-        C=1 / (sample_weights.sum() * alpha),
+        alpha=sample_weights.sum() * alpha,
     )
     est.fit(X, y, sample_weight=sample_weights)
     true_weights = est.coef_[0]
