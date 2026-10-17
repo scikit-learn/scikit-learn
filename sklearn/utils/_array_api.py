@@ -192,8 +192,10 @@ def _check_array_api_dispatch(array_api_dispatch):
         )
 
 
-def _single_array_device(array):
+def _single_array_device(array, array_api_dispatch=None):
     """Hardware device where the array data resides on."""
+    if array_api_dispatch is None:
+        array_api_dispatch = get_config()["array_api_dispatch"]
     if (
         not hasattr(array, "device")
         # When array API dispatch is disabled, we expect the scikit-learn code
@@ -201,14 +203,19 @@ def _single_array_device(array):
         # CPU. In this case, scikit-learn should stay as device neutral as possible,
         # hence the use of `device=None` which is accepted by all libraries, before
         # and after the expected conversion to NumPy via np.asarray.
-        or not get_config()["array_api_dispatch"]
+        or not array_api_dispatch
     ):
         return None
     else:
         return array.device
 
 
-def array_device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT):
+def array_device(
+    *array_list,
+    remove_none=True,
+    remove_types=REMOVE_TYPES_DEFAULT,
+    array_api_dispatch=None,
+):
     """Hardware device where the array data resides on.
 
     If the hardware device is not the same for all arrays, an error is raised.
@@ -224,6 +231,12 @@ def array_device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAUL
     remove_types : tuple or list, default=(str, list, tuple)
         Types to ignore in array_list.
 
+    array_api_dispatch : bool, default=None
+        Override for the ``array_api_dispatch`` configuration flag. When left as
+        None, the value is read from the global configuration. Internal callers
+        can force introspection of the true device regardless of the global
+        configuration.
+
     Returns
     -------
     out : device
@@ -236,14 +249,16 @@ def array_device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAUL
     if not array_list:
         return None
 
-    device = _single_array_device(array_list[0])
+    device = _single_array_device(array_list[0], array_api_dispatch=array_api_dispatch)
 
     # Note: here we cannot simply use a Python `set` as it requires
     # hashable members which is not guaranteed for Array API device
     # objects. In particular, CuPy devices are not hashable at the
     # time of writing.
     for array in array_list[1:]:
-        device_other = _single_array_device(array)
+        device_other = _single_array_device(
+            array, array_api_dispatch=array_api_dispatch
+        )
         if device != device_other:
             raise ValueError(
                 f"Input arrays use different devices: {device}, {device_other}"
@@ -377,7 +392,11 @@ def _unwrap_memoryviewslices(*arrays):
 
 
 def get_namespace(
-    *arrays, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT, xp=None
+    *arrays,
+    remove_none=True,
+    remove_types=REMOVE_TYPES_DEFAULT,
+    xp=None,
+    array_api_dispatch=None,
 ):
     """Get namespace of arrays.
 
@@ -422,6 +441,12 @@ def get_namespace(
         that has already performed inspection of its own inputs, skips array
         namespace inspection.
 
+    array_api_dispatch : bool, default=None
+        Override for the ``array_api_dispatch`` configuration flag. When left as
+        None, the value is read from the global configuration. Internal callers
+        can force introspection of the true namespace regardless of the global
+        configuration.
+
     Returns
     -------
     namespace : module
@@ -433,7 +458,12 @@ def get_namespace(
         https://data-apis.org/array-api/latest/index.html).
         Always False when array_api_dispatch=False.
     """
-    array_api_dispatch = get_config()["array_api_dispatch"]
+    if array_api_dispatch is None:
+        array_api_dispatch = get_config()["array_api_dispatch"]
+        validate_dispatch = True
+    else:
+        validate_dispatch = False
+
     if not array_api_dispatch:
         if xp is not None:
             return xp, False
@@ -458,7 +488,8 @@ def get_namespace(
     if not arrays:
         return np_compat, False
 
-    _check_array_api_dispatch(array_api_dispatch)
+    if validate_dispatch:
+        _check_array_api_dispatch(array_api_dispatch)
 
     namespace = array_api_compat.get_namespace(*arrays)
     is_array_api_compliant = True
@@ -472,7 +503,11 @@ def get_namespace(
 
 
 def get_namespace_and_device(
-    *array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAULT, xp=None
+    *array_list,
+    remove_none=True,
+    remove_types=REMOVE_TYPES_DEFAULT,
+    xp=None,
+    array_api_dispatch=None,
 ):
     """Combination into one single function of `get_namespace` and `device`.
 
@@ -488,6 +523,11 @@ def get_namespace_and_device(
         Precomputed array namespace module. When passed, typically from a caller
         that has already performed inspection of its own inputs, skips array
         namespace inspection.
+    array_api_dispatch : bool, default=None
+        Override for the ``array_api_dispatch`` configuration flag. When left as
+        None, the value is read from the global configuration. Internal callers
+        can force introspection of the true namespace and device regardless of
+        the global configuration.
 
     Returns
     -------
@@ -507,10 +547,14 @@ def get_namespace_and_device(
         remove_none=remove_none,
         remove_types=remove_types,
     )
-    arrays_device = array_device(*array_list, **skip_remove_kwargs)
+    arrays_device = array_device(
+        *array_list, array_api_dispatch=array_api_dispatch, **skip_remove_kwargs
+    )
 
     if xp is None:
-        xp, is_array_api = get_namespace(*array_list, **skip_remove_kwargs)
+        xp, is_array_api = get_namespace(
+            *array_list, array_api_dispatch=array_api_dispatch, **skip_remove_kwargs
+        )
     else:
         xp, is_array_api = xp, True
 
@@ -568,7 +612,12 @@ def move_to(*arrays, xp, device):
     if _max_precision_float_dtype(xp, device) == xp.float32:
         arrays_ = []
         for array in arrays:
-            xp_array, _ = get_namespace(array)
+            try:
+                xp_array, _ = get_namespace(array, array_api_dispatch=True)
+            except (TypeError, ValueError):
+                # Not an Array API array (e.g. a Python/NumPy scalar). Treat it as
+                # NumPy, matching the behavior when array_api_dispatch is disabled.
+                xp_array = np_compat
             if getattr(array, "dtype", None) == xp_array.float64:
                 arrays_.append(xp_array.astype(array, xp_array.float32))
             else:
@@ -581,7 +630,16 @@ def move_to(*arrays, xp, device):
         elif is_sparse:
             converted_arrays.append(array)
         else:
-            xp_array, _, device_array = get_namespace_and_device(array)
+            try:
+                xp_array, _, device_array = get_namespace_and_device(
+                    array, array_api_dispatch=True
+                )
+            except (TypeError, ValueError):
+                # Not an Array API array (e.g. a Python/NumPy scalar). Treat it as
+                # NumPy, matching the behavior when array_api_dispatch is disabled.
+                xp_array = np_compat
+                device_array = array_device(array, array_api_dispatch=True)
+
             if xp == xp_array and device == device_array:
                 converted_arrays.append(array)
             else:
