@@ -1,0 +1,7 @@
+- :class:`neighbors.RadiusNeighborsRegressor` now returns `nan` and warns when a
+  query point has no neighbors within `radius` and `y` has a non-floating point
+  dtype. Previously the `nan` was cast to the target dtype, which produced an
+  implementation defined value and suppressed the warning. Predictions for such
+  targets are now floating point, as is already the case when the neighborhood
+  is non-empty.
+  By :user:`Kayvan Zahiri <Kayvan-Zahiri>`.
