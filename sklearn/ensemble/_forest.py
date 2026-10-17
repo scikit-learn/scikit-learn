@@ -1350,7 +1350,7 @@ class RandomForestClassifier(ForestClassifier):
 
         ``warm_start`` is not supported when categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -1417,7 +1417,7 @@ class RandomForestClassifier(ForestClassifier):
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     See Also
     --------
@@ -1755,7 +1755,7 @@ class RandomForestRegressor(ForestRegressor):
 
         ``warm_start`` is not supported when categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -1810,7 +1810,7 @@ class RandomForestRegressor(ForestRegressor):
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     See Also
     --------
@@ -2169,7 +2169,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
         ``warm_start`` is not supported when categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -2236,7 +2236,7 @@ class ExtraTreesClassifier(ForestClassifier):
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     See Also
     --------
@@ -2556,7 +2556,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
         ``warm_start`` is not supported when categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -2611,7 +2611,7 @@ class ExtraTreesRegressor(ForestRegressor):
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     See Also
     --------
