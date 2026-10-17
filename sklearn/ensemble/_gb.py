@@ -1337,7 +1337,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         ``warm_start`` is not supported when categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -1406,7 +1406,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1965,7 +1965,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         ``warm_start`` is not supported when categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -2029,7 +2029,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
