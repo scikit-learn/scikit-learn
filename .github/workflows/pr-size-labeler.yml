@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   size-label:
+    if: github.repository == 'scikit-learn/scikit-learn'
     runs-on: ubuntu-latest
     steps:
       - name: Label PR by size
