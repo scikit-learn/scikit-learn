@@ -1570,6 +1570,37 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
     assert_allclose(X_imputed[:, 1], 0)
 
 
+def test_iterative_imputer_keep_empty_features_does_not_modify_input():
+    """Check that `keep_empty_features=True` does not write into an F-ordered
+    float input."""
+    X = np.asfortranarray(
+        [[1, np.nan, 3], [4, np.nan, np.nan], [7, np.nan, 9], [2, np.nan, 5]],
+        dtype=np.float64,
+    )
+    X_orig = X.copy()
+
+    imputer = IterativeImputer(keep_empty_features=True, max_iter=2)
+    imputer.fit_transform(X)
+    assert_array_equal(X, X_orig)
+    imputer.transform(X)
+    assert_array_equal(X, X_orig)
+
+
+def test_iterative_imputer_keep_empty_features_dataframe():
+    """Check that `keep_empty_features=True` works with a pandas DataFrame whose
+    data is exposed as a read-only array."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame({"x0": [1.0, 2.0, np.nan, 4.0, 5.0], "x1": [2.0, 1.0, 3, 5, 4]})
+    df_orig = df.copy()
+
+    X_expected = IterativeImputer(keep_empty_features=False, max_iter=2).fit_transform(
+        df
+    )
+    X_imputed = IterativeImputer(keep_empty_features=True, max_iter=2).fit_transform(df)
+    assert_allclose(X_imputed, X_expected)
+    pd.testing.assert_frame_equal(df, df_orig)
+
+
 @pytest.mark.parametrize("keep_empty_features", [True, False])
 def test_iterative_imputer_constant_fill_value(keep_empty_features):
     """Check that we propagate properly the parameter `fill_value`."""

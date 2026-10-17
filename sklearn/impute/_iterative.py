@@ -651,7 +651,7 @@ class IterativeImputer(_BaseImputer):
             # mark empty features as not missing and keep the original
             # imputation
             mask_missing_values[:, self._is_empty_feature] = False
-            Xt = X
+            Xt = X.copy()
             Xt[:, self._is_empty_feature] = X_filled[:, self._is_empty_feature]
 
         return Xt, X_filled, mask_missing_values, X_missing_mask
