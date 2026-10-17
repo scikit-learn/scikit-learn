@@ -11,6 +11,10 @@ permissions:
   contents: read
   issues: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   size-label:
     if: github.repository == 'scikit-learn/scikit-learn'
