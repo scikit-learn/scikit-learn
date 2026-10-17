@@ -561,3 +561,26 @@ def test_categorical_parameters(is_categorical, known_categories, match):
     )
     with pytest.raises(ValueError, match=match):
         bin_mapper.fit(X)
+
+
+@pytest.mark.parametrize("subsample", [None, 50])
+@pytest.mark.parametrize("use_sample_weight", [False, True])
+def test_bin_mapper_sample_indices(subsample, use_sample_weight):
+    """Fitting on sample_indices is equivalent to fitting on X[sample_indices]."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(200, 3)
+    sample_weight = rng.rand(200) if use_sample_weight else None
+    sample_indices = rng.permutation(200)[:150]
+
+    bin_mapper = _BinMapper(n_bins=16, subsample=subsample, random_state=0)
+    bin_mapper.fit(X, sample_weight=sample_weight, sample_indices=sample_indices)
+
+    expected = _BinMapper(n_bins=16, subsample=subsample, random_state=0)
+    expected.fit(
+        X[sample_indices],
+        sample_weight=None if sample_weight is None else sample_weight[sample_indices],
+    )
+    for thresholds, expected_thresholds in zip(
+        bin_mapper.bin_thresholds_, expected.bin_thresholds_
+    ):
+        assert_array_equal(thresholds, expected_thresholds)

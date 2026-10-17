@@ -5,7 +5,7 @@
 
 import itertools
 from abc import ABC, abstractmethod
-from contextlib import contextmanager, nullcontext, suppress
+from contextlib import contextmanager, nullcontext
 from functools import partial
 from numbers import Integral, Real
 from time import time
@@ -28,7 +28,6 @@ from sklearn.base import (
     _fit_context,
     is_classifier,
 )
-from sklearn.compose import ColumnTransformer
 from sklearn.ensemble._hist_gradient_boosting._gradient_boosting import (
     _update_raw_predictions,
 )
@@ -38,21 +37,18 @@ from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import _SCORERS
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import FunctionTransformer, LabelEncoder, OrdinalEncoder
+from sklearn.preprocessing import LabelEncoder
+from sklearn.tree._preprocessing import _get_n_categories, _validate_X
 from sklearn.utils import check_random_state, compute_sample_weight, resample
-from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
-    _check_categorical_features,
     _check_monotonic_cst,
     _check_sample_weight,
     _check_y,
-    check_array,
     check_consistent_length,
     check_is_fitted,
-    validate_data,
 )
 
 _LOSSES = _LOSSES.copy()
@@ -63,6 +59,18 @@ _LOSSES.update(
         "quantile": PinballLoss,
     }
 )
+
+
+def _take_rows(X, indices):
+    """Return ``X[indices]`` as a Fortran-ordered array.
+
+    Rows are gathered one column at a time, which is much faster than fancy
+    indexing the rows of a Fortran-ordered array.
+    """
+    X_out = np.empty((indices.shape[0], X.shape[1]), dtype=X.dtype, order="F")
+    for j in range(X.shape[1]):
+        np.take(X[:, j], indices, out=X_out[:, j])
+    return X_out
 
 
 def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
@@ -240,7 +248,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return sample_weight
 
     def _preprocess_X(self, X, *, reset):
-        """Preprocess and validate X.
+        """Validate X and ordinal-encode its categorical features.
 
         Parameters
         ----------
@@ -256,61 +264,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Validated input data.
 
         known_categories : list of ndarray of shape (n_categories,)
-            List of known categories for each categorical feature.
+            List of known categories for each categorical feature. Only returned
+            at fit time.
         """
-        # If there is a preprocessor, we let the preprocessor handle the validation.
-        # Otherwise, we validate the data ourselves.
-        check_X_kwargs = dict(dtype=[X_DTYPE], ensure_all_finite=False)
+        X = _validate_X(self, X, reset=reset, dtype=X_DTYPE, ensure_all_finite=False)
         if not reset:
-            if self._preprocessor is None:
-                return validate_data(self, X, reset=False, **check_X_kwargs)
-            return self._preprocessor.transform(X)
-
-        # At this point, reset is False, which runs during `fit`.
-        self.is_categorical_ = _check_categorical_features(X, self.categorical_features)
-
-        if self.is_categorical_ is None:
-            self._preprocessor = None
-            self._is_categorical_remapped = None
-
-            X = validate_data(self, X, **check_X_kwargs)
-            return X, None
-
-        n_features = X.shape[1]
-        ordinal_encoder = OrdinalEncoder(
-            categories="auto",
-            handle_unknown="use_encoded_value",
-            unknown_value=np.nan,
-            encoded_missing_value=np.nan,
-            dtype=X_DTYPE,
-        )
-
-        check_X = partial(check_array, **check_X_kwargs)
-        numerical_preprocessor = FunctionTransformer(check_X)
-        self._preprocessor = ColumnTransformer(
-            [
-                ("encoder", ordinal_encoder, self.is_categorical_),
-                ("numerical", numerical_preprocessor, ~self.is_categorical_),
-            ]
-        )
-        self._preprocessor.set_output(transform="default")
-        X = self._preprocessor.fit_transform(X)
-        # check categories found by the OrdinalEncoder and get their encoded values
-        known_categories = self._check_categories()
-        self.n_features_in_ = self._preprocessor.n_features_in_
-        with suppress(AttributeError):
-            self.feature_names_in_ = self._preprocessor.feature_names_in_
-
-        # The ColumnTransformer's output places the categorical features at the
-        # beginning
-        categorical_remapped = np.zeros(n_features, dtype=bool)
-        categorical_remapped[self._preprocessor.output_indices_["encoder"]] = True
-        self._is_categorical_remapped = categorical_remapped
-
-        return X, known_categories
+            return X
+        return X, self._check_categories()
 
     def _check_categories(self):
-        """Check categories found by the preprocessor and return their encoded values.
+        """Check categories found by the encoder and return their encoded values.
 
         Returns a list of length ``self.n_features_in_``, with one entry per
         input feature.
@@ -318,39 +281,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         For non-categorical features, the corresponding entry is ``None``.
 
         For categorical features, the corresponding entry is an array
-        containing the categories as encoded by the preprocessor (an
-        ``OrdinalEncoder``), excluding missing values. The entry is therefore
-        ``np.arange(n_categories)`` where ``n_categories`` is the number of
-        unique values in the considered feature column, after removing missing
-        values.
+        containing the categories as encoded by the ``OrdinalEncoder``, excluding
+        missing values. The entry is therefore ``np.arange(n_categories)`` where
+        ``n_categories`` is the number of unique values in the considered feature
+        column, after removing missing values.
 
         If ``n_categories > self.max_bins`` for any feature, a ``ValueError``
         is raised.
         """
-        encoder = self._preprocessor.named_transformers_["encoder"]
-        known_categories = [None] * self._preprocessor.n_features_in_
-        categorical_column_indices = np.arange(self._preprocessor.n_features_in_)[
-            self._preprocessor.output_indices_["encoder"]
-        ]
-        for feature_idx, categories in zip(
-            categorical_column_indices, encoder.categories_
-        ):
-            # OrdinalEncoder always puts np.nan as the last category if the
-            # training data has missing values. Here we remove it because it is
-            # already added by the _BinMapper.
-            if len(categories) and is_scalar_nan(categories[-1]):
-                categories = categories[:-1]
-            if categories.size > self.max_bins:
-                try:
-                    feature_name = repr(encoder.feature_names_in_[feature_idx])
-                except AttributeError:
+        n_categories = _get_n_categories(self)
+        known_categories = [None] * self.n_features_in_
+        for feature_idx in np.flatnonzero(n_categories >= 0):
+            if n_categories[feature_idx] > self.max_bins:
+                if hasattr(self, "feature_names_in_"):
+                    feature_name = repr(self.feature_names_in_[feature_idx])
+                else:
                     feature_name = f"at index {feature_idx}"
                 raise ValueError(
                     f"Categorical feature {feature_name} is expected to "
                     f"have a cardinality <= {self.max_bins} but actually "
-                    f"has a cardinality of {categories.size}."
+                    f"has a cardinality of {n_categories[feature_idx]}."
                 )
-            known_categories[feature_idx] = np.arange(len(categories), dtype=X_DTYPE)
+            known_categories[feature_idx] = np.arange(
+                n_categories[feature_idx], dtype=X_DTYPE
+            )
         return known_categories
 
     def _check_interaction_cst(self, n_features):
@@ -496,17 +450,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         self._validate_parameters()
         monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
-        # _preprocess_X places the categorical features at the beginning,
-        # change the order of monotonic_cst accordingly
-        if self.is_categorical_ is not None:
-            monotonic_cst_remapped = np.concatenate(
-                (
-                    monotonic_cst[self.is_categorical_],
-                    monotonic_cst[~self.is_categorical_],
-                )
-            )
-        else:
-            monotonic_cst_remapped = monotonic_cst
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
@@ -555,35 +498,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # This is needed in order to have the same split when using
             # warm starting.
 
+            # Only split the indices: X is split after binning, as the binned
+            # data is 8 times smaller.
+            # TODO: incorporate sample_weight in sampling here, as well as
+            # stratify
+            train_indices, val_indices = train_test_split(
+                np.arange(n_samples),
+                test_size=self.validation_fraction,
+                stratify=stratify,
+                random_state=self._random_seed,
+            )
+            y_train, y_val = y[train_indices], y[val_indices]
             if sample_weight is None:
-                X_train, X_val, y_train, y_val = train_test_split(
-                    X,
-                    y,
-                    test_size=self.validation_fraction,
-                    stratify=stratify,
-                    random_state=self._random_seed,
-                )
                 sample_weight_train = sample_weight_val = None
             else:
-                # TODO: incorporate sample_weight in sampling here, as well as
-                # stratify
-                (
-                    X_train,
-                    X_val,
-                    y_train,
-                    y_val,
-                    sample_weight_train,
-                    sample_weight_val,
-                ) = train_test_split(
-                    X,
-                    y,
-                    sample_weight,
-                    test_size=self.validation_fraction,
-                    stratify=stratify,
-                    random_state=self._random_seed,
-                )
+                sample_weight_train = sample_weight[train_indices]
+                sample_weight_val = sample_weight[val_indices]
         else:
-            X_train, y_train, sample_weight_train = X, y, sample_weight
+            train_indices = None
+            y_train, sample_weight_train = y, sample_weight
             if not validation_data_provided:
                 X_val = y_val = sample_weight_val = None
 
@@ -598,20 +531,28 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_bins = self.max_bins + 1  # + 1 for missing values
         self._bin_mapper = _BinMapper(
             n_bins=n_bins,
-            is_categorical=self._is_categorical_remapped,
+            is_categorical=self.is_categorical_,
             known_categories=known_categories,
             random_state=self._random_seed,
             n_threads=n_threads,
         )
-        X_binned_train = self._bin_data(
-            X_train, sample_weight_train, is_training_data=True
-        )
-        if X_val is not None:
-            X_binned_val = self._bin_data(
-                X_val, sample_weight_val, is_training_data=False
-            )
+        if train_indices is None:
+            X_binned_train = self._bin_data(X, sample_weight, is_training_data=True)
+            if X_val is not None:
+                X_binned_val = self._bin_data(
+                    X_val, sample_weight_val, is_training_data=False
+                )
+            else:
+                X_binned_val = None
         else:
-            X_binned_val = None
+            # The bin thresholds are computed from the training samples only.
+            X_binned = self._bin_data(
+                X, sample_weight, is_training_data=True, sample_indices=train_indices
+            )
+            X_binned_train = _take_rows(X_binned, train_indices)
+            # Predicting is faster on C-contiguous arrays.
+            X_binned_val = np.ascontiguousarray(_take_rows(X_binned, val_indices))
+            del X_binned
 
         # Uses binned data to check for missing values
         has_missing_values = (
@@ -829,8 +770,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
-                    is_categorical=self._is_categorical_remapped,
-                    monotonic_cst=monotonic_cst_remapped,
+                    is_categorical=self.is_categorical_,
+                    monotonic_cst=monotonic_cst,
                     interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
@@ -1106,10 +1047,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         recent_improvements = [score > reference_score for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, sample_weight, is_training_data):
+    def _bin_data(self, X, sample_weight, is_training_data, sample_indices=None):
         """Bin data X.
 
-        If is_training_data, then fit the _bin_mapper attribute.
+        If is_training_data, then fit the _bin_mapper attribute on the samples
+        at ``sample_indices`` (all samples if None).
         Else, the binned data is converted to a C-contiguous array.
         """
 
@@ -1123,7 +1065,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         tic = time()
         if is_training_data:
             X_binned = self._bin_mapper.fit_transform(
-                X, sample_weight=sample_weight
+                X, sample_weight=sample_weight, sample_indices=sample_indices
             )  # F-aligned array
         else:
             X_binned = self._bin_mapper.transform(X)  # F-aligned array

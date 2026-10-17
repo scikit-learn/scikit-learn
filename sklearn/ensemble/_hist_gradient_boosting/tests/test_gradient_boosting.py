@@ -34,6 +34,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.exceptions import NotFittedError
+from sklearn.inspection import partial_dependence
 from sklearn.metrics import get_scorer, mean_gamma_deviance, mean_poisson_deviance
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import make_pipeline
@@ -1607,7 +1608,7 @@ def test_dataframe_categorical_results_same_as_ndarray(
     hist_pd.fit(X_train_df, y_train)
 
     # Check categories are correct and sorted
-    categories = hist_pd._preprocessor.named_transformers_["encoder"].categories_[0]
+    categories = hist_pd._categorical_encoder.categories_[0]
     assert_array_equal(categories, np.unique(f_cat))
 
     assert len(hist_np._predictors) == len(hist_pd._predictors)
@@ -1779,3 +1780,64 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+def _make_data_with_categorical_last(n_samples=2000, seed=0):
+    """Two numerical features and a categorical one, in last position."""
+    rng = np.random.RandomState(seed)
+    X = np.c_[rng.randn(n_samples), rng.randn(n_samples), rng.randint(0, 5, n_samples)]
+    return X, rng
+
+
+def test_interaction_cst_with_categorical_feature_not_first():
+    """Interaction constraints refer to the original feature indices."""
+    X, _ = _make_data_with_categorical_last()
+    y = X[:, 0] * X[:, 1] + X[:, 2]
+    est = HistGradientBoostingRegressor(
+        categorical_features=[2],
+        interaction_cst=[[0, 1], [2]],
+        max_iter=20,
+        random_state=0,
+    ).fit(X, y)
+
+    # Without interaction between {0, 1} and {2}, the effect of the categorical
+    # feature does not depend on the numerical ones.
+    X_cat_0, X_cat_1 = X.copy(), X.copy()
+    X_cat_0[:, 2], X_cat_1[:, 2] = 0, 1
+    effect = est.predict(X_cat_1) - est.predict(X_cat_0)
+    assert_allclose(effect, effect[0])
+
+
+def test_partial_dependence_recursion_with_categorical_feature_not_first():
+    """The recursion method matches brute when a categorical feature is not first."""
+    X, rng = _make_data_with_categorical_last()
+    y = X[:, 0] ** 2 + X[:, 2] + 0.1 * rng.randn(X.shape[0])
+    # The recursion method does not account for the baseline prediction.
+    y -= y.mean()
+    est = HistGradientBoostingRegressor(
+        categorical_features=[2], max_iter=20, random_state=0
+    ).fit(X, y)
+
+    kwargs = dict(features=[0], categorical_features=[2], grid_resolution=5)
+    pd_recursion = partial_dependence(est, X, method="recursion", **kwargs)
+    pd_brute = partial_dependence(est, X, method="brute", **kwargs)
+    assert_allclose(pd_recursion["average"], pd_brute["average"], atol=0.05)
+
+
+def test_categorical_encoding_preserves_feature_order():
+    """Encoded X keeps the input column order, with categorical features encoded."""
+    X = np.array([[0.5, "b"], [1.5, "a"], [2.5, "b"]], dtype=object)
+    est = HistGradientBoostingRegressor(categorical_features=[1], max_iter=1)
+    est.fit(X, [0, 1, 2])
+
+    X_encoded = est._preprocess_X(X, reset=False)
+    assert X_encoded.flags.f_contiguous
+    assert_array_equal(X_encoded, [[0.5, 1], [1.5, 0], [2.5, 1]])
+
+
+def test_categorical_cardinality_error_reports_original_feature_index():
+    X, _ = _make_data_with_categorical_last(n_samples=100)
+    est = HistGradientBoostingRegressor(categorical_features=[2], max_bins=3)
+    msg = "Categorical feature at index 2 is expected to have a cardinality <= 3"
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, X[:, 0])

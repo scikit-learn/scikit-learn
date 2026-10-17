@@ -22,10 +22,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import scale
 from sklearn.svm import NuSVR
+from sklearn.tree._utils import SPLIT_CATEGORICAL_BITSET
 from sklearn.utils import check_random_state
 from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.utils._testing import (
+    _convert_container,
     assert_array_almost_equal,
     assert_array_equal,
     skip_if_32bit,
@@ -1675,3 +1677,165 @@ def test_criterion_param_deprecation(GradientBoosting):
     with pytest.warns(FutureWarning, match="criterion"):
         reg = GradientBoosting(criterion="friedman_mse")
         reg.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_sparse_input_early_stopping(sparse_container):
+    """Sparse and dense inputs give the same model with an early stopping split."""
+    X, y = make_regression(n_samples=200, n_features=5, random_state=0)
+    X[X < 0.5] = 0
+    params = dict(n_estimators=50, n_iter_no_change=3, random_state=0)
+
+    dense = GradientBoostingRegressor(**params).fit(X, y)
+    sparse = GradientBoostingRegressor(**params).fit(sparse_container(X), y)
+
+    assert sparse.n_estimators_ == dense.n_estimators_
+    assert_allclose(sparse.predict(X), dense.predict(X))
+
+
+def _make_categorical_data_with_missing_values(n_samples=500, seed=0):
+    """Integer-coded categorical feature and numerical feature, both with NaNs.
+
+    Missing values are predictive of a low target, so that some splits send
+    them to the left child.
+    """
+    rng = np.random.RandomState(seed)
+    X = np.empty((n_samples, 2))
+    X[:, 0] = rng.randint(0, 10, size=n_samples)
+    X[:, 1] = rng.randn(n_samples)
+    y = rng.permutation(10)[X[:, 0].astype(int)] + X[:, 1]
+    X[rng.rand(n_samples) < 0.1, 0] = np.nan
+    missing_num = rng.rand(n_samples) < 0.1
+    X[missing_num, 1] = np.nan
+    y[missing_num] = -10
+    return X, y
+
+
+@pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
+def test_predict_stages_matches_trees_predict(GradientBoosting):
+    """predict_stages routes categorical splits and missing values like trees."""
+    X, y = _make_categorical_data_with_missing_values()
+    if GradientBoosting is GradientBoostingClassifier:
+        y = np.digitize(y, [-5, 3])  # 3 classes
+    est = GradientBoosting(
+        n_estimators=10, max_depth=3, categorical_features=[0], random_state=0
+    ).fit(X, y)
+
+    trees = est.estimators_.ravel()
+    split_kinds = np.concatenate([tree.tree_.split_kind for tree in trees])
+    assert np.any(split_kinds == SPLIT_CATEGORICAL_BITSET)
+    is_split = np.concatenate([tree.tree_.children_left for tree in trees]) != -1
+    missing_go_to_left = np.concatenate(
+        [tree.tree_.missing_go_to_left for tree in trees]
+    )
+    assert np.any(missing_go_to_left[is_split])
+
+    # The categories are 0, ..., 9, so the ordinal encoding leaves X unchanged.
+    X_float32 = X.astype(np.float32)
+    expected = est._raw_predict_init(X_float32)
+    for k in range(est.n_trees_per_iteration_):
+        for tree in est.estimators_[:, k]:
+            expected[:, k] += est.learning_rate * tree.predict(X_float32)
+
+    if GradientBoosting is GradientBoostingClassifier:
+        assert_allclose(est.decision_function(X), expected)
+    else:
+        assert_allclose(est.predict(X), expected.ravel())
+
+
+@pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
+def test_categorical_features_improve_fit(GradientBoosting):
+    """A single categorical split fits a non-monotonic category effect."""
+    rng = np.random.RandomState(0)
+    n_categories = 20
+    X = rng.randint(0, n_categories, size=(1000, 1))
+    y = rng.permutation(n_categories)[X[:, 0]] % 2
+    params = dict(n_estimators=1, max_depth=1, learning_rate=1.0, random_state=0)
+
+    numerical = GradientBoosting(**params).fit(X, y)
+    categorical = GradientBoosting(categorical_features=[0], **params).fit(X, y)
+
+    assert_array_equal(categorical.is_categorical_, [True])
+    assert numerical.is_categorical_ is None
+    assert categorical.score(X, y) == pytest.approx(1)
+    assert numerical.score(X, y) < 0.9
+
+
+@pytest.mark.parametrize("constructor_name", ["pandas", "polars"])
+def test_categorical_from_dtype(constructor_name):
+    """String categories are detected from the dataframe dtypes and encoded."""
+    pytest.importorskip(constructor_name)
+    rng = np.random.RandomState(0)
+    categories = np.array(["a", "b", "c", "d"])
+    X = np.empty((200, 2), dtype=object)
+    X[:, 0] = rng.randn(200)
+    X[:, 1] = categories[rng.randint(0, 4, size=200)]
+    y = np.isin(X[:, 1], ["a", "c"]).astype(int)
+    X = _convert_container(
+        X,
+        constructor_name,
+        column_names=["f_num", "f_cat"],
+        dtype=object,
+        categorical_feature_names=["f_cat"],
+    )
+
+    est = GradientBoostingClassifier(
+        n_estimators=5, categorical_features="from_dtype", random_state=0
+    ).fit(X, y)
+
+    assert_array_equal(est.is_categorical_, [False, True])
+    assert_array_equal(est.feature_names_in_, ["f_num", "f_cat"])
+    for tree in est.estimators_.ravel():
+        assert tree._categorical_encoder is None
+    assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
+def test_categorical_missing_and_unknown_values(GradientBoosting):
+    """Unknown categories at predict time are treated as missing values."""
+    X = np.array([["a"], ["a"], ["b"], ["b"], [np.nan], [np.nan]], dtype=object)
+    y = np.array([0, 0, 0, 0, 1, 1])
+    est = GradientBoosting(
+        categorical_features=[0], n_estimators=1, learning_rate=1.0, random_state=0
+    ).fit(X, y)
+
+    assert_allclose(est.predict(X), y)
+    unknown_prediction = est.predict(np.array([["c"]], dtype=object))
+    assert_allclose(unknown_prediction, [1])
+
+
+@pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
+def test_no_sparse_with_categorical(GradientBoosting):
+    X = np.array([[0, 1], [1, 0], [2, 1], [0, 0]], dtype=np.float64)
+    y = np.array([0, 1, 0, 1])
+    est = GradientBoosting(categorical_features=[0], n_estimators=2)
+
+    msg = "Categorical features not supported with sparse"
+    with pytest.raises(NotImplementedError, match=msg):
+        clone(est).fit(CSC_CONTAINERS[0](X), y)
+
+    est.fit(X, y)
+    with pytest.raises(NotImplementedError, match=msg):
+        est.predict(CSR_CONTAINERS[0](X))
+
+
+@pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
+def test_warm_start_with_categorical_features_raises(GradientBoosting):
+    """A second fit would re-encode categories and invalidate existing trees."""
+    X = np.array([["a"], ["a"], ["b"], ["b"]], dtype=object)
+    y = np.array([0, 0, 1, 1])
+    est = GradientBoosting(
+        categorical_features=[0], n_estimators=2, warm_start=True, random_state=0
+    ).fit(X, y)
+
+    est.set_params(n_estimators=4)
+    with pytest.raises(
+        ValueError, match="warm_start is not supported with categorical features"
+    ):
+        est.fit(X, y)
+
+    est.set_params(warm_start=False)
+    est.fit(X, y)
+    assert est.n_estimators_ == 4

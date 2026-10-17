@@ -49,16 +49,12 @@ from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree._classes import BaseDecisionTree
 from sklearn.tree._tree import TREE_LEAF
 from sklearn.utils import check_array, check_random_state, column_or_1d
 from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.stats import _weighted_percentile
-from sklearn.utils.validation import (
-    _check_sample_weight,
-    check_is_fitted,
-    validate_data,
-)
+from sklearn.utils.validation import check_is_fitted
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(
@@ -359,7 +355,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     }
     _parameter_constraints.pop("splitter")
     _parameter_constraints.pop("monotonic_cst")
-    _parameter_constraints.pop("categorical_features")
 
     @abstractmethod
     def __init__(
@@ -386,6 +381,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         n_iter_no_change=None,
         tol=1e-4,
         criterion="deprecated",
+        categorical_features=None,
     ):
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -408,6 +404,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
+        self.categorical_features = categorical_features
 
     @abstractmethod
     def _encode_y(self, y=None, sample_weight=None):
@@ -426,6 +423,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         sample_weight,
         sample_mask,
         random_state,
+        fit_kwargs,
         X_csc=None,
         X_csr=None,
     ):
@@ -479,9 +477,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             X = X_csc if X_csc is not None else X
-            tree.fit(
-                X, neg_g_view[:, k], sample_weight=sample_weight, check_input=False
-            )
+            tree._fit_validated(X, neg_g_view[:, k], sample_weight, **fit_kwargs)
 
             # update tree leaves
             X_for_tree_update = X_csr if X_csr is not None else X
@@ -609,7 +605,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_array``.
+            to a sparse ``csc_array``.
 
         y : array-like of shape (n_samples,)
             Target values (strings or integers in classification, real numbers
@@ -648,22 +644,21 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 FutureWarning,
             )
 
-        # Check input
-        # Since check_array converts both X and y to the same dtype, but the
-        # trees use different types for X and y, checking them separately.
-
-        X, y = validate_data(
-            self,
-            X,
-            y,
-            accept_sparse=["csr", "csc", "coo"],
-            dtype=np.float32,
-            multi_output=True,
-        )
+        # Validate X and encode its categorical features once for all trees.
         sample_weight_is_none = sample_weight is None
-        sample_weight = _check_sample_weight(sample_weight, X)
+        X, y, sample_weight, fit_kwargs = self._validate_and_preprocess_input(
+            X, y, sample_weight, reset=True, check_input=True
+        )
+        if self._categorical_encoder is not None and self._is_fitted():
+            raise ValueError(
+                "warm_start is not supported with categorical features. "
+                "Refitting would re-encode categories and invalidate splits "
+                "learned by trees from earlier iterations."
+            )
+
         if sample_weight_is_none:
             y = self._encode_y(y=y, sample_weight=None)
+            sample_weight = np.ones(X.shape[0], dtype=np.float64)
         else:
             y = self._encode_y(y=y, sample_weight=sample_weight)
         y = column_or_1d(y, warn=True)  # TODO: Is this still required?
@@ -769,7 +764,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             begin_at_stage = self.estimators_.shape[0]
             # The requirements of _raw_predict
             # are more constrained than fit. It accepts only CSR
-            # matrices. Finite values have already been checked in _validate_data.
+            # matrices. Finite values have already been checked in
+            # _validate_and_preprocess_input.
             X_train = check_array(
                 X_train,
                 dtype=np.float32,
@@ -790,6 +786,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             X_val,
             y_val,
             sample_weight_val,
+            fit_kwargs,
             begin_at_stage,
             monitor,
         )
@@ -816,6 +813,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X_val,
         y_val,
         sample_weight_val,
+        fit_kwargs,
         begin_at_stage=0,
         monitor=None,
     ):
@@ -837,6 +835,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         X_csc = csc_array(X) if issparse(X) else None
         X_csr = csr_array(X) if issparse(X) else None
+        if X_csc is not None:
+            # The early stopping split turns X into CSR: the trees need a CSC
+            # matrix with sorted indices.
+            X_csc.sort_indices()
 
         if self.n_iter_no_change is not None:
             loss_history = np.full(self.n_iter_no_change, np.inf)
@@ -885,6 +887,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight,
                 sample_mask,
                 random_state,
+                fit_kwargs,
                 X_csc=X_csc,
                 X_csr=X_csr,
             )
@@ -942,9 +945,18 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # we don't need _make_estimator
         raise NotImplementedError()
 
+    # Reuse the tree implementation:
+    _validate_and_preprocess_input = BaseDecisionTree._validate_and_preprocess_input
+
+    def _validate_X_predict(self, X):
+        """Validate X and encode its categorical features for prediction."""
+        check_is_fitted(self)
+        X = self._validate_and_preprocess_input(X, reset=False, check_input=True)
+        # predict_stages requires a C-contiguous array or a CSR matrix.
+        return X if issparse(X) else np.ascontiguousarray(X)
+
     def _raw_predict_init(self, X):
-        """Check input and compute raw predictions of the init estimator."""
-        X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
+        """Compute raw predictions of the init estimator on validated X."""
         if self.init_ == "zero":
             raw_predictions = np.zeros(
                 shape=(X.shape[0], self.n_trees_per_iteration_), dtype=np.float64
@@ -957,7 +969,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _raw_predict(self, X):
         """Return the sum of the trees raw predictions (+ init estimator)."""
-        check_is_fitted(self)
         raw_predictions = self._raw_predict_init(X)
         predict_stages(self.estimators_, X, self.learning_rate, raw_predictions)
         return raw_predictions
@@ -986,11 +997,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        check_is_fitted(self)
         if check_input:
-            X = validate_data(
-                self, X, dtype=np.float32, order="C", accept_sparse="csr", reset=False
-            )
+            X = self._validate_X_predict(X)
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, raw_predictions)
@@ -1097,8 +1105,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             In the case of binary classification n_classes is 1.
         """
 
-        check_is_fitted(self)
-        X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
+        X = self._validate_X_predict(X)
 
         # n_classes will be equal to 1 in the binary classification or the
         # regression case.
@@ -1115,6 +1122,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
+        tags.input_tags.allow_nan = True
         return tags
 
 
@@ -1227,6 +1235,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         'zero', the initial raw predictions are set to zero. By default, a
         ``DummyEstimator`` predicting the classes priors is used.
 
+        ``init`` is fitted on the same `X` as the trees: converted to float32,
+        with categorical features ordinal-encoded (see `categorical_features`).
+
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given to each Tree estimator at each
         boosting iteration.
@@ -1303,6 +1314,30 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
 
+    categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
+        (n_categorical_features,), or "from_dtype", default=None
+        Indicates which features are treated as categorical.
+
+        - None : no feature will be considered categorical.
+        - boolean array-like : boolean mask indicating categorical features.
+        - integer array-like : integer indices indicating categorical
+          features.
+        - str array-like: names of categorical features (assuming the training
+          data has feature names).
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
+
+        For each categorical feature, at most 255 unique categories are
+        supported. Missing values for categorical features should be represented
+        by ``np.nan``; unknown categories at prediction time are also treated as
+        missing values.
+
+        ``warm_start`` is not supported when categorical features are used.
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     n_estimators_ : int
@@ -1365,6 +1400,12 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+    is_categorical_ : ndarray of shape (n_features,) or None
+        Boolean mask indicating which features are treated as categorical.
+        ``None`` if no categorical features are used.
+
+        .. versionadded:: 1.10
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1458,6 +1499,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         n_iter_no_change=None,
         tol=1e-4,
         ccp_alpha=0.0,
+        categorical_features=None,  # TODO(1.13): change default to "from_dtype"
     ):
         super().__init__(
             loss=loss,
@@ -1480,13 +1522,12 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             n_iter_no_change=n_iter_no_change,
             tol=tol,
             ccp_alpha=ccp_alpha,
+            categorical_features=categorical_features,
         )
 
     def _encode_y(self, y, sample_weight):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
         # and n_trees_per_iteration_
-        check_classification_targets(y)
-
         label_encoder = LabelEncoder()
         encoded_y_int = label_encoder.fit_transform(y)
         self.classes_ = label_encoder.classes_
@@ -1549,9 +1590,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             :term:`classes_`. Regression and binary classification produce an
             array of shape (n_samples,).
         """
-        X = validate_data(
-            self, X, dtype=np.float32, order="C", accept_sparse="csr", reset=False
-        )
+        X = self._validate_X_predict(X)
         raw_predictions = self._raw_predict(X)
         if raw_predictions.shape[1] == 1:
             return raw_predictions.ravel()
@@ -1817,6 +1856,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         ``DummyEstimator`` is used, predicting either the average target value
         (for loss='squared_error'), or a quantile for the other losses.
 
+        ``init`` is fitted on the same `X` as the trees: converted to float32,
+        with categorical features ordinal-encoded (see `categorical_features`).
+
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given to each Tree estimator at each
         boosting iteration.
@@ -1898,6 +1940,30 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
 
+    categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
+        (n_categorical_features,), or "from_dtype", default=None
+        Indicates which features are treated as categorical.
+
+        - None : no feature will be considered categorical.
+        - boolean array-like : boolean mask indicating categorical features.
+        - integer array-like : integer indices indicating categorical
+          features.
+        - str array-like: names of categorical features (assuming the training
+          data has feature names).
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
+
+        For each categorical feature, at most 255 unique categories are
+        supported. Missing values for categorical features should be represented
+        by ``np.nan``; unknown categories at prediction time are also treated as
+        missing values.
+
+        ``warm_start`` is not supported when categorical features are used.
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     n_estimators_ : int
@@ -1955,6 +2021,12 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+    is_categorical_ : ndarray of shape (n_features,) or None
+        Boolean mask indicating which features are treated as categorical.
+        ``None`` if no categorical features are used.
+
+        .. versionadded:: 1.10
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2044,6 +2116,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         n_iter_no_change=None,
         tol=1e-4,
         ccp_alpha=0.0,
+        categorical_features=None,  # TODO(1.13): change default to "from_dtype"
     ):
         super().__init__(
             loss=loss,
@@ -2067,6 +2140,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             n_iter_no_change=n_iter_no_change,
             tol=tol,
             ccp_alpha=ccp_alpha,
+            categorical_features=categorical_features,
         )
 
     def _encode_y(self, y=None, sample_weight=None):
@@ -2096,9 +2170,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         y : ndarray of shape (n_samples,)
             The predicted values.
         """
-        X = validate_data(
-            self, X, dtype=np.float32, order="C", accept_sparse="csr", reset=False
-        )
+        X = self._validate_X_predict(X)
         # In regression we can directly return the raw value from the trees.
         return self._raw_predict(X).ravel()
 
