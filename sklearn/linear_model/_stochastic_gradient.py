@@ -1223,15 +1223,26 @@ class SGDClassifier(BaseSGDClassifier):
     >>> from sklearn.preprocessing import StandardScaler
     >>> from sklearn.pipeline import make_pipeline
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> Y = np.array([1, 1, 2, 2])
+    >>> y = np.array([1, 1, 2, 2])
     >>> # Always scale the input. The most convenient way is to use a pipeline.
     >>> clf = make_pipeline(StandardScaler(),
     ...                     SGDClassifier(max_iter=1000, tol=1e-3))
-    >>> clf.fit(X, Y)
+    >>> clf.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdclassifier', SGDClassifier())])
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+
+    To fit with the passive-aggressive algorithm, use
+    >>> reg = make_pipeline(
+    ...     StandardScaler(),
+    ...     SGDClassifier(
+    ...         loss="hinge",
+    ...         penalty=None,
+    ...         learning_rate="pa1",  # or "pa2"
+    ...         eta0=1.0,  # for PA parameter C
+    ...     )
+    ... ).fit(X, y)
     """
 
     _parameter_constraints: dict = {
@@ -2006,9 +2017,10 @@ class SGDRegressor(BaseSGDRegressor):
 
      References
     ----------
-    .. [1] Online Passive-Aggressive Algorithms
-       <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>
-       K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
+    .. [1] Crammer, K., Ofer Dekel, Keshet, J., Shalev-Shwartz, S. and Singer, Y.
+       (2006). `"Online Passive-Aggressive Algorithms"
+       <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>`_
+       JMLR, 7(19), 551-585
 
     Examples
     --------
@@ -2026,6 +2038,17 @@ class SGDRegressor(BaseSGDRegressor):
     >>> reg.fit(X, y)
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdregressor', SGDRegressor())])
+
+    To fit with the passive-aggressive algorithm, use
+    >>> reg = make_pipeline(
+    ...     StandardScaler(),
+    ...     SGDRegressor(
+    ...         loss="epsilon_insensitive",
+    ...         penalty=None,
+    ...         learning_rate="pa1",  # or "pa2"
+    ...         eta0=1.0,  # for PA parameter C
+    ...     )
+    ... ).fit(X, y)
     """
 
     _parameter_constraints: dict = {
