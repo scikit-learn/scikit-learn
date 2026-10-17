@@ -1,5 +1,6 @@
 - For a better user experience the following estimators got a new option
   `solver="auto"`:
+
   - :class:`linear_model.LogisticRegression`
   - :class:`linear_model.LogisticRegressionCV`
   - :class:`linear_model.GammaRegressor`
