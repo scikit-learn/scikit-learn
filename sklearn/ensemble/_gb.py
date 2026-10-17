@@ -53,9 +53,8 @@ from sklearn.tree._classes import BaseDecisionTree
 from sklearn.tree._tree import TREE_LEAF
 from sklearn.utils import check_array, check_random_state, column_or_1d
 from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
-from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.stats import _weighted_percentile
-from sklearn.utils.validation import _check_sample_weight, check_is_fitted
+from sklearn.utils.validation import check_is_fitted
 
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(
@@ -646,8 +645,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             )
 
         # Validate X and encode its categorical features once for all trees.
-        X, y, fit_kwargs = self._validate_and_preprocess_X(
-            X, y, reset=True, check_input=True
+        sample_weight_is_none = sample_weight is None
+        X, y, sample_weight, fit_kwargs = self._validate_and_preprocess_input(
+            X, y, sample_weight, reset=True, check_input=True
         )
         if self._categorical_encoder is not None and self._is_fitted():
             raise ValueError(
@@ -656,10 +656,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "learned by trees from earlier iterations."
             )
 
-        sample_weight_is_none = sample_weight is None
-        sample_weight = _check_sample_weight(sample_weight, X)
         if sample_weight_is_none:
             y = self._encode_y(y=y, sample_weight=None)
+            sample_weight = np.ones(X.shape[0], dtype=np.float64)
         else:
             y = self._encode_y(y=y, sample_weight=sample_weight)
         y = column_or_1d(y, warn=True)  # TODO: Is this still required?
@@ -766,7 +765,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # The requirements of _raw_predict
             # are more constrained than fit. It accepts only CSR
             # matrices. Finite values have already been checked in
-            # _validate_and_preprocess_X.
+            # _validate_and_preprocess_input.
             X_train = check_array(
                 X_train,
                 dtype=np.float32,
@@ -947,12 +946,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         raise NotImplementedError()
 
     # Reuse the tree implementation:
-    _validate_and_preprocess_X = BaseDecisionTree._validate_and_preprocess_X
+    _validate_and_preprocess_input = BaseDecisionTree._validate_and_preprocess_input
 
     def _validate_X_predict(self, X):
         """Validate X and encode its categorical features for prediction."""
         check_is_fitted(self)
-        X = self._validate_and_preprocess_X(X, reset=False, check_input=True)
+        X = self._validate_and_preprocess_input(X, reset=False, check_input=True)
         # predict_stages requires a C-contiguous array or a CSR matrix.
         return X if issparse(X) else np.ascontiguousarray(X)
 
@@ -1529,8 +1528,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     def _encode_y(self, y, sample_weight):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
         # and n_trees_per_iteration_
-        check_classification_targets(y)
-
         label_encoder = LabelEncoder()
         encoded_y_int = label_encoder.fit_transform(y)
         self.classes_ = label_encoder.classes_

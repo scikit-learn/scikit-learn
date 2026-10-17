@@ -71,11 +71,10 @@ from sklearn.utils import (
 )
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils._tags import get_tags
-from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
     _check_feature_names_in,
-    _check_sample_weight,
     _num_samples,
     check_is_fitted,
 )
@@ -313,8 +312,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             Fitted estimator.
         """
         # Validate or convert input data
-        X, y, fit_kwargs = self._validate_and_preprocess_X(
-            X, y, reset=True, check_input=True
+        X, y, sample_weight, fit_kwargs = self._validate_and_preprocess_input(
+            X, y, sample_weight, reset=True, check_input=True
         )
         has_categorical = self._categorical_encoder is not None
 
@@ -324,9 +323,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 "Refitting would re-encode categories and invalidate splits "
                 "learned by trees from earlier iterations."
             )
-
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
 
         # TODO: work on y really needed?
         y = np.atleast_1d(y)
@@ -562,13 +558,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return y, None
 
     # Reuse the tree implementation:
-    _validate_and_preprocess_X = BaseDecisionTree._validate_and_preprocess_X
+    _validate_and_preprocess_input = BaseDecisionTree._validate_and_preprocess_input
 
     def _validate_X_predict(self, X):
         """
         Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
-        return self._validate_and_preprocess_X(X, reset=False, check_input=True)
+        return self._validate_and_preprocess_input(X, reset=False, check_input=True)
 
     @property
     def feature_importances_(self):
@@ -754,8 +750,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         )
 
     def _validate_y_class_weight(self, y, sample_weight):
-        check_classification_targets(y)
-
         y_original = np.copy(y)
         self.classes_ = []
         self.n_classes_ = []

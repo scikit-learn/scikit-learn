@@ -494,13 +494,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         return self
 
-    def _validate_and_preprocess_X(self, X, y=None, *, reset, check_input):
-        """Validate X and encode its categorical features.
+    def _validate_and_preprocess_input(
+        self, X, y=None, sample_weight=None, *, reset, check_input
+    ):
+        """Validate the inputs and encode the categorical features of X.
 
         Used at fit time (``reset=True``) and predict time (``reset=False``), by
-        trees and forests alike. With ``check_input=False``, the inputs are
-        assumed to be already validated: only categorical features are encoded
-        and the number of features is checked.
+        trees, forests and gradient boosting alike. With ``check_input=False``,
+        the inputs are assumed to be already validated: only categorical features
+        are encoded and the number of features is checked.
 
         Returns
         -------
@@ -510,6 +512,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         y : ndarray
             Validated y. Only returned at fit time.
+
+        sample_weight : ndarray of shape (n_samples,) or None
+            Validated sample weights. Only returned at fit time.
 
         fit_kwargs : dict
             The `missing_values_in_feature_mask` and `categorical_counts`
@@ -550,6 +555,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 y, input_name="y", estimator=self, ensure_2d=False, dtype=None
             )
             check_consistent_length(X, y)
+            if is_classifier(self):
+                check_classification_targets(y)
+            if sample_weight is not None:
+                sample_weight = _check_sample_weight(sample_weight, X)
 
             if self.criterion == "poisson":
                 if np.any(y < 0):
@@ -569,7 +578,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ),
             "categorical_counts": _get_n_categories(self),
         }
-        return X, y, fit_kwargs
+        return X, y, sample_weight, fit_kwargs
 
     def predict(self, X, check_input=True):
         """Predict class or regression value for X.
@@ -595,7 +604,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             The predicted classes, or the predict values.
         """
         check_is_fitted(self)
-        X = self._validate_and_preprocess_X(X, reset=False, check_input=check_input)
+        X = self._validate_and_preprocess_input(X, reset=False, check_input=check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
 
@@ -645,7 +654,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             numbering.
         """
         check_is_fitted(self)
-        X = self._validate_and_preprocess_X(X, reset=False, check_input=check_input)
+        X = self._validate_and_preprocess_input(X, reset=False, check_input=check_input)
         return self.tree_.apply(X)
 
     def decision_path(self, X, check_input=True):
@@ -668,7 +677,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             Return a node indicator CSR matrix where non zero elements
             indicates that the samples goes through the nodes.
         """
-        X = self._validate_and_preprocess_X(X, reset=False, check_input=check_input)
+        X = self._validate_and_preprocess_input(X, reset=False, check_input=check_input)
         return self.tree_.decision_path(X)
 
     def _prune_tree(self):
@@ -1107,13 +1116,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         self : DecisionTreeClassifier
             Fitted estimator.
         """
-        X, y, fit_kwargs = self._validate_and_preprocess_X(
-            X, y, reset=True, check_input=check_input
+        X, y, sample_weight, fit_kwargs = self._validate_and_preprocess_input(
+            X, y, sample_weight, reset=True, check_input=check_input
         )
-        if check_input:
-            check_classification_targets(y)
-            if sample_weight is not None:
-                sample_weight = _check_sample_weight(sample_weight, X)
         return self._fit_validated(X, y, sample_weight, **fit_kwargs)
 
     def predict_proba(self, X, check_input=True):
@@ -1141,7 +1146,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        X = self._validate_and_preprocess_X(X, reset=False, check_input=check_input)
+        X = self._validate_and_preprocess_input(X, reset=False, check_input=check_input)
         proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
@@ -1505,11 +1510,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         self : DecisionTreeRegressor
             Fitted estimator.
         """
-        X, y, fit_kwargs = self._validate_and_preprocess_X(
-            X, y, reset=True, check_input=check_input
+        X, y, sample_weight, fit_kwargs = self._validate_and_preprocess_input(
+            X, y, sample_weight, reset=True, check_input=check_input
         )
-        if check_input and sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
         return self._fit_validated(X, y, sample_weight, **fit_kwargs)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
