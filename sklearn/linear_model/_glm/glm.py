@@ -104,6 +104,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         'auto'
             This selects a good default solver. The selection may change without a
             deprecation warning.
+
             - For `l1_ratio == 0`: 'lbfgs'
             - For `l1_ratio > 0` and `n_samples >= n_features`: 'newton-cd-gram'
             - For `l1_ratio > 0` and `n_features > n_samples`: 'newton-cd'

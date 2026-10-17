@@ -1293,6 +1293,7 @@ class LogisticRegression(
         'auto'
             This selects a good default solver. The selection may change without a
             deprecation warning.
+
             - For `l1_ratio == 0`: 'lbfgs'
             - For `l1_ratio > 0` and `n_samples >= n_features`: 'newton-cd-gram'
             - For `l1_ratio > 0` and `n_features > n_samples`: 'newton-cd'
@@ -2084,6 +2085,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         'auto'
             This selects a good default solver. The selection may change without a
             deprecation warning. With `l1_ratio=np.max(l1_ratios)`:
+
             - For `l1_ratio == 0`: 'lbfgs'
             - For `l1_ratio > 0` and `n_samples >= n_features`: 'newton-cd-gram'
             - For `l1_ratio > 0` and `n_features > n_samples`: 'newton-cd'
