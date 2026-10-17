@@ -1,5 +1,7 @@
 import itertools
+import pickle
 import re
+import sys
 import time
 import warnings
 
@@ -17,7 +19,13 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.fixes import _IS_WASM
-from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import (
+    _CONTEXT_AWARE_WARNINGS,
+    Parallel,
+    _get_warning_filters,
+    _with_config_and_warning_filters,
+    delayed,
+)
 
 
 def get_working_memory():
@@ -134,14 +142,11 @@ def test_filter_warning_propagates(n_jobs, backend):
             )
 
 
-def get_warning_filters():
-    # In free-threading Python >= 3.14, warnings filters are managed through a
-    # ContextVar and warnings.filters is not modified inside a
-    # warnings.catch_warnings context. You need to use warnings._get_filters().
-    # For more details, see
-    # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
-    filters_func = getattr(warnings, "_get_filters", None)
-    return filters_func() if filters_func is not None else warnings.filters
+# With context-aware warnings, worker threads have the caller's warning filters
+# only if they inherit the caller's context.
+_THREADS_INHERIT_WARNING_FILTERS = not _CONTEXT_AWARE_WARNINGS or getattr(
+    sys.flags, "thread_inherit_context", False
+)
 
 
 def test_check_warnings_threading():
@@ -149,12 +154,12 @@ def test_check_warnings_threading():
     with warnings.catch_warnings():
         warnings.simplefilter("error", category=ConvergenceWarning)
 
-        main_warning_filters = get_warning_filters()
+        main_warning_filters = _get_warning_filters()
 
         assert ("error", None, ConvergenceWarning, None, 0) in main_warning_filters
 
         all_worker_warning_filters = Parallel(n_jobs=2, backend="threading")(
-            delayed(get_warning_filters)() for _ in range(2)
+            delayed(_get_warning_filters)() for _ in range(2)
         )
 
         def normalize_main_module(filters):
@@ -179,6 +184,69 @@ def test_check_warnings_threading():
             assert normalize_main_module(
                 worker_warning_filter
             ) == normalize_main_module(main_warning_filters)
+
+
+@pytest.mark.parametrize("n_jobs, backend", [(2, "threading"), (1, "sequential")])
+def test_warning_filters_not_reset_in_caller_process(n_jobs, backend):
+    """Tasks running in the caller's process use the caller's warning filters
+    themselves, not a copy: resetting them in each task is racy with
+    process-wide filters (and costly with many threads)."""
+    if backend == "threading" and not _THREADS_INHERIT_WARNING_FILTERS:
+        pytest.skip("Worker threads don't inherit the caller's warning filters")
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConvergenceWarning)
+        main_warning_filters = _get_warning_filters()
+        worker_warning_filters = Parallel(n_jobs=n_jobs, backend=backend)(
+            delayed(_get_warning_filters)() for _ in range(4)
+        )
+    assert all(filters is main_warning_filters for filters in worker_warning_filters)
+
+
+def test_pickled_task_sets_warning_filters():
+    """A pickled task sets the caller's warning filters: it can run in another
+    process."""
+    task, args, kwargs = delayed(raise_warning)()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConvergenceWarning)
+        task = _with_config_and_warning_filters(
+            task, get_config(), _get_warning_filters()
+        )
+    # Unpickled in the same process, with filters that differ from the caller's.
+    task = pickle.loads(pickle.dumps(task))
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConvergenceWarning)
+        with pytest.raises(ConvergenceWarning):
+            task(*args, **kwargs)
+
+
+@pytest.mark.parametrize("n_jobs, backend", [(2, "threading"), (1, "sequential")])
+def test_no_warning_with_empty_warning_filters(n_jobs, backend):
+    """An empty list of warning filters is a valid caller's state, not a sign that
+    the task was dispatched by joblib's Parallel."""
+    if backend == "threading" and not _THREADS_INHERIT_WARNING_FILTERS:
+        pytest.skip("Worker threads don't inherit the caller's warning filters")
+
+    with warnings.catch_warnings(record=True) as records:
+        warnings.resetwarnings()
+        Parallel(n_jobs=n_jobs, backend=backend)(delayed(len)([1]) for _ in range(2))
+    assert not records
+
+
+@pytest.mark.parametrize("n_jobs, backend", [(2, "threading"), (1, "sequential")])
+def test_warning_filters_kept_with_joblib_parallel(n_jobs, backend):
+    """Tasks dispatched by joblib's Parallel keep the warning filters they have:
+    the caller's filters are unknown."""
+    if backend == "threading" and not _THREADS_INHERIT_WARNING_FILTERS:
+        pytest.skip("Worker threads don't inherit the caller's warning filters")
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=".*should be used with")
+        warnings.simplefilter("error", category=ConvergenceWarning)
+        with pytest.raises(ConvergenceWarning):
+            joblib.Parallel(n_jobs=n_jobs, backend=backend)(
+                delayed(raise_warning)() for _ in range(2)
+            )
 
 
 @pytest.mark.xfail(_IS_WASM, reason="Pyodide always use the sequential backend")
