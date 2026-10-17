@@ -162,6 +162,27 @@ of components is limited by `min(n_samples, n_features, n_targets)` in
 :class:`PLSRegression` is a form of regularized linear regression where the
 number of components controls the strength of the regularization.
 
+.. dropdown:: Variable Importance in Projection (VIP)
+
+  In :class:`PLSRegression`, the relative contribution of each predictor feature
+  to the explanation of the target :math:`Y` can be quantified using Variable
+  Importance in Projection (VIP) scores [2]_, [3]_.
+
+  For a model with :math:`p` features and :math:`K` components, the VIP score for
+  feature :math:`j` is defined as:
+
+  .. math::
+
+      \text{VIP}_j = \sqrt{p \frac{\sum_{k=1}^K w_{kj}^2 \text{SS}_k}{\text{SS}_{\text{total}}}}
+
+  where :math:`w_{kj}` is the normalized weight of feature :math:`j` in component
+  :math:`k` (derived from ``x_rotations_``), :math:`\text{SS}_k = \|t_k\|^2 \|q_k\|^2`
+  is the sum of squares explained by component :math:`k`, and :math:`\text{SS}_{\text{total}} = \sum_{k=1}^K \text{SS}_k`.
+
+  The VIP scores satisfy :math:`\frac{1}{p} \sum_{j=1}^p \text{VIP}_j^2 = 1`.
+  Features with a VIP score greater than 1 are generally considered significantly
+  important to the regression model. VIP scores are available via the ``vip_`` attribute.
+
 Canonical Correlation Analysis
 ------------------------------
 
@@ -182,6 +203,13 @@ targets is greater than the number of samples.
 .. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on the two-block
   case <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_,
   JA Wegelin
+
+.. [2] `Variable Importance in Projection (VIP) <https://doi.org/10.1016/0169-7439(87)80084-9>`_,
+  S. Wold, K. Esbensen, P. Geladi, Principal component analysis,
+  Chemometrics and Intelligent Laboratory Systems, 2(1-3), 37-52, 1987.
+
+.. [3] `Performance of some variable selection methods when multicollinearity is present <https://doi.org/10.1016/j.chemolab.2004.12.011>`_,
+  I.G. Chong, C.H. Jun, Chemometrics and Intelligent Laboratory Systems, 78(1), 103-112, 2005.
 
 .. rubric:: Examples
 
