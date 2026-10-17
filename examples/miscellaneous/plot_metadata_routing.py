@@ -463,6 +463,9 @@ print_routing(meta_est)
 # Default and Auto-Requested Metadata
 # -----------------------------------
 #
+# .. seealso::
+#    User-facing overview: :ref:`metadata_routing_auto_request_user`.
+#
 # There are two ways for developers to set request values before the user calls
 # `set_*_request`:
 #

@@ -353,7 +353,9 @@ def test_probability():
 
         # Degenerate case, where some classes are missing
         ensemble = BaggingClassifier(
-            estimator=LogisticRegression(), random_state=rng, max_samples=5
+            estimator=LogisticRegression(),
+            random_state=rng,
+            max_samples=5,
         ).fit(X_train, y_train)
 
         assert_array_almost_equal(

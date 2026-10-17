@@ -1091,8 +1091,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def apply(self, X):
         """Apply trees in the ensemble to X, return leaf indices.
 
-        .. versionadded:: 0.17
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -1179,8 +1177,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
         This parameter has no effect.
 
-        .. versionadded:: 0.18
-
         .. deprecated:: 1.9
            `criterion` is deprecated and will be removed in 1.11.
 
@@ -1190,9 +1186,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         - If int, values must be in the range `[2, inf)`.
         - If float, values must be in the range `(0.0, 1.0]` and `min_samples_split`
           will be `ceil(min_samples_split * n_samples)`.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
@@ -1204,9 +1197,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         - If int, values must be in the range `[1, inf)`.
         - If float, values must be in the range `(0.0, 1.0)` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1239,8 +1229,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-
-        .. versionadded:: 0.19
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
@@ -1300,8 +1288,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         early stopping. Values must be in the range `(0.0, 1.0)`.
         Only used if ``n_iter_no_change`` is set to an integer.
 
-        .. versionadded:: 0.20
-
     n_iter_no_change : int, default=None
         ``n_iter_no_change`` is used to decide if early stopping will be used
         to terminate training when validation score is not improving. By
@@ -1314,15 +1300,11 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         See
         :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
-        .. versionadded:: 0.20
-
     tol : float, default=1e-4
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
         Values must be in the range `[0.0, inf)`.
-
-        .. versionadded:: 0.20
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -1332,8 +1314,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         See :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
         (n_categorical_features,), or "from_dtype", default=None
@@ -1346,9 +1326,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, at most 255 unique categories are
         supported. Missing values for categorical features should be represented
@@ -1365,8 +1345,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         The number of estimators as selected by early stopping (if
         ``n_iter_no_change`` is specified). Otherwise it is set to
         ``n_estimators``.
-
-        .. versionadded:: 0.20
 
     n_trees_per_iteration_ : int
         The number of trees that are built at each iteration. For binary classifiers,
@@ -1423,8 +1401,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     is_categorical_ : ndarray of shape (n_features,) or None
         Boolean mask indicating which features are treated as categorical.
@@ -1823,8 +1799,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
         This parameter has no effect.
 
-        .. versionadded:: 0.18
-
         .. deprecated:: 1.9
            `criterion` is deprecated and will be removed in 1.11.
 
@@ -1834,9 +1808,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         - If int, values must be in the range `[2, inf)`.
         - If float, values must be in the range `(0.0, 1.0]` and `min_samples_split`
           will be `ceil(min_samples_split * n_samples)`.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
@@ -1848,9 +1819,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         - If int, values must be in the range `[1, inf)`.
         - If float, values must be in the range `(0.0, 1.0)` and `min_samples_leaf`
           will be `ceil(min_samples_leaf * n_samples)`.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1883,8 +1851,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-
-        .. versionadded:: 0.19
 
     init : estimator or 'zero', default=None
         An estimator object that is used to compute the initial predictions.
@@ -1950,8 +1916,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         early stopping. Values must be in the range `(0.0, 1.0)`.
         Only used if ``n_iter_no_change`` is set to an integer.
 
-        .. versionadded:: 0.20
-
     n_iter_no_change : int, default=None
         ``n_iter_no_change`` is used to decide if early stopping will be used
         to terminate training when validation score is not improving. By
@@ -1964,15 +1928,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         See
         :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_early_stopping.py`.
 
-        .. versionadded:: 0.20
-
     tol : float, default=1e-4
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
         Values must be in the range `[0.0, inf)`.
-
-        .. versionadded:: 0.20
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -1982,8 +1942,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         See :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
         (n_categorical_features,), or "from_dtype", default=None
@@ -1996,9 +1954,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, at most 255 unique categories are
         supported. Missing values for categorical features should be represented
@@ -2066,8 +2024,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     is_categorical_ : ndarray of shape (n_features,) or None
         Boolean mask indicating which features are treated as categorical.
@@ -2244,8 +2200,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     def apply(self, X):
         """Apply trees in the ensemble to X, return leaf indices.
-
-        .. versionadded:: 0.17
 
         Parameters
         ----------

@@ -50,8 +50,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     kernel : kernel instance, default=None
@@ -117,8 +115,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         implementation, the normalisation is reversed before the GP predictions
         are reported.
 
-        .. versionchanged:: 0.23
-
     copy_X_train : bool, default=True
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
@@ -162,8 +158,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

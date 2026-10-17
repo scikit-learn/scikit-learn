@@ -12,8 +12,6 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 
-    .. versionadded:: 0.9
-
     Parameters
     ----------
     n_neighbors : int, default=5
@@ -84,8 +82,6 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

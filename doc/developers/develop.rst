@@ -376,11 +376,12 @@ The parameter `deep` controls whether or not the parameters of the
     >>> for param, value in my_estimator.get_params(deep=True).items():
     ...     print(f"{param} -> {value}")
     my_extra_param -> random
-    subestimator__C -> 1.0
+    subestimator__C -> deprecated
+    subestimator__alpha -> 1.0
     subestimator__class_weight -> None
-    subestimator__dual -> False
+    subestimator__dual -> deprecated
     subestimator__fit_intercept -> True
-    subestimator__intercept_scaling -> 1
+    subestimator__intercept_scaling -> deprecated
     subestimator__l1_ratio -> 0.0
     subestimator__max_iter -> 100
     subestimator__n_jobs -> None
@@ -394,7 +395,7 @@ The parameter `deep` controls whether or not the parameters of the
 
 If the meta-estimator takes multiple sub-estimators, often, those sub-estimators have
 names (as e.g. named steps in a :class:`~pipeline.Pipeline` object), in which case the
-key should become `<name>__C`, `<name>__class_weight`, etc.
+key should become `<name>__alpha`, `<name>__class_weight`, etc.
 
 When ``deep=False``, the output will be::
 

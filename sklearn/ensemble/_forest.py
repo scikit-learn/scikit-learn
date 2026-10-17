@@ -250,8 +250,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         Return the decision path in the forest.
 
-        .. versionadded:: 0.18
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -1149,10 +1147,6 @@ class RandomForestClassifier(ForestClassifier):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-        .. versionchanged:: 0.22
-           The default value of ``n_estimators`` changed from 10 to 100
-           in 0.22.
-
     criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "log_loss" and "entropy" both for the
@@ -1172,9 +1166,6 @@ class RandomForestClassifier(ForestClassifier):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -1186,9 +1177,6 @@ class RandomForestClassifier(ForestClassifier):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1233,8 +1221,6 @@ class RandomForestClassifier(ForestClassifier):
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-
-        .. versionadded:: 0.19
 
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
@@ -1306,8 +1292,6 @@ class RandomForestClassifier(ForestClassifier):
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
 
-        .. versionadded:: 0.22
-
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
@@ -1317,8 +1301,6 @@ class RandomForestClassifier(ForestClassifier):
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
-
-        .. versionadded:: 0.22
 
         .. versionchanged:: 1.9
             Float `max_samples` is relative to `sample_weight.sum()` instead of
@@ -1353,9 +1335,9 @@ class RandomForestClassifier(ForestClassifier):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
         categories. Missing values for categorical features should be
@@ -1392,14 +1374,6 @@ class RandomForestClassifier(ForestClassifier):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
-
-    is_categorical_ : ndarray of shape (n_features,) or None
-        Boolean mask indicating which features are treated as categorical.
-        ``None`` if no categorical features are used.
-
-        .. versionadded:: 1.11
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1438,6 +1412,12 @@ class RandomForestClassifier(ForestClassifier):
         estimator. Each subset is defined by an array of the indices selected.
 
         .. versionadded:: 1.4
+
+    is_categorical_ : ndarray of shape (n_features,) or None
+        Boolean mask indicating which features are treated as categorical.
+        ``None`` if no categorical features are used.
+
+        .. versionadded:: 1.11
 
     See Also
     --------
@@ -1588,10 +1568,6 @@ class RandomForestRegressor(ForestRegressor):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-        .. versionchanged:: 0.22
-           The default value of ``n_estimators`` changed from 10 to 100
-           in 0.22.
-
     criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
@@ -1600,9 +1576,6 @@ class RandomForestRegressor(ForestRegressor):
         absolute error, which minimizes the L1 loss using the median of each terminal
         node, and "poisson" which uses reduction in Poisson deviance to find splits,
         also using the mean of each terminal node.
-
-        .. versionadded:: 0.18
-           Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 1.0
            Poisson criterion.
@@ -1623,9 +1596,6 @@ class RandomForestRegressor(ForestRegressor):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -1637,9 +1607,6 @@ class RandomForestRegressor(ForestRegressor):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1689,8 +1656,6 @@ class RandomForestRegressor(ForestRegressor):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. versionadded:: 0.19
-
     bootstrap : bool, default=True
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
@@ -1735,8 +1700,6 @@ class RandomForestRegressor(ForestRegressor):
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
 
-        .. versionadded:: 0.22
-
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
@@ -1746,8 +1709,6 @@ class RandomForestRegressor(ForestRegressor):
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
-
-        .. versionadded:: 0.22
 
         .. versionchanged:: 1.9
             Float `max_samples` is relative to `sample_weight.sum()` instead of
@@ -1779,9 +1740,9 @@ class RandomForestRegressor(ForestRegressor):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
         categories. Missing values for categorical features should be
@@ -1822,14 +1783,6 @@ class RandomForestRegressor(ForestRegressor):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
-    is_categorical_ : ndarray of shape (n_features,) or None
-        Boolean mask indicating which features are treated as categorical.
-        ``None`` if no categorical features are used.
-
-        .. versionadded:: 1.11
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1852,6 +1805,12 @@ class RandomForestRegressor(ForestRegressor):
         estimator. Each subset is defined by an array of the indices selected.
 
         .. versionadded:: 1.4
+
+    is_categorical_ : ndarray of shape (n_features,) or None
+        Boolean mask indicating which features are treated as categorical.
+        ``None`` if no categorical features are used.
+
+        .. versionadded:: 1.11
 
     See Also
     --------
@@ -2004,10 +1963,6 @@ class ExtraTreesClassifier(ForestClassifier):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-        .. versionchanged:: 0.22
-           The default value of ``n_estimators`` changed from 10 to 100
-           in 0.22.
-
     criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "log_loss" and "entropy" both for the
@@ -2027,9 +1982,6 @@ class ExtraTreesClassifier(ForestClassifier):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -2041,9 +1993,6 @@ class ExtraTreesClassifier(ForestClassifier):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -2088,8 +2037,6 @@ class ExtraTreesClassifier(ForestClassifier):
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-
-        .. versionadded:: 0.19
 
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
@@ -2165,8 +2112,6 @@ class ExtraTreesClassifier(ForestClassifier):
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
 
-        .. versionadded:: 0.22
-
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
@@ -2176,8 +2121,6 @@ class ExtraTreesClassifier(ForestClassifier):
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
-
-        .. versionadded:: 0.22
 
         .. versionchanged:: 1.9
             Float `max_samples` is relative to `sample_weight.sum()` instead of
@@ -2212,9 +2155,9 @@ class ExtraTreesClassifier(ForestClassifier):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, about 16 million unique categories are
         supported. Missing values for categorical features should be represented
@@ -2262,14 +2205,6 @@ class ExtraTreesClassifier(ForestClassifier):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
-    is_categorical_ : ndarray of shape (n_features,) or None
-        Boolean mask indicating which features are treated as categorical.
-        ``None`` if no categorical features are used.
-
-        .. versionadded:: 1.11
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -2296,6 +2231,12 @@ class ExtraTreesClassifier(ForestClassifier):
         estimator. Each subset is defined by an array of the indices selected.
 
         .. versionadded:: 1.4
+
+    is_categorical_ : ndarray of shape (n_features,) or None
+        Boolean mask indicating which features are treated as categorical.
+        ``None`` if no categorical features are used.
+
+        .. versionadded:: 1.11
 
     See Also
     --------
@@ -2428,10 +2369,6 @@ class ExtraTreesRegressor(ForestRegressor):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-        .. versionchanged:: 0.22
-           The default value of ``n_estimators`` changed from 10 to 100
-           in 0.22.
-
     criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
@@ -2440,9 +2377,6 @@ class ExtraTreesRegressor(ForestRegressor):
         absolute error, which minimizes the L1 loss using the median of each terminal
         node, and "poisson" which uses reduction in Poisson deviance to find splits,
         also using the mean of each terminal node.
-
-        .. versionadded:: 0.18
-           Mean Absolute Error (MAE) criterion.
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
@@ -2460,9 +2394,6 @@ class ExtraTreesRegressor(ForestRegressor):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -2474,9 +2405,6 @@ class ExtraTreesRegressor(ForestRegressor):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -2526,8 +2454,6 @@ class ExtraTreesRegressor(ForestRegressor):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. versionadded:: 0.19
-
     bootstrap : bool, default=False
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
@@ -2576,8 +2502,6 @@ class ExtraTreesRegressor(ForestRegressor):
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
 
-        .. versionadded:: 0.22
-
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
@@ -2587,8 +2511,6 @@ class ExtraTreesRegressor(ForestRegressor):
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` unweighted samples
           or `max_samples * sample_weight.sum()` weighted samples.
-
-        .. versionadded:: 0.22
 
         .. versionchanged:: 1.9
             Float `max_samples` is relative to `sample_weight.sum()` instead of
@@ -2620,9 +2542,9 @@ class ExtraTreesRegressor(ForestRegressor):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, about 16 million unique categories are
         supported. Missing values for categorical features should be represented
@@ -2662,14 +2584,6 @@ class ExtraTreesRegressor(ForestRegressor):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
-    is_categorical_ : ndarray of shape (n_features,) or None
-        Boolean mask indicating which features are treated as categorical.
-        ``None`` if no categorical features are used.
-
-        .. versionadded:: 1.11
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -2692,6 +2606,12 @@ class ExtraTreesRegressor(ForestRegressor):
         estimator. Each subset is defined by an array of the indices selected.
 
         .. versionadded:: 1.4
+
+    is_categorical_ : ndarray of shape (n_features,) or None
+        Boolean mask indicating which features are treated as categorical.
+        ``None`` if no categorical features are used.
+
+        .. versionadded:: 1.11
 
     See Also
     --------
@@ -2829,10 +2749,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     n_estimators : int, default=100
         Number of trees in the forest.
 
-        .. versionchanged:: 0.22
-           The default value of ``n_estimators`` changed from 10 to 100
-           in 0.22.
-
     max_depth : int, default=5
         The maximum depth of each tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
@@ -2846,9 +2762,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
           `ceil(min_samples_split * n_samples)` is the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -2860,9 +2773,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` is the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -2889,8 +2799,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-
-        .. versionadded:: 0.19
 
     sparse_output : bool, default=True
         Whether or not to return a sparse CSR matrix, as default behavior,
@@ -2934,8 +2842,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
