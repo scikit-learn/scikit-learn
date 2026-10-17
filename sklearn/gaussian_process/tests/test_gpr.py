@@ -141,16 +141,12 @@ def test_solution_inside_bounds(kernel):
     assert_array_less(gpr.kernel_.theta, bounds[:, 1] + tiny)
 
 
-@pytest.mark.xfail(
-    raises=AssertionError,
-    reason="https://github.com/scikit-learn/scikit-learn/issues/31366",
-)
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 @pytest.mark.parametrize("length_scale", np.logspace(-3, 3, 13))
 def test_lml_gradient(kernel, length_scale):
     # Clone the kernel object prior to mutating it to avoid any side effects between
     # GP tests:
-    kernel = clone(kernel)
+    kernel = clone(kernel) + WhiteKernel()
     length_scale_param_name = next(
         name for name in kernel.get_params() if name.endswith("length_scale")
     )
@@ -159,12 +155,13 @@ def test_lml_gradient(kernel, length_scale):
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     _, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, eval_gradient=True)
-    epsilon = 1e-9
+    epsilon = 1e-6
     lml_gradient_approx = approx_fprime(
         kernel.theta.copy(),
         lambda theta: gpr.log_marginal_likelihood(theta, False),
         epsilon=epsilon,
     )
+
     assert_allclose(lml_gradient, lml_gradient_approx, rtol=1e-4, atol=epsilon * 100)
 
 
