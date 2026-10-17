@@ -1,0 +1,4 @@
+- :class:`cluster.HDBSCAN` with `cluster_selection_epsilon` no longer crashes
+  with a `TypeError` on NumPy 2 when the epsilon search walks up the condensed
+  tree.
+  By :user:`Sanjay Santhanam <Sanjays2402>`.

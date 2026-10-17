@@ -359,6 +359,33 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
     assert counts[unique_labels == -1] == 2
 
 
+def test_hdbscan_cluster_selection_epsilon_traverse_upwards():
+    """Check that the epsilon search does not crash on NumPy >= 2.
+
+    Non-regression test for #33219: `traverse_upwards` in `_tree.pyx`
+    assigned the result of a boolean lookup (a size-1 ndarray) to a C
+    integer, and converting ndim > 0 arrays to scalars raises a TypeError
+    on NumPy >= 2.
+    """
+    rng = np.random.RandomState(1)
+    X = np.vstack(
+        [
+            rng.normal(0, 0.2, size=(20, 2)),
+            rng.normal(5, 0.2, size=(21, 2)),
+        ]
+    )
+    labels = HDBSCAN(
+        min_cluster_size=5,
+        min_samples=1,
+        allow_single_cluster=True,
+        cluster_selection_method="leaf",
+        cluster_selection_epsilon=0.5,
+        copy=True,
+    ).fit_predict(X)
+    # the two blobs are recovered as two distinct clusters
+    assert set(np.unique(labels)) == {0, 1}
+
+
 def test_hdbscan_better_than_dbscan():
     """
     Validate that HDBSCAN can properly cluster this difficult synthetic
