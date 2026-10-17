@@ -114,8 +114,8 @@ def test_progressbar_no_callback_support(backend):
     from sklearn.callback._progressbar import _run_monitors, _run_queues
 
     # After fit completes, `teardown` has popped the per-fit queue and monitor from
-    # the module-level registry and the per-fit listener handle from the instance.
-    assert progressbar._listener_handles == {}
+    # the module-level registry and the per-fit channel from the instance.
+    assert progressbar._channels == {}
     assert _run_queues == {}
     assert _run_monitors == {}
 
