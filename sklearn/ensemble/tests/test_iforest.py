@@ -393,3 +393,20 @@ def test_iforest_predict_parallel(global_random_seed, contamination, n_jobs):
 
     # assert the same results as non-parallel
     assert_array_equal(pred, pred_parallel)
+
+
+def test_iforest_sample_weight_with_zeros():
+    # Non-regression test: `IsolationForest` samples without replacement
+    # (`bootstrap=False`), hence fitting fails when `sample_weight` contains
+    # zeros and `max_samples` (256 by default, but capped by the number of
+    # samples here) is greater than the number of non-zero weights.
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(100, 5))
+    sample_weight = rng.randint(0, 2, size=100).astype(float)
+    assert 0 < np.count_nonzero(sample_weight) < X.shape[0]
+
+    forest = IsolationForest(n_estimators=10, random_state=0)
+    forest.fit(X, sample_weight=sample_weight)
+
+    assert forest.score_samples(X).shape == (X.shape[0],)
+    assert forest.predict(X).shape == (X.shape[0],)
