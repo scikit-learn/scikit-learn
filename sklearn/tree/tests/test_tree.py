@@ -1174,6 +1174,26 @@ def test_sample_weight_invalid():
         clf.fit(X, y, sample_weight=sample_weight)
 
 
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_sample_weight_without_input_check(Tree):
+    """With check_input=False, sample weights are not validated but still
+    converted (e.g. integer bootstrap counts of forests) and shape-checked."""
+    X = np.arange(100, dtype=np.float32)[:, np.newaxis]
+    y = np.repeat([0.0, 1.0], 50)
+    sample_weight = np.random.RandomState(0).randint(0, 3, size=100)
+
+    tree = Tree(random_state=0).fit(X, y, sample_weight=sample_weight)
+    tree_unchecked = Tree(random_state=0).fit(
+        X, y, sample_weight=sample_weight, check_input=False
+    )
+    assert_array_equal(tree.predict(X), tree_unchecked.predict(X))
+
+    with pytest.raises(ValueError, match="sample_weight.shape"):
+        Tree(random_state=0).fit(
+            X, y, sample_weight=sample_weight[:-1], check_input=False
+        )
+
+
 @pytest.mark.parametrize("name", CLF_TREES)
 def test_class_weights(name):
     # Test that class_weights resemble sample_weights behavior.

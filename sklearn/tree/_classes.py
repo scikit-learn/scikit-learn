@@ -214,7 +214,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             Validated target values.
 
         sample_weight : array-like of shape (n_samples,) or None
-            Sample weights.
+            Validated sample weights.
 
         missing_values_in_feature_mask : ndarray of shape (n_features,)
             Whether each feature has missing values.
@@ -243,7 +243,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_outputs_ = y.shape[1]
 
         if is_classification:
-            check_classification_targets(y)
             y = np.copy(y)
 
             self.classes_ = []
@@ -310,7 +309,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
+            # Only ensure what the tree builder needs: running check_array on
+            # sample_weight for each tree of an ensemble would be costly.
+            sample_weight = np.ascontiguousarray(sample_weight, dtype=np.float64)
+            if sample_weight.shape != (n_samples,):
+                raise ValueError(
+                    f"sample_weight.shape == {sample_weight.shape}, expected "
+                    f"{(n_samples,)}!"
+                )
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
@@ -1104,6 +1110,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         X, y, fit_kwargs = self._validate_and_preprocess_X(
             X, y, reset=True, check_input=check_input
         )
+        if check_input:
+            check_classification_targets(y)
+            if sample_weight is not None:
+                sample_weight = _check_sample_weight(sample_weight, X)
         return self._fit_validated(X, y, sample_weight, **fit_kwargs)
 
     def predict_proba(self, X, check_input=True):
@@ -1498,6 +1508,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         X, y, fit_kwargs = self._validate_and_preprocess_X(
             X, y, reset=True, check_input=check_input
         )
+        if check_input and sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
         return self._fit_validated(X, y, sample_weight, **fit_kwargs)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
