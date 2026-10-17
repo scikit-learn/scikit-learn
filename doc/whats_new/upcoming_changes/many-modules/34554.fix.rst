@@ -1,0 +1,6 @@
+- :func:`inspection.partial_dependence` with ``method="recursion"`` now raises
+  `NotImplementedError` for categorical target features on
+  :class:`tree.DecisionTreeRegressor`, :class:`ensemble.HistGradientBoostingRegressor`
+  and :class:`ensemble.HistGradientBoostingClassifier`, instead of silently
+  returning incorrect values. Use ``method="brute"`` instead.
+  By :user:`Arthur Lacote <cakedev0>`.
