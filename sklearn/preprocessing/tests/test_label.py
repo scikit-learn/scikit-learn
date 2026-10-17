@@ -345,6 +345,38 @@ def test_label_encoder(values, classes, unknown):
         le.transform(unknown)
 
 
+@pytest.mark.parametrize("dtype", ["category", "string"])
+def test_label_encoder_pandas_series(dtype):
+    """Non-regression test for a genuine (non-materialized) pandas Series
+    passed to `LabelEncoder`.
+
+    `category`/`string` are non-numeric, non-`object` dtypes, so `fit`/
+    `fit_transform`/`transform` keep them as pandas Series (see
+    `_label_column_or_1d`) instead of eagerly converting to a numpy array,
+    routing them through the same `pandas.factorize`/`Index.get_indexer`
+    fast path (`_unique_pandas`/`_encode_pandas`) used by `_BaseEncoder`
+    for encoders' `X`. This also exercises `_unique_pandas`'s
+    `return_inverse` branch and `_encode`'s pandas `return_diff` branch
+    (via the unseen-label error below), neither of which is reachable
+    through any other current public estimator.
+    """
+    pd = pytest.importorskip("pandas")
+
+    values = pd.Series(["b", "a", None, "a", "c"], dtype=dtype)
+
+    le = LabelEncoder()
+    ret = le.fit_transform(values)
+    assert_array_equal(le.classes_[:-1], ["a", "b", "c"])
+    assert np.isnan(le.classes_[-1])
+    assert_array_equal(ret, [1, 0, 3, 0, 2])
+
+    query = pd.Series(["c", "b", None], dtype=dtype)
+    assert_array_equal(le.transform(query), [2, 1, 3])
+
+    with pytest.raises(ValueError, match="unseen labels"):
+        le.transform(pd.Series(["c", "z"], dtype=dtype))
+
+
 def test_label_encoder_negative_ints():
     le = LabelEncoder()
     le.fit([1, 1, 4, 5, -1, 0])
