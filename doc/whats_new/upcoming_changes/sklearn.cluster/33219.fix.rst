@@ -1,0 +1,4 @@
+- Fixed a bug in :class:`cluster.HDBSCAN` where setting `cluster_selection_epsilon`
+  caused a :class:`TypeError` during cluster tree traversal due to 1D array
+  coercion.
+  By :user:`bodapatisaikrishna <bodapatisaikrishna>`.
