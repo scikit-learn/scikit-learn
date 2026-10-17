@@ -201,11 +201,16 @@ def plot_tree(
         If None, colors with equally spaced hues are generated automatically.
         Ignored if ``filled=False``.
 
-    Returns
+        Returns
     -------
-    annotations : list of artists
+    list of artists
         List containing the artists for the annotation boxes making up the
         tree.
+
+    See Also
+    --------
+    export_graphviz : Export a decision tree in DOT format.
+    export_text : Build a text report showing the rules of a decision tree.
 
     Examples
     --------
