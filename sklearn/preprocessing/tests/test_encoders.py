@@ -2373,6 +2373,31 @@ def test_ordinal_encoder_missing_appears_infrequent():
     X_trans = ordinal.transform(X_test)
     assert_allclose(X_trans, [[2, 1], [2, 0], [np.nan, 0], [1, 0], [0, 1]])
 
+    X_inverse = ordinal.inverse_transform(X_trans)
+    assert_array_equal(
+        X_inverse[:, 0][[0, 1, 3, 4]],
+        ["infrequent_sklearn", "infrequent_sklearn", "dog", "cat"],
+    )
+    assert is_scalar_nan(X_inverse[2, 0])
+    assert_array_equal(X_inverse[:, 1], X_test[:, 1])
+
+
+def test_ordinal_encoder_inverse_transform_infrequent_and_missing():
+    """Check that inverse_transform does not swap infrequent and missing values
+    when a feature has a single infrequent category."""
+    X = np.array(["a"] * 5 + ["b"] * 5 + ["c"] + [np.nan] * 2, dtype=object)
+    X = X.reshape(-1, 1)
+    ordinal = OrdinalEncoder(min_frequency=2).fit(X)
+
+    X_trans = ordinal.transform(X)
+    assert_allclose(X_trans[-3:, 0], [2, np.nan, np.nan])
+
+    X_inverse = ordinal.inverse_transform(X_trans)
+    assert_array_equal(
+        X_inverse[:-2, 0], ["a"] * 5 + ["b"] * 5 + ["infrequent_sklearn"]
+    )
+    assert all(is_scalar_nan(value) for value in X_inverse[-2:, 0])
+
 
 @pytest.mark.parametrize("Encoder", [OneHotEncoder, OrdinalEncoder])
 def test_encoder_not_fitted(Encoder):

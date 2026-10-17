@@ -1637,17 +1637,14 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         for i in range(n_features):
             labels = X[:, i]
 
-            # replace values of X[:, i] that were nan with actual indices
-            if i in self._missing_indices:
-                X_i_mask = _get_mask(labels, self.encoded_missing_value)
-                labels[X_i_mask] = self._missing_indices[i]
-
             rows_to_update = slice(None)
             categories = self.categories_[i]
 
             if infrequent_indices is not None and infrequent_indices[i] is not None:
                 # Compute mask for frequent categories
-                infrequent_encoding_value = len(categories) - len(infrequent_indices[i])
+                infrequent_encoding_value = self._default_to_infrequent_mappings[
+                    i
+                ].max()
                 infrequent_masks[i] = labels == infrequent_encoding_value
                 rows_to_update = ~infrequent_masks[i]
 
@@ -1656,6 +1653,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                 frequent_categories_mask = np.ones_like(categories, dtype=bool)
                 frequent_categories_mask[infrequent_indices[i]] = False
                 categories = categories[frequent_categories_mask]
+
+            # replace values of X[:, i] that were nan with the index of the
+            # missing category, which is the last one in `categories`
+            if i in self._missing_indices:
+                X_i_mask = _get_mask(labels, self.encoded_missing_value)
+                labels[X_i_mask] = len(categories) - 1
 
             if self.handle_unknown == "use_encoded_value":
                 unknown_labels = _get_mask(labels, self.unknown_value)
