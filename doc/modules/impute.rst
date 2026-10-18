@@ -66,9 +66,10 @@ high-level guidelines help choose among these tools [3]_:
 Missing value mechanisms
 ========================
 
-The missing data literature [2]_ distinguishes three mechanisms that describe
-why values may be missing. Knowing which one applies helps decide whether the
-missingness itself carries information that should be preserved.
+The missing data literature [2]_ distinguishes three classical mechanisms
+based on what the missingness depends on. Knowing which one applies helps
+decide whether the missingness itself carries information that should be
+preserved.
 
 * **Missing Completely At Random (MCAR)**: the probability that a value is
   missing does not depend on the data, whether observed or not. For example, a
@@ -89,6 +90,9 @@ variables.
 .. figure:: ../images/missing_value_mechanisms.png
    :align: center
    :scale: 20%
+   :alt: Three plots showing X2 missing independently of X1 (MCAR), when
+       observed X1 crosses a threshold (MAR), and when X2 itself crosses a
+       threshold (MNAR).
 
 In the above example, ``X1`` is always observed. In the left-hand plot, ``X2``
 is masked independently of the values of ``(X1, X2)``, hence MCAR. In the
@@ -96,16 +100,16 @@ middle plot, ``X2`` is masked when the observed ``X1`` reaches some threshold,
 hence MAR. In the right-hand plot, ``X2`` is masked when ``X2`` itself reaches
 some threshold, hence MNAR.
 
-The distinction matters for imputation. Conditional imputation methods such as
-:class:`IterativeImputer` and :class:`KNNImputer` estimate a missing value from
-the other observed features and are guaranteed to be valid only under
-*ignorable* missingness [2]_, i.e. under MCAR or MAR. When missingness is MNAR, the
-fact that a value is missing is itself informative, and a missingness indicator
-should be added (for instance with ``add_indicator=True`` on the imputers, or
-with :class:`MissingIndicator`). In practice, real-world data are often MNAR.
-The same reasoning applies to the target ``y``: an unobserved outcome is
-informative about its value and should not be discarded as if it were missing
-completely at random (see the discussion of censoring above).
+The distinction matters for imputation. Conditional imputation — estimating
+each missing value from the other observed features, as done by
+:class:`IterativeImputer` and :class:`KNNImputer` — relies on the assumption
+that missingness is *ignorable*, i.e. that it is MCAR or MAR [2]_. Under MNAR,
+the missingness pattern is itself informative, so it should be exposed to the
+model with a missingness indicator (for instance with ``add_indicator=True`` on
+the imputers, or with :class:`MissingIndicator`). In practice, missingness is
+often not ignorable. When the target ``y`` is unobserved, this is often a
+censoring problem rather than ordinary missingness, and dropping such samples
+biases the analysis (see the discussion of censoring above).
 
 
 Univariate vs. Multivariate Imputation
