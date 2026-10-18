@@ -66,8 +66,8 @@ high-level guidelines help choose among these tools [3]_:
 Missing value mechanisms
 ========================
 
-The missing data literature distinguishes three mechanisms that describe why
-values may be missing. Knowing which one applies helps decide whether the
+The missing data literature [2]_ distinguishes three mechanisms that describe
+why values may be missing. Knowing which one applies helps decide whether the
 missingness itself carries information that should be preserved.
 
 * **Missing Completely At Random (MCAR)**: the probability that a value is
@@ -99,7 +99,7 @@ some threshold, hence MNAR.
 The distinction matters for imputation. Conditional imputation methods such as
 :class:`IterativeImputer` and :class:`KNNImputer` estimate a missing value from
 the other observed features and are guaranteed to be valid only under
-*ignorable* missingness, i.e. under MCAR or MAR. When missingness is MNAR, the
+*ignorable* missingness [2]_, i.e. under MCAR or MAR. When missingness is MNAR, the
 fact that a value is missing is itself informative, and a missingness indicator
 should be added (for instance with ``add_indicator=True`` on the imputers, or
 with :class:`MissingIndicator`). In practice, real-world data are often MNAR.
