@@ -82,14 +82,20 @@ def _assess_dimension(spectrum, rank, n_samples):
     m = n_features * rank - rank * (rank + 1.0) / 2.0
     pp = log(2.0 * xp.pi) * (m + rank) / 2.0
 
-    pa = 0.0
     spectrum_ = xp.asarray(spectrum, copy=True)
     spectrum_[rank:n_features] = v
-    for i in range(rank):
-        for j in range(i + 1, spectrum.shape[0]):
-            pa += log(
-                (spectrum[i] - spectrum[j]) * (1.0 / spectrum_[j] - 1.0 / spectrum_[i])
-            ) + log(n_samples)
+    # Vectorized form of the double sum over pairs (i, j) with i < rank < j+1,
+    # i.e. i in [0, rank) and j in (i, n_features). For those pairs the product
+    # is positive (spectrum is sorted in decreasing order), so the log is well
+    # defined; the lower triangle is masked out before summing.
+    inv_spectrum_ = 1.0 / spectrum_
+    delta = spectrum[:rank, None] - spectrum[None, :]
+    inv_delta = inv_spectrum_[None, :] - inv_spectrum_[:rank, None]
+    pair_mask = xp.arange(n_features)[None, :] > xp.arange(rank)[:, None]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        pair_terms = xp.log(delta * inv_delta)
+    n_pairs = xp.sum(xp.astype(pair_mask, spectrum.dtype))
+    pa = xp.sum(pair_terms[pair_mask]) + n_pairs * log(n_samples)
 
     ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
