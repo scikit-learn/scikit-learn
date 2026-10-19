@@ -49,25 +49,9 @@ cdef void _center_shift(
     floating[::1]
 )
 
-cdef int _alloc_thread_buffers_arrays(
-    floating ***,
-    floating ***,
-    int
-) except -1
-
-cdef void _alloc_thread_buffers(
-    floating **,
-    floating **,
-    int,
-    int,
-    int
-) noexcept nogil
-
 cdef void _reduce_thread_buffers(
-    floating **,
-    floating **,
+    floating[:, ::1],
     int,
     floating[:, ::1],
-    floating[::1],
-    bint
+    floating[::1]
 ) noexcept nogil

@@ -12,6 +12,7 @@ from sklearn.base import clone
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
 from sklearn.cluster._k_means_common import (
     CHUNK_SIZE,
+    _alloc_thread_buffers,
     _euclidean_dense_dense_wrapper,
     _euclidean_sparse_dense_wrapper,
     _inertia_dense,
@@ -190,6 +191,56 @@ def test_lloyd_iter_several_chunks_per_thread(
     rtol = 1e-4 if dtype == np.float32 else 1e-7
     assert_allclose(weight_in_clusters, expected_weights, rtol=rtol)
     assert_allclose(centers_new, expected_centers, rtol=rtol)
+
+
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_lloyd_iter_reused_thread_buffers(array_constr, dtype, global_random_seed):
+    # Check that the thread buffers are zeroed after a Lloyd iteration, so that
+    # the next iterations can reuse them. Most values of X are zero, so that
+    # some parts of the buffers are never written.
+    rng = np.random.RandomState(global_random_seed)
+    n_threads, n_clusters, n_features = 3, 7, 37
+    n_samples = 3 * CHUNK_SIZE * n_threads + 7
+    X = rng.uniform(size=(n_samples, n_features)).astype(dtype)
+    X[rng.uniform(size=X.shape) < 0.8] = 0
+    sample_weight = rng.uniform(size=n_samples).astype(dtype)
+    centers = X[rng.choice(n_samples, n_clusters, replace=False)]
+    if array_constr is np.array:
+        lloyd_iter = lloyd_iter_chunked_dense
+    else:
+        lloyd_iter = lloyd_iter_chunked_sparse
+
+    def lloyd_iter_results(thread_buffers):
+        centers_new = np.zeros_like(centers)
+        weight_in_clusters = np.zeros(n_clusters, dtype=dtype)
+        labels = np.full(n_samples, -1, dtype=np.int32)
+        center_shift = np.zeros(n_clusters, dtype=dtype)
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
+            lloyd_iter(
+                array_constr(X),
+                sample_weight,
+                centers,
+                centers_new,
+                weight_in_clusters,
+                labels,
+                center_shift,
+                n_threads=n_threads,
+                thread_buffers=thread_buffers,
+            )
+        return centers_new, weight_in_clusters, labels
+
+    expected_results = lloyd_iter_results(thread_buffers=None)
+    thread_buffers = _alloc_thread_buffers(n_threads, n_clusters, n_features, dtype)
+    for _ in range(2):
+        results = lloyd_iter_results(thread_buffers)
+        for result, expected_result in zip(results, expected_results):
+            assert_array_equal(result, expected_result)
+        assert not thread_buffers.any()
+
+    too_small_thread_buffers = thread_buffers[: n_threads - 1]
+    with pytest.raises(ValueError, match="too small"):
+        lloyd_iter_results(too_small_thread_buffers)
 
 
 @pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)

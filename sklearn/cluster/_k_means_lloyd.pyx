@@ -1,5 +1,6 @@
 # Licence: BSD 3 clause
 
+import numpy as np
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, free
@@ -13,8 +14,7 @@ from sklearn.cluster._k_means_common import CHUNK_SIZE
 from sklearn.cluster._k_means_common cimport _relocate_empty_clusters_dense
 from sklearn.cluster._k_means_common cimport _relocate_empty_clusters_sparse
 from sklearn.cluster._k_means_common cimport _average_centers, _center_shift
-from sklearn.cluster._k_means_common cimport _alloc_thread_buffers_arrays
-from sklearn.cluster._k_means_common cimport _alloc_thread_buffers
+from sklearn.cluster._k_means_common import _alloc_thread_buffers
 from sklearn.cluster._k_means_common cimport _reduce_thread_buffers
 
 
@@ -27,7 +27,8 @@ def lloyd_iter_chunked_dense(
         int[::1] labels,                     # OUT
         floating[::1] center_shift,          # OUT
         int n_threads,
-        bint update_centers=True):
+        bint update_centers=True,
+        floating[:, ::1] thread_buffers=None):
     """Single iteration of K-means lloyd algorithm with dense input.
 
     Update labels and centers (inplace), for one iteration, distributed
@@ -70,6 +71,13 @@ def lloyd_iter_chunked_dense(
         - If False, only the labels will be computed, i.e runs the E-step of
           the algorithm. This is useful especially when calling predict on a
           fitted model.
+
+    thread_buffers : ndarray of shape (n_threads, buffer_size), dtype=floating, \
+            default=None
+        Zeroed buffers of the threads, from `_alloc_thread_buffers`. They are
+        zeroed again at the end, so that the next iterations can reuse them. If
+        None, they are allocated for this call. Not used if `update_centers` is
+        False.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -98,8 +106,6 @@ def lloyd_iter_chunked_dense(
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
         floating *pairwise_distances_chunk
-        floating **centers_new_chunks
-        floating **weight_in_clusters_chunks
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
@@ -107,19 +113,22 @@ def lloyd_iter_chunked_dense(
     # number of threads should not be bigger than number of chunks
     n_threads = min(n_threads, n_chunks)
 
-    # Each thread allocates its own buffers, and they are summed after the
-    # parallel region, so that the threads never wait for each other inside it,
-    # which scales badly with the number of threads.
-    _alloc_thread_buffers_arrays(
-        &centers_new_chunks, &weight_in_clusters_chunks, n_threads)
+    # Each thread sums its samples in its own buffer, and the buffers are summed
+    # after the parallel region, so that the threads never wait for each other
+    # inside it, which scales badly with the number of threads.
+    if update_centers:
+        thread_buffers = _check_thread_buffers(
+            thread_buffers, n_threads, n_clusters, n_features, centers_new)
 
     with nogil, parallel(num_threads=n_threads):
-        thread_idx = omp_get_thread_num()
         if update_centers:
-            _alloc_thread_buffers(centers_new_chunks, weight_in_clusters_chunks,
-                                  thread_idx, n_clusters, n_features)
-        centers_new_chunk = centers_new_chunks[thread_idx]
-        weight_in_clusters_chunk = weight_in_clusters_chunks[thread_idx]
+            thread_idx = omp_get_thread_num()
+            centers_new_chunk = &thread_buffers[thread_idx, 0]
+            weight_in_clusters_chunk = &thread_buffers[
+                thread_idx, n_clusters * n_features]
+        else:
+            centers_new_chunk = NULL
+            weight_in_clusters_chunk = NULL
         pairwise_distances_chunk = <floating*> malloc(n_samples_chunk * n_clusters * sizeof(floating))
 
         for chunk_idx in prange(n_chunks, schedule='static'):
@@ -146,18 +155,32 @@ def lloyd_iter_chunked_dense(
 
         free(pairwise_distances_chunk)
 
-    with nogil:
-        _reduce_thread_buffers(centers_new_chunks, weight_in_clusters_chunks,
-                               n_threads, centers_new, weight_in_clusters,
-                               update_centers)
-
     if update_centers:
+        with nogil:
+            _reduce_thread_buffers(
+                thread_buffers, n_threads, centers_new, weight_in_clusters)
         _relocate_empty_clusters_dense(
             X, sample_weight, centers_old, centers_new, weight_in_clusters, labels
         )
 
         _average_centers(centers_new, weight_in_clusters)
         _center_shift(centers_old, centers_new, center_shift)
+
+
+def _check_thread_buffers(
+        thread_buffers, n_threads, n_clusters, n_features, centers_new):
+    """Allocate the thread buffers if None, else check their shape."""
+    if thread_buffers is None:
+        return _alloc_thread_buffers(
+            n_threads, n_clusters, n_features, np.asarray(centers_new).dtype)
+    if (thread_buffers.shape[0] < n_threads
+            or thread_buffers.shape[1] < n_clusters * (n_features + 1)):
+        raise ValueError(
+            f"thread_buffers of shape {tuple(thread_buffers.shape[:2])} is too "
+            f"small for {n_threads} threads, {n_clusters} clusters and "
+            f"{n_features} features."
+        )
+    return thread_buffers
 
 
 cdef void _update_chunk_dense(
@@ -226,7 +249,8 @@ def lloyd_iter_chunked_sparse(
         int[::1] labels,                     # OUT
         floating[::1] center_shift,          # OUT
         int n_threads,
-        bint update_centers=True):
+        bint update_centers=True,
+        floating[:, ::1] thread_buffers=None):
     """Single iteration of K-means lloyd algorithm with sparse input.
 
     Update labels and centers (inplace), for one iteration, distributed
@@ -269,6 +293,13 @@ def lloyd_iter_chunked_sparse(
         - If False, only the labels will be computed, i.e runs the E-step of
           the algorithm. This is useful especially when calling predict on a
           fitted model.
+
+    thread_buffers : ndarray of shape (n_threads, buffer_size), dtype=floating, \
+            default=None
+        Zeroed buffers of the threads, from `_alloc_thread_buffers`. They are
+        zeroed again at the end, so that the next iterations can reuse them. If
+        None, they are allocated for this call. Not used if `update_centers` is
+        False.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -301,8 +332,6 @@ def lloyd_iter_chunked_sparse(
         int thread_idx
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
-        floating **centers_new_chunks
-        floating **weight_in_clusters_chunks
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
@@ -311,16 +340,19 @@ def lloyd_iter_chunked_sparse(
     n_threads = min(n_threads, n_chunks)
 
     # Thread local buffers, see lloyd_iter_chunked_dense.
-    _alloc_thread_buffers_arrays(
-        &centers_new_chunks, &weight_in_clusters_chunks, n_threads)
+    if update_centers:
+        thread_buffers = _check_thread_buffers(
+            thread_buffers, n_threads, n_clusters, n_features, centers_new)
 
     with nogil, parallel(num_threads=n_threads):
-        thread_idx = omp_get_thread_num()
         if update_centers:
-            _alloc_thread_buffers(centers_new_chunks, weight_in_clusters_chunks,
-                                  thread_idx, n_clusters, n_features)
-        centers_new_chunk = centers_new_chunks[thread_idx]
-        weight_in_clusters_chunk = weight_in_clusters_chunks[thread_idx]
+            thread_idx = omp_get_thread_num()
+            centers_new_chunk = &thread_buffers[thread_idx, 0]
+            weight_in_clusters_chunk = &thread_buffers[
+                thread_idx, n_clusters * n_features]
+        else:
+            centers_new_chunk = NULL
+            weight_in_clusters_chunk = NULL
 
         for chunk_idx in prange(n_chunks, schedule='static'):
             start = chunk_idx * n_samples_chunk
@@ -343,12 +375,10 @@ def lloyd_iter_chunked_sparse(
                 weight_in_clusters_chunk,
                 update_centers)
 
-    with nogil:
-        _reduce_thread_buffers(centers_new_chunks, weight_in_clusters_chunks,
-                               n_threads, centers_new, weight_in_clusters,
-                               update_centers)
-
     if update_centers:
+        with nogil:
+            _reduce_thread_buffers(
+                thread_buffers, n_threads, centers_new, weight_in_clusters)
         _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,
             centers_old, centers_new, weight_in_clusters, labels)
