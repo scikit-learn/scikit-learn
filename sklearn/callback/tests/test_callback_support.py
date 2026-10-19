@@ -174,10 +174,8 @@ def test_set_callback_empty():
 
 def test_one_per_estimator_callback_error():
     """Check that a callback that is set to be one per estimator raises an error."""
-    with pytest.raises(
-        ValueError,
-        match=r"Only one OnePerEstimatorCallback can be registered to an estimator.",
-    ):
+    msg = r"Only a single OnePerEstimatorCallback instance can be registered to a given"
+    with pytest.raises(ValueError, match=msg):
         estimator = MaxIterEstimator().set_callbacks(
             OnePerEstimatorCallback(), OnePerEstimatorCallback()
         )

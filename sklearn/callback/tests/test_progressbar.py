@@ -227,7 +227,6 @@ def test_two_progressbars_error(capsys):
     from sklearn.callback._progressbar import ProgressBar
 
     est = MaxIterEstimator()
-    with pytest.raises(
-        ValueError, match=r"Only one ProgressBar can be registered to an estimator."
-    ):
+    msg = r"Only a single ProgressBar instance can be registered to a given estimator."
+    with pytest.raises(ValueError, match=msg):
         est.set_callbacks(ProgressBar(), ProgressBar())

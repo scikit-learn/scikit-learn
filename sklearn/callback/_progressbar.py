@@ -39,7 +39,7 @@ class ProgressBar:
     This callback requires rich to be installed.
     """
 
-    one_per_estimator = True
+    _one_per_estimator = True
 
     @validate_params(
         {"max_propagation_depth": [Interval(Integral, 0, None, closed="left"), None]},
@@ -52,6 +52,10 @@ class ProgressBar:
 
         # Handles to the main-process per-fit listeners, keyed by `root_uuid`.
         self._listener_handles = {}
+
+    @property
+    def one_per_estimator(self):
+        return self._one_per_estimator
 
     def setup(self, estimator, context):
         # Lazily create the per-fit transport state. `setup` runs on the main

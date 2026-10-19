@@ -8,6 +8,8 @@ from typing import Protocol, runtime_checkable
 class _BaseCallback(Protocol):
     """Protocol for the base callbacks."""
 
+    one_per_estimator: bool
+
     def setup(self, estimator, context):
         """Method called at the beginning of the fit method of the estimator.
 

@@ -15,6 +15,8 @@ class RecordingCallback:
     `AutoPropagatedCallback`: it should not be propagated to sub-estimators.
     """
 
+    one_per_estimator = False
+
     def __init__(self):
         self.record = []
         self._listener_handle = open_listener(self.record.append, owner=self)

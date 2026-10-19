@@ -104,7 +104,7 @@ class ScoringMonitor:
         callback can be registered to a given estimator.
     """
 
-    one_per_estimator = False
+    _one_per_estimator = False
 
     @validate_params(
         {"scoring": [str, callable, list, tuple, dict]},
@@ -129,6 +129,10 @@ class ScoringMonitor:
         # `self._log.append` is the message consumer that `send` calls will use to
         # to grow the main process's log.
         self._listener_handle = open_listener(self._log.append, owner=self)
+
+    @property
+    def one_per_estimator(self):
+        return self._one_per_estimator
 
     def setup(self, estimator, context):
         pass
