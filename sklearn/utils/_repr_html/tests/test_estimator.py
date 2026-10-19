@@ -617,6 +617,14 @@ def test_non_utf8_locale(set_non_utf8_locale):
     _get_css_style()
 
 
+def test_estimator_html_repr_non_utf8_locale(set_non_utf8_locale):
+    """
+    estimator_html_repr must work under non-UTF-8 locale.
+    Non-regression test for https://github.com/scikit-learn/scikit-learn/pull/35093
+    """
+    assert "✔" in estimator_html_repr(LinearRegression())
+
+
 @pytest.mark.parametrize(
     "func, expected_name",
     [
