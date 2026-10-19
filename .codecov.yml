@@ -29,3 +29,4 @@ ignore:
 - "sklearn/__check_build"
 - "sklearn/_min_dependencies.py"
 - "**/conftest.py"
+- "sklearn/your_new_folder_here/**"
