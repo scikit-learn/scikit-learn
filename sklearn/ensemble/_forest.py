@@ -71,17 +71,12 @@ from sklearn.utils import (
 )
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils._tags import get_tags
-from sklearn.utils.multiclass import check_classification_targets, type_of_target
+from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
-    _check_categorical_features,
     _check_feature_names_in,
-    _check_n_features,
-    _check_sample_weight,
     _num_samples,
-    check_array,
     check_is_fitted,
-    validate_data,
 )
 
 __all__ = [
@@ -138,13 +133,12 @@ def _parallel_build_trees(
     X,
     y,
     sample_weight,
+    fit_kwargs,
     tree_idx,
     n_trees,
     verbose=0,
     class_weight=None,
     n_samples_bootstrap=None,
-    missing_values_in_feature_mask=None,
-    categorical_counts=None,
 ):
     """
     Private function used to fit a single tree in parallel."""
@@ -164,23 +158,9 @@ def _parallel_build_trees(
             )
             sample_weight_tree = sample_weight_tree * expanded_class_weight
 
-        tree._fit(
-            X,
-            y,
-            sample_weight=sample_weight_tree,
-            check_input=False,
-            missing_values_in_feature_mask=missing_values_in_feature_mask,
-            categorical_counts=categorical_counts,
-        )
+        tree._fit_validated(X, y, sample_weight_tree, **fit_kwargs)
     else:
-        tree._fit(
-            X,
-            y,
-            sample_weight=sample_weight,
-            check_input=False,
-            missing_values_in_feature_mask=missing_values_in_feature_mask,
-            categorical_counts=categorical_counts,
-        )
+        tree._fit_validated(X, y, sample_weight, **fit_kwargs)
 
     return tree
 
@@ -332,16 +312,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             Fitted estimator.
         """
         # Validate or convert input data
-        if issparse(y):
-            raise ValueError("sparse multilabel-indicator for y is not supported.")
-
-        if hasattr(self, "categorical_features"):
-            self.is_categorical_ = _check_categorical_features(
-                X, self.categorical_features
-            )
-            has_categorical = self.is_categorical_ is not None
-        else:
-            has_categorical = False
+        X, y, sample_weight, fit_kwargs = self._validate_and_preprocess_input(
+            X, y, sample_weight, reset=True, check_input=True
+        )
+        has_categorical = self._categorical_encoder is not None
 
         if has_categorical and self.warm_start and getattr(self, "estimators_", None):
             raise ValueError(
@@ -350,67 +324,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 "learned by trees from earlier iterations."
             )
 
-        if has_categorical:
-            if issparse(X):
-                raise NotImplementedError(
-                    "Categorical features not supported with sparse inputs"
-                )
-            # Capture feature names on the original dataframe-like input before
-            # categorical encoding converts X to a NumPy array.
-            validate_data(
-                self,
-                X,
-                y,
-                multi_output=True,
-                reset=True,
-                skip_check_array=True,
-            )
-            X = self._preprocess_X(X, reset=True)
-            # Feature names were already stored from the original dataframe above.
-            # Encoding turns X into a plain ndarray with no names.
-            # validate_data(reset=True) would treat that as "no feature names"
-            # and delete feature_names_in_.
-            X, y = validate_data(
-                self,
-                X,
-                y,
-                multi_output=True,
-                dtype=np.float32,
-                ensure_all_finite=False,
-                reset=False,
-            )
-        else:
-            self._categorical_encoder = None
-            self._preprocessor = None
-            self._categorical_counts = None
-            X, y = validate_data(
-                self,
-                X,
-                y,
-                multi_output=True,
-                accept_sparse="csc",
-                dtype=np.float32,
-                ensure_all_finite=False,
-            )
-        # _compute_missing_values_in_feature_mask checks if X has missing values and
-        # will raise an error if the underlying tree base estimator can't handle missing
-        # values. Only the criterion is required to determine if the tree supports
-        # missing values.
-        estimator = type(self.estimator)(criterion=self.criterion)
-        missing_values_in_feature_mask = (
-            estimator._compute_missing_values_in_feature_mask(
-                X, estimator_name=self.__class__.__name__
-            )
-        )
-
-        if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
-
-        if issparse(X):
-            # Pre-sort indices to avoid that each individual tree of the
-            # ensemble sorts the indices.
-            X.sort_indices()
-
+        # TODO: work on y really needed?
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
             warn(
@@ -427,18 +341,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # reshape is necessary to preserve the data contiguity against vs
             # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
-
-        if self.criterion == "poisson":
-            if np.any(y < 0):
-                raise ValueError(
-                    "Some value(s) of y are negative which is "
-                    "not allowed for Poisson regression."
-                )
-            if np.sum(y) <= 0:
-                raise ValueError(
-                    "Sum of y is not strictly positive which "
-                    "is necessary for Poisson regression."
-                )
 
         self._n_samples, self.n_outputs_ = y.shape
 
@@ -510,12 +412,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                 self._make_estimator(append=False, random_state=random_state)
                 for i in range(n_more_estimators)
             ]
-            # Trees must get the bool mask, not categorical_features="from_dtype" (or
-            # column names). The forest already turned X into a NumPy array, so trees
-            # can no longer read dtypes/names and would treat all features as numeric.
-            if has_categorical:
-                for tree in trees:
-                    tree.set_params(categorical_features=self.is_categorical_)
 
             # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
@@ -534,13 +430,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     X,
                     y,
                     _sample_weight,
+                    fit_kwargs,
                     i,
                     len(trees),
                     verbose=self.verbose,
                     class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
-                    missing_values_in_feature_mask=missing_values_in_feature_mask,
-                    categorical_counts=self._categorical_counts,
                 )
                 for i, t in enumerate(trees)
             )
@@ -662,55 +557,14 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # Default implementation
         return y, None
 
-    def _preprocess_X(self, X, *, reset):
-        """Encode categorical features and cast numerical features to float32.
-
-        Reuses the tree implementation so forests stay aligned with
-        :class:`~sklearn.tree.DecisionTreeClassifier` /
-        :class:`~sklearn.tree.DecisionTreeRegressor` preprocessing.
-        """
-        return BaseDecisionTree._preprocess_X(self, X, reset=reset)
+    # Reuse the tree implementation:
+    _validate_and_preprocess_input = BaseDecisionTree._validate_and_preprocess_input
 
     def _validate_X_predict(self, X):
         """
         Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
-        if self.estimators_[0]._support_missing_values(X):
-            ensure_all_finite = "allow-nan"
-        else:
-            ensure_all_finite = True
-
-        has_categorical = getattr(self, "is_categorical_", None) is not None
-        if has_categorical:
-            if issparse(X):
-                raise NotImplementedError(
-                    "Categorical features not supported with sparse inputs"
-                )
-            # Check feature names on the original input before categorical
-            # encoding converts it to a NumPy array and drops dataframe metadata.
-            validate_data(self, X, reset=False, skip_check_array=True)
-            X = self._preprocess_X(X, reset=False)
-            X = check_array(
-                X,
-                input_name="X",
-                estimator=self,
-                dtype=np.float32,
-                accept_sparse="csr",
-                ensure_all_finite=ensure_all_finite,
-            )
-            _check_n_features(self, X, reset=False)
-        else:
-            X = validate_data(
-                self,
-                X,
-                dtype=np.float32,
-                accept_sparse="csr",
-                reset=False,
-                ensure_all_finite=ensure_all_finite,
-            )
-        if issparse(X) and (X.indices.dtype != np.intc or X.indptr.dtype != np.intc):
-            raise ValueError("No support for np.int64 index based sparse matrices")
-        return X
+        return self._validate_and_preprocess_input(X, reset=False, check_input=True)
 
     @property
     def feature_importances_(self):
@@ -896,8 +750,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         )
 
     def _validate_y_class_weight(self, y, sample_weight):
-        check_classification_targets(y)
-
         y_original = np.copy(y)
         self.classes_ = []
         self.n_classes_ = []
@@ -1492,7 +1344,7 @@ class RandomForestClassifier(ForestClassifier):
 
         ``warm_start`` is not supported when categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -1559,7 +1411,7 @@ class RandomForestClassifier(ForestClassifier):
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     See Also
     --------
@@ -1892,12 +1744,12 @@ class RandomForestRegressor(ForestRegressor):
         also treated as missing values.
 
         Trees in the forest use the best split strategy, so categorical
-        features are only supported for single-output regression.
-        Categorical features are not supported with `criterion="absolute_error"`.
+        features are only supported for single-output regression, and not with
+        `criterion="absolute_error"`.
 
         ``warm_start`` is not supported when categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -1952,7 +1804,7 @@ class RandomForestRegressor(ForestRegressor):
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     See Also
     --------
@@ -2311,7 +2163,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
         ``warm_start`` is not supported when categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -2378,7 +2230,7 @@ class ExtraTreesClassifier(ForestClassifier):
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     See Also
     --------
@@ -2695,11 +2547,10 @@ class ExtraTreesRegressor(ForestRegressor):
 
         Trees in the forest use the random split strategy, including
         multi-output targets.
-        Categorical features are not supported with `criterion="absolute_error"`.
 
         ``warm_start`` is not supported when categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -2754,7 +2605,7 @@ class ExtraTreesRegressor(ForestRegressor):
         Boolean mask indicating which features are treated as categorical.
         ``None`` if no categorical features are used.
 
-        .. versionadded:: 1.11
+        .. versionadded:: 1.10
 
     See Also
     --------
