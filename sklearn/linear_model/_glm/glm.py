@@ -19,6 +19,7 @@ from sklearn._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.externals import array_api_compat
 from sklearn.linear_model._glm._newton_solver import (
     NewtonCDGramSolver,
     NewtonCDSolver,
@@ -274,6 +275,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
             raise ValueError(msg)
         xp, _, device = get_namespace_and_device(X)
+        # Only newton-cg has complete support of the array API, lbfgs still needs
+        # coef as numpy arrays.
+        coef_as_xp = self.solver == "newton-cg"
         X, y = validate_data(
             self,
             X,
@@ -325,17 +329,20 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # Thus, without rescaling, we have
         #     obj = LinearModelLoss.loss(...)
 
-        loss_dtype_np = _matching_numpy_dtype(X, xp=xp)
+        loss_dtype = X.dtype if coef_as_xp else _matching_numpy_dtype(X, xp=xp)
+        xp_coef = xp if coef_as_xp else array_api_compat.numpy
+        device_coef = device if coef_as_xp else "cpu"
         if self.warm_start and hasattr(self, "coef_"):
-            coef_xp, _ = get_namespace(self.coef_)
-            coef = move_to(self.coef_, xp=np, device="cpu")
+            coef = move_to(self.coef_, xp=xp_coef, device=device_coef)
             if self.fit_intercept:
                 # LinearModelLoss needs intercept at the end of coefficient array.
-                intercept = move_to(self.intercept_, xp=np, device="cpu")
-                coef = np.concatenate((coef, np.array([intercept])))
-            coef = coef.astype(loss_dtype_np, copy=False)
+                intercept = move_to(self.intercept_, xp=xp_coef, device=device_coef)
+                coef = xp_coef.concat((coef, xp_coef.array([intercept])))
+            coef = coef.astype(loss_dtype, copy=False)
         else:
-            coef = linear_loss.init_zero_coef(X, dtype=loss_dtype_np)
+            coef = linear_loss.init_zero_coef(
+                X, dtype=loss_dtype, xp=xp_coef, device=device_coef
+            )
             if self.fit_intercept:
                 coef[-1] = linear_loss.base_loss.link.link(
                     _average(y, weights=sample_weight)
@@ -777,7 +784,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.array_api_support = self.solver == "lbfgs"
+        tags.array_api_support = self.solver in ("lbfgs", "newton-cg")
         return tags
 
 
