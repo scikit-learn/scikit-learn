@@ -379,8 +379,10 @@ cdef void _reduce_thread_buffers(
     # The sum over n_threads buffers of n_clusters * n_features values is done
     # in parallel, by blocks that fit in the L1 cache. The team has n_threads
     # threads even if there are fewer blocks: changing the size of the team from
-    # one parallel region to the next is slow.
-    for block_idx in prange(n_blocks, schedule='static', num_threads=n_threads):
+    # one parallel region to the next is slow. A single block is summed by the
+    # calling thread: waking the team would cost more than the sum.
+    for block_idx in prange(n_blocks, schedule='static', num_threads=n_threads,
+                            use_threads_if=n_blocks > 1):
         start = block_idx * REDUCE_BLOCK_SIZE
         end = min(start + REDUCE_BLOCK_SIZE, n_centers_values)
         memset(&centers_new_ptr[start], 0, (end - start) * sizeof(floating))
