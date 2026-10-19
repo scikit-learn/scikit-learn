@@ -96,7 +96,15 @@ class ScoringMonitor:
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
         - a dictionary with metric names as keys and callables as values.
+
+    Attributes
+    ----------
+    one_per_estimator : bool, False
+        This class attribute being False indicates that multiple instances of this
+        callback can be registered to a given estimator.
     """
+
+    one_per_estimator = False
 
     @validate_params(
         {"scoring": [str, callable, list, tuple, dict]},

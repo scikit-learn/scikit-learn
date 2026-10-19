@@ -181,4 +181,4 @@ class NotRequiredKwargsCallback(RecordingCallback):
 class OnePerEstimatorCallback(RecordingCallback):
     """A callback that is set to be one per estimator."""
 
-    _one_per_estimator = True
+    one_per_estimator = True

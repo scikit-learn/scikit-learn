@@ -135,6 +135,9 @@ example the case of :class:`~sklearn.callback.ProgressBar`. This can be achieved
 adding a the `one_per_estimator` class attribute to the callback's class and setting it
 to `True`. This will make the :meth:`~CallbackSupportMixin.set_callbacks` method raise a
 `ValueError` if two instances of that class are registered to the same estimator.
+Otherwise, the `one_per_estimator` class attribute should be set to `False`. The absence
+of this attribute will default to enabling multiple instances of the callback to be
+registered to the same estimator.
 
 Callback shared state
 ---------------------

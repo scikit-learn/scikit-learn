@@ -28,12 +28,18 @@ class ProgressBar:
         0 means that the progress of only the outermost estimator is displayed.
         If set to None, all levels are displayed.
 
+    Attributes
+    ----------
+    one_per_estimator : bool, True
+        This cass attribute being True indicates that only a single instance of this
+        callback can be registered to a given estimator.
+
     Notes
     -----
     This callback requires rich to be installed.
     """
 
-    _one_per_estimator = True
+    one_per_estimator = True
 
     @validate_params(
         {"max_propagation_depth": [Interval(Integral, 0, None, closed="left"), None]},
