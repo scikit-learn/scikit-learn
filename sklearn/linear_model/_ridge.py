@@ -527,8 +527,7 @@ def ridge_regression(
         See :term:`Glossary <random_state>` for details.
 
     return_n_iter : bool, default=False
-        If True, the method also returns `n_iter`, the actual number of
-        iteration performed by the solver.
+        If True, the method also returns `n_iter`, the actual number of iterations performed by the solver.
 
     return_intercept : bool, default=False
         If True and if X is sparse, the method also returns the intercept,

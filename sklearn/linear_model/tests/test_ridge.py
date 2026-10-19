@@ -208,7 +208,12 @@ def test_ridge_regression(solver, fit_intercept, ols_ridge_dataset, global_rando
     assert model.score(X, y) == pytest.approx(R2_Ridge)
 
     assert model.solver_ == solver
-
+    def test_ridge_classifier_custom_behavior():
+        
+        X = [[0, 0], [1, 1]]
+        y = [0, 1]
+        clf = RidgeClassifier().fit(X, y)
+        assert clf.coef_.shape is not None
 
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
