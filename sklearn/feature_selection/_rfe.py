@@ -683,7 +683,7 @@ class RFECV(RFE):
 
             .. versionadded:: 1.5
 
-        split(k)_ranking : ndarray of shape (n_subsets_of_features,)
+        split(k)_ranking : ndarray of shape (n_subsets_of_features, n_features)
             The cross-validation rankings across (k)th fold.
             Selected (i.e., estimated best) features are assigned rank 1.
             Illustration in
@@ -691,7 +691,7 @@ class RFECV(RFE):
 
             .. versionadded:: 1.7
 
-        split(k)_support : ndarray of shape (n_subsets_of_features,)
+        split(k)_support : ndarray of shape (n_subsets_of_features, n_features)
             The cross-validation supports across (k)th fold. The support
             is the mask of selected features.
 
