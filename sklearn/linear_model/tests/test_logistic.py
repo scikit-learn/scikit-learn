@@ -270,6 +270,9 @@ def test_logistic_glmnet_L1(solver, global_random_seed):
 
 # TODO(1.14): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
+# TODO(1.12): remove filterwarnings with deprecation of liblinear and dual
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
+@pytest.mark.filterwarnings("ignore:The parameter 'dual':FutureWarning")
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
 # TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
@@ -406,6 +409,9 @@ def test_nan():
         clf.fit(Xnan, Y1)
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear and dual, ...
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
+@pytest.mark.filterwarnings("ignore:The parameter 'intercept_scaling':FutureWarning")
 @pytest.mark.parametrize("sample_weight", [None, 2])
 def test_consistency_path(global_random_seed, sample_weight):
     """Test that the path algorithm is consistent with the class LogisticRgression."""
@@ -503,6 +509,9 @@ def test_logistic_regression_path_convergence_fail():
     assert "linear_model.html#logistic-regression" in warn_msg
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear and dual
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
+@pytest.mark.filterwarnings("ignore:The parameter 'dual':FutureWarning")
 # XXX: investigate thread-safety bug that might be related to:
 # https://github.com/scikit-learn/scikit-learn/issues/31883
 @pytest.mark.thread_unsafe
@@ -558,24 +567,23 @@ def test_logistic_cv(global_random_seed, use_legacy_attributes, n_jobs):
     y = np.sign(X_ref.dot(5 * rng.randn(n_features)))
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
+    params = dict(
+        fit_intercept=False,
+        solver="newton-cholesky",
+        tol=1e-6,
+        random_state=global_random_seed,
+    )
     lr_cv = LogisticRegressionCV(
         alphas=[1.0],
         l1_ratios=(0.0,),  # TODO(1.10): remove because it is default now.
-        fit_intercept=False,
-        random_state=global_random_seed,
-        solver="liblinear",
         cv=n_cv,
         scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
         use_legacy_attributes=use_legacy_attributes,
         n_jobs=n_jobs,
+        **params,
     )
     lr_cv.fit(X_ref, y)
-    lr = LogisticRegression(
-        alpha=1.0,
-        fit_intercept=False,
-        random_state=global_random_seed,
-        solver="liblinear",
-    )
+    lr = LogisticRegression(alpha=1.0, **params)
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
@@ -981,6 +989,9 @@ def test_logistic_cv_folds_with_classes_missing(enable_metadata_routing, n_class
             assert_allclose(-clf.scores_[i, 0, 0], bs)
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear and dual
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
+@pytest.mark.filterwarnings("ignore:The parameter 'dual':FutureWarning")
 def test_logistic_regression_solvers(global_random_seed):
     """Test solvers converge to the same result."""
     X, y = make_classification(
@@ -1147,6 +1158,9 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
             )
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear and dual
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
+@pytest.mark.filterwarnings("ignore:The parameter 'dual':FutureWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_logistic_cv_sparse(global_random_seed, solver, csr_container):
@@ -1244,6 +1258,8 @@ def test_logistic_regressioncv_class_weights(weight, class_weight, global_random
         )
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
 # TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
@@ -1317,6 +1333,8 @@ def test_logistic_regression_sample_weights(problem, solver, global_random_seed)
     assert_allclose(clf_sw_weighted.coef_, clf_sw_repeated.coef_, atol=1e-5)
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 def test_logistic_regression_solver_class_weights(solver, global_random_seed):
     # Test that passing class_weight as [1, 2] is the same as
@@ -1353,6 +1371,9 @@ def test_logistic_regression_solver_class_weights(solver, global_random_seed):
     assert_allclose(clf_cw_12.coef_, clf_sw_12.coef_, atol=1e-6)
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear and dual
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
+@pytest.mark.filterwarnings("ignore:The parameter 'dual':FutureWarning")
 def test_sample_and_class_weight_equivalence_liblinear(global_random_seed):
     # Test the above for l1 penalty and l2 penalty with dual=True.
     # since the patched liblinear code is different.
@@ -1402,6 +1423,8 @@ def _compute_class_weight_dictionary(y):
     return class_weight_dict
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.parametrize("csr_container", [lambda x: x] + CSR_CONTAINERS)
 def test_logistic_regression_class_weights(global_random_seed, csr_container):
     # Scale data to avoid convergence warnings with the lbfgs solver
@@ -1473,6 +1496,8 @@ def test_logistic_regression_class_weights(global_random_seed, csr_container):
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=6)
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 def test_liblinear_decision_function_zero(global_random_seed):
     # Test negative prediction when decision_function values are zero.
     # Liblinear predicts the positive class when decision_function values
@@ -1503,6 +1528,8 @@ def test_logreg_intercept_scaling_zero():
     assert clf.intercept_ == 0.0
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 # XXX: investigate thread-safety bug that might be related to:
 # https://github.com/scikit-learn/scikit-learn/issues/31883
 @pytest.mark.thread_unsafe
@@ -1627,6 +1654,8 @@ def test_logreg_predict_proba_multinomial(global_random_seed):
     assert clf_wrong_loss > clf_multi_loss
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.parametrize("max_iter", np.arange(1, 5))
 @pytest.mark.parametrize(
     "solver, message",
@@ -1665,6 +1694,8 @@ def test_max_iter(global_random_seed, max_iter, solver, message):
     assert lr.n_iter_[0] == max_iter
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("use_legacy_attributes", [True, False])
 def test_n_iter(solver, use_legacy_attributes):
@@ -1789,6 +1820,8 @@ def test_warm_start_newton_solver(solver, fit_intercept, alpha):
         assert_allclose(clf2.intercept_, clf1.intercept_)
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.parametrize("l1_ratio", (0, 1))
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_saga_vs_liblinear(global_random_seed, csr_container, l1_ratio):
@@ -1834,6 +1867,8 @@ def test_saga_vs_liblinear(global_random_seed, csr_container, l1_ratio):
             assert_array_almost_equal(saga.coef_, liblinear.coef_, 3)
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -2422,6 +2457,9 @@ def test_c_inf_no_warning(solver):
         lr.fit(X, y)
 
 
+# TODO(1.12): remove the whole test with deprecation of liblinear and dual
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
+@pytest.mark.filterwarnings("ignore:The parameter 'dual':FutureWarning")
 # XXX: investigate thread-safety bug that might be related to:
 # https://github.com/scikit-learn/scikit-learn/issues/31883
 @pytest.mark.thread_unsafe
@@ -2586,6 +2624,8 @@ def test_sample_weight_not_modified(class_weight):
     assert_allclose(expected, W)
 
 
+# TODO(1.12): remove the whole test with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_large_sparse_matrix(solver, csr_container):
@@ -2607,6 +2647,8 @@ def test_large_sparse_matrix(solver, csr_container):
         LogisticRegression(solver=solver, alpha=1e-1).fit(X, y)
 
 
+# TODO(1.12): remove the whole test with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 def test_liblinear_with_large_values():
     # Liblinear freezes when X.max() ~ 1e100, see issue #7486.
     # We preemptively raise an error when X.max() > 1e30.
@@ -2636,6 +2678,9 @@ def test_single_feature_newton_cg():
 
 # TODO(1.14): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
+# TODO(1.12): remove the whole test with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
+@pytest.mark.filterwarnings("ignore:The parameter 'intercept_scaling':FutureWarning")
 def test_liblinear_not_stuck(global_random_seed):
     # Non-regression https://github.com/scikit-learn/scikit-learn/issues/18264
     X = iris.data.copy()
@@ -2738,6 +2783,8 @@ def test_lr_cv_scores_without_enabling_metadata_routing():
     assert_allclose(score_1, score_2)
 
 
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.parametrize("solver", SOLVERS)
 def test_zero_max_iter(solver):
     # Make sure we can inspect the state of LogisticRegression right after
@@ -2827,6 +2874,8 @@ def test_newton_cholesky_fallback_to_lbfgs():
 
 # TODO(1.14): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
+# TODO(1.12): remove the whole test with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 # TODO(1.11): remove filterwarnings with change of default scoring
 @pytest.mark.filterwarnings("ignore:The default value.*scoring.*:FutureWarning")
 # TODO(1.10): remove filterwarnings with deprecation period of use_legacy_attributes
@@ -3206,6 +3255,8 @@ def test_get_default_scorer():
 
 # TODO(1.14): remove after deprecation cycle.
 @pytest.mark.filterwarnings("ignore:.*C.*? was deprecated.*:FutureWarning")
+# TODO(1.12): remove filterwarnings with deprecation of liblinear
+@pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.parametrize("n_classes", [2, 3])
 @pytest.mark.parametrize("sample_weight", [False, True])
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -3425,7 +3476,7 @@ def test_logistic_regression_callback_support_warning():
         UserWarning,
         match="Callbacks are only supported in LogisticRegression for solver='lbfgs'",
     ):
-        LogisticRegression(solver="liblinear").set_callbacks(cb)
+        LogisticRegression(solver="saga").set_callbacks(cb)
 
 
 # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
@@ -3450,3 +3501,54 @@ def test_newton_cd_scipy_below_1_16_raises(csr_container):
             use_legacy_attributes=False,
             scoring="neg_log_loss",
         ).fit(X, y)
+
+
+# TODO(1.10): remove filter after deprecation cycle.
+@pytest.mark.filterwarnings("ignore:l1_ratios parameter is only us.*:UserWarning")
+@pytest.mark.filterwarnings("ignore:.*default.*use_legacy_attributes.*:FutureWarning")
+# TODO(1.11): remove filter after deprecation cycle.
+@pytest.mark.filterwarnings("ignore:.*default.*scoring.*:FutureWarning")
+# TODO(1.12): remove test when liblinear is removed
+@pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
+def test_liblinear_deprecated(est):
+    """Check that solver liblinear emits a deprecattion warning."""
+    X, y = make_classification(n_classes=2, n_samples=20)
+    lr = est(solver="liblinear")
+    msg = "The solver 'liblinear' was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
+
+# TODO(1.10): remove filter after deprecation cycle.
+@pytest.mark.filterwarnings("ignore:l1_ratios parameter is only us.*:UserWarning")
+@pytest.mark.filterwarnings("ignore:.*default.*use_legacy_attributes.*:FutureWarning")
+# TODO(1.11): remove filter after deprecation cycle.
+@pytest.mark.filterwarnings("ignore:.*default.*scoring.*:FutureWarning")
+# TODO(1.12): remove test when dual (and liblinear) is removed
+@pytest.mark.filterwarnings("ignore:.*liblinear.*:FutureWarning")
+@pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
+@pytest.mark.parametrize("dual", [True, False])
+def test_dual_deprecated(est, dual):
+    """Check that setting dual to a value emits a deprecation warning."""
+    X, y = make_classification(n_classes=2, n_samples=20)
+    lr = est(solver="liblinear", dual=dual)
+    msg = "The parameter 'dual' was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
+
+
+# TODO(1.10): remove filter after deprecation cycle.
+@pytest.mark.filterwarnings("ignore:l1_ratios parameter is only us.*:UserWarning")
+@pytest.mark.filterwarnings("ignore:.*default.*use_legacy_attributes.*:FutureWarning")
+# TODO(1.11): remove filter after deprecation cycle.
+@pytest.mark.filterwarnings("ignore:.*default.*scoring.*:FutureWarning")
+# TODO(1.12): remove test when intercept_scaling (and liblinear) is removed
+@pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
+@pytest.mark.parametrize("intercept_scaling", [1.0, 2])
+def test_intercept_scaling_deprecated(est, intercept_scaling):
+    """Check that setting intercept_scaling to a value emits a deprecation warning."""
+    X, y = make_classification(n_classes=2, n_samples=20)
+    lr = est(intercept_scaling=intercept_scaling)
+    msg = "The parameter 'intercept_scaling' was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        lr.fit(X, y)
