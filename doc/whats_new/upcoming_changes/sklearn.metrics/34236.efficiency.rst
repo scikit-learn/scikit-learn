@@ -1,4 +1,0 @@
-- Scorers created with :func:`~metrics.make_scorer` no longer deep-copy metadata
-  kwargs on each call, reducing memory usage during model selection and
-  cross-validation.
-  By :user:`Stefanie Senger <StefanieSenger>`.

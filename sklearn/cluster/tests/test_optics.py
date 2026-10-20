@@ -13,6 +13,7 @@ from sklearn.datasets import make_blobs
 from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.neighbors import kneighbors_graph, sort_graph_by_row_values
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -819,11 +820,7 @@ def test_precomputed_dists(global_dtype, csr_container):
     redX = X[::2].astype(global_dtype, copy=False)
     dists = pairwise_distances(redX, metric="euclidean")
     dists = csr_container(dists) if csr_container is not None else dists
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", EfficiencyWarning)
-        clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(
-            dists
-        )
+    clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
     clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
@@ -851,6 +848,22 @@ def test_optics_input_not_modified_precomputed_sparse_nodiag(
     # explicit 0s values.
     assert X.nnz == X_copy.nnz
     assert_array_equal(X.toarray(), X_copy.toarray())
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_optics_precomputed_sparse_no_warning(csr_container):
+    """Test that `EfficiencyWarning` isn't emitted on precomputed sparse input.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/34647
+    """
+    X = np.random.RandomState(0).randn(50, 5)
+    graph = csr_container(kneighbors_graph(X, n_neighbors=10, mode="distance"))
+    # Sort the graph so only OPTICS can unsort it
+    graph = sort_graph_by_row_values(graph, warn_when_not_sorted=False)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", EfficiencyWarning)
+        OPTICS(metric="precomputed").fit(graph)
 
 
 def test_optics_predecessor_correction_ordering():

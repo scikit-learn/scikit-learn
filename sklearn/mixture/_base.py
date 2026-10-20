@@ -211,8 +211,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         raised. After fitting, it predicts the most probable label for the
         input data points.
 
-        .. versionadded:: 0.20
-
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)

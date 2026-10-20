@@ -10,7 +10,7 @@ import pytest
 from joblib import parallel_backend
 from numpy.testing import assert_allclose, assert_array_almost_equal, assert_array_equal
 
-from sklearn.base import BaseEstimator, ClassifierMixin, is_classifier
+from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import load_iris, make_classification, make_friedman1
@@ -24,7 +24,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import _convert_container, ignore_warnings
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
@@ -776,3 +776,38 @@ def test_rfe_sparse_coef(feature_importance):
 
     assert_array_equal(selector_sparse.support_, selector_dense.support_)
     assert_array_equal(selector_sparse.ranking_, selector_dense.ranking_)
+
+
+@pytest.mark.parametrize("dataframe_format", ["pandas", "polars"])
+@pytest.mark.parametrize(
+    "rfe",
+    [
+        RFE(
+            RandomForestClassifier(n_estimators=5, random_state=0),
+            n_features_to_select=2,
+        ),
+        RFECV(
+            RandomForestClassifier(n_estimators=5, random_state=0),
+            min_features_to_select=2,
+            cv=3,
+        ),
+    ],
+)
+def test_rfe_dataframe_preservation(dataframe_format, rfe):
+    iris = load_iris()
+    feature_names = [f"feat_{i}" for i in range(iris.data.shape[1])]
+    X = _convert_container(
+        iris.data, constructor_name=dataframe_format, column_names=feature_names
+    )
+    y = iris.target
+
+    rfe = clone(rfe)
+    rfe.fit(X, y)
+
+    # Check the feature names are correctly tracked on RFE and sub-estimator
+    assert_array_equal(rfe.feature_names_in_, feature_names)
+    expected_selected = np.array(feature_names)[rfe.support_]
+    assert_array_equal(rfe.estimator_.feature_names_in_, expected_selected)
+
+    preds = rfe.predict(X)
+    assert len(preds) == len(iris.data)
