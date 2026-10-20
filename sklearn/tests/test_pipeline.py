@@ -2571,6 +2571,62 @@ def test_metadata_routing_error_for_pipeline(method):
             getattr(pipeline, method)(X, sample_weight=sample_weight, prop=prop)
 
 
+@config_context(enable_metadata_routing=True)
+def test_sample_weight_routing_auto_request():
+    """Test that Pipeline correctly routes `sample_weight` auto-requested in consuming
+    estimators."""
+
+    class MyEstimator(BaseEstimator):
+        def fit(self, X, y, sample_weight=None):
+            self.sample_weight_ = sample_weight
+            return self
+
+        def transform(self, X, y=None, sample_weight=None):
+            return X
+
+        def predict(self, X, y=None, sample_weight=None):
+            return np.ones(X.shape[0])
+
+    X, y = make_classification(n_samples=200, random_state=42)
+    sample_weight = np.random.RandomState(42).rand(len(X))
+
+    scaler = StandardScaler()
+    est = MyEstimator()
+    pipe = make_pipeline(scaler, est)
+
+    with config_context(enable_metadata_auto_requests=True):
+        est_routing = get_routing_for_object(est)
+        scaler_routing = get_routing_for_object(scaler)
+        assert est_routing.fit.requests.get("sample_weight") is True
+        assert est_routing.transform.requests.get("sample_weight") is True
+        assert est_routing.predict.requests.get("sample_weight") is True
+        assert scaler_routing.fit.requests.get("sample_weight") is True
+
+        pipe.fit(X, y, sample_weight=sample_weight)
+        assert_allclose(pipe[-1].sample_weight_, sample_weight)
+
+        # smoke test
+        pipe.transform(X, sample_weight=sample_weight)
+        pipe.predict(X, sample_weight=sample_weight)
+
+    with config_context(enable_metadata_auto_requests=False):
+        est_routing = get_routing_for_object(est)
+        scaler_routing = get_routing_for_object(scaler)
+        assert est_routing.fit.requests.get("sample_weight") is None
+        assert est_routing.transform.requests.get("sample_weight") is None
+        assert est_routing.predict.requests.get("sample_weight") is None
+        assert scaler_routing.fit.requests.get("sample_weight") is None
+
+    with pytest.raises(UnsetMetadataPassedError):
+        pipe.fit(X, y, sample_weight=sample_weight)
+
+    with pytest.raises(UnsetMetadataPassedError):
+        pipe.transform(X, sample_weight=sample_weight)
+
+    with pytest.raises(UnsetMetadataPassedError):
+        pipe.predict(X, sample_weight=sample_weight)
+
+
 @pytest.mark.parametrize(
     "method", ["decision_function", "transform", "inverse_transform"]
 )

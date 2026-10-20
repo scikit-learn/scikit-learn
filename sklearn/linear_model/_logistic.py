@@ -81,6 +81,8 @@ from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
     _deprecate_positional_args,
+    _num_features,
+    _num_samples,
     check_is_fitted,
     validate_data,
 )
@@ -92,7 +94,36 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 )
 
 
-def _check_solver(solver, penalty, dual):
+def _check_solver(solver, penalty, n_features, n_samples, dual):
+    if solver == "liblinear":
+        warnings.warn(
+            (
+                "The solver 'liblinear' was deprecated in version 1.10 and will "
+                "be removed in 1.12. For 'l1_ratio > 0', the new solvers 'newton-cd' "
+                "and 'newton-cd-gram' are good replacements."
+            ),
+            FutureWarning,
+        )
+    if isinstance(dual, str) and dual == "deprecated":
+        dual = False
+    else:
+        warnings.warn(
+            (
+                "The parameter 'dual' was deprecated in version 1.10 and will "
+                "be removed in 1.12."
+            ),
+            FutureWarning,
+        )
+
+    if solver == "auto":
+        if penalty in ("l2", None):  # l1_ratio == 0
+            solver = "lbfgs"
+        else:
+            if n_samples >= n_features:
+                solver = "newton-cd-gram"
+            else:
+                solver = "newton-cd"
+
     if solver not in (
         "liblinear",
         "newton-cd",
@@ -122,7 +153,7 @@ def _check_solver(solver, penalty, dual):
             "C=np.inf as well as penalty=None is not supported for the liblinear solver"
         )
 
-    return solver
+    return solver, dual
 
 
 class _LbfgsCallbackBridge:
@@ -422,7 +453,6 @@ def _logistic_regression_path(
             Cs = np.logspace(-4, 4, Cs)  # increasing
         alphas = [None] * len(Cs)  # to ease ignoring it
 
-    solver = _check_solver(solver, penalty, dual)
     xp, _, device = get_namespace_and_device(X)
     # Only newton-cg has complete support of the array API, lbfgs still needs
     # coef / w0 as numpy arrays.
@@ -717,7 +747,7 @@ def _logistic_regression_path(
                 1 / alpha if use_alpha else C,
                 fit_intercept,
                 intercept_scaling,
-                None,
+                None,  # class weight
                 penalty,
                 dual,
                 verbose,
@@ -1212,6 +1242,9 @@ class LogisticRegression(
         is only implemented for l2 penalty with liblinear solver. Prefer `dual=False`
         when n_samples > n_features.
 
+        .. deprecated:: 1.10
+           `dual` is deprecated and will be removed in version 1.12.
+
     tol : float, default=1e-4
         Tolerance for stopping criteria.
 
@@ -1234,6 +1267,9 @@ class LogisticRegression(
             To lessen the effect of regularization on synthetic feature weight
             (and therefore on the intercept) `intercept_scaling` has to be increased.
 
+        .. deprecated:: 1.10
+           `intercept_scaling` is deprecated and will be removed in version 1.12.
+
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
@@ -1250,27 +1286,75 @@ class LogisticRegression(
         data. It has no effect on the other solvers.
         See :term:`Glossary <random_state>` for details.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cd', 'newton-cd-gram', 'newton-cg', \
-            'newton-cholesky', 'sag', 'saga'}, default='lbfgs'
+    solver : {'auto', 'lbfgs', 'liblinear', 'newton-cd', 'newton-cd-gram', \
+            'newton-cg', 'newton-cholesky', 'sag', 'saga'}, default='auto'
+        Algorithm to use in the optimization problem:
 
-        Algorithm to use in the optimization problem. Default is 'lbfgs'.
-        To choose a solver, you might want to consider the following aspects:
+        'auto'
+            This selects a good default solver. The selection may change without a
+            deprecation warning.
 
-        - 'lbfgs' is a good default solver because it works reasonably well for a wide
-          class of problems.
-        - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
-          'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-          error.
-        - 'newton-cholesky' is a good choice for
-          `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
-          categorical features with rare categories. Be aware that the memory usage
-          of this solver has a quadratic dependency on `n_features * n_classes`
-          because it explicitly computes the full Hessian matrix.
-        - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-          and 'saga' are faster for large ones;
-        - 'liblinear' can only handle binary classification by default. To apply a
-          one-versus-rest scheme for the multiclass setting one can wrap it with the
-          :class:`~sklearn.multiclass.OneVsRestClassifier`.
+            - For `l1_ratio == 0`: 'lbfgs'
+            - For `l1_ratio > 0` and `n_samples >= n_features`: 'newton-cd-gram'
+            - For `l1_ratio > 0` and `n_features > n_samples`: 'newton-cd'
+
+            .. versionadded:: 1.10
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer. It works reasonably well for a wide
+            class of problems.
+
+        'liblinear':
+            This solver can only handle binary classification by default and will raise
+            an error for `n_classes >= 3`. To apply a one-versus-rest scheme for the
+            multiclass setting one can wrap it with the
+            :class:`~sklearn.multiclass.OneVsRestClassifier`.
+
+            .. deprecated:: 1.10
+               The solver 'liblinear' is deprecated and will be removed in version 1.12.
+
+        'newton-cd'
+            Uses Newton-Raphson steps in an iterated reweighted least squares fashion:
+            The normal equations are cast as a weighted least squares problem with
+            elastic-net penalty. The inner solver then uses a coordinate descent based
+            solver. This way the full Hessian is used but never explicitly constructed.
+            It can solve for all values of `l1_ratio`.
+            This solver is a good choice for `n_features * n_classes` > `n_samples`.
+
+            .. versionadded:: 1.10
+
+        'newton-cd-gram'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner coordinate descent based
+            solver that uses the full Hessian/Gram matrix. It can solve for all
+            values of `l1_ratio`.
+            This solver is a good choice for `n_samples` >> `n_features * n_classes`.
+            Be aware that the memory usage of this solver has a quadratic dependency on
+            `n_features * n_classes` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.10
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is a good choice for `n_samples` >> `n_features * n_classes`.
+            Be aware that the memory usage of this solver has a quadratic dependency on
+            `n_features * n_classes` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.2
+               newton-cholesky solver. Multinomial support in version 1.6.
+
+        'sag' / 'saga'
+            Stochastic Average Gradient (SAG) and refined version (SAGA) that also
+            supports `l1_ratio > 0`. Both are incremental gradient methods, i.e. first
+            order methods.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen (`l1_ratio=0`
@@ -1300,9 +1384,6 @@ class LogisticRegression(
            information regarding :class:`LogisticRegression` and more specifically the
            :ref:`Table <logistic_regression_solvers>`
            summarizing solver/penalty supports.
-
-        .. versionadded:: 1.2
-           newton-cholesky solver. Multinomial support in version 1.6.
 
     max_iter : int, default=100
         Maximum number of iterations taken for the solvers to converge.
@@ -1344,6 +1425,14 @@ class LogisticRegression(
         If `fit_intercept` is set to False, the intercept is set to zero.
         `intercept_` is of shape (1,) when the given problem is binary.
 
+    n_iter_ : ndarray of shape (1, )
+        Actual number of iterations for all classes.
+
+    solver_ : str
+        The actual solver used to fit.
+
+        .. versionadded:: 1.10
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1352,9 +1441,6 @@ class LogisticRegression(
         has feature names that are all strings.
 
         .. versionadded:: 1.0
-
-    n_iter_ : ndarray of shape (1, )
-        Actual number of iterations for all classes.
 
     See Also
     --------
@@ -1403,15 +1489,19 @@ class LogisticRegression(
             Hidden(StrOptions({"deprecated"})),
         ],
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
-        "dual": ["boolean"],
+        "dual": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "tol": [Interval(Real, 0, None, closed="left")],
         "fit_intercept": ["boolean"],
-        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
+        "intercept_scaling": [
+            Interval(Real, 0, None, closed="neither"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
         "class_weight": [dict, StrOptions({"balanced"}), None],
         "random_state": ["random_state"],
         "solver": [
             StrOptions(
                 {
+                    "auto",
                     "lbfgs",
                     "liblinear",
                     "newton-cd",
@@ -1436,13 +1526,13 @@ class LogisticRegression(
         alpha=1.0,
         C="deprecated",
         l1_ratio=0.0,
-        dual=False,
+        dual="deprecated",
         tol=1e-4,
         fit_intercept=True,
-        intercept_scaling=1,
+        intercept_scaling="deprecated",
         class_weight=None,
         random_state=None,
-        solver="lbfgs",
+        solver="auto",
         max_iter=100,
         verbose=0,
         warm_start=False,
@@ -1559,7 +1649,36 @@ class LogisticRegression(
                 FutureWarning,
             )
 
-        solver = _check_solver(self.solver, penalty, self.dual)
+        if (
+            isinstance(self.intercept_scaling, str)
+            and self.intercept_scaling == "deprecated"
+        ):
+            intercept_scaling = 1.0  # set to default
+        else:
+            warnings.warn(
+                (
+                    "The parameter 'intercept_scaling' was deprecated in version 1.10 "
+                    "and will be removed in 1.12."
+                ),
+                FutureWarning,
+            )
+            intercept_scaling = self.intercept_scaling
+
+        # Suppress TypeError from _num_features and _num_samples, validate_data
+        # will later raise the right/better error.
+        try:
+            n_features = _num_features(X)
+            n_samples = _num_samples(X)
+        except TypeError:
+            n_features = 1
+            n_samples = 1
+        self.solver_, dual = _check_solver(
+            solver=self.solver,
+            penalty=penalty,
+            n_features=n_features,
+            n_samples=n_samples,
+            dual=self.dual,
+        )
 
         if penalty != "elasticnet" and (
             self.l1_ratio is not None and 0 < self.l1_ratio < 1
@@ -1595,12 +1714,12 @@ class LogisticRegression(
             self,
             X,
             y,
-            accept_sparse="csc" if solver == "newton-cd" else "csr",
+            accept_sparse="csc" if self.solver_ == "newton-cd" else "csr",
             dtype=[xp.float64, xp.float32],
-            order="F" if solver == "newton-cd" else "C",
-            accept_large_sparse=solver not in ("liblinear", "newton-cd", "sag", "saga"),
+            order="F" if self.solver_ == "newton-cd" else "C",
+            accept_large_sparse=self.solver_
+            not in ("liblinear", "newton-cd", "sag", "saga"),
         )
-        n_samples, n_features = X.shape
         check_classification_targets(y)
         le = LabelEncoder().fit(y)
         self.classes_ = le.classes_
@@ -1650,7 +1769,7 @@ class LogisticRegression(
             alpha_ = None
             C_ = self.C
 
-        if solver == "newton-cd" and n_classes >= 3 and sparse.issparse(X):
+        if self.solver_ == "newton-cd" and n_classes >= 3 and sparse.issparse(X):
             # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
             if sp_version < parse_version("1.17.0"):
                 raise ValueError(
@@ -1671,7 +1790,7 @@ class LogisticRegression(
             estimator=self, X=X, y=y, metadata=callback_metadata
         )
 
-        if solver == "liblinear":
+        if self.solver_ == "liblinear":
             if not is_binary:
                 raise ValueError(
                     "The 'liblinear' solver does not support multiclass classification"
@@ -1686,7 +1805,7 @@ class LogisticRegression(
                     "solver or rescale the input X."
                 )
 
-        if solver in ["sag", "saga"]:
+        if self.solver_ in ["sag", "saga"]:
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
@@ -1717,14 +1836,14 @@ class LogisticRegression(
             fit_intercept=self.fit_intercept,
             tol=self.tol,
             verbose=self.verbose,
-            solver=solver,
+            solver=self.solver_,
             max_iter=self.max_iter,
-            dual=self.dual,
+            dual=dual,
             check_input=False,
             random_state=self.random_state,
             coef=warm_start_coef,
             penalty=penalty,
-            intercept_scaling=self.intercept_scaling,
+            intercept_scaling=intercept_scaling,
             max_squared_sum=max_squared_sum,
             sample_weight=sample_weight,
             n_threads=n_threads,
@@ -1817,7 +1936,13 @@ class LogisticRegression(
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.sparse = True
-        tags.array_api_support = self.solver in ("lbfgs", "newton-cg")
+        if self.l1_ratio is None:
+            l1_penalty = False
+        else:
+            l1_penalty = self.l1_ratio > 0
+        tags.array_api_support = self.solver in ("lbfgs", "newton-cg") or (
+            self.solver == "auto" and not l1_penalty
+        )
         if self.solver == "liblinear":
             tags.classifier_tags.multi_class = False
 
@@ -1918,6 +2043,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         is only implemented for l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
+        .. deprecated:: 1.10
+           `dual` is deprecated and will be removed in version 1.12.
+
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
         Specify the norm of the penalty:
 
@@ -1954,23 +2082,71 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
 
-        - 'lbfgs' is a good default solver because it works reasonably well for a wide
-          class of problems.
-        - For :term:`multiclass` problems (`n_classes >= 3`), all solvers except
-          'liblinear' minimize the full multinomial loss, 'liblinear' will raise an
-          error.
-        - 'newton-cholesky' is a good choice for
-          `n_samples` >> `n_features * n_classes`, especially with one-hot encoded
-          categorical features with rare categories. Be aware that the memory usage
-          of this solver has a quadratic dependency on `n_features * n_classes`
-          because it explicitly computes the full Hessian matrix.
-        - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-          and 'saga' are faster for large ones;
-        - 'liblinear' might be slower in :class:`LogisticRegressionCV`
-          because it does not handle warm-starting.
-        - 'liblinear' can only handle binary classification by default. To apply a
-          one-versus-rest scheme for the multiclass setting one can wrap it with the
-          :class:`~sklearn.multiclass.OneVsRestClassifier`.
+        'auto'
+            This selects a good default solver. The selection may change without a
+            deprecation warning. With `l1_ratio=np.max(l1_ratios)`:
+
+            - For `l1_ratio == 0`: 'lbfgs'
+            - For `l1_ratio > 0` and `n_samples >= n_features`: 'newton-cd-gram'
+            - For `l1_ratio > 0` and `n_features > n_samples`: 'newton-cd'
+
+            .. versionadded:: 1.10
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer. It works reasonably well for a wide
+            class of problems.
+
+        'liblinear':
+            This solver can only handle binary classification by default and will raise
+            an error for `n_classes >= 3`. To apply a one-versus-rest scheme for the
+            multiclass setting one can wrap it with the
+            :class:`~sklearn.multiclass.OneVsRestClassifier`.
+
+            .. deprecated:: 1.10
+               The solver 'liblinear' is deprecated and will be removed in version 1.12.
+
+        'newton-cd'
+            Uses Newton-Raphson steps in an iterated reweighted least squares fashion:
+            The normal equations are cast as a weighted least squares problem with
+            elastic-net penalty. The inner solver then uses a coordinate descent based
+            solver. This way the full Hessian is used but never explicitly constructed.
+            It can solve for all values of `l1_ratio`.
+            This solver is a good choice for `n_features * n_classes` > `n_samples`.
+
+            .. versionadded:: 1.10
+
+        'newton-cd-gram'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner coordinate descent based
+            solver that uses the full Hessian/Gram matrix. It can solve for all
+            values of `l1_ratio`.
+            This solver is a good choice for `n_samples` >> `n_features * n_classes`.
+            Be aware that the memory usage of this solver has a quadratic dependency on
+            `n_features * n_classes` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.10
+
+        'newton-cg'
+            Uses a slightly adapted version of scipy's Newton-CG optimizer. This is
+            sometimes called the truncated Newton method. Due to the fact that it
+            does not construct the Hessian matrix but only uses gradients and
+            vector products of the Hessian, it is a good solver when `X` is sparse
+            or when `X` has many features.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is a good choice for `n_samples` >> `n_features * n_classes`.
+            Be aware that the memory usage of this solver has a quadratic dependency on
+            `n_features * n_classes` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.2
+               newton-cholesky solver. Multinomial support in version 1.6.
+
+        'sag' / 'saga'
+            Stochastic Average Gradient (SAG) and a refined version (SAGA) that also
+            supports `l1_ratio > 0`. Both are incremental gradient methods, i.e. first
+            order methods.
 
         .. warning::
            The choice of the algorithm depends on the penalty (`l1_ratio=0` for
@@ -1994,9 +2170,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            'sag' and 'saga' fast convergence is only guaranteed on features
            with approximately the same scale. You can preprocess the data with
            a scaler from :mod:`sklearn.preprocessing`.
-
-        .. versionadded:: 1.2
-           newton-cholesky solver. Multinomial support in version 1.6.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -2046,6 +2219,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             regularization as all other features.
             To lessen the effect of regularization on synthetic feature weight
             (and therefore on the intercept) `intercept_scaling` has to be increased.
+
+        .. deprecated:: 1.10
+           `intercept_scaling` is deprecated and will be removed in version 1.12.
 
     random_state : int, RandomState instance, default=None
         Only used for `solver` == 'sag', 'saga' or 'liblinear' to shuffle the
@@ -2161,6 +2337,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         If `penalty='elasticnet'`, the shape is `(1, n_folds, n_alphas, n_l1_ratios)`.
         See also parameter `use_legacy_attributes`.
 
+    solver_ : str
+        The actual solver used to fit.
+
+        .. versionadded:: 1.10
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -2236,17 +2417,17 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         l1_ratios="warn",
         fit_intercept=True,
         cv=None,
-        dual=False,
+        dual="deprecated",
         penalty="deprecated",
         scoring="warn",
-        solver="lbfgs",
+        solver="auto",
         tol=1e-4,
         max_iter=100,
         class_weight=None,
         n_jobs=None,
         verbose=0,
         refit=True,
-        intercept_scaling=1.0,
+        intercept_scaling="deprecated",
         random_state=None,
         use_legacy_attributes="warn",
     ):
@@ -2395,7 +2576,36 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             use_legacy_attributes = self.use_legacy_attributes
 
-        solver = _check_solver(self.solver, penalty, self.dual)
+        if (
+            isinstance(self.intercept_scaling, str)
+            and self.intercept_scaling == "deprecated"
+        ):
+            intercept_scaling = 1.0  # set to default
+        else:
+            warnings.warn(
+                (
+                    "The parameter 'intercept_scaling' was deprecated in version 1.10 "
+                    "and will be removed in 1.12."
+                ),
+                FutureWarning,
+            )
+            intercept_scaling = self.intercept_scaling
+
+        # Suppress TypeError from _num_features and _num_samples, validate_data
+        # will later raise the right/better error.
+        try:
+            n_features = _num_features(X)
+            n_samples = _num_samples(X)
+        except TypeError:
+            n_features = 1
+            n_samples = 1
+        self.solver_, dual = _check_solver(
+            solver=self.solver,
+            penalty=penalty,
+            n_features=n_features,
+            n_samples=n_samples,
+            dual=self.dual,
+        )
 
         if penalty == "elasticnet":
             if (
@@ -2436,7 +2646,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             accept_sparse="csr",  # CV will index data on first dimension
             dtype=[xp.float64, xp.float32],
             order="C",  # CV will index data on first dimension
-            accept_large_sparse=solver not in ("liblinear", "newton-cd", "sag", "saga"),
+            accept_large_sparse=self.solver_
+            not in ("liblinear", "newton-cd", "sag", "saga"),
         )
         n_samples, n_features = X.shape
         check_classification_targets(y)
@@ -2478,7 +2689,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         class_labels = move_to(class_labels, xp=np, device="cpu")
 
-        if solver == "newton-cd" and n_classes >= 3 and sparse.issparse(X):
+        if self.solver_ == "newton-cd" and n_classes >= 3 and sparse.issparse(X):
             # TODO(scipy 1.17): remove once scipy >= 1.17 is minimal version.
             if sp_version < parse_version("1.17.0"):
                 raise ValueError(
@@ -2487,7 +2698,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 )
             X = sparse.csr_array(X)
 
-        if solver in ["sag", "saga"]:
+        if self.solver_ in ["sag", "saga"]:
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
@@ -2516,7 +2727,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         # If this Python has a GIL, the SAG solver releases the GIL so it's
         # more efficient to use threads. If there is no GIL, threads are more
         # efficient in general.
-        if not _is_gil_enabled() or self.solver in ["sag", "saga"]:
+        if not _is_gil_enabled() or self.solver_ in ["sag", "saga"]:
             prefer = "threads"
         else:
             prefer = "processes"
@@ -2532,13 +2743,13 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 Cs=Cs_,
                 fit_intercept=self.fit_intercept,
                 penalty=penalty,
-                dual=self.dual,
-                solver=solver,
+                dual=dual,
+                solver=self.solver_,
                 tol=self.tol,
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 scoring=scoring,
-                intercept_scaling=self.intercept_scaling,
+                intercept_scaling=intercept_scaling,
                 random_state=self.random_state,
                 max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
@@ -2632,10 +2843,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             else:
                 coef_init = xp.mean(coefs_paths[:, :, *best_index_int, :], axis=1)
 
-            if solver == "lbfgs":
+            if self.solver_ == "lbfgs":
                 coef_init = move_to(coef_init, xp=np, device="cpu")
 
-            if solver == "newton-cd":
+            if self.solver_ == "newton-cd":
                 if sparse.issparse(X):
                     X = X.tocsc()
                 else:
@@ -2648,7 +2859,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 classes=self.classes_,
                 alphas=[float(alpha_)] if use_alpha else None,
                 Cs=[float(C_)] if not use_alpha else None,
-                solver=solver,
+                solver=self.solver_,
                 fit_intercept=self.fit_intercept,
                 coef=coef_init,
                 max_iter=self.max_iter,
@@ -2885,9 +3096,20 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         return get_scorer(scoring)
 
     def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
+        tags = super(LinearClassifierMixin, self).__sklearn_tags__()
         tags.input_tags.sparse = True
-        tags.array_api_support = self.solver in ("lbfgs", "newton-cg")
+        if self.l1_ratios is None or (
+            isinstance(self.l1_ratios, str) and self.l1_ratios == "warn"
+        ):
+            l1_penalty = False
+        else:
+            l1_penalty = np.max(self.l1_ratios) > 0
+        tags.array_api_support = self.solver in ("lbfgs", "newton-cg") or (
+            self.solver == "auto" and not l1_penalty
+        )
+        if self.solver == "liblinear":
+            tags.classifier_tags.multi_class = False
+
         return tags
 
     @deprecated(  # type: ignore[prop-decorator]
