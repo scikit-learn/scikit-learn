@@ -61,9 +61,6 @@ jobs:
         include:
           # Window 64 bit
           - os: windows-latest
-            python: 311
-            platform_id: win_amd64
-          - os: windows-latest
             python: 312
             platform_id: win_amd64
           - os: windows-latest
@@ -78,9 +75,6 @@ jobs:
 
           # Windows on ARM64 (WoA)
           - os: windows-11-arm
-            python: 311
-            platform_id: win_arm64
-          - os: windows-11-arm
             python: 312
             platform_id: win_arm64
           - os: windows-11-arm
@@ -94,10 +88,6 @@ jobs:
             platform_id: win_arm64
 
           # Linux
-          - os: ubuntu-latest
-            python: 311
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux_2_28
           - os: ubuntu-latest
             python: 312
             platform_id: manylinux_x86_64
@@ -117,10 +107,6 @@ jobs:
 
           # Linux arm
           - os: ubuntu-24.04-arm
-            python: 311
-            platform_id: manylinux_aarch64
-            manylinux_image: manylinux_2_28
-          - os: ubuntu-24.04-arm
             python: 312
             platform_id: manylinux_aarch64
             manylinux_image: manylinux_2_28
@@ -139,9 +125,6 @@ jobs:
 
           # MacOS x86_64
           - os: macos-15-intel
-            python: 311
-            platform_id: macosx_x86_64
-          - os: macos-15-intel
             python: 312
             platform_id: macosx_x86_64
           - os: macos-15-intel
@@ -155,9 +138,6 @@ jobs:
             platform_id: macosx_x86_64
 
           # MacOS arm64
-          - os: macos-14
-            python: 311
-            platform_id: macosx_arm64
           - os: macos-14
             python: 312
             platform_id: macosx_arm64
@@ -178,39 +158,32 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11" # update once build dependencies are available
+          python-version: "3.12" # update once build dependencies are available
 
       - uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(matrix.platform_id, 'macosx') }}
         with:
           miniforge-version: latest
 
+      - name: Set up macOS OpenMP
+        if: ${{ startsWith(matrix.platform_id, 'macosx') }}
+        run: bash build_tools/wheels/configure_macos_env.sh
+
+      - name: Set SOURCE_DATE_EPOCH from source commit
+        run: |
+          echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+
       - name: Build and test wheels
+        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074 # v4.2.0
         env:
-          CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
-          CIBW_ARCHS: all
-          CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
-          CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
-          # Needed on Windows CI to compile with Visual Studio compiler
-          # otherwise Meson detects a MINGW64 platform and use MINGW64
-          # toolchain
-          CIBW_CONFIG_SETTINGS_WINDOWS: "setup-args=--vsenv"
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
-          CIBW_BEFORE_BUILD: bash {project}/build_tools/wheels/cibw_before_build.sh {project}
-          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{matrix.platform_id}}
-          CIBW_ENVIRONMENT_PASS_LINUX: RUNNER_OS
+          SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
+          PYTHONHASHSEED: "0"
+          CIBW_ENVIRONMENT_PASS_LINUX: SOURCE_DATE_EPOCH PYTHONHASHSEED RUNNER_OS
           # TODO Put back pandas when there is a pandas release with Python 3.14 wheels
           CIBW_TEST_REQUIRES: ${{ contains(matrix.python, '314') && 'pytest' || 'pytest pandas' }} scipy
-          # On Windows, we use a custom Docker image and CIBW_TEST_REQUIRES_WINDOWS
-          # does not make sense because it would install dependencies in the host
-          # rather than inside the Docker image
-          CIBW_TEST_REQUIRES_WINDOWS: ""
-          CIBW_TEST_COMMAND: bash {project}/build_tools/wheels/test_wheels.sh {project}
-          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} {project} ${{matrix.platform_id}}
-          CIBW_BUILD_VERBOSITY: 1
-
-        run: bash build_tools/wheels/build_wheels.sh
+        with:
+          config-file: cibuildwheel.toml
 
       - name: Store artifacts
         uses: actions/upload-artifact@v7
@@ -263,8 +236,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: upload_anaconda
     needs: [build_wheels, build_sdist]
-    # The artifacts cannot be uploaded on PRs
-    if: github.event_name != 'pull_request'
+    # The artifacts should only be updated for push on branches (with special marker)
+    if: github.event_name == 'push'
 
     steps:
       - name: Checkout scikit-learn
@@ -283,7 +256,6 @@ jobs:
       - name: Upload artifacts
         env:
           # Secret variables need to be mapped to environment variables explicitly
-          SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
           SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
           ARTIFACTS_PATH: dist
         # Force a replacement if the remote file already exists

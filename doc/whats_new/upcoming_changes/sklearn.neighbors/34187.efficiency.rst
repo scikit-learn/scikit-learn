@@ -1,1 +1,2 @@
 * :class:`sklearn.neighbors.KNeighborsClassifier` is now faster when running with multiple threads. The statistics returned from :class:`sklearn.neighbors.BallTree` and :class:`sklearn.neighbors.KDTree` no longer reset on each query, and are no longer incorrect when the tree is used from multiple threads.
+  By :user:`Itamar Turner-Trauring <itamarst>`.

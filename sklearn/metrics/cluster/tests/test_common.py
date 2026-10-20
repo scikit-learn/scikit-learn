@@ -9,6 +9,7 @@ from sklearn.metrics.cluster import (
     adjusted_rand_score,
     calinski_harabasz_score,
     completeness_score,
+    contingency_matrix,
     davies_bouldin_score,
     fowlkes_mallows_score,
     homogeneity_score,
@@ -254,12 +255,36 @@ def check_array_api_unsupervised_metric(
     )
 
 
+def check_array_api_supervised_metric(metric, array_namespace, device, dtype_name):
+    # If `dtype_name` is not None, test with both the original float
+    # `dtype_name` along with the respective int dtype.
+    dtype_names = [dtype_name]
+    if dtype_name is not None:
+        dtype_names.append(dtype_name.replace("float", "int"))
+
+    for dt_name in dtype_names:
+        labels_true = np.array([0, 0, 1, 1, 2, 2], dtype=dt_name)
+        labels_pred = np.array([1, 0, 2, 1, 0, 2], dtype=dt_name)
+
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,  # This is used for atol so it needs to be float or None
+            labels_true,
+            labels_pred,
+        )
+
+
 array_api_metric_checkers = {
     calinski_harabasz_score: [
         check_array_api_unsupervised_metric,
     ],
     davies_bouldin_score: [
         check_array_api_unsupervised_metric,
+    ],
+    contingency_matrix: [
+        check_array_api_supervised_metric,
     ],
 }
 

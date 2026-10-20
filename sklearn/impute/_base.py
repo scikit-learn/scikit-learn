@@ -10,13 +10,14 @@ from typing import Callable
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
+from scipy import stats
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import MissingValues, StrOptions
 from sklearn.utils._sparse import _align_api_if_sparse
-from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12, _mode
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
 from sklearn.utils.sparsefuncs import _get_median
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -73,9 +74,7 @@ def _most_frequent(array, extra_value, n_repeat):
                 ]
             )
         else:
-            mode = _mode(array)
-            most_frequent_value = mode[0][0]
-            most_frequent_count = mode[1][0]
+            most_frequent_value, most_frequent_count = stats.mode(array)
     else:
         most_frequent_value = 0
         most_frequent_count = 0
@@ -176,10 +175,6 @@ class SimpleImputer(_BaseImputer):
 
     Read more in the :ref:`User Guide <impute>`.
 
-    .. versionadded:: 0.20
-       `SimpleImputer` replaces the previous `sklearn.preprocessing.Imputer`
-       estimator which is now removed.
-
     Parameters
     ----------
     missing_values : int, float, str, np.nan, None or pandas.NA, default=np.nan
@@ -203,9 +198,6 @@ class SimpleImputer(_BaseImputer):
         - If an instance of Callable, then replace missing values using the
           scalar statistic returned by running the callable over a dense 1d
           array containing non-missing values of each column.
-
-        .. versionadded:: 0.20
-           strategy="constant" for fixed value imputation.
 
         .. versionadded:: 1.5
            strategy=callable for custom value imputation.
@@ -256,8 +248,6 @@ class SimpleImputer(_BaseImputer):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -700,8 +690,6 @@ class SimpleImputer(_BaseImputer):
         indicator, and the imputation done at `transform` time won't be
         inverted.
 
-        .. versionadded:: 0.24
-
         Parameters
         ----------
         X : array-like of shape \
@@ -795,8 +783,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <impute>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     missing_values : int, float, str, np.nan or None, default=np.nan
@@ -835,8 +821,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

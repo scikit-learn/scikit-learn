@@ -21,6 +21,7 @@ from sklearn._loss.loss import (
 from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
 from sklearn.linear_model._glm._newton_solver import (
     NewtonCDGramSolver,
+    NewtonCDSolver,
     NewtonCholeskySolver,
     NewtonSolver,
 )
@@ -40,6 +41,8 @@ from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.optimize import _check_optimize_result, _newton_cg
 from sklearn.utils.validation import (
     _check_sample_weight,
+    _num_features,
+    _num_samples,
     check_is_fitted,
     validate_data,
 )
@@ -68,8 +71,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
-    .. versionadded:: 0.23
-
     Parameters
     ----------
     alpha : float, default=1
@@ -96,11 +97,33 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (`X @ coef + intercept`).
 
-    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
+    solver : {'auto', 'lbfgs', 'newton-cd', 'newton-cd-gram' 'newton-cg', \
+            'newton-cholesky'}, default='auto'
         Algorithm to use in the optimization problem:
 
+        'auto'
+            This selects a good default solver. The selection may change without a
+            deprecation warning.
+
+            - For `l1_ratio == 0`: 'lbfgs'
+            - For `l1_ratio > 0` and `n_samples >= n_features`: 'newton-cd-gram'
+            - For `l1_ratio > 0` and `n_features > n_samples`: 'newton-cd'
+
+            .. versionadded:: 1.10
+
         'lbfgs'
-            Calls scipy's L-BFGS-B optimizer.
+            Calls scipy's L-BFGS-B optimizer. It works reasonably well for a wide
+            class of problems.
+
+        'newton-cd'
+            Uses Newton-Raphson steps in an iterated reweighted least squares fashion:
+            The normal equations are cast as a weighted least squares problem with
+            elastic-net penalty. The inner solver then uses a coordinate descent based
+            solver. This way the full Hessian is used but never explicitly constructed.
+            It can solve for all values of `l1_ratio`.
+            This solver is a good choice for `n_features` > `n_samples`.
+
+            .. versionadded:: 1.10
 
         'newton-cd-gram'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -125,10 +148,9 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
             iterated reweighted least squares) with an inner Cholesky based solver.
-            This solver is a good choice for `n_samples` >> `n_features`, especially
-            with one-hot encoded categorical features with rare categories. Be aware
-            that the memory usage of this solver has a quadratic dependency on
-            `n_features` because it explicitly computes the Hessian matrix.
+            This solver is a good choice for `n_samples` >> `n_features`. Be aware that
+            the memory usage of this solver has a quadratic dependency on `n_features`
+            because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
 
@@ -177,6 +199,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     n_iter_ : int
         Actual number of iterations used in the solver.
 
+    solver_ : str
+        The actual solver used to fit.
+
+        .. versionadded:: 1.10
+
     _base_loss : BaseLoss, default=HalfSquaredError()
         This is set during fit via `self._get_loss()`.
         A `_base_loss` contains a specific loss function as well as the link
@@ -206,7 +233,16 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": ["boolean"],
         "solver": [
-            StrOptions({"lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"}),
+            StrOptions(
+                {
+                    "auto",
+                    "lbfgs",
+                    "newton-cd",
+                    "newton-cd-gram",
+                    "newton-cg",
+                    "newton-cholesky",
+                }
+            ),
             Hidden(type),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -221,7 +257,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         alpha=1.0,
         l1_ratio=0.0,
         fit_intercept=True,
-        solver="lbfgs",
+        solver="auto",
         max_iter=100,
         tol=1e-4,
         warm_start=False,
@@ -256,9 +292,27 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         self : object
             Fitted model.
         """
-        if self.l1_ratio > 0 and self.solver != "newton-cd-gram":
+        if self.solver == "auto":
+            if self.l1_ratio == 0:
+                self.solver_ = "lbfgs"
+            else:
+                # Suppress TypeError from _num_features and _num_samples, validate_data
+                # will later raise the right/better error.
+                try:
+                    n_features = _num_features(X)
+                    n_samples = _num_samples(X)
+                except TypeError:
+                    n_features = 1
+                    n_samples = 1
+                if n_samples >= n_features:
+                    self.solver_ = "newton-cd-gram"
+                else:
+                    self.solver_ = "newton-cd"
+        else:
+            self.solver_ = self.solver
+        if self.l1_ratio > 0 and self.solver_ not in ("newton-cd", "newton-cd-gram"):
             msg = (
-                f"The solver '{self.solver}' does not support l1_ratio > 0; got "
+                f"The solver '{self.solver_}' does not support l1_ratio > 0; got "
                 f"l1_ratio={self.l1_ratio}."
             )
             raise ValueError(msg)
@@ -267,11 +321,14 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             self,
             X,
             y,
-            accept_sparse=["csc", "csr"],
+            accept_sparse="csc" if self.solver_ == "newton-cd" else ["csc", "csr"],
             dtype=[xp.float64, xp.float32],
+            order="F" if self.solver_ == "newton-cd" else None,
             y_numeric=True,
             multi_output=False,
         )
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
+
         loss_dtype = X.dtype
         y = check_array(y, dtype=loss_dtype, order="C", ensure_2d=False)
 
@@ -279,8 +336,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # Note that _check_sample_weight calls check_array(order="C") required by
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
-
-        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
 
         n_samples, n_features = X.shape
         self._base_loss = self._get_loss(xp=xp, device=device)
@@ -335,7 +390,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
 
         # Algorithms for optimization:
         # Note again that our losses implement 1/2 * deviance.
-        if self.solver == "lbfgs":
+        if self.solver_ == "lbfgs":
             func = linear_loss.loss_gradient
 
             opt_res = scipy.optimize.minimize(
@@ -364,7 +419,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 dtype=X.dtype,
                 device=device,
             )
-        elif self.solver == "newton-cg":
+        elif self.solver_ == "newton-cg":
             func = linear_loss.loss
             grad = linear_loss.gradient
             hess = linear_loss.gradient_hessian_product  # hess = [gradient, hessp]
@@ -379,10 +434,13 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 tol=self.tol,
                 verbose=self.verbose,
             )
-        elif self.solver in ("newton-cd-gram", "newton-cholesky"):
-            if self.solver == "newton-cholesky":
+        elif self.solver_ in ("newton-cd", "newton-cd-gram", "newton-cholesky"):
+            if self.solver_ == "newton-cholesky":
                 sol = NewtonCholeskySolver
                 params = dict()
+            elif self.solver_ == "newton-cd":
+                sol = NewtonCDSolver
+                params = dict(l1_reg_strength=l1_reg_strength)
             else:
                 sol = NewtonCDGramSolver
                 params = dict(l1_reg_strength=l1_reg_strength)
@@ -398,8 +456,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
             coef = sol.solve(X, y, sample_weight)
             self.n_iter_ = sol.iteration
-        elif issubclass(self.solver, NewtonSolver):
-            sol = self.solver(
+        elif issubclass(self.solver_, NewtonSolver):
+            sol = self.solver_(
                 coef=coef,
                 linear_loss=linear_loss,
                 l2_reg_strength=l2_reg_strength,
@@ -410,7 +468,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             coef = sol.solve(X, y, sample_weight)
             self.n_iter_ = sol.iteration
         else:
-            raise ValueError(f"Invalid solver={self.solver}.")
+            raise ValueError(f"Invalid solver={self.solver_}.")
 
         if self.fit_intercept:
             self.intercept_ = coef[-1]
@@ -506,6 +564,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         # TODO: make D^2 a score function in module metrics (and thereby get
         #       input validation and so on)
         raw_prediction = self._linear_predictor(X)  # validates X
+
+        xp, _, device = get_namespace_and_device(X)
+        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
+
         # required by losses
         y = check_array(y, dtype=raw_prediction.dtype, order="C", ensure_2d=False)
 
@@ -513,9 +575,6 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             # Note that _check_sample_weight calls check_array(order="C") required by
             # losses.
             sample_weight = _check_sample_weight(sample_weight, X, dtype=y.dtype)
-
-        xp, _, device = get_namespace_and_device(X)
-        y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
 
         base_loss = self._base_loss
 
@@ -578,8 +637,6 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
     Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
-    .. versionadded:: 0.23
-
     Parameters
     ----------
     alpha : float, default=1
@@ -606,11 +663,33 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (`X @ coef + intercept`).
 
-    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
+    solver : {'auto', 'lbfgs', 'newton-cd', 'newton-cd-gram' 'newton-cg', \
+            'newton-cholesky'}, default='auto'
         Algorithm to use in the optimization problem:
 
+        'auto'
+            This selects a good default solver. The selection may change without a
+            deprecation warning.
+
+            - For `l1_ratio == 0`: 'lbfgs'
+            - For `l1_ratio > 0` and `n_samples >= n_features`: 'newton-cd-gram'
+            - For `l1_ratio > 0` and `n_features > n_samples`: 'newton-cd'
+
+            .. versionadded:: 1.10
+
         'lbfgs'
-            Calls scipy's L-BFGS-B optimizer.
+            Calls scipy's L-BFGS-B optimizer. It works reasonably well for a wide
+            class of problems.
+
+        'newton-cd'
+            Uses Newton-Raphson steps in an iterated reweighted least squares fashion:
+            The normal equations are cast as a weighted least squares problem with
+            elastic-net penalty. The inner solver then uses a coordinate descent based
+            solver. This way the full Hessian is used but never explicitly constructed.
+            It can solve for all values of `l1_ratio`.
+            This solver is a good choice for `n_features` > `n_samples`.
+
+            .. versionadded:: 1.10
 
         'newton-cd-gram'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -635,10 +714,9 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
             iterated reweighted least squares) with an inner Cholesky based solver.
-            This solver is a good choice for `n_samples` >> `n_features`, especially
-            with one-hot encoded categorical features with rare categories. Be aware
-            that the memory usage of this solver has a quadratic dependency on
-            `n_features` because it explicitly computes the Hessian matrix.
+            This solver is a good choice for `n_samples` >> `n_features`. Be aware that
+            the memory usage of this solver has a quadratic dependency on `n_features`
+            because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
 
@@ -684,19 +762,22 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
 
+    n_iter_ : int
+        Actual number of iterations used in the solver.
+
+    solver_ : str
+        The actual solver used to fit.
+
+        .. versionadded:: 1.10
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
 
         .. versionadded:: 1.0
-
-    n_iter_ : int
-        Actual number of iterations used in the solver.
 
     See Also
     --------
@@ -730,7 +811,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         alpha=1.0,
         l1_ratio=0.0,
         fit_intercept=True,
-        solver="lbfgs",
+        solver="auto",
         max_iter=100,
         tol=1e-4,
         warm_start=False,
@@ -755,7 +836,9 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.array_api_support = self.solver == "lbfgs"
+        tags.array_api_support = self.solver == "lbfgs" or (
+            self.solver == "auto" and self.l1_ratio == 0
+        )
         return tags
 
 
@@ -765,8 +848,6 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     This regressor uses the 'log' link function.
 
     Read more in the :ref:`User Guide <Generalized_linear_models>`.
-
-    .. versionadded:: 0.23
 
     Parameters
     ----------
@@ -794,11 +875,33 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (`X @ coef + intercept`).
 
-    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
+    solver : {'auto', 'lbfgs', 'newton-cd', 'newton-cd-gram' 'newton-cg', \
+            'newton-cholesky'}, default='auto'
         Algorithm to use in the optimization problem:
 
+        'auto'
+            This selects a good default solver. The selection may change without a
+            deprecation warning.
+
+            - For `l1_ratio == 0`: 'lbfgs'
+            - For `l1_ratio > 0` and `n_samples >= n_features`: 'newton-cd-gram'
+            - For `l1_ratio > 0` and `n_features > n_samples`: 'newton-cd'
+
+            .. versionadded:: 1.10
+
         'lbfgs'
-            Calls scipy's L-BFGS-B optimizer.
+            Calls scipy's L-BFGS-B optimizer. It works reasonably well for a wide
+            class of problems.
+
+        'newton-cd'
+            Uses Newton-Raphson steps in an iterated reweighted least squares fashion:
+            The normal equations are cast as a weighted least squares problem with
+            elastic-net penalty. The inner solver then uses a coordinate descent based
+            solver. This way the full Hessian is used but never explicitly constructed.
+            It can solve for all values of `l1_ratio`.
+            This solver is a good choice for `n_features` > `n_samples`.
+
+            .. versionadded:: 1.10
 
         'newton-cd-gram'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -823,10 +926,9 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
             iterated reweighted least squares) with an inner Cholesky based solver.
-            This solver is a good choice for `n_samples` >> `n_features`, especially
-            with one-hot encoded categorical features with rare categories. Be aware
-            that the memory usage of this solver has a quadratic dependency on
-            `n_features` because it explicitly computes the Hessian matrix.
+            This solver is a good choice for `n_samples` >> `n_features`. Be aware that
+            the memory usage of this solver has a quadratic dependency on `n_features`
+            because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
 
@@ -872,13 +974,16 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
 
-    n_features_in_ : int
-        Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
-
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    solver_ : str
+        The actual solver used to fit.
+
+        .. versionadded:: 1.10
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -919,7 +1024,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         alpha=1.0,
         l1_ratio=0.0,
         fit_intercept=True,
-        solver="lbfgs",
+        solver="auto",
         max_iter=100,
         tol=1e-4,
         warm_start=False,
@@ -947,8 +1052,6 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     ``power`` parameter, which determines the underlying distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_models>`.
-
-    .. versionadded:: 0.23
 
     Parameters
     ----------
@@ -1005,11 +1108,33 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         - 'log' for ``power > 0``, e.g. for Poisson, Gamma and Inverse Gaussian
           distributions
 
-    solver : {'lbfgs', 'newton-cg', 'newton-cholesky'}, default='lbfgs'
+    solver : {'auto', 'lbfgs', 'newton-cd', 'newton-cd-gram' 'newton-cg', \
+            'newton-cholesky'}, default='auto'
         Algorithm to use in the optimization problem:
 
+        'auto'
+            This selects a good default solver. The selection may change without a
+            deprecation warning.
+
+            - For `l1_ratio == 0`: 'lbfgs'
+            - For `l1_ratio > 0` and `n_samples >= n_features`: 'newton-cd-gram'
+            - For `l1_ratio > 0` and `n_features > n_samples`: 'newton-cd'
+
+            .. versionadded:: 1.10
+
         'lbfgs'
-            Calls scipy's L-BFGS-B optimizer.
+            Calls scipy's L-BFGS-B optimizer. It works reasonably well for a wide
+            class of problems.
+
+        'newton-cd'
+            Uses Newton-Raphson steps in an iterated reweighted least squares fashion:
+            The normal equations are cast as a weighted least squares problem with
+            elastic-net penalty. The inner solver then uses a coordinate descent based
+            solver. This way the full Hessian is used but never explicitly constructed.
+            It can solve for all values of `l1_ratio`.
+            This solver is a good choice for `n_features` > `n_samples`.
+
+            .. versionadded:: 1.10
 
         'newton-cd-gram'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
@@ -1034,10 +1159,9 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
             iterated reweighted least squares) with an inner Cholesky based solver.
-            This solver is a good choice for `n_samples` >> `n_features`, especially
-            with one-hot encoded categorical features with rare categories. Be aware
-            that the memory usage of this solver has a quadratic dependency on
-            `n_features` because it explicitly computes the Hessian matrix.
+            This solver is a good choice for `n_samples` >> `n_features`. Be aware that
+            the memory usage of this solver has a quadratic dependency on `n_features`
+            because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
 
@@ -1086,10 +1210,13 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
 
+    solver_ : str
+        The actual solver used to fit.
+
+        .. versionadded:: 1.10
+
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1134,7 +1261,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         l1_ratio=0.0,
         fit_intercept=True,
         link="auto",
-        solver="lbfgs",
+        solver="auto",
         max_iter=100,
         tol=1e-4,
         warm_start=False,

@@ -40,7 +40,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 
-SOLVERS = ["lbfgs", "newton-cd-gram", "newton-cg", "newton-cholesky"]
+SOLVERS = ["lbfgs", "newton-cd", "newton-cd-gram", "newton-cg", "newton-cholesky"]
 
 
 class BinomialRegressor(_GeneralizedLinearRegressor):
@@ -522,7 +522,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     if n_samples > n_features:
         assert model_intercept == pytest.approx(intercept)
         rtol = 1e-4
-        if solver == "newton-cd-gram":
+        if solver in ("newton-cd", "newton-cd-gram"):
             # This solver finds a solution, but a different linear combination.
             p = coef.shape[0]
             assert_allclose(model_coef[:p] + model_coef[p:], 2 * coef, rtol=rtol)
@@ -949,7 +949,7 @@ def test_poisson_glmnet_L2(solver):
     assert_allclose(glm.coef_, [0.29019207995, 0.03741173122], rtol=1e-5)
 
 
-@pytest.mark.parametrize("solver", ["newton-cd-gram"])
+@pytest.mark.parametrize("solver", ["newton-cd", "newton-cd-gram"])
 def test_poisson_glmnet_enet(solver):
     """Compare Poisson regression with Elastic-Net penaltiy and LogLink to glmnet"""
     # library("glmnet")
@@ -973,7 +973,6 @@ def test_poisson_glmnet_enet(solver):
         solver=solver,
     )
     glm.fit(X, y)
-    print(glm.coef_)
     assert_allclose(glm.intercept_, -0.03550976074, rtol=1e-6)
     assert_allclose(glm.coef_, [0.16936420181, 0], rtol=1e-6)
 
@@ -1027,18 +1026,39 @@ def test_tweedie_score(regression_data, power, link):
     )
 
 
+@pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
+@pytest.mark.parametrize("long_data", [True, False])
+def test_solver_auto(l1_ratio, long_data):
+    """Test that solver='auto' works for all penalties."""
+    X, y = make_regression(
+        n_samples=20 if long_data else 5,
+        n_features=5 if long_data else 20,
+        random_state=42,
+    )
+    y = np.abs(y)  # make it non-negative
+    PoissonRegressor(solver="auto", l1_ratio=l1_ratio).fit(X, y)
+
+
 @pytest.mark.parametrize(
-    "estimator, value",
+    "estimator, positive_tag, array_api_tag",
     [
-        (PoissonRegressor(), True),
-        (GammaRegressor(), True),
-        (TweedieRegressor(power=1.5), True),
-        (TweedieRegressor(power=0), False),
+        (PoissonRegressor(), True, True),
+        (GammaRegressor(), True, False),
+        (TweedieRegressor(power=1.5), True, False),
+        (TweedieRegressor(power=0), False, False),
     ],
 )
-def test_tags(estimator, value):
-    """Test that `positive_only` tag is correctly set for different estimators."""
-    assert estimator.__sklearn_tags__().target_tags.positive_only is value
+def test_tags(estimator, positive_tag, array_api_tag):
+    """Test that tags are set correctly for different estimators."""
+    # positive_only
+    assert estimator.__sklearn_tags__().target_tags.positive_only is positive_tag
+
+    # array_api_support
+    for solver in ["auto", "lbfgs"]:
+        estimator.set_params(solver=solver, l1_ratio=0)
+        assert estimator.__sklearn_tags__().array_api_support is array_api_tag
+    estimator.set_params(solver="auto", l1_ratio=1)
+    assert estimator.__sklearn_tags__().array_api_support is False
 
 
 def test_linalg_warning_with_newton_solver(global_random_seed):
@@ -1241,6 +1261,7 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
             assert msg in captured.out
 
 
+@pytest.mark.parametrize("solver", ["auto", "lbfgs"])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
@@ -1248,6 +1269,7 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_poisson_regressor_array_api_compliance(
+    solver,
     use_sample_weight,
     array_namespace,
     device_name,
@@ -1280,7 +1302,7 @@ def test_poisson_regressor_array_api_compliance(
     else:
         sample_weight = None
 
-    params = dict(alpha=1, solver="lbfgs", max_iter=500)
+    params = dict(alpha=1, solver=solver, max_iter=500)
     params["tol"] = 3e-6 if dtype_name == "float32" else 1e-13
     with config_context(array_api_dispatch=False):
         glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)

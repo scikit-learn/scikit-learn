@@ -152,3 +152,19 @@ def test_output_dataframe():
 
     assert_array_equal(output0.index, X.index)
     assert output0.shape == (X.shape[0], 0)
+
+
+@pytest.mark.parametrize("non_finite", [np.inf, np.nan])
+def test_transform_dataframe_non_finite(non_finite):
+    """Check that transform rejects non-finite values with pandas output.
+    Regression test for https://github.com/scikit-learn/scikit-learn/issues/34500.
+    """
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame({"a": [1.0, 2.0, 3.0]})
+    sel = StepSelector().set_output(transform="pandas").fit(X)
+
+    X_bad = X.copy()
+    X_bad.loc[0, "a"] = non_finite
+    with pytest.raises(ValueError, match="Input X contains"):
+        sel.transform(X_bad)

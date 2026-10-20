@@ -12,17 +12,18 @@ from sklearn.callback._callback_context import (
     _from_reconstruction_attributes,
     get_context_path,
 )
-from sklearn.callback.tests._utils import (
+from sklearn.callback.tests._common.callbacks import (
+    NotRequiredKwargsCallback,
+    RecordingAutoPropagatedCallback,
+    RecordingCallback,
+    StopFitCallback,
+)
+from sklearn.callback.tests._common.estimators import (
     MaxIterEstimator,
     MetaEstimator,
     NoCallbackEstimator,
     NoSubtaskEstimator,
-    NotRequiredKwargsCallback,
-    NotValidHookCallback,
     ParentFitEstimator,
-    RecordingAutoPropagatedCallback,
-    RecordingCallback,
-    StopFitCallback,
     ThirdPartyEstimator,
 )
 
@@ -356,17 +357,6 @@ def test_autopropagation_to_callback_agnostic_subestimator():
     assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
     assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
     assert callback.count_hooks("teardown") == 1
-
-
-# TODO(callbacks): should be a common test in a dev test suite instead of a check
-# in the hook calls to avoid repeating the same check for each call of the same hook.
-def test_hook_calling_invalid_kwargs_out():
-    """Check that a callback with invalid kwargs in its signatures raises an error."""
-    estimator = MaxIterEstimator()
-    context = estimator.set_callbacks(NotValidHookCallback())._init_callback_context()
-    msg = r"on_fit_task_begin .* has parameters that are not valid"
-    with pytest.raises(TypeError, match=msg):
-        context.call_on_fit_task_begin(estimator=estimator, X=1, y=2)
 
 
 def test_hook_calling_return_value():

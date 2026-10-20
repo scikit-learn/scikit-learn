@@ -229,8 +229,6 @@ class SparsePCA(_BaseSparsePCA):
     n_components_ : int
         Estimated number of components.
 
-        .. versionadded:: 0.23
-
     n_iter_ : int
         Number of iterations run.
 
@@ -240,8 +238,6 @@ class SparsePCA(_BaseSparsePCA):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -429,8 +425,6 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
     n_components_ : int
         Estimated number of components.
 
-        .. versionadded:: 0.23
-
     n_iter_ : int
         Number of iterations run.
 
@@ -440,8 +434,6 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

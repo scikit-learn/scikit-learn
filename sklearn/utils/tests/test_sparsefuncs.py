@@ -11,6 +11,7 @@ from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
     LIL_CONTAINERS,
+    _sparse_eye_array,
     _sparse_random_array,
 )
 from sklearn.utils.sparsefuncs import (
@@ -1007,19 +1008,39 @@ def test_implit_center_rmatvec(global_random_seed, centered_matrices):
 @pytest.mark.parametrize(
     ["A", "B", "out", "msg"],
     [
-        (sp.eye(3, format="csr"), sp.eye(2, format="csr"), None, "Shapes must fulfil"),
-        (sp.eye(2, format="csr"), sp.eye(2, format="csr"), np.eye(3), "Shape of out"),
-        (sp.eye(2, format="coo"), sp.eye(2, format="csr"), None, "Input 'A' must"),
-        (sp.eye(2, format="csr"), sp.eye(2, format="coo"), None, "Input 'B' must"),
         (
-            sp.eye(2, format="csr", dtype=np.int32),
-            sp.eye(2, format="csr"),
+            _sparse_eye_array(3, format="csr"),
+            _sparse_eye_array(2, format="csr"),
+            None,
+            "Shapes must fulfil",
+        ),
+        (
+            _sparse_eye_array(2, format="csr"),
+            _sparse_eye_array(2, format="csr"),
+            np.eye(3),
+            "Shape of out",
+        ),
+        (
+            _sparse_eye_array(2, format="coo"),
+            _sparse_eye_array(2, format="csr"),
+            None,
+            "Input 'A' must",
+        ),
+        (
+            _sparse_eye_array(2, format="csr"),
+            _sparse_eye_array(2, format="coo"),
+            None,
+            "Input 'B' must",
+        ),
+        (
+            _sparse_eye_array(2, format="csr", dtype=np.int32),
+            _sparse_eye_array(2, format="csr"),
             None,
             "Dtype of A and B",
         ),
         (
-            sp.eye(2, format="csr", dtype=np.float32),
-            sp.eye(2, format="csr", dtype=np.float64),
+            _sparse_eye_array(2, format="csr", dtype=np.float32),
+            _sparse_eye_array(2, format="csr", dtype=np.float64),
             None,
             "Dtype of A and B",
         ),
