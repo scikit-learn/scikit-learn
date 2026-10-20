@@ -7,15 +7,16 @@ import inspect
 import uuid
 import warnings
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import NamedTuple
 
 from sklearn.callback._base import AutoPropagatedCallback
 
 _cached_signature = functools.lru_cache()(inspect.signature)
 
 
-class TaskInfo(NamedTuple):
+@dataclass(frozen=True, slots=True)
+class TaskInfo:
     """Information about one task in a callback context's task path.
 
     Attributes

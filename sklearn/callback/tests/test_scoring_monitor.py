@@ -42,10 +42,12 @@ def _make_expected_output_MaxIterEstimator(
     log_item = {
         "task_id_path": (root_task_id,),
         "parent_task_id_path": (),
-        "estimator_name": est_name,
-        "task_name": "fit",
         "task_id": root_task_id,
+        "task_name": "fit",
+        "estimator_name": est_name,
         "sequential_subtasks": True,
+        "source_estimator_name": None,
+        "source_task_name": None,
     }
     scores = scorer(fitted_est, X, y)
     if not isinstance(scores, dict):
@@ -58,10 +60,12 @@ def _make_expected_output_MaxIterEstimator(
         log_item = {
             "task_id_path": (root_task_id, i),
             "parent_task_id_path": (root_task_id,),
-            "estimator_name": est_name,
-            "task_name": f"iteration {i}",
             "task_id": i,
+            "task_name": f"iteration {i}",
+            "estimator_name": est_name,
             "sequential_subtasks": True,
+            "source_estimator_name": None,
+            "source_task_name": None,
         }
         scores = scorer(fitted_est, X, y)
         if not isinstance(scores, dict):
@@ -90,6 +94,8 @@ def _make_expected_output_MetaEstimator(
             estimator_log = _make_expected_output_MaxIterEstimator(
                 max_iter, scoring, False, X, y, root_task_id=j
             )
+            estimator_log[0]["source_estimator_name"] = "MetaEstimator"
+            estimator_log[0]["source_task_name"] = "inner"
             for row in estimator_log:
                 row["task_id_path"] = (0, i) + row["task_id_path"]
                 row["parent_task_id_path"] = (0, i) + row["parent_task_id_path"]
@@ -101,10 +107,12 @@ def _make_expected_output_MetaEstimator(
             {
                 "task_id_path": (0,),
                 "parent_task_id_path": (),
-                "estimator_name": meta_est_name,
-                "task_name": "fit",
                 "task_id": 0,
+                "task_name": "fit",
+                "estimator_name": meta_est_name,
                 "sequential_subtasks": False,
+                "source_estimator_name": None,
+                "source_task_name": None,
             }
         )
         # outer tasks
@@ -113,10 +121,12 @@ def _make_expected_output_MetaEstimator(
                 {
                     "task_id_path": (0, i),
                     "parent_task_id_path": (0,),
-                    "estimator_name": meta_est_name,
-                    "task_name": "outer",
                     "task_id": i,
+                    "task_name": "outer",
+                    "estimator_name": meta_est_name,
                     "sequential_subtasks": True,
+                    "source_estimator_name": None,
+                    "source_task_name": None,
                 }
             )
 
@@ -182,8 +192,10 @@ def test_logged_values(scoring, as_pandas):
     )
 
     if as_pandas:
-        assert log.equals(expected_log)
+        assert log.drop(columns="init_time").equals(expected_log)
     else:
+        for row in log:
+            row.pop("init_time")
         assert log == expected_log
 
 
@@ -217,8 +229,10 @@ def test_logged_values_meta_estimator(prefer, scoring, as_pandas, include_lineag
     )
 
     if as_pandas:
-        assert log.equals(expected_log)
+        assert log.drop(columns="init_time").equals(expected_log)
     else:
+        for row in log:
+            row.pop("init_time")
         assert log == expected_log
 
 
@@ -405,6 +419,8 @@ def test_scoring_monitor_no_callback_support(backend):
 
     assert len(log_all) == n_fits
     for log in log_all:
+        for row in log.data:
+            row.pop("init_time")
         assert log.data == expected_log
         assert log.estimator_name == "MaxIterEstimator"
 

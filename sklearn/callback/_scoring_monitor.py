@@ -4,7 +4,7 @@
 import datetime
 import uuid
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from sklearn.callback._transport import can_reuse_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_pandas_support
@@ -151,22 +151,12 @@ class ScoringMonitor:
             "estimator_name": context.task_path[0].estimator_name,
         }
 
-        task_info_path = [
-            {
-                "estimator_name": task.estimator_name,
-                "task_name": task.task_name,
-                "task_id": task.task_id,
-                "sequential_subtasks": task.sequential_subtasks,
-            }
-            for task in context.task_path
-        ]
-
         scores = {}
         metadata = {} if metadata is None else metadata
         if X is not None and y is not None:
             scores.update(self._scorer(fitted_estimator, X, y, **metadata))
 
-        send(self._listener_handle, (run_id, run_info, task_info_path, scores))
+        send(self._listener_handle, (run_id, run_info, context.task_path, scores))
 
     def __getstate__(self):
         # `_log` is grown by the listener thread, which can run while this callback is
@@ -246,14 +236,14 @@ class ScoringMonitor:
         for run_id, run_info, task_info_path, scores in self._log:
             logs[run_id].update(run_info)
 
-            task_id_path = tuple(task_info["task_id"] for task_info in task_info_path)
+            task_id_path = tuple(task_info.task_id for task_info in task_info_path)
 
             logs[run_id]["data"].append(
                 {
                     "task_id_path": task_id_path,
                     "parent_task_id_path": task_id_path[:-1],
                     "parent_task_info_path": task_info_path[:-1],
-                    **task_info_path[-1],
+                    **asdict(task_info_path[-1]),
                     **scores,
                 }
             )
@@ -266,15 +256,14 @@ class ScoringMonitor:
                     for i in range(len(row["parent_task_info_path"])):
                         task_info_path = row["parent_task_info_path"][: i + 1]
                         task_id_path = tuple(
-                            task_info["task_id"] for task_info in task_info_path
+                            task_info.task_id for task_info in task_info_path
                         )
                         if task_id_path not in run_to_task_id_path[run_id]:
                             extra_rows.append(
                                 {
                                     "task_id_path": task_id_path,
                                     "parent_task_id_path": task_id_path[:-1],
-                                    "parent_task_info_path": task_info_path[:-1],
-                                    **task_info_path[-1],
+                                    **asdict(task_info_path[-1]),
                                 }
                             )
                             run_to_task_id_path[run_id].add(task_id_path)
