@@ -203,9 +203,9 @@ for classification::
   >>> X_new.shape
   (150, 3)
 
-With SVMs and logistic regression, the parameter C controls the sparsity:
-the smaller C the fewer features selected. With Lasso, the higher the
-alpha parameter, the fewer features selected.
+With SVMs, the parameter C controls the sparsity: the smaller C the fewer
+features selected. With logistic regression and Lasso, the higher the alpha
+parameter, the fewer features selected.
 
 .. rubric:: Examples
 
