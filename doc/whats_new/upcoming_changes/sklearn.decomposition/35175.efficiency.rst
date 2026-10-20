@@ -1,0 +1,5 @@
+- :class:`decomposition.PCA` with `n_components="mle"` is now much faster when
+  the number of features is large, because the log-likelihood used to select the
+  number of components is computed with vectorized array operations instead of a
+  Python double loop.
+  By :user:`Varun Balani <varunbln>`.
