@@ -91,7 +91,11 @@ def _assess_dimension(spectrum, rank, n_samples):
     inv_spectrum_ = 1.0 / spectrum_
     delta = spectrum[:rank, None] - spectrum[None, :]
     inv_delta = inv_spectrum_[None, :] - inv_spectrum_[:rank, None]
-    pair_mask = xp.arange(n_features)[None, :] > xp.arange(rank)[:, None]
+    device = array_device(spectrum)
+    pair_mask = (
+        xp.arange(n_features, device=device)[None, :]
+        > xp.arange(rank, device=device)[:, None]
+    )
     with np.errstate(divide="ignore", invalid="ignore"):
         pair_terms = xp.log(delta * inv_delta)
     n_pairs = xp.sum(xp.astype(pair_mask, spectrum.dtype))
