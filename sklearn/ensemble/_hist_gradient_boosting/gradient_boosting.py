@@ -65,18 +65,6 @@ _LOSSES.update(
 )
 
 
-def _take_rows(X, indices):
-    """Return ``X[indices]`` as a Fortran-ordered array.
-
-    Rows are gathered one column at a time, which is much faster than fancy
-    indexing the rows of a Fortran-ordered array.
-    """
-    X_out = np.empty((indices.shape[0], X.shape[1]), dtype=X.dtype, order="F")
-    for j in range(X.shape[1]):
-        np.take(X[:, j], indices, out=X_out[:, j])
-    return X_out
-
-
 def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     """Update the leaf values to be predicted by the tree.
 
@@ -618,9 +606,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_binned = self._bin_data(
                 X, sample_weight, is_training_data=True, sample_indices=train_indices
             )
-            X_binned_train = _take_rows(X_binned, train_indices)
-            # Predicting is faster on C-contiguous arrays.
-            X_binned_val = np.ascontiguousarray(_take_rows(X_binned, val_indices))
+            # Taking columns of the C-ordered X_binned.T gives F-ordered
+            # training data, much faster than fancy indexing the rows of X_binned.
+            X_binned_train = np.take(X_binned.T, train_indices, axis=1).T
+            # Fancy indexing gives C-contiguous validation data, which is faster
+            # to predict on.
+            X_binned_val = X_binned[val_indices]
             del X_binned
 
         # Uses binned data to check for missing values
