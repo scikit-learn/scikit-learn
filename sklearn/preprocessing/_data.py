@@ -48,7 +48,7 @@ from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
-from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.stats import _weighted_percentile, _weighted_percentile_1d_sorted
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
@@ -1606,9 +1606,9 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     >>> transformer
     RobustScaler()
     >>> transformer.transform(X)
-    array([[ 0. , -2. ,  0. ],
-           [-1. ,  0. ,  0.4],
-           [ 1. ,  0. , -1.6]])
+    array([[ 0. , -1. ,  0. ],
+           [-0.5,  0. ,  0.2],
+           [ 0.5,  0. , -0.8]])
     """
 
     _parameter_constraints: dict = {
@@ -1683,12 +1683,21 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     column_nnz_data = X.data[
                         X.indptr[feature_idx] : X.indptr[feature_idx + 1]
                     ]
-                    column_data = np.zeros(shape=X.shape[0], dtype=X.dtype)
-                    column_data[: len(column_nnz_data)] = column_nnz_data
+                    n_zeros = X.shape[0] - len(column_nnz_data)
+                    quantiles.append(
+                        _sparse_column_percentile(
+                            column_nnz_data, n_zeros, self.quantile_range
+                        )
+                    )
                 else:
                     column_data = X[:, feature_idx]
-
-                quantiles.append(np.nanpercentile(column_data, self.quantile_range))
+                    quantiles.append(
+                        np.nanpercentile(
+                            column_data,
+                            self.quantile_range,
+                            method="averaged_inverted_cdf",
+                        )
+                    )
 
             quantiles = np.transpose(quantiles)
 
@@ -1877,11 +1886,11 @@ def robust_scale(
     >>> from sklearn.preprocessing import robust_scale
     >>> X = [[-2, 1, 2], [-1, 0, 1]]
     >>> robust_scale(X, axis=0)  # scale each column independently
-    array([[-1.,  1.,  1.],
-           [ 1., -1., -1.]])
+    array([[-0.5,  0.5,  0.5],
+           [ 0.5, -0.5, -0.5]])
     >>> robust_scale(X, axis=1)  # scale each row independently
-    array([[-1.5,  0. ,  0.5],
-           [-1. ,  0. ,  1. ]])
+    array([[-0.75,  0.  ,  0.25],
+           [-0.5 ,  0.  ,  0.5 ]])
     """
     X = check_array(
         X,
@@ -2610,6 +2619,34 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
+def _sparse_column_percentile(column_nnz_data, n_zeros, percentiles):
+    """Compute percentiles of a sparse column without densifying it.
+
+    ``column_nnz_data`` holds the explicitly stored entries of the column, which
+    may be of any sign and may contain NaNs; ``n_zeros`` implicit zeros complete
+    the column. The implicit zeros are represented by a single zero whose weight
+    is ``n_zeros``, which matches ``np.nanpercentile`` on the densified column
+    with ``method="averaged_inverted_cdf"``.
+    """
+    percentiles = np.asarray(percentiles, dtype=np.float64)
+    n_nans = np.count_nonzero(np.isnan(column_nnz_data))
+    # float64 so that the weights CDF stays exact for large `n_samples`
+    column_data = column_nnz_data.astype(np.float64)
+    column_data.sort()  # NaNs are sorted last
+    column_data = column_data[: column_data.size - n_nans]
+    sample_weight = np.ones_like(column_data)
+    if n_zeros > 0:
+        zero_idx = np.searchsorted(column_data, 0.0)
+        column_data = np.insert(column_data, zero_idx, 0.0)
+        sample_weight = np.insert(sample_weight, zero_idx, n_zeros)
+    if column_data.size == 0:
+        return np.full(percentiles.shape, np.nan)
+    # Unlike `_weighted_percentile`, `_weighted_percentile_1d_sorted` is vectorized
+    # over `percentiles`, which matters for `QuantileTransformer` (`n_quantiles`
+    # percentiles per column).
+    return _weighted_percentile_1d_sorted(column_data, sample_weight, percentiles)
+
+
 class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features using quantiles information.
 
@@ -2809,10 +2846,9 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
         Parameters
         ----------
-        X : sparse matrix of shape (n_samples, n_features)
+        X : sparse CSC matrix of shape (n_samples, n_features)
             The data used to scale along the features axis. The sparse matrix
-            needs to be nonnegative. If a sparse matrix is provided,
-            it will be converted into a SciPy sparse CSC matrix.
+            needs to be nonnegative if `ignore_implicit_zeros` is False.
 
         Notes
         -----
@@ -2826,35 +2862,32 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.quantiles_ = []
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
+            n_zeros = n_samples - len(column_nnz_data)
+
             if self.subsample is not None and len(column_nnz_data) > self.subsample:
-                column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
-                column_subsample = (
-                    self.subsample
-                    if self.ignore_implicit_zeros
-                    else self.subsample * len(column_nnz_data) // n_samples
+                column_data = random_state.choice(
+                    column_nnz_data, size=self.subsample, replace=False
                 )
-                column_data[:column_subsample] = random_state.choice(
-                    column_nnz_data, size=column_subsample, replace=False
-                )
+                # subsample zeros too:
+                n_zeros = round(n_zeros * self.subsample / len(column_nnz_data))
             else:
-                if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=len(column_nnz_data), dtype=X.dtype)
-                else:
-                    column_data = np.zeros(shape=n_samples, dtype=X.dtype)
-                column_data[: len(column_nnz_data)] = column_nnz_data
+                column_data = column_nnz_data
 
             if not column_data.size:
                 # if no nnz, an error will be raised for computing the
                 # quantiles. Force the quantiles to be zeros.
-                self.quantiles_.append([0] * len(self.references_))
-            else:
+                self.quantiles_.append([0] * len(references))
+            elif self.ignore_implicit_zeros:
                 self.quantiles_.append(
                     np.nanpercentile(
-                        column_data,
-                        references,
-                        method="averaged_inverted_cdf",
+                        column_data, references, method="averaged_inverted_cdf"
                     )
                 )
+            else:
+                self.quantiles_.append(
+                    _sparse_column_percentile(column_data, n_zeros, references)
+                )
+
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
