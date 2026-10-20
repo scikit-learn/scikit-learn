@@ -545,6 +545,13 @@ def test_partial_dependence_recursion_categorical_target_feature(Estimator):
             est, X, features=[0], method="recursion", categorical_features=[0]
         )
 
+    # method="auto" falls back to brute
+    auto = partial_dependence(est, X, features=[0], categorical_features=[0])
+    brute = partial_dependence(
+        est, X, features=[0], method="brute", categorical_features=[0]
+    )
+    assert_allclose(auto["average"], brute["average"])
+
 
 def test_partial_dependence_recursion_decision_tree_missing_target_feature():
     # Missing values are isolated by the split. Recursion must route np.nan
