@@ -3182,40 +3182,6 @@ def test_fit_categorical_with_absolute_error():
         )
 
 
-@pytest.mark.parametrize("with_sample_weight", [False, True])
-def test_random_splitter_categorical_absolute_error(with_sample_weight):
-    """Random categorical splits are evaluated exactly with absolute_error.
-
-    Each node must store the weighted median of its training targets and the
-    corresponding weighted mean absolute error as impurity.
-    """
-    rng = np.random.RandomState(0)
-    n_samples = 300
-    X = np.c_[rng.randint(0, 12, n_samples), rng.randint(0, 5, n_samples)]
-    y = X[:, 0] % 3 + 2 * (X[:, 1] == 2) + rng.laplace(size=n_samples)
-    sample_weight = rng.randint(1, 4, n_samples) if with_sample_weight else None
-
-    tree = ExtraTreeRegressor(
-        criterion="absolute_error",
-        categorical_features=[0, 1],
-        min_samples_leaf=5,
-        random_state=0,
-    ).fit(X, y, sample_weight=sample_weight)
-    assert tree.tree_.max_depth > 1
-
-    weights = np.ones(n_samples) if sample_weight is None else sample_weight
-    node_indicator = tree.decision_path(X).toarray().astype(bool)
-    for node in range(tree.tree_.node_count):
-        y_node = y[node_indicator[:, node]]
-        w_node = weights[node_indicator[:, node]]
-        # A weighted median is reached at one of the targets.
-        errors = np.abs(y_node[:, None] - y_node[None, :]).T @ w_node / w_node.sum()
-        median = tree.tree_.value[node, 0, 0]
-        error_at_median = np.abs(y_node - median) @ w_node / w_node.sum()
-        assert error_at_median == pytest.approx(errors.min())
-        assert tree.tree_.impurity[node] == pytest.approx(errors.min())
-
-
 def test_predict_sparse_int64_indices_raises():
     X = np.array([[0.0], [1.0]], dtype=np.float64)
     y = np.array([0, 1])
