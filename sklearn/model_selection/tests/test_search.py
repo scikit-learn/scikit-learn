@@ -2778,18 +2778,9 @@ def test_search_sample_weight_auto_request(auto_request, expected):
     search = GridSearchCV(meta_est, param_grid={"estimator__alpha": [0.0]}, cv=2)
 
     with config_context(enable_metadata_auto_requests=auto_request):
-        assert (
-            get_routing_for_object(search)
-            ._route_mappings["estimator"]
-            .router._self_request.fit.requests.get("sample_weight")
-            is expected
-        )
-        assert (
-            get_routing_for_object(search)
-            ._route_mappings["estimator"]
-            .router._self_request.score.requests.get("sample_weight")
-            is expected
-        )
+        routing = get_routing_for_object(meta_est)
+        assert routing._self_request.fit.requests.get("sample_weight") is expected
+        assert routing._self_request.score.requests.get("sample_weight") is expected
 
         if auto_request:
             search.fit(X, y, sample_weight=sample_weight)
