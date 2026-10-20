@@ -557,6 +557,7 @@ def test_partial_dependence_easy_target(est, power):
     "Estimator",
     (
         DecisionTreeRegressor,
+        RandomForestRegressor,
         HistGradientBoostingRegressor,
         HistGradientBoostingClassifier,
     ),

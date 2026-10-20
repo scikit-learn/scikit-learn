@@ -1,5 +1,6 @@
 - :func:`inspection.partial_dependence` no longer returns incorrect values for
   target features that are categorical for :class:`tree.DecisionTreeRegressor`,
+  :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.HistGradientBoostingRegressor` or
   :class:`ensemble.HistGradientBoostingClassifier`. `method="auto"` now uses
   the `'brute'` method for such features, and `method="recursion"` raises a
