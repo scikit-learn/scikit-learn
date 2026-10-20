@@ -257,6 +257,7 @@ METAESTIMATORS: list = [
         "X": X,
         "y": y,
         "estimator_routing_methods": ["fit"],
+        "self_request_sample_weight_methods": ["score"],
     },
     {
         "metaestimator": SelectFromModel,
@@ -359,6 +360,7 @@ METAESTIMATORS: list = [
             "predict_proba": ["predict", "predict_proba"],
             "predict_log_proba": ["predict", "predict_proba", "predict_log_proba"],
         },
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": BaggingRegressor,
@@ -368,6 +370,7 @@ METAESTIMATORS: list = [
         "y": y,
         "preserves_metadata": False,
         "estimator_routing_methods": [("fit", ["metadata"]), "predict"],
+        "self_request_sample_weight_methods": ["fit", "score"],
     },
     {
         "metaestimator": RidgeCV,
