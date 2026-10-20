@@ -557,8 +557,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Only split the indices: X is split after binning, as the binned
             # data is 8 times smaller.
-            # TODO: incorporate sample_weight in sampling here, as well as
-            # stratify
+            # TODO: take sample_weight into account in the split and in its
+            # stratification.
             train_indices, val_indices = train_test_split(
                 np.arange(n_samples),
                 test_size=self.validation_fraction,
