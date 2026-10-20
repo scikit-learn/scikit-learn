@@ -1,10 +1,11 @@
-from cupy.fft import * # noqa: F403
+from cupy.fft import *  # noqa: F403
+
 # cupy.fft doesn't have __all__. If it is added, replace this with
 #
 # from cupy.fft import __all__ as linalg_all
-_n = {}
-exec('from cupy.fft import *', _n)
-del _n['__builtins__']
+_n: dict[str, object] = {}
+exec("from cupy.fft import *", _n)
+del _n["__builtins__"]
 fft_all = list(_n)
 del _n
 
@@ -30,7 +31,6 @@ ifftshift = get_xp(cp)(_fft.ifftshift)
 
 __all__ = fft_all + _fft.__all__
 
-del get_xp
-del cp
-del fft_all
-del _fft
+def __dir__() -> list[str]:
+    return __all__
+

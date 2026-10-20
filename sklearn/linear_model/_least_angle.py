@@ -15,28 +15,31 @@ import numpy as np
 from scipy import interpolate, linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from ..base import MultiOutputMixin, RegressorMixin, _fit_context
-from ..exceptions import ConvergenceWarning
-from ..model_selection import check_cv
-
-# mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
-from ..utils import (  # type: ignore
-    Bunch,
-    arrayfuncs,
-    as_float_array,
-    check_random_state,
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import (
+    LinearRegression,
+    MultiOutputLinearModel,
+    _preprocess_data,
 )
-from ..utils._metadata_requests import (
+from sklearn.model_selection import check_cv
+from sklearn.utils import arrayfuncs, as_float_array, check_random_state
+from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
 )
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import validate_data
-from ._base import LinearModel, LinearRegression, _preprocess_data
+from sklearn.utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import validate_data
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
 
@@ -197,7 +200,7 @@ def lars_path(
     ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
     ... )
     >>> true_coef
-    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    array([ 0.        ,  0.        ,  0.        , 97.9, 45.7])
     >>> alphas, _, estimated_coef = lars_path(X, y)
     >>> alphas.shape
     (3,)
@@ -205,8 +208,8 @@ def lars_path(
     array([[ 0.     ,  0.     ,  0.     ],
            [ 0.     ,  0.     ,  0.     ],
            [ 0.     ,  0.     ,  0.     ],
-           [ 0.     , 46.96..., 97.99...],
-           [ 0.     ,  0.     , 45.70...]])
+           [ 0.     , 46.96, 97.99],
+           [ 0.     ,  0.     , 45.70]])
     """
     if X is None and Gram is not None:
         raise ValueError(
@@ -378,7 +381,7 @@ def lars_path_gram(
     ...    n_samples=100, n_features=5, n_informative=2, coef=True, random_state=0
     ... )
     >>> true_coef
-    array([ 0.        ,  0.        ,  0.        , 97.9..., 45.7...])
+    array([ 0.        ,  0.        ,  0.        , 97.9, 45.7])
     >>> alphas, _, estimated_coef = lars_path_gram(X.T @ y, X.T @ X, n_samples=100)
     >>> alphas.shape
     (3,)
@@ -386,8 +389,8 @@ def lars_path_gram(
     array([[ 0.     ,  0.     ,  0.     ],
            [ 0.     ,  0.     ,  0.     ],
            [ 0.     ,  0.     ,  0.     ],
-           [ 0.     , 46.96..., 97.99...],
-           [ 0.     ,  0.     , 45.70...]])
+           [ 0.     , 46.96, 97.99],
+           [ 0.     ,  0.     , 45.70]])
     """
     return _lars_path_solver(
         X=None,
@@ -917,8 +920,8 @@ def _lars_path_solver(
 # Estimator classes
 
 
-class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
-    """Least Angle Regression model a.k.a. LAR.
+class Lars(RegressorMixin, MultiOutputLinearModel):
+    """Least Angle Regression model aka LAR.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -961,14 +964,10 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
-        .. versionadded:: 0.23
-
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
-
-        .. versionadded:: 0.23
 
     Attributes
     ----------
@@ -1002,8 +1001,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1024,7 +1021,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     Lars(n_nonzero_coefs=1)
     >>> print(reg.coef_)
-    [ 0. -1.11...]
+    [ 0. -1.11]
     """
 
     _parameter_constraints: dict = {
@@ -1080,7 +1077,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = _preprocess_data(
+        X, y, X_offset, y_offset, X_scale, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=self.copy_X
         )
 
@@ -1208,7 +1205,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 class LassoLars(Lars):
-    """Lasso model fit with Least Angle Regression a.k.a. Lars.
+    """Lasso model fit with Least Angle Regression aka Lars.
 
     It is a Linear Model trained with an L1 prior as regularizer.
 
@@ -1274,14 +1271,10 @@ class LassoLars(Lars):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
-        .. versionadded:: 0.23
-
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
-
-        .. versionadded:: 0.23
 
     Attributes
     ----------
@@ -1316,8 +1309,6 @@ class LassoLars(Lars):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1345,7 +1336,7 @@ class LassoLars(Lars):
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
     LassoLars(alpha=0.01)
     >>> print(reg.coef_)
-    [ 0.         -0.955...]
+    [ 0.         -0.955]
     """
 
     _parameter_constraints: dict = {
@@ -1542,17 +1533,14 @@ class LarsCV(Lars):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     max_n_alphas : int, default=1000
         The maximum number of points on the path used to compute the
@@ -1608,8 +1596,6 @@ class LarsCV(Lars):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1642,11 +1628,11 @@ class LarsCV(Lars):
     >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
     >>> reg = LarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
-    0.9996...
+    0.9996
     >>> reg.alpha_
-    np.float64(0.2961...)
+    np.float64(0.2961)
     >>> reg.predict(X[:1,])
-    array([154.3996...])
+    array([154.3996])
     """
 
     _parameter_constraints: dict = {
@@ -1733,7 +1719,7 @@ class LarsCV(Lars):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **params)
         else:
-            routed_params = Bunch(splitter=Bunch(split={}))
+            routed_params = _manual_routing({"splitter": {}})
 
         # As we use cross-validation, the Gram matrix is not precomputed here
         Gram = self.precompute
@@ -1821,7 +1807,7 @@ class LarsCV(Lars):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             splitter=check_cv(self.cv),
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
@@ -1862,17 +1848,14 @@ class LassoLarsCV(LarsCV):
         Possible inputs for cv are:
 
         - None, to use the default 5-fold cross-validation,
-        - integer, to specify the number of folds.
+        - integer, to specify the number of folds,
         - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - an iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     max_n_alphas : int, default=1000
         The maximum number of points on the path used to compute the
@@ -1939,8 +1922,6 @@ class LassoLarsCV(LarsCV):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1984,11 +1965,11 @@ class LassoLarsCV(LarsCV):
     >>> X, y = make_regression(noise=4.0, random_state=0)
     >>> reg = LassoLarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
-    0.9993...
+    0.9993
     >>> reg.alpha_
-    np.float64(0.3972...)
+    np.float64(0.3972)
     >>> reg.predict(X[:1,])
-    array([-78.4831...])
+    array([-78.4831])
     """
 
     _parameter_constraints = {
@@ -2127,8 +2108,6 @@ class LassoLarsIC(LassoLars):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -2177,7 +2156,10 @@ class LassoLarsIC(LassoLars):
     >>> reg.fit(X, y)
     LassoLarsIC(criterion='bic')
     >>> print(reg.coef_)
-    [ 0.  -1.11...]
+    [ 0.  -1.11]
+
+    For a detailed example of using this class, see
+    :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lars_ic.py`.
     """
 
     _parameter_constraints: dict = {
@@ -2244,7 +2226,7 @@ class LassoLarsIC(LassoLars):
             copy_X = self.copy_X
         X, y = validate_data(self, X, y, force_writeable=True, y_numeric=True)
 
-        X, y, Xmean, ymean, Xstd = _preprocess_data(
+        X, y, Xmean, ymean, _, _ = _preprocess_data(
             X, y, fit_intercept=self.fit_intercept, copy=copy_X
         )
 
@@ -2306,7 +2288,7 @@ class LassoLarsIC(LassoLars):
 
         self.alpha_ = alphas_[n_best]
         self.coef_ = coef_path_[:, n_best]
-        self._set_intercept(Xmean, ymean, Xstd)
+        self._set_intercept(Xmean, ymean)
         return self
 
     def _estimate_noise_variance(self, X, y, positive):

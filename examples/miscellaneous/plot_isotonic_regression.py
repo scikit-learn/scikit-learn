@@ -13,7 +13,7 @@ the target function besides monotonicity. For comparison a linear regression is
 also presented.
 
 The plot on the right-hand side shows the model prediction function that
-results from the linear interpolation of thresholds points. The thresholds
+results from the linear interpolation of threshold points. The threshold
 points are a subset of the training input observations and their matching
 target values are computed by the isotonic non-parametric fit.
 

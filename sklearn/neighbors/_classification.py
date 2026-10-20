@@ -7,25 +7,29 @@ import warnings
 from numbers import Integral
 
 import numpy as np
+from scipy import stats
 
-from sklearn.neighbors._base import _check_precomputed
-
-from ..base import ClassifierMixin, _fit_context
-from ..metrics._pairwise_distances_reduction import (
+from sklearn.base import ClassifierMixin, _fit_context
+from sklearn.metrics._pairwise_distances_reduction import (
     ArgKminClassMode,
     RadiusNeighborsClassMode,
 )
-from ..utils._param_validation import StrOptions
-from ..utils.arrayfuncs import _all_with_any_reduction_axis_1
-from ..utils.extmath import weighted_mode
-from ..utils.fixes import _mode
-from ..utils.validation import (
+from sklearn.neighbors._base import (
+    KNeighborsMixin,
+    NeighborsBase,
+    RadiusNeighborsMixin,
+    _check_precomputed,
+    _get_weights,
+)
+from sklearn.utils._param_validation import StrOptions
+from sklearn.utils.arrayfuncs import _all_with_any_reduction_axis_1
+from sklearn.utils.extmath import weighted_mode
+from sklearn.utils.validation import (
     _is_arraylike,
     _num_samples,
     check_is_fitted,
     validate_data,
 )
-from ._base import KNeighborsMixin, NeighborsBase, RadiusNeighborsMixin, _get_weights
 
 
 def _adjusted_metric(metric, metric_kwargs, p=None):
@@ -135,8 +139,6 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -182,7 +184,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     >>> print(neigh.predict([[1.1]]))
     [0]
     >>> print(neigh.predict_proba([[0.9]]))
-    [[0.666... 0.333...]]
+    [[0.666 0.333]]
     """
 
     _parameter_constraints: dict = {**NeighborsBase._parameter_constraints}
@@ -295,7 +297,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             if weights is None:
-                mode, _ = _mode(_y[neigh_ind, k], axis=1)
+                mode, _ = stats.mode(_y[neigh_ind, k], axis=1, keepdims=True)
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
@@ -351,7 +353,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     k=self.n_neighbors,
                     weights=self.weights,
                     Y_labels=self._y,
-                    unique_Y_labels=self.classes_,
+                    unique_Y_labels=np.arange(len(self.classes_), dtype=np.intp),
                     metric=metric,
                     metric_kwargs=metric_kwargs,
                     # `strategy="parallel_on_X"` has in practice be shown
@@ -359,7 +361,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                     # on many combination of datasets.
                     # Hence, we choose to enforce it here.
                     # For more information, see:
-                    # https://github.com/scikit-learn/scikit-learn/pull/24076#issuecomment-1445258342  # noqa
+                    # https://github.com/scikit-learn/scikit-learn/pull/24076#issuecomment-1445258342
                     # TODO: adapt the heuristic for `strategy="auto"` for
                     # `ArgKminClassMode` and use `strategy="auto"`.
                     strategy="parallel_on_X",
@@ -558,8 +560,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -797,7 +797,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                 radius=self.radius,
                 weights=self.weights,
                 Y_labels=self._y,
-                unique_Y_labels=self.classes_,
+                unique_Y_labels=np.arange(len(self.classes_), dtype=np.intp),
                 outlier_label=self.outlier_label,
                 metric=metric,
                 metric_kwargs=metric_kwargs,
@@ -807,7 +807,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
                 # on many combination of datasets.
                 # Hence, we choose to enforce it here.
                 # For more information, see:
-                # https://github.com/scikit-learn/scikit-learn/pull/26828/files#r1282398471  # noqa
+                # https://github.com/scikit-learn/scikit-learn/pull/26828/files#r1282398471
             )
             return probabilities
 

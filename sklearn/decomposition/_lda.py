@@ -18,25 +18,21 @@ import scipy.sparse as sp
 from joblib import effective_n_jobs
 from scipy.special import gammaln, logsumexp
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..utils import check_random_state, gen_batches, gen_even_slices
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, check_non_negative, validate_data
-from ._online_lda_fast import (
+from sklearn.decomposition._online_lda_fast import (
     _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
 )
-from ._online_lda_fast import (
-    _dirichlet_expectation_2d,
-)
-from ._online_lda_fast import (
-    mean_change as cy_mean_change,
-)
+from sklearn.decomposition._online_lda_fast import _dirichlet_expectation_2d
+from sklearn.decomposition._online_lda_fast import mean_change as cy_mean_change
+from sklearn.utils import check_random_state, gen_batches, gen_even_slices
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, check_non_negative, validate_data
 
 EPS = np.finfo(float).eps
 
@@ -168,17 +164,12 @@ class LatentDirichletAllocation(
 
     The implementation is based on [1]_ and [2]_.
 
-    .. versionadded:: 0.17
-
     Read more in the :ref:`User Guide <LatentDirichletAllocation>`.
 
     Parameters
     ----------
     n_components : int, default=10
         Number of topics.
-
-        .. versionchanged:: 0.19
-            ``n_topics`` was renamed to ``n_components``
 
     doc_topic_prior : float, default=None
         Prior of document topic distribution `theta`. If the value is None,
@@ -203,9 +194,6 @@ class LatentDirichletAllocation(
           of training data to update the ``components_`` variable incrementally. The
           learning rate is controlled by the ``learning_decay`` and the
           ``learning_offset`` parameters.
-
-        .. versionchanged:: 0.20
-            The default learning method is now ``"batch"``.
 
     learning_decay : float, default=0.7
         It is a parameter that control learning rate in the online learning
@@ -283,8 +271,6 @@ class LatentDirichletAllocation(
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -318,11 +304,12 @@ class LatentDirichletAllocation(
     References
     ----------
     .. [1] "Online Learning for Latent Dirichlet Allocation", Matthew D.
-           Hoffman, David M. Blei, Francis Bach, 2010
+           Hoffman, David M. Blei, Francis Bach, 2010.
            https://github.com/blei-lab/onlineldavb
 
     .. [2] "Stochastic Variational Inference", Matthew D. Hoffman,
-           David M. Blei, Chong Wang, John Paisley, 2013
+           David M. Blei, Chong Wang, John Paisley, 2013.
+           https://jmlr.org/papers/volume14/hoffman13a/hoffman13a.pdf
 
     Examples
     --------
@@ -495,7 +482,7 @@ class LatentDirichletAllocation(
     def _em_step(self, X, total_samples, batch_update, parallel=None):
         """EM update for 1 iteration.
 
-        update `_component` by batch VB or online VB.
+        update `component_` by batch VB or online VB.
 
         Parameters
         ----------
@@ -727,9 +714,6 @@ class LatentDirichletAllocation(
     def transform(self, X, *, normalize=True):
         """Transform data X according to the fitted model.
 
-        .. versionchanged:: 0.18
-            `doc_topic_distr` is now normalized.
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -772,7 +756,7 @@ class LatentDirichletAllocation(
 
         Returns
         -------
-        X_new : ndarray array of shape (n_samples, n_features_new)
+        X_new : ndarray array of shape (n_samples, n_components)
             Transformed array.
         """
         return self.fit(X, y).transform(X, normalize=normalize)
@@ -929,10 +913,6 @@ class LatentDirichletAllocation(
         """Calculate approximate perplexity for data X.
 
         Perplexity is defined as exp(-1. * log-likelihood per word)
-
-        .. versionchanged:: 0.19
-           *doc_topic_distr* argument has been deprecated and is ignored
-           because user no longer has access to unnormalized distribution
 
         Parameters
         ----------

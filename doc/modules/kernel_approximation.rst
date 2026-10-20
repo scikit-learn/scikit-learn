@@ -94,6 +94,8 @@ also the dimensionality of the features computed - is given by the parameter
   :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`,
   that shows an efficient machine learning pipeline that uses a
   :class:`Nystroem` kernel.
+* See :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
+  for a comparison of :class:`Nystroem` kernel with :class:`RBFSampler`.
 
 .. _rbf_kernel_approx:
 
@@ -145,7 +147,9 @@ use of larger feature spaces more efficient.
 
 .. rubric:: Examples
 
-* :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
+* See :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py` for a
+  comparison of :class:`Nystroem` kernel with :class:`RBFSampler`.
+
 
 .. _additive_chi_kernel_approx:
 

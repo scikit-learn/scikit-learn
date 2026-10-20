@@ -25,16 +25,12 @@ from sklearn.utils._testing import (
 )
 
 
-def test_graphical_lassos(random_state=1):
-    """Test the graphical lasso solvers.
-
-    This checks is unstable for some random seeds where the covariance found with "cd"
-    and "lars" solvers are different (4 cases / 100 tries).
-    """
+def test_graphical_lassos(global_random_seed):
+    """Test the graphical lasso solvers."""
     # Sample data from a sparse multivariate normal
-    dim = 20
+    dim = 10
     n_samples = 100
-    random_state = check_random_state(random_state)
+    random_state = check_random_state(global_random_seed)
     prec = make_sparse_spd_matrix(dim, alpha=0.95, random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
@@ -45,24 +41,29 @@ def test_graphical_lassos(random_state=1):
         icovs = dict()
         for method in ("cd", "lars"):
             cov_, icov_, costs = graphical_lasso(
-                emp_cov, return_costs=True, alpha=alpha, mode=method
+                emp_cov,
+                return_costs=True,
+                alpha=alpha,
+                mode=method,
+                tol=1e-7,
+                enet_tol=1e-11,
+                max_iter=100,
             )
             covs[method] = cov_
             icovs[method] = icov_
             costs, dual_gap = np.array(costs).T
             # Check that the costs always decrease (doesn't hold if alpha == 0)
             if not alpha == 0:
-                # use 1e-12 since the cost can be exactly 0
-                assert_array_less(np.diff(costs), 1e-12)
+                # use 1e-10 since the cost can be exactly 0
+                assert_array_less(np.diff(costs), 1e-10)
         # Check that the 2 approaches give similar results
-        assert_allclose(covs["cd"], covs["lars"], atol=5e-4)
-        assert_allclose(icovs["cd"], icovs["lars"], atol=5e-4)
+        assert_allclose(covs["cd"], covs["lars"], atol=2e-3)
+        assert_allclose(icovs["cd"], icovs["lars"], atol=2e-3)
 
     # Smoke test the estimator
-    model = GraphicalLasso(alpha=0.25).fit(X)
+    model = GraphicalLasso(alpha=0.25, tol=1e-7, enet_tol=1e-11, max_iter=100).fit(X)
     model.score(X)
-    assert_array_almost_equal(model.covariance_, covs["cd"], decimal=4)
-    assert_array_almost_equal(model.covariance_, covs["lars"], decimal=4)
+    assert_allclose(model.covariance_, covs["cd"], rtol=1e-6)
 
     # For a centered matrix, assume_centered could be chosen True or False
     # Check that this returns indeed the same result for centered data
@@ -74,9 +75,9 @@ def test_graphical_lassos(random_state=1):
     assert_array_almost_equal(precs[0], precs[1])
 
 
-def test_graphical_lasso_when_alpha_equals_0():
+def test_graphical_lasso_when_alpha_equals_0(global_random_seed):
     """Test graphical_lasso's early return condition when alpha=0."""
-    X = np.random.randn(100, 10)
+    X = np.random.RandomState(global_random_seed).randn(100, 10)
     emp_cov = empirical_covariance(X, assume_centered=True)
 
     model = GraphicalLasso(alpha=0, covariance="precomputed").fit(emp_cov)
@@ -87,6 +88,7 @@ def test_graphical_lasso_when_alpha_equals_0():
 
 
 @pytest.mark.parametrize("mode", ["cd", "lars"])
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_graphical_lasso_n_iter(mode):
     X, _ = datasets.make_classification(n_samples=5_000, n_features=20, random_state=0)
     emp_cov = empirical_covariance(X)
@@ -138,12 +140,25 @@ def test_graph_lasso_2D():
         assert_array_almost_equal(icov, icov_skggm)
 
 
-def test_graphical_lasso_iris_singular():
+@pytest.mark.parametrize("method", ["cd", "lars"])
+def test_graphical_lasso_iris_singular(method):
     # Small subset of rows to test the rank-deficient case
     # Need to choose samples such that none of the variances are zero
     indices = np.arange(10, 13)
 
     # Hard-coded solution from R glasso package for alpha=0.01
+    # library(glasso)
+    # X = t(array(c(
+    #   5.4, 3.7, 1.5, 0.2,
+    #   4.8, 3.4, 1.6, 0.2,
+    #   4.8, 3. , 1.4, 0.1),
+    #   dim = c(4, 3)
+    # ))
+    # n = nrow(X)
+    # emp_cov = cov(X) * (n - 1)/n  # without Bessel correction
+    # sol = glasso(emp_cov, 0.01, penalize.diagonal = FALSE)
+    # # print cov_R
+    # print(noquote(format(sol$w, scientific=FALSE, digits = 10)))
     cov_R = np.array(
         [
             [0.08, 0.056666662595, 0.00229729713223, 0.00153153142149],
@@ -162,19 +177,16 @@ def test_graphical_lasso_iris_singular():
     )
     X = datasets.load_iris().data[indices, :]
     emp_cov = empirical_covariance(X)
-    for method in ("cd", "lars"):
-        cov, icov = graphical_lasso(
-            emp_cov, alpha=0.01, return_costs=False, mode=method
-        )
-        assert_array_almost_equal(cov, cov_R, decimal=5)
-        assert_array_almost_equal(icov, icov_R, decimal=5)
+    cov, icov = graphical_lasso(emp_cov, alpha=0.01, return_costs=False, mode=method)
+    assert_allclose(cov, cov_R, atol=1e-6)
+    assert_allclose(icov, icov_R, atol=1e-5)
 
 
-def test_graphical_lasso_cv(random_state=1):
+def test_graphical_lasso_cv(global_random_seed):
     # Sample data from a sparse multivariate normal
     dim = 5
     n_samples = 6
-    random_state = check_random_state(random_state)
+    random_state = np.random.RandomState(global_random_seed)
     prec = make_sparse_spd_matrix(dim, alpha=0.96, random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
@@ -237,7 +249,7 @@ def test_graphical_lasso_cv_alphas_invalid_array(alphas, err_type, err_msg):
         GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
 
 
-def test_graphical_lasso_cv_scores():
+def test_graphical_lasso_cv_scores(global_random_seed):
     splits = 4
     n_alphas = 5
     n_refinements = 3
@@ -249,7 +261,7 @@ def test_graphical_lasso_cv_scores():
             [0.0, 0.0, 0.1, 0.7],
         ]
     )
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
     cov = GraphicalLassoCV(cv=splits, alphas=n_alphas, n_refinements=n_refinements).fit(
         X

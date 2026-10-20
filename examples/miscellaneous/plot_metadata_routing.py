@@ -1,22 +1,22 @@
 """
-================
-Metadata Routing
-================
+=====================================================
+Developing Estimators Compliant with Metadata Routing
+=====================================================
 
 .. currentmodule:: sklearn
 
 This document shows how you can use the :ref:`metadata routing mechanism
-<metadata_routing>` in scikit-learn to route metadata to the estimators,
-scorers, and CV splitters consuming them.
+<metadata_routing>` in scikit-learn to build estimators that route metadata
+to other estimators, scorers, and CV splitters, that can consume :term:`metadata`.
 
 To better understand the following document, we need to introduce two concepts:
-routers and consumers. A router is an object which forwards some given data and
-metadata to other objects. In most cases, a router is a :term:`meta-estimator`,
-i.e. an estimator which takes another estimator as a parameter. A function such
-as :func:`sklearn.model_selection.cross_validate` which takes an estimator as a
-parameter and forwards data and metadata, is also a router.
+:term:`routers <router>` and :term:`consumers <consumer>`. A :term:`router` is an object
+which forwards some given data and metadata to other objects. In most cases, a router is
+a :term:`meta-estimator`, i.e. an estimator which takes another estimator as a
+parameter. A function such as :func:`sklearn.model_selection.cross_validate` which takes
+an estimator as a parameter and forwards data and metadata, is also a router.
 
-A consumer, on the other hand, is an object which accepts and uses some given
+A :term:`consumer`, on the other hand, is an object which accepts and uses some given
 metadata. For instance, an estimator taking into account ``sample_weight`` in
 its :term:`fit` method is a consumer of ``sample_weight``.
 
@@ -37,7 +37,7 @@ from pprint import pprint
 
 import numpy as np
 
-from sklearn import set_config
+from sklearn import config_context, set_config
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
@@ -84,7 +84,7 @@ def check_metadata(obj, **kwargs):
 # %%
 # A utility function to nicely print the routing information of an object:
 def print_routing(obj):
-    pprint(obj.get_metadata_routing()._serialize())
+    pprint(get_routing_for_object(obj)._serialize())
 
 
 # %%
@@ -92,7 +92,7 @@ def print_routing(obj):
 # -------------------
 # Here we demonstrate how an estimator can expose the required API to support
 # metadata routing as a consumer. Imagine a simple classifier accepting
-# ``sample_weight`` as a metadata on its ``fit`` and ``groups`` in its
+# ``sample_weight`` as a metadata in its ``fit`` and ``groups`` in its
 # ``predict`` method:
 
 
@@ -146,10 +146,21 @@ print_routing(est)
 #     metadata and the set values are ignored, since a consumer does not
 #     validate or route given metadata. A simple usage of the above estimator
 #     would work as expected.
-
-est = ExampleClassifier()
-est.fit(X, y, sample_weight=my_weights)
-est.predict(X[:3, :], groups=my_groups)
+#
+#     .. code-block:: python
+#
+#         est = ExampleClassifier()
+#         est.fit(X, y, sample_weight=my_weights)
+#         est.predict(X[:3, :], groups=my_groups)
+#
+#     Out:
+#
+#     .. code-block:: python-console
+#
+#         Received sample_weight of length = 100 in ExampleClassifier.
+#         Received groups of length = 100 in ExampleClassifier.
+#
+#         array([1., 1., 1.])
 
 # %%
 # Routing Meta-Estimator
@@ -157,6 +168,13 @@ est.predict(X[:3, :], groups=my_groups)
 # Now, we show how to design a meta-estimator to be a router. As a simplified
 # example, here is a meta-estimator, which doesn't do much other than routing
 # the metadata.
+#
+# To make the meta-estimator a router, you only need to:
+#
+# - define its `get_metadata_routing` method, which returns a `MetadataRouter`
+#   instance in charge of configuring the metadata routing.
+# - use `process_routing` inside its methods (`fit`, `predict`, ...) to  properly
+#   route the metadata from the meta-estimator to its sub-estimator.
 
 
 class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
@@ -166,8 +184,8 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     def get_metadata_routing(self):
         # This method defines the routing for this meta-estimator.
         # In order to do so, a `MetadataRouter` instance is created, and the
-        # routing is added to it. More explanations follow below.
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        # routing is added to it.
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping()
             .add(caller="fit", callee="fit")
@@ -177,56 +195,39 @@ class MetaClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         return router
 
     def fit(self, X, y, **fit_params):
-        # `get_routing_for_object` returns a copy of the `MetadataRouter`
-        # constructed by the above `get_metadata_routing` method, that is
-        # internally called.
-        request_router = get_routing_for_object(self)
-        # Meta-estimators are responsible for validating the given metadata.
-        # `method` refers to the parent's method, i.e. `fit` in this example.
-        request_router.validate_metadata(params=fit_params, method="fit")
-        # `MetadataRouter.route_params` maps the given metadata to the metadata
-        # required by the underlying estimator based on the routing information
-        # defined by the MetadataRouter. The output of type `Bunch` has a key
-        # for each consuming object and those hold keys for their consuming
-        # methods, which then contain key for the metadata which should be
-        # routed to them.
-        routed_params = request_router.route_params(params=fit_params, caller="fit")
-
+        # Get information on all the metadata that should be routed from here to
+        # consuming methods.
+        routed_params = process_routing(self, "fit", **fit_params)
         # A sub-estimator is fitted and its classes are attributed to the
-        # meta-estimator.
-        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
+        # meta-estimator. Since we call the sub-estimator's fit method, we pass the
+        # the metadata stored in `routed_params["estimator"]["fit"]`.
+        self.estimator_ = clone(self.estimator).fit(
+            X, y, **routed_params["estimator"]["fit"]
+        )
         self.classes_ = self.estimator_.classes_
         return self
 
     def predict(self, X, **predict_params):
         check_is_fitted(self)
-        # As in `fit`, we get a copy of the object's MetadataRouter,
-        request_router = get_routing_for_object(self)
-        # then we validate the given metadata,
-        request_router.validate_metadata(params=predict_params, method="predict")
-        # and then prepare the input to the underlying `predict` method.
-        routed_params = request_router.route_params(
-            params=predict_params, caller="predict"
-        )
-        return self.estimator_.predict(X, **routed_params.estimator.predict)
+        # As in `fit`, we get information on all the metadata that should be routed
+        # and pass the metadata that is stored in
+        # `routed_params["estimator"]["predict"]` to the sub-estimator's predict method.
+        routed_params = process_routing(self, "predict", **predict_params)
+        return self.estimator_.predict(X, **routed_params["estimator"]["predict"])
 
 
 # %%
 # Let's break down different parts of the above code.
 #
-# First, the :meth:`~utils.metadata_routing.get_routing_for_object` takes our
-# meta-estimator (``self``) and returns a
-# :class:`~utils.metadata_routing.MetadataRouter` or, a
-# :class:`~utils.metadata_routing.MetadataRequest` if the object is a consumer,
-# based on the output of the estimator's ``get_metadata_routing`` method.
-#
-# Then in each method, we use the ``route_params`` method to construct a
-# dictionary of the form ``{"object_name": {"method_name": {"metadata":
+# In each method, we use the ``process_routing`` function to construct a
+# :class:`~utils.Bunch` of the form ``{"object_name": {"method_name": {"metadata":
 # value}}}`` to pass to the underlying estimator's method. The ``object_name``
-# (``estimator`` in the above ``routed_params.estimator.fit`` example) is the
-# same as the one added in the ``get_metadata_routing``. ``validate_metadata``
-# makes sure all given metadata are requested to avoid silent bugs.
-#
+# (``estimator`` in ``routed_params["estimator"]["fit"]``) is the same as the
+# `estimator` added in the ``get_metadata_routing``. ``process_routing`` also validates
+# the input
+# metadata: it makes sure all given metadata are requested to avoid silent bugs.
+
+# %%
 # Next, we illustrate the different behaviors and notably the type of errors
 # raised.
 
@@ -352,7 +353,7 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             # defining metadata routing request values for usage in the meta-estimator
             .add_self_request(self)
             # defining metadata routing request values for usage in the sub-estimator
@@ -378,25 +379,17 @@ class RouterConsumerClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimato
         # We add `sample_weight` to the `fit_params` dictionary.
         if sample_weight is not None:
             fit_params["sample_weight"] = sample_weight
-
-        request_router = get_routing_for_object(self)
-        request_router.validate_metadata(params=fit_params, method="fit")
-        routed_params = request_router.route_params(params=fit_params, caller="fit")
-        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
+        routed_params = process_routing(self, "fit", **fit_params)
+        self.estimator_ = clone(self.estimator).fit(
+            X, y, **routed_params["estimator"]["fit"]
+        )
         self.classes_ = self.estimator_.classes_
         return self
 
     def predict(self, X, **predict_params):
         check_is_fitted(self)
-        # As in `fit`, we get a copy of the object's MetadataRouter,
-        request_router = get_routing_for_object(self)
-        # we validate the given metadata,
-        request_router.validate_metadata(params=predict_params, method="predict")
-        # and then prepare the input to the underlying ``predict`` method.
-        routed_params = request_router.route_params(
-            params=predict_params, caller="predict"
-        )
-        return self.estimator_.predict(X, **routed_params.estimator.predict)
+        routed_params = process_routing(self, "predict", **predict_params)
+        return self.estimator_.predict(X, **routed_params["estimator"]["predict"])
 
 
 # %%
@@ -465,6 +458,128 @@ print_routing(meta_est)
 # `set_fit_request(sample_weight=True)` was set on it.
 
 # %%
+# .. _metadata_routing_auto_request:
+#
+# Default and Auto-Requested Metadata
+# -----------------------------------
+#
+# .. seealso::
+#    User-facing overview: :ref:`metadata_routing_auto_request_user`.
+#
+# There are two ways for developers to set request values before the user calls
+# `set_*_request`:
+#
+# 1. Class-level request defaults using `__metadata_request__{method}` class attributes,
+#    which apply to all instances of a class, and can even remove a metadata from the
+#    metadata routing machinery if necessary.
+# 2. Auto-requests, which apply at instance level only if
+#    `set_config(enable_metadata_auto_requests=True)` is set by the user.
+#    Developers can add these via the
+#    :func:`~sklearn.utils.metadata_routing.MethodMetadataRequest.add_auto_request`
+#    method. By instance level we mean they are actualised inside `get_metadata_routing`
+#    which has access to the instance (`self`), and `add_auto_request` only adds the
+#    request depending on if `enable_metadata_auto_requests` is set. Therefore we refer
+#    to these as "auto-requests".
+#
+# Here is an example demonstrating both approaches on a :term:`consumer`:
+
+
+class ClassifierWithRequestDefaults(ClassifierMixin, BaseEstimator):
+    """This consumer can use `sample_weight` in its `fit` and `other_metadata` in its
+    `predict` method."""
+
+    # Class-level default request for fit method:
+    __metadata_request__fit = {"sample_weight": True}
+
+    def get_metadata_routing(self):
+        # Each instance can configure metadata which should be auto-requested if
+        # `set_config(enable_metadata_auto_requests=True)` is set. The
+        # `add_auto_request` method does this.
+        requests = super().get_metadata_routing()
+        requests.predict.add_auto_request("other_metadata")
+        return requests
+
+    def fit(self, X, y, sample_weight=None):
+        check_metadata(self, sample_weight=sample_weight)
+        self.classes_ = np.array([0, 1])
+        return self
+
+    def predict(self, X, other_metadata=None):
+        check_metadata(self, other_metadata=other_metadata)
+        return np.ones(len(X))
+
+
+# %%
+# Let's see the default class-level requests:
+clf = ClassifierWithRequestDefaults()
+print_routing(clf)
+
+# %%
+# And now with auto requests enabled:
+with config_context(enable_metadata_auto_requests=True):
+    print_routing(clf)
+
+# %% Note that the auto-requests override class-level requests.
+
+# %%
+# The routing can still be modified by the user with `set_*_request` methods, which take
+# precedence over the previous two ways to set requests. Class-level requests are
+# overridden:
+clf.set_fit_request(sample_weight=False)
+print_routing(clf)
+
+# %%
+# Auto-requests can also be overridden:
+with config_context(enable_metadata_auto_requests=True):
+    clf = ClassifierWithRequestDefaults()
+    clf.set_predict_request(other_metadata=False)
+    print_routing(clf)
+
+# %%
+# Auto-requests can also be set on composite methods such as `fit_transform` or
+# `fit_predict`. Since the requests of a composite method are composed from those of
+# its component methods (`fit` + `transform`, `fit` + `predict`), this is only allowed
+# for metadata which is not already present in the requests of any of the component
+# methods. Otherwise, call `add_auto_request` on the component method, and the
+# composite method inherits the request.
+
+# %%
+# On a consuming :term:`router`, apply `add_auto_request` on the `MetadataRequest`, then
+# attach it with ``add_self_request``. Here we subclass `RouterConsumerClassifier` from
+# above:
+
+
+class RouterConsumerClassifierWithAutoRequests(RouterConsumerClassifier):
+    def get_metadata_routing(self):
+        self_request = self._get_metadata_request()
+        self_request.fit.add_auto_request("sample_weight")
+        return (
+            MetadataRouter(owner=self)
+            .add_self_request(self_request)
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping()
+                .add(caller="fit", callee="fit")
+                .add(caller="predict", callee="predict")
+                .add(caller="score", callee="score"),
+            )
+        )
+
+
+meta_est = RouterConsumerClassifierWithAutoRequests(estimator=ExampleClassifier())
+
+# %%
+# With the default `enable_metadata_auto_requests=False`, no request is automatically
+# set:
+print_routing(meta_est)
+
+# %%
+# When auto-requests are enabled, the consuming router requests `sample_weight`
+# for its own usage:
+with config_context(enable_metadata_auto_requests=True):
+    print_routing(meta_est)
+
+# %%
 # Simple Pipeline
 # ---------------
 # A slightly more complicated use-case is a meta-estimator resembling a
@@ -483,7 +598,7 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             # We add the routing for the transformer.
             .add(
                 transformer=self.transformer,
@@ -509,14 +624,14 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
         routed_params = process_routing(self, "fit", **fit_params)
 
         self.transformer_ = clone(self.transformer).fit(
-            X, y, **routed_params.transformer.fit
+            X, y, **routed_params["transformer"]["fit"]
         )
         X_transformed = self.transformer_.transform(
-            X, **routed_params.transformer.transform
+            X, **routed_params["transformer"]["transform"]
         )
 
         self.classifier_ = clone(self.classifier).fit(
-            X_transformed, y, **routed_params.classifier.fit
+            X_transformed, y, **routed_params["classifier"]["fit"]
         )
         return self
 
@@ -524,10 +639,10 @@ class SimplePipeline(ClassifierMixin, BaseEstimator):
         routed_params = process_routing(self, "predict", **predict_params)
 
         X_transformed = self.transformer_.transform(
-            X, **routed_params.transformer.transform
+            X, **routed_params["transformer"]["transform"]
         )
         return self.classifier_.predict(
-            X_transformed, **routed_params.classifier.predict
+            X_transformed, **routed_params["classifier"]["predict"]
         )
 
 
@@ -610,10 +725,12 @@ class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
 
     def fit(self, X, y, **fit_params):
         routed_params = process_routing(self, "fit", **fit_params)
-        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
+        self.estimator_ = clone(self.estimator).fit(
+            X, y, **routed_params["estimator"]["fit"]
+        )
 
     def get_metadata_routing(self):
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
@@ -646,11 +763,13 @@ class WeightedMetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
             self, "fit", sample_weight=sample_weight, **fit_params
         )
         check_metadata(self, sample_weight=sample_weight)
-        self.estimator_ = clone(self.estimator).fit(X, y, **routed_params.estimator.fit)
+        self.estimator_ = clone(self.estimator).fit(
+            X, y, **routed_params["estimator"]["fit"]
+        )
 
     def get_metadata_routing(self):
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,

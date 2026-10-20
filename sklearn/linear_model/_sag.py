@@ -7,12 +7,12 @@ import warnings
 
 import numpy as np
 
-from ..exceptions import ConvergenceWarning
-from ..utils import check_array
-from ..utils.extmath import row_norms
-from ..utils.validation import _check_sample_weight
-from ._base import make_dataset
-from ._sag_fast import sag32, sag64
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import make_dataset
+from sklearn.linear_model._sag_fast import sag32, sag64
+from sklearn.utils import check_array
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import _check_sample_weight
 
 
 def get_auto_step_size(
@@ -118,8 +118,6 @@ def sag_solver(
     The regularizer is a penalty added to the loss function that shrinks model
     parameters towards the zero vector using the squared euclidean norm L2.
 
-    .. versionadded:: 0.17
-
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -138,9 +136,6 @@ def sag_solver(
         -'squared' is the squared loss, as used in Ridge.
         -'multinomial' is the multinomial logistic loss, as used in
          LogisticRegression.
-
-        .. versionadded:: 0.18
-           *loss='multinomial'*
 
     alpha : float, default=1.
         L2 regularization term in the objective function

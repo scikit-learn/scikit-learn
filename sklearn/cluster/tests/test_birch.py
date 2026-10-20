@@ -240,11 +240,3 @@ def test_both_subclusters_updated():
 
     # no error
     Birch(branching_factor=5, threshold=1e-5, n_clusters=None).fit(X)
-
-
-# TODO(1.8): Remove
-def test_birch_copy_deprecated():
-    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
-    brc = Birch(n_clusters=4, copy=True)
-    with pytest.warns(FutureWarning, match="`copy` was deprecated"):
-        brc.fit(X)

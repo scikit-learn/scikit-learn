@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.base import clone
 from sklearn.impute import IterativeImputer, KNNImputer, SimpleImputer
 from sklearn.utils._testing import (
     assert_allclose,
@@ -19,20 +19,17 @@ def sparse_imputers():
     return [SimpleImputer()]
 
 
-# ConvergenceWarning will be raised by the IterativeImputer
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("imputer", imputers(), ids=lambda x: x.__class__.__name__)
 def test_imputation_missing_value_in_test_array(imputer):
     # [Non Regression Test for issue #13968] Missing value in test set should
     # not throw an error and return a finite dataset
     train = [[1], [2]]
     test = [[3], [np.nan]]
+    imputer = clone(imputer)
     imputer.set_params(add_indicator=True)
     imputer.fit(train).transform(test)
 
 
-# ConvergenceWarning will be raised by the IterativeImputer
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("marker", [np.nan, -1, 0])
 @pytest.mark.parametrize("imputer", imputers(), ids=lambda x: x.__class__.__name__)
 def test_imputers_add_indicator(marker, imputer):
@@ -52,6 +49,7 @@ def test_imputers_add_indicator(marker, imputer):
             [0.0, 0.0, 0.0, 1.0],
         ]
     )
+    imputer = clone(imputer)
     imputer.set_params(missing_values=marker, add_indicator=True)
 
     X_trans = imputer.fit_transform(X)
@@ -63,14 +61,13 @@ def test_imputers_add_indicator(marker, imputer):
     assert_allclose(X_trans[:, :-4], X_trans_no_indicator)
 
 
-# ConvergenceWarning will be raised by the IterativeImputer
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("marker", [np.nan, -1])
 @pytest.mark.parametrize(
     "imputer", sparse_imputers(), ids=lambda x: x.__class__.__name__
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_imputers_add_indicator_sparse(imputer, marker, csr_container):
+    imputer = clone(imputer)  # Avoid side effects from shared instances.
     X = csr_container(
         [
             [marker, 1, 5, marker, 1],
@@ -98,8 +95,6 @@ def test_imputers_add_indicator_sparse(imputer, marker, csr_container):
     assert_allclose_dense_sparse(X_trans[:, :-4], X_trans_no_indicator)
 
 
-# ConvergenceWarning will be raised by the IterativeImputer
-@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("imputer", imputers(), ids=lambda x: x.__class__.__name__)
 @pytest.mark.parametrize("add_indicator", [True, False])
 def test_imputers_pandas_na_integer_array_support(imputer, add_indicator):
@@ -172,6 +167,7 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
 def test_keep_empty_features(imputer, keep_empty_features):
     """Check that the imputer keeps features with only missing values."""
     X = np.array([[np.nan, 1], [np.nan, 2], [np.nan, 3]])
+    imputer = clone(imputer)
     imputer = imputer.set_params(
         add_indicator=False, keep_empty_features=keep_empty_features
     )
@@ -198,6 +194,7 @@ def test_imputation_adds_missing_indicator_if_add_indicator_is_true(
     # Test data where missing_value_test variable can be set to np.nan or 1.
     X_test = np.array([[0, missing_value_test], [1, 2]])
 
+    imputer = clone(imputer)
     imputer.set_params(add_indicator=True)
     imputer.fit(X_train)
 

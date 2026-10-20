@@ -6,8 +6,8 @@
 import numpy as np
 from scipy import sparse
 
-from ..metrics.pairwise import pairwise_distances
-from ._param_validation import Integral, Interval, validate_params
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.utils._param_validation import Integral, Interval, validate_params
 
 
 ###############################################################################
@@ -59,7 +59,7 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
     if sparse.issparse(graph):
         graph = graph.tolil()
     else:
-        graph = sparse.lil_matrix(graph)
+        graph = sparse.lil_array(graph)
     seen = {}  # level (number of hops) when seen in BFS
     level = 0  # the current level
     next_level = [source]  # dict of nodes to check at next level

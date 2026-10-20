@@ -14,11 +14,11 @@ Mailing Lists
 
 - **Main Mailing List**: Join the primary discussion
   platform for scikit-learn at `scikit-learn Mailing List
-  <https://mail.python.org/mailman/listinfo/scikitlearn>`_.
+  <https://mail.python.org/mailman3/lists/scikit-learn.python.org/>`_.
 
 - **Commit Updates**: Stay informed about repository
   updates and test failures on the `scikit-learn-commits list
-  <https://lists.sourceforge.net/lists/listinfo/scikit-learn-commits>`_.
+  <https://mail.python.org/mailman3/lists/scikit-learn-commits.python.org/>`_.
 
 .. _user_questions:
 
@@ -87,6 +87,16 @@ Include in your report:
   `gist <https://gist.github.com>`_ or a github repo.
 
 **Tip**: Gists are Git repositories; you can push data files to them using Git.
+
+Paid support
+============
+
+The following companies (listed in alphabetical order) offer support services
+related to scikit-learn and have a proven track record of employing long-term
+maintainers of scikit-learn and related open source projects:
+
+- `:probabl. <https://support.probabl.ai/?utm_source=scikit_learn_docs&utm_medium=documentation&utm_campaign=pro_support>`__
+- `Quansight <https://quansight.com/open-source-services>`__
 
 .. _social_media:
 

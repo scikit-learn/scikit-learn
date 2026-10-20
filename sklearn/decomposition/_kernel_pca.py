@@ -10,19 +10,19 @@ from scipy import linalg
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import NotFittedError
-from ..metrics.pairwise import pairwise_kernels
-from ..preprocessing import KernelCenterer
-from ..utils._arpack import _init_arpack_v0
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import _randomized_eigsh, svd_flip
-from ..utils.validation import (
+from sklearn.exceptions import NotFittedError
+from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.preprocessing import KernelCenterer
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import _randomized_eigsh, svd_flip
+from sklearn.utils.validation import (
     _check_psd_eigenvalues,
     check_is_fitted,
     validate_data,
@@ -144,22 +144,16 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-        .. versionadded:: 0.18
-
     copy_X : bool, default=True
         If True, input X is copied and stored by the model in the `X_fit_`
         attribute. If no further changes will be done to X, setting
         `copy_X=False` saves memory by storing a reference.
-
-        .. versionadded:: 0.18
 
     n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-
-        .. versionadded:: 0.18
 
     Attributes
     ----------
@@ -186,8 +180,6 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -217,7 +209,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
        "Kernel principal component analysis."
        International conference on artificial neural networks.
        Springer, Berlin, Heidelberg, 1997.
-       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+       <https://graphics.stanford.edu/courses/cs233-25-spring/ReferencedPapers/scholkopf_kernel.pdf>`_
 
     .. [2] `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
        "Learning to find pre-images."
@@ -471,7 +463,7 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
-            Returns the instance itself.
+            Transformed values.
         """
         self.fit(X, **params)
 
@@ -495,7 +487,8 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         Returns
         -------
         X_new : ndarray of shape (n_samples, n_components)
-            Returns the instance itself.
+            Projection of X in the first principal components, where `n_samples`
+            is the number of samples and `n_components` is the number of the components.
         """
         check_is_fitted(self)
         X = validate_data(self, X, accept_sparse="csr", reset=False)
@@ -544,8 +537,9 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
-            Returns the instance itself.
+        X_original : ndarray of shape (n_samples, n_features)
+            Original data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         References
         ----------

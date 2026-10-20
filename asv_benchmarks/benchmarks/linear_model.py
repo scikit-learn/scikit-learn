@@ -47,11 +47,11 @@ class LogisticRegressionBenchmark(Predictor, Estimator, Benchmark):
     def make_estimator(self, params):
         representation, solver, n_jobs = params
 
-        penalty = "l2" if solver == "lbfgs" else "l1"
+        l1_ratio = 0 if solver == "lbfgs" else 1
 
         estimator = LogisticRegression(
             solver=solver,
-            penalty=penalty,
+            l1_ratio=l1_ratio,
             tol=0.01,
             n_jobs=n_jobs,
             random_state=0,

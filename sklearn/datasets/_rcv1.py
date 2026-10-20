@@ -18,12 +18,18 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils import Bunch
-from ..utils import shuffle as shuffle_
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from . import get_data_home
-from ._base import RemoteFileMetadata, _fetch_remote, _pkl_filepath, load_descr
-from ._svmlight_format_io import load_svmlight_files
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
+    RemoteFileMetadata,
+    _fetch_remote,
+    _pkl_filepath,
+    load_descr,
+)
+from sklearn.datasets._svmlight_format_io import load_svmlight_files
+from sklearn.utils import Bunch
+from sklearn.utils import shuffle as shuffle_
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._sparse import _align_api_if_sparse
 
 # The original vectorized data can be found at:
 #    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
@@ -112,8 +118,6 @@ def fetch_rcv1(
 
     Read more in the :ref:`User Guide <rcv1_dataset>`.
 
-    .. versionadded:: 0.17
-
     Parameters
     ----------
     data_home : str or path-like, default=None
@@ -142,8 +146,6 @@ def fetch_rcv1(
         If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
         object. See below for more information about the `dataset.data` and
         `dataset.target` object.
-
-        .. versionadded:: 0.20
 
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
@@ -176,8 +178,6 @@ def fetch_rcv1(
     (data, target) : tuple
         A tuple consisting of `dataset.data` and `dataset.target`, as
         described above. Returned only if `return_X_y` is True.
-
-        .. versionadded:: 0.20
 
     Examples
     --------
@@ -280,7 +280,7 @@ def fetch_rcv1(
         # reorder categories in lexicographic order
         order = np.argsort(categories)
         categories = categories[order]
-        y = sp.csr_matrix(y[:, order])
+        y = _align_api_if_sparse(sp.csr_array(y[:, order]))
 
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)
@@ -309,6 +309,7 @@ def fetch_rcv1(
 
     fdescr = load_descr("rcv1.rst")
 
+    X = _align_api_if_sparse(X)
     if return_X_y:
         return X, y
 

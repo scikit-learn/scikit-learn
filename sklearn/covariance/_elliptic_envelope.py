@@ -5,11 +5,11 @@ from numbers import Real
 
 import numpy as np
 
-from ..base import OutlierMixin, _fit_context
-from ..metrics import accuracy_score
-from ..utils._param_validation import Interval
-from ..utils.validation import check_is_fitted
-from ._robust_covariance import MinCovDet
+from sklearn.base import OutlierMixin, _fit_context
+from sklearn.covariance._robust_covariance import MinCovDet
+from sklearn.metrics import accuracy_score
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.validation import check_is_fitted
 
 
 class EllipticEnvelope(OutlierMixin, MinCovDet):
@@ -69,8 +69,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
 
-        .. versionadded:: 0.20
-
     raw_location_ : ndarray of shape (n_features,)
         The raw robust estimated location before correction and re-weighting.
 
@@ -88,8 +86,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -135,10 +131,10 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     ...              [3, 3]])
     array([ 1, -1])
     >>> cov.covariance_
-    array([[0.7411..., 0.2535...],
-           [0.2535..., 0.3053...]])
+    array([[0.8102, 0.2736],
+           [0.2736, 0.3330]])
     >>> cov.location_
-    array([0.0813... , 0.0427...])
+    array([0.0769 , 0.0397])
     """
 
     _parameter_constraints: dict = {

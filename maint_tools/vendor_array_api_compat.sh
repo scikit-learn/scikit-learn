@@ -6,7 +6,7 @@ set -o nounset
 set -o errexit
 
 URL="https://github.com/data-apis/array-api-compat.git"
-VERSION="1.11.2"
+VERSION="1.15"
 
 ROOT_DIR=sklearn/externals/array_api_compat
 
@@ -17,7 +17,7 @@ git clone $URL $ROOT_DIR/.tmp
 pushd $ROOT_DIR/.tmp
 git checkout $VERSION
 popd
-mv -v $ROOT_DIR/.tmp/array_api_compat/* $ROOT_DIR/
+mv -v $ROOT_DIR/.tmp/src/array_api_compat/* $ROOT_DIR/
 mv -v $ROOT_DIR/.tmp/LICENSE $ROOT_DIR/
 rm -rf $ROOT_DIR/.tmp
 

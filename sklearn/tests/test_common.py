@@ -10,7 +10,6 @@ import pkgutil
 import re
 import warnings
 from functools import partial
-from inspect import isgenerator
 from itertools import chain
 
 import pytest
@@ -19,14 +18,10 @@ from scipy.linalg import LinAlgWarning
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer
-from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa
-    enable_iterative_imputer,  # noqa
-)
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.preprocessing import (
@@ -40,12 +35,15 @@ from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
     _get_expected_failed_checks,
     _tested_estimators,
+    _yield_instances_for_check,
 )
 from sklearn.utils._testing import (
     SkipTest,
+    assert_run_python_script_without_output,
     ignore_warnings,
 )
 from sklearn.utils.estimator_checks import (
+    check_all_zero_sample_weights_error,
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
@@ -60,8 +58,11 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.fixes import _IS_WASM
+from sklearn.utils.validation import has_fit_parameter
 
 
+@pytest.mark.thread_unsafe  # import side-effects
 def test_all_estimator_no_base_class():
     # test that all_estimators doesn't find abstract classes.
     for name, Estimator in all_estimators():
@@ -91,16 +92,18 @@ class CallableEstimator(BaseEstimator):
         (partial(_sample_func, y=1), "_sample_func(y=1)"),
         (_sample_func, "_sample_func"),
         (partial(_sample_func, "world"), "_sample_func"),
-        (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
+        (
+            LogisticRegression(alpha=0.5),
+            "LogisticRegression(alpha=0.5)",
+        ),
         (
             LogisticRegression(
-                random_state=1,
                 solver="newton-cg",
                 class_weight="balanced",
                 warm_start=True,
             ),
             (
-                "LogisticRegression(class_weight='balanced',random_state=1,"
+                "LogisticRegression(class_weight='balanced',"
                 "solver='newton-cg',warm_start=True)"
             ),
         ),
@@ -111,6 +114,7 @@ def test_get_check_estimator_ids(val, expected):
     assert _get_check_estimator_ids(val) == expected
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 @parametrize_with_checks(
     list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
 )
@@ -122,21 +126,16 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
-# TODO(1.8): remove test when generate_only is removed
-def test_check_estimator_generate_only_deprecation():
-    """Check that check_estimator with generate_only=True raises a deprecation
-    warning."""
-    with pytest.warns(FutureWarning, match="`generate_only` is deprecated in 1.6"):
-        all_instance_gen_checks = check_estimator(
-            LogisticRegression(), generate_only=True
-        )
-    assert isgenerator(all_instance_gen_checks)
-
-
+# TODO(1.12): remove filter
 @pytest.mark.filterwarnings(
-    "ignore:Since version 1.0, it is not needed to import "
-    "enable_hist_gradient_boosting anymore"
+    "ignore:The sklearn.experimental.enable_hist_gradient_boosting module is "
+    "deprecated:FutureWarning"
 )
+@pytest.mark.filterwarnings(
+    "ignore:Since version 1.10, it is not needed to import "
+    "enable_iterative_imputer anymore"
+)
+@pytest.mark.thread_unsafe  # import side-effects
 def test_import_all_consistency():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     # Smoke test to check that any name in a __all__ list is actually defined
@@ -161,24 +160,49 @@ def test_import_all_consistency():
 def test_root_import_all_completeness():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     EXCEPTIONS = ("utils", "tests", "base", "conftest")
-    for _, modname, _ in pkgutil.walk_packages(
-        path=sklearn_path, onerror=lambda _: None
-    ):
-        if "." in modname or modname.startswith("_") or modname in EXCEPTIONS:
+    for _, modname, _ in pkgutil.iter_modules(sklearn_path):
+        if modname.startswith("_") or modname in EXCEPTIONS:
             continue
         assert modname in sklearn.__all__
 
 
+@pytest.mark.xfail(_IS_WASM, reason="cannot start subprocess")
+def test_wildcard_import_for_public_modules():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
+    modules = [
+        name
+        for _, name, _ in pkgutil.iter_modules(sklearn_path)
+        if not name.startswith("_") and name not in {"tests", "conftest"}
+    ]
+    # Run in a fresh interpreter: this test module imports
+    # sklearn.experimental.enable_halving_search_cv, which could hide wildcard
+    # import failures, see for example
+    # https://github.com/scikit-learn/scikit-learn/pull/35038
+    code = "\n".join(f"from sklearn.{name} import *" for name in modules)
+    # sanity check to make sure that nothing is imported from deeper than
+    # sklearn.experimental as an import side-effect
+    code += """
+import sys
+
+experimental_modules = [
+    name for name in sys.modules if name.startswith("sklearn.experimental.")
+]
+assert not experimental_modules, experimental_modules
+"""
+    assert_run_python_script_without_output(code)
+
+
+@pytest.mark.thread_unsafe  # import side-effects
 def test_all_tests_are_importable():
     # Ensure that for each contentful subpackage, there is a test directory
     # within it that is also a subpackage (i.e. a directory with __init__.py)
 
     HAS_TESTS_EXCEPTIONS = re.compile(
         r"""(?x)
-                                      \.externals(\.|$)|
-                                      \.tests(\.|$)|
-                                      \._
-                                      """
+        \.externals(\.|$)|
+        \.tests(\.|$)|
+        \._
+        """
     )
     resource_modules = {
         "sklearn.datasets.data",
@@ -243,31 +267,34 @@ def _estimators_that_predict_in_fit():
 column_name_estimators = list(
     chain(
         _tested_estimators(),
-        [make_pipeline(LogisticRegression(C=1))],
+        [make_pipeline(LogisticRegression())],
         _estimators_that_predict_in_fit(),
     )
 )
 
 
 @pytest.mark.parametrize(
-    "estimator", column_name_estimators, ids=_get_check_estimator_ids
+    "estimator_orig", column_name_estimators, ids=_get_check_estimator_ids
 )
-def test_pandas_column_name_consistency(estimator):
-    if isinstance(estimator, ColumnTransformer):
+def test_pandas_column_name_consistency(estimator_orig):
+    if isinstance(estimator_orig, ColumnTransformer):
         pytest.skip("ColumnTransformer is not tested here")
     if "check_dataframe_column_names_consistency" in _get_expected_failed_checks(
-        estimator
+        estimator_orig
     ):
         pytest.skip(
             "Estimator does not support check_dataframe_column_names_consistency"
         )
-    with ignore_warnings(category=(FutureWarning)):
-        with warnings.catch_warnings(record=True) as record:
-            check_dataframe_column_names_consistency(
-                estimator.__class__.__name__, estimator
-            )
-        for warning in record:
-            assert "was fitted without feature names" not in str(warning.message)
+    for estimator in _yield_instances_for_check(
+        check_dataframe_column_names_consistency, estimator_orig
+    ):
+        with ignore_warnings(category=(FutureWarning)):
+            with warnings.catch_warnings(record=True) as record:
+                check_dataframe_column_names_consistency(
+                    estimator.__class__.__name__, estimator
+                )
+            for warning in record:
+                assert "was fitted without feature names" not in str(warning.message)
 
 
 # TODO: As more modules support get_feature_names_out they should be removed
@@ -296,7 +323,6 @@ GET_FEATURES_OUT_ESTIMATORS = [
     "transformer", GET_FEATURES_OUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 def test_transformers_get_feature_names_out(transformer):
-
     with ignore_warnings(category=(FutureWarning)):
         check_transformer_get_feature_names_out(
             transformer.__class__.__name__, transformer
@@ -342,21 +368,24 @@ SET_OUTPUT_ESTIMATORS = list(
 
 
 @pytest.mark.parametrize(
-    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+    "estimator_orig", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
-def test_set_output_transform(estimator):
-    name = estimator.__class__.__name__
-    if not hasattr(estimator, "set_output"):
+def test_set_output_transform(estimator_orig):
+    name = estimator_orig.__class__.__name__
+    if not hasattr(estimator_orig, "set_output"):
         pytest.skip(
             f"Skipping check_set_output_transform for {name}: Does not support"
             " set_output API"
         )
-    with ignore_warnings(category=(FutureWarning)):
-        check_set_output_transform(estimator.__class__.__name__, estimator)
+    for estimator in _yield_instances_for_check(
+        check_set_output_transform, estimator_orig
+    ):
+        with ignore_warnings(category=(FutureWarning)):
+            check_set_output_transform(estimator.__class__.__name__, estimator)
 
 
 @pytest.mark.parametrize(
-    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+    "estimator_orig", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
 @pytest.mark.parametrize(
     "check_func",
@@ -367,15 +396,16 @@ def test_set_output_transform(estimator):
         check_global_set_output_transform_polars,
     ],
 )
-def test_set_output_transform_configured(estimator, check_func):
-    name = estimator.__class__.__name__
-    if not hasattr(estimator, "set_output"):
+def test_set_output_transform_configured(estimator_orig, check_func):
+    name = estimator_orig.__class__.__name__
+    if not hasattr(estimator_orig, "set_output"):
         pytest.skip(
             f"Skipping {check_func.__name__} for {name}: Does not support"
             " set_output API yet"
         )
-    with ignore_warnings(category=(FutureWarning)):
-        check_func(estimator.__class__.__name__, estimator)
+    for estimator in _yield_instances_for_check(check_func, estimator_orig):
+        with ignore_warnings(category=(FutureWarning)):
+            check_func(estimator.__class__.__name__, estimator)
 
 
 @pytest.mark.parametrize(
@@ -404,35 +434,15 @@ def test_check_inplace_ensure_writeable(estimator):
     check_inplace_ensure_writeable(name, estimator)
 
 
-# TODO(1.7): Remove this test when the deprecation cycle is over
-def test_transition_public_api_deprecations():
-    """This test checks that we raised deprecation warning explaining how to transition
-    to the new developer public API from 1.5 to 1.6.
-    """
+ESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS = [
+    est for est in _tested_estimators() if has_fit_parameter(est, "sample_weight")
+]
 
-    class OldEstimator(BaseEstimator):
-        def fit(self, X, y=None):
-            X = self._validate_data(X)
-            self._check_n_features(X, reset=True)
-            self._check_feature_names(X, reset=True)
-            return self
 
-        def transform(self, X):
-            return X  # pragma: no cover
+@pytest.mark.parametrize(
+    "estimator", ESTIMATORS_ACCEPTING_SAMPLE_WEIGHTS, ids=_get_check_estimator_ids
+)
+def test_check_all_zero_sample_weights_error(estimator):
+    name = estimator.__class__.__name__
 
-    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
-
-    old_estimator = OldEstimator()
-    with pytest.warns(FutureWarning) as warning_list:
-        old_estimator.fit(X)
-
-    assert len(warning_list) == 3
-    assert str(warning_list[0].message).startswith(
-        "`BaseEstimator._validate_data` is deprecated"
-    )
-    assert str(warning_list[1].message).startswith(
-        "`BaseEstimator._check_n_features` is deprecated"
-    )
-    assert str(warning_list[2].message).startswith(
-        "`BaseEstimator._check_feature_names` is deprecated"
-    )
+    check_all_zero_sample_weights_error(name, estimator)

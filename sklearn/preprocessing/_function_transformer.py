@@ -4,24 +4,19 @@
 import warnings
 from functools import partial
 
+import narwhals.stable.v2 as nw
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._estimator_html_repr import _VisualBlock
-from ..utils._param_validation import StrOptions
-from ..utils._set_output import (
-    _get_adapter_from_container,
-    _get_output_config,
-)
-from ..utils.metaestimators import available_if
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._dataframe import is_polars_df
+from sklearn.utils._param_validation import StrOptions
+from sklearn.utils._repr_html.estimator import _VisualBlock
+from sklearn.utils._set_output import _get_adapter_from_container, _get_output_config
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.validation import (
     _allclose_dense_sparse,
-    _check_feature_names,
     _check_feature_names_in,
-    _check_n_features,
     _get_feature_names,
-    _is_pandas_df,
-    _is_polars_df,
     check_array,
     validate_data,
 )
@@ -42,8 +37,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     Note: If a lambda is used as the function, then the resulting
     transformer will not be pickleable.
-
-    .. versionadded:: 0.17
 
     Read more in the :ref:`User Guide <function_transformer>`.
 
@@ -69,9 +62,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
           sparse matrix. If the conversion is not possible an exception is
           raised.
 
-        .. versionchanged:: 0.22
-           The default of ``validate`` changed from True to False.
-
     accept_sparse : bool, default=False
         Indicate that func accepts a sparse matrix as input. If validate is
         False, this has no effect. Otherwise, if accept_sparse is false,
@@ -81,8 +71,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
        Whether to check that or ``func`` followed by ``inverse_func`` leads to
        the original inputs. It can be used for a sanity check, raising a
        warning when the condition is not fulfilled.
-
-       .. versionadded:: 0.20
 
     feature_names_out : callable, 'one-to-one' or None, default=None
         Determines the list of feature names that will be returned by the
@@ -101,19 +89,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     kw_args : dict, default=None
         Dictionary of additional keyword arguments to pass to func.
 
-        .. versionadded:: 0.18
-
     inv_kw_args : dict, default=None
         Dictionary of additional keyword arguments to pass to inverse_func.
-
-        .. versionadded:: 0.18
 
     Attributes
     ----------
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X` has feature
@@ -142,8 +124,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     >>> transformer = FunctionTransformer(np.log1p)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.transform(X)
-    array([[0.       , 0.6931...],
-           [1.0986..., 1.3862...]])
+    array([[0.       , 0.6931],
+           [1.0986, 1.3862]])
     """
 
     _parameter_constraints: dict = {
@@ -178,17 +160,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
 
-    def _check_input(self, X, *, reset):
-        if self.validate:
-            return validate_data(self, X, accept_sparse=self.accept_sparse, reset=reset)
-        elif reset:
-            # Set feature_names_in_ and n_features_in_ even if validate=False
-            # We run this only when reset==True to store the attributes but not
-            # validate them, because validate=False
-            _check_n_features(self, X, reset=reset)
-            _check_feature_names(self, X, reset=reset)
-        return X
-
     def _check_inverse_transform(self, X):
         """Check that func and inverse_func are the inverse."""
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
@@ -200,7 +171,10 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
             # Dataframes can have multiple dtypes
             dtypes = X.dtypes
 
-        if not all(np.issubdtype(d, np.number) for d in dtypes):
+        # Not all dtypes are numpy dtypes, they can be pandas dtypes as well
+        if not all(
+            isinstance(d, np.dtype) and np.issubdtype(d, np.number) for d in dtypes
+        ):
             raise ValueError(
                 "'check_inverse' is only supported when all the elements in `X` is"
                 " numerical."
@@ -237,7 +211,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self : object
             FunctionTransformer class instance.
         """
-        X = self._check_input(X, reset=True)
+        X = validate_data(
+            self,
+            X,
+            reset=True,
+            accept_sparse=self.accept_sparse,
+            skip_check_array=not self.validate,
+        )
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
             self._check_inverse_transform(X)
         return self
@@ -256,13 +236,15 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
-        X = self._check_input(X, reset=False)
+        if self.validate:
+            X = validate_data(self, X, reset=False, accept_sparse=self.accept_sparse)
+
         out = self._transform(X, func=self.func, kw_args=self.kw_args)
         output_config = _get_output_config("transform", self)["dense"]
 
         if hasattr(out, "columns") and self.feature_names_out is not None:
             # check the consistency between the column provided by `transform` and
-            # the the column names provided by `get_feature_names_out`.
+            # the column names provided by `get_feature_names_out`.
             feature_names_out = self.get_feature_names_out()
             if list(out.columns) != list(feature_names_out):
                 # we can override the column names of the output if it is inconsistent
@@ -307,9 +289,11 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 "a {0} DataFrame to follow the `set_output` API  or `feature_names_out`"
                 " should be defined."
             )
-            if output_config == "pandas" and not _is_pandas_df(out):
+            if output_config == "pandas" and not nw.dependencies.is_pandas_dataframe(
+                out
+            ):
                 warnings.warn(warn_msg.format("pandas"))
-            elif output_config == "polars" and not _is_polars_df(out):
+            elif output_config == "polars" and not is_polars_df(out):
                 warnings.warn(warn_msg.format("polars"))
 
         return out
@@ -325,7 +309,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_out : array-like, shape (n_samples, n_features)
+        X_original : array-like, shape (n_samples, n_features)
             Transformed input.
         """
         if self.validate:
@@ -387,7 +371,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         return func(X, **(kw_args if kw_args else {}))
 
     def __sklearn_is_fitted__(self):
-        """Return True since FunctionTransfomer is stateless."""
+        """Return True since FunctionTransformer is stateless."""
         return True
 
     def __sklearn_tags__(self):
@@ -400,8 +384,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     def set_output(self, *, transform=None):
         """Set output container.
 
-        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-        for an example on how to use the API.
+        Refer to the :ref:`user guide <df_output_transform>` for more details
+        and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+        example on how to use the API.
 
         Parameters
         ----------

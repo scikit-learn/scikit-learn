@@ -18,14 +18,14 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from .._config import config_context
-from ..base import BaseEstimator, ClusterMixin, _fit_context
-from ..metrics.pairwise import pairwise_distances_argmin
-from ..neighbors import NearestNeighbors
-from ..utils import check_array, check_random_state, gen_batches
-from ..utils._param_validation import Interval, validate_params
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn._config import config_context
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.metrics.pairwise import pairwise_distances_argmin
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import check_array, check_random_state, gen_batches
+from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 @validate_params(
@@ -58,7 +58,7 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     n_samples : int, default=None
         The number of samples to use. If not given, all samples are used.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance, default=0
         The generator used to randomly select the samples from input points
         for bandwidth estimation. Use an int to make the randomness
         deterministic.
@@ -82,7 +82,7 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     >>> X = np.array([[1, 1], [2, 1], [1, 0],
     ...               [4, 7], [3, 5], [3, 6]])
     >>> estimate_bandwidth(X, quantile=0.5)
-    np.float64(1.61...)
+    np.float64(1.61)
     """
     X = check_array(X)
 
@@ -202,9 +202,6 @@ def mean_shift(
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionadded:: 0.17
-           Parallel Execution using *n_jobs*.
-
     Returns
     -------
 
@@ -227,8 +224,8 @@ def mean_shift(
     ...               [4, 7], [3, 5], [3, 6]])
     >>> cluster_centers, labels = mean_shift(X, bandwidth=2)
     >>> cluster_centers
-    array([[3.33..., 6.     ],
-           [1.33..., 0.66...]])
+    array([[3.33, 6.     ],
+           [1.33, 0.66]])
     >>> labels
     array([1, 1, 1, 0, 0, 0])
     """
@@ -365,8 +362,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
 
-        .. versionadded:: 0.22
-
     Attributes
     ----------
     cluster_centers_ : ndarray of shape (n_clusters, n_features)
@@ -378,12 +373,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
     n_iter_ : int
         Maximum number of iterations performed on each seed.
 
-        .. versionadded:: 0.22
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

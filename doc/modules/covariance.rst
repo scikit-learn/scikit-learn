@@ -35,10 +35,9 @@ The empirical covariance matrix of a sample can be computed using the
 :class:`EmpiricalCovariance` object to the data sample with the
 :meth:`EmpiricalCovariance.fit` method. Be careful that results depend
 on whether the data are centered, so one may want to use the
-``assume_centered`` parameter accurately. More precisely, if
-``assume_centered=False``, then the test set is supposed to have the
-same mean vector as the training set. If not, both should be centered
-by the user, and ``assume_centered=True`` should be used.
+`assume_centered` parameter accurately. More precisely, if `assume_centered=True`, then
+all features in the train and test sets should have a mean of zero. If not, both should
+be centered by the user, or `assume_centered=False` should be used.
 
 .. rubric:: Examples
 

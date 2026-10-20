@@ -7,11 +7,11 @@ import numbers
 
 import numpy as np
 
-from ..ensemble._bagging import _generate_indices
-from ..metrics import check_scoring, get_scorer_names
-from ..model_selection._validation import _aggregate_score_dicts
-from ..utils import Bunch, _safe_indexing, check_array, check_random_state
-from ..utils._param_validation import (
+from sklearn.ensemble._bagging import _generate_indices
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.model_selection._validation import _aggregate_score_dicts
+from sklearn.utils import Bunch, _safe_indexing, check_array, check_random_state
+from sklearn.utils._param_validation import (
     HasMethods,
     Integral,
     Interval,
@@ -19,7 +19,7 @@ from ..utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from ..utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import Parallel, delayed
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
@@ -187,7 +187,7 @@ def permutation_importance(
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         Passing multiple scores to `scoring` is more efficient than calling
         `permutation_importance` for each of the scores as it reuses
@@ -211,8 +211,6 @@ def permutation_importance(
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights used in scoring.
-
-        .. versionadded:: 0.24
 
     max_samples : int or float, default=1.0
         The number of samples to draw from X to compute feature importance
@@ -262,9 +260,9 @@ def permutation_importance(
     >>> result = permutation_importance(clf, X, y, n_repeats=10,
     ...                                 random_state=0)
     >>> result.importances_mean
-    array([0.4666..., 0.       , 0.       ])
+    array([0.4666, 0.       , 0.       ])
     >>> result.importances_std
-    array([0.2211..., 0.       , 0.       ])
+    array([0.2211, 0.       , 0.       ])
     """
     if not hasattr(X, "iloc"):
         X = check_array(X, ensure_all_finite="allow-nan", dtype=None)

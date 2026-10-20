@@ -5,9 +5,9 @@ import numbers
 
 import numpy as np
 
-from ...utils import _safe_indexing, check_random_state
-from ...utils._optional_dependencies import check_matplotlib_support
-from ...utils._plotting import _validate_style_kwargs
+from sklearn.utils import _safe_indexing, check_random_state
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._plotting import _validate_style_kwargs
 
 
 class PredictionErrorDisplay:

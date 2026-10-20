@@ -23,17 +23,17 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
-from ..utils.validation import check_is_fitted, validate_data
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import _randomized_svd, fast_logdet, squared_norm
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -56,8 +56,6 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
     observed ones, using SVD based approach.
 
     Read more in the :ref:`User Guide <FA>`.
-
-    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -100,8 +98,6 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         <https://link.springer.com/article/10.1007%2FBF02289233>`_
         H. F. Kaiser, 1958.
 
-        .. versionadded:: 0.24
-
     random_state : int or RandomState instance, default=0
         Only used when ``svd_method`` equals 'randomized'. Pass an int for
         reproducible results across multiple function calls.
@@ -126,8 +122,6 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -264,7 +258,7 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             random_state = check_random_state(self.random_state)
 
             def my_svd(X):
-                _, s, Vt = randomized_svd(
+                _, s, Vt = _randomized_svd(
                     X,
                     n_components,
                     random_state=random_state,

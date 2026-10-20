@@ -13,6 +13,7 @@ from sklearn.datasets import make_blobs
 from sklearn.exceptions import DataConversionWarning, EfficiencyWarning
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.neighbors import kneighbors_graph, sort_graph_by_row_values
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -84,6 +85,8 @@ def test_the_extract_xi_labels(ordering, clusters, expected):
 def test_extract_xi(global_dtype):
     # small and easy test (no clusters around other clusters)
     # but with a clear noise data.
+    # global_random_seed is not used here since the expected labels
+    # are hardcoded for these specific data.
     rng = np.random.RandomState(0)
     n_points_per_cluster = 5
 
@@ -138,8 +141,8 @@ def test_extract_xi(global_dtype):
     assert_array_equal(clust.labels_, expected_labels)
 
 
-def test_cluster_hierarchy_(global_dtype):
-    rng = np.random.RandomState(0)
+def test_cluster_hierarchy(global_dtype, global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_points_per_cluster = 100
     C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2).astype(
         global_dtype, copy=False
@@ -148,12 +151,16 @@ def test_cluster_hierarchy_(global_dtype):
         global_dtype, copy=False
     )
     X = np.vstack((C1, C2))
-    X = shuffle(X, random_state=0)
+    X = shuffle(X, random_state=rng)
 
-    clusters = OPTICS(min_samples=20, xi=0.1).fit(X).cluster_hierarchy_
+    clusters = OPTICS(min_samples=20, xi=0.2).fit(X).cluster_hierarchy_
     assert clusters.shape == (2, 2)
-    diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
-    assert diff / len(X) < 0.05
+
+    # The first cluster should contain all point from C1 but due to how the data is
+    # generated, some points from C2 may end up in it.
+    assert 100 <= np.diff(clusters[0]) + 1 <= 115
+    # The second cluster should contain all points from C1 and C2.
+    assert np.diff(clusters[-1]) + 1 == 200
 
 
 @pytest.mark.parametrize(
@@ -252,6 +259,12 @@ def test_warn_if_metric_bool_data_no_bool():
     msg = f"Data will be converted to boolean for metric {pairwise_metric}"
 
     with pytest.warns(DataConversionWarning, match=msg) as warn_record:
+        # Silence a DeprecationWarning from joblib <= 1.5.1 in Python 3.14+.
+        warnings.filterwarnings(
+            "ignore",
+            message="'asyncio.iscoroutinefunction' is deprecated",
+            category=DeprecationWarning,
+        )
         OPTICS(metric=pairwise_metric).fit(X)
         assert len(warn_record) == 1
 
@@ -785,10 +798,10 @@ def test_compare_to_ELKI():
     assert_allclose(clust1.core_distances_[index], clust2.core_distances_[index])
 
 
-def test_extract_dbscan(global_dtype):
+def test_extract_dbscan(global_dtype, global_random_seed):
     # testing an easy dbscan case. Not including clusters with different
     # densities.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_points_per_cluster = 20
     C1 = [-5, -2] + 0.2 * rng.randn(n_points_per_cluster, 2)
     C2 = [4, -1] + 0.2 * rng.randn(n_points_per_cluster, 2)
@@ -797,7 +810,9 @@ def test_extract_dbscan(global_dtype):
     X = np.vstack((C1, C2, C3, C4)).astype(global_dtype, copy=False)
 
     clust = OPTICS(cluster_method="dbscan", eps=0.5).fit(X)
-    assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
+    assert_array_equal(
+        np.sort(np.unique(clust.labels_[clust.labels_ != -1])), [0, 1, 2, 3]
+    )
 
 
 @pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
@@ -805,11 +820,7 @@ def test_precomputed_dists(global_dtype, csr_container):
     redX = X[::2].astype(global_dtype, copy=False)
     dists = pairwise_distances(redX, metric="euclidean")
     dists = csr_container(dists) if csr_container is not None else dists
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", EfficiencyWarning)
-        clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(
-            dists
-        )
+    clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
     clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
@@ -817,12 +828,14 @@ def test_precomputed_dists(global_dtype, csr_container):
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-def test_optics_input_not_modified_precomputed_sparse_nodiag(csr_container):
+def test_optics_input_not_modified_precomputed_sparse_nodiag(
+    csr_container, global_random_seed
+):
     """Check that we don't modify in-place the pre-computed sparse matrix.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/27508
     """
-    X = np.random.RandomState(0).rand(6, 6)
+    X = np.random.RandomState(global_random_seed).rand(6, 6)
     # Add zeros on the diagonal that will be implicit when creating
     # the sparse matrix. If `X` is modified in-place, the zeros from
     # the diagonal will be made explicit.
@@ -835,6 +848,22 @@ def test_optics_input_not_modified_precomputed_sparse_nodiag(csr_container):
     # explicit 0s values.
     assert X.nnz == X_copy.nnz
     assert_array_equal(X.toarray(), X_copy.toarray())
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_optics_precomputed_sparse_no_warning(csr_container):
+    """Test that `EfficiencyWarning` isn't emitted on precomputed sparse input.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/34647
+    """
+    X = np.random.RandomState(0).randn(50, 5)
+    graph = csr_container(kneighbors_graph(X, n_neighbors=10, mode="distance"))
+    # Sort the graph so only OPTICS can unsort it
+    graph = sort_graph_by_row_values(graph, warn_when_not_sorted=False)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", EfficiencyWarning)
+        OPTICS(metric="precomputed").fit(graph)
 
 
 def test_optics_predecessor_correction_ordering():

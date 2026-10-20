@@ -7,18 +7,21 @@ from numbers import Integral, Real
 
 import numpy as np
 
-from ..base import (
+from sklearn.base import (
     BaseEstimator,
     ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _fit_context,
 )
-from ..linear_model import ridge_regression
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import svd_flip
-from ..utils.validation import check_array, check_is_fitted, validate_data
-from ._dict_learning import MiniBatchDictionaryLearning, dict_learning
+from sklearn.decomposition._dict_learning import (
+    MiniBatchDictionaryLearning,
+    dict_learning,
+)
+from sklearn.linear_model import ridge_regression
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import svd_flip
+from sklearn.utils.validation import check_array, check_is_fitted, validate_data
 
 
 class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -226,8 +229,6 @@ class SparsePCA(_BaseSparsePCA):
     n_components_ : int
         Estimated number of components.
 
-        .. versionadded:: 0.23
-
     n_iter_ : int
         Number of iterations run.
 
@@ -237,8 +238,6 @@ class SparsePCA(_BaseSparsePCA):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -267,7 +266,7 @@ class SparsePCA(_BaseSparsePCA):
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
-    np.float64(0.9666...)
+    np.float64(0.9666)
     """
 
     _parameter_constraints: dict = {
@@ -426,8 +425,6 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
     n_components_ : int
         Estimated number of components.
 
-        .. versionadded:: 0.23
-
     n_iter_ : int
         Number of iterations run.
 
@@ -437,8 +434,6 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -469,7 +464,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
     >>> np.mean(transformer.components_ == 0)
-    np.float64(0.9...)
+    np.float64(0.9)
     """
 
     _parameter_constraints: dict = {

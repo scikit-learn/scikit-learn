@@ -19,6 +19,6 @@ may be prefixed with e.g. `https://app.diagrams.net/`. Remember to check and
 remove them, for instance by replacing all occurrences of
 `https://app.diagrams.net/./` with `./` with the following command:
 
-.. prompt:: bash
+.. code-block:: console
 
-  perl -pi -e 's@https://app.diagrams.net/\./@./@g' doc/images/ml_map.svg
+  $ perl -pi -e 's@https://app.diagrams.net/\./@./@g' doc/images/ml_map.svg

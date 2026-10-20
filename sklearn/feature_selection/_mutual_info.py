@@ -7,14 +7,14 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.special import digamma
 
-from ..metrics.cluster import mutual_info_score
-from ..neighbors import KDTree, NearestNeighbors
-from ..preprocessing import scale
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_array, check_X_y
+from sklearn.metrics.cluster import mutual_info_score
+from sklearn.neighbors import KDTree, NearestNeighbors
+from sklearn.preprocessing import scale
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_array, check_X_y
 
 
 def _compute_mi_cc(x, y, n_neighbors):
@@ -436,7 +436,7 @@ def mutual_info_regression(
     ...     n_samples=50, n_features=3, n_informative=1, noise=1e-4, random_state=42
     ... )
     >>> mutual_info_regression(X, y)
-    array([0.1..., 2.6...  , 0.0...])
+    array([0.117, 2.645, 0.0287])
     """
     return _estimate_mi(
         X,
@@ -564,8 +564,8 @@ def mutual_info_classif(
     ...     shuffle=False, random_state=42
     ... )
     >>> mutual_info_classif(X, y)
-    array([0.58..., 0.10..., 0.19..., 0.09... , 0.        ,
-           0.     , 0.     , 0.     , 0.      , 0.        ])
+    array([0.589, 0.107, 0.196, 0.0968 , 0.,
+           0.   , 0.   , 0.   , 0.     , 0.])
     """
     check_classification_targets(y)
     return _estimate_mi(

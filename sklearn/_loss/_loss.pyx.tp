@@ -121,7 +121,7 @@ doc_HalfTweedieLoss = (
         - y_true * exp((1-p) * raw_prediction) / (1-p)
 
     Notes:
-    - Poisson with p=1 and and Gamma with p=2 have different terms dropped such
+    - Poisson with p=1 and Gamma with p=2 have different terms dropped such
       that cHalfTweedieLoss is not continuous in p=power at p=1 and p=2.
     - While the Tweedie distribution only exists for p<=0 or p>=1, the range
       0<p<1 still gives a strictly consistent scoring function for the
@@ -1185,7 +1185,7 @@ cdef class CyHalfMultinomialLoss():
             Raw prediction values (in link space).
         sample_weight : double
             Sample weight.
-        gradient_out : array of shape (n_classs,)
+        gradient_out : array of shape (n_classes,)
             A location into which the gradient is stored.
 
         Returns

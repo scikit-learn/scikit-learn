@@ -8,7 +8,7 @@ import pytest
 from sklearn import datasets
 from sklearn.base import BaseEstimator
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
-from sklearn.datasets import make_friedman1
+from sklearn.datasets import make_friedman1, make_regression
 from sklearn.decomposition import PCA
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
@@ -20,7 +20,6 @@ from sklearn.linear_model import (
     LassoCV,
     LinearRegression,
     LogisticRegression,
-    PassiveAggressiveClassifier,
     SGDClassifier,
 )
 from sklearn.pipeline import make_pipeline
@@ -82,19 +81,9 @@ def test_input_estimator_unchanged():
     "max_features, err_type, err_msg",
     [
         (
-            data.shape[1] + 1,
-            ValueError,
-            "max_features ==",
-        ),
-        (
             lambda X: 1.5,
             TypeError,
             "max_features must be an instance of int, not float.",
-        ),
-        (
-            lambda X: data.shape[1] + 1,
-            ValueError,
-            "max_features ==",
         ),
         (
             lambda X: -1,
@@ -320,7 +309,7 @@ def test_sample_weight():
     sample_weight = np.ones(y.shape)
     sample_weight[y == 1] *= 100
 
-    est = LogisticRegression(random_state=0, fit_intercept=False)
+    est = LogisticRegression(fit_intercept=False)
     transformer = SelectFromModel(estimator=est)
     transformer.fit(X, y, sample_weight=None)
     mask = transformer._get_support_mask()
@@ -393,8 +382,8 @@ def test_2d_coef():
 
 
 def test_partial_fit():
-    est = PassiveAggressiveClassifier(
-        random_state=0, shuffle=False, max_iter=5, tol=None
+    est = SGDClassifier(
+        random_state=0, shuffle=False, max_iter=5, tol=None, learning_rate="pa1"
     )
     transformer = SelectFromModel(estimator=est)
     transformer.partial_fit(data, y, classes=np.unique(y))
@@ -487,6 +476,21 @@ def test_prefit_max_features():
     model.set_params(max_features=max_features)
     with pytest.raises(ValueError, match="`max_features` must be an integer"):
         model.transform(data)
+
+
+def test_get_feature_names_out_elasticnetcv():
+    """Check if ElasticNetCV works with a list of floats.
+
+    Non-regression test for #30936."""
+    X, y = make_regression(n_features=5, n_informative=3, random_state=0)
+    estimator = ElasticNetCV(l1_ratio=[0.25, 0.5, 0.75], random_state=0)
+    selector = SelectFromModel(estimator=estimator)
+    selector.fit(X, y)
+
+    names_out = selector.get_feature_names_out()
+    mask = selector.get_support()
+    expected = np.array([f"x{i}" for i in range(X.shape[1])])[mask]
+    assert_array_equal(names_out, expected)
 
 
 def test_prefit_get_feature_names_out():
@@ -633,27 +637,6 @@ def test_estimator_does_not_support_feature_names():
         selector.transform(X.iloc[1:3])
 
 
-@pytest.mark.parametrize(
-    "error, err_msg, max_features",
-    (
-        [ValueError, "max_features == 10, must be <= 4", 10],
-        [ValueError, "max_features == 5, must be <= 4", lambda x: x.shape[1] + 1],
-    ),
-)
-def test_partial_fit_validate_max_features(error, err_msg, max_features):
-    """Test that partial_fit from SelectFromModel validates `max_features`."""
-    X, y = datasets.make_classification(
-        n_samples=100,
-        n_features=4,
-        random_state=0,
-    )
-
-    with pytest.raises(error, match=err_msg):
-        SelectFromModel(
-            estimator=SGDClassifier(), max_features=max_features
-        ).partial_fit(X, y, classes=[0, 1])
-
-
 @pytest.mark.parametrize("as_frame", [True, False])
 def test_partial_fit_validate_feature_names(as_frame):
     """Test that partial_fit from SelectFromModel validates `feature_names_in_`."""
@@ -687,3 +670,23 @@ def test_from_model_estimator_attribute_error():
         from_model.fit(data, y).partial_fit(data)
     assert isinstance(exec_info.value.__cause__, AttributeError)
     assert inner_msg in str(exec_info.value.__cause__)
+
+
+@pytest.mark.parametrize(
+    "feature_importance",
+    [
+        lambda estimator: estimator.sparsify().coef_,
+        lambda estimator: estimator.sparsify().coef_.tocsc(),
+    ],
+)
+def test_feature_importance_sparse(feature_importance):
+    from_model_sparse = SelectFromModel(
+        estimator=LogisticRegression(), importance_getter=feature_importance
+    )
+    from_model_dense = SelectFromModel(estimator=LogisticRegression())
+
+    from_model_sparse.fit(data, y)
+    from_model_dense.fit(data, y)
+
+    assert_array_equal(from_model_sparse.get_support(), from_model_dense.get_support())
+    assert_allclose(from_model_sparse.transform(data), from_model_dense.transform(data))

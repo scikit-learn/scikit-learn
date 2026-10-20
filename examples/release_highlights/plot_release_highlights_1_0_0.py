@@ -1,4 +1,4 @@
-# ruff: noqa
+# ruff: noqa: CPY001
 """
 =======================================
 Release Highlights for scikit-learn 1.0
@@ -89,6 +89,7 @@ or with conda::
 # refer to the :ref:`User Guide <spline_transformer>`.
 
 import numpy as np
+
 from sklearn.preprocessing import SplineTransformer
 
 X = np.arange(5).reshape(5, 1)
@@ -135,6 +136,8 @@ spline.fit_transform(X)
 #    :scale: 50%
 
 ##############################################################################
+# .. _feature_names_in_release_highlights_1_0_0:
+#
 # Feature Names Support
 # --------------------------------------------------------------------------
 # When an estimator is passed a `pandas' dataframe
@@ -147,8 +150,9 @@ spline.fit_transform(X)
 # is used to check that the column names of the dataframe passed in
 # non-:term:`fit`, such as :term:`predict`, are consistent with features in
 # :term:`fit`:
-from sklearn.preprocessing import StandardScaler
 import pandas as pd
+
+from sklearn.preprocessing import StandardScaler
 
 X = pd.DataFrame([[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
 scalar = StandardScaler().fit(X)
@@ -162,9 +166,10 @@ scalar.feature_names_in_
 # will be added to all other transformers in future releases. Additionally,
 # :meth:`compose.ColumnTransformer.get_feature_names_out` is available to
 # combine feature names of its transformers:
+import pandas as pd
+
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
-import pandas as pd
 
 X = pd.DataFrame({"pet": ["dog", "cat", "fish"], "age": [3, 7, 1]})
 preprocessor = ColumnTransformer(

@@ -102,10 +102,10 @@ print(f"Elapsed time to compute the importances: {elapsed_time:.3f} seconds")
 forest_importances = pd.Series(result.importances_mean, index=feature_names)
 
 # %%
-# The computation for full permutation importance is more costly. Features are
-# shuffled n times and the model refitted to estimate the importance of it.
-# Please see :ref:`permutation_importance` for more details. We can now plot
-# the importance ranking.
+# The computation for full permutation importance is more costly. Each feature is
+# shuffled n times and the model is used to make predictions on the permuted data to see
+# the drop in performance. Please see :ref:`permutation_importance` for more details.
+# We can now plot the importance ranking.
 
 fig, ax = plt.subplots()
 forest_importances.plot.bar(yerr=result.importances_std, ax=ax)

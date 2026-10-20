@@ -10,14 +10,16 @@ from typing import Callable
 import numpy as np
 import numpy.ma as ma
 from scipy import sparse as sp
+from scipy import stats
 
-from ..base import BaseEstimator, TransformerMixin, _fit_context
-from ..utils._mask import _get_mask
-from ..utils._missing import is_pandas_na, is_scalar_nan
-from ..utils._param_validation import MissingValues, StrOptions
-from ..utils.fixes import _mode
-from ..utils.sparsefuncs import _get_median
-from ..utils.validation import (
+from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_pandas_na, is_scalar_nan
+from sklearn.utils._param_validation import MissingValues, StrOptions
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
+from sklearn.utils.sparsefuncs import _get_median
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
     _check_n_features,
@@ -38,6 +40,20 @@ def _check_inputs_dtype(X, missing_values):
         )
 
 
+def _safe_min(items):
+    """Compute the minimum of a list of potentially non-comparable values.
+
+    If values cannot be directly compared due to type incompatibility, the object with
+    the lowest string representation is returned.
+    """
+    try:
+        return min(items)
+    except TypeError as e:
+        if "'<' not supported between" in str(e):
+            return min(items, key=lambda x: (str(type(x)), str(x)))
+        raise  # pragma: no cover
+
+
 def _most_frequent(array, extra_value, n_repeat):
     """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
@@ -50,15 +66,15 @@ def _most_frequent(array, extra_value, n_repeat):
             counter = Counter(array)
             most_frequent_count = counter.most_common(1)[0][1]
             # tie breaking similarly to scipy.stats.mode
-            most_frequent_value = min(
-                value
-                for value, count in counter.items()
-                if count == most_frequent_count
+            most_frequent_value = _safe_min(
+                [
+                    value
+                    for value, count in counter.items()
+                    if count == most_frequent_count
+                ]
             )
         else:
-            mode = _mode(array)
-            most_frequent_value = mode[0][0]
-            most_frequent_count = mode[1][0]
+            most_frequent_value, most_frequent_count = stats.mode(array)
     else:
         most_frequent_value = 0
         most_frequent_count = 0
@@ -72,7 +88,7 @@ def _most_frequent(array, extra_value, n_repeat):
         return most_frequent_value
     elif most_frequent_count == n_repeat:
         # tie breaking similarly to scipy.stats.mode
-        return min(most_frequent_value, extra_value)
+        return _safe_min([most_frequent_value, extra_value])
 
 
 class _BaseImputer(TransformerMixin, BaseEstimator):
@@ -136,7 +152,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
                 "implementation."
             )
 
-        return hstack((X_imputed, X_indicator))
+        return _align_api_if_sparse(hstack((X_imputed, X_indicator)))
 
     def _concatenate_indicator_feature_names_out(self, names, input_features):
         if not self.add_indicator:
@@ -158,10 +174,6 @@ class SimpleImputer(_BaseImputer):
     most frequent) along each column, or using a constant value.
 
     Read more in the :ref:`User Guide <impute>`.
-
-    .. versionadded:: 0.20
-       `SimpleImputer` replaces the previous `sklearn.preprocessing.Imputer`
-       estimator which is now removed.
 
     Parameters
     ----------
@@ -186,9 +198,6 @@ class SimpleImputer(_BaseImputer):
         - If an instance of Callable, then replace missing values using the
           scalar statistic returned by running the callable over a dense 1d
           array containing non-missing values of each column.
-
-        .. versionadded:: 0.20
-           strategy="constant" for fixed value imputation.
 
         .. versionadded:: 1.5
            strategy=callable for custom value imputation.
@@ -225,11 +234,6 @@ class SimpleImputer(_BaseImputer):
 
         .. versionadded:: 1.2
 
-        .. versionchanged:: 1.6
-            Currently, when `keep_empty_feature=False` and `strategy="constant"`,
-            empty features are not dropped. This behaviour will change in version
-            1.8. Set `keep_empty_feature=True` to preserve this behaviour.
-
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
@@ -244,8 +248,6 @@ class SimpleImputer(_BaseImputer):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -391,16 +393,18 @@ class SimpleImputer(_BaseImputer):
                 fill_value_dtype = type(self.fill_value)
                 err_msg = (
                     f"fill_value={self.fill_value!r} (of type {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that both dtypes are of the same kind."
+                    f"cannot be cast to the input data that is {X.dtype!r}. "
+                    "If fill_value is a Python scalar, instead pass  a numpy scalar "
+                    "(e.g. fill_value=np.uint8(0) if your data is of type np.uint8). "
+                    "Make sure that both dtypes are of the same kind."
                 )
             elif not in_fit:
-                fill_value_dtype = self.statistics_.dtype
+                fill_value_dtype = self._fill_dtype
                 err_msg = (
                     f"The dtype of the filling value (i.e. {fill_value_dtype!r}) "
-                    f"cannot be cast to the input data that is {X.dtype!r}. Make sure "
-                    "that the dtypes of the input data is of the same kind between "
-                    "fit and transform."
+                    f"cannot be cast to the input data that is {X.dtype!r}. "
+                    "Make sure that the dtypes of the input data are of the same kind "
+                    "between fit and transform."
                 )
             else:
                 # By default, fill_value=None, and the replacement is always
@@ -443,6 +447,8 @@ class SimpleImputer(_BaseImputer):
         else:
             fill_value = self.fill_value
 
+        self._fill_dtype = X.dtype
+
         if sp.issparse(X):
             self.statistics_ = self._sparse_fit(
                 X, self.strategy, self.missing_values, fill_value
@@ -463,22 +469,20 @@ class SimpleImputer(_BaseImputer):
         statistics = np.empty(X.shape[1])
 
         if strategy == "constant":
-            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
-            # for empty features to drop them later.
-            if not self.keep_empty_features and any(
-                [all(missing_mask[:, i].data) for i in range(missing_mask.shape[1])]
-            ):
-                warnings.warn(
-                    "Currently, when `keep_empty_feature=False` and "
-                    '`strategy="constant"`, empty features are not dropped. '
-                    "This behaviour will change in version 1.8. Set "
-                    "`keep_empty_feature=True` to preserve this behaviour.",
-                    FutureWarning,
-                )
-
             # for constant strategy, self.statistics_ is used to store
-            # fill_value in each column
+            # fill_value in each column, or np.nan for columns to drop
             statistics.fill(fill_value)
+
+            if not self.keep_empty_features:
+                if SCIPY_VERSION_BELOW_1_12:
+                    for i in range(missing_mask.shape[1]):
+                        if all(missing_mask[:, [i]].data):
+                            statistics[i] = np.nan
+                else:
+                    for i in range(missing_mask.shape[1]):
+                        if all(missing_mask[:, i].data):
+                            statistics[i] = np.nan
+
         else:
             for i in range(X.shape[1]):
                 column = X.data[X.indptr[i] : X.indptr[i + 1]]
@@ -566,20 +570,16 @@ class SimpleImputer(_BaseImputer):
 
         # Constant
         elif strategy == "constant":
-            # TODO(1.8): Remove FutureWarning and add `np.nan` as a statistic
-            # for empty features to drop them later.
-            if not self.keep_empty_features and ma.getmask(masked_X).all(axis=0).any():
-                warnings.warn(
-                    "Currently, when `keep_empty_feature=False` and "
-                    '`strategy="constant"`, empty features are not dropped. '
-                    "This behaviour will change in version 1.8. Set "
-                    "`keep_empty_feature=True` to preserve this behaviour.",
-                    FutureWarning,
-                )
+            # for constant strategy, self.statistics_ is used to store
+            # fill_value in each column, or np.nan for columns to drop
+            statistics = np.full(X.shape[1], fill_value, dtype=np.object_)
 
-            # for constant strategy, self.statistcs_ is used to store
-            # fill_value in each column
-            return np.full(X.shape[1], fill_value, dtype=X.dtype)
+            if not self.keep_empty_features:
+                for i in range(missing_mask.shape[1]):
+                    if missing_mask[:, i].all():
+                        statistics[i] = np.nan
+
+            return statistics
 
         # Custom
         elif isinstance(strategy, Callable):
@@ -617,14 +617,16 @@ class SimpleImputer(_BaseImputer):
         missing_mask = _get_mask(X, self.missing_values)
 
         # Decide whether to keep missing features
-        if self.strategy == "constant" or self.keep_empty_features:
-            valid_statistics = statistics
+        if self.keep_empty_features:
+            valid_statistics = statistics.astype(self._fill_dtype, copy=False)
             valid_statistics_indexes = None
         else:
             # same as np.isnan but also works for object dtypes
             invalid_mask = _get_mask(statistics, np.nan)
             valid_mask = np.logical_not(invalid_mask)
-            valid_statistics = statistics[valid_mask]
+            valid_statistics = statistics[valid_mask].astype(
+                self._fill_dtype, copy=False
+            )
             valid_statistics_indexes = np.flatnonzero(valid_mask)
 
             if invalid_mask.any():
@@ -658,7 +660,7 @@ class SimpleImputer(_BaseImputer):
                     np.arange(len(X.indptr) - 1, dtype=int), np.diff(X.indptr)
                 )[mask]
 
-                X.data[mask] = valid_statistics[indexes].astype(X.dtype, copy=False)
+                X.data[mask] = valid_statistics[indexes]
         else:
             # use mask computed before eliminating invalid mask
             if valid_statistics_indexes is None:
@@ -687,8 +689,6 @@ class SimpleImputer(_BaseImputer):
         has no missing values at `fit` time, the feature won't have a binary
         indicator, and the imputation done at `transform` time won't be
         inverted.
-
-        .. versionadded:: 0.24
 
         Parameters
         ----------
@@ -783,8 +783,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <impute>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     missing_values : int, float, str, np.nan or None, default=np.nan
@@ -823,8 +821,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -923,7 +919,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
                 n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is True:
-                imputer_mask = sp.csc_matrix(imputer_mask)
+                imputer_mask = _align_api_if_sparse(sp.csc_array(imputer_mask))
 
         if self.features == "all":
             features_indices = np.arange(X.shape[1])

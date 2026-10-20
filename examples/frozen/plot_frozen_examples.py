@@ -3,7 +3,7 @@
 Examples of Using `FrozenEstimator`
 ===================================
 
-This examples showcases some use cases of :class:`~sklearn.frozen.FrozenEstimator`.
+This example showcases some use cases of :class:`~sklearn.frozen.FrozenEstimator`.
 
 :class:`~sklearn.frozen.FrozenEstimator` is a utility class that allows to freeze a
 fitted estimator. This is useful, for instance, when we want to pass a fitted estimator
@@ -91,8 +91,8 @@ calibrated_classifier = CalibratedClassifierCV(
 
 prob_pos_clf = classifier.predict_proba(X_test)[:, 1]
 clf_score = brier_score_loss(y_test, prob_pos_clf)
-print(f"No calibration: {clf_score:.3f}")
+print(f"Brier score - no calibration: {clf_score:.3f}")
 
 prob_pos_calibrated = calibrated_classifier.predict_proba(X_test)[:, 1]
 calibrated_score = brier_score_loss(y_test, prob_pos_calibrated)
-print(f"With calibration: {calibrated_score:.3f}")
+print(f"Brier score - with calibration: {calibrated_score:.3f}")

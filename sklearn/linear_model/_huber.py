@@ -6,13 +6,14 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import optimize
 
-from ..base import BaseEstimator, RegressorMixin, _fit_context
-from ..utils._mask import axis0_safe_slice
-from ..utils._param_validation import Interval
-from ..utils.extmath import safe_sparse_dot
-from ..utils.optimize import _check_optimize_result
-from ..utils.validation import _check_sample_weight, validate_data
-from ._base import LinearModel
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel
+from sklearn.utils._mask import axis0_safe_slice
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import _check_sample_weight, validate_data
 
 
 def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
@@ -142,8 +143,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <huber_regression>`
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     epsilon : float, default=1.35
@@ -189,8 +188,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -200,11 +197,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` has run for.
-
-        .. versionchanged:: 0.20
-
-            In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
-            ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
     outliers_ : array, shape (n_samples,)
         A boolean mask which is set to True where the samples are identified
@@ -235,9 +227,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> y[:4] = rng.uniform(10, 20, 4)
     >>> huber = HuberRegressor().fit(X, y)
     >>> huber.score(X, y)
-    -7.284...
+    -7.284
     >>> huber.predict(X[:1,])
-    array([806.7200...])
+    array([806.7200])
     >>> linear = LinearRegression().fit(X, y)
     >>> print("True coefficients:", coef)
     True coefficients: [20.4923...  34.1698...]
@@ -329,7 +321,11 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             method="L-BFGS-B",
             jac=True,
             args=(X, y, self.epsilon, self.alpha, sample_weight),
-            options={"maxiter": self.max_iter, "gtol": self.tol, "iprint": -1},
+            options={
+                "maxiter": self.max_iter,
+                "gtol": self.tol,
+                **_get_additional_lbfgs_options_dict("iprint", -1),
+            },
             bounds=bounds,
         )
 

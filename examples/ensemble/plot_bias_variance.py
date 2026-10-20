@@ -43,8 +43,8 @@ between the average prediction (in cyan) and the best possible model is larger
 curve is also slightly higher than in the lower left figure. In terms of
 variance however, the beam of predictions is narrower, which suggests that the
 variance is lower. Indeed, as the lower right figure confirms, the variance
-term (in green) is lower than for single decision trees. Overall, the bias-
-variance decomposition is therefore no longer the same. The tradeoff is better
+term (in green) is lower than for single decision trees. Overall, the bias-variance
+decomposition is therefore no longer the same. The tradeoff is better
 for bagging: averaging several decision trees fit on bootstrap copies of the
 dataset slightly increases the bias term but allows for a larger reduction of
 the variance, which results in a lower overall mean squared error (compare the
@@ -177,8 +177,8 @@ for n, (name, estimator) in enumerate(estimators):
 
     plt.subplot(2, n_estimators, n_estimators + n + 1)
     plt.plot(X_test, y_error, "r", label="$error(x)$")
-    plt.plot(X_test, y_bias, "b", label="$bias^2(x)$"),
-    plt.plot(X_test, y_var, "g", label="$variance(x)$"),
+    plt.plot(X_test, y_bias, "b", label="$bias^2(x)$")
+    plt.plot(X_test, y_var, "g", label="$variance(x)$")
     plt.plot(X_test, y_noise, "c", label="$noise(x)$")
 
     plt.xlim([-5, 5])

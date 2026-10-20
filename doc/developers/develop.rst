@@ -376,18 +376,18 @@ The parameter `deep` controls whether or not the parameters of the
     >>> for param, value in my_estimator.get_params(deep=True).items():
     ...     print(f"{param} -> {value}")
     my_extra_param -> random
-    subestimator__C -> 1.0
+    subestimator__C -> deprecated
+    subestimator__alpha -> 1.0
     subestimator__class_weight -> None
-    subestimator__dual -> False
+    subestimator__dual -> deprecated
     subestimator__fit_intercept -> True
-    subestimator__intercept_scaling -> 1
-    subestimator__l1_ratio -> None
+    subestimator__intercept_scaling -> deprecated
+    subestimator__l1_ratio -> 0.0
     subestimator__max_iter -> 100
-    subestimator__multi_class -> deprecated
     subestimator__n_jobs -> None
-    subestimator__penalty -> l2
+    subestimator__penalty -> deprecated
     subestimator__random_state -> None
-    subestimator__solver -> lbfgs
+    subestimator__solver -> auto
     subestimator__tol -> 0.0001
     subestimator__verbose -> 0
     subestimator__warm_start -> False
@@ -395,7 +395,7 @@ The parameter `deep` controls whether or not the parameters of the
 
 If the meta-estimator takes multiple sub-estimators, often, those sub-estimators have
 names (as e.g. named steps in a :class:`~pipeline.Pipeline` object), in which case the
-key should become `<name>__C`, `<name>__class_weight`, etc.
+key should become `<name>__alpha`, `<name>__class_weight`, etc.
 
 When ``deep=False``, the output will be::
 
@@ -499,7 +499,7 @@ Estimator Tags
 The estimator tags are annotations of estimators that allow programmatic inspection of
 their capabilities, such as sparse matrix support, supported output types and supported
 methods. The estimator tags are an instance of :class:`~sklearn.utils.Tags` returned by
-the method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__()`. These tags are used
+the method :meth:`~sklearn.base.BaseEstimator.__sklearn_tags__`. These tags are used
 in different places, such as :func:`~base.is_regressor` or the common checks run by
 :func:`~sklearn.utils.estimator_checks.check_estimator` and
 :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`, where tags determine
@@ -524,7 +524,7 @@ You can create a new subclass of :class:`~sklearn.utils.Tags` if you wish to add
 tags to the existing set. Note that all attributes that you add in a child class need
 to have a default value. It can be of the form::
 
-    from dataclasses import dataclass, asdict
+    from dataclasses import dataclass, fields
 
     @dataclass
     class MyTags(Tags):
@@ -584,8 +584,9 @@ keyword arguments to its super class. Super classes' `__init_subclass__` should
 For transformers that return multiple arrays in `transform`, auto wrapping will
 only wrap the first array and not alter the other arrays.
 
-See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-for an example on how to use the API.
+Refer to the :ref:`user guide <df_output_transform>` for more details
+and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+example on how to use the API.
 
 .. _developer_api_check_is_fitted:
 
@@ -660,13 +661,11 @@ In addition, we add the following guidelines:
 * Avoid multiple statements on one line. Prefer a line return after
   a control flow statement (``if``/``for``).
 
-* Use relative imports for references inside scikit-learn.
+* Use absolute imports
 
-* Unit tests are an exception to the previous rule;
-  they should use absolute imports, exactly as client code would.
-  A corollary is that, if ``sklearn.foo`` exports a class or function
-  that is implemented in ``sklearn.foo.bar.baz``,
-  the test should import it from ``sklearn.foo``.
+* Unit tests should use imports exactly as client code would.
+  If ``sklearn.foo`` exports a class or function that is implemented in
+  ``sklearn.foo.bar.baz``, the test should import it from ``sklearn.foo``.
 
 * **Please don't use** ``import *`` **in any case**. It is considered harmful
   by the `official Python recommendations
@@ -681,9 +680,21 @@ In addition, we add the following guidelines:
   <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_
   in all your docstrings.
 
+* When applicable, use the validation tools and scripts in the
+  :mod:`sklearn.utils` module. An overview of utility routines available for developers
+  can be found in the sections below and the :ref:`developers-utils` page.
+
+* Only write inline comments that add value and avoid stating the obvious: explain
+  the "why" rather than the "what".
 
 A good example of code that we like can be found `here
 <https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
+
+.. note::
+
+  The current state of the scikit-learn code base is not necessarily compliant with all
+  of those guidelines, but we expect that enforcing those constraints on all new
+  contributions will get the overall code base quality in the right direction.
 
 Input validation
 ----------------

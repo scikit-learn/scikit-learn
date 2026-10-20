@@ -53,11 +53,11 @@ X_train = scaler.fit_transform(X_train)
 X_test = scaler.transform(X_test)
 
 # Turn up tolerance for faster convergence
-clf = LogisticRegression(C=50.0 / train_samples, penalty="l1", solver="saga", tol=0.1)
+clf = LogisticRegression(alpha=train_samples / 50, l1_ratio=1, solver="saga", tol=0.1)
 clf.fit(X_train, y_train)
 sparsity = np.mean(clf.coef_ == 0) * 100
 score = clf.score(X_test, y_test)
-# print('Best C % .4f' % clf.C_)
+# print('Best alpha % .4f' % clf.alpha_)
 print("Sparsity with L1 penalty: %.2f%%" % sparsity)
 print("Test score with L1 penalty: %.4f" % score)
 
@@ -75,7 +75,7 @@ for i in range(10):
     )
     l1_plot.set_xticks(())
     l1_plot.set_yticks(())
-    l1_plot.set_xlabel("Class %i" % i)
+    l1_plot.set_xlabel(f"Class {i}")
 plt.suptitle("Classification vector for...")
 
 run_time = time.time() - t0

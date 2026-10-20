@@ -7,39 +7,33 @@ from math import ceil
 
 import numpy as np
 from scipy import sparse
-from scipy.stats.mstats import mquantiles
 
-from ...base import is_regressor
-from ...utils import (
-    Bunch,
-    _safe_indexing,
-    check_array,
-    check_random_state,
-)
-from ...utils._encode import _unique
-from ...utils._optional_dependencies import check_matplotlib_support
-from ...utils._plotting import _validate_style_kwargs
-from ...utils.parallel import Parallel, delayed
-from .. import partial_dependence
-from .._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.base import is_regressor
+from sklearn.inspection import partial_dependence
+from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.utils import Bunch, _safe_indexing, check_array, check_random_state
+from sklearn.utils._encode import _unique
+from sklearn.utils._optional_dependencies import check_matplotlib_support
+from sklearn.utils._plotting import _validate_style_kwargs
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.stats import _nanquantile
 
 
 class PartialDependenceDisplay:
-    """Partial Dependence Plot (PDP).
-
-    This can also display individual partial dependencies which are often
-    referred to as: Individual Condition Expectation (ICE).
+    """Partial Dependence Plot (PDP) and Individual Conditional Expectation (ICE).
 
     It is recommended to use
     :func:`~sklearn.inspection.PartialDependenceDisplay.from_estimator` to create a
-    :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are
-    stored as attributes.
+    :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are stored
+    as attributes.
 
-    Read more in
-    :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
-    and the :ref:`User Guide <partial_dependence>`.
+    For general information regarding `scikit-learn` visualization tools, see
+    the :ref:`Visualization Guide <visualizations>`.
+    For guidance on interpreting these plots, refer to the
+    :ref:`Inspection Guide <partial_dependence>`.
 
-    .. versionadded:: 0.22
+    For an example on how to use this class, see the following example:
+    :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence_visualization_api.py`.
 
     Parameters
     ----------
@@ -94,10 +88,6 @@ class PartialDependenceDisplay:
            dependencies and doing weighted averages requires using the slower
            `method='brute'`.
 
-        .. versionadded:: 0.24
-           Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
-           options.
-
         .. versionadded:: 1.1
            Add the possibility to pass a list of string specifying `kind`
            for each plot.
@@ -111,13 +101,9 @@ class PartialDependenceDisplay:
         Note that the full dataset is still used to calculate partial
         dependence when `kind='both'`.
 
-        .. versionadded:: 0.24
-
     random_state : int, RandomState instance or None, default=None
         Controls the randomness of the selected samples when subsamples is not
         `None`. See :term:`Glossary <random_state>` for details.
-
-        .. versionadded:: 0.24
 
     is_categorical : list of (bool,) or list of (bool, bool), default=None
         Whether each target feature in `features` is categorical or not.
@@ -153,16 +139,12 @@ class PartialDependenceDisplay:
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a PDP plot.
 
-        .. versionadded:: 0.23
-
     deciles_hlines_ : ndarray of matplotlib LineCollection
         If `ax` is an axes or None, `vlines_[i, j]` is the line collection
         representing the y axis deciles of the i-th row and j-th column. If
         `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a 2-way plot.
-
-        .. versionadded:: 0.23
 
     contours_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `contours_[i, j]` is the partial dependence
@@ -276,17 +258,21 @@ class PartialDependenceDisplay:
     ):
         """Partial dependence (PD) and individual conditional expectation (ICE) plots.
 
-        Partial dependence plots, individual conditional expectation plots or an
-        overlay of both of them can be plotted by setting the ``kind``
-        parameter. The ``len(features)`` plots are arranged in a grid with
-        ``n_cols`` columns. Two-way partial dependence plots are plotted as
-        contour plots. The deciles of the feature values will be shown with tick
-        marks on the x-axes for one-way plots, and on both axes for two-way
-        plots.
+        Partial dependence plots, individual conditional expectation plots, or an
+        overlay of both can be plotted by setting the `kind` parameter.
+        This method generates one plot for each entry in `features`. The plots
+        are arranged in a grid with `n_cols` columns. For one-way partial
+        dependence plots, the deciles of the feature values are shown on the
+        x-axis. For two-way plots, the deciles are shown on both axes and PDPs
+        are contour plots.
 
-        Read more in
-        :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
-        and the :ref:`User Guide <partial_dependence>`.
+        For general information regarding `scikit-learn` visualization tools, see
+        the :ref:`Visualization Guide <visualizations>`.
+        For guidance on interpreting these plots, refer to the
+        :ref:`Inspection Guide <partial_dependence>`.
+
+        For an example on how to use this class method, see
+        :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`.
 
         .. note::
 
@@ -759,8 +745,7 @@ class PartialDependenceDisplay:
         for fxs, cats in zip(features, is_categorical):
             for fx, cat in zip(fxs, cats):
                 if not cat and fx not in deciles:
-                    X_col = _safe_indexing(X, fx, axis=1)
-                    deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
+                    deciles[fx] = _nanquantile(X, fx, np.arange(0.1, 1.0, 0.1))
 
         display = cls(
             pd_results=pd_results,

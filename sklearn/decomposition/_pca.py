@@ -11,15 +11,15 @@ from scipy import linalg
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
-from ..base import _fit_context
-from ..utils import check_random_state
-from ..utils._arpack import _init_arpack_v0
-from ..utils._array_api import _convert_to_numpy, get_namespace
-from ..utils._param_validation import Interval, RealNotInt, StrOptions
-from ..utils.extmath import fast_logdet, randomized_svd, stable_cumsum, svd_flip
-from ..utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
-from ..utils.validation import check_is_fitted, validate_data
-from ._base import _BasePCA
+from sklearn.base import _fit_context
+from sklearn.decomposition._base import _BasePCA
+from sklearn.utils import check_random_state
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._array_api import _cov, array_device, get_namespace
+from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
+from sklearn.utils.extmath import _randomized_svd, fast_logdet, svd_flip
+from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -204,8 +204,6 @@ class PCA(_BasePCA):
         "randomized" :
             Run randomized SVD by the method of Halko et al.
 
-        .. versionadded:: 0.18.0
-
         .. versionchanged:: 1.5
             Added the 'covariance_eigh' solver.
 
@@ -213,14 +211,10 @@ class PCA(_BasePCA):
         Tolerance for singular values computed by svd_solver == 'arpack'.
         Must be of range [0.0, infinity).
 
-        .. versionadded:: 0.18.0
-
     iterated_power : int or 'auto', default='auto'
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
         Must be of range [0, infinity).
-
-        .. versionadded:: 0.18.0
 
     n_oversamples : int, default=10
         This parameter is only relevant when `svd_solver="randomized"`.
@@ -242,8 +236,6 @@ class PCA(_BasePCA):
         for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-        .. versionadded:: 0.18.0
-
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
@@ -259,8 +251,6 @@ class PCA(_BasePCA):
         Equal to n_components largest eigenvalues
         of the covariance matrix of X.
 
-        .. versionadded:: 0.18
-
     explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
@@ -271,8 +261,6 @@ class PCA(_BasePCA):
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
-
-        .. versionadded:: 0.19
 
     mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
@@ -301,8 +289,6 @@ class PCA(_BasePCA):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -353,25 +339,25 @@ class PCA(_BasePCA):
     >>> pca.fit(X)
     PCA(n_components=2)
     >>> print(pca.explained_variance_ratio_)
-    [0.9924... 0.0075...]
+    [0.9924 0.0075]
     >>> print(pca.singular_values_)
-    [6.30061... 0.54980...]
+    [6.30061 0.54980]
 
     >>> pca = PCA(n_components=2, svd_solver='full')
     >>> pca.fit(X)
     PCA(n_components=2, svd_solver='full')
     >>> print(pca.explained_variance_ratio_)
-    [0.9924... 0.00755...]
+    [0.9924 0.00755]
     >>> print(pca.singular_values_)
-    [6.30061... 0.54980...]
+    [6.30061 0.54980]
 
     >>> pca = PCA(n_components=1, svd_solver='arpack')
     >>> pca.fit(X)
     PCA(n_components=1, svd_solver='arpack')
     >>> print(pca.explained_variance_ratio_)
-    [0.99244...]
+    [0.99244]
     >>> print(pca.singular_values_)
-    [6.30061...]
+    [6.30061]
     """
 
     _parameter_constraints: dict = {
@@ -585,29 +571,11 @@ class PCA(_BasePCA):
 
         else:
             assert self._fit_svd_solver == "covariance_eigh"
-            # In the following, we center the covariance matrix C afterwards
-            # (without centering the data X first) to avoid an unnecessary copy
-            # of X. Note that the mean_ attribute is still needed to center
-            # test data in the transform method.
-            #
-            # Note: at the time of writing, `xp.cov` does not exist in the
-            # Array API standard:
-            # https://github.com/data-apis/array-api/issues/43
-            #
-            # Besides, using `numpy.cov`, as of numpy 1.26.0, would not be
-            # memory efficient for our use case when `n_samples >> n_features`:
-            # `numpy.cov` centers a copy of the data before computing the
-            # matrix product instead of subtracting a small `(n_features,
-            # n_features)` square matrix from the gram matrix X.T @ X, as we do
-            # below.
+            # Center the covariance post-hoc (without centering X first) to
+            # avoid an unnecessary copy of X. The mean_ attribute is still
+            # needed to center test data in the transform method.
             x_is_centered = False
-            C = X.T @ X
-            C -= (
-                n_samples
-                * xp.reshape(self.mean_, (-1, 1))
-                * xp.reshape(self.mean_, (1, -1))
-            )
-            C /= n_samples - 1
+            C = _cov(X, ddof=1, mean=self.mean_, xp=xp)
             eigenvals, eigenvecs = xp.linalg.eigh(C)
 
             # When X is a scipy sparse matrix, the following two datastructures
@@ -655,23 +623,15 @@ class PCA(_BasePCA):
             # side='right' ensures that number of features selected
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
-            if is_array_api_compliant:
-                # Convert to numpy as xp.cumsum and xp.searchsorted are not
-                # part of the Array API standard yet:
-                #
-                # https://github.com/data-apis/array-api/issues/597
-                # https://github.com/data-apis/array-api/issues/688
-                #
-                # Furthermore, it's not always safe to call them for namespaces
-                # that already implement them: for instance as
-                # cupy.searchsorted does not accept a float as second argument.
-                explained_variance_ratio_np = _convert_to_numpy(
-                    explained_variance_ratio_, xp=xp
+            ratio_cumsum = xp.cumulative_sum(explained_variance_ratio_)
+            n_components = (
+                xp.searchsorted(
+                    ratio_cumsum,
+                    xp.asarray(n_components, device=array_device(ratio_cumsum)),
+                    side="right",
                 )
-            else:
-                explained_variance_ratio_np = explained_variance_ratio_
-            ratio_cumsum = stable_cumsum(explained_variance_ratio_np)
-            n_components = np.searchsorted(ratio_cumsum, n_components, side="right") + 1
+                + 1
+            )
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
@@ -754,7 +714,7 @@ class PCA(_BasePCA):
 
         elif svd_solver == "randomized":
             # sign flipping is done inside
-            U, S, Vt = randomized_svd(
+            U, S, Vt = _randomized_svd(
                 X_centered,
                 n_components=n_components,
                 n_oversamples=self.n_oversamples,
@@ -848,7 +808,10 @@ class PCA(_BasePCA):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.transformer_tags.preserves_dtype = ["float64", "float32"]
-        tags.array_api_support = True
+        solver = getattr(self, "_fit_svd_solver", self.svd_solver)
+        tags.array_api_support = solver not in ["arpack", "randomized"] or (
+            solver == "randomized" and self.power_iteration_normalizer == "QR"
+        )
         tags.input_tags.sparse = self.svd_solver in (
             "auto",
             "arpack",

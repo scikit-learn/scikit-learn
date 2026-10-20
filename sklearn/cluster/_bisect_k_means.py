@@ -8,22 +8,22 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import _fit_context
-from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..utils._param_validation import Integral, Interval, StrOptions
-from ..utils.extmath import row_norms
-from ..utils.validation import (
-    _check_sample_weight,
-    check_is_fitted,
-    check_random_state,
-    validate_data,
-)
-from ._k_means_common import _inertia_dense, _inertia_sparse
-from ._kmeans import (
+from sklearn.base import _fit_context
+from sklearn.cluster._k_means_common import _inertia_dense, _inertia_sparse
+from sklearn.cluster._kmeans import (
     _BaseKMeans,
     _kmeans_single_elkan,
     _kmeans_single_lloyd,
     _labels_inertia_threadpool_limit,
+)
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._param_validation import Integral, Interval, StrOptions
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    check_random_state,
+    validate_data,
 )
 
 
@@ -94,7 +94,7 @@ class BisectingKMeans(_BaseKMeans):
         centroids to generate.
 
     init : {'k-means++', 'random'} or callable, default='random'
-        Method for initialization:
+        Method for initialization for each bisection.
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
@@ -104,7 +104,9 @@ class BisectingKMeans(_BaseKMeans):
         for the initial centroids.
 
         If a callable is passed, it should take arguments X, n_clusters and a
-        random state and return an initialization.
+        random state and return an initialization. Note that the bisecting algorithm
+        always performs a 2-way split, so the callable will always be called with
+        `n_clusters=2` and should return 2 centroids.
 
     n_init : int, default=1
         Number of time the inner k-means algorithm will be run with different

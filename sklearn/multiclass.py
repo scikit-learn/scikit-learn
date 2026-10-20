@@ -36,7 +36,7 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MetaEstimatorMixin,
@@ -46,25 +46,25 @@ from .base import (
     is_classifier,
     is_regressor,
 )
-from .metrics.pairwise import pairwise_distances_argmin
-from .preprocessing import LabelBinarizer
-from .utils import check_random_state
-from .utils._param_validation import HasMethods, Interval
-from .utils._tags import get_tags
-from .utils.metadata_routing import (
+from sklearn.metrics.pairwise import pairwise_distances_argmin
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import HasMethods, Interval
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
     _raise_for_params,
     process_routing,
 )
-from .utils.metaestimators import _safe_split, available_if
-from .utils.multiclass import (
+from sklearn.utils.metaestimators import _safe_split, available_if
+from sklearn.utils.multiclass import (
     _check_partial_fit_first_call,
     _ovr_decision_function,
     check_classification_targets,
 )
-from .utils.parallel import Parallel, delayed
-from .utils.validation import (
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import (
     _check_method_params,
     _num_samples,
     check_is_fitted,
@@ -243,9 +243,6 @@ class OneVsRestClassifier(
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionchanged:: 0.20
-           `n_jobs` default changed from 1 to None
-
     verbose : int, default=0
         The verbosity level, if non zero, progress messages are printed.
         Below 50, the output is sent to stderr. Otherwise, the output is sent
@@ -276,8 +273,6 @@ class OneVsRestClassifier(
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -499,10 +494,12 @@ class OneVsRestClassifier(
             maxima = np.empty(n_samples, dtype=float)
             maxima.fill(-np.inf)
             argmaxima = np.zeros(n_samples, dtype=int)
-            for i, e in enumerate(self.estimators_):
+            n_classes = len(self.estimators_)
+            # Iterate in reverse order to match np.argmax tie-breaking behavior
+            for i, e in enumerate(reversed(self.estimators_)):
                 pred = _predict_binary(e, X)
                 np.maximum(maxima, pred, out=maxima)
-                argmaxima[maxima == pred] = i
+                argmaxima[maxima == pred] = n_classes - i - 1
             return self.classes_[argmaxima]
         else:
             thresh = _threshold_for_binary_predict(self.estimators_[0])
@@ -512,7 +509,7 @@ class OneVsRestClassifier(
                 indices.extend(np.where(_predict_binary(e, X) > thresh)[0])
                 indptr.append(len(indices))
             data = np.ones(len(indices), dtype=int)
-            indicator = sp.csc_matrix(
+            indicator = sp.csc_array(
                 (data, indices, indptr), shape=(n_samples, len(self.estimators_))
             )
             return self.label_binarizer_.inverse_transform(indicator)
@@ -553,8 +550,10 @@ class OneVsRestClassifier(
             Y = np.concatenate(((1 - Y), Y), axis=1)
 
         if not self.multilabel_:
-            # Then, probabilities should be normalized to 1.
-            Y /= np.sum(Y, axis=1)[:, np.newaxis]
+            # Then, (nonzero) sample probability distributions should be normalized.
+            row_sums = np.sum(Y, axis=1)[:, np.newaxis]
+            np.divide(Y, row_sums, out=Y, where=row_sums != 0)
+
         return Y
 
     @available_if(_estimators_has("decision_function"))
@@ -575,10 +574,6 @@ class OneVsRestClassifier(
         T : array-like of shape (n_samples, n_classes) or (n_samples,) for \
             binary classification.
             Result of calling `decision_function` on the final estimator.
-
-            .. versionchanged:: 0.19
-                output shape changed to ``(n_samples,)`` to conform to
-                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
         if len(self.estimators_) == 1:
@@ -620,7 +615,7 @@ class OneVsRestClassifier(
         """
 
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
@@ -720,8 +715,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -965,10 +958,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         Y : array-like of shape (n_samples, n_classes) or (n_samples,)
             Result of calling `decision_function` on the final estimator.
-
-            .. versionchanged:: 0.19
-                output shape changed to ``(n_samples,)`` to conform to
-                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
         X = validate_data(
@@ -1024,7 +1013,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
 
         router = (
-            MetadataRouter(owner=self.__class__.__name__)
+            MetadataRouter(owner=self)
             .add_self_request(self)
             .add(
                 estimator=self.estimator,
@@ -1089,8 +1078,6 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -1248,7 +1235,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
         # ArgKmin only accepts C-contiguous array. The aggregated predictions need to be
-        # transposed. We therefore create a F-contiguous array to avoid a copy and have
+        # transposed. We therefore create an F-contiguous array to avoid a copy and have
         # a C-contiguous array after the transpose operation.
         Y = np.array(
             [_predict_binary(e, X) for e in self.estimators_],
@@ -1273,7 +1260,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             routing information.
         """
 
-        router = MetadataRouter(owner=self.__class__.__name__).add(
+        router = MetadataRouter(owner=self).add(
             estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )

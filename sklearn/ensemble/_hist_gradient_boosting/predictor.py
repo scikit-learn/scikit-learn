@@ -7,12 +7,15 @@ This module contains the TreePredictor class which is used for prediction.
 
 import numpy as np
 
-from ._predictor import (
+from sklearn.ensemble._hist_gradient_boosting._predictor import (
     _compute_partial_dependence,
     _predict_from_binned_data,
     _predict_from_raw_data,
 )
-from .common import PREDICTOR_RECORD_DTYPE, Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    PREDICTOR_RECORD_DTYPE,
+    Y_DTYPE,
+)
 
 
 class TreePredictor:

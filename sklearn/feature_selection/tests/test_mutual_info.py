@@ -168,7 +168,7 @@ def test_mutual_info_classif_mixed(global_dtype):
         mi_nn = mutual_info_classif(
             X, y, discrete_features=[2], n_neighbors=n_neighbors, random_state=0
         )
-        # Check that the continuous values have an higher MI with greater
+        # Check that the continuous values have a higher MI with greater
         # n_neighbors
         assert mi_nn[0] > mi[0]
         assert mi_nn[1] > mi[1]

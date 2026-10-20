@@ -41,7 +41,7 @@ def setup_working_with_text_data():
 
 def setup_loading_other_datasets():
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
     except ImportError:
         raise SkipTest("Skipping loading_other_datasets.rst, pandas not installed")
 
@@ -56,35 +56,35 @@ def setup_loading_other_datasets():
 
 def setup_compose():
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
     except ImportError:
         raise SkipTest("Skipping compose.rst, pandas not installed")
 
 
 def setup_impute():
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
     except ImportError:
         raise SkipTest("Skipping impute.rst, pandas not installed")
 
 
 def setup_grid_search():
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
     except ImportError:
         raise SkipTest("Skipping grid_search.rst, pandas not installed")
 
 
 def setup_preprocessing():
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
     except ImportError:
         raise SkipTest("Skipping preprocessing.rst, pandas not installed")
 
 
 def skip_if_matplotlib_not_installed(fname):
     try:
-        import matplotlib  # noqa
+        import matplotlib  # noqa: F401
     except ImportError:
         basename = os.path.basename(fname)
         raise SkipTest(f"Skipping doctests for {basename}, matplotlib not installed")
@@ -92,7 +92,7 @@ def skip_if_matplotlib_not_installed(fname):
 
 def skip_if_cupy_not_installed(fname):
     try:
-        import cupy  # noqa
+        import cupy  # noqa: F401
     except ImportError:
         basename = os.path.basename(fname)
         raise SkipTest(f"Skipping doctests for {basename}, cupy not installed")

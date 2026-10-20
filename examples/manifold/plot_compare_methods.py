@@ -30,9 +30,6 @@ representation of the data in the low-dimensional space.
 # We start by generating the S-curve dataset.
 
 import matplotlib.pyplot as plt
-
-# unused but required import for doing 3d projections with matplotlib < 3.2
-import mpl_toolkits.mplot3d  # noqa: F401
 from matplotlib import ticker
 
 from sklearn import datasets, manifold
@@ -166,13 +163,43 @@ plot_2d(S_isomap, S_color, "Isomap Embedding")
 md_scaling = manifold.MDS(
     n_components=n_components,
     max_iter=50,
-    n_init=4,
+    n_init=1,
     random_state=0,
+    init="classical_mds",
     normalized_stress=False,
 )
-S_scaling = md_scaling.fit_transform(S_points)
+S_scaling_metric = md_scaling.fit_transform(S_points)
 
-plot_2d(S_scaling, S_color, "Multidimensional scaling")
+md_scaling_nonmetric = manifold.MDS(
+    n_components=n_components,
+    max_iter=50,
+    n_init=1,
+    random_state=0,
+    normalized_stress=False,
+    metric_mds=False,
+    init="classical_mds",
+)
+S_scaling_nonmetric = md_scaling_nonmetric.fit_transform(S_points)
+
+md_scaling_classical = manifold.ClassicalMDS(n_components=n_components)
+S_scaling_classical = md_scaling_classical.fit_transform(S_points)
+
+# %%
+fig, axs = plt.subplots(
+    nrows=1, ncols=3, figsize=(7, 3.5), facecolor="white", constrained_layout=True
+)
+fig.suptitle("Multidimensional scaling", size=16)
+
+mds_methods = [
+    ("Metric MDS", S_scaling_metric),
+    ("Non-metric MDS", S_scaling_nonmetric),
+    ("Classical MDS", S_scaling_classical),
+]
+for ax, method in zip(axs.flat, mds_methods):
+    name, points = method
+    add_2d_scatter(ax, points, S_color, name)
+
+plt.show()
 
 # %%
 # Spectral embedding for non-linear dimensionality reduction

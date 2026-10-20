@@ -12,14 +12,18 @@ from numbers import Integral, Real
 import numpy as np
 from scipy.special import gammainc
 
-from ..base import BaseEstimator, _fit_context
-from ..neighbors._base import VALID_METRICS
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.extmath import row_norms
-from ..utils.validation import _check_sample_weight, check_is_fitted, validate_data
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.neighbors._ball_tree import BallTree
+from sklearn.neighbors._base import VALID_METRICS
+from sklearn.neighbors._kd_tree import KDTree
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 VALID_KERNELS = [
     "gaussian",
@@ -92,8 +96,6 @@ class KernelDensity(BaseEstimator):
     ----------
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     tree_ : ``BinaryTree`` instance
         The tree algorithm for fast generalized N-point problems.
@@ -206,8 +208,6 @@ class KernelDensity(BaseEstimator):
 
         sample_weight : array-like of shape (n_samples,), default=None
             List of sample weights attached to the data X.
-
-            .. versionadded:: 0.20
 
         Returns
         -------
