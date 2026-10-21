@@ -16,11 +16,16 @@ from sklearn import config_context
 from sklearn._loss import HalfBinomialLoss, HalfPoissonLoss, HalfTweedieLoss
 from sklearn._loss.link import IdentityLink, LogLink
 from sklearn.base import clone
-from sklearn.datasets import make_low_rank_matrix, make_regression
+from sklearn.datasets import (
+    make_classification,
+    make_low_rank_matrix,
+    make_regression,
+)
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
     GammaRegressor,
     LinearRegression,
+    LogisticRegression,
     PoissonRegressor,
     Ridge,
     TweedieRegressor,
@@ -1205,10 +1210,7 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     # Fitting a Newton solver on the collinear version of the training data
     # without regularization should raise an informative warning, it should then
     # deal with the collinearity appropriately.
-    msg = (
-        "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
-        "ill-conditioned Hessian matrix"
-    )
+    msg = "The design matrix X has rank 4 for 31 columns, including the intercept"
     with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
         reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=tol).fit(
             X_collinear, y
@@ -1297,10 +1299,7 @@ def test_newton_cholesky_fallback_to_lbfgs(capsys):
     X = np.zeros((y.shape[0], 1))
     X[0, 0] = 1e-12
     X = np.hstack([X] * 2)
-    msg = (
-        "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
-        "ill-conditioned Hessian matrix"
-    )
+    msg = "The design matrix X has rank 1 for 2 columns"
     captured = capsys.readouterr()  # reset
     with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
         PoissonRegressor(
@@ -1333,7 +1332,9 @@ def test_newton_cholesky_minimum_norm_like_linear_regression(csr_container):
 
     for shift in [0, 100]:
         lr = LinearRegression().fit(X, y + shift)
-        with ignore_warnings(category=scipy.linalg.LinAlgWarning):
+        with pytest.warns(
+            scipy.linalg.LinAlgWarning, match="The design matrix X has rank"
+        ):
             glm.fit(X_fit, y + shift)
         assert_allclose(glm.coef_, lr.coef_, rtol=1e-8, atol=1e-10)
         assert glm.intercept_ == pytest.approx(lr.intercept_, rel=1e-10)
@@ -1343,9 +1344,9 @@ def test_newton_cholesky_minimum_norm_singular_hessian_not_detected():
     """Check the minimum norm solution when LAPACK misses the singular Hessian.
 
     For a full one-hot encoding and an intercept, the Hessian is singular, but
-    scipy.linalg.solve does not always raise a LinAlgWarning (here for seeds 0, 2 and
-    4). The minimum norm solution makes the coefficients independent of the units of
-    y, only the intercept changes.
+    scipy.linalg.solve does not always flag it (here for seeds 0, 2 and 4). The rank
+    deficiency must still be warned about, and the minimum norm solution makes the
+    coefficients independent of the units of y, only the intercept changes.
     """
     n_samples = 1000
     for seed in range(5):
@@ -1354,8 +1355,10 @@ def test_newton_cholesky_minimum_norm_singular_hessian_not_detected():
         X = np.eye(3)[categories]
         y = rng.poisson(np.exp(np.array([0.0, 0.5, 1.0])[categories]))
         params = dict(alpha=0, solver="newton-cholesky", tol=1e-8)
-        with ignore_warnings(category=scipy.linalg.LinAlgWarning):
+        msg = "The design matrix X has rank 3 for 4 columns, including the intercept"
+        with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
             reg = PoissonRegressor(**params).fit(X, y)
+        with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
             reg_1000 = PoissonRegressor(**params).fit(X, 1000 * y)
         # Minimum norm: the coefficients of a full one-hot encoding sum to zero.
         assert np.sum(reg.coef_) == pytest.approx(0, abs=1e-10)
@@ -1387,6 +1390,36 @@ def test_newton_cholesky_minimum_norm_zero_sample_weight(fit_intercept):
     assert reg_zero.intercept_ == pytest.approx(reg.intercept_, rel=1e-8)
     # The duplicated columns share the coefficient equally.
     assert reg.coef_[0] == pytest.approx(reg.coef_[3])
+
+
+@pytest.mark.parametrize(
+    "n_classes, msg",
+    [
+        (2, "The design matrix X has rank 3 for 5 columns, including the intercept"),
+        # No minimum norm solution for multiclass, the Hessian is still singular.
+        (3, "stumbled upon a singular or very ill-conditioned Hessian matrix"),
+    ],
+)
+def test_newton_cholesky_singular_hessian_warns_once(n_classes, msg):
+    """Check that newton-cholesky raises a single warning per fit."""
+    X, y = make_classification(
+        n_samples=200,
+        n_features=2,
+        n_informative=2,
+        n_redundant=0,
+        n_classes=n_classes,
+        n_clusters_per_class=1,
+        random_state=0,
+    )
+    X = np.c_[X, X]  # duplicated columns
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        LogisticRegression(alpha=0, solver="newton-cholesky").fit(X, y)
+    linalg_warnings = [
+        w for w in record if issubclass(w.category, scipy.linalg.LinAlgWarning)
+    ]
+    assert len(linalg_warnings) == 1
+    assert msg in str(linalg_warnings[0].message)
 
 
 @pytest.mark.parametrize("solver", [NewtonCholeskySolver, NewtonCDGramSolver])

@@ -138,6 +138,9 @@ def minimum_norm_coef(coef, X, sample_weight, fit_intercept):
     Returns
     -------
     coef : ndarray of shape (n_dof,)
+
+    rank_deficiency : int
+        Dimension of the null space of Xe, i.e. n_dof - rank(Xe).
     """
     n_samples, n_features = X.shape
     n_dof = coef.shape[0]
@@ -159,17 +162,18 @@ def minimum_norm_coef(coef, X, sample_weight, fit_intercept):
     # keeps the threshold safely above those rounding errors.
     eps = np.finfo(X.dtype).eps
     Z = eigenvectors[:, eigenvalues <= 10 * n_dof * eps * eigenvalues[-1]]
-    if Z.shape[1] == 0:
-        return coef
+    rank_deficiency = Z.shape[1]
+    if rank_deficiency == 0:
+        return coef, 0
     if fit_intercept:
         # min ||coef[:-1] + Z[:-1] @ v||_2 with a free intercept coef[-1] + Z[-1] @ v.
         # Z[:-1] has full column rank: no direction of the null space of Xe changes the
         # intercept alone.
         v = scipy.linalg.lstsq(Z[:-1], -coef[:-1])[0]
-        return coef + Z @ v
+        return coef + Z @ v, rank_deficiency
     else:
         # Z has orthonormal columns: remove the component of coef in the null space.
-        return coef - Z @ (Z.T @ coef)
+        return coef - Z @ (Z.T @ coef), rank_deficiency
 
 
 class NewtonSolver(ABC):
@@ -808,8 +812,9 @@ class NewtonCholeskySolver(NewtonSolver):
             # See inner_solve. Same as above, but only for the intercept.
             # intercept -= intercept of last class
             self.coef[-n_classes:] -= self.coef[-1]
-        # Track linear algebra warnings
-        self.has_already_warned = False
+        # (iteration, LAPACK message) of the first singular or very ill-conditioned
+        # Hessian met by inner_solve. The warning is raised once in finalize.
+        self.ill_conditioned_hessian = None
 
         # Memory buffers for pointwise gradient and hessian.
         n_samples = X.shape[0]
@@ -927,23 +932,8 @@ class NewtonCholeskySolver(NewtonSolver):
             #    LinearModelLoss.gradient_hessian.
             # 2. X is singular or ill-conditioned
             #    This might be the most probable cause.
-            if not self.has_already_warned:
-                # We only warn once.
-                warnings.warn(
-                    f"The inner solver of {self.__class__.__name__} stumbled upon a "
-                    "singular or very ill-conditioned Hessian matrix at iteration "
-                    f"{self.iteration}. It will now resort to using an "
-                    "eigendecomposition of the Hessian, which is expensive to compute,"
-                    " and only take large enough eigenvalues into consideration. For "
-                    "tiny or negative eigenvalues, it will resort to lbfgs instead.\n"
-                    "Further options are to use another solver or to avoid such a "
-                    "situation in the first place. Possible remedies are removing "
-                    "collinear features of X or increasing the penalization strengths."
-                    "\n"
-                    "The original Linear Algebra message was:\n" + str(e),
-                    scipy.linalg.LinAlgWarning,
-                )
-            self.has_already_warned = True
+            if self.ill_conditioned_hessian is None:
+                self.ill_conditioned_hessian = (self.iteration, str(e))
             # There are many possible ways to deal with this situation. Most of them
             # add, explicitly or implicitly, a matrix to the hessian to make it
             # positive definite, confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
@@ -1000,6 +990,7 @@ class NewtonCholeskySolver(NewtonSolver):
         return self.coef_newton @ self.hessian @ self.coef_newton
 
     def finalize(self, X, y, sample_weight):
+        rank_deficiency = 0
         if (
             self._minimum_norm
             and self.l1_reg_strength == 0
@@ -1019,9 +1010,43 @@ class NewtonCholeskySolver(NewtonSolver):
                 eps = np.sqrt(np.finfo(X.dtype).eps)
                 maybe_singular = eigenvalues[0] <= eps * eigenvalues[-1]
             if maybe_singular:
-                self.coef = minimum_norm_coef(
+                self.coef, rank_deficiency = minimum_norm_coef(
                     self.coef, X, sample_weight, self.linear_loss.fit_intercept
                 )
+
+        # A single warning per fit. Rank deficiency of X explains a singular Hessian,
+        # and it is detected even when LAPACK did not flag the Hessian.
+        if rank_deficiency > 0:
+            n_dof = self.coef.size
+            columns = (
+                "columns, including the intercept"
+                if self.linear_loss.fit_intercept
+                else "columns"
+            )
+            warnings.warn(
+                f"The design matrix X has rank {n_dof - rank_deficiency} for "
+                f"{n_dof} {columns}: some features are collinear. Without penalty, "
+                f"the solution is not unique and {self.__class__.__name__} returns "
+                "the one with minimum L2 norm, where the intercept is not part of the "
+                "norm. Possible remedies are removing collinear features of X or "
+                "adding a penalty.",
+                scipy.linalg.LinAlgWarning,
+            )
+        elif self.ill_conditioned_hessian is not None:
+            iteration, linalg_message = self.ill_conditioned_hessian
+            warnings.warn(
+                f"The inner solver of {self.__class__.__name__} stumbled upon a "
+                "singular or very ill-conditioned Hessian matrix at iteration "
+                f"{iteration}. It resorted to an eigendecomposition of the Hessian, "
+                "which is expensive to compute, and only took large enough "
+                "eigenvalues into consideration, or to lbfgs for tiny or negative "
+                "eigenvalues.\n"
+                "Further options are to use another solver or to avoid such a "
+                "situation in the first place. Possible remedies are removing "
+                "collinear features of X or increasing the penalization strengths.\n"
+                "The original Linear Algebra message was:\n" + linalg_message,
+                scipy.linalg.LinAlgWarning,
+            )
 
         if self.is_multinomial_no_penalty:
             # Our convention is usually the symmetric parametrization where
