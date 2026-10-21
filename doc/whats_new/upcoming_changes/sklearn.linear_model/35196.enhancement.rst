@@ -8,4 +8,4 @@
   For unpenalized problems (`alpha=0`) with collinear features, except multiclass
   classification, it now returns the minimum L2 norm solution, where the intercept is
   not part of the norm, as for :class:`linear_model.LinearRegression`.
-  By :user:`Christian Lorentzen <lorentzenchr>`.
+  By :user:`Christian Lorentzen <lorentzenchr>` and :user:`Arthur Lacote <cakedev0>`.
