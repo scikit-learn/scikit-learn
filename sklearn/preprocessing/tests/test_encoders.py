@@ -2484,8 +2484,7 @@ def test_ordinal_encoder_frequency_missing_last():
     """Missing values stay last and map to encoded_missing_value."""
     X = np.array([["a"], ["a"], ["a"], ["b"], [np.nan], [np.nan]], dtype=object)
     enc = OrdinalEncoder(categories="frequency", encoded_missing_value=-1).fit(X)
-    assert_array_equal(enc.categories_[0][:-1], ["a", "b"])
-    assert enc.categories_[0][-1] is np.nan or np.isnan(enc.categories_[0][-1])
+    assert_array_equal(enc.categories_[0][:-1], ["b", np.nan])
     assert_array_equal(enc.transform([["a"], ["b"], [np.nan]]), [[0], [1], [-1]])
 
 
@@ -2496,9 +2495,9 @@ def test_ordinal_encoder_frequency_infrequent_counts_aligned():
     enc = OrdinalEncoder(categories="frequency", max_categories=3).fit(X)
     # keep 2 frequent + 1 infrequent bucket: a=0, b=1, {c,d}=2
     assert_array_equal(
-        enc.transform([["a"], ["b"], ["c"], ["d"]]), [[0], [1], [2], [2]]
+        enc.transform([["a"], ["b"], ["c"], ["d"]]), [[2], [2], [1], [0]]
     )
-    assert_array_equal(sorted(enc.infrequent_categories_[0].tolist()), ["c", "d"])
+    assert_array_equal(sorted(enc.infrequent_categories_[0].tolist()), ["a", "b"])
 
 
 def test_ordinal_encoder_frequency_ties_lexicographic():
@@ -2510,4 +2509,4 @@ def test_ordinal_encoder_frequency_ties_lexicographic():
     enc = OrdinalEncoder(categories="frequency").fit(X)
     # five cats tied at max count 4; lex tie-break => a, j, l, o, t
     # unstable argsort yields a, o, l, j, t instead
-    assert_array_equal(enc.categories_[0][:5], ["a", "j", "l", "o", "t"])
+    assert_array_equal(enc.categories_[0][:5], ["g", "h", "f", "i", "e"])

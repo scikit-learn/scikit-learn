@@ -121,10 +121,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     encoder_mapping[val] = idx
                     local_decoder[idx] = val
                 if compute_counts:
-                    cats = np.array(list(encoder_mapping.keys()))
+                    cats = np.array(list(encoder_mapping.keys()), dtype=object)
                     category_counts.append(counts)
                 else:
-                    cats = np.array(list(encoder_mapping.keys()))
+                    cats = np.array(list(encoder_mapping.keys()), dtype=object)
             else:
                 if np.issubdtype(Xi.dtype, np.str_):
                     # Always convert string categories to objects to avoid
@@ -227,7 +227,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
             X_int[:, i] = _encode(Xi, uniques=self.categories_[i])
             X_mask[:, i] = X_int[:, i] != -1
-
             if not np.all(X_mask[:, i]):
                 if handle_unknown == "error":
                     diff = _unique(Xi[~X_mask[:, i]])
