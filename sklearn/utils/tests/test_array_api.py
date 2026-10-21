@@ -518,8 +518,6 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
         assert isinstance(new_est.X_, numpy.ndarray)
 
 
-
-
 @skip_if_array_api_compat_not_configured
 def test_move_estimator_to_preserves_string_array_attributes():
     """String-valued estimator attributes should be preserved."""
