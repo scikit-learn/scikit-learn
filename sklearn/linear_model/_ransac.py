@@ -180,7 +180,11 @@ class RANSACRegressor(
         then this sample is classified as an outlier.
 
     random_state : int, RandomState instance, default=None
-        The generator used to initialize the centers.
+        Controls the randomness of the data subsets selected during RANSAC
+        iterations. If the estimator supports a ``random_state`` parameter,
+        the same random state instance is passed to the estimator. This means that
+        random numbers consumed by the estimator can affect the data subsets
+        selected in subsequent iterations.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
