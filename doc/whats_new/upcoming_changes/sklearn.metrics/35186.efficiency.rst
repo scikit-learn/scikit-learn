@@ -1,0 +1,2 @@
+- The inlined euclidean distance and manhattan distance are now faster.
+  By :user:`Itamar Turner-Trauring<itamarst>`.
