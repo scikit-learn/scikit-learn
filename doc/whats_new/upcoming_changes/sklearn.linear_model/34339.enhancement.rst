@@ -5,6 +5,7 @@
   solver fails on the normal equations, it first tries to solve via an
   eigendecomposition of the Hessian. If that is not possible (e.g. due to negative
   curvature), it still falls back to lbfgs.
-  Newton-Cholesky now often recovers the minimum norm solution for underdetermined,
-  unpenalized problems.
+  For unpenalized problems (`alpha=0`) with collinear features, except multiclass
+  classification, it now returns the minimum L2 norm solution, where the intercept is
+  not part of the norm, as for :class:`linear_model.LinearRegression`.
   By :user:`Christian Lorentzen <lorentzenchr>`.
