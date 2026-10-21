@@ -138,16 +138,16 @@ jobs:
             platform_id: macosx_x86_64
 
           # MacOS arm64
-          - os: macos-14
+          - os: macos-latest
             python: 312
             platform_id: macosx_arm64
-          - os: macos-14
+          - os: macos-latest
             python: 313
             platform_id: macosx_arm64
-          - os: macos-14
+          - os: macos-latest
             python: 314
             platform_id: macosx_arm64
-          - os: macos-14
+          - os: macos-latest
             python: 314t
             platform_id: macosx_arm64
 
