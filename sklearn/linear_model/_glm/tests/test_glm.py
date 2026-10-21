@@ -1339,6 +1339,30 @@ def test_newton_cholesky_minimum_norm_like_linear_regression(csr_container):
         assert glm.intercept_ == pytest.approx(lr.intercept_, rel=1e-10)
 
 
+def test_newton_cholesky_minimum_norm_singular_hessian_not_detected():
+    """Check the minimum norm solution when LAPACK misses the singular Hessian.
+
+    For a full one-hot encoding and an intercept, the Hessian is singular, but
+    scipy.linalg.solve does not always raise a LinAlgWarning (here for seeds 0, 2 and
+    4). The minimum norm solution makes the coefficients independent of the units of
+    y, only the intercept changes.
+    """
+    n_samples = 1000
+    for seed in range(5):
+        rng = np.random.RandomState(seed)
+        categories = rng.randint(0, 3, size=n_samples)
+        X = np.eye(3)[categories]
+        y = rng.poisson(np.exp(np.array([0.0, 0.5, 1.0])[categories]))
+        params = dict(alpha=0, solver="newton-cholesky", tol=1e-8)
+        with ignore_warnings(category=scipy.linalg.LinAlgWarning):
+            reg = PoissonRegressor(**params).fit(X, y)
+            reg_1000 = PoissonRegressor(**params).fit(X, 1000 * y)
+        # Minimum norm: the coefficients of a full one-hot encoding sum to zero.
+        assert np.sum(reg.coef_) == pytest.approx(0, abs=1e-10)
+        assert_allclose(reg_1000.coef_, reg.coef_, atol=1e-10)
+        assert reg_1000.intercept_ - reg.intercept_ == pytest.approx(np.log(1000))
+
+
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_newton_cholesky_minimum_norm_zero_sample_weight(fit_intercept):
     """Check that zero sample weights are equivalent to removing samples.

@@ -752,6 +752,9 @@ class NewtonCholeskySolver(NewtonSolver):
     uses Cholesky based linear solver.
     """
 
+    # Return the minimum norm solution for unpenalized problems, see finalize.
+    _minimum_norm = True
+
     def __init__(
         self,
         *,
@@ -998,15 +1001,27 @@ class NewtonCholeskySolver(NewtonSolver):
 
     def finalize(self, X, y, sample_weight):
         if (
-            self.has_already_warned
+            self._minimum_norm
+            and self.l1_reg_strength == 0
             and self.l2_reg_strength == 0
             and not self.linear_loss.base_loss.is_multiclass
         ):
-            # The Hessian was singular, X might be rank deficient. Without penalty,
-            # the solution is then not unique and we pick the minimum norm one.
-            self.coef = minimum_norm_coef(
-                self.coef, X, sample_weight, self.linear_loss.fit_intercept
-            )
+            # Without penalty, the solution is not unique for rank deficient X and we
+            # pick the minimum norm one. As H = Xe' diag(sw * h) Xe, a rank deficient
+            # Xe makes the Hessian singular. LAPACK in inner_solve does not always
+            # detect it, so we check the eigenvalues of H, which is cheap compared to
+            # computing H.
+            if self.hessian_warning:
+                # The Hessian was not computed, see LinearModelLoss.gradient_hessian.
+                maybe_singular = True
+            else:
+                eigenvalues = scipy.linalg.eigvalsh(self.hessian)
+                eps = np.sqrt(np.finfo(X.dtype).eps)
+                maybe_singular = eigenvalues[0] <= eps * eigenvalues[-1]
+            if maybe_singular:
+                self.coef = minimum_norm_coef(
+                    self.coef, X, sample_weight, self.linear_loss.fit_intercept
+                )
 
         if self.is_multinomial_no_penalty:
             # Our convention is usually the symmetric parametrization where
@@ -1058,6 +1073,8 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
 
     Note that this solver can naturally deal with sparse X.
     """
+
+    _minimum_norm = False
 
     def __init__(
         self,
