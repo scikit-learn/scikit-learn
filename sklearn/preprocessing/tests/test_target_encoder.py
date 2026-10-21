@@ -776,10 +776,9 @@ def test_target_encoder_shuffle_random_state_deprecated():
 
 
 @config_context(enable_metadata_routing=True)
-def test_target_encoder_routing():
-    """
-    Test that `TargetEncoder` correctly routes metadata.
-    """
+def test_target_encoder_metadat_routing_without_groups():
+    # Regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/35139
     rng = np.random.default_rng(0)
     X = rng.choice(["a", "b", "c"], size=(100, 1))
     y = rng.integers(0, 2, size=100)
