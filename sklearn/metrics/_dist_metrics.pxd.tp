@@ -28,12 +28,7 @@ cdef inline float64_t euclidean_dist{{name_suffix}}(
     const {{INPUT_DTYPE_t}}* x2,
     intp_t size,
 ) except -1 nogil:
-    cdef float64_t tmp, d=0
-    cdef intp_t j
-    for j in range(size):
-        tmp = <float64_t> (x1[j] - x2[j])
-        d += tmp * tmp
-    return sqrt(d)
+    return sqrt(euclidean_rdist{{name_suffix}}(x1, x2, size))
 
 
 cdef inline float64_t euclidean_rdist{{name_suffix}}(
