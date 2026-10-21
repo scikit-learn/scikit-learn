@@ -2416,13 +2416,13 @@ def test_ridge_positive_unsupported_solver_error(solver, positive):
     coef = np.array([1, -1])
     y = X @ coef
 
-    model = Ridge(alpha=alpha, positive=True, solver=solver, fit_intercept=False)
+    model = Ridge(alpha=alpha, positive=positive, solver=solver, fit_intercept=False)
     with pytest.raises(ValueError, match="does not support positive"):
         model.fit(X, y)
 
     with pytest.raises(ValueError, match="only 'lbfgs' solver can be used"):
         _, _ = ridge_regression(
-            X, y, alpha, positive=True, solver=solver, return_intercept=False
+            X, y, alpha, positive=positive, solver=solver, return_intercept=False
         )
 
 
@@ -2504,24 +2504,14 @@ def test_lbfgs_positive_list(alpha):
     Test that LBGFS gets the same coef when
     positive=True and positive=[True]*n_features.
     """
-    X, y = make_regression(n_samples=100, n_features=3, random_state=42)
-    y = np.expand_dims(y, 1)
+    X = rng.randn(10, 2)
+    coef = np.array([-2, -1])
+    y = X @ coef
     alpha = np.asarray([alpha])
-    config_single_bool = {
-        "positive": True,
-        "tol": 1e-16,
-        "max_iter": 500000,
-    }
+    ride_single_bool = Ridge(alpha=alpha, positive=True, solver="lbfgs").fit(X, y)
+    ride_list_bool = Ridge(alpha=alpha, positive=[True, True], solver="lbfgs").fit(X, y)
 
-    config_list_bool = {
-        "positive": [[True, True, True]],
-        "tol": 1e-16,
-        "max_iter": 500000,
-    }
-
-    coef_lbfgs_single_bool = _solve_lbfgs(X, y, alpha, **config_single_bool)
-    coef_lbfgs_list_bool = _solve_lbfgs(X, y, alpha, **config_list_bool)
-    assert_allclose(coef_lbfgs_single_bool, coef_lbfgs_list_bool)
+    assert_allclose(ride_single_bool.coef_, ride_list_bool.coef_)
 
 
 @pytest.mark.parametrize("fit_intercept", [False, True])

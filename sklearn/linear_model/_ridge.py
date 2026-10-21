@@ -537,7 +537,7 @@ def ridge_regression(
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
           `scipy.optimize.minimize`. It can be used only when `positive`
-          is True.
+          constrains at least one coefficient.
 
         All solvers except 'svd' support both dense and sparse data. However, only
         'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
@@ -1163,7 +1163,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
           :func:`scipy.optimize.minimize`. It can be used only when `positive`
-          is True.
+          constrains at least one coefficient.
 
         All solvers except 'svd' support both dense and sparse data. However, only
         'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
@@ -1174,13 +1174,15 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         .. versionadded:: 0.19
            SAGA solver.
 
-    positive : bool or list of bool, default=False
-        When set to ``True``, forces the coefficients to be positive.
-        When set to ``[True, True, False]``, forces only the first two
-        coefficients to be positive.
-        When set to ``False``, no specific constraint is enforced.
-        When positive is a list, it must have the same length as the number
-        of expected coefficients. (X.shape[1])
+    positive : bool or array-like of bool of shape (n_features,), default=False
+        Positivity constraint on the coefficients.
+        If ``True``, forces all coefficients to be positive.
+        If ``False``, no constraint is enforced.
+        If an array-like of shape (n_features,), the constraint is applied to
+        each feature independently. For example, ``[True, True, False]`` forces
+        the first two coefficients to be positive and leaves the third
+        unconstrained. For multi-output `y`, the same mask is applied to every
+        target.
         Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None
@@ -1522,10 +1524,15 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
           `scipy.optimize.minimize`. It can be used only when `positive`
-          is True.
+          constrains at least one coefficient.
 
-    positive : bool, default=False
-        When set to ``True``, forces the coefficients to be positive.
+    positive : bool or array-like of bool of shape (n_features,), default=False
+        Positivity constraint on the coefficients.
+        If ``True``, forces all coefficients to be positive.
+        If ``False``, no constraint is enforced.
+        If an array-like of shape (n_features,), the constraint is applied to
+        each feature independently. A ``False`` entry leaves that coefficient
+        unconstrained. The same mask is applied to every class.
         Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None

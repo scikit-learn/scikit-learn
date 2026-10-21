@@ -8,24 +8,20 @@ of non-negative constraints. This example is an extension of
 :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py` that includes the
 `positive` parameter.
 
-Each curve is one coefficient of :class:`~sklearn.linear_model.Ridge` on
-the 10x10 Hilbert matrix, plotted against the regularization ``alpha``.
-The ``positive`` parameter chooses which coefficients must be greater
-than or equal to zero.
+Each curve is one coefficient of :class:`~sklearn.linear_model.Ridge` on the 10x10
+Hilbert matrix, plotted against the regularization ``alpha``. The ``positive`` parameter
+chooses which coefficients must be greater than or equal to zero.
 
-``positive=False`` leaves every coefficient free. On this
-ill-conditioned matrix those coefficients change sign and grow as
-``alpha`` decreases. See
-:ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py` for the
-same unconstrained path.
+``positive=False`` leaves every coefficient free. On this ill-conditioned matrix those
+coefficients change sign and grow as ``alpha`` decreases.
 
-A boolean array of shape ``(n_features,)`` applies the bound only where
-an entry is ``True``. A ``False`` entry leaves that coefficient free,
-so it can be negative. ``positive=True`` bounds every coefficient.
+A boolean array of shape ``(n_features,)`` applies the bound only where an entry is
+``True``. A ``False`` entry leaves that coefficient free, so it can be negative.
+``positive=True`` bounds every coefficient.
 
-For the smallest values of ``alpha``, the constrained paths level off.
-Coefficients that the bound keeps from becoming negative stay at zero.
-The unconstrained path keeps changing.
+For the smallest values of ``alpha``, the constrained paths level off. Coefficients that
+the bound keeps from becoming negative stay at zero. The unconstrained path keeps
+changing.
 
 """
 
