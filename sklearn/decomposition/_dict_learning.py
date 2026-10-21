@@ -105,8 +105,6 @@ def _sparse_encode_precomputed(
     positive: bool, default=False
         Whether to enforce a positivity constraint on the sparse code.
 
-        .. versionadded:: 0.20
-
     Returns
     -------
     code : ndarray of shape (n_components, n_features)
@@ -323,8 +321,6 @@ def sparse_encode(
     positive : bool, default=False
         Whether to enforce positivity when finding the encoding.
 
-        .. versionadded:: 0.20
-
     Returns
     -------
     code : ndarray of shape (n_samples, n_components)
@@ -509,8 +505,6 @@ def _update_dict(
 
     positive : bool, default=False
         Whether to enforce positivity when finding the dictionary.
-
-        .. versionadded:: 0.20
     """
     n_samples, n_components = code.shape
     random_state = check_random_state(random_state)
@@ -773,17 +767,11 @@ def dict_learning_online(
     positive_dict : bool, default=False
         Whether to enforce positivity when finding the dictionary.
 
-        .. versionadded:: 0.20
-
     positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
 
-        .. versionadded:: 0.20
-
     method_max_iter : int, default=1000
         Maximum number of iterations to perform when solving the lasso problem.
-
-        .. versionadded:: 0.22
 
     tol : float, default=1e-3
         Control early stopping based on the norm of the differences in the
@@ -980,17 +968,11 @@ def dict_learning(
     positive_dict : bool, default=False
         Whether to enforce positivity when finding the dictionary.
 
-        .. versionadded:: 0.20
-
     positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
 
-        .. versionadded:: 0.20
-
     method_max_iter : int, default=1000
         Maximum number of iterations to perform.
-
-        .. versionadded:: 0.22
 
     Returns
     -------
@@ -1243,13 +1225,9 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
 
-        .. versionadded:: 0.20
-
     transform_max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
-
-        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1258,8 +1236,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1454,9 +1430,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
           Lasso solution (:class:`~sklearn.linear_model.Lasso`). Lars will be
           faster if the estimated components are sparse.
 
-        .. versionadded:: 0.17
-           *cd* coordinate descent method to improve speed.
-
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
             'threshold'}, default='omp'
         Algorithm used to transform the data:
@@ -1471,9 +1444,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
           solution.
         - `'threshold'`: squashes to zero all coefficients less than alpha from
           the projection ``dictionary * X'``.
-
-        .. versionadded:: 0.17
-           *lasso_cd* coordinate descent method to improve speed.
 
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
@@ -1528,18 +1498,12 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
 
-        .. versionadded:: 0.20
-
     positive_dict : bool, default=False
         Whether to enforce positivity when finding the dictionary.
-
-        .. versionadded:: 0.20
 
     transform_max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `'lasso_lars'`.
-
-        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1551,8 +1515,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1865,18 +1827,12 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
 
-        .. versionadded:: 0.20
-
     positive_dict : bool, default=False
         Whether to enforce positivity when finding the dictionary.
-
-        .. versionadded:: 0.20
 
     transform_max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `'lasso_lars'`.
-
-        .. versionadded:: 0.22
 
     callback : callable, default=None
         A callable that gets invoked at the end of each iteration.
@@ -1908,8 +1864,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

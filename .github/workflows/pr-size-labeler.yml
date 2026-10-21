@@ -1,0 +1,53 @@
+name: PR Size Labeler
+
+# Automatically labels pull requests based on the number of lines changed
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  size-label:
+    if: github.repository == 'scikit-learn/scikit-learn'
+    runs-on: ubuntu-latest
+    env:
+      xl_message: >
+              This PR exceeds the recommended size of 500 lines changed. Consider
+              splitting it into smaller PRs to ease the review process.
+
+
+              Please make sure you read our
+              [Contributing guide](https://scikit-learn.org/stable/developers/contributing.html)
+              and in particular our
+              [Pull Request guidelines](https://scikit-learn.org/dev/developers/contributing.html#pull-request-checklist)
+    steps:
+      - name: Label PR by size
+        uses: codelytv/pr-size-labeler@19c335e7695ba922de938806dd129f0a9b992644 # v1.12.0
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          xs_label: "size/XS"
+          xs_max_size: "10"
+          s_label: "size/S"
+          s_max_size: "50"
+          m_label: "size/M"
+          m_max_size: "200"
+          l_label: "size/L"
+          l_max_size: "500"
+          xl_label: "size/XL"
+          fail_if_xl: "false"
+          # Skip the XL message on PRs opened by org members
+          message_if_xl: ${{ !contains(fromJSON('["OWNER", "MEMBER"]'), github.event.pull_request.author_association) && env.xl_message || '' }}
+          # For the diff size computation, ignore lock-files and externals Array API changes
+          files_to_ignore: |
+             build_tools/**/*.lock
+             build_tools/**/*lock.txt
+             sklearn/externals/array_api*

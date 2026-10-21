@@ -128,12 +128,8 @@ def contingency_matrix(
         If `True`, return a sparse CSR contingency matrix. If `eps` is not
         `None` and `sparse` is `True` will raise ValueError.
 
-        .. versionadded:: 0.18
-
     dtype : numeric type, default=np.int64
         Output dtype. Ignored if `eps` is not `None`.
-
-        .. versionadded:: 0.24
 
     Returns
     -------
@@ -992,12 +988,6 @@ def adjusted_mutual_info_score(
     average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
         How to compute the normalizer in the denominator.
 
-        .. versionadded:: 0.20
-
-        .. versionchanged:: 0.22
-           The default value of ``average_method`` changed from 'max' to
-           'arithmetic'.
-
     Returns
     -------
     ami: float (upperlimited by 1.0)
@@ -1126,12 +1116,6 @@ def normalized_mutual_info_score(
     average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
         How to compute the normalizer in the denominator.
 
-        .. versionadded:: 0.20
-
-        .. versionchanged:: 0.22
-           The default value of ``average_method`` changed from 'geometric' to
-           'arithmetic'.
-
     Returns
     -------
     nmi : float
@@ -1203,8 +1187,6 @@ def normalized_mutual_info_score(
 )
 def fowlkes_mallows_score(labels_true, labels_pred):
     """Measure the similarity of two clusterings of a set of points.
-
-    .. versionadded:: 0.18
 
     The Fowlkes-Mallows index (FMI) is defined as the geometric mean of
     the precision and recall::

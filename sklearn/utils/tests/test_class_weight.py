@@ -91,6 +91,28 @@ def test_compute_class_weight_dict():
     assert_allclose([4.0, 2.0, 3.0], cw)
 
 
+@pytest.mark.parametrize(
+    "labels",
+    [
+        ["1", "2"],
+        ["01", "1"],
+        ["0", "a"],
+        ["cat", "dog"],
+        [1, 2],
+    ],
+)
+def test_compute_class_weight_dict_preserves_labels(labels):
+    """Ensure numeric-looking string labels are not converted to integer keys."""
+    # Non-regression for https://github.com/scikit-learn/scikit-learn/issues/34883
+    classes = np.asarray(labels)
+    y = np.asarray([labels[0], labels[0], labels[1]])
+    class_weight = {labels[0]: 2.0, labels[1]: 3.0}
+
+    weights = compute_class_weight(class_weight, classes=classes, y=y)
+
+    assert_allclose(weights, [2.0, 3.0])
+
+
 def test_compute_class_weight_invariance():
     # Test that results with class_weight="balanced" is invariant wrt
     # class imbalance if the number of samples is identical.
