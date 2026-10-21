@@ -31,7 +31,7 @@ from sklearn.linear_model._ridge import (
     _solve_svd,
     _X_CenterStackOp,
 )
-from sklearn.metrics import get_scorer, make_scorer, mean_squared_error
+from sklearn.metrics import accuracy_score, get_scorer, make_scorer, mean_squared_error
 from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
@@ -2675,6 +2675,31 @@ def test_ridge_cv_custom_multioutput_scorer(X_shape):
     )
 
     assert_allclose(ridge_cv.best_score_, -custom_error(y, y_pred_loo))
+
+
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_ridge_classifier_cv_accuracy_loo(global_random_seed, n_classes):
+    """Binary LOO scoring used to take `argmax` over a single-column
+    `LabelBinarizer` output, making `best_score_` always 1.0. Multiclass is
+    checked alongside as a guard on the shared code path."""
+    X, y = make_classification(
+        n_samples=60,
+        n_features=8,
+        n_informative=4,
+        n_classes=n_classes,
+        random_state=global_random_seed,
+    )
+    alphas = [0.1, 1.0, 10.0]
+    clf = RidgeClassifierCV(alphas=alphas, scoring="accuracy").fit(X, y)
+    if n_classes == 2:
+        assert clf.best_score_ < 1.0
+
+    cv = LeaveOneOut()
+    y_pred_loo = [
+        RidgeClassifier(alpha=clf.alpha_).fit(X[train], y[train]).predict(X[test])[0]
+        for train, test in cv.split(X)
+    ]
+    assert_array_almost_equal(clf.best_score_, accuracy_score(y, y_pred_loo))
 
 
 # Metadata Routing Tests
