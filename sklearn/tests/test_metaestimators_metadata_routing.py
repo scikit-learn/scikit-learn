@@ -690,7 +690,7 @@ def _get_callee_from_caller(instance, estimator_name, caller):
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_unsupported_estimators_get_metadata_routing(estimator):
     """Test that get_metadata_routing is not implemented on meta-estimators for
     which we haven't implemented routing yet."""
@@ -699,7 +699,7 @@ def test_unsupported_estimators_get_metadata_routing(estimator):
 
 
 @pytest.mark.parametrize("estimator", UNSUPPORTED_ESTIMATORS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_unsupported_estimators_fit_with_metadata(estimator):
     """Test that fit raises NotImplementedError when metadata routing is
     enabled and a metadata is passed on meta-estimators for which we haven't
@@ -713,7 +713,7 @@ def test_unsupported_estimators_fit_with_metadata(estimator):
             raise NotImplementedError
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_registry_copy():
     # test that _Registry is not copied into a new instance.
     a = _Registry()
@@ -724,7 +724,7 @@ def test_registry_copy():
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_default_request(metaestimator):
     # Check that by default request is empty and the right type
     metaestimator_class = metaestimator["metaestimator"]
@@ -741,7 +741,7 @@ def test_default_request(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_error_on_missing_requests_for_sub_estimator(metaestimator):
     # Test that a UnsetMetadataPassedError is raised when the sub-estimator's
     # requests are not set
@@ -802,7 +802,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     # When the metadata is explicitly requested on the sub-estimator, there
     # should be no errors.
@@ -879,7 +879,7 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_non_consuming_estimator_works(metaestimator):
     # Test that when a non-consuming estimator is given, the meta-estimator
     # works w/o setting any requests.
@@ -919,7 +919,7 @@ def test_non_consuming_estimator_works(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_is_routed_correctly_to_scorer(metaestimator):
     """Test that any requested metadata is correctly routed to the underlying
     scorers in CV estimators.
@@ -967,7 +967,7 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_is_routed_correctly_to_splitter(metaestimator):
     """Test that any requested metadata is correctly routed to the underlying
     splitters in CV estimators.
@@ -1002,7 +1002,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):
     """Check that sample_weight is routed to a sub-estimator when the
     meta-estimator is an intermediate (transformer) step of a ``Pipeline``.
@@ -1056,7 +1056,7 @@ def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_routed_to_group_splitter(metaestimator):
     """Test that groups are routed correctly if group splitter of CV estimator is used
     within cross_validate. Regression test for issue described in PR #29634 to test that
