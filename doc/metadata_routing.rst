@@ -307,10 +307,7 @@ when auto-requests are enabled.
 If you pass metadata that no consumer requests (including under auto-requests), the
 router still raises an error.
 
-For a full example that routes a validation set (`X_val`, `y_val`) through a
-:class:`~pipeline.Pipeline` and :class:`~model_selection.GridSearchCV` to
-:class:`~ensemble.HistGradientBoostingRegressor` with
-:class:`~preprocessing.TargetEncoder`, see
+For a full example on routing a validation set (`X_val`, `y_val`) see
 :ref:`sphx_glr_auto_examples_ensemble_plot_metadata_routing_validation_set.py`.
 
 Developers who implement auto-requests should follow
