@@ -20,6 +20,7 @@ from sklearn.datasets import make_low_rank_matrix, make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
     GammaRegressor,
+    LinearRegression,
     PoissonRegressor,
     Ridge,
     TweedieRegressor,
@@ -43,6 +44,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     ignore_warnings,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS
 
 SOLVERS = ["lbfgs", "newton-cd", "newton-cd-gram", "newton-cg", "newton-cholesky"]
 
@@ -223,6 +225,21 @@ def glm_dataset(global_random_seed, request):
     )
 
 
+def _min_norm_with_free_intercept(X, raw_prediction):
+    """Minimum norm solution where the intercept is not part of the norm.
+
+        min ||coef||_2 subject to X @ coef + intercept = raw_prediction
+
+    Centering removes the intercept: coef is the minimum norm solution of
+    X_c @ coef = raw_prediction - mean(raw_prediction) with X_c the centered X.
+    """
+    X_mean = X.mean(axis=0)
+    raw_mean = raw_prediction.mean()
+    coef = linalg.pinv(X - X_mean) @ (raw_prediction - raw_mean)
+    intercept = raw_mean - X_mean @ coef
+    return coef, intercept
+
+
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_glm_regression(solver, fit_intercept, glm_dataset):
@@ -380,6 +397,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     Note: This checks the minimum norm solution for wide X, i.e.
     n_samples < n_features:
         min ||w||_2 subject to w = argmin deviance(X, y, w)
+    where w excludes the intercept.
     """
     model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
@@ -395,8 +413,12 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
     model = clone(model).set_params(**params)
     if fit_intercept:
         X = X[:, :-1]  # remove intercept
-        intercept = coef[-1]
-        coef = coef[:-1]
+        if n_samples > n_features:
+            intercept = coef[-1]
+            coef = coef[:-1]
+        else:
+            # The fixture's solution includes the intercept in the norm.
+            coef, intercept = _min_norm_with_free_intercept(X, X @ coef[:-1] + coef[-1])
     else:
         intercept = 0
 
@@ -429,8 +451,8 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         rtol = 5e-5
         assert_allclose(model.predict(X), y, rtol=rtol)
 
-        norm_solution = np.linalg.norm(np.r_[intercept, coef])
-        norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
+        norm_solution = np.linalg.norm(coef)
+        norm_model = np.linalg.norm(model.coef_)
         if solver in ("newton-cd", "newton-cd-gram"):
             # XXX: This solver shows random behaviour. Sometimes it finds solutions
             # with norm_model <= norm_solution! So we check conditionally.
@@ -473,6 +495,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     For long X, [X, X] is a singular matrix and we check against the minimum norm
     solution:
         min ||w||_2 subject to w = argmin deviance(X, y, w)
+    where w excludes the intercept.
     """
     model, X, y, coef, _, _, _ = glm_dataset
     n_samples, n_features = X.shape
@@ -488,12 +511,15 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     model = clone(model).set_params(**params)
     if fit_intercept:
         X = X[:, :-1]  # remove intercept
-        intercept = coef[-1]
-        coef = coef[:-1]
-        # Put one intercept term into the new X, the other one is the "fit_intercept".
+        if n_samples > n_features:
+            intercept = coef[-1]
+            coef = coef[:-1]
+        else:
+            # The fixture's solution includes the intercept in the norm.
+            coef, intercept = _min_norm_with_free_intercept(X, X @ coef[:-1] + coef[-1])
+        # Put a column of ones into the new X, collinear with the "fit_intercept".
         X = np.concatenate((X, X, np.ones((n_samples, 1))), axis=1)
-        # We omit the factor of 1/2 such that both intercept terms have the same
-        # effective design matrix column (all ones).
+        # We omit the factor of 1/2 to keep the column of ones.
         # We will need to correct for this factor of 2 later.
     else:
         intercept = 0
@@ -516,13 +542,15 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
             warnings.filterwarnings("ignore", category=ConvergenceWarning)
         model.fit(X, y)
 
-    norm_solution = np.linalg.norm(np.r_[intercept, intercept, coef, coef])
+    # The minimum norm solution splits coef equally on [X, X]. With fit_intercept, it
+    # puts nothing on the column of ones as the intercept is free.
+    norm_solution = np.linalg.norm(np.r_[coef, coef])
     if fit_intercept:
         # Here we need the factor of 2 because we did not divide X by 1/2.
-        norm_model = np.linalg.norm(2 * np.r_[model.intercept_, model.coef_])
-        model_coef = 2 * model.coef_[:-1]  # remove the intercept
+        norm_model = np.linalg.norm(2 * model.coef_)
+        model_coef = 2 * model.coef_[:-1]  # remove the column of ones
     else:
-        norm_model = np.linalg.norm(np.r_[model.coef_])
+        norm_model = np.linalg.norm(model.coef_)
         model_coef = model.coef_
 
     if solver == "newton-cholesky":
@@ -543,10 +571,10 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
 
         if fit_intercept:
             # For the minimum norm solution, we should have
-            # model.intercept_ == model.coef[-1] == 0.5 * intercept.
+            # model.coef[-1] == 0 and model.intercept_ == intercept.
             if solver == "newton-cholesky":
-                assert model.intercept_ == pytest.approx(model.coef_[-1])
-                assert model.intercept_ == pytest.approx(0.5 * intercept)
+                assert model.coef_[-1] == pytest.approx(0, abs=1e-10)
+                assert model.intercept_ == pytest.approx(intercept)
                 assert norm_model == pytest.approx(norm_solution, rel=tol_norm)
             else:
                 # Some solvers don't find the min norm solution. So we check that we
@@ -583,7 +611,8 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
             # Here, we find the minimum norm solution.
             assert norm_model == pytest.approx(norm_solution, rel=tol_norm)
             if fit_intercept:
-                assert model.intercept_ == pytest.approx(0.5 * intercept, rel=5e-6)
+                assert model.coef_[-1] == pytest.approx(0, abs=1e-10)
+                assert model.intercept_ == pytest.approx(intercept, rel=5e-6)
             rtol = 1e-5 if solver == "newton-cholesky" else 1e-4
             assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
 
@@ -615,8 +644,12 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
     model = clone(model).set_params(**params)
     if fit_intercept:
         X = X[:, :-1]  # remove intercept
-        intercept = coef[-1]
-        coef = coef[:-1]
+        if n_samples > n_features:
+            intercept = coef[-1]
+            coef = coef[:-1]
+        else:
+            # The fixture's solution includes the intercept in the norm.
+            coef, intercept = _min_norm_with_free_intercept(X, X @ coef[:-1] + coef[-1])
     else:
         intercept = 0
     X = np.concatenate((X, X), axis=0)
@@ -650,8 +683,8 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
         rtol = 5e-6 if solver == "newton-cg" else 1e-6
         assert_allclose(model.predict(X), y, rtol=rtol)
 
-        norm_solution = np.linalg.norm(np.r_[intercept, coef])
-        norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
+        norm_solution = np.linalg.norm(coef)
+        norm_model = np.linalg.norm(model.coef_)
         if solver in ("newton-cd", "newton-cd-gram"):
             # XXX: This solver shows random behaviour. Sometimes it finds solutions
             # with norm_model <= norm_solution! So we check conditionally.
@@ -1279,6 +1312,57 @@ def test_newton_cholesky_fallback_to_lbfgs(capsys):
         "conditioned Hessian matrix and resorts to LBFGS instead."
     )
     assert msg in captured.out
+
+
+@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
+def test_newton_cholesky_minimum_norm_like_linear_regression(csr_container):
+    """Check the minimum norm solution of newton-cholesky for collinear X.
+
+    With identity link and alpha=0, the GLM is ordinary least squares. For rank
+    deficient X, it should give the same minimum norm solution as LinearRegression,
+    where the intercept is not part of the norm. Shifting y then only shifts the
+    intercept.
+    """
+    rng = np.random.RandomState(0)
+    n_samples = 200
+    X = np.c_[np.eye(4)[rng.randint(0, 4, size=n_samples)], rng.randn(n_samples, 2)]
+    X = np.c_[X, X[:, -1]]  # Full one-hot encoding and a duplicated column.
+    y = X @ rng.randn(X.shape[1]) + rng.randn(n_samples)
+    X_fit = X if csr_container is None else csr_container(X)
+    glm = TweedieRegressor(power=0, link="identity", alpha=0, solver="newton-cholesky")
+
+    for shift in [0, 100]:
+        lr = LinearRegression().fit(X, y + shift)
+        with ignore_warnings(category=scipy.linalg.LinAlgWarning):
+            glm.fit(X_fit, y + shift)
+        assert_allclose(glm.coef_, lr.coef_, rtol=1e-8, atol=1e-10)
+        assert glm.intercept_ == pytest.approx(lr.intercept_, rel=1e-10)
+
+
+@pytest.mark.parametrize("fit_intercept", [False, True])
+def test_newton_cholesky_minimum_norm_zero_sample_weight(fit_intercept):
+    """Check that zero sample weights are equivalent to removing samples.
+
+    The samples with zero weight make X full rank, while the other samples are
+    collinear: the minimum norm solution must only depend on the latter.
+    """
+    rng = np.random.RandomState(0)
+    n_samples = 200
+    X = np.eye(3)[rng.randint(0, 3, size=n_samples)]
+    X = np.c_[X, X[:, 0]]  # duplicated column
+    y = rng.poisson(np.exp(X @ [0.5, 0.0, 1.0, 0.0]))
+    # Two samples that break the collinearity, but with zero weight.
+    X_zero = np.r_[X, [[1.0, 0, 0, 0], [0, 0, 0, 1]]]
+    y_zero = np.r_[y, [5, 7]]
+    sw = np.r_[np.ones(n_samples), [0, 0]]
+    params = dict(alpha=0, fit_intercept=fit_intercept, solver="newton-cholesky")
+    with ignore_warnings(category=scipy.linalg.LinAlgWarning):
+        reg = PoissonRegressor(**params).fit(X, y)
+        reg_zero = PoissonRegressor(**params).fit(X_zero, y_zero, sample_weight=sw)
+    assert_allclose(reg_zero.coef_, reg.coef_, rtol=1e-8)
+    assert reg_zero.intercept_ == pytest.approx(reg.intercept_, rel=1e-8)
+    # The duplicated columns share the coefficient equally.
+    assert reg.coef_[0] == pytest.approx(reg.coef_[3])
 
 
 @pytest.mark.parametrize("solver", [NewtonCholeskySolver, NewtonCDGramSolver])

@@ -25,6 +25,7 @@ from sklearn.linear_model._cd_fast import (
 )
 from sklearn.linear_model._linear_loss import (
     LinearModelLoss,
+    sandwich_dot,
 )
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.optimize import _check_optimize_result
@@ -104,6 +105,71 @@ def min_norm_subgradient(alpha, gradient, coef, linear_loss):
         return result
     else:
         return result.reshape(gradient.shape, order="F")
+
+
+def minimum_norm_coef(coef, X, sample_weight, fit_intercept):
+    """Minimum norm coefficients with the same raw predictions as coef.
+
+    Let Xe = [X, 1] if fit_intercept else X. For rank deficient Xe, all coef + Z @ v,
+    with the columns of Z spanning the null space of Xe, give the same raw predictions
+    Xe @ coef, hence the same unpenalized objective. Among them, this returns the one
+    with minimal ||w||_2, where w are the coefficients without the intercept:
+
+        min ||w||_2 subject to Xe @ coef = raw_prediction
+
+    As in the L2 penalty, the intercept is not part of the norm. This makes the result
+    the limit of the L2 penalized solution for l2_reg_strength -> 0, and adding a
+    constant to the raw predictions or to a column of X only changes the intercept.
+
+    Samples with zero weight do not constrain the null space, such that zero weights
+    are equivalent to removing those samples.
+
+    Parameters
+    ----------
+    coef : ndarray of shape (n_dof,)
+        Coefficients, the last one being the intercept if fit_intercept.
+
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+
+    sample_weight : ndarray of shape (n_samples,) or None
+
+    fit_intercept : bool
+
+    Returns
+    -------
+    coef : ndarray of shape (n_dof,)
+    """
+    n_samples, n_features = X.shape
+    n_dof = coef.shape[0]
+    if sample_weight is None:
+        sample_weight = np.ones(n_samples, dtype=X.dtype)
+    # The null space of diag(sqrt(sw)) Xe is the one of the Gram matrix
+    #   G = Xe' diag(sw) Xe
+    # of shape (n_dof, n_dof), also for sparse X. Contrary to the Hessian
+    # Xe' diag(sw * h) Xe, it does not depend on the pointwise hessians h, which can
+    # underflow to zero for some samples.
+    G = np.empty((n_dof, n_dof), dtype=X.dtype)
+    G[:n_features, :n_features] = sandwich_dot(X, sample_weight)
+    if fit_intercept:
+        G[:n_features, -1] = G[-1, :n_features] = X.T @ sample_weight
+        G[-1, -1] = np.sum(sample_weight)
+    eigenvalues, eigenvectors = scipy.linalg.eigh(G)
+    # Exact zero eigenvalues of G come out at about eps * max(eigenvalues) in floating
+    # point arithmetic (G squares the condition number of Xe). The factor 10 * n_dof
+    # keeps the threshold safely above those rounding errors.
+    eps = np.finfo(X.dtype).eps
+    Z = eigenvectors[:, eigenvalues <= 10 * n_dof * eps * eigenvalues[-1]]
+    if Z.shape[1] == 0:
+        return coef
+    if fit_intercept:
+        # min ||coef[:-1] + Z[:-1] @ v||_2 with a free intercept coef[-1] + Z[-1] @ v.
+        # Z[:-1] has full column rank: no direction of the null space of Xe changes the
+        # intercept alone.
+        v = scipy.linalg.lstsq(Z[:-1], -coef[:-1])[0]
+        return coef + Z @ v
+    else:
+        # Z has orthonormal columns: remove the component of coef in the null space.
+        return coef - Z @ (Z.T @ coef)
 
 
 class NewtonSolver(ABC):
@@ -931,24 +997,16 @@ class NewtonCholeskySolver(NewtonSolver):
         return self.coef_newton @ self.hessian @ self.coef_newton
 
     def finalize(self, X, y, sample_weight):
-        if self.has_already_warned and not self.linear_loss.base_loss.is_multiclass:
-            # X might be singular, try to find minimum norm solution.
-            if self.linear_loss.fit_intercept:
-                Xe = np.concatenate(
-                    (X, np.ones((X.shape[0], 1), dtype=X.dtype)), axis=1
-                )
-            else:
-                Xe = X
-            eps = np.finfo(X.dtype).eps
-            # As long as Xe @ coef remains constant, we are allowed to change coef.
-            # This corresponds to the nullspace Z of Xe.
-            Z = scipy.linalg.null_space(Xe, rcond=np.sqrt(eps))
-            if Z.shape[1] > 0:
-                # For any x of length Z.shape[1], we are free to add Z @ x to the
-                # coefficients: coef_new = coef + Z @ x. We want to minimize
-                # ||coef_new||_2^2 = ||coef + Z @ x||_2^2 which is a least squares.
-                res = scipy.linalg.lstsq(Z, -self.coef)
-                self.coef += Z @ res[0]
+        if (
+            self.has_already_warned
+            and self.l2_reg_strength == 0
+            and not self.linear_loss.base_loss.is_multiclass
+        ):
+            # The Hessian was singular, X might be rank deficient. Without penalty,
+            # the solution is then not unique and we pick the minimum norm one.
+            self.coef = minimum_norm_coef(
+                self.coef, X, sample_weight, self.linear_loss.fit_intercept
+            )
 
         if self.is_multinomial_no_penalty:
             # Our convention is usually the symmetric parametrization where
