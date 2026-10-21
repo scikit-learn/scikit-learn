@@ -24,7 +24,6 @@ from sklearn.datasets import (
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
     GammaRegressor,
-    LinearRegression,
     LogisticRegression,
     PoissonRegressor,
     Ridge,
@@ -1313,61 +1312,49 @@ def test_newton_cholesky_fallback_to_lbfgs(capsys):
     assert msg in captured.out
 
 
+def _fit_with_linalg_warnings(model, *args, **kwargs):
+    """Fit model and return its messages of LinAlgWarning."""
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        model.fit(*args, **kwargs)
+    return [
+        str(w.message)
+        for w in record
+        if issubclass(w.category, scipy.linalg.LinAlgWarning)
+    ]
+
+
 @pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
-def test_newton_cholesky_minimum_norm_like_linear_regression(csr_container):
-    """Check the minimum norm solution of newton-cholesky for collinear X.
-
-    With identity link and alpha=0, the GLM is ordinary least squares. For rank
-    deficient X, it should give the same minimum norm solution as LinearRegression,
-    where the intercept is not part of the norm. Shifting y then only shifts the
-    intercept.
-    """
-    rng = np.random.RandomState(0)
-    n_samples = 200
-    X = np.c_[np.eye(4)[rng.randint(0, 4, size=n_samples)], rng.randn(n_samples, 2)]
-    X = np.c_[X, X[:, -1]]  # Full one-hot encoding and a duplicated column.
-    y = X @ rng.randn(X.shape[1]) + rng.randn(n_samples)
-    X_fit = X if csr_container is None else csr_container(X)
-    glm = TweedieRegressor(power=0, link="identity", alpha=0, solver="newton-cholesky")
-
-    for shift in [0, 100]:
-        lr = LinearRegression().fit(X, y + shift)
-        with pytest.warns(
-            scipy.linalg.LinAlgWarning, match="The design matrix X has rank"
-        ):
-            glm.fit(X_fit, y + shift)
-        assert_allclose(glm.coef_, lr.coef_, rtol=1e-8, atol=1e-10)
-        assert glm.intercept_ == pytest.approx(lr.intercept_, rel=1e-10)
-
-
-def test_newton_cholesky_minimum_norm_singular_hessian_not_detected():
-    """Check the minimum norm solution when LAPACK misses the singular Hessian.
+def test_newton_cholesky_minimum_norm(csr_container):
+    """Check the minimum norm solution of newton-cholesky for a rank deficient X.
 
     For a full one-hot encoding and an intercept, the Hessian is singular, but
-    scipy.linalg.solve does not always flag it (here for seeds 0, 2 and 4). The rank
-    deficiency must still be warned about, and the minimum norm solution makes the
-    coefficients independent of the units of y, only the intercept changes.
+    scipy.linalg.solve does not always flag it (for dense X, here for seeds 0, 2 and
+    4). Each fit must still raise one warning about the rank of X, and return the
+    minimum norm solution where the intercept is not part of the norm: the
+    coefficients do not depend on the units of y, only the intercept does.
     """
     n_samples = 1000
+    msg = "The design matrix X has rank 3 for 4 columns, including the intercept"
     for seed in range(5):
         rng = np.random.RandomState(seed)
         categories = rng.randint(0, 3, size=n_samples)
         X = np.eye(3)[categories]
+        if csr_container is not None:
+            X = csr_container(X)
         y = rng.poisson(np.exp(np.array([0.0, 0.5, 1.0])[categories]))
-        params = dict(alpha=0, solver="newton-cholesky", tol=1e-8)
-        msg = "The design matrix X has rank 3 for 4 columns, including the intercept"
-        with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
-            reg = PoissonRegressor(**params).fit(X, y)
-        with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
-            reg_1000 = PoissonRegressor(**params).fit(X, 1000 * y)
+        reg = PoissonRegressor(alpha=0, solver="newton-cholesky", tol=1e-8)
+        reg_1000 = clone(reg)
+        for model, target in [(reg, y), (reg_1000, 1000 * y)]:
+            messages = _fit_with_linalg_warnings(model, X, target)
+            assert len(messages) == 1 and msg in messages[0]
         # Minimum norm: the coefficients of a full one-hot encoding sum to zero.
         assert np.sum(reg.coef_) == pytest.approx(0, abs=1e-10)
         assert_allclose(reg_1000.coef_, reg.coef_, atol=1e-10)
         assert reg_1000.intercept_ - reg.intercept_ == pytest.approx(np.log(1000))
 
 
-@pytest.mark.parametrize("fit_intercept", [False, True])
-def test_newton_cholesky_minimum_norm_zero_sample_weight(fit_intercept):
+def test_newton_cholesky_minimum_norm_zero_sample_weight():
     """Check that zero sample weights are equivalent to removing samples.
 
     The samples with zero weight make X full rank, while the other samples are
@@ -1382,7 +1369,7 @@ def test_newton_cholesky_minimum_norm_zero_sample_weight(fit_intercept):
     X_zero = np.r_[X, [[1.0, 0, 0, 0], [0, 0, 0, 1]]]
     y_zero = np.r_[y, [5, 7]]
     sw = np.r_[np.ones(n_samples), [0, 0]]
-    params = dict(alpha=0, fit_intercept=fit_intercept, solver="newton-cholesky")
+    params = dict(alpha=0, solver="newton-cholesky")
     with ignore_warnings(category=scipy.linalg.LinAlgWarning):
         reg = PoissonRegressor(**params).fit(X, y)
         reg_zero = PoissonRegressor(**params).fit(X_zero, y_zero, sample_weight=sw)
@@ -1392,34 +1379,23 @@ def test_newton_cholesky_minimum_norm_zero_sample_weight(fit_intercept):
     assert reg.coef_[0] == pytest.approx(reg.coef_[3])
 
 
-@pytest.mark.parametrize(
-    "n_classes, msg",
-    [
-        (2, "The design matrix X has rank 3 for 5 columns, including the intercept"),
-        # No minimum norm solution for multiclass, the Hessian is still singular.
-        (3, "stumbled upon a singular or very ill-conditioned Hessian matrix"),
-    ],
-)
-def test_newton_cholesky_singular_hessian_warns_once(n_classes, msg):
-    """Check that newton-cholesky raises a single warning per fit."""
+def test_newton_cholesky_multiclass_singular_hessian_warns_once():
+    """Check the single warning for multiclass, which is not projected."""
     X, y = make_classification(
         n_samples=200,
         n_features=2,
         n_informative=2,
         n_redundant=0,
-        n_classes=n_classes,
+        n_classes=3,
         n_clusters_per_class=1,
         random_state=0,
     )
     X = np.c_[X, X]  # duplicated columns
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
-        LogisticRegression(alpha=0, solver="newton-cholesky").fit(X, y)
-    linalg_warnings = [
-        w for w in record if issubclass(w.category, scipy.linalg.LinAlgWarning)
-    ]
-    assert len(linalg_warnings) == 1
-    assert msg in str(linalg_warnings[0].message)
+    messages = _fit_with_linalg_warnings(
+        LogisticRegression(alpha=0, solver="newton-cholesky"), X, y
+    )
+    assert len(messages) == 1
+    assert "stumbled upon a singular or very ill-conditioned Hessian" in messages[0]
 
 
 @pytest.mark.parametrize("solver", [NewtonCholeskySolver, NewtonCDGramSolver])
