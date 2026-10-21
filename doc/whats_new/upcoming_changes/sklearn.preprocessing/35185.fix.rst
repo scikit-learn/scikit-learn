@@ -1,0 +1,3 @@
+- :meth:`preprocessing.TargetEncoder.fit_transform` no longer raises a `KeyError`
+  when metadata routing is enabled and `groups` is not passed.
+  By :user:`Erwan Le Pennec <lepennec>`.
