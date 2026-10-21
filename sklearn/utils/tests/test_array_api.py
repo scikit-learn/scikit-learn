@@ -518,6 +518,35 @@ def test_convert_estimator_to_ndarray(array_namespace, converter):
         assert isinstance(new_est.X_, numpy.ndarray)
 
 
+
+
+@skip_if_array_api_compat_not_configured
+def test_move_estimator_to_preserves_string_array_attributes():
+    """String-valued estimator attributes should be preserved."""
+    xp = pytest.importorskip("array_api_strict")
+    pd = pytest.importorskip("pandas")
+    from sklearn.linear_model import LogisticRegression
+
+    X = pd.DataFrame(
+        {
+            "feature_a": [0.1, 0.2, 0.8, 0.9],
+            "feature_b": [1.0, 1.2, 2.8, 3.0],
+        }
+    )
+    y = numpy.array(["cat", "cat", "dog", "dog"])
+    estimator = LogisticRegression().fit(X, y)
+
+    with config_context(array_api_dispatch=True):
+        moved = move_estimator_to(estimator, xp, device=None)
+        assert get_namespace(moved.coef_)[0] == xp
+        assert get_namespace(moved.intercept_)[0] == xp
+
+    assert_array_equal(moved.feature_names_in_, estimator.feature_names_in_)
+    assert moved.feature_names_in_.dtype == object
+    assert_array_equal(moved.classes_, estimator.classes_)
+    assert moved.classes_.dtype.kind in "US"
+
+
 @skip_if_array_api_compat_not_configured
 def test_convert_estimator_with_custom_logic():
     xp = pytest.importorskip("array_api_strict")

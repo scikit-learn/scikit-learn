@@ -1060,6 +1060,14 @@ def _estimator_with_converted_arrays(estimator, converter):
             _estimator_with_converted_arrays(v, converter) for v in estimator
         )
 
+    # String-valued arrays are metadata (e.g. feature_names_in_) and
+    # cannot be converted to Array API namespaces that do not support strings.
+    if (
+        isinstance(estimator, (numpy.ndarray, numpy.generic))
+        and estimator.dtype.kind in "OUS"
+    ):
+        return estimator
+
     if hasattr(estimator, "__dlpack__") or isinstance(
         estimator, (numpy.ndarray, numpy.generic)
     ):
