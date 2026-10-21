@@ -6,7 +6,9 @@ usage.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+import sys
 import warnings
+from contextlib import contextmanager, nullcontext
 from functools import update_wrapper
 
 import joblib
@@ -19,6 +21,26 @@ from sklearn._config import config_context, get_config
 # It should not be accessed directly and _get_threadpool_controller should be used
 # instead.
 _threadpool_controller = None
+
+# With context-aware warnings (Python >= 3.14, on by default on free-threaded
+# builds), each context has its own warning filters. Otherwise, they are
+# process-wide.
+_CONTEXT_AWARE_WARNINGS = getattr(sys.flags, "context_aware_warnings", False)
+
+# Tells whether a task runs where it was dispatched: unpickling a task gives it
+# a new object, so pickled tasks never match.
+_PROCESS_TOKEN = object()
+
+
+def _get_warning_filters():
+    """Return the warning filters of the current context."""
+    # In free-threading Python >= 3.14, warnings filters are managed through a
+    # ContextVar and warnings.filters is not modified inside a
+    # warnings.catch_warnings context. You need to use warnings._get_filters().
+    # For more details, see
+    # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
+    filters_func = getattr(warnings, "_get_filters", None)
+    return filters_func() if filters_func is not None else warnings.filters
 
 
 def _with_config_and_warning_filters(delayed_func, config, warning_filters):
@@ -70,15 +92,7 @@ class Parallel(joblib.Parallel):
         # in a different thread depending on the backend and on the value of
         # pre_dispatch and n_jobs.
         config = get_config()
-        # In free-threading Python >= 3.14, warnings filters are managed through a
-        # ContextVar and warnings.filters is not modified inside a
-        # warnings.catch_warnings context. You need to use warnings._get_filters().
-        # For more details, see
-        # https://docs.python.org/3.14/whatsnew/3.14.html#concurrent-safe-warnings-control
-        filters_func = getattr(warnings, "_get_filters", None)
-        warning_filters = (
-            filters_func() if filters_func is not None else warnings.filters
-        )
+        warning_filters = _get_warning_filters()
 
         iterable_with_config_and_warning_filters = (
             (
@@ -128,6 +142,12 @@ def delayed(function):
 class _FuncWrapper:
     """Load the global configuration before calling the function."""
 
+    # Set by sklearn's Parallel. They stay None when the task is dispatched by
+    # joblib's Parallel.
+    config = None
+    warning_filters = None
+    _process_token = None
+
     def __init__(self, function):
         self.function = function
         update_wrapper(self, self.function)
@@ -135,12 +155,12 @@ class _FuncWrapper:
     def with_config_and_warning_filters(self, config, warning_filters):
         self.config = config
         self.warning_filters = warning_filters
+        self._process_token = _PROCESS_TOKEN
         return self
 
     def __call__(self, *args, **kwargs):
-        config = getattr(self, "config", {})
-        warning_filters = getattr(self, "warning_filters", [])
-        if not config or not warning_filters:
+        config = self.config
+        if config is None:
             warnings.warn(
                 (
                     "`sklearn.utils.parallel.delayed` should be used with"
@@ -150,38 +170,65 @@ class _FuncWrapper:
                 ),
                 UserWarning,
             )
+            config = {}
 
-        with config_context(**config), warnings.catch_warnings():
-            # TODO is there a simpler way that resetwarnings+ filterwarnings?
-            warnings.resetwarnings()
-            warning_filter_keys = ["action", "message", "category", "module", "lineno"]
-            for filter_args in warning_filters:
-                this_warning_filter_dict = {
-                    k: v
-                    for k, v in zip(warning_filter_keys, filter_args)
-                    if v is not None
-                }
-
-                # Some small discrepancy between warnings filters and what
-                # filterwarnings expect. simplefilter is more lenient, e.g.
-                # accepts a tuple as category. We try simplefilter first and
-                # use filterwarnings in more complicated cases
-                if (
-                    "message" not in this_warning_filter_dict
-                    and "module" not in this_warning_filter_dict
-                ):
-                    warnings.simplefilter(**this_warning_filter_dict, append=True)
-                else:
-                    # 'message' and 'module' are most of the time regex.Pattern but
-                    # can be str as well and filterwarnings wants a str
-                    for special_key in ["message", "module"]:
-                        this_value = this_warning_filter_dict.get(special_key)
-                        if this_value is not None and not isinstance(this_value, str):
-                            this_warning_filter_dict[special_key] = this_value.pattern
-
-                    warnings.filterwarnings(**this_warning_filter_dict, append=True)
-
+        with config_context(**config), self._warning_filters_context():
             return self.function(*args, **kwargs)
+
+    def _warning_filters_context(self):
+        """Context that sets the caller's warning filters if the task needs them."""
+        if self.warning_filters is None:
+            # The caller's filters are unknown.
+            return nullcontext()
+        if _CONTEXT_AWARE_WARNINGS:
+            # Each context has its own filters. The caller's thread, and threads
+            # that inherit the caller's context (the default on free-threaded
+            # builds), already have the caller's filters.
+            if _get_warning_filters() is self.warning_filters:
+                return nullcontext()
+        elif self._process_token is _PROCESS_TOKEN:
+            # The filters are shared by all the threads of the process. Setting
+            # them in a task would need catch_warnings, which isn't thread-safe:
+            # tasks of other threads (or other callers) leaving it out of order
+            # leave stale or partially reset filters behind. So the task uses the
+            # filters active when it runs, even if the caller changed them since
+            # Parallel was called (e.g. with a generator output).
+            return nullcontext()
+        return _set_warning_filters(self.warning_filters)
+
+
+@contextmanager
+def _set_warning_filters(warning_filters):
+    """Set the warning filters for the duration of the context."""
+    with warnings.catch_warnings():
+        # TODO is there a simpler way that resetwarnings+ filterwarnings?
+        warnings.resetwarnings()
+        warning_filter_keys = ["action", "message", "category", "module", "lineno"]
+        for filter_args in warning_filters:
+            this_warning_filter_dict = {
+                k: v for k, v in zip(warning_filter_keys, filter_args) if v is not None
+            }
+
+            # Some small discrepancy between warnings filters and what
+            # filterwarnings expect. simplefilter is more lenient, e.g.
+            # accepts a tuple as category. We try simplefilter first and
+            # use filterwarnings in more complicated cases
+            if (
+                "message" not in this_warning_filter_dict
+                and "module" not in this_warning_filter_dict
+            ):
+                warnings.simplefilter(**this_warning_filter_dict, append=True)
+            else:
+                # 'message' and 'module' are most of the time regex.Pattern but
+                # can be str as well and filterwarnings wants a str
+                for special_key in ["message", "module"]:
+                    this_value = this_warning_filter_dict.get(special_key)
+                    if this_value is not None and not isinstance(this_value, str):
+                        this_warning_filter_dict[special_key] = this_value.pattern
+
+                warnings.filterwarnings(**this_warning_filter_dict, append=True)
+
+        yield
 
 
 def _get_threadpool_controller():
