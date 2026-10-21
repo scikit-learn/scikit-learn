@@ -1210,27 +1210,21 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
     # Fit on [X] is the same as fit on [X, X]/2. Instead of dividing X by 1/2, we add
     # the factor 1/2 in the test of equal coefficients.
     X2 = np.concatenate((X, X), axis=1)
-    with ignore_warnings(category=scipy.linalg.LinAlgWarning):
-        regressors2 = {
-            solver: LogisticRegression(
-                C=np.inf,
+    # Coordinate descent solvers do not provide the minimum norm solution.
+    for solver in sorted(set(SOLVERS) - {"liblinear", "newton-cd", "newton-cd-gram"}):
+        with ignore_warnings(category=scipy.linalg.LinAlgWarning):
+            lr = LogisticRegression(
+                alpha=0,
                 solver=solver,
                 tol=solver_tol.get(solver, tol),
                 max_iter=solver_max_iter.get(solver, 100),
                 **params,
             ).fit(X2, y)
-            # TODO(newton-cd): remove newton-cd when it supports multiclass
-            for solver in set(SOLVERS) - set(["liblinear", "newton-cd"])
-        }
-    for solver in regressors2:
-        if solver == "newton-cd-gram":
-            pytest.xfail(
-                reason="GLM solver does not provide the minimum norm solution."
-            )
         assert_allclose(
-            regressors2[solver].coef_,
+            lr.coef_,
             0.5 * np.tile(regressors["lbfgs"].coef_, (1, 2)),
             rtol=1e-3,
+            err_msg=solver,
         )
 
 
