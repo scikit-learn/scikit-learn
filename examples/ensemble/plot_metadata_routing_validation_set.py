@@ -11,16 +11,17 @@ and a :class:`~model_selection.GridSearchCV`.
 
 Estimators such as :class:`~ensemble.HistGradientBoostingRegressor` can use a validation
 set inside :term:`fit` for early stopping. If that set is split off from `X` after
-preprocessing fitted on the full training set, information from the validation sets can
+preprocessing fitted on the full training set, information from the validation set can
 leak into the transformers (for example target statistics in
 :class:`~preprocessing.TargetEncoder`). A safer pattern is to hold out validation data
 and then run it through the same pipeline steps as `X`. This was however not possible in
 scikit-learn versions < 1.7.
 
 Today we can use :ref:`Metadata routing <metadata_routing>` to transform selected
-metadata listed in :class:`~pipeline.Pipeline's `transform_input` (by default `X_val`)
-until a later step of the pipeline consumes it. With auto-requests enabled, the gradient
-boosting estimator requests `X_val` and `y_val` without an explicit `set_fit_request`.
+metadata listed in the `transform_input` parameter of :class:`~pipeline.Pipeline` (by
+default `X_val`) until a later step of the pipeline consumes it. With auto-requests
+enabled, the gradient boosting estimator requests `X_val` and `y_val` without an
+explicit `set_fit_request`.
 """
 
 # Authors: The scikit-learn developers
