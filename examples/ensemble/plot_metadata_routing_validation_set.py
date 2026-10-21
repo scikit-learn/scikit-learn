@@ -18,7 +18,7 @@ and then run it through the same pipeline steps as `X`.
 
 :ref:`Metadata routing <metadata_routing>` makes that possible:
 :class:`~pipeline.Pipeline` can transform selected metadata listed in `transform_input`
-(by default `X_val`) until a later step consumes it. With auto-requests enabled, the
+(by default `X_val`) until a later step of the pipeline consumes it. With auto-requests enabled, the
 gradient boosting estimator requests `X_val` and `y_val` without an explicit
 `set_fit_request`.
 """
@@ -76,7 +76,7 @@ search = GridSearchCV(
 search.fit(X_train, y_train, X_val=X_val, y_val=y_val)
 print(search.best_params_)
 print(f"best CV score: {search.best_score_:.3f}")
-# Number of trees after early stopping on the routed validation set:
+# Number of trees after early stopping based on the routed validation set:
 print(f"n_iter_: {search.best_estimator_.named_steps['hist'].n_iter_}")
 
 # %%
