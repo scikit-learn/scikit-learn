@@ -174,7 +174,7 @@ jobs:
           echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
 
       - name: Build and test wheels
-        uses: pypa/cibuildwheel@1828c10ab37f080699c7b81cea34097c684a7074 # v4.2.0
+        uses: pypa/cibuildwheel@8c2dcd2e96041a619f5ff03c9638d7941e2553a4 # v4.3.3
         env:
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
