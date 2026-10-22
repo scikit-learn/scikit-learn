@@ -1330,20 +1330,20 @@ def test_kmeans_plusplus_sample_candidates(global_random_seed, dtype):
         sample_potentials, np.arange(0, n_samples, CHUNK_SIZE)
     )
 
-    candidate_ids = np.empty(n_candidates, dtype=np.intp)
+    candidate_indices = np.empty(n_candidates, dtype=np.intp)
     _kmeans_plusplus_sample_candidates(
         np.random.RandomState(global_random_seed),
         chunk_potentials,
         closest_dist_sq,
         sample_weight,
-        candidate_ids,
+        candidate_indices,
     )
 
     random_values = np.random.RandomState(global_random_seed).uniform(size=n_candidates)
     potential_cumsum = np.cumsum(sample_potentials)
     expected = np.searchsorted(potential_cumsum, random_values * potential_cumsum[-1])
-    assert_array_equal(candidate_ids, expected)
-    assert np.all(closest_dist_sq[candidate_ids] > 0)
+    assert_array_equal(candidate_indices, expected)
+    assert np.all(closest_dist_sq[candidate_indices] > 0)
 
 
 def test_kmeans_plusplus_sample_candidates_rounding():
@@ -1358,12 +1358,16 @@ def test_kmeans_plusplus_sample_candidates_rounding():
     random_state = Mock()
     random_state.uniform.return_value = np.array([0, 1 - 1e-15])
 
-    candidate_ids = np.empty(2, dtype=np.intp)
+    candidate_indices = np.empty(2, dtype=np.intp)
     _kmeans_plusplus_sample_candidates(
-        random_state, chunk_potentials, closest_dist_sq, sample_weight, candidate_ids
+        random_state,
+        chunk_potentials,
+        closest_dist_sq,
+        sample_weight,
+        candidate_indices,
     )
 
-    assert_array_equal(candidate_ids, [3, CHUNK_SIZE - 4])
+    assert_array_equal(candidate_indices, [3, CHUNK_SIZE - 4])
 
 
 def test_is_same_clustering():
