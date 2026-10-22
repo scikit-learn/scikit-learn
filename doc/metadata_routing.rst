@@ -59,7 +59,10 @@ requested by default.
 Usage Examples
 **************
 For convenience and a faster start into metadata routing, see
-:ref:`auto-requested metadata <metadata_routing_auto_request_user>`.
+:ref:`auto-requested metadata <metadata_routing_auto_request_user>`. 
+In this section auto-requests are disabled::
+
+  >>> sklearn.set_config(enable_metadata_auto_requests=False)
 
 The following examples use explicit ``set_{method}_request`` calls and are designed to
 show some common use-cases. Our goal here is to pass `sample_weight` and `groups`
@@ -272,10 +275,9 @@ Auto-requested metadata
 ***********************
 
 :term:`Consumers <consumer>` can **auto-request** selected metadata. This is enabled
-by default (``enable_metadata_auto_requests=True``). Metadata routing itself stays
-off until you turn it on::
+by default but you can turn it on explicitly::
 
-    >>> sklearn.set_config(enable_metadata_routing=True)
+    >>> sklearn.set_config(enable_metadata_auto_requests=True)
 
 See :func:`~sklearn.set_config` and :func:`~sklearn.config_context` for
 ``enable_metadata_auto_requests``. Both ``enable_metadata_routing`` and
