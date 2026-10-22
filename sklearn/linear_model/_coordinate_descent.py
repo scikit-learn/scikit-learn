@@ -1469,8 +1469,7 @@ class Lasso(ElasticNet):
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
     regularization. Alpha corresponds to `1 / (2C)` in other linear
-    models such as :class:`~sklearn.linear_model.LogisticRegression` or
-    :class:`~sklearn.svm.LinearSVC`.
+    models such as :class:`~sklearn.svm.LinearSVC`.
 
     The precise stopping criteria based on `tol` are the following: First, check that
     the maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
@@ -3249,7 +3248,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
-    alphas : array-like or int, default=None
+    alphas : array-like or int, default=100
         Values of alphas to test along the regularization path.
         If int, `alphas` values are generated automatically.
         If array-like, list of alpha values to use.
