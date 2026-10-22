@@ -743,7 +743,6 @@ def test_estimator_warnings():
         )
 
 
-@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 @pytest.mark.parametrize(
     "obj, string",
     [
@@ -764,15 +763,14 @@ def test_estimator_warnings():
             ),
             (
                 "{'estimator': {'mapping': [{'caller': 'predict', 'callee':"
-                " 'predict'}], 'router': {'fit': {'sample_weight': None, 'metadata':"
-                " None}, 'partial_fit': {'sample_weight': None, 'metadata': None},"
-                " 'predict': {'sample_weight': None, 'metadata': None}, 'score':"
-                " {'sample_weight': None, 'metadata': None}}}}"
+                " 'predict'}], 'router': {'fit': {'sample_weight': True, 'metadata':"
+                " None}, 'partial_fit': {'sample_weight': True, 'metadata': None},"
+                " 'predict': {'sample_weight': True, 'metadata': None}, 'score':"
+                " {'sample_weight': True, 'metadata': None}}}}"
             ),
         ),
     ],
 )
-@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_string_representations(obj, string):
     assert str(obj) == string
 
