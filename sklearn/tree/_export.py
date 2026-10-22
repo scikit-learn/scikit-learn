@@ -5,7 +5,9 @@ This module defines export functions for decision trees.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import json
 from collections.abc import Iterable
+from html import escape
 from io import StringIO
 from numbers import Integral
 
@@ -19,6 +21,7 @@ from sklearn.tree import (
     _tree,
 )
 from sklearn.tree._reingold_tilford import Tree, buchheim
+from sklearn.tree._utils import SPLIT_NUMERIC
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -27,6 +30,37 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.validation import check_array, check_is_fitted
+
+
+def _get_categorical_features(decision_tree):
+    """Map original feature indices to known labels in their encoded order."""
+    if isinstance(decision_tree, _tree.Tree):
+        return {
+            feature: np.arange(count)
+            for feature, count in enumerate(decision_tree._n_categories)
+            if count
+        }
+    if decision_tree.is_categorical_ is None:
+        return {}
+    return {
+        feature: categories[: decision_tree.tree_._n_categories[feature]]
+        for feature, categories in zip(
+            np.flatnonzero(decision_tree.is_categorical_),
+            decision_tree._categorical_encoder.categories_,
+        )
+    }
+
+
+def _format_category_set(categories):
+    """Use original labels and distinguish strings from numeric categories."""
+    return (
+        "{"
+        + ", ".join(
+            repr(value.item() if isinstance(value, np.generic) else value)
+            for value in categories
+        )
+        + "}"
+    )
 
 
 def _matplotlib_to_rgb(color):
@@ -131,6 +165,9 @@ def plot_tree(
     fill_colors=None,
 ):
     """Plot a decision tree.
+
+    Categorical splits show membership in a set of original category labels
+    and the direction taken by missing values and unknown categories.
 
     The sample counts that are shown are weighted with any sample_weights that
     might be present.
@@ -270,6 +307,7 @@ class _BaseTreeExporter:
         self.fontsize = fontsize
         self.colors = {"bounds": None}
         self.fill_colors = fill_colors
+        self.categorical_features = {}
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -363,12 +401,24 @@ class _BaseTreeExporter:
                     tree.feature[node_id],
                     characters[2],
                 )
-            node_string += "%s %s %s%s" % (
-                feature,
-                characters[3],
-                round(tree.threshold[node_id], self.precision),
-                characters[4],
-            )
+            if tree.split_kind[node_id] == SPLIT_NUMERIC:
+                node_string += "%s %s %s%s" % (
+                    feature,
+                    characters[3],
+                    round(tree.threshold[node_id], self.precision),
+                    characters[4],
+                )
+            else:
+                categories = self.categorical_features[tree.feature[node_id]]
+                categories_left = categories[tree._get_left_categories(node_id)]
+                category_set = self.category_escape(
+                    _format_category_set(categories_left)
+                )
+                direction = "left" if tree.missing_go_to_left[node_id] else "right"
+                node_string += (
+                    f"{feature} in {category_set} "
+                    f"(missing/unknown: {direction}){characters[4]}"
+                )
 
         # Write impurity
         if self.impurity:
@@ -445,6 +495,9 @@ class _BaseTreeExporter:
 
         return node_string + characters[5]
 
+    def category_escape(self, string):
+        return string
+
     def str_escape(self, string):
         return string
 
@@ -500,6 +553,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         self.colors = {"bounds": None}
 
     def export(self, decision_tree):
+        self.categorical_features = _get_categorical_features(decision_tree)
         # Check length of feature_names before getting into the tree node
         # Raise error if length of feature_names does not match
         # n_features_in_ in the decision_tree
@@ -624,6 +678,11 @@ class _DOTTreeExporter(_BaseTreeExporter):
                 # Add edge to parent
                 self.out_file.write("%d -> %d ;\n" % (parent, node_id))
 
+    def category_escape(self, string):
+        if self.special_characters:
+            return escape(string)
+        return string.replace("\\", "\\\\").replace('"', r"\"")
+
     def str_escape(self, string):
         # override default escaping for graphviz
         return string.replace('"', r"\"")
@@ -672,6 +731,10 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         self.arrow_args = dict(arrowstyle="<-")
 
+    def category_escape(self, string):
+        # Render category labels literally rather than as Matplotlib mathtext.
+        return string.replace("$", r"\$")
+
     def _make_tree(self, node_id, et, criterion, depth=0):
         # traverses _tree.Tree recursively, builds intermediate
         # "_reingold_tilford.Tree" object
@@ -699,6 +762,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax = plt.gca()
         ax.clear()
         ax.set_axis_off()
+        self.categorical_features = _get_categorical_features(decision_tree)
         my_tree = self._make_tree(0, decision_tree.tree_, decision_tree.criterion)
         draw_tree = buchheim(my_tree)
 
@@ -851,6 +915,9 @@ def export_graphviz(
     fill_colors=None,
 ):
     """Export a decision tree in DOT format.
+
+    Categorical splits show membership in a set of original category labels
+    and the direction taken by missing values and unknown categories.
 
     This function generates a GraphViz representation of the decision tree,
     which is then written into `out_file`. Once exported, graphical renderings
@@ -1053,6 +1120,9 @@ def export_text(
 ):
     """Build a text report showing the rules of a decision tree.
 
+    Categorical branches show sets of original category labels. The branch
+    taken by missing values and unknown categories is marked explicitly.
+
     Note that backwards compatibility may not be supported.
 
     Parameters
@@ -1138,6 +1208,7 @@ def export_text(
                 f" {len(class_names)} while the tree was fitted with"
                 f" {len(decision_tree.classes_)} classes."
             )
+    categorical_features = _get_categorical_features(decision_tree)
     right_child_fmt = "{} {} <= {}\n"
     left_child_fmt = "{} {} >  {}\n"
     truncation_fmt = "{} {}\n"
@@ -1204,13 +1275,29 @@ def export_text(
 
             if tree_.feature[node] != _tree.TREE_UNDEFINED:
                 name = feature_names_[node]
-                threshold = tree_.threshold[node]
-                threshold = "{1:.{0}f}".format(decimals, threshold)
-                report.write(right_child_fmt.format(indent, name, threshold))
+                if tree_.split_kind[node] == SPLIT_NUMERIC:
+                    threshold = "{1:.{0}f}".format(decimals, tree_.threshold[node])
+                    left_rule = right_child_fmt.format(indent, name, threshold)
+                    right_rule = left_child_fmt.format(indent, name, threshold)
+                else:
+                    categories = categorical_features[tree_.feature[node]]
+                    left_mask = np.zeros(len(categories), dtype=bool)
+                    left_mask[tree_._get_left_categories(node)] = True
+                    left_categories = _format_category_set(categories[left_mask])
+                    left_rule = f"{indent} {name} in {left_categories}"
+                    right_categories = _format_category_set(categories[~left_mask])
+                    right_rule = f"{indent} {name} in {right_categories}"
+                    if tree_.missing_go_to_left[node]:
+                        left_rule += " or missing/unknown"
+                    else:
+                        right_rule += " or missing/unknown"
+                    left_rule += "\n"
+                    right_rule += "\n"
+                report.write(left_rule)
                 report.write(info_fmt_left)
                 print_tree_recurse(report, tree_.children_left[node], depth + 1)
 
-                report.write(left_child_fmt.format(indent, name, threshold))
+                report.write(right_rule)
                 report.write(info_fmt_right)
                 print_tree_recurse(report, tree_.children_right[node], depth + 1)
             else:  # leaf
@@ -1225,3 +1312,268 @@ def export_text(
 
     print_tree_recurse(report, 0, 1)
     return report.getvalue()
+
+
+@validate_params(
+    {
+        "decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor],
+        "out_file": [str, None, HasMethods("write")],
+        "feature_names": ["array-like", None],
+        "class_names": ["array-like", None],
+        "max_depth": [Interval(Integral, 0, None, closed="left"), None],
+        "decimals": [Interval(Integral, 0, None, closed="left"), None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def export_dict(
+    decision_tree,
+    out_file=None,
+    *,
+    feature_names=None,
+    class_names=None,
+    max_depth=None,
+    decimals=None,
+):
+    """Build a nested dict representation of a decision tree.
+
+    Note that backwards compatibility may not be supported.
+
+    Parameters
+    ----------
+    decision_tree : object
+        The decision tree estimator to be exported.
+        It can be an instance of
+        DecisionTreeClassifier or DecisionTreeRegressor.
+
+    out_file : object or str, default=None
+        Handle or name of the file to additionally write the result to, as
+        JSON. If None, nothing is written to a file. The dict is returned
+        either way.
+
+    feature_names : array-like of shape (n_features,), default=None
+        An array containing the feature names.
+        If None, the ``"feature_name"`` key is omitted. Feature indices
+        are always included at internal nodes.
+
+    class_names : array-like of shape (n_classes,), default=None
+        Names of each of the target classes in the order of
+        ``decision_tree.classes_``.
+        Only relevant for classification and not supported for multi-output.
+
+        - if `None`, the class names are delegated to `decision_tree.classes_`;
+        - otherwise, `class_names` will be used as class names instead of
+          `decision_tree.classes_`. The length of `class_names` must match
+          the length of `decision_tree.classes_`.
+
+    max_depth : int, default=None
+        Maximum depth at which split information is exported, counting the
+        root as depth 0. Internal nodes one level beyond this depth are
+        replaced by terminal summaries with ``"truncated": True``. For
+        example, ``max_depth=0`` retains the root split and summarizes its
+        children. Actual leaves are not marked as truncated. If None, the
+        full tree is exported.
+
+    decimals : int, default=None
+        Number of decimal digits `threshold`, `impurity`,
+        `weighted_n_node_samples` and `value` are
+        rounded to. If None, no rounding is applied and values are exported
+        at full floating-point precision. Rounding `threshold` can change
+        which branch a value near the boundary is routed to, so the default
+        should be kept when the output is used to reproduce
+        `decision_tree.predict`.
+
+    Returns
+    -------
+    tree_dict : dict
+        Nested dict representation of the decision tree, rooted at node 0.
+        Every node has the keys ``"node_id"``, ``"n_node_samples"``,
+        ``"weighted_n_node_samples"`` and ``"impurity"``. An internal node
+        additionally has ``"feature"``, ``"feature_name"`` (only if
+        `feature_names` was provided), ``"missing_go_to_left"``, ``"left"`` and
+        ``"right"``. Numerical splits have a ``"threshold"``; categorical
+        splits instead have ``"categories_left"``, a list of integer category
+        codes routed to the left child.
+
+        For trees fitted with categorical features, the root also contains
+        ``"categorical_features"``: a list of dictionaries with ``"feature"``
+        (the original column index) and ``"categories"`` (the known labels in
+        code order). Labels must be JSON-compatible scalars: strings, finite
+        numbers, booleans, or None. NaN is excluded from these lists because
+        it represents a missing value. This metadata is included even for
+        truncated trees or trees consisting of a single leaf.
+
+        Infinite thresholds are represented by the strings ``"Infinity"`` or
+        ``"-Infinity"`` so that the representation remains JSON-compatible.
+        The boolean ``"missing_go_to_left"`` records the branch used for missing
+        values by trees that support them. A leaf, or a node truncated by `max_depth`,
+        additionally has ``"value"`` and, for single-output classifiers,
+        ``"class"``.
+
+        For single-output classification, ``"value"`` is a list of weighted
+        class proportions in the order of ``decision_tree.classes_``. For
+        single-output regression, it is a one-element list containing the
+        predicted value. For multiple outputs, it is a list of such lists,
+        one per output. Classification lists are padded with zeros to the
+        largest number of classes across outputs; only the first
+        ``decision_tree.n_classes_[k]`` entries are meaningful for output k.
+        Multi-output class labels are not included: interpret these entries
+        using ``decision_tree.classes_[k]``.
+
+    Notes
+    -----
+    This representation is intended for inspection and conversion, rather
+    than as a complete model persistence format. To reproduce tree traversal,
+    convert numerical input features to ``numpy.float32`` before comparing them with
+    thresholds, as the estimator does. Convert exported thresholds with
+    ``float(threshold)`` to handle both numbers and infinity strings.
+    Compare the converted values at float64 precision without downcasting
+    the exported thresholds (for
+    example, convert each float32 scalar to a Python float). Route finite
+    values left when they are less than or equal to the threshold, and right
+    otherwise. For trees
+    supporting missing values, route NaNs according to
+    ``"missing_go_to_left"``. This field does not enable missing-value support
+    for estimators or criteria that reject NaNs.
+
+    For categorical features, look up the original label in the root's
+    corresponding ``"categories"`` list, without converting the label to
+    float32. Its position is the category code. Route known categories left
+    when their code belongs to ``"categories_left"``, and right otherwise.
+    Missing values and unknown labels follow ``"missing_go_to_left"``.
+    Random categorical splits are expanded to explicit category-code lists;
+    export size and time therefore grow with the number of known categories
+    at each exported categorical split.
+
+    Keep ``decimals=None`` and ``max_depth=None`` when reproducing predictions.
+    Rounding thresholds can change traversal, and rounding leaf values can
+    change predictions or probabilities. A truncated node describes that
+    node's aggregate values, not the predictions of the omitted subtree.
+    Custom ``class_names`` replace the estimator's labels in ``"class"``.
+
+    Very deep trees may exceed Python's recursion limit during dictionary
+    construction or JSON serialization. Use `max_depth` to limit the export
+    depth in that case.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.tree import DecisionTreeClassifier, export_dict
+    >>> iris = load_iris()
+    >>> clf = DecisionTreeClassifier(random_state=0, max_depth=1)
+    >>> clf = clf.fit(iris.data, iris.target)
+    >>> tree_dict = export_dict(clf, feature_names=iris.feature_names)
+    >>> tree_dict["feature_name"]
+    'petal width (cm)'
+    """
+    check_is_fitted(decision_tree)
+    tree_ = decision_tree.tree_
+
+    if feature_names is not None:
+        feature_names = check_array(
+            feature_names, ensure_2d=False, dtype=None, ensure_min_samples=0
+        )
+        if len(feature_names) != tree_.n_features:
+            raise ValueError(
+                "feature_names must contain %d elements, got %d"
+                % (tree_.n_features, len(feature_names))
+            )
+
+    single_output_clf = is_classifier(decision_tree) and tree_.n_outputs == 1
+
+    if class_names is not None:
+        if not single_output_clf:
+            raise ValueError(
+                "class_names is only supported for single-output classification trees."
+            )
+        class_names = check_array(
+            class_names, ensure_2d=False, dtype=None, ensure_min_samples=0
+        )
+        if len(class_names) != len(decision_tree.classes_):
+            raise ValueError(
+                "When `class_names` is an array, it should contain as"
+                " many items as `decision_tree.classes_`. Got"
+                f" {len(class_names)} while the tree was fitted with"
+                f" {len(decision_tree.classes_)} classes."
+            )
+    elif single_output_clf:
+        class_names = decision_tree.classes_
+
+    def _round(value):
+        value = float(value)
+        return value if decimals is None else round(value, decimals)
+
+    def _native(value):
+        return value.item() if hasattr(value, "item") else value
+
+    def _value(node_id):
+        value = tree_.value[node_id]
+        if tree_.n_outputs == 1:
+            return [_round(v) for v in value[0]]
+        return [[_round(v) for v in output] for output in value]
+
+    def _recurse(node_id, depth):
+        node = {
+            "node_id": int(node_id),
+            "n_node_samples": int(tree_.n_node_samples[node_id]),
+            "weighted_n_node_samples": _round(tree_.weighted_n_node_samples[node_id]),
+            "impurity": _round(tree_.impurity[node_id]),
+        }
+
+        is_leaf = tree_.feature[node_id] == _tree.TREE_UNDEFINED
+        truncated = max_depth is not None and depth > max_depth
+
+        if is_leaf or truncated:
+            node["value"] = _value(node_id)
+            if single_output_clf:
+                class_idx = int(np.argmax(tree_.value[node_id][0]))
+                node["class"] = _native(class_names[class_idx])
+            if truncated and not is_leaf:
+                node["truncated"] = True
+            return node
+
+        feature = int(tree_.feature[node_id])
+        node["feature"] = feature
+        if feature_names is not None:
+            node["feature_name"] = _native(feature_names[feature])
+        if tree_.split_kind[node_id] == SPLIT_NUMERIC:
+            threshold = _round(tree_.threshold[node_id])
+            if np.isinf(threshold):
+                threshold = "Infinity" if threshold > 0 else "-Infinity"
+            node["threshold"] = threshold
+        else:
+            node["categories_left"] = tree_._get_left_categories(node_id).tolist()
+        node["missing_go_to_left"] = bool(tree_.missing_go_to_left[node_id])
+        node["left"] = _recurse(tree_.children_left[node_id], depth + 1)
+        node["right"] = _recurse(tree_.children_right[node_id], depth + 1)
+        return node
+
+    tree_dict = _recurse(0, 0)
+    if decision_tree.is_categorical_ is not None:
+        categorical_features = []
+        for feature, categories in _get_categorical_features(decision_tree).items():
+            # Missing values are encoded as NaN, not as a category index.
+            categories = [_native(v) for v in categories]
+            try:
+                json.dumps(categories, allow_nan=False)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "Categorical labels must be JSON-compatible scalars "
+                    "(strings, finite numbers, booleans, or None)."
+                ) from exc
+            categorical_features.append(
+                {"feature": int(feature), "categories": categories}
+            )
+        tree_dict["categorical_features"] = categorical_features
+
+    if out_file is not None:
+        own_file = False
+        if isinstance(out_file, str):
+            out_file = open(out_file, "w", encoding="utf-8")
+            own_file = True
+        try:
+            json.dump(tree_dict, out_file, allow_nan=False)
+        finally:
+            if own_file:
+                out_file.close()
+
+    return tree_dict
