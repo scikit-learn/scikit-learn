@@ -1049,7 +1049,7 @@ def fetch_openml(
         )
 
     data_description = _get_data_description_by_id(data_id, data_home)
-    if data_description["status"] != "active":
+    if data_description["status"] == "deactivated":
         warn(
             "Version {} of dataset {} is inactive, meaning that issues have "
             "been found in the dataset. Try using a newer version from "
