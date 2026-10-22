@@ -737,8 +737,6 @@ def _kmeans_single_lloyd(
 
         labels_old[:] = labels
 
-    del thread_buffers
-
     if not strict_convergence:
         # rerun E-step so that predicted labels match cluster centers
         lloyd_iter(
