@@ -246,7 +246,7 @@ def _kmeans_plusplus(
         given index and center, X[index] = center.
     """
     n_samples = X.shape[0]
-    n_chunks = -(-n_samples // CHUNK_SIZE)
+    n_chunks = int(np.ceil(n_samples / CHUNK_SIZE))
     # Each k-means++ step is a parallel region with little work for small
     # datasets, where starting and synchronizing many threads would dominate:
     # use at most one thread per 2**16 elements of X (or non-zero values).
@@ -259,12 +259,24 @@ def _kmeans_plusplus(
         # that it helped.
         n_local_trials = 2 + int(np.log(n_clusters))
 
-    # Squared distances from each sample to its closest center for each
-    # candidate, and their weighted sums per chunk of samples. Steps write
-    # alternately in the 2 halves of the buffers: the distances of the best
-    # candidate of a step are read as the closest distances by the next step.
+    # The potential of a sample is its squared distance to the closest center,
+    # weighted by `sample_weight`. Candidates are sampled with a probability
+    # proportional to the potential, and the candidate that gives the smallest
+    # total potential (i.e. inertia) is added to the centers.
+    #
+    # trials_dist_sq[:, j, i] is the squared distance from sample i to its
+    # closest center if candidate j is added to the centers.
     trials_dist_sq = np.empty((2, n_local_trials, n_samples), dtype=X.dtype)
-    trials_chunk_pot = np.empty((2, n_local_trials, n_chunks), dtype=np.float64)
+    # trials_chunk_potentials[:, j, k] is the sum of the potentials of the
+    # samples of the k-th chunk of CHUNK_SIZE samples, if candidate j is added.
+    # Each chunk is summed by a single thread, without synchronization, and the
+    # fixed chunk size makes the result independent of the number of threads
+    # (see `_kmeans_plusplus_trials_dense`).
+    trials_chunk_potentials = np.empty((2, n_local_trials, n_chunks), dtype=np.float64)
+    # Both arrays are twice as large as needed to act as "ping-pong" buffers:
+    # each step writes in one half, and reads `closest_dist_sq` and
+    # `chunk_potentials` from views of the half written by the previous step.
+    # This avoids copies, at the cost of a slightly larger memory usage.
 
     # The sparse kernel reads the columns of X: convert it once for all the steps
     X_csc = None
@@ -274,36 +286,66 @@ def _kmeans_plusplus(
 
     # Pick first center randomly and track index of point
     center_id = random_state.choice(n_samples, p=sample_weight / sample_weight.sum())
-    indices = np.full(n_clusters, -1, dtype=int)
-    indices[0] = center_id
+    center_indices = np.full(n_clusters, -1, dtype=int)
+    center_indices[0] = center_id
 
-    # Initialize list of closest distances and potential per chunk
+    # Initialize the closest distances and the potential per chunk, i.e.:
+    #   trials_dist_sq[0, 0] = euclidean_distances(
+    #       X[[center_id]], X, squared=True
+    #   )[0]
+    #   trials_chunk_potentials[0, 0] = np.add.reduceat(
+    #       sample_weight * trials_dist_sq[0, 0], np.arange(0, n_samples, CHUNK_SIZE)
+    #   )
     _kmeans_plusplus_trials(
         X,
         X_csc,
         x_squared_norms,
         sample_weight,
-        np.array([center_id], dtype=np.intp),
-        np.full(n_samples, np.inf, dtype=X.dtype),
-        trials_dist_sq[0, :1],
-        trials_chunk_pot[0, :1],
-        n_threads,
+        candidate_ids=np.array([center_id], dtype=np.intp),
+        # There is no center yet, hence closest distances of +inf:
+        closest_dist_sq=np.full(n_samples, np.inf, dtype=X.dtype),
+        trials_dist_sq=trials_dist_sq[0, :1],  # OUT
+        trials_chunk_potentials=trials_chunk_potentials[0, :1],  # OUT
+        n_threads=n_threads,
     )
-    closest_dist_sq = trials_dist_sq[0, 0]
-    chunk_pot = trials_chunk_pot[0, 0]
+    # The first center is "trial" 0 in half 0 of the buffers
+    best_candidate = 0
 
-    rand_vals = random_state.uniform(size=(n_clusters - 1, n_local_trials))
     candidate_ids = np.empty(n_local_trials, dtype=np.intp)
 
     # Pick the remaining n_clusters-1 points
     for c in range(1, n_clusters):
+        # Read the half of the ping-pong buffers written by the previous step,
+        # write in the other half.
+        in_idx = (c - 1) % 2
+        out_idx = c % 2
+        closest_dist_sq = trials_dist_sq[in_idx, best_candidate]
+        chunk_potentials = trials_chunk_potentials[in_idx, best_candidate]
+
         # Choose center candidates by sampling with probability proportional
-        # to the squared distance to the closest existing center
+        # to the potential, i.e. up to rounding errors:
+        #   potential_cumsum = np.cumsum(sample_weight * closest_dist_sq)
+        #   random_potentials = (
+        #       random_state.uniform(size=n_local_trials) * potential_cumsum[-1]
+        #   )
+        #   candidate_ids[:] = np.searchsorted(potential_cumsum, random_potentials)
         _kmeans_plusplus_sample_candidates(
-            rand_vals[c - 1], chunk_pot, closest_dist_sq, sample_weight, candidate_ids
+            random_state,
+            chunk_potentials,
+            closest_dist_sq,
+            sample_weight,
+            candidate_ids,
         )
 
-        # Compute closest distances and potential for each candidate
+        # Compute the closest distances and the potential per chunk for each
+        # candidate, i.e.:
+        #   dist_sq = euclidean_distances(X[candidate_ids], X, squared=True)
+        #   trials_dist_sq[out_idx] = np.minimum(closest_dist_sq, dist_sq)
+        #   trials_chunk_potentials[out_idx] = np.add.reduceat(
+        #       sample_weight * trials_dist_sq[out_idx],
+        #       np.arange(0, n_samples, CHUNK_SIZE),
+        #       axis=1,
+        #   )
         _kmeans_plusplus_trials(
             X,
             X_csc,
@@ -311,38 +353,38 @@ def _kmeans_plusplus(
             sample_weight,
             candidate_ids,
             closest_dist_sq,
-            trials_dist_sq[c % 2],
-            trials_chunk_pot[c % 2],
+            trials_dist_sq[out_idx],
+            trials_chunk_potentials[out_idx],
             n_threads,
         )
 
         # Pick the candidate with the smallest potential. The kernel only sums
         # within each chunk of samples, finish the sum over the chunks here.
-        best_candidate = np.argmin(trials_chunk_pot[c % 2].sum(axis=1))
-        closest_dist_sq = trials_dist_sq[c % 2, best_candidate]
-        chunk_pot = trials_chunk_pot[c % 2, best_candidate]
+        best_candidate = np.argmin(trials_chunk_potentials[out_idx].sum(axis=1))
 
         # Permanently add best center candidate found in local tries
-        indices[c] = candidate_ids[best_candidate]
+        center_indices[c] = candidate_ids[best_candidate]
 
-    centers = X[indices]
+    centers = X[center_indices]
     if sp.issparse(X):
         centers = centers.toarray()
 
-    return centers, indices
+    return centers, center_indices
 
 
+# fmt: off
 def _kmeans_plusplus_trials(
-    X,
-    X_csc,
-    x_squared_norms,
-    sample_weight,
-    candidate_ids,
-    closest_dist_sq,
-    trials_dist_sq,
-    trials_chunk_pot,
+    X,                          # IN (n_samples, n_features)
+    X_csc,                      # IN (n_samples, n_features) or None
+    x_squared_norms,            # IN (n_samples,)
+    sample_weight,              # IN (n_samples,)
+    candidate_ids,              # IN (n_trials,)
+    closest_dist_sq,            # IN (n_samples,)
+    trials_dist_sq,             # OUT (n_trials, n_samples)
+    trials_chunk_potentials,    # OUT (n_trials, n_chunks)
     n_threads,
 ):
+    # fmt: on
     """Evaluate k-means++ candidate centers, see `_kmeans_plusplus_trials_dense`.
 
     `X_csc` is X in CSC format if X is sparse, None otherwise.
@@ -360,7 +402,7 @@ def _kmeans_plusplus_trials(
             candidates_squared_norms,
             closest_dist_sq,
             trials_dist_sq,
-            trials_chunk_pot,
+            trials_chunk_potentials,
             n_threads,
         )
     else:
@@ -372,7 +414,7 @@ def _kmeans_plusplus_trials(
             candidates_squared_norms,
             closest_dist_sq,
             trials_dist_sq,
-            trials_chunk_pot,
+            trials_chunk_potentials,
             n_threads,
         )
 

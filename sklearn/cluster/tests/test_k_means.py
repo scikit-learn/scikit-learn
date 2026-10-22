@@ -3,6 +3,7 @@
 import re
 import sys
 from io import StringIO
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
@@ -1321,17 +1322,23 @@ def test_kmeans_plusplus_sample_candidates(global_random_seed, dtype):
     closest_dist_sq = rng.uniform(size=n_samples).astype(dtype)
     closest_dist_sq[rng.uniform(size=n_samples) < 0.3] = 0
     sample_weight = rng.uniform(size=n_samples).astype(dtype)
-    sample_pot = (sample_weight * closest_dist_sq).astype(np.float64)
-    chunk_pot = np.add.reduceat(sample_pot, np.arange(0, n_samples, CHUNK_SIZE))
-    rand_vals = rng.uniform(size=n_candidates)
+    sample_potentials = (sample_weight * closest_dist_sq).astype(np.float64)
+    chunk_potentials = np.add.reduceat(
+        sample_potentials, np.arange(0, n_samples, CHUNK_SIZE)
+    )
 
     candidate_ids = np.empty(n_candidates, dtype=np.intp)
     _kmeans_plusplus_sample_candidates(
-        rand_vals, chunk_pot, closest_dist_sq, sample_weight, candidate_ids
+        np.random.RandomState(global_random_seed),
+        chunk_potentials,
+        closest_dist_sq,
+        sample_weight,
+        candidate_ids,
     )
 
-    pot_cumsum = np.cumsum(sample_pot)
-    expected = np.searchsorted(pot_cumsum, rand_vals * pot_cumsum[-1])
+    random_values = np.random.RandomState(global_random_seed).uniform(size=n_candidates)
+    potential_cumsum = np.cumsum(sample_potentials)
+    expected = np.searchsorted(potential_cumsum, random_values * potential_cumsum[-1])
     assert_array_equal(candidate_ids, expected)
     assert np.all(closest_dist_sq[candidate_ids] > 0)
 
@@ -1344,12 +1351,13 @@ def test_kmeans_plusplus_sample_candidates_rounding():
     closest_dist_sq[:3] = 0
     closest_dist_sq[-3:] = 0
     sample_weight = np.ones(CHUNK_SIZE)
-    chunk_pot = np.array([closest_dist_sq.sum() * (1 + 1e-12)])
-    rand_vals = np.array([0, 1 - 1e-15])
+    chunk_potentials = np.array([closest_dist_sq.sum() * (1 + 1e-12)])
+    random_state = Mock()
+    random_state.uniform.return_value = np.array([0, 1 - 1e-15])
 
     candidate_ids = np.empty(2, dtype=np.intp)
     _kmeans_plusplus_sample_candidates(
-        rand_vals, chunk_pot, closest_dist_sq, sample_weight, candidate_ids
+        random_state, chunk_potentials, closest_dist_sq, sample_weight, candidate_ids
     )
 
     assert_array_equal(candidate_ids, [3, CHUNK_SIZE - 4])
