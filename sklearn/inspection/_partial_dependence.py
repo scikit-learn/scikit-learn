@@ -14,7 +14,7 @@ from sklearn.ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting,
 )
-from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
+from sklearn.inspection._pd_utils import _check_feature_names, _get_is_categorical
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import Bunch, _safe_indexing, check_array
 from sklearn.utils._indexing import (
@@ -667,41 +667,9 @@ def partial_dependence(
 
     feature_names = _check_feature_names(X, feature_names)
 
-    n_features = X.shape[1]
-    if categorical_features is None:
-        is_categorical = [False] * len(features_indices)
-    else:
-        categorical_features = np.asarray(categorical_features)
-        if categorical_features.size == 0:
-            raise ValueError(
-                "Passing an empty list (`[]`) to `categorical_features` is not "
-                "supported. Use `None` instead to indicate that there are no "
-                "categorical features."
-            )
-        if categorical_features.dtype.kind == "b":
-            # categorical features provided as a list of boolean
-            if categorical_features.size != n_features:
-                raise ValueError(
-                    "When `categorical_features` is a boolean array-like, "
-                    "the array should be of shape (n_features,). Got "
-                    f"{categorical_features.size} elements while `X` contains "
-                    f"{n_features} features."
-                )
-            is_categorical = [categorical_features[idx] for idx in features_indices]
-        elif categorical_features.dtype.kind in ("i", "O", "U"):
-            # categorical features provided as a list of indices or feature names
-            categorical_features_idx = [
-                _get_feature_index(cat, feature_names=feature_names)
-                for cat in categorical_features
-            ]
-            is_categorical = [
-                idx in categorical_features_idx for idx in features_indices
-            ]
-        else:
-            raise ValueError(
-                "Expected `categorical_features` to be an array-like of boolean,"
-                f" integer, or string. Got {categorical_features.dtype} instead."
-            )
+    is_categorical = _get_is_categorical(
+        categorical_features, features_indices, feature_names, X.shape[1]
+    )
 
     custom_values = custom_values or {}
     if isinstance(features, (str, int)):
