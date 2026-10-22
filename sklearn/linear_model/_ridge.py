@@ -405,8 +405,7 @@ def _validate_positive(positive, n_features):
     -------
     positive : bool or ndarray of shape (n_features,)
         ``True`` or ``False`` when every coefficient has the same constraint.
-        An all-false mask is returned as ``False``. Otherwise a boolean mask
-        with at least one ``True`` entry.
+        Otherwise a boolean mask as a numpy array.
     """
     if isinstance(positive, (bool, np.bool_)):
         return bool(positive)
@@ -414,11 +413,13 @@ def _validate_positive(positive, n_features):
     mask = np.asarray(positive)
     if mask.ndim != 1:
         raise ValueError(
-            "'positive' must be either a boolean or an array-like of booleans."
+            "'positive' must be either a boolean or an array-like of booleans of shape "
+            "(n_features,)."
         )
     if mask.shape[0] != n_features:
         raise ValueError(
-            "Length of 'positive' must be equal to the number of features."
+            "Length of 'positive' must be equal to the number of features of X : "
+            f"{n_features}. Got {mask.shape[0]}."
         )
     if not np.issubdtype(mask.dtype, np.bool_):
         raise ValueError(
@@ -426,6 +427,8 @@ def _validate_positive(positive, n_features):
         )
     if not mask.any():
         return False
+    if mask.all():
+        return True
     return mask
 
 
@@ -689,15 +692,15 @@ def _ridge_regression(
     if enforce_positive and solver != "lbfgs":
         raise ValueError(
             "When `positive` constrains at least one coefficient, only 'lbfgs' "
-            "solver can be used. "
-            f"Please change solver {solver} to 'lbfgs' "
+            f"solver can be used. Please change solver {solver} to 'lbfgs' "
             "or set positive=False."
         )
 
     if solver == "lbfgs" and not enforce_positive:
         raise ValueError(
-            "'lbfgs' solver can be used only when positive=True. "
-            "Please use another solver."
+            "'lbfgs' solver can be used only when `positive` constrains at least one "
+            "coefficient. Please use another solver or use `positive` to constrain "
+            "at least one coefficient."
         )
 
     if return_intercept and solver != "sag":
@@ -962,8 +965,9 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         if self.solver == "lbfgs" and not enforce_positive:
             raise ValueError(
-                "'lbfgs' solver can be used only when positive=True. "
-                "Please use another solver."
+                "'lbfgs' solver can be used only when `positive` constrains at least "
+                "one coefficient. Please use another solver or use `positive` to "
+                "constrain at least one coefficient."
             )
 
         if enforce_positive:
@@ -1166,11 +1170,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         All solvers except 'svd' support both dense and sparse data. However, only
         'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
         `fit_intercept` is True.
-
-        .. versionadded:: 0.17
-           Stochastic Average Gradient descent solver.
-        .. versionadded:: 0.19
-           SAGA solver.
 
     positive : bool or array-like of bool of shape (n_features,), default=False
         Positivity constraint on the coefficients.

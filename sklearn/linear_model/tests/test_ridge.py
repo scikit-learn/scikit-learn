@@ -2308,7 +2308,7 @@ def test_ridgeclassifier_multilabel(Classifier, params):
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
 def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
     """Test that positive Ridge finds true positive coefficients."""
-    X = np.array([[1, 2], [13, 31], [11, 19], [29, 37]])
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     coef = np.array([1, -10])
     if fit_intercept:
         intercept = 20
@@ -2346,7 +2346,7 @@ def test_ridge_positive_list_length_error():
 
     with pytest.raises(
         ValueError,
-        match="Length of 'positive' must be equal to the number of features",
+        match="Length of 'positive' must be equal to the number of features of X",
     ):
         Ridge(positive=[True, False, True], solver="lbfgs").fit(X, y)
 
