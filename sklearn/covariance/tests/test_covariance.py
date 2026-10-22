@@ -20,6 +20,8 @@ from sklearn.covariance import (
 from sklearn.covariance._shrunk_covariance import _ledoit_wolf, _oas
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
+    get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
@@ -395,7 +397,8 @@ def test_empirical_covariance_array_api(
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
 
-    result_np = empirical_covariance(X_np, assume_centered=assume_centered)
+    with config_context(array_api_dispatch=False):
+        result_np = empirical_covariance(X_np, assume_centered=assume_centered)
 
     with config_context(array_api_dispatch=True):
         result_xp = empirical_covariance(X_xp, assume_centered=assume_centered)
@@ -418,7 +421,8 @@ def test_ledoit_wolf_shrinkage_array_api(
     X_np = X[:, :n_features].astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
 
-    shrinkage_np = ledoit_wolf_shrinkage(X_np)
+    with config_context(array_api_dispatch=False):
+        shrinkage_np = ledoit_wolf_shrinkage(X_np)
 
     with config_context(array_api_dispatch=True):
         shrinkage_xp = ledoit_wolf_shrinkage(X_xp)
@@ -436,10 +440,11 @@ def test_log_likelihood_array_api(array_namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X_np = X.astype(dtype_name, copy=False)
-    emp_cov_np = empirical_covariance(X_np)
-    est = EmpiricalCovariance().fit(X_np)
-    precision_np = est.get_precision()
-    result_np = log_likelihood(emp_cov_np, precision_np)
+    with config_context(array_api_dispatch=False):
+        emp_cov_np = empirical_covariance(X_np)
+        est = EmpiricalCovariance().fit(X_np)
+        precision_np = est.get_precision()
+        result_np = log_likelihood(emp_cov_np, precision_np)
 
     # Downcast to target dtype before converting because `empirical_covariance` can
     # return float64 for numpy and MPS only supports float32
@@ -469,8 +474,9 @@ def test_score_array_api(array_namespace, device_name, dtype_name, store_precisi
         lw_xp = LedoitWolf(store_precision=store_precision).fit(X_xp)
         score_xp = lw_xp.score(X_xp)
 
-    lw_np = LedoitWolf(store_precision=store_precision).fit(X_np)
-    score_np = lw_np.score(X_np)
+    with config_context(array_api_dispatch=False):
+        lw_np = LedoitWolf(store_precision=store_precision).fit(X_np)
+        score_np = lw_np.score(X_np)
 
     assert isinstance(score_xp, float)
     assert_allclose(score_np, score_xp, atol=_atol_for_type(dtype_name))
@@ -488,8 +494,9 @@ def test_error_norm_array_api(array_namespace, device_name, dtype_name, norm):
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
 
-    lw_np = LedoitWolf().fit(X_np)
-    comp_cov_np = empirical_covariance(X_np)
+    with config_context(array_api_dispatch=False):
+        lw_np = LedoitWolf().fit(X_np)
+        comp_cov_np = empirical_covariance(X_np)
 
     with config_context(array_api_dispatch=True):
         lw_xp = LedoitWolf().fit(X_xp)
@@ -498,7 +505,8 @@ def test_error_norm_array_api(array_namespace, device_name, dtype_name, norm):
         comp_cov_xp = xp.asarray(comp_cov_np.astype(dtype_name), device=device)
         result_xp = lw_xp.error_norm(comp_cov_xp, norm=norm)
 
-    result_np = lw_np.error_norm(comp_cov_np, norm=norm)
+    with config_context(array_api_dispatch=False):
+        result_np = lw_np.error_norm(comp_cov_np, norm=norm)
     assert_allclose(result_np, float(result_xp), atol=_atol_for_type(dtype_name))
 
 
@@ -513,8 +521,9 @@ def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
     X_np = X.astype(dtype_name, copy=False)
     X_xp = xp.asarray(X_np, device=device)
 
-    lw_np = LedoitWolf().fit(X_np)
-    dist_np = lw_np.mahalanobis(X_np)
+    with config_context(array_api_dispatch=False):
+        lw_np = LedoitWolf().fit(X_np)
+        dist_np = lw_np.mahalanobis(X_np)
 
     with config_context(array_api_dispatch=True):
         lw_xp = LedoitWolf().fit(X_xp)
@@ -528,6 +537,45 @@ def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
+@pytest.mark.parametrize("assume_centered", [True, False])
+@pytest.mark.parametrize(
+    "X_input",
+    [
+        pytest.param(X[:, :1], id="one-feature"),
+        pytest.param(X, id="multi-feature"),
+        pytest.param(np.zeros_like(X), id="zero-variance"),
+    ],
+)
+def test_oas_array_api(
+    array_namespace,
+    device_name,
+    dtype_name,
+    assume_centered,
+    X_input,
+):
+    """OAS functions should return the same result with array API inputs."""
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    X_np = X_input.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    covariance_np, shrinkage_np = oas(X_np, assume_centered=assume_centered)
+
+    with config_context(array_api_dispatch=True):
+        covariance_xp, shrinkage_xp = oas(X_xp, assume_centered=assume_centered)
+        assert get_namespace(covariance_xp)[0].__name__ == xp.__name__
+        assert array_device(covariance_xp) == array_device(X_xp)
+        assert covariance_xp.dtype == X_xp.dtype
+    covariance_xp_np = move_to(covariance_xp, xp=np, device="cpu")
+    assert_allclose(covariance_np, covariance_xp_np, atol=_atol_for_type(dtype_name))
+    assert isinstance(shrinkage_xp, float)
+    assert_allclose(shrinkage_np, shrinkage_xp, atol=_atol_for_type(dtype_name))
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
 @pytest.mark.parametrize(
     "check",
     [check_array_api_input_and_values],
@@ -535,7 +583,7 @@ def test_mahalanobis_array_api(array_namespace, device_name, dtype_name):
 )
 @pytest.mark.parametrize(
     "estimator",
-    [LedoitWolf()],
+    [LedoitWolf(), OAS()],
     ids=_get_check_estimator_ids,
 )
 def test_covariance_array_api_compliance(

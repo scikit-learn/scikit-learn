@@ -237,6 +237,34 @@ def test_grid_from_X():
     assert grid.dtype == object
 
 
+def test_grid_from_X_with_nan():
+    """Check that _grid_from_X ignores NaNs."""
+    percentiles = (0.05, 0.95)
+    grid_resolution = 10
+    is_categorical = [False]
+    rng = np.random.RandomState(0)
+    X = rng.rand(50, 1)
+    X[0, 0] = np.nan
+
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution, {})
+
+    assert not np.isnan(grid).any()
+    assert not np.isnan(axes[0]).any()
+
+
+def test_grid_from_X_with_boolean_feature():
+    """Check that _grid_from_X handles booleans."""
+    percentiles = (0.05, 0.95)
+    grid_resolution = 2
+    is_categorical = [False]
+    X = np.array([[True], [False]] * 10)
+
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution, {})
+
+    assert_allclose(axes[0], [0.0, 1.0])
+    assert_allclose(grid.ravel(), [0.0, 1.0])
+
+
 @pytest.mark.parametrize(
     "grid_resolution",
     [
@@ -299,7 +327,9 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
 @pytest.mark.parametrize(
     "grid_resolution, percentiles, err_msg",
     [
-        (2, (0, 0.0001), "percentiles are too close"),
+        # percentiles gap small enough that the resulting grid endpoints are
+        # indistinguishable under linear interpolation
+        (2, (0, 1e-6), "percentiles are too close"),
         (100, (1, 2, 3, 4), "'percentiles' must be a sequence of 2 elements"),
         (100, 12345, "'percentiles' must be a sequence of 2 elements"),
         (100, (-1, 0.95), r"'percentiles' values must be in \[0, 1\]"),
@@ -521,6 +551,57 @@ def test_partial_dependence_easy_target(est, power):
     r2 = r2_score(new_y, lr.predict(new_X))
 
     assert r2 > 0.99
+
+
+def test_partial_dependence_recursion_decision_tree_categorical_target_feature():
+    # Non-ordinal categorical signal: categories {1, 2, 5} -> 1 and
+    # {0, 3, 4} -> 0. Recursion must route with the categorical bitset.
+    category_values = np.arange(6, dtype=np.float64)
+    X = np.repeat(category_values, 4).reshape(-1, 1)
+    y = np.isin(X.ravel(), [1, 2, 5]).astype(np.float64)
+
+    est = DecisionTreeRegressor(
+        categorical_features=[0], max_depth=1, random_state=0
+    ).fit(X, y)
+
+    recursion = partial_dependence(
+        est, X, features=[0], method="recursion", categorical_features=[0]
+    )
+    brute = partial_dependence(
+        est, X, features=[0], method="brute", categorical_features=[0]
+    )
+
+    grid = recursion["grid_values"][0].reshape(-1, 1)
+    expected = est.predict(grid)
+
+    assert_array_equal(recursion["grid_values"][0], category_values)
+    assert_allclose(recursion["average"][0], brute["average"][0])
+    assert_allclose(recursion["average"][0], expected)
+
+
+def test_partial_dependence_recursion_decision_tree_missing_target_feature():
+    # Missing values are isolated by the split. Recursion must route np.nan
+    # according to the fitted node's missing_go_to_left flag.
+    X = np.array([0.0, 0.0, np.nan, np.nan, 1.0, 1.0, 1.0]).reshape(-1, 1)
+    y = np.array([0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+
+    est = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y)
+    assert est.tree_.missing_go_to_left[0]
+
+    custom_values = {0: [0.0, np.nan, 1.0]}
+    recursion = partial_dependence(
+        est, X, features=[0], method="recursion", custom_values=custom_values
+    )
+    brute = partial_dependence(
+        est, X, features=[0], method="brute", custom_values=custom_values
+    )
+
+    grid = recursion["grid_values"][0].reshape(-1, 1)
+    expected = est.predict(grid)
+
+    assert_array_equal(recursion["grid_values"][0], custom_values[0])
+    assert_allclose(recursion["average"][0], brute["average"][0])
+    assert_allclose(recursion["average"][0], expected)
 
 
 @pytest.mark.parametrize(

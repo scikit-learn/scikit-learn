@@ -80,6 +80,7 @@ python_environment_install_and_activate() {
         echo "Installing Cython from latest sources"
         # NO_CYTHON_COMPILE=true installs Cython as a pure Python package (faster install)
         NO_CYTHON_COMPILE=true pip install https://github.com/cython/cython/archive/master.zip
+
         echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"

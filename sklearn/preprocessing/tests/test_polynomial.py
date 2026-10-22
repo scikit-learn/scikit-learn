@@ -6,7 +6,6 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 from scipy import sparse
 from scipy.interpolate import BSpline
-from scipy.sparse import random as sparse_random
 
 from sklearn._config import config_context
 from sklearn.linear_model import LinearRegression
@@ -21,12 +20,10 @@ from sklearn.preprocessing._csr_polynomial_expansion import (
 )
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_api_device,
 )
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._testing import (
@@ -37,6 +34,7 @@ from sklearn.utils._testing import (
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
+    _sparse_random_array,
 )
 
 
@@ -67,6 +65,27 @@ def test_spline_transformer_input_validation(params, err_msg):
 
     with pytest.raises(ValueError, match=err_msg):
         SplineTransformer(**params).fit(X)
+
+
+@pytest.mark.parametrize(["n_knots", "degree"], [(3, 1), (5, 3)])
+@pytest.mark.parametrize("periodic", [False, True])
+def test_spline_transformer_for_one_unique_knot(n_knots, degree, periodic):
+    """Test that SplineTransformer returns 0 for knots with a single unique value."""
+    n_splines = n_knots + (1 - periodic) * degree - 1
+    extrapolation = "periodic" if periodic else "constant"
+    X = [[1, 2, 3], [1, 22, 3], [1, 222, 3]]
+    splt = SplineTransformer(
+        n_knots=n_knots, degree=degree, extrapolation=extrapolation
+    ).fit(X)
+    assert_allclose(splt.bsplines_[0].t, 1)
+    assert_allclose(splt.bsplines_[2].t, 3)
+
+    X_trans = splt.transform(X)
+    assert X_trans.shape[1] == 3 * n_splines
+    assert_array_equal(X_trans[:, :n_splines], 0)
+    assert_array_equal(X_trans[:, 2 * n_splines :], 0)
+    # The spline from the middle column should contain non-zero values.
+    assert np.all(np.sum(X_trans[:, n_splines : 2 * n_splines], axis=0) > 0)
 
 
 @pytest.mark.parametrize("extrapolation", ["continue", "periodic"])
@@ -251,12 +270,12 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
     assert_allclose(predictions[0:100], predictions[100:200], rtol=1e-3)
 
 
-def test_spline_transformer_periodic_spline_backport():
-    """Test that the backport of extrapolate="periodic" works correctly"""
+def test_spline_transformer_periodic_vs_scipy():
+    """Test that B-Spline with extrapolate="periodic" matches scipy"""
     X = np.linspace(-2, 3.5, 10)[:, None]
     degree = 2
 
-    # Use periodic extrapolation backport in SplineTransformer
+    # Use periodic extrapolation in SplineTransformer
     transformer = SplineTransformer(
         degree=degree, extrapolation="periodic", knots=[[-1.0], [0.0], [1.0]]
     )
@@ -379,7 +398,7 @@ def test_spline_transformer_extrapolation(bias, intercept, degree):
         n_knots=4, degree=degree, include_bias=bias, extrapolation="error"
     )
     splt.fit(X)
-    msg = "`X` contains values beyond the limits of the knots"
+    msg = "X contains values beyond the limits of the knots"
     with pytest.raises(ValueError, match=msg):
         splt.transform([[-10]])
     with pytest.raises(ValueError, match=msg):
@@ -453,7 +472,7 @@ def test_spline_transformer_sparse_output(
         np.linspace(X_min - 5, X_min, 10), np.linspace(X_max, X_max + 5, 10)
     ]
     if extrapolation == "error":
-        msg = "`X` contains values beyond the limits of the knots"
+        msg = "X contains values beyond the limits of the knots"
         with pytest.raises(ValueError, match=msg):
             splt_dense.transform(X_extra)
         msg = "Out of bounds"
@@ -574,8 +593,10 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
     """Test that SplineTransformer encodes missing values to zeros even for
     all-nan-features."""
 
-    X = np.array([[1, 1], [2, 2], [3, 3], [4, 5], [4, 4]])
-    X_nan_full_column = np.array([[np.nan, np.nan], [np.nan, 1]])
+    X1 = np.array(
+        [[1, 1, np.nan], [2, 2, np.nan], [3, 3, np.nan], [4, 5, np.nan], [4, 4, np.nan]]
+    )
+    X2 = np.array([[np.nan, np.nan, 1], [np.nan, 1, 2]])
 
     spline = SplineTransformer(
         degree=2,
@@ -584,12 +605,22 @@ def test_spline_transformer_handles_all_nans(extrapolation, sparse_output):
         extrapolation=extrapolation,
         sparse_output=sparse_output,
     )
-    spline.fit(X_nan_full_column)
+    spline.fit(X1)
 
-    all_missing_column_encoded = spline.transform(X_nan_full_column)
-    nan_mask = _get_mask(X_nan_full_column, np.nan)
-    encoded_nan_mask = np.repeat(nan_mask, spline.bsplines_[0].c.shape[1], axis=1)
-    assert (all_missing_column_encoded[encoded_nan_mask] == 0).all()
+    X_trans = spline.transform(X2)
+    if sparse_output:
+        X_trans = X_trans.toarray()
+
+    # first row must be all zeros
+    assert_array_equal(X_trans[0], 0)
+
+    # second row must be zero for first and last feature
+    # n_splines = n_knots + (1 - periodic) * degree - 1
+    n_splines = 3 + (1 - (extrapolation == "periodic")) * 2 - 1
+    assert_array_equal(X_trans[1, :n_splines], 0)
+    assert_array_equal(X_trans[1, -n_splines:], 0)
+    # some spline basis of the second feature not equal to zero
+    assert (X_trans[1, n_splines:-n_splines] > 0).sum() >= 1
 
 
 @pytest.mark.parametrize(
@@ -907,7 +938,9 @@ def test_num_combinations(
 def test_polynomial_features_csr_X_floats(
     deg, include_bias, interaction_only, dtype, csr_container, global_random_seed
 ):
-    X_csr = csr_container(sparse_random(1000, 10, 0.5, random_state=global_random_seed))
+    X_csr = csr_container(
+        _sparse_random_array((1000, 10), density=0.5, random_state=global_random_seed)
+    )
     X = X_csr.toarray()
 
     est = PolynomialFeatures(
@@ -942,7 +975,9 @@ def test_polynomial_features_csr_X_floats(
 def test_polynomial_features_csr_X_zero_row(
     zero_row_index, deg, interaction_only, csr_container, global_random_seed
 ):
-    X_csr = csr_container(sparse_random(3, 10, 1.0, random_state=global_random_seed))
+    X_csr = csr_container(
+        _sparse_random_array((3, 10), density=1.0, random_state=global_random_seed)
+    )
     X_csr[zero_row_index, :] = 0.0
     X = X_csr.toarray()
 
@@ -965,7 +1000,9 @@ def test_polynomial_features_csr_X_zero_row(
 def test_polynomial_features_csr_X_degree_4(
     include_bias, interaction_only, csr_container, global_random_seed
 ):
-    X_csr = csr_container(sparse_random(1000, 10, 0.5, random_state=global_random_seed))
+    X_csr = csr_container(
+        _sparse_random_array((1000, 10), density=0.5, random_state=global_random_seed)
+    )
     X = X_csr.toarray()
 
     est = PolynomialFeatures(
@@ -999,7 +1036,7 @@ def test_polynomial_features_csr_X_dim_edges(
     deg, dim, interaction_only, csr_container, global_random_seed
 ):
     X_csr = csr_container(
-        sparse_random(1000, dim, 0.5, random_state=global_random_seed)
+        _sparse_random_array((1000, dim), density=0.5, random_state=global_random_seed)
     )
     X = X_csr.toarray()
 
@@ -1365,7 +1402,7 @@ def test_polynomial_features_array_api_compliance(
         out_xp = tf_xp.transform(X_xp)
         assert_allclose(move_to(out_xp, xp=np, device="cpu"), out_np)
         assert get_namespace(out_xp)[0].__name__ == xp.__name__
-        assert array_api_device(out_xp) == array_api_device(X_xp)
+        assert array_device(out_xp) == array_device(X_xp)
         assert out_xp.dtype == X_xp.dtype
 
 

@@ -4,15 +4,19 @@ from numpy.testing import assert_allclose, assert_array_equal
 from pytest import approx
 
 from sklearn._config import config_context
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils._array_api import (
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.fixes import np_version, parse_version
-from sklearn.utils.stats import _weighted_percentile, _weighted_percentile_1d_sorted
+from sklearn.utils.stats import (
+    _nanquantile,
+    _weighted_percentile,
+    _weighted_percentile_1d_sorted,
+)
 
 
 @pytest.mark.parametrize("average", [True, False])
@@ -336,7 +340,8 @@ def test_weighted_percentile_array_api_consistency(
     # Ensure `data` of correct dtype
     X_np = X_np.astype(dtype_name)
 
-    result_np = _weighted_percentile(X_np, weights_np, percentile)
+    with config_context(array_api_dispatch=False):
+        result_np = _weighted_percentile(X_np, weights_np, percentile)
     # Convert to Array API arrays
     X_xp = xp.asarray(X_np, device=device)
     weights_xp = xp.asarray(weights_np, device=device)
@@ -360,8 +365,9 @@ def test_weighted_percentile_array_api_consistency(
 
 @pytest.mark.parametrize("average", [True, False])
 @pytest.mark.parametrize("sample_weight_ndim", [1, 2])
+@pytest.mark.parametrize("percentile_rank", [0, 30, 100])
 def test_weighted_percentile_nan_filtered(
-    global_random_seed, sample_weight_ndim, average
+    global_random_seed, sample_weight_ndim, average, percentile_rank
 ):
     """Test `_weighted_percentile` ignores NaNs.
 
@@ -382,7 +388,9 @@ def test_weighted_percentile_nan_filtered(
         sample_weight = rng.randint(1, 6, size=(100,))
 
     # Find the weighted percentile on the array with nans:
-    results = _weighted_percentile(array_with_nans, sample_weight, 30, average=average)
+    results = _weighted_percentile(
+        array_with_nans, sample_weight, percentile_rank, average=average
+    )
 
     # Find the weighted percentile on the filtered array:
     filtered_array = [
@@ -400,7 +408,10 @@ def test_weighted_percentile_nan_filtered(
     expected_results = np.array(
         [
             _weighted_percentile(
-                filtered_array[col], filtered_weights[col], 30, average=average
+                filtered_array[col],
+                filtered_weights[col],
+                percentile_rank,
+                average=average,
             )
             for col in range(array_with_nans.shape[1])
         ]
@@ -518,3 +529,25 @@ def test_weighted_percentile_like_numpy_nanquantile(
     )
 
     assert_array_equal(percentile_weighted_percentile, percentile_numpy_nanquantile)
+
+
+def test_nanquantile():
+    """Sanity check for _nanquantile."""
+    X = np.array([[0.0], [1.0], [2.0], [3.0], [4.0]])
+    quantiles = _nanquantile(X, 0, (0.0, 0.5, 1.0))
+    assert_allclose(quantiles, [0.0, 2.0, 4.0])
+
+
+def test_nanquantile_ignores_nan():
+    """Check that _nanquantile ignores NaNs."""
+    X = np.array([[np.nan], [1.0], [2.0], [3.0], [4.0]])
+    quantiles = _nanquantile(X, 0, (0.0, 0.5, 1.0))
+    assert not np.isnan(quantiles).any()
+    assert_allclose(quantiles, [1.0, 2.5, 4.0])
+
+
+def test_nanquantile_boolean_column():
+    """Check that _nanquantile handles booleans."""
+    X = np.array([[True], [False], [True], [False]])
+    quantiles = _nanquantile(X, 0, (0.0, 1.0))
+    assert_allclose(quantiles, [0.0, 1.0])

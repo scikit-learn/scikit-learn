@@ -454,9 +454,6 @@ class KFold(_UnsupportedGroupCVMixin, _BaseKFold):
     n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-        .. versionchanged:: 0.22
-            ``n_splits`` default value changed from 3 to 5.
-
     shuffle : bool, default=False
         Whether to shuffle the data before splitting into batches.
         Note that the samples within each split will not be shuffled.
@@ -549,9 +546,6 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     ----------
     n_splits : int, default=5
         Number of folds. Must be at least 2.
-
-        .. versionchanged:: 0.22
-            ``n_splits`` default value changed from 3 to 5.
 
     shuffle : bool, default=False
         Whether to shuffle the groups before splitting into batches.
@@ -710,9 +704,6 @@ class StratifiedKFold(_BaseKFold):
     n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-        .. versionchanged:: 0.22
-            ``n_splits`` default value changed from 3 to 5.
-
     shuffle : bool, default=False
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
@@ -759,9 +750,6 @@ class StratifiedKFold(_BaseKFold):
       contiguous in y, or separated in y by samples from classes other than k.
     * Generate test sets where the smallest and largest differ by at most one
       sample.
-
-    .. versionchanged:: 0.22
-        The previous implementation did not follow the last constraint.
 
     See Also
     --------
@@ -1136,15 +1124,10 @@ class TimeSeriesSplit(_BaseKFold):
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     n_splits : int, default=5
         Number of splits. Must be at least 2.
-
-        .. versionchanged:: 0.22
-            ``n_splits`` default value changed from 3 to 5.
 
     max_train_size : int, default=None
         Maximum size for a single training set.
@@ -1154,13 +1137,9 @@ class TimeSeriesSplit(_BaseKFold):
         ``n_samples // (n_splits + 1)``, which is the maximum allowed value
         with ``gap=0``.
 
-        .. versionadded:: 0.24
-
     gap : int, default=0
         Number of samples to exclude from the end of each train set before
         the test set.
-
-        .. versionadded:: 0.24
 
     Examples
     --------
@@ -2525,8 +2504,6 @@ class PredefinedSplit(BaseCrossValidator):
 
     Read more in the :ref:`User Guide <predefined_split>`.
 
-    .. versionadded:: 0.16
-
     Parameters
     ----------
     test_fold : array-like of shape (n_samples,)
@@ -2714,9 +2691,6 @@ def check_cv(cv=5, y=None, *, classifier=False, shuffle=False, random_state=None
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value changed from 3-fold to 5-fold.
-
     y : array-like, default=None
         The target variable for supervised learning problems.
 
@@ -2813,9 +2787,10 @@ def train_test_split(
 
     Parameters
     ----------
-    *arrays : sequence of indexables with same length / shape[0]
-        Allowed inputs are lists, numpy arrays, scipy-sparse
-        matrices or pandas dataframes.
+    *arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
+        Indexable data-structures can be arrays, lists, dataframes, scipy
+        sparse matrices or pandas dataframes with consistent first dimension.
 
     test_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
@@ -2839,7 +2814,7 @@ def train_test_split(
         Whether or not to shuffle the data before splitting. If shuffle=False
         then stratify must be None.
 
-    stratify : array-like, default=None
+    stratify : array-like of shape (n_samples,), default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
         Read more in the :ref:`User Guide <stratification>`.
@@ -2848,11 +2823,6 @@ def train_test_split(
     -------
     splitting : list, length=2 * len(arrays)
         List containing train-test split of inputs.
-
-        .. versionadded:: 0.16
-            If the input is sparse, the output will be a
-            ``scipy.sparse.csr_matrix``. Else, output type is the same as the
-            input type.
 
     Examples
     --------
@@ -2978,7 +2948,7 @@ def train_test_split(
 
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
-# Use setattr to avoid mypy errors when monkeypatching.
+# Use setattr to avoid pyrefly errors when monkeypatching.
 setattr(train_test_split, "__test__", False)
 
 

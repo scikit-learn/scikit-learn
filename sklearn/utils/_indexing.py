@@ -31,16 +31,16 @@ from sklearn.utils.validation import (
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
-    xp, is_array_api, device_ = get_namespace_and_device(array)
+    xp, is_array_api, device = get_namespace_and_device(array)
     if is_array_api:
         if hasattr(key, "shape"):
-            key = move_to(key, xp=xp, device=device_)
+            key = move_to(key, xp=xp, device=device)
         elif isinstance(key, (int, slice)):
             # Passthrough for valid __getitem__ inputs as noted in the array
             # API spec.
             pass
         else:
-            key = xp.asarray(key, device=device_)
+            key = xp.asarray(key, device=device)
 
         if hasattr(key, "dtype"):
             if xp.isdtype(key.dtype, "integral"):
@@ -48,7 +48,7 @@ def _array_indexing(array, key, key_dtype, axis):
             elif xp.isdtype(key.dtype, "bool"):
                 # Array API does not support boolean indexing for n-dim arrays
                 # yet hence the need to turn to equivalent integer indexing.
-                indices = xp.arange(array.shape[axis], device=device_)
+                indices = xp.arange(array.shape[axis], device=device)
                 return xp.take(array, indices[key], axis=axis)
 
     if issparse(array):
@@ -342,11 +342,9 @@ def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
 
     if hasattr(X, "iloc"):  # pandas dataframe
         with warnings.catch_warnings():
-            # pandas >= 1.5 raises a warning when using iloc to set values in a column
-            # that does not have the same type as the column being set. It happens
-            # for instance when setting a categorical column with a string.
-            # In the future the behavior won't change and the warning should disappear.
-            # TODO(1.3): check if the warning is still raised or remove the filter.
+            # pandas raises a warning when using iloc to set values in a column
+            # that does not have the same type as the column being set.
+            # That warning will be an error in a future pandas release.
             warnings.simplefilter("ignore", FutureWarning)
             X.iloc[row_indexer, column_indexer] = values
     else:  # numpy array or sparse matrix

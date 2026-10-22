@@ -203,9 +203,9 @@ for classification::
   >>> X_new.shape
   (150, 3)
 
-With SVMs and logistic regression, the parameter C controls the sparsity:
-the smaller C the fewer features selected. With Lasso, the higher the
-alpha parameter, the fewer features selected.
+With SVMs, the parameter C controls the sparsity: the smaller C the fewer
+features selected. With logistic regression and Lasso, the higher the alpha
+parameter, the fewer features selected.
 
 .. rubric:: Examples
 
@@ -239,9 +239,8 @@ alpha parameter, the fewer features selected.
 
   .. rubric:: References
 
-  Richard G. Baraniuk "Compressive Sensing", IEEE Signal
-  Processing Magazine [120] July 2007
-  http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
+  Richard G. Baraniuk :doi:`"Compressive Sensing" <10.1109/MSP.2007.4286571>`,
+  IEEE Signal Processing Magazine [120] July 2007
 
 
 Tree-based feature selection
@@ -320,9 +319,9 @@ with *all* the features and greedily *remove* features from the set. The
 
   .. rubric:: References
 
-  .. [sfs] Ferri et al, `Comparative study of techniques for
+  .. [sfs] Ferri et al, :doi:`Comparative study of techniques for
       large-scale feature selection
-      <https://citeseerx.ist.psu.edu/doc_view/pid/5fedabbb3957bbb442802e012d829ee0629a01b6>`_.
+      <10.1016/B978-0-444-81892-8.50040-7>`.
 
 
 .. rubric:: Examples
