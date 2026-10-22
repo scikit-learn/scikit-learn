@@ -1,0 +1,8 @@
+- Custom callbacks must now subclass :class:`callback.FitCallback` (or
+  :class:`callback.AutoPropagatedCallback`) instead of implementing the callback
+  protocols. ``on_fit_task_begin`` and ``on_fit_task_end`` no longer take a ``metadata``
+  dict; requested metadata is passed as keyword arguments.
+  :class:`callback.ScoringMonitor` replaces ``scoring`` with ``scoring_train`` and
+  ``scoring_val``, and :class:`callback.ScoringMonitorLog` replaces ``data`` and
+  ``data_as_pandas`` with ``train_scores``, ``val_scores``, and the corresponding
+  ``*_as_pandas`` attributes. By :user:`François Paugam <FrancoisPgm>`.
