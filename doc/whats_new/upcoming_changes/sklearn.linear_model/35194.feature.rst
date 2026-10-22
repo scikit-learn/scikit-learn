@@ -1,4 +1,4 @@
-- :class:`linear_model.Ridge` now supports array-like of bools for the `positive`
-  parameter in addition to a single boolean. Providing an array-like of bools allows to
-  specify non-negativity constraints for each coefficient independently.
+- :class:`linear_model.Ridge`, :class:`linear_model.RidgeClassifier` and
+  :func:`linear_model.ridge_regression` now accept an array-like of bools for
+  `positive`, to set the non-negativity constraint of each coefficient independently.
   By :user:`Daniel Smith <thedanindanger>` and :user:`François Paugam <FrancoisPgm>`

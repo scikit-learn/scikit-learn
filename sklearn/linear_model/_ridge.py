@@ -625,10 +625,7 @@ def ridge_regression(
     >>> intercept
     np.float64(-.0012)
     """
-    if isinstance(positive, (bool, np.bool_)):
-        positive = bool(positive)
-    else:
-        positive = _validate_positive(positive, _num_features(X))
+    positive = _validate_positive(positive, _num_features(X))
 
     return _ridge_regression(
         X,
@@ -691,7 +688,8 @@ def _ridge_regression(
 
     if enforce_positive and solver != "lbfgs":
         raise ValueError(
-            "When positive=True, only 'lbfgs' solver can be used. "
+            "When `positive` constrains at least one coefficient, only 'lbfgs' "
+            "solver can be used. "
             f"Please change solver {solver} to 'lbfgs' "
             "or set positive=False."
         )
@@ -1184,6 +1182,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         unconstrained. For multi-output `y`, the same mask is applied to every
         target.
         Only 'lbfgs' solver is supported in this case.
+
+        .. versionchanged:: 1.10
+           Accepts an array-like of bool of shape (n_features,).
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
