@@ -1021,6 +1021,10 @@ controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
 regularization. Elastic-Net is equivalent to :math:`\ell_1` when
 :math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
 
+All solvers minimize this objective, except the deprecated "liblinear" solver
+which, with `fit_intercept=True`, also includes the intercept :math:`w_0` in the
+penalty term :math:`r(w)`, see :ref:`logistic_regression_solvers`.
+
 Multinomial Case
 ----------------
 
