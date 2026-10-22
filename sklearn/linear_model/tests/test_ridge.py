@@ -4,6 +4,7 @@ from itertools import product
 import numpy as np
 import pytest
 from scipy import linalg
+from scipy.optimize import lsq_linear
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
