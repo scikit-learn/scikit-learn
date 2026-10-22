@@ -2498,20 +2498,38 @@ def test_lbfgs_solver_error():
         model.fit(X, y)
 
 
-@pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
-def test_lbfgs_positive_list(alpha):
-    """
-    Test that LBGFS gets the same coef when
-    positive=True and positive=[True]*n_features.
-    """
-    X = rng.randn(10, 2)
-    coef = np.array([-2, -1])
-    y = X @ coef
-    alpha = np.asarray([alpha])
-    ride_single_bool = Ridge(alpha=alpha, positive=True, solver="lbfgs").fit(X, y)
-    ride_list_bool = Ridge(alpha=alpha, positive=[True, True], solver="lbfgs").fit(X, y)
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
+def test_ridge_positive_mask_matches_bounded_lstsq(
+    fit_intercept, csr_container, global_random_seed
+):
+    """Check a masked positive Ridge against a bounded least squares solution."""
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_features, alpha = 60, 5, 0.5
+    X = rng.randn(n_samples, n_features) + 3
+    y = X @ np.array([-2.0, 1.0, -1.0, 0.5, -3.0]) + 4 + 0.1 * rng.randn(n_samples)
+    sample_weight = rng.uniform(0.5, 2, n_samples)
+    mask = np.array([True, False, True, False, False])
 
-    assert_allclose(ride_single_bool.coef_, ride_list_bool.coef_)
+    # min_w,b ||sqrt(sw) * (y - X w - b)||^2 + alpha ||w||^2  s.t.  w[mask] >= 0
+    A = np.c_[X, np.ones(n_samples)] if fit_intercept else X
+    penalty = np.sqrt(alpha) * np.eye(A.shape[1])
+    if fit_intercept:
+        penalty[-1, -1] = 0
+    lower = np.full(A.shape[1], -np.inf)
+    lower[:n_features][mask] = 0
+    expected = lsq_linear(
+        np.r_[np.sqrt(sample_weight)[:, None] * A, penalty],
+        np.r_[np.sqrt(sample_weight) * y, np.zeros(A.shape[1])],
+        bounds=(lower, np.inf),
+        tol=1e-12,
+    ).x
+
+    X_fit = X if csr_container is None else csr_container(X)
+    model = Ridge(alpha=alpha, positive=mask, fit_intercept=fit_intercept, tol=1e-10)
+    model.fit(X_fit, y, sample_weight=sample_weight)
+    coef = np.r_[model.coef_, model.intercept_] if fit_intercept else model.coef_
+    assert_allclose(coef, expected, atol=1e-4)
 
 
 @pytest.mark.parametrize("fit_intercept", [False, True])
