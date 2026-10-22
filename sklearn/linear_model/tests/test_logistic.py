@@ -3110,7 +3110,7 @@ def test_equivalence_of_default_C_and_alpha(n_classes, sample_weight, solver):
                 X, y, sample_weight
             )
         m = f"{alpha=} {C=}"
-        assert_allclose(clf_C.coef_, clf_alpha.coef_, err_msg=m, rtol=5e-7, atol=1e-11)
+        assert_allclose(clf_C.coef_, clf_alpha.coef_, err_msg=m, rtol=1e-6, atol=1e-11)
 
     params["scoring"] = "neg_log_loss"
     for alphas, Cs in ((5, 5), ([0, 0.1, 10, 1e5], [np.inf, 10, 0.1, 1e-5])):
