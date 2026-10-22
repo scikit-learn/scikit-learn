@@ -266,8 +266,8 @@ def _kmeans_plusplus_trials_dense(
                     if dist_sq < threshold * norms:
                         # Small squared distances computed this way can be
                         # inaccurate because of catastrophic cancellation:
-                        # recompute these with the safer but slower sum
-                        # of squared differences.
+                        # recompute these with the numerically safer but
+                        # slower sum of squared differences.
                         dist_sq = _euclidean_dense_dense(
                             &X[i, 0], &candidates[j, 0], n_features, True)
                     # trials_dist_sq[j, i] = min(closest_dist_sq[i], dist_sq)
@@ -379,7 +379,10 @@ def _kmeans_plusplus_trials_sparse(
                         norms = x_squared_norms[i] + candidates_squared_norms[j]
                         dist_sq = trials_dist_sq[j, i] + norms
                         if dist_sq < threshold * norms:
-                            # Same direct computation as for dense input, with
+                            # Small squared distances computed this way can be
+                            # inaccurate because of catastrophic cancellation:
+                            # recompute these with the numerically safer but
+                            # slower sum of squared differences with
                             # x_dense = X[i].toarray()
                             for k in range(X_indptr[i], X_indptr[i + 1]):
                                 x_dense[X_indices[k]] = X_data[k]
@@ -406,23 +409,30 @@ def _kmeans_plusplus_sample_candidates(
         intp_t[::1] candidate_ids):             # OUT (n_candidates,)
     """Sample k-means++ candidate centers.
 
-    The probability of a sample is proportional to its potential, i.e. its
-    weighted squared distance to the closest center
-    `sample_weight[i] * closest_dist_sq[i]`.
+    The probability of a sample is proportional to its potential, i.e. its weighted
+    squared distance to the closest center `sample_weight[i] * closest_dist_sq[i]`.
 
-    For each candidate, using a value drawn uniformly in [0, 1) from
-    `random_state`:
+    For each candidate, using a `random_potential` drawn uniformly in
+    [0, total potential) from `random_state`:
 
-    - first, a chunk of `CHUNK_SIZE` samples is chosen with probability
-      proportional to the chunk's potential `chunk_potentials[k]` (the sum of
-      the potentials of the samples of that chunk),
+    - first, a chunk is chosen with probability proportional to the chunk's
+      own potential (the sum of the potentials of its samples), i.e.::
+
+          chunk_idx = np.searchsorted(np.cumsum(chunk_potentials), random_potential)
+
     - then, a sample of that chunk is chosen with probability proportional to
-      its potential.
+      its potential, i.e.::
+
+          candidate = chunk_start + np.searchsorted(
+              np.cumsum(sample_potentials[chunk_start:chunk_end]),
+              random_potential - chunk_potentials[:chunk_idx].sum(),
+          )
 
     This picks the same samples as a search in the cumulative sum of the
     potentials of all the samples (up to rounding errors), but only computes
-    the cumulative sums of `n_chunks + CHUNK_SIZE` values. A sample with a zero
-    potential is never picked, even with rounding errors.
+    the cumulative sums of `n_chunks + CHUNK_SIZE` values. Unlike the numpy
+    code above, a sample with a zero potential is never picked, even with
+    rounding errors.
     """
     cdef:
         const double[::1] chunk_potentials_cumsum = np.cumsum(chunk_potentials)
@@ -451,14 +461,16 @@ def _kmeans_plusplus_sample_candidates(
                     lo = chunk_idx + 1
                 else:
                     hi = chunk_idx
-            if lo > 0:
-                random_potential -= chunk_potentials_cumsum[lo - 1]
+            chunk_idx = lo
+
+            if chunk_idx > 0:
+                random_potential -= chunk_potentials_cumsum[chunk_idx - 1]
 
             # Find the first sample of the chunk with a non-zero potential whose
             # cumulative potential reaches random_potential. Rounding errors can
             # make random_potential larger than the potential of the chunk: then
             # take its last sample with a non-zero potential.
-            start = lo * chunk_size
+            start = chunk_idx * chunk_size
             end = min(start + chunk_size, n_samples)
             candidate = start
             potential_cumsum = 0.0

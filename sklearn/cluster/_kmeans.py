@@ -273,10 +273,10 @@ def _kmeans_plusplus(
     # fixed chunk size makes the result independent of the number of threads
     # (see `_kmeans_plusplus_trials_dense`).
     trials_chunk_potentials = np.empty((2, n_local_trials, n_chunks), dtype=np.float64)
-    # Both arrays are twice as large as needed to act as "ping-pong" buffers:
-    # each step writes in one half, and reads `closest_dist_sq` and
-    # `chunk_potentials` from views of the half written by the previous step.
-    # This avoids copies, at the cost of a slightly larger memory usage.
+    # Both arrays are twice as large as needed to act as "ping-pong" buffers.
+    # At each step, `closest_dist_sq` and `chunk_potentials` are read from views
+    # inside the half written at the previous iteration.
+    # This spares memory copies at the cost of a slightly larger memory usage.
 
     # The sparse kernel reads the columns of X: convert it once for all the steps
     X_csc = None
@@ -315,8 +315,7 @@ def _kmeans_plusplus(
 
     # Pick the remaining n_clusters-1 points
     for c in range(1, n_clusters):
-        # Read the half of the ping-pong buffers written by the previous step,
-        # write in the other half.
+        # Read the half written by the previous step, write in the other half.
         in_idx = (c - 1) % 2
         out_idx = c % 2
         closest_dist_sq = trials_dist_sq[in_idx, best_candidate]
