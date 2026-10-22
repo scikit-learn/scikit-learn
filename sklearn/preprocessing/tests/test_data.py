@@ -2990,3 +2990,16 @@ def test_standard_scaler_callback_support(fit_method):
     task_end_record = [rec for rec in cb.record if rec["name"] == "on_fit_task_end"][0]
     fitted_scaler = task_end_record["kwargs"]["fitted_estimator"]
     assert_allclose(fitted_scaler.transform(X), Xt)
+def test_standard_scaler_partial_fit_all_nan_variance():
+    # Initial fit with valid data
+    X_init = np.array([[1.0, 2.0], [3.0, 4.0]])
+    scaler = StandardScaler().partial_fit(X_init)
+    initial_var = scaler.var_.copy()
+
+    # Second batch where column 0 contains only NaN values
+    X_nan_batch = np.array([[np.nan, 5.0], [np.nan, 6.0]])
+    scaler.partial_fit(X_nan_batch)
+
+    # Verify column 0 variance is preserved and not overwritten with NaN
+    assert not np.isnan(scaler.var_[0])
+    assert np.isclose(scaler.var_[0], initial_var[0])

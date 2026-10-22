@@ -1024,6 +1024,10 @@ class StandardScaler(
                 self.n_samples_seen_ += X.shape[0] - xp.isnan(X).sum(axis=0)
 
             else:
+                # Retain previous statistics to prevent all-NaN batch overwrites
+                prev_var = None if first_call or self.var_ is None else xp.asarray(self.var_, copy=True)
+                prev_mean = None if first_call or self.mean_ is None else xp.asarray(self.mean_, copy=True)
+
                 self.mean_, self.var_, self.n_samples_seen_ = _incremental_mean_and_var(
                     X,
                     self.mean_,
@@ -1031,6 +1035,15 @@ class StandardScaler(
                     self.n_samples_seen_,
                     sample_weight=sample_weight,
                 )
+
+                # If an incoming feature column was entirely NaN, preserve previous statistics
+                if not first_call:
+                    if self.var_ is not None and prev_var is not None:
+                        nan_var_mask = xp.isnan(self.var_) & ~xp.isnan(prev_var)
+                        self.var_[nan_var_mask] = prev_var[nan_var_mask]
+                    if self.mean_ is not None and prev_mean is not None:
+                        nan_mean_mask = xp.isnan(self.mean_) & ~xp.isnan(prev_mean)
+                        self.mean_[nan_mean_mask] = prev_mean[nan_mean_mask]
 
         # for backward-compatibility, reduce n_samples_seen_ to an integer
         # if the number of samples is the same for each feature (i.e. no
