@@ -1968,13 +1968,25 @@ cluster analysis:
   - The score is higher when clusters are dense and well separated, which
     relates to a standard concept of a cluster.
 
-  - The score is fast to compute.
+  - The score is fast to compute: its cost grows linearly with the number of
+    samples, whereas the :ref:`silhouette_coefficient` uses all pairwise
+    distances and its cost grows quadratically. This makes it a cheaper
+    alternative on large datasets.
 
 .. topic:: Drawbacks:
 
   - The Calinski-Harabasz index is generally higher for convex clusters than
     other concepts of clusters, such as density based clusters like those
     obtained through DBSCAN.
+
+  - The score has no upper bound and, for the same data distribution, it grows
+    with the number of samples. Unlike the Silhouette Coefficient, which lies
+    between -1 and 1, its value is therefore only meaningful when comparing
+    clusterings of the same dataset, for instance to choose the number of
+    clusters.
+
+  - The score is based on squared Euclidean distances to the cluster centers,
+    while the Silhouette Coefficient can be computed with any distance metric.
 
 .. dropdown:: Mathematical formulation
 
