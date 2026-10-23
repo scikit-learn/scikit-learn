@@ -1,0 +1,6 @@
+- :func:`metrics.fowlkes_mallows_score` no longer returns 0.0 for two identical
+  labelings that consist only of singleton clusters. Such labelings share no
+  pair of co-clustered points, which was previously reported as the worst
+  possible score instead of a perfect match, unlike the other supervised
+  clustering metrics.
+  By :user:`Pranav Achar <PranavAchar01>`.
