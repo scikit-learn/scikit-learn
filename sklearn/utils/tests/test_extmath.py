@@ -1039,7 +1039,7 @@ def test_safe_sparse_dot_nd(csr_container):
     # sparse / dense ND
     A = rng.random_sample((2, 3))
     B = rng.random_sample((4, 5, 3, 6))
-    expected = np.dot(A, B)
+    expected = np.tensordot(A, B, axes=[-1, -2])
     A = csr_container(A)
     actual = safe_sparse_dot(A, B)
     assert_allclose(actual, expected)
