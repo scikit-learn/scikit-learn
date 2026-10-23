@@ -1591,7 +1591,7 @@ def AP_metric(contmtx):
         contingency table as determined from the peak value in each row of the 
         contingency matrix.
     peakiness_metric : Peakiness of the peak values in rows of a contingency 
-        table. The peakiness metric meaures the credence of the associativity score.
+        table. The peakiness metric measures the credence of the associativity score.
     AP_metric : AP metric, the harmonic mean of associativity and peakiness metric scores.
 
      References
