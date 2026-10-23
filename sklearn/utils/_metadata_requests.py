@@ -179,9 +179,10 @@ def _auto_requests_enabled():
     Returns
     -------
     enabled : bool
-        Whether auto-requesting metadata is enabled.
+        Whether auto-requesting metadata is enabled. If the config is not set, it
+        defaults to True.
     """
-    return get_config().get("enable_metadata_auto_requests", False)
+    return get_config().get("enable_metadata_auto_requests", True)
 
 
 def _raise_for_params(params, owner, method, allow=None):
@@ -642,8 +643,9 @@ class MetadataRequest:
     Note that requests on composite methods (`fit_transform`, `fit_predict`) are not
     stored as attributes. Accessing them, for example `request.fit_predict`, builds
     their requests from the component methods (`fit` and `predict` in this case), plus
-    auto-requests set on them. Auto-requests are included only when
-    `set_config(enable_metadata_auto_requests=True)`.
+    auto-requests set on them. Auto-requests are included by default
+    (`enable_metadata_auto_requests=True`). Set that config to `False` to leave
+    them unset.
 
     Read more on developing custom estimators that can route metadata in the
     :ref:`Metadata Routing Developing Guide
@@ -1021,7 +1023,7 @@ class MetadataRouter:
     {'estimator': {'mapping': [{'caller': 'partial_fit', 'callee': 'partial_fit'},
                            {'caller': 'fit', 'callee': 'fit'}],
                'router': {'fit': {'sample_weight': True},
-                          'score': {'sample_weight': None}}}}
+                          'score': {'sample_weight': True}}}}
     >>> set_config(enable_metadata_routing=False)
     """
 
