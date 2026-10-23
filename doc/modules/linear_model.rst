@@ -6,16 +6,34 @@ Linear Models
 
 .. currentmodule:: sklearn.linear_model
 
-The following are a set of methods intended for regression in which
-the target value is expected to be a linear combination of the features.
-In mathematical notation, the predicted value :math:`\hat{y}` can be
-written as:
-
+Linear models cover a wide range of different models, most of them regressors but
+also some important classifiers. They all have in common that their predictions are a
+linear combination of the :math:`p=n_{\text{features}}` features, or a function
+thereof. This linear combination is learned from the data and parametrized by
+coefficients :math:`w`. In mathematical notation, the predicted value :math:`\hat{y}`
+can be written as
 
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
-Across the module, we designate the vector :math:`w = (w_1,
-..., w_p)` as ``coef_`` and :math:`w_0` as ``intercept_``.
+or some function thereof: :math:`\hat{y}(w, x) = h(w_0 + w_1 x_1 + ...)`.
+Across the module, we designate the vector :math:`w = (w_1, ..., w_p)` as ``coef_`` and
+:math:`w_0` as ``intercept_``. For brevity, we denote the linear predictor as
+
+.. math:: Xw = w_0 + X \cdot w \,,
+
+such that it includes the intercept :math:`w_0`. You might also think of :math:`X` as
+the data matrix extended by a column of ones. In the implementation, scikit-learn
+tries to avoid as much as possible to build this extended matrix explicitly.
+For norms of the coefficients as used in penalties, the intercept is always excluded,
+for example:
+
+.. math:: ||w||_2^2 = w_1^2 + ... + w_p^2 \,.
+
+A consequence of the common linear predictor is that all linear models take into
+account the design matrix `X` only term by term as passed to `fit`. Non-linear terms
+and interactions of features must be added in the preprocessing as shown further down
+in :ref:`Polynomial regression <polynomial_regression>`. On top, it is considered good
+practice to standardized `X` before fitting a linear model.
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
@@ -25,11 +43,11 @@ To perform classification with generalized linear models, see
 Ordinary Least Squares
 =======================
 
-:class:`LinearRegression` fits a linear model with coefficients
-:math:`w = (w_1, ..., w_p)` to minimize the residual sum
-of squares between the observed targets in the dataset, and the
-targets predicted by the linear approximation. Mathematically it
-solves a problem of the form:
+:class:`LinearRegression` predicts the conditional expectation :math:`E(y|X)` by the
+linear predictor :math:`Xw`. The coefficients and the intercept are fitted to minimize
+the residual sum of squares between the observed targets in the dataset, and the
+targets predicted by the linear approximation. Mathematically, it solves the least
+squares problem:
 
 .. math:: \min_{w} || X w - y||_2^2
 
@@ -51,14 +69,36 @@ solves a problem of the form:
     >>> reg.intercept_
     0.0
 
-The coefficient estimates for Ordinary Least Squares rely on the
-independence of the features. When features are correlated and some
-columns of the design matrix :math:`X` have an approximately linear
-dependence, the design matrix becomes close to singular
-and as a result, the least-squares estimate becomes highly sensitive
-to random errors in the observed target, producing a large
-variance. This situation of *multicollinearity* can arise, for
-example, when data are collected without an experimental design.
+When features are correlated, e.g. some columns of the design matrix :math:`X` have an
+approximately linear dependence, the design matrix becomes ill-conditioned (close to
+singular) and as a result, the least squares estimate becomes highly sensitive
+to random errors or small changes in the observed target :math:`y`, leading to a large
+inflation of the variance of the estimated coefficients. This situation of
+*multicollinearity* can arise, for example, in observational studies where data are
+collected without an experimental design.
+
+One possible remedy is to add a penalty for the size of the coefficients as in
+:ref:`Ridge regression <ridge_regression>`.
+
+.. dropdown:: Computational Details
+
+  **Weighted Least Squares**
+
+  With sample weights :math:`s=\text{sample_weight}`, :class:`LinearRegression`
+  minimized the weighted squared error:
+
+  .. math:: \min_{w} \sum_i s_i (X_i w - y_i)^2
+
+  **Ordinary Least Squares Complexity**
+
+  For dense `X`, the least squares solution is computed using the singular value
+  decomposition of :math:`X` via :func:`SciPy lstsq <scipy:scipy.linalg.lstsq>`.
+  For a matrix :math:`X` of shape `(n_samples, n_features)` this method has a cost of
+  :math:`O(n_{\text{samples}} n_{\text{features}}^2)`.
+
+  For sparse `X`, the least squares problem is solved by the iterative solver
+  :func:`SciPy lstsq <scipy:scipy.sparse.linalg.lsqr>`.
+
 
 .. rubric:: Examples
 
@@ -78,14 +118,6 @@ parameter: when set to `True` `Non-Negative Least Squares
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`
 
-Ordinary Least Squares Complexity
----------------------------------
-
-The least squares solution is computed using the singular value
-decomposition of :math:`X`. If :math:`X` is a matrix of shape `(n_samples, n_features)`
-this method has a cost of
-:math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
-:math:`n_{\text{samples}} \geq n_{\text{features}}`.
 
 .. _ridge_regression:
 
