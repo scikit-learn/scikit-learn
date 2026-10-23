@@ -77,7 +77,6 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
 
     # fast way for n_distinct = len(np.unique(col_data))
     distinct_mask = np.empty(len(col_data), dtype=bool)
-    # col_data is empty if all values are missing or have zero weight
     distinct_mask[:1] = True
     distinct_mask[1:] = col_data[1:] != col_data[:-1]
     n_distincts = distinct_mask.sum()
