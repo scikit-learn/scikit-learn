@@ -282,19 +282,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
         coef_old_ = None
 
         XT_y = np.dot(X.T, y)
-        # Let M, N = n_samples, n_features and K = min(M, N).
-        # The posterior covariance matrix needs Vh_full: (N, N).
-        # The full SVD is only required when n_samples < n_features.
-        # When n_samples < n_features, K=M and full_matrices=True
-        # U: (M, M), S: M, Vh_full: (N, N), Vh: (M, N)
-        # When n_samples > n_features, K=N and full_matrices=False
-        # U: (M, N), S: N, Vh_full: (N, N), Vh: (N, N)
-        U, S, Vh_full = linalg.svd(X, full_matrices=(n_samples < n_features))
-        K = len(S)
+        U, S, Vh = linalg.svd(X, full_matrices=False)
         eigen_vals_ = S**2
-        eigen_vals_full = np.zeros(n_features, dtype=dtype)
-        eigen_vals_full[0:K] = eigen_vals_
-        Vh = Vh_full[0:K, :]
 
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.max_iter):
@@ -354,9 +343,25 @@ class BayesianRidge(RegressorMixin, LinearModel):
             self.scores_ = np.array(self.scores_)
 
         # posterior covariance
-        self.sigma_ = np.dot(
-            Vh_full.T, Vh_full / (alpha_ * eigen_vals_full + lambda_)[:, np.newaxis]
-        )
+        # sigma_ = (lambda_ * I + alpha_ * Vh.T @ diag(eigen_vals_) @ Vh)^-1
+        if n_samples >= n_features:
+            # Vh.T @ Vh = I
+            # sigma_ = Vh.T @ (lambda_ * I + alpha_ * diag(eigen_vals_))^-1 @ Vh
+            #        = Vh.T @ diag(1 / (alpha_ * eigen_vals_ + lambda_)) @ Vh
+            self.sigma_ = Vh.T / (alpha_ * eigen_vals_ + lambda_) @ Vh
+        else:
+            # Vh.T @ Vh != I since we set full_matrices=False for SVD
+            # however, Vh @ Vh.T = I, apply the Woodbury matrix identity
+            # https://en.wikipedia.org/wiki/Woodbury_matrix_identity
+            # sigma_ = (lambda_ * I + Vh.T @ diag(alpha_ * eigen_vals_) @ Vh)^-1
+            #        = 1 / lambda_ * I - Vh.T @ D @ Vh, D is a diagonal matrix
+            # D = diag(alpha_*eigen_vals_ / (lambda_*(lambda_+alpha_*eigen_vals_)))
+            self.sigma_ = (
+                np.eye(n_features, dtype=dtype) / lambda_
+                - Vh.T
+                * (alpha_ * eigen_vals_ / (lambda_ * (lambda_ + alpha_ * eigen_vals_)))
+                @ Vh
+            )
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
 

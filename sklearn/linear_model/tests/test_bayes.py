@@ -95,7 +95,7 @@ def test_bayesian_ridge_parameter():
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
 
-@pytest.mark.parametrize("n_samples, n_features", [(10, 20), (20, 10)])
+@pytest.mark.parametrize("n_samples, n_features", [(10, 20), (20, 10), (10, 10)])
 def test_bayesian_covariance_matrix(n_samples, n_features, global_random_seed):
     """Check the posterior covariance matrix sigma_
 
