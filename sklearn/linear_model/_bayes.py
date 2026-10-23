@@ -66,13 +66,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Initial value for alpha (precision of the noise).
         If not set, alpha_init is 1/Var(y).
 
-        .. versionadded:: 0.22
-
     lambda_init : float, default=None
         Initial value for lambda (precision of the weights).
         If not set, lambda_init is 1.
-
-        .. versionadded:: 0.22
 
     compute_score : bool, default=False
         If True, compute the log marginal likelihood at each iteration of the
@@ -128,8 +124,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -226,9 +220,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         sample_weight : ndarray of shape (n_samples,), default=None
             Individual weights for each sample.
-
-            .. versionadded:: 0.20
-               parameter *sample_weight* support to BayesianRidge.
 
         Returns
         -------
@@ -554,8 +545,6 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

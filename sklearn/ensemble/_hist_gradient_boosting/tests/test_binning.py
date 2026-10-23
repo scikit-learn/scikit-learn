@@ -98,9 +98,8 @@ def test_map_to_bins(max_bins):
         _find_binning_thresholds(DATA[:, i], max_bins=max_bins) for i in range(2)
     ]
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order="F")
-    is_categorical = np.zeros(2, dtype=np.uint8)
     last_bin_idx = max_bins
-    _map_to_bins(DATA, bin_thresholds, is_categorical, last_bin_idx, n_threads, binned)
+    _map_to_bins(DATA, bin_thresholds, last_bin_idx, n_threads, binned)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous
@@ -437,7 +436,16 @@ def test_categorical_feature(n_bins):
     # we make sure that categories are mapped into [0, n_categories - 1] and
     # that nans are mapped to the last bin
     X = np.array(
-        [[4] * 500 + [1] * 3 + [10] * 4 + [0] * 4 + [13] + [7] * 5 + [np.nan] * 2],
+        [
+            [4] * 500
+            + [1] * 3
+            + [10] * 4
+            + [0] * 4
+            + [13]
+            + [7] * 5
+            + [-3] * 6
+            + [np.nan] * 2
+        ],
         dtype=X_DTYPE,
     ).T
     known_categories = [np.unique(X[~np.isnan(X)])]
@@ -447,42 +455,14 @@ def test_categorical_feature(n_bins):
         is_categorical=np.array([True]),
         known_categories=known_categories,
     ).fit(X)
-    assert bin_mapper.n_bins_non_missing_ == [6]
-    assert_array_equal(bin_mapper.bin_thresholds_[0], [0, 1, 4, 7, 10, 13])
+    assert bin_mapper.n_bins_non_missing_ == [7]
+    assert_array_equal(bin_mapper.bin_thresholds_[0], [-3, 0, 1, 4, 7, 10, 13])
 
-    X = np.array([[0, 1, 4, np.nan, 7, 10, 13]], dtype=X_DTYPE).T
-    expected_trans = np.array([[0, 1, 2, n_bins - 1, 3, 4, 5]]).T
-    assert_array_equal(bin_mapper.transform(X), expected_trans)
-
-    # Negative categories are mapped to the missing values' bin
-    # (i.e. the bin of index `missing_values_bin_idx_ == n_bins - 1).
-    # Unknown positive categories does not happen in practice and tested
-    # for illustration purpose.
-    X = np.array([[-4, -1, 100]], dtype=X_DTYPE).T
-    expected_trans = np.array([[n_bins - 1, n_bins - 1, 6]]).T
-    assert_array_equal(bin_mapper.transform(X), expected_trans)
-
-
-def test_categorical_feature_negative_missing():
-    """Make sure bin mapper treats negative categories as missing values."""
-    X = np.array(
-        [[4] * 500 + [1] * 3 + [5] * 10 + [-1] * 3 + [np.nan] * 4], dtype=X_DTYPE
-    ).T
-    bin_mapper = _BinMapper(
-        n_bins=4,
-        is_categorical=np.array([True]),
-        known_categories=[np.array([1, 4, 5], dtype=X_DTYPE)],
-    ).fit(X)
-
-    assert bin_mapper.n_bins_non_missing_ == [3]
-
-    X = np.array([[-1, 1, 3, 5, np.nan]], dtype=X_DTYPE).T
-
-    # Negative values for categorical features are considered as missing values.
-    # They are mapped to the bin of index `bin_mapper.missing_values_bin_idx_`,
-    # which is 3 here.
-    assert bin_mapper.missing_values_bin_idx_ == 3
-    expected_trans = np.array([[3, 0, 1, 2, 3]]).T
+    # Categorical features go through an OrdinalEncoder that doesn't produce
+    # values outside of the range seen in the fit (except NaNs), so
+    # we test only in-range values:
+    X = np.array([[-3, 0, 1, 4, np.nan, 7, 10, 13]], dtype=X_DTYPE).T
+    expected_trans = np.array([[0, 1, 2, 3, n_bins - 1, 4, 5, 6]]).T
     assert_array_equal(bin_mapper.transform(X), expected_trans)
 
 

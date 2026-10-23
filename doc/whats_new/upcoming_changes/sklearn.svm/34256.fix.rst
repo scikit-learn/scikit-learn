@@ -1,2 +1,0 @@
-- Fixed a memory leak when calling the `fit` method of :class:`svm.LinearSVR`.
-  By :user:`Jake VanderPlas <jakevdp>`.

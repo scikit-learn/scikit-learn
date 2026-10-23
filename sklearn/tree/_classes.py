@@ -248,29 +248,47 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         sample_weight=None,
         check_input=True,
         missing_values_in_feature_mask=None,
+        categorical_counts=None,
     ):
         random_state = check_random_state(self.random_state)
-        self.is_categorical_ = _check_categorical_features(X, self.categorical_features)
-        has_categorical = self.is_categorical_ is not None
-
-        if has_categorical:
-            if issparse(X):
-                raise NotImplementedError(
-                    "Categorical features not supported with sparse inputs"
-                )
-
-            if check_input:
-                # Capture feature names on the original dataframe-like input before
-                # categorical encoding converts X to a NumPy array.
-                validate_data(self, X, reset=True, skip_check_array=True)
-
-            # Categorical feature selection must see the original container for
-            # names/dtypes, but tree fitting needs numeric values. Encode selected
-            # columns before numeric validation, preserving column order.
-            X = self._preprocess_X(X, reset=True)
-        else:
+        # Ensembles pass an already-resolved bool mask, already-encoded X and
+        # precomputed categorical_counts to skip re-encoding (avoiding a per-tree
+        # copy and OrdinalEncoder under n_jobs).
+        already_encoded = categorical_counts is not None
+        if already_encoded:
+            assert check_input is False
+            self.is_categorical_ = categorical_counts >= 0
+            if not np.any(self.is_categorical_):
+                self.is_categorical_ = None
             self._categorical_encoder = None
             self._preprocessor = None
+            self._categorical_counts = categorical_counts
+            has_categorical = self.is_categorical_ is not None
+        else:
+            self.is_categorical_ = _check_categorical_features(
+                X, self.categorical_features
+            )
+            has_categorical = self.is_categorical_ is not None
+
+            if has_categorical:
+                if issparse(X):
+                    raise NotImplementedError(
+                        "Categorical features not supported with sparse inputs"
+                    )
+
+                if check_input:
+                    # Capture feature names on the original dataframe-like input before
+                    # categorical encoding converts X to a NumPy array.
+                    validate_data(self, X, reset=True, skip_check_array=True)
+
+                # Categorical feature selection must see the original container for
+                # names/dtypes, but tree fitting needs numeric values. Encode selected
+                # columns before numeric validation, preserving column order.
+                X = self._preprocess_X(X, reset=True)
+            else:
+                self._categorical_encoder = None
+                self._preprocessor = None
+                self._categorical_counts = None
 
         if check_input:
             # Need to validate separately here.
@@ -284,9 +302,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
             check_y_params = dict(ensure_2d=False, dtype=None)
             if has_categorical:
-                # X has already been encoded to a numeric array. Do not call
-                # validate_data(reset=True) again here because ndarray input would
-                # remove feature_names_in_ captured from the original container.
+                # Feature names were already stored from the original dataframe above.
+                # Encoding turns X into a plain ndarray with no names.
+                # validate_data(reset=True) would treat that as "no feature names" and
+                # delete feature_names_in_.
                 X = check_array(X, input_name="X", estimator=self, **check_X_params)
                 y = check_array(y, input_name="y", estimator=self, **check_y_params)
                 _check_n_features(self, X, reset=False)
@@ -497,17 +516,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 f"[0, {max_n_categories - 1}]."
             )
 
-            for idx, categories in zip(
-                np.flatnonzero(self.is_categorical_),
-                self._categorical_encoder.categories_,
-            ):
-                # OrdinalEncoder places np.nan last if missing values reach fit.
-                if len(categories) and is_scalar_nan(categories[-1]):
-                    n_categories[idx] = len(categories) - 1
-                else:
-                    n_categories[idx] = len(categories)
+            category_counts = self._categorical_counts[self.is_categorical_]
 
-                max_encoded_value = n_categories[idx] - 1
+            for idx, n_cats in zip(
+                np.flatnonzero(self.is_categorical_), category_counts
+            ):
+                n_categories[idx] = n_cats
+                max_encoded_value = n_cats - 1
                 if max_encoded_value >= max_n_categories:
                     raise ValueError(f"{base_msg} Found {max_encoded_value}.")
 
@@ -617,6 +632,18 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self._categorical_encoder = self._preprocessor.named_transformers_[
                 "categorical"
             ]
+
+            self._categorical_counts = np.full(
+                self.is_categorical_.shape[0], -1, np.intp
+            )
+            counts = []
+            for categories in self._categorical_encoder.categories_:
+                # OrdinalEncoder places np.nan last if missing values reach fit.
+                if len(categories) and is_scalar_nan(categories[-1]):
+                    counts.append(len(categories) - 1)
+                else:
+                    counts.append(len(categories))
+            self._categorical_counts[self.is_categorical_] = counts
         else:
             X_transformed = self._preprocessor.transform(X)
 
@@ -679,7 +706,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             # The number of features is checked regardless of `check_input`
             _check_n_features(self, X, reset=False)
-            if has_categorical:
+            # Ensembles that already encoded X leave `_preprocessor` unset and pass
+            # check_input=False; skip transform so prediction stays on the encoded
+            # float array.
+            if has_categorical and getattr(self, "_preprocessor", None) is not None:
                 X = self._preprocess_X(X, reset=False)
         return X
 
@@ -737,8 +767,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def apply(self, X, check_input=True):
         """Return the index of the leaf that each sample is predicted as.
 
-        .. versionadded:: 0.17
-
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -764,8 +792,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     def decision_path(self, X, check_input=True):
         """Return the decision path in the tree.
-
-        .. versionadded:: 0.18
 
         Parameters
         ----------
@@ -919,9 +945,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -933,9 +956,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -989,8 +1009,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. versionadded:: 0.19
-
     class_weight : dict, list of dict or "balanced", default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If None, all classes are supposed to have weight one. For
@@ -1019,8 +1037,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -1051,9 +1067,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
         categories. Missing values for categorical features should be
@@ -1092,8 +1108,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1336,12 +1350,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         terminal node (controlled by ``quantile``), and "poisson" which uses reduction
         in Poisson deviance to find splits, also using the mean of each terminal node.
 
-        .. versionadded:: 0.18
-           Mean Absolute Error (MAE) criterion.
-
-        .. versionadded:: 0.24
-            Poisson deviance criterion.
-
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
@@ -1369,9 +1377,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -1383,9 +1388,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1439,8 +1441,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. versionadded:: 0.19
-
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
@@ -1448,8 +1448,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -1493,9 +1491,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most 255 unique
         categories. Missing values for categorical features should be
@@ -1527,8 +1525,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1764,9 +1760,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -1778,9 +1771,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -1829,8 +1819,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. versionadded:: 0.19
-
     class_weight : dict, list of dict or "balanced", default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If None, all classes are supposed to have weight one. For
@@ -1859,8 +1847,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -1891,9 +1877,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, about 16 million unique categories are
         supported. Missing values for categorical features should be represented
@@ -1932,8 +1918,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2060,12 +2044,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         terminal node (controlled by ``quantile``), and "poisson" which uses reduction
         in Poisson deviance to find splits, also using the mean of each terminal node.
 
-        .. versionadded:: 0.18
-           Mean Absolute Error (MAE) criterion.
-
-        .. versionadded:: 0.24
-            Poisson deviance criterion.
-
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
 
@@ -2090,9 +2068,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
-        .. versionchanged:: 0.18
-           Added float values for fractions.
-
     min_samples_leaf : int or float, default=1
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -2104,9 +2079,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-
-        .. versionchanged:: 0.18
-           Added float values for fractions.
 
     min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
@@ -2150,8 +2122,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
 
-        .. versionadded:: 0.19
-
     max_leaf_nodes : int, default=None
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -2164,8 +2134,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         :ref:`minimal_cost_complexity_pruning` for details. See
         :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
         for an example of such pruning.
-
-        .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonicity constraint to enforce on each feature.
@@ -2209,9 +2177,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, about 16 million unique categories are
         supported. Missing values for categorical features should be represented
@@ -2232,8 +2200,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

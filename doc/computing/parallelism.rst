@@ -97,9 +97,9 @@ You can control the exact number of threads that are used either:
 - via the ``OMP_NUM_THREADS`` environment variable, for instance when:
   running a python script:
 
-  .. prompt:: bash $
+  .. code-block:: console
 
-      OMP_NUM_THREADS=4 python my_script.py
+      $ OMP_NUM_THREADS=4 python my_script.py
 
 - or via `threadpoolctl` as explained by `this piece of documentation
   <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
@@ -128,9 +128,9 @@ you can inspect how the number of threads effectively used by those libraries
 is affected when running the following command in a bash or zsh terminal
 for different values of `OMP_NUM_THREADS`:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    OMP_NUM_THREADS=2 python -m threadpoolctl -i numpy scipy
+    $ OMP_NUM_THREADS=2 python -m threadpoolctl -i numpy scipy
 
 .. note::
     At the time of writing (2022), NumPy and SciPy packages which are
