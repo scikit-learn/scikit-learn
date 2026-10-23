@@ -70,6 +70,11 @@ jobs:
       - uses: pypa/cibuildwheel@8c2dcd2e96041a619f5ff03c9638d7941e2553a4 # v4.3.3
         env:
           CIBW_PLATFORM: pyodide
+          # cp315 uses a prerelease Pyodide without scipy wheels, and scipy fails
+          # to build from source there.
+          # TODO: remove the skip once the default Pyodide for cp315 in
+          # cibuildwheel is a stable release that ships scipy.
+          CIBW_SKIP: "cp315-*"
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
           CIBW_TEST_REQUIRES: "pytest pandas"
