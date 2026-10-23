@@ -2877,10 +2877,9 @@ def test_metadata_routing_with_remainder_no_error(remainder):
 
     # This can only be set here because metadata routing has to be enabled first.
     if isinstance(remainder, ConsumingTransformer):
-        remainder = (
-            clone(remainder)
-            .set_fit_request(sample_weight=True)
-            .set_transform_request(sample_weight=True)
+        remainder = clone(remainder)
+        remainder.set_fit_request(sample_weight=True).set_transform_request(
+            sample_weight=True
         )
 
     transformer = (
