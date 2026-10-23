@@ -119,6 +119,7 @@ def _preprocess_data(
     sample_weight=None,
     check_input=True,
     rescale_with_sw=True,
+    center_X=True,
 ):
     """Common data preprocessing for fitting linear models.
 
@@ -132,9 +133,9 @@ def _preprocess_data(
 
     Then, if `fit_intercept=True` this preprocessing centers both `X` and `y` as
     follows:
-        - if `X` is dense, center the data and
+        - if `X` is dense and `center_X=True`, center the data and
         store the mean vector in `X_offset`.
-        - if `X` is sparse, store the mean in `X_offset`
+        - if `X` is sparse, or `center_X=False`, store the mean in `X_offset`
         without centering `X`. The centering is expected to be handled by the
         linear solver where appropriate.
         - in either case, always center `y` and store the mean in `y_offset`.
@@ -147,12 +148,16 @@ def _preprocess_data(
     If `rescale_with_sw` is True, then X and y are rescaled with the square root of
     sample weights.
 
+    `center_X=False` lets a caller with a dense `X` skip the `O(n_samples *
+    n_features)` centering pass. It has no effect on sparse `X`, which is never
+    centered in place regardless.
+
     Returns
     -------
     X_out : {ndarray, sparse matrix} of shape (n_samples, n_features)
         If copy=True a copy of the input X is triggered, otherwise operations are
         inplace.
-        If input X is dense, then X_out is centered.
+        If input X is dense and `center_X=True`, then X_out is centered.
     y_out : {ndarray, sparse matrix} of shape (n_samples,) or (n_samples, n_targets)
         Centered copy of y.
     X_offset : ndarray of shape (n_features,)
@@ -191,9 +196,10 @@ def _preprocess_data(
             X_offset, X_var = mean_variance_axis(X, axis=0, weights=sample_weight)
         else:
             X_offset = _average(X, axis=0, weights=sample_weight, xp=xp)
-
             X_offset = xp.astype(X_offset, X.dtype, copy=False)
-            X -= X_offset
+
+            if center_X:
+                X -= X_offset
 
         y_offset = _average(y, axis=0, weights=sample_weight, xp=xp)
         y -= y_offset

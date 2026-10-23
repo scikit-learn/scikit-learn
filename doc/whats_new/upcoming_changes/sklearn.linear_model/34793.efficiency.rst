@@ -1,0 +1,6 @@
+- :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier` with the
+  `"cholesky"` solver (the default for dense `X`) are now faster and no longer
+  make a centered copy of `X` when `X` is float64 with `n_samples >= n_features`,
+  `fit_intercept=True` and no `sample_weight`. This saves as much memory as the
+  size of `X`.
+  By :user:`Arthur Lacote <cakedev0>`.
