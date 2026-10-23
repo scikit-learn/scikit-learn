@@ -19,6 +19,7 @@ from sklearn.base import (
 )
 from sklearn.cluster._k_means_common import (
     CHUNK_SIZE,
+    _alloc_thread_buffers,
     _inertia_dense,
     _inertia_sparse,
     _is_same_clustering,
@@ -687,6 +688,7 @@ def _kmeans_single_lloyd(
     labels_old = labels.copy()
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     center_shift = np.zeros(n_clusters, dtype=X.dtype)
+    thread_buffers = _alloc_thread_buffers(n_threads, n_clusters, X.shape[1], X.dtype)
 
     if sp.issparse(X):
         lloyd_iter = lloyd_iter_chunked_sparse
@@ -707,6 +709,7 @@ def _kmeans_single_lloyd(
             labels,
             center_shift,
             n_threads,
+            thread_buffers=thread_buffers,
         )
 
         if verbose:

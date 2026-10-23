@@ -1,0 +1,7 @@
+- The Lloyd iterations of :class:`cluster.KMeans` and
+  :class:`cluster.BisectingKMeans` scale better with the number of threads: the
+  threads no longer wait for each other during an iteration, and their buffers
+  are allocated once per fit instead of at each iteration. This makes them
+  several times faster on machines with many cores, and on sparse data with
+  many features.
+  By :user:`Arthur Lacote <cakedev0>`.
