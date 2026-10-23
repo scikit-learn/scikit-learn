@@ -76,6 +76,10 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
         sample_weight = sample_weight[sort_idx]
 
     # fast way for n_distinct = len(np.unique(col_data))
+    if len(col_data) == 0:
+        # All values are missing (or zero-weighted): nothing to bin, return
+        # no thresholds so every sample maps to the missing-values bin.
+        return np.asarray([])
     distinct_mask = np.empty(len(col_data), dtype=bool)
     distinct_mask[0] = True
     distinct_mask[1:] = col_data[1:] != col_data[:-1]

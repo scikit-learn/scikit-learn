@@ -561,3 +561,19 @@ def test_categorical_parameters(is_categorical, known_categories, match):
     )
     with pytest.raises(ValueError, match=match):
         bin_mapper.fit(X)
+
+
+def test_find_binning_thresholds_all_missing_column():
+    # Regression test for #35164: an all-missing (all-NaN) feature must not
+    # raise IndexError when computing bin thresholds. Every sample maps to the
+    # missing-values bin instead.
+    col_data = np.full(10, np.nan)
+    thresholds = _find_binning_thresholds(col_data, max_bins=255)
+    assert thresholds.shape == (0,)
+
+    # Mixed: a normal column alongside an all-missing column must bin fine.
+    bin_mapper = _BinMapper(n_bins=8)
+    X = np.c_[np.arange(20.0, dtype=float), np.full(20, np.nan)]
+    bin_mapper.fit(X)
+    assert bin_mapper.n_bins_non_missing_.shape == (2,)
+    assert bin_mapper.bin_thresholds_[1].shape == (0,)
