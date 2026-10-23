@@ -77,11 +77,11 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
 
     # fast way for n_distinct = len(np.unique(col_data))
     distinct_mask = np.empty(len(col_data), dtype=bool)
-    distinct_mask[0] = True
+    distinct_mask[:1] = True
     distinct_mask[1:] = col_data[1:] != col_data[:-1]
     n_distincts = distinct_mask.sum()
 
-    if n_distincts == 1:
+    if n_distincts <= 1:
         return np.asarray([])
     elif n_distincts <= max_bins:
         # Calculate midpoints if distinct values <= max_bins

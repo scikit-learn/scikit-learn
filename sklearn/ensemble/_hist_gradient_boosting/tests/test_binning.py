@@ -232,6 +232,9 @@ def test_binmapper_weighted_vs_repeated_equivalence(
         X[missing_mask] = np.nan
 
     sw = rng.randint(0, 5, size=n_samples)
+    if with_missing_values:
+        # only zero-weighted non-missing values: no threshold for this feature
+        X[sw != 0, -1] = np.nan
     X_repeated = np.repeat(X, sw, axis=0)
 
     est_weighted = _BinMapper(n_bins=n_bins).fit(X, sample_weight=sw)
