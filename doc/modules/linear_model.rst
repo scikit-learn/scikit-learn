@@ -80,16 +80,14 @@ collected without an experimental design.
 One possible remedy is to add a penalty for the size of the coefficients as in
 :ref:`Ridge regression <ridge_regression>`.
 
-.. dropdown:: Computational Details
-
-  **Weighted Least Squares**
+.. dropdown:: Weighted Least Squares
 
   With sample weights :math:`s=\text{sample_weight}`, :class:`LinearRegression`
   minimized the weighted squared error:
 
   .. math:: \min_{w} \sum_i s_i (X_i w - y_i)^2
 
-  **Ordinary Least Squares Complexity**
+.. dropdown:: Ordinary Least Squares Complexity
 
   For dense `X`, the least squares solution is computed using the singular value
   decomposition of :math:`X` via :func:`SciPy lstsq <scipy:scipy.linalg.lstsq>`.
@@ -98,7 +96,6 @@ One possible remedy is to add a penalty for the size of the coefficients as in
 
   For sparse `X`, the least squares problem is solved by the iterative solver
   :func:`SciPy lstsq <scipy:scipy.sparse.linalg.lsqr>`.
-
 
 .. rubric:: Examples
 
