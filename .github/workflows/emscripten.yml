@@ -70,6 +70,10 @@ jobs:
       - uses: pypa/cibuildwheel@8c2dcd2e96041a619f5ff03c9638d7941e2553a4 # v4.3.3
         env:
           CIBW_PLATFORM: pyodide
+          # Pin the targets: the cibuildwheel defaults also include prerelease
+          # Pyodide versions without scipy wheels, and scipy fails to build from
+          # source there.
+          CIBW_BUILD: "cp313-pyodide_wasm32 cp314-pyodide_wasm32"
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
           CIBW_TEST_REQUIRES: "pytest pandas"
