@@ -64,7 +64,7 @@ python_environment_install_and_activate() {
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m venv --system-site-packages $VIRTUALENV
         activate_environment
-        # Make sure to update pip>=26.2.2 as mitigation for eMudhra certificate incident
+        # Update pip>=26.2.2 as mitigation for eMudhra certificate incident
         pip install -U pip
         python -c 'import pip, sys; from pip._vendor.packaging.version import Version; sys.exit(Version(pip.__version__) < Version("26.2.2"))'
 
