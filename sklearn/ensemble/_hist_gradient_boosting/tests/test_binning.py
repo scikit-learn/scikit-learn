@@ -232,6 +232,9 @@ def test_binmapper_weighted_vs_repeated_equivalence(
         X[missing_mask] = np.nan
 
     sw = rng.randint(0, 5, size=n_samples)
+    if with_missing_values:
+        # only zero-weighted non-missing values: no threshold for this feature
+        X[sw != 0, -1] = np.nan
     X_repeated = np.repeat(X, sw, axis=0)
 
     est_weighted = _BinMapper(n_bins=n_bins).fit(X, sample_weight=sw)
@@ -360,26 +363,26 @@ def test_subsample():
     [
         (
             256,
-            [4, 2, 2],
+            [4, 2, 2, 1],
             [
-                [0, 0, 0],  # 255 <=> missing value
-                [255, 255, 0],
-                [1, 0, 0],
-                [255, 1, 1],
-                [2, 1, 1],
-                [3, 0, 0],
+                [0, 0, 0, 255],  # 255 <=> missing value
+                [255, 255, 0, 255],
+                [1, 0, 0, 255],
+                [255, 1, 1, 255],
+                [2, 1, 1, 255],
+                [3, 0, 0, 255],
             ],
         ),
         (
             3,
-            [2, 2, 2],
+            [2, 2, 2, 1],
             [
-                [0, 0, 0],  # 2 <=> missing value
-                [2, 2, 0],
-                [0, 0, 0],
-                [2, 1, 1],
-                [1, 1, 1],
-                [1, 0, 0],
+                [0, 0, 0, 2],  # 2 <=> missing value
+                [2, 2, 0, 2],
+                [0, 0, 0, 2],
+                [2, 1, 1, 2],
+                [1, 1, 1, 2],
+                [1, 0, 0, 2],
             ],
         ),
     ],
@@ -389,12 +392,12 @@ def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
     # and that the _BinMapper attributes are correct
 
     X = [
-        [1, 1, 0],
-        [np.nan, np.nan, 0],
-        [2, 1, 0],
-        [np.nan, 2, 1],
-        [3, 2, 1],
-        [4, 1, 0],
+        [1, 1, 0, np.nan],
+        [np.nan, np.nan, 0, np.nan],
+        [2, 1, 0, np.nan],
+        [np.nan, 2, 1, np.nan],
+        [3, 2, 1, np.nan],
+        [4, 1, 0, np.nan],
     ]
 
     X = np.array(X)
@@ -414,26 +417,6 @@ def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
 
     X_trans = mapper.transform(X)
     assert_array_equal(X_trans, X_trans_expected)
-
-
-@pytest.mark.parametrize("weighted", [False, True])
-def test_all_missing_feature(weighted):
-    # Non-regression test for gh-35164: a feature without any non-missing value
-    # gets no thresholds and all its values are mapped to the missing values bin.
-    X = np.c_[np.arange(6.0), np.full(6, np.nan)]
-    sample_weight = None
-    X_trans_expected = [255] * 6
-    if weighted:
-        # non-missing values with zero weight are ignored too
-        X[:3, 1] = [1, 2, 3]
-        sample_weight = np.array([0, 0, 0, 1, 1, 1.0])
-        X_trans_expected = [0, 0, 0, 255, 255, 255]
-
-    mapper = _BinMapper(n_bins=256).fit(X, sample_weight=sample_weight)
-
-    assert mapper.n_bins_non_missing_[1] == 1
-    assert len(mapper.bin_thresholds_[1]) == 0
-    assert_array_equal(mapper.transform(X)[:, 1], X_trans_expected)
 
 
 def test_infinite_values():
