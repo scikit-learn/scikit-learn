@@ -450,6 +450,13 @@ other people in the wider Scientific Python and CPython ecosystem, for example
   :func:`metrics.hamming_loss`.
   By :user:`Lucy Liu <lucyleeow>`. :pr:`32047`
 
+- |Enhancement| :func:`metrics.ndcg_score` now supports a ``replaced_undefined_by``
+  parameter (default ``np.nan``) that controls the return value for samples where
+  all true relevance values are zero (IDCG = 0). When ``np.nan`` is used, an
+  :class:`~sklearn.exceptions.UndefinedMetricWarning` is raised and undefined
+  samples are excluded from the average.
+  By :user:`Keshav Dube <dubekeshav>`. :pr:`34244`
+
 - |Fix| :func:`metrics.median_absolute_error` now uses `_averaged_weighted_percentile`
   instead of `_weighted_percentile` to calculate median when `sample_weight` is not
   `None`. This is equivalent to using the "averaged_inverted_cdf" instead of
