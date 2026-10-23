@@ -193,6 +193,36 @@ def test_aggressive_elimination(
     assert ceil(sh.n_candidates_[-1] / sh.factor) == sh.n_remaining_candidates_
 
 
+@pytest.mark.parametrize("SearchCV", (HalvingGridSearchCV, HalvingRandomSearchCV))
+def test_exhaust_min_resources_uses_actual_iterations(SearchCV):
+    """Check thatmin_resources='exhaust' must size r0 from the actual number of
+    iterations, not n_required_iterations
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/27422
+    """
+    X, y = make_classification(
+        n_samples=1050, n_classes=2, n_informative=4, random_state=0
+    )
+    param_grid = {"a": range(8), "b": range(10), "c": range(2)}  # 160 candidates
+    base_estimator = FastClassifier()
+
+    search_cv = SearchCV(
+        base_estimator,
+        param_grid,
+        cv=5,
+        factor=2,
+        min_resources="exhaust",
+    )
+    if SearchCV is HalvingRandomSearchCV:
+        search_cv.set_params(n_candidates=160)
+
+    search_cv.fit(X, y)
+
+    assert search_cv.min_resources_ == 32
+    assert search_cv.n_resources_[-1] == 1024
+
+
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
     (
@@ -217,7 +247,7 @@ def test_aggressive_elimination(
         ("exhaust", 599, 2, 2, [199, 597]),
         ("exhaust", 300, 2, 2, [100, 300]),
         ("exhaust", 60, 2, 2, [20, 60]),
-        ("exhaust", 50, 1, 1, [20]),
+        ("exhaust", 50, 1, 1, [50]),
         ("exhaust", 20, 1, 1, [20]),
     ],
 )
