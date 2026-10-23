@@ -1235,11 +1235,20 @@ cdef class ManhattanDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         const {{INPUT_DTYPE_t}}* x2,
         intp_t size,
     ) except -1 nogil:
-        cdef float64_t d = 0
+        cdef float64_t d1 = 0, d2 = 0
         cdef intp_t j
-        for j in range(size):
-            d += fabs(x1[j] - x2[j])
-        return d
+        cdef intp_t half = size // 2
+
+        # Unroll into 2 passes to increase instruction-level parallelism:
+        for j in range(half):
+            d1 += fabs(x1[j * 2] - x2[j * 2])
+            d2 += fabs(x1[j * 2 + 1] - x2[j * 2 + 1])
+
+        # Remaining odd item, if any:
+        for j in range(half * 2, size):
+            d1 += fabs(x1[j] - x2[j])
+
+        return d1 + d2
 
     cdef inline {{INPUT_DTYPE_t}} dist_csr(
         self,
