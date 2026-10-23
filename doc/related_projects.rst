@@ -71,6 +71,12 @@ enhance the functionality of scikit-learn's estimators.
 
 **Model inspection and visualization**
 
+- `aggmetrics <https://github.com/rcprati/aggmetrics>`_ Binary classification
+  measures extended to multiclass, multilabel, ordinal, cost-sensitive, soft-label
+  and cross-validated settings through micro, macro, weighted, exemplar and
+  fold-pooled aggregation, with warnings when a measure leaves the range where it
+  behaves as commonly assumed.
+
 - `dtreeviz <https://github.com/parrt/dtreeviz/>`_ A Python library for
   decision tree visualization and model interpretation.
 
