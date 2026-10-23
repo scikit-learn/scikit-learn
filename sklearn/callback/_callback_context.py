@@ -7,6 +7,7 @@ import inspect
 import uuid
 import warnings
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallback
@@ -14,18 +15,58 @@ from sklearn.callback._base import AutoPropagatedCallback
 _cached_signature = functools.lru_cache()(inspect.signature)
 
 
+@dataclass(frozen=True, slots=True)
+class TaskInfo:
+    """Information about one task in a callback context's task path.
+
+    Attributes
+    ----------
+    task_id : int
+        The identifier of the task among its siblings.
+
+    task_name : str
+        The name of the task.
+
+    estimator_name : str
+        The name of the estimator that holds the task.
+
+    sequential_subtasks : bool
+        Whether this task's subtasks are sequential.
+
+    init_time : datetime.datetime
+        The time when the task was initialised, in the UTC timezone.
+
+    source_estimator_name : str or None
+        The name of the estimator that holds the task this task was merged with.
+        None if it was not merged with another context.
+
+    source_task_name : str or None
+        The task name of the task this task was merged with. None if it was not
+        merged with another context.
+    """
+
+    task_id: int
+    task_name: str
+    estimator_name: str
+    sequential_subtasks: bool
+    init_time: datetime
+    source_estimator_name: str | None
+    source_task_name: str | None
+
+
 class CallbackContext:
     """Task level context for the callbacks.
 
-    This class is responsible for managing the callbacks and holding the tree structure
-    of an estimator's tasks. Each instance corresponds to a task of the estimator.
+    This class is responsible for managing the callbacks and recording the position of
+    each task in the estimator's task tree. Each instance corresponds to a task of the
+    estimator.
 
     This class should not be instantiated directly, but through the
     `_init_callback_context` method of the estimator to create the root context or using
     the `subcontext` method of this class to create sub-contexts.
 
-    These contexts are passed to the callback hooks to be able to keep track of the
-    position of a task in the task tree from within the callbacks.
+    These contexts are passed to the callback hooks. The position of a task in the task
+    tree is given by its `task_path` attribute.
 
     Attributes
     ----------
@@ -47,15 +88,16 @@ class CallbackContext:
     estimator_name : str
         The name of the estimator that holds this context.
 
-    parent : CallbackContext or None
-        The parent context of this context. None if this context is the root.
-
     root_uuid : uuid.UUID instance
         The UUID of the root context. All contexts in the same task tree have the same
         root UUID that is used to identify the task tree itself.
 
     init_time : datetime.datetime
         The time when the context was initialised, in the UTC timezone.
+
+    task_path : tuple of TaskInfo
+        The path of this task in the task tree, from the root task to this task.
+        Callbacks use it to locate the task.
 
     source_estimator_name : str or None
         The name of the estimator that holds the parent task this task was
@@ -103,13 +145,13 @@ class CallbackContext:
         new_ctx.task_id = task_id
         new_ctx.max_subtasks = max_subtasks
         new_ctx.sequential_subtasks = sequential_subtasks
-        new_ctx.parent = None
         new_ctx.root_uuid = uuid.uuid4()
         new_ctx.init_time = datetime.now(timezone.utc)
-        new_ctx._children_map = {}
+        new_ctx._children_ids = set()
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
         new_ctx._subestimator_support_warnings = set()
+        new_ctx.task_path = (new_ctx._get_task_info(),)
 
         if hasattr(estimator, "_parent_callback_ctx"):
             # This context's task is the root task of the estimator which itself
@@ -163,21 +205,18 @@ class CallbackContext:
         new_ctx.sequential_subtasks = sequential_subtasks
         new_ctx.root_uuid = parent_context.root_uuid
         new_ctx.init_time = datetime.now(timezone.utc)
-        new_ctx.parent = None
-        new_ctx._children_map = {}
+        new_ctx._children_ids = set()
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
+        new_ctx._subestimator_support_warnings = (
+            parent_context._subestimator_support_warnings
+        )
+        new_ctx.task_path = parent_context.task_path + (new_ctx._get_task_info(),)
 
         # This task is a subtask of another task of a same estimator
         parent_context._add_child(new_ctx)
 
         return new_ctx
-
-    def __iter__(self):
-        """Pre-order depth-first traversal of the task tree."""
-        yield self
-        for context in self._children_map.values():
-            yield from context
 
     def __repr__(self):
         return (
@@ -187,9 +226,21 @@ class CallbackContext:
             f"task_id={self.task_id})"
         )
 
+    def _get_task_info(self):
+        """Return the information about this task stored in the task path."""
+        return TaskInfo(
+            task_id=self.task_id,
+            task_name=self.task_name,
+            estimator_name=self.estimator_name,
+            sequential_subtasks=self.sequential_subtasks,
+            init_time=self.init_time,
+            source_estimator_name=self.source_estimator_name,
+            source_task_name=self.source_task_name,
+        )
+
     def _add_child(self, child_context):
         """Add `child_context` as a child of this context."""
-        if child_context.task_id in self._children_map:
+        if child_context.task_id in self._children_ids:
             raise ValueError(
                 f"Callback context {self.task_name} of estimator "
                 f"{self.estimator_name} already has a child with "
@@ -198,7 +249,7 @@ class CallbackContext:
 
         if (
             self.max_subtasks is not None
-            and len(self._children_map) >= self.max_subtasks
+            and len(self._children_ids) >= self.max_subtasks
         ):
             raise ValueError(
                 f"Cannot add child to callback context {self.task_name} of estimator "
@@ -206,8 +257,7 @@ class CallbackContext:
                 f"number of children ({self.max_subtasks})."
             )
 
-        self._children_map[child_context.task_id] = child_context
-        child_context.parent = self
+        self._children_ids.add(child_context.task_id)
 
     def _merge_with(self, other_context):
         """Merge this context with `other_context`.
@@ -226,16 +276,15 @@ class CallbackContext:
                 f"{other_context.estimator_name}) because the latter is not a leaf."
             )
 
-        # Set the parent of the sub-estimator's root context to the parent of the
-        # meta-estimator's leaf context
-        self.parent = other_context.parent
         self.task_id = other_context.task_id
         self.root_uuid = other_context.root_uuid
-        other_context.parent._children_map[self.task_id] = self
-
-        # Keep information about the context it was merged with
+        self._subestimator_support_warnings = (
+            other_context._subestimator_support_warnings
+        )
+        # Set before rebuilding the task path so the merged step records them.
         self.source_task_name = other_context.task_name
         self.source_estimator_name = other_context.estimator_name
+        self.task_path = other_context.task_path[:-1] + (self._get_task_info(),)
 
     def subcontext(
         self, task_name="", task_id=None, max_subtasks=0, sequential_subtasks=True
@@ -273,7 +322,7 @@ class CallbackContext:
                 f"if sequential_subtasks is False for {self.task_name}."
             )
         if task_id is None:
-            task_id = len(self._children_map)
+            task_id = len(self._children_ids)
 
         return CallbackContext._from_parent(
             parent_context=self,
@@ -498,12 +547,12 @@ class CallbackContext:
                 f"not be propagated to {sub_estimator_name} because the latter does "
                 "not support callbacks."
             )
-            # Check on the root context not to repeat the same warning.
-            root_context = get_context_path(self)[0]
+            # The set is shared by all contexts of the task tree, so that the same
+            # warning is not repeated.
             key = (self.estimator_name, sub_estimator_name)
-            if key not in root_context._subestimator_support_warnings:
+            if key not in self._subestimator_support_warnings:
                 warnings.warn(warning_message)
-                root_context._subestimator_support_warnings.add(key)
+                self._subestimator_support_warnings.add(key)
             callbacks_to_propagate = []
 
         if callbacks_to_propagate:
@@ -545,24 +594,3 @@ def _from_reconstruction_attributes(estimator, reconstruction_attributes):
     for key, val in reconstruction_attributes.items():
         setattr(new_estimator, key, val)
     return new_estimator
-
-
-def get_context_path(context):
-    """Helper function to get the path from the root context down to a given context.
-
-    Parameters
-    ----------
-    context : `CallbackContext` instance
-        The context to get the path to.
-
-    Returns
-    -------
-    list of `CallbackContext` instances
-        The list of the ancestors (itself included) of the given context. The list is
-        ordered from the root context to the given context.
-    """
-    return (
-        [context]
-        if context.parent is None
-        else get_context_path(context.parent) + [context]
-    )

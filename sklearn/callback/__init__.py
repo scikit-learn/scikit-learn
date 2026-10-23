@@ -7,7 +7,7 @@ callbacks for scikit-learn estimators.
 # SPDX-License-Identifier: BSD-3-Clause
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
-from sklearn.callback._callback_context import CallbackContext
+from sklearn.callback._callback_context import CallbackContext, TaskInfo
 from sklearn.callback._callback_support import CallbackSupportMixin, with_callbacks
 from sklearn.callback._progressbar import ProgressBar
 from sklearn.callback._scoring_monitor import ScoringMonitor, ScoringMonitorLog
@@ -20,5 +20,6 @@ __all__ = [
     "ProgressBar",
     "ScoringMonitor",
     "ScoringMonitorLog",
+    "TaskInfo",
     "with_callbacks",
 ]
