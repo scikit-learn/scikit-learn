@@ -416,6 +416,26 @@ def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
     assert_array_equal(X_trans, X_trans_expected)
 
 
+@pytest.mark.parametrize("weighted", [False, True])
+def test_all_missing_feature(weighted):
+    # Non-regression test for gh-35164: a feature without any non-missing value
+    # gets no thresholds and all its values are mapped to the missing values bin.
+    X = np.c_[np.arange(6.0), np.full(6, np.nan)]
+    sample_weight = None
+    X_trans_expected = [255] * 6
+    if weighted:
+        # non-missing values with zero weight are ignored too
+        X[:3, 1] = [1, 2, 3]
+        sample_weight = np.array([0, 0, 0, 1, 1, 1.0])
+        X_trans_expected = [0, 0, 0, 255, 255, 255]
+
+    mapper = _BinMapper(n_bins=256).fit(X, sample_weight=sample_weight)
+
+    assert mapper.n_bins_non_missing_[1] == 1
+    assert len(mapper.bin_thresholds_[1]) == 0
+    assert_array_equal(mapper.transform(X)[:, 1], X_trans_expected)
+
+
 def test_infinite_values():
     # Make sure infinite values are properly handled.
     bin_mapper = _BinMapper()
