@@ -1688,6 +1688,7 @@ parameter_grid_test_verbose = (
 
 @pytest.mark.parametrize("est, pattern, method", parameter_grid_test_verbose)
 def test_verbose(est, method, pattern, capsys):
+    est = clone(est)
     func = getattr(est, method)
 
     X = [[1, 2, 3], [4, 5, 6]]
