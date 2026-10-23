@@ -1196,7 +1196,8 @@ class LogisticRegression(
     alpha : float, default=1.0
         Regularization strength that multiplies the penalty term (both L1 and L2).
         ``alpha = 0`` is equivalent to unpenalized logistic regression. In this case,
-        the design matrix `X` must have full column rank (no collinearities).
+        the solution is only unique if the design matrix `X` has full column rank (no
+        collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
         For a visual example on the effect of tuning the `alpha` parameter with an L1
         penalty, see: :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`.
@@ -1347,6 +1348,9 @@ class LogisticRegression(
             This solver is a good choice for `n_samples` >> `n_features * n_classes`.
             Be aware that the memory usage of this solver has a quadratic dependency on
             `n_features * n_classes` because it explicitly computes the Hessian matrix.
+            For binary classification with `alpha = 0` and collinear features in `X`,
+            it returns the minimum L2 norm solution, where the intercept is not part
+            of the norm.
 
             .. versionadded:: 1.2
                newton-cholesky solver. Multinomial support in version 1.6.
