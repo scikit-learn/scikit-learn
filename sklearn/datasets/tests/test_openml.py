@@ -15,6 +15,7 @@ import scipy.sparse
 
 import sklearn
 from sklearn import config_context
+from sklearn.datasets import _openml
 from sklearn.datasets import fetch_openml as fetch_openml_orig
 from sklearn.datasets._openml import (
     _get_local_path,
@@ -1163,6 +1164,27 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response, dataset_params):
         )
     assert glass2.data.shape == (163, 9)
     assert glass2.details["id"] == "40675"
+
+
+def test_fetch_openml_in_preparation(monkeypatch, recwarn):
+    """Check that in-preparation datasets do not raise an inactive warning."""
+    data_id = 40675
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response=True)
+    get_data_description = _openml._get_data_description_by_id
+
+    def get_data_description_in_preparation(*args, **kwargs):
+        data_description = get_data_description(*args, **kwargs)
+        data_description["status"] = "in_preparation"
+        return data_description
+
+    monkeypatch.setattr(
+        _openml,
+        "_get_data_description_by_id",
+        get_data_description_in_preparation,
+    )
+    fetch_openml(data_id=data_id, cache=False, as_frame=False, parser="liac-arff")
+
+    assert not any("is inactive" in str(warning.message) for warning in recwarn)
 
 
 @pytest.mark.parametrize("gzip_response", [True, False])
