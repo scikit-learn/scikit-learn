@@ -363,26 +363,26 @@ def test_subsample():
     [
         (
             256,
-            [4, 2, 2, 1],
+            [4, 2, 2],
             [
-                [0, 0, 0, 255],  # 255 <=> missing value
-                [255, 255, 0, 255],
-                [1, 0, 0, 255],
-                [255, 1, 1, 255],
-                [2, 1, 1, 255],
-                [3, 0, 0, 255],
+                [0, 0, 0],  # 255 <=> missing value
+                [255, 255, 0],
+                [1, 0, 0],
+                [255, 1, 1],
+                [2, 1, 1],
+                [3, 0, 0],
             ],
         ),
         (
             3,
-            [2, 2, 2, 1],
+            [2, 2, 2],
             [
-                [0, 0, 0, 2],  # 2 <=> missing value
-                [2, 2, 0, 2],
-                [0, 0, 0, 2],
-                [2, 1, 1, 2],
-                [1, 1, 1, 2],
-                [1, 0, 0, 2],
+                [0, 0, 0],  # 2 <=> missing value
+                [2, 2, 0],
+                [0, 0, 0],
+                [2, 1, 1],
+                [1, 1, 1],
+                [1, 0, 0],
             ],
         ),
     ],
@@ -392,12 +392,12 @@ def test_missing_values_support(n_bins, n_bins_non_missing, X_trans_expected):
     # and that the _BinMapper attributes are correct
 
     X = [
-        [1, 1, 0, np.nan],
-        [np.nan, np.nan, 0, np.nan],
-        [2, 1, 0, np.nan],
-        [np.nan, 2, 1, np.nan],
-        [3, 2, 1, np.nan],
-        [4, 1, 0, np.nan],
+        [1, 1, 0],
+        [np.nan, np.nan, 0],
+        [2, 1, 0],
+        [np.nan, 2, 1],
+        [3, 2, 1],
+        [4, 1, 0],
     ]
 
     X = np.array(X)
