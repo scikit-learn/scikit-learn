@@ -97,8 +97,8 @@ Regression
 
 :class:`Ridge` regression addresses some of the problems of
 :ref:`ordinary_least_squares` by imposing a penalty on the size of the
-coefficients in the form of an L2-norm. The ridge coefficients minimize a penalized
-residual sum of squares
+coefficients in the form of an :math:`\ell_2`-norm. The ridge coefficients minimize a
+penalized residual sum of squares
 
 .. math::
 
