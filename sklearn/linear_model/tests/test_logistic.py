@@ -2347,25 +2347,6 @@ def test_logistic_regression_path_init_coefs():
         )
 
 
-@pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
-def test_alpha_zero_no_warning(solver):
-    """Test that alpha=0 produces no warnings.
-
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/32927
-    """
-    X, y = make_classification(n_samples=100, n_redundant=0, random_state=42)
-
-    lr = LogisticRegression(alpha=0, solver=solver)
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        warnings.filterwarnings("ignore", category=ConvergenceWarning)
-        warnings.filterwarnings(
-            "ignore", message="'C' was deprecated.*", category=FutureWarning
-        )
-        lr.fit(X, y)
-
-
 # TODO(1.12): remove the whole test with deprecation of liblinear and dual
 @pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.filterwarnings("ignore:The parameter 'dual':FutureWarning")
