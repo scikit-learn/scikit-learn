@@ -17,6 +17,8 @@ To be compatible with scikit-learn estimators, :term:`callbacks` must implement 
 
     class FitCallback(Protocol):
 
+        one_per_estimator: bool
+
         def setup(self, estimator, context) -> None: ...
 
         def on_fit_task_begin(
@@ -42,6 +44,10 @@ To be compatible with scikit-learn estimators, :term:`callbacks` must implement 
         ) -> bool: ...
 
         def teardown(self, estimator, context) -> None: ...
+
+`one_per_estimator` is a class attribute indicating whether only a single instance of
+the callback can be registered on a given estimator. See
+:ref:`one_per_estimator_callbacks` for details.
 
 The methods of the protocol, referred to as callback :term:`hooks`, will be called at
 specific steps during the fitting process of the estimator the callback is registered
@@ -127,6 +133,19 @@ sub-estimators and are expected to work, though possibly not at full capacity.
     top-level estimator's `fit` method. They are not called for any of its
     sub-estimators.
 
+.. _one_per_estimator_callbacks:
+
+One per estimator callbacks
+---------------------------
+
+Some callbacks require to have only one instance registered per estimator to work
+correctly. This is for example the case of :class:`~sklearn.callback.ProgressBar`. The
+`one_per_estimator` class attribute is a boolean that indicates if it is the case. When
+set to `True` it makes :meth:`~CallbackSupportMixin.set_callbacks` raise a `ValueError`
+if two instances of that class are registered to the same estimator. Setting it to
+`False` allows multiple instances of the callback to be registered on the same
+estimator.
+
 Callback shared state
 ---------------------
 
@@ -148,6 +167,8 @@ every time it is invoked:
 .. code-block:: python
 
     class MyCallback:
+
+        one_per_estimator = False
 
         def setup(self, estimator, context):
             print(f"Setup hook is being called in the {context.task_name} task.")
