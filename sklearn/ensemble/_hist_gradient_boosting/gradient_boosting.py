@@ -30,6 +30,7 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.compose import ColumnTransformer
+from sklearn.ensemble._gb import set_huber_delta
 from sklearn.ensemble._hist_gradient_boosting._gradient_boosting import (
     _update_raw_predictions,
 )
@@ -45,7 +46,6 @@ from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     _check_categorical_features,
     _check_monotonic_cst,
@@ -792,16 +792,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # For Huber loss, re-estimate delta each iteration as the quantile-th
             # percentile of absolute residuals (Friedman 2001, Algorithm 2).
             if isinstance(self._loss, HuberLoss):
-                abs_residuals = np.abs(y_train - raw_predictions.ravel())
-                if sample_weight_train is None:
-                    delta = np.percentile(abs_residuals, 100 * self._loss.quantile)
-                else:
-                    delta = _weighted_percentile(
-                        abs_residuals,
-                        sample_weight_train,
-                        100 * self._loss.quantile,
-                    )
-                self._loss.closs.delta = delta
+                set_huber_delta(
+                    loss=self._loss,
+                    y_true=y_train,
+                    raw_prediction=raw_predictions,
+                    sample_weight=sample_weight_train,
+                )
 
             # Update gradients and hessians, inplace
             # Note that self._loss expects shape (n_samples,) for

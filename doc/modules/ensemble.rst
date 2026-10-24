@@ -102,6 +102,10 @@ Available losses for **regression** are:
 
 - 'squared_error', which is the default loss;
 - 'absolute_error', which is less sensitive to outliers than the squared error;
+- 'huber', which is also less sensitive to outliers than the squared error: it
+  behaves quadratically for small residuals and linearly for large ones. The
+  transition point is re-estimated at each iteration as the ``quantile``-th
+  percentile of the absolute residuals (see [Friedman2001]_ for more details);
 - 'gamma', which is well suited to model strictly positive outcomes;
 - 'poisson', which is well suited to model counts and frequencies;
 - 'quantile', which allows for estimating a conditional quantile that can later
