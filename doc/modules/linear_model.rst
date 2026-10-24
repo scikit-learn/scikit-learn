@@ -106,12 +106,33 @@ penalized residual sum of squares
 
 The penalty strength :math:`\alpha \geq 0` controls the amount of shrinkage of the
 estimated coefficients: the larger the value of :math:`\alpha`, the greater the amount
-of shrinkage toward zero. This shrinkage as at least two advantages w.r.t. ordinary
-least squares:
+of shrinkage toward zero. This shrinkage causes a downward bias of the estimated
+coefficients but it offers at least two advantages w.r.t. ordinary least squares, see
+[HK1970]_:
 
-- The coefficients become more robust to collinearity and ill-conditioning.
-- The expected out-of-sample squared error (risk) has a good change to be lower at the
-  cost of a downward bias in the estimated coefficients.
+- The estimated coefficients become more robust to collinearity and ill-conditioning.
+- For an appropriate choice of `alpha`, the expected out-of-sample squared error
+  (*risk*) is lower, i.e. the expected prediction accuracy is better.
+
+.. note:: **Penalty and feature standardization**
+
+  Because Ridge penalizes coefficient magnitudes, feature scales matter: for a
+  comparable effect on the target, a feature with larger values can have a smaller
+  coefficient and be penalized less. **Standardizing** features makes the penalty more
+  comparable across them.
+
+  .. dropdown:: Example
+
+    If distances of cities of a country (in meters, typically several thousands) and
+    travel times between cities (in hours, typically smaller 24) have similar effect on
+    the target, Ridge will tend to shrink the travel time coefficient more when the
+    features are unstandardized.
+
+.. dropdown:: Weighted Ridge regression
+
+  With sample weights :math:`s=\text{sample_weight}`, :class:`Ridge` minimizes:
+
+  .. math:: \min_{w} \sum_i s_i (X_i w - y_i)^2 + \alpha ||w||_2^2
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ridge_path_001.png
    :target: ../auto_examples/linear_model/plot_ridge_path.html
@@ -222,6 +243,10 @@ example `cv=10` for 10-fold cross-validation, rather than Leave-One-Out
 Cross-Validation.
 
 .. dropdown:: References
+
+  .. [HK1970] :doi:`Hoerl, A. E., & Kennard, R. W. (1970). Ridge Regression: Biased
+    Estimation for Nonorthogonal Problems. Technometrics, 12(1), 55-67.
+    <10.2307/1267351>`
 
   .. [RL2007] "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
     <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
