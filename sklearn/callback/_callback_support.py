@@ -2,10 +2,56 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import functools
+import inspect
 from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
 from sklearn.callback._callback_context import CallbackContext
+
+
+def validate_callbacks(callbacks):
+    """Validate that callbacks follow the protocol and correctly implement hooks."""
+    for callback in callbacks:
+        callback_name = callback.__class__.__name__
+
+        # isinstance for a Protocol returns True for classes too (not only instances).
+        # Hence the additional check for classes.
+        if not isinstance(callback, FitCallback) or isinstance(callback, type):
+            raise TypeError(
+                f"Callbacks must be instances following the FitCallback protocol. "
+                f"Got {callback_name}."
+            )
+
+        # isinstance for Protocols does not verify the methods' signatures.
+        for hook_name in ("setup", "teardown", "on_fit_task_begin", "on_fit_task_end"):
+            hook = getattr(callback, hook_name)
+            params = list(inspect.signature(hook).parameters.values())
+
+            positional = [p.name for p in params if p.kind != p.KEYWORD_ONLY]
+            expected_positional = ["estimator", "context"]
+            if positional != expected_positional:
+                raise TypeError(
+                    f"Hook {hook_name!r} of the callback {callback_name} must have "
+                    f"exactly the positional parameters {expected_positional}, got "
+                    f"{positional}."
+                )
+
+            if hook_name in ("setup", "teardown"):
+                if len(params) > 2:
+                    raise TypeError(
+                        f"The signature of the {hook_name!r} hook of the callback "
+                        f"{callback_name} must be {hook_name}(self, estimator, context)"
+                    )
+                continue
+
+            kwarg_only = {p.name for p in params if p.kind == p.KEYWORD_ONLY}
+            valid_kwargs = {"X", "y", "metadata", "fitted_estimator"}
+            if invalid := kwarg_only - valid_kwargs:
+                raise TypeError(
+                    f"Hook {hook_name!r} of the callback {callback_name} has "
+                    f"parameters that are not valid: {invalid}. The valid parameters "
+                    f"are: {valid_kwargs}."
+                )
 
 
 class CallbackSupportMixin:
@@ -28,16 +74,11 @@ class CallbackSupportMixin:
         self : estimator instance
             The estimator instance itself.
         """
-        if not all(
-            # isinstance for a Protocol returns True for classes too (not only
-            # instances). Hence the additional check for classes.
-            isinstance(callback, FitCallback) and not isinstance(callback, type)
-            for callback in callbacks
-        ):
-            raise TypeError(
-                "callbacks must be instances following the FitCallback protocol."
-            )
+        validate_callbacks(callbacks)
+        return self._set_callbacks(callbacks)
 
+    def _set_callbacks(self, callbacks):
+        """set_callbacks without validation."""
         if callbacks:
             self._skl_callbacks = list(callbacks)
         else:

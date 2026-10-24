@@ -67,14 +67,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
+      - uses: pypa/cibuildwheel@8c2dcd2e96041a619f5ff03c9638d7941e2553a4 # v4.3.3
         env:
           CIBW_PLATFORM: pyodide
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
           CIBW_TEST_REQUIRES: "pytest pandas"
-          # -s pytest argument is needed to avoid an issue in pytest output capturing with Pyodide
-          CIBW_TEST_COMMAND: "python -m pytest -sra --pyargs sklearn --durations 20 --showlocals"
+          # pytest -s argument is needed to avoid an issue in pytest output capturing with Pyodide
+          # -p no:cacheprovider is needed to avoid cleaning up pytest cache failing with PermissionError
+          CIBW_TEST_COMMAND: "python -m pytest -sra -p no:cacheprovider --pyargs sklearn --durations 20 --showlocals"
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v7

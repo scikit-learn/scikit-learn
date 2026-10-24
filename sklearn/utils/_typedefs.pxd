@@ -1,3 +1,5 @@
+from cython cimport floating
+
 # Commonly used types
 # These are redefinitions of the ones defined by numpy in
 # https://github.com/numpy/numpy/blob/main/numpy/__init__.pxd.
@@ -39,3 +41,20 @@ ctypedef double float64_t
 ctypedef signed char int8_t
 ctypedef signed int int32_t
 ctypedef signed long long int64_t
+
+cdef inline bint inlinable_isnan(floating x) noexcept nogil:
+    """Check whether x is NaN.
+
+    Prefer this over libc.math.isnan in hot loops: unlike that libm call,
+    which some compilers/libc fail to inline, this is guaranteed to be
+    inlined. See https://github.com/scikit-learn/scikit-learn/issues/34869.
+
+    Relies on the `x != x` NaN self-inequality trick, which -ffast-math
+    (enabled by -Ofast, not by -O3) can fold away; test_isnan guards
+    against a silent regression on toolchains that do use it.
+
+    TODO: remove this helper in favor of libc.math.isnan when conda-forge bumps
+    its minimal glibc version to 2.28, see:
+    https://github.com/conda-forge/conda-forge.github.io/issues/2383
+    """
+    return x != x

@@ -28,6 +28,7 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     size,
     supported_float_dtypes,
+    xpx,
 )
 from sklearn.utils._param_validation import (
     Interval,
@@ -47,6 +48,7 @@ from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
@@ -349,8 +351,6 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             sensitive to out-of-range inputs (e.g. linear models). Use with care,
             as clipping can distort the distribution of test data.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     min_ : ndarray of shape (n_features,)
@@ -361,31 +361,17 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Per feature relative scaling of the data. Equivalent to
         ``(max - min) / (X.max(axis=0) - X.min(axis=0))``
 
-        .. versionadded:: 0.17
-           *scale_* attribute.
-
     data_min_ : ndarray of shape (n_features,)
         Per feature minimum seen in the data
-
-        .. versionadded:: 0.17
-           *data_min_*
 
     data_max_ : ndarray of shape (n_features,)
         Per feature maximum seen in the data
 
-        .. versionadded:: 0.17
-           *data_max_*
-
     data_range_ : ndarray of shape (n_features,)
         Per feature range ``(data_max_ - data_min_)`` seen in the data
 
-        .. versionadded:: 0.17
-           *data_range_*
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     n_samples_seen_ : int
         The number of samples processed by the estimator.
@@ -524,8 +510,8 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             xp.asarray(feature_range[1], dtype=X.dtype, device=device),
         )
 
-        data_min = _array_api._nanmin(X, axis=0, xp=xp)
-        data_max = _array_api._nanmax(X, axis=0, xp=xp)
+        data_min = xpx.nanmin(X, axis=0, xp=xp)
+        data_max = xpx.nanmax(X, axis=0, xp=xp)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
@@ -651,10 +637,6 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     unit variance scaling.
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
-
-    .. versionadded:: 0.17
-       *minmax_scale* function interface
-       to :class:`~sklearn.preprocessing.MinMaxScaler`.
 
     Parameters
     ----------
@@ -810,9 +792,6 @@ class StandardScaler(
         as-is, giving a scaling factor of 1. `scale_` is equal to `None`
         when `with_std=False`.
 
-        .. versionadded:: 0.17
-           *scale_*
-
     mean_ : ndarray of shape (n_features,) or None
         The mean value for each feature in the training set.
         Equal to ``None`` when ``with_mean=False`` and ``with_std=False``.
@@ -824,8 +803,6 @@ class StandardScaler(
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -915,9 +892,6 @@ class StandardScaler(
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample.
 
-            .. versionadded:: 0.24
-               parameter *sample_weight* support to StandardScaler.
-
         Returns
         -------
         self : object
@@ -951,9 +925,6 @@ class StandardScaler(
 
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample.
-
-            .. versionadded:: 0.24
-               parameter *sample_weight* support to StandardScaler.
 
         Returns
         -------
@@ -1201,8 +1172,6 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     scales them down. For an example visualization, refer to :ref:`Compare
     MaxAbsScaler with other scalers <plot_all_scaling_max_abs_scaler_section>`.
 
-    .. versionadded:: 0.17
-
     Parameters
     ----------
     copy : bool, default=True
@@ -1226,16 +1195,11 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     scale_ : ndarray of shape (n_features,)
         Per feature relative scaling of the data.
 
-        .. versionadded:: 0.17
-           *scale_* attribute.
-
     max_abs_ : ndarray of shape (n_features,)
         Per feature maximum absolute value.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1298,7 +1262,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The data used to compute the per-feature minimum and maximum
+            The data used to compute the per-feature maximum absolute value
             used for later scaling along the features axis.
 
         y : None
@@ -1324,7 +1288,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The data used to compute the mean and standard deviation
+            The data used to compute the maximum absolute value
             used for later scaling along the features axis.
 
         y : None
@@ -1351,7 +1315,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             mins, maxs = min_max_axis(X, axis=0, ignore_nan=True)
             max_abs = np.maximum(np.abs(mins), np.abs(maxs))
         else:
-            max_abs = _array_api._nanmax(xp.abs(X), axis=0, xp=xp)
+            max_abs = xpx.nanmax(xp.abs(X), axis=0, xp=xp)
 
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
@@ -1570,8 +1534,6 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     and comparison to other scalers, refer to :ref:`Compare RobustScaler with
     other scalers <plot_all_scaling_robust_scaler_section>`.
 
-    .. versionadded:: 0.17
-
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
     Parameters
@@ -1592,8 +1554,6 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         the IQR, i.e., `q_min` is the first quantile and `q_max` is the third
         quantile.
 
-        .. versionadded:: 0.18
-
     copy : bool, default=True
         If `False`, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
@@ -1607,8 +1567,6 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         than 1, the dataset will be scaled down. If less than 1, the dataset
         will be scaled up.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     center_ : array of floats
@@ -1617,13 +1575,8 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     scale_ : array of floats
         The (scaled) interquartile range for each feature in the training set.
 
-        .. versionadded:: 0.17
-           *scale_* attribute.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1868,8 +1821,6 @@ def robust_scale(
         the IQR, i.e., `q_min` is the first quantile and `q_max` is the third
         quantile.
 
-        .. versionadded:: 0.18
-
     copy : bool, default=True
         If False, try to avoid a copy and scale in place.
         This is not guaranteed to always work in place; e.g. if the data is
@@ -1882,8 +1833,6 @@ def robust_scale(
         `q_max` and `q_min` for a standard normal distribution is greater
         than 1, the dataset will be scaled down. If less than 1, the dataset
         will be scaled up.
-
-        .. versionadded:: 0.24
 
     Returns
     -------
@@ -2128,8 +2077,6 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -2324,8 +2271,6 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -2470,8 +2415,6 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2690,17 +2633,16 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
-    .. versionadded:: 0.19
-
     Parameters
     ----------
-    n_quantiles : int, default=1000 or n_samples
-        Number of quantiles to be computed. It corresponds to the number
-        of landmarks used to discretize the cumulative distribution function.
-        If n_quantiles is larger than the number of samples, n_quantiles is set
-        to the number of samples as a larger number of quantiles does not give
-        a better approximation of the cumulative distribution function
-        estimator.
+    n_quantiles : int, default=1000
+        Number of quantiles to be computed. It corresponds to the number of
+        landmarks used to discretize the cumulative distribution function.
+
+        .. versionchanged:: 1.10
+            `n_quantiles` is no longer capped according to the number of
+            samples. The number of quantiles is now always equal to the value
+            of `n_quantiles`.
 
     output_distribution : {'uniform', 'normal'}, default='uniform'
         Marginal distribution for the transformed data. The choices are
@@ -2708,8 +2650,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If False,
-        these entries are treated as zeros.
+        matrix are discarded to compute the quantile statistics, including
+        when subsampling. If False, these entries are treated as zeros.
 
     subsample : int or None, default=10_000
         Maximum number of samples used to estimate the quantiles for
@@ -2734,8 +2676,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
     Attributes
     ----------
     n_quantiles_ : int
-        The actual number of quantiles used to discretize the cumulative
-        distribution function.
+        The number of quantiles used to discretize the cumulative
+        distribution function. Always equal to `n_quantiles`.
 
     quantiles_ : ndarray of shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
@@ -2745,8 +2687,6 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2806,13 +2746,19 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         self.random_state = random_state
         self.copy = copy
 
-    def _dense_fit(self, X, random_state):
+    def _dense_fit(self, X, random_state, sample_weight=None):
         """Compute percentiles for dense matrices.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
             The data used to scale along the features axis.
+
+        random_state : RandomState instance
+            Random number generator used for subsampling.
+
+        sample_weight : ndarray of shape (n_samples,), default=None
+            Individual weights for each sample.
         """
         if self.ignore_implicit_zeros:
             warnings.warn(
@@ -2824,12 +2770,39 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         references = self.references_ * 100
 
         if self.subsample is not None and self.subsample < n_samples:
-            # Take a subsample of `X`
+            # Take a subsample of `X`.
+            # When resampling, it is important to subsample **with replacement** to
+            # preserve the distribution, in particular in the presence of a few data
+            # points with large weights. You can check this by setting `replace=False`
+            # in sklearn.utils.tests.test_indexing.test_resample_weighted and check that
+            # it fails as a justification for this claim.
             X = resample(
-                X, replace=False, n_samples=self.subsample, random_state=random_state
+                X,
+                replace=True,
+                n_samples=self.subsample,
+                random_state=random_state,
+                sample_weight=sample_weight,
             )
+            # Since we already used the weights when resampling when provided,
+            # we set them back to `None` to avoid accounting for the weights twice
+            # in subsequent quantile estimation.
+            sample_weight = None
 
-        self.quantiles_ = np.nanpercentile(X, references, axis=0)
+        if sample_weight is not None:
+            self.quantiles_ = _weighted_percentile(
+                X,
+                sample_weight=sample_weight,
+                percentile_rank=references,
+                average=True,
+            )
+            self.quantiles_ = np.asarray(self.quantiles_).T
+        else:
+            self.quantiles_ = np.nanpercentile(
+                X,
+                references,
+                method="averaged_inverted_cdf",
+                axis=0,
+            )
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2840,6 +2813,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             The data used to scale along the features axis. The sparse matrix
             needs to be nonnegative. If a sparse matrix is provided,
             it will be converted into a SciPy sparse CSC matrix.
+
+        Notes
+        -----
+        Columns with fewer non-zero entries than `subsample` are not
+        subsampled: when `ignore_implicit_zeros=False`, this materializes a
+        `n_samples` array.
         """
         n_samples, n_features = X.shape
         references = self.references_ * 100
@@ -2848,11 +2827,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
             if self.subsample is not None and len(column_nnz_data) > self.subsample:
-                column_subsample = self.subsample * len(column_nnz_data) // n_samples
-                if self.ignore_implicit_zeros:
-                    column_data = np.zeros(shape=column_subsample, dtype=X.dtype)
-                else:
-                    column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
+                column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
+                column_subsample = (
+                    self.subsample
+                    if self.ignore_implicit_zeros
+                    else self.subsample * len(column_nnz_data) // n_samples
+                )
                 column_data[:column_subsample] = random_state.choice(
                     column_nnz_data, size=column_subsample, replace=False
                 )
@@ -2866,13 +2846,19 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             if not column_data.size:
                 # if no nnz, an error will be raised for computing the
                 # quantiles. Force the quantiles to be zeros.
-                self.quantiles_.append([0] * len(references))
+                self.quantiles_.append([0] * len(self.references_))
             else:
-                self.quantiles_.append(np.nanpercentile(column_data, references))
+                self.quantiles_.append(
+                    np.nanpercentile(
+                        column_data,
+                        references,
+                        method="averaged_inverted_cdf",
+                    )
+                )
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Compute the quantiles used for transforming.
 
         Parameters
@@ -2886,6 +2872,12 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         y : None
             Ignored.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Individual weights for each sample. Sample weights are not
+            supported for sparse inputs.
+
+            .. versionadded:: 1.10
+
         Returns
         -------
         self : object
@@ -2894,29 +2886,32 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         if self.subsample is not None and self.n_quantiles > self.subsample:
             raise ValueError(
                 "The number of quantiles cannot be greater than"
-                " the number of samples used. Got {} quantiles"
-                " and {} samples.".format(self.n_quantiles, self.subsample)
+                f" the number of samples used. Got {self.n_quantiles} quantiles"
+                f" and {self.subsample} samples."
             )
 
         X = self._check_inputs(X, in_fit=True, copy=False)
-        n_samples = X.shape[0]
+        is_sparse = sparse.issparse(X)
 
-        if self.n_quantiles > n_samples:
-            warnings.warn(
-                "n_quantiles (%s) is greater than the total number "
-                "of samples (%s). n_quantiles is set to "
-                "n_samples." % (self.n_quantiles, n_samples)
+        if is_sparse and sample_weight is not None:
+            raise NotImplementedError(
+                "sample_weight is not supported for sparse input."
             )
-        self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
+        self.n_quantiles_ = self.n_quantiles
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(
+                sample_weight, X, dtype=X.dtype, ensure_non_negative=True
+            )
 
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
         self.references_ = np.linspace(0, 1, self.n_quantiles_, endpoint=True)
-        if sparse.issparse(X):
+        if is_sparse:
             self._sparse_fit(X, rng)
         else:
-            self._dense_fit(X, rng)
+            self._dense_fit(X, rng, sample_weight=sample_weight)
 
         return self
 
@@ -3149,13 +3144,14 @@ def quantile_transform(
         Axis used to compute the means and standard deviations along. If 0,
         transform each feature, otherwise (if 1) transform each sample.
 
-    n_quantiles : int, default=1000 or n_samples
+    n_quantiles : int, default=1000
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
-        If n_quantiles is larger than the number of samples, n_quantiles is set
-        to the number of samples as a larger number of quantiles does not give
-        a better approximation of the cumulative distribution function
-        estimator.
+
+        .. versionchanged:: 1.10
+            `n_quantiles` is no longer capped according to the number of
+            samples. The number of quantiles is now always equal to the value
+            of `n_quantiles`.
 
     output_distribution : {'uniform', 'normal'}, default='uniform'
         Marginal distribution for the transformed data. The choices are
@@ -3163,8 +3159,8 @@ def quantile_transform(
 
     ignore_implicit_zeros : bool, default=False
         Only applies to sparse matrices. If True, the sparse entries of the
-        matrix are discarded to compute the quantile statistics. If False,
-        these entries are treated as zeros.
+        matrix are discarded to compute the quantile statistics, including
+        when subsampling. If False, these entries are treated as zeros.
 
     subsample : int or None, default=1e5
         Maximum number of samples used to estimate the quantiles for
@@ -3187,9 +3183,6 @@ def quantile_transform(
         This is not guaranteed to always work in place; e.g. if the data is
         a numpy array with an int dtype, a copy will be returned even with
         copy=False.
-
-        .. versionchanged:: 0.23
-            The default value of `copy` changed from False to True in 0.23.
 
     Returns
     -------
@@ -3280,8 +3273,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     method : {'yeo-johnson', 'box-cox'}, default='yeo-johnson'
@@ -3304,8 +3295,6 @@ class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -3686,10 +3675,6 @@ def power_transform(X, method="yeo-johnson", *, standardize=True, copy=True):
 
         - 'yeo-johnson' [1]_, works with positive and negative values
         - 'box-cox' [2]_, only works with strictly positive values
-
-        .. versionchanged:: 0.23
-            The default value of the `method` parameter changed from
-            'box-cox' to 'yeo-johnson' in 0.23.
 
     standardize : bool, default=True
         Set to True to apply zero-mean, unit-variance normalization to the

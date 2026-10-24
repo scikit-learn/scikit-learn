@@ -50,16 +50,6 @@ if sp_base_version < parse_version("1.17"):
     BOOL_METRICS += ["sokalmichener"]
 if sp_base_version >= parse_version("1.15"):
     DEPRECATED_METRICS.append("sokalmichener")
-if sp_base_version < parse_version("1.11"):
-    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
-    BOOL_METRICS += ["kulsinski"]
-if sp_base_version >= parse_version("1.9"):
-    DEPRECATED_METRICS.append("kulsinski")
-if sp_base_version < parse_version("1.9"):
-    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
-    BOOL_METRICS += ["matching"]
-if sp_base_version >= parse_version("1.0"):
-    DEPRECATED_METRICS.append("matching")
 
 def get_valid_metric_ids(L):
     """Given an iterable of metric class names or class identifiers,
@@ -155,9 +145,7 @@ cdef class DistanceMetric:
     identifier         class name               distance function
     -----------------  -----------------------  -------------------------------
     "jaccard"          JaccardDistance          NNEQ / NNZ
-    "matching"         MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
-    "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
     "russellrao"       RussellRaoDistance       (N - NTT) / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
@@ -246,10 +234,8 @@ METRIC_MAPPING{{name_suffix}} = {
     'hamming': HammingDistance{{name_suffix}},
     'canberra': CanberraDistance{{name_suffix}},
     'braycurtis': BrayCurtisDistance{{name_suffix}},
-    'matching': MatchingDistance{{name_suffix}},
     'jaccard': JaccardDistance{{name_suffix}},
     'dice': DiceDistance{{name_suffix}},
-    'kulsinski': KulsinskiDistance{{name_suffix}},
     'rogerstanimoto': RogersTanimotoDistance{{name_suffix}},
     'russellrao': RussellRaoDistance{{name_suffix}},
     'sokalmichener': SokalMichenerDistance{{name_suffix}},
@@ -348,9 +334,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     identifier         class name               distance function
     -----------------  -----------------------  -------------------------------
     "jaccard"          JaccardDistance          NNEQ / NNZ
-    "matching"         MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
-    "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
     "russellrao"       RussellRaoDistance       (N - NTT) / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)

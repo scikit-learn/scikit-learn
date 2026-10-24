@@ -39,6 +39,7 @@ from sklearn.utils._metadata_requests import (
     SIMPLE_METHODS,
     MethodMetadataRequest,
     MethodPair,
+    _auto_requests_enabled,
     _MetadataRequester,
     request_is_alias,
     request_is_valid,
@@ -215,7 +216,7 @@ def test_default_requests():
         __metadata_request__fit = {
             # set a different default request
             "sample_weight": True
-        }  # type: ignore[var-annotated]
+        }
 
         def fit(self, X, y=None):
             return self  # pragma: no cover
@@ -536,7 +537,7 @@ def test_get_metadata_routing():
 
 @config_context(enable_metadata_routing=True)
 def test_setting_default_requests():
-    # Test _get_default_requests method
+    # Test setting class-level requests works.
     test_cases = dict()
 
     class ExplicitRequest(BaseEstimator):
@@ -792,13 +793,6 @@ def test_string_representations(obj, string):
             {"caller": "invalid", "callee": "fit"},
             ValueError,
             "Given caller",
-        ),
-        (
-            MetadataRouter(owner="test"),
-            "add_self_request",
-            {"obj": MetadataRouter(owner="test")},
-            ValueError,
-            "Given `obj` is neither a `MetadataRequest` nor does it implement",
         ),
         (
             ConsumingClassifier(),
@@ -1196,6 +1190,189 @@ def test_unbound_set_methods_work():
         A().set_fit_request(True)
 
 
+@pytest.mark.parametrize(
+    "enable_metadata_auto_requests, auto_requests_enabled",
+    [
+        (True, True),
+        (False, False),
+    ],
+)
+def test_auto_requests_enabled(enable_metadata_auto_requests, auto_requests_enabled):
+    """Check correctness of _auto_requests_enabled."""
+    with config_context(enable_metadata_auto_requests=enable_metadata_auto_requests):
+        assert _auto_requests_enabled() == enable_metadata_auto_requests
+
+
+def test_auto_requests_override_class_level_requests():
+    """Test that auto-requests override class-level default requests."""
+
+    class SimpleConsumingEstimator(BaseEstimator):
+        __metadata_request__fit = {"prop": False}
+
+        def fit(self, X, y, prop):
+            # fit method to prove the override of the class-level request
+            pass  # pragma: no cover
+
+        def predict(self, X, prop):
+            pass  # pragma: no cover
+
+        def get_metadata_routing(self):
+            requests = super().get_metadata_routing()
+            # Override class-level False with True:
+            requests.fit.add_auto_request("prop")
+            # Add new method request:
+            requests.predict.add_auto_request("prop")
+            return requests
+
+    est = SimpleConsumingEstimator()
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(est)
+        # Instance-level True should override class-level False:
+        assert routing.fit.requests["prop"] is True
+        assert routing.predict.requests["prop"] is True
+        # Composite methods inherit the requests of their component methods:
+        assert routing.fit_transform.requests["prop"] is True
+        assert routing.fit_predict.requests["prop"] is True
+
+
+@config_context(enable_metadata_routing=True)
+def test_auto_requests_on_composite_methods():
+    """Auto-requests set directly on a composite method apply to metadata which
+    none of its component methods request, and the requests of the component
+    methods are still composed into the composite method."""
+
+    class SimpleConsumingEstimator(BaseEstimator):
+        def fit(self, X, y, prop=None):
+            pass  # pragma: no cover
+
+        def predict(self, X):
+            pass  # pragma: no cover
+
+        def fit_predict(self, X, y, prop=None, composite_only=None):
+            pass  # pragma: no cover
+
+        def get_metadata_routing(self):
+            requests = super().get_metadata_routing()
+            requests.fit_predict.add_auto_request("composite_only")
+            return requests
+
+    def make_router(est):
+        # fake router that calls our consuming estimator
+        return MetadataRouter(owner="test").add(
+            estimator=est,
+            method_mapping=MethodMapping().add(
+                caller="fit_predict", callee="fit_predict"
+            ),
+        )
+
+    # With auto-requests disabled, the composite method only has the requests
+    # composed from its component methods, and the metadata is not routed.
+    est = SimpleConsumingEstimator()
+    assert get_routing_for_object(est).fit_predict.requests == {"prop": None}
+    with pytest.raises(TypeError, match="got unexpected argument"):
+        process_routing(make_router(est), "fit_predict", composite_only="value")
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(est)
+        # `composite_only` is requested on `fit_predict`, not on `fit` or `predict`:
+        assert routing.fit_predict.requests == {"prop": None, "composite_only": True}
+        assert "composite_only" not in routing.fit.requests
+        assert "composite_only" not in routing.predict.requests
+        # And the metadata is routed to the composite method:
+        routed = process_routing(
+            make_router(est), "fit_predict", composite_only="value"
+        )
+        assert routed.estimator.fit_predict == {"composite_only": "value"}
+
+        # A request set on `fit` still appears on `fit_predict`, next to `fit_predict`'s
+        # own auto-request:
+        est.set_fit_request(prop="alias")
+        routing = get_routing_for_object(est)
+        assert routing.fit_predict.requests == {
+            "prop": "alias",
+            "composite_only": True,
+        }
+
+
+def test_auto_requests_on_composite_methods_overlap_error():
+    """Auto-requesting metadata on a composite method which is already present in
+    the requests of one of its component methods raises an informative error."""
+
+    class SimpleConsumingEstimator(BaseEstimator):
+        def fit(self, X, y, prop=None):
+            pass  # pragma: no cover
+
+        def get_metadata_routing(self):
+            requests = super().get_metadata_routing()
+            requests.fit_transform.add_auto_request("prop")
+            return requests
+
+    msg = re.escape(
+        "Auto-requests can only be set on the composite method fit_transform for"
+        " metadata which is not already present in the requests of its component"
+        " methods (fit, transform). Set the auto-request for prop on the component"
+        " method instead."
+    )
+    # The error is raised independently of whether auto-requests are enabled.
+    for enabled in (False, True):
+        with config_context(enable_metadata_auto_requests=enabled):
+            with pytest.raises(ValueError, match=msg):
+                get_routing_for_object(SimpleConsumingEstimator()).fit_transform
+
+
+@config_context(enable_metadata_routing=True)
+def test_set_request_on_router_without_self_request():
+    """Check that `set_{method}_request` on a pure router stores a `MetadataRequest`,
+    not the whole `MetadataRouter`."""
+    pipe = Pipeline([("clf", ConsumingClassifier())])
+    pipe.set_score_request(sample_weight=True)
+    assert isinstance(pipe._metadata_request, MetadataRequest)
+    assert pipe._metadata_request.score.requests == {"sample_weight": True}
+
+
+@config_context(enable_metadata_routing=True)
+def test_routing_not_frozen_by_set_request():
+    """Check that calling `set_{method}_request` on a consuming router does not freeze
+    routing to sub-estimators: later changes to them are still reflected.
+    `get_metadata_routing` must still be built from the current sub-estimators, not from
+    a frozen MetadataRouter stored on `_metadata_request`.
+    """
+    meta = WeightedMetaRegressor(estimator=ConsumingRegressor())
+    meta.set_fit_request(sample_weight=True)
+    meta.set_params(estimator=ConsumingRegressor().set_fit_request(sample_weight=True))
+    routed = process_routing(meta, "fit", sample_weight=[1, 2])
+    assert routed.estimator.fit == {"sample_weight": [1, 2]}
+
+
+@config_context(enable_metadata_routing=True)
+@pytest.mark.parametrize("auto_requests_enabled_at_set_time", [True, False])
+def test_explicit_requests_win_over_auto_requests(auto_requests_enabled_at_set_time):
+    """Requests set via `set_{method}_request` are never overridden by
+    auto-requests, whether or not auto-requests were enabled when they were set."""
+
+    class SimpleConsumingEstimator(BaseEstimator):
+        def fit(self, X, y, prop=None, other=None):
+            pass  # pragma: no cover
+
+        def get_metadata_routing(self):
+            requests = super().get_metadata_routing()
+            requests.fit.add_auto_request("prop", "other")
+            return requests
+
+    with config_context(
+        enable_metadata_auto_requests=auto_requests_enabled_at_set_time,
+    ):
+        est = SimpleConsumingEstimator().set_fit_request(prop=False)
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(est)
+        assert routing.fit.requests == {"prop": False, "other": True}
+    with config_context(enable_metadata_auto_requests=False):
+        routing = get_routing_for_object(est)
+        assert routing.fit.requests == {"prop": False, "other": None}
+
+
 class _UncopyableOwner:
     """An owner-like object that fails on deepcopy.
 
@@ -1264,7 +1441,7 @@ def test_metadata_router_clone_does_not_copy_owner():
 
 @config_context(enable_metadata_routing=True)
 def test_get_routing_for_object_does_not_deepcopy_estimator():
-    # Regression test for the skorch deepcopy issue: asking for routing info
+    # Regression test for the skorch deepcopy issue (#33827): asking for routing info
     # of an estimator should not deep-copy the estimator itself.
     class Est(BaseEstimator):
         def fit(self, X, y, sample_weight=None):

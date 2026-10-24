@@ -35,7 +35,7 @@ from sklearn.utils._array_api import (
     move_to,
     size,
 )
-from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._encode import _encode_labels, _unique
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
@@ -201,9 +201,6 @@ def average_precision_score(
 
     Notes
     -----
-    .. versionchanged:: 0.19
-      Instead of linearly interpolating between operating points, precisions
-      are weighted by the change in recall since the last operating point.
 
     References
     ----------
@@ -323,8 +320,6 @@ def det_curve(
 
     Read more in the :ref:`User Guide <det_curve>`.
 
-    .. versionadded:: 0.24
-
     .. versionchanged:: 1.7
        An arbitrary threshold at infinity is added to represent a classifier
        that always predicts the negative class, i.e. `fpr=0` and `fnr=1`, unless
@@ -404,7 +399,7 @@ def det_curve(
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
@@ -436,7 +431,8 @@ def det_curve(
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if xp.unique_values(y_true).shape[0] != 2:
+    xp_y_true, _ = get_namespace(y_true)
+    if xp_y_true.unique_values(y_true).shape[0] != 2:
         raise ValueError(
             "Only one class is present in y_true. Detection error "
             "tradeoff curve is not defined in that case."
@@ -859,7 +855,7 @@ def _multiclass_roc_auc_score(
                 "for multiclass one-vs-one ROC AUC, "
                 "'sample_weight' must be None in this case."
             )
-        y_true_encoded = _encode(y_true, uniques=classes)
+        y_true_encoded = _encode_labels(y_true, uniques=classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(
             _binary_roc_auc_score, y_true_encoded, y_score, average=average
@@ -1023,25 +1019,33 @@ def confusion_matrix_at_thresholds(
             y_true, y_score, sample_weight
         )
     )
-    if weight is None:
-        weight = 1.0
-
     # accumulate the true positives with decreasing threshold
-    max_float_dtype = _max_precision_float_dtype(xp, device)
-    # Perform the weighted cumulative sum using float64 precision when possible
-    # to avoid numerical stability problem with tens of millions of very noisy
-    # predictions:
-    # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
-    y_true = xp.astype(y_true, max_float_dtype)
-    tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
-    if sample_weight is not None:
-        # express fps as a cumsum to ensure fps is increasing even in
-        # the presence of floating point errors
+    if sample_weight is None:
+        # Accumulate the counts using an integer datatype to avoid
+        # rounding errors on devices that do not support float64.
+        y_true_int = xp.astype(y_true, xp.int64)
+        tps_int = xp.cumulative_sum(y_true_int, dtype=xp.int64)[threshold_idxs]
+        fps_int = (xp.astype(threshold_idxs, xp.int64) + 1) - tps_int
+
+        output_dtype = (
+            y_score.dtype
+            if hasattr(y_score, "dtype") and xp.isdtype(y_score.dtype, "real floating")
+            else _max_precision_float_dtype(xp, device)
+        )
+        tps = xp.astype(tps_int, output_dtype)
+        fps = xp.astype(fps_int, output_dtype)
+    else:
+        max_float_dtype = _max_precision_float_dtype(xp, device)
+        # Perform the weighted cumulative sum using float64 precision when possible
+        # to avoid numerical stability problem with tens of millions of very noisy
+        # predictions:
+        # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
+        y_true = xp.astype(y_true, max_float_dtype)
+        tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
         fps = xp.cumulative_sum((1 - y_true) * weight, dtype=max_float_dtype)[
             threshold_idxs
         ]
-    else:
-        fps = 1 + xp.astype(threshold_idxs, max_float_dtype) - tps
+
     tns = fps[-1] - fps
     fns = tps[-1] - tps
     return tns, fps, fns, tps, y_score[threshold_idxs]
@@ -1252,9 +1256,6 @@ def roc_curve(
         its neighbors in ROC space. This has no effect on the ROC AUC or visual
         shape of the curve, but reduces the number of plotted points.
 
-        .. versionadded:: 0.17
-           parameter *drop_intermediate*.
-
     Returns
     -------
     fpr : ndarray of shape (>2,)
@@ -1315,7 +1316,7 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1331,11 +1332,15 @@ def roc_curve(
     # kept, but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
     if drop_intermediate and fps.shape[0] > 2:
-        optimal_idxs = xp.where(
+        optimal_idxs = xp.nonzero(
             xp.concat(
                 [
                     xp.asarray([True], device=device),
-                    xp.logical_or(xp.diff(fps, 2), xp.diff(tps, 2)),
+                    # Array API spec recommends `logical_or` only accepts bool input
+                    xp.logical_or(
+                        xp.astype(xp.diff(fps, n=2), xp.bool),
+                        xp.astype(xp.diff(tps, n=2), xp.bool),
+                    ),
                     xp.asarray([True], device=device),
                 ]
             )
@@ -1410,8 +1415,6 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
@@ -1571,9 +1574,6 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     a ranking loss of zero.
 
     Read more in the :ref:`User Guide <label_ranking_loss>`.
-
-    .. versionadded:: 0.17
-       A function *label_ranking_loss*
 
     Parameters
     ----------
@@ -2227,7 +2227,7 @@ def top_k_accuracy_score(
             UndefinedMetricWarning,
         )
 
-    y_true_encoded = _encode(y_true, uniques=classes)
+    y_true_encoded = _encode_labels(y_true, uniques=classes)
 
     if y_type == "binary":
         if k == 1:
