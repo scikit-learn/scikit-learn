@@ -15,7 +15,8 @@ can be written as
 
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
-or some function thereof: :math:`\hat{y}(w, x) = h(w_0 + w_1 x_1 + ...)`.
+or, more generally, :math:`\hat{y}(w, x) = h(w_0 + w_1 x_1 + ...)` with some inverse
+link or response function :math:`h`.
 Across the module, we designate the vector :math:`w = (w_1, ..., w_p)` as ``coef_`` and
 :math:`w_0` as ``intercept_``. For brevity, we denote the linear predictor as
 
@@ -29,11 +30,11 @@ for example:
 
 .. math:: ||w||_2^2 = w_1^2 + ... + w_p^2 \,.
 
-A consequence of the common linear predictor is that all linear models take into
-account the design matrix `X` only term by term as passed to `fit`. Non-linear terms
-and interactions of features must be added in the preprocessing as shown further down
-in :ref:`Polynomial regression <polynomial_regression>`. On top, it is considered good
-practice to standardized `X` before fitting a linear model.
+A consequence of the common linear predictor for all linear models is that each feature
+in `X` as passed to `fit` contributes a separate additive term. Non-linear terms and
+interactions of features must be added in the preprocessing as shown further down in
+:ref:`Polynomial regression <polynomial_regression>`. On top, it is considered good
+practice to standardize `X` before fitting a linear model.
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
@@ -83,7 +84,7 @@ One possible remedy is to add a penalty for the size of the coefficients as in
 .. dropdown:: Weighted Least Squares
 
   With sample weights :math:`s=\text{sample_weight}`, :class:`LinearRegression`
-  minimized the weighted squared error:
+  minimizes the weighted squared error:
 
   .. math:: \min_{w} \sum_i s_i (X_i w - y_i)^2
 
@@ -91,11 +92,11 @@ One possible remedy is to add a penalty for the size of the coefficients as in
 
   For dense `X`, the least squares solution is computed using the singular value
   decomposition of :math:`X` via :func:`SciPy lstsq <scipy:scipy.linalg.lstsq>`.
-  For a matrix :math:`X` of shape `(n_samples, n_features)` this method has a cost of
-  :math:`O(n_{\text{samples}} n_{\text{features}}^2)`.
+  For a matrix :math:`X` of shape `(n, p)=(n_samples, n_features)` this method has a
+  cost of :math:`O(\max(n, p)\min(n, p)^2)`.
 
   For sparse `X`, the least squares problem is solved by the iterative solver
-  :func:`SciPy lstsq <scipy:scipy.sparse.linalg.lsqr>`.
+  :func:`SciPy lsqr <scipy:scipy.sparse.linalg.lsqr>`.
 
 .. rubric:: Examples
 
@@ -108,8 +109,9 @@ It is possible to constrain all the coefficients to be non-negative, which may
 be useful when they represent some physical or naturally non-negative
 quantities (e.g., frequency counts or prices of goods).
 :class:`LinearRegression` accepts a boolean ``positive``
-parameter: when set to `True` `Non-Negative Least Squares
-<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied.
+parameter: when set to `True`, `Non-Negative Least Squares
+<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied via
+:func:`SciPy nnls <scipy:scipy.optimize.nnls>`.
 
 .. rubric:: Examples
 
@@ -1010,7 +1012,7 @@ Once fitted, the :meth:`~sklearn.linear_model.LogisticRegression.predict_proba`
 method of :class:`~sklearn.linear_model.LogisticRegression` predicts
 the probability of the positive class :math:`P(y_i=1|X_i)` as
 
-.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w + w_0) = \frac{1}{1 + \exp(-X_i w - w_0)}.
+.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w) = \frac{1}{1 + \exp(-X_i w)}.
 
 
 As an optimization problem, binary
