@@ -1078,7 +1078,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             'sag', 'saga', 'lbfgs'}, default='auto'
         Solver to use in the computational routines:
 
-        - 'auto' chooses the solver automatically based on the type of data.
+        - 'auto' chooses the solver automatically based on the type of data.Note that depending on the shape of the data (n_samples and n_features),
+        the chosen solver may operate on a primal or dual problem formulation.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
           coefficients. It is the most stable solver, in particular more stable
