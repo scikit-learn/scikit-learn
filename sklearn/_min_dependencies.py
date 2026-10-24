@@ -52,7 +52,6 @@ dependent_packages = {
     "sphinx-prompt": ("1.4.0", "docs"),
     "sphinxext-opengraph": ("0.9.1", "docs"),
     "plotly": ("5.22.0", "docs, examples"),
-    "sphinxcontrib-sass": ("0.3.4", "docs"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
     "sphinx-design": ("0.6.0", "docs"),
     "pydata-sphinx-theme": ("0.15.3", "docs"),

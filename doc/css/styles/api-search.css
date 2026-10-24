@@ -7,7 +7,7 @@
 .dt-container {
   margin-bottom: 2rem;
 
-  // Fix the selection box for entries per page
+  /* Fix the selection box for entries per page */
   select.dt-input {
     padding: 0 !important;
     margin-right: 0.4rem !important;
@@ -18,7 +18,7 @@
     }
   }
 
-  // Fix the search box
+  /* Fix the search box */
   input.dt-input {
     width: 50%;
     line-height: normal;
@@ -28,12 +28,12 @@
 
   table.dataTable {
     th {
-      // Avoid table header being too tall
+      /* Avoid table header being too tall */
       p {
         margin-bottom: 0;
       }
 
-      // Fix the ascending/descending order buttons in the header
+      /* Fix the ascending/descending order buttons in the header */
       span.dt-column-order {
         &::before,
         &::after {
@@ -44,13 +44,13 @@
     }
 
     td {
-      // Fix color of text warning no records found
+      /* Fix color of text warning no records found */
       &.dt-empty {
         color: var(--pst-color-text-base) !important;
       }
     }
 
-    // Unset bottom border of the last row
+    /* Unset bottom border of the last row */
     tr:last-child > * {
       border-bottom: unset !important;
     }
@@ -62,14 +62,14 @@
     &.disabled {
       color: var(--pst-color-border) !important;
 
-      // Overwrite the !important color assigned by DataTables because we must keep
-      // the color of disabled buttons consistent with and without hovering
+      /* Overwrite the !important color assigned by DataTables because we must keep
+         the color of disabled buttons consistent with and without hovering */
       &:hover {
         color: var(--pst-color-border) !important;
       }
     }
 
-    // Fix colors of paging buttons
+    /* Fix colors of paging buttons */
     &.current,
     &:not(.disabled):not(.current):hover {
       color: var(--pst-color-on-surface) !important;
@@ -77,14 +77,14 @@
       background: var(--pst-color-surface) !important;
     }
 
-    // Highlight the border of the current selected paging button
+    /* Highlight the border of the current selected paging button */
     &.current {
       border-color: var(--pst-color-text-base) !important;
     }
   }
 }
 
-// Styling the object description cells in the table
+/* Styling the object description cells in the table */
 div.sk-apisearch-desc {
   p {
     margin-bottom: 0;

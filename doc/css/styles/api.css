@@ -4,7 +4,7 @@
  * designed based on how `autodoc` and `autosummary` generate the stuff.
  */
 
-// Make the admonitions more compact
+/* Make the admonitions more compact */
 div.versionadded,
 div.versionchanged,
 div.deprecated {
@@ -15,7 +15,7 @@ div.deprecated {
   }
 }
 
-// Make docstrings more compact
+/* Make docstrings more compact */
 dd {
   p:not(table *) {
     margin-bottom: 0.5rem !important;
@@ -27,12 +27,12 @@ dd {
   }
 }
 
-// The first method is too close the the docstring above
+/* The first method is too close the the docstring above */
 dl.py.method:first-of-type {
   margin-top: 2rem;
 }
 
-// https://github.com/pydata/pydata-sphinx-theme/blob/8cf45f835bfdafc5f3821014a18f3b7e0fc2d44b/src/pydata_sphinx_theme/assets/styles/content/_api.scss
+/* https://github.com/pydata/pydata-sphinx-theme/blob/8cf45f835bfdafc5f3821014a18f3b7e0fc2d44b/src/pydata_sphinx_theme/assets/styles/content/_api.scss */
 dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) {
   margin-bottom: 1.5rem;
 
@@ -40,7 +40,7 @@ dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.
     margin-left: 1.2rem;
   }
 
-  // "Parameters", "Returns", etc. in the docstring
+  /* "Parameters", "Returns", etc. in the docstring */
   dt.field-odd,
   dt.field-even {
     margin: 0.5rem 0;

@@ -798,7 +798,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
         "euclidean" and "l2" are accepted. If "precomputed", a distance matrix is needed
         as input for the fit method. If connectivity is None, linkage is
-        "single" and affinity is not "precomputed" any valid pairwise distance
+        "single" and metric is not "precomputed" any valid pairwise distance
         metric can be assigned.
 
         For an example of agglomerative clustering with different metrics, see
@@ -1106,7 +1106,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features) or \
                 (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         y : Ignored
             Not used, present here for API consistency by convention.

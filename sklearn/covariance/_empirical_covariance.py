@@ -272,10 +272,10 @@ class EmpiricalCovariance(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        xp, _, device_ = get_namespace_and_device(X)
-        X = validate_data(self, X, dtype=supported_float_dtypes(xp, device_))
+        xp, _, device = get_namespace_and_device(X)
+        X = validate_data(self, X, dtype=supported_float_dtypes(xp, device))
         if self.assume_centered:
-            self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device_)
+            self.location_ = xp.zeros(X.shape[1], dtype=X.dtype, device=device)
         else:
             self.location_ = xp.mean(X, axis=0)
         covariance = empirical_covariance(X, assume_centered=self.assume_centered)
@@ -388,9 +388,9 @@ class EmpiricalCovariance(BaseEstimator):
         dist : ndarray of shape (n_samples,)
             Squared Mahalanobis distances of the observations.
         """
-        xp, _, device_ = get_namespace_and_device(X)
+        xp, _, device = get_namespace_and_device(X)
         X = validate_data(
-            self, X, reset=False, dtype=supported_float_dtypes(xp, device_)
+            self, X, reset=False, dtype=supported_float_dtypes(xp, device)
         )
 
         precision = self.get_precision()

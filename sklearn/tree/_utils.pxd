@@ -2,11 +2,42 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # See _utils.pyx for details.
-
 cimport numpy as cnp
-from sklearn.tree._tree cimport Node
 from sklearn.neighbors._quad_tree cimport Cell
-from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, uint32_t
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int32_t, uint32_t, uint64_t
+from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C, N_BITSETS
+
+
+cdef enum:
+    MAX_NUM_CATEGORIES = N_BITSETS
+
+
+cdef struct Node:
+    # Base storage structure for the nodes in a Tree object
+
+    intp_t left_child                    # id of the left child of the node
+    intp_t right_child                   # id of the right child of the node
+    intp_t feature                       # Feature used for splitting the node
+    # Threshold for numerical features splits:
+    # - feature values less than or equal to the threshold go left, and values greater than the threshold go right.
+    float64_t threshold
+    # Threshold for categorical features splits:
+    # - left_cat_bitset stores the set of categories that go to the left child.
+    BITSET_DTYPE_C left_cat_bitset
+
+    float64_t impurity                   # Impurity of the node (i.e., the value of the criterion)
+    intp_t n_node_samples                # Number of samples at the node
+    float64_t weighted_n_node_samples    # Weighted number of samples at the node
+    uint8_t missing_go_to_left           # Whether features have missing values
+
+
+cdef bint goes_left(
+    float64_t threshold,
+    const BITSET_INNER_DTYPE_C* left_cat_bitset,
+    bint missing_go_to_left,
+    bint is_categorical,
+    float32_t value,
+) noexcept nogil
 
 
 cdef enum:
@@ -28,6 +59,8 @@ ctypedef fused realloc_ptr:
     (float32_t*)
     (intp_t*)
     (uint8_t*)
+    (uint32_t*)
+    (uint64_t*)
     (float64_t*)
     (float64_t**)
     (Node*)

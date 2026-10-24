@@ -76,7 +76,7 @@ def _get_mask(X, value_to_mask):
     prefer_skip_nested_validation=True,
 )
 def safe_mask(X, mask):
-    """Return a mask which is safe to use on X.
+    """Return an indexing mask compatible with X.
 
     Parameters
     ----------

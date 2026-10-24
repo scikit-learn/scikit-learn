@@ -189,11 +189,12 @@ def test_standard_scaler_sample_weight_array_api(
     yw = np.ones(Xw.shape[0]).astype(dtype_name, copy=False)
     X_test = np.array([[1.5, 2.5, 3.5], [3.5, 4.5, 5.5]]).astype(dtype_name, copy=False)
 
-    scaler = StandardScaler()
-    scaler.fit(X, y)
+    with config_context(array_api_dispatch=False):
+        scaler = StandardScaler()
+        scaler.fit(X, y)
 
-    scaler_w = StandardScaler()
-    scaler_w.fit(Xw, yw, sample_weight=sample_weight)
+        scaler_w = StandardScaler()
+        scaler_w.fit(Xw, yw, sample_weight=sample_weight)
 
     # Test array-api support and correctness.
     X_xp = xp.asarray(X, device=device)
@@ -2159,7 +2160,8 @@ def test_binarizer_array_api_int(array_namespace, device_name, dtype_name):
     for dtype_name_ in [dtype_name, "int32", "int64"]:
         X_np = np.reshape(np.asarray([0, 1, 2, 3, 4], dtype=dtype_name_), (-1, 1))
         X_xp = xp.asarray(X_np, device=device)
-        binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
+        with config_context(array_api_dispatch=False):
+            binarized_np = Binarizer(threshold=2.5).fit_transform(X_np)
         with config_context(array_api_dispatch=True):
             binarized_xp = Binarizer(threshold=2.5).fit_transform(X_xp)
         assert_array_equal(move_to(binarized_xp, xp=np, device="cpu"), binarized_np)

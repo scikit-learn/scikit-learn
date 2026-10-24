@@ -371,14 +371,14 @@ def calinski_harabasz_score(X, labels):
     114.8...
     """
 
-    xp, _, device_ = get_namespace_and_device(X, labels)
+    xp, _, device = get_namespace_and_device(X, labels)
 
     if _is_numpy_namespace(xp) and not is_numpy_array(X):
         # This is required to handle the case where `array_api_dispatch` is False but
         # we are still dealing with `X` as a non-NumPy array e.g. a PyTorch tensor.
         X = move_to(X, xp=np, device="cpu")
     else:
-        X = xp.astype(X, _max_precision_float_dtype(xp, device_), copy=False)
+        X = xp.astype(X, _max_precision_float_dtype(xp, device), copy=False)
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
     labels = le.fit_transform(labels)
@@ -454,7 +454,7 @@ def davies_bouldin_score(X, labels):
     >>> davies_bouldin_score(X, labels)
     0.12...
     """
-    xp, _, device_ = get_namespace_and_device(X, labels)
+    xp, _, device = get_namespace_and_device(X, labels)
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
     labels = le.fit_transform(labels)
@@ -462,9 +462,9 @@ def davies_bouldin_score(X, labels):
     n_labels = le.classes_.shape[0]
     check_number_of_labels(n_labels, n_samples)
 
-    dtype = _max_precision_float_dtype(xp, device_)
-    intra_dists = xp.zeros(n_labels, dtype=dtype, device=device_)
-    centroids = xp.zeros((n_labels, X.shape[1]), dtype=dtype, device=device_)
+    dtype = _max_precision_float_dtype(xp, device)
+    intra_dists = xp.zeros(n_labels, dtype=dtype, device=device)
+    centroids = xp.zeros((n_labels, X.shape[1]), dtype=dtype, device=device)
     for k in range(n_labels):
         cluster_k = _safe_indexing(X, xp.nonzero(labels == k)[0])
         centroid = _average(cluster_k, axis=0, xp=xp)
@@ -475,7 +475,7 @@ def davies_bouldin_score(X, labels):
 
     centroid_distances = pairwise_distances(centroids)
 
-    zero = xp.asarray(0.0, device=device_, dtype=dtype)
+    zero = xp.asarray(0.0, device=device, dtype=dtype)
     if xp.all(xpx.isclose(intra_dists, zero)) or xp.all(
         xpx.isclose(centroid_distances, zero)
     ):

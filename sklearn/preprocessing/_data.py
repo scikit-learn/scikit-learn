@@ -23,7 +23,7 @@ from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     _max_precision_float_dtype,
     _modify_in_place_if_numpy,
-    device,
+    array_device,
     get_namespace,
     get_namespace_and_device,
     size,
@@ -90,8 +90,8 @@ def _is_constant_feature(var, mean, n_samples):
     recommendations", by Chan, Golub, and LeVeque.
     """
     # In scikit-learn, variance is always computed using float64 accumulators.
-    xp, _, device_ = get_namespace_and_device(var, mean)
-    max_float_dtype = _max_precision_float_dtype(xp=xp, device=device_)
+    xp, _, device = get_namespace_and_device(var, mean)
+    max_float_dtype = _max_precision_float_dtype(xp=xp, device=device)
     eps = xp.finfo(max_float_dtype).eps
 
     upper_bound = n_samples * eps * var + (n_samples * mean * eps) ** 2
@@ -514,14 +514,14 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self,
             X,
             reset=first_pass,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             ensure_all_finite="allow-nan",
         )
 
-        device_ = device(X)
+        device = array_device(X)
         feature_range = (
-            xp.asarray(feature_range[0], dtype=X.dtype, device=device_),
-            xp.asarray(feature_range[1], dtype=X.dtype, device=device_),
+            xp.asarray(feature_range[0], dtype=X.dtype, device=device),
+            xp.asarray(feature_range[1], dtype=X.dtype, device=device),
         )
 
         data_min = _array_api._nanmin(X, axis=0, xp=xp)
@@ -565,7 +565,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             self,
             X,
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
             reset=False,
@@ -574,13 +574,13 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X *= self.scale_
         X += self.min_
         if self.clip:
-            device_ = device(X)
+            device = array_device(X)
             X = _modify_in_place_if_numpy(
                 xp,
                 xp.clip,
                 X,
-                xp.asarray(self.feature_range[0], dtype=X.dtype, device=device_),
-                xp.asarray(self.feature_range[1], dtype=X.dtype, device=device_),
+                xp.asarray(self.feature_range[0], dtype=X.dtype, device=device),
+                xp.asarray(self.feature_range[1], dtype=X.dtype, device=device),
                 out=X,
             )
         return X
@@ -605,7 +605,7 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         X = check_array(
             X,
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1343,7 +1343,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             reset=first_pass,
             accept_sparse=("csr", "csc"),
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             ensure_all_finite="allow-nan",
         )
 
@@ -1386,7 +1386,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             accept_sparse=("csr", "csc"),
             copy=self.copy,
             reset=False,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -1398,13 +1398,13 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         else:
             X /= self.scale_
             if self.clip:
-                device_ = device(X)
+                device = array_device(X)
                 X = _modify_in_place_if_numpy(
                     xp,
                     xp.clip,
                     X,
-                    xp.asarray(-1.0, dtype=X.dtype, device=device_),
-                    xp.asarray(1.0, dtype=X.dtype, device=device_),
+                    xp.asarray(-1.0, dtype=X.dtype, device=device),
+                    xp.asarray(1.0, dtype=X.dtype, device=device),
                     out=X,
                 )
         return X
@@ -1430,7 +1430,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
             X,
             accept_sparse=("csr", "csc"),
             copy=self.copy,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
             force_writeable=True,
             ensure_all_finite="allow-nan",
         )
@@ -2047,7 +2047,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         accept_sparse=sparse_format,
         copy=copy,
         estimator="the normalize function",
-        dtype=_array_api.supported_float_dtypes(xp, device=device(X)),
+        dtype=_array_api.supported_float_dtypes(xp, device=array_device(X)),
         force_writeable=True,
     )
     if axis == 0:
@@ -2535,7 +2535,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         xp, _ = get_namespace(K)
 
         K = validate_data(
-            self, K, dtype=_array_api.supported_float_dtypes(xp, device=device(K))
+            self, K, dtype=_array_api.supported_float_dtypes(xp, device=array_device(K))
         )
 
         if K.shape[0] != K.shape[1]:
@@ -2574,7 +2574,7 @@ class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             K,
             copy=copy,
             force_writeable=True,
-            dtype=_array_api.supported_float_dtypes(xp, device=device(K)),
+            dtype=_array_api.supported_float_dtypes(xp, device=array_device(K)),
             reset=False,
         )
 

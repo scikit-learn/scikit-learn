@@ -1,4 +1,3 @@
-import io
 import re
 import subprocess
 import sys
@@ -9,17 +8,12 @@ import pandas as pd
 import requests
 from packaging import version
 
-req = requests.get("https://devguide.python.org/versions/")
-df_list = pd.read_html(io.StringIO(req.content.decode("utf-8")))
-df = pd.concat(df_list).astype({"Branch": str})
-release_dates = {}
+response = requests.get("https://peps.python.org/api/release-cycle.json")
+response.raise_for_status()
+release_cycle = response.json()
 python_version_info = {
-    version: release_date
-    for version, release_date in zip(df["Branch"], df["First release"])
-}
-python_version_info = {
-    version: pd.to_datetime(release_date)
-    for version, release_date in python_version_info.items()
+    version: pd.to_datetime(info["first_release"])
+    for version, info in release_cycle.items()
 }
 
 

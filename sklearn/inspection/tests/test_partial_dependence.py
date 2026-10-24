@@ -523,6 +523,57 @@ def test_partial_dependence_easy_target(est, power):
     assert r2 > 0.99
 
 
+def test_partial_dependence_recursion_decision_tree_categorical_target_feature():
+    # Non-ordinal categorical signal: categories {1, 2, 5} -> 1 and
+    # {0, 3, 4} -> 0. Recursion must route with the categorical bitset.
+    category_values = np.arange(6, dtype=np.float64)
+    X = np.repeat(category_values, 4).reshape(-1, 1)
+    y = np.isin(X.ravel(), [1, 2, 5]).astype(np.float64)
+
+    est = DecisionTreeRegressor(
+        categorical_features=[0], max_depth=1, random_state=0
+    ).fit(X, y)
+
+    recursion = partial_dependence(
+        est, X, features=[0], method="recursion", categorical_features=[0]
+    )
+    brute = partial_dependence(
+        est, X, features=[0], method="brute", categorical_features=[0]
+    )
+
+    grid = recursion["grid_values"][0].reshape(-1, 1)
+    expected = est.predict(grid)
+
+    assert_array_equal(recursion["grid_values"][0], category_values)
+    assert_allclose(recursion["average"][0], brute["average"][0])
+    assert_allclose(recursion["average"][0], expected)
+
+
+def test_partial_dependence_recursion_decision_tree_missing_target_feature():
+    # Missing values are isolated by the split. Recursion must route np.nan
+    # according to the fitted node's missing_go_to_left flag.
+    X = np.array([0.0, 0.0, np.nan, np.nan, 1.0, 1.0, 1.0]).reshape(-1, 1)
+    y = np.array([0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+
+    est = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y)
+    assert est.tree_.missing_go_to_left[0]
+
+    custom_values = {0: [0.0, np.nan, 1.0]}
+    recursion = partial_dependence(
+        est, X, features=[0], method="recursion", custom_values=custom_values
+    )
+    brute = partial_dependence(
+        est, X, features=[0], method="brute", custom_values=custom_values
+    )
+
+    grid = recursion["grid_values"][0].reshape(-1, 1)
+    expected = est.predict(grid)
+
+    assert_array_equal(recursion["grid_values"][0], custom_values[0])
+    assert_allclose(recursion["average"][0], brute["average"][0])
+    assert_allclose(recursion["average"][0], expected)
+
+
 @pytest.mark.parametrize(
     "Estimator",
     (

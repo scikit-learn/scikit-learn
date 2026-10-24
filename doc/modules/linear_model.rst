@@ -1629,7 +1629,7 @@ estimated only from the determined inliers.
     <https://www.cs.ait.ac.th/~mdailey/cvreadings/Fischler-RANSAC.pdf>`_
     Martin A. Fischler and Robert C. Bolles - SRI International (1981)
   * `"Performance Evaluation of RANSAC Family"
-    <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
+    <https://bmva-archive.org.uk/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
     Sunglok Choi, Taemin Kim and Wonpil Yu - BMVC (2009)
 
 .. _theil_sen_regression:

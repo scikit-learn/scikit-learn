@@ -77,9 +77,14 @@ python_environment_install_and_activate() {
 
         check_packages_dev_version $dev_packages
 
-        echo "Installing Cython from latest sources"
-        # NO_CYTHON_COMPILE=true installs Cython as a pure Python package (faster install)
-        NO_CYTHON_COMPILE=true pip install https://github.com/cython/cython/archive/master.zip
+        # TODO Switch from cython 3.2.5 to cython dev (see commented out lines below) once
+        # https://github.com/cython/cython/issues/7846 is fixed
+        # Temporary work-around to upload development wheels
+        echo "Installing cython 3.2.5 as temporary work-around for cython dev issues"
+        pip install cython==3.2.5
+        # echo "Installing Cython from latest sources"
+        # # NO_CYTHON_COMPILE=true installs Cython as a pure Python package (faster install)
+        # NO_CYTHON_COMPILE=true pip install https://github.com/cython/cython/archive/master.zip
         echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"

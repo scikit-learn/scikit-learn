@@ -1,0 +1,5 @@
+- The copy-to-clipboard icons in the HTML representation of estimators are
+  now rendered as ``<button>`` elements with an ``aria-label`` and a visible
+  focus outline, instead of non-interactive ``<i>`` elements, so they are
+  reachable and usable with a keyboard and screen readers.
+  By :user:`Dea María Léon <deamarialeon>`.

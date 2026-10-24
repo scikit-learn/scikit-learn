@@ -1285,12 +1285,12 @@ def _entropy(labels):
     -----
     The logarithm used is the natural logarithm (base-e).
     """
-    xp, is_array_api_compliant, device_ = get_namespace_and_device(labels)
+    xp, is_array_api_compliant, device = get_namespace_and_device(labels)
     labels_len = labels.shape[0] if is_array_api_compliant else len(labels)
     if labels_len == 0:
         return 1.0
 
-    pi = xp.astype(xp.unique_counts(labels)[1], _max_precision_float_dtype(xp, device_))
+    pi = xp.astype(xp.unique_counts(labels)[1], _max_precision_float_dtype(xp, device))
 
     # single cluster => zero entropy
     if pi.size == 1:
