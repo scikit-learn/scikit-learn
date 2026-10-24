@@ -345,6 +345,7 @@ def test_solver_auto(n_classes, l1_ratio, long_data):
 )
 def test_tags(estimator):
     """Test that tags are set correctly for different estimators."""
+    estimator = clone(estimator)
     assert estimator.__sklearn_tags__().input_tags.sparse
     assert estimator.__sklearn_tags__().classifier_tags.multi_class
 
