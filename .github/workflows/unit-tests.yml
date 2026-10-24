@@ -250,6 +250,12 @@ jobs:
           activate-environment: ""
           run-init: ${{ runner.os != 'Windows' }}
 
+      - name: Install conda-launchers on Windows
+        if: runner.os == 'Windows' && startsWith(env.DISTRIB, 'conda')
+        run: >
+          conda install --yes --name base --override-channels
+          --channel conda-forge conda-launchers
+
       - name: Initialize conda for bash
         if: runner.os == 'Windows' && startsWith(env.DISTRIB, 'conda')
         shell: bash
