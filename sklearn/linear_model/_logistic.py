@@ -2101,8 +2101,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         .. versionchanged:: 1.10
            Default value changed from True to False.
         .. deprecated:: 1.10
-           `use_legacy_attributes` was deprecated in version 1.10 and be removed in
-           1.12.
+           `use_legacy_attributes` was deprecated in version 1.10 and will be removed
+           in 1.12.
 
     Attributes
     ----------
