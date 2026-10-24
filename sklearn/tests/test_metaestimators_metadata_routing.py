@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, is_classifier
+from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.covariance import GraphicalLassoCV
@@ -704,6 +704,7 @@ def test_unsupported_estimators_fit_with_metadata(estimator):
     """Test that fit raises NotImplementedError when metadata routing is
     enabled and a metadata is passed on meta-estimators for which we haven't
     implemented routing yet."""
+    estimator = clone(estimator)
     with pytest.raises(NotImplementedError):
         try:
             estimator.fit([[1]], [1], sample_weight=[1])
