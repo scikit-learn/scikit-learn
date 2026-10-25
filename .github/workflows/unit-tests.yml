@@ -254,7 +254,7 @@ jobs:
         if: runner.os == 'Windows' && startsWith(env.DISTRIB, 'conda')
         run: >
           conda install --yes --name base --override-channels
-          --channel conda-forge conda-launchers
+          --channel defaults conda-launchers=24.7.1=hd3eb1b0_6
 
       - name: Initialize conda for bash
         if: runner.os == 'Windows' && startsWith(env.DISTRIB, 'conda')
