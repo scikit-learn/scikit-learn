@@ -248,6 +248,19 @@ jobs:
           miniforge-version: latest
           auto-activate: true
           activate-environment: ""
+          run-init: ${{ runner.os != 'Windows' }}
+
+      - name: Repair Conda launcher metadata on Windows
+        if: runner.os == 'Windows' && startsWith(env.DISTRIB, 'conda')
+        env:
+          CONDA_SAFETY_CHECKS: warn
+        run: >-
+          & "$env:CONDA/python.exe" -m conda install --yes --name base
+          --force-reinstall --override-channels --channel conda-forge conda-launchers
+
+      - name: Initialize Conda on Windows
+        if: runner.os == 'Windows' && startsWith(env.DISTRIB, 'conda')
+        run: '& "$env:CONDA/python.exe" -m conda init --all'
 
       - name: Build scikit-learn
         run: bash -l build_tools/github/install.sh
