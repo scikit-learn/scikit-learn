@@ -27,13 +27,14 @@ from sklearn.callback.tests._common.callbacks import (
 )
 from sklearn.callback.tests._common.estimators import MaxIterEstimator
 from sklearn.cluster import KMeans
-from sklearn.datasets import load_iris, make_classification
+from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
     HistGradientBoostingClassifier,
     RandomForestClassifier,
     RandomTreesEmbedding,
+    StackingRegressor,
 )
 from sklearn.exceptions import NotFittedError, UnsetMetadataPassedError
 from sklearn.feature_extraction.text import CountVectorizer
@@ -410,6 +411,23 @@ def test_pipeline_sample_weight_unsupported():
     msg = re.escape("score() got an unexpected keyword argument 'sample_weight'")
     with pytest.raises(TypeError, match=msg):
         pipe.score(X, sample_weight=np.array([2, 3]))
+
+
+@config_context(enable_metadata_routing=True)
+def test_pipeline_score_sample_weight_not_routed_when_none():
+    # Non-regression test for GH-35195: when metadata routing is enabled,
+    # `Pipeline.score` must not route `sample_weight` when it is `None`, so
+    # pipelines whose final estimator does not request it can be scored.
+    X, y = make_regression(random_state=0)
+    pipe = make_pipeline(
+        StackingRegressor(
+            estimators=[("lr", LinearRegression())],
+            final_estimator=LinearRegression(),
+        )
+    )
+    pipe.fit(X, y)
+    score = pipe.score(X, y)
+    assert np.isfinite(score)
 
 
 def test_pipeline_raise_set_params_error():

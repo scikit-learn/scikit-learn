@@ -1201,9 +1201,10 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             return self.steps[-1][1].score(Xt, y, **score_params)
 
         # metadata routing is enabled.
-        routed_params = process_routing(
-            self, "score", sample_weight=sample_weight, **params
-        )
+        score_params = {}
+        if sample_weight is not None:
+            score_params["sample_weight"] = sample_weight
+        routed_params = process_routing(self, "score", **score_params, **params)
 
         Xt = X
         for _, name, transform in self._iter(with_final=False):
