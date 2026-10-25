@@ -1,0 +1,6 @@
+- :class:`ensemble.BaggingClassifier`, :class:`ensemble.BaggingRegressor`, and
+  :class:`ensemble.IsolationForest` no longer fail when `sample_weight` contains
+  zero values and `bootstrap=False`: the number of samples drawn without
+  replacement is capped at the number of non-zero weights, so zero-weighted
+  observations are simply never drawn.
+  By :user:`Yaxuan Shen <syxscott>`.
