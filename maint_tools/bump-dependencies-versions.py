@@ -19,7 +19,7 @@ python_version_info = {
 
 def get_min_version_with_wheel(package_name, python_version):
     # For compiled dependencies we want the oldest minor version that has
-    # wheels for 'python_version'
+    # wheels for 'python_version'.
     url = f"https://pypi.org/pypi/{package_name}/json"
     response = requests.get(url)
     if response.status_code != 200:
