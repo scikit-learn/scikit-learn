@@ -741,8 +741,9 @@ def roc_auc_score(
         multiclass_roc_auc_score = _multiclass_roc_auc_score(
             y_true, y_score, labels, multi_class, average, sample_weight
         )
-        if isinstance(multiclass_roc_auc_score, float):
-            return multiclass_roc_auc_score
+        # `_average_binary_score` may return a native Python int (e.g., 0).
+        if isinstance(multiclass_roc_auc_score, (int, float)):
+            return float(multiclass_roc_auc_score)
         # Convert 0d-array to native Python scalar
         if multiclass_roc_auc_score.ndim == 0:
             return float(multiclass_roc_auc_score)

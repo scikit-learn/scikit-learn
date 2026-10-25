@@ -639,6 +639,25 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     )
 
 
+def test_multiclass_ovr_roc_auc_zero_sample_weight():
+    """Non-regression test for OvR roc_auc_score(average="weighted")
+    with all-zero sample weights. See:
+    https://github.com/scikit-learn/scikit-learn/pull/33200#discussion_r4315296397
+    """
+    y_true = np.asarray([0, 1, 2])
+    y_score = np.ones(shape=(3, 3)) / 3
+
+    result = roc_auc_score(
+        y_true,
+        y_score,
+        multi_class="ovr",
+        average="weighted",
+        sample_weight=np.zeros(3),
+    )
+    assert isinstance(result, float)
+    assert result == 0.0
+
+
 @pytest.mark.parametrize(
     "multi_class, average",
     [
