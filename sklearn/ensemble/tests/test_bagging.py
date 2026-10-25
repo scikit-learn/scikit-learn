@@ -837,8 +837,9 @@ def test_draw_indices_using_sample_weight(
 
 @pytest.mark.parametrize("bagging_class", [BaggingRegressor, BaggingClassifier])
 def test_zero_sample_weight_without_replacement_raises(bagging_class):
-    # Non-regression test for gh-34673: all-zero weights are rejected with an
-    # informative error instead of a cryptic numpy failure.
+    # Non-regression test for gh-34673: all-zero weights keep being rejected
+    # with an informative error, and the max_samples clamp below never
+    # bypasses that guard.
     X = np.arange(100).reshape(-1, 1)
     y = np.repeat([0, 1], 50)
     sample_weight = np.zeros(100)
