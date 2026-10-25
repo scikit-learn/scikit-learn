@@ -1,3 +1,4 @@
+import math
 import re
 
 import numpy as np
@@ -381,8 +382,9 @@ def test_roc_curve_toydata():
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
     )
-    with pytest.raises(ValueError, match=expected_message):
-        roc_auc_score(y_true, y_score)
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        auc = roc_auc_score(y_true, y_score)
+    assert math.isnan(auc)
 
     # case with no negative samples
     y_true = [1, 1]
@@ -399,8 +401,9 @@ def test_roc_curve_toydata():
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
     )
-    with pytest.raises(ValueError, match=expected_message):
-        roc_auc_score(y_true, y_score)
+    with pytest.warns(UndefinedMetricWarning, match=expected_message):
+        auc = roc_auc_score(y_true, y_score)
+    assert math.isnan(auc)
 
     # Multi-label classification task
     y_true = np.array([[0, 1], [0, 1]])
@@ -833,17 +836,17 @@ def test_auc_score_non_binary_class():
     y_pred = rng.rand(10)
     # y_true contains only one class value
     y_true = np.zeros(10, dtype="int")
-    err_message = (
+    warn_message = (
         "Only one class is present in y_true. "
         "ROC AUC score is not defined in that case."
     )
-    with pytest.raises(ValueError, match=err_message):
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
     y_true = np.ones(10, dtype="int")
-    with pytest.raises(ValueError, match=err_message):
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
     y_true = np.full(10, -1, dtype="int")
-    with pytest.raises(ValueError, match=err_message):
+    with pytest.warns(UndefinedMetricWarning, match=warn_message):
         roc_auc_score(y_true, y_pred)
 
 
