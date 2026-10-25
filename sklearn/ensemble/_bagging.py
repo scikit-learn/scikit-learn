@@ -467,6 +467,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 f"Effective max_samples={max_samples} must be <= n_samples="
                 f"{X.shape[0]} to be able to sample without replacement."
             )
+        if not self.bootstrap and sample_weight is not None:
+            # Zero-weight samples can never be drawn when sampling without
+            # replacement, so the number of draws cannot exceed the number of
+            # non-zero weights.
+            max_samples = min(max_samples, np.count_nonzero(sample_weight))
 
         # Store validated integer row sampling value
         self._max_samples = max_samples

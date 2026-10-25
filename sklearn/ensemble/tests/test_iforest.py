@@ -118,6 +118,29 @@ def test_max_samples_attribute():
     assert clf.max_samples_ == 0.4 * X.shape[0]
 
 
+def test_sample_weight_with_zero_weights_without_replacement():
+    # Non-regression test for gh-34673: with bootstrap=False, zero-weight
+    # samples can never be drawn and fitting used to crash with a cryptic
+    # numpy error whenever max_samples exceeded the number of non-zero
+    # weights.
+    X = iris.data
+    sample_weight = np.ones(X.shape[0])
+    sample_weight[:10] = 0.0
+
+    clf = IsolationForest(n_estimators=3, random_state=0)
+    clf.fit(X, sample_weight=sample_weight)
+    assert clf.max_samples_ == np.count_nonzero(sample_weight)
+    assert_array_equal(np.isfinite(clf.decision_function(X)), True)
+
+    # all-zero weights are rejected with an informative error
+    with pytest.raises(
+        ValueError, match="Sample weights must contain at least one non-zero number"
+    ):
+        IsolationForest(n_estimators=3, random_state=0).fit(
+            X, sample_weight=np.zeros(X.shape[0])
+        )
+
+
 def test_iforest_parallel_regression(global_random_seed):
     """Check parallel regression."""
     rng = check_random_state(global_random_seed)

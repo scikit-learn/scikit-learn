@@ -774,8 +774,9 @@ class EstimatorRejectingSampleWeight(BaseEstimator):
 @pytest.mark.parametrize("accept_sample_weight", [False, True])
 @pytest.mark.parametrize("metadata_routing", [False, True])
 @pytest.mark.parametrize("max_samples", [10, 0.8])
+@pytest.mark.parametrize("bootstrap", [True, False])
 def test_draw_indices_using_sample_weight(
-    bagging_class, accept_sample_weight, metadata_routing, max_samples
+    bagging_class, accept_sample_weight, metadata_routing, max_samples, bootstrap
 ):
     X = np.arange(100).reshape(-1, 1)
     y = np.repeat([0, 1], 50)
@@ -797,12 +798,22 @@ def test_draw_indices_using_sample_weight(
         expected_integer_max_samples = int(max_samples * sample_weight.sum())
     else:
         expected_integer_max_samples = max_samples
+    if not bootstrap:
+        # zero-weight samples can never be drawn without replacement
+        expected_integer_max_samples = min(
+            expected_integer_max_samples, np.count_nonzero(sample_weight)
+        )
 
     with config_context(enable_metadata_routing=metadata_routing):
         # TODO(slep006): remove block when default routing is implemented
         if metadata_routing and accept_sample_weight:
             base_estimator = base_estimator.set_fit_request(sample_weight=True)
-        bagging = bagging_class(base_estimator, max_samples=max_samples, n_estimators=4)
+        bagging = bagging_class(
+            base_estimator,
+            max_samples=max_samples,
+            bootstrap=bootstrap,
+            n_estimators=4,
+        )
         bagging.fit(X, y, sample_weight=sample_weight)
         for estimator, samples in zip(bagging.estimators_, bagging.estimators_samples_):
             counts = np.bincount(samples, minlength=n_samples)
@@ -822,6 +833,20 @@ def test_draw_indices_using_sample_weight(
                 assert estimator.y_.shape == (expected_integer_max_samples,)
                 assert_allclose(estimator.X_, X[samples])
                 assert_allclose(estimator.y_, y[samples])
+
+
+@pytest.mark.parametrize("bagging_class", [BaggingRegressor, BaggingClassifier])
+def test_zero_sample_weight_without_replacement_raises(bagging_class):
+    # Non-regression test for gh-34673: all-zero weights are rejected with an
+    # informative error instead of a cryptic numpy failure.
+    X = np.arange(100).reshape(-1, 1)
+    y = np.repeat([0, 1], 50)
+    sample_weight = np.zeros(100)
+
+    with pytest.raises(
+        ValueError, match="Sample weights must contain at least one non-zero number"
+    ):
+        bagging_class(bootstrap=False).fit(X, y, sample_weight=sample_weight)
 
 
 def test_oob_score_removed_on_warm_start():
