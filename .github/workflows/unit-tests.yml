@@ -39,7 +39,6 @@ jobs:
       - name: Update pip >= 26.2.2
         run: |
           python -m pip install 'pip>=26.2.2'
-          python -c 'import pip, sys; from pip._vendor.packaging.version import Version; sys.exit(Version(pip.__version__) < Version("26.2.2"))'
 
       - name: Install linters
         run: |
