@@ -1032,9 +1032,6 @@ class _BaseKMeans(
                 f"n_samples={X.shape[0]} should be >= n_clusters={self.n_clusters}."
             )
 
-        # tol
-        self._tol = _tolerance(X, self.tol)
-
         # n-init
         if self.n_init == "auto":
             if isinstance(self.init, str) and self.init == "k-means++":
@@ -1612,13 +1609,15 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
+        X_input = X
         X = validate_data(
             self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
             order="C",
-            copy=self.copy_x,
+            # Dense X is copied by the out-of-place centering below.
+            copy=self.copy_x and sp.issparse(X),
             accept_large_sparse=False,
         )
 
@@ -1638,14 +1637,30 @@ class KMeans(_BaseKMeans):
         # subtract of mean of x for more accurate distance computations
         if not sp.issparse(X):
             X_mean = X.mean(axis=0)
-            # The copy was already done above
-            X -= X_mean
+            # validate_data only copies X to convert it, otherwise X can still
+            # be the user's data or a view of it (e.g. of a DataFrame). Then,
+            # centering out of place is the copy, in a single pass over X.
+            converted = isinstance(X_input, np.ndarray) and not np.may_share_memory(
+                X, X_input
+            )
+            if self.copy_x and not converted:
+                X = X - X_mean
+            else:
+                X -= X_mean
 
             if init_is_array_like:
                 init -= X_mean
 
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
+
+        if sp.issparse(X):
+            self._tol = _tolerance(X, self.tol)
+        else:
+            # X is centered: the mean of the feature variances is the mean squared
+            # norm of the rows divided by n_features. Unlike np.var, this needs no
+            # extra pass over X and no X-sized temporary.
+            self._tol = self.tol * x_squared_norms.mean() / X.shape[1]
 
         if self._algorithm == "elkan":
             kmeans_single = _kmeans_single_elkan
@@ -2079,6 +2094,8 @@ class MiniBatchKMeans(_BaseKMeans):
 
     def _check_params_vs_input(self, X):
         super()._check_params_vs_input(X, default_n_init=3)
+
+        self._tol = _tolerance(X, self.tol)
 
         self._batch_size = min(self.batch_size, X.shape[0])
 
