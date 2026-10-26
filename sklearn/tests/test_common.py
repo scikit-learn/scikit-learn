@@ -16,7 +16,7 @@ import pytest
 from scipy.linalg import LinAlgWarning
 
 import sklearn
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.compose import ColumnTransformer
 from sklearn.exceptions import ConvergenceWarning
 
@@ -412,6 +412,7 @@ def test_set_output_transform_configured(estimator_orig, check_func):
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
 def test_check_inplace_ensure_writeable(estimator):
+    estimator = clone(estimator)
     name = estimator.__class__.__name__
 
     if hasattr(estimator, "copy"):

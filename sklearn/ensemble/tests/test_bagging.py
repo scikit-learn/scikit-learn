@@ -13,7 +13,7 @@ import numpy as np
 import pytest
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -1101,6 +1101,7 @@ def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
 )
 def test_bagging_with_metadata_routing(model):
     """Make sure that metadata routing works with non-default estimator."""
+    model = clone(model)
     model.fit(iris.data, iris.target)
 
 
@@ -1172,4 +1173,5 @@ def test_metadata_routing_with_dynamic_method_selection(sub_estimator, caller, c
 def test_bagging_without_support_metadata_routing(model):
     """Make sure that we still can use an estimator that does not implement the
     metadata routing."""
+    model = clone(model)
     model.fit(iris.data, iris.target)
