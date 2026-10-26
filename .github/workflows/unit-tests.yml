@@ -378,7 +378,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
-          miniforge-version: latest
+          miniforge-version: 26.7.2-0
           auto-activate: true
           activate-environment: ""
 
