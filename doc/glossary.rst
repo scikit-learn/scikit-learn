@@ -251,7 +251,7 @@ General Concepts
         accepted wherever tabular :term:`array-like` inputs are expected.
 
         When passed as input, column names are used for feature name validation
-        and are recorded in the :term:`feature_names_in_` attribute.
+        and are recorded in the ``feature_names_in_`` attribute.
 
         Transformers can also be configured to output dataframes instead of
         NumPy arrays via :meth:`~base.TransformerMixin.set_output` (e.g.

@@ -1,3 +1,5 @@
+.. _data_interoperability:
+
 =====================
 Data Interoperability
 =====================
@@ -31,7 +33,7 @@ Scikit-learn handles four kinds of data for :term:`X` as used in `fit(X, y)`, `f
 
   Scikit-learn accepts dataframes supported by Narwhals (such as pandas, polars,
   and pyarrow). Estimators can accept dataframe inputs and use column names for
-  feature name tracking (:term:`feature_names_in_`). Transformers can also be
+  feature name tracking (``feature_names_in_``). Transformers can also be
   configured to output pandas or polars dataframes using the
   :ref:`df_output_transform` API.
 - Array API compliant arrays
