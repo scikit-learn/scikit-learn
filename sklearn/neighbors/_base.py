@@ -12,6 +12,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from joblib import effective_n_jobs
+from joblib.parallel import get_active_backend
 from scipy.sparse import csr_array, issparse
 
 from sklearn.base import BaseEstimator, MultiOutputMixin, is_classifier
@@ -907,9 +908,19 @@ class KNeighborsMixin:
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method
                 )
+            # Querying can take different amounts of time for different values.
+            # By having smaller parallel chunks of work, you don't end up with
+            # one worker still working while the rest sit idle, thus increasing
+            # effective parallelism. Given overhead of extra work, have more
+            # chunks only once the inputs are above a certain size.
+            n_slices = n_jobs
+            if X.shape[0] >= 10_000 and getattr(
+                get_active_backend(prefer="threads")[0], "uses_threads", False
+            ):
+                n_slices *= 25
             chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed(self._tree.query)(X[s], n_neighbors, return_distance)
-                for s in gen_even_slices(X.shape[0], n_jobs)
+                for s in gen_even_slices(X.shape[0], n_slices)
             )
         else:
             raise ValueError("internal: _fit_method not recognized")
