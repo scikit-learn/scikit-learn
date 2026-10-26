@@ -1,6 +1,7 @@
 - The parameters `C` of :class:`linear_model.LogisticRegression` and `Cs` of
   :class:`linear_model.LogisticRegressionCV` are deprecated and will be removed in
-  version 1.14. The relationship is
+  version 1.14. There are new parameters `alpha` and `alphas` instead with the
+  following relationship:
 
   - for `LogisticRegression`: `alpha = 1/C`
   - for `LogisticRegressionCV`: `alphas = Cs` for integer values, `alphas = 1/Cs` for
@@ -11,7 +12,7 @@
   - `alpha=1.0` for `LogisticRegression`, meaning it is the same default as `C=1.0`.
   - `alphas=10` for `LogisticRegressionCV`, meaning it is the same default as `Cs=10`.
 
-  This means, the defaults result in the same model as before (up to floating point
+  This means that the defaults result in the same models as before (up to floating point
   precision).
 
   With this change the penalty parameter of most linear models is `alpha`, the larger
