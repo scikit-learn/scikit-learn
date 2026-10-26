@@ -1333,7 +1333,7 @@ class RandomForestClassifier(ForestClassifier):
           supported by narwhals, meaning :func:`narwhals.from_native` must work.
           This is the case, for instance, for pandas and polars DataFrames.
 
-        For each categorical feature, there must be at most 255 unique
+        For each categorical feature, there must be at most 256 unique
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
@@ -1738,7 +1738,7 @@ class RandomForestRegressor(ForestRegressor):
           supported by narwhals, meaning :func:`narwhals.from_native` must work.
           This is the case, for instance, for pandas and polars DataFrames.
 
-        For each categorical feature, there must be at most 255 unique
+        For each categorical feature, there must be at most 256 unique
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.

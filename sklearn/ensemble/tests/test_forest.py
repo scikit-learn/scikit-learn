@@ -2077,8 +2077,8 @@ def test_categorical_absolute_error():
 
 @pytest.mark.parametrize("Forest", [ExtraTreesClassifier, ExtraTreesRegressor])
 def test_extratrees_high_cardinality_categorical(Forest):
-    """ExtraTrees accept >255 categories; RandomForest best-splits do not."""
-    # Include every level so cardinality is deterministic (>255), not sampled.
+    """ExtraTrees accept >256 categories; RandomForest best-splits do not."""
+    # Include every level so cardinality is deterministic (>256), not sampled.
     n_categories = 500
     X = np.arange(n_categories).reshape(-1, 1)
     y = X[:, 0] % 2
@@ -2090,9 +2090,7 @@ def test_extratrees_high_cardinality_categorical(Forest):
         if issubclass(Forest, ExtraTreesClassifier)
         else RandomForestRegressor
     )
-    with pytest.raises(
-        ValueError, match=r"Values for categorical features.*\[0, 255\]"
-    ):
+    with pytest.raises(ValueError, match="has 500 categories, but at most 256"):
         RF(categorical_features=[0], n_estimators=5, random_state=0).fit(X, y)
 
 

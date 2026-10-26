@@ -402,14 +402,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_n_categories = MAX_NUM_CATEGORIES
             else:
                 max_n_categories = MAX_NUM_CATEGORIES_RANDOM
-            base_msg = (
-                f"Values for categorical features should be integers in "
-                f"[0, {max_n_categories - 1}]."
-            )
-
-            max_encoded_value = categorical_counts.max() - 1
-            if max_encoded_value >= max_n_categories:
-                raise ValueError(f"{base_msg} Found {max_encoded_value}.")
+            if categorical_counts.max() > max_n_categories:
+                idx = categorical_counts.argmax()
+                raise ValueError(
+                    f"Categorical feature {idx} has {categorical_counts[idx]} "
+                    f"categories, but at most {max_n_categories} are supported "
+                    f"with splitter={self.splitter!r}."
+                )
 
         if has_categorical and self.splitter == "best":
             if self.n_outputs_ > 1:
@@ -938,7 +937,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
           supported by narwhals, meaning :func:`narwhals.from_native` must work.
           This is the case, for instance, for pandas and polars DataFrames.
 
-        For each categorical feature, there must be at most 255 unique
+        For each categorical feature, there must be at most 256 unique
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.
@@ -1337,7 +1336,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
           supported by narwhals, meaning :func:`narwhals.from_native` must work.
           This is the case, for instance, for pandas and polars DataFrames.
 
-        For each categorical feature, there must be at most 255 unique
+        For each categorical feature, there must be at most 256 unique
         categories. Missing values for categorical features should be
         represented by ``np.nan``; unknown categories at prediction time are
         also treated as missing values.

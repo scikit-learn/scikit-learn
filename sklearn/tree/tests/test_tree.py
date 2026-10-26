@@ -615,19 +615,24 @@ def test_error():
             est.apply(T)
 
         # Categorical cardinality limits depend on the splitter:
-        # - best (DecisionTree*): bitset capacity is 256 categories ([0, 255])
+        # - best (DecisionTree*): bitset capacity is 256 categories
         # - random (ExtraTree*): up to 2**24 - 1 categories via hash splits
         X_cat = np.array([f"cat_{idx}" for idx in range(257)], dtype=object).reshape(
             -1, 1
         )
         y_cat = np.arange(257) % 2
         est_cat = TreeEstimator(categorical_features=[0], random_state=0)
+        est_cat.fit(X_cat[:256], y_cat[:256])
         if name.startswith("Extra"):
             est_cat.fit(X_cat, y_cat)
             assert est_cat.tree_.node_count >= 1
         else:
             with pytest.raises(
-                ValueError, match=r"Values for categorical features.*\[0, 255\]"
+                ValueError,
+                match=(
+                    "Categorical feature 0 has 257 categories, but at most 256 "
+                    "are supported with splitter='best'"
+                ),
             ):
                 est_cat.fit(X_cat, y_cat)
 
@@ -3607,7 +3612,7 @@ def test_random_splitter_categorical(Tree, y, X):
 def test_random_splitter_high_cardinality_categorical(Tree):
     """Random splitter accepts >256 categories via hash splits."""
     n_categories = 500
-    # Include every level so cardinality is deterministic (>255), not sampled.
+    # Include every level so cardinality is deterministic (>256), not sampled.
     X = np.arange(n_categories).reshape(-1, 1)
     y = X[:, 0] % 2
     # DecisionTree defaults to splitter='best'; force random.
