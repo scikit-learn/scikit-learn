@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
+        uses: pypa/cibuildwheel@8c2dcd2e96041a619f5ff03c9638d7941e2553a4 # v4.3.3
         env:
           CIBW_BUILD: cp314-manylinux_x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
