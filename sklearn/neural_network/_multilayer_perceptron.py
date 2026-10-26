@@ -1757,7 +1757,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             y = column_or_1d(y, warn=True)
         return X, y
 
-    @available_if(lambda est: est._check_solver)
+    @available_if(lambda est: est._check_solver())
     @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, sample_weight=None):
         """Update the model with a single iteration over the given data.

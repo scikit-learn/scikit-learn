@@ -501,8 +501,18 @@ def test_partial_fit_errors():
     with pytest.raises(ValueError):
         MLPClassifier(solver="sgd").partial_fit(X, y, classes=[2])
 
-    # lbfgs doesn't support partial_fit
-    assert not hasattr(MLPClassifier(solver="lbfgs"), "partial_fit")
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+@pytest.mark.parametrize("solver", ["sgd", "adam", "lbfgs"])
+def test_partial_fit_available(MLPEstimator, solver):
+    """Check that partial_fit is available only for stochastic solvers."""
+    mlp = MLPEstimator(solver=solver)
+    assert hasattr(mlp, "partial_fit") == (solver != "lbfgs")
+
+    if solver == "lbfgs":
+        msg = f"This {MLPEstimator.__name__!r} has no attribute 'partial_fit'"
+        with pytest.raises(AttributeError, match=msg):
+            mlp.partial_fit([[3, 2], [1, 6]], [1, 0])
 
 
 def test_nonfinite_params():

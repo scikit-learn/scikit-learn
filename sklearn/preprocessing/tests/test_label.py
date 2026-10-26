@@ -3,6 +3,7 @@ import pytest
 from scipy.sparse import issparse
 
 from sklearn import config_context, datasets
+from sklearn.base import clone
 from sklearn.preprocessing._label import (
     LabelBinarizer,
     LabelEncoder,
@@ -880,6 +881,7 @@ def test_label_encoders_do_not_have_set_output(encoder):
 
     Non-regression test for #26854.
     """
+    encoder = clone(encoder)
     assert not hasattr(encoder, "set_output")
     y_encoded_with_kwarg = encoder.fit_transform(y=["a", "b", "c"])
     y_encoded_positional = encoder.fit_transform(["a", "b", "c"])

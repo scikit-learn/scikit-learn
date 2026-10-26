@@ -3,6 +3,7 @@ from collections import Counter
 import numpy as np
 import pytest
 
+from sklearn.base import clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_breast_cancer, make_classification
 from sklearn.exceptions import NotFittedError
@@ -456,6 +457,7 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
     ],
 )
 def test_precision_recall_display_pipeline(pyplot, clf):
+    clf = clone(clf)
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     with pytest.raises(NotFittedError):
         PrecisionRecallDisplay.from_estimator(clf, X, y)

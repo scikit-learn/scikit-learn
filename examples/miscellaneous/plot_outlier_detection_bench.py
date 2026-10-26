@@ -209,7 +209,7 @@ y = y.div(X["Lot_Area"])
 X["Misc_Feature"] = X["Misc_Feature"].cat.add_categories("NoInfo").fillna("NoInfo")
 X["Mas_Vnr_Type"] = X["Mas_Vnr_Type"].cat.add_categories("NoInfo").fillna("NoInfo")
 
-X.drop(columns="Lot_Area", inplace=True)
+X = X.drop(columns="Lot_Area")
 mask = (y < 40) | (y > 70)
 X = X.loc[mask]
 y = y.loc[mask]
