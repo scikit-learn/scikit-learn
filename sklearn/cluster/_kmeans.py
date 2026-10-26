@@ -335,7 +335,8 @@ def _kmeans_plusplus(
 
     # Pick the remaining n_clusters-1 points
     for c in range(1, n_clusters):
-        # Read the half written by the previous step, write in the other half.
+        # Read the half written by the previous step, write in the other
+        # half of the two "ping-pong" arrays.
         in_idx = (c - 1) % 2
         out_idx = c % 2
         closest_dist_sq = trials_dist_sq[in_idx, best_trial_idx]
