@@ -644,6 +644,12 @@ def test_resample_stratify_2dy():
     assert y.ndim == 2
 
 
+def test_resample_stratify_2dy_string_labels_with_spaces():
+    y = np.array([["a b", "c"], ["a", "b c"], ["a b", "c"], ["a", "b c"]])
+    y_resampled = resample(y, n_samples=2, random_state=1, stratify=y)
+    assert_array_equal(np.unique(y_resampled, axis=0), np.unique(y, axis=0))
+
+
 def test_notimplementederror():
     with pytest.raises(
         NotImplementedError,

@@ -575,9 +575,9 @@ def resample(
         # Code adapted from StratifiedShuffleSplit()
         y = check_array(stratify, ensure_2d=False, dtype=None)
         if y.ndim == 2:
-            # for multi-label y, map each distinct row to a string repr
-            # using join because str(row) uses an ellipsis if len(row) > 1000
-            y = np.array([" ".join(row.astype("str")) for row in y])
+            # For multi-label y, map each distinct row to a string repr. Using
+            # tuples avoids collisions between values containing spaces.
+            y = np.array([repr(tuple(row.astype("str"))) for row in y])
 
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
