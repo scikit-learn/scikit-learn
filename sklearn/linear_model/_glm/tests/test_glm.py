@@ -456,16 +456,19 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
             # (Stochastic) Gradient Descent (https://doi.org/10.1137/0707027) as well
             # as Newton CG (https://doi.org/10.1137/0709016) are known to converge
             # to the minimal distance ||x - x0||_2 from the initial point x0 (subject
-            # to y = prediction). Why LBFGS also converge to the minimum norm solution
+            # to y = prediction). Why LBFGS also converges to the minimum norm solution
             # is not known.
             assert norm_model == pytest.approx(norm_solution)
             assert model.intercept_ == pytest.approx(intercept, rel=rtol)
             assert_allclose(model.coef_, coef, rtol=rtol)
 
 
+@pytest.mark.parametrize("container", [np.asarray, scipy.sparse.csr_matrix])
 @pytest.mark.parametrize("solver", SOLVERS)
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_dataset):
+def test_glm_regression_unpenalized_hstacked_X(
+    container, solver, fit_intercept, glm_dataset
+):
     """Test that unpenalized GLM converges for all solvers to correct solution.
 
     We work with a simple constructed data set with known solution.
@@ -499,6 +502,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         intercept = 0
         X = 0.5 * np.concatenate((X, X), axis=1)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
+    X = container(X)
 
     with warnings.catch_warnings():
         if solver == "newton-cholesky":

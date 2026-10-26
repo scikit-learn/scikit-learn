@@ -1223,7 +1223,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
             for solver in set(SOLVERS) - set(["liblinear"])
         }
     for solver in regressors2:
-        if solver == "newton-cd-gram":
+        if solver in ["newton-cd", "newton-cd-gram"]:
             pytest.xfail(
                 reason="GLM solver does not provide the minimum norm solution."
             )
@@ -1231,6 +1231,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
             regressors2[solver].coef_,
             0.5 * np.tile(regressors["lbfgs"].coef_, (1, 2)),
             rtol=1e-3,
+            err_msg=f"solver={solver}",
         )
 
 

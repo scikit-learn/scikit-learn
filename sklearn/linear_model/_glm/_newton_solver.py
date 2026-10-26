@@ -932,22 +932,50 @@ class NewtonCholeskySolver(NewtonSolver):
     def finalize(self, X, y, sample_weight):
         if self.has_already_warned and not self.linear_loss.base_loss.is_multiclass:
             # X might be singular, try to find minimum norm solution.
-            if self.linear_loss.fit_intercept:
-                Xe = np.concatenate(
-                    (X, np.ones((X.shape[0], 1), dtype=X.dtype)), axis=1
-                )
+            if not sparse.issparse(X):
+                if self.linear_loss.fit_intercept:
+                    Xe = np.concatenate(
+                        (X, np.ones((X.shape[0], 1), dtype=X.dtype)), axis=1
+                    )
+                else:
+                    Xe = X
+                eps = np.finfo(X.dtype).eps
+                # As long as Xe @ coef remains constant, we are allowed to change coef.
+                # This corresponds to the nullspace Z of Xe.
+                Z = _null_space(Xe, rcond=np.sqrt(eps))
+                if Z.shape[1] > 0:
+                    # For any x of length Z.shape[1], we are free to add Z @ x to the
+                    # coefficients: coef_new = coef + Z @ x. We want to minimize
+                    # ||coef_new||_2^2 = ||coef + Z @ x||_2^2 which is a least squares.
+                    res = scipy.linalg.lstsq(Z, -self.coef)
+                    self.coef += Z @ res[0]
             else:
-                Xe = X
-            eps = np.finfo(X.dtype).eps
-            # As long as Xe @ coef remains constant, we are allowed to change coef.
-            # This corresponds to the nullspace Z of Xe.
-            Z = _null_space(Xe, rcond=np.sqrt(eps))
-            if Z.shape[1] > 0:
-                # For any x of length Z.shape[1], we are free to add Z @ x to the
-                # coefficients: coef_new = coef + Z @ x. We want to minimize
-                # ||coef_new||_2^2 = ||coef + Z @ x||_2^2 which is a least squares.
-                res = scipy.linalg.lstsq(Z, -self.coef)
-                self.coef += Z @ res[0]
+                # We directly search for
+                #   min_x ||x||_2^2  s.t. X @ x = X @ coef
+                # This is a least squares problem with A = X and b = X @ coef.
+                b = self.raw_prediction
+                n_samples, n_dof = X.shape
+                if self.linear_loss.fit_intercept:
+                    n_dof += 1
+
+                    def mv(c):
+                        return X @ c[:-1] + c[-1]
+
+                    def rmv(b):
+                        return np.concatenate((X.T @ b, [np.sum(b)]), axis=0)
+                else:
+
+                    def mv(c):
+                        return X @ c
+
+                    def rmv(b):
+                        return X.T @ b
+
+                A = sparse.linalg.LinearOperator(
+                    (n_samples, n_dof), matvec=mv, rmatvec=rmv, dtype=X.dtype
+                )
+                res = scipy.sparse.linalg.lsmr(A, b)
+                self.coef = res[0]
 
         if self.is_multinomial_no_penalty:
             # Our convention is usually the symmetric parametrization where
