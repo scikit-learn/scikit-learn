@@ -1609,15 +1609,13 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
-        X_input = X
         X = validate_data(
             self,
             X,
             accept_sparse="csr",
             dtype=[np.float64, np.float32],
             order="C",
-            # Dense X is copied by the out-of-place centering below.
-            copy=self.copy_x and sp.issparse(X),
+            copy=self.copy_x,
             accept_large_sparse=False,
         )
 
@@ -1637,16 +1635,8 @@ class KMeans(_BaseKMeans):
         # subtract of mean of x for more accurate distance computations
         if not sp.issparse(X):
             X_mean = X.mean(axis=0)
-            # validate_data only copies X to convert it, otherwise X can still
-            # be the user's data or a view of it (e.g. of a DataFrame). Then,
-            # centering out of place is the copy, in a single pass over X.
-            converted = isinstance(X_input, np.ndarray) and not np.may_share_memory(
-                X, X_input
-            )
-            if self.copy_x and not converted:
-                X = X - X_mean
-            else:
-                X -= X_mean
+            # The copy was already done above
+            X -= X_mean
 
             if init_is_array_like:
                 init -= X_mean

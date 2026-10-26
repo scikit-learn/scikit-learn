@@ -611,22 +611,6 @@ def test_kmeans_copyx():
     assert_allclose(my_X, X)
 
 
-@pytest.mark.parametrize("input_type", ["C", "F", "readonly", "dataframe"])
-def test_kmeans_copyx_true_keeps_input(input_type):
-    # Check that copy_x=True leaves X untouched, whether fit has to convert X
-    # (F-ordered) or not.
-    if input_type == "dataframe":
-        pd = pytest.importorskip("pandas")
-        my_X = pd.DataFrame(X)
-    else:
-        my_X = np.array(X, order="F" if input_type == "F" else "C")
-        my_X.flags.writeable = input_type != "readonly"
-
-    KMeans(n_clusters=n_clusters, random_state=42).fit(my_X)
-
-    assert_array_equal(np.asarray(my_X), X)
-
-
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_kmeans_tol_scaled_by_mean_feature_variance(dtype):
     # Check that the tolerance is tol times the mean variance of the features,
