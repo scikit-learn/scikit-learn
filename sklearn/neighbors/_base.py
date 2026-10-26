@@ -917,7 +917,7 @@ class KNeighborsMixin:
             if X.shape[0] >= 10_000 and getattr(
                 get_active_backend(prefer="threads")[0], "uses_threads", False
             ):
-                n_slices *= 25
+                n_slices *= 50
             chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed(self._tree.query)(X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_slices)
