@@ -507,10 +507,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 max_n_categories = MAX_NUM_CATEGORIES
             else:
                 max_n_categories = MAX_NUM_CATEGORIES_RANDOM
-            base_msg = (
-                f"Values for categorical features should be integers in "
-                f"[0, {max_n_categories - 1}]."
-            )
 
             category_counts = self._categorical_counts[self.is_categorical_]
 
@@ -518,9 +514,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 np.flatnonzero(self.is_categorical_), category_counts
             ):
                 n_categories[idx] = n_cats
-                max_encoded_value = n_cats - 1
-                if max_encoded_value >= max_n_categories:
-                    raise ValueError(f"{base_msg} Found {max_encoded_value}.")
+                if n_cats > max_n_categories:
+                    raise ValueError(
+                        f"Categorical feature {idx} has {n_cats} unique categories, "
+                        f"but at most {max_n_categories} are supported with splitter='{self.splitter}'."
+                    )
 
         if has_categorical and self.splitter == "best":
             if self.n_outputs_ > 1:
