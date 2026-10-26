@@ -561,8 +561,6 @@ class LinearRegression(RegressorMixin, MultiOutputLinearModel):
         on the regression coefficients and a linear regression without such constraints,
         see :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     coef_ : array of shape (n_features, ) or (n_targets, n_features)
@@ -583,8 +581,6 @@ class LinearRegression(RegressorMixin, MultiOutputLinearModel):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -665,9 +661,6 @@ class LinearRegression(RegressorMixin, MultiOutputLinearModel):
 
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample.
-
-            .. versionadded:: 0.17
-               parameter *sample_weight* support to LinearRegression.
 
         Returns
         -------

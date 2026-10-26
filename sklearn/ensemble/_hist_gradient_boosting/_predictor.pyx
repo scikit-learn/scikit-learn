@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cython.parallel import prange
-from libc.math cimport isnan
 import numpy as np
 
 from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset_2d_memoryview
-from sklearn.utils._typedefs cimport intp_t, uint8_t
+from sklearn.utils._typedefs cimport intp_t, uint8_t, inlinable_isnan
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
@@ -55,16 +54,13 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
 
         data_val = numeric_data[row, node.feature_idx]
 
-        if isnan(data_val):
+        if inlinable_isnan(data_val):
             if node.missing_go_to_left:
                 node_idx = node.left
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            if data_val < 0:
-                # data_val is not in the accepted range, so it is treated as missing value
-                node_idx = node.left if node.missing_go_to_left else node.right
-            elif in_bitset_2d_memoryview(
+            if in_bitset_2d_memoryview(
                     raw_left_cat_bitsets,
                     <X_BINNED_DTYPE_C>data_val,
                     node.bitset_idx):

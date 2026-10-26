@@ -5,7 +5,7 @@ import itertools
 
 import numpy as np
 import pytest
-from scipy import linalg, sparse
+from scipy import linalg, sparse, stats
 from scipy.linalg import eigh, null_space
 from scipy.sparse.linalg import eigsh
 
@@ -53,7 +53,6 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     DOK_CONTAINERS,
     LIL_CONTAINERS,
-    _mode,
     _sparse_random_array,
 )
 
@@ -78,7 +77,7 @@ def test_uniform_weights():
     weights = np.ones(x.shape)
 
     for axis in (None, 0, 1):
-        mode, score = _mode(x, axis)
+        mode, score = stats.mode(x, axis=axis, keepdims=axis is not None)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
         assert_array_equal(mode, mode2)
@@ -1041,7 +1040,7 @@ def test_safe_sparse_dot_nd(csr_container):
     # sparse / dense ND
     A = rng.random_sample((2, 3))
     B = rng.random_sample((4, 5, 3, 6))
-    expected = np.dot(A, B)
+    expected = np.tensordot(A, B, axes=[-1, -2])
     A = csr_container(A)
     actual = safe_sparse_dot(A, B)
     assert_allclose(actual, expected)
