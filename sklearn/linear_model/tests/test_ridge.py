@@ -1533,6 +1533,7 @@ def test_ridge_array_api_compliance(
 def test_ridge_classifier_multilabel_array_api(
     estimator, array_namespace, device_name, dtype_name
 ):
+    estimator = clone(estimator)
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, y = make_multilabel_classification(random_state=0)
     X_np = X.astype(dtype_name)
