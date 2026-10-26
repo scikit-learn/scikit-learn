@@ -23,6 +23,7 @@ from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent_sparse,
 )
 from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.utils.extmath import _null_space
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.optimize import _check_optimize_result
 
@@ -920,7 +921,7 @@ class NewtonCholeskySolver(NewtonSolver):
             eps = np.finfo(X.dtype).eps
             # As long as Xe @ coef remains constant, we are allowed to change coef.
             # This corresponds to the nullspace Z of Xe.
-            Z = scipy.linalg.null_space(Xe, rcond=np.sqrt(eps))
+            Z = _null_space(Xe, rcond=np.sqrt(eps))
             if Z.shape[1] > 0:
                 # For any x of length Z.shape[1], we are free to add Z @ x to the
                 # coefficients: coef_new = coef + Z @ x. We want to minimize
