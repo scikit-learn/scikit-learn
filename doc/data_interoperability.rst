@@ -27,9 +27,13 @@ Scikit-learn handles four kinds of data for :term:`X` as used in `fit(X, y)`, `f
   To control whether it returns a sparse matrix or a sparse array, use
   `sparse_interface` in :func:`config_context` or :func:`set_config`.
   This also controls whether sparse attributes are sparse matrices or sparse arrays.
-- tabular data: pandas and polars dataframes
+- tabular data: :term:`dataframes <dataframe>` (pandas, polars, pyarrow)
 
-  See :ref:`df_output_transform`.
+  Scikit-learn accepts dataframes supported by Narwhals (such as pandas, polars,
+  and pyarrow). Estimators can accept dataframe inputs and use column names for
+  feature name tracking (:term:`feature_names_in_`). Transformers can also be
+  configured to output pandas or polars dataframes using the
+  :ref:`df_output_transform` API.
 - Array API compliant arrays
 
   Very importantly, this includes arrays on the GPU, see :ref:`array_api`.

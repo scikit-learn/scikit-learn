@@ -239,6 +239,28 @@ General Concepts
         rounds of cross validation are generally performed.
         See :ref:`User Guide <cross_validation>` for more details.
 
+    dataframe
+    dataframes
+        A two-dimensional tabular data structure with labeled axes (rows and
+        columns), such as a :class:`pandas.DataFrame`, :class:`polars.DataFrame`,
+        or PyArrow Table.
+
+        Scikit-learn accepts dataframes as input to estimators and functions via
+        `Narwhals <https://narwhals-dev.github.io/narwhals/>`_. Any dataframe
+        supported by Narwhals, meaning :func:`narwhals.from_native` works, is
+        accepted wherever tabular :term:`array-like` inputs are expected.
+
+        When passed as input, column names are used for feature name validation
+        and are recorded in the :term:`feature_names_in_` attribute.
+
+        Transformers can also be configured to output dataframes instead of
+        NumPy arrays via :meth:`~base.TransformerMixin.set_output` (e.g.
+        ``set_output(transform="pandas")`` or ``set_output(transform="polars")``)
+        or globally via :func:`set_config`.
+
+        See :ref:`data_interoperability` and :ref:`df_output_transform` for more
+        details.
+
     deprecation
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to:
