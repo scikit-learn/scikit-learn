@@ -1,0 +1,5 @@
+- :class:`compose.TransformedTargetRegressor` now correctly propagates the
+  `pairwise` tag from the wrapped `regressor`, fixing `GridSearchCV` and
+  other cross-validation tools that previously failed to correctly split a
+  precomputed distance matrix when the wrapped regressor requires one.
+  By :user:`Rohan Mukka <RohanMukka>`.
