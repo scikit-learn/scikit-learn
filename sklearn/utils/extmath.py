@@ -1207,13 +1207,8 @@ def _incremental_mean_and_var(
     )
 
     with context_manager:
-        # Cumulative-sum mean update. It overflows on long streams with
-        # large values (issue #5602).
         updated_mean = (last_sum + new_sum) / updated_sample_count
         if not xp.all(xp.isfinite(updated_mean)):
-            # Fallback: delta-based update (Chan, Golub, LeVeque 1979,
-            # Eq. 2.1a). It never reconstructs the cumulative sum, so it
-            # cannot overflow, at the cost of a small precision loss.
             safe_new_count = xp.where(
                 new_sample_count > 0,
                 new_sample_count,
@@ -1291,7 +1286,9 @@ def _incremental_mean_and_var(
                     * new_sample_count
                     / updated_sample_count
                 )
-                updated_unnormalized_variance_safe[zeros] = new_unnormalized_variance[zeros]
+                updated_unnormalized_variance_safe[zeros] = (
+                    new_unnormalized_variance[zeros]
+                )
                 updated_variance_safe = (
                     updated_unnormalized_variance_safe / updated_sample_count
                 )
