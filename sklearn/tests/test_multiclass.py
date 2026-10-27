@@ -166,6 +166,46 @@ def test_ovr_partial_fit_exceptions():
         ovr.partial_fit(X=X[7:], y=y1)
 
 
+@pytest.mark.parametrize("classes", [None, [0, 1, 2]])
+@pytest.mark.parametrize("sparse_y", [False, True])
+def test_ovr_partial_fit_multilabel_indicator(classes, sparse_y):
+    # Non-regression test for #8381: partial_fit on a multilabel indicator matrix
+    # fails, while fit works.
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 5, size=(40, 6))
+    Y = (rng.rand(40, 3) > 0.5).astype(int)
+    if sparse_y:
+        Y = sp.csr_matrix(Y)
+
+    ovr = OneVsRestClassifier(MultinomialNB())
+    ovr.partial_fit(X[:20], Y[:20], classes)
+    ovr.partial_fit(X[20:], Y[20:])
+
+    ovr_full = OneVsRestClassifier(MultinomialNB()).fit(X, Y)
+    assert_array_equal(ovr.classes_, ovr_full.classes_)
+    assert ovr.label_binarizer_.y_type_ == "multilabel-indicator"
+    pred, pred_full = ovr.predict(X), ovr_full.predict(X)
+    if sparse_y:
+        pred, pred_full = pred.toarray(), pred_full.toarray()
+    assert_array_equal(pred, pred_full)
+    assert_almost_equal(ovr.predict_proba(X), ovr_full.predict_proba(X))
+
+
+def test_ovr_partial_fit_multilabel_indicator_errors():
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 5, size=(20, 6))
+    Y = (rng.rand(20, 3) > 0.5).astype(int)
+
+    msg = "For a multilabel indicator matrix y, `classes` must be omitted"
+    with pytest.raises(ValueError, match=msg):
+        OneVsRestClassifier(MultinomialNB()).partial_fit(X, Y, ["a", "b", "c"])
+
+    ovr = OneVsRestClassifier(MultinomialNB()).partial_fit(X, Y)
+    msg = "y has 2 columns while the classifier was fitted with 3 classes"
+    with pytest.raises(ValueError, match=msg):
+        ovr.partial_fit(X, Y[:, :2])
+
+
 def test_ovr_ovo_regressor():
     # test that ovr and ovo work on regressors which don't have a decision_
     # function
