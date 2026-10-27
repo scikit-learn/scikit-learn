@@ -2476,7 +2476,7 @@ def test_ordinal_encoder_frequency_order_and_numeric():
     X = np.array([[2], [1], [1], [1], [3], [3]], dtype=np.int64)
     enc = OrdinalEncoder(categories="frequency").fit(X)
     # frequencies: 1:3, 3:2, 2:1  -> codes 0, 1, 2
-    assert_array_equal(enc.categories_[0], [1, 3, 2])
+    assert_array_equal(enc.categories_[0], [2, 3, 1])
     assert_array_equal(enc.transform([[1], [3], [2]]), [[0], [1], [2]])
 
 

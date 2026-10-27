@@ -225,7 +225,14 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
-            X_int[:, i] = _encode(Xi, uniques=self.categories_[i])
+            if self.categories == "frequency" and np.issubdtype(Xi.dtype, np.number):
+                sorter = np.argsort(self.categories_[i], kind="stable")
+                codes = _encode(Xi, uniques=self.categories_[i][sorter])
+                known = codes != -1
+                codes[known] = sorter[codes[known]]
+                X_int[:, i] = codes
+            else:
+                X_int[:, i] = _encode(Xi, uniques=self.categories_[i])
             X_mask[:, i] = X_int[:, i] != -1
             if not np.all(X_mask[:, i]):
                 if handle_unknown == "error":
