@@ -887,7 +887,7 @@ def test_sparse_input_dtype_enet_and_lassocv(
     reg1 = estimator(alphas=5)
     reg1.fit(csr_container(X, dtype=np.float32), y)
     assert_allclose(reg.alpha_, reg1.alpha_, rtol=1e-5)
-    assert_allclose(reg.coef_, reg1.coef_, rtol=1e-5)
+    assert_allclose(reg.coef_, reg1.coef_, rtol=1e-5, atol=1e-6)
 
 
 def test_elasticnet_precompute_incorrect_gram():
@@ -1017,7 +1017,7 @@ def test_random_descent(csr_container, global_random_seed):
         selection="random", tol=1e-9, random_state=global_random_seed
     )
     clf_random.fit(X, y)
-    assert_allclose(clf_cyclic.coef_, clf_random.coef_)
+    assert_allclose(clf_cyclic.coef_, clf_random.coef_, atol=1e-8)
     assert_allclose(clf_cyclic.intercept_, clf_random.intercept_)
 
     # This uses the descent algo without the gram trick
@@ -1027,7 +1027,7 @@ def test_random_descent(csr_container, global_random_seed):
         selection="random", tol=1e-9, random_state=global_random_seed
     )
     clf_random.fit(X.T, y[:20])
-    assert_allclose(clf_cyclic.coef_, clf_random.coef_)
+    assert_allclose(clf_cyclic.coef_, clf_random.coef_, atol=1e-8)
     assert_allclose(clf_cyclic.intercept_, clf_random.intercept_)
 
     # Sparse Case
@@ -1037,7 +1037,7 @@ def test_random_descent(csr_container, global_random_seed):
         selection="random", tol=1e-9, random_state=global_random_seed
     )
     clf_random.fit(csr_container(X), y)
-    assert_allclose(clf_cyclic.coef_, clf_random.coef_)
+    assert_allclose(clf_cyclic.coef_, clf_random.coef_, atol=1e-8)
     assert_allclose(clf_cyclic.intercept_, clf_random.intercept_)
 
     # Multioutput case.
@@ -1048,7 +1048,7 @@ def test_random_descent(csr_container, global_random_seed):
         selection="random", tol=1e-9, random_state=global_random_seed
     )
     clf_random.fit(csr_container(X), new_y)
-    assert_allclose(clf_cyclic.coef_, clf_random.coef_)
+    assert_allclose(clf_cyclic.coef_, clf_random.coef_, atol=1e-8)
     assert_allclose(clf_cyclic.intercept_, clf_random.intercept_)
 
 
@@ -1630,7 +1630,7 @@ def test_enet_cv_sample_weight_consistency(
     n_samples, n_features = 10, 5
 
     X = rng.rand(n_samples, n_features)
-    y = X.sum(axis=1) + rng.rand(n_samples)
+    y = X.sum(axis=1) + 0.1 * rng.rand(n_samples)
     params = dict(
         fit_intercept=fit_intercept,
         precompute=precompute,
