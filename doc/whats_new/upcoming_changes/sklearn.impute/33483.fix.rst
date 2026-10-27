@@ -1,0 +1,6 @@
+- :class:`impute.SimpleImputer` now correctly preserves the integer dtype when
+  fitted on a pandas DataFrame backed by a pyarrow integer extension array
+  (e.g., ``int32[pyarrow]``). Previously, the imputer would incorrectly record
+  ``float64`` as the fitted dtype, causing a ``ValueError`` when subsequently
+  calling ``transform`` on a standard numpy-backed integer DataFrame.
+  By :user:`Fadi Younes <repeating>`.
