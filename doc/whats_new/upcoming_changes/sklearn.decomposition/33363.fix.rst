@@ -1,0 +1,6 @@
+- Fix :class:`~sklearn.decomposition.LatentDirichletAllocation` perplexity
+  normalization so the topic-word prior term is scaled by the fitted component mass
+  instead of the evaluation-document word count. This removes spurious large changes
+  when evaluating perplexity on small datasets and improves consistency with
+  :meth:`~sklearn.decomposition.LatentDirichletAllocation.score`.
+  By :user:`gustavorubim`.
