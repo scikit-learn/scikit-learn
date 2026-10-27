@@ -8,32 +8,23 @@ from io import StringIO
 from pathlib import Path
 
 from sklearn import config_context
-
-
-class _IDCounter:
-    """Generate sequential ids with a prefix."""
-
-    def __init__(self, prefix):
-        self.prefix = prefix
-        self.count = 0
-
-    def get_id(self):
-        self.count += 1
-        return f"{self.prefix}-{self.count}"
+from sklearn.utils._repr_html.base import _IDCounter
+from sklearn.utils._repr_html.features import _features_html
 
 
 def _get_css_style():
     estimator_css_file = Path(__file__).parent / "estimator.css"
     params_css_file = Path(__file__).parent / "params.css"
+    features_css_file = Path(__file__).parent / "features.css"
 
     estimator_css = estimator_css_file.read_text(encoding="utf-8")
     params_css = params_css_file.read_text(encoding="utf-8")
+    features_css = features_css_file.read_text(encoding="utf-8")
 
-    return f"{estimator_css}\n{params_css}"
+    return f"{estimator_css}\n{params_css}\n{features_css}"
 
 
 _CONTAINER_ID_COUNTER = _IDCounter("sk-container-id")
-_ESTIMATOR_ID_COUNTER = _IDCounter("sk-estimator-id")
 _CSS_STYLE = _get_css_style()
 
 
@@ -107,13 +98,15 @@ class _VisualBlock:
 def _write_label_html(
     out,
     params,
+    attrs,
     name,
     name_details,
     name_caption=None,
     doc_link_label=None,
+    features=None,
     outer_class="sk-label-container",
     inner_class="sk-label",
-    checked=False,
+    open=False,
     doc_link="",
     is_fitted_css_class="",
     is_fitted_icon="",
@@ -129,6 +122,9 @@ def _write_label_html(
         If estimator has `get_params` method, this is the HTML representation
         of the estimator's parameters and their values. When the estimator
         does not have `get_params`, it is an empty string.
+    attrs: str
+        If estimator is fitted, this is the HTML representation of its
+        fitted attributes.
     name : str
         The label for the estimator. It corresponds either to the estimator class name
         for a simple estimator or in the case of a `Pipeline` and `ColumnTransformer`,
@@ -146,7 +142,7 @@ def _write_label_html(
         The CSS class for the outer container.
     inner_class : {"sk-label", "sk-estimator"}, default="sk-label"
         The CSS class for the inner container.
-    checked : bool, default=False
+    open : bool, default=False
         Whether the dropdown is folded or not. With a single estimator, we intend to
         unfold the content.
     doc_link : str, default=""
@@ -170,8 +166,8 @@ def _write_label_html(
     name = html.escape(name)
     if name_details is not None:
         name_details = html.escape(str(name_details))
-        checked_str = "checked" if checked else ""
-        est_id = _ESTIMATOR_ID_COUNTER.get_id()
+        open_str = "open" if open else ""
+        hide_marker = name == "passthrough" or name_details == "[]"
 
         if doc_link:
             doc_label = "<span>Online documentation</span>"
@@ -183,47 +179,55 @@ def _write_label_html(
                 f'<a class="sk-estimator-doc-link {is_fitted_css_class}"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
-        if name == "passthrough" or name_details == "[]":
+        if hide_marker:
             name_caption = ""
-        name_caption_div = (
+        name_caption_span = (
             ""
             if name_caption is None or name_caption == ""
-            else f'<div class="caption">{html.escape(name_caption)}</div>'
+            else f'<span class="caption">{html.escape(name_caption)}</span>'
         )
-        name_caption_div = f"<div><div>{name}</div>{name_caption_div}</div>"
-        links_div = (
-            f"<div>{doc_link}{is_fitted_icon}</div>"
+        name_caption_span = (
+            f'<span class="sk-toggleable__label-name"><span>{name}</span>'
+            f"{name_caption_span}</span>"
+        )
+        links_span = (
+            f"<span>{doc_link}{is_fitted_icon}</span>"
             if doc_link or is_fitted_icon
             else ""
         )
-        label_arrow_class = (
-            "" if name == "passthrough" else "sk-toggleable__label-arrow"
-        )
-
+        no_marker_class = " sk-toggleable__label--no-marker" if hide_marker else ""
         label_html = (
-            f'<label for="{est_id}" class="sk-toggleable__label {is_fitted_css_class} '
-            f'{label_arrow_class}">{name_caption_div}{links_div}</label>'
+            f'<summary class="sk-toggleable__label'
+            f' {is_fitted_css_class}{no_marker_class}">'
+            f'<span class="sk-toggleable__label-content">'
+            f"{name_caption_span}{links_span}</span></summary>"
         )
 
-        fmt_str = (
-            f'<input class="sk-toggleable__control sk-hidden--visually '
-            f'sk-global" id="{est_id}" '
-            f'type="checkbox" {checked_str}>{label_html}<div '
+        out.write(
+            f'<details class="sk-toggleable" {open_str}>{label_html}<div '
             f'class="sk-toggleable__content {is_fitted_css_class}" '
             f'data-param-prefix="{html.escape(param_prefix)}">'
         )
 
-        if params:
-            fmt_str = "".join([fmt_str, f"{params}</div>"])
-        elif name_details and ("Pipeline" not in name):
-            if name == "passthrough" or name_details == "[]":
+        out.write(params)
+        out.write(attrs)
+        if name_details and ("Pipeline" not in name) and not params:
+            if hide_marker:
                 name_details = ""
-            fmt_str = "".join([fmt_str, f"<pre>{name_details}</pre></div>"])
+            out.write(f"<pre>{name_details}</pre>")
 
-        out.write(fmt_str)
+        out.write("</div></details>")
+        if features is None or len(features) == 0:
+            features_div = ""
+        else:
+            features_div = _features_html(features, is_fitted_css_class)
+
+        out.write("</div></div>")
+        out.write(features_div)
+
     else:
         out.write(f"<label>{name}</label>")
-    out.write("</div></div>")  # outer_class inner_class
+        out.write("</div></div>")  # outer_class inner_class
 
 
 def _get_visual_block(estimator):
@@ -312,6 +316,8 @@ def _write_estimator_html(
         The prefix to prepend to parameter names for nested estimators.
         For example, in a pipeline this might be "pipeline__stepname__".
     """
+    from sklearn.compose import ColumnTransformer
+
     if first_call:
         est_block = _get_visual_block(estimator)
     else:
@@ -323,11 +329,14 @@ def _write_estimator_html(
         doc_link = estimator._get_doc_link()
     else:
         doc_link = ""
+
+    has_feature_names_out = hasattr(estimator, "get_feature_names_out")
+    is_not_pipeline_step = not hasattr(estimator, "steps")
+
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
-
         if estimator_label:
             if hasattr(estimator, "get_params") and hasattr(
                 estimator, "_get_params_html"
@@ -335,13 +344,24 @@ def _write_estimator_html(
                 params = estimator._get_params_html(False, doc_link)._repr_html_inner()
             else:
                 params = ""
+            if (
+                hasattr(estimator, "_get_fitted_attr_html")
+                and is_fitted_css_class == "fitted"
+            ):
+                fitted_attrs = estimator._get_fitted_attr_html(doc_link)
+                attrs = fitted_attrs._repr_html_inner() if len(fitted_attrs) > 0 else ""
+
+            else:
+                attrs = ""
 
             _write_label_html(
                 out,
                 params,
+                attrs,
                 estimator_label,
                 estimator_label_details,
                 doc_link=doc_link,
+                features=None,
                 is_fitted_css_class=is_fitted_css_class,
                 is_fitted_icon=is_fitted_icon,
                 param_prefix=param_prefix,
@@ -386,8 +406,41 @@ def _write_estimator_html(
                 )
                 out.write("</div>")  # sk-parallel-item
 
-        out.write("</div></div>")
+        out.write("</div>")
+
+        is_column_transformer = isinstance(estimator, ColumnTransformer)
+        has_single_estimator = len(est_block.estimators) == 1
+        if (
+            is_fitted_css_class
+            and has_feature_names_out
+            and is_not_pipeline_step
+            and not (is_column_transformer and has_single_estimator)
+        ):
+            try:
+                output_features = estimator.get_feature_names_out()
+            except Exception:
+                output_features = None
+
+            if output_features is not None:
+                features_div = _features_html(output_features, is_fitted_css_class)
+                total_output_features_item = (
+                    f"<div class='total_features'>{features_div}</div>"
+                )
+                out.write(total_output_features_item)
+
+        out.write("</div>")
     elif est_block.kind == "single":
+        if has_feature_names_out and is_not_pipeline_step and is_fitted_css_class:
+            try:
+                output_features = estimator.get_feature_names_out()
+            except Exception:
+                output_features = None
+        else:
+            output_features = ""
+
+        if est_block.names == "NoneType(...)":
+            est_block.names = "passthrough"
+
         if (
             hasattr(estimator, "_get_params_html")
             and not est_block.names == "passthrough"
@@ -395,18 +448,30 @@ def _write_estimator_html(
             params = estimator._get_params_html(doc_link=doc_link)._repr_html_inner()
         else:
             params = ""
+        if (
+            hasattr(estimator, "_get_fitted_attr_html")
+            and not est_block.names == "passthrough"
+            and is_fitted_css_class == "fitted"
+        ):
+            fitted_attrs = estimator._get_fitted_attr_html(doc_link)
+            attrs = fitted_attrs._repr_html_inner() if len(fitted_attrs) > 0 else ""
+
+        else:
+            attrs = ""
 
         _write_label_html(
             out,
             params,
+            attrs,
             est_block.names,
             est_block.name_details,
             est_block.name_caption,
             est_block.doc_link_label,
             outer_class="sk-item",
             inner_class="sk-estimator",
-            checked=first_call,
+            open=first_call,
             doc_link=doc_link,
+            features=output_features,
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
             param_prefix=param_prefix,
@@ -476,8 +541,12 @@ def estimator_html_repr(estimator):
         html_template = (
             f"<style>{_CSS_STYLE}</style>"
             f"<body>"
-            f'<div id="{container_id}" class="sk-top-container sk-global">'
-            '<div class="sk-text-repr-fallback">'
+            # we need tabindex="0" to make it 'focusable'
+            f'<div id="{container_id}" tabindex="0" role="region" '
+            f'aria-label="'
+            f'{html.escape(estimator.__class__.__name__)} estimator diagram" '
+            f'class="sk-top-container sk-global">'
+            f'<div class="sk-text-repr-fallback">'
             f"<pre>{html.escape(estimator_str)}</pre><b>{fallback_msg}</b>"
             "</div>"
             '<div class="sk-container" hidden>'
@@ -493,8 +562,7 @@ def estimator_html_repr(estimator):
             is_fitted_css_class=is_fitted_css_class,
             is_fitted_icon=is_fitted_icon,
         )
-        with open(str(Path(__file__).parent / "estimator.js"), "r") as f:
-            script = f.read()
+        script = (Path(__file__).parent / "estimator.js").read_text(encoding="utf-8")
 
         html_end = (
             f"</div></div><script>{script}"

@@ -8,7 +8,7 @@ This example illustrates the use of
 probabilities of various classifiers in a 2D feature space, mostly for didactic
 purposes.
 
-The first three columns shows the predicted probability for varying values of
+The first three columns show the predicted probability for varying values of
 the two features. Round markers represent the test data that was predicted to
 belong to that class.
 
@@ -20,6 +20,7 @@ markers show the test data and are colored by their true label.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+# %%
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
@@ -63,23 +64,23 @@ X_train, X_test, y_train, y_test = train_test_split(
 # the classifier in regions where it is not certain of its prediction.
 
 classifiers = {
-    "Logistic regression\n(C=0.1)": LogisticRegression(C=0.1),
-    "Logistic regression\n(C=100)": LogisticRegression(C=100),
+    "Logistic regression\n(alpha=10)": LogisticRegression(alpha=10),
+    "Logistic regression\n(alpha=1e-2)": LogisticRegression(alpha=1e-2),
     "Gaussian Process": GaussianProcessClassifier(kernel=1.0 * RBF([1.0, 1.0])),
     "Logistic regression\n(RBF features)": make_pipeline(
         Nystroem(kernel="rbf", gamma=5e-1, n_components=50, random_state=1),
-        LogisticRegression(C=10),
+        LogisticRegression(alpha=1e-1),
     ),
     "Gradient Boosting": HistGradientBoostingClassifier(random_state=42),
     "Logistic regression\n(binned features)": make_pipeline(
         KBinsDiscretizer(n_bins=5, quantile_method="averaged_inverted_cdf"),
         PolynomialFeatures(interaction_only=True),
-        LogisticRegression(C=10),
+        LogisticRegression(alpha=1e-1),
     ),
     "Logistic regression\n(spline features)": make_pipeline(
         SplineTransformer(n_knots=5),
         PolynomialFeatures(interaction_only=True),
-        LogisticRegression(C=10),
+        LogisticRegression(alpha=1e-1),
     ),
 }
 
@@ -161,7 +162,7 @@ for classifier_idx, (name, classifier) in enumerate(classifiers.items()):
         axes[classifier_idx, max_col].scatter(
             X_test[mask_label, 0],
             X_test[mask_label, 1],
-            c=max_class_disp.multiclass_colors_[[label], :],
+            c=max_class_disp.target_colors_[[label], :],
             **scatter_kwargs,
         )
 
@@ -198,7 +199,6 @@ for label in y_unique:
 # -----------------------
 pd.DataFrame(evaluation_results).round(2)
 
-
 # %%
 # Analysis
 # --------
@@ -208,7 +208,7 @@ pd.DataFrame(evaluation_results).round(2)
 # does not seem to be detrimental as both models are competitive with the
 # non-linear models when quantitatively evaluated on the test set. We can
 # observe that the amount of regularization influences the model confidence:
-# lighter colors for the strongly regularized model with a lower value of `C`.
+# lighter colors for the strongly regularized model with a larger value of `alpha`.
 # Regularization also impacts the orientation of decision boundary leading to
 # slightly different ROC AUC.
 #

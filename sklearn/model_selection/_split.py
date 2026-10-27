@@ -25,7 +25,6 @@ from sklearn.utils import (
     metadata_routing,
 )
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -211,7 +210,7 @@ class LeaveOneOut(_UnsupportedGroupCVMixin, BaseCrossValidator):
     See Also
     --------
     LeaveOneGroupOut : For splitting the data according to explicit,
-        domain-specific stratification of the dataset.
+        domain-specific grouping of the dataset.
     GroupKFold : K-fold iterator variant with non-overlapping groups.
     """
 
@@ -455,9 +454,6 @@ class KFold(_UnsupportedGroupCVMixin, _BaseKFold):
     n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-        .. versionchanged:: 0.22
-            ``n_splits`` default value changed from 3 to 5.
-
     shuffle : bool, default=False
         Whether to shuffle the data before splitting into batches.
         Note that the samples within each split will not be shuffled.
@@ -551,9 +547,6 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
     n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-        .. versionchanged:: 0.22
-            ``n_splits`` default value changed from 3 to 5.
-
     shuffle : bool, default=False
         Whether to shuffle the groups before splitting into batches.
         Note that the samples within each split will not be shuffled.
@@ -598,8 +591,8 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
 
     See Also
     --------
-    LeaveOneGroupOut : For splitting the data according to explicit
-        domain-specific stratification of the dataset.
+    LeaveOneGroupOut : For splitting the data according to explicit,
+        domain-specific grouping of the dataset.
 
     StratifiedKFold : Takes class information into account to avoid building
         folds with imbalanced class proportions (for binary or multiclass
@@ -638,7 +631,7 @@ class GroupKFold(GroupsConsumerMixin, _BaseKFold):
             n_samples_per_group = np.bincount(group_idx)
 
             # Distribute the most frequent groups first
-            indices = np.argsort(n_samples_per_group)[::-1]
+            indices = np.argsort(n_samples_per_group, kind="stable")[::-1]
             n_samples_per_group = n_samples_per_group[indices]
 
             # Total weight of each fold
@@ -711,9 +704,6 @@ class StratifiedKFold(_BaseKFold):
     n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-        .. versionchanged:: 0.22
-            ``n_splits`` default value changed from 3 to 5.
-
     shuffle : bool, default=False
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
@@ -761,9 +751,6 @@ class StratifiedKFold(_BaseKFold):
     * Generate test sets where the smallest and largest differ by at most one
       sample.
 
-    .. versionchanged:: 0.22
-        The previous implementation did not follow the last constraint.
-
     See Also
     --------
     RepeatedStratifiedKFold : Repeats Stratified K-Fold n times.
@@ -780,7 +767,7 @@ class StratifiedKFold(_BaseKFold):
         # we need the following explicit conversion:
         xp, is_array_api = get_namespace(y)
         if is_array_api:
-            y = _convert_to_numpy(y, xp)
+            y = move_to(y, xp=np, device="cpu")
         else:
             y = np.asarray(y)
         type_of_target_y = type_of_target(y)
@@ -1045,6 +1032,14 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         _, groups_inv, groups_cnt = np.unique(
             groups, return_inverse=True, return_counts=True
         )
+        n_groups = len(groups_cnt)
+
+        if self.n_splits > n_groups:
+            raise ValueError(
+                f"Cannot have number of splits n_splits={self.n_splits} greater"
+                f" than the number of groups: {n_groups}."
+            )
+
         y_counts_per_group = np.zeros((len(groups_cnt), n_classes))
         for class_idx, group_idx in zip(y_inv, groups_inv):
             y_counts_per_group[group_idx, class_idx] += 1
@@ -1063,7 +1058,7 @@ class StratifiedGroupKFold(GroupsConsumerMixin, _BaseKFold):
         # Stable sort to keep shuffled order for groups with the same
         # class distribution variance
         sorted_groups_idx = np.argsort(
-            -np.std(y_counts_per_group, axis=1), kind="mergesort"
+            -np.std(y_counts_per_group, axis=1), kind="stable"
         )
 
         for group_idx in sorted_groups_idx:
@@ -1129,15 +1124,10 @@ class TimeSeriesSplit(_BaseKFold):
     comparison between common scikit-learn split methods
     refer to :ref:`sphx_glr_auto_examples_model_selection_plot_cv_indices.py`
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     n_splits : int, default=5
         Number of splits. Must be at least 2.
-
-        .. versionchanged:: 0.22
-            ``n_splits`` default value changed from 3 to 5.
 
     max_train_size : int, default=None
         Maximum size for a single training set.
@@ -1147,13 +1137,9 @@ class TimeSeriesSplit(_BaseKFold):
         ``n_samples // (n_splits + 1)``, which is the maximum allowed value
         with ``gap=0``.
 
-        .. versionadded:: 0.24
-
     gap : int, default=0
         Number of samples to exclude from the end of each train set before
         the test set.
-
-        .. versionadded:: 0.24
 
     Examples
     --------
@@ -1325,7 +1311,7 @@ class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data such that each training set is
     comprised of all samples except ones belonging to one specific group.
-    Arbitrary domain specific group information is provided as an array of integers
+    Arbitrary domain-specific group information is provided as an array of integers
     that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
@@ -1442,7 +1428,7 @@ class LeavePGroupsOut(GroupsConsumerMixin, BaseCrossValidator):
 
     Provides train/test indices to split data according to a third-party
     provided group. This group information can be used to encode arbitrary
-    domain specific stratifications of the samples as integers.
+    domain-specific groupings of the samples as integers.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -2082,7 +2068,7 @@ class GroupShuffleSplit(GroupsConsumerMixin, BaseShuffleSplit):
 
     Provides randomized train/test indices to split data according to a
     third-party provided group. This group information can be used to encode
-    arbitrary domain specific stratifications of the samples as integers.
+    arbitrary domain-specific groupings of the samples as integers.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -2329,7 +2315,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # `y` is probably never a very large array, which means that converting it
         # should be cheap
         xp, _ = get_namespace(y)
-        y = _convert_to_numpy(y, xp=xp)
+        y = move_to(y, xp=np, device="cpu")
 
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
@@ -2365,7 +2351,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
         class_indices = np.split(
-            np.argsort(y_indices, kind="mergesort"), np.cumsum(class_counts)[:-1]
+            np.argsort(y_indices, kind="stable"), np.cumsum(class_counts)[:-1]
         )
 
         rng = check_random_state(self.random_state)
@@ -2517,8 +2503,6 @@ class PredefinedSplit(BaseCrossValidator):
     predefined scheme specified by the user with the ``test_fold`` parameter.
 
     Read more in the :ref:`User Guide <predefined_split>`.
-
-    .. versionadded:: 0.16
 
     Parameters
     ----------
@@ -2707,9 +2691,6 @@ def check_cv(cv=5, y=None, *, classifier=False, shuffle=False, random_state=None
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value changed from 3-fold to 5-fold.
-
     y : array-like, default=None
         The target variable for supervised learning problems.
 
@@ -2806,9 +2787,10 @@ def train_test_split(
 
     Parameters
     ----------
-    *arrays : sequence of indexables with same length / shape[0]
-        Allowed inputs are lists, numpy arrays, scipy-sparse
-        matrices or pandas dataframes.
+    *arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
+        Indexable data-structures can be arrays, lists, dataframes, scipy
+        sparse matrices or pandas dataframes with consistent first dimension.
 
     test_size : float or int, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
@@ -2832,7 +2814,7 @@ def train_test_split(
         Whether or not to shuffle the data before splitting. If shuffle=False
         then stratify must be None.
 
-    stratify : array-like, default=None
+    stratify : array-like of shape (n_samples,), default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
         Read more in the :ref:`User Guide <stratification>`.
@@ -2841,11 +2823,6 @@ def train_test_split(
     -------
     splitting : list, length=2 * len(arrays)
         List containing train-test split of inputs.
-
-        .. versionadded:: 0.16
-            If the input is sparse, the output will be a
-            ``scipy.sparse.csr_matrix``. Else, output type is the same as the
-            input type.
 
     Examples
     --------
@@ -2971,7 +2948,7 @@ def train_test_split(
 
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
-# Use setattr to avoid mypy errors when monkeypatching.
+# Use setattr to avoid pyrefly errors when monkeypatching.
 setattr(train_test_split, "__test__", False)
 
 

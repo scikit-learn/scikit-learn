@@ -120,15 +120,15 @@ def fit_single(
         scores = []
         for X, y in [(X_train, y_train), (X_test, y_test)]:
             try:
-                y_pred = lr.predict_proba(X)
+                y_proba = lr.predict_proba(X)
             except NotImplementedError:
                 # Lightning predict_proba is not implemented for n_classes > 2
-                y_pred = _predict_proba(lr, X)
+                y_proba = _predict_proba(lr, X)
             if isinstance(lr, OneVsRestClassifier):
                 coef = np.concatenate([est.coef_ for est in lr.estimators_])
             else:
                 coef = lr.coef_
-            score = log_loss(y, y_pred, normalize=False) / n_samples
+            score = log_loss(y, y_proba, normalize=False) / n_samples
             score += 0.5 * alpha * np.sum(coef**2) + beta * np.sum(np.abs(coef))
             scores.append(score)
         train_score, test_score = tuple(scores)

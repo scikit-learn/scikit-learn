@@ -9,6 +9,7 @@ from sklearn.metrics.cluster import (
     adjusted_rand_score,
     calinski_harabasz_score,
     completeness_score,
+    contingency_matrix,
     davies_bouldin_score,
     fowlkes_mallows_score,
     homogeneity_score,
@@ -20,7 +21,6 @@ from sklearn.metrics.cluster import (
 )
 from sklearn.metrics.tests.test_common import check_array_api_metric
 from sklearn.utils._array_api import (
-    _get_namespace_device_dtype_ids,
     yield_namespace_device_dtype_combinations,
 )
 from sklearn.utils._testing import assert_allclose
@@ -239,18 +239,41 @@ def test_returned_value_consistency(name):
     assert not isinstance(score, (np.float64, np.float32))
 
 
-def check_array_api_unsupervised_metric(metric, array_namespace, device, dtype_name):
+def check_array_api_unsupervised_metric(
+    metric, array_namespace, device_name, dtype_name
+):
     y_pred = np.array([1, 0, 1, 0, 1, 1, 0])
     X = np.random.randint(10, size=(7, 10))
 
     check_array_api_metric(
         metric,
         array_namespace,
-        device,
+        device_name,
         dtype_name,
         a_np=X,
         b_np=y_pred,
     )
+
+
+def check_array_api_supervised_metric(metric, array_namespace, device, dtype_name):
+    # If `dtype_name` is not None, test with both the original float
+    # `dtype_name` along with the respective int dtype.
+    dtype_names = [dtype_name]
+    if dtype_name is not None:
+        dtype_names.append(dtype_name.replace("float", "int"))
+
+    for dt_name in dtype_names:
+        labels_true = np.array([0, 0, 1, 1, 2, 2], dtype=dt_name)
+        labels_pred = np.array([1, 0, 2, 1, 0, 2], dtype=dt_name)
+
+        check_array_api_metric(
+            metric,
+            array_namespace,
+            device,
+            dtype_name,  # This is used for atol so it needs to be float or None
+            labels_true,
+            labels_pred,
+        )
 
 
 array_api_metric_checkers = {
@@ -259,6 +282,9 @@ array_api_metric_checkers = {
     ],
     davies_bouldin_score: [
         check_array_api_unsupervised_metric,
+    ],
+    contingency_matrix: [
+        check_array_api_supervised_metric,
     ],
 }
 
@@ -270,10 +296,11 @@ def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers)
 
 
 @pytest.mark.parametrize(
-    "array_namespace, device, dtype_name",
+    "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
-    ids=_get_namespace_device_dtype_ids,
 )
 @pytest.mark.parametrize("metric, check_func", yield_metric_checker_combinations())
-def test_array_api_compliance(metric, array_namespace, device, dtype_name, check_func):
-    check_func(metric, array_namespace, device, dtype_name)
+def test_array_api_compliance(
+    metric, array_namespace, device_name, dtype_name, check_func
+):
+    check_func(metric, array_namespace, device_name, dtype_name)

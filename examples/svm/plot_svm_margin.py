@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn import svm
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # we create 40 separable points
 np.random.seed(0)
@@ -69,16 +70,18 @@ for name, penalty in (("unreg", 1), ("reg", 0.05)):
 
     plt.axis("tight")
     x_min = -4.8
-    x_max = 4.2
-    y_min = -6
-    y_max = 6
+    x_max = 4.1
+    y_min = -5
+    y_max = 5
 
-    YY, XX = np.meshgrid(yy, xx)
-    xy = np.vstack([XX.ravel(), YY.ravel()]).T
-    Z = clf.decision_function(xy).reshape(XX.shape)
-
-    # Put the result into a contour plot
-    plt.contourf(XX, YY, Z, cmap=plt.get_cmap("RdBu"), alpha=0.5, linestyles=["-"])
+    DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X,
+        ax=plt.gca(),
+        cmap="RdBu",
+        alpha=0.5,
+        response_method="decision_function",
+    )
 
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)

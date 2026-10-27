@@ -55,8 +55,8 @@ if TYPE_CHECKING:
         | SupportsArrayNamespace[Any]
     )
 
-_API_VERSIONS_OLD: Final = frozenset({"2021.12", "2022.12", "2023.12"})
-_API_VERSIONS: Final = _API_VERSIONS_OLD | frozenset({"2024.12"})
+_API_VERSIONS_OLD: Final = frozenset({"2021.12", "2022.12", "2023.12", "2024.12"})
+_API_VERSIONS: Final = _API_VERSIONS_OLD | frozenset({"2025.12"})
 
 
 @lru_cache(100)
@@ -288,8 +288,14 @@ def is_array_api_obj(x: object) -> TypeGuard[_ArrayApiObj]:
     is_dask_array
     is_jax_array
     """
+    try:
+        # TODO: drop this check after np.matrix is gone
+        if _issubclass_fast(type(x), "numpy", "matrix"):
+            return False
+    except Exception:
+        pass
     return (
-        hasattr(x, '__array_namespace__') 
+        hasattr(x, '__array_namespace__')
         or _is_array_api_cls(cast(Hashable, type(x)))
     )
 
@@ -485,11 +491,11 @@ def is_array_api_strict_namespace(xp: Namespace) -> bool:
 def _check_api_version(api_version: str | None) -> None:
     if api_version in _API_VERSIONS_OLD:
         warnings.warn(
-            f"The {api_version} version of the array API specification was requested but the returned namespace is actually version 2024.12"
+            f"The {api_version} version of the array API specification was requested but the returned namespace is actually version 2025.12"
         )
     elif api_version is not None and api_version not in _API_VERSIONS:
         raise ValueError(
-            "Only the 2024.12 version of the array API specification is currently supported"
+            "Only the 2025.12 version of the array API specification is currently supported"
         )
 
 
@@ -589,11 +595,11 @@ def array_namespace(
 
     api_version: str
         The newest version of the spec that you need support for (currently
-        the compat library wrapped APIs support v2024.12).
+        the compat library wrapped APIs support v2025.12).
 
     use_compat: bool or None
         If None (the default), the native namespace will be returned if it is
-        already array API compatible, otherwise a compat wrapper is used. If
+        already array API compatible; otherwise, a compat wrapper is used. If
         True, the compat library wrapped library will be returned. If False,
         the native library namespace is returned.
 
@@ -641,7 +647,7 @@ def array_namespace(
     is_pydata_sparse_array
 
     """
-    namespaces: set[Namespace] = set()
+    namespaces: list[Namespace] = []
     for x in xs:
         xp, info = _cls_to_namespace(cast(Hashable, type(x)), api_version, use_compat)
         if info is _ClsToXPInfo.SCALAR:
@@ -663,7 +669,19 @@ def array_namespace(
                 )
             xp = get_ns(api_version=api_version)
 
-        namespaces.add(xp)
+        namespaces.append(xp)
+
+    # Use a list of modules to avoid a graph break under torch.compile:
+    # torch._dynamo.exc.Unsupported: Dynamo cannot determine whether the underlying object is hashable
+    # Explanation: Dynamo does not know whether the underlying python object for
+    # PythonModuleVariable(<module 'array_api_compat.torch' from ...) is hashable
+    names = {x.__name__ for x in namespaces}
+    unique_namespaces = []
+    for ns in namespaces:
+        if (name := ns.__name__) in names:
+            unique_namespaces.append(ns)
+            names.remove(name)
+    namespaces = unique_namespaces
 
     try:
         (xp,) = namespaces
@@ -1042,7 +1060,7 @@ def is_lazy_array(x: object) -> TypeGuard[_ArrayApiObj]:
     try:
         bool(x)
         return False
-    # The Array API standard dictactes that __bool__ should raise TypeError if the
+    # The Array API standard dictates that __bool__ should raise TypeError if the
     # output cannot be defined.
     # Here we allow for it to raise arbitrary exceptions, e.g. like Dask does.
     except Exception:

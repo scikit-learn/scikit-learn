@@ -50,10 +50,11 @@ def _params_html_repr(params):
 
     PARAM_ROW_TEMPLATE = """
         <tr class="{param_type}">
-            <td><i class="copy-paste-icon"
+            <td><button type="button" class="copy-paste-icon"
+                 aria-label="Copy {param_name} to clipboard"
                  onclick="copyToClipboard('{param_name}',
                           this.parentElement.nextElementSibling)"
-            ></i></td>
+            ></button></td>
             <td class="param">{param_display}</td>
             <td class="value">{param_value}</td>
         </tr>
@@ -64,7 +65,7 @@ def _params_html_repr(params):
             style="anchor-name: --doc-link-{param_name};"
             rel="noreferrer" target="_blank" href="{link}">
             {param_name}
-            <span class="param-doc-description"
+            <span class="param-doc-description" tabindex="-1"
             style="position-anchor: --doc-link-{param_name};">
             {param_description}</span>
         </a>

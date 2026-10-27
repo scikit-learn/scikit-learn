@@ -12,7 +12,12 @@ from sklearn.utils._testing import (
     create_memmap_backed_data,
     ignore_warnings,
 )
-from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, LIL_CONTAINERS
+from sklearn.utils.fixes import (
+    COO_CONTAINERS,
+    CSC_CONTAINERS,
+    LIL_CONTAINERS,
+    _sparse_random_array,
+)
 
 
 def test_sparse_coef():
@@ -366,7 +371,7 @@ def test_same_multiple_output_sparse_dense(coo_container):
 
 
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_sparse_enet_coordinate_descent(csc_container):
+def test_enet_coordinate_descent_sparse(csc_container):
     """Test that a warning is issued if model does not converge"""
     clf = Lasso(
         alpha=1e-10, fit_intercept=False, warm_start=True, max_iter=2, tol=1e-10
@@ -390,7 +395,7 @@ def test_sparse_read_only_buffer(copy_X):
     rng = np.random.RandomState(0)
 
     clf = ElasticNet(alpha=0.1, copy_X=copy_X, random_state=rng)
-    X = sp.random(100, 20, format="csc", random_state=rng)
+    X = _sparse_random_array((100, 20), format="csc", rng=rng)
 
     # Make X.data read-only
     X.data = create_memmap_backed_data(X.data)

@@ -156,3 +156,18 @@ def test_one_feature():
     # https://github.com/scikit-learn/scikit-learn/issues/27236
     X = np.random.normal(size=(128, 1))
     BisectingKMeans(bisecting_strategy="biggest_inertia", random_state=0).fit(X)
+
+
+def test_bisecting_kmeans_custom_init_validation():
+    """Test that BisectingKMeans validates center shape correctly with callable init.
+
+    Regression test for issue #33146
+    """
+    rng = np.random.RandomState(42)
+    X = rng.rand(100, 2)
+
+    def my_init(X, n_clusters, random_state):
+        return X[:n_clusters]
+
+    bisect = BisectingKMeans(n_clusters=3, init=my_init, n_init=1, random_state=rng)
+    bisect.fit(X)

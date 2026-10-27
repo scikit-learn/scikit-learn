@@ -264,6 +264,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.mean_squared_log_error",
     "sklearn.metrics.mean_tweedie_deviance",
     "sklearn.metrics.median_absolute_error",
+    "sklearn.metrics.metric_at_thresholds",
     "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",
     "sklearn.metrics.ndcg_score",

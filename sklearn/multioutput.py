@@ -8,7 +8,6 @@ extends single output estimators to multioutput estimators.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral
 
@@ -25,13 +24,15 @@ from sklearn.base import (
     is_classifier,
 )
 from sklearn.model_selection import cross_val_predict
-from sklearn.utils import Bunch, check_random_state, get_tags
-from sklearn.utils._param_validation import HasMethods, Hidden, StrOptions
+from sklearn.utils import check_random_state, get_tags
+from sklearn.utils._param_validation import HasMethods, StrOptions
 from sklearn.utils._response import _get_response_values
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils._user_interface import _print_elapsed_time
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -179,12 +180,8 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                     "Underlying estimator does not support sample weights."
                 )
 
-            if sample_weight is not None:
-                routed_params = Bunch(
-                    estimator=Bunch(partial_fit=Bunch(sample_weight=sample_weight))
-                )
-            else:
-                routed_params = Bunch(estimator=Bunch(partial_fit=Bunch()))
+            sw = {"sample_weight": sample_weight} if sample_weight is not None else {}
+            routed_params = _manual_routing({"estimator": {"partial_fit": sw}})
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_estimator)(
@@ -229,8 +226,6 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
 
-            .. versionadded:: 0.23
-
         Returns
         -------
         self : object
@@ -266,10 +261,10 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
                     "Underlying estimator does not support sample weights."
                 )
 
-            fit_params_validated = _check_method_params(X, params=fit_params)
-            routed_params = Bunch(estimator=Bunch(fit=fit_params_validated))
+            fit_kwargs = dict(_check_method_params(X, params=fit_params))
             if sample_weight is not None:
-                routed_params.estimator.fit["sample_weight"] = sample_weight
+                fit_kwargs["sample_weight"] = sample_weight
+            routed_params = _manual_routing({"estimator": {"fit": fit_kwargs}})
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
@@ -346,8 +341,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     simple strategy for extending regressors that do not natively support
     multi-target regression.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     estimator : estimator object
@@ -366,9 +359,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         ``-1`` means using all available processes / threads.
         See :term:`Glossary <n_jobs>` for more details.
 
-        .. versionchanged:: 0.20
-            `n_jobs` default changed from `1` to `None`.
-
     Attributes
     ----------
     estimators_ : list of ``n_output`` estimators
@@ -377,8 +367,6 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying `estimator` exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -469,9 +457,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         ``-1`` means using all available processes / threads.
         See :term:`Glossary <n_jobs>` for more details.
 
-        .. versionchanged:: 0.20
-            `n_jobs` default changed from `1` to `None`.
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -483,8 +468,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying `estimator` exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -503,9 +486,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> import numpy as np
     >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
-    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.svm import LinearSVC
     >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
-    >>> clf = MultiOutputClassifier(LogisticRegression()).fit(X, y)
+    >>> clf = MultiOutputClassifier(LinearSVC()).fit(X, y)
     >>> clf.predict(X[-2:])
     array([[1, 1, 1],
            [1, 0, 1]])
@@ -532,8 +515,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
         **fit_params : dict of string -> object
             Parameters passed to the ``estimator.fit`` method of each step.
-
-            .. versionadded:: 0.23
 
         Returns
         -------
@@ -573,11 +554,6 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
                 such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
-
-            .. versionchanged:: 0.19
-                This function now returns a list of arrays where the length of
-                the list is ``n_outputs``, and each array is (``n_samples``,
-                ``n_classes``) for that particular output.
         """
         check_is_fitted(self)
         results = [estimator.predict_proba(X) for estimator in self.estimators_]
@@ -622,13 +598,13 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
 
 def _available_if_base_estimator_has(attr):
-    """Return a function to check if `base_estimator` or `estimators_` has `attr`.
+    """Return a function to check if `estimator` or `estimators_` has `attr`.
 
     Helper for Chain implementations.
     """
 
     def _check(self):
-        return hasattr(self._get_estimator(), attr) or all(
+        return hasattr(self.estimator, attr) or all(
             hasattr(est, attr) for est in self.estimators_
         )
 
@@ -637,59 +613,27 @@ def _available_if_base_estimator_has(attr):
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     _parameter_constraints: dict = {
-        "base_estimator": [
-            HasMethods(["fit", "predict"]),
-            StrOptions({"deprecated"}),
-        ],
-        "estimator": [
-            HasMethods(["fit", "predict"]),
-            Hidden(None),
-        ],
+        "estimator": [HasMethods(["fit", "predict"])],
         "order": ["array-like", StrOptions({"random"}), None],
         "cv": ["cv_object", StrOptions({"prefit"})],
         "random_state": ["random_state"],
         "verbose": ["boolean"],
     }
 
-    # TODO(1.9): Remove base_estimator
     def __init__(
         self,
-        estimator=None,
+        estimator,
         *,
         order=None,
         cv=None,
         random_state=None,
         verbose=False,
-        base_estimator="deprecated",
     ):
         self.estimator = estimator
-        self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
         self.random_state = random_state
         self.verbose = verbose
-
-    # TODO(1.9): This is a temporary getter method to validate input wrt deprecation.
-    # It was only included to avoid relying on the presence of self.estimator_
-    def _get_estimator(self):
-        """Get and validate estimator."""
-
-        if self.estimator is not None and (self.base_estimator != "deprecated"):
-            raise ValueError(
-                "Both `estimator` and `base_estimator` are provided. You should only"
-                " pass `estimator`. `base_estimator` as a parameter is deprecated in"
-                " version 1.7, and will be removed in version 1.9."
-            )
-
-        if self.base_estimator != "deprecated":
-            warning_msg = (
-                "`base_estimator` as an argument was deprecated in 1.7 and will be"
-                " removed in 1.9. Use `estimator` instead."
-            )
-            warnings.warn(warning_msg, FutureWarning)
-            return self.base_estimator
-        else:
-            return self.estimator
 
     def _log_message(self, *, estimator_idx, n_estimators, processing_msg):
         if not self.verbose:
@@ -734,7 +678,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         inv_order[self.order_] = np.arange(len(self.order_))
         Y_output = Y_output_chain[:, inv_order]
 
-        return Y_output
+        return _align_api_if_sparse(Y_output)
 
     @abstractmethod
     def fit(self, X, Y, **fit_params):
@@ -750,8 +694,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         **fit_params : dict of string -> object
             Parameters passed to the `fit` method of each step.
-
-            .. versionadded:: 0.23
 
         Returns
         -------
@@ -773,7 +715,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         elif sorted(self.order_) != list(range(Y.shape[1])):
             raise ValueError("invalid order")
 
-        self.estimators_ = [clone(self._get_estimator()) for _ in range(Y.shape[1])]
+        self.estimators_ = [clone(self.estimator) for _ in range(Y.shape[1])]
 
         if self.cv is None:
             Y_pred_chain = Y[:, self.order_]
@@ -808,11 +750,11 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch(estimator=Bunch(fit=fit_params))
+            routed_params = _manual_routing({"estimator": {"fit": fit_params}})
 
         if hasattr(self, "chain_method"):
             chain_method = _check_response_method(
-                self._get_estimator(),
+                self.estimator,
                 self.chain_method,
             ).__name__
             self.chain_method_ = chain_method
@@ -837,7 +779,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
-                    self._get_estimator(),
+                    self.estimator,
                     X_aug[:, :col_idx],
                     y=y,
                     cv=self.cv,
@@ -870,7 +812,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = get_tags(self._get_estimator()).input_tags.sparse
+        tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         return tags
 
 
@@ -887,8 +829,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     <sphx_glr_auto_examples_multioutput_plot_classifier_chain_yeast.py>` example.
 
     Read more in the :ref:`User Guide <classifierchain>`.
-
-    .. versionadded:: 0.19
 
     Parameters
     ----------
@@ -949,13 +889,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
-    base_estimator : estimator, default="deprecated"
-        Use `estimator` instead.
-
-        .. deprecated:: 1.7
-            `base_estimator` is deprecated and will be removed in 1.9.
-            Use `estimator` instead.
-
     Attributes
     ----------
     classes_ : list
@@ -975,8 +908,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying `base_estimator` exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1007,7 +938,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> X_train, X_test, Y_train, Y_test = train_test_split(
     ...    X, Y, random_state=0
     ... )
-    >>> base_lr = LogisticRegression(solver='lbfgs', random_state=0)
+    >>> base_lr = LogisticRegression()
     >>> chain = ClassifierChain(base_lr, order='random', random_state=0)
     >>> chain.fit(X_train, Y_train).predict(X_test)
     array([[1., 1., 0.],
@@ -1030,17 +961,15 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         ],
     }
 
-    # TODO(1.9): Remove base_estimator from __init__
     def __init__(
         self,
-        estimator=None,
+        estimator,
         *,
         order=None,
         cv=None,
         chain_method="predict",
         random_state=None,
         verbose=False,
-        base_estimator="deprecated",
     ):
         super().__init__(
             estimator,
@@ -1048,7 +977,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
             cv=cv,
             random_state=random_state,
             verbose=verbose,
-            base_estimator=base_estimator,
         )
         self.chain_method = chain_method
 
@@ -1150,7 +1078,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         """
 
         router = MetadataRouter(owner=self).add(
-            estimator=self._get_estimator(),
+            estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router
@@ -1172,8 +1100,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     of models that are earlier in the chain.
 
     Read more in the :ref:`User Guide <regressorchain>`.
-
-    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -1221,13 +1147,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         .. versionadded:: 1.2
 
-    base_estimator : estimator, default="deprecated"
-        Use `estimator` instead.
-
-        .. deprecated:: 1.7
-            `base_estimator` is deprecated and will be removed in 1.9.
-            Use `estimator` instead.
-
     Attributes
     ----------
     estimators_ : list
@@ -1239,8 +1158,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying `base_estimator` exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1258,7 +1175,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     --------
     >>> from sklearn.multioutput import RegressorChain
     >>> from sklearn.linear_model import LogisticRegression
-    >>> logreg = LogisticRegression(solver='lbfgs')
+    >>> logreg = LogisticRegression()
     >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
     >>> chain = RegressorChain(logreg, order=[0, 1]).fit(X, Y)
     >>> chain.predict(X)
@@ -1286,8 +1203,6 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
             Parameters passed to the `fit` method at each step
             of the regressor chain.
 
-            .. versionadded:: 0.23
-
         Returns
         -------
         self : object
@@ -1312,7 +1227,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         """
 
         router = MetadataRouter(owner=self).add(
-            estimator=self._get_estimator(),
+            estimator=self.estimator,
             method_mapping=MethodMapping().add(caller="fit", callee="fit"),
         )
         return router

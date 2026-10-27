@@ -78,7 +78,7 @@ numeric_transformer = Pipeline(
 categorical_features = ["embarked", "sex", "pclass"]
 categorical_transformer = Pipeline(
     steps=[
-        ("encoder", OneHotEncoder(handle_unknown="ignore")),
+        ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
         ("selector", SelectPercentile(chi2, percentile=50)),
     ]
 )
@@ -94,7 +94,7 @@ preprocessor = ColumnTransformer(
 # Now we have a full prediction pipeline.
 clf = Pipeline(
     steps=[("preprocessor", preprocessor), ("classifier", LogisticRegression())]
-)
+).set_output(transform="pandas")
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
 
@@ -185,7 +185,7 @@ selector(dtype_include="category")(X_train)
 param_grid = {
     "preprocessor__num__imputer__strategy": ["mean", "median"],
     "preprocessor__cat__selector__percentile": [10, 30, 50, 70],
-    "classifier__C": [0.1, 1.0, 10, 100],
+    "classifier__alpha": [0.01, 0.1, 1, 10],
 }
 
 search_cv = RandomizedSearchCV(clf, param_grid, n_iter=10, random_state=0)
@@ -199,6 +199,7 @@ search_cv.fit(X_train, y_train)
 
 print("Best params:")
 print(search_cv.best_params_)
+search_cv
 
 # %%
 # The internal cross-validation scores obtained by those parameters is:
@@ -216,7 +217,7 @@ cv_results[
         "std_test_score",
         "param_preprocessor__num__imputer__strategy",
         "param_preprocessor__cat__selector__percentile",
-        "param_classifier__C",
+        "param_classifier__alpha",
     ]
 ].head(5)
 

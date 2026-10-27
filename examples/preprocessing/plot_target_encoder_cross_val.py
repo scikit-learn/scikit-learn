@@ -111,10 +111,13 @@ print("Raw Model score on test set: ", raw_model.score(X_test, y_test))
 # Next, we create a pipeline with the target encoder and ridge model. The pipeline
 # uses :meth:`TargetEncoder.fit_transform` which uses :term:`cross fitting`. We
 # see that the model fits the data well and generalizes to the test set:
+from sklearn.model_selection import KFold
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import TargetEncoder
 
-model_with_cf = make_pipeline(TargetEncoder(random_state=0), ridge)
+model_with_cf = make_pipeline(
+    TargetEncoder(cv=KFold(shuffle=True, random_state=0)), ridge
+)
 model_with_cf.fit(X_train, y_train)
 print("Model with CF on train set: ", model_with_cf.score(X_train, y_train))
 print("Model with CF on test set: ", model_with_cf.score(X_test, y_test))

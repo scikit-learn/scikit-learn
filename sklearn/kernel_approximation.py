@@ -22,7 +22,7 @@ from sklearn.metrics.pairwise import (
     _find_floating_dtype_allow_sparse,
     pairwise_kernels,
 )
-from sklearn.utils import check_random_state
+from sklearn.utils import _align_api_if_sparse, check_random_state
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     get_namespace_and_device,
@@ -51,8 +51,6 @@ class PolynomialCountSketch(
     vector with itself using Fast Fourier Transforms (FFT). Read more in the
     :ref:`User Guide <polynomial_kernel_approx>`.
 
-    .. versionadded:: 0.24
-
     Parameters
     ----------
     gamma : float, default=1.0
@@ -63,7 +61,7 @@ class PolynomialCountSketch(
         Degree of the polynomial kernel whose feature map
         will be approximated.
 
-    coef0 : int, default=0
+    coef0 : float, default=0.0
         Constant term of the polynomial kernel whose feature map
         will be approximated.
 
@@ -91,8 +89,6 @@ class PolynomialCountSketch(
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -136,7 +132,7 @@ class PolynomialCountSketch(
     }
 
     def __init__(
-        self, *, gamma=1.0, degree=2, coef0=0, n_components=100, random_state=None
+        self, *, gamma=1.0, degree=2, coef0=0.0, n_components=100, random_state=None
     ):
         self.gamma = gamma
         self.degree = degree
@@ -290,8 +286,6 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -457,8 +451,6 @@ class SkewedChi2Sampler(
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -611,8 +603,6 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     ----------
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -811,8 +801,10 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         indptr = X.indptr.copy()
 
         data_step = np.sqrt(X.data * sample_interval)
-        X_step = sp.csr_matrix(
-            (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+        X_step = _align_api_if_sparse(
+            sp.csr_array(
+                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+            )
         )
         X_new = [X_step]
 
@@ -823,14 +815,24 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * sample_interval))
 
             data_step = factor_nz * np.cos(j * log_step_nz)
-            X_step = sp.csr_matrix(
-                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+            X_step = _align_api_if_sparse(
+                sp.csr_array(
+                    (data_step, indices, indptr),
+                    shape=X.shape,
+                    dtype=X.dtype,
+                    copy=False,
+                )
             )
             X_new.append(X_step)
 
             data_step = factor_nz * np.sin(j * log_step_nz)
-            X_step = sp.csr_matrix(
-                (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
+            X_step = _align_api_if_sparse(
+                sp.csr_array(
+                    (data_step, indices, indptr),
+                    shape=X.shape,
+                    dtype=X.dtype,
+                    copy=False,
+                )
             )
             X_new.append(X_step)
 
@@ -851,8 +853,6 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     using a subset of the data as basis.
 
     Read more in the :ref:`User Guide <nystroem_kernel_approx>`.
-
-    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -898,8 +898,6 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
@@ -914,8 +912,6 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

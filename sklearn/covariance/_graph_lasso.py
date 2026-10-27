@@ -17,16 +17,14 @@ from scipy import linalg
 from sklearn.base import _fit_context
 from sklearn.covariance import EmpiricalCovariance, empirical_covariance, log_likelihood
 from sklearn.exceptions import ConvergenceWarning
-
-# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model import _cd_fast as cd_fast
 from sklearn.linear_model import lars_path_gram
 from sklearn.model_selection import check_cv, cross_val_score
-from sklearn.utils import Bunch
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -479,8 +477,6 @@ class GraphicalLasso(BaseGraphicalLasso):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -756,9 +752,6 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     tol : float, default=1e-4
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped. Range is (0, inf].
@@ -850,8 +843,6 @@ class GraphicalLassoCV(BaseGraphicalLasso):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1010,7 +1001,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **params)
         else:
-            routed_params = Bunch(splitter=Bunch(split={}))
+            routed_params = _manual_routing({"splitter": {}})
 
         t0 = time.time()
         for i in range(n_refinements):

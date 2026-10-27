@@ -32,7 +32,7 @@ from sklearn.linear_model import Lasso
 
 X, y = make_regression(n_samples=200, n_features=5000, random_state=0)
 # create a copy of X in sparse format
-X_sp = sparse.coo_matrix(X)
+X_sp = sparse.coo_array(X)
 
 alpha = 1
 sparse_lasso = Lasso(alpha=alpha, fit_intercept=False, max_iter=1000)
@@ -64,7 +64,7 @@ Xs = X.copy()
 # make Xs sparse by replacing the values lower than 2.5 with 0s
 Xs[Xs < 2.5] = 0.0
 # create a copy of Xs in sparse format
-Xs_sp = sparse.coo_matrix(Xs)
+Xs_sp = sparse.coo_array(Xs)
 Xs_sp = Xs_sp.tocsc()
 
 # compute the proportion of non-zero coefficient in the data matrix

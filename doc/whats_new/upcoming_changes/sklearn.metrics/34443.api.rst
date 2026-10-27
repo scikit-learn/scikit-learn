@@ -1,0 +1,6 @@
+- In :class:`metrics.DetCurveDisplay` the `estimator_name` parameter is deprecated in
+  favour of `name` and will be removed in 1.12. The `**kwargs` parameter of
+  :meth:`metrics.DetCurveDisplay.plot`, :meth:`metrics.DetCurveDisplay.from_estimator`
+  and :meth:`metrics.DetCurveDisplay.from_predictions` is also deprecated in favour of
+  `curve_kwargs` and will be removed in 1.12.
+  By :user:`AnneBeyer`.

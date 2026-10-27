@@ -1,0 +1,42 @@
+name: Handle opened or edited pull requests
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+
+jobs:
+  pull-request-opened-or-edited:
+    name: Check linked issue and welcome contributor
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_REPO: ${{ github.repository }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install PyGithub
+        run: pip install -Uq PyGithub
+      - name: Checkout workflow scripts
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: |
+            .github/scripts/close-pr-if-issue-not-ready.py
+            .github/scripts/first-time-contributor.py
+          sparse-checkout-cone-mode: false # false for files/ true for directories
+      - name: Check linked issue readiness
+        run: python .github/scripts/close-pr-if-issue-not-ready.py
+      - name: Welcome first-time contributor
+        if: github.event.action == 'opened'
+        run: python .github/scripts/first-time-contributor.py

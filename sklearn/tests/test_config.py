@@ -20,7 +20,9 @@ def test_config_context():
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
         "enable_metadata_routing": False,
+        "enable_metadata_auto_requests": False,
         "skip_parameter_validation": False,
+        "sparse_interface": "spmatrix",
     }
 
     # Not using as a context manager affects nothing
@@ -38,7 +40,9 @@ def test_config_context():
             "enable_cython_pairwise_dist": True,
             "transform_output": "default",
             "enable_metadata_routing": False,
+            "enable_metadata_auto_requests": False,
             "skip_parameter_validation": False,
+            "sparse_interface": "spmatrix",
         }
     assert get_config()["assume_finite"] is False
 
@@ -73,7 +77,9 @@ def test_config_context():
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
         "enable_metadata_routing": False,
+        "enable_metadata_auto_requests": False,
         "skip_parameter_validation": False,
+        "sparse_interface": "spmatrix",
     }
 
     # No positional arguments

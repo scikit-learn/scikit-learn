@@ -8,7 +8,7 @@ from numbers import Integral
 
 import numpy as np
 from scipy.linalg import norm
-from scipy.sparse import dia_matrix, issparse
+from scipy.sparse import dia_array, issparse
 from scipy.sparse.linalg import eigsh, svds
 
 from sklearn.base import BaseEstimator, BiclusterMixin, _fit_context
@@ -34,8 +34,8 @@ def _scale_normalize(X):
     col_diag = np.where(np.isnan(col_diag), 0, col_diag)
     if issparse(X):
         n_rows, n_cols = X.shape
-        r = dia_matrix((row_diag, [0]), shape=(n_rows, n_rows))
-        c = dia_matrix((col_diag, [0]), shape=(n_cols, n_cols))
+        r = dia_array((row_diag, [0]), shape=(n_rows, n_rows))
+        c = dia_array((col_diag, [0]), shape=(n_cols, n_cols))
         an = r @ X @ c
     else:
         an = row_diag[:, np.newaxis] * X * col_diag
@@ -275,8 +275,6 @@ class SpectralCoclustering(BaseSpectral):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -447,8 +445,6 @@ class SpectralBiclustering(BaseSpectral):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

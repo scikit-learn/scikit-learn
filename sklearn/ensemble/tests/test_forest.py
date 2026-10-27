@@ -17,11 +17,12 @@ from unittest.mock import patch
 import joblib
 import numpy as np
 import pytest
+import scipy.sparse
 from scipy.special import comb
 
 import sklearn
 from sklearn import clone, datasets
-from sklearn.datasets import make_classification, make_hastie_10_2
+from sklearn.datasets import make_classification, make_hastie_10_2, make_regression
 from sklearn.decomposition import TruncatedSVD
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -114,6 +115,9 @@ FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 
 FOREST_CLASSIFIERS_REGRESSORS: Dict[str, Any] = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
+
+CLF_CRITERIONS = ("gini", "log_loss")
+REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
@@ -1532,8 +1536,7 @@ def test_poisson_y_positive_check():
         est.fit(X, y)
 
 
-# mypy error: Variable "DEFAULT_JOBLIB_BACKEND" is not valid type
-class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore[valid-type,misc]
+class MyBackend(DEFAULT_JOBLIB_BACKEND):
     def __init__(self, *args, **kwargs):
         self.count = 0
         super().__init__(*args, **kwargs)
@@ -1829,21 +1832,25 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
     assert_allclose(orig_tree_values, new_tree_values)
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
-    "make_data, Forest",
+    "Forest, criterion",
     [
-        (datasets.make_regression, RandomForestRegressor),
-        (datasets.make_classification, RandomForestClassifier),
-        (datasets.make_regression, ExtraTreesRegressor),
-        (datasets.make_classification, ExtraTreesClassifier),
+        *product(FOREST_REGRESSORS.values(), REG_CRITERIONS),
+        *product(FOREST_CLASSIFIERS.values(), CLF_CRITERIONS),
     ],
 )
-def test_missing_values_is_resilient(make_data, Forest):
+def test_missing_values_is_resilient(Forest, criterion):
     """Check that forest can deal with missing values and has decent performance."""
-
     rng = np.random.RandomState(0)
-    n_samples, n_features = 1000, 10
+    n_samples, n_features = 500, 5
+    make_data = make_regression if criterion in REG_CRITERIONS else make_classification
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
+
+    # Make y non-negative for Poisson criterion
+    if criterion == "poisson":
+        y -= np.min(y)
 
     # Create dataset with missing values
     X_missing = X.copy()
@@ -1855,13 +1862,13 @@ def test_missing_values_is_resilient(make_data, Forest):
     )
 
     # Train forest with missing values
-    forest_with_missing = Forest(random_state=rng, n_estimators=50)
+    forest_with_missing = Forest(random_state=rng, criterion=criterion, n_estimators=50)
     forest_with_missing.fit(X_missing_train, y_train)
     score_with_missing = forest_with_missing.score(X_missing_test, y_test)
 
     # Train forest without missing values
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    forest = Forest(random_state=rng, n_estimators=50)
+    forest = Forest(random_state=rng, criterion=criterion, n_estimators=50)
     forest.fit(X_train, y_train)
     score_without_missing = forest.score(X_test, y_test)
 
@@ -1869,36 +1876,36 @@ def test_missing_values_is_resilient(make_data, Forest):
     assert score_with_missing >= 0.80 * score_without_missing
 
 
+# TODO(1.11): remove the deprecated friedman_mse criterion parametrization
+@pytest.mark.filterwarnings("ignore:.*friedman_mse.*:FutureWarning")
 @pytest.mark.parametrize(
-    "Forest",
+    "Forest, criterion",
     [
-        RandomForestClassifier,
-        RandomForestRegressor,
-        ExtraTreesRegressor,
-        ExtraTreesClassifier,
+        *product(FOREST_REGRESSORS.values(), REG_CRITERIONS),
+        *product(FOREST_CLASSIFIERS.values(), CLF_CRITERIONS),
     ],
 )
-def test_missing_value_is_predictive(Forest):
+def test_missing_value_is_predictive(Forest, criterion, global_random_seed):
     """Check that the forest learns when missing values are only present for
     a predictive feature."""
-    rng = np.random.RandomState(0)
-    n_samples = 300
-    expected_score = 0.75
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 1000
+    expected_score_gap = 0.3
+    # Require a minimum 0.3 gap between `forest_predictive` and
+    # `forest_non_predictive`: meaningful for R2/accuracy, but robust in tests.
 
-    X_non_predictive = rng.standard_normal(size=(n_samples, 10))
-    y = rng.randint(0, high=2, size=n_samples)
+    X_non_predictive = rng.randn(n_samples, 2)
+    y = rng.rand(n_samples) < 0.5
 
     # Create a predictive feature using `y` and with some noise
-    X_random_mask = rng.choice([False, True], size=n_samples, p=[0.95, 0.05])
-    y_mask = y.astype(bool)
-    y_mask[X_random_mask] = ~y_mask[X_random_mask]
-
-    predictive_feature = rng.standard_normal(size=n_samples)
-    predictive_feature[y_mask] = np.nan
+    predictive_feature = rng.randn(n_samples)
+    noise_mask = rng.rand(n_samples) < 0.05
+    # nan/non-nan indicates y is 1/0, except if noise_mask is true:
+    predictive_feature[y ^ noise_mask] = np.nan
     assert np.isnan(predictive_feature).any()
 
     X_predictive = X_non_predictive.copy()
-    X_predictive[:, 5] = predictive_feature
+    X_predictive[:, 1] = predictive_feature
 
     (
         X_predictive_train,
@@ -1908,28 +1915,17 @@ def test_missing_value_is_predictive(Forest):
         y_train,
         y_test,
     ) = train_test_split(X_predictive, X_non_predictive, y, random_state=0)
-    forest_predictive = Forest(random_state=0).fit(X_predictive_train, y_train)
-    forest_non_predictive = Forest(random_state=0).fit(X_non_predictive_train, y_train)
+    forest_predictive = Forest(random_state=0, criterion=criterion)
+    forest_predictive.fit(X_predictive_train, y_train)
+    forest_non_predictive = Forest(random_state=0, criterion=criterion)
+    forest_non_predictive.fit(X_non_predictive_train, y_train)
 
     predictive_test_score = forest_predictive.score(X_predictive_test, y_test)
-
-    assert predictive_test_score >= expected_score
-    assert predictive_test_score >= forest_non_predictive.score(
+    non_predictive_test_score = forest_non_predictive.score(
         X_non_predictive_test, y_test
     )
 
-
-@pytest.mark.parametrize("Forest", FOREST_REGRESSORS.values())
-def test_non_supported_criterion_raises_error_with_missing_values(Forest):
-    """Raise error for unsupported criterion when there are missing values."""
-    X = np.array([[0, 1, 2], [np.nan, 0, 2.0]])
-    y = [0.5, 1.0]
-
-    forest = Forest(criterion="absolute_error")
-
-    msg = ".*does not accept missing values"
-    with pytest.raises(ValueError, match=msg):
-        forest.fit(X, y)
+    assert predictive_test_score >= non_predictive_test_score + expected_score_gap
 
 
 # TODO(1.11): remove test with the deprecation of friedman_mse criterion
@@ -1937,3 +1933,190 @@ def test_non_supported_criterion_raises_error_with_missing_values(Forest):
 def test_friedman_mse_deprecation(Forest):
     with pytest.warns(FutureWarning, match="friedman_mse"):
         _ = Forest(criterion="friedman_mse")
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_fit_categorical_raw_labels_are_reencoded(name):
+    """Forest encodes raw labels once and forwards the mask to base trees."""
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+    X = np.array([["a"], ["a"], ["b"], ["b"]], dtype=object)
+    y = np.array([0, 0, 1, 1])
+    est = Forest(categorical_features=[0], n_estimators=5, random_state=0).fit(X, y)
+
+    assert_array_equal(est.is_categorical_, [True])
+    assert_array_equal(est._categorical_encoder.categories_[0], ["a", "b"])
+    assert_array_equal(est.estimators_[0].is_categorical_, [True])
+    # Forest owns encoding; trees must not re-fit their own preprocessor.
+    assert est.estimators_[0]._preprocessor is None
+    assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.parametrize("constructor_name", ["pandas", "polars"])
+def test_categorical_from_dtype_propagated_to_trees(name, constructor_name):
+    """``categorical_features="from_dtype"`` must survive down to each tree.
+
+    Trees only ever see the forest's already-encoded ndarray, so
+    ``_check_categorical_features`` on the tree side can no longer see the
+    original dataframe dtypes and would silently resolve to "no categorical
+    features" unless the forest passes the resolved bool mask.
+    """
+    pytest.importorskip(constructor_name)
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+    X = _convert_container(
+        np.array(
+            [[0.0, "low"], [1.0, "high"], [2.0, "low"], [3.0, "high"]], dtype=object
+        ),
+        constructor_name,
+        column_names=["f_num", "f_cat"],
+        dtype=object,
+        categorical_feature_names=["f_cat"],
+    )
+    y = np.array([0, 1, 0, 1])
+
+    est = Forest(n_estimators=3, random_state=0, categorical_features="from_dtype").fit(
+        X, y
+    )
+
+    assert est.categorical_features == "from_dtype"
+    assert_array_equal(est.is_categorical_, [False, True])
+    for tree in est.estimators_:
+        assert_array_equal(tree.is_categorical_, [False, True])
+        assert tree._preprocessor is None
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_no_sparse_with_categorical(name):
+    """Sparse matrices are rejected at fit and at predict when categoricals are used."""
+    rng = np.random.RandomState(0)
+    n_samples = 50
+    X = np.hstack(
+        [
+            rng.randn(n_samples, 3),
+            rng.randint(0, 3, size=(n_samples, 2)).astype(np.float64),
+        ]
+    )
+    y = rng.randint(0, 2, size=n_samples)
+    X_sparse = scipy.sparse.csc_array(X)
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
+        Forest(categorical_features=[3, 4], n_estimators=5, random_state=0).fit(
+            X_sparse, y
+        )
+
+    with pytest.raises(
+        NotImplementedError, match="Categorical features not supported with sparse"
+    ):
+        Forest(categorical_features=[3, 4], n_estimators=5, random_state=0).fit(
+            X, y
+        ).predict(X_sparse)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_fit_categorical_missing_and_unknown_values(name):
+    """Missing and unseen categories share the same prediction path."""
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+    X = np.array([["a"], ["a"], ["b"], ["b"], [np.nan], [np.nan]], dtype=object)
+    y = np.array([0, 0, 0, 0, 1, 1])
+    est = Forest(
+        categorical_features=[0], max_depth=2, n_estimators=5, random_state=0
+    ).fit(X, y)
+
+    non_missing_prediction = est.predict(X[:1])
+    missing_prediction = est.predict(np.array([[np.nan]], dtype=object))
+    unknown_prediction = est.predict(np.array([["c"]], dtype=object))
+
+    assert_array_equal(non_missing_prediction, [0])
+    assert missing_prediction[0] != non_missing_prediction[0]
+    assert_array_equal(unknown_prediction, missing_prediction)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.parametrize(
+    "categorical_features, match",
+    [
+        ([0.5, 1.5], "must be an array-like of bool, int or str"),
+        ([False, False, False], "boolean mask must have shape"),
+        ([5], "must be in \\[0, n_features - 1\\]"),
+        ([-3], "must be in \\[0, n_features - 1\\]"),
+    ],
+)
+def test_invalid_categorical(name, categorical_features, match):
+    """Forest fit surfaces invalid categorical_features the same way trees do."""
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+    with pytest.raises(ValueError, match=match):
+        Forest(categorical_features=categorical_features, random_state=0).fit(
+            np.asarray(X), y
+        )
+
+
+@pytest.mark.parametrize("Forest", [RandomForestRegressor, ExtraTreesRegressor])
+def test_categorical_absolute_error_unsupported(Forest):
+    """absolute_error categorical splits are rejected (same limit as trees)."""
+    X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
+    y = np.array([0.0, 1.0, 0.0, 1.0])
+
+    with pytest.raises(
+        ValueError,
+        match="Categorical features are not supported with criterion='absolute_error'",
+    ):
+        Forest(
+            categorical_features=[0], criterion="absolute_error", random_state=0
+        ).fit(X, y)
+
+
+@pytest.mark.parametrize("Forest", [ExtraTreesClassifier, ExtraTreesRegressor])
+def test_extratrees_high_cardinality_categorical(Forest):
+    """ExtraTrees accept >255 categories; RandomForest best-splits do not."""
+    # Include every level so cardinality is deterministic (>255), not sampled.
+    n_categories = 500
+    X = np.arange(n_categories).reshape(-1, 1)
+    y = X[:, 0] % 2
+
+    Forest(categorical_features=[0], n_estimators=5, random_state=0).fit(X, y)
+
+    RF = (
+        RandomForestClassifier
+        if issubclass(Forest, ExtraTreesClassifier)
+        else RandomForestRegressor
+    )
+    with pytest.raises(
+        ValueError, match=r"Values for categorical features.*\[0, 255\]"
+    ):
+        RF(categorical_features=[0], n_estimators=5, random_state=0).fit(X, y)
+
+
+@pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
+def test_warm_start_with_categorical_features_raises(name):
+    """Refitting with warm_start and categorical features is rejected.
+
+    A second fit rebuilds the ordinal encoding, which would invalidate splits
+    stored on trees from the first fit. ``warm_start=False`` still replaces
+    the forest.
+    """
+    Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
+    X = np.array([["a"], ["a"], ["b"], ["b"]], dtype=object)
+    y = np.array([0, 0, 1, 1])
+    est = Forest(
+        categorical_features=[0], n_estimators=2, warm_start=True, random_state=0
+    )
+    est.fit(X, y)
+    assert len(est.estimators_) == 2
+
+    with pytest.raises(
+        ValueError, match="warm_start is not supported with categorical features"
+    ):
+        est.fit(X, y)
+
+    est.set_params(n_estimators=4)
+    with pytest.raises(
+        ValueError, match="warm_start is not supported with categorical features"
+    ):
+        est.fit(X, y)
+
+    est.set_params(warm_start=False)
+    est.fit(X, y)
+    assert len(est.estimators_) == 4

@@ -243,9 +243,6 @@ class OneVsRestClassifier(
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionchanged:: 0.20
-           `n_jobs` default changed from 1 to None
-
     verbose : int, default=0
         The verbosity level, if non zero, progress messages are printed.
         Below 50, the output is sent to stderr. Otherwise, the output is sent
@@ -276,8 +273,6 @@ class OneVsRestClassifier(
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -514,7 +509,7 @@ class OneVsRestClassifier(
                 indices.extend(np.where(_predict_binary(e, X) > thresh)[0])
                 indptr.append(len(indices))
             data = np.ones(len(indices), dtype=int)
-            indicator = sp.csc_matrix(
+            indicator = sp.csc_array(
                 (data, indices, indptr), shape=(n_samples, len(self.estimators_))
             )
             return self.label_binarizer_.inverse_transform(indicator)
@@ -579,10 +574,6 @@ class OneVsRestClassifier(
         T : array-like of shape (n_samples, n_classes) or (n_samples,) for \
             binary classification.
             Result of calling `decision_function` on the final estimator.
-
-            .. versionchanged:: 0.19
-                output shape changed to ``(n_samples,)`` to conform to
-                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
         if len(self.estimators_) == 1:
@@ -724,8 +715,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -969,10 +958,6 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         Y : array-like of shape (n_samples, n_classes) or (n_samples,)
             Result of calling `decision_function` on the final estimator.
-
-            .. versionchanged:: 0.19
-                output shape changed to ``(n_samples,)`` to conform to
-                scikit-learn conventions for binary classification.
         """
         check_is_fitted(self)
         X = validate_data(
@@ -1093,8 +1078,6 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the

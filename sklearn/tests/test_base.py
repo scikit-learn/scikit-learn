@@ -30,12 +30,15 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import deprecated
+from sklearn.utils._metadata_requests import SIMPLE_METHODS
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils._set_output import _get_output_config
 from sklearn.utils._testing import (
     _convert_container,
     assert_array_equal,
 )
+from sklearn.utils.metadata_routing import get_routing_for_object
 from sklearn.utils.validation import _check_n_features, validate_data
 
 
@@ -189,6 +192,10 @@ def test_clone_empty_array():
     clf2 = clone(clf)
     assert_array_equal(clf.empty.data, clf2.empty.data)
 
+    clf = MyEstimator(empty=sp.csr_array(np.array([[0]])))
+    clf2 = clone(clf)
+    assert_array_equal(clf.empty.data, clf2.empty.data)
+
 
 def test_clone_nan():
     # Regression test for cloning estimators with default parameter as np.nan
@@ -209,7 +216,8 @@ def test_clone_sparse_matrices():
     sparse_matrix_classes = [
         cls
         for name in dir(sp)
-        if name.endswith("_matrix") and type(cls := getattr(sp, name)) is type
+        if name.endswith("_matrix") or name.endswith("_array")
+        if type(cls := getattr(sp, name)) is type
     ]
 
     for cls in sparse_matrix_classes:
@@ -906,21 +914,12 @@ def test_estimator_getstate_using_slots_error_message():
         pickle.dumps(Estimator())
 
 
-@pytest.mark.parametrize(
-    "constructor_name, minversion",
-    [
-        ("dataframe", "1.5.0"),
-        ("pyarrow", "12.0.0"),
-        ("polars", "0.20.23"),
-    ],
-)
-def test_dataframe_protocol(constructor_name, minversion):
-    """Uses the dataframe exchange protocol to get feature names."""
+@pytest.mark.parametrize("constructor_name", ["pandas", "pyarrow", "polars"])
+def test_feature_names_in_on_dataframes(constructor_name):
+    """Test that feature_names_in_ is correctly set for dataframe X."""
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
-    df = _convert_container(
-        data, constructor_name, columns_name=columns, minversion=minversion
-    )
+    df = _convert_container(data, constructor_name, column_names=columns)
 
     class NoOpTransformer(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None):
@@ -941,7 +940,7 @@ def test_dataframe_protocol(constructor_name, minversion):
         assert_allclose(df, X_out)
 
     bad_names = ["a", "b", "c"]
-    df_bad = _convert_container(data, constructor_name, columns_name=bad_names)
+    df_bad = _convert_container(data, constructor_name, column_names=bad_names)
     with pytest.raises(ValueError, match="The feature names should match"):
         no_op.transform(df_bad)
 
@@ -1004,6 +1003,43 @@ def test_get_params_html():
 
     assert est._get_params_html() == {"l1": 0, "empty": "test"}
     assert est._get_params_html().non_default == ("empty",)
+
+
+def test_get_fitted_attr_html():
+    """Check the behaviour of the `_get_fitted_attr_html` method."""
+    X = np.array([[-1, -1], [-2, -1], [-3, -2]])
+    pca = PCA().fit(X)
+    pca._not_a_fitted_attr = "x"
+
+    fitted_attr_html = pca._get_fitted_attr_html()
+    assert fitted_attr_html["n_features_in_"] == {"type_name": "int", "value": 2}
+    assert pca._not_a_fitted_attr not in fitted_attr_html
+    assert len(fitted_attr_html) == 9
+    assert fitted_attr_html["components_"]["type_name"] == ("ndarray")
+    assert fitted_attr_html["components_"]["shape"] == (2, 2)
+    assert_allclose(fitted_attr_html["components_"]["value"], pca.components_)
+
+
+def test_get_fitted_attr_html_no_warnings():
+    """Check that deprecated fitted attrs don't generate a warning in the repr.
+
+    Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/34056
+    """
+
+    class Estimator(BaseEstimator):
+        @deprecated("Attribute `foo` is deprecated")
+        @property
+        def foo_(self):
+            return 1
+
+    model = Estimator()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+
+        html = model._get_fitted_attr_html()
+
+    assert html["foo_"] == {"type_name": "int", "value": 1}
 
 
 def make_estimator_with_param(default_value):
@@ -1095,3 +1131,68 @@ def test_param_is_default(default_value, test_value):
     estimator = make_estimator_with_param(default_value)(param=test_value)
     non_default = estimator._get_params_html().non_default
     assert "param" not in non_default
+
+
+def test_baseestimator_sample_weight_auto_request():
+    """Test that sklearn estimators auto-request `sample_weight`."""
+
+    class MyEstimator(BaseEstimator):
+        """This class lives in a sklearn module and therefore creates the
+        `_auto_request_sample_weight` class attribute in `__init_subclass__`."""
+
+        def fit(self, X, y, sample_weight=None):
+            return self  # pragma: no cover
+
+        def predict(self, X, y=None):
+            return y  # pragma: no cover
+
+    assert MyEstimator._auto_request_sample_weight
+    est = MyEstimator()
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(est)
+        assert routing.fit.requests.get("sample_weight") is True
+        methods = [m for m in SIMPLE_METHODS if m != "fit"]
+        for method in methods:
+            assert getattr(routing, method).requests.get("sample_weight") is None
+
+
+def test_third_party_baseestimator_no_sample_weight_auto_request():
+    # Test that third-party subclasses of `BaseEstimator` do not auto-request
+    # sample_weight.
+
+    def fit(self, X, y, sample_weight=None):
+        return self  # pragma: no cover
+
+    # This class lives in 'third_party.pkg' and therefore doesn't have a
+    # `_auto_request_sample_weight` class attribute.
+    ThirdPartyEstimator = type(
+        "ThirdPartyEstimator",
+        (BaseEstimator,),
+        {"__module__": "third_party.pkg", "fit": fit},
+    )
+
+    assert "_auto_request_sample_weight" not in ThirdPartyEstimator.__dict__
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(ThirdPartyEstimator())
+        assert routing.fit.requests.get("sample_weight") is None
+
+
+def test_auto_request_mixin_opts_in_sample_weight():
+    """AutoRequestMixin opts third-party estimators into sample_weight auto-requests."""
+    from sklearn.utils.metadata_routing import AutoRequestMixin
+
+    def fit(self, X, y, sample_weight=None):
+        return self  # pragma: no cover
+
+    ThirdPartyEstimator = type(
+        "ThirdPartyEstimator",
+        (AutoRequestMixin, BaseEstimator),
+        {"__module__": "third_party.pkg", "fit": fit},
+    )
+    assert ThirdPartyEstimator._auto_request_sample_weight
+
+    with config_context(enable_metadata_auto_requests=True):
+        routing = get_routing_for_object(ThirdPartyEstimator())
+        assert routing.fit.requests.get("sample_weight") is True

@@ -50,16 +50,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     kernel : kernel instance, default=None
-        The kernel specifying the covariance function of the GP. If None is
-        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed")
-        * RBF(1.0, length_scale_bounds="fixed")`` is used as default. Note that
-        the kernel hyperparameters are optimized during fitting unless the
-        bounds are marked as "fixed".
+        The kernel specifying the covariance function of the GP.
+        If `None` is passed,
+        the kernel `ConstantKernel() * RBF()` is used as default.
+        Note that
+        the kernel hyperparameters are optimized during fitting
+        unless the bounds are marked as `"fixed"`
+        or the argument `optimizer` is set to `None`.
 
     alpha : float or ndarray of shape (n_samples,), default=1e-10
         Value added to the diagonal of the kernel matrix during fitting.
@@ -115,8 +115,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         implementation, the normalisation is reversed before the GP predictions
         are reported.
 
-        .. versionchanged:: 0.23
-
     copy_X_train : bool, default=True
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
@@ -160,8 +158,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -244,12 +240,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             GaussianProcessRegressor class instance.
         """
-        if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
-                1.0, length_scale_bounds="fixed"
-            )
-        else:
-            self.kernel_ = clone(self.kernel)
+        self.kernel_ = C() * RBF() if self.kernel is None else clone(self.kernel)
 
         self._rng = check_random_state(self.random_state)
 
@@ -643,7 +634,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             # it is equivalent to:
             # for param_idx in range(n_kernel_params):
             #     for output_idx in range(n_output):
-            #         log_likehood_gradient_dims[param_idx, output_idx] = (
+            #         log_likelihood_gradient_dims[param_idx, output_idx] = (
             #             inner_term[..., output_idx] @
             #             K_gradient[..., param_idx]
             #         )

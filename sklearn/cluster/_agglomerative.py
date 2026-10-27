@@ -21,9 +21,7 @@ from sklearn.base import (
     ClusterMixin,
     _fit_context,
 )
-
-# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from sklearn.cluster import (  # type: ignore[attr-defined]
+from sklearn.cluster import (
     _hierarchical_fast as _hierarchical,
 )
 from sklearn.cluster._feature_agglomeration import AgglomerationTransform
@@ -38,6 +36,7 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.graph import _fix_connected_components
 from sklearn.utils.validation import check_memory, validate_data
 
@@ -92,7 +91,7 @@ def _fix_connectivity(X, connectivity, affinity):
 
     # Convert connectivity matrix to LIL
     if not sparse.issparse(connectivity):
-        connectivity = sparse.lil_matrix(connectivity)
+        connectivity = sparse.lil_array(connectivity)
 
     # `connectivity` is a sparse matrix at this point
     if connectivity.format != "lil":
@@ -118,7 +117,7 @@ def _fix_connectivity(X, connectivity, affinity):
             mode="connectivity",
         )
 
-    return connectivity, n_connected_components
+    return _align_api_if_sparse(connectivity), n_connected_components
 
 
 def _single_linkage_tree(
@@ -795,9 +794,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     metric : str or callable, default="euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
-        "euclidean" is accepted. If "precomputed", a distance matrix is needed
+        "euclidean" and "l2" are accepted. If "precomputed", a distance matrix is needed
         as input for the fit method. If connectivity is None, linkage is
-        "single" and affinity is not "precomputed" any valid pairwise distance
+        "single" and metric is not "precomputed" any valid pairwise distance
         metric can be assigned.
 
         For an example of agglomerative clustering with different metrics, see
@@ -847,9 +846,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         - 'single' uses the minimum of the distances between all observations
           of the two sets.
 
-        .. versionadded:: 0.20
-            Added the 'single' option
-
         For examples comparing different `linkage` criteria, see
         :ref:`sphx_glr_auto_examples_cluster_plot_linkage_comparison.py`.
 
@@ -858,14 +854,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
 
-        .. versionadded:: 0.21
-
     compute_distances : bool, default=False
         Computes distances between clusters even if `distance_threshold` is not
         used. This can be used to make dendrogram visualization, but introduces
         a computational and memory overhead.
-
-        .. versionadded:: 0.24
 
         For an example of dendrogram visualization, see
         :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_dendrogram.py`.
@@ -886,13 +878,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     n_connected_components_ : int
         The estimated number of connected components in the graph.
 
-        .. versionadded:: 0.21
-            ``n_connected_components_`` was added to replace ``n_components_``.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1020,10 +1007,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "compute_full_tree must be True if distance_threshold is set."
             )
 
-        if self.linkage == "ward" and self.metric != "euclidean":
+        if self.linkage == "ward" and self.metric not in ("euclidean", "l2"):
             raise ValueError(
                 f"{self.metric} was provided as metric. Ward can only "
-                "work with euclidean distances."
+                "work with euclidean distances (i.e. 'euclidean' and 'l2')."
             )
 
         tree_builder = _TREE_BUILDERS[self.linkage]
@@ -1105,7 +1092,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features) or \
                 (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
-            ``affinity='precomputed'``.
+            ``metric='precomputed'``.
 
         y : Ignored
             Not used, present here for API consistency by convention.
@@ -1141,7 +1128,7 @@ class FeatureAgglomeration(
     metric : str or callable, default="euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If linkage is "ward", only
-        "euclidean" is accepted. If "precomputed", a distance matrix is needed
+        "euclidean" and "l2" are accepted. If "precomputed", a distance matrix is needed
         as input for the fit method.
 
         .. versionadded:: 1.2
@@ -1194,14 +1181,10 @@ class FeatureAgglomeration(
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
 
-        .. versionadded:: 0.21
-
     compute_distances : bool, default=False
         Computes distances between clusters even if `distance_threshold` is not
         used. This can be used to make dendrogram visualization, but introduces
         a computational and memory overhead.
-
-        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -1219,13 +1202,8 @@ class FeatureAgglomeration(
     n_connected_components_ : int
         The estimated number of connected components in the graph.
 
-        .. versionadded:: 0.21
-            ``n_connected_components_`` was added to replace ``n_components_``.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

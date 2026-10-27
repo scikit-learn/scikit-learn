@@ -25,10 +25,9 @@ from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.metrics._scorer import _MultimetricScorer
 from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
+from sklearn.utils import _safe_indexing, check_random_state, indexable
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
-    device,
+    array_device,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -43,6 +42,7 @@ from sklearn.utils._param_validation import (
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _routing_enabled,
     process_routing,
 )
@@ -159,7 +159,7 @@ def cross_validate(
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         See :ref:`multimetric_grid_search` for an example.
 
@@ -179,9 +179,6 @@ def cross_validate(
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
@@ -216,15 +213,8 @@ def cross_validate(
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-        .. versionadded:: 0.19
-
-        .. versionchanged:: 0.21
-            Default value was changed from ``True`` to ``False``
-
     return_estimator : bool, default=False
         Whether to return the estimators fitted on each split.
-
-        .. versionadded:: 0.20
 
     return_indices : bool, default=False
         Whether to return the train-test indices selected for each split.
@@ -235,8 +225,6 @@ def cross_validate(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
@@ -357,10 +345,13 @@ def cross_validate(
                 routed_params=e.routed_params,
             )
     else:
-        routed_params = Bunch()
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.estimator = Bunch(fit=params)
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "splitter": {"split": {"groups": groups}},
+                "estimator": {"fit": params},
+                "scorer": {},
+            }
+        )
 
     indices = cv.split(X, y, **routed_params.splitter.split)
     if return_indices:
@@ -580,9 +571,6 @@ def cross_val_score(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            `cv` default value if `None` changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
         the score are parallelized over the cross-validation splits.
@@ -615,8 +603,6 @@ def cross_val_score(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
@@ -684,6 +670,8 @@ def _fit_and_score(
     split_progress=None,
     candidate_progress=None,
     error_score=np.nan,
+    caller=None,
+    callback_ctx=None,
 ):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -754,6 +742,12 @@ def _fit_and_score(
     return_estimator : bool, default=False
         Whether to return the fitted estimator.
 
+    caller : estimator instance or None, default=None
+        The *SearchCV instance that called this function.
+
+    callback_ctx : `CallbackContext` object or None, default=None
+        Callback context for the evaluation task.
+
     Returns
     -------
     result : dict with the following attributes
@@ -775,13 +769,6 @@ def _fit_and_score(
         fit_error : str or None
             Traceback str if the fit failed, None if the fit succeeded.
     """
-    xp, _ = get_namespace(X)
-    X_device = device(X)
-
-    # Make sure that we can fancy index X even if train and test are provided
-    # as NumPy arrays by NumPy only cross-validation splitters.
-    train, test = xp.asarray(train, device=X_device), xp.asarray(test, device=X_device)
-
     if not isinstance(error_score, numbers.Number) and error_score != "raise":
         raise ValueError(
             "error_score must be the string 'raise' or a numeric value. "
@@ -825,12 +812,28 @@ def _fit_and_score(
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
+    if (sample_weight := fit_params.get("sample_weight")) is not None:
+        metadata_callbacks = {"sample_weight": sample_weight}
+    else:
+        metadata_callbacks = None
+
     result = {}
+
     try:
-        if y_train is None:
-            estimator.fit(X_train, **fit_params)
-        else:
-            estimator.fit(X_train, y_train, **fit_params)
+        if callback_ctx is not None:
+            with callback_ctx.propagate_callback_context(estimator):
+                callback_ctx.call_on_fit_task_begin(
+                    estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
+                )
+                if y_train is None:
+                    estimator.fit(X_train, **fit_params)
+                else:
+                    estimator.fit(X_train, y_train, **fit_params)
+        else:  # custom search class that does not support callbacks
+            if y_train is None:
+                estimator.fit(X_train, **fit_params)
+            else:
+                estimator.fit(X_train, y_train, **fit_params)
 
     except Exception:
         # Note fit time as time until error
@@ -859,6 +862,11 @@ def _fit_and_score(
         if return_train_score:
             train_scores = _score(
                 estimator, X_train, y_train, scorer, score_params_train, error_score
+            )
+    finally:
+        if callback_ctx is not None:
+            callback_ctx.call_on_fit_task_end(
+                estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
             )
 
     if verbose > 1:
@@ -898,6 +906,7 @@ def _fit_and_score(
         result["parameters"] = parameters
     if return_estimator:
         result["estimator"] = estimator
+
     return result
 
 
@@ -1064,9 +1073,6 @@ def cross_val_predict(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and
         predicting are parallelized over the cross-validation splits.
@@ -1174,9 +1180,12 @@ def cross_val_predict(
                 routed_params=e.routed_params,
             )
     else:
-        routed_params = Bunch()
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.estimator = Bunch(fit=params)
+        routed_params = _manual_routing(
+            {
+                "splitter": {"split": {"groups": groups}},
+                "estimator": {"fit": params},
+            }
+        )
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     splits = list(cv.split(X, y, **routed_params.splitter.split))
@@ -1191,7 +1200,7 @@ def cross_val_predict(
         method in ["decision_function", "predict_proba", "predict_log_proba"]
         and y is not None
     )
-    xp, is_array_api, device_ = get_namespace_and_device(X)
+    xp, is_array_api, device = get_namespace_and_device(X)
     xp_y, _ = get_namespace(y)
     if encode:
         y = xp_y.asarray(y)
@@ -1204,7 +1213,7 @@ def cross_val_predict(
                 y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
             y = y_enc
 
-    y = move_to(y, xp=xp, device=device_)
+    y = move_to(y, xp=xp, device=device)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
@@ -1238,7 +1247,7 @@ def cross_val_predict(
             concat_pred.append(label_preds)
         predictions = concat_pred
     else:
-        inv_test_indices = xp.asarray(inv_test_indices, device=device(X))
+        inv_test_indices = xp.asarray(inv_test_indices, device=array_device(X))
         predictions = xp.concat(predictions)
 
     if isinstance(predictions, list):
@@ -1261,9 +1270,6 @@ def _fit_and_predict(estimator, X, y, train, test, fit_params, method):
 
     X : array-like of shape (n_samples, n_features)
         The data to fit.
-
-        .. versionchanged:: 0.20
-            X is only required to be an object with finite length or shape now
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         The target variable to try to predict in the case of
@@ -1320,7 +1326,7 @@ def _fit_and_predict(estimator, X, y, train, test, fit_params, method):
             # A 2D y array should be a binary label indicator matrix
             xp, _ = get_namespace(X, y)
             n_classes = (
-                len(set(_convert_to_numpy(y, xp=xp))) if y.ndim == 1 else y.shape[1]
+                len(set(move_to(y, xp=np, device="cpu"))) if y.ndim == 1 else y.shape[1]
             )
             predictions = _enforce_prediction_order(
                 estimator.classes_, predictions, n_classes, method
@@ -1514,9 +1520,6 @@ def permutation_test_score(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            `cv` default value if `None` changed from 3-fold to 5-fold.
-
     n_permutations : int, default=100
         Number of times to permute ``y``.
 
@@ -1647,10 +1650,13 @@ def permutation_test_score(
             )
 
     else:
-        routed_params = Bunch()
-        routed_params.estimator = Bunch(fit=params)
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "estimator": {"fit": params},
+                "splitter": {"split": {"groups": groups}},
+                "scorer": {},
+            }
+        )
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -1820,9 +1826,6 @@ def learning_curve(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     scoring : str or callable, default=None
         Scoring method to use to evaluate the training and test sets.
 
@@ -1864,8 +1867,6 @@ def learning_curve(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     return_times : bool, default=False
         Whether to return the fit and score times.
@@ -1983,10 +1984,13 @@ def learning_curve(
             )
 
     else:
-        routed_params = Bunch()
-        routed_params.estimator = Bunch(fit=params, partial_fit=params)
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "estimator": {"fit": params, "partial_fit": params},
+                "splitter": {"split": {"groups": groups}},
+                "scorer": {},
+            }
+        )
 
     # Store cv as list as we will be iterating over the list multiple times
     cv_iter = list(cv.split(X, y, **routed_params.splitter.split))
@@ -2154,15 +2158,12 @@ def _incremental_fit_estimator(
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores, fit_times, score_times = [], [], [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
-    if fit_params is None:
-        fit_params = {}
+    fit_params = fit_params or {}
+    score_params = score_params or {}
     if classes is None:
-        partial_fit_func = partial(estimator.partial_fit, **fit_params)
+        partial_fit_func = partial(estimator.partial_fit)
     else:
-        partial_fit_func = partial(estimator.partial_fit, classes=classes, **fit_params)
-    score_params = score_params if score_params is not None else {}
-    score_params_train = _check_method_params(X, params=score_params, indices=train)
-    score_params_test = _check_method_params(X, params=score_params, indices=test)
+        partial_fit_func = partial(estimator.partial_fit, classes=classes)
 
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
@@ -2170,14 +2171,26 @@ def _incremental_fit_estimator(
         X_partial_train, y_partial_train = _safe_split(estimator, X, y, partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
+
+        fit_params_iter = _check_method_params(
+            X, params=fit_params, indices=partial_train
+        )
+
         if y_partial_train is None:
-            partial_fit_func(X_partial_train)
+            partial_fit_func(X_partial_train, **fit_params_iter)
         else:
-            partial_fit_func(X_partial_train, y_partial_train)
+            partial_fit_func(X_partial_train, y_partial_train, **fit_params_iter)
         fit_time = time.time() - start_fit
         fit_times.append(fit_time)
 
         start_score = time.time()
+
+        score_params_test_iter = _check_method_params(
+            X, params=score_params, indices=test
+        )
+        score_params_train_iter = _check_method_params(
+            X, params=score_params, indices=train_subset
+        )
 
         test_scores.append(
             _score(
@@ -2185,7 +2198,7 @@ def _incremental_fit_estimator(
                 X_test,
                 y_test,
                 scorer,
-                score_params=score_params_test,
+                score_params=score_params_test_iter,
                 error_score=error_score,
             )
         )
@@ -2195,7 +2208,7 @@ def _incremental_fit_estimator(
                 X_train,
                 y_train,
                 scorer,
-                score_params=score_params_train,
+                score_params=score_params_train_iter,
                 error_score=error_score,
             )
         )
@@ -2306,9 +2319,6 @@ def validation_curve(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     scoring : str or callable, default=None
         Scoring method to use to evaluate the training and test sets.
 
@@ -2338,8 +2348,6 @@ def validation_curve(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     params : dict, default=None
         Parameters to pass to the estimator, scorer and cross-validation object.
@@ -2378,7 +2386,7 @@ def validation_curve(
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(n_samples=1_000, random_state=0)
     >>> logistic_regression = LogisticRegression()
-    >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
+    >>> param_name, param_range = "alpha", np.logspace(8, -3, 10)
     >>> train_scores, test_scores = validation_curve(
     ...     logistic_regression, X, y, param_name=param_name, param_range=param_range
     ... )
@@ -2426,10 +2434,13 @@ def validation_curve(
             )
 
     else:
-        routed_params = Bunch()
-        routed_params.estimator = Bunch(fit=params)
-        routed_params.splitter = Bunch(split={"groups": groups})
-        routed_params.scorer = Bunch(score={})
+        routed_params = _manual_routing(
+            {
+                "estimator": {"fit": params},
+                "splitter": {"split": {"groups": groups}},
+                "scorer": {},
+            }
+        )
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
     results = parallel(

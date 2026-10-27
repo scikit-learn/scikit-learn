@@ -16,7 +16,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy.integrate import trapezoid
-from scipy.sparse import csr_matrix, issparse
+from scipy.sparse import csr_array, issparse
 from scipy.stats import rankdata
 
 from sklearn.exceptions import UndefinedMetricWarning
@@ -30,15 +30,20 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
+    get_namespace,
     get_namespace_and_device,
     move_to,
     size,
 )
-from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._encode import _encode_labels, _unique
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
-from sklearn.utils.validation import _check_pos_label_consistency, _check_sample_weight
+from sklearn.utils.validation import (
+    _check_pos_label_consistency,
+    _check_sample_weight,
+    _deprecate_positional_args,
+)
 
 
 @validate_params(
@@ -148,8 +153,8 @@ def average_precision_score(
 
     y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by :term:`decision_function` on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -196,9 +201,6 @@ def average_precision_score(
 
     Notes
     -----
-    .. versionchanged:: 0.19
-      Instead of linearly interpolating between operating points, precisions
-      are weighted by the change in recall since the last operating point.
 
     References
     ----------
@@ -227,7 +229,11 @@ def average_precision_score(
     0.77
     """
     xp, _, device = get_namespace_and_device(y_score)
-    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
+    y_score = check_array(y_score, ensure_2d=False)
+    # To allow mixed string `y_true`/numeric `y_score` input, cannot move `y_true`
+    # until it has been converted to an integer (e.g., via `label_binarize`)
+    # Ensures `test_array_api_classification_mixed_string_numeric_input` passes.
+    sample_weight = move_to(sample_weight, xp=xp, device=device)
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)
@@ -252,7 +258,8 @@ def average_precision_score(
         return float(max(0.0, -xp.sum(xp.diff(recall) * precision[:-1])))
 
     y_type = type_of_target(y_true, input_name="y_true")
-    present_labels = xp.unique_values(y_true)
+    xp_y_true, _ = get_namespace(y_true)
+    present_labels = xp_y_true.unique_values(y_true)
 
     if y_type == "binary":
         if present_labels.shape[0] == 2 and pos_label not in present_labels:
@@ -274,6 +281,7 @@ def average_precision_score(
                 "Do not set pos_label or set pos_label to 1."
             )
         y_true = label_binarize(y_true, classes=present_labels)
+        y_true = move_to(y_true, xp=xp, device=device)
         if not y_score.shape == y_true.shape:
             raise ValueError(
                 "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
@@ -312,8 +320,6 @@ def det_curve(
 
     Read more in the :ref:`User Guide <det_curve>`.
 
-    .. versionadded:: 0.24
-
     .. versionchanged:: 1.7
        An arbitrary threshold at infinity is added to represent a classifier
        that always predicts the negative class, i.e. `fpr=0` and `fnr=1`, unless
@@ -321,14 +327,14 @@ def det_curve(
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    y_score : ndarray of shape of (n_samples,)
+    y_score : array-like of shape of (n_samples,)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -356,11 +362,11 @@ def det_curve(
 
     fnr : ndarray of shape (n_thresholds,)
         False negative rate (FNR) such that element i is the false negative
-        rate of predictions with score >= thresholds[i]. This is occasionally
+        rate of predictions with score < thresholds[i]. This is occasionally
         referred to as false rejection or miss rate.
 
     thresholds : ndarray of shape (n_thresholds,)
-        Decreasing thresholds on the decision function (either `predict_proba`
+        Increasing thresholds on the decision function (either `predict_proba`
         or `decision_function`) used to compute FPR and FNR.
 
         .. versionchanged:: 1.7
@@ -393,7 +399,7 @@ def det_curve(
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
@@ -425,7 +431,8 @@ def det_curve(
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if xp.unique_values(y_true).shape[0] != 2:
+    xp_y_true, _ = get_namespace(y_true)
+    if xp_y_true.unique_values(y_true).shape[0] != 2:
         raise ValueError(
             "Only one class is present in y_true. Detection error "
             "tradeoff curve is not defined in that case."
@@ -661,7 +668,7 @@ def roc_auc_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
     0.99
     >>> roc_auc_score(y, clf.decision_function(X))
@@ -848,7 +855,7 @@ def _multiclass_roc_auc_score(
                 "for multiclass one-vs-one ROC AUC, "
                 "'sample_weight' must be None in this case."
             )
-        y_true_encoded = _encode(y_true, uniques=classes)
+        y_true_encoded = _encode_labels(y_true, uniques=classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(
             _binary_roc_auc_score, y_true_encoded, y_score, average=average
@@ -865,6 +872,53 @@ def _multiclass_roc_auc_score(
         )
 
 
+def _sort_inputs_and_compute_classification_thresholds(
+    y_true, y_score, sample_weight=None
+):
+    """Validate and sort inputs, and compute classification thresholds.
+
+    Performs the following functions:
+
+    * Array validation on `y_true`, `y_score` and `sample_weight`
+    * Filters out 0-weighted samples
+    * Sorts `y_score`, `y_true` and `sample_weight` according to descending `y_score`
+    * Computes thresholds i.e. indices where sorted `y_score` changes
+    """
+    xp, _, device = get_namespace_and_device(y_score)
+
+    check_consistent_length(y_true, y_score, sample_weight)
+    y_true = column_or_1d(y_true)
+    y_score = column_or_1d(y_score)
+    assert_all_finite(y_true)
+    assert_all_finite(y_score)
+
+    # Filter out zero-weighted samples, as they should not impact the result
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
+        sample_weight = _check_sample_weight(sample_weight, y_true)
+        nonzero_weight_mask = sample_weight != 0
+        y_true = y_true[nonzero_weight_mask]
+        y_score = y_score[nonzero_weight_mask]
+        sample_weight = sample_weight[nonzero_weight_mask]
+
+    # sort scores and corresponding truth values
+    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
+    y_score = y_score[desc_score_indices]
+    y_true = y_true[desc_score_indices]
+    if sample_weight is not None:
+        sample_weight = sample_weight[desc_score_indices]
+
+    # y_score typically has many tied values. Here we extract
+    # the indices associated with the distinct values. We also
+    # concatenate a value for the end of the curve.
+    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
+    threshold_idxs = xp.concat(
+        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
+    )
+    return y_true, y_score, sample_weight, threshold_idxs
+
+
+@_deprecate_positional_args(version="1.11")
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -874,7 +928,9 @@ def _multiclass_roc_auc_score(
     },
     prefer_skip_nested_validation=True,
 )
-def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weight=None):
+def confusion_matrix_at_thresholds(
+    y_true, y_score, *, pos_label=None, sample_weight=None
+):
     """Calculate :term:`binary` confusion matrix terms per classification threshold.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
@@ -883,10 +939,10 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True targets of binary classification.
 
-    y_score : ndarray of shape (n_samples,)
+    y_score : array-like of shape (n_samples,)
         Estimated probabilities or output of a decision function.
 
     pos_label : int, float, bool or str, default=None
@@ -949,61 +1005,47 @@ def confusion_matrix_at_thresholds(y_true, y_score, pos_label=None, sample_weigh
     if not (y_type == "binary" or (y_type == "multiclass" and pos_label is not None)):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    xp, _, device = get_namespace_and_device(y_true, y_score, sample_weight)
-
-    check_consistent_length(y_true, y_score, sample_weight)
-    y_true = column_or_1d(y_true)
-    y_score = column_or_1d(y_score)
-    assert_all_finite(y_true)
-    assert_all_finite(y_score)
-
-    # Filter out zero-weighted samples, as they should not impact the result
-    if sample_weight is not None:
-        sample_weight = column_or_1d(sample_weight)
-        sample_weight = _check_sample_weight(sample_weight, y_true)
-        nonzero_weight_mask = sample_weight != 0
-        y_true = y_true[nonzero_weight_mask]
-        y_score = y_score[nonzero_weight_mask]
-        sample_weight = sample_weight[nonzero_weight_mask]
-
+    xp, _, device = get_namespace_and_device(y_score)
     pos_label = _check_pos_label_consistency(pos_label, y_true)
-
-    # make y_true a boolean vector
-    y_true = y_true == pos_label
-
-    # sort scores and corresponding truth values
-    desc_score_indices = xp.argsort(y_score, stable=True, descending=True)
-    y_score = y_score[desc_score_indices]
-    y_true = y_true[desc_score_indices]
-    if sample_weight is not None:
-        weight = sample_weight[desc_score_indices]
-    else:
-        weight = 1.0
-
-    # y_score typically has many tied values. Here we extract
-    # the indices associated with the distinct values. We also
-    # concatenate a value for the end of the curve.
-    distinct_value_indices = xp.nonzero(xp.diff(y_score))[0]
-    threshold_idxs = xp.concat(
-        [distinct_value_indices, xp.asarray([size(y_true) - 1], device=device)]
+    xp_y_true, _ = get_namespace(y_true)
+    # Make `y_true` a boolean vector. Use `asarray` as `y_true` could be a list
+    y_true = xp_y_true.asarray(
+        xp_y_true.asarray(y_true) == pos_label, dtype=xp_y_true.int32
     )
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
 
+    y_true, y_score, weight, threshold_idxs = (
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, sample_weight
+        )
+    )
     # accumulate the true positives with decreasing threshold
-    max_float_dtype = _max_precision_float_dtype(xp, device)
-    # Perform the weighted cumulative sum using float64 precision when possible
-    # to avoid numerical stability problem with tens of millions of very noisy
-    # predictions:
-    # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
-    y_true = xp.astype(y_true, max_float_dtype)
-    tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
-    if sample_weight is not None:
-        # express fps as a cumsum to ensure fps is increasing even in
-        # the presence of floating point errors
+    if sample_weight is None:
+        # Accumulate the counts using an integer datatype to avoid
+        # rounding errors on devices that do not support float64.
+        y_true_int = xp.astype(y_true, xp.int64)
+        tps_int = xp.cumulative_sum(y_true_int, dtype=xp.int64)[threshold_idxs]
+        fps_int = (xp.astype(threshold_idxs, xp.int64) + 1) - tps_int
+
+        output_dtype = (
+            y_score.dtype
+            if hasattr(y_score, "dtype") and xp.isdtype(y_score.dtype, "real floating")
+            else _max_precision_float_dtype(xp, device)
+        )
+        tps = xp.astype(tps_int, output_dtype)
+        fps = xp.astype(fps_int, output_dtype)
+    else:
+        max_float_dtype = _max_precision_float_dtype(xp, device)
+        # Perform the weighted cumulative sum using float64 precision when possible
+        # to avoid numerical stability problem with tens of millions of very noisy
+        # predictions:
+        # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
+        y_true = xp.astype(y_true, max_float_dtype)
+        tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
         fps = xp.cumulative_sum((1 - y_true) * weight, dtype=max_float_dtype)[
             threshold_idxs
         ]
-    else:
-        fps = 1 + xp.astype(threshold_idxs, max_float_dtype) - tps
+
     tns = fps[-1] - fps
     fns = tps[-1] - tps
     return tns, fps, fns, tps, y_score[threshold_idxs]
@@ -1119,7 +1161,7 @@ def precision_recall_curve(
     >>> thresholds
     array([0.1 , 0.35, 0.4 , 0.8 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1196,8 +1238,8 @@ def roc_curve(
 
     y_score : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1213,9 +1255,6 @@ def roc_curve(
         Whether to drop thresholds where the resulting point is collinear with
         its neighbors in ROC space. This has no effect on the ROC AUC or visual
         shape of the curve, but reduces the number of plotted points.
-
-        .. versionadded:: 0.17
-           parameter *drop_intermediate*.
 
     Returns
     -------
@@ -1277,7 +1316,7 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1293,11 +1332,15 @@ def roc_curve(
     # kept, but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
     if drop_intermediate and fps.shape[0] > 2:
-        optimal_idxs = xp.where(
+        optimal_idxs = xp.nonzero(
             xp.concat(
                 [
                     xp.asarray([True], device=device),
-                    xp.logical_or(xp.diff(fps, 2), xp.diff(tps, 2)),
+                    # Array API spec recommends `logical_or` only accepts bool input
+                    xp.logical_or(
+                        xp.astype(xp.diff(fps, n=2), xp.bool),
+                        xp.astype(xp.diff(tps, n=2), xp.bool),
+                    ),
                     xp.asarray([True], device=device),
                 ]
             )
@@ -1365,15 +1408,13 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
@@ -1404,7 +1445,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
         raise ValueError("{0} format is not supported".format(y_type))
 
     if not issparse(y_true):
-        y_true = csr_matrix(y_true)
+        y_true = csr_array(y_true)
 
     y_score = -y_score
 
@@ -1467,8 +1508,8 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1534,9 +1575,6 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     Read more in the :ref:`User Guide <label_ranking_loss>`.
 
-    .. versionadded:: 0.17
-       A function *label_ranking_loss*
-
     Parameters
     ----------
     y_true : {array-like, sparse matrix} of shape (n_samples, n_labels)
@@ -1544,8 +1582,8 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     y_score : array-like of shape (n_samples, n_labels)
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
         For :term:`decision_function` scores, values greater than or equal to
         zero should indicate the positive class.
 
@@ -1586,7 +1624,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
 
     n_samples, n_labels = y_true.shape
 
-    y_true = csr_matrix(y_true)
+    y_true = csr_array(y_true)
 
     loss = np.zeros(n_samples)
     for i, (start, stop) in enumerate(zip(y_true.indptr, y_true.indptr[1:])):
@@ -1631,9 +1669,9 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
         to be ranked.
 
     y_score : ndarray of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If `None`, use all
@@ -1770,9 +1808,9 @@ def dcg_score(
         to be ranked.
 
     y_score : array-like of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
@@ -1876,9 +1914,9 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         to be ranked.
 
     y_score : ndarray of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
@@ -1938,9 +1976,9 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
         that is not between 0 and 1.
 
     y_score : array-like of shape (n_samples, n_labels)
-        Target scores, can either be probability estimates, confidence values,
-        or non-thresholded measure of decisions (as returned by
-        "decision_function" on some classifiers).
+        Target scores, can either be probability estimates of the positive
+        class or non-thresholded decision values (as returned by
+        :term:`decision_function` on some classifiers).
 
     k : int, default=None
         Only consider the highest k scores in the ranking. If `None`, use all
@@ -2189,7 +2227,7 @@ def top_k_accuracy_score(
             UndefinedMetricWarning,
         )
 
-    y_true_encoded = _encode(y_true, uniques=classes)
+    y_true_encoded = _encode_labels(y_true, uniques=classes)
 
     if y_type == "binary":
         if k == 1:
@@ -2208,3 +2246,103 @@ def top_k_accuracy_score(
         return float(np.sum(hits))
     else:
         return float(np.dot(hits, sample_weight))
+
+
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "metric_func": [callable],
+        "sample_weight": ["array-like", None],
+        "metric_params": [dict, None],
+    },
+    prefer_skip_nested_validation=True,
+)
+def metric_at_thresholds(
+    y_true,
+    y_score,
+    metric_func,
+    *,
+    sample_weight=None,
+    metric_params=None,
+):
+    r"""Compute `metric_func` per threshold for :term:`binary` data.
+
+    Aids visualization of metric values across thresholds when tuning the
+    :ref:`decision threshold <threshold_tuning>`.
+
+    Read more in the :ref:`User Guide <metric_at_thresholds>`.
+
+    .. versionadded:: 1.9
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target labels.
+
+    y_score : array-like of shape (n_samples,)
+        Continuous prediction scores, either estimated probabilities of the
+        positive class or output of a :term:`decision_function`.
+
+    metric_func : callable
+        The metric function to use. It will be called as
+        `metric_func(y_true, y_pred, **metric_params)`, where `y_pred` are
+        thresholded predictions, internally computed as
+        `y_pred = (y_score >= threshold)`. The output should be
+        a single numeric or a collection where each element has the same size.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. If not `None`, will be passed to `metric_func`.
+
+    metric_params : dict, default=None
+        Parameters to pass to `metric_func`.
+
+    Returns
+    -------
+    metric_values : ndarray of shape (n_thresholds,) or (n_thresholds, \*n_outputs)
+        The scores associated with each threshold. If `metric_func` returns a
+        collection (e.g., a tuple of floats), the output would be a 2D array
+        of shape (n_thresholds, \*n_outputs).
+
+    thresholds : ndarray of shape (n_thresholds,)
+        The thresholds used to compute the scores.
+
+    See Also
+    --------
+    confusion_matrix_at_thresholds : Compute binary confusion matrix per threshold.
+    precision_recall_curve : Compute precision-recall pairs for different
+        probability thresholds.
+    det_curve : Compute error rates for different probability thresholds.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import accuracy_score, metric_at_thresholds
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_score = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> metric_values, thresholds = metric_at_thresholds(
+    ...     y_true, y_score, accuracy_score)
+    >>> thresholds
+    array([0.8 , 0.4 , 0.35, 0.1 ])
+    >>> metric_values
+    array([0.75, 0.5 , 0.75, 0.5 ])
+    """
+    y_true, y_score, sample_weight, threshold_idxs = (
+        _sort_inputs_and_compute_classification_thresholds(
+            y_true, y_score, sample_weight
+        )
+    )
+    metric_params = {
+        **(metric_params or {}),
+        **({"sample_weight": sample_weight} if sample_weight is not None else {}),
+    }
+
+    thresholds = y_score[threshold_idxs]
+    metric_values = []
+    for threshold in thresholds:
+        y_pred = (y_score >= threshold).astype(np.int32)
+        metric_values.append(metric_func(y_true, y_pred, **metric_params))
+
+    metric_values = np.asarray(metric_values)
+    return metric_values, thresholds

@@ -15,7 +15,10 @@ Guide, we may minimize redundancy and inconsistency.
 
 We begin by listing general concepts (and any that didn't fit elsewhere), but
 more specific sets of related terms are listed below:
-:ref:`glossary_estimator_types`, :ref:`glossary_target_types`,
+:ref:`glossary_estimator_types`,
+:ref:`glossary_metadata_routing`,
+:ref:`glossary_callbacks`,
+:ref:`glossary_target_types`,
 :ref:`glossary_methods`, :ref:`glossary_parameters`,
 :ref:`glossary_attributes`, :ref:`glossary_sample_props`.
 
@@ -1128,6 +1131,57 @@ Metadata Routing
 Please refer to :ref:`Metadata Routing User Guide <metadata_routing>` for more
 information.
 
+.. _glossary_callbacks:
+
+Callbacks
+=========
+
+.. glossary::
+
+    auto-propagated
+    autopropagated
+        A :term:`callback` is auto-propagated if, when registered on a
+        :term:`meta-estimator`, it can be propagated to the sub-estimators of that
+        meta-estimator. This propagation means that the callback gets automatically
+        registered on the sub-estimators, and thus it will have its :term:`hooks`
+        called during their :term:`fitting` too.
+
+    callback
+    callbacks
+        An object which can be registered on a compatible :term:`estimator` to have its
+        :term:`hooks` called during the :term:`fitting` of that estimator. Registering a
+        callback on an estimator makes it possible to add functionalities to the
+        fitting process, such as displaying a progress bar or logging a score at each
+        step of the fitting. A callback can also interrupt the fitting, for example to
+        perform early stopping.
+
+    hook
+    hooks
+        The methods of a :term:`callback` which are called during the :term:`fitting` of
+        the estimator(s) the callback is registered on. The different hooks of a
+        callback are:
+
+        * :meth:`~sklearn.callback.FitCallback.setup` called once at the start of
+          :term:`fit`.
+        * :meth:`~sklearn.callback.FitCallback.on_fit_task_begin` called at the
+          beginning of each :term:`fit task`.
+        * :meth:`~sklearn.callback.FitCallback.on_fit_task_end` called at the end of
+          each :term:`fit task`.
+        * :meth:`~sklearn.callback.FitCallback.teardown` called once at the end of
+          :term:`fit`.
+
+    fit task
+    fit tasks
+        In the context of callbacks, a fit task is an arbitrary unit of work performed
+        during the :term:`fitting` of an estimator. These tasks are typically an
+        iteration of a loop, with nested loop corresponding to nested tasks. The tasks
+        have an inherent tree structure, with the root task being the whole fitting
+        process itself. For a more detailed description of the task tree, see the
+        :ref:`task tree section <callback_task_definition>` of the developer
+        documentation on callbacks.
+
+Please refer to the :ref:`Callbacks User Guide <callbacks_user>` for more information.
+
 .. _glossary_target_types:
 
 Target Types
@@ -1433,7 +1487,7 @@ Methods
         Output conventions:
 
         classifier
-            An array of shape ``(n_samples,)`` ``(n_samples, n_outputs)``.
+            An array of shape ``(n_samples,)`` or ``(n_samples, n_outputs)``.
             :term:`Multilabel <multilabel>` data may be represented as a sparse
             matrix if a sparse matrix was used in fitting. Each element should
             be one of the values in the classifier's :term:`classes_`
@@ -1518,7 +1572,7 @@ Methods
         parameters (:term:`X`, :term:`y`, :term:`groups`), where all may be
         optional, and returns an iterator over ``(train_idx, test_idx)``
         pairs.  Each of {train,test}_idx is a 1d integer array, with values
-        from 0 from ``X.shape[0] - 1`` of any length, such that no values
+        from 0 to ``X.shape[0] - 1`` of any length, such that no values
         appear in both some ``train_idx`` and its corresponding ``test_idx``.
 
     ``transform``
@@ -1814,7 +1868,7 @@ See concept :term:`attribute`.
 
     ``classes_``
         A list of class labels known to the :term:`classifier`, mapping each
-        label to a numerical index used in the model representation our output.
+        label to a numerical index used in the model representation or output.
         For instance, the array output from :term:`predict_proba` has columns
         aligned with ``classes_``. For :term:`multi-output` classifiers,
         ``classes_`` should be a list of lists, with one class listing for

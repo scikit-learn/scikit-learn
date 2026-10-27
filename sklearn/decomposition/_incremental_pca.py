@@ -44,8 +44,6 @@ class IncrementalPCA(_BasePCA):
 
     Read more in the :ref:`User Guide <IncrementalPCA>`.
 
-    .. versionadded:: 0.16
-
     Parameters
     ----------
     n_components : int, default=None
@@ -120,8 +118,6 @@ class IncrementalPCA(_BasePCA):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -177,7 +173,7 @@ class IncrementalPCA(_BasePCA):
     >>> transformer.partial_fit(X[:100, :])
     IncrementalPCA(batch_size=200, n_components=7)
     >>> # or let the fit function itself divide the data into batches
-    >>> X_sparse = sparse.csr_matrix(X)
+    >>> X_sparse = sparse.csr_array(X)
     >>> X_transformed = transformer.fit_transform(X_sparse)
     >>> X_transformed.shape
     (1797, 7)

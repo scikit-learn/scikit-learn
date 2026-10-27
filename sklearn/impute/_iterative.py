@@ -1,7 +1,6 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-import warnings
 from collections import namedtuple
 from numbers import Integral, Real
 from time import time
@@ -10,7 +9,6 @@ import numpy as np
 from scipy import stats
 
 from sklearn.base import _fit_context, clone
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 from sklearn.preprocessing import normalize
 from sklearn.utils import _safe_indexing, check_array, check_random_state
@@ -65,18 +63,18 @@ class IterativeImputer(_BaseImputer):
 
     Read more in the :ref:`User Guide <iterative_imputer>`.
 
-    .. versionadded:: 0.21
+    .. versionchanged:: 1.10
+        :class:`IterativeImputer` is no longer experimental and can be imported
+        directly from :mod:`sklearn.impute` without enabling it through
+        ``sklearn.experimental``.
 
     .. note::
 
-      This estimator is still **experimental** for now: the predictions
-      and the API might change without any deprecation cycle. To use it,
-      you need to explicitly import `enable_iterative_imputer`::
-
-        >>> # explicitly require this experimental feature
-        >>> from sklearn.experimental import enable_iterative_imputer  # noqa
-        >>> # now you can import normally from sklearn.impute
-        >>> from sklearn.impute import IterativeImputer
+        The stopping criterion of this imputer rarely improves the downstream
+        predictive performance, and the imputed values are not guaranteed to
+        converge with the number of iterations. See the
+        :ref:`User Guide <iterative_imputer_convergence>` for details on why
+        chasing convergence is usually not worthwhile.
 
     Parameters
     ----------
@@ -154,16 +152,10 @@ class IterativeImputer(_BaseImputer):
         scalar. If array-like, expects shape `(n_features,)`, one min value for
         each feature. The default is `-np.inf`.
 
-        .. versionchanged:: 0.23
-           Added support for array-like.
-
     max_value : float or array-like of shape (n_features,), default=np.inf
         Maximum possible imputed value. Broadcast to shape `(n_features,)` if
         scalar. If array-like, expects shape `(n_features,)`, one max value for
         each feature. The default is `np.inf`.
-
-        .. versionchanged:: 0.23
-           Added support for array-like.
 
     verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
@@ -213,8 +205,6 @@ class IterativeImputer(_BaseImputer):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -274,7 +264,6 @@ class IterativeImputer(_BaseImputer):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp_mean = IterativeImputer(random_state=0)
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
@@ -862,12 +851,6 @@ class IterativeImputer(_BaseImputer):
                         print("[IterativeImputer] Early stopping criterion reached.")
                     break
                 Xt_previous = Xt.copy()
-        else:
-            if not self.sample_posterior:
-                warnings.warn(
-                    "[IterativeImputer] Early stopping criterion not reached.",
-                    ConvergenceWarning,
-                )
         _assign_where(Xt, X, cond=~mask_missing_values)
 
         return super()._concatenate_indicator(Xt, X_indicator)

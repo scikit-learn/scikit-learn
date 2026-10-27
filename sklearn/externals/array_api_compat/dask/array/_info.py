@@ -379,7 +379,7 @@ class __array_namespace_info__:
             return res
         raise ValueError(f"unsupported kind: {kind!r}")
 
-    def devices(self) -> list[Device]:
+    def devices(self) -> tuple[Device]:
         """
         The devices supported by Dask.
 
@@ -404,4 +404,4 @@ class __array_namespace_info__:
         ['cpu', DASK_DEVICE]
 
         """
-        return ["cpu", _DASK_DEVICE]
+        return ("cpu", _DASK_DEVICE)

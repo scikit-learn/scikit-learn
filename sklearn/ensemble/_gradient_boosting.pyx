@@ -19,7 +19,7 @@ from sklearn.tree._utils cimport safe_realloc
 from numpy import zeros as np_zeros
 
 
-# constant to mark tree leafs
+# constant to mark tree leaves
 cdef intp_t TREE_LEAF = -1
 
 cdef void _predict_regression_tree_inplace_fast_dense(

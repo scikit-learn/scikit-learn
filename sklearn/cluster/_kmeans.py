@@ -82,8 +82,6 @@ def kmeans_plusplus(
 ):
     """Init n_clusters seeds according to k-means++.
 
-    .. versionadded:: 0.24
-
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
@@ -397,9 +395,6 @@ def k_means(
         well-defined clusters, by using the triangle inequality. However it's
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
-
-        .. versionchanged:: 0.18
-            Added Elkan algorithm
 
         .. versionchanged:: 1.1
             Renamed "full" to "lloyd", and deprecated "auto" and "full".
@@ -772,10 +767,6 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
     sample_weight : ndarray of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : ndarray of shape (n_samples,)
-        Precomputed squared euclidean norm of each data point, to speed up
-        computations.
-
     centers : ndarray of shape (n_clusters, n_features)
         The cluster centers.
 
@@ -933,12 +924,15 @@ class _BaseKMeans(
             if has_vcomp and has_mkl:
                 self._warn_mkl_vcomp(n_active_threads)
 
-    def _validate_center_shape(self, X, centers):
-        """Check if centers is compatible with X and n_clusters."""
-        if centers.shape[0] != self.n_clusters:
+    def _validate_center_shape(self, X, centers, n_centroids=None):
+        """Check if the shape of the centers is correct."""
+        if n_centroids is None:
+            n_centroids = self.n_clusters
+
+        if centers.shape[0] != n_centroids:
             raise ValueError(
                 f"The shape of the initial centers {centers.shape} does not "
-                f"match the number of clusters {self.n_clusters}."
+                f"match the number of clusters {n_centroids}."
             )
         if centers.shape[1] != X.shape[1]:
             raise ValueError(
@@ -1037,7 +1031,7 @@ class _BaseKMeans(
         elif callable(init):
             centers = init(X, n_clusters, random_state=random_state)
             centers = check_array(centers, dtype=X.dtype, copy=False, order="C")
-            self._validate_center_shape(X, centers)
+            self._validate_center_shape(X, centers, n_centroids=n_clusters)
 
         if sp.issparse(centers):
             centers = centers.toarray()
@@ -1280,9 +1274,6 @@ class KMeans(_BaseKMeans):
         more memory intensive due to the allocation of an extra array of shape
         `(n_samples, n_clusters)`.
 
-        .. versionchanged:: 0.18
-            Added Elkan algorithm
-
         .. versionchanged:: 1.1
             Renamed "full" to "lloyd", and deprecated "auto" and "full".
             Changed "auto" to use "lloyd" instead of "elkan".
@@ -1306,8 +1297,6 @@ class KMeans(_BaseKMeans):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1450,8 +1439,6 @@ class KMeans(_BaseKMeans):
             are assigned equal weight. `sample_weight` is not used during
             initialization if `init` is a callable or a user provided array.
 
-            .. versionadded:: 0.20
-
         Returns
         -------
         self : object
@@ -1579,9 +1566,6 @@ def _mini_batch_step(
 
     X : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The original data array. If sparse, must be in CSR format.
-
-    x_squared_norms : ndarray of shape (n_samples,)
-        Squared euclidean norm of each data point.
 
     sample_weight : ndarray of shape (n_samples,)
         The weights for each observation in `X`.
@@ -1821,8 +1805,6 @@ class MiniBatchKMeans(_BaseKMeans):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2069,8 +2051,6 @@ class MiniBatchKMeans(_BaseKMeans):
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
             initialization if `init` is a callable or a user provided array.
-
-            .. versionadded:: 0.20
 
         Returns
         -------

@@ -28,7 +28,7 @@ print(f"The number of bytes taken in RAM is {raccoon_face.nbytes}")
 
 # %%
 # Thus the image is a 2D array of 768 pixels in height and 1024 pixels in width. Each
-# value is a 8-bit unsigned integer, which means that the image is encoded using 8
+# value is an 8-bit unsigned integer, which means that the image is encoded using 8
 # bits per pixel. The total memory usage of the image is 786 kilobytes (1 byte equals
 # 8 bits).
 #

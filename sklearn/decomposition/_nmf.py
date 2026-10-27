@@ -25,6 +25,7 @@ from sklearn.decomposition._cdnmf_fast import _update_cdnmf_fast
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_array, check_random_state, gen_batches
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _randomized_svd, safe_sparse_dot, squared_norm
 from sklearn.utils.validation import check_is_fitted, check_non_negative, validate_data
 
@@ -196,8 +197,8 @@ def _special_sparse_dot(W, H, X):
                 axis=1
             )
 
-        WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
-        return WH.tocsr()
+        WH = sp.coo_array((dot_vals, (ii, jj)), shape=X.shape)
+        return _align_api_if_sparse(WH.tocsr())
     else:
         return np.dot(W, H)
 
@@ -479,9 +480,11 @@ def _fit_coordinate_descent(
        Cichocki, Andrzej, and P. H. A. N. Anh-Huy. IEICE transactions on fundamentals
        of electronics, communications and computer sciences 92.3: 708-721, 2009.
     """
-    # so W and Ht are both in C order in memory
-    Ht = check_array(H.T, order="C")
-    X = check_array(X, accept_sparse="csr")
+    # ensure that W and Ht are both in C order in memory and that X is csr
+    W = np.ascontiguousarray(W)
+    Ht = np.ascontiguousarray(H.T)
+    if sp.issparse(X) and X.format == "csc":
+        X = X.tocsr()
 
     rng = check_random_state(random_state)
 
@@ -997,9 +1000,6 @@ def non_negative_factorization(
         - 'custom': If `update_H=True`, use custom matrices W and H which must both
           be provided. If `update_H=False`, then only custom matrix H is used.
 
-        .. versionchanged:: 0.23
-            The default value of `init` changed from 'random' to None in 0.23.
-
         .. versionchanged:: 1.1
             When `init=None` and n_components is less than n_samples and n_features
             defaults to `nndsvda` instead of `nndsvd`.
@@ -1015,12 +1015,6 @@ def non_negative_factorization(
           Alternating Least Squares (Fast HALS).
         - 'mu' is a Multiplicative Update solver.
 
-        .. versionadded:: 0.17
-           Coordinate Descent solver.
-
-        .. versionadded:: 0.19
-           Multiplicative Update solver.
-
     beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
         Beta divergence to be minimized, measuring the distance between X
@@ -1028,8 +1022,6 @@ def non_negative_factorization(
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros. Used only in 'mu' solver.
-
-        .. versionadded:: 0.19
 
     tol : float, default=1e-4
         Tolerance of the stopping condition.
@@ -1285,8 +1277,6 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
     def inverse_transform(self, X):
         """Transform data back to its original space.
 
-        .. versionadded:: 0.18
-
         Parameters
         ----------
         X : {ndarray, sparse matrix} of shape (n_samples, n_components)
@@ -1400,12 +1390,6 @@ class NMF(_BaseNMF):
         - 'cd' is a Coordinate Descent solver.
         - 'mu' is a Multiplicative Update solver.
 
-        .. versionadded:: 0.17
-           Coordinate Descent solver.
-
-        .. versionadded:: 0.19
-           Multiplicative Update solver.
-
     beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
         Beta divergence to be minimized, measuring the distance between X
@@ -1413,8 +1397,6 @@ class NMF(_BaseNMF):
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros. Used only in 'mu' solver.
-
-        .. versionadded:: 0.19
 
     tol : float, default=1e-4
         Tolerance of the stopping condition.
@@ -1448,18 +1430,11 @@ class NMF(_BaseNMF):
         For l1_ratio = 1 it is an elementwise L1 penalty.
         For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
 
-        .. versionadded:: 0.17
-           Regularization parameter *l1_ratio* used in the Coordinate Descent
-           solver.
-
     verbose : int, default=0
         Whether to be verbose.
 
     shuffle : bool, default=False
         If true, randomize the order of coordinates in the CD solver.
-
-        .. versionadded:: 0.17
-           *shuffle* parameter used in the Coordinate Descent solver.
 
     Attributes
     ----------
@@ -1481,8 +1456,6 @@ class NMF(_BaseNMF):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1897,7 +1870,7 @@ class MiniBatchNMF(_BaseNMF):
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    verbose : bool, default=False
+    verbose : int, default=0
         Whether to be verbose.
 
     Attributes

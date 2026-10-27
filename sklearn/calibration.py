@@ -5,7 +5,7 @@
 
 import warnings
 from inspect import signature
-from math import log
+from math import ceil, log
 from numbers import Integral, Real
 
 import numpy as np
@@ -17,6 +17,7 @@ from sklearn._loss import (
     HalfMultinomialLoss,
     HalfMultinomialLossArrayAPI,
 )
+from sklearn._loss.link import LogitLink, MultinomialLogit
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
@@ -31,9 +32,8 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import LeaveOneOut, check_cv, cross_val_predict
 from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.svm import LinearSVC
-from sklearn.utils import Bunch, _safe_indexing, column_or_1d, get_tags, indexable
+from sklearn.utils import _safe_indexing, column_or_1d, get_tags, indexable
 from sklearn.utils._array_api import (
-    _convert_to_numpy,
     _is_numpy_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -41,6 +41,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._param_validation import (
     HasMethods,
+    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -54,6 +55,7 @@ from sklearn.utils.extmath import softmax
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _routing_enabled,
     process_routing,
 )
@@ -69,6 +71,109 @@ from sklearn.utils.validation import (
     check_consistent_length,
     check_is_fitted,
 )
+
+_CLASSIFIER_RESPONSE_METHODS = ("predict_proba", "decision_function")
+
+
+def _ensure_logits(predictions, response_method_name, method):
+    """Prepare classifier outputs for the calibrator.
+
+    When the response method is ``predict_proba``:
+
+    - For ``method='sigmoid'``, logits are computed per class
+      (OvR convention for multiclass).
+    - For ``method='isotonic'``, probabilities are passed through (with
+      reshaping / positive-class selection in the binary case).
+    - For ``method='temperature'``, multinomial logits are computed.
+
+    When the response method is ``decision_function``, predictions are assumed
+    to already be in score / logit space and are returned unchanged (with
+    reshaping for the binary case).
+
+    Parameters
+    ----------
+    predictions : array-like of shape (n_samples, n_classes) or (n_samples,)
+        The predictions to be converted.
+
+    response_method_name : {'decision_function', 'predict_proba'}
+        The name of the response method used to obtain the predictions.
+
+    method : {'sigmoid', 'isotonic', 'temperature'}
+        The calibration method.
+
+    Returns
+    -------
+    scores : array-like of shape (n_samples, n_classes) or (n_samples, 1).
+        Logits or probabilities prepared for the calibrator.
+    """
+    if response_method_name not in _CLASSIFIER_RESPONSE_METHODS:
+        raise ValueError(
+            f"Unknown response method name: {response_method_name}. "
+            f"Expected one of {_CLASSIFIER_RESPONSE_METHODS}."
+        )
+
+    xp, _, device_ = get_namespace_and_device(predictions)
+    one = xp.asarray(1.0, dtype=predictions.dtype, device=device_)
+
+    if response_method_name == "decision_function":
+        if predictions.ndim == 1:
+            return xp.reshape(predictions, (-1, 1))
+        return predictions
+
+    elif method == "isotonic":
+        # Keep probabilities on the probability scale for isotonic regression.
+        if predictions.ndim == 1:
+            return xp.reshape(predictions, (-1, 1))
+        if predictions.shape[1] == 2:
+            return xp.reshape(predictions[:, 1], (-1, 1))
+        return predictions
+
+    eps = xp.asarray(
+        xp.finfo(predictions.dtype).eps, dtype=predictions.dtype, device=device_
+    )
+    predictions = xp.clip(predictions, eps, one - eps)
+
+    if method == "sigmoid":
+        if predictions.ndim == 1:
+            return xp.reshape(LogitLink().link(predictions), (-1, 1))
+        if predictions.shape[1] == 2:
+            return xp.reshape(LogitLink().link(predictions[:, 1]), (-1, 1))
+        sigmoid_logits = xp.zeros_like(predictions)
+        sigmoid_link = LogitLink()
+        for i in range(predictions.shape[1]):
+            sigmoid_logits[:, i] = sigmoid_link.link(predictions[:, i])
+        return sigmoid_logits
+
+    if method == "temperature":
+        if predictions.ndim == 1:
+            predictions = xp.reshape(predictions, (-1, 1))
+            predictions = xp.concat([one - predictions, predictions], axis=1)
+        elif predictions.shape[1] == 1:
+            predictions = xp.concat([one - predictions, predictions], axis=1)
+        return MultinomialLogit().link(predictions)
+
+    else:
+        raise ValueError(
+            f"Unknown calibration method: {method}. "
+            "Expected 'sigmoid', 'isotonic', or 'temperature'."
+        )
+
+
+def _get_calibration_logits(estimator, X, *, method, pos_label=None):
+    """Get classifier outputs and convert them to calibration logits."""
+    predictions, _, response_method_used = _get_response_values(
+        estimator,
+        X,
+        response_method=_CLASSIFIER_RESPONSE_METHODS,
+        pos_label=pos_label,
+        return_response_method_used=True,
+    )
+    logits = _ensure_logits(
+        predictions,
+        response_method_name=response_method_used,
+        method=method,
+    )
+    return logits, response_method_used
 
 
 class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator):
@@ -92,8 +197,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     data is used for calibration. The user has to take care manually that data
     for model fitting and calibration are disjoint.
 
-    The calibration is based on the :term:`decision_function` method of the
-    `estimator` if it exists, else on :term:`predict_proba`.
+    The calibration is based on the :term:`predict_proba` method of the
+    `estimator` when available, otherwise on :term:`decision_function`.
 
     Read more in the :ref:`User Guide <calibration>`.
     In order to learn more on the CalibratedClassifierCV class, see the
@@ -128,6 +233,13 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         applying `softmax(classifier_logits/T)` with a value of `T` (temperature)
         that optimizes the log loss.
 
+        For all methods, ``predict_proba`` outputs are preferred when available.
+        Sigmoid converts them to logits per class. Isotonic keeps them
+        as probabilities. Temperature scaling converts them to symmetric
+        multinomial logits. When ``predict_proba`` is unavailable
+        (e.g. :class:`~sklearn.svm.LinearSVC`), ``decision_function``
+        outputs are used instead.
+
         For very uncalibrated classifiers on very imbalanced datasets, sigmoid
         calibration might be preferred because it fits an additional intercept
         parameter. This helps shift decision boundaries appropriately when the
@@ -156,9 +268,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Refer to the :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -168,8 +277,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         iterations.
 
         See :term:`Glossary <n_jobs>` for more details.
-
-        .. versionadded:: 0.24
 
     ensemble : bool, or "auto", default="auto"
         Determines how the calibrator is fitted.
@@ -190,8 +297,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Note that this method is also internally implemented  in
         :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
-        .. versionadded:: 0.24
-
         .. versionchanged:: 1.6
             `"auto"` option is added and is the default.
 
@@ -203,8 +308,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -219,9 +322,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
           `n_cv` is the number of cross-validation folds.
         - When `ensemble=False`, the `estimator`, fitted on all the data, and fitted
           calibrator.
-
-        .. versionchanged:: 0.24
-            Single calibrated classifier case when `ensemble=False`.
 
     See Also
     --------
@@ -258,40 +358,47 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
     Examples
     --------
+    Without calibration, the GaussianNB classifier is over-confident
+    (predicted probabilities closer to 0 or 1 than they should be),
+    in particular on its training set:
+
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.calibration import CalibratedClassifierCV
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
-    >>> base_clf = GaussianNB()
-    >>> calibrated_clf = CalibratedClassifierCV(base_clf, cv=3)
+    >>> GaussianNB().fit(X, y).predict_proba(X)[:, 1].max()
+    np.float64(0.9999...)
+
+    After calibration with internal cross-validation, the resulting classifier
+    is less over-confident:
+
+    >>> calibrated_clf = CalibratedClassifierCV(GaussianNB(), cv=3)
     >>> calibrated_clf.fit(X, y)
-    CalibratedClassifierCV(...)
+    CalibratedClassifierCV(cv=3, estimator=GaussianNB())
     >>> len(calibrated_clf.calibrated_classifiers_)
     3
-    >>> calibrated_clf.predict_proba(X)[:5, :]
-    array([[0.110, 0.889],
-           [0.072, 0.927],
-           [0.928, 0.072],
-           [0.928, 0.072],
-           [0.072, 0.928]])
+    >>> calibrated_clf.predict_proba(X)[:, 1].max()
+    np.float64(0.989...)
+
+    We can also calibrate a pre-fitted classifier. In this case, we need a held-out
+    calibration set instead of relying on internal cross-validation:
+
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
     >>> X_train, X_calib, y_train, y_calib = train_test_split(
     ...        X, y, random_state=42
     ... )
-    >>> base_clf = GaussianNB()
-    >>> base_clf.fit(X_train, y_train)
-    GaussianNB()
+    >>> fitted_clf = GaussianNB().fit(X_train, y_train)
     >>> from sklearn.frozen import FrozenEstimator
-    >>> calibrated_clf = CalibratedClassifierCV(FrozenEstimator(base_clf))
+    >>> calibrated_clf = CalibratedClassifierCV(FrozenEstimator(fitted_clf))
     >>> calibrated_clf.fit(X_calib, y_calib)
     CalibratedClassifierCV(...)
     >>> len(calibrated_clf.calibrated_classifiers_)
     1
-    >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
-    array([[0.936, 0.063]])
+    >>> calibrated_clf.predict_proba(X_calib)[:, 1].max()
+    np.float64(0.965...)
     """
 
     _parameter_constraints: dict = {
@@ -370,7 +477,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             _ensemble = not isinstance(estimator, FrozenEstimator)
 
         self.calibrated_classifiers_ = []
-
         # Set `classes_` using all `y`
         label_encoder_ = LabelEncoder().fit(y)
         self.classes_ = label_encoder_.classes_
@@ -403,15 +509,16 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                     " Be warned that the result of the calibration is likely to be"
                     " incorrect."
                 )
-            routed_params = Bunch()
-            routed_params.splitter = Bunch(split={})  # no routing for splitter
-            routed_params.estimator = Bunch(fit=fit_params)
+            fit_kwargs = dict(fit_params)
             if sample_weight is not None and supports_sw:
-                routed_params.estimator.fit["sample_weight"] = sample_weight
+                fit_kwargs["sample_weight"] = sample_weight
+            routed_params = _manual_routing(
+                {"splitter": {}, "estimator": {"fit": fit_kwargs}}
+            )
 
-        xp, is_array_api, device_ = get_namespace_and_device(X)
+        xp, is_array_api, device = get_namespace_and_device(X)
         if is_array_api:
-            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device_)
+            y, sample_weight = move_to(y, sample_weight, xp=xp, device=device)
         # Check that each cross-validation fold can have at least one
         # example per class
         if isinstance(self.cv, int):
@@ -456,7 +563,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             this_estimator = clone(estimator)
             method_name = _check_response_method(
                 this_estimator,
-                ["decision_function", "predict_proba"],
+                _CLASSIFIER_RESPONSE_METHODS,
             ).__name__
             predictions = cross_val_predict(
                 estimator=this_estimator,
@@ -467,17 +574,23 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 n_jobs=self.n_jobs,
                 params=routed_params.estimator.fit,
             )
-            if self.classes_.shape[0] == 2:
-                # Ensure shape (n_samples, 1) in the binary case
-                if method_name == "predict_proba":
-                    # Select the probability column of the positive class
-                    predictions = _process_predict_proba(
-                        y_pred=predictions,
-                        target_type="binary",
-                        classes=self.classes_,
-                        pos_label=self.classes_[1],
-                    )
-                predictions = predictions.reshape(-1, 1)
+            classes = self.classes_
+            if (
+                method_name == "predict_proba"
+                and classes is not None
+                and classes.shape[0] == 2
+            ):
+                predictions = _process_predict_proba(
+                    y_pred=predictions,
+                    target_type="binary",
+                    classes=classes,
+                    pos_label=classes[1],
+                )
+            predictions = _ensure_logits(
+                predictions,
+                response_method_name=method_name,
+                method=self.method,
+            )
 
             if sample_weight is not None:
                 # Check that the sample_weight dtype is consistent with the
@@ -526,8 +639,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        xp, _, device_ = get_namespace_and_device(X)
-        mean_proba = xp.zeros((_num_samples(X), self.classes_.shape[0]), device=device_)
+        xp, _, device = get_namespace_and_device(X)
+        mean_proba = xp.zeros((_num_samples(X), self.classes_.shape[0]), device=device)
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
             mean_proba += proba
@@ -556,7 +669,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         class_indices = xp.argmax(self.predict_proba(X), axis=1)
         if isinstance(self.classes_[0], str):
-            class_indices = _convert_to_numpy(class_indices, xp=xp)
+            class_indices = move_to(class_indices, xp=np, device="cpu")
 
         return self.classes_[class_indices]
 
@@ -657,14 +770,11 @@ def _fit_classifier_calibrator_pair(
 
     estimator.fit(X_train, y_train, **fit_params_train)
 
-    predictions, _ = _get_response_values(
+    predictions, _ = _get_calibration_logits(
         estimator,
         X_test,
-        response_method=["decision_function", "predict_proba"],
+        method=method,
     )
-    if predictions.ndim == 1:
-        # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
-        predictions = predictions.reshape(-1, 1)
 
     if sample_weight is not None:
         # Check that the sample_weight dtype is consistent with the predictions
@@ -735,18 +845,16 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
             calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
             calibrators.append(calibrator)
     elif method == "temperature":
-        if classes.shape[0] == 2 and predictions.shape[-1] == 1:
-            response_method_name = _check_response_method(
-                clf,
-                ["decision_function", "predict_proba"],
-            ).__name__
-            if response_method_name == "predict_proba":
-                predictions = xp.concat([1 - predictions, predictions], axis=1)
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
         calibrators.append(calibrator)
 
-    pipeline = _CalibratedClassifier(clf, calibrators, method=method, classes=classes)
+    pipeline = _CalibratedClassifier(
+        clf,
+        calibrators,
+        method=method,
+        classes=classes,
+    )
     return pipeline
 
 
@@ -795,14 +903,11 @@ class _CalibratedClassifier:
         proba : array, shape (n_samples, n_classes)
             The predicted probabilities. Can be exact zeros.
         """
-        predictions, _ = _get_response_values(
+        predictions, _ = _get_calibration_logits(
             self.estimator,
             X,
-            response_method=["decision_function", "predict_proba"],
+            method=self.method,
         )
-        if predictions.ndim == 1:
-            # Reshape binary output from `(n_samples,)` to `(n_samples, 1)`
-            predictions = predictions.reshape(-1, 1)
 
         n_classes = self.classes.shape[0]
 
@@ -832,14 +937,6 @@ class _CalibratedClassifier:
                     proba, denominator, out=uniform_proba, where=denominator != 0
                 )
         elif self.method == "temperature":
-            xp, _ = get_namespace(predictions)
-            if n_classes == 2 and predictions.shape[-1] == 1:
-                response_method_name = _check_response_method(
-                    self.estimator,
-                    ["decision_function", "predict_proba"],
-                ).__name__
-                if response_method_name == "predict_proba":
-                    predictions = xp.concat([1 - predictions, predictions], axis=1)
             proba = self.calibrators[0].predict(predictions)
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
@@ -925,11 +1022,7 @@ def _sigmoid_calibration(
             sample_weight=sample_weight,
         )
         loss = l.sum()
-        # TODO: Remove casting to np.float64 when minimum supported SciPy is 1.11.2
-        # With SciPy >= 1.11.2, the LBFGS implementation will cast to float64
-        # https://github.com/scipy/scipy/pull/18825.
-        # Here we cast to float64 to support SciPy < 1.11.2
-        grad = np.asarray([-g @ F, -g.sum()], dtype=np.float64)
+        grad = np.asarray([-g @ F, -g.sum()])
         return loss, grad
 
     AB0 = np.array([0.0, log((prior0 + 1.0) / (prior1 + 1.0))])
@@ -980,7 +1073,7 @@ def _convert_to_logits(decision_values, eps=1e-12, xp=None):
     -------
     logits : ndarray of shape (n_samples, n_classes)
     """
-    xp, _, device_ = get_namespace_and_device(decision_values, xp=xp)
+    xp, _, device = get_namespace_and_device(decision_values, xp=xp)
     decision_values = check_array(
         decision_values, dtype=[xp.float64, xp.float32], ensure_2d=False
     )
@@ -992,7 +1085,7 @@ def _convert_to_logits(decision_values, eps=1e-12, xp=None):
         row_sums_to_one = xp.all(
             xpx.isclose(
                 xp.sum(decision_values, axis=1),
-                xp.asarray(1.0, device=device_, dtype=decision_values.dtype),
+                xp.asarray(1.0, device=device, dtype=decision_values.dtype),
             )
         )
 
@@ -1118,7 +1211,9 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         multinomial_loss = (
             HalfMultinomialLoss(n_classes=logits.shape[1])
             if is_numpy_namespace
-            else HalfMultinomialLossArrayAPI(n_classes=logits.shape[1])
+            else HalfMultinomialLossArrayAPI(
+                n_classes=logits.shape[1], xp=xp, device=xp_device
+            )
         )
 
         def log_loss(log_beta=0.0):
@@ -1155,7 +1250,6 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
                 labels,
                 raw_prediction,
                 sample_weight,
-                xp=xp,
             )
 
         xatol = 64 * xp.finfo(dtype_).eps
@@ -1212,13 +1306,22 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         return tags
 
 
+# TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
+# TODO(1.12): change default strategy to 'quantile', see PR #33908.
 @validate_params(
     {
         "y_true": ["array-like"],
         "y_prob": ["array-like"],
         "pos_label": [Real, str, "boolean", None],
-        "n_bins": [Interval(Integral, 1, None, closed="left")],
-        "strategy": [StrOptions({"uniform", "quantile"})],
+        "n_bins": [
+            Interval(Integral, 1, None, closed="left"),
+            StrOptions({"cube_root"}),
+            Hidden(StrOptions({"warn"})),
+        ],
+        "strategy": [
+            StrOptions({"uniform", "quantile"}),
+            Hidden(StrOptions({"warn"})),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1227,8 +1330,8 @@ def calibration_curve(
     y_prob,
     *,
     pos_label=None,
-    n_bins=5,
-    strategy="uniform",
+    n_bins="warn",
+    strategy="warn",
 ):
     """Compute true and predicted probabilities for a calibration curve.
 
@@ -1252,11 +1355,17 @@ def calibration_curve(
 
         .. versionadded:: 1.1
 
-    n_bins : int, default=5
+    n_bins : int or "cube_root", default=5
         Number of bins to discretize the [0, 1] interval. A bigger number
         requires more data. Bins with no samples (i.e. without
         corresponding values in `y_prob`) will not be returned, thus the
         returned arrays may have less than `n_bins` values.
+        If "cube_root", the number of bins is set to
+        ``ceil(n_samples ** (1/3))`` to balance the trade-off between
+        bias and variance.
+
+        .. versionadded:: 1.10
+           The "cube_root" option was added.
 
     strategy : {'uniform', 'quantile'}, default='uniform'
         Strategy used to define the widths of the bins.
@@ -1289,13 +1398,21 @@ def calibration_curve(
     International Conference on Machine Learning (ICML).
     See section 4 (Qualitative Analysis of Predictions).
 
+    Sun, Z., Song, D., & Hero, A. O. (2023). Minimum-Risk Recalibration of
+    Classifiers, in Advances in Neural Information Processing Systems (NeurIPS).
+
+    Futami, F., & Fujisawa, M. (2024). Information-Theoretic Generalization
+    Analysis for Expected Calibration Error, in Advances in Neural Information
+    Processing Systems (NeurIPS).
+
     Examples
     --------
     >>> import numpy as np
     >>> from sklearn.calibration import calibration_curve
     >>> y_true = np.array([0, 0, 0, 0, 1, 1, 1, 1, 1])
     >>> y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.65, 0.7, 0.8, 0.9,  1.])
-    >>> prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=3)
+    >>> prob_true, prob_pred = calibration_curve(
+    ...     y_true, y_pred, n_bins=3, strategy='uniform')
     >>> prob_true
     array([0. , 0.5, 1. ])
     >>> prob_pred
@@ -1316,6 +1433,26 @@ def calibration_curve(
         )
     y_true = y_true == pos_label
 
+    # TODO(1.12): remove block, see PR #34326.
+    if n_bins == "warn":
+        warnings.warn(
+            "The default value of `n_bins` will change from 5 to 'cube_root' in 1.12.",
+            FutureWarning,
+        )
+        n_bins = 5
+
+    if n_bins == "cube_root":
+        n_bins = ceil(len(y_true) ** (1 / 3))
+
+    # TODO(1.12): remove with change of default strategy.
+    if strategy == "warn":
+        warnings.warn(
+            "The default value of `strategy` will change "
+            "from 'uniform' to 'quantile' in 1.12",
+            FutureWarning,
+        )
+        strategy = "uniform"
+
     if strategy == "quantile":  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)
         bins = np.percentile(y_prob, quantiles * 100)
@@ -1329,9 +1466,9 @@ def calibration_curve(
 
     binids = np.searchsorted(bins[1:-1], y_prob)
 
-    bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
-    bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
-    bin_total = np.bincount(binids, minlength=len(bins))
+    bin_sums = np.bincount(binids, weights=y_prob, minlength=n_bins)
+    bin_true = np.bincount(binids, weights=y_true, minlength=n_bins)
+    bin_total = np.bincount(binids, minlength=n_bins)
 
     nonzero = bin_total != 0
     prob_true = bin_true[nonzero] / bin_total[nonzero]
@@ -1406,11 +1543,12 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> X, y = make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     X, y, random_state=0)
-    >>> clf = LogisticRegression(random_state=0)
+    >>> clf = LogisticRegression()
     >>> clf.fit(X_train, y_train)
-    LogisticRegression(random_state=0)
+    LogisticRegression()
     >>> y_prob = clf.predict_proba(X_test)[:, 1]
-    >>> prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
+    >>> prob_true, prob_pred = calibration_curve(
+    ...     y_test, y_prob, n_bins=10, strategy='uniform')
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
     >>> disp.plot()
     <...>
@@ -1479,6 +1617,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return self
 
+    # TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
+    # TODO(1.12): change default strategy to 'quantile', see PR #33908.
     @classmethod
     def from_estimator(
         cls,
@@ -1486,8 +1626,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         X,
         y,
         *,
-        n_bins=5,
-        strategy="uniform",
+        n_bins="warn",
+        strategy="warn",
         pos_label=None,
         name=None,
         ax=None,
@@ -1522,10 +1662,16 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         y : array-like of shape (n_samples,)
             Binary target values.
 
-        n_bins : int, default=5
+        n_bins : int or "cube_root", default=5
             Number of bins to discretize the [0, 1] interval into when
             calculating the calibration curve. A bigger number requires more
             data.
+            If "cube_root", the number of bins is set to
+            ``ceil(n_samples ** (1/3))`` to balance the trade-off
+            between bias and variance.
+
+            .. versionadded:: 1.10
+               The "cube_root" option was added.
 
         strategy : {'uniform', 'quantile'}, default='uniform'
             Strategy used to define the widths of the bins.
@@ -1576,10 +1722,11 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
-        >>> clf = LogisticRegression(random_state=0)
+        >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
-        LogisticRegression(random_state=0)
-        >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
+        LogisticRegression()
+        >>> disp = CalibrationDisplay.from_estimator(
+        ...     clf, X_test, y_test, n_bins='cube_root', strategy='quantile')
         >>> plt.show()
         """
         y_prob, pos_label, name = cls._validate_and_get_response_values(
@@ -1603,14 +1750,16 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             **kwargs,
         )
 
+    # TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
+    # TODO(1.12): change default strategy to 'quantile', see PR #33908.
     @classmethod
     def from_predictions(
         cls,
         y_true,
         y_prob,
         *,
-        n_bins=5,
-        strategy="uniform",
+        n_bins="warn",
+        strategy="warn",
         pos_label=None,
         name=None,
         ax=None,
@@ -1640,10 +1789,16 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         y_prob : array-like of shape (n_samples,)
             The predicted probabilities of the positive class.
 
-        n_bins : int, default=5
+        n_bins : int or "cube_root", default=5
             Number of bins to discretize the [0, 1] interval into when
             calculating the calibration curve. A bigger number requires more
             data.
+            If "cube_root", the number of bins is set to
+            ``ceil(n_samples ** (1/3))`` to balance the trade-off
+            between bias and variance.
+
+            .. versionadded:: 1.10
+               The "cube_root" option was added.
 
         strategy : {'uniform', 'quantile'}, default='uniform'
             Strategy used to define the widths of the bins.
@@ -1651,6 +1806,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
+
+            .. versionchanged:: 1.12
+                The default value will change from 'uniform' to 'quantile' in 1.12.
 
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
@@ -1693,11 +1851,12 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> X, y = make_classification(random_state=0)
         >>> X_train, X_test, y_train, y_test = train_test_split(
         ...     X, y, random_state=0)
-        >>> clf = LogisticRegression(random_state=0)
+        >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
-        LogisticRegression(random_state=0)
+        LogisticRegression()
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
-        >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
+        >>> disp = CalibrationDisplay.from_predictions(
+        ...     y_test, y_prob, n_bins='cube_root', strategy='quantile')
         >>> plt.show()
         """
         pos_label_validated, name = cls._validate_from_predictions_params(

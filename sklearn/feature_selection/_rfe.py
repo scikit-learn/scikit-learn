@@ -21,10 +21,12 @@ from sklearn.feature_selection._base import SelectorMixin, _get_feature_importan
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._validation import _score
-from sklearn.utils import Bunch, metadata_routing
+from sklearn.utils import _safe_indexing, metadata_routing
+from sklearn.utils._dataframe import is_df_or_series
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     process_routing,
@@ -59,7 +61,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
         y_train,
         lambda estimator, features: _score(
             estimator,
-            X_test[:, features],
+            _safe_indexing(X_test, features, axis=1),
             y_test,
             scorer,
             score_params=score_params,
@@ -98,9 +100,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         to select. If float between 0 and 1, it is the fraction of features to
         select.
 
-        .. versionchanged:: 0.24
-           Added float values for fractions.
-
     step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
         (integer) number of features to remove at each iteration.
@@ -125,8 +124,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -141,8 +138,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -271,7 +266,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch(estimator=Bunch(fit=fit_params))
+            routed_params = _manual_routing({"estimator": {"fit": fit_params}})
 
         return self._fit(X, y, **routed_params.estimator.fit)
 
@@ -280,6 +275,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # step_score is not exposed to users and is used when implementing RFECV
         # self.step_scores_ will not be calculated when calling _fit through fit
 
+        preserve_X = is_df_or_series(X)
         X, y = validate_data(
             self,
             X,
@@ -288,6 +284,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             ensure_min_features=2,
             ensure_all_finite=False,
             multi_output=True,
+            skip_check_array=preserve_X,
         )
 
         # Initialization
@@ -329,9 +326,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Rank the remaining features
             estimator = clone(self.estimator)
             if self.verbose > 0:
-                print("Fitting estimator with %d features." % np.sum(support_))
+                print(f"Fitting estimator with {np.sum(support_)} features.")
 
-            estimator.fit(X[:, features], y, **fit_params)
+            estimator.fit(_safe_indexing(X, features, axis=1), y, **fit_params)
 
             # Compute step values on the previous selection iteration because
             # 'estimator' must use features that have not been eliminated yet
@@ -347,7 +344,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
                 self.importance_getter,
                 transform_func="square",
             )
-            ranks = np.argsort(importances)
+            ranks = np.argsort(importances, kind="stable")
 
             # for sparse case ranks is matrix
             ranks = np.ravel(ranks)
@@ -361,7 +358,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # Set final attributes
         features = np.arange(n_features)[support_]
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(X[:, features], y, **fit_params)
+        self.estimator_.fit(_safe_indexing(X, features, axis=1), y, **fit_params)
 
         # Compute step values when only n_features_to_select features left
         if step_score:
@@ -374,6 +371,20 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.ranking_ = ranking_
 
         return self
+
+    def _transform_for_estimator(self, X):
+        """Transform X to the selected features, preserving the DataFrame."""
+        preserve_X = is_df_or_series(X)
+        X = validate_data(
+            self,
+            X,
+            dtype=None,
+            accept_sparse="csr",
+            ensure_all_finite=not get_tags(self).input_tags.allow_nan,
+            skip_check_array=preserve_X,
+            reset=False,
+        )
+        return self._transform(X)
 
     @available_if(_estimator_has("predict"))
     def predict(self, X, **predict_params):
@@ -405,10 +416,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if _routing_enabled():
             routed_params = process_routing(self, "predict", **predict_params)
         else:
-            routed_params = Bunch(estimator=Bunch(predict={}))
+            routed_params = _manual_routing({"estimator": {}})
 
         return self.estimator_.predict(
-            self.transform(X), **routed_params.estimator.predict
+            self._transform_for_estimator(X), **routed_params.estimator.predict
         )
 
     @available_if(_estimator_has("score"))
@@ -446,10 +457,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if _routing_enabled():
             routed_params = process_routing(self, "score", **score_params)
         else:
-            routed_params = Bunch(estimator=Bunch(score=score_params))
+            routed_params = _manual_routing({"estimator": {"score": score_params}})
 
         return self.estimator_.score(
-            self.transform(X), y, **routed_params.estimator.score
+            self._transform_for_estimator(X), y, **routed_params.estimator.score
         )
 
     def _get_support_mask(self):
@@ -476,7 +487,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             [n_samples].
         """
         check_is_fitted(self)
-        return self.estimator_.decision_function(self.transform(X))
+        return self.estimator_.decision_function(self._transform_for_estimator(X))
 
     @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
@@ -496,7 +507,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.estimator_.predict_proba(self.transform(X))
+        return self.estimator_.predict_proba(self._transform_for_estimator(X))
 
     @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
@@ -514,7 +525,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        return self.estimator_.predict_log_proba(self.transform(X))
+        return self.estimator_.predict_log_proba(self._transform_for_estimator(X))
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -590,8 +601,6 @@ class RFECV(RFE):
         feature count and ``min_features_to_select`` isn't divisible by
         ``step``.
 
-        .. versionadded:: 0.20
-
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -608,9 +617,6 @@ class RFECV(RFE):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value of None changed from 3-fold to 5-fold.
 
     scoring : str or callable, default=None
         Scoring method to evaluate the :class:`RFE` selectors' performance. Options:
@@ -630,8 +636,6 @@ class RFECV(RFE):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-        .. versionadded:: 0.18
-
     importance_getter : str or callable, default='auto'
         If 'auto', uses the feature importance either through a `coef_`
         or `feature_importances_` attributes of estimator.
@@ -646,8 +650,6 @@ class RFECV(RFE):
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
-
-        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -701,8 +703,6 @@ class RFECV(RFE):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -827,6 +827,7 @@ class RFECV(RFE):
             Fitted estimator.
         """
         _raise_for_params(params, self, "fit", allow=["groups"])
+        preserve_X = is_df_or_series(X)
         X, y = validate_data(
             self,
             X,
@@ -835,15 +836,18 @@ class RFECV(RFE):
             ensure_min_features=2,
             ensure_all_finite=False,
             multi_output=True,
+            skip_check_array=preserve_X,
         )
 
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **params)
         else:
-            routed_params = Bunch(
-                estimator=Bunch(fit={}),
-                splitter=Bunch(split={"groups": params.pop("groups", None)}),
-                scorer=Bunch(score={}),
+            routed_params = _manual_routing(
+                {
+                    "estimator": {},
+                    "splitter": {"split": {"groups": params.pop("groups", None)}},
+                    "scorer": {},
+                }
             )
 
         # Initialization
@@ -966,8 +970,7 @@ class RFECV(RFE):
         if _routing_enabled():
             routed_params = process_routing(self, "score", **score_params)
         else:
-            routed_params = Bunch()
-            routed_params.scorer = Bunch(score={})
+            routed_params = _manual_routing({"scorer": {}})
 
         return scoring(self, X, y, **routed_params.scorer.score)
 
@@ -988,7 +991,9 @@ class RFECV(RFE):
         router = MetadataRouter(owner=self)
         router.add(
             estimator=self.estimator,
-            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            method_mapping=MethodMapping()
+            .add(caller="fit", callee="fit")
+            .add(caller="predict", callee="predict"),
         )
         router.add(
             splitter=check_cv(self.cv),
