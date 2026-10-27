@@ -1166,3 +1166,41 @@ def test_randomized_range_finder_array_api_compliance(
         assert get_namespace(Q_xp)[0].__name__ == xp.__name__
         assert Q_xp.dtype == max_dtype
         assert_allclose(move_to(Q_xp, xp=np, device="cpu"), Q_np, atol=atol)
+
+
+def test_incremental_mean_and_var_large_values_no_overflow():
+    """Non-regression test for issue #5602.
+
+    ``StandardScaler.partial_fit`` used to overflow to ``inf`` on long
+    streams with large values, because the cumulative sum
+    ``last_mean * last_sample_count`` was reconstructed. The delta-based
+    update of Chan, Golub and LeVeque (1979) never reconstructs the sum.
+    """
+    rng = np.random.RandomState(0)
+    max_f = np.finfo(np.float64).max / 1e5
+    min_f = max_f / 1e2
+    batch = rng.uniform(min_f, min_f, size=(500000, 1))
+
+    scaler = StandardScaler(with_std=False).fit(batch)
+    expected_mean = scaler.mean_
+
+    iscaler = StandardScaler(with_std=False)
+    for _ in range(100):
+        iscaler = iscaler.partial_fit(batch)
+
+    assert np.isfinite(iscaler.mean_).all()
+    assert_allclose(iscaler.mean_, expected_mean, rtol=1e-10)
+
+
+def test_incremental_mean_and_var_constant_values():
+    """Non-regression test: constant data with zero variance."""
+    X = np.ones((1000, 2)) * 42.0
+    scaler = StandardScaler().fit(X)
+
+    iscaler = StandardScaler()
+    for i in range(0, 1000, 10):
+        iscaler = iscaler.partial_fit(X[i:i + 10])
+
+    assert_allclose(iscaler.mean_, scaler.mean_, rtol=1e-12)
+    assert_allclose(iscaler.var_, scaler.var_, atol=1e-15)
+
