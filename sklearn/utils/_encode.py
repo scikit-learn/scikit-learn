@@ -9,7 +9,7 @@ from typing import NamedTuple, cast
 import numpy as np
 
 from sklearn.utils._array_api import array_device, get_namespace, size
-from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 
 
 def _unique(values, *, return_inverse=False, return_counts=False):
@@ -128,7 +128,9 @@ def _extract_missing(values):
         Object with missing value information.
     """
     missing_values_set = {
-        value for value in values if value is None or is_scalar_nan(value)
+        value
+        for value in values
+        if value is None or is_scalar_nan(value) or is_pandas_na(value)
     }
 
     if not missing_values_set:
@@ -142,7 +144,7 @@ def _extract_missing(values):
             )
         else:
             # If there is more than one missing value, then it has to be
-            # float('nan') or np.nan
+            # float('nan'), np.nan, or pd.NA
             output_missing_values = MissingValues(
                 nan=True, none=True, all_nans=all_nans
             )
@@ -169,12 +171,12 @@ class _nandict(dict):
 
     def __init__(self, keys):
         super().__init__(zip(keys, range(len(keys))))
-        self.has_nan = is_scalar_nan(keys[-1])
+        self.has_nan = is_scalar_nan(keys[-1]) or is_pandas_na(keys[-1])
         if self.has_nan:
             self.nan_value = len(keys) - 1
 
     def __missing__(self, key):
-        if self.has_nan and is_scalar_nan(key):
+        if self.has_nan and (is_scalar_nan(key) or is_pandas_na(key)):
             return self.nan_value
         return -1
 
@@ -324,7 +326,9 @@ def _get_counts(values, uniques, nan_values=(np.nan,), counter=None):
         output = np.zeros(len(uniques), dtype=np.int64)
         for i, item in enumerate(uniques):
             output[i] = counter[item]
-        if len(uniques) > 0 and is_scalar_nan(uniques[-1]):
+        if len(uniques) > 0 and (
+            is_scalar_nan(uniques[-1]) or is_pandas_na(uniques[-1])
+        ):
             # Should be the sum of all nans:
             output[-1] = sum(counter[nan] for nan in nan_values)
         return output
