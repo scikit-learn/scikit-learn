@@ -15,11 +15,12 @@ from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
     DecisionTreeRegressor,
+    _tree,
     export_graphviz,
     export_text,
     plot_tree,
 )
-from sklearn.tree._export import _rgb_to_hexstring
+from sklearn.tree._export import _DOTTreeExporter, _rgb_to_hexstring
 
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
@@ -432,6 +433,13 @@ def test_graphviz_errors():
     out = StringIO()
     with pytest.raises(IndexError):
         export_graphviz(clf, out, class_names=[])
+
+    # Check invalid node_id error with improved error message
+    exporter = _DOTTreeExporter(out_file=StringIO())
+    tree = clf.tree_
+    # Test with TREE_LEAF (-2) as node_id
+    with pytest.raises(ValueError, match="node_id must be in"):
+        exporter.recurse(tree, _tree.TREE_LEAF, criterion="gini")
 
 
 def test_graphviz_fill_colors_length_mismatch_error(pyplot):
