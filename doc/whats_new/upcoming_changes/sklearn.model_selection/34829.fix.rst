@@ -1,0 +1,6 @@
+- :class:`model_selection.StratifiedGroupKFold` no longer returns an empty fold when
+  the number of groups equals `n_splits`. Fold evaluations that are mathematically
+  tied can differ by a few ULP, and a strict comparison let that floating-point noise
+  decide the assignment, bypassing the heuristic that sends a group to the least
+  populated fold. This changes the fold assignment for some inputs.
+  By :user:`Akshath <akshath-raj>`.
