@@ -19,7 +19,7 @@ _global_config = {
     "array_api_dispatch": False,
     "transform_output": "default",
     "enable_metadata_routing": False,
-    "enable_metadata_auto_requests": False,
+    "enable_metadata_auto_requests": True,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
 }
@@ -180,14 +180,13 @@ def set_config(
         Consumer objects, i.e. estimators, splitters, and scorers, can automatically
         request metadata for convenience. Note that these are subject to change and
         stability guarantees applied to the rest of the scikit-learn API do not apply
-        here. If you want these to be enabled, you set the value to `True` on this
-        config.
+        here. Set this to `False` to require explicit `set_{method}_request` calls.
 
         - `False`: auto-requests are not enabled
         - `True`: Metadata are requested per each consumer's internal policy
         - `None`: configuration is unchanged
 
-        Global default: `False`.
+        Global default: `True`.
 
         Refer to the :ref:`Metadata Routing User Guide
         <metadata_routing_auto_request_user>` for usage, and to
@@ -380,14 +379,13 @@ def config_context(
         Consumer objects, i.e. estimators, splitters, and scorers, can automatically
         request metadata for convenience. Note that these are subject to change and
         stability guarantees applied to the rest of the scikit-learn API do not apply
-        here. If you want these to be enabled, you set the value to `True` on this
-        config.
+        here. Set this to `False` to require explicit `set_{method}_request` calls.
 
         - `False`: auto-requests are not enabled
         - `True`: Metadata are requested per each consumer's internal policy
         - `None`: configuration is unchanged
 
-        Global default: `False`.
+        Global default: `True`.
 
         Refer to the :ref:`Metadata Routing User Guide
         <metadata_routing_auto_request_user>` for usage, and to

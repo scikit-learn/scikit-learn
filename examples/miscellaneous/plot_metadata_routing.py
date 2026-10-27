@@ -472,8 +472,9 @@ print_routing(meta_est)
 # 1. Class-level request defaults using `__metadata_request__{method}` class attributes,
 #    which apply to all instances of a class, and can even remove a metadata from the
 #    metadata routing machinery if necessary.
-# 2. Auto-requests, which apply at instance level only if
-#    `set_config(enable_metadata_auto_requests=True)` is set by the user.
+# 2. Auto-requests, which apply at instance level when
+#    `enable_metadata_auto_requests` is true (the default). Set it to false to
+#    leave these requests unset.
 #    Developers can add these via the
 #    :func:`~sklearn.utils.metadata_routing.MethodMetadataRequest.add_auto_request`
 #    method. By instance level we mean they are actualised inside `get_metadata_routing`
@@ -492,8 +493,8 @@ class ClassifierWithRequestDefaults(ClassifierMixin, BaseEstimator):
     __metadata_request__fit = {"sample_weight": True}
 
     def get_metadata_routing(self):
-        # Each instance can configure metadata which should be auto-requested if
-        # `set_config(enable_metadata_auto_requests=True)` is set. The
+        # Each instance can configure metadata which is auto-requested when
+        # `enable_metadata_auto_requests` is true (the default). The
         # `add_auto_request` method does this.
         requests = super().get_metadata_routing()
         requests.predict.add_auto_request("other_metadata")
@@ -510,14 +511,14 @@ class ClassifierWithRequestDefaults(ClassifierMixin, BaseEstimator):
 
 
 # %%
-# Let's see the default class-level requests:
+# Let's see the class-level requests with auto-requests disabled:
 clf = ClassifierWithRequestDefaults()
-print_routing(clf)
+with config_context(enable_metadata_auto_requests=False):
+    print_routing(clf)
 
 # %%
-# And now with auto requests enabled:
-with config_context(enable_metadata_auto_requests=True):
-    print_routing(clf)
+# Auto-requests are enabled by default, so `other_metadata` is requested too:
+print_routing(clf)
 
 # %% Note that the auto-requests override class-level requests.
 
@@ -569,15 +570,14 @@ class RouterConsumerClassifierWithAutoRequests(RouterConsumerClassifier):
 meta_est = RouterConsumerClassifierWithAutoRequests(estimator=ExampleClassifier())
 
 # %%
-# With the default `enable_metadata_auto_requests=False`, no request is automatically
-# set:
-print_routing(meta_est)
+# With auto-requests disabled, no request is automatically set:
+with config_context(enable_metadata_auto_requests=False):
+    print_routing(meta_est)
 
 # %%
-# When auto-requests are enabled, the consuming router requests `sample_weight`
-# for its own usage:
-with config_context(enable_metadata_auto_requests=True):
-    print_routing(meta_est)
+# Auto-requests are enabled by default, so the consuming router requests
+# `sample_weight` for its own usage:
+print_routing(meta_est)
 
 # %%
 # Simple Pipeline

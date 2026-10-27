@@ -60,6 +60,9 @@ Usage Examples
 **************
 For convenience and a faster start into metadata routing, see
 :ref:`auto-requested metadata <metadata_routing_auto_request_user>`.
+In this section auto-requests are disabled::
+
+  >>> sklearn.set_config(enable_metadata_auto_requests=False)
 
 The following examples use explicit ``set_{method}_request`` calls and are designed to
 show some common use-cases. Our goal here is to pass `sample_weight` and `groups`
@@ -271,19 +274,18 @@ The issue can be fixed by explicitly setting the request value::
 Auto-requested metadata
 ***********************
 
-By default, most :term:`consumers <consumer>` leave metadata requests as ``None``, so
-you must call ``set_{method}_request`` before passing that metadata through a
-:term:`router`. In addition, consumers can **auto-request** selected metadata when you
-enable a second configuration flag::
+:term:`Consumers <consumer>` can **auto-request** selected metadata. This is enabled
+by default but you can turn it on explicitly::
 
-    >>> sklearn.set_config(
-    ...     enable_metadata_routing=True,
-    ...     enable_metadata_auto_requests=True,
-    ... )
+    >>> sklearn.set_config(enable_metadata_auto_requests=True)
 
 See :func:`~sklearn.set_config` and :func:`~sklearn.config_context` for
 ``enable_metadata_auto_requests``. Both ``enable_metadata_routing`` and
 ``enable_metadata_auto_requests`` must be ``True`` for auto-requests to take effect.
+With the defaults, enabling metadata routing is enough.
+
+Set ``enable_metadata_auto_requests=False`` when you want every metadata value,
+including ``sample_weight``, to stay unset until you call ``set_{method}_request``.
 
 Auto-requests are declared for specific metadata such as ``sample_weight``, ``X_val``,
 ``y_val`` and ``sample_weight_val``. Once a metadata is supported, methods that take
@@ -294,10 +296,9 @@ since they raise an error if `groups` is not provided.)
 Note that auto-requests are subject to change and stability guarantees applied to the
 rest of the scikit-learn API do not apply here. They may grow or change over time.
 
-For most use cases it is enough to set ``enable_metadata_auto_requests=True``
-(with metadata routing enabled) and leave request values unchanged. Use
-``set_{method}_request`` only when you need to opt out, alias, or handle a
-consumer that does not yet auto-request the metadata you pass.
+For most use cases it is enough to enable metadata routing and leave request values
+unchanged. Use ``set_{method}_request`` only when you need to opt out, alias, or
+handle a consumer that does not yet auto-request the metadata you pass.
 
 You can still override any auto-request (or default request) with
 ``set_{method}_request``. Values set that way take precedence. In particular,

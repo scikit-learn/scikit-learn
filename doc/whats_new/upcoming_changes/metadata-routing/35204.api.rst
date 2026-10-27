@@ -1,0 +1,5 @@
+- ``enable_metadata_auto_requests`` now defaults to ``True``. Enabling metadata
+  routing therefore auto-requests metadata such as ``sample_weight`` according to
+  each consumer's policy. Set ``enable_metadata_auto_requests=False`` to require
+  explicit ``set_{method}_request`` calls.
+  By :user:`Antoine Baker <antoinebaker>`.

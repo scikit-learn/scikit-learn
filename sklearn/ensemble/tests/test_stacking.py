@@ -1000,7 +1000,7 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
         (StackingRegressor, ConsumingRegressor),
     ],
 )
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_routing_error_for_stacking_estimators(Estimator, Child):
     """Test that the right error is raised when metadata is not requested."""
     sample_weight, metadata = np.ones(X_iris.shape[0]), "a"
