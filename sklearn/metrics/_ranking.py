@@ -860,11 +860,12 @@ def _multiclass_roc_auc_score(
         )
 
     if labels is not None:
-        labels = column_or_1d(labels)
+        xp_y_true, _, device_y_true = get_namespace_and_device(y_true)
+        labels = move_to(column_or_1d(labels), xp=xp_y_true, device=device_y_true)
         classes = _unique(labels)
         if classes.shape[0] != labels.shape[0]:
             raise ValueError("Parameter 'labels' must be unique")
-        if not xp.all(classes == labels):
+        if not xp_y_true.all(classes == labels):
             raise ValueError("Parameter 'labels' must be ordered")
         if classes.shape[0] != y_score.shape[1]:
             raise ValueError(

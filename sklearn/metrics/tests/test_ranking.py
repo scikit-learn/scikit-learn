@@ -37,7 +37,10 @@ from sklearn.metrics._ranking import (
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.random_projection import _sparse_random_matrix
-from sklearn.utils._array_api import move_to
+from sklearn.utils._array_api import (
+    move_to,
+    yield_mixed_namespace_input_permutations,
+)
 from sklearn.utils._testing import (
     _array_api_for_tests,
     _convert_container,
@@ -656,6 +659,62 @@ def test_multiclass_ovr_roc_auc_zero_sample_weight():
     )
     assert isinstance(result, float)
     assert result == 0.0
+
+
+@pytest.mark.parametrize(
+    "y_true_ns_and_device, y_score_ns_and_device",
+    [
+        pytest.param(*args[:2], id=args[2])
+        for args in yield_mixed_namespace_input_permutations()
+    ],
+)
+@pytest.mark.parametrize("dtype_name", ["float32", "float64"])
+@pytest.mark.parametrize("multi_class", ["ovr", "ovo"])
+def test_roc_auc_score_multiclass_labels_array_api(
+    y_true_ns_and_device, y_score_ns_and_device, dtype_name, multi_class
+):
+    """Check the parameter `labels` handling for mixed namespace inputs."""
+    xp_y_true, device_y_true = _array_api_for_tests(
+        y_true_ns_and_device.xp,
+        device_name=y_true_ns_and_device.device,
+        dtype_name=dtype_name,
+    )
+    xp_y_score, device_y_score = _array_api_for_tests(
+        y_score_ns_and_device.xp,
+        device_name=y_score_ns_and_device.device,
+        dtype_name=dtype_name,
+    )
+
+    y_true = np.asarray([0, 1, 2, 0, 1, 2])
+    y_score = np.asarray(
+        [
+            [0.7, 0.2, 0.1],
+            [0.2, 0.3, 0.5],
+            [0.1, 0.2, 0.7],
+            [0.3, 0.4, 0.3],
+            [0.2, 0.6, 0.2],
+            [0.4, 0.2, 0.4],
+        ],
+        dtype=dtype_name,
+    )
+    expected = roc_auc_score(y_true, y_score, multi_class=multi_class)
+
+    y_true_xp = xp_y_true.asarray(y_true, device=device_y_true)
+    y_score_xp = xp_y_score.asarray(y_score, device=device_y_score)
+
+    with config_context(array_api_dispatch=True):
+        for labels in [
+            [0, 1, 2],
+            xp_y_true.asarray([0, 1, 2], device=device_y_true),
+            xp_y_score.asarray([0, 1, 2], device=device_y_score),
+            None,
+        ]:
+            actual = roc_auc_score(
+                y_true_xp, y_score_xp, multi_class=multi_class, labels=labels
+            )
+
+            assert isinstance(actual, float)
+            assert_array_almost_equal(actual, expected)
 
 
 @pytest.mark.parametrize(
