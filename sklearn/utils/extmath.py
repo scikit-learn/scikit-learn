@@ -1169,7 +1169,6 @@ def _incremental_mean_and_var(
     last_sample_count = xp.asarray(
         last_sample_count, dtype=max_float_dtype, device=X_device
     )
-    last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
         sum_op = xpx.nansum
@@ -1197,58 +1196,77 @@ def _incremental_mean_and_var(
 
     updated_sample_count = last_sample_count + new_sample_count
 
-    updated_mean = (last_sum + new_sum) / updated_sample_count
+    # There is no errstate equivalent for warning/error management in array API
+    context_manager = (
+        np.errstate(divide="ignore", invalid="ignore")
+        if _is_numpy_namespace(xp)
+        else nullcontext()
+    )
 
-    if last_variance is None:
-        updated_variance = None
-    else:
-        T = new_sum / new_sample_count
-        temp = X - T
-        if sample_weight is not None:
-            # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
-            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-            correction = _safe_accumulator_op(
-                xp.matmul,
-                sample_weight,
-                xp.where(X_nan_mask, 0, temp),
-            )
-            temp **= 2
-            new_unnormalized_variance = _safe_accumulator_op(
-                xp.matmul,
-                sample_weight,
-                xp.where(X_nan_mask, 0, temp),
-            )
-        else:
-            correction = _safe_accumulator_op(sum_op, temp, axis=0)
-            temp **= 2
-            new_unnormalized_variance = _safe_accumulator_op(sum_op, temp, axis=0)
-
-        # correction term of the corrected 2 pass algorithm.
-        # See "Algorithms for computing the sample variance: analysis
-        # and recommendations", by Chan, Golub, and LeVeque.
-        new_unnormalized_variance -= correction**2 / new_sample_count
-
-        last_unnormalized_variance = last_variance * last_sample_count
-
-        # There is no errstate equivalent for warning/error management in array API
-        context_manager = (
-            np.errstate(divide="ignore", invalid="ignore")
-            if _is_numpy_namespace(xp)
-            else nullcontext()
+    # Delta-based mean update (Chan, Golub, LeVeque 1979, Eq. 2.1a).
+    # The cumulative-sum formula (last_sum + new_sum) / updated_sample_count
+    # overflows on long streams with large values. The delta-based formula is
+    # algebraically equivalent but never reconstructs the cumulative sum.
+    # See https://github.com/scikit-learn/scikit-learn/issues/5602
+    with context_manager:
+        safe_new_count = xp.where(
+            new_sample_count > 0,
+            new_sample_count,
+            xp.ones_like(new_sample_count),
         )
-        with context_manager:
-            last_over_new_count = last_sample_count / new_sample_count
+        T = new_sum / safe_new_count
+        delta = xp.where(
+            new_sample_count > 0,
+            T - last_mean,
+            xp.zeros_like(last_mean),
+        )
+        updated_mean = last_mean + delta * new_sample_count / updated_sample_count
+
+        if last_variance is None:
+            updated_variance = None
+        else:
+            temp = X - T
+            if sample_weight is not None:
+                # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
+                # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+                correction = _safe_accumulator_op(
+                    xp.matmul,
+                    sample_weight,
+                    xp.where(X_nan_mask, 0, temp),
+                )
+                temp **= 2
+                new_unnormalized_variance = _safe_accumulator_op(
+                    xp.matmul,
+                    sample_weight,
+                    xp.where(X_nan_mask, 0, temp),
+                )
+            else:
+                correction = _safe_accumulator_op(sum_op, temp, axis=0)
+                temp **= 2
+                new_unnormalized_variance = _safe_accumulator_op(sum_op, temp, axis=0)
+
+            # correction term of the corrected 2 pass algorithm.
+            # See "Algorithms for computing the sample variance: analysis
+            # and recommendations", by Chan, Golub, and LeVeque.
+            new_unnormalized_variance -= correction**2 / new_sample_count
+
+            last_unnormalized_variance = last_variance * last_sample_count
+
+            # Delta-based variance merge (Chan, Golub, LeVeque 1979, Eq. 2.1b).
+            # Algebraically equivalent to the cross-term above, but it never
+            # reconstructs the cumulative sum, so it does not overflow.
             updated_unnormalized_variance = (
                 last_unnormalized_variance
                 + new_unnormalized_variance
-                + last_over_new_count
+                + delta**2
+                * last_sample_count
+                * new_sample_count
                 / updated_sample_count
-                * (last_sum / last_over_new_count - new_sum) ** 2
             )
 
-        zeros = last_sample_count == 0
-        updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
-        updated_variance = updated_unnormalized_variance / updated_sample_count
+            zeros = last_sample_count == 0
+            updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
+            updated_variance = updated_unnormalized_variance / updated_sample_count
 
     return updated_mean, updated_variance, updated_sample_count
 
