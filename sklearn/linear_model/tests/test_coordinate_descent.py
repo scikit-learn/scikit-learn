@@ -529,14 +529,17 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
 
 
 def test_enet_path(global_random_seed):
-    # We use a large number of samples and of informative features so that
-    # the l1_ratio selected is more toward ridge than lasso
-    X, y, X_test, y_test = build_dataset(
-        n_samples=200,
-        n_features=100,
-        n_informative_features=100,
-        random_state=global_random_seed,
-    )
+    # We use a large number of samples and a dense ground truth with
+    # coefficients of similar magnitude so that the l1_ratio selected is more
+    # toward ridge than lasso. Coefficients drawn from N(0, 1) would include
+    # many near zero, making the problem approximately sparse.
+    n_samples, n_features = 200, 100
+    rng = np.random.RandomState(global_random_seed)
+    w = 1 + 0.1 * rng.randn(n_features)
+    X = rng.randn(n_samples, n_features)
+    y = X @ w
+    X_test = rng.randn(n_samples, n_features)
+    y_test = X_test @ w
     max_iter = 150
 
     # Here we have a small number of iterations, and thus the
@@ -549,6 +552,9 @@ def test_enet_path(global_random_seed):
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
+    # Non-sparse ground truth: we should have selected an elastic-net
+    # that is closer to ridge than to lasso
+    assert clf.l1_ratio_ == min(clf.l1_ratio)
 
     clf = ElasticNetCV(
         alphas=[0.01, 0.05, 0.1],
@@ -563,6 +569,9 @@ def test_enet_path(global_random_seed):
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
+    # Non-sparse ground truth: we should have selected an elastic-net
+    # that is closer to ridge than to lasso
+    assert clf.l1_ratio_ == min(clf.l1_ratio)
 
     # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
