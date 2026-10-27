@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from sklearn import config_context, datasets
+from sklearn import clone, config_context, datasets
 from sklearn.covariance import (
     OAS,
     EmpiricalCovariance,
@@ -572,6 +572,78 @@ def test_oas_array_api(
     assert_allclose(shrinkage_np, shrinkage_xp, atol=_atol_for_type(dtype_name))
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("assume_centered", [True, False])
+@pytest.mark.parametrize(
+    "estimator",
+    [ShrunkCovariance(), LedoitWolf(), OAS()],
+    ids=_get_check_estimator_ids,
+)
+def test_shrinkage_estimators_dtype_preservation(estimator, assume_centered, dtype):
+    """Shrinkage estimators should not upcast float32 inputs.
+
+    Non-regression test: these estimators center `X` themselves and pass
+    `assume_centered=True` to `empirical_covariance`, which avoids its `np.cov`
+    branch. `np.cov` always returns float64, so passing a raw, uncentered `X`
+    would silently widen float32 inputs (and make the NumPy result disagree in
+    dtype with the array API one).
+    """
+    estimator = clone(estimator).set_params(assume_centered=assume_centered)
+    est = estimator.fit(X.astype(dtype, copy=False))
+
+    assert est.location_.dtype == dtype
+    assert est.covariance_.dtype == dtype
+    assert est.precision_.dtype == dtype
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize("shrinkage", [0.0, 0.5, 1.0])
+@pytest.mark.parametrize(
+    "cov_input",
+    [
+        pytest.param(empirical_covariance(X), id="single-matrix"),
+        # `shrunk_covariance` is documented as accepting stacked matrices of
+        # shape (..., n_features, n_features). The two blocks have different
+        # traces, which the looped oracle below relies on.
+        pytest.param(
+            np.stack([empirical_covariance(X[:100]), empirical_covariance(X[100:])]),
+            id="stacked-matrices",
+        ),
+    ],
+)
+def test_shrunk_covariance_array_api(
+    array_namespace, device_name, dtype_name, cov_input, shrinkage
+):
+    """shrunk_covariance() should return the same result with array API inputs."""
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    cov_np = cov_input.astype(dtype_name, copy=False)
+    cov_xp = xp.asarray(cov_np, device=device)
+
+    with config_context(array_api_dispatch=False):
+        result_np = shrunk_covariance(cov_np, shrinkage=shrinkage)
+
+    with config_context(array_api_dispatch=True):
+        result_xp = shrunk_covariance(cov_xp, shrinkage=shrinkage)
+        assert result_xp.shape == cov_xp.shape
+        assert get_namespace(result_xp)[0].__name__ == xp.__name__
+        assert array_device(result_xp) == array_device(cov_xp)
+        assert result_xp.dtype == cov_xp.dtype
+
+    result_xp_np = move_to(result_xp, xp=np, device="cpu")
+    assert_allclose(result_np, result_xp_np, atol=_atol_for_type(dtype_name))
+
+    # Oracle independent of the batched code path: shrinking a stack must equal
+    # shrinking each matrix on its own. `mu` is 0-dimensional in the unstacked
+    # case, so this is what pins the per-matrix trace of the stacked case.
+    if cov_np.ndim > 2:
+        looped = np.stack([shrunk_covariance(m, shrinkage=shrinkage) for m in cov_np])
+        assert_allclose(looped, result_xp_np, atol=_atol_for_type(dtype_name))
+
+
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
@@ -583,7 +655,7 @@ def test_oas_array_api(
 )
 @pytest.mark.parametrize(
     "estimator",
-    [LedoitWolf(), OAS()],
+    [LedoitWolf(), OAS(), ShrunkCovariance()],
     ids=_get_check_estimator_ids,
 )
 def test_covariance_array_api_compliance(
