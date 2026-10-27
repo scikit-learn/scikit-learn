@@ -2476,37 +2476,56 @@ def test_ordinal_encoder_frequency_order_and_numeric():
     X = np.array([[2], [1], [1], [1], [3], [3]], dtype=np.int64)
     enc = OrdinalEncoder(categories="frequency").fit(X)
     # frequencies: 1:3, 3:2, 2:1  -> codes 0, 1, 2
-    assert_array_equal(enc.categories_[0], [2, 3, 1])
+    assert_array_equal(enc.categories_[0], [1, 3, 2])
+    assert enc.categories_[0].dtype == np.int64
     assert_array_equal(enc.transform([[1], [3], [2]]), [[0], [1], [2]])
+    assert_array_equal(enc.inverse_transform([[0], [1], [2]]), [[1], [3], [2]])
+
+
+def test_ordinal_encoder_frequency_numeric_unknown_and_nan():
+    """Unknown and missing numeric values are handled with frequency order."""
+    X = np.array([[2.0], [1.0], [1.0], [np.nan], [3.0], [3.0], [3.0]])
+    enc = OrdinalEncoder(
+        categories="frequency", handle_unknown="use_encoded_value", unknown_value=-1
+    ).fit(X)
+    assert_array_equal(enc.categories_[0][:-1], [3.0, 1.0, 2.0])
+    assert np.isnan(enc.categories_[0][-1])
+    X_trans = enc.transform([[3.0], [1.0], [2.0], [np.nan], [42.0]])
+    assert_array_equal(X_trans[:3], [[0], [1], [2]])
+    assert np.isnan(X_trans[3, 0])
+    assert X_trans[4, 0] == -1
 
 
 def test_ordinal_encoder_frequency_missing_last():
     """Missing values stay last and map to encoded_missing_value."""
-    X = np.array([["a"], ["a"], ["a"], ["b"], [np.nan], [np.nan]], dtype=object)
+    X = np.array([["b"], ["a"], ["a"], ["a"], [np.nan], [np.nan]], dtype=object)
     enc = OrdinalEncoder(categories="frequency", encoded_missing_value=-1).fit(X)
-    assert_array_equal(enc.categories_[0][:-1], ["b", np.nan])
+    assert_array_equal(enc.categories_[0][:-1], ["a", "b"])
+    assert np.isnan(enc.categories_[0][-1])
     assert_array_equal(enc.transform([["a"], ["b"], [np.nan]]), [[0], [1], [-1]])
 
 
 def test_ordinal_encoder_frequency_infrequent_counts_aligned():
     """Infrequent grouping must use counts aligned to frequency-ordered categories_."""
-    # a:5, b:3, c:1, d:1  -> categories_ before grouping: [a, b, c, d] (or [a,b,d,c])
+    # a:5, b:3, c:1, d:1  -> categories_: [a, b, c, d]
     X = np.array([["a"] * 5 + ["b"] * 3 + ["c"] + ["d"]], dtype=object).T
     enc = OrdinalEncoder(categories="frequency", max_categories=3).fit(X)
+    assert_array_equal(enc.categories_[0], ["a", "b", "c", "d"])
     # keep 2 frequent + 1 infrequent bucket: a=0, b=1, {c,d}=2
     assert_array_equal(
-        enc.transform([["a"], ["b"], ["c"], ["d"]]), [[2], [2], [1], [0]]
+        enc.transform([["a"], ["b"], ["c"], ["d"]]), [[0], [1], [2], [2]]
     )
-    assert_array_equal(sorted(enc.infrequent_categories_[0].tolist()), ["a", "b"])
+    assert_array_equal(enc.infrequent_categories_[0], ["c", "d"])
 
 
 def test_ordinal_encoder_frequency_ties_lexicographic():
     """Equal frequencies keep lexicographic order (stable by count, then label)."""
-    # counts chosen so default argsort (quicksort) disagrees with mergesort on ties
+    # counts chosen so that an unstable argsort would reorder the ties
     counts = np.array([4, 3, 3, 2, 2, 1, 1, 1, 1, 4, 3, 4, 3, 3, 4, 3, 3, 3, 3, 4])
     labels = np.array([chr(ord("a") + i) for i in range(20)])
     X = np.repeat(labels, counts).astype(object).reshape(-1, 1)
     enc = OrdinalEncoder(categories="frequency").fit(X)
+    expected = labels[np.lexsort((labels, -counts))]
+    assert_array_equal(enc.categories_[0], expected)
     # five cats tied at max count 4; lex tie-break => a, j, l, o, t
-    # unstable argsort yields a, o, l, j, t instead
-    assert_array_equal(enc.categories_[0][:5], ["g", "h", "f", "i", "e"])
+    assert_array_equal(enc.categories_[0][:5], ["a", "j", "l", "o", "t"])

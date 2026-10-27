@@ -111,20 +111,22 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 else:
                     cats = result
             elif self.categories == "frequency":
-                unique_vals, counts = _unique(X_list[i], return_counts=True)
-                local_decoder = {}
-                count_sort_idx = np.argsort(counts)
-                sorted_unique_vals = unique_vals[count_sort_idx]
-                np.flip(sorted_unique_vals)
-                encoder_mapping = dict()
-                for idx, val in enumerate(sorted_unique_vals):
-                    encoder_mapping[val] = idx
-                    local_decoder[idx] = val
+                cats, counts = _unique(Xi, return_counts=True)
+                # `_unique` returns sorted categories with missing values
+                # (nan and/or None) last. Order by decreasing count; the
+                # stable sort keeps the lexicographic order for ties. Missing
+                # values are kept out of the sort so that they stay last.
+                n_non_missing = len(cats)
+                while n_non_missing and (
+                    cats[n_non_missing - 1] is None
+                    or is_scalar_nan(cats[n_non_missing - 1])
+                ):
+                    n_non_missing -= 1
+                order = np.argsort(-counts[:n_non_missing], kind="stable")
+                order = np.concatenate([order, np.arange(n_non_missing, len(cats))])
+                cats = cats[order]
                 if compute_counts:
-                    cats = np.array(list(encoder_mapping.keys()), dtype=object)
-                    category_counts.append(counts)
-                else:
-                    cats = np.array(list(encoder_mapping.keys()), dtype=object)
+                    category_counts.append(counts[order])
             else:
                 if np.issubdtype(Xi.dtype, np.str_):
                     # Always convert string categories to objects to avoid
@@ -246,12 +248,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     columns_with_unknown.append(i)
 
         if columns_with_unknown:
-            # Whether an unknown category is encoded as the infrequent category
-            # is decided per column by `_map_infrequent_categories` below: a
-            # column only has an infrequent category if its
-            # `_infrequent_indices` entry is not None. Unknown categories in
-            # columns where it is None are encoded as all zeros, as documented
-            # for `handle_unknown`.
             if handle_unknown == "infrequent_if_exist" and self._infrequent_enabled:
                 infrequent_columns = [
                     i
