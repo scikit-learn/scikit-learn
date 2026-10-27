@@ -51,3 +51,8 @@ class ShortSummaryDocumenter(ModuleLevelDocumenter):
 
 def setup(app):
     app.add_autodocumenter(ShortSummaryDocumenter)
+    return {
+        "version": "0.1",
+        "parallel_read_safe": True,
+        "parallel_write_safe": True,
+    }

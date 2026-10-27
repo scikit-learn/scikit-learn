@@ -2,13 +2,12 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 # See _utils.pyx for details.
-from libc.math cimport isnan
 from libc.math cimport log as ln
 from libc.stdlib cimport realloc
 
 cimport numpy as cnp
 from sklearn.neighbors._quad_tree cimport Cell
-from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int8_t, int32_t, uint32_t, uint64_t
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, int8_t, int32_t, uint32_t, uint64_t, inlinable_isnan
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C, N_BITSETS, in_bitset
 from sklearn.utils._random cimport our_rand_r
 
@@ -68,7 +67,7 @@ cdef inline bint goes_left(
     int8_t split_kind,
     float32_t value,
 ) noexcept nogil:
-    if isnan(value):
+    if inlinable_isnan(value):
         return missing_go_to_left
     elif split_kind == SPLIT_NUMERIC:
         return value <= threshold

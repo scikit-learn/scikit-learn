@@ -139,19 +139,21 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
             break
 
     print("Computing the adjacency matrix")
-    X = sparse.lil_array((len(index_map), len(index_map)), dtype=np.float32)
-    for i, j in links:
-        X[i, j] = 1.0
+    n = len(index_map)
+    rows, cols = np.array(links, dtype=np.int32).T
     del links
-    print("Converting to CSR representation")
-    X = X.tocsr()
-    print("CSR conversion done")
+    data = np.ones(len(rows), dtype=np.float32)
+    X = sparse.csr_array((data, (rows, cols)), shape=(n, n))
+    # Multiple links between the same pair of pages must still count as a
+    # single edge, so we set the data to 1 after the CSR matrix constructor
+    # which sums duplicate (row, col) entries.
+    X.data[:] = 1.0
     return X, redirects, index_map
 
 
-# stop after 5M links to make it possible to work in RAM
+# stop after 3M links so parsing stays fast and the graph stays small enough in memory.
 X, redirects, index_map = get_adjacency_matrix(
-    redirects_filename, page_links_filename, limit=5000000
+    redirects_filename, page_links_filename, limit=3000000
 )
 names = {i: name for name, i in index_map.items()}
 

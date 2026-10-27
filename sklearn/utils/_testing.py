@@ -29,6 +29,7 @@ from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 import joblib
 import numpy as np
 import scipy as sp
+from numpy.exceptions import VisibleDeprecationWarning
 from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import (
     assert_almost_equal,
@@ -52,7 +53,6 @@ from sklearn.utils._array_api import (
 from sklearn.utils.fixes import (
     _IS_32BIT,
     _IS_WASM,
-    VisibleDeprecationWarning,
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils.multiclass import check_classification_targets
@@ -1435,18 +1435,6 @@ def _get_warnings_filters_info_list():
         WarningInfo("error", category=DeprecationWarning),
         WarningInfo("error", category=FutureWarning),
         WarningInfo("error", category=VisibleDeprecationWarning),
-        # TODO: remove when pyamg > 5.0.1
-        # Avoid a deprecation warning due pkg_resources usage in pyamg.
-        WarningInfo(
-            "ignore",
-            message="pkg_resources is deprecated as an API",
-            category=DeprecationWarning,
-        ),
-        WarningInfo(
-            "ignore",
-            message="Deprecated call to `pkg_resources",
-            category=DeprecationWarning,
-        ),
         # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
         # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
         # would probably fix it.

@@ -1,0 +1,4 @@
+- :func:`utils.class_weight.compute_class_weight` now preserves numeric-looking
+  string class labels when using dictionary class weights, fixing failures for
+  estimators such as random forests with `class_weight="balanced"`.
+  By :user:`Tony Bagnall <TonyBagnall>`.
