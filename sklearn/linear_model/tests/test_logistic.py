@@ -1214,7 +1214,7 @@ def test_logistic_regression_solvers_multiclass_unpenalized(
     with ignore_warnings(category=scipy.linalg.LinAlgWarning):
         regressors2 = {
             solver: LogisticRegression(
-                C=np.inf,
+                alpha=0,
                 solver=solver,
                 tol=solver_tol.get(solver, tol),
                 max_iter=solver_max_iter.get(solver, 100),
