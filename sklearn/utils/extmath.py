@@ -1119,11 +1119,12 @@ def _incremental_mean_and_var(
     From the paper "Algorithms for computing the sample variance: analysis and
     recommendations", by Chan, Golub, and LeVeque.
 
-    The mean and the variance are updated with the delta-based formula of
-    Chan, Golub and LeVeque (1979), which never reconstructs the cumulative
-    sum. On long streams or on values with a large magnitude, the
-    cumulative-sum formula overflows to ``inf`` (see issue #5602). The
-    delta-based formula is algebraically equivalent but does not overflow.
+    On long streams or on values with a large magnitude, the cumulative-sum
+    formula ``last_mean * last_sample_count + new_sum`` overflows to ``inf``
+    (see issue #5602). In that case, the delta-based update of Chan, Golub
+    and LeVeque (1979) is used instead; it is algebraically equivalent but
+    never reconstructs the sum. On inputs where the cumulative sum does not
+    overflow, the cumulative-sum formula is kept, because it is more precise.
 
     Parameters
     ----------
@@ -1173,6 +1174,7 @@ def _incremental_mean_and_var(
     last_sample_count = xp.asarray(
         last_sample_count, dtype=max_float_dtype, device=X_device
     )
+    last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
         sum_op = xpx.nansum
@@ -1205,22 +1207,33 @@ def _incremental_mean_and_var(
     )
 
     with context_manager:
-        safe_new_count = xp.where(
-            new_sample_count > 0,
-            new_sample_count,
-            xp.ones_like(new_sample_count),
-        )
-        T = new_sum / safe_new_count
-        delta = xp.where(
-            new_sample_count > 0,
-            T - last_mean,
-            xp.zeros_like(xp.asarray(last_mean, dtype=max_float_dtype)),
-        )
-        updated_mean = last_mean + delta * new_sample_count / updated_sample_count
+        # Cumulative-sum mean update. It overflows on long streams with
+        # large values (issue #5602).
+        updated_mean = (last_sum + new_sum) / updated_sample_count
+        if not xp.all(xp.isfinite(updated_mean)):
+            # Fallback: delta-based update (Chan, Golub, LeVeque 1979,
+            # Eq. 2.1a). It never reconstructs the cumulative sum, so it
+            # cannot overflow, at the cost of a small precision loss.
+            safe_new_count = xp.where(
+                new_sample_count > 0,
+                new_sample_count,
+                xp.ones_like(new_sample_count),
+            )
+            T = new_sum / safe_new_count
+            delta = xp.where(
+                new_sample_count > 0,
+                T - last_mean,
+                xp.zeros_like(xp.asarray(last_mean, dtype=max_float_dtype)),
+            )
+            delta_mean = last_mean + delta * new_sample_count / updated_sample_count
+            updated_mean = xp.where(
+                xp.isfinite(updated_mean), updated_mean, delta_mean
+            )
 
         if last_variance is None:
             updated_variance = None
         else:
+            T = new_sum / new_sample_count
             temp = X - T
             if sample_weight is not None:
                 correction = _safe_accumulator_op(
@@ -1245,18 +1258,48 @@ def _incremental_mean_and_var(
 
             last_unnormalized_variance = last_variance * last_sample_count
 
+            last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
                 last_unnormalized_variance
                 + new_unnormalized_variance
-                + delta**2
-                * last_sample_count
-                * new_sample_count
+                + last_over_new_count
                 / updated_sample_count
+                * (last_sum / last_over_new_count - new_sum) ** 2
             )
 
             zeros = last_sample_count == 0
             updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
             updated_variance = updated_unnormalized_variance / updated_sample_count
+
+            if not xp.all(xp.isfinite(updated_variance)):
+                safe_new_count = xp.where(
+                    new_sample_count > 0,
+                    new_sample_count,
+                    xp.ones_like(new_sample_count),
+                )
+                T_var = new_sum / safe_new_count
+                delta_var = xp.where(
+                    new_sample_count > 0,
+                    T_var - last_mean,
+                    xp.zeros_like(xp.asarray(last_mean, dtype=max_float_dtype)),
+                )
+                updated_unnormalized_variance_safe = (
+                    last_unnormalized_variance
+                    + new_unnormalized_variance
+                    + delta_var**2
+                    * last_sample_count
+                    * new_sample_count
+                    / updated_sample_count
+                )
+                updated_unnormalized_variance_safe[zeros] = new_unnormalized_variance[zeros]
+                updated_variance_safe = (
+                    updated_unnormalized_variance_safe / updated_sample_count
+                )
+                updated_variance = xp.where(
+                    xp.isfinite(updated_variance),
+                    updated_variance,
+                    updated_variance_safe,
+                )
 
     return updated_mean, updated_variance, updated_sample_count
 

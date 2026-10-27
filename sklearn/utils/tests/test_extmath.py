@@ -10,6 +10,7 @@ from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
 from sklearn import config_context
+from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
 from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
