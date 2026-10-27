@@ -1119,6 +1119,13 @@ def _incremental_mean_and_var(
     From the paper "Algorithms for computing the sample variance: analysis and
     recommendations", by Chan, Golub, and LeVeque.
 
+    On long streams or on values with a large magnitude, the cumulative-sum
+    formula ``last_mean * last_sample_count + new_sum`` overflows to ``inf``
+    (see issue #5602). In that case, the delta-based update of Chan, Golub
+    and LeVeque (1979) is used instead; it is algebraically equivalent but
+    never reconstructs the sum. On inputs where the cumulative sum does not
+    overflow, the cumulative-sum formula is kept, because it is more precise.
+
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
@@ -1164,8 +1171,6 @@ def _incremental_mean_and_var(
     # updated = the aggregated stats
     xp, _, X_device = get_namespace_and_device(X)
     max_float_dtype = _max_precision_float_dtype(xp, device=X_device)
-    # Promoting int -> float is not guaranteed by the array-api, so we cast manually.
-    # (Also, last_sample_count may be a python scalar)
     last_sample_count = xp.asarray(
         last_sample_count, dtype=max_float_dtype, device=X_device
     )
@@ -1176,8 +1181,6 @@ def _incremental_mean_and_var(
     else:
         sum_op = xp.sum
     if sample_weight is not None:
-        # equivalent to np.nansum(X * sample_weight, axis=0)
-        # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
         new_sum = _safe_accumulator_op(
             xp.matmul,
             sample_weight,
@@ -1197,46 +1200,59 @@ def _incremental_mean_and_var(
 
     updated_sample_count = last_sample_count + new_sample_count
 
-    updated_mean = (last_sum + new_sum) / updated_sample_count
+    context_manager = (
+        np.errstate(divide="ignore", invalid="ignore")
+        if _is_numpy_namespace(xp)
+        else nullcontext()
+    )
 
-    if last_variance is None:
-        updated_variance = None
-    else:
-        T = new_sum / new_sample_count
-        temp = X - T
-        if sample_weight is not None:
-            # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
-            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-            correction = _safe_accumulator_op(
-                xp.matmul,
-                sample_weight,
-                xp.where(X_nan_mask, 0, temp),
+    with context_manager:
+        updated_mean = (last_sum + new_sum) / updated_sample_count
+        if not xp.all(xp.isfinite(updated_mean)):
+            safe_new_count = xp.where(
+                new_sample_count > 0,
+                new_sample_count,
+                xp.ones_like(new_sample_count),
             )
-            temp **= 2
-            new_unnormalized_variance = _safe_accumulator_op(
-                xp.matmul,
-                sample_weight,
-                xp.where(X_nan_mask, 0, temp),
+            T = new_sum / safe_new_count
+            delta = xp.where(
+                new_sample_count > 0,
+                T - last_mean,
+                xp.zeros_like(xp.asarray(last_mean, dtype=max_float_dtype)),
             )
+            delta_mean = last_mean + delta * new_sample_count / updated_sample_count
+            updated_mean = xp.where(
+                xp.isfinite(updated_mean), updated_mean, delta_mean
+            )
+
+        if last_variance is None:
+            updated_variance = None
         else:
-            correction = _safe_accumulator_op(sum_op, temp, axis=0)
-            temp **= 2
-            new_unnormalized_variance = _safe_accumulator_op(sum_op, temp, axis=0)
+            T = new_sum / new_sample_count
+            temp = X - T
+            if sample_weight is not None:
+                correction = _safe_accumulator_op(
+                    xp.matmul,
+                    sample_weight,
+                    xp.where(X_nan_mask, 0, temp),
+                )
+                temp **= 2
+                new_unnormalized_variance = _safe_accumulator_op(
+                    xp.matmul,
+                    sample_weight,
+                    xp.where(X_nan_mask, 0, temp),
+                )
+            else:
+                correction = _safe_accumulator_op(sum_op, temp, axis=0)
+                temp **= 2
+                new_unnormalized_variance = _safe_accumulator_op(
+                    sum_op, temp, axis=0
+                )
 
-        # correction term of the corrected 2 pass algorithm.
-        # See "Algorithms for computing the sample variance: analysis
-        # and recommendations", by Chan, Golub, and LeVeque.
-        new_unnormalized_variance -= correction**2 / new_sample_count
+            new_unnormalized_variance -= correction**2 / new_sample_count
 
-        last_unnormalized_variance = last_variance * last_sample_count
+            last_unnormalized_variance = last_variance * last_sample_count
 
-        # There is no errstate equivalent for warning/error management in array API
-        context_manager = (
-            np.errstate(divide="ignore", invalid="ignore")
-            if _is_numpy_namespace(xp)
-            else nullcontext()
-        )
-        with context_manager:
             last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
                 last_unnormalized_variance
@@ -1246,12 +1262,43 @@ def _incremental_mean_and_var(
                 * (last_sum / last_over_new_count - new_sum) ** 2
             )
 
-        zeros = last_sample_count == 0
-        updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
-        updated_variance = updated_unnormalized_variance / updated_sample_count
+            zeros = last_sample_count == 0
+            updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
+            updated_variance = updated_unnormalized_variance / updated_sample_count
+
+            if not xp.all(xp.isfinite(updated_variance)):
+                safe_new_count = xp.where(
+                    new_sample_count > 0,
+                    new_sample_count,
+                    xp.ones_like(new_sample_count),
+                )
+                T_var = new_sum / safe_new_count
+                delta_var = xp.where(
+                    new_sample_count > 0,
+                    T_var - last_mean,
+                    xp.zeros_like(xp.asarray(last_mean, dtype=max_float_dtype)),
+                )
+                updated_unnormalized_variance_safe = (
+                    last_unnormalized_variance
+                    + new_unnormalized_variance
+                    + delta_var**2
+                    * last_sample_count
+                    * new_sample_count
+                    / updated_sample_count
+                )
+                updated_unnormalized_variance_safe[zeros] = (
+                    new_unnormalized_variance[zeros]
+                )
+                updated_variance_safe = (
+                    updated_unnormalized_variance_safe / updated_sample_count
+                )
+                updated_variance = xp.where(
+                    xp.isfinite(updated_variance),
+                    updated_variance,
+                    updated_variance_safe,
+                )
 
     return updated_mean, updated_variance, updated_sample_count
-
 
 def _deterministic_vector_sign_flip(u):
     """Modify the sign of vectors for reproducibility.
