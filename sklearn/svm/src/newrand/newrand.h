@@ -18,7 +18,10 @@ extern "C" {
 // used in LibSVM / LibLinear, to ensure the same behaviour on windows-linux,
 // with increased speed
 // - (1) Init a `mt_rand` object
-std::mt19937 mt_rand(std::mt19937::default_seed);
+// The generator is thread-local: the solvers are run without the GIL, and
+// sharing its state would make concurrent fits draw from the same stream.
+// This requires `set_seed()` to be called from the thread that runs the solver.
+thread_local std::mt19937 mt_rand(std::mt19937::default_seed);
 
 // - (2) public `set_seed()` function that should be used instead of `srand()` to set a new seed.
 void set_seed(unsigned custom_seed) {

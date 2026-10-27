@@ -563,9 +563,6 @@ def test_logistic_regression_path_convergence_fail():
 # TODO(1.12): remove filterwarnings with deprecation of liblinear and dual
 @pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
 @pytest.mark.filterwarnings("ignore:The parameter 'dual':FutureWarning")
-# XXX: investigate thread-safety bug that might be related to:
-# https://github.com/scikit-learn/scikit-learn/issues/31883
-@pytest.mark.thread_unsafe
 def test_liblinear_dual_random_state(global_random_seed):
     # random_state is relevant for liblinear solver only if dual=True
     X, y = make_classification(n_samples=20, random_state=global_random_seed)
@@ -1581,9 +1578,6 @@ def test_logreg_intercept_scaling_zero():
 
 # TODO(1.12): remove filterwarnings with deprecation of liblinear
 @pytest.mark.filterwarnings("ignore:The solver 'liblinear':FutureWarning")
-# XXX: investigate thread-safety bug that might be related to:
-# https://github.com/scikit-learn/scikit-learn/issues/31883
-@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_logreg_l1(csr_container, fit_intercept, global_random_seed):
