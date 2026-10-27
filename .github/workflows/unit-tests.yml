@@ -31,6 +31,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Drop the compromised emSign root from the system CA store
+        run: |
+          sudo apt-get update
+          sudo apt-get install --only-upgrade -y ca-certificates
+          dpkg-query -W ca-certificates
+          test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -225,6 +233,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Drop the compromised emSign root from the system CA store
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --only-upgrade -y ca-certificates
+          dpkg-query -W ca-certificates
+          test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
       # This step is necessary to access the job name the same way in both matrix and
       # non-matrix jobs (like free-threaded or scipy-dev builds).
       - name: Set JOB_NAME variable
@@ -366,6 +382,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      - name: Drop the compromised emSign root from the system CA store
+        run: |
+          sudo apt-get update
+          sudo apt-get install --only-upgrade -y ca-certificates
+          dpkg-query -W ca-certificates
+          test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
 
       - name: Create cache for ccache
         uses: actions/cache@v5

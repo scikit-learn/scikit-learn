@@ -34,6 +34,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+
+      - name: Drop the compromised emSign root from the system CA store
+        run: |
+          sudo apt-get update
+          sudo apt-get install --only-upgrade -y ca-certificates
+          dpkg-query -W ca-certificates
+          test ! -e /etc/ssl/certs/emSign_ECC_Root_CA_-_G3.pem
+
       - name: Generate lock files
         run: |
           source build_tools/shared.sh
