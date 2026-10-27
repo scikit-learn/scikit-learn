@@ -1,0 +1,3 @@
+- Fix a regression in :class:`linear_model.LogisticRegressionCV` that caused
+  binary classification with a string scorer such as ``"f1_macro"`` to raise a
+  ``TypeError``. By :user:`msaule`.
