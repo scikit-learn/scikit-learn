@@ -38,3 +38,54 @@ function addVersionSwitcherAvailDocsLink() {
 }
 
 document.addEventListener("DOMContentLoaded", addVersionSwitcherAvailDocsLink);
+
+function addVersionWarningNightlyLink() {
+  var version = DOCUMENTATION_OPTIONS.VERSION || "";
+  var isDevelopmentVersion = version.includes("dev");
+
+  if (!isDevelopmentVersion) {
+    return;
+  }
+
+  var banner = document.querySelector("#bd-header-version-warning");
+
+  if (!banner) {
+    return;
+  }
+
+  function addNightlyLink() {
+    if (
+      banner.classList.contains("d-none") ||
+      banner.querySelector(".sk-nightly-install-link")
+    ) {
+      return;
+    }
+
+    var stableLink = banner.querySelector(".pst-button-link-to-stable-version");
+
+    if (!stableLink) {
+      return;
+    }
+
+    var nightlyLink = document.createElement("a");
+    nightlyLink.href =
+      "https://scikit-learn.org/dev/install.html#installing-nightly-builds";
+    nightlyLink.innerText = "Install nightly build";
+    nightlyLink.className = stableLink.className;
+    nightlyLink.classList.add("sk-nightly-install-link");
+
+    stableLink.insertAdjacentElement("afterend", nightlyLink);
+  }
+
+  addNightlyLink();
+
+  var observer = new MutationObserver(addNightlyLink);
+  observer.observe(banner, {
+    attributes: true,
+    attributeFilter: ["class"],
+    childList: true,
+    subtree: true,
+  });
+}
+
+document.addEventListener("DOMContentLoaded", addVersionWarningNightlyLink);
