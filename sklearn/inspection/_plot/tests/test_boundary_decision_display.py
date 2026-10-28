@@ -6,6 +6,7 @@ import pytest
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
+    clone,
 )
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
@@ -921,6 +922,7 @@ def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
 
     Introduced in https://github.com/scikit-learn/scikit-learn/pull/33015.
     """
+    estimator = clone(estimator)
 
     X, y = make_blobs(n_samples=150, centers=n_blobs, n_features=2, random_state=42)
     clf = estimator.fit(X, y)
