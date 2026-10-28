@@ -27,7 +27,7 @@ from sklearn.base import (
 )
 from sklearn.tree import _criterion, _splitter
 from sklearn.tree._criterion import Criterion
-from sklearn.tree._preprocessing import _get_n_categories, _validate_X
+from sklearn.tree._preprocessing import _TreeInputValidationMixin
 from sklearn.tree._tree import MAX_NUM_CATEGORIES_PY as MAX_NUM_CATEGORIES
 from sklearn.tree._tree import (
     BestFirstTreeBuilder,
@@ -43,13 +43,7 @@ from sklearn.utils import (
     metadata_routing,
 )
 from sklearn.utils._param_validation import Hidden, Interval, RealNotInt, StrOptions
-from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import (
-    _check_sample_weight,
-    check_array,
-    check_consistent_length,
-    check_is_fitted,
-)
+from sklearn.utils.validation import check_is_fitted
 
 __all__ = [
     "DecisionTreeClassifier",
@@ -92,7 +86,9 @@ SPARSE_SPLITTERS = {
 # =============================================================================
 
 
-class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
+class BaseDecisionTree(
+    _TreeInputValidationMixin, MultiOutputMixin, BaseEstimator, metaclass=ABCMeta
+):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -191,10 +187,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
         return self.tree_.n_leaves
-
-    # Set by `_validate_X` when `fit` encodes categorical features. Ensembles
-    # encode X themselves and call `_fit_validated`, leaving it to None.
-    _categorical_encoder = None
 
     def _fit_validated(
         self, X, y, sample_weight, missing_values_in_feature_mask, categorical_counts
@@ -492,92 +484,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self._prune_tree()
 
         return self
-
-    def _validate_and_preprocess_input(
-        self, X, y=None, sample_weight=None, *, reset, check_input
-    ):
-        """Validate the inputs and encode the categorical features of X.
-
-        Used at fit time (``reset=True``) and predict time (``reset=False``), by
-        trees, forests and gradient boosting alike. With ``check_input=False``,
-        the inputs are assumed to be already validated: only categorical features
-        are encoded and the number of features is checked.
-
-        Returns
-        -------
-        X : {ndarray, sparse matrix}
-            Validated float32 X, with categorical features encoded. Returned
-            alone at predict time.
-
-        y : ndarray
-            Validated y. Only returned at fit time.
-
-        sample_weight : ndarray of shape (n_samples,) or None
-            Validated sample weights. Only returned at fit time.
-
-        fit_kwargs : dict
-            The `missing_values_in_feature_mask` and `categorical_counts`
-            arguments of `_fit_validated`. Only returned at fit time.
-        """
-        if check_input and reset and issparse(y):
-            raise ValueError("sparse multilabel-indicator for y is not supported.")
-        X = _validate_X(
-            self,
-            X,
-            # At fit time, validate_data raises an informative error if y is None.
-            y if reset else "no_validation",
-            reset=reset,
-            check_input=check_input,
-            dtype=np.float32,
-            # Trees are built from CSC matrices and predict from CSR matrices.
-            accept_sparse="csc" if reset else "csr",
-            ensure_all_finite=(
-                "allow-nan"
-                if not issparse(X) and self.__sklearn_tags__().input_tags.allow_nan
-                else True
-            ),
-        )
-        if check_input and issparse(X):
-            if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
-                raise ValueError("No support for np.int64 index based sparse matrices")
-            if reset:
-                # Sort once for all trees of an ensemble.
-                X.sort_indices()
-
-        if not reset:
-            return X
-
-        if check_input:
-            # We can't use validate_data(multi_output=True) because that would
-            # allow y to be csr.
-            y = check_array(
-                y, input_name="y", estimator=self, ensure_2d=False, dtype=None
-            )
-            check_consistent_length(X, y)
-            if is_classifier(self):
-                check_classification_targets(y)
-            if sample_weight is not None:
-                sample_weight = _check_sample_weight(sample_weight, X)
-
-            if self.criterion == "poisson":
-                if np.any(y < 0):
-                    raise ValueError(
-                        "Some value(s) of y are negative which is "
-                        "not allowed for Poisson regression."
-                    )
-                if np.sum(y) <= 0:
-                    raise ValueError(
-                        "Sum of y is not strictly positive which "
-                        "is necessary for Poisson regression."
-                    )
-
-        fit_kwargs = {
-            "missing_values_in_feature_mask": np.isnan(
-                np.asarray(X.sum(axis=0)).ravel()
-            ),
-            "categorical_counts": _get_n_categories(self),
-        }
-        return X, y, sample_weight, fit_kwargs
 
     def predict(self, X, check_input=True):
         """Predict class or regression value for X.

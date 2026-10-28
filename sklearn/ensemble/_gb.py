@@ -49,7 +49,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree._classes import BaseDecisionTree
+from sklearn.tree._preprocessing import _TreeInputValidationMixin
 from sklearn.tree._tree import TREE_LEAF
 from sklearn.utils import check_array, check_random_state, column_or_1d
 from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
@@ -335,7 +335,7 @@ class VerboseReporter:
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
+class BaseGradientBoosting(_TreeInputValidationMixin, BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting."""
 
     _parameter_constraints: dict = {
@@ -938,9 +938,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _make_estimator(self, append=True):
         # we don't need _make_estimator
         raise NotImplementedError()
-
-    # Reuse the tree implementation:
-    _validate_and_preprocess_input = BaseDecisionTree._validate_and_preprocess_input
 
     def _validate_X_predict(self, X):
         """Validate X for prediction."""

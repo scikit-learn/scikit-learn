@@ -64,6 +64,7 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
+from sklearn.tree._preprocessing import _TreeInputValidationMixin
 from sklearn.utils import (
     check_random_state,
     compute_class_weight,
@@ -165,7 +166,9 @@ def _parallel_build_trees(
     return tree
 
 
-class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
+class BaseForest(
+    _TreeInputValidationMixin, MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta
+):
     """
     Base class for forests of trees.
 
@@ -556,9 +559,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     def _validate_y_class_weight(self, y, sample_weight):
         # Default implementation
         return y, None
-
-    # Reuse the tree implementation:
-    _validate_and_preprocess_input = BaseDecisionTree._validate_and_preprocess_input
 
     def _validate_X_predict(self, X):
         """
