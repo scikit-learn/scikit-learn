@@ -2398,7 +2398,7 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
 
 
 @pytest.mark.parametrize(["loss", "lr"], [("hinge", "pa1"), ("squared_hinge", "pa2")])
-def test_passive_aggressive_classifier_vs_sgd(loss, lr):
+def test_passive_aggressive_vs_sgd_classifier(loss, lr):
     """Test that SGDClassifier is equivalent to a passive aggressive classifier.
 
     Setting learning_rate to "pa1" or "pa2" should make SGDClassifier equivalent to a
@@ -2429,7 +2429,7 @@ def test_passive_aggressive_classifier_vs_sgd(loss, lr):
     ["loss", "lr"],
     [("epsilon_insensitive", "pa1"), ("squared_epsilon_insensitive", "pa2")],
 )
-def test_passive_aggressive_regressor_vs_sgd(loss, lr):
+def test_passive_aggressive_vs_sgd_regressor(loss, lr):
     """Test that SGDRegressor is equivalent to a passive aggressive regressor.
 
     Setting learning_rate to "pa1" or "pa2" should make SGDRegressor equivalent to a
