@@ -984,6 +984,35 @@ def test_confusion_matrix_at_thresholds_float32_only_unweighted_large_n():
     assert_allclose(tps_np, tps_ref, atol=1)
 
 
+def test_confusion_matrix_at_thresholds_float32_y_score_plain_numpy_exact():
+    """Unweighted counts stay exact on plain numpy even with float32 y_score.
+
+    Plain numpy always supports float64, so the output should never be
+    downcast to float32 merely because the caller's ``y_score`` happens to be
+    float32 (e.g. model scores stored in float32 to save memory). Non-regression
+    test for https://github.com/scikit-learn/scikit-learn/issues/34975.
+    """
+    rng = np.random.RandomState(0)
+    n_samples = 20_000_000
+    y_true = (rng.random(n_samples) < 0.9).astype(np.int32)
+    y_score64 = rng.random(n_samples).astype(np.float64)
+    y_score32 = y_score64.astype(np.float32)
+    n_pos = int(y_true.sum())
+    assert n_pos > 2**24
+
+    _, fps64, _, tps64, _ = confusion_matrix_at_thresholds(y_true, y_score64)
+    _, fps32, _, tps32, _ = confusion_matrix_at_thresholds(y_true, y_score32)
+
+    # float32 y_score has more tied values than float64, so the number of
+    # distinct thresholds (and hence array length) legitimately differs; what
+    # must not differ is the output dtype and the exact final cumulative count.
+    assert tps64.dtype == np.float64
+    assert tps32.dtype == np.float64
+    assert tps64[-1] == n_pos
+    assert tps32[-1] == n_pos
+    assert fps32[-1] == n_samples - n_pos
+
+
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
 def test_confusion_matrix_at_thresholds_multiclass_error(curve_func):
     rng = check_random_state(404)
