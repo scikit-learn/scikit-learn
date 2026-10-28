@@ -57,10 +57,14 @@ jobs:
           fi
 
   build_wasm_wheel:
-    name: Build WASM wheel
+    name: Build WASM wheel (cp${{ matrix.python }})
     runs-on: ubuntu-latest
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["313", "314"]
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v7
@@ -70,6 +74,7 @@ jobs:
       - uses: pypa/cibuildwheel@8c2dcd2e96041a619f5ff03c9638d7941e2553a4 # v4.3.3
         env:
           CIBW_PLATFORM: pyodide
+          CIBW_BUILD: "cp${{ matrix.python }}-pyodide_wasm32"
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
           CIBW_TEST_REQUIRES: "pytest pandas"
@@ -80,7 +85,7 @@ jobs:
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v7
         with:
-          name: pyodide_wheel
+          name: pyodide_wheel_cp${{ matrix.python }}
           path: ./wheelhouse/*.whl
           if-no-files-found: error
 
