@@ -98,6 +98,9 @@ def auc(x, y):
             % x.shape
         )
 
+    if np.issubdtype(x.dtype, np.unsignedinteger):
+        x = x.astype(np.float64)
+
     direction = 1
     dx = np.diff(x)
     if np.any(dx < 0):

@@ -465,6 +465,17 @@ def test_roc_curve_fpr_tpr_increasing():
     assert (np.diff(tpr) < 0).sum() == 0
 
 
+@pytest.mark.parametrize("dtype", [np.uint8, np.uint16, np.uint32, np.uint64])
+def test_auc_unsigned_integers(dtype):
+    # Test Area Under Curve with unsigned integer coordinates (#35224)
+    x = np.array([3, 2, 1], dtype=dtype)
+    y = np.array([1, 2, 3], dtype=np.float64)
+    assert_array_almost_equal(auc(x, y), 4.0)
+
+    x = np.array([1, 2, 3], dtype=dtype)
+    assert_array_almost_equal(auc(x, y), 4.0)
+
+
 def test_auc():
     # Test Area Under Curve (AUC) computation
     x = [0, 1]
@@ -499,6 +510,11 @@ def test_auc_errors():
     error_message = "x is neither increasing nor decreasing : {}".format(np.array(x))
     with pytest.raises(ValueError, match=re.escape(error_message)):
         auc(x, y)
+
+    # unsigned integer x is not in order (#35224)
+    x_uint = np.array([2, 1, 3, 4], dtype=np.uint64)
+    with pytest.raises(ValueError, match="x is neither increasing nor decreasing"):
+        auc(x_uint, y)
 
 
 @pytest.mark.parametrize(
