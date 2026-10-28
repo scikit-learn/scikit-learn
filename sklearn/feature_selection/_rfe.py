@@ -683,16 +683,22 @@ class RFECV(RFE):
 
             .. versionadded:: 1.5
 
-        split(k)_ranking : ndarray of shape (n_subsets_of_features,)
-            The cross-validation rankings across (k)th fold.
+        split(k)_ranking : ndarray of shape (n_subsets_of_features, n_features)
+            The cross-validation rankings across (k)th fold. Rows
+            correspond to the evaluated subset sizes, ordered consistently
+            with ``cv_results_["n_features"]``. Columns correspond to the
+            original input features in their original order.
             Selected (i.e., estimated best) features are assigned rank 1.
             Illustration in
             :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
 
             .. versionadded:: 1.7
 
-        split(k)_support : ndarray of shape (n_subsets_of_features,)
-            The cross-validation supports across (k)th fold. The support
+        split(k)_support : ndarray of shape (n_subsets_of_features, n_features)
+            The cross-validation supports across (k)th fold. Rows
+            correspond to the evaluated subset sizes, ordered consistently
+            with ``cv_results_["n_features"]``. Columns correspond to the
+            original input features in their original order. The support
             is the mask of selected features.
 
             .. versionadded:: 1.7
