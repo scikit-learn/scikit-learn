@@ -1267,38 +1267,6 @@ def _incremental_mean_and_var(
             updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
             updated_variance = updated_unnormalized_variance / updated_sample_count
 
-            if not xp.all(xp.isfinite(updated_variance)):
-                safe_new_count = xp.where(
-                    new_sample_count > 0,
-                    new_sample_count,
-                    xp.ones_like(new_sample_count),
-                )
-                T_var = new_sum / safe_new_count
-                delta_var = xp.where(
-                    new_sample_count > 0,
-                    T_var - last_mean,
-                    xp.zeros_like(last_mean),
-                )
-                updated_unnormalized_variance_safe = (
-                    last_unnormalized_variance
-                    + new_unnormalized_variance
-                    + delta_var**2
-                    * last_sample_count
-                    * new_sample_count
-                    / updated_sample_count
-                )
-                updated_unnormalized_variance_safe[zeros] = new_unnormalized_variance[
-                    zeros
-                ]
-                updated_variance_safe = (
-                    updated_unnormalized_variance_safe / updated_sample_count
-                )
-                updated_variance = xp.where(
-                    xp.isfinite(updated_variance),
-                    updated_variance,
-                    updated_variance_safe,
-                )
-
     return updated_mean, updated_variance, updated_sample_count
 
 
