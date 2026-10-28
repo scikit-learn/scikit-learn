@@ -6,7 +6,7 @@
 import numpy as np
 
 from sklearn.base import is_classifier, is_regressor
-from sklearn.inspection._pd_utils import _check_feature_names, _get_is_categorical
+from sklearn.inspection._pd_utils import _check_feature_names
 from sklearn.utils import Bunch, _safe_indexing, check_array
 from sklearn.utils._indexing import (
     _determine_key_type,
@@ -22,19 +22,11 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils._response import _get_response_values
-from sklearn.utils.stats import _weighted_percentile
-from sklearn.utils.validation import _check_sample_weight, check_is_fitted
+from sklearn.utils.validation import _check_categorical_features, check_is_fitted
 
 
-def _replace_values_and_predict(estimator, X, column, values, response_method):
-    """Predict on a copy of `X` where the feature `column` is replaced by `values`.
-
-    ALE compares the predictions of each sample when only the feature of interest
-    is moved, e.g. to the lower and upper bounds of its interval. The other
-    features keep their observed values.
-
-    This function replaces the value of the feature `column` in `X` by `values` and
-    returns the predictions of `estimator` on this modified data.
+def _replace_feature_values_and_predict(estimator, X, feature, values, response_method):
+    """Replace `feature` in a copy of `X` by `values` and return the predictions.
 
     Parameters
     ----------
@@ -43,9 +35,9 @@ def _replace_values_and_predict(estimator, X, column, values, response_method):
         :term:`predict_proba`, or :term:`decision_function`.
 
     X : {ndarray, dataframe} of shape (n_samples, n_features)
-        The data where feature `column` is replaced by `values`.
+        The data where `feature` is replaced by `values`.
 
-    column : int
+    feature : int
         Index of the feature to replace.
 
     values : ndarray of shape (n_samples,)
@@ -59,40 +51,38 @@ def _replace_values_and_predict(estimator, X, column, values, response_method):
     -------
     predictions : ndarray of shape (n_samples, n_outputs)
         The predictions on the modified data. `n_outputs` is 1 for regression
-        or greater for classification and multi-output regression.
+        and binary classification, or greater for multi-class and multi-output
+        regression.
     """
     # TODO: decide how to handle libraries other than numpy and pandas
     X_eval = X.copy()
-    _safe_assign(X_eval, values, column_indexer=column)
+    _safe_assign(X_eval, values, column_indexer=feature)
     pred, _ = _get_response_values(estimator, X_eval, response_method=response_method)
     return pred.reshape(pred.shape[0], -1)
 
 
-def _mean_local_effect_per_bin(local_effects, bins, sample_weight, n_bins):
+def _mean_local_effect_per_bin(local_effects, bins, n_bins):
     """Average the local effects of the samples that fall in each bin.
 
-    Each sample has one local effect: the difference of its predictions when its
-    feature value is moved from one end of its bin to the other. A bin is an interval
-    of a continuous feature, or the step between two adjacent integers/categories.
-    A bin contains several samples and therefore several local effects. This function
-    returns, for each bin, the (weighted) mean of those local effects: the sum of
-    the local effects in bin `k` divided by the number of samples in bin `k`, as
-    in the ALE estimator of Apley and Zhu (2020), Eq. 15. The caller then
-    accumulates these means over the bins.
+    Each row has one local effect: the difference of its predictions when its
+    feature value is moved from one end of its bin to the other. A bin is an
+    interval of a continuous feature, or the step between two adjacent
+    integers/values/categories. A bin contains several samples and therefore
+    several local effects. This function returns, for each bin, the mean of those
+    local effects: the sum of the local effects in bin `k` divided by the number
+    of samples in bin `k`, as in the ALE estimator of Apley and Zhu (2020), Eq. 15.
+    The caller then accumulates these means over the bins.
 
     For bins with no samples, it returns 0.
 
     Parameters
     ----------
     local_effects : ndarray of shape (n_rows, n_outputs)
-        Local effect of each row, i.e. its prediction difference. One column for
-        regression, one per class/task for classification or multioutput regression.
+        Local effect of each row. One column for regression or binary classif,
+        one per class/task for multi-class or multioutput regression.
 
     bins : ndarray of shape (n_rows,), dtype=int
         Index of the bin of each row, in `[0, n_bins)`.
-
-    sample_weight : ndarray of shape (n_rows,)
-        Sample weight of each row. With unit weights, the result is the mean.
 
     n_bins : int
         Number of bins. Bins without rows get a mean of 0.
@@ -102,30 +92,32 @@ def _mean_local_effect_per_bin(local_effects, bins, sample_weight, n_bins):
     means : ndarray of shape (n_outputs, n_bins)
         Mean local effect in each bin, for each output.
 
-    bin_weights : ndarray of shape (n_bins,)
-        Sum of the weights in each bin, i.e. the number of samples when all
-        weights are 1. It is used by the caller to center the effects.
+    bin_n_samples : ndarray of shape (n_bins,)
+        Number of samples in each bin. It is used by the caller to center the
+        effects.
     """
-    bin_weights = np.bincount(bins, weights=sample_weight, minlength=n_bins)
-    non_empty = bin_weights > 0
+    # The number of samples per bin
+    bin_n_samples = np.bincount(bins, minlength=n_bins)
+    non_empty = bin_n_samples > 0
     means = np.zeros((local_effects.shape[1], n_bins))
     for output in range(local_effects.shape[1]):
-        sums = np.bincount(
-            bins, weights=sample_weight * local_effects[:, output], minlength=n_bins
-        )
-        means[output, non_empty] = sums[non_empty] / bin_weights[non_empty]
-    return means, bin_weights
+        # The sum of the local effects per bin
+        sums = np.bincount(bins, weights=local_effects[:, output], minlength=n_bins)
+        # The mean local effect per bin
+        means[output, non_empty] = sums[non_empty] / bin_n_samples[non_empty]
+    return means, bin_n_samples
 
 
-def _ale_continuous(estimator, X, column, x, sample_weight, edges, response_method):
-    """First-order ALE of a continuous feature, evaluated at the bin `edges`.
+def _ale_continuous(estimator, X, feature, x, edges, response_method):
+    """ALE of a continuous feature, evaluated at the bin `edges`.
 
     Each sample is assigned to the limits of the interval it falls into:
     `(edges[k], edges[k + 1]]`. The local effect of a sample is the difference
     of the predictions when its feature is set to the upper and to the lower
     bound of its interval. The local effects are averaged within each interval,
-    accumulated from the first interval, and centered so that their weighted mean
-    over the samples is zero.
+    accumulated from the first interval, and centered by subtracting the mean of
+    the interval midpoints, weighted by the number of samples, as in ALEPlot
+    (Eq. 16 of Apley and Zhu (2020) uses the upper edges instead).
 
     Parameters
     ----------
@@ -135,14 +127,11 @@ def _ale_continuous(estimator, X, column, x, sample_weight, edges, response_meth
     X : {ndarray, dataframe} of shape (n_samples, n_features)
         The data.
 
-    column : int
+    feature : int
         Index of the feature of interest in `X`.
 
     x : ndarray of shape (n_samples,)
         Values of the feature of interest.
-
-    sample_weight : ndarray of shape (n_samples,)
-        Sample weights.
 
     edges : ndarray of shape (n_bins + 1,)
         Sorted bounds of the intervals.
@@ -156,57 +145,62 @@ def _ale_continuous(estimator, X, column, x, sample_weight, edges, response_meth
         Centered accumulated local effects at each value of `edges`.
 
     bin_sizes : ndarray of shape (n_bins,)
-        Sum of the sample weights in each interval.
+        Number of samples in each interval.
     """
     n_bins = edges.shape[0] - 1
     bins = np.clip(np.searchsorted(edges, x, side="left"), 1, n_bins) - 1
 
-    pred_upper = _replace_values_and_predict(
-        estimator, X, column, edges[bins + 1], response_method
+    pred_upper = _replace_feature_values_and_predict(
+        estimator, X, feature, edges[bins + 1], response_method
     )
-    pred_lower = _replace_values_and_predict(
-        estimator, X, column, edges[bins], response_method
+    pred_lower = _replace_feature_values_and_predict(
+        estimator, X, feature, edges[bins], response_method
     )
 
-    local_effects, bin_sizes = _mean_local_effect_per_bin(
-        pred_upper - pred_lower, bins, sample_weight, n_bins
+    mean_local_effects, bin_sizes = _mean_local_effect_per_bin(
+        pred_upper - pred_lower, bins, n_bins
     )
     ale = np.hstack(
-        [np.zeros((local_effects.shape[0], 1)), np.cumsum(local_effects, axis=1)]
+        [
+            np.zeros((mean_local_effects.shape[0], 1)),
+            np.cumsum(mean_local_effects, axis=1),
+        ]
     )
     midpoints = (ale[:, :-1] + ale[:, 1:]) / 2
     ale -= np.average(midpoints, axis=1, weights=bin_sizes)[:, np.newaxis]
     return ale, bin_sizes
 
 
-# TODO: decide if we want to support categorical/discrete calculation of ale effects
-# in short, this is not described in the paper, it's implemented in R by the author
-# of the ale paper, but I am not convinced it makes a lot of sense.
-def _ale_categorical(estimator, X, column, x, sample_weight, levels, response_method):
-    """First-order ALE of a discrete or categorical feature with ordered `levels`.
+def _ale_categorical(estimator, X, feature, x, levels, response_method):
+    """ALE of a discrete or categorical feature with ordered `levels`.
 
-    For discrete and categorical features, the local effect of a sample is
-    calculated by setting its value to the value immediately smaller and to the
-    value immediately larger. This gives two local effects per sample: the
-    prediction at the larger value minus the prediction at its original value,
-    and the prediction at its original value minus the prediction at the smaller
-    value. The exception are the samples at the limits (i.e., the smallest and
-    the largest values), which can only be set to the value immediately larger
-    or smaller, respectively, so they have only one local effect.
+    The changes between neighbouring values are called bridges. For example, a
+    feature with values 1, 3, 5 and 7 has three bridges: 1 -> 3, 3 -> 5 and
+    5 -> 7. Each bridge is measured with the samples at its two ends::
 
-    Each local effect describes the change from one value to the next one, and
-    the local effects are averaged for each of these changes. So for example, if
-    the variable contains values 1, 3 and 7, there are two changes: from 1 to 3,
-    and from 3 to 7. The change from 1 to 3 is the average of the local effects
-    of the samples with value 1 when set to 3, and of the samples with value 3
-    when set to 1. The change from 3 to 7 is the average of the local effects of
-    the samples with value 3 when set to 7, and of the samples with value 7 when
-    set to 3.
+        bridge 1 -> 3:  samples at 1 moved up to 3,  samples at 3 moved down to 1
+        bridge 3 -> 5:  samples at 3 moved up to 5,  samples at 5 moved down to 3
+        bridge 5 -> 7:  samples at 5 moved up to 7,  samples at 7 moved down to 5
 
-    Finally, the average changes are added up from the smallest value to the
-    largest, which gives the accumulated local effect at each value. The result
-    is then shifted up or down so that its average over the samples is zero.
+    The local effect of each move is the prediction at the upper end of the bridge
+    minus the prediction at the lower end, keeping the other features unchanged.
+    The effect of a bridge is the mean of the local effects of its moves. Samples
+    at 3 and 5 are used in two bridges, once in each.
 
+    The bridges are then accumulated from the first value::
+
+        ALE at 1 = 0
+        ALE at 3 = bridge 1 -> 3
+        ALE at 5 = bridge 1 -> 3 + bridge 3 -> 5
+        ALE at 7 = bridge 1 -> 3 + bridge 3 -> 5 + bridge 5 -> 7
+
+    and centered, so that the mean of the ALE over the samples is zero.
+
+    In the continuous case, each sample lies inside one interval and is moved to
+    its two edges, so each local effect covers exactly one interval. In the
+    categorical case, the bridges play the role of the intervals, and a sample
+    sits on the edge between two bridges, so it gives one local effect for each.
+    Every local effect still covers exactly one bridge.
 
     Parameters
     ----------
@@ -216,14 +210,11 @@ def _ale_categorical(estimator, X, column, x, sample_weight, levels, response_me
     X : {ndarray, dataframe} of shape (n_samples, n_features)
         The data.
 
-    column : int
+    feature : int
         Index of the feature of interest in `X`.
 
     x : ndarray of shape (n_samples,)
         Values of the feature of interest.
-
-    sample_weight : ndarray of shape (n_samples,)
-        Sample weights.
 
     levels : ndarray of shape (n_levels,)
         Unique values of the feature.
@@ -237,24 +228,29 @@ def _ale_categorical(estimator, X, column, x, sample_weight, levels, response_me
         Centered accumulated local effects at each value of `levels`.
 
     level_sizes : ndarray of shape (n_levels,)
-        Sum of the sample weights at each level.
+        Number of samples at each level.
+
+    References
+    ----------
+    Local effects of categorical features in the ALEPlot R package by Apley:
+    https://github.com/cran/ALEPlot/blob/d283def19a5d7f1840f18dfca82c073210df0d81/R/ALEPlot.R#L53-L67
     """
     n_levels = levels.shape[0]
     sorter = np.argsort(levels)
     level_idx = sorter[np.searchsorted(levels, x, sorter=sorter)]
 
-    pred = _replace_values_and_predict(
-        estimator, X, column, levels[level_idx], response_method
+    pred = _replace_feature_values_and_predict(
+        estimator, X, feature, levels[level_idx], response_method
     )
-    pred_up = _replace_values_and_predict(
+    pred_up = _replace_feature_values_and_predict(
         estimator,
         X,
-        column,
+        feature,
         levels[np.minimum(level_idx + 1, n_levels - 1)],
         response_method,
     )
-    pred_down = _replace_values_and_predict(
-        estimator, X, column, levels[np.maximum(level_idx - 1, 0)], response_method
+    pred_down = _replace_feature_values_and_predict(
+        estimator, X, feature, levels[np.maximum(level_idx - 1, 0)], response_method
     )
 
     # Samples that can move up or down (i.e., not the edges of the
@@ -264,21 +260,123 @@ def _ale_categorical(estimator, X, column, x, sample_weight, levels, response_me
     # Step k goes from levels[k] to levels[k + 1]: moving up from k, down from k + 1.
     steps = np.concatenate([level_idx[up], level_idx[down] - 1])
     # Average the prediction differences of both groups within each step.
-    local_effects, _ = _mean_local_effect_per_bin(
+    mean_local_effects, _ = _mean_local_effect_per_bin(
         np.concatenate([(pred_up - pred)[up], (pred - pred_down)[down]]),
         steps,
-        np.concatenate([sample_weight[up], sample_weight[down]]),
         n_levels - 1,
     )
     # Accumulate the step effects from the first level, which starts at 0.
     ale = np.hstack(
-        [np.zeros((local_effects.shape[0], 1)), np.cumsum(local_effects, axis=1)]
+        [
+            np.zeros((mean_local_effects.shape[0], 1)),
+            np.cumsum(mean_local_effects, axis=1),
+        ]
     )
-    # Number of samples (sum of weights) at each level.
-    level_sizes = np.bincount(level_idx, weights=sample_weight, minlength=n_levels)
+    # Number of samples at each level.
+    level_sizes = np.bincount(level_idx, minlength=n_levels)
     # Center so that the average effect over the samples is zero.
     ale -= np.average(ale, axis=1, weights=level_sizes)[:, np.newaxis]
     return ale, level_sizes
+
+
+def _ale_continuous_2d(estimator, X, features, x, edges, response_method):
+    """Second-order ALE of two continuous features, evaluated at the grid `edges`.
+
+    The two features are split into intervals, which form a grid of cells. The
+    local effect of a sample is its four-corner difference in the cell it falls
+    into: f(upper, upper) - f(upper, lower) - f(lower, upper) + f(lower, lower),
+    keeping the other features unchanged. The local effects are averaged within
+    each cell and accumulated over both features. Then, the first-order effects
+    of each feature are removed and the result is centered, as in ALEPlot.
+
+    Cells without samples get a mean local effect of 0. Their ALE is not
+    imputed from neighbouring cells, and they can be identified with the
+    returned `cell_sizes`.
+
+    Parameters
+    ----------
+    estimator : BaseEstimator
+        A fitted estimator.
+
+    X : {ndarray, dataframe} of shape (n_samples, n_features)
+        The data.
+
+    features : tuple of int
+        Indices of the two features of interest in `X`.
+
+    x : tuple of two ndarrays of shape (n_samples,)
+        Values of the two features of interest.
+
+    edges : tuple of two ndarrays of shape (n_bins_0 + 1,) and (n_bins_1 + 1,)
+        Sorted bounds of the intervals of each feature.
+
+    response_method : str or list of str
+        The method(s) of `estimator` used to compute the predictions.
+
+    Returns
+    -------
+    ale : ndarray of shape (n_outputs, n_bins_0 + 1, n_bins_1 + 1)
+        Centered second-order accumulated local effects at each grid point.
+
+    cell_sizes : ndarray of shape (n_bins_0, n_bins_1)
+        Number of samples in each cell.
+
+    References
+    ----------
+    Second-order effects of two numeric features in the ALEPlot R package by Apley:
+    https://github.com/cran/ALEPlot/blob/d283def19a5d7f1840f18dfca82c073210df0d81/R/ALEPlot.R#L240-L309
+    """
+    n_bins = [e.shape[0] - 1 for e in edges]
+    bins = [
+        np.clip(np.searchsorted(e, xi, side="left"), 1, n) - 1
+        for e, xi, n in zip(edges, x, n_bins)
+    ]
+
+    # Predictions at the four corners of the cell of each sample.
+    pred = {}
+    for i in (0, 1):
+        X_first = X.copy()
+        _safe_assign(X_first, edges[0][bins[0] + i], column_indexer=features[0])
+        for j in (0, 1):
+            pred[i, j] = _replace_feature_values_and_predict(
+                estimator, X_first, features[1], edges[1][bins[1] + j], response_method
+            )
+    local_effects = (pred[1, 1] - pred[1, 0]) - (pred[0, 1] - pred[0, 0])
+
+    # Mean local effect per cell, with the cells numbered row by row.
+    mean_local_effects, cell_sizes = _mean_local_effect_per_bin(
+        local_effects, bins[0] * n_bins[1] + bins[1], n_bins[0] * n_bins[1]
+    )
+    mean_local_effects = mean_local_effects.reshape(-1, *n_bins)
+    cell_sizes = cell_sizes.reshape(n_bins)
+
+    # Accumulate over both features, starting at 0 at the first grid point.
+    ale = np.zeros((mean_local_effects.shape[0], n_bins[0] + 1, n_bins[1] + 1))
+    ale[:, 1:, 1:] = np.cumsum(np.cumsum(mean_local_effects, axis=1), axis=2)
+
+    # Remove the first-order effect of the first feature.
+    diff_0 = ale[:, 1:, :] - ale[:, :-1, :]
+    weighted = cell_sizes * (diff_0[:, :, :-1] + diff_0[:, :, 1:]) / 2
+    effect_0 = weighted.sum(axis=2) / cell_sizes.sum(axis=1)
+    ale_0 = np.hstack([np.zeros((ale.shape[0], 1)), np.cumsum(effect_0, axis=1)])
+
+    # Remove the first-order effect of the second feature.
+    diff_1 = ale[:, :, 1:] - ale[:, :, :-1]
+    weighted = cell_sizes * (diff_1[:, :-1, :] + diff_1[:, 1:, :]) / 2
+    effect_1 = weighted.sum(axis=1) / cell_sizes.sum(axis=0)
+    ale_1 = np.hstack([np.zeros((ale.shape[0], 1)), np.cumsum(effect_1, axis=1)])
+
+    ale -= ale_0[:, :, np.newaxis] + ale_1[:, np.newaxis, :]
+
+    # Center with the mean of the four corners of each cell, weighted by the
+    # number of samples in the cell.
+    corners = (
+        ale[:, :-1, :-1] + ale[:, :-1, 1:] + ale[:, 1:, :-1] + ale[:, 1:, 1:]
+    ) / 4
+    ale -= (np.sum(cell_sizes * corners, axis=(1, 2)) / cell_sizes.sum())[
+        :, np.newaxis, np.newaxis
+    ]
+    return ale, cell_sizes
 
 
 @validate_params(
@@ -290,12 +388,10 @@ def _ale_categorical(estimator, X, column, x, sample_weight, levels, response_me
         ],
         "X": ["array-like"],
         "features": ["array-like", Integral, str],
-        "sample_weight": ["array-like", None],
-        "categorical_features": ["array-like", None],
+        "categorical_features": ["array-like", StrOptions({"from_dtype"}), None],
         "feature_names": ["array-like", None],
         "response_method": [StrOptions({"auto", "predict_proba", "decision_function"})],
         "grid_resolution": [Interval(Integral, 2, None, closed="left")],
-        "custom_values": [dict, None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -304,12 +400,10 @@ def accumulated_local_effects(
     X,
     features,
     *,
-    sample_weight=None,
-    categorical_features=None,
+    categorical_features="from_dtype",
     feature_names=None,
     response_method="auto",
     grid_resolution=100,
-    custom_values=None,
 ):
     """Accumulated local effects (ALE) of ``features``.
 
@@ -317,7 +411,7 @@ def accumulated_local_effects(
     feature of the samples that fall into it is set to the lower and upper
     interval bounds, and the difference in the predictions is averaged. These
     local effects are accumulated over the intervals and centered so that their
-    weighted mean is zero [1]_.
+    mean over the samples is zero [1]_.
 
     Unlike partial dependence, ALE only evaluates the estimator in the vicinity
     of observed samples and therefore prevents or minimizes the occurrence of
@@ -339,22 +433,24 @@ def accumulated_local_effects(
         Samples with a missing value in the target feature are ignored.
 
     features : int, str or array-like of {int, str, bool}
-        The feature (e.g. `[0]`) or pair of interacting features
-        (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
+        The feature (e.g. `0`) or pair of interacting features (e.g. `[0, 1]`)
+        for which the accumulated local effects are computed. Pairs are only
+        supported for continuous features.
 
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights used to compute the interval bounds, the average local
-        effects and the centering. If `None`, samples are equally weighted.
-
-    categorical_features : array-like of shape (n_features,) or shape \
-            (n_categorical_features,), dtype={bool, int, str}, default=None
+    categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
+            shape (n_categorical_features,), "from_dtype" or None, \
+            default="from_dtype"
         Indicates the categorical or discrete features.
 
-        - `None`: no feature will be considered categorical;
-        - boolean array-like: boolean mask of shape `(n_features,)`
-          indicating which features are categorical;
-        - integer or string array-like: integer indices or strings
-          indicating categorical features.
+        - `None`: no feature is considered categorical.
+        - boolean array-like: boolean mask of shape `(n_features,)` indicating
+          which features are categorical.
+        - integer array-like: integer indices indicating categorical features.
+        - str array-like: names of categorical features (`X` must be a
+          dataframe).
+        - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum"
+          are considered categorical. For other inputs, no feature is
+          categorical.
 
         For these features, the local effect between two consecutive observed
         values is computed by moving the samples at the lower value to the
@@ -362,9 +458,9 @@ def accumulated_local_effects(
 
         .. warning::
 
-            Categories are ordered as returned by :func:`numpy.unique`, unless
-            an order is given in `custom_values`. For nominal features, this
-            order is arbitrary and the accumulated local effects depend on it.
+            Categories are ordered as returned by :func:`numpy.unique`. For
+            nominal features, this order is arbitrary and the accumulated local
+            effects depend on it.
 
     feature_names : array-like of shape (n_features,), dtype=str, default=None
         Name of each feature; `feature_names[i]` holds the name of the feature
@@ -381,35 +477,31 @@ def accumulated_local_effects(
         and we revert to :term:`decision_function` if it doesn't exist.
 
     grid_resolution : int, default=100
-        Maximum number of interval bounds for continuous features. The bounds
-        are the `grid_resolution` quantiles of the feature computed with the
-        `"inverted_cdf"` method, so they are always observed values and no
-        interval is empty. Repeated quantiles are merged, so fewer bounds may
-        be returned. Ignored for categorical features and for features in
-        `custom_values`.
-
-    custom_values : dict, default=None
-        A dictionary mapping a feature to the interval bounds (continuous
-        features) or to the categories in the order in which their effects are
-        accumulated (categorical features). Samples outside the bounds or not
-        in the categories are ignored.
+        Maximum number of points at which the accumulated local effects of a
+        continuous feature are computed. The range of the feature is split into
+        `grid_resolution - 1` intervals with roughly the same number of samples.
 
     Returns
     -------
     result : :class:`~sklearn.utils.Bunch`
         Dictionary-like object, with the following attributes.
 
-        effects : ndarray of shape (n_outputs, n_grid_values)
-            The accumulated local effects at each value in `grid_values`.
+        effects : ndarray of shape (n_outputs, n_grid_values) or \
+                (n_outputs, n_grid_values_0, n_grid_values_1)
+            The accumulated local effects at each value in `grid_values`. For a
+            pair of features, the second-order effects at each grid point.
 
         grid_values : list of 1d ndarrays
             One array per feature in `features`: the interval bounds for
             continuous features, or the categories for categorical features.
 
         bin_sizes : ndarray
-            The (weighted) number of samples in each interval, of shape
+            The number of samples in each interval, of shape
             `(n_grid_values - 1,)`, or in each category, of shape
-            `(n_grid_values,)`.
+            `(n_grid_values,)`. For a pair of features, the number of samples in
+            each cell of the grid, of shape
+            `(n_grid_values_0 - 1, n_grid_values_1 - 1)`. Cells without samples
+            have no data to estimate their effects.
 
         `n_outputs` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
@@ -466,10 +558,6 @@ def accumulated_local_effects(
             else ["predict_proba", "decision_function"]
         )
 
-    # TODO: fix negative sample weights are silently accepted. Consider
-    # `_check_sample_weight(..., ensure_non_negative=True)`.
-    sample_weight = _check_sample_weight(sample_weight, X)
-
     if _determine_key_type(features, accept_slice=False) == "int":
         # _get_column_indices() supports negative indexing. Here, we limit
         # the indexing to be positive. The upper bound will be checked
@@ -489,89 +577,48 @@ def accumulated_local_effects(
 
     feature_names = _check_feature_names(X, feature_names)
 
-    is_categorical = _get_is_categorical(
-        categorical_features, features_indices, feature_names, X.shape[1]
-    )
-
-    custom_values = custom_values or {}
-    # TODO: fix numpy integer scalars (e.g. `np.int64(0)`) are not wrapped in a list
-    # and raise a TypeError below. `partial_dependence` has the same bug.
-    if isinstance(features, (str, int)):
-        features = [features]
+    categorical_mask = _check_categorical_features(X, categorical_features)
+    if categorical_mask is None:
+        is_categorical = [False] * features_indices.size
+    else:
+        is_categorical = [bool(categorical_mask[idx]) for idx in features_indices]
 
     X_subset = _safe_indexing(X, features_indices, axis=1)
 
-    custom_values_for_X_subset = {
-        index: custom_values.get(feature)
-        for index, feature in enumerate(features)
-        if feature in custom_values
-    }
-
-    # One 1d array with the values of each feature of interest.
-    columns = [
+    # A list with one 1d array per feature of interest, holding its values for all
+    # samples.
+    observed_values = [
         np.asarray(_safe_indexing(X_subset, feature, axis=1))
         for feature in range(len(is_categorical))
     ]
 
-    # First, find the samples to ignore, looking at all the features of interest.
-    custom_axes = {}
-    for feature, (x, is_cat) in enumerate(zip(columns, is_categorical)):
-        # Ignore samples with a missing value in this feature.
-        sample_weight = np.where(_get_mask(x, np.nan), 0.0, sample_weight)
-        # Nothing else to ignore unless the user gave custom values for this feature.
-        if feature in custom_values_for_X_subset:
-            # TODO: fix empty custom values raise an IndexError, and 2D custom values
-            # are silently flattened. Validate them as `partial_dependence` does.
-            axis = np.asarray(custom_values_for_X_subset[feature])
-            if is_cat:
-                # The custom categories define the order, so they can't repeat.
-                if np.unique(axis).shape[0] != axis.shape[0]:
-                    raise ValueError(
-                        "The custom values of a categorical feature must be unique."
-                    )
-                # Samples whose category is not in the custom categories.
-                outside = ~np.isin(x, axis)
-            else:
-                # Custom interval bounds, sorted and without repeats.
-                axis = np.unique(axis)
-                # Samples below the first bound or above the last bound.
-                outside = (x < axis[0]) | (x > axis[-1])
-            # Ignore those samples.
-            sample_weight = np.where(outside, 0.0, sample_weight)
-            # Keep the custom grid so that it is not built again below.
-            custom_axes[feature] = axis
+    # Ignore the samples with a missing value in any of the features of interest.
+    valid = ~np.any([_get_mask(x, np.nan) for x in observed_values], axis=0)
+    if not np.any(valid):
+        raise ValueError(
+            "No sample is left to compute the accumulated local effects of "
+            f"{[feature_names[idx] for idx in features_indices]!r}: all samples "
+            "have a missing value."
+        )
 
-    # Then, build the grid of each feature from the samples that are left.
-    values = []
-    for feature, (x, is_cat) in enumerate(zip(columns, is_categorical)):
-        if feature in custom_axes:
-            # Custom values: use them as they are.
-            axis = custom_axes[feature]
-        elif is_cat:
+    # Build the grid of each feature from the samples that are left.
+    grid_values = []
+    for x, is_cat in zip(observed_values, is_categorical):
+        if is_cat:
             # Categorical: the categories observed in the samples that are left.
-            axis = np.unique(x[sample_weight > 0])
+            axis = np.unique(x[valid])
         else:
-            # TODO: fix string features not listed in `categorical_features` fail
-            # here with "could not convert string to float". Raise a clear error.
-            # Continuous: `grid_resolution` weighted quantiles ("inverted_cdf"),
-            # which are always observed values.
-            axis = _weighted_percentile(
-                x.astype(np.float64),
-                sample_weight,
+            # Continuous: quantiles.
+            axis = np.percentile(
+                x[valid].astype(np.float64),
                 np.linspace(0, 100, grid_resolution),
+                method="inverted_cdf",
             )
             # Merge repeated quantiles and keep the dtype of the feature.
             axis = np.unique(axis).astype(x.dtype)
-        values.append(axis)
+        grid_values.append(axis)
 
-    # TODO: fix a single custom bound ignores all samples, so this error is raised
-    # instead of the "at least two distinct values" one below.
-    if not np.any(sample_weight > 0):
-        raise ValueError(
-            "No sample with a positive weight is available for features "
-            f"{[feature_names[idx] for idx in features_indices]!r}."
-        )
-    for feature_idx, axis in zip(features_indices, values):
+    for feature_idx, axis in zip(features_indices, grid_values):
         if axis.shape[0] < 2:
             raise ValueError(
                 f"Feature {feature_names[feature_idx]!r} must have at least two "
@@ -581,21 +628,33 @@ def accumulated_local_effects(
 
     if features_indices.size == 1:
         column = features_indices[0]
-        x = np.asarray(_safe_indexing(X_subset, 0, axis=1))
-        x = np.where(sample_weight > 0, x, values[0][0])
+        # Keep only the samples that are not ignored.
+        X_valid = _safe_indexing(X, np.flatnonzero(valid), axis=0)
+        x = observed_values[0][valid]
         if is_categorical[0]:
             effects, bin_sizes = _ale_categorical(
-                estimator, X, column, x, sample_weight, values[0], response_method
+                estimator, X_valid, column, x, grid_values[0], response_method
             )
         else:
             effects, bin_sizes = _ale_continuous(
-                estimator, X, column, x, sample_weight, values[0], response_method
+                estimator, X_valid, column, x, grid_values[0], response_method
             )
     else:
-        # TODO: add support for 2 feature interaction
-        raise NotImplementedError(
-            "Second-order accumulated local effects of two features are not "
-            "supported yet."
+        if any(is_categorical):
+            # TODO: add support for pairs with categorical features (ALEPlot
+            # supports a categorical first feature with a continuous second one).
+            raise NotImplementedError(
+                "Second-order accumulated local effects are only supported for "
+                "two continuous features."
+            )
+        X_valid = _safe_indexing(X, np.flatnonzero(valid), axis=0)
+        effects, bin_sizes = _ale_continuous_2d(
+            estimator,
+            X_valid,
+            tuple(features_indices),
+            tuple(x[valid] for x in observed_values),
+            tuple(grid_values),
+            response_method,
         )
 
-    return Bunch(effects=effects, grid_values=values, bin_sizes=bin_sizes)
+    return Bunch(effects=effects, grid_values=grid_values, bin_sizes=bin_sizes)
