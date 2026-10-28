@@ -328,6 +328,7 @@ class BisectingKMeans(_BaseKMeans):
                 random_state=self._random_state,
                 n_centroids=2,
                 sample_weight=sample_weight,
+                n_threads=self._n_threads,
             )
 
             labels, inertia, centers, _ = self._kmeans_single(
