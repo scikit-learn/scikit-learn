@@ -9,12 +9,13 @@ import scipy.sparse as sp
 from scipy.optimize import minimize
 
 from sklearn import datasets, linear_model, metrics
-from sklearn.base import clone, is_classifier
-from sklearn.datasets import make_blobs
+from sklearn.base import ClassifierMixin, clone, is_classifier
+from sklearn.datasets import make_blobs, make_classification, make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.linear_model import _stochastic_gradient
+from sklearn.linear_model._base import SPARSE_INTERCEPT_DECAY
 from sklearn.model_selection import (
     RandomizedSearchCV,
     ShuffleSplit,
@@ -90,6 +91,62 @@ class _SparseSGDOneClassSVM(linear_model.SGDOneClassSVM):
     def decision_function(self, X, *args, **kw):
         X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDOneClassSVM.decision_function(self, X, *args, **kw)
+
+
+class MyPassiveAggressive(ClassifierMixin):
+    def __init__(
+        self,
+        C=1.0,
+        epsilon=_stochastic_gradient.DEFAULT_EPSILON,
+        loss="hinge",
+        fit_intercept=True,
+        n_iter=1,
+        random_state=None,
+    ):
+        self.C = C
+        self.epsilon = epsilon
+        self.loss = loss
+        self.fit_intercept = fit_intercept
+        self.n_iter = n_iter
+
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+        self.w = np.zeros(n_features, dtype=np.float64)
+        self.b = 0.0
+
+        # Mimic SGD's behavior for intercept
+        intercept_decay = 1.0
+        if sp.issparse(X):
+            intercept_decay = SPARSE_INTERCEPT_DECAY
+            X = X.toarray()
+
+        for t in range(self.n_iter):
+            for i in range(n_samples):
+                p = self.project(X[i])
+                if self.loss in ("hinge", "squared_hinge"):
+                    loss = max(1 - y[i] * p, 0)
+                else:
+                    loss = max(np.abs(p - y[i]) - self.epsilon, 0)
+
+                sqnorm = np.dot(X[i], X[i])
+
+                if self.loss in ("hinge", "epsilon_insensitive"):
+                    step = min(self.C, loss / sqnorm)
+                elif self.loss in ("squared_hinge", "squared_epsilon_insensitive"):
+                    step = loss / (sqnorm + 1.0 / (2 * self.C))
+
+                if self.loss in ("hinge", "squared_hinge"):
+                    step *= y[i]
+                else:
+                    step *= np.sign(y[i] - p)
+
+                self.w += step * X[i]
+                if self.fit_intercept:
+                    self.b += intercept_decay * step
+        return self
+
+    def project(self, X):
+        return np.dot(X, self.w) + self.b
 
 
 def SGDClassifier(**kwargs):
@@ -2338,3 +2395,61 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
 
     assert_allclose(model.coef_, expected_coef, rtol=5e-3)
     assert_allclose(model.offset_, expected_offset, rtol=1e-2)
+
+
+@pytest.mark.parametrize(["loss", "lr"], [("hinge", "pa1"), ("squared_hinge", "pa2")])
+def test_passive_aggressive_classifier_vs_sgd(loss, lr):
+    """Test that SGDClassifier is equivalent to a passive aggressive classifier.
+
+    Setting learning_rate to "pa1" or "pa2" should make SGDClassifier equivalent to a
+    passive aggressive classifier.
+    """
+    X, y = make_classification(
+        n_samples=100, n_features=10, n_informative=5, random_state=1234
+    )
+    y_bin = y.copy()
+    y_bin[y != 1] = -1
+    pa = MyPassiveAggressive(loss=loss, n_iter=4, C=0.987, random_state=42).fit(
+        X, y_bin
+    )
+    sgd = SGDClassifier(
+        loss="hinge",
+        penalty=None,
+        learning_rate=lr,
+        eta0=0.987,
+        random_state=42,
+        max_iter=4,
+        tol=0.0,
+        shuffle=False,
+    ).fit(X, y)
+    assert_allclose(pa.project(X), sgd.decision_function(X))
+
+
+@pytest.mark.parametrize(
+    ["loss", "lr"],
+    [("epsilon_insensitive", "pa1"), ("squared_epsilon_insensitive", "pa2")],
+)
+def test_passive_aggressive_regressor_vs_sgd(loss, lr):
+    """Test that SGDRegressor is equivalent to a passive aggressive regressor.
+
+    Setting learning_rate to "pa1" or "pa2" should make SGDRegressor equivalent to a
+    passive aggressive regressor.
+    """
+    X, y = make_regression(
+        n_samples=100, n_features=10, n_informative=5, random_state=1234
+    )
+    pa = MyPassiveAggressive(
+        loss=loss, n_iter=4, epsilon=0.123, C=0.987, random_state=42
+    ).fit(X, y)
+    sgd = SGDRegressor(
+        loss="epsilon_insensitive",
+        epsilon=0.123,
+        penalty=None,
+        learning_rate=lr,
+        eta0=0.987,
+        random_state=42,
+        max_iter=4,
+        tol=0.0,
+        shuffle=False,
+    ).fit(X, y)
+    assert_allclose(pa.project(X), sgd.predict(X))
