@@ -683,17 +683,25 @@ class RFECV(RFE):
 
             .. versionadded:: 1.5
 
-        split(k)_ranking : ndarray of shape (n_subsets_of_features,)
-            The cross-validation rankings across (k)th fold.
-            Selected (i.e., estimated best) features are assigned rank 1.
+        split(k)_ranking : ndarray of shape (n_subsets_of_features, n_features)
+            The cross-validation rankings across (k)th fold. Rows correspond
+            to the evaluated subset sizes, ordered consistently with
+            ``n_features``. Columns correspond to the original input
+            features, in their original order. Selected (i.e., estimated
+            best) features are assigned rank 1. This axis does not shrink
+            as features are eliminated.
             Illustration in
             :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`
 
             .. versionadded:: 1.7
 
-        split(k)_support : ndarray of shape (n_subsets_of_features,)
-            The cross-validation supports across (k)th fold. The support
-            is the mask of selected features.
+        split(k)_support : ndarray of shape (n_subsets_of_features, n_features)
+            The cross-validation supports across (k)th fold. Rows correspond
+            to the evaluated subset sizes, ordered consistently with
+            ``n_features``. Columns correspond to the original input
+            features, in their original order. The support is the mask of
+            selected features. This axis does not shrink as features are
+            eliminated.
 
             .. versionadded:: 1.7
 
@@ -726,7 +734,7 @@ class RFECV(RFE):
 
     Notes
     -----
-    The size of all values in ``cv_results_`` is equal to
+    The length of the first axis of all values in ``cv_results_`` is equal to
     ``ceil((n_features - min_features_to_select) / step) + 1``,
     where step is the number of features removed at each iteration.
 
