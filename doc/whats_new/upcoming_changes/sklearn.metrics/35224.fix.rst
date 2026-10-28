@@ -1,0 +1,3 @@
+- Fixed :func:`metrics.auc` to correctly validate monotonicity and compute area for
+  unsigned integer coordinates.
+  By :user:`Roshan Raj <Roshanraj2580>`.
