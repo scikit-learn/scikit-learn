@@ -1174,6 +1174,11 @@ def _incremental_mean_and_var(
     last_sample_count = xp.asarray(
         last_sample_count, dtype=max_float_dtype, device=X_device
     )
+    last_mean = xp.asarray(last_mean, dtype=max_float_dtype, device=X_device)
+    if last_variance is not None:
+        last_variance = xp.asarray(
+            last_variance, dtype=max_float_dtype, device=X_device
+        )
     last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
@@ -1218,7 +1223,7 @@ def _incremental_mean_and_var(
             delta = xp.where(
                 new_sample_count > 0,
                 T - last_mean,
-                xp.zeros_like(xp.asarray(last_mean, dtype=max_float_dtype)),
+                xp.zeros_like(last_mean),
             )
             delta_mean = last_mean + delta * new_sample_count / updated_sample_count
             updated_mean = xp.where(xp.isfinite(updated_mean), updated_mean, delta_mean)
@@ -1272,7 +1277,7 @@ def _incremental_mean_and_var(
                 delta_var = xp.where(
                     new_sample_count > 0,
                     T_var - last_mean,
-                    xp.zeros_like(xp.asarray(last_mean, dtype=max_float_dtype)),
+                    xp.zeros_like(last_mean),
                 )
                 updated_unnormalized_variance_safe = (
                     last_unnormalized_variance
