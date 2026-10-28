@@ -10,8 +10,8 @@ from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
 from sklearn import config_context
-from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import make_low_rank_matrix, make_sparse_spd_matrix
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import (
@@ -1207,10 +1207,12 @@ def test_incremental_mean_and_var_constant_values():
 
     iscaler = StandardScaler()
     for i in range(0, 1000, 10):
-        iscaler = iscaler.partial_fit(X[i:i + 10])
+        iscaler = iscaler.partial_fit(X[i : i + 10])
 
     assert_allclose(iscaler.mean_, scaler.mean_, rtol=1e-12)
     assert_allclose(iscaler.var_, scaler.var_, atol=1e-15)
+
+
 def test_incremental_mean_and_var_with_std_false_overflow():
     """Non-regression test: with_std=False at 1.79e301.
 

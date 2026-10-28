@@ -1,0 +1,5 @@
+- |Fix| :meth:`preprocessing.StandardScaler.partial_fit` no longer produces
+  ``inf`` for the mean on long streams or on values with a large magnitude.
+  The mean is now updated with the delta-based formula of Chan, Golub and
+  LeVeque (1979) when the cumulative-sum formula would overflow.
+  By :user:`tatopenn-cell`

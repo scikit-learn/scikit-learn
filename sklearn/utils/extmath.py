@@ -1221,9 +1221,7 @@ def _incremental_mean_and_var(
                 xp.zeros_like(xp.asarray(last_mean, dtype=max_float_dtype)),
             )
             delta_mean = last_mean + delta * new_sample_count / updated_sample_count
-            updated_mean = xp.where(
-                xp.isfinite(updated_mean), updated_mean, delta_mean
-            )
+            updated_mean = xp.where(xp.isfinite(updated_mean), updated_mean, delta_mean)
 
         if last_variance is None:
             updated_variance = None
@@ -1245,9 +1243,7 @@ def _incremental_mean_and_var(
             else:
                 correction = _safe_accumulator_op(sum_op, temp, axis=0)
                 temp **= 2
-                new_unnormalized_variance = _safe_accumulator_op(
-                    sum_op, temp, axis=0
-                )
+                new_unnormalized_variance = _safe_accumulator_op(sum_op, temp, axis=0)
 
             new_unnormalized_variance -= correction**2 / new_sample_count
 
@@ -1286,9 +1282,9 @@ def _incremental_mean_and_var(
                     * new_sample_count
                     / updated_sample_count
                 )
-                updated_unnormalized_variance_safe[zeros] = (
-                    new_unnormalized_variance[zeros]
-                )
+                updated_unnormalized_variance_safe[zeros] = new_unnormalized_variance[
+                    zeros
+                ]
                 updated_variance_safe = (
                     updated_unnormalized_variance_safe / updated_sample_count
                 )
@@ -1299,6 +1295,7 @@ def _incremental_mean_and_var(
                 )
 
     return updated_mean, updated_variance, updated_sample_count
+
 
 def _deterministic_vector_sign_flip(u):
     """Modify the sign of vectors for reproducibility.
