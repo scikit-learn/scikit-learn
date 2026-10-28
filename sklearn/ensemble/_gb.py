@@ -604,7 +604,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csc_array``.
+            to both a sparse ``csc_array`` (to fit the trees) and a
+            sparse ``csr_array`` (to compute the predictions).
 
         y : array-like of shape (n_samples,)
             Target values (strings or integers in classification, real numbers
