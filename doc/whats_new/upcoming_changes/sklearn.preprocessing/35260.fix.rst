@@ -1,5 +1,0 @@
-- :meth:`preprocessing.StandardScaler.partial_fit` no longer returns an infinite
-  variance for float32 sparse input when the intermediate statistics overflow
-  float32 but the variance itself is representable. The incremental update is
-  now done in float64.
-  By :user:`Arthur Lacote <cakedev0>`.
