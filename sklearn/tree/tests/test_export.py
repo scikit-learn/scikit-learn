@@ -771,3 +771,16 @@ def test_not_fitted_tree(pyplot):
     clf = DecisionTreeRegressor()
     with pytest.raises(NotFittedError):
         plot_tree(clf)
+
+
+@pytest.mark.parametrize("node_id", [-1, 3])
+def test_get_left_categories_invalid_node(node_id):
+    estimator = DecisionTreeClassifier().fit([[0], [1]], [0, 1])
+    with pytest.raises(ValueError, match="node_id is out of bounds"):
+        estimator.tree_._get_left_categories(node_id)
+
+
+def test_get_left_categories_numeric_node():
+    estimator = DecisionTreeClassifier().fit([[0], [1]], [0, 1])
+    with pytest.raises(ValueError, match="categorical split"):
+        estimator.tree_._get_left_categories(0)

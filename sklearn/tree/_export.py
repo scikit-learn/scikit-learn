@@ -8,6 +8,7 @@ This module defines export functions for decision trees.
 from collections.abc import Iterable
 from io import StringIO
 from numbers import Integral
+from typing import NamedTuple
 
 import numpy as np
 
@@ -19,6 +20,7 @@ from sklearn.tree import (
     _tree,
 )
 from sklearn.tree._reingold_tilford import Tree, buchheim
+from sklearn.tree._utils import SPLIT_NUMERIC
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -27,6 +29,48 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.validation import check_array, check_is_fitted
+
+
+class _SplitInfo(NamedTuple):
+    """Unformatted split data shared by tree exporters (internal nodes only)."""
+
+    feature: int
+    threshold: float
+    categories_left: np.ndarray | None
+    missing_go_to_left: bool
+
+
+def _get_split_info(tree, node_id):
+    """Read a split without imposing an export format or rounding its values."""
+    return _SplitInfo(
+        feature=int(tree.feature[node_id]),
+        threshold=float(tree.threshold[node_id]),
+        categories_left=(
+            None
+            if tree.split_kind[node_id] == SPLIT_NUMERIC
+            else tree._get_left_categories(node_id)
+        ),
+        missing_go_to_left=bool(tree.missing_go_to_left[node_id]),
+    )
+
+
+def _get_categorical_features(decision_tree):
+    """Map original feature indices to known labels in their encoded order."""
+    if isinstance(decision_tree, _tree.Tree):
+        return {
+            feature: np.arange(count)
+            for feature, count in enumerate(decision_tree._n_categories)
+            if count
+        }
+    if decision_tree.is_categorical_ is None:
+        return {}
+    return {
+        feature: categories[: decision_tree.tree_._n_categories[feature]]
+        for feature, categories in zip(
+            np.flatnonzero(decision_tree.is_categorical_),
+            decision_tree._categorical_encoder.categories_,
+        )
+    }
 
 
 def _matplotlib_to_rgb(color):
@@ -354,19 +398,20 @@ class _BaseTreeExporter:
         # Write decision criteria
         if tree.children_left[node_id] != _tree.TREE_LEAF:
             # Always write node decision criteria, except for leaves
+            split = _get_split_info(tree, node_id)
             if self.feature_names is not None:
-                feature = self.feature_names[tree.feature[node_id]]
+                feature = self.feature_names[split.feature]
                 feature = self.str_escape(feature)
             else:
                 feature = "x%s%s%s" % (
                     characters[1],
-                    tree.feature[node_id],
+                    split.feature,
                     characters[2],
                 )
             node_string += "%s %s %s%s" % (
                 feature,
                 characters[3],
-                round(tree.threshold[node_id], self.precision),
+                round(split.threshold, self.precision),
                 characters[4],
             )
 
@@ -1204,7 +1249,8 @@ def export_text(
 
             if tree_.feature[node] != _tree.TREE_UNDEFINED:
                 name = feature_names_[node]
-                threshold = tree_.threshold[node]
+                split = _get_split_info(tree_, node)
+                threshold = split.threshold
                 threshold = "{1:.{0}f}".format(decimals, threshold)
                 report.write(right_child_fmt.format(indent, name, threshold))
                 report.write(info_fmt_left)
