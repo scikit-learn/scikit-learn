@@ -1233,8 +1233,9 @@ class SGDClassifier(BaseSGDClassifier):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
-    To fit with the passive-aggressive algorithm, use
-    >>> reg = make_pipeline(
+    To fit with the passive-aggressive algorithm, use:
+
+    >>> clf = make_pipeline(
     ...     StandardScaler(),
     ...     SGDClassifier(
     ...         loss="hinge",
@@ -2017,7 +2018,7 @@ class SGDRegressor(BaseSGDRegressor):
 
      References
     ----------
-    .. [1] Crammer, K., Ofer Dekel, Keshet, J., Shalev-Shwartz, S. and Singer, Y.
+    .. [1] Crammer, K., Dekel, O., Keshet, J., Shalev-Shwartz, S. and Singer, Y.
        (2006). `"Online Passive-Aggressive Algorithms"
        <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>`_
        JMLR, 7(19), 551-585
@@ -2039,7 +2040,8 @@ class SGDRegressor(BaseSGDRegressor):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdregressor', SGDRegressor())])
 
-    To fit with the passive-aggressive algorithm, use
+    To fit with the passive-aggressive algorithm, use:
+
     >>> reg = make_pipeline(
     ...     StandardScaler(),
     ...     SGDRegressor(

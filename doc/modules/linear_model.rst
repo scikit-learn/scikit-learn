@@ -1431,7 +1431,7 @@ The ``partial_fit`` method allows online/out-of-core learning.
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
 using different (convex) loss functions and different penalties.
-For instance, :class:`SGDClassifier` with `loss="log"`
+For instance, :class:`SGDClassifier` with `loss="log_loss"`
 fits a logistic regression model,
 while with `loss="hinge"` it fits a linear support vector machine (SVM).
 
@@ -1479,7 +1479,7 @@ eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 
-  * Crammer, K., Ofer Dekel, Keshet, J., Shalev-Shwartz, S. and Singer, Y. (2006).
+  * Crammer, K., Dekel, O., Keshet, J., Shalev-Shwartz, S. and Singer, Y. (2006).
     `"Online Passive-Aggressive Algorithms"
     <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>`_
     JMLR, 7(19), 551-585
