@@ -635,7 +635,8 @@ def roc_auc_score(
 
     Where G is the Gini coefficient and AUC is the ROC-AUC score. This normalisation
     will ensure that random guessing will yield a score of 0 in expectation, and it is
-    upper bounded by 1.
+    upper bounded by 1. Note that there are differences between this Gini coefficient
+    as used in machine learning and the one used in economics, see [6]_.
 
     References
     ----------
@@ -649,16 +650,15 @@ def roc_auc_score(
            probability estimation trees (Section 6.2), CeDER Working Paper
            #IS-00-04, Stern School of Business, New York University.
 
-    .. [4] `Fawcett, T. (2006). An introduction to ROC analysis. Pattern
-            Recognition Letters, 27(8), 861-874.
-            <https://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
+    .. [4] :doi:`Fawcett, T. (2006). An introduction to ROC analysis. Pattern
+            Recognition Letters, 27(8), 861-874. <10.1016/j.patrec.2005.10.010>`
 
-    .. [5] `Hand, D.J., Till, R.J. (2001). A Simple Generalisation of the Area
+    .. [5] :doi:`Hand, D.J., Till, R.J. (2001). A Simple Generalisation of the Area
             Under the ROC Curve for Multiple Class Classification Problems.
-            Machine Learning, 45(2), 171-186.
-            <http://link.springer.com/article/10.1023/A:1010920819831>`_
-    .. [6] `Wikipedia entry for the Gini coefficient
-            <https://en.wikipedia.org/wiki/Gini_coefficient>`_
+            Machine Learning, 45(2), 171-186. <10.1023/A:1010920819831>`
+
+    .. [6] :doi:`Lorentzen, C., Mayer, M., & Wuthrich, M. V. (2022). Gini index and
+           friends. <10.2139/ssrn.4248143>`
 
     Examples
     --------
