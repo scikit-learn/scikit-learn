@@ -17,7 +17,7 @@ from scipy import sparse as sp
 from sklearn.metrics.cluster._expected_mutual_info_fast import (
     expected_mutual_information,
 )
-from sklearn.utils import _align_api_if_sparse, deprecated
+from sklearn.utils import _align_api_if_sparse
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     get_namespace_and_device,
@@ -1293,5 +1293,3 @@ def _entropy(labels):
     # Always convert the result as a Python scalar (on CPU) instead of a device
     # specific scalar array.
     return float(-xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum))))
-
-
