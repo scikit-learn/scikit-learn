@@ -372,7 +372,7 @@ INIT_PARAMS = {
         alphas=10, max_iter=7, cv=3, use_legacy_attributes=False, scoring="neg_log_loss"
     ),
     LogisticRegression: dict(max_iter=5),
-    MDS: dict(n_init=2, max_iter=5),
+    MDS: dict(init="random", n_init=2, max_iter=5),
     # In the case of check_fit2d_1sample, bandwidth is set to None and
     # is thus estimated. De facto it is 0.0 as a single sample is provided
     # and this makes the test fails. Hence we give it a placeholder value.

@@ -8,6 +8,7 @@ from sklearn.datasets import load_digits, load_iris, make_blobs
 from sklearn.manifold import ClassicalMDS
 from sklearn.manifold import _mds as mds
 from sklearn.metrics import euclidean_distances
+from sklearn.utils._param_validation import InvalidParameterError
 
 
 def test_smacof():
@@ -139,8 +140,6 @@ def test_MDS():
     mds_clf.fit(sim)
 
 
-# TODO(1.10): remove warning filter
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("k", [0.5, 1.5, 2])
 def test_normed_stress(k):
     """Test that non-metric MDS normalized stress is scale-invariant."""
@@ -153,10 +152,8 @@ def test_normed_stress(k):
     assert_allclose(X1, X2, rtol=1e-5)
 
 
-# TODO(1.10): remove warning filter
-@pytest.mark.filterwarnings("ignore::FutureWarning")
-@pytest.mark.parametrize("metric", [True, False])
-def test_normalized_stress_auto(metric, monkeypatch):
+@pytest.mark.parametrize("metric_mds", [True, False])
+def test_normalized_stress_auto(metric_mds, monkeypatch):
     rng = np.random.RandomState(0)
     X = rng.randn(4, 3)
     dist = euclidean_distances(X)
@@ -164,12 +161,12 @@ def test_normalized_stress_auto(metric, monkeypatch):
     mock = Mock(side_effect=mds._smacof_single)
     monkeypatch.setattr("sklearn.manifold._mds._smacof_single", mock)
 
-    est = mds.MDS(metric=metric, normalized_stress="auto", random_state=rng)
+    est = mds.MDS(metric_mds=metric_mds, normalized_stress="auto", random_state=rng)
     est.fit_transform(X)
-    assert mock.call_args[1]["normalized_stress"] != metric
+    assert mock.call_args[1]["normalized_stress"] != metric_mds
 
-    mds.smacof(dist, metric=metric, normalized_stress="auto", random_state=rng)
-    assert mock.call_args[1]["normalized_stress"] != metric
+    mds.smacof(dist, metric=metric_mds, normalized_stress="auto", random_state=rng)
+    assert mock.call_args[1]["normalized_stress"] != metric_mds
 
 
 def test_isotonic_outofbounds():
@@ -192,8 +189,6 @@ def test_isotonic_outofbounds():
     mds.smacof(dis, init=init, metric=False, n_init=1)
 
 
-# TODO(1.10): remove warning filter
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("normalized_stress", [True, False])
 def test_returned_stress(normalized_stress):
     # Test that the final stress corresponds to the final embedding
@@ -219,8 +214,6 @@ def test_returned_stress(normalized_stress):
     assert_allclose(stress, stress_Z)
 
 
-# TODO(1.10): remove warning filter
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("metric_mds", [True, False])
 def test_convergence_does_not_depend_on_scale(metric_mds):
     # Test that the number of iterations until convergence does not depend on
@@ -228,6 +221,7 @@ def test_convergence_does_not_depend_on_scale(metric_mds):
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
 
     mds_est = mds.MDS(
+        init="random",
         n_components=2,
         random_state=42,
         metric_mds=metric_mds,
@@ -242,32 +236,13 @@ def test_convergence_does_not_depend_on_scale(metric_mds):
     assert_equal(n_iter1, n_iter2)
 
 
-# TODO(1.10): delete this test
-def test_future_warning_init_and_metric():
+@pytest.mark.parametrize("metric", [True, False])
+def test_boolean_metric_removed(metric):
+    """Boolean `metric` was removed in 1.10 in favor of `metric_mds`."""
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
-    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
 
-    # dissimilarity argument deprecated
-    with pytest.warns(FutureWarning, match="`dissimilarity` parameter is"):
-        mds.MDS(dissimilarity="precomputed", init="random", n_init=1).fit(sim)
-
-    # metric=True deprecated
-    with pytest.warns(FutureWarning, match="Use metric_mds"):
-        mds.MDS(metric=True, init="random", n_init=1).fit(X)
-
-    # metric=False deprecated
-    with pytest.warns(FutureWarning, match="Use metric_mds"):
-        mds.MDS(metric=False, init="random", n_init=1).fit(X)
-
-    # default init will become classical_mds in the future
-    with pytest.warns(FutureWarning, match="The default value of `init`"):
-        mds.MDS(metric="euclidean", n_init=1).fit(X)
-
-    # providing both metric and dissimilarity raises an error
-    with pytest.raises(ValueError, match="provided both `dissimilarity`"):
-        mds.MDS(
-            metric="cosine", dissimilarity="euclidean", init="random", n_init=1
-        ).fit(X)
+    with pytest.raises(InvalidParameterError, match=f"metric_mds={metric}"):
+        mds.MDS(metric=metric).fit(X)
 
 
 def test_classical_mds_init_to_mds():
