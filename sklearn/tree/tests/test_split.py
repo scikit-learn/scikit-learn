@@ -16,7 +16,6 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from sklearn.tree._preprocessing import _encode_categorical_features
 from sklearn.tree._utils import (
     SPLIT_CATEGORICAL_BITSET,
     SPLIT_CATEGORICAL_HASH,
@@ -313,7 +312,7 @@ def test_split_impurity(
 
         tree.fit(X, y, sample_weight=w)
         X_split = (
-            _encode_categorical_features(tree, X_dense, reset=False, dtype=np.float32)
+            tree._encode_categorical_features(X_dense, reset=False, dtype=np.float32)
             if tree.is_categorical_ is not None
             else X_dense
         )

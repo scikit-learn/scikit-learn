@@ -1,7 +1,4 @@
-"""Input validation and categorical encoding shared by tree-based estimators.
-
-Used by decision trees, forests and gradient boosting.
-"""
+"""Input validation and categorical encoding shared by tree-based estimators."""
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
@@ -25,132 +22,10 @@ from sklearn.utils.validation import (
 )
 
 
-def _encode_categorical_features(estimator, X, *, reset, dtype):
-    """Ordinal-encode the categorical features of X, keeping the column order.
+class _CategoricalEncodingMixin:
+    """Input validation and categorical encoding shared by tree-based estimators.
 
-    At fit time (``reset=True``), also detect the categorical features and fit
-    the encoder, stored in ``estimator._categorical_encoder`` (None if there is
-    no categorical feature). X is returned unchanged if there is no categorical
-    feature. Otherwise, a Fortran-ordered array of dtype ``dtype`` is returned.
-    """
-    if reset:
-        estimator._categorical_encoder = None
-        # RandomTreesEmbedding and gradient boosting have no
-        # `categorical_features` parameter.
-        if hasattr(estimator, "categorical_features"):
-            estimator.is_categorical_ = _check_categorical_features(
-                X, estimator.categorical_features
-            )
-        if getattr(estimator, "is_categorical_", None) is not None:
-            estimator._categorical_encoder = OrdinalEncoder(
-                dtype=dtype,
-                categories="auto",
-                handle_unknown="use_encoded_value",
-                unknown_value=np.nan,
-                encoded_missing_value=np.nan,
-            )
-
-    encoder = estimator._categorical_encoder
-    if encoder is None:
-        return X
-
-    if issparse(X):
-        raise NotImplementedError(
-            "Categorical features not supported with sparse inputs"
-        )
-
-    if not (hasattr(X, "__array__") or hasattr(X, "__dataframe__")):
-        # Lists of lists do not support column indexing.
-        X = check_array(X, dtype=object, ensure_all_finite=False)
-    if not reset:
-        _check_n_features(estimator, X, reset=False)
-
-    is_categorical = estimator.is_categorical_
-    X_out = np.empty((_num_samples(X), is_categorical.shape[0]), dtype, order="F")
-
-    X_cat = _safe_indexing(X, is_categorical, axis=1)
-    X_out[:, is_categorical] = (
-        encoder.fit_transform(X_cat) if reset else encoder.transform(X_cat)
-    )
-    if not is_categorical.all():
-        X_out[:, ~is_categorical] = check_array(
-            _safe_indexing(X, ~is_categorical, axis=1),
-            input_name="X",
-            estimator=estimator,
-            dtype=dtype,
-            ensure_all_finite=False,
-        )
-    return X_out
-
-
-def _validate_X(
-    estimator,
-    X,
-    y="no_validation",
-    *,
-    reset,
-    dtype,
-    accept_sparse=False,
-    ensure_all_finite=True,
-    check_input=True,
-):
-    """Validate X and ordinal-encode its categorical features.
-
-    Used at fit time (``reset=True``) and predict time (``reset=False``). With
-    ``check_input=False``, X is assumed to be already validated: only categorical
-    features are encoded and the number of features is checked.
-
-    ``y`` is only passed to :func:`validate_data` to raise an informative error
-    if it is None at fit time. It is neither validated nor returned.
-    """
-    if check_input:
-        # Check feature names on the original input before categorical
-        # encoding converts it to a NumPy array and drops dataframe metadata.
-        # The number of features is checked after check_array
-        # (ensure_2d=False here), so that 1D inputs get check_array's
-        # informative error.
-        validate_data(
-            estimator, X, y, reset=reset, skip_check_array=True, ensure_2d=False
-        )
-
-    X = _encode_categorical_features(estimator, X, reset=reset, dtype=dtype)
-
-    if check_input:
-        X = check_array(
-            X,
-            input_name="X",
-            estimator=estimator,
-            dtype=dtype,
-            accept_sparse=accept_sparse,
-            ensure_all_finite=ensure_all_finite,
-        )
-    _check_n_features(estimator, X, reset=reset)
-    return X
-
-
-def _get_n_categories(estimator):
-    """Number of categories of each feature, -1 for numerical features.
-
-    Missing values are not counted as a category.
-    """
-    n_categories = np.full(estimator.n_features_in_, -1, dtype=np.intp)
-    encoder = estimator._categorical_encoder
-    if encoder is not None:
-        for idx, categories in zip(
-            np.flatnonzero(estimator.is_categorical_), encoder.categories_
-        ):
-            # OrdinalEncoder places np.nan last if missing values reach fit.
-            has_nan = len(categories) > 0 and is_scalar_nan(categories[-1])
-            n_categories[idx] = len(categories) - has_nan
-    return n_categories
-
-
-class _TreeInputValidationMixin:
-    """Input validation shared by decision trees, forests and gradient boosting.
-
-    Requires a ``criterion`` parameter. Estimators with a
-    ``categorical_features`` parameter (trees and forests, except
-    :class:`~sklearn.ensemble.RandomTreesEmbedding`) also get their categorical
+    Estimators with a ``categorical_features`` parameter get their categorical
     features ordinal-encoded: fitting sets ``is_categorical_`` and
     ``_categorical_encoder``.
     """
@@ -158,6 +33,131 @@ class _TreeInputValidationMixin:
     # Set at fit time if X has categorical features. Trees fitted by an
     # ensemble get already encoded X through `_fit_validated` and keep None.
     _categorical_encoder = None
+
+    def _encode_categorical_features(self, X, *, reset, dtype):
+        """Ordinal-encode the categorical features of X, keeping column order.
+
+        At fit time (``reset=True``), also detect the categorical features and
+        fit the encoder, stored in ``self._categorical_encoder`` (None if there
+        is no categorical feature). X is returned unchanged if there is no
+        categorical feature. Otherwise, a Fortran-ordered array of dtype
+        ``dtype`` is returned.
+        """
+        if reset:
+            self._categorical_encoder = None
+            # RandomTreesEmbedding and gradient boosting have no
+            # `categorical_features` parameter.
+            if hasattr(self, "categorical_features"):
+                self.is_categorical_ = _check_categorical_features(
+                    X, self.categorical_features
+                )
+            if getattr(self, "is_categorical_", None) is not None:
+                self._categorical_encoder = OrdinalEncoder(
+                    dtype=dtype,
+                    categories="auto",
+                    handle_unknown="use_encoded_value",
+                    unknown_value=np.nan,
+                    encoded_missing_value=np.nan,
+                )
+
+        encoder = self._categorical_encoder
+        if encoder is None:
+            return X
+
+        if issparse(X):
+            raise NotImplementedError(
+                "Categorical features not supported with sparse inputs"
+            )
+
+        if not (hasattr(X, "__array__") or hasattr(X, "__dataframe__")):
+            # Lists of lists do not support column indexing.
+            X = check_array(X, dtype=object, ensure_all_finite=False)
+        if not reset:
+            _check_n_features(self, X, reset=False)
+
+        is_categorical = self.is_categorical_
+        X_out = np.empty((_num_samples(X), is_categorical.shape[0]), dtype, order="F")
+
+        X_cat = _safe_indexing(X, is_categorical, axis=1)
+        X_out[:, is_categorical] = (
+            encoder.fit_transform(X_cat) if reset else encoder.transform(X_cat)
+        )
+        if not is_categorical.all():
+            X_out[:, ~is_categorical] = check_array(
+                _safe_indexing(X, ~is_categorical, axis=1),
+                input_name="X",
+                estimator=self,
+                dtype=dtype,
+                ensure_all_finite=False,
+            )
+        return X_out
+
+    def _validate_X(
+        self,
+        X,
+        y="no_validation",
+        *,
+        reset,
+        dtype,
+        accept_sparse=False,
+        ensure_all_finite=True,
+        check_input=True,
+    ):
+        """Validate X and ordinal-encode its categorical features.
+
+        Used at fit time (``reset=True``) and predict time (``reset=False``).
+        With ``check_input=False``, X is assumed to be already validated: only
+        categorical features are encoded and the number of features is checked.
+
+        ``y`` is only passed to :func:`validate_data` to raise an informative
+        error if it is None at fit time. It is neither validated nor returned.
+        """
+        if check_input:
+            # Check feature names on the original input before categorical
+            # encoding converts it to a NumPy array and drops dataframe metadata.
+            # The number of features is checked after check_array
+            # (ensure_2d=False here), so that 1D inputs get check_array's
+            # informative error.
+            validate_data(
+                self, X, y, reset=reset, skip_check_array=True, ensure_2d=False
+            )
+
+        X = self._encode_categorical_features(X, reset=reset, dtype=dtype)
+
+        if check_input:
+            X = check_array(
+                X,
+                input_name="X",
+                estimator=self,
+                dtype=dtype,
+                accept_sparse=accept_sparse,
+                ensure_all_finite=ensure_all_finite,
+            )
+        _check_n_features(self, X, reset=reset)
+        return X
+
+    def _get_n_categories(self):
+        """Number of categories of each feature, -1 for numerical features.
+
+        Missing values are not counted as a category.
+        """
+        n_categories = np.full(self.n_features_in_, -1, dtype=np.intp)
+        encoder = self._categorical_encoder
+        if encoder is not None:
+            for idx, categories in zip(
+                np.flatnonzero(self.is_categorical_), encoder.categories_
+            ):
+                # OrdinalEncoder places np.nan last if missing values reach fit.
+                has_nan = len(categories) > 0 and is_scalar_nan(categories[-1])
+                n_categories[idx] = len(categories) - has_nan
+        return n_categories
+
+
+class _TreeInputValidationMixin(_CategoricalEncodingMixin):
+    """Input validation shared by decision trees, forests and gradient boosting.
+
+    Requires a ``criterion`` parameter.
+    """
 
     def _validate_and_preprocess_input(
         self, X, y=None, sample_weight=None, *, reset, check_input
@@ -187,8 +187,7 @@ class _TreeInputValidationMixin:
         """
         if check_input and reset and issparse(y):
             raise ValueError("sparse multilabel-indicator for y is not supported.")
-        X = _validate_X(
-            self,
+        X = self._validate_X(
             X,
             # At fit time, validate_data raises an informative error if y is None.
             y if reset else "no_validation",
@@ -241,6 +240,6 @@ class _TreeInputValidationMixin:
             "missing_values_in_feature_mask": np.isnan(
                 np.asarray(X.sum(axis=0)).ravel()
             ),
-            "categorical_counts": _get_n_categories(self),
+            "categorical_counts": self._get_n_categories(),
         }
         return X, y, sample_weight, fit_kwargs
