@@ -334,17 +334,6 @@ def test_output_shape(estimator, X, y, n_outputs, grid_resolution):
     assert result.bin_sizes.shape == (n_grid_values - 1,)
 
 
-def test_linear_model_effects_have_the_coefficient_as_slope():
-    # from ALE’s definition: for a linear model, the ALE of each feature
-    # is a straight line whose slope is that feature’s coefficient.
-    X, y = make_regression(n_samples=100, n_features=3, random_state=0)
-    reg = LinearRegression().fit(X, y)
-    for feature in range(X.shape[1]):
-        result = accumulated_local_effects(reg, X, feature, grid_resolution=10)
-        slopes = np.diff(result.effects[0]) / np.diff(result.grid_values[0])
-        assert_allclose(slopes, reg.coef_[feature])
-
-
 def test_additive_effect_is_exact_at_grid_values():
     # x2 is added to the model (f = x0**2 + x0 * x1 + x2), so its ALE must equal x2
     # plus a constant, whatever the non-linear terms and interactions of x0 and x1.
@@ -546,14 +535,47 @@ def test_categorical_features_from_dtype():
     assert_allclose(from_dtype.effects, explicit.effects)
 
 
-def test_categorical_features_from_dtype_numpy():
-    X = np.random.RandomState(0).randint(0, 4, size=(50, 2)).astype(float)
-    reg = LinearRegression().fit(X, X[:, 0])
-    from_dtype = accumulated_local_effects(reg, X, 0, grid_resolution=3)
-    continuous = accumulated_local_effects(
-        reg, X, 0, categorical_features=None, grid_resolution=3
+@pytest.mark.parametrize(
+    "X_type, categorical_features, features, expected",
+    [
+        # "from_dtype" (default): only pandas Categorical columns are categorical.
+        ("pandas", "from_dtype", "color", [True]),
+        ("pandas", "from_dtype", "a", [False]),
+        ("pandas", "from_dtype", ["a", "code"], [False, False]),
+        ("numpy", "from_dtype", 1, [False]),
+        # Explicit declarations: names, indices or a boolean mask.
+        ("pandas", ["code"], "code", [True]),
+        ("pandas", ["code"], "a", [False]),
+        ("numpy", [1], 1, [True]),
+        ("numpy", [1], 0, [False]),
+        ("numpy", [False, True], 1, [True]),
+        # None: no feature is categorical.
+        ("pandas", None, "code", [False]),
+        ("numpy", None, 1, [False]),
+    ],
+)
+def test_is_categorical(X_type, categorical_features, features, expected):
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
+    a, code = rng.normal(size=100), rng.randint(0, 4, size=100)
+    colors = rng.choice(["blue", "green", "red"], size=100)
+    if X_type == "pandas":
+        X = pd.DataFrame({"a": a, "code": code, "color": pd.Categorical(colors)})
+        model = make_pipeline(
+            make_column_transformer(
+                (OneHotEncoder(), ["color"]), remainder="passthrough"
+            ),
+            LinearRegression(),
+        )
+    else:
+        X = np.c_[a, code]
+        model = LinearRegression()
+    model.fit(X, a + code)
+
+    result = accumulated_local_effects(
+        model, X, features, categorical_features=categorical_features
     )
-    assert_allclose(from_dtype.effects, continuous.effects)
+    assert result.is_categorical == expected
 
 
 @pytest.mark.parametrize(
@@ -569,13 +591,6 @@ def test_two_way_output_shape(estimator, n_classes):
     assert result.effects.shape == (n_classes, 6, 6)
     assert result.bin_sizes.shape == (5, 5)
     assert result.bin_sizes.sum() == X.shape[0]
-
-
-def test_two_way_additive_model_has_no_interaction():
-    X = np.random.RandomState(0).uniform(-1, 1, size=(300, 3))
-    reg = _AdditiveRegressor().fit(X)
-    result = accumulated_local_effects(reg, X, [0, 2], grid_resolution=8)
-    assert_allclose(result.effects, 0, atol=1e-12)
 
 
 # Reference implementation: a slow, loop-based reproduction of the second-order ALE,

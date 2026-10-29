@@ -503,6 +503,10 @@ def accumulated_local_effects(
             `(n_grid_values_0 - 1, n_grid_values_1 - 1)`. Cells without samples
             have no data to estimate their effects.
 
+        is_categorical : list of bool
+            One value per feature in `features`: whether it was treated as
+            categorical, according to `categorical_features`.
+
         `n_outputs` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
         For classical regression and binary classification `n_outputs==1`.
@@ -657,4 +661,9 @@ def accumulated_local_effects(
             response_method,
         )
 
-    return Bunch(effects=effects, grid_values=grid_values, bin_sizes=bin_sizes)
+    return Bunch(
+        effects=effects,
+        grid_values=grid_values,
+        bin_sizes=bin_sizes,
+        is_categorical=is_categorical,
+    )
