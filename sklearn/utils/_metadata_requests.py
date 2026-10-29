@@ -1639,27 +1639,43 @@ class RequestMethod:
 
 
 class AutoRequestMixin:
-    """Mixin to auto-request `sample_weight` when auto-requests are enabled.
+    """Mixin to opt into scikit-learn's metadata auto-request policies.
 
     Inherit from this mixin (typically to the left of
-    :class:`~sklearn.base.BaseEstimator`) to opt into auto-requesting `sample_weight` on
-    methods that accept it. scikit-learn's own estimators get the same policy
-    automatically via their `_auto_request_sample_weight` class attribute;
+    :class:`~sklearn.base.BaseEstimator`) to opt into auto-requesting `sample_weight`
+    and validation sets (`X_val`, `y_val`, `sample_weight_val`) on methods that accept
+    these params. scikit-learn's own estimators get the same policy automatically;
     third-party estimators that only inherit from :class:`~sklearn.base.BaseEstimator`
     do not.
 
-    See :ref:`metadata_routing_auto_request` for more details.
+    This Mixin adds auto-request-support for
+    - `sample_weight` when `_auto_request_sample_weight=True`
+    - `X_val`, `y_val`, `sample_weight_val` when `_auto_request_validation_set=True`
+
+    Override these class attributes to `False` to opt out of one policy while keeping
+    the other.
+
+    The auto-requests only take effect if `enable_metadata_auto_requests=True`.
+
+    See :ref:`metadata_routing_auto_request` for details on scikit-learn's metadata
+    auto-request policies.
 
     .. versionadded:: 1.10
 
     Examples
     --------
+    >>> from sklearn.base import BaseEstimator
     >>> from sklearn.utils.metadata_routing import AutoRequestMixin
-    >>> AutoRequestMixin._auto_request_sample_weight
-    True
+    >>> class MyEst(AutoRequestMixin, BaseEstimator):
+    ...     _auto_request_validation_set = False  # only sample_weight
+    ...     def fit(self, X, y, sample_weight=None):
+    ...         return self
+    >>> MyEst._auto_request_sample_weight, MyEst._auto_request_validation_set
+    (True, False)
     """
 
     _auto_request_sample_weight = True
+    _auto_request_validation_set = True
 
 
 class _MetadataRequester:
@@ -1745,16 +1761,17 @@ class _MetadataRequester:
             # all the issues and make sure class definition does not fail.
             pass
 
-        # Set the `_auto_request_sample_weight` attribute on scikit-learn estimators
-        # that inherit from `BaseEstimator` (unless they already define it). Note that
-        # third-party do not set this attribute but they can opt in by inheriting from
-        # `AutoRequestMixin`.
-        if (
-            cls.__module__.startswith("sklearn.")
-            and "_auto_request_sample_weight" not in cls.__dict__
-            and any(base.__name__ == "BaseEstimator" for base in cls.__mro__[1:])
+        # Set the `_auto_request_*` attributes on scikit-learn estimators that inherit
+        # from `BaseEstimator` (unless they already define it). Note that third-party
+        # classes do not set this attribute (even if they inherit from `BaseEstimator`)
+        # but they can opt in by inheriting from `AutoRequestMixin`.
+        if cls.__module__.startswith("sklearn.") and any(
+            base.__name__ == "BaseEstimator" for base in cls.__mro__[1:]
         ):
-            cls._auto_request_sample_weight = True
+            if "_auto_request_sample_weight" not in cls.__dict__:
+                cls._auto_request_sample_weight = True
+            if "_auto_request_validation_set" not in cls.__dict__:
+                cls._auto_request_validation_set = True
 
         super().__init_subclass__(**kwargs)
 
@@ -1892,13 +1909,25 @@ class _MetadataRequester:
                     ),
                 )
 
-        # This adds auto-requests for `sample_weight` for all consuming methods of
+        # Adding auto-requests for `sample_weight` for all consuming methods of
         # scikit-learn estimators:
         if getattr(self, "_auto_request_sample_weight", False):
             for method in SIMPLE_METHODS:
                 method_request = getattr(requests, method)
                 if "sample_weight" in method_request.requests:
                     method_request.add_auto_request("sample_weight")
+
+        # Adding auto-requests for validation sets for all consuming methods of
+        # scikit-learn estimators:
+        if getattr(self, "_auto_request_validation_set", False):
+            for method in SIMPLE_METHODS:
+                method_request = getattr(requests, method)
+                if "X_val" in method_request.requests:
+                    method_request.add_auto_request("X_val")
+                if "y_val" in method_request.requests:
+                    method_request.add_auto_request("y_val")
+                if "sample_weight_val" in method_request.requests:
+                    method_request.add_auto_request("sample_weight_val")
 
         return requests
 
