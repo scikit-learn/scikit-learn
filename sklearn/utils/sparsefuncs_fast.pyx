@@ -87,6 +87,9 @@ def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
 
     means, variances, sum_weights = _csr_mean_variance_axis0(
         X.data, X.shape[0], X.shape[1], X.indices, X.indptr, weights)
+    means = means.astype(X.dtype, copy=False)
+    variances = variances.astype(X.dtype, copy=False)
+    sum_weights = sum_weights.astype(X.dtype, copy=False)
 
     if return_sum_weights:
         return means, variances, sum_weights
@@ -170,16 +173,7 @@ def _csr_mean_variance_axis0(
             sum_weights[feature_idx]
         )
 
-    if floating is float:
-        return (
-            np.array(means, dtype=np.float32),
-            np.array(variances, dtype=np.float32),
-            np.array(sum_weights, dtype=np.float32),
-        )
-    else:
-        return (
-            np.asarray(means), np.asarray(variances), np.asarray(sum_weights)
-        )
+    return np.asarray(means), np.asarray(variances), np.asarray(sum_weights)
 
 
 def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
@@ -221,6 +215,9 @@ def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
 
     means, variances, sum_weights = _csc_mean_variance_axis0(
         X.data, X.shape[0], X.shape[1], X.indices, X.indptr, weights)
+    means = means.astype(X.dtype, copy=False)
+    variances = variances.astype(X.dtype, copy=False)
+    sum_weights = sum_weights.astype(X.dtype, copy=False)
 
     if return_sum_weights:
         return means, variances, sum_weights
@@ -302,14 +299,7 @@ def _csc_mean_variance_axis0(
             (variances[feature_idx] - correction[feature_idx])
         ) / sum_weights[feature_idx]
 
-    if floating is float:
-        return (np.array(means, dtype=np.float32),
-                np.array(variances, dtype=np.float32),
-                np.array(sum_weights, dtype=np.float32))
-    else:
-        return (
-            np.asarray(means), np.asarray(variances), np.asarray(sum_weights)
-        )
+    return np.asarray(means), np.asarray(variances), np.asarray(sum_weights)
 
 
 def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
@@ -369,20 +359,28 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
         weights = np.ones(X.shape[0], dtype=X_dtype)
     elif weights.dtype not in [np.float32, np.float64]:
         weights = weights.astype(np.float64, copy=False)
-    if last_n.dtype not in [np.float32, np.float64]:
-        last_n = last_n.astype(np.float64, copy=False)
 
     _ensure_sparse_index_int32(X)
-    return _incr_mean_variance_axis0(X.data,
-                                     np.sum(weights),
-                                     X.shape[1],
-                                     X.indices,
-                                     X.indptr,
-                                     X.format,
-                                     last_mean.astype(X_dtype, copy=False),
-                                     last_var.astype(X_dtype, copy=False),
-                                     last_n.astype(X_dtype, copy=False),
-                                     weights.astype(X_dtype, copy=False))
+    # The update is done in float64 whatever the dtype of X: the intermediate
+    # unnormalized statistics can overflow float32 even when the resulting
+    # mean and variance are representable.
+    updated_mean, updated_var, updated_n = _incr_mean_variance_axis0(
+        X.data,
+        np.sum(weights),
+        X.shape[1],
+        X.indices,
+        X.indptr,
+        X.format,
+        last_mean.astype(np.float64, copy=False),
+        last_var.astype(np.float64, copy=False),
+        last_n.astype(np.float64, copy=False),
+        weights.astype(X_dtype, copy=False),
+    )
+    return (
+        updated_mean.astype(X_dtype, copy=False),
+        updated_var.astype(X_dtype, copy=False),
+        updated_n.astype(X_dtype, copy=False),
+    )
 
 
 def _incr_mean_variance_axis0(
@@ -393,9 +391,9 @@ def _incr_mean_variance_axis0(
     # X_indptr might be either int32 or int64
     const integral[:] X_indptr,
     str X_format,
-    floating[:] last_mean,
-    floating[:] last_var,
-    floating[:] last_n,
+    float64_t[:] last_mean,
+    float64_t[:] last_var,
+    float64_t[:] last_n,
     # previous sum of the weights (ie float)
     const floating[:] weights,
 ):
@@ -408,30 +406,15 @@ def _incr_mean_variance_axis0(
         # new = the current increment
         # updated = the aggregated stats
         # when arrays, they are indexed by i per-feature
-        floating[::1] new_mean
-        floating[::1] new_var
-        floating[::1] updated_mean
-        floating[::1] updated_var
-
-    if floating is float:
-        dtype = np.float32
-    else:
-        dtype = np.float64
-
-    new_mean = np.zeros(n_features, dtype=dtype)
-    new_var = np.zeros_like(new_mean, dtype=dtype)
-    updated_mean = np.zeros_like(new_mean, dtype=dtype)
-    updated_var = np.zeros_like(new_mean, dtype=dtype)
-
-    cdef:
-        floating[::1] new_n
-        floating[::1] updated_n
-        floating[::1] last_over_new_n
+        float64_t[::1] new_mean
+        float64_t[::1] new_var
+        float64_t[::1] new_n
+        float64_t[::1] updated_mean = np.zeros(n_features)
+        float64_t[::1] updated_var = np.zeros(n_features)
+        float64_t[::1] updated_n = np.zeros(n_features)
+        float64_t[::1] last_over_new_n = np.zeros(n_features)
 
     # Obtain new stats first
-    updated_n = np.zeros(shape=n_features, dtype=dtype)
-    last_over_new_n = np.zeros_like(updated_n, dtype=dtype)
-
     # X can be a CSR or CSC matrix
     if X_format == 'csr':
         new_mean, new_var, new_n = _csr_mean_variance_axis0(
@@ -456,7 +439,7 @@ def _incr_mean_variance_axis0(
     # Next passes
     for i in range(n_features):
         if new_n[i] > 0:
-            last_over_new_n[i] = dtype(last_n[i]) / dtype(new_n[i])
+            last_over_new_n[i] = last_n[i] / new_n[i]
             # Unnormalized stats
             last_mean[i] *= last_n[i]
             last_var[i] *= last_n[i]

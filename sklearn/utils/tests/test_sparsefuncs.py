@@ -514,6 +514,40 @@ def test_incr_mean_variance_n_float():
 
 @pytest.mark.parametrize("axis", [0, 1])
 @pytest.mark.parametrize("sparse_constructor", CSC_CONTAINERS + CSR_CONTAINERS)
+def test_incr_mean_variance_float32_no_overflow(axis, sparse_constructor):
+    # The variance of the two batches (2.5e37) fits in float32, but the
+    # intermediate unnormalized statistics don't: the update must be done in
+    # float64.
+    X1 = np.ones((4, 3), dtype=np.float32)
+    X2 = np.full((4, 3), 1e19, dtype=np.float32)
+    if axis == 1:
+        X1, X2 = X1.T, X2.T
+    n_stats = X1.shape[1 - axis]
+
+    last_mean, last_var, last_n = incr_mean_variance_axis(
+        sparse_constructor(X1),
+        axis=axis,
+        last_mean=np.zeros(n_stats, dtype=np.float32),
+        last_var=np.zeros(n_stats, dtype=np.float32),
+        last_n=np.zeros(n_stats, dtype=np.int64),
+    )
+    updated_mean, updated_var, updated_n = incr_mean_variance_axis(
+        sparse_constructor(X2),
+        axis=axis,
+        last_mean=last_mean,
+        last_var=last_var,
+        last_n=last_n,
+    )
+
+    X = np.concatenate([X1, X2], axis=axis).astype(np.float64)
+    assert updated_var.dtype == np.float32
+    assert_allclose(updated_mean, np.mean(X, axis=axis), rtol=1e-6)
+    assert_allclose(updated_var, np.var(X, axis=axis), rtol=1e-6)
+    assert_allclose(updated_n, np.full(n_stats, 8))
+
+
+@pytest.mark.parametrize("axis", [0, 1])
+@pytest.mark.parametrize("sparse_constructor", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_incr_mean_variance_axis_ignore_nan(axis, sparse_constructor):
     old_means = np.array([535.0, 535.0, 535.0, 535.0])
     old_variances = np.array([4225.0, 4225.0, 4225.0, 4225.0])
