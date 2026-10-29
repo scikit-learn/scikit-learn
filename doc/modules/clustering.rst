@@ -1278,6 +1278,29 @@ truth set of classes or satisfying some assumption such that members
 belong to the same class are more similar than members of different
 classes according to some similarity metric.
 
+.. _consensus_clustering:
+
+Consensus clustering and model selection
+----------------------------------------
+
+When ground-truth labels are not available, clustering models can be compared
+by measuring how consistently they produce similar partitions under
+perturbations of the data. A common approach is to fit a candidate model on
+several overlapping subsamples, compare the resulting label assignments with
+an adjusted clustering metric such as
+:func:`adjusted_rand_score` or :func:`adjusted_mutual_info_score`, and
+aggregate the pairwise scores. The candidate with the highest average
+agreement can then be selected as the most stable model for the chosen
+number of clusters.
+
+This stability-based score is sometimes called a *consensus index*. It is not
+implemented as a dedicated estimator in scikit-learn, but can be constructed
+from the clustering metrics described below. The example
+:ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`
+illustrates why adjusted metrics are appropriate for this use: unlike
+unadjusted metrics, they remain close to zero for random label assignments and
+are therefore comparable across different numbers of clusters.
+
 .. currentmodule:: sklearn.metrics
 
 .. _rand_score:
@@ -1372,9 +1395,9 @@ will not necessarily be close to zero::
     practice or requires manual assignment by human annotators (as in the
     supervised learning setting).
 
-    However (adjusted or unadjusted) Rand index can also be useful in a purely
-    unsupervised setting as a building block for a Consensus Index that can be
-    used for clustering model selection (TODO).
+    However, the adjusted Rand index can also be useful in a purely
+    unsupervised setting as a building block for a consensus index. See
+    :ref:`consensus_clustering` for an example workflow.
 
   - The **unadjusted Rand index is often close to 1.0** even if the clusterings
     themselves differ significantly. This can be understood when interpreting
@@ -1507,9 +1530,9 @@ Bad (e.g. independent labelings) have non-positive scores::
     truth classes** while almost never available in practice or requires manual
     assignment by human annotators (as in the supervised learning setting).
 
-    However MI-based measures can also be useful in purely unsupervised setting
-    as a building block for a Consensus Index that can be used for clustering
-    model selection.
+    However, adjusted MI-based measures can also be useful in a purely
+    unsupervised setting as a building block for a consensus index. See
+    :ref:`consensus_clustering` for an example workflow.
 
   - NMI and MI are not adjusted against chance.
 
