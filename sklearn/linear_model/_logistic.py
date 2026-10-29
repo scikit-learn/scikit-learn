@@ -2375,12 +2375,28 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
             intercept_scaling = self.intercept_scaling
 
-        if np.max(np.asarray(self.l1_ratios)) == 0:
+        l1_ratios = check_array(
+            self.l1_ratios, ensure_2d=False, estimator=self, input_name="l1_ratios"
+        )
+        min_l1_ratio, max_l1_ratio = np.min(l1_ratios), np.max(l1_ratios)
+        if (
+            len(l1_ratios) == 0
+            or l1_ratios.ndim > 1
+            or min_l1_ratio < 0
+            or max_l1_ratio > 1
+        ):
+            raise ValueError(
+                "l1_ratios must be an array-like of numbers between "
+                f"0 and 1; got l1_ratios={self.l1_ratios}"
+            )
+
+        # l1_ratio_type is only used for _check_solver
+        if max_l1_ratio == 0:
             l1_ratio_type = 0  # only L2 penalty
-        elif np.min(np.asarray(self.l1_ratios)) == 1:
-            l1_ratio_type = 1  # only L1 penalty
         else:
-            l1_ratio_type = 0.5  # Elastic-Net penalty
+            l1_ratio_type = min_l1_ratio
+            # if l1_ratio_type == 1, then only L1 penalty
+            # else Elastic-Net
 
         # Suppress TypeError from _num_features and _num_samples, validate_data
         # will later raise the right/better error.
@@ -2405,22 +2421,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 "Using alpha=0 (C=np.inf) is not supported for the liblinear solver."
             )
 
-        if l1_ratio_type == 0.5:
-            if len(self.l1_ratios) == 0 or any(
-                (
-                    not isinstance(l1_ratio, numbers.Number)
-                    or l1_ratio < 0
-                    or l1_ratio > 1
-                )
-                for l1_ratio in self.l1_ratios
-            ):
-                raise ValueError(
-                    "l1_ratios must be an array-like of numbers between "
-                    "0 and 1; got (l1_ratios=%r)" % self.l1_ratios
-                )
-
         xp, _, device = get_namespace_and_device(X)
         sample_weight = move_to(sample_weight, xp=xp, device=device)
+        l1_ratios = move_to(l1_ratios, xp=xp, device=device)
         X, y = validate_data(
             self,
             X,
@@ -2538,7 +2541,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 score_params=routed_params.scorer.score,
             )
             for train, test in folds
-            for l1_ratio in self.l1_ratios
+            for l1_ratio in l1_ratios
         )
 
         # fold_coefs_ is a list and would have shape (n_folds * n_l1_ratios, ..)
@@ -2566,7 +2569,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             self.alphas_[~mask] = 0
         n_folds = len(folds)
         n_alphas = size(self.alphas_)
-        n_l1_ratios = len(self.l1_ratios)
+        n_l1_ratios = size(l1_ratios)
         coefs_paths = xp.stack(coefs_paths)
         n_iter_ = xp.stack(n_iter_)
         if is_binary:
@@ -2616,7 +2619,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 C_ = self._Cs_[best_index_int[0]]
                 self._C_.append(C_)
 
-            l1_ratio_ = self.l1_ratios[best_index_int[1]]
+            l1_ratio_ = float(l1_ratios[best_index_int[1]])
             self.l1_ratio_.append(l1_ratio_)
 
             if is_binary:
@@ -2689,11 +2692,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 best_indices_C = best_indices[:, 0]
                 self._C_.append(xp.mean(self._Cs_[best_indices_C]))
 
-            if l1_ratio_type == 0.5:
-                best_indices_l1 = best_indices[:, 1]
-                self.l1_ratio_.append(xp.mean(self.l1_ratios[best_indices_l1]))
-            else:
-                self.l1_ratio_.append(0.0)
+            best_indices_l1 = best_indices[:, 1]
+            self.l1_ratio_.append(float(xp.mean(l1_ratios[best_indices_l1])))
 
         if use_alpha:
             self.alpha_ = xp.stack(self.alpha_)
@@ -2721,7 +2721,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             self._C_ = xp.asarray(self._C_)
             self.alpha_ = 1 / self._C_
         self.l1_ratio_ = xp.asarray(self.l1_ratio_)
-        self.l1_ratios_ = xp.asarray(self.l1_ratios, device=device, dtype=X.dtype)
+        self.l1_ratios_ = xp.asarray(l1_ratios, device=device, dtype=X.dtype)
 
         if not use_legacy_attributes:
             n_dof = X.shape[1] + int(self.fit_intercept)
@@ -2856,9 +2856,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     def __sklearn_tags__(self):
         tags = super(LinearClassifierMixin, self).__sklearn_tags__()
         tags.input_tags.sparse = True
-        if self.l1_ratios is None or (
-            isinstance(self.l1_ratios, str) and self.l1_ratios == "warn"
-        ):
+        if isinstance(self.l1_ratios, str) and self.l1_ratios == "warn":
             l1_penalty = False
         else:
             l1_penalty = np.max(self.l1_ratios) > 0
