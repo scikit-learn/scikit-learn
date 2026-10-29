@@ -64,6 +64,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # TODO Add Python 3.15 when it is possible see
+        # https://github.com/scikit-learn/scikit-learn/pull/35259 for more
+        # context
         python: ["313", "314"]
     steps:
       - name: Checkout scikit-learn
