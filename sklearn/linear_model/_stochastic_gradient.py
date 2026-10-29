@@ -1234,7 +1234,7 @@ class SGDClassifier(BaseSGDClassifier):
     [1]
 
     To fit with the passive-aggressive algorithm, use:
-    
+
     >>> clf = make_pipeline(
     ...     StandardScaler(),
     ...     SGDClassifier(
@@ -2040,9 +2040,8 @@ class SGDRegressor(BaseSGDRegressor):
     Pipeline(steps=[('standardscaler', StandardScaler()),
                     ('sgdregressor', SGDRegressor())])
 
-    To fit with the passive-aggressive algorithm, use
     To fit with the passive-aggressive algorithm, use:
-    
+
     >>> reg = make_pipeline(
     ...     StandardScaler(),
     ...     SGDRegressor(
