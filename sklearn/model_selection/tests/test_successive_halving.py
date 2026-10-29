@@ -784,6 +784,43 @@ def test_select_best_index(SearchCV):
     best_index = SearchCV._select_best_index(None, None, results)
     assert best_index == 8
 
+    # a callable refit selects among the candidates of the last iteration: we
+    # expect the index of 'g'
+    best_index = SearchCV._select_best_index(lambda results: 0, None, results)
+    assert best_index == 6
+
+
+@pytest.mark.parametrize("SearchCV", [HalvingGridSearchCV, HalvingRandomSearchCV])
+def test_refit_callable(SearchCV):
+    """Check that a callable `refit` is given the `cv_results_` of the last
+    iteration and selects `best_index_` among them."""
+    X, y = make_classification(n_samples=1000, random_state=0)
+    param_grid = {"a": ("l1", "l2"), "b": list(range(30))}
+    refit_inputs = []
+
+    def refit(cv_results):
+        refit_inputs.append(cv_results)
+        # select the last candidate, whatever its score
+        return len(cv_results["params"]) - 1
+
+    search = SearchCV(FastClassifier(), param_grid, refit=refit, random_state=0)
+    search.fit(X, y)
+
+    assert len(refit_inputs) == 1
+    assert refit_inputs[0]["params"] == search.cv_results_["params"]
+    assert np.array_equal(
+        refit_inputs[0]["rank_test_score"], search.cv_results_["rank_test_score"]
+    )
+    n_candidates_last_iter = search.n_candidates_[-1]
+    assert search.best_index_ == n_candidates_last_iter - 1
+    assert search.best_params_ == search.cv_results_["params"][-1]
+    assert not hasattr(search, "best_score_")
+
+    # an index into all the iterations is out of range for the last iteration
+    search.set_params(refit=lambda cv_results: len(cv_results["params"]))
+    with pytest.raises(IndexError, match="best_index_ index out of range"):
+        search.fit(X, y)
+
 
 def test_trim_cv_results_to_last_iter():
     """Check trimming cv_results_ to the last halving iteration."""
@@ -796,7 +833,8 @@ def test_trim_cv_results_to_last_iter():
     }
     best_index = 8
 
-    trimmed, new_best_index = _trim_cv_results_to_last_iter(results, best_index)
+    trimmed, start = _trim_cv_results_to_last_iter(results)
+    new_best_index = best_index - start
 
     assert len(trimmed["params"]) == 3
     assert np.all(trimmed["iter"] == 2)
@@ -817,7 +855,8 @@ def test_trim_cv_results_to_last_iter_nan_ranking():
     }
     best_index = 2
 
-    trimmed, new_best_index = _trim_cv_results_to_last_iter(results, best_index)
+    trimmed, start = _trim_cv_results_to_last_iter(results)
+    new_best_index = best_index - start
 
     assert new_best_index == 0
     # the non-NaN candidate ranks first, the two NaN candidates share the
