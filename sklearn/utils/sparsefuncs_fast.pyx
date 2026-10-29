@@ -361,9 +361,8 @@ def incr_mean_variance_axis0(X, last_mean, last_var, last_n, weights=None):
         weights = weights.astype(np.float64, copy=False)
 
     _ensure_sparse_index_int32(X)
-    # The update is done in float64 whatever the dtype of X: the intermediate
-    # unnormalized statistics can overflow float32 even when the resulting
-    # mean and variance are representable.
+    # The update squares sums over samples, which overflows float32 long before
+    # the values of X do. With float32 X, float64 has enough headroom for it.
     updated_mean, updated_var, updated_n = _incr_mean_variance_axis0(
         X.data,
         np.sum(weights),
