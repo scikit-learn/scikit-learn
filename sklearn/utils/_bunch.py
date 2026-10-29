@@ -52,6 +52,16 @@ class Bunch(dict):
     def __dir__(self):
         return self.keys()
 
+    def copy(self):
+        """Return a shallow copy of the bunch."""
+        # `dict.copy` always returns a plain `dict`, even for subclasses.
+        bunch = Bunch()
+        bunch.update(self)
+        bunch.__dict__["_deprecated_key_to_warnings"] = dict(
+            self.__dict__.get("_deprecated_key_to_warnings", {})
+        )
+        return bunch
+
     def __getattr__(self, key):
         try:
             return self[key]
