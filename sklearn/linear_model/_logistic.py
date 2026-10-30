@@ -2390,13 +2390,14 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 f"0 and 1; got l1_ratios={self.l1_ratios}"
             )
 
-        # l1_ratio_type is only used for _check_solver
+        # l1_ratio_check is only used for _check_solver
         if max_l1_ratio == 0:
-            l1_ratio_type = 0  # only L2 penalty
+            l1_ratio_check = 0  # only L2 penalty
+        elif np.all(np.isin(l1_ratios, [0, 1])):
+            l1_ratio_check = 1  # only L1 penalty
         else:
-            l1_ratio_type = min_l1_ratio
-            # if l1_ratio_type == 1, then only L1 penalty
-            # else Elastic-Net
+            # Elastic-Net
+            l1_ratio_check = np.min(l1_ratios[(l1_ratios > 0)])
 
         # Suppress TypeError from _num_features and _num_samples, validate_data
         # will later raise the right/better error.
@@ -2408,7 +2409,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             n_samples = 1
         self.solver_, dual = _check_solver(
             solver=self.solver,
-            l1_ratio=l1_ratio_type,
+            l1_ratio=l1_ratio_check,
             n_features=n_features,
             n_samples=n_samples,
             dual=self.dual,

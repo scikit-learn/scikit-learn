@@ -96,25 +96,21 @@ def check_predictions(clf, X, y):
     assert_array_equal(probabilities.argmax(axis=1), y)
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("csr_container", [lambda x: x] + CSR_CONTAINERS)
 def test_predict_2_classes(csr_container):
     # Simple sanity check on a 2 classes dataset
     # Make sure it predicts the correct result on simple datasets.
-    check_predictions(LogisticRegression(alpha=1e-2), X, Y1)
     check_predictions(LogisticRegression(alpha=1e-2), csr_container(X), Y1)
 
-    check_predictions(LogisticRegression(alpha=1.0), X, Y1)
     check_predictions(LogisticRegression(alpha=1.0), csr_container(X), Y1)
 
-    check_predictions(LogisticRegression(alpha=1.0, fit_intercept=False), X, Y1)
     check_predictions(
         LogisticRegression(alpha=1.0, fit_intercept=False), csr_container(X), Y1
     )
 
 
-@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("csr_container", [lambda x: x] + CSR_CONTAINERS)
 def test_predict_3_classes(csr_container):
-    check_predictions(LogisticRegression(alpha=1e-1), X, Y2)
     check_predictions(LogisticRegression(alpha=1e-1), csr_container(X), Y2)
 
 
@@ -286,9 +282,10 @@ def test_check_solver_option(LR):
         if LR == LogisticRegression:
             lr = LR(solver=solver, l1_ratio=1)
         else:
-            lr = LR(solver=solver, l1_ratios=(1,))
+            lr = LR(solver=solver, l1_ratios=(1, 0))
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
+
     for solver in set(SOLVERS) - {"liblinear"}:
         msg = "Solver %s supports only dual=False, got dual=True" % solver
         lr = LR(solver=solver, dual=True)
@@ -296,7 +293,7 @@ def test_check_solver_option(LR):
             lr.fit(X, y)
 
     # only saga, newton-cd and newton-cd-gram support elasticnet. We only test for
-    # liblinear because the error is raised before for the other solvers
+    # liblinear because it is the only solver supporting pure L1 but not elasticnet.
     for solver in ["liblinear"]:
         msg = (
             "Only solvers 'newton-cd', 'newton-cd-gram' and 'saga' support elasticnet "
@@ -305,7 +302,7 @@ def test_check_solver_option(LR):
         if LR == LogisticRegression:
             lr = LR(solver=solver, l1_ratio=0.5)
         else:
-            lr = LR(solver=solver, l1_ratios=(0.5,))
+            lr = LR(solver=solver, l1_ratios=(0, 0.5, 1))
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
 
