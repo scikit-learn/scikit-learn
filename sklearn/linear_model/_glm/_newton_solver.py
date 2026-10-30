@@ -25,6 +25,7 @@ from sklearn.linear_model._cd_fast import (
 )
 from sklearn.linear_model._linear_loss import (
     LinearModelLoss,
+    sandwich_dot,
 )
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.optimize import _check_optimize_result
@@ -104,6 +105,75 @@ def min_norm_subgradient(alpha, gradient, coef, linear_loss):
         return result
     else:
         return result.reshape(gradient.shape, order="F")
+
+
+def minimum_norm_coef(coef, X, sample_weight, fit_intercept):
+    """Minimum norm coefficients with the same raw predictions as coef.
+
+    Let Xe = [X, 1] if fit_intercept else X. For rank deficient Xe, all coef + Z @ v,
+    with the columns of Z spanning the null space of Xe, give the same raw predictions
+    Xe @ coef, hence the same unpenalized objective. Among them, this returns the one
+    with minimal ||w||_2, where w are the coefficients without the intercept:
+
+        min ||w||_2 subject to Xe @ coef = raw_prediction
+
+    As in the L2 penalty, the intercept is not part of the norm. This makes the result
+    the limit of the L2 penalized solution for l2_reg_strength -> 0, and adding a
+    constant to the raw predictions or to a column of X only changes the intercept.
+
+    Samples with zero weight do not constrain the null space, such that zero weights
+    are equivalent to removing those samples.
+
+    Parameters
+    ----------
+    coef : ndarray of shape (n_dof,)
+        Coefficients, the last one being the intercept if fit_intercept.
+
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+
+    sample_weight : ndarray of shape (n_samples,) or None
+
+    fit_intercept : bool
+
+    Returns
+    -------
+    coef : ndarray of shape (n_dof,)
+
+    rank_deficiency : int
+        Dimension of the null space of Xe, i.e. n_dof - rank(Xe).
+    """
+    n_samples, n_features = X.shape
+    n_dof = coef.shape[0]
+    if sample_weight is None:
+        sample_weight = np.ones(n_samples, dtype=X.dtype)
+    # The null space of diag(sqrt(sw)) Xe is the one of the Gram matrix
+    #   G = Xe' diag(sw) Xe
+    # of shape (n_dof, n_dof), also for sparse X. Contrary to the Hessian
+    # Xe' diag(sw * h) Xe, it does not depend on the pointwise hessians h, which can
+    # underflow to zero for some samples.
+    G = np.empty((n_dof, n_dof), dtype=X.dtype)
+    G[:n_features, :n_features] = sandwich_dot(X, sample_weight)
+    if fit_intercept:
+        G[:n_features, -1] = G[-1, :n_features] = X.T @ sample_weight
+        G[-1, -1] = np.sum(sample_weight)
+    eigenvalues, eigenvectors = scipy.linalg.eigh(G)
+    # Exact zero eigenvalues of G come out at about eps * max(eigenvalues) in floating
+    # point arithmetic (G squares the condition number of Xe). The factor 10 * n_dof
+    # keeps the threshold safely above those rounding errors.
+    eps = np.finfo(X.dtype).eps
+    Z = eigenvectors[:, eigenvalues <= 10 * n_dof * eps * eigenvalues[-1]]
+    rank_deficiency = Z.shape[1]
+    if rank_deficiency == 0:
+        return coef, 0
+    if fit_intercept:
+        # min ||coef[:-1] + Z[:-1] @ v||_2 with a free intercept coef[-1] + Z[-1] @ v.
+        # Z[:-1] has full column rank: no direction of the null space of Xe changes the
+        # intercept alone.
+        v = scipy.linalg.lstsq(Z[:-1], -coef[:-1])[0]
+        return coef + Z @ v, rank_deficiency
+    else:
+        # Z has orthonormal columns: remove the component of coef in the null space.
+        return coef - Z @ (Z.T @ coef), rank_deficiency
 
 
 class NewtonSolver(ABC):
@@ -686,6 +756,9 @@ class NewtonCholeskySolver(NewtonSolver):
     uses Cholesky based linear solver.
     """
 
+    # Return the minimum norm solution for unpenalized problems, see finalize.
+    _minimum_norm = True
+
     def __init__(
         self,
         *,
@@ -733,12 +806,15 @@ class NewtonCholeskySolver(NewtonSolver):
             # that the last class is set to zero.
             # This is done by the usual freedom of a (overparametrized) multinomial to
             # add a constant to all classes which doesn't change predictions.
-            coef = self.coef.reshape(n_classes, -1, order="F")  # easier as 2d
+            coef = self.coef.reshape(n_classes, -1, order="F")  # easier as 2d view
             coef -= coef[-1, :]  # coef -= coef of last class
         elif self.is_multinomial_with_intercept:
             # See inner_solve. Same as above, but only for the intercept.
             # intercept -= intercept of last class
             self.coef[-n_classes:] -= self.coef[-1]
+        # (iteration, LAPACK message) of the first singular or very ill-conditioned
+        # Hessian met by inner_solve. The warning is raised once in finalize.
+        self.ill_conditioned_hessian = None
 
         # Memory buffers for pointwise gradient and hessian.
         n_samples = X.shape[0]
@@ -850,65 +926,135 @@ class NewtonCholeskySolver(NewtonSolver):
                 self.coef_newton = scipy.linalg.solve(
                     hessian, -gradient, check_finite=False, assume_a="sym"
                 )
-                if self.is_multinomial_no_penalty:
-                    n_classes = self.linear_loss.base_loss.n_classes
-                    n_dof = self.coef.size // n_classes  # degree of freedom per class
-                    self.coef_newton = np.c_[
-                        self.coef_newton.reshape(n_dof, n_classes - 1), np.zeros(n_dof)
-                    ].reshape(-1)
-                    assert self.coef_newton.flags.f_contiguous
-                elif self.is_multinomial_with_intercept:
-                    self.coef_newton = np.r_[self.coef_newton, 0]
-                self.gradient_times_newton = self.gradient @ self.coef_newton
-                if self.gradient_times_newton > 0:
-                    if self.verbose:
-                        print(
-                            "  The inner solver found a Newton step that is not a "
-                            "descent direction and resorts to LBFGS steps instead."
-                        )
-                    self.use_fallback_lbfgs_solve = True
-                    return
         except (np.linalg.LinAlgError, scipy.linalg.LinAlgWarning) as e:
-            warnings.warn(
-                f"The inner solver of {self.__class__.__name__} stumbled upon a "
-                "singular or very ill-conditioned Hessian matrix at iteration "
-                f"{self.iteration}. It will now resort to lbfgs instead.\n"
-                "Further options are to use another solver or to avoid such situation "
-                "in the first place. Possible remedies are removing collinear features"
-                " of X or increasing the penalization strengths.\n"
-                "The original Linear Algebra message was:\n" + str(e),
-                scipy.linalg.LinAlgWarning,
-            )
             # Possible causes:
-            # 1. hess_pointwise is negative. But this is already taken care in
+            # 1. hess_pointwise is negative. But this is already taken care of in
             #    LinearModelLoss.gradient_hessian.
             # 2. X is singular or ill-conditioned
             #    This might be the most probable cause.
-            #
+            if self.ill_conditioned_hessian is None:
+                self.ill_conditioned_hessian = (self.iteration, str(e))
             # There are many possible ways to deal with this situation. Most of them
             # add, explicitly or implicitly, a matrix to the hessian to make it
             # positive definite, confer to Chapter 3.4 of Nocedal & Wright 2nd ed.
-            # Instead, we resort to lbfgs.
+            # We use an eigenvalue decomposition of the hessian and only use the
+            # eigenvectors corresponding to large enough eigenvalues. The eigenvalues
+            # correspond to curvature, negative curvature is bad (non-convex problem),
+            # tiny eigenvalues mean flat space.
+            eval, evec = scipy.linalg.eigh(hessian)
+            max_eval = eval[-1]
+            eps = np.sqrt(np.finfo(X.dtype).eps)
+            if max_eval <= eps:
+                # For flat space and negative curvature, we resort to lbfgs instead.
+                if self.verbose:
+                    print(
+                        "  The inner solver stumbled upon a singular or ill-"
+                        "conditioned Hessian matrix and resorts to LBFGS instead."
+                    )
+                self.use_fallback_lbfgs_solve = True
+                return
+
             if self.verbose:
                 print(
                     "  The inner solver stumbled upon a singular or ill-conditioned "
-                    "Hessian matrix and resorts to LBFGS instead."
+                    "Hessian matrix and resorts to an eigendecomposition of the "
+                    "Hessian."
+                )
+            idx = np.flatnonzero(eval >= eps * np.abs(max_eval))
+            # Eigendecomposition Hessian = Q D Q', Newton step = -Q D^(-1) Q' grad
+            # As Hessian is symmetric, Q is an orthonormal matrix.
+            Q = evec[:, idx]
+            self.coef_newton = -Q @ ((1 / eval[idx]) * (Q.T @ gradient))
+
+        if self.is_multinomial_no_penalty:
+            n_classes = self.linear_loss.base_loss.n_classes
+            n_dof = self.coef.size // n_classes  # degree of freedom per class
+            self.coef_newton = np.c_[
+                self.coef_newton.reshape(n_dof, n_classes - 1), np.zeros(n_dof)
+            ].reshape(-1)
+            assert self.coef_newton.flags.f_contiguous
+        elif self.is_multinomial_with_intercept:
+            self.coef_newton = np.r_[self.coef_newton, 0]
+        self.gradient_times_newton = self.gradient @ self.coef_newton
+        if self.gradient_times_newton > 0:
+            if self.verbose:
+                print(
+                    "  The inner solver found a Newton step that is not a "
+                    "descent direction and resorts to LBFGS steps instead."
                 )
             self.use_fallback_lbfgs_solve = True
-            return
+        return
 
     def compute_d2(self, X, sample_weight):
         """Compute square of Newton decrement."""
         return self.coef_newton @ self.hessian @ self.coef_newton
 
     def finalize(self, X, y, sample_weight):
+        rank_deficiency = 0
+        if (
+            self._minimum_norm
+            and self.l1_reg_strength == 0
+            and self.l2_reg_strength == 0
+            and not self.linear_loss.base_loss.is_multiclass
+        ):
+            # Without penalty, the solution is not unique for rank deficient X and we
+            # pick the minimum norm one. As H = Xe' diag(sw * h) Xe, a rank deficient
+            # Xe makes the Hessian singular. LAPACK in inner_solve does not always
+            # detect it, so we check the eigenvalues of H, which is cheap compared to
+            # computing H.
+            if self.hessian_warning:
+                # The Hessian was not computed, see LinearModelLoss.gradient_hessian.
+                maybe_singular = True
+            else:
+                eigenvalues = scipy.linalg.eigvalsh(self.hessian)
+                eps = np.sqrt(np.finfo(X.dtype).eps)
+                maybe_singular = eigenvalues[0] <= eps * eigenvalues[-1]
+            if maybe_singular:
+                self.coef, rank_deficiency = minimum_norm_coef(
+                    self.coef, X, sample_weight, self.linear_loss.fit_intercept
+                )
+
+        # A single warning per fit. Rank deficiency of X explains a singular Hessian,
+        # and it is detected even when LAPACK did not flag the Hessian.
+        if rank_deficiency > 0:
+            n_dof = self.coef.size
+            columns = (
+                "columns, including the intercept"
+                if self.linear_loss.fit_intercept
+                else "columns"
+            )
+            warnings.warn(
+                f"The design matrix X has rank {n_dof - rank_deficiency} for "
+                f"{n_dof} {columns}: some features are collinear. Without penalty, "
+                f"the solution is not unique and {self.__class__.__name__} returns "
+                "the one with minimum L2 norm, where the intercept is not part of the "
+                "norm. Possible remedies are removing collinear features of X or "
+                "adding a penalty.",
+                scipy.linalg.LinAlgWarning,
+            )
+        elif self.ill_conditioned_hessian is not None:
+            iteration, linalg_message = self.ill_conditioned_hessian
+            warnings.warn(
+                f"The inner solver of {self.__class__.__name__} stumbled upon a "
+                "singular or very ill-conditioned Hessian matrix at iteration "
+                f"{iteration}. It resorted to an eigendecomposition of the Hessian, "
+                "which is expensive to compute, and only took large enough "
+                "eigenvalues into consideration, or to lbfgs for tiny or negative "
+                "eigenvalues.\n"
+                "Further options are to use another solver or to avoid such a "
+                "situation in the first place. Possible remedies are removing "
+                "collinear features of X or increasing the penalization strengths.\n"
+                "The original Linear Algebra message was:\n" + linalg_message,
+                scipy.linalg.LinAlgWarning,
+            )
+
         if self.is_multinomial_no_penalty:
             # Our convention is usually the symmetric parametrization where
             # sum(coef[classes, features], axis=0) = 0.
             # We convert now to this convention. Note that it does not change
             # the predicted probabilities.
             n_classes = self.linear_loss.base_loss.n_classes
-            self.coef = self.coef.reshape(n_classes, -1, order="F")
+            self.coef = self.coef.reshape(n_classes, -1, order="F")  # easier as 2d
             self.coef -= np.mean(self.coef, axis=0)
         elif self.is_multinomial_with_intercept:
             # Only the intercept needs an update to the symmetric parametrization.
@@ -952,6 +1098,8 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
 
     Note that this solver can naturally deal with sparse X.
     """
+
+    _minimum_norm = False
 
     def __init__(
         self,

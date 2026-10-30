@@ -76,8 +76,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     alpha : float, default=1
         Constant that multiplies the penalty terms and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
-        GLMs. In this case, the design matrix `X` must have full column rank
-        (no collinearities).
+        GLMs. In this case, the solution is only unique if the design matrix
+        `X` has full column rank (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
 
     l1_ratio : float, default=0.0
@@ -151,6 +151,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             This solver is a good choice for `n_samples` >> `n_features`. Be aware that
             the memory usage of this solver has a quadratic dependency on `n_features`
             because it explicitly computes the Hessian matrix.
+            For `alpha = 0` and collinear features in `X`, it returns the minimum L2
+            norm solution, where the intercept is not part of the norm.
 
             .. versionadded:: 1.2
 
@@ -642,8 +644,8 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     alpha : float, default=1
         Constant that multiplies the penalty terms and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
-        GLMs. In this case, the design matrix `X` must have full column rank
-        (no collinearities).
+        GLMs. In this case, the solution is only unique if the design matrix
+        `X` has full column rank (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
 
     l1_ratio : float, default=0.0
@@ -717,6 +719,8 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             This solver is a good choice for `n_samples` >> `n_features`. Be aware that
             the memory usage of this solver has a quadratic dependency on `n_features`
             because it explicitly computes the Hessian matrix.
+            For `alpha = 0` and collinear features in `X`, it returns the minimum L2
+            norm solution, where the intercept is not part of the norm.
 
             .. versionadded:: 1.2
 
@@ -854,8 +858,8 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     alpha : float, default=1
         Constant that multiplies the penalty terms and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
-        GLMs. In this case, the design matrix `X` must have full column rank
-        (no collinearities).
+        GLMs. In this case, the solution is only unique if the design matrix
+        `X` has full column rank (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
 
     l1_ratio : float, default=0.0
@@ -929,6 +933,8 @@ class GammaRegressor(_GeneralizedLinearRegressor):
             This solver is a good choice for `n_samples` >> `n_features`. Be aware that
             the memory usage of this solver has a quadratic dependency on `n_features`
             because it explicitly computes the Hessian matrix.
+            For `alpha = 0` and collinear features in `X`, it returns the minimum L2
+            norm solution, where the intercept is not part of the norm.
 
             .. versionadded:: 1.2
 
@@ -1078,8 +1084,8 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     alpha : float, default=1
         Constant that multiplies the penalty terms and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
-        GLMs. In this case, the design matrix `X` must have full column rank
-        (no collinearities).
+        GLMs. In this case, the solution is only unique if the design matrix
+        `X` has full column rank (no collinearities).
         Values of `alpha` must be in the range `[0.0, inf)`.
 
     l1_ratio : float, default=0.0
@@ -1162,6 +1168,8 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             This solver is a good choice for `n_samples` >> `n_features`. Be aware that
             the memory usage of this solver has a quadratic dependency on `n_features`
             because it explicitly computes the Hessian matrix.
+            For `alpha = 0` and collinear features in `X`, it returns the minimum L2
+            norm solution, where the intercept is not part of the norm.
 
             .. versionadded:: 1.2
 
