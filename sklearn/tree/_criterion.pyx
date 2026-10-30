@@ -660,28 +660,44 @@ cdef class Gini(ClassificationCriterion):
         """
         cdef float64_t gini_left = 0.0
         cdef float64_t gini_right = 0.0
-        cdef float64_t sq_count_left
-        cdef float64_t sq_count_right
-        cdef float64_t count_k
+        cdef float64_t sq_count_left1, sq_count_left2
+        cdef float64_t sq_count_right1, sq_count_right2
+        cdef float64_t count_k1, count_k2, count_k3, count_k4
         cdef intp_t k
-        cdef intp_t c
+        cdef intp_t c, half_classes
 
         for k in range(self.n_outputs):
-            sq_count_left = 0.0
-            sq_count_right = 0.0
+            sq_count_left1 = 0.0
+            sq_count_left2 = 0.0
+            sq_count_right1 = 0.0
+            sq_count_right2 = 0.0
+            half_classes = self.n_classes[k] // 2
 
-            for c in range(self.n_classes[k]):
-                count_k = self.sum_left[k, c]
-                sq_count_left += count_k * count_k
+            # Unroll the loop to allow for more instruction-level parallelism:
+            for c in range(0, half_classes * 2, 2):
+                count_k1 = self.sum_left[k, c]
+                sq_count_left1 += count_k1 * count_k1
+                count_k2 = self.sum_left[k, c + 1]
+                sq_count_left2 += count_k2 * count_k2
 
-                count_k = self.sum_right[k, c]
-                sq_count_right += count_k * count_k
+                count_k3 = self.sum_right[k, c]
+                sq_count_right1 += count_k3 * count_k3
+                count_k4 = self.sum_right[k, c + 1]
+                sq_count_right2 += count_k4 * count_k4
 
-            gini_left += 1.0 - sq_count_left / (self.weighted_n_left *
-                                                self.weighted_n_left)
+            # Handle any remaining items, if any:
+            for c in range(half_classes * 2, self.n_classes[k]):
+                count_k1 = self.sum_left[k, c]
+                sq_count_left1 += count_k1 * count_k1
 
-            gini_right += 1.0 - sq_count_right / (self.weighted_n_right *
-                                                  self.weighted_n_right)
+                count_k2 = self.sum_right[k, c]
+                sq_count_right2 += count_k2 * count_k2
+
+            gini_left += 1.0 - (sq_count_left1 + sq_count_left2) / (
+                self.weighted_n_left * self.weighted_n_left)
+
+            gini_right += 1.0 - (sq_count_right1 + sq_count_right2) / (
+                self.weighted_n_right * self.weighted_n_right)
 
         impurity_left[0] = gini_left / self.n_outputs
         impurity_right[0] = gini_right / self.n_outputs
