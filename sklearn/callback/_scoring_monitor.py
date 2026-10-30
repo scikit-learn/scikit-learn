@@ -322,7 +322,8 @@ class ScoringMonitor(FitCallback):
 
     def get_metadata_routing(self):
         self_request = self._get_metadata_request()
-        self_request.on_fit_task_end.add_auto_request("X_val", "y_val")
+        if self._scorers["val"] != "no_val_score":
+            self_request.on_fit_task_end.add_auto_request("X_val", "y_val")
 
         router = MetadataRouter(owner=self).add_self_request(self_request)
         for dataset in ("train", "val"):
