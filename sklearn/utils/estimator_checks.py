@@ -12,7 +12,9 @@ from contextlib import nullcontext
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
+from io import BytesIO
 from numbers import Integral, Real
+from pickle import Pickler
 from typing import Callable, Literal
 
 import joblib
@@ -57,6 +59,7 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 from sklearn.metrics.pairwise import linear_kernel, pairwise_distances, rbf_kernel
 from sklearn.model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_split
 from sklearn.model_selection._validation import _safe_split
+from sklearn.neighbors import BallTree, KDTree
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, scale
 from sklearn.utils import _safe_indexing, shuffle
@@ -457,6 +460,7 @@ def _yield_all_checks(estimator, legacy: bool):
     yield check_set_params
     yield check_dict_unchanged
     yield check_fit_idempotent
+    yield check_estimator_internal_state_unchanged_by_inference
     yield check_fit_check_is_fitted
     if not tags.no_validation:
         yield check_n_features_in
@@ -4636,21 +4640,16 @@ def check_fit_non_negative(name, estimator_orig):
         estimator.fit(X, y)
 
 
-def check_fit_idempotent(name, estimator_orig):
-    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
-    # check that the estimated parameters during training (e.g. coefs_) are
-    # the same, but having a universal comparison function for those
-    # attributes is difficult and full of edge cases. So instead we check that
-    # predict(), predict_proba(), decision_function() and transform() return
-    # the same results.
-
-    check_methods = ["predict", "transform", "decision_function", "predict_proba"]
+def _fit_estimator(estimator_orig):
     rng = np.random.RandomState(0)
 
     estimator = clone(estimator_orig)
     set_random_state(estimator)
-    if "warm_start" in estimator.get_params().keys():
+    param_keys = estimator.get_params().keys()
+    if "warm_start" in param_keys:
         estimator.set_params(warm_start=False)
+    if "add_indicator" in param_keys:
+        estimator.set_params(add_indicator=True)
 
     n_samples = 100
     X = rng.normal(loc=100, size=(n_samples, 2))
@@ -4667,7 +4666,20 @@ def check_fit_idempotent(name, estimator_orig):
 
     # Fit for the first time
     estimator.fit(X_train, y_train)
+    return (estimator, X_train, y_train, X_test, y_test)
 
+
+def check_fit_idempotent(name, estimator_orig):
+    # Check that est.fit(X) is the same as est.fit(X).fit(X). Ideally we would
+    # check that the estimated parameters during training (e.g. coefs_) are
+    # the same, but having a universal comparison function for those
+    # attributes is difficult and full of edge cases. So instead we check that
+    # predict(), predict_proba(), decision_function() and transform() return
+    # the same results.
+
+    estimator, X_train, y_train, X_test, _ = _fit_estimator(estimator_orig)
+
+    check_methods = ["predict", "transform", "decision_function", "predict_proba"]
     result = {
         method: getattr(estimator, method)(X_test)
         for method in check_methods
@@ -5729,3 +5741,104 @@ def check_classifier_not_supporting_multiclass(name, estimator_orig):
         ValueError, match="Only binary classification is supported.", err_msg=err_msg
     ):
         estimator.fit(X, y)
+
+
+class _StatePickler(Pickler):
+    """Add some extra pickling logic to work around edge cases."""
+
+    def reducer_override(self, obj: object) -> tuple:
+        if isinstance(obj, (KDTree, BallTree)):
+            # This should be removed in 1.12 when these deprecated stats are
+            # removed. These are not really thread-safe, but they're also just
+            # deprecated stats, so they don't meaningfully affect anything.
+            state = obj.__getstate__()
+            assert len(state) == 13
+            # Specifically we're overwriting int(self.n_trims),
+            # int(self.n_leaves), int(self.n_splits), int(self.n_calls):
+            state = state[:-6] + (0, 0, 0, 0) + state[-2:]
+            return (obj.__class__.__setstate__, state)
+
+        return NotImplemented
+
+
+def _pickled_bytes(obj: object) -> bytes:
+    """
+    Pickled bytes of a Python object; effectively a verbose hash, since
+    dictionary and set order iteration is stables.
+
+    Mutating the object should change the result.
+    """
+    f = BytesIO()
+    _StatePickler(f).dump(obj)
+    return f.getvalue()
+
+
+_INFERENCE_METHODS = [
+    "apply",
+    "decision_function",
+    "decision_path",
+    "inverse_transform",
+    "kneighbors",
+    "kneighbors_graph",
+    "predict",
+    "predict_joint_log_proba",
+    "predict_log_proba",
+    "predict_proba",
+    "radius_neighbors",
+    "score",
+    "score_samples",
+    "staged_predict",
+    "staged_predict_proba",
+    "transform",
+]
+
+
+def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
+    """
+    Estimators' internal state should not be changed by inference methods, in
+    order to ensure thread safety.
+
+    Bit like ``check_dict_unchanged`` but hopefully covers many more edge
+    cases.
+    """
+    estimator, X_train, y_train, X_test, y_test = _fit_estimator(estimator_orig)
+
+    before_hash = _pickled_bytes(estimator)
+    attr_hashes = {
+        key: _pickled_bytes(value) for (key, value) in estimator.__dict__.items()
+    }
+    for method_name in _INFERENCE_METHODS:
+        if not hasattr(estimator, method_name):
+            continue
+        method = getattr(estimator, method_name)
+        if method_name == "score":
+            method(X_test, y_test)
+        elif method_name == "inverse_transform":
+            result = estimator.transform(X_test)
+            method(result)
+        else:
+            result = method(X_test)
+            if hasattr(result, "__iter__"):
+                # Call list() to handle methods that return generators or other
+                # lazy iterables.
+                list(result)
+        after_hash = _pickled_bytes(estimator)
+        after_attr_hashes = {
+            key: _pickled_bytes(value) for (key, value) in estimator.__dict__.items()
+        }
+        missing = object()
+        mismatching_attrs = {
+            k
+            for k in after_attr_hashes
+            if attr_hashes.get(k, missing) != after_attr_hashes[k]
+        }
+        mismatching_attrs |= {
+            k
+            for k in attr_hashes
+            if after_attr_hashes.get(k, missing) != attr_hashes[k]
+        }
+        err_message = (
+            f"Hash of {estimator} changed when running {method_name}(),"
+            + f" mismatching attributes are {mismatching_attrs}"
+        )
+        assert after_hash == before_hash, err_message
