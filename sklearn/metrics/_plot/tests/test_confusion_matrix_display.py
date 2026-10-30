@@ -374,3 +374,13 @@ def test_confusion_matrix_text_kw(pyplot):
     )
     for text in disp.text_.reshape(-1):
         assert text.get_fontsize() == font_size
+
+
+def test_confusion_matrix_display_default_values_format(pyplot):
+    """Check the text format used when `values_format=None`."""
+
+    # integer matrix: each value uses the shortest of "d" and ".2g"
+    cm = np.array([[10_000_000, 0], [123_456, 12_345_678]])
+    disp = ConfusionMatrixDisplay(cm).plot()
+    text = [t.get_text() for t in disp.text_.ravel()]
+    assert text == ["1e+07", "0", "123456", "1.2e+07"]
