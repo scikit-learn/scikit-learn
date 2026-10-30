@@ -321,15 +321,10 @@ class ScoringMonitor(FitCallback):
             self._listener_handle = open_listener(self._log.append, owner=self)
 
     def get_metadata_routing(self):
-        if _routing_enabled() and self._scorers["val"] != "no_val_score":
-            current_request = self._get_metadata_request()
-            if (
-                current_request.on_fit_task_end.requests["X_val"] is None
-                and current_request.on_fit_task_end.requests["y_val"] is None
-            ):
-                self.set_on_fit_task_end_request(X_val=True, y_val=True)
+        self_request = self._get_metadata_request()
+        self_request.on_fit_task_end.add_auto_request("X_val", "y_val")
 
-        router = MetadataRouter(owner=self).add_self_request(self)
+        router = MetadataRouter(owner=self).add_self_request(self_request)
         for dataset in ("train", "val"):
             if (
                 self._scorers[dataset] is not None

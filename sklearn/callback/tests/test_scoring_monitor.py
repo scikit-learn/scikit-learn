@@ -202,7 +202,7 @@ def test_logged_values(scoring_train, scoring_val, as_pandas):
         pytest.skip("At least one scorer must be set.")
 
     if scoring_val != "no_val_score":
-        set_config(enable_metadata_routing=True)
+        set_config(enable_metadata_routing=True, enable_metadata_auto_requests=True)
         X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=1)
     else:
         X_val, y_val = None, None
@@ -236,7 +236,7 @@ def test_logged_values(scoring_train, scoring_val, as_pandas):
     else:
         assert log_train == expected_log_train
         assert log_val == expected_log_val
-    set_config(enable_metadata_routing=False)
+    set_config(enable_metadata_routing=False, enable_metadata_auto_requests=False)
 
 
 @pytest.mark.parametrize("prefer", ["processes", "threads"])
@@ -334,7 +334,7 @@ def test_scoring_monitor_no_metadata_routing_estimator():
     assert len(cb.get_logs().train_scores) == expected_log_length
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
 def test_scoringmonitor_metadata_routing():
     """Test the routing of metadata to the scorer."""
     score_func = lambda y_true, y_pred, req_arg: req_arg
@@ -352,7 +352,7 @@ def test_scoringmonitor_metadata_routing():
     assert all([ll["score"] == "val_value" for ll in logs.val_scores])
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
 def test_scoringmonitor_metadata_routing_meta_estimator():
     """Test the routing of metadata to the scorer in a meta-estimator."""
     score_func = lambda y_true, y_pred, req_arg: req_arg
@@ -381,7 +381,7 @@ def test_scoringmonitor_sample_weights(enable_metadata_routing):
     scorer_val = "no_val_score"
 
     if enable_metadata_routing:
-        set_config(enable_metadata_routing=True)
+        set_config(enable_metadata_routing=True, enable_metadata_auto_requests=True)
         X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=rng)
         scorer_val = get_scorer("r2")
 
@@ -419,7 +419,7 @@ def test_scoringmonitor_sample_weights(enable_metadata_routing):
     if enable_metadata_routing:
         assert log_no_sw.val_scores != log_sw.val_scores
 
-    set_config(enable_metadata_routing=False)
+    set_config(enable_metadata_routing=False, enable_metadata_auto_requests=False)
 
 
 def _get_ancestors_info_path(log, parent_task_id_path):
@@ -609,7 +609,7 @@ def test_accept_sample_weight():
         )
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
 def test_val_scorer_with_alias_request():
     """Test that the validation scorer with alias request is working."""
     cb_no_alias = ScoringMonitor(scoring_val="r2")
@@ -639,7 +639,7 @@ def test_val_scorer_with_alias_request():
     assert_allclose(no_alias_score_values, alias_score_values)
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
 def test_val_scorer_only_X():
     """Smoke test for the validation scorer on a scorer that only requires X."""
 
