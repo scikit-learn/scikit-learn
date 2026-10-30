@@ -1372,6 +1372,10 @@ will not necessarily be close to zero::
     practice or requires manual assignment by human annotators (as in the
     supervised learning setting).
 
+    However, the (adjusted or unadjusted) Rand index can also compare two
+    clusterings of the same data without any ground truth, for instance to
+    check how stable a clustering is across random seeds or algorithms.
+
   - The **unadjusted Rand index is often close to 1.0** even if the clusterings
     themselves differ significantly. This can be understood when interpreting
     the Rand index as the accuracy of element pair labeling resulting from the
@@ -1502,6 +1506,10 @@ Bad (e.g. independent labelings) have non-positive scores::
   - Contrary to inertia, **MI-based measures require the knowledge of the ground
     truth classes** while almost never available in practice or requires manual
     assignment by human annotators (as in the supervised learning setting).
+
+    However, MI-based measures can also compare two clusterings of the same
+    data without any ground truth, for instance to check how stable a
+    clustering is across random seeds or algorithms.
 
   - NMI and MI are not adjusted against chance.
 
