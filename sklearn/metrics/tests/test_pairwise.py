@@ -458,6 +458,62 @@ def test_pairwise_parallel_array_api(
             assert_allclose(n_job2_xp_np, n_job2_np)
 
 
+@pytest.mark.parametrize("n_jobs", [1, 2, -1])
+def test_pairwise_distances_asymmetric_callable(n_jobs):
+    from scipy.stats import entropy
+
+    X = np.array(
+        [
+            [2, 1, 1, 5],
+            [2, 1, 1, 1],
+            [1, 3, 5, 1],
+        ]
+    )
+
+    expected = np.array([[entropy(x, y) for y in X] for x in X])
+
+    actual = pairwise_distances(
+        X, metric=entropy, assume_symmetric=False, n_jobs=n_jobs
+    )
+
+    assert_allclose(actual, expected)
+
+
+def test_pairwise_distances_assume_symmetric_default():
+    from scipy.stats import entropy
+
+    X = np.array([[2, 1, 1, 5], [2, 1, 1, 1], [1, 3, 5, 1]])
+
+    actual = pairwise_distances(X, metric=entropy)
+    explicit = pairwise_distances(X, metric=entropy, assume_symmetric=True)
+
+    assert_allclose(actual, explicit)
+    assert_allclose(actual, actual.T)
+
+
+@pytest.mark.parametrize("metric", ["euclidean", "cityblock"])
+def test_pairwise_distances_assume_symmetric_builtin(metric):
+    X = np.array([[1, 2], [3, 4]])
+
+    expected = pairwise_distances(X, metric=metric)
+    actual = pairwise_distances(X, metric=metric, assume_symmetric=False)
+
+    assert_allclose(actual, expected)
+
+
+def test_pairwise_distances_assume_symmetric_invalid():
+    from sklearn.utils._param_validation import InvalidParameterError
+
+    X = np.array([[1, 2], [3, 4]])
+
+    with pytest.raises(InvalidParameterError, match="assume_symmetric"):
+        pairwise_distances(
+            X,
+            metric=lambda x, y: np.abs(x - y).sum(),
+            assume_symmetric="no",
+        )
+
+
 def test_pairwise_callable_nonstrict_metric():
     # paired_distances should allow callable metric where metric(x, x) != 0
     # Knowing that the callable is a strict metric would allow the diagonal to
