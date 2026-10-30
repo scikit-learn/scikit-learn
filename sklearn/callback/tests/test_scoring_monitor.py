@@ -626,7 +626,7 @@ def test_val_scorer_with_alias_request():
         log_item["r2"] for log_item in cb_no_alias.get_logs().val_scores
     ]
     # Verify that the callback with alias request is not using the same data
-    assert not np.array_equal(alias_score_values, no_alias_score_values)
+    assert not np.allclose(alias_score_values, no_alias_score_values)
 
     cb_no_alias = ScoringMonitor(scoring_val="r2")
     MaxIterEstimator().set_callbacks(cb_no_alias).fit(
