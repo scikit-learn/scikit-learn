@@ -283,7 +283,6 @@ LogisticRegression(alpha=99, class_weight=0.4, fit_intercept=False, tol=1234,
     repr(
         LogisticRegressionCV(
             alphas=np.array([0.1, 1]),
-            use_legacy_attributes=False,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
         )
     )
