@@ -971,6 +971,59 @@ def svd_flip(u, v, u_based_decision=True):
     return u, v
 
 
+def _null_space(
+    A, rcond=None, *, overwrite_a=False, check_finite=True, lapack_driver="gesdd"
+):
+    """
+    Construct an orthonormal basis for the null space of A using SVD.
+
+    This method makes scipy.linalg.null_space more memory-efficient for
+    long/tall A.
+
+    Parameters
+    ----------
+    A : (M, N) array_like
+        Input array
+    rcond : float, optional
+        Relative condition number. Singular values ``s`` smaller than
+        ``rcond * max(s)`` are considered zero.
+        Default: floating point eps * max(M,N).
+    overwrite_a : bool, optional
+        Whether to overwrite `a`; may improve performance. Default is False.
+        See :ref:`tutorial_linalg_overwrite` for details.
+    check_finite : bool, optional
+        Whether to check that the input matrix contains only finite numbers.
+        Disabling may give a performance gain, but may result in problems
+        (crashes, non-termination) if the inputs do contain infinities or NaNs.
+    lapack_driver : {'gesdd', 'gesvd'}, optional
+        Whether to use the more efficient divide-and-conquer approach
+        (``'gesdd'``) or general rectangular approach (``'gesvd'``)
+        to compute the SVD. MATLAB and Octave use the ``'gesvd'`` approach.
+        Default is ``'gesdd'``.
+
+    Returns
+    -------
+    Z : (N, K) ndarray
+        Orthonormal basis for the null space of A.
+        K = dimension of effective null space, as determined by rcond
+    """
+    M, N = A.shape
+    is_tall = M > N
+    u, s, vh = linalg.svd(
+        a=A,
+        full_matrices=not is_tall,
+        overwrite_a=overwrite_a,
+        check_finite=check_finite,
+        lapack_driver=lapack_driver,
+    )
+    if rcond is None:
+        rcond = np.finfo(s.dtype).eps * max(M, N)
+    tol = np.amax(s, initial=0.0) * rcond
+    num = np.sum(s > tol, dtype=int)
+    Q = vh[num:, :].T.conj()
+    return Q
+
+
 def softmax(X, copy=True):
     """
     Calculate the softmax function.

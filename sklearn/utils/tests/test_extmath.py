@@ -6,7 +6,7 @@ import itertools
 import numpy as np
 import pytest
 from scipy import linalg, sparse, stats
-from scipy.linalg import eigh
+from scipy.linalg import eigh, null_space
 from scipy.sparse.linalg import eigsh
 
 from sklearn import config_context
@@ -33,6 +33,7 @@ from sklearn.utils.extmath import (
     _approximate_mode,
     _deterministic_vector_sign_flip,
     _incremental_mean_and_var,
+    _null_space,
     _randomized_eigsh,
     _safe_accumulator_op,
     cartesian,
@@ -1166,3 +1167,25 @@ def test_randomized_range_finder_array_api_compliance(
         assert get_namespace(Q_xp)[0].__name__ == xp.__name__
         assert Q_xp.dtype == max_dtype
         assert_allclose(move_to(Q_xp, xp=np, device="cpu"), Q_np, atol=atol)
+
+
+def test_null_space():
+    """Test equivalence to scipy.linalg.null_space."""
+    X_tall = np.array(
+        [
+            [0, 0, 0, 0],
+            [1, 1, 1, 1],
+            [2, 2, 4, 4],
+            [3, 3, 9, 9],
+            [4, 4, 16, 16],
+            [5, 5, 25, 25],
+        ],
+        dtype=np.float64,
+    )
+    ns = _null_space(X_tall)
+    expected = null_space(X_tall)
+    assert_allclose(ns, expected)
+
+    ns = _null_space(X_tall.T)
+    expected = null_space(X_tall.T)
+    assert_allclose(ns, expected)
