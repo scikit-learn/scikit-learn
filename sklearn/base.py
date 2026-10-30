@@ -17,6 +17,7 @@ import numpy as np
 from sklearn import __version__
 from sklearn._config import config_context, get_config
 from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.utils._array_api import _fitted_attrs_as_numpy
 from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
@@ -1400,7 +1401,9 @@ def _fit_context(*, prefer_skip_nested_validation):
                 ),
                 callback_management_context(estimator),
             ):
-                return fit_method(estimator, *args, **kwargs)
+                fitted = fit_method(estimator, *args, **kwargs)
+                _fitted_attrs_as_numpy(estimator)
+                return fitted
 
         return wrapper
 
