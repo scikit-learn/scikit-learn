@@ -106,7 +106,7 @@ class CallbackContext:
         new_ctx.parent = None
         new_ctx.root_uuid = uuid.uuid4()
         new_ctx.init_time = datetime.now(timezone.utc)
-        new_ctx._children_map = {}
+        new_ctx._children_ids = set()
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
         new_ctx._subestimator_support_warnings = set()
@@ -164,7 +164,7 @@ class CallbackContext:
         new_ctx.root_uuid = parent_context.root_uuid
         new_ctx.init_time = datetime.now(timezone.utc)
         new_ctx.parent = None
-        new_ctx._children_map = {}
+        new_ctx._children_ids = set()
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
 
@@ -172,12 +172,6 @@ class CallbackContext:
         parent_context._add_child(new_ctx)
 
         return new_ctx
-
-    def __iter__(self):
-        """Pre-order depth-first traversal of the task tree."""
-        yield self
-        for context in self._children_map.values():
-            yield from context
 
     def __repr__(self):
         return (
@@ -189,7 +183,7 @@ class CallbackContext:
 
     def _add_child(self, child_context):
         """Add `child_context` as a child of this context."""
-        if child_context.task_id in self._children_map:
+        if child_context.task_id in self._children_ids:
             raise ValueError(
                 f"Callback context {self.task_name} of estimator "
                 f"{self.estimator_name} already has a child with "
@@ -198,7 +192,7 @@ class CallbackContext:
 
         if (
             self.max_subtasks is not None
-            and len(self._children_map) >= self.max_subtasks
+            and len(self._children_ids) >= self.max_subtasks
         ):
             raise ValueError(
                 f"Cannot add child to callback context {self.task_name} of estimator "
@@ -206,7 +200,7 @@ class CallbackContext:
                 f"number of children ({self.max_subtasks})."
             )
 
-        self._children_map[child_context.task_id] = child_context
+        self._children_ids.add(child_context.task_id)
         child_context.parent = self
 
     def _merge_with(self, other_context):
@@ -231,7 +225,7 @@ class CallbackContext:
         self.parent = other_context.parent
         self.task_id = other_context.task_id
         self.root_uuid = other_context.root_uuid
-        other_context.parent._children_map[self.task_id] = self
+        other_context.parent._children_ids.add(self.task_id)
 
         # Keep information about the context it was merged with
         self.source_task_name = other_context.task_name
@@ -273,7 +267,7 @@ class CallbackContext:
                 f"if sequential_subtasks is False for {self.task_name}."
             )
         if task_id is None:
-            task_id = len(self._children_map)
+            task_id = len(self._children_ids)
 
         return CallbackContext._from_parent(
             parent_context=self,
