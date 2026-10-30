@@ -22,14 +22,14 @@ class LogisticRegressionBenchmark(Predictor, Estimator, Benchmark):
     Benchmarks for LogisticRegression.
     """
 
-    param_names = ["representation", "solver", "n_jobs"]
-    params = (["dense", "sparse"], ["lbfgs", "saga"], Benchmark.n_jobs_vals)
+    param_names = ["representation", "solver"]
+    params = (["dense", "sparse"], ["lbfgs", "saga"])
 
     def setup_cache(self):
         super().setup_cache()
 
     def make_data(self, params):
-        representation, solver, n_jobs = params
+        representation, solver = params
 
         if Benchmark.data_size == "large":
             if representation == "sparse":
@@ -45,7 +45,7 @@ class LogisticRegressionBenchmark(Predictor, Estimator, Benchmark):
         return data
 
     def make_estimator(self, params):
-        representation, solver, n_jobs = params
+        representation, solver = params
 
         l1_ratio = 0 if solver == "lbfgs" else 1
 
@@ -53,7 +53,6 @@ class LogisticRegressionBenchmark(Predictor, Estimator, Benchmark):
             solver=solver,
             l1_ratio=l1_ratio,
             tol=0.01,
-            n_jobs=n_jobs,
             random_state=0,
         )
 
