@@ -282,7 +282,7 @@ estimators that support it, and 'brute' is used for the rest.
 .. [M2019] C. Molnar,
     `Interpretable Machine Learning
     <https://christophm.github.io/interpretable-ml-book/>`_,
-    Section 5.1, 2019.
+    Sections 13 and 19, 2025.
 
 .. [G2015] :arxiv:`A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin,
     "Peeking Inside the Black Box: Visualizing Statistical
