@@ -41,12 +41,12 @@ attributes::
        @classmethod
        def from_estimator(cls, estimator, X, y):
            # get the predictions
-           y_pred = estimator.predict_proba(X)[:, 1]
-           return cls.from_predictions(y, y_pred, estimator.__class__.__name__)
+           y_score = estimator.predict_proba(X)[:, 1]
+           return cls.from_predictions(y, y_score, estimator.__class__.__name__)
 
        @classmethod
-       def from_predictions(cls, y, y_pred, name):
-           # do ROC computation from y and y_pred
+       def from_predictions(cls, y, y_score, name):
+           # do ROC computation from y and y_score
            fpr, tpr, roc_auc = ...
            viz = RocCurveDisplay(fpr, tpr, roc_auc, name)
            return viz.plot()
