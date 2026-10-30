@@ -41,11 +41,20 @@ class ProgressBar:
         check_rich_support("Progressbar")
 
         self.max_propagation_depth = max_propagation_depth
+        self._disabled_runs = set()
 
         # Handles to the main-process per-fit listeners, keyed by `root_uuid`.
         self._listener_handles = {}
 
     def setup(self, estimator, context):
+        # Disable for current fit run if another ProgressBar is attached, except for the
+        # last one in the callback list.
+        id_in_cb_list = estimator._skl_callbacks.index(self)
+        for cb in estimator._skl_callbacks[id_in_cb_list + 1 :]:
+            if isinstance(cb, ProgressBar) and cb is not self:
+                self._disabled_runs.add(context.root_uuid)
+                return
+
         # Lazily create the per-fit transport state. `setup` runs on the main
         # process for the common case where `ProgressBar` is registered on (or
         # auto-propagated from) the outermost estimator. In the degraded case
@@ -67,7 +76,7 @@ class ProgressBar:
     def on_fit_task_begin(self, estimator, context):
         # A new progress bar is created at the beginning of each task that is not a
         # leaf, except if it's also the root task of an estimator.
-        if (
+        if context.root_uuid not in self._disabled_runs and (
             context.max_subtasks != 0
             or context.parent is None
             or context.source_estimator_name is not None
@@ -91,20 +100,24 @@ class ProgressBar:
 
     def on_fit_task_end(self, estimator, context):
         # The path is enough to update the progress of the task and its ancestors.
-        send(
-            self._listener_handles[context.root_uuid],
-            {
-                "event": "end",
-                "path": [ctx.task_id for ctx in get_context_path(context)],
-            },
-        )
+        if context.root_uuid not in self._disabled_runs:
+            send(
+                self._listener_handles[context.root_uuid],
+                {
+                    "event": "end",
+                    "path": [ctx.task_id for ctx in get_context_path(context)],
+                },
+            )
 
     def teardown(self, estimator, context):
-        # Fit is finished. Signal that the queue won't receive any more tasks, close
-        # the monitor thread and the listener.
-        _run_queues.pop(context.root_uuid).put(None)
-        _run_monitors.pop(context.root_uuid).join()
-        close_listener(self._listener_handles.pop(context.root_uuid))
+        if context.root_uuid in self._disabled_runs:
+            self._disabled_runs.remove(context.root_uuid)
+        else:
+            # Fit is finished. Signal that the queue won't receive any more tasks, close
+            # the monitor thread and the listener.
+            _run_queues.pop(context.root_uuid).put(None)
+            _run_monitors.pop(context.root_uuid).join()
+            close_listener(self._listener_handles.pop(context.root_uuid))
 
 
 try:
