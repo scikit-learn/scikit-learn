@@ -1,0 +1,5 @@
+- Improve the efficiency of posterior covariance computation in
+  :class:`linear_model.BayesianRidge` by using reduced SVD and
+  the Woodbury matrix identity when the number of features
+  exceeds the number of samples.
+  By :user:`Xuefeng Xu <xuefeng-xu>`.
