@@ -615,28 +615,33 @@ def test_error():
             est.apply(T)
 
         # Categorical cardinality limits depend on the splitter:
-        # - best (DecisionTree*): bitset capacity is 256 categories ([0, 255])
+        # - best (DecisionTree*): bitset capacity is 256 categories
         # - random (ExtraTree*): up to 2**24 - 1 categories via hash splits
         X_cat = np.array([f"cat_{idx}" for idx in range(257)], dtype=object).reshape(
             -1, 1
         )
         y_cat = np.arange(257) % 2
         est_cat = TreeEstimator(categorical_features=[0], random_state=0)
+        est_cat.fit(X_cat[:256], y_cat[:256])
         if name.startswith("Extra"):
             est_cat.fit(X_cat, y_cat)
             assert est_cat.tree_.node_count >= 1
         else:
             with pytest.raises(
-                ValueError, match=r"Values for categorical features.*\[0, 255\]"
+                ValueError,
+                match=(
+                    "Categorical feature 0 has 257 categories, but at most 256 "
+                    "are supported with splitter='best'"
+                ),
             ):
                 est_cat.fit(X_cat, y_cat)
 
     # non positive target for Poisson splitting Criterion
     est = DecisionTreeRegressor(criterion="poisson")
-    with pytest.raises(ValueError, match="y is not positive.*Poisson"):
-        est.fit([[0, 1, 2]], [0, 0, 0])
+    with pytest.raises(ValueError, match="y is not strictly positive.*Poisson"):
+        est.fit([[0], [1], [2]], [0, 0, 0])
     with pytest.raises(ValueError, match="Some.*y are negative.*Poisson"):
-        est.fit([[0, 1, 2]], [5, -0.1, 2])
+        est.fit([[0], [1], [2]], [5, -0.1, 2])
 
 
 def test_min_samples_split():
@@ -1172,6 +1177,26 @@ def test_sample_weight_invalid():
     )
     with pytest.raises(TypeError, match=expected_err):
         clf.fit(X, y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_sample_weight_without_input_check(Tree):
+    """With check_input=False, sample weights are not validated but still
+    converted (e.g. integer bootstrap counts of forests) and shape-checked."""
+    X = np.arange(100, dtype=np.float32)[:, np.newaxis]
+    y = np.repeat([0.0, 1.0], 50)
+    sample_weight = np.random.RandomState(0).randint(0, 3, size=100)
+
+    tree = Tree(random_state=0).fit(X, y, sample_weight=sample_weight)
+    tree_unchecked = Tree(random_state=0).fit(
+        X, y, sample_weight=sample_weight, check_input=False
+    )
+    assert_array_equal(tree.predict(X), tree_unchecked.predict(X))
+
+    with pytest.raises(ValueError, match="sample_weight.shape"):
+        Tree(random_state=0).fit(
+            X, y, sample_weight=sample_weight[:-1], check_input=False
+        )
 
 
 @pytest.mark.parametrize("name", CLF_TREES)
@@ -1714,7 +1739,7 @@ def test_no_sparse_y_support(name, csr_container):
     # Currently we don't support sparse y
     X, y = X_multilabel, csr_container(y_multilabel)
     TreeEstimator = ALL_TREES[name]
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError, match="sparse multilabel-indicator for y"):
         TreeEstimator(random_state=0).fit(X, y)
 
 
@@ -3145,15 +3170,18 @@ def test_fit_categorical_with_monotonic_constraint(Tree):
 
 
 def test_fit_categorical_with_absolute_error():
-    # Non-regression test: the categorical split-finding algorithm is not
-    # valid for criterion="absolute_error" (see gh-34578), so it should be
-    # rejected rather than silently return a possibly suboptimal split.
+    # Non-regression test: the best splitter's categorical split-finding
+    # algorithm is not valid for criterion="absolute_error" (see gh-34578), so it
+    # should be rejected rather than silently return a possibly suboptimal split.
     X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
     y = np.array([0.0, 1.0, 0.0, 1.0])
 
     with pytest.raises(
         ValueError,
-        match="Categorical features are not supported with criterion='absolute_error'",
+        match=(
+            "Categorical features with splitter='best' are not supported with "
+            "criterion='absolute_error'"
+        ),
     ):
         DecisionTreeRegressor(categorical_features=[0], criterion="absolute_error").fit(
             X, y
@@ -3585,7 +3613,7 @@ def test_random_splitter_categorical(Tree, y, X):
 def test_random_splitter_high_cardinality_categorical(Tree):
     """Random splitter accepts >256 categories via hash splits."""
     n_categories = 500
-    # Include every level so cardinality is deterministic (>255), not sampled.
+    # Include every level so cardinality is deterministic (>256), not sampled.
     X = np.arange(n_categories).reshape(-1, 1)
     y = X[:, 0] % 2
     # DecisionTree defaults to splitter='best'; force random.
