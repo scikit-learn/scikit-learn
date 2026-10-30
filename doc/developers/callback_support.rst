@@ -57,9 +57,13 @@ correspond to steps of a pipeline, cross-validation folds, etc. As tasks can be
 decomposed into subtasks, the tasks (and therefore callback contexts) have a natural
 tree structure, with the root task being the whole fit task.
 
-The callback context objects follow this tree structure, holding references to their
-parent and children contexts, and are dynamically built during `fit`. The root context
-must be created by the :meth:`~CallbackSupportMixin._init_callback_context` method.
+The callback context objects follow this tree structure, each one recording its position
+in the tree through the `task_path` attribute: a tuple of :class:`~TaskInfo` from the
+root task to its own task. Each step holds `task_id`, `task_name`, `estimator_name`,
+`sequential_subtasks`, `init_time`, `source_estimator_name` and `source_task_name`.
+Callbacks use this task path to locate the task. Contexts are dynamically built during
+`fit` and do not reference one another. The root context must be created by the
+:meth:`~CallbackSupportMixin._init_callback_context` method.
 
 .. dropdown:: examples of task / context trees
 

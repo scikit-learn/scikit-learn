@@ -54,6 +54,7 @@ _DOCSTRING_IGNORES = [
     "sklearn.pipeline.make_union",
     "HalfBinomialLoss",
     "ScoringMonitorLog",  # dataclass
+    "TaskInfo",  # dataclass
 ]
 
 # Methods where y param should be ignored if y=None by default
