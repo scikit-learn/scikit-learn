@@ -1,0 +1,3 @@
+- :func:`datasets.fetch_openml` no longer warns that an OpenML dataset is
+  inactive when its status is still `in_preparation`.
+  By :user:`Suresh`.
