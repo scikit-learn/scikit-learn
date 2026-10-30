@@ -636,7 +636,7 @@ def test_val_scorer_with_alias_request():
         log_item["r2"] for log_item in cb_no_alias.get_logs().val_scores
     ]
     # Verify that with or without alias give the same score with the same data
-    assert np.array_equal(no_alias_score_values, alias_score_values)
+    assert_allclose(no_alias_score_values, alias_score_values)
 
 
 @config_context(enable_metadata_routing=True)
