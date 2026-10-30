@@ -552,7 +552,7 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
     def from_predictions(
         cls,
         y_true,
-        y_score=None,
+        y_score,
         *,
         sample_weight=None,
         drop_intermediate=False,
@@ -677,7 +677,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         """
 
         y_true = check_array(y_true, ensure_2d=False, dtype=None)
-        y_score = y_score
         pos_label, name = cls._validate_from_predictions_params(
             y_true, y_score, sample_weight=sample_weight, pos_label=pos_label, name=name
         )
