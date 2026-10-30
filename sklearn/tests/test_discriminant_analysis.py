@@ -276,6 +276,30 @@ def test_lda_coefs():
     assert_array_almost_equal(clf_lda_eigen.coef_, clf_lda_lsqr.coef_)
 
 
+def test_lda_solvers_agree_with_custom_priors():
+    rng = np.random.RandomState(0)
+    X_custom = np.vstack(
+        [
+            rng.randn(200, 2) * [1.0, 0.3],
+            rng.randn(20, 2) * [0.3, 2.0] + [1.5, 0.5],
+        ]
+    )
+    y_custom = np.repeat([0, 1], [200, 20])
+    X_test = rng.uniform(-3, 3, size=(2000, 2))
+
+    predictions = {
+        solver: LinearDiscriminantAnalysis(
+            solver=solver, priors=[0.5, 0.5], store_covariance=True
+        )
+        .fit(X_custom, y_custom)
+        .predict_proba(X_test)
+        for solver in ("svd", "lsqr", "eigen")
+    }
+
+    assert_allclose(predictions["svd"], predictions["lsqr"], rtol=1e-10, atol=1e-12)
+    assert_allclose(predictions["svd"], predictions["eigen"], rtol=1e-10, atol=1e-12)
+
+
 def test_lda_transform():
     # Test LDA transform.
     clf = LinearDiscriminantAnalysis(solver="svd", n_components=1)

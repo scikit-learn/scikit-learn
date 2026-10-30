@@ -598,7 +598,12 @@ class LinearDiscriminantAnalysis(
         # indexed by position in `self.classes_`.
         for idx in range(n_classes):
             Xg = X[y_encoded == idx]
-            Xc.append(Xg - self.means_[idx, :])
+            class_centered = Xg - self.means_[idx, :]
+            # Match _class_cov: each class covariance is weighted by its prior.
+            # The later 1 / n_samples factor turns this into
+            # prior_k * biased_covariance_k.
+            class_weight = xp.sqrt(self.priors_[idx] * n_samples / Xg.shape[0])
+            Xc.append(class_weight * class_centered)
 
         self.xbar_ = self.priors_ @ self.means_
 
