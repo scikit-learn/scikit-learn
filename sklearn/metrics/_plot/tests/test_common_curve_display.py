@@ -845,11 +845,6 @@ def test_display_from_cv_results_curve_kwargs_default_kwargs(
 @pytest.mark.parametrize(
     "Display, display_kwargs",
     [
-        # TODO(1.10): Remove
-        (
-            PrecisionRecallDisplay,
-            {"precision": np.array([1, 0.5, 0]), "recall": np.array([0, 0.5, 1])},
-        ),
         # TODO(1.12): Remove
         (
             DetCurveDisplay,

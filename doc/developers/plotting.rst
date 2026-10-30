@@ -31,12 +31,12 @@ For example, the `RocCurveDisplay` defines the following methods and
 attributes::
 
    class RocCurveDisplay:
-       def __init__(self, fpr, tpr, roc_auc, estimator_name):
+       def __init__(self, fpr, tpr, roc_auc, name):
            ...
            self.fpr = fpr
            self.tpr = tpr
            self.roc_auc = roc_auc
-           self.estimator_name = estimator_name
+           self.name = name
 
        @classmethod
        def from_estimator(cls, estimator, X, y):
@@ -45,10 +45,10 @@ attributes::
            return cls.from_predictions(y, y_pred, estimator.__class__.__name__)
 
        @classmethod
-       def from_predictions(cls, y, y_pred, estimator_name):
+       def from_predictions(cls, y, y_pred, name):
            # do ROC computation from y and y_pred
            fpr, tpr, roc_auc = ...
-           viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator_name)
+           viz = RocCurveDisplay(fpr, tpr, roc_auc, name)
            return viz.plot()
 
        def plot(self, ax=None, name=None, **kwargs):

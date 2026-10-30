@@ -9,7 +9,6 @@ from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
     _convert_to_list_leaving_none,
-    _deprecate_estimator_name,
     _deprecate_y_pred_parameter,
     _despine,
     _validate_style_kwargs,
@@ -89,13 +88,6 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         .. versionchanged:: 1.9
             May now be list of floats for when multiple curves plotted.
 
-    estimator_name : str, default=None
-        Name of estimator. If None, the estimator name is not shown.
-
-        .. deprecated:: 1.8
-            `estimator_name` is deprecated and will be removed in 1.10. Use `name`
-            instead.
-
     Attributes
     ----------
     line_ : matplotlib Artist or list of Artists
@@ -172,12 +164,11 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         name=None,
         pos_label=None,
         prevalence_pos_label=None,
-        estimator_name="deprecated",
     ):
         self.precision = precision
         self.recall = recall
         self.average_precision = average_precision
-        self.name = _deprecate_estimator_name(estimator_name, name, "1.8")
+        self.name = name
         self.pos_label = pos_label
         self.prevalence_pos_label = prevalence_pos_label
 
