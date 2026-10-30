@@ -615,8 +615,8 @@ def test_val_scorer_with_alias_request():
     cb_no_alias = ScoringMonitor(scoring_val="r2")
     cb_alias = ScoringMonitor(scoring_val="r2")
     X, y = make_regression(n_samples=10, n_features=2)
-    X_val_1, y_val_1 = make_regression(n_samples=10, n_features=2)
-    X_val_2, y_val_2 = make_regression(n_samples=10, n_features=2)
+    X_val_1, y_val_1 = make_regression(n_samples=10, n_features=2, random_state=0)
+    X_val_2, y_val_2 = make_regression(n_samples=10, n_features=2, random_state=1)
     cb_alias.set_on_fit_task_end_request(X_val="X_val_alias", y_val="y_val_alias")
     MaxIterEstimator().set_callbacks(cb_no_alias, cb_alias).fit(
         X, y, X_val=X_val_1, y_val=y_val_1, X_val_alias=X_val_2, y_val_alias=y_val_2
