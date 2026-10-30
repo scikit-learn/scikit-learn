@@ -2460,9 +2460,12 @@ class SimpleEstimator(BaseEstimator):
         return X - 1
 
 
-# split and partial_fit not relevant for pipelines
+# split, partial_fit, on_fit_task_begin and on_fit_task_end not relevant for pipelines
 @pytest.mark.parametrize(
-    "parent_method", sorted(set(METHODS) - {"split", "partial_fit"})
+    "parent_method",
+    sorted(
+        set(METHODS) - {"split", "partial_fit", "on_fit_task_begin", "on_fit_task_end"}
+    ),
 )
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_pipeline(parent_method):
@@ -2546,10 +2549,15 @@ def test_metadata_routing_for_pipeline(parent_method):
     )
 
 
-# split and partial_fit not relevant for pipelines
+# split, partial_fit, on_fit_task_begin and on_fit_task_end not relevant for pipelines
 # sorted is here needed to make `pytest -nX` work. W/o it, tests are collected
 # in different orders between workers and that makes it fail.
-@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+@pytest.mark.parametrize(
+    "method",
+    sorted(
+        set(METHODS) - {"split", "partial_fit", "on_fit_task_begin", "on_fit_task_end"}
+    ),
+)
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_error_for_pipeline(method):
     """Test that metadata is not routed for pipelines when not requested."""
@@ -2601,7 +2609,7 @@ def test_sample_weight_routing_auto_request():
         assert est_routing.fit.requests.get("sample_weight") is True
         assert est_routing.transform.requests.get("sample_weight") is True
         assert est_routing.predict.requests.get("sample_weight") is True
-        assert scaler_routing.fit.requests.get("sample_weight") is True
+        assert scaler_routing._self_request.fit.requests.get("sample_weight") is True
 
         pipe.fit(X, y, sample_weight=sample_weight)
         assert_allclose(pipe[-1].sample_weight_, sample_weight)
@@ -2616,7 +2624,7 @@ def test_sample_weight_routing_auto_request():
         assert est_routing.fit.requests.get("sample_weight") is None
         assert est_routing.transform.requests.get("sample_weight") is None
         assert est_routing.predict.requests.get("sample_weight") is None
-        assert scaler_routing.fit.requests.get("sample_weight") is None
+        assert scaler_routing._self_request.fit.requests.get("sample_weight") is None
 
     with pytest.raises(UnsetMetadataPassedError):
         pipe.fit(X, y, sample_weight=sample_weight)
