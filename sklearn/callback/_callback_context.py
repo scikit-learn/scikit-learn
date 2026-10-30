@@ -106,6 +106,10 @@ class CallbackContext:
         new_ctx.parent = None
         new_ctx.root_uuid = uuid.uuid4()
         new_ctx.init_time = datetime.now(timezone.utc)
+        # TODO XXX: weakrefs to children contexts could be used instead of just ids
+        # to be able to iterate over the whole tree in the main process without
+        # pickling the whole tree which would introduce a large overhead (see
+        # https://github.com/scikit-learn/scikit-learn/issues/35104).
         new_ctx._children_ids = set()
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
