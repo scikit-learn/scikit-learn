@@ -15,6 +15,8 @@ class RecordingCallback:
     `AutoPropagatedCallback`: it should not be propagated to sub-estimators.
     """
 
+    one_per_estimator = False
+
     def __init__(self):
         self.record = []
         self._listener_handle = open_listener(self.record.append, owner=self)
@@ -176,3 +178,9 @@ class NotRequiredKwargsCallback(RecordingCallback):
 
     def on_fit_task_end(self, estimator, context, *, X=None, y=None):
         super().on_fit_task_end(estimator, context, X=X, y=y)
+
+
+class OnePerEstimatorCallback(RecordingCallback):
+    """A callback that is set to be one per estimator."""
+
+    one_per_estimator = True

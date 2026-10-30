@@ -1,0 +1,3 @@
+- Callbacks now expose the class attribute `one_per_estimator`, a boolean indicating
+  whether only a single instance of that callback class can be registered to a given
+  estimator. By :user:`François Paugam <FrancoisPgm>`.

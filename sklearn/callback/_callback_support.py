@@ -14,6 +14,14 @@ def validate_callbacks(callbacks):
     for callback in callbacks:
         callback_name = callback.__class__.__name__
 
+        if getattr(callback, "one_per_estimator", False):
+            n_same_class = sum(isinstance(cb, callback.__class__) for cb in callbacks)
+            if n_same_class > 1:
+                raise ValueError(
+                    f"Only a single {callback_name} instance can be registered to a "
+                    f"given estimator. Got {n_same_class}."
+                )
+
         # isinstance for a Protocol returns True for classes too (not only instances).
         # Hence the additional check for classes.
         if not isinstance(callback, FitCallback) or isinstance(callback, type):
