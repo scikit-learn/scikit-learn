@@ -62,6 +62,8 @@ from sklearn.utils.metadata_routing import (
 )
 from sklearn.utils.validation import (
     _check_sample_weight,
+    _is_arraylike,
+    _num_features,
     check_is_fitted,
     validate_data,
 )
@@ -337,9 +339,12 @@ def _solve_lbfgs(
         "jac": True,
         "options": options,
     }
-    if positive:
-        config["bounds"] = [(0, np.inf)] * n_features
 
+    if isinstance(positive, bool):
+        if positive:
+            config["bounds"] = [(0, np.inf)] * n_features
+    elif _is_arraylike(positive):
+        config["bounds"] = [(0, np.inf) if p else (None, None) for p in positive]
     if X_offset is not None and X_scale is not None:
         X_offset_scale = X_offset / X_scale
     else:
@@ -386,6 +391,47 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         return ["csr", "csc", "coo"]
 
 
+def _validate_positive(positive, n_features):
+    """Validate ``positive`` and return the constraint passed to the solver.
+
+    Parameters
+    ----------
+    positive : bool or array-like of shape (n_features,)
+        Raw positivity constraint.
+    n_features : int
+        Number of features. Used when ``positive`` is array-like.
+
+    Returns
+    -------
+    positive : bool or ndarray of shape (n_features,)
+        ``True`` or ``False`` when every coefficient has the same constraint.
+        Otherwise a boolean mask as a numpy array.
+    """
+    if isinstance(positive, (bool, np.bool_)):
+        return bool(positive)
+
+    mask = np.asarray(positive)
+    if mask.ndim != 1:
+        raise ValueError(
+            "'positive' must be either a boolean or an array-like of booleans of shape "
+            "(n_features,)."
+        )
+    if mask.shape[0] != n_features:
+        raise ValueError(
+            "Length of 'positive' must be equal to the number of features of X : "
+            f"{n_features}. Got {mask.shape[0]}."
+        )
+    if not np.issubdtype(mask.dtype, np.bool_):
+        raise ValueError(
+            "'positive' must be either a boolean or an array-like of booleans."
+        )
+    if not mask.any():
+        return False
+    if mask.all():
+        return True
+    return mask
+
+
 @validate_params(
     {
         "X": ["array-like", "sparse matrix", sp_linalg.LinearOperator],
@@ -404,7 +450,7 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left")],
         "verbose": ["verbose"],
-        "positive": ["boolean"],
+        "positive": ["boolean", "array-like"],
         "random_state": ["random_state"],
         "return_n_iter": ["boolean"],
         "return_intercept": ["boolean"],
@@ -494,7 +540,7 @@ def ridge_regression(
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
           `scipy.optimize.minimize`. It can be used only when `positive`
-          is True.
+          constrains at least one coefficient.
 
         All solvers except 'svd' support both dense and sparse data. However, only
         'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
@@ -518,8 +564,12 @@ def ridge_regression(
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
 
-    positive : bool, default=False
-        When set to ``True``, forces the coefficients to be positive.
+    positive : bool or array-like of bool with shape (n_features,), default=False
+        Positivity constraint on the coefficients.
+        If True, forces all coefficients to be positive.
+        If False, no constraint is enforced.
+        If array-like of length `n_features`, the positivity constraint is specified
+        for each feature, forcing the corresponding coefficient to be positive.
         Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None
@@ -578,6 +628,8 @@ def ridge_regression(
     >>> intercept
     np.float64(-.0012)
     """
+    positive = _validate_positive(positive, _num_features(X))
+
     return _ridge_regression(
         X,
         y,
@@ -624,7 +676,9 @@ def _ridge_regression(
 
     has_sw = sample_weight is not None
 
-    solver = resolve_solver(solver, positive, return_intercept, X_is_sparse, xp)
+    enforce_positive = isinstance(positive, np.ndarray) or bool(positive)
+
+    solver = resolve_solver(solver, enforce_positive, return_intercept, X_is_sparse, xp)
 
     if is_numpy_namespace and not X_is_sparse:
         X = np.asarray(X)
@@ -635,17 +689,18 @@ def _ridge_regression(
             f"solver 'svd'. Got '{solver}'."
         )
 
-    if positive and solver != "lbfgs":
+    if enforce_positive and solver != "lbfgs":
         raise ValueError(
-            "When positive=True, only 'lbfgs' solver can be used. "
-            f"Please change solver {solver} to 'lbfgs' "
+            "When `positive` constrains at least one coefficient, only 'lbfgs' "
+            f"solver can be used. Please change solver {solver} to 'lbfgs' "
             "or set positive=False."
         )
 
-    if solver == "lbfgs" and not positive:
+    if solver == "lbfgs" and not enforce_positive:
         raise ValueError(
-            "'lbfgs' solver can be used only when positive=True. "
-            "Please use another solver."
+            "'lbfgs' solver can be used only when `positive` constrains at least one "
+            "coefficient. Please use another solver or use `positive` to constrain "
+            "at least one coefficient."
         )
 
     if return_intercept and solver != "sag":
@@ -876,7 +931,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
             )
         ],
-        "positive": ["boolean"],
+        "positive": ["boolean", "array-like"],
         "random_state": ["random_state"],
     }
 
@@ -905,13 +960,17 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
     def fit(self, X, y, sample_weight=None):
         xp, is_array_api_compliant = get_namespace(X, y, sample_weight)
 
-        if self.solver == "lbfgs" and not self.positive:
+        _positive = _validate_positive(self.positive, X.shape[1])
+        enforce_positive = isinstance(_positive, np.ndarray) or _positive
+
+        if self.solver == "lbfgs" and not enforce_positive:
             raise ValueError(
-                "'lbfgs' solver can be used only when positive=True. "
-                "Please use another solver."
+                "'lbfgs' solver can be used only when `positive` constrains at least "
+                "one coefficient. Please use another solver or use `positive` to "
+                "constrain at least one coefficient."
             )
 
-        if self.positive:
+        if enforce_positive:
             if self.solver not in ["auto", "lbfgs"]:
                 raise ValueError(
                     f"solver='{self.solver}' does not support positive fitting. Please"
@@ -965,7 +1024,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 max_iter=self.max_iter,
                 tol=self.tol,
                 solver="sag",
-                positive=self.positive,
+                positive=_positive,
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=True,
@@ -991,7 +1050,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 max_iter=self.max_iter,
                 tol=self.tol,
                 solver=solver,
-                positive=self.positive,
+                positive=_positive,
                 random_state=self.random_state,
                 return_n_iter=True,
                 return_intercept=False,
@@ -1106,15 +1165,25 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
           :func:`scipy.optimize.minimize`. It can be used only when `positive`
-          is True.
+          constrains at least one coefficient.
 
         All solvers except 'svd' support both dense and sparse data. However, only
         'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
         `fit_intercept` is True.
 
-    positive : bool, default=False
-        When set to ``True``, forces the coefficients to be positive.
+    positive : bool or array-like of bool of shape (n_features,), default=False
+        Positivity constraint on the coefficients.
+        If ``True``, forces all coefficients to be positive.
+        If ``False``, no constraint is enforced.
+        If an array-like of shape (n_features,), the constraint is applied to
+        each feature independently. For example, ``[True, True, False]`` forces
+        the first two coefficients to be positive and leaves the third
+        unconstrained. For multi-output `y`, the same mask is applied to every
+        target.
         Only 'lbfgs' solver is supported in this case.
+
+        .. versionchanged:: 1.10
+           Accepts an array-like of bool of shape (n_features,).
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
@@ -1455,10 +1524,15 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
           `scipy.optimize.minimize`. It can be used only when `positive`
-          is True.
+          constrains at least one coefficient.
 
-    positive : bool, default=False
-        When set to ``True``, forces the coefficients to be positive.
+    positive : bool or array-like of bool of shape (n_features,), default=False
+        Positivity constraint on the coefficients.
+        If ``True``, forces all coefficients to be positive.
+        If ``False``, no constraint is enforced.
+        If an array-like of shape (n_features,), the constraint is applied to
+        each feature independently. A ``False`` entry leaves that coefficient
+        unconstrained. The same mask is applied to every class.
         Only 'lbfgs' solver is supported in this case.
 
     random_state : int, RandomState instance, default=None
