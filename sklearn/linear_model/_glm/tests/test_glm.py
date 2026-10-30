@@ -1263,7 +1263,7 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
             assert msg in captured.out
 
 
-@pytest.mark.parametrize("solver", ["auto", "lbfgs"])
+@pytest.mark.parametrize("solver", ["auto", "lbfgs", "newton-cg"])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
