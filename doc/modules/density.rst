@@ -92,7 +92,15 @@ Given this kernel form, the density estimate at a point :math:`y` within
 a group of points :math:`x_i; i=1, \cdots, N` is given by:
 
 .. math::
-    \rho_K(y) = \sum_{i=1}^{N} K(y - x_i; h)
+    \rho_K(y) = \frac{1}{N} \sum_{i=1}^{N} K(y - x_i; h)
+
+The method :meth:`~sklearn.neighbors.KernelDensity.score_samples` computes the
+log-density :math:`\log \rho_K(y)` for each query point. For a continuous
+probability density, the density value at a point can exceed 1, so its
+logarithm can be positive or negative. Unlike discrete probability masses,
+density values do not need to sum to 1 over sample points. To evaluate the total
+log-likelihood of a dataset, :meth:`~sklearn.neighbors.KernelDensity.score` sums
+these log-density values.
 
 The bandwidth here acts as a smoothing parameter, controlling the tradeoff
 between bias and variance in the result.  A large bandwidth leads to a very
