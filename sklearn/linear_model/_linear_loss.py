@@ -26,12 +26,6 @@ def sandwich_dot(X, W):
     # TODO: This "sandwich product" is the main computational bottleneck for solvers
     # that use the full hessian matrix. Here, thread parallelism would pay-off the
     # most.
-    # While a dedicated Cython routine could exploit the symmetry, it is very hard to
-    # beat BLAS GEMM, even thought the latter cannot exploit the symmetry, unless one
-    # pays the price of taking square roots and implements
-    #    sqrtWX = sqrt(W)[: None] * X
-    #    return sqrtWX.T @ sqrtWX
-    # which (might) detect the symmetry and use BLAS SYRK under the hood.
     n_samples = X.shape[0]
     if sparse.issparse(X):
         return _align_api_if_sparse(
@@ -42,6 +36,14 @@ def sandwich_dot(X, W):
             )
         )
     else:
+        xp, _ = get_namespace(X, W)
+        if float(xp.min(W)) >= 0:
+            # For non-negative W, taking square roots allows to write the product as
+            # A.T @ A. As of version 1.11 numpy detects this and uses BLAS SYRK, which
+            # exploits the symmetry and needs about half the flops of GEMM. The result
+            # is exactly symmetric.
+            sqrtWX = xp.sqrt(W)[:, None] * X
+            return sqrtWX.T @ sqrtWX
         # np.einsum may use less memory but the following, using BLAS matrix
         # multiplication (GEMM), is by far faster.
         WX = W[:, None] * X

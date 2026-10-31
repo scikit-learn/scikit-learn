@@ -8,9 +8,10 @@ covered in the _loss module.
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from scipy import linalg, optimize
+from scipy import linalg, optimize, sparse
 from scipy.special import logit
 
+from sklearn import config_context
 from sklearn._loss.loss import (
     HalfBinomialLoss,
     HalfMultinomialLoss,
@@ -20,7 +21,13 @@ from sklearn.datasets import make_low_rank_matrix
 from sklearn.linear_model._linear_loss import (
     LinearModelLoss,
     Multinomial_LDL_Decomposition,
+    sandwich_dot,
 )
+from sklearn.utils._array_api import (
+    _convert_to_numpy,
+    yield_namespace_device_dtype_combinations,
+)
+from sklearn.utils._testing import _array_api_for_tests
 from sklearn.utils.extmath import squared_norm
 from sklearn.utils.fixes import CSR_CONTAINERS
 
@@ -79,6 +86,52 @@ def random_X_y_coef(
         )
 
     return X, y, coef
+
+
+@pytest.mark.parametrize("negative_weights", [False, True])
+@pytest.mark.parametrize("csr_container", [lambda x: x] + CSR_CONTAINERS)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_sandwich_dot(negative_weights, csr_container, dtype, global_random_seed):
+    """Test sandwich_dot against the naive X.T @ diag(W) @ X."""
+    rng = np.random.default_rng(global_random_seed)
+    X = rng.standard_normal(size=(50, 7)).astype(dtype)
+    W = rng.uniform(low=0.1, high=2, size=50).astype(dtype)
+    if negative_weights:
+        W[::5] *= -1
+    expected = X.T @ np.diag(W) @ X
+    X = csr_container(X)
+    result = sandwich_dot(X, W)
+    assert result.dtype == dtype
+    rtol = 1e-4 if dtype == np.float32 else 1e-12
+    assert_allclose(result, expected, rtol=rtol, atol=rtol)
+    if not negative_weights and not sparse.issparse(X):
+        # The SYRK code path gives an exactly symmetric result.
+        assert_allclose(result, result.T, rtol=0, atol=0)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize("negative_weights", [False, True])
+def test_sandwich_dot_array_api(
+    array_namespace, device_name, dtype_name, negative_weights
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(50, 7)).astype(dtype_name)
+    W = rng.uniform(low=0.1, high=2, size=50).astype(dtype_name)
+    if negative_weights:
+        W[::5] *= -1
+    expected = sandwich_dot(X, W)
+    with config_context(array_api_dispatch=True):
+        result = sandwich_dot(
+            xp.asarray(X, device=device), xp.asarray(W, device=device)
+        )
+        assert result.dtype == xp.asarray(X, device=device).dtype
+        result_np = _convert_to_numpy(result, xp=xp)
+    rtol = 1e-4 if dtype_name == "float32" else 1e-12
+    assert_allclose(result_np, expected, rtol=rtol, atol=rtol)
 
 
 @pytest.mark.parametrize("base_loss", LOSSES)
