@@ -582,8 +582,31 @@ def test_minmax_scaler_partial_fit():
                 n_samples_seen=scaler_incr.n_samples_seen_,
             )
 
+@pytest.mark.parametrize("scaler_class", [MinMaxScaler, MaxAbsScaler])
+def test_scaler_partial_fit_all_nan_batch(scaler_class):
+    # An all-NaN batch must not poison statistics learned earlier.
+    # Non-regression test for gh-35143.
+    X_a = np.array([[1.0, -2.0], [3.0, 4.0]])
+    X_b = np.array([[np.nan, 5.0], [np.nan, -6.0]])
+    X = np.vstack([X_a, X_b])
+    X_test = np.array([[2.0, 0.0]])
+    scaler_batch = scaler_class().fit(X)
+    scaler_incr = scaler_class().partial_fit(X_a)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        scaler_incr.partial_fit(X_b)
+    assert_array_almost_equal(
+        scaler_batch.transform(X_test), scaler_incr.transform(X_test)
+    )
+    if scaler_class is MinMaxScaler:
+        assert_array_almost_equal(scaler_batch.data_min_, scaler_incr.data_min_)
+        assert_array_almost_equal(scaler_batch.data_max_, scaler_incr.data_max_)
+    else:
+        assert_array_almost_equal(scaler_batch.max_abs_, scaler_incr.max_abs_)
 
-def test_standard_scaler_partial_fit():
+    
+    
+    def test_standard_scaler_partial_fit():
     # Test if partial_fit run over many batches of size 1 and 50
     # gives the same results as fit
     X = X_2d
