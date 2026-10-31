@@ -40,3 +40,19 @@ Scikit-learn handles four kinds of data for :term:`X` as used in `fit(X, y)`, `f
 
     modules/df_output_transform
     modules/array_api
+
+Loading features from Redis SQL results
+=======================================
+
+Database clients can supply estimator inputs through Arrow-to-NumPy conversion.
+For example, the external `Redis ADBC driver
+<https://github.com/redis/redis-adbc-driver>`_ fetches query results as Arrow
+tables. Select features and labels in one query, convert the numeric columns
+to arrays, and handle missing values and categorical encoding before fitting.
+
+The `Redis ADBC scikit-learn guide
+<https://github.com/redis/redis-adbc-driver/blob/a48432273a0f9978e893bca27057b9f128e7603e/docs/integrations/scikit-learn.md>`_
+shows this data-loading path with a small decision-tree fit and prediction.
+Its training-row check verifies data flow, not model quality; use held-out
+evaluation for an application. This is custom application code, not a native
+scikit-learn database connector.
