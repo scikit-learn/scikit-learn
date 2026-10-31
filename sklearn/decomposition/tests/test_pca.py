@@ -891,12 +891,12 @@ def test_infer_dimension_sensitive_spectra(spectrum, n_samples, expected):
     assert _infer_dimension(spectrum, n_samples) == expected
 
 
-def test_infer_dimension_tied_eigenvalues_is_not_an_error():
+def test_infer_dimension_tied_eigenvalues_raises_error():
     # An exactly isotropic spectrum makes every gap log(0), so no rank has a
-    # meaningful likelihood. _infer_dimension still has to return a rank in
-    # [1, n_features - 1] rather than propagating a math domain error.
+    # meaningful likelihood.
     spectrum = np.ones(8)
-    assert _infer_dimension(spectrum, 100) == 1
+    with pytest.raises(ValueError, match="tied eigenvalues"):
+        _infer_dimension(spectrum, 100)
 
 
 def test_pca_randomized_svd_n_oversamples():

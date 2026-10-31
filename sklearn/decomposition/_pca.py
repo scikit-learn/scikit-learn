@@ -56,10 +56,10 @@ def _infer_dimension(spectrum, n_samples):
     n_features = spectrum.shape[0]
     eps = 1e-15
 
-    # Running argmax of log likelihood. Rank 0 is never a candidate (per the
-    # documented return range).
+    # Running argmax of log likelihood. Rank 0 is never a candidate, it is only
+    # returned when the loop below has no rank to test.
     best_ll = -xp.inf
-    best_rank = 1
+    best_rank = 0
 
     # Below, l = spectrum (non-increasing) and d = n_features. At rank k the
     # retained block is l(0:k) and lambda_hat(j) = v for j >= k.
@@ -111,8 +111,8 @@ def _infer_dimension(spectrum, n_samples):
             # pa = logdet(A_Z). Each rank appends one row to each pair sum:
             #   log_diff_sum += sum_{j>=k} log(l(k-1) - l(j))
             #   inv_pair_sum += sum_{i<k-1} log(1/l(k-1) - 1/l(i))
-            # Tied eigenvalues make these log(0); the guard on `ll` below
-            # deals with the -inf that propagates from there.
+            # Tied eigenvalues make these log(0); the check on `ll` below
+            # raises on the -inf that propagates from there.
             last = spectrum[rank - 1]
             log_diff_sum += xp.sum(xp.log(last - spectrum[rank:]))
             inv_pair_sum += xp.sum(xp.log(1.0 / last - 1.0 / spectrum[: rank - 1]))
@@ -130,7 +130,15 @@ def _infer_dimension(spectrum, n_samples):
             ll = pu + pl + pv + pp - pa / 2.0 - rank * log(n_samples) / 2.0
 
             # Reject +inf or nan
-            if ll < xp.inf and ll > best_ll:
+            if not ll < xp.inf:
+                raise ValueError(
+                    "Could not infer the number of components with "
+                    "n_components='mle': the log-likelihood of rank "
+                    f"{rank} is not finite because the data has tied "
+                    "eigenvalues."
+                )
+
+            if ll > best_ll:
                 best_ll = ll
                 best_rank = rank
 
