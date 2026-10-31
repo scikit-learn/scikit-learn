@@ -535,6 +535,35 @@ def test_multilabel_confusion_matrix_multiclass():
     test([str(y) for y in y_true], [str(y) for y in y_pred], string_type=True)
 
 
+@pytest.mark.parametrize(
+    "dtype, n_classes, labels",
+    [
+        (np.uint8, 2, None),
+        (np.int32, 5, None),
+        (np.int64, 20, None),
+        (bool, 2, None),
+        (np.uint8, 2, [1, 0]),
+        (np.uint8, 2, [0]),
+        (np.uint8, 2, [1]),
+        (np.uint8, 2, [0, 1, 99]),
+        (np.uint8, 2, [-1, 0, 1]),
+        (np.uint8, 2, [0.5, 1]),
+    ],
+)
+def test_multilabel_confusion_matrix_integer_fast_path(dtype, n_classes, labels):
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, n_classes, size=1000).astype(dtype)
+    y_pred = rng.randint(0, n_classes, size=1000).astype(dtype)
+
+    result = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+    expected = multilabel_confusion_matrix(
+        y_true.astype(np.float64),
+        y_pred.astype(np.float64),
+        labels=labels,
+    )
+    assert_array_equal(result, expected)
+
+
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_multilabel_confusion_matrix_multilabel(csc_container, csr_container):

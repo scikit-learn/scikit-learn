@@ -759,11 +759,33 @@ def multilabel_confusion_matrix(
                 "multilabel classification."
             )
 
-        le = LabelEncoder()
-        le.fit(labels)
-        y_true = le.transform(y_true)
-        y_pred = le.transform(y_pred)
-        sorted_labels = le.classes_
+        n_present = int(present_labels.shape[0])
+        integral_kinds = ("bool", "signed integer", "unsigned integer")
+        use_fast_path = (
+            n_present > 0
+            and xp.isdtype(y_true.dtype, integral_kinds)
+            and xp.isdtype(y_pred.dtype, integral_kinds)
+            and xp.isdtype(labels.dtype, integral_kinds)
+        )
+        if use_fast_path:
+            int_labels = xp.astype(labels, xp.int64)
+            int_present_labels = xp.astype(present_labels, xp.int64)
+            use_fast_path = (
+                int_present_labels[0] == 0
+                and int_present_labels[-1] == n_present - 1
+                and xp.min(int_labels) >= 0
+            )
+        if use_fast_path:
+            y_true = xp.astype(y_true, xp.int64)
+            y_pred = xp.astype(y_pred, xp.int64)
+            labels = int_labels
+            sorted_labels = int_present_labels
+        else:
+            le = LabelEncoder()
+            le.fit(labels)
+            y_true = le.transform(y_true)
+            y_pred = le.transform(y_pred)
+            sorted_labels = le.classes_
 
         # labels are now from 0 to len(labels) - 1 -> use bincount
         tp = y_true == y_pred
