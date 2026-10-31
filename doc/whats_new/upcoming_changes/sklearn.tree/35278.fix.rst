@@ -1,0 +1,12 @@
+:func:`sklearn.tree.DecisionTreeClassifier` and
+:func:`sklearn.tree.DecisionTreeRegressor`: fixed the ``categorical_features``
+docstring and the validation error message.
+
+- The docstring now correctly states the actual category limits: at most 256
+  unique categories with ``splitter='best'`` and at most 16,777,216 with
+  ``splitter='random'`` (previously stated 255, which was wrong).
+- The ``ValueError`` raised when a feature exceeds the limit now reports the
+  number of categories found and the actual limit for the chosen splitter,
+  instead of referring to an internal encoded value range.
+
+:pr:`35278` by :user:`MilindLate`.
