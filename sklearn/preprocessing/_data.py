@@ -516,8 +516,24 @@ class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
         else:
-            data_min = xp.minimum(self.data_min_, data_min)
-            data_max = xp.maximum(self.data_max_, data_max)
+                    data_min = xp.where(
+                                    xp.isnan(data_min),
+            self.data_min_,
+            xp.where(
+                xp.isnan(self.data_min_),
+                data_min,
+                xp.minimum(self.data_min_, data_min),
+            ),
+                    )
+                    data_max = xp.where(
+            xp.isnan(data_max),
+            self.data_max_,
+            xp.where(
+                xp.isnan(self.data_max_),
+                data_max,
+                xp.maximum(self.data_max_, data_max),
+            ),
+                    )
             self.n_samples_seen_ += X.shape[0]
 
         data_range = data_max - data_min
@@ -1320,7 +1336,15 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         if first_pass:
             self.n_samples_seen_ = X.shape[0]
         else:
-            max_abs = xp.maximum(self.max_abs_, max_abs)
+                    max_abs = xp.where(
+            xp.isnan(max_abs),
+            self.max_abs_,
+            xp.where(
+                xp.isnan(self.max_abs_),
+                max_abs,
+                xp.maximum(self.max_abs_, max_abs),
+            ),
+                    )
             self.n_samples_seen_ += X.shape[0]
 
         self.max_abs_ = max_abs
