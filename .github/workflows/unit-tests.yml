@@ -35,6 +35,11 @@ jobs:
         with:
           python-version: '3.12'
           cache: 'pip'
+      # Update pip>=26.2.2 as mitigation for eMudhra certificate incident
+      - name: Update pip >= 26.2.2
+        run: |
+          python -m pip install 'pip>=26.2.2'
+
       - name: Install linters
         run: |
           pip install -r build_tools/github/lint_lock.txt
