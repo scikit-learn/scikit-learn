@@ -2433,6 +2433,11 @@ class GroupTimeSeriesSplit(GroupsConsumerMixin, _BaseKFold):
     The same group will not appear in two different folds (the number of
     distinct groups has to be at least equal to the number of folds).
 
+    Groups are never split: `test_size`, `max_train_size` and `gap` count whole
+    groups, not samples. Every test set therefore contains the same number of
+    groups, but test sets can contain different numbers of samples when groups
+    have different sizes.
+
     Note that, unlike standard cross-validation methods, successive training
     sets are supersets of those that come before them.
 
@@ -2460,14 +2465,17 @@ class GroupTimeSeriesSplit(GroupsConsumerMixin, _BaseKFold):
         Number of splits. Must be at least 2.
 
     max_train_size : int, default=None
-        Maximum size for a single training group.
+        Maximum number of groups in a single training set. When set, training
+        uses only the `max_train_size` groups that come right before the `gap`.
 
     test_size : int, default=None
-        Used to limit the size of the test group.
+        Number of groups in each test set. Defaults to
+        ``n_groups // (n_splits + 1)``, where ``n_groups`` is the number of
+        distinct groups. This is the maximum allowed value with ``gap=0``.
 
     gap : int, default=0
-        Number of groups to exclude from the end of each training group before
-        the test group.
+        Number of groups to exclude from the end of each training set before
+        the test set.
 
     Examples
     --------
@@ -2488,6 +2496,12 @@ class GroupTimeSeriesSplit(GroupsConsumerMixin, _BaseKFold):
     TRAIN GROUP: ['a' 'a' 'a' 'a' 'b' 'b' 'b'] TEST GROUP: ['c' 'c' 'c' 'c']
     TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10] TEST: [11 12 13]
     TRAIN GROUP: ['a' 'a' 'a' 'a' 'b' 'b' 'b' 'c' 'c' 'c' 'c'] TEST GROUP: ['d' 'd' 'd']
+    >>> # `test_size`, `max_train_size` and `gap` count groups, not samples
+    >>> gtss = GroupTimeSeriesSplit(n_splits=2, test_size=1, gap=1)
+    >>> for train_idx, test_idx in gtss.split(groups, groups=groups):
+    ...     print("TRAIN GROUP:", groups[train_idx], "TEST GROUP:", groups[test_idx])
+    TRAIN GROUP: ['a' 'a' 'a' 'a'] TEST GROUP: ['c' 'c' 'c' 'c']
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'b' 'b' 'b'] TEST GROUP: ['d' 'd' 'd']
     """
 
     def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
@@ -2523,16 +2537,28 @@ class GroupTimeSeriesSplit(GroupsConsumerMixin, _BaseKFold):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
         X, y, groups = indexable(X, y, groups)
-        n_folds = self.n_splits + 1
+        n_splits = self.n_splits
+        n_folds = n_splits + 1
+        gap = self.gap
         # `np.unique` will reorder the group. We need to keep the original
         # ordering.
         reordered_unique_groups, indices = np.unique(groups, return_index=True)
         unique_groups = reordered_unique_groups[np.argsort(indices)]
         n_groups = len(unique_groups)
+        test_size = (
+            self.test_size if self.test_size is not None else n_groups // n_folds
+        )
+        # Validate here rather than in `TimeSeriesSplit`, whose error messages
+        # would count the groups as samples.
         if n_folds > n_groups:
             raise ValueError(
                 f"Cannot have number of folds={n_folds} "
                 f"greater than the number of groups={n_groups}"
+            )
+        if n_groups - gap - (test_size * n_splits) <= 0:
+            raise ValueError(
+                f"Too many splits={n_splits} for number of groups={n_groups} "
+                f"with test_size={test_size} and gap={gap}."
             )
         seen_groups = set()
         prev_group = None
@@ -2545,20 +2571,18 @@ class GroupTimeSeriesSplit(GroupsConsumerMixin, _BaseKFold):
                 )
             prev_group = group
             seen_groups.add(group)
+        # Splitting the ordered unique groups, rather than the samples, keeps
+        # every group whole: `test_size`, `max_train_size` and `gap` all count
+        # groups.
         tss = TimeSeriesSplit(
-            gap=self.gap,
-            max_train_size=None,
-            n_splits=self.n_splits,
-            test_size=None,
+            n_splits=n_splits,
+            max_train_size=self.max_train_size,
+            test_size=self.test_size,
+            gap=gap,
         )
         for train_idx, test_idx in tss.split(unique_groups):
             train_array = np.where(np.isin(groups, unique_groups[train_idx]))[0]
             test_array = np.where(np.isin(groups, unique_groups[test_idx]))[0]
-            train_end = len(train_array)
-            if self.max_train_size and self.max_train_size < train_end:
-                train_array = train_array[train_end - self.max_train_size : train_end]
-            if self.test_size:
-                test_array = test_array[: self.test_size]
             yield train_array, test_array
 
 
