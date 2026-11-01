@@ -213,6 +213,13 @@ parameter. :class:`SGDRegressor` supports the following loss functions:
 * ``loss="squared_error"``: Ordinary least squares,
 * ``loss="huber"``: Huber loss for robust regression,
 * ``loss="epsilon_insensitive"``: linear Support Vector Regression.
+* ``loss="poisson"``: Half Poisson deviance loss with log link.
+  Equivalent to online :class:`PoissonRegressor`. Requires non-negative targets,
+* ``loss="gamma"``: Half Gamma deviance loss with log link.
+  Equivalent to online :class:`GammaRegressor`. Requires strictly positive targets,
+* ``loss="tweedie"``: Half Tweedie deviance loss with log link.
+  Controlled by the ``power`` parameter (default 1.5); ``power=1`` recovers Poisson,
+  ``power=2`` recovers Gamma.
 
 Please refer to the :ref:`mathematical section below
 <sgd_mathematical_formulation>` for formulas.
