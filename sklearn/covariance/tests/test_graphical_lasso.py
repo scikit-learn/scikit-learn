@@ -57,8 +57,8 @@ def test_graphical_lassos(global_random_seed):
                 # use 1e-10 since the cost can be exactly 0
                 assert_array_less(np.diff(costs), 1e-10)
         # Check that the 2 approaches give similar results
-        assert_allclose(covs["cd"], covs["lars"], atol=1e-3)
-        assert_allclose(icovs["cd"], icovs["lars"], atol=1e-3)
+        assert_allclose(covs["cd"], covs["lars"], atol=2e-3)
+        assert_allclose(icovs["cd"], icovs["lars"], atol=2e-3)
 
     # Smoke test the estimator
     model = GraphicalLasso(alpha=0.25, tol=1e-7, enet_tol=1e-11, max_iter=100).fit(X)

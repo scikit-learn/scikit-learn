@@ -33,7 +33,7 @@ folder with the following content::
   now supports missing values in the data matrix `X`. Missing-values are
   handled by randomly moving all of the samples to the left, or right child
   node as the tree is traversed.
-  By :user:`Adam Li <adam2392>`
+  By :user:`Adam Li <adam2392>`.
 ```
 
 If you are unsure how to name the news fragment or which folder to use, don't

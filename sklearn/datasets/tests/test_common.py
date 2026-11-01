@@ -82,7 +82,7 @@ def check_as_frame(
     frame_X, frame_y = dataset_func(as_frame=True, return_X_y=True)
     assert isinstance(frame_X, pd.DataFrame)
     if frame_y.ndim > 1:
-        assert isinstance(frame_X, pd.DataFrame)
+        assert isinstance(frame_y, pd.DataFrame)
     else:
         assert isinstance(frame_y, pd.Series)
 

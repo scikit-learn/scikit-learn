@@ -627,7 +627,15 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         self._expanded_class_weight = compute_class_weight(
             self.class_weight, classes=self.classes_, y=y
         )
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        # Skip check that validation weights are not all zero when `early_stopping` is
+        # set to True as `_make_validation_split` will raise a more informative error.
+        sample_weight = _check_sample_weight(
+            sample_weight,
+            X,
+            dtype=X.dtype,
+            allow_all_zero_weights=self.early_stopping,
+        )
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(
@@ -1030,8 +1038,6 @@ class SGDClassifier(BaseSGDClassifier):
         :meth:`partial_fit` method.
         Values must be in the range `[1, inf)`.
 
-        .. versionadded:: 0.19
-
     tol : float or None, default=1e-3
         The stopping criterion. If it is not None, training will stop
         when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
@@ -1039,8 +1045,6 @@ class SGDClassifier(BaseSGDClassifier):
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
         Values must be in the range `[0.0, inf)`.
-
-        .. versionadded:: 0.19
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -1088,9 +1092,6 @@ class SGDClassifier(BaseSGDClassifier):
           `loss='hinge'`.
           Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 eta0))`.
 
-        .. versionadded:: 0.20
-            Added 'adaptive' option.
-
         .. versionadded:: 1.8
            Added options 'pa1' and 'pa2'
 
@@ -1101,7 +1102,7 @@ class SGDClassifier(BaseSGDClassifier):
         Values must be in the range `(0.0, inf)`.
 
         For PA-1 (`learning_rate=pa1`) and PA-II (`pa2`), it specifies the
-        aggressiveness parameter for the passive-agressive algorithm, see [1] where it
+        aggressiveness parameter for the passive-aggressive algorithm, see [1] where it
         is called C:
 
         - For PA-I it is the maximum step size.
@@ -1129,17 +1130,11 @@ class SGDClassifier(BaseSGDClassifier):
         See :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_early_stopping.py` for an
         example of the effects of early stopping.
 
-        .. versionadded:: 0.20
-            Added 'early_stopping' option
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if `early_stopping` is True.
         Values must be in the range `(0.0, 1.0)`.
-
-        .. versionadded:: 0.20
-            Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before stopping
@@ -1147,9 +1142,6 @@ class SGDClassifier(BaseSGDClassifier):
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
         Integer values must be in the range `[1, max_iter)`.
-
-        .. versionadded:: 0.20
-            Added 'n_iter_no_change' option
 
     class_weight : dict, {class_label: weight} or "balanced", default=None
         Preset for the class_weight fit parameter.
@@ -1203,8 +1195,6 @@ class SGDClassifier(BaseSGDClassifier):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1862,8 +1852,6 @@ class SGDRegressor(BaseSGDRegressor):
         :meth:`partial_fit` method.
         Values must be in the range `[1, inf)`.
 
-        .. versionadded:: 0.19
-
     tol : float or None, default=1e-3
         The stopping criterion. If it is not None, training will stop
         when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
@@ -1871,8 +1859,6 @@ class SGDRegressor(BaseSGDRegressor):
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
         Values must be in the range `[0.0, inf)`.
-
-        .. versionadded:: 0.19
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -1913,9 +1899,6 @@ class SGDRegressor(BaseSGDRegressor):
           `loss='epsilon_insensitive'`.
           Update is `w += eta y x` with `eta = hinge_loss / (||x||**2 + 1/(2 eta0))`.
 
-        .. versionadded:: 0.20
-            Added 'adaptive' option.
-
         .. versionadded:: 1.8
            Added options 'pa1' and 'pa2'
 
@@ -1925,7 +1908,7 @@ class SGDRegressor(BaseSGDRegressor):
         Values must be in the range `(0.0, inf)`.
 
         For PA-1 (`learning_rate=pa1`) and PA-II (`pa2`), it specifies the
-        aggressiveness parameter for the passive-agressive algorithm, see [1] where it
+        aggressiveness parameter for the passive-aggressive algorithm, see [1] where it
         is called C:
 
         - For PA-I it is the maximum step size.
@@ -1954,17 +1937,11 @@ class SGDRegressor(BaseSGDRegressor):
         See :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_early_stopping.py` for an
         example of the effects of early stopping.
 
-        .. versionadded:: 0.20
-            Added 'early_stopping' option
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if `early_stopping` is True.
         Values must be in the range `(0.0, 1.0)`.
-
-        .. versionadded:: 0.20
-            Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before stopping
@@ -1972,9 +1949,6 @@ class SGDRegressor(BaseSGDRegressor):
         Convergence is checked against the training loss or the
         validation loss depending on the `early_stopping` parameter.
         Integer values must be in the range `[1, max_iter)`.
-
-        .. versionadded:: 0.20
-            Added 'n_iter_no_change' option
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -2013,8 +1987,6 @@ class SGDRegressor(BaseSGDRegressor):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2227,8 +2199,6 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2492,7 +2462,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         if not hasattr(self, "coef_"):
             self._more_validate_params(for_partial_fit=True)
 
-        alpha = self.nu / 2
+        alpha = self.nu
         return self._partial_fit(
             X,
             alpha,
@@ -2596,7 +2566,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         """
         self._more_validate_params()
 
-        alpha = self.nu / 2
+        alpha = self.nu
         self._fit(
             X,
             alpha=alpha,

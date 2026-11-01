@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass, fields
 
 import numpy as np
@@ -32,6 +33,21 @@ class EmptyRegressor(RegressorMixin, BaseEstimator):
     pass
 
 
+def test_type_error_is_thrown_for_class_vs_instance():
+    """Test that a clearer error is raised if a class is passed instead of an instance.
+
+    Related to the discussion in
+    https://github.com/scikit-learn/scikit-learn/issues/32394#issuecomment-3375647854.
+    """
+    estimator_class = EmptyClassifier
+    match = re.escape(
+        "Expected an estimator instance (EmptyClassifier()), "
+        "got estimator class instead (EmptyClassifier)."
+    )
+    with pytest.raises(TypeError, match=match):
+        get_tags(estimator_class)
+
+
 @pytest.mark.parametrize(
     "estimator, value",
     [
@@ -63,7 +79,7 @@ def test_no___sklearn_tags__with_more_tags():
 def test_tag_test_passes_with_inheritance():
     @dataclass
     class MyTags(Tags):
-        my_tag: bool = True  # type: ignore[annotation-unchecked]
+        my_tag: bool = True
 
     class MyEstimator(BaseEstimator):
         def __sklearn_tags__(self):

@@ -162,7 +162,44 @@ ax.figure.tight_layout()
 #
 # Also, note that both random features have very low importances (close to 0) as
 # expected.
+import matplotlib
+import matplotlib.pyplot as plt
+
 from sklearn.inspection import permutation_importance
+from sklearn.utils.fixes import parse_version
+
+# `pandas.DataFrame.plot.box` forwards its `vert` and `labels` arguments to matplotlib.
+# These arguments are deprecated and removed in version 3.11 and 3.9, respectively. We
+# therefore draw the horizontal boxplots directly with matplotlib in a way that is
+# compatible with the matplotlib versions we support. As a user you probably can write
+# simpler code by using `pandas.DataFrame.plot.box` directly with the appropriate
+# arguments.
+tick_labels_parameter_name = (
+    "tick_labels"
+    if parse_version(matplotlib.__version__) >= parse_version("3.9")
+    else "labels"
+)
+orientation_dict = (
+    {"orientation": "horizontal"}
+    if parse_version(matplotlib.__version__) >= parse_version("3.10")
+    else {"vert": False}
+)
+
+
+def plot_importances_box(importances, title):
+    fig, ax = plt.subplots()
+    ax.boxplot(
+        importances.values,
+        whis=10,
+        **orientation_dict,
+        **{tick_labels_parameter_name: importances.columns},
+    )
+    ax.set_title(title)
+    ax.axvline(x=0, color="k", linestyle="--")
+    ax.set_xlabel("Decrease in accuracy score")
+    fig.tight_layout()
+    return ax
+
 
 result = permutation_importance(
     rf, X_test, y_test, n_repeats=10, random_state=42, n_jobs=2
@@ -173,11 +210,7 @@ importances = pd.DataFrame(
     result.importances[sorted_importances_idx].T,
     columns=X.columns[sorted_importances_idx],
 )
-ax = importances.plot.box(vert=False, whis=10)
-ax.set_title("Permutation Importances (test set)")
-ax.axvline(x=0, color="k", linestyle="--")
-ax.set_xlabel("Decrease in accuracy score")
-ax.figure.tight_layout()
+plot_importances_box(importances, "Permutation Importances (test set)")
 
 # %%
 # It is also possible to compute the permutation importances on the training
@@ -194,11 +227,7 @@ importances = pd.DataFrame(
     result.importances[sorted_importances_idx].T,
     columns=X.columns[sorted_importances_idx],
 )
-ax = importances.plot.box(vert=False, whis=10)
-ax.set_title("Permutation Importances (train set)")
-ax.axvline(x=0, color="k", linestyle="--")
-ax.set_xlabel("Decrease in accuracy score")
-ax.figure.tight_layout()
+plot_importances_box(importances, "Permutation Importances (train set)")
 
 # %%
 # We can further retry the experiment by limiting the capacity of the trees
@@ -233,11 +262,7 @@ test_importances = pd.DataFrame(
 
 # %%
 for name, importances in zip(["train", "test"], [train_importances, test_importances]):
-    ax = importances.plot.box(vert=False, whis=10)
-    ax.set_title(f"Permutation Importances ({name} set)")
-    ax.set_xlabel("Decrease in accuracy score")
-    ax.axvline(x=0, color="k", linestyle="--")
-    ax.figure.tight_layout()
+    plot_importances_box(importances, f"Permutation Importances ({name} set)")
 
 # %%
 # Now, we can observe that on both sets, the `random_num` and `random_cat`

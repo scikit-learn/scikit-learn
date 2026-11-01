@@ -69,12 +69,14 @@ from sklearn.utils.fixes import CSR_CONTAINERS
         # This is a known limitation, see:
         # https://github.com/scikit-learn/scikit-learn/issues/21305
         pytest.param(
-            LogisticRegression(
-                penalty="elasticnet", solver="saga", l1_ratio=0.5, tol=1e-15
-            ),
+            LogisticRegression(l1_ratio=0.5, solver="saga", tol=1e-15),
             marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
         ),
-        LogisticRegressionCV(tol=1e-6),
+        LogisticRegressionCV(
+            alphas=10,
+            tol=1e-6,
+            scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
+        ),
         MultiTaskElasticNet(),
         MultiTaskElasticNetCV(),
         MultiTaskLasso(),
@@ -214,7 +216,14 @@ def test_linear_model_regressor_coef_shape(Regressor, ndim):
     [
         (LinearSVC, {}),
         (LogisticRegression, {}),
-        (LogisticRegressionCV, {"solver": "newton-cholesky"}),
+        (
+            LogisticRegressionCV,
+            {
+                "alphas": 10,
+                "solver": "newton-cholesky",
+                "scoring": "neg_log_loss",  # TODO(1.11): remove
+            },
+        ),
         (PassiveAggressiveClassifier, {}),
         (Perceptron, {}),
         (RidgeClassifier, {}),

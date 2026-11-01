@@ -32,14 +32,14 @@ else
     global_status=1
 fi
 
-echo -e "### Running mypy ###\n"
-mypy sklearn/
+echo -e "### Running pyrefly ###\n"
+pyrefly check
 status=$?
 if [[ $status -eq 0 ]]
 then
-    echo -e "No problem detected by mypy\n"
+    echo -e "No problem detected by pyrefly\n"
 else
-    echo -e "Problems detected by mypy, please fix them\n"
+    echo -e "Problems detected by pyrefly, please fix them\n"
     global_status=1
 fi
 
@@ -51,6 +51,37 @@ then
     echo -e "No problem detected by cython-lint\n"
 else
     echo -e "Problems detected by cython-lint, please fix them\n"
+    global_status=1
+fi
+
+echo -e "### Running sphinx-lint ###\n"
+# Use git ls-files + xargs to avoid running sphinx-lint on generated rst files
+# (e.g. doc/modules/generated from sphinx autodoc or .rst from rst.template
+# files). This is easier to use this pattern than explicitly using -i to ignore
+# specific files and folders. This matters mostly when running locally, since
+# in the lint CI the doc hasn't been built
+git ls-files -z '*.rst' | xargs -0 sphinx-lint
+status=$?
+if [[ $status -eq 0 ]]
+then
+    echo -e "No problem detected by sphinx-lint\n"
+else
+    echo -e "Problems detected by sphinx-lint, please fix them\n"
+    global_status=1
+fi
+
+echo -e "### Running codespell ###\n"
+# Use git ls-files + xargs to avoid running Codespell on untracked local files
+# (like build artifacts or notebooks). It's easier to use this pattern than
+# explicitly excluding files with --exclude-file and other flags.
+# This matters mostly when running locally not in CI.
+git ls-files -z | xargs -0 codespell
+status=$?
+if [[ $status -eq 0 ]]
+then
+    echo -e "No problem detected by codespell\n"
+else
+    echo -e "Problems detected by codespell, please fix them\n"
     global_status=1
 fi
 

@@ -1,12 +1,14 @@
-from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t, uint32_t
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, BITSET_INNER_DTYPE_C
+from sklearn.utils._typedefs cimport float32_t, float64_t, intp_t, uint8_t
 
 
 ctypedef float64_t X_DTYPE_C
 ctypedef uint8_t X_BINNED_DTYPE_C
 ctypedef float64_t Y_DTYPE_C
 ctypedef float32_t G_H_DTYPE_C
-ctypedef uint32_t BITSET_INNER_DTYPE_C
-ctypedef BITSET_INNER_DTYPE_C[8] BITSET_DTYPE_C
 
 
 cdef packed struct hist_struct:

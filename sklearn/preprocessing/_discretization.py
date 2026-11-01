@@ -27,8 +27,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     n_bins : int or array-like of shape (n_features,), default=5
@@ -59,7 +57,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     quantile_method : {"inverted_cdf", "averaged_inverted_cdf",
             "closest_observation", "interpolated_inverted_cdf", "hazen",
             "weibull", "linear", "median_unbiased", "normal_unbiased"},
-            default="linear"
+            default="averaged_inverted_cdf"
             Method to pass on to np.percentile calculation when using
             strategy="quantile". Only `averaged_inverted_cdf` and `inverted_cdf`
             support the use of `sample_weight != None` when subsampling is not
@@ -67,12 +65,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             .. versionadded:: 1.7
 
+            .. versionchanged:: 1.9
+                The default value changed from `"linear"` to `"averaged_inverted_cdf"`.
+
     dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
         consistent with input dtype. Only np.float32 and np.float64 are
         supported.
-
-        .. versionadded:: 0.24
 
     subsample : int or None, default=200_000
         Maximum number of samples, used to fit the model, for computational
@@ -112,8 +111,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -196,7 +193,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         "quantile_method": [
             StrOptions(
                 {
-                    "warn",
                     "inverted_cdf",
                     "averaged_inverted_cdf",
                     "closest_observation",
@@ -220,7 +216,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         *,
         encode="onehot",
         strategy="quantile",
-        quantile_method="warn",
+        quantile_method="averaged_inverted_cdf",
         dtype=None,
         subsample=200_000,
         random_state=None,
@@ -297,20 +293,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         bin_edges = np.zeros(n_features, dtype=object)
 
-        # TODO(1.9): remove and switch to quantile_method="averaged_inverted_cdf"
-        # by default.
         quantile_method = self.quantile_method
-        if self.strategy == "quantile" and quantile_method == "warn":
-            warnings.warn(
-                "The current default behavior, quantile_method='linear', will be "
-                "changed to quantile_method='averaged_inverted_cdf' in "
-                "scikit-learn version 1.9 to naturally support sample weight "
-                "equivalence properties by default. Pass "
-                "quantile_method='averaged_inverted_cdf' explicitly to silence this "
-                "warning.",
-                FutureWarning,
-            )
-            quantile_method = "linear"
 
         if (
             self.strategy == "quantile"

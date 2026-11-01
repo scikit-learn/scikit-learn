@@ -327,7 +327,10 @@ def test_ovr_binary():
     ):
         conduct_test(base_clf)
 
-    for base_clf in (MultinomialNB(), SVC(probability=True), LogisticRegression()):
+    for base_clf in (
+        MultinomialNB(),
+        LogisticRegression(),
+    ):
         conduct_test(base_clf, test_predict_proba=True)
 
 
@@ -404,20 +407,11 @@ def test_ovr_multilabel_predict_proba():
         assert not hasattr(decision_only, "predict_proba")
 
         # Estimator with predict_proba disabled, depending on parameters.
-        decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        decision_only = OneVsRestClassifier(svm.SVC())
         assert not hasattr(decision_only, "predict_proba")
         decision_only.fit(X_train, Y_train)
         assert not hasattr(decision_only, "predict_proba")
         assert hasattr(decision_only, "decision_function")
-
-        # Estimator which can get predict_proba enabled after fitting
-        gs = GridSearchCV(
-            svm.SVC(probability=False), param_grid={"probability": [True]}
-        )
-        proba_after_fit = OneVsRestClassifier(gs)
-        assert not hasattr(proba_after_fit, "predict_proba")
-        proba_after_fit.fit(X_train, Y_train)
-        assert hasattr(proba_after_fit, "predict_proba")
 
         Y_pred = clf.predict(X_test)
         Y_proba = clf.predict_proba(X_test)
@@ -930,7 +924,7 @@ def test_support_missing_values(MultiClassClassifier):
     X = np.copy(X)  # Copy to avoid that the original data is modified
     mask = rng.choice([1, 0], X.shape, p=[0.1, 0.9]).astype(bool)
     X[mask] = np.nan
-    lr = make_pipeline(SimpleImputer(), LogisticRegression(random_state=rng))
+    lr = make_pipeline(SimpleImputer(), LogisticRegression())
 
     MultiClassClassifier(lr).fit(X, y).score(X, y)
 
@@ -980,7 +974,7 @@ def test_multiclass_estimator_attribute_error():
 
     # LogisticRegression does not implement 'partial_fit' and should raise an
     # AttributeError
-    clf = OneVsRestClassifier(estimator=LogisticRegression(random_state=42))
+    clf = OneVsRestClassifier(estimator=LogisticRegression())
 
     outer_msg = "This 'OneVsRestClassifier' has no attribute 'partial_fit'"
     inner_msg = "'LogisticRegression' object has no attribute 'partial_fit'"

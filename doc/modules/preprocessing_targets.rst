@@ -41,6 +41,8 @@ that support the label indicator matrix format.
 For more information about multiclass classification, refer to
 :ref:`multiclass_classification`.
 
+.. _multilabelbinarizer:
+
 MultiLabelBinarizer
 -------------------
 

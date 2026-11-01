@@ -40,11 +40,20 @@ def _calculate_threshold(estimator, importances, threshold):
         is_elasticnetcv_l1_penalized = est_name == "ElasticNetCV" and (
             hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0)
         )
+        is_logreg_l1_penalized = est_name == "LogisticRegression" and (
+            hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0)
+        )
+        is_logregcv_l1_penalized = est_name == "LogisticRegressionCV" and (
+            hasattr(estimator, "l1_ratio_")
+            and np.all(np.isclose(estimator.l1_ratio_, 1.0))
+        )
         if (
             is_l1_penalized
             or is_lasso
             or is_elasticnet_l1_penalized
             or is_elasticnetcv_l1_penalized
+            or is_logreg_l1_penalized
+            or is_logregcv_l1_penalized
         ):
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
@@ -85,8 +94,6 @@ def _calculate_threshold(estimator, importances, threshold):
 
 class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     """Meta-transformer for selecting features based on importance weights.
-
-    .. versionadded:: 0.17
 
     Read more in the :ref:`User Guide <select_from_model>`.
 
@@ -132,7 +139,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
-        .. versionadded:: 0.20
         .. versionchanged:: 1.1
            `max_features` accepts a callable.
 
@@ -151,8 +157,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     estimator_ : estimator
@@ -166,8 +170,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     max_features_ : int
         Maximum number of features calculated during :term:`fit`. Only defined

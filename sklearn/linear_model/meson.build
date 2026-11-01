@@ -18,7 +18,7 @@ foreach name: name_list
     output: name + '.pyx',
     input: name + '.pyx.tp',
     command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO in principle this should go in py.exension_module below. This is
+    # TODO in principle this should go in py.extension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [linear_model_cython_tree, utils_cython_tree, _loss_cython_tree],

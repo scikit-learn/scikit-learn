@@ -1,0 +1,6 @@
+- :class:`preprocessing.QuantileTransformer` and
+  :func:`preprocessing.quantile_transform` now estimate quantiles with the
+  `averaged_inverted_cdf` method and no longer cap `n_quantiles` at `n_samples`.
+  Dense subsampling is also done with replacement. These changes affect `quantiles_`
+  even when `sample_weight` is not passed.
+  By :user:`Karassay Raushanbek <kaekkr>` and :user:`Shruti Nath <snath-xoc>`.

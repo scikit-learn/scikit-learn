@@ -45,7 +45,7 @@ def test_det_curve_display(
 
     common_kwargs = {
         "name": lr.__class__.__name__,
-        "alpha": 0.8,
+        "curve_kwargs": {"alpha": 0.8},
         "sample_weight": sample_weight,
         "drop_intermediate": drop_intermediate,
         "pos_label": pos_label,
@@ -66,7 +66,7 @@ def test_det_curve_display(
     assert_allclose(disp.fpr, fpr, atol=1e-7)
     assert_allclose(disp.fnr, fnr, atol=1e-7)
 
-    assert disp.estimator_name == "LogisticRegression"
+    assert disp.name == "LogisticRegression"
 
     # cannot fail thanks to pyplot fixture
     import matplotlib as mpl
@@ -109,7 +109,7 @@ def test_det_curve_display_default_name(
     else:
         disp = DetCurveDisplay.from_predictions(y, y_score)
 
-    assert disp.estimator_name == expected_clf_name
+    assert disp.name == expected_clf_name
     assert disp.line_.get_label() == expected_clf_name
 
 

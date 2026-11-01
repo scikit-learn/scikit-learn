@@ -430,7 +430,7 @@ It is also possible to map data to a normal distribution using
 Using the earlier example with the iris dataset::
 
   >>> quantile_transformer = preprocessing.QuantileTransformer(
-  ...     output_distribution='normal', random_state=0)
+  ...     output_distribution='normal', n_quantiles=150, random_state=0)
   >>> X_trans = quantile_transformer.fit_transform(X)
   >>> quantile_transformer.quantiles_
   array([[4.3, 2. , 1. , 0.1],
@@ -1064,7 +1064,7 @@ For instance, we can use the Pandas function :func:`pandas.cut`::
   >>> X = np.array([0.2, 2, 15, 25, 97])
   >>> transformer.fit_transform(X)
   ['infant', 'kid', 'teen', 'adult', 'senior citizen']
-  Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
+  Categories (5, str): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
 
 .. rubric:: Examples
 

@@ -297,7 +297,7 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 
 .. [Scholkopf1997] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
    `"Kernel principal component analysis."
-   <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+   <https://graphics.stanford.edu/courses/cs233-25-spring/ReferencedPapers/scholkopf_kernel.pdf>`_
    International conference on artificial neural networks.
    Springer, Berlin, Heidelberg, 1997.
 
@@ -950,7 +950,7 @@ is not readily available from the start, or when the data does not fit into memo
 .. rubric:: References
 
 .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-  <http://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
+  <https://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
   D. Lee, S. Seung, 1999
 
 .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -959,7 +959,7 @@ is not readily available from the start, or when the data does not fit into memo
 
 .. [4] `"SVD based initialization: A head start for nonnegative
   matrix factorization"
-  <https://www.boutsidis.org/Boutsidis_PRE_08.pdf>`_
+  <https://user.it.uu.se/~milga730/histo/before2011august/Boutsidis.pdf>`_
   C. Boutsidis, E. Gallopoulos, 2008
 
 .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor

@@ -93,7 +93,7 @@ def test_same_predictions_regression(
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
 
-    # We need X to be treated an numerical data, not pre-binned data.
+    # We need X to be treated a numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)
@@ -170,7 +170,7 @@ def test_same_predictions_classification(
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
 
-    # We need X to be treated an numerical data, not pre-binned data.
+    # We need X to be treated a numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)
@@ -245,7 +245,7 @@ def test_same_predictions_multiclass_classification(
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
 
-    # We need X to be treated an numerical data, not pre-binned data.
+    # We need X to be treated a numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)
