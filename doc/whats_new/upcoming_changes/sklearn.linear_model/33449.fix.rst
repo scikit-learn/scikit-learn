@@ -1,0 +1,6 @@
+- :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`, and
+  :class:`linear_model.SGDOneClassSVM` now treat an all-zero ``sample_weight``
+  passed to :meth:`partial_fit` as a no-op, leaving ``coef_``, ``intercept_``,
+  and ``t_`` unchanged. This makes it easier to use zero weights as a skip
+  signal in streaming and incremental learning workflows.
+  By :user:`Fadi Younes <repeating>`.
