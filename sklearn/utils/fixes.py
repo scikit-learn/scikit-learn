@@ -378,7 +378,7 @@ def _safely_cast_index_arrays(A, idx_dtype=np.int32, msg=""):
     elif A.format == "bsr":
         R, C = A.blocksize
         if A.indptr[-1] * R > max_value:
-            raise ValueError("indptr values too large for {msg}")
+            raise ValueError(f"indptr values too large for {msg}")
         if max(*A.shape) > max_value:
             if (A.indices * C > max_value).any():
                 raise ValueError(f"indices values too large for {msg}")
