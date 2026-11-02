@@ -1949,11 +1949,17 @@ See concept :term:`sample property`.
         are not invariant to the scale of weights.
 
         `sample_weight` can be both an argument of the estimator's :term:`fit` method
-        for model training or a parameter of a :term:`scorer` for model
-        evaluation. These callables are said to *consume* the sample weights
-        while other components of scikit-learn can *route*  the weights to the
-        underlying estimators or scorers (see
-        :ref:`glossary_metadata_routing`).
+        for model training or a parameter of a :term:`scorer` for model evaluation.
+        These callables are said to *consume* the sample weights while other components
+        of scikit-learn can *route*  the weights to the underlying estimators or scorers
+        (see :ref:`glossary_metadata_routing`). When :ref:`metadata routing
+        <metadata_routing>` is enabled together with
+        `enable_metadata_auto_requests=True` (see :func:`~sklearn.set_config`),
+        estimators, meta-estimators that also consume weights, and scorers that accept
+        `sample_weight` **auto-request** it. You then do not need
+        `set_fit_request(sample_weight=True)` or
+        `set_score_request(sample_weight=True)`. See
+        :ref:`metadata_routing_auto_request_user`.
 
         Weighting samples can be useful in several contexts. For instance, if
         the training data is not uniformly sampled from the target population,

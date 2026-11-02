@@ -179,7 +179,7 @@ def _check_array_api_dispatch(array_api_dispatch):
     if scipy_version < parse_version(min_scipy_version):
         raise ImportError(
             f"SciPy must be {min_scipy_version} or newer"
-            " (found {scipy.__version__}) to dispatch array using"
+            f" (found {scipy.__version__}) to dispatch array using"
             " the array API specification"
         )
 
