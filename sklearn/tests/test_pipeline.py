@@ -1744,9 +1744,11 @@ def test_feature_union_drop_features_in():
     fu_all_drop.fit(X, y)
     assert not hasattr(fu_all_drop, "n_features_in_")
     assert not hasattr(fu_all_drop, "feature_names_in_")
-    with pytest.raises(AttributeError, match="'FeatureUnion' object has no attribute 'n_features_in_'"):
+    msg = "'FeatureUnion' object has no attribute 'n_features_in_'"
+    with pytest.raises(AttributeError, match=msg):
         fu_all_drop.n_features_in_
-    with pytest.raises(AttributeError, match="'FeatureUnion' object has no attribute 'feature_names_in_'"):
+    msg = "'FeatureUnion' object has no attribute 'feature_names_in_'"
+    with pytest.raises(AttributeError, match=msg):
         fu_all_drop.feature_names_in_
 
 
