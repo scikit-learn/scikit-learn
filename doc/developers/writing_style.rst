@@ -188,16 +188,16 @@ and reports problems in the lines you changed. Each alert has a level:
 To check the lines your branch changed compared to ``main`` in a given file,
 run:
 
-.. prompt:: bash
+.. code-block:: console
 
-  pre-commit run vale --files doc/modules/svm.rst
+  $ pre-commit run vale --files doc/modules/svm.rst
 
 To see every alert in a file, including in lines you did not change, run the
 script behind the hook directly. It needs ``pip install vale docutils``:
 
-.. prompt:: bash
+.. code-block:: console
 
-  python build_tools/vale/run_vale.py --all-lines doc/modules/svm.rst
+  $ python build_tools/vale/run_vale.py --all-lines doc/modules/svm.rst
 
 Vale only checks patterns. It cannot tell whether a sentence is clear or a
 paragraph well structured, and it sometimes flags text that is fine. When an
