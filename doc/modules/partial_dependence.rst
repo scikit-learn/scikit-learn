@@ -14,7 +14,7 @@ response [1]_ and a set of input features of interest.
 Both PDPs [H2009]_ and ICEs [G2015]_ assume that the input features of interest
 are independent from the complement features, and this assumption is often
 violated in practice. Thus, in the case of correlated features, we will
-create absurd data points to compute the PDP/ICE [M2019]_.
+create absurd data points to compute the PDP/ICE [M2025]_.
 
 Partial dependence plots
 ========================
