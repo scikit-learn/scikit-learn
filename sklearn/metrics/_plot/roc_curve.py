@@ -75,8 +75,6 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         The class considered the positive class when ROC AUC metrics computed.
         If not `None`, this value is displayed in the x- and y-axes labels.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     line_ : matplotlib Artist or list of matplotlib Artists

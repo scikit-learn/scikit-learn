@@ -58,12 +58,16 @@ requested by default.
 
 Usage Examples
 **************
-Here we present a few examples to show some common use-cases. Our goal is to pass
-`sample_weight` and `groups` through :func:`~model_selection.cross_validate`, which
-routes the metadata to :class:`~linear_model.LogisticRegressionCV` and to a custom scorer
-made with :func:`~metrics.make_scorer`, both of which *can* use the metadata in their
-methods. In these examples we want to individually set whether to use the metadata
-within the different :term:`consumers <consumer>`.
+For convenience and a faster start into metadata routing, see
+:ref:`auto-requested metadata <metadata_routing_auto_request_user>`.
+
+The following examples use explicit ``set_{method}_request`` calls and are designed to
+show some common use-cases. Our goal here is to pass `sample_weight` and `groups`
+through :func:`~model_selection.cross_validate`, which routes the metadata to
+:class:`~linear_model.LogisticRegressionCV` and to a custom scorer made with
+:func:`~metrics.make_scorer`, both of which *can* use the metadata in their methods. In
+these examples we want to individually set whether to use the metadata within the
+different :term:`consumers <consumer>`.
 
 The examples in this section require the following imports and data::
 
@@ -95,9 +99,9 @@ method and in :func:`~metrics.make_scorer`'s `set_score_request()` method. Both
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
+  ...     alphas=10,
   ...     cv=GroupKFold(),
   ...     scoring=weighted_acc,
-  ...     use_legacy_attributes=False,
   ... ).set_fit_request(sample_weight=True)
   >>> cv_results = cross_validate(
   ...     lr,
@@ -130,7 +134,7 @@ that :func:`~model_selection.cross_validate` does not pass the weights along::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
+  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc
   ... ).set_fit_request(sample_weight=False)
   >>> cv_results = cross_validate(
   ...     lr,
@@ -161,7 +165,7 @@ to it::
 
   >>> weighted_acc = make_scorer(accuracy_score).set_score_request(sample_weight=True)
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
+  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc
   ... ).set_fit_request(sample_weight=True)
   >>> sel = SelectKBest(k=2)
   >>> pipe = make_pipeline(sel, lr)
@@ -187,7 +191,7 @@ consumers. In this example, we pass ``scoring_weight`` to the scorer, and
   ...    sample_weight="scoring_weight"
   ... )
   >>> lr = LogisticRegressionCV(
-  ...     cv=GroupKFold(), scoring=weighted_acc, use_legacy_attributes=False
+  ...     alphas=10, cv=GroupKFold(), scoring=weighted_acc
   ... ).set_fit_request(sample_weight="fitting_weight")
   >>> cv_results = cross_validate(
   ...     lr,
@@ -241,7 +245,7 @@ otherwise an error is raised by the router object. For example, the following co
 raises an error, since it hasn't been explicitly specified whether ``sample_weight``
 should be passed to the estimator's scorer or not::
 
-    >>> param_grid = {"C": [0.1, 1]}
+    >>> param_grid = {"alpha": [10, 1]}
     >>> lr = LogisticRegression().set_fit_request(sample_weight=True)
     >>> try:
     ...     GridSearchCV(
@@ -261,8 +265,59 @@ The issue can be fixed by explicitly setting the request value::
     ...     sample_weight=True
     ... ).set_score_request(sample_weight=False)
 
-At the end of the **Usage Examples** section, we disable the configuration flag for
-metadata routing::
+.. _metadata_routing_auto_request_user:
+
+Auto-requested metadata
+***********************
+
+By default, most :term:`consumers <consumer>` leave metadata requests as ``None``, so
+you must call ``set_{method}_request`` before passing that metadata through a
+:term:`router`. In addition, consumers can **auto-request** selected metadata when you
+enable a second configuration flag::
+
+    >>> sklearn.set_config(
+    ...     enable_metadata_routing=True,
+    ...     enable_metadata_auto_requests=True,
+    ... )
+
+See :func:`~sklearn.set_config` and :func:`~sklearn.config_context` for
+``enable_metadata_auto_requests``. Both ``enable_metadata_routing`` and
+``enable_metadata_auto_requests`` must be ``True`` for auto-requests to take effect.
+
+In scikit-learn, `sample_weight` is auto-requested on estimator methods that accept it
+(typically `fit` and `score`), on meta-estimators that also consume it themselves, and
+on scorers whose metric accepts `sample_weight` (for example those from
+:func:`~metrics.make_scorer` / :func:`~metrics.get_scorer`). Validation-set metadata
+(`X_val`, `y_val` and `sample_weight_val`) is auto-requested where those arguments are
+consumed (in :class:`~ensemble.HistGradientBoostingClassifier` and
+:class:`~ensemble.HistGradientBoostingRegressor`). (`groups` in `Group*Fold` is not an
+auto-request: it is requested by default whether auto-requests are on or off, because
+those splitters raise if `groups` is missing.)
+
+Note that auto-requests are subject to change and stability guarantees applied to the
+rest of the scikit-learn API do not apply here. They may grow or change over time.
+
+For most use cases it is enough to set `enable_metadata_auto_requests=True` (with
+metadata routing enabled) and leave request values unchanged. Specifically, you can pass
+your `sample_weight` through a router without calling `set_fit_request` or
+`set_score_request`. Use `set_{method}_request` when you need to opt out, set an alias,
+or handle a consumer that does not auto-request the metadata you pass.
+
+You can still override any auto-request (or default request) with
+``set_{method}_request``. Values set that way take precedence. In particular,
+``set_fit_request(sample_weight=False)`` opts out of receiving ``sample_weight`` even
+when auto-requests are enabled.
+
+If you pass metadata that no consumer requests (including under auto-requests), the
+router still raises an error.
+
+For an end-to-end example on routing a validation set (`X_val`, `y_val`), see
+:ref:`sphx_glr_auto_examples_compose_plot_metadata_routing_validation_set.py`.
+
+Developers who implement auto-requests should follow
+:ref:`metadata_routing_auto_request`.
+
+Finally, we disable the configuration flag for metadata routing::
 
     >>> sklearn.set_config(enable_metadata_routing=False)
 

@@ -52,7 +52,7 @@ rsh.fit(X, y)
 
 results = pd.DataFrame(rsh.all_cv_results_)
 results["params_str"] = results.params.apply(str)
-results.drop_duplicates(subset=("params_str", "iter"), inplace=True)
+results = results.drop_duplicates(subset=("params_str", "iter"))
 mean_scores = results.pivot(
     index="iter", columns="params_str", values="mean_test_score"
 )

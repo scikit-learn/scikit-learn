@@ -98,8 +98,6 @@ def fetch_olivetti_faces(
         If True, returns `(data, target)` instead of a `Bunch` object. See
         below for more information about the `data` and `target` objects.
 
-        .. versionadded:: 0.22
-
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
@@ -130,8 +128,6 @@ def fetch_olivetti_faces(
 
     (data, target) : tuple if `return_X_y=True`
         Tuple with the `data` and `target` objects described above.
-
-        .. versionadded:: 0.22
 
     Examples
     --------

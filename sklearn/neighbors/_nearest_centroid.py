@@ -47,9 +47,6 @@ class NearestCentroid(
             All metrics but `"euclidean"` and `"manhattan"` were deprecated and
             now raise an error.
 
-        .. versionchanged:: 0.19
-            `metric='precomputed'` was deprecated and now raises an error
-
     shrink_threshold : float, default=None
         Threshold for shrinking centroids to remove features.
 
@@ -70,8 +67,6 @@ class NearestCentroid(
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

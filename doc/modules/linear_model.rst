@@ -189,13 +189,31 @@ a linear kernel.
 Ridge Complexity
 ----------------
 
-This method has the same order of complexity as
-:ref:`ordinary_least_squares`.
+The computational cost of :class:`Ridge` depends on the solver and the shape of
+``X``. The ``"cholesky"`` and ``"sparse_cg"`` solvers use the primal formulation
+when ``n_samples >= n_features``, solving a system with ``n_features`` unknowns:
 
-.. FIXME:
-.. Not completely true: OLS is solved by an SVD, while Ridge is solved by
-.. the method of normal equations (Cholesky), there is a big flop difference
-.. between these
+.. math::
+
+   (X^T X + \alpha I) w = X^T y.
+
+When ``n_samples < n_features``, they use the dual formulation, solving a system
+with ``n_samples`` unknowns and recovering the coefficients as follows:
+
+.. math::
+
+   (X X^T + \alpha I) c = y, \qquad w = X^T c.
+
+Here, :math:`I` is the identity matrix of the appropriate size, and :math:`X` and
+:math:`y` denote the data after centering and sample-weight rescaling, when
+applicable. Using the dual formulation can be more efficient when there are many
+more features than samples.
+
+The ``"cholesky"`` solver explicitly forms the corresponding Gram matrix.
+Storing the Gram matrix requires memory proportional to
+:math:`n_{\text{features}}^2` in the primal formulation and
+:math:`n_{\text{samples}}^2` in the dual formulation. In contrast, ``"sparse_cg"`` uses
+matrix-vector products without forming it.
 
 
 Setting the regularization parameter: leave-one-out Cross-Validation
@@ -307,7 +325,7 @@ single feature :math:`j` at a time. This way, the optimization problem is reduce
 
 with index :math:`-j` meaning all features but :math:`j`. The solution is
 
-.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), \alpha)}{||x_j||_2^2}
+.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), n_{\text{samples}}\alpha)}{||x_j||_2^2}
 
 with the soft-thresholding function
 :math:`S(z, \alpha) = \operatorname{sign}(z) \max(0, |z|-\alpha)`.
@@ -325,7 +343,7 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
   :math:`P(w^\star)`, i.e. :math:`G(w, v) \geq P(w) - P(w^\star)`. It is given by
   :math:`G(w, v) = P(w) - D(v)` with dual objective function
 
-  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(y^Tv - ||v||_2^2)
+  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
 
   subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
   At optimum, the duality gap is zero, :math:`G(w^\star, v^\star) = 0` (a property
@@ -499,8 +517,8 @@ scikit-learn.
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The equivalence between ``alpha`` and the regularization parameter of SVM,
-``C`` is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``,
+The equivalence between ``alpha`` and the regularization parameter ``C`` of SVM
+is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``,
 depending on the estimator and the exact objective function optimized by the
 model.
 
@@ -951,7 +969,7 @@ regularization.
     Regularization is applied by default, which is common in machine
     learning but not in statistics. Another advantage of regularization is
     that it improves numerical stability. No regularization amounts to
-    setting C to a very high value.
+    setting `alpha` to zero.
 
 .. note:: **Logistic Regression as a special case of the Generalized Linear Models (GLM)**
 
@@ -986,27 +1004,28 @@ the probability of the positive class :math:`P(y_i=1|X_i)` as
 
 As an optimization problem, binary
 class logistic regression with regularization term :math:`r(w)` minimizes the
-following cost function:
+following objective function:
 
 .. math::
     :name: regularized-logistic-loss
 
     \min_{w} \frac{1}{S}\sum_{i=1}^n s_i
     \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right)
-    + \frac{r(w)}{S C}\,,
+    + \frac{\alpha}{S} r(w)\,,
 
 where :math:`{s_i}` corresponds to the weights assigned by the user to a
 specific training sample (the vector :math:`s` is formed by element-wise
 multiplication of the class weights and sample weights),
-and the sum :math:`S = \sum_{i=1}^n s_i`.
+and the sum :math:`S = \sum_{i=1}^n s_i`. For `sample_weight=None` (and no
+class weights), we have :math:`s_i=1` and :math:`S = n_{\text{samples}}`.
 
 We currently provide four choices for the regularization or penalty term :math:`r(w)`
-via the arguments `C` and `l1_ratio`:
+via the arguments `alpha` and `l1_ratio`:
 
 +-------------------------------+-------------------------------------------------+
 | penalty                       | :math:`r(w)`                                    |
 +===============================+=================================================+
-| none (`C=np.inf`)             | :math:`0`                                       |
+| none (`alpha=0`)              | :math:`0`                                       |
 +-------------------------------+-------------------------------------------------+
 | :math:`\ell_1` (`l1_ratio=1`) | :math:`\|w\|_1`                                 |
 +-------------------------------+-------------------------------------------------+
@@ -1019,11 +1038,6 @@ For ElasticNet, :math:`\rho` (which corresponds to the `l1_ratio` parameter)
 controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
 regularization. Elastic-Net is equivalent to :math:`\ell_1` when
 :math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
-
-Note that the scale of the class weights and the sample weights will influence
-the optimization problem. For instance, multiplying the sample weights by a
-constant :math:`b>0` is equivalent to multiplying the (inverse) regularization
-strength `C` by :math:`b`.
 
 Multinomial Case
 ----------------
@@ -1056,21 +1070,23 @@ logistic regression, see also `log-linear model
 
   .. math::
     \min_W -\frac{1}{S}\sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik} [y_i = k] \log(\hat{p}_k(X_i))
-    + \frac{r(W)}{S C}\,,
+    + \frac{\alpha}{S} r(W)\,,
 
   where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
   if :math:`P` is false, otherwise it evaluates to :math:`1`.
 
   Again, :math:`s_{ik}` are the weights assigned by the user (multiplication of sample
   weights and class weights) with their sum :math:`S = \sum_{i=1}^n \sum_{k=0}^{K-1} s_{ik}`.
+  For `sample_weight=None` (and no class weights), we have :math:`s_i=1` and
+  :math:`S = n_{\text{samples}}`.
 
   We currently provide four choices for the regularization or penalty term :math:`r(W)`
-  via the arguments `C` and `l1_ratio`, where :math:`m` is the number of features:
+  via the arguments `alpha` and `l1_ratio`, where :math:`m` is the number of features:
 
   +-------------------------------+----------------------------------------------------------------------------------+
   | penalty                       | :math:`r(W)`                                                                     |
   +===============================+==================================================================================+
-  | none (`C=np.inf`)             | :math:`0`                                                                        |
+  | none (`alpha=0`)              | :math:`0`                                                                        |
   +-------------------------------+----------------------------------------------------------------------------------+
   | :math:`\ell_1` (`l1_ratio=1`) | :math:`\|W\|_{1,1} = \sum_{i=1}^m\sum_{j=1}^{K}|W_{i,j}|`                        |
   +-------------------------------+----------------------------------------------------------------------------------+
@@ -1085,41 +1101,45 @@ Solvers
 -------
 
 The solvers implemented in the class :class:`LogisticRegression`
-are "lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag" and "saga":
+are "lbfgs", "liblinear", "newton-cholesky", "newton-cd", "newton-cd-gram",
+"newton-cg", "sag" and "saga":
 
-The following table summarizes the penalties and multinomial multiclass supported by each solver:
+The following table summarizes the penalties and multinomial multiclass supported by
+each solver:
 
-+------------------------------+-----------------+-------------+-----------------+-----------------------+-----------+------------+
-|                              |                       **Solvers**                                                                |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cg'** | **'newton-cholesky'** | **'sag'** | **'saga'** |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| L2 penalty                   |     yes     |       yes       |       yes       |     yes               |    yes    |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| L1 penalty                   |     no      |       yes       |       no        |     no                |    no     |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Elastic-Net (L1 + L2)        |     no      |       no        |       no        |     no                |    no     |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| No penalty                   |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| **Multiclass support**       |                                                                                                  |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| multinomial multiclass       |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| **Behaviors**                |                                                                                                  |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Penalize the intercept (bad) |     no      |       yes       |       no        |     no                |    no     |    no      |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Faster for large datasets    |     no      |       no        |       no        |     no                |    yes    |    yes     |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
-| Robust to unscaled datasets  |     yes     |       yes       |       yes       |     yes               |    no     |    no      |
-+------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+|                              |                       **Solvers**                                                                                                         |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cholesky'** | **'newton-cd'** | **'newton-cd-gram'** | **'newton-cg'** | **'sag'** | **'saga'** |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| L2 penalty                   |     yes     |       yes       |     yes               |     yes         |     yes              |       yes       |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| L1 penalty                   |     no      |       yes       |     no                |     yes         |     yes              |       no        |    no     |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| Elastic-Net (L1 + L2)        |     no      |       no        |     no                |     yes         |     yes              |       no        |    no     |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| No penalty                   |     yes     |       no        |     yes               |     yes         |     yes              |       yes       |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| **Multiclass support**       |                                                                                                                                           |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| multinomial multiclass       |     yes     |       no        |     yes               |     yes         |     yes              |       yes       |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| **Behaviors**                |                                                                                                                                           |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| Penalize the intercept (bad) |     no      |       yes       |     no                |     no          |     no               |       no        |    no     |    no      |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| Faster for large datasets    |     no      |       no        |     no                |     no          |     no               |       no        |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
+| Robust to unscaled datasets  |     yes     |       yes       |     yes               |     yes         |     yes              |       yes       |    no     |    no      |
++------------------------------+-------------+-----------------+-----------------------+-----------------+----------------------+-----------------+-----------+------------+
 
 The "lbfgs" solver is used by default for its robustness. For
 `n_samples >> n_features`, "newton-cholesky" is a good choice and can reach high
-precision (tiny `tol` values). For large datasets
-the "saga" solver is usually faster (than "lbfgs"), in particular for low precision
-(high `tol`).
+precision (tiny `tol` values). With L1 or Elastic-Net penalty, "newton-cd-gram" is
+a good choice for `n_samples >> n_features`, while "newton-cd" is a good choice for
+`n_features > n_samples` (or both large).
+For large datasets the "saga" solver is usually faster (than "lbfgs"), in particular
+for low precision (high `tol`).
 For large dataset, you may also consider using :class:`SGDClassifier`
 with `loss="log_loss"`, which might be even faster but requires more tuning.
 
@@ -1181,8 +1201,8 @@ zero, is likely to be an underfit, bad model and you are advised to set
     multinomial loss is expected to give better calibrated results as compared to
     a "one-vs-rest" scheme.
     For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allows to
-    calculate the lower bound for C in order to get a non "null" (all feature
-    weights to zero) model.
+    calculate the lower bound for C, which equals 1/alpha in order
+    to get a non "null" (all feature weights to zero) model.
 
   * The "lbfgs", "newton-cg", "newton-cholesky" and "sag" solvers only support
     :math:`\ell_2` regularization or no regularization, and are found to converge
@@ -1249,7 +1269,7 @@ zero, is likely to be an underfit, bad model and you are advised to set
 
 
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
-cross-validation support, to find the optimal `C` and `l1_ratio` parameters
+cross-validation support, to find the optimal `alpha` and `l1_ratio` parameters
 according to the ``scoring`` attribute. The "newton-cg", "sag", "saga" and
 "lbfgs" solvers are found to be faster for high-dimensional dense data, due
 to warm-starting (see :term:`Glossary <warm_start>`).
@@ -1429,9 +1449,9 @@ The ``partial_fit`` method allows online/out-of-core learning.
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
 using different (convex) loss functions and different penalties.
-E.g., with ``loss="log"``, :class:`SGDClassifier`
+For instance, :class:`SGDClassifier` with `loss="log_loss"`
 fits a logistic regression model,
-while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
+while with `loss="hinge"` it fits a linear support vector machine (SVM).
 
 You can refer to the dedicated :ref:`sgd` documentation section for more details.
 
@@ -1477,9 +1497,10 @@ eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 
-  * `"Online Passive-Aggressive Algorithms"
-    <https://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+  * Crammer, K., Dekel, O., Keshet, J., Shalev-Shwartz, S. and Singer, Y. (2006).
+    `"Online Passive-Aggressive Algorithms"
+    <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>`_
+    JMLR, 7(19), 551-585
 
 Robustness regression: outliers and modeling errors
 =====================================================

@@ -5,6 +5,7 @@ from numpy.testing import (
     assert_array_equal,
 )
 
+from sklearn.base import clone
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import make_classification
 from sklearn.exceptions import NotFittedError
@@ -275,6 +276,7 @@ def test_confusion_matrix_contrast(pyplot):
 )
 def test_confusion_matrix_pipeline(pyplot, clf):
     """Check the behaviour of the plotting with more complex pipeline."""
+    clf = clone(clf)
     n_classes = 5
     X, y = make_classification(
         n_samples=100, n_informative=5, n_classes=n_classes, random_state=0

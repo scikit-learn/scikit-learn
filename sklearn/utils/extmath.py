@@ -261,8 +261,6 @@ def randomized_range_finder(
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-        .. versionadded:: 0.18
-
     random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data, i.e. getting the random vectors to initialize the algorithm.
@@ -452,8 +450,6 @@ def randomized_svd(
         present a slow decay, `n_iter=0` or `1` should even work fine in theory
         (see [1]_ page 9).
 
-        .. versionchanged:: 0.18
-
     power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
@@ -462,16 +458,12 @@ def randomized_svd(
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-        .. versionadded:: 0.18
-
     transpose : bool or 'auto', default='auto'
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
         trigger the transposition if M.shape[1] > M.shape[0] since this
         implementation of randomized SVD tend to be a little faster in that
         case.
-
-        .. versionchanged:: 0.18
 
     flip_sign : bool, default=True
         The output of a singular value decomposition is only unique up to a
@@ -649,8 +641,6 @@ def _randomized_eigsh(
 
     The choice of which components to select can be tuned with the `selection`
     parameter.
-
-    .. versionadded:: 0.24
 
     Parameters
     ----------

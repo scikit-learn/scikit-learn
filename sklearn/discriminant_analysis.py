@@ -61,8 +61,6 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
         like the estimators in :mod:`sklearn.covariance``.
         If None the shrinkage parameter drives the estimate.
 
-        .. versionadded:: 0.24
-
     Returns
     -------
     s : ndarray of shape (n_features, n_features)
@@ -167,8 +165,6 @@ def _class_cov(
         The object should have a fit method and a ``covariance_`` attribute
         like the estimators in sklearn.covariance.
         If None, the shrinkage parameter drives the estimate.
-
-        .. versionadded:: 0.24
 
     Returns
     -------
@@ -278,8 +274,6 @@ class LinearDiscriminantAnalysis(
     by projecting it to the most discriminative directions, using the
     `transform` method.
 
-    .. versionadded:: 0.17
-
     For a comparison between
     :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
     and :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`, see
@@ -333,15 +327,11 @@ class LinearDiscriminantAnalysis(
         matrix when solver is 'svd'. The matrix is always computed
         and stored for the other solvers.
 
-        .. versionadded:: 0.17
-
     tol : float, default=1.0e-4
         Absolute threshold for a singular value of X to be considered
         significant, used to estimate the rank of X. Dimensions whose
         singular values are non-significant are discarded. Only used if
         solver is 'svd'.
-
-        .. versionadded:: 0.17
 
     covariance_estimator : covariance estimator, default=None
         If not None, `covariance_estimator` is used to estimate
@@ -354,8 +344,6 @@ class LinearDiscriminantAnalysis(
         This should be left to None if `shrinkage` is used.
         Note that `covariance_estimator` works only with 'lsqr' and 'eigen'
         solvers.
-
-        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -396,8 +384,6 @@ class LinearDiscriminantAnalysis(
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -485,8 +471,6 @@ class LinearDiscriminantAnalysis(
             like the estimators in sklearn.covariance.
             if None the shrinkage parameter drives the estimate.
 
-            .. versionadded:: 0.24
-
         Notes
         -----
         This solver is based on [1]_, section 2.6.2, pp. 39-41.
@@ -544,8 +528,6 @@ class LinearDiscriminantAnalysis(
             The object should have a fit method and a ``covariance_`` attribute
             like the estimators in sklearn.covariance.
             if None the shrinkage parameter drives the estimate.
-
-            .. versionadded:: 0.24
 
         Notes
         -----
@@ -668,9 +650,6 @@ class LinearDiscriminantAnalysis(
     )
     def fit(self, X, y):
         """Fit the Linear Discriminant Analysis model.
-
-        .. versionchanged:: 0.19
-            `store_covariance` and `tol` has been moved to main constructor.
 
         Parameters
         ----------
@@ -881,8 +860,6 @@ class QuadraticDiscriminantAnalysis(
 
     The model fits a Gaussian density to each class.
 
-    .. versionadded:: 0.17
-
     For a comparison between
     :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
     and :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, see
@@ -927,16 +904,12 @@ class QuadraticDiscriminantAnalysis(
         If True, the class covariance matrices are explicitly computed and
         stored in the `self.covariance_` attribute.
 
-        .. versionadded:: 0.17
-
     tol : float, default=1.0e-4
         Absolute threshold for the covariance matrix to be considered rank
         deficient after applying some regularization (see `reg_param`) to each
         `Sk` where `Sk` represents covariance matrix for k-th class. This
         parameter does not affect the predictions. It controls when a warning
         is raised if the covariance matrix is not full rank.
-
-        .. versionadded:: 0.17
 
     covariance_estimator : covariance estimator, default=None
         If not None, `covariance_estimator` is used to estimate the covariance
@@ -985,8 +958,6 @@ class QuadraticDiscriminantAnalysis(
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1088,13 +1059,6 @@ class QuadraticDiscriminantAnalysis(
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
-
-        .. versionchanged:: 0.19
-            ``store_covariances`` has been moved to main constructor as
-            ``store_covariance``.
-
-        .. versionchanged:: 0.19
-            ``tol`` has been moved to main constructor.
 
         Parameters
         ----------

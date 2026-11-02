@@ -36,24 +36,24 @@ from sklearn.utils.validation import (
     column_or_1d,
 )
 
-__ALL__ = [
+__all__ = [
+    "d2_absolute_error_score",
+    "d2_pinball_score",
+    "d2_tweedie_score",
+    "explained_variance_score",
     "max_error",
     "mean_absolute_error",
+    "mean_absolute_percentage_error",
+    "mean_gamma_deviance",
+    "mean_pinball_loss",
+    "mean_poisson_deviance",
     "mean_squared_error",
     "mean_squared_log_error",
-    "median_absolute_error",
-    "mean_absolute_percentage_error",
-    "mean_pinball_loss",
-    "r2_score",
-    "root_mean_squared_log_error",
-    "root_mean_squared_error",
-    "explained_variance_score",
     "mean_tweedie_deviance",
-    "mean_poisson_deviance",
-    "mean_gamma_deviance",
-    "d2_tweedie_score",
-    "d2_pinball_score",
-    "d2_absolute_error_score",
+    "median_absolute_error",
+    "r2_score",
+    "root_mean_squared_error",
+    "root_mean_squared_log_error",
 ]
 
 
@@ -454,8 +454,6 @@ def mean_absolute_percentage_error(
     by dividing by 100. Thus, an error of 200% corresponds to a relative error of 2.
 
     Read more in the :ref:`User Guide <mean_absolute_percentage_error>`.
-
-    .. versionadded:: 0.24
 
     Parameters
     ----------
@@ -921,8 +919,6 @@ def median_absolute_error(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-        .. versionadded:: 0.24
-
     Returns
     -------
     loss : float or ndarray of floats
@@ -1232,9 +1228,6 @@ def r2_score(
         'variance_weighted' :
             Scores of all outputs are averaged, weighted by the variances
             of each individual output.
-
-        .. versionchanged:: 0.19
-            Default value of multioutput is 'uniform_average'.
 
     force_finite : bool, default=True
         Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
