@@ -1116,7 +1116,9 @@ def _estimator_with_converted_arrays(estimator, converter):
 # estimator's inference methods have been moved onto `_fitted_attrs_like`. Until
 # then converting unconditionally would break the estimators whose inference
 # still reads fitted attributes straight off `self`.
-_NUMPY_FITTED_ATTRS = frozenset({"LogisticRegression", "LogisticRegressionCV"})
+_NUMPY_FITTED_ATTRS = frozenset(
+    {"CalibratedClassifierCV", "LogisticRegression", "LogisticRegressionCV"}
+)
 
 
 def _fitted_attrs_as_numpy(estimator):

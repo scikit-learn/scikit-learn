@@ -204,7 +204,11 @@ INIT_PARAMS = {
     BernoulliRBM: dict(n_iter=5, batch_size=10),
     Birch: dict(n_clusters=2),
     BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
-    CalibratedClassifierCV: dict(estimator=LogisticRegression(C=1), cv=3),
+    CalibratedClassifierCV: [
+        dict(estimator=LogisticRegression(C=1), cv=3),
+        # Only temperature scaling supports the array API.
+        dict(estimator=LogisticRegression(C=1), cv=3, method="temperature"),
+    ],
     CCA: dict(n_components=1, max_iter=5),
     ClassifierChain: dict(estimator=LogisticRegression(C=1), cv=3),
     ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0, 1])]),
