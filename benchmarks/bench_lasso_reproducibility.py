@@ -21,10 +21,11 @@ from numbers import Integral, Real
 from time import perf_counter
 
 import numpy as np
-from scipy.stats import norm
+from scipy.stats import binomtest, norm
 from threadpoolctl import threadpool_limits
 
 from sklearn.linear_model import Lasso, lasso_path
+from sklearn.linear_model._coordinate_descent import _path_residuals
 from sklearn.model_selection import KFold
 from sklearn.utils import check_random_state
 from sklearn.utils.parallel import Parallel, delayed
@@ -35,16 +36,19 @@ def _loss_curve(X, y, alphas, folds, *, tol, max_iter):
     """Compute one complete CV curve, without a full-data refit."""
     losses = []
     for train, test in folds:
-        X_mean, y_mean = X[train].mean(axis=0), y[train].mean()
-        _, coefs, _ = lasso_path(
-            np.asfortranarray(X[train] - X_mean),
-            y[train] - y_mean,
+        loss = _path_residuals(
+            X,
+            y,
+            sample_weight=None,
+            train=train,
+            test=test,
+            fit_intercept=True,
+            path=lasso_path,
+            path_params={"precompute": False, "tol": tol, "max_iter": max_iter},
             alphas=alphas,
-            tol=tol,
-            max_iter=max_iter,
+            dtype=np.float64,
         )
-        residual = y[test, None] - y_mean - (X[test] - X_mean) @ coefs
-        losses.append(np.mean(residual**2, axis=0))
+        losses.append(loss)
     curve = np.mean(losses, axis=0)
     if not np.isfinite(curve).all():
         raise ValueError("The loss curve contains non-finite values.")
@@ -175,12 +179,13 @@ def adaptive_lasso_cv(
 
 def _fixed_cv(X, y, alphas, repeats, seed, *, shuffled=True):
     rng = np.random.RandomState(seed)
+    splitter = KFold(5, shuffle=shuffled, random_state=rng if shuffled else None)
     curves = [
         _loss_curve(
             X,
             y,
             alphas,
-            KFold(5, shuffle=shuffled, random_state=rng if shuffled else None).split(X),
+            splitter.split(X),
             tol=1e-8,
             max_iter=10000,
         )
@@ -191,7 +196,7 @@ def _fixed_cv(X, y, alphas, repeats, seed, *, shuffled=True):
     return fitted, {
         "relative_mean": mean - mean[0],
         "n_repeats": repeats,
-        "n_path_fits": 5 * repeats,
+        "n_path_fits": splitter.n_splits * repeats,
     }
 
 
@@ -281,19 +286,14 @@ def benchmark(pairs=1000, tolerance=0.02, max_repeats=1000, n_jobs=1):
             delayed(_run_pair)(run, pair, X_test, y_test, tolerance)
             for pair in range(pairs)
         )
-        probability = float(np.mean([r["exceeded"] for r in rows]))
-        z = norm.isf(0.025)
-        center = (probability + z**2 / (2 * pairs)) / (1 + z**2 / pairs)
-        half = (
-            z
-            * np.sqrt(probability * (1 - probability) / pairs + z**2 / (4 * pairs**2))
-            / (1 + z**2 / pairs)
-        )
+        exceedances = binomtest(sum(r["exceeded"] for r in rows), pairs)
+        probability = exceedances.statistic
+        interval = exceedances.proportion_ci(method="wilson")
         results[name] = {
             "pairs": pairs,
             "risk_curve_exceedance": probability,
             "exceedance_mcse": float(np.sqrt(probability * (1 - probability) / pairs)),
-            "exceedance_interval_95": [float(center - half), float(center + half)],
+            "exceedance_interval_95": [float(interval.low), float(interval.high)],
             "alpha_agreement": float(np.mean([r["alpha_agreement"] for r in rows])),
             "support_agreement": float(np.mean([r["support_agreement"] for r in rows])),
             "test_mse": float(np.mean([r["risk"] for r in rows])),

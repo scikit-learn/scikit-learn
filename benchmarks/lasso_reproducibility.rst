@@ -147,4 +147,4 @@ scikit-learn 1.10.dev0 based on upstream revision
 ``84fc20f30f5150b415c11ac9a20123f6b2de876d``.
 
 This pull request includes code written with the assistance of AI.
-The code has **not yet been reviewed** by a human.
+`Human review status <https://github.com/scikit-learn/scikit-learn/pull/35288>`_ is tracked in the pull request.

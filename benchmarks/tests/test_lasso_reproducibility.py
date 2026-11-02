@@ -38,6 +38,46 @@ def test_loss_curve_matches_lassocv(data):
     assert_array_equal(y, original_y)
 
 
+def test_loss_curve_matches_individual_fits(data):
+    X, y = data
+    alphas = np.geomspace(1, 0.01, 7)
+    folds = list(KFold(5, shuffle=True, random_state=20).split(X))
+    expected = []
+    for train, test in folds:
+        losses = []
+        for alpha in alphas:
+            fitted = Lasso(alpha=alpha, tol=1e-12, max_iter=10000).fit(
+                X[train], y[train]
+            )
+            losses.append(np.mean((y[test] - fitted.predict(X[test])) ** 2))
+        expected.append(losses)
+    actual = benchmark._loss_curve(X, y, alphas, folds, tol=1e-12, max_iter=10000)
+    assert_allclose(actual, np.mean(expected, axis=0), rtol=1e-10)
+
+
+@pytest.mark.parametrize(
+    "exceeded, interval",
+    [(False, [0, 0.2775327998628892]), (True, [0.7224672001371107, 1])],
+)
+def test_benchmark_exceedance_interval(exceeded, interval, monkeypatch):
+    def run_pair(*args):
+        return {
+            "exceeded": exceeded,
+            "alpha_agreement": True,
+            "support_agreement": True,
+            "risk": [1, 1],
+            "repeats": [20, 20],
+            "path_fits": [100, 100],
+            "exhausted": [False, False],
+        }
+
+    monkeypatch.setattr(benchmark, "_run_pair", run_pair)
+    report = benchmark.benchmark(pairs=10)
+    for result in report["results"].values():
+        assert result["risk_curve_exceedance"] == float(exceeded)
+        assert_allclose(result["exceedance_interval_95"], interval, atol=1e-15)
+
+
 def test_fixed_repeated_cv_equivalence(data):
     X, y = data
     alphas = np.geomspace(1, 0.01, 7)
