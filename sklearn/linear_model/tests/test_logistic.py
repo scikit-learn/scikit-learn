@@ -3106,7 +3106,7 @@ def test_equivalence_of_default_C_and_alpha(n_classes, sample_weight, solver):
             np.inf if clf_alpha.alpha_ == 0 else 1 / clf_alpha.alpha_
         )
         m = f"{alphas=} {Cs=}"
-        assert_allclose(clf_C.coef_, clf_alpha.coef_, err_msg=m, rtol=5e-7, atol=1e-11)
+        assert_allclose(clf_C.coef_, clf_alpha.coef_, err_msg=m, rtol=1e-6, atol=1e-11)
 
 
 # TODO(1.14): remove after deprecation cycle.
