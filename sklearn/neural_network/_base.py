@@ -4,8 +4,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
-from scipy.special import expit as logistic_sigmoid
-from scipy.special import log_expit, log_softmax, xlogy
+from scipy.special import log_softmax, xlogy
+
+from sklearn.utils._array_api import get_namespace
 
 
 def inplace_identity(X):
@@ -28,7 +29,8 @@ def inplace_exp(X):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
     """
-    np.exp(X, out=X)
+    xp, _ = get_namespace(X)
+    xp.exp(X, out=X)
 
 
 def inplace_logistic(X):
@@ -39,7 +41,8 @@ def inplace_logistic(X):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
     """
-    logistic_sigmoid(X, out=X)
+    xp, _ = get_namespace(X)
+    X[...] = xp.exp(-xp.logaddexp(xp.zeros_like(X), -X))
 
 
 def inplace_tanh(X):
@@ -50,7 +53,8 @@ def inplace_tanh(X):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
     """
-    np.tanh(X, out=X)
+    xp, _ = get_namespace(X)
+    X[...] = xp.tanh(X)
 
 
 def inplace_relu(X):
@@ -61,7 +65,8 @@ def inplace_relu(X):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
     """
-    np.maximum(X, 0, out=X)
+    xp, _ = get_namespace(X)
+    X[...] = xp.maximum(X, xp.zeros_like(X))
 
 
 def inplace_softmax(X):
@@ -72,9 +77,10 @@ def inplace_softmax(X):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
     """
-    tmp = X - X.max(axis=1)[:, np.newaxis]
-    np.exp(tmp, out=X)
-    X /= X.sum(axis=1)[:, np.newaxis]
+    xp, _ = get_namespace(X)
+    tmp = X - xp.max(X, axis=1)[:, xp.newaxis]
+    X[...] = xp.exp(tmp)
+    X /= xp.sum(X, axis=1)[:, xp.newaxis]
 
 
 def inplace_softmin(X):
@@ -85,9 +91,10 @@ def inplace_softmin(X):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
     """
-    tmp = -X + X.min(axis=1)[:, np.newaxis]
-    np.exp(tmp, out=X)
-    X /= X.sum(axis=1)[:, np.newaxis]
+    xp, _ = get_namespace(X)
+    tmp = -X + xp.min(X, axis=1)[:, xp.newaxis]
+    X[...] = xp.exp(tmp)
+    X /= xp.sum(X, axis=1)[:, xp.newaxis]
 
 
 def inplace_log_sigmoid(X):
@@ -98,7 +105,8 @@ def inplace_log_sigmoid(X):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
     """
-    X[:] = log_expit(X)
+    xp, _ = get_namespace(X)
+    X[...] = -xp.logaddexp(xp.zeros_like(X), -X)
 
 
 def inplace_log_softmax(X):
@@ -109,7 +117,7 @@ def inplace_log_softmax(X):
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         The input data.
     """
-    X[:] = log_softmax(X, axis=1)
+    X[...] = log_softmax(X, axis=1)
 
 
 ACTIVATIONS = {
