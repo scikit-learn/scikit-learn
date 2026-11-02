@@ -10,7 +10,7 @@ import numpy as np
 from sklearn.ensemble._bagging import _generate_indices
 from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.model_selection._validation import _aggregate_score_dicts
-from sklearn.utils import Bunch, _safe_indexing, check_array, check_random_state
+from sklearn.utils import Bunch, check_array, check_random_state, safe_indexing
 from sklearn.utils._param_validation import (
     HasMethods,
     Integral,
@@ -55,10 +55,10 @@ def _calculate_permutation_scores(
             n_population=X.shape[0],
             n_samples=max_samples,
         )
-        X_permuted = _safe_indexing(X, row_indices, axis=0)
-        y = _safe_indexing(y, row_indices, axis=0)
+        X_permuted = safe_indexing(X, row_indices, axis=0)
+        y = safe_indexing(y, row_indices, axis=0)
         if sample_weight is not None:
-            sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
+            sample_weight = safe_indexing(sample_weight, row_indices, axis=0)
     else:
         X_permuted = X.copy()
 

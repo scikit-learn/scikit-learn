@@ -25,7 +25,7 @@ from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.metrics._scorer import _MultimetricScorer
 from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import _safe_indexing, check_random_state, indexable
+from sklearn.utils import check_random_state, indexable, safe_indexing
 from sklearn.utils._array_api import (
     array_device,
     get_namespace,
@@ -1716,7 +1716,7 @@ def _shuffle(y, groups, random_state):
         for group in np.unique(groups):
             this_mask = groups == group
             indices[this_mask] = random_state.permutation(indices[this_mask])
-    return _safe_indexing(y, indices)
+    return safe_indexing(y, indices)
 
 
 @validate_params(

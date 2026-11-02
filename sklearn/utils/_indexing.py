@@ -356,7 +356,7 @@ def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
 def _get_column_indices_for_bool_or_int(key, n_columns):
     # Convert key into list of positive integer indexes
     try:
-        idx = _safe_indexing(np.arange(n_columns), key)
+        idx = safe_indexing(np.arange(n_columns), key)
     except IndexError as e:
         raise ValueError(
             f"all features must be in [0, {n_columns - 1}] or [-{n_columns}, 0]"
@@ -604,7 +604,7 @@ def resample(
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
-    resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
+    resampled_arrays = [safe_indexing(a, indices) for a in arrays]
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
         return resampled_arrays[0]

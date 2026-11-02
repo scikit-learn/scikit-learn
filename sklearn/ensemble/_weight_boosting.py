@@ -35,7 +35,7 @@ from sklearn.base import (
 from sklearn.ensemble._base import BaseEnsemble
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.utils import _safe_indexing, check_random_state
+from sklearn.utils import check_random_state, safe_indexing
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
 from sklearn.utils.extmath import softmax
 from sklearn.utils.metadata_routing import (
@@ -1012,8 +1012,8 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
 
         # Fit on the bootstrapped sample and obtain a prediction
         # for all samples in the training set
-        X_ = _safe_indexing(X, bootstrap_idx)
-        y_ = _safe_indexing(y, bootstrap_idx)
+        X_ = safe_indexing(X, bootstrap_idx)
+        y_ = safe_indexing(y, bootstrap_idx)
         estimator.fit(X_, y_)
         y_predict = estimator.predict(X)
 
