@@ -671,6 +671,7 @@ def test_glm_wrong_y_range(glm):
     non-negative. This test ensures that passing a `y` array containing
     negative values triggers the expected ValueError with the correct message.
     """
+    glm = clone(glm)
     y = np.array([-1, 2])
     X = np.array([[1], [1]])
     msg = r"Some value\(s\) of y are out of the valid range of the loss"
@@ -1050,6 +1051,7 @@ def test_solver_auto(l1_ratio, long_data):
 )
 def test_tags(estimator, positive_tag, array_api_tag):
     """Test that tags are set correctly for different estimators."""
+    estimator = clone(estimator)
     # positive_only
     assert estimator.__sklearn_tags__().target_tags.positive_only is positive_tag
 
