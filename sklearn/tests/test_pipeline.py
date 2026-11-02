@@ -1726,9 +1726,11 @@ def test_pipeline_passthrough_features_in():
     pipe_all_pass.fit(X, y)
     assert not hasattr(pipe_all_pass, "n_features_in_")
     assert not hasattr(pipe_all_pass, "feature_names_in_")
-    with pytest.raises(AttributeError, match="'Pipeline' object has no attribute 'n_features_in_'"):
+    msg = "'Pipeline' object has no attribute 'n_features_in_'"
+    with pytest.raises(AttributeError, match=msg):
         pipe_all_pass.n_features_in_
-    with pytest.raises(AttributeError, match="'Pipeline' object has no attribute 'feature_names_in_'"):
+    msg = "'Pipeline' object has no attribute 'feature_names_in_'"
+    with pytest.raises(AttributeError, match=msg):
         pipe_all_pass.feature_names_in_
 
 
