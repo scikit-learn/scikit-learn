@@ -1726,6 +1726,30 @@ def test_n_features_in_pipeline():
     assert not hasattr(gbdt, "n_features_in_")
 
 
+def test_feature_union_drop_features_in():
+    # Regression test for BUG-002: drop / None transformers and features_in
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    y = [0, 1, 0]
+
+    fu = FeatureUnion([("drop", "drop"), ("scaler", StandardScaler())])
+    assert not hasattr(fu, "n_features_in_")
+    assert not hasattr(fu, "feature_names_in_")
+
+    fu.fit(X, y)
+    assert fu.n_features_in_ == 2
+    assert_array_equal(fu.feature_names_in_, ["a", "b"])
+
+    fu_all_drop = FeatureUnion([("drop1", "drop"), ("drop2", "drop")])
+    fu_all_drop.fit(X, y)
+    assert not hasattr(fu_all_drop, "n_features_in_")
+    assert not hasattr(fu_all_drop, "feature_names_in_")
+    with pytest.raises(AttributeError, match="'FeatureUnion' object has no attribute 'n_features_in_'"):
+        fu_all_drop.n_features_in_
+    with pytest.raises(AttributeError, match="'FeatureUnion' object has no attribute 'feature_names_in_'"):
+        fu_all_drop.feature_names_in_
+
+
 def test_n_features_in_feature_union():
     # make sure FeatureUnion delegates n_features_in to the first transformer
 
