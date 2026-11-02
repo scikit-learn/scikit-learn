@@ -279,7 +279,7 @@ estimators that support it, and 'brute' is used for the rest.
     <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
     Second Edition, Section 10.13.2, Springer, 2009.
 
-.. [M2019] C. Molnar,
+.. [M2025] C. Molnar,
     `Interpretable Machine Learning
     <https://christophm.github.io/interpretable-ml-book/>`_,
     Sections 13 and 19, 2025.
