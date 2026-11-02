@@ -8,6 +8,7 @@ from scipy.stats import norm
 
 from sklearn.linear_model import Lasso, LassoCV
 from sklearn.model_selection import KFold, LeaveOneOut, RepeatedKFold
+from sklearn.utils.validation import check_is_fitted
 
 spec = importlib.util.spec_from_file_location(
     "lasso_reproducibility",
@@ -220,3 +221,66 @@ def test_overflow_cannot_certify_precision(data, monkeypatch):
             min_repeats=20,
             max_repeats=20,
         )
+
+
+def test_result_contract(data):
+    fitted, report = benchmark.adaptive_lasso_cv(
+        *data,
+        alphas=[1, 0.1, 0.01],
+        tolerance=1,
+        min_repeats=3,
+        max_repeats=3,
+        random_state=12,
+    )
+    assert isinstance(fitted, Lasso)
+    check_is_fitted(fitted)
+    assert fitted.predict(data[0]).shape == data[1].shape
+    assert fitted.coef_.shape == (data[0].shape[1],)
+    assert isinstance(report, dict)
+    assert set(report) == {
+        "status",
+        "n_repeats",
+        "n_path_fits",
+        "n_full_fits",
+        "alphas",
+        "loss_curves",
+        "mean_loss",
+        "relative_mean",
+        "mcse",
+        "threshold",
+        "tolerance",
+        "error_rate",
+        "near_best_alphas",
+        "partition_winner_counts",
+    }
+    assert report["loss_curves"].shape == (report["n_repeats"], 3)
+    for name in (
+        "alphas",
+        "mean_loss",
+        "relative_mean",
+        "mcse",
+        "partition_winner_counts",
+    ):
+        assert isinstance(report[name], np.ndarray)
+        assert report[name].shape == (3,)
+    assert report["partition_winner_counts"].sum() == report["n_repeats"]
+    assert fitted.alpha == report["alphas"][np.argmin(report["mean_loss"])]
+
+
+def test_dataframe_feature_names_are_preserved(data):
+    pd = pytest.importorskip("pandas")
+    X, y = data
+    X = pd.DataFrame(X, columns=[f"feature_{j}" for j in range(X.shape[1])])
+    fitted, _ = benchmark.adaptive_lasso_cv(
+        X,
+        y,
+        alphas=[1, 0.1],
+        tolerance=1,
+        min_repeats=3,
+        max_repeats=3,
+        random_state=12,
+    )
+    assert_array_equal(fitted.feature_names_in_, X.columns)
+    assert fitted.predict(X).shape == y.shape
+    with pytest.raises(ValueError, match="feature names"):
+        fitted.predict(X[X.columns[::-1]])

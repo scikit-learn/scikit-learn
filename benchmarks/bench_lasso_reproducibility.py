@@ -21,13 +21,13 @@ from numbers import Integral, Real
 from time import perf_counter
 
 import numpy as np
-from joblib import Parallel, delayed
 from scipy.stats import norm
 from threadpoolctl import threadpool_limits
 
 from sklearn.linear_model import Lasso, lasso_path
 from sklearn.model_selection import KFold
 from sklearn.utils import check_random_state
+from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import check_X_y
 
 
@@ -79,6 +79,7 @@ def adaptive_lasso_cv(
     ``partition_winner_counts`` describes single-partition winners, not the
     probability of agreement between two independent adaptive runs.
     """
+    X_original = X
     X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
     alphas = np.asarray(alphas)
     if (
@@ -151,7 +152,7 @@ def adaptive_lasso_cv(
     if not np.isfinite(mean_loss).all():
         raise ValueError("Mean validation loss overflowed; rescale the response")
     best = np.argmin(mean_loss)
-    fitted = Lasso(alpha=alphas[best], tol=tol, max_iter=max_iter).fit(X, y)
+    fitted = Lasso(alpha=alphas[best], tol=tol, max_iter=max_iter).fit(X_original, y)
     return fitted, {
         "status": "target_reached" if criterion_met else "budget_exhausted",
         "n_repeats": count,
