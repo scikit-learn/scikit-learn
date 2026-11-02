@@ -2452,9 +2452,11 @@ def class_likelihood_ratios(
             )
         else:
             msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
-        msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
-        "control this behavior. To suppress this warning or turn it into an error, "
-        "see Python's `warnings` module and `warnings.catch_warnings()`."
+        msg_end = (
+            "set to `np.nan`. Use the `replace_undefined_by` param to "
+            "control this behavior. To suppress this warning or turn it into an error, "
+            "see Python's `warnings` module and `warnings.catch_warnings()`."
+        )
         warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
             positive_likelihood_ratio = replace_undefined_by

@@ -635,6 +635,7 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
 def test_stacking_prefit_error(stacker, X, y):
     # check that NotFittedError is raised
     # if base estimators are not fitted when cv="prefit"
+    stacker = clone(stacker)
     with pytest.raises(NotFittedError):
         stacker.fit(X, y)
 

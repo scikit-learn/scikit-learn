@@ -776,7 +776,7 @@ def sparse_matmul_to_dense(A, B, out=None):
         out = np.empty((n1, n3), dtype=A.data.dtype)
     else:
         if out.shape[0] != n1 or out.shape[1] != n3:
-            raise ValueError("Shape of out must be ({n1}, {n3}), got {out.shape}.")
+            raise ValueError(f"Shape of out must be ({n1}, {n3}), got {out.shape}.")
         if out.dtype != A.data.dtype:
             raise ValueError("Dtype of out must match that of input A.")
 
