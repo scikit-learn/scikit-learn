@@ -268,20 +268,17 @@ The issue can be fixed by explicitly setting the request value::
     ...     sample_weight=True
     ... ).set_score_request(sample_weight=False)
 
+We reset ``enable_metadata_auto_requests=True`` (its default value) for the next section::
+
+  >>> sklearn.set_config(enable_metadata_auto_requests=True)
+
 .. _metadata_routing_auto_request_user:
 
 Auto-requested metadata
 ***********************
 
-:term:`Consumers <consumer>` can **auto-request** selected metadata::
-
-    >>> sklearn.set_config(
-    ...     enable_metadata_routing=True,
-    ...     enable_metadata_auto_requests=True,
-    ... )
-
-Auto-requests are enabled by default, so enabling metadata routing is enough.
-Set ``enable_metadata_auto_requests=False`` to disable them.
+:term:`Consumers <consumer>` **auto-request** selected metadata by default
+when metadata routing is enabled.
 
 In scikit-learn, `sample_weight` is auto-requested on estimator methods that accept it
 (typically `fit` and `score`), on meta-estimators that also consume it themselves, and
