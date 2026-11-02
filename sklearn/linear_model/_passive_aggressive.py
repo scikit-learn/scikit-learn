@@ -54,13 +54,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         It only impacts the behavior in the ``fit`` method, and not the
         :meth:`~sklearn.linear_model.PassiveAggressiveClassifier.partial_fit` method.
 
-        .. versionadded:: 0.19
-
     tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol).
-
-        .. versionadded:: 0.19
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -69,19 +65,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         training when validation score is not improving by at least `tol` for
         `n_iter_no_change` consecutive epochs.
 
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
 
-        .. versionadded:: 0.20
-
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -127,17 +117,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``.
 
-        .. versionadded:: 0.17
-           parameter *class_weight* to automatically weight samples.
-
     average : bool or int, default=False
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
         average. So average=10 will begin averaging after seeing 10 samples.
-
-        .. versionadded:: 0.19
-           parameter *average* to use weights averaging in SGD.
 
     Attributes
     ----------
@@ -150,8 +134,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -381,13 +363,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         It only impacts the behavior in the ``fit`` method, and not the
         :meth:`~sklearn.linear_model.PassiveAggressiveRegressor.partial_fit` method.
 
-        .. versionadded:: 0.19
-
     tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol).
-
-        .. versionadded:: 0.19
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation.
@@ -396,19 +374,13 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         training when validation score is not improving by at least tol for
         n_iter_no_change consecutive epochs.
 
-        .. versionadded:: 0.20
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True.
 
-        .. versionadded:: 0.20
-
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
-
-        .. versionadded:: 0.20
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -447,9 +419,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         averaging will begin once the total number of samples seen reaches
         average. So average=10 will begin averaging after seeing 10 samples.
 
-        .. versionadded:: 0.19
-           parameter *average* to use weights averaging in SGD.
-
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -461,8 +430,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

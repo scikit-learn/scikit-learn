@@ -344,7 +344,6 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         _map_to_bins(
             X,
             self.bin_thresholds_,
-            self.is_categorical_,
             self.missing_values_bin_idx_,
             n_threads,
             binned,

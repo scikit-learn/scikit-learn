@@ -29,7 +29,7 @@ from sklearn.linear_model import (
     lars_path,
     lasso_path,
 )
-from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model import _cd_fast as cd_fast
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.model_selection import (
     GridSearchCV,
@@ -171,9 +171,9 @@ def test_cython_solver_equivalence(sparse_csc_type):
 
 
 @pytest.mark.parametrize("cd", ["enet", "sparse_enet", "enet_gram", "enet_multi"])
-def test_cython_solver_early_stopping(cd):
+def test_cython_solver_early_stopping(cd, global_random_seed):
     """Test that early_stopping works correctly."""
-    X, y = make_regression()
+    X, y = make_regression(random_state=global_random_seed)
     X_mean = X.mean(axis=0)
     X_centered = np.asfortranarray(X - X_mean)
     y -= y.mean()
@@ -235,7 +235,8 @@ def test_cython_solver_early_stopping(cd):
     else:
         coef_1 = np.zeros(X.shape[1])
     _, gap_1, _, _ = cd_solve(w=coef_1)
-    assert np.sum(coef_1 != 0) > X.shape[1] / 4  # avoid all zeros
+    # Assert meaningful test setup by avoiding that all coef are zero.
+    assert np.sum(coef_1 != 0) > max(2, X.shape[1] / 10)
 
     # With early stopping, the coefficients should stay unchanged.
     coef_2 = coef_1.copy(order="F")

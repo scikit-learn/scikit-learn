@@ -14,9 +14,7 @@ from joblib import effective_n_jobs
 from scipy import sparse
 
 from sklearn.base import RegressorMixin, _fit_context
-
-# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
-from sklearn.linear_model import _cd_fast as cd_fast  # type: ignore[attr-defined]
+from sklearn.linear_model import _cd_fast as cd_fast
 from sklearn.linear_model._base import (
     MultiOutputLinearModel,
     _pre_fit,
@@ -1031,8 +1029,6 @@ class ElasticNet(RegressorMixin, MultiOutputLinearModel):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1147,8 +1143,6 @@ class ElasticNet(RegressorMixin, MultiOutputLinearModel):
         sample_weight : float or array-like of shape (n_samples,), default=None
             Sample weights. Internally, the `sample_weight` vector will be
             rescaled to sum to `n_samples`.
-
-            .. versionadded:: 0.23
 
         check_input : bool, default=True
             Allow to bypass several input checking.
@@ -1450,8 +1444,6 @@ class Lasso(ElasticNet):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -1477,8 +1469,7 @@ class Lasso(ElasticNet):
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
     regularization. Alpha corresponds to `1 / (2C)` in other linear
-    models such as :class:`~sklearn.linear_model.LogisticRegression` or
-    :class:`~sklearn.svm.LinearSVC`.
+    models such as :class:`~sklearn.svm.LinearSVC`.
 
     The precise stopping criteria based on `tol` are the following: First, check that
     the maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
@@ -1567,7 +1558,6 @@ def _path_residuals(
     path_params,
     alphas=None,
     l1_ratio=1,
-    X_order=None,
     dtype=None,
 ):
     """Returns the MSE for the models computed by 'path'.
@@ -1605,10 +1595,6 @@ def _path_residuals(
         l1 and l2 penalties). For ``l1_ratio = 0`` the penalty is an
         L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty. For ``0
         < l1_ratio < 1``, the penalty is a combination of L1 and L2.
-
-    X_order : {'F', 'C'}, default=None
-        The order of the arrays expected by the path function to
-        avoid memory copies.
 
     dtype : a numpy dtype, default=None
         The dtype of the arrays expected by the path function to
@@ -1676,7 +1662,7 @@ def _path_residuals(
 
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
-    X_train = check_array(X_train, accept_sparse="csc", dtype=dtype, order=X_order)
+    X_train = check_array(X_train, accept_sparse="csc", dtype=dtype, order="F")
     alphas, coefs, _ = path(X_train, y_train, **path_params)
     del X_train, y_train
 
@@ -1773,8 +1759,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
@@ -1827,7 +1812,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
-                accept_sparse="csc",
+                accept_sparse="csr",
                 dtype=[np.float64, np.float32],
                 force_writeable=True,
                 copy=False,
@@ -1852,9 +1837,9 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
-                accept_sparse="csc",
+                accept_sparse="csr",
                 dtype=[np.float64, np.float32],
-                order="F",
+                order=None,
                 force_writeable=True,
                 copy=copy_X,
             )
@@ -1969,7 +1954,6 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
                 path_params,
                 alphas=this_alphas,
                 l1_ratio=this_l1_ratio,
-                X_order="F",
                 dtype=X.dtype.type,
             )
             for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
@@ -2003,6 +1987,7 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             self.alphas_ = np.asarray(alphas[0])
 
         # Refit the model with the parameters selected
+        X, y = _set_order(X, y, order="F")
         common_params = {
             name: value
             for name, value in self.get_params().items()
@@ -2127,9 +2112,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     verbose : bool or int, default=False
         Amount of verbosity.
 
@@ -2181,8 +2163,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2284,8 +2264,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
@@ -2384,9 +2363,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
@@ -2445,8 +2421,6 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2562,8 +2536,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data
-            to avoid unnecessary memory duplication. If y is mono-output,
+            Training data. If y is mono-output,
             X can be sparse. Note that large sparse matrices and arrays
             requiring `int64` indices are not accepted.
 
@@ -2686,8 +2659,6 @@ class MultiTaskElasticNet(ElasticNet):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2980,8 +2951,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -3062,8 +3031,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     Read more in the :ref:`User Guide <multi_task_elastic_net>`.
 
-    .. versionadded:: 0.15
-
     Parameters
     ----------
     l1_ratio : float or list of float, default=0.5
@@ -3117,9 +3084,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -3177,8 +3141,6 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -3280,15 +3242,13 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     Read more in the :ref:`User Guide <multi_task_lasso>`.
 
-    .. versionadded:: 0.15
-
     Parameters
     ----------
     eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
-    alphas : array-like or int, default=None
+    alphas : array-like or int, default=100
         Values of alphas to test along the regularization path.
         If int, `alphas` values are generated automatically.
         If array-like, list of alpha values to use.
@@ -3326,9 +3286,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     verbose : bool or int, default=False
         Amount of verbosity.
@@ -3379,8 +3336,6 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

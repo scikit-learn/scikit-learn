@@ -43,8 +43,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
 
     Read more in the :ref:`User Guide <sequential_feature_selection>`.
 
-    .. versionadded:: 0.24
-
     Parameters
     ----------
     estimator : estimator instance
@@ -92,7 +90,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         - `None`: the `estimator`'s
           :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator or an iterable, default=5
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -124,8 +122,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

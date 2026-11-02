@@ -35,7 +35,7 @@ from sklearn.utils._array_api import (
     move_to,
     size,
 )
-from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._encode import _encode_labels, _unique
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
@@ -201,9 +201,6 @@ def average_precision_score(
 
     Notes
     -----
-    .. versionchanged:: 0.19
-      Instead of linearly interpolating between operating points, precisions
-      are weighted by the change in recall since the last operating point.
 
     References
     ----------
@@ -322,8 +319,6 @@ def det_curve(
     classification tasks.
 
     Read more in the :ref:`User Guide <det_curve>`.
-
-    .. versionadded:: 0.24
 
     .. versionchanged:: 1.7
        An arbitrary threshold at infinity is added to represent a classifier
@@ -640,7 +635,8 @@ def roc_auc_score(
 
     Where G is the Gini coefficient and AUC is the ROC-AUC score. This normalisation
     will ensure that random guessing will yield a score of 0 in expectation, and it is
-    upper bounded by 1.
+    upper bounded by 1. Note that there are differences between this Gini coefficient
+    as used in machine learning and the one used in economics, see [6]_.
 
     References
     ----------
@@ -654,16 +650,15 @@ def roc_auc_score(
            probability estimation trees (Section 6.2), CeDER Working Paper
            #IS-00-04, Stern School of Business, New York University.
 
-    .. [4] `Fawcett, T. (2006). An introduction to ROC analysis. Pattern
-            Recognition Letters, 27(8), 861-874.
-            <https://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
+    .. [4] :doi:`Fawcett, T. (2006). An introduction to ROC analysis. Pattern
+            Recognition Letters, 27(8), 861-874. <10.1016/j.patrec.2005.10.010>`
 
-    .. [5] `Hand, D.J., Till, R.J. (2001). A Simple Generalisation of the Area
+    .. [5] :doi:`Hand, D.J., Till, R.J. (2001). A Simple Generalisation of the Area
             Under the ROC Curve for Multiple Class Classification Problems.
-            Machine Learning, 45(2), 171-186.
-            <http://link.springer.com/article/10.1023/A:1010920819831>`_
-    .. [6] `Wikipedia entry for the Gini coefficient
-            <https://en.wikipedia.org/wiki/Gini_coefficient>`_
+            Machine Learning, 45(2), 171-186. <10.1023/A:1010920819831>`
+
+    .. [6] :doi:`Lorentzen, C., Mayer, M., & Wuthrich, M. V. (2022). Gini index and
+           friends. <10.2139/ssrn.4248143>`
 
     Examples
     --------
@@ -860,7 +855,7 @@ def _multiclass_roc_auc_score(
                 "for multiclass one-vs-one ROC AUC, "
                 "'sample_weight' must be None in this case."
             )
-        y_true_encoded = _encode(y_true, uniques=classes)
+        y_true_encoded = _encode_labels(y_true, uniques=classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(
             _binary_roc_auc_score, y_true_encoded, y_score, average=average
@@ -1024,25 +1019,33 @@ def confusion_matrix_at_thresholds(
             y_true, y_score, sample_weight
         )
     )
-    if weight is None:
-        weight = 1.0
-
     # accumulate the true positives with decreasing threshold
-    max_float_dtype = _max_precision_float_dtype(xp, device)
-    # Perform the weighted cumulative sum using float64 precision when possible
-    # to avoid numerical stability problem with tens of millions of very noisy
-    # predictions:
-    # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
-    y_true = xp.astype(y_true, max_float_dtype)
-    tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
-    if sample_weight is not None:
-        # express fps as a cumsum to ensure fps is increasing even in
-        # the presence of floating point errors
+    if sample_weight is None:
+        # Accumulate the counts using an integer datatype to avoid
+        # rounding errors on devices that do not support float64.
+        y_true_int = xp.astype(y_true, xp.int64)
+        tps_int = xp.cumulative_sum(y_true_int, dtype=xp.int64)[threshold_idxs]
+        fps_int = (xp.astype(threshold_idxs, xp.int64) + 1) - tps_int
+
+        output_dtype = (
+            y_score.dtype
+            if hasattr(y_score, "dtype") and xp.isdtype(y_score.dtype, "real floating")
+            else _max_precision_float_dtype(xp, device)
+        )
+        tps = xp.astype(tps_int, output_dtype)
+        fps = xp.astype(fps_int, output_dtype)
+    else:
+        max_float_dtype = _max_precision_float_dtype(xp, device)
+        # Perform the weighted cumulative sum using float64 precision when possible
+        # to avoid numerical stability problem with tens of millions of very noisy
+        # predictions:
+        # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
+        y_true = xp.astype(y_true, max_float_dtype)
+        tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
         fps = xp.cumulative_sum((1 - y_true) * weight, dtype=max_float_dtype)[
             threshold_idxs
         ]
-    else:
-        fps = 1 + xp.astype(threshold_idxs, max_float_dtype) - tps
+
     tns = fps[-1] - fps
     fns = tps[-1] - tps
     return tns, fps, fns, tps, y_score[threshold_idxs]
@@ -1253,9 +1256,6 @@ def roc_curve(
         its neighbors in ROC space. This has no effect on the ROC AUC or visual
         shape of the curve, but reduces the number of plotted points.
 
-        .. versionadded:: 0.17
-           parameter *drop_intermediate*.
-
     Returns
     -------
     fpr : ndarray of shape (>2,)
@@ -1416,8 +1416,6 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-        .. versionadded:: 0.20
-
     Returns
     -------
     score : float
@@ -1576,9 +1574,6 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     a ranking loss of zero.
 
     Read more in the :ref:`User Guide <label_ranking_loss>`.
-
-    .. versionadded:: 0.17
-       A function *label_ranking_loss*
 
     Parameters
     ----------
@@ -2232,7 +2227,7 @@ def top_k_accuracy_score(
             UndefinedMetricWarning,
         )
 
-    y_true_encoded = _encode(y_true, uniques=classes)
+    y_true_encoded = _encode_labels(y_true, uniques=classes)
 
     if y_type == "binary":
         if k == 1:

@@ -16,11 +16,10 @@ from sklearn.utils._array_api import (
     _average,
     _is_numpy_namespace,
     _max_precision_float_dtype,
-    _nanmean,
-    _nansum,
     array_device,
     get_namespace,
     get_namespace_and_device,
+    xpx,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.deprecation import deprecated
@@ -262,8 +261,6 @@ def randomized_range_finder(
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-        .. versionadded:: 0.18
-
     random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data, i.e. getting the random vectors to initialize the algorithm.
@@ -417,7 +414,7 @@ def randomized_svd(
     (problem (1.5), p5).
 
     Refer to
-    :ref:`sphx_glr_auto_examples_applications_wikipedia_principal_eigenvector.py`
+    :ref:`sphx_glr_auto_examples_applications_plot_wikipedia_principal_eigenvector.py`
     for a typical example where the power iteration algorithm is used to rank web pages.
     This algorithm is also known to be used as a building block in Google's PageRank
     algorithm.
@@ -453,8 +450,6 @@ def randomized_svd(
         present a slow decay, `n_iter=0` or `1` should even work fine in theory
         (see [1]_ page 9).
 
-        .. versionchanged:: 0.18
-
     power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
@@ -463,8 +458,6 @@ def randomized_svd(
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-        .. versionadded:: 0.18
-
     transpose : bool or 'auto', default='auto'
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
@@ -472,15 +465,13 @@ def randomized_svd(
         implementation of randomized SVD tend to be a little faster in that
         case.
 
-        .. versionchanged:: 0.18
-
     flip_sign : bool, default=True
         The output of a singular value decomposition is only unique up to a
         permutation of the signs of the singular vectors. If `flip_sign` is
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, default='warn'
+    random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when
         shuffling the data, i.e. getting the random vectors to initialize
         the algorithm. Pass an int for reproducible results across multiple
@@ -650,8 +641,6 @@ def _randomized_eigsh(
 
     The choice of which components to select can be tuned with the `selection`
     parameter.
-
-    .. versionadded:: 0.24
 
     Parameters
     ----------
@@ -1183,7 +1172,7 @@ def _incremental_mean_and_var(
     last_sum = last_mean * last_sample_count
     X_nan_mask = xp.isnan(X)
     if xp.any(X_nan_mask):
-        sum_op = _nansum
+        sum_op = xpx.nansum
     else:
         sum_op = xp.sum
     if sample_weight is not None:
@@ -1367,7 +1356,7 @@ def _nanaverage(a, weights=None):
         return xp.nan
 
     if weights is None:
-        return _nanmean(a, xp=xp)
+        return xpx.nanmean(a, xp=xp)
 
     weights = xp.asarray(weights)
     a, weights = a[~mask], weights[~mask]

@@ -16,12 +16,13 @@ from scipy.stats import bernoulli, expon, randint, uniform
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
-from sklearn.callback.tests._utils import (
-    MaxIterEstimator,
-    NoCallbackEstimator,
+from sklearn.callback.tests._common.callbacks import (
     RecordingAutoPropagatedCallback,
     RecordingCallback,
-    skip_callback_test_if_wasm,
+)
+from sklearn.callback.tests._common.estimators import (
+    MaxIterEstimator,
+    NoCallbackEstimator,
 )
 from sklearn.cluster import KMeans
 from sklearn.compose import ColumnTransformer
@@ -33,7 +34,7 @@ from sklearn.datasets import (
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.exceptions import FitFailedWarning
+from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
 from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
@@ -86,6 +87,8 @@ from sklearn.preprocessing import (
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
     ConsumingScorer,
+    NonConsumingClassifier,
+    WeightedMetaClassifier,
     _Registry,
     check_recorded_metadata,
 )
@@ -106,9 +109,11 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     set_random_state,
+    skip_callback_test_if_wasm,
 )
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.metadata_routing import get_routing_for_object
 from sklearn.utils.validation import _num_samples
 
 
@@ -1216,7 +1221,7 @@ def test_random_search_cv_results_multimetric():
     n_splits = 3
     n_search_iter = 30
 
-    params = dict(C=np.logspace(-4, 1, 3))
+    params = dict(alpha=np.logspace(4, -1, 3))
     for refit in (True, False):
         random_searches = []
         for scoring in (("accuracy", "recall"), "accuracy", "recall"):
@@ -1339,7 +1344,9 @@ def test_unsupported_sample_weight_scorer():
 
     X, y = make_classification(n_samples=10, n_features=4, random_state=42)
     sw = np.ones_like(y)
-    search_cv = GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10]})
+    search_cv = GridSearchCV(
+        estimator=LogisticRegression(), param_grid={"alpha": [1, 0.1]}
+    )
     # function
     search_cv.set_params(scoring=fake_score_func)
     with pytest.warns(UserWarning, match="does not support sample_weight"):
@@ -1362,9 +1369,11 @@ def test_unsupported_sample_weight_scorer():
 @pytest.mark.parametrize(
     "estimator",
     [
-        GridSearchCV(estimator=LogisticRegression(), param_grid={"C": [1, 10, 100]}),
+        GridSearchCV(
+            estimator=LogisticRegression(), param_grid={"alpha": [1, 0.1, 0.01]}
+        ),
         RandomizedSearchCV(
-            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}
+            estimator=Ridge(), param_distributions={"alpha": [1, 0.1, 0.01]}, n_iter=3
         ),
     ],
 )
@@ -2674,21 +2683,21 @@ def test_search_html_repr():
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=False)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<div>DummyClassifier</div>" in repr_html
+        assert "<span>DummyClassifier</span>" in repr_html
 
     # Fitted with `refit=False` shows the original pipeline
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<div>DummyClassifier</div>" in repr_html
+        assert "<span>DummyClassifier</span>" in repr_html
 
     # Fitted with `refit=True` shows the best estimator
     search_cv = GridSearchCV(pipeline, param_grid=param_grid, refit=True)
     search_cv.fit(X, y)
     with config_context(display="diagram"):
         repr_html = search_cv._repr_html_()
-        assert "<div>DummyClassifier</div>" not in repr_html
-        assert "<div>LogisticRegression</div>" in repr_html
+        assert "<span>DummyClassifier</span>" not in repr_html
+        assert "<span>LogisticRegression</span>" in repr_html
 
 
 # Metadata Routing Tests
@@ -2753,6 +2762,31 @@ def test_score_rejects_params_with_no_routing_enabled(SearchCV, param_search):
 
     with pytest.raises(ValueError, match="is only supported if"):
         gs.score(X, y, metadata=1)
+
+
+@pytest.mark.parametrize(
+    "auto_request, expected",
+    [(False, None), (True, True)],
+)
+@config_context(enable_metadata_routing=True)
+def test_search_sample_weight_auto_request(auto_request, expected):
+    # Check that auto-requesting `sample_weight` works on consuming routers if passed
+    # through `GridSearchCV`.
+    X, y = make_classification(random_state=42)
+    sample_weight = np.ones(len(y))
+    meta_est = WeightedMetaClassifier(estimator=NonConsumingClassifier())
+    search = GridSearchCV(meta_est, param_grid={"estimator__alpha": [0.0]}, cv=2)
+
+    with config_context(enable_metadata_auto_requests=auto_request):
+        routing = get_routing_for_object(meta_est)
+        assert routing._self_request.fit.requests.get("sample_weight") is expected
+        assert routing._self_request.score.requests.get("sample_weight") is expected
+
+        if auto_request:
+            search.fit(X, y, sample_weight=sample_weight)
+        else:
+            with pytest.raises(UnsetMetadataPassedError, match="sample_weight"):
+                search.fit(X, y, sample_weight=sample_weight)
 
 
 # End of Metadata Routing Tests
@@ -2904,7 +2938,7 @@ ordinal_encoder = OrdinalEncoder()
 
 # If we construct this directly via `MaskedArray`, the list of tuples
 # gets auto-converted to a 2D array.
-ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)  # type: ignore[var-annotated]
+ma_with_tuples = np.ma.MaskedArray(np.empty(2), mask=True, dtype=object)
 ma_with_tuples[0] = (1, 2)
 ma_with_tuples[1] = (3, 4)
 

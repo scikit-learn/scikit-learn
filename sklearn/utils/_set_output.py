@@ -60,8 +60,8 @@ class ContainerAdapterProtocol(Protocol):
 
         Parameters
         ----------
-        Xs: container
-            Containers to be checked.
+        X : container
+            Container to be checked.
 
         Returns
         -------

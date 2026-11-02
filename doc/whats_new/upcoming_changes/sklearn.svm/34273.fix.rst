@@ -1,2 +1,0 @@
-- Fixed an out-of-bound write in the ``fit`` method of :class:`svm.LinearSVC` memory
-  when using ``multi_class="crammer_singer"``.  By :user:`Jake VanderPlas <jakevdp>`.

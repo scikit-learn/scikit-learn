@@ -658,10 +658,10 @@ def test_cross_val_and_permutation_test_on_dataframe(input_type, target_type):
     target_type = type(y_ser)
 
     def check_df(x):
-        return isinstance(x, input_type) or isinstance(x.to_native(), input_type)
+        return isinstance(x, input_type)
 
     def check_series(x):
-        return isinstance(x, target_type) or isinstance(x.to_native(), target_type)
+        return isinstance(x, target_type)
 
     clf = CheckingClassifier(check_X=check_df, check_y=check_series)
     cross_val_predict(clf, X_df, y_ser, cv=3)
@@ -999,7 +999,7 @@ def test_cross_val_predict(coo_container):
     )
     with pytest.warns(RuntimeWarning, match=warning_message):
         cross_val_predict(
-            LogisticRegression(solver="liblinear"),
+            LogisticRegression(),
             X,
             y,
             method="predict_proba",
@@ -1869,7 +1869,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(LogisticRegression(), {"C": [0.1, 1]}, cv=2)
+    est = GridSearchCV(LogisticRegression(), {"alpha": [0.1, 1]}, cv=2)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
         check_cross_val_predict_multiclass(est, X, y, method)
 
@@ -1883,7 +1883,7 @@ def test_cross_val_predict_with_method_multilabel_ovr():
     X, y = make_multilabel_classification(
         n_samples=n_samp, n_labels=3, n_classes=n_classes, n_features=5, random_state=42
     )
-    est = OneVsRestClassifier(LogisticRegression(solver="liblinear", random_state=0))
+    est = OneVsRestClassifier(LogisticRegression())
     for method in ["predict_proba", "decision_function"]:
         check_cross_val_predict_binary(est, X, y, method=method)
 

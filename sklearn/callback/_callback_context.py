@@ -318,7 +318,11 @@ class CallbackContext:
                 # sub-estimator's root context (both represent the same task).
                 continue
 
-            signature = _cached_signature(getattr(callback, hook_name))
+            hook = getattr(callback, hook_name)
+            # Cache the signature of the underlying function rather than that of the
+            # bound method, which would make the cache hold references to the callbacks
+            # themselves and keep the resources they own alive.
+            signature = _cached_signature(getattr(hook, "__func__", hook))
             params_names = {
                 p.name
                 for p in signature.parameters.values()
@@ -347,9 +351,7 @@ class CallbackContext:
 
                 args_to_pass[param_name] = evaluated_args[param_name]
 
-            result |= bool(
-                getattr(callback, hook_name)(estimator, self, **args_to_pass)
-            )
+            result |= bool(hook(estimator, self, **args_to_pass))
 
         return result
 

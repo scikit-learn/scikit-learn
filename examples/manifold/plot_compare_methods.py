@@ -30,9 +30,6 @@ representation of the data in the low-dimensional space.
 # We start by generating the S-curve dataset.
 
 import matplotlib.pyplot as plt
-
-# unused but required import for doing 3d projections with matplotlib < 3.2
-import mpl_toolkits.mplot3d  # noqa: F401
 from matplotlib import ticker
 
 from sklearn import datasets, manifold

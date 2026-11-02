@@ -81,7 +81,7 @@ def _fitted_attr_html_repr(fitted_attributes):
             style="anchor-name: --doc-link-{fitted_attr_name};"
             rel="noreferrer" target="_blank" href="{link}">
             {fitted_attr_name}
-            <span class="param-doc-description"
+            <span class="param-doc-description" tabindex="-1"
             style="position-anchor: --doc-link-{fitted_attr_name};">
             {fitted_attr_description}</span>
         </a>
@@ -108,10 +108,7 @@ def _fitted_attr_html_repr(fitted_attributes):
             )
         else:
             # Just show the attribute name without link
-            fitted_attr_display = (
-                f'<a class="param-doc-link" style="text-decoration:none;">'
-                f"{html.escape(name)}</a>"
-            )
+            fitted_attr_display = html.escape(name)
 
         if len(attr_info) == 2:
             html_row_values = (

@@ -269,8 +269,6 @@ class KNeighborsTransformer(
 
     Read more in the :ref:`User Guide <neighbors_transformer>`.
 
-    .. versionadded:: 0.22
-
     Parameters
     ----------
     mode : {'distance', 'connectivity'}, default='distance'
@@ -347,8 +345,6 @@ class KNeighborsTransformer(
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -499,8 +495,6 @@ class RadiusNeighborsTransformer(
 
     Read more in the :ref:`User Guide <neighbors_transformer>`.
 
-    .. versionadded:: 0.22
-
     Parameters
     ----------
     mode : {'distance', 'connectivity'}, default='distance'
@@ -574,8 +568,6 @@ class RadiusNeighborsTransformer(
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

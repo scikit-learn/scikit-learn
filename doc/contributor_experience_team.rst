@@ -6,12 +6,20 @@
       img.avatar {border-radius: 10px;}
     </style>
     <div>
+    <a href='https://github.com/antoinebaker'><img src='https://avatars.githubusercontent.com/u/8403898?v=4' class='avatar' /></a> <br />
+    <p>antoinebaker</p>
+    </div>
+    <div>
     <a href='https://github.com/AnneBeyer'><img src='https://avatars.githubusercontent.com/u/12881170?v=4' class='avatar' /></a> <br />
     <p>Anne Beyer</p>
     </div>
     <div>
     <a href='https://github.com/alfaro96'><img src='https://avatars.githubusercontent.com/u/32649176?v=4' class='avatar' /></a> <br />
     <p>Juan Carlos Alfaro Jiménez</p>
+    </div>
+    <div>
+    <a href='https://github.com/cakedev0'><img src='https://avatars.githubusercontent.com/u/25986961?v=4' class='avatar' /></a> <br />
+    <p>Arthur Lacote</p>
     </div>
     <div>
     <a href='https://github.com/MaxwellLZH'><img src='https://avatars.githubusercontent.com/u/16646940?v=4' class='avatar' /></a> <br />
@@ -28,6 +36,10 @@
     <div>
     <a href='https://github.com/smarie'><img src='https://avatars.githubusercontent.com/u/3236794?v=4' class='avatar' /></a> <br />
     <p>Sylvain Marié</p>
+    </div>
+    <div>
+    <a href='https://github.com/FrancoisPgm'><img src='https://avatars.githubusercontent.com/u/35327799?v=4' class='avatar' /></a> <br />
+    <p>François Paugam</p>
     </div>
     <div>
     <a href='https://github.com/norbusan'><img src='https://avatars.githubusercontent.com/u/1735589?v=4' class='avatar' /></a> <br />
