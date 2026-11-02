@@ -83,21 +83,21 @@ def test_hdbscan_distance_matrix():
     """
     D = euclidean_distances(X)
     D_original = D.copy()
-    labels = HDBSCAN(metric="precomputed", copy=True).fit_predict(D)
+    labels = HDBSCAN(metric="precomputed").fit_predict(D)
 
     assert_allclose(D, D_original)
     check_label_quality(labels)
 
     msg = r"The precomputed distance matrix.*has shape"
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="precomputed", copy=True).fit_predict(X)
+        HDBSCAN(metric="precomputed").fit_predict(X)
 
     msg = r"The precomputed distance matrix.*values"
     # Ensure the matrix is not symmetric
     D[0, 1] = 10
     D[1, 0] = 1
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="precomputed", copy=False).fit_predict(D)
+        HDBSCAN(metric="precomputed").fit_predict(D)
 
 
 @pytest.mark.parametrize("sparse_constructor", [*CSR_CONTAINERS, *CSC_CONTAINERS])
