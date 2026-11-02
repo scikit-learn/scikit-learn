@@ -202,14 +202,11 @@ def _determine_key_type(key, accept_slice=True):
     raise ValueError(err_msg)
 
 
-def _safe_indexing(X, indices, *, axis=0):
+def safe_indexing(X, indices, *, axis=0):
     """Return rows, items or columns of X using indices.
 
-    .. warning::
-
-        This utility is documented, but **private**. This means that
-        backward compatibility might be broken without any deprecation
-        cycle.
+    .. versionadded:: 1.10
+       Previously available as `_safe_indexing`, which remains as an alias.
 
     Parameters
     ----------
@@ -246,11 +243,11 @@ def _safe_indexing(X, indices, *, axis=0):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.utils import _safe_indexing
+    >>> from sklearn.utils import safe_indexing
     >>> data = np.array([[1, 2], [3, 4], [5, 6]])
-    >>> _safe_indexing(data, 0, axis=0)  # select the first row
+    >>> safe_indexing(data, 0, axis=0)  # select the first row
     array([1, 2])
-    >>> _safe_indexing(data, 0, axis=1)  # select the first column
+    >>> safe_indexing(data, 0, axis=1)  # select the first column
     array([1, 3, 5])
     """
     if indices is None:
@@ -316,6 +313,11 @@ def _safe_indexing(X, indices, *, axis=0):
         return _list_indexing(X, indices, indices_dtype)
 
 
+# Many third-party libraries import `_safe_indexing` from `sklearn.utils`, keep it
+# working without warnings.
+_safe_indexing = safe_indexing
+
+
 def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
     """Safe assignment to a numpy array, sparse matrix, or pandas dataframe.
 
@@ -366,7 +368,7 @@ def _get_column_indices(X, key):
     """Get feature column indices for input data X and key.
 
     For accepted values of `key`, see the docstring of
-    :func:`_safe_indexing`.
+    :func:`safe_indexing`.
     """
     key_dtype = _determine_key_type(key)
 
