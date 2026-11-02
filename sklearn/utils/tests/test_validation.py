@@ -2573,6 +2573,8 @@ def test_check_pos_label_consistency_unsigned_array_api(
 
     with config_context(array_api_dispatch=True):
         y_true = xp.asarray(values, dtype=getattr(xp, label_dtype), device=device)
+        assert _check_pos_label_consistency(1, y_true) == 1
+        assert _check_pos_label_consistency(0, y_true) == 0
         assert _check_pos_label_consistency(None, y_true) == 1
 
 
