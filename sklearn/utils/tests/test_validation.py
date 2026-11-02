@@ -140,7 +140,7 @@ def test_as_float_array():
     assert as_float_array(X, copy=False) is X
     # Test that if X is fortran ordered it stays
     X = np.asfortranarray(X)
-    assert np.isfortran(as_float_array(X, copy=True))
+    assert as_float_array(X, copy=True).flags.f_contiguous
 
     # Test the copy parameter with some matrices
     matrices = [
