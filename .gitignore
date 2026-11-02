@@ -93,3 +93,4 @@ jupyterlite_contents
 
 # file recognised by vscode IDEs containing env variables
 .env
+.github/copilot-instructions.md
