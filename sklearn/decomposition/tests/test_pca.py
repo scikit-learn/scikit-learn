@@ -899,6 +899,10 @@ def test_infer_dimension_tied_eigenvalues_raises_error():
         _infer_dimension(spectrum, 100)
 
 
+def test_infer_dimension_returns_zero_when_no_rank_can_be_tested():
+    assert _infer_dimension(np.zeros(5), 50) == 0
+
+
 def test_pca_randomized_svd_n_oversamples():
     """Check that exposing and setting `n_oversamples` will provide accurate results
     even when `X` as a large number of features.

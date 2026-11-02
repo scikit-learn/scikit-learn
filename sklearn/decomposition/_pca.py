@@ -15,7 +15,12 @@ from sklearn.base import _fit_context
 from sklearn.decomposition._base import _BasePCA
 from sklearn.utils import check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
-from sklearn.utils._array_api import _cov, array_device, get_namespace
+from sklearn.utils._array_api import (
+    _cov,
+    _max_precision_float_dtype,
+    array_device,
+    get_namespace,
+)
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.extmath import _randomized_svd, fast_logdet, svd_flip
 from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
@@ -53,6 +58,11 @@ def _infer_dimension(spectrum, n_samples):
     <https://proceedings.neurips.cc/paper/2000/file/7503cfacd12053d309b6bed5c89de212-Paper.pdf>`_
     """
     xp, _ = get_namespace(spectrum)
+    # Work in double precision where available; f32 rounding can change the
+    # selected rank.
+    spectrum = xp.astype(
+        spectrum, _max_precision_float_dtype(xp, array_device(spectrum)), copy=False
+    )
     n_features = spectrum.shape[0]
     eps = 1e-15
 
