@@ -88,7 +88,7 @@ One possible remedy is to add a penalty for the size of the coefficients as in
 
   .. math:: \min_{w} \sum_i s_i (X_i w - y_i)^2
 
-.. dropdown:: Ordinary Least Squares Complexity
+.. dropdown:: Complexity of OLS
 
   For dense `X`, the least squares solution is computed using the singular value
   decomposition of :math:`X` via :func:`SciPy lstsq <scipy:scipy.linalg.lstsq>`.
