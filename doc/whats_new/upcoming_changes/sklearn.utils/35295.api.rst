@@ -1,0 +1,3 @@
+- :func:`utils.safe_indexing` is now public. It was previously available as
+  `utils._safe_indexing`, which remains as an alias.
+  By :user:`Arthur Lacote <cakedev0>`.
