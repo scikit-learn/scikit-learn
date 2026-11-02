@@ -494,7 +494,7 @@ class ClassifierWithRequestDefaults(ClassifierMixin, BaseEstimator):
 
     def get_metadata_routing(self):
         # Each instance can configure metadata which is auto-requested when
-        # `enable_metadata_auto_requests` is true (the default). The
+        # `enable_metadata_auto_requests` is `True` (the default). The
         # `add_auto_request` method does this.
         requests = super().get_metadata_routing()
         requests.predict.add_auto_request("other_metadata")
