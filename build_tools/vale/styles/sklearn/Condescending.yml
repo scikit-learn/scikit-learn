@@ -1,0 +1,10 @@
+extends: existence
+message: "'%s' can sound condescending when something is not obvious to the reader."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-concise
+level: suggestion
+ignorecase: true
+tokens:
+  - obviously
+  - of course
+  - trivially
+  - clearly
