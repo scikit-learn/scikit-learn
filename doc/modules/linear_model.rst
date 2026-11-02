@@ -395,6 +395,51 @@ features, it is often faster than :class:`LassoCV`.
 
 .. centered:: |lasso_cv_1| |lasso_cv_2|
 
+Adaptive repeated cross-validation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For randomized CV, :class:`LassoCV` can stop repetitions based on the precision
+of the mean validation-loss curve. For example::
+
+    from sklearn.linear_model import LassoCV
+    from sklearn.model_selection import RepeatedKFold
+
+    model = LassoCV(
+        cv=RepeatedKFold(n_splits=5, n_repeats=1000, random_state=42),
+        cv_tolerance=1e-4,
+        cv_error_rate=0.05,
+        min_cv_repeats=20,
+    ).fit(X, y)
+
+The tolerance is in squared-response units and should be chosen before fitting,
+preferably using an independent pilot. It is distinct from the coordinate-descent
+solver's ``tol``. Each complete partition contributes one loss curve. The method
+monitors losses relative to the largest alpha, using their sample standard
+deviations divided by the square root of the repetition count. It stops after
+burn-in when every nonreference MCSE is at most
+:math:`\xi / (\sqrt{2} z_{1-\beta/(2(m-1))})`, where :math:`m` is the number of
+candidate alphas, :math:`\xi` is ``cv_tolerance``, and :math:`\beta` is
+``cv_error_rate``. Fold losses use the same averaging convention as ordinary
+:class:`LassoCV`, including when sample weights are supplied.
+
+Inspect ``n_repeats_``, ``cv_mcse_``, and ``cv_reproducibility_status_`` after
+fitting. Exhausting the budget emits a warning and returns the model selected
+from the available loss curves. Earlier folds are not refitted, future
+repetitions are not scheduled, and only the final selected model is refitted
+on all data.
+
+The reproducibility interpretation is conditional on the observed data and
+asymptotic as the tolerance decreases. It is not a finite-sample guarantee,
+a confidence interval for predictive risk, or a guarantee of identical selected
+penalties or features. Near-tied risks can yield different models despite small
+MCSEs; zero observed variance can also underestimate split variability. Additional
+repetitions can be expensive and need not improve prediction. Default unshuffled
+CV remains deterministic for fixed, ordered data. Grouped and time-series
+partitions are outside this mode's scope.
+
+See :arxiv:`Ritzwoller and Romano, Reproducible Aggregation of Sample-Split
+Statistics <2311.14204>`.
+
 .. _lasso_lars_ic:
 
 Information-criteria based model selection

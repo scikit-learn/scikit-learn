@@ -7,11 +7,13 @@ import warnings
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import partial
+from itertools import islice
 from numbers import Integral, Real
 
 import numpy as np
 from joblib import effective_n_jobs
 from scipy import sparse
+from scipy.stats import norm
 
 from sklearn.base import RegressorMixin, _fit_context
 from sklearn.linear_model import _cd_fast as cd_fast
@@ -19,7 +21,7 @@ from sklearn.linear_model._base import (
     MultiOutputLinearModel,
     _pre_fit,
 )
-from sklearn.model_selection import check_cv
+from sklearn.model_selection import RepeatedKFold, check_cv
 from sklearn.utils import check_array, check_scalar, metadata_routing
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
@@ -1737,6 +1739,39 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
         self.random_state = random_state
         self.selection = selection
 
+    def _compute_mse_paths(
+        self, X, y, sample_weight, folds, l1_ratios, alphas, path_params
+    ):
+        folds = list(folds)
+        jobs = self._path_jobs(
+            X, y, sample_weight, folds, l1_ratios, alphas, path_params
+        )
+        mse_paths = Parallel(
+            n_jobs=self.n_jobs,
+            verbose=self.verbose,
+            prefer="threads",
+        )(jobs)
+        return np.reshape(mse_paths, (len(l1_ratios), len(folds), -1))
+
+    def _path_jobs(self, X, y, sample_weight, folds, l1_ratios, alphas, path_params):
+        return (
+            delayed(_path_residuals)(
+                X,
+                y,
+                sample_weight,
+                train,
+                test,
+                self.fit_intercept,
+                self.path,
+                path_params,
+                alphas=this_alphas,
+                l1_ratio=this_l1_ratio,
+                dtype=X.dtype.type,
+            )
+            for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
+            for train, test in folds
+        )
+
     @abstractmethod
     def _get_estimator(self):
         """Model to be fitted after the best alpha has been determined."""
@@ -1885,6 +1920,8 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
             ]
         path_params.pop("cv", None)
         path_params.pop("n_jobs", None)
+        for parameter in ("cv_tolerance", "cv_error_rate", "min_cv_repeats"):
+            path_params.pop(parameter, None)
 
         n_l1_ratio = len(l1_ratios)
 
@@ -1936,35 +1973,16 @@ class LinearModelCV(MultiOutputLinearModel, ABC):
         else:
             routed_params = _manual_routing({"splitter": {}})
 
-        # Compute path for all folds and compute MSE to get the best alpha
-        folds = list(cv.split(X, y, **routed_params.splitter.split))
-        best_mse = np.inf
-
-        # We do a double for loop folded in one, in order to be able to
-        # iterate in parallel on l1_ratio and folds
-        jobs = (
-            delayed(_path_residuals)(
-                X,
-                y,
-                sample_weight,
-                train,
-                test,
-                self.fit_intercept,
-                self.path,
-                path_params,
-                alphas=this_alphas,
-                l1_ratio=this_l1_ratio,
-                dtype=X.dtype.type,
-            )
-            for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
-            for train, test in folds
+        mse_paths = self._compute_mse_paths(
+            X,
+            y,
+            sample_weight,
+            cv.split(X, y, **routed_params.splitter.split),
+            l1_ratios,
+            alphas,
+            path_params,
         )
-        mse_paths = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            prefer="threads",
-        )(jobs)
-        mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
+        best_mse = np.inf
         # The mean is computed over folds.
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.moveaxis(mse_paths, 2, 1))
@@ -2136,6 +2154,34 @@ class LassoCV(RegressorMixin, LinearModelCV):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
+    cv_tolerance : float or None, default=None
+        Absolute precision target for mean CV losses relative to the largest
+        alpha, in squared-response units. If set, ``cv`` must be a
+        :class:`~sklearn.model_selection.RepeatedKFold` instance; its
+        ``n_repeats`` is the maximum budget. The alpha grid is computed once
+        and must contain at least two distinct finite positive values.
+        With ``selection="random"``, an integer ``random_state`` is required.
+        ``None`` evaluates all supplied folds as usual.
+
+        .. versionadded:: 1.10
+
+    cv_error_rate : float, default=0.05
+        Nominal upper bound on the probability that two independent adaptive
+        runs differ by more than ``cv_tolerance`` in any mean relative loss,
+        provided the budget does not bind. Must be between zero
+        and one. Uses a normal approximation and Bonferroni adjustment; this
+        interpretation is asymptotic, not a finite-sample guarantee. Used only
+        when ``cv_tolerance`` is set.
+
+        .. versionadded:: 1.10
+
+    min_cv_repeats : int, default=20
+        Minimum complete repetitions before checking precision, at least two
+        and no greater than ``cv.n_repeats``. A small burn-in or zero observed
+        variance does not guarantee calibration. Used only in adaptive mode.
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     alpha_ : float
@@ -2149,6 +2195,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     mse_path_ : ndarray of shape (n_alphas, n_folds)
         Mean square error for the test set on each fold, varying alpha.
+        In adaptive mode, columns contain only the folds actually evaluated,
+        ordered by repetition and then fold.
 
     alphas_ : ndarray of shape (n_alphas,)
         The grid of alphas used for fitting.
@@ -2169,6 +2217,30 @@ class LassoCV(RegressorMixin, LinearModelCV):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    n_repeats_ : int
+        Complete repetitions evaluated. Available only in adaptive mode.
+
+        .. versionadded:: 1.10
+
+    cv_mcse_ : ndarray of shape (n_alphas,)
+        Monte Carlo standard errors of mean losses relative to the largest
+        alpha. The reference entry is zero. Available only in adaptive mode.
+
+        .. versionadded:: 1.10
+
+    cv_reproducibility_threshold_ : float
+        Simultaneously adjusted MCSE threshold. Available only in adaptive mode.
+
+        .. versionadded:: 1.10
+
+    cv_reproducibility_status_ : {"target_reached", "budget_exhausted"}
+        Whether all relative-loss MCSEs met the threshold after burn-in.
+        Budget exhaustion emits a warning but still returns a fitted model.
+        Neither status guarantees stable variable or penalty selection.
+        Available only in adaptive mode.
+
+        .. versionadded:: 1.10
 
     See Also
     --------
@@ -2215,6 +2287,13 @@ class LassoCV(RegressorMixin, LinearModelCV):
     array([-79.4755331])
     """
 
+    _parameter_constraints = {
+        **LinearModelCV._parameter_constraints,
+        "cv_tolerance": [None, Interval(Real, 0, None, closed="neither")],
+        "cv_error_rate": [Interval(Real, 0, 1, closed="neither")],
+        "min_cv_repeats": [Interval(Integral, 2, None, closed="left")],
+    }
+
     path = staticmethod(lasso_path)
 
     def __init__(
@@ -2233,6 +2312,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
         positive=False,
         random_state=None,
         selection="cyclic",
+        cv_tolerance=None,
+        cv_error_rate=0.05,
+        min_cv_repeats=20,
     ):
         super().__init__(
             eps=eps,
@@ -2249,6 +2331,94 @@ class LassoCV(RegressorMixin, LinearModelCV):
             random_state=random_state,
             selection=selection,
         )
+
+        self.cv_tolerance = cv_tolerance
+        self.cv_error_rate = cv_error_rate
+        self.min_cv_repeats = min_cv_repeats
+
+    def _compute_mse_paths(
+        self, X, y, sample_weight, folds, l1_ratios, alphas, path_params
+    ):
+        for attribute in (
+            "n_repeats_",
+            "cv_mcse_",
+            "cv_reproducibility_threshold_",
+            "cv_reproducibility_status_",
+        ):
+            self.__dict__.pop(attribute, None)
+        if self.cv_tolerance is None:
+            return super()._compute_mse_paths(
+                X, y, sample_weight, folds, l1_ratios, alphas, path_params
+            )
+        if not isinstance(self.cv, RepeatedKFold):
+            raise ValueError("cv_tolerance requires cv=RepeatedKFold(...).")
+        if self.min_cv_repeats > self.cv.n_repeats:
+            raise ValueError("min_cv_repeats must not exceed cv.n_repeats.")
+        if self.selection == "random" and not isinstance(self.random_state, Integral):
+            raise ValueError(
+                "Adaptive CV with selection='random' requires an integer random_state."
+            )
+        grid = np.asarray(alphas[0])
+        if not np.isfinite(grid).all() or np.any(grid <= 0) or np.unique(grid).size < 2:
+            raise ValueError(
+                "Adaptive CV requires at least two distinct finite positive alphas."
+            )
+        threshold = self.cv_tolerance / (
+            np.sqrt(2) * norm.isf(self.cv_error_rate / (2 * (len(grid) - 1)))
+        )
+        if not np.isfinite(threshold) or threshold <= 0:
+            raise ValueError(
+                "The CV precision target is outside floating-point precision."
+            )
+        n_splits = self.cv.get_n_splits(X, y) // self.cv.n_repeats
+        mean = np.zeros(len(grid))
+        m2 = np.zeros(len(grid))
+        paths = []
+        reached = False
+        with Parallel(
+            n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads"
+        ) as parallel:
+            for count in range(1, self.cv.n_repeats + 1):
+                repetition = list(islice(folds, n_splits))
+                losses = parallel(
+                    self._path_jobs(
+                        X, y, sample_weight, repetition, l1_ratios, alphas, path_params
+                    )
+                )
+                losses = np.asarray(losses)
+                if not np.isfinite(losses).all():
+                    raise ValueError(
+                        "Adaptive CV encountered non-finite validation losses."
+                    )
+                paths.append(losses)
+                with np.errstate(over="ignore", invalid="ignore"):
+                    relative = losses.mean(axis=0, dtype=np.float64)
+                    relative -= relative[0]
+                    delta = relative - mean
+                    mean += delta / count
+                    m2 += delta * (relative - mean)
+                if not np.isfinite(m2).all() or not np.isfinite(mean).all():
+                    raise ValueError(
+                        "Adaptive CV loss moments overflowed; rescale the response."
+                    )
+                if count >= self.min_cv_repeats:
+                    mcse = np.sqrt(np.maximum(m2, 0) / (count * (count - 1)))
+                    reached = bool(np.all(mcse[1:] <= threshold))
+                    if reached:
+                        break
+        self.n_repeats_ = count
+        self.cv_mcse_ = mcse
+        self.cv_reproducibility_threshold_ = float(threshold)
+        self.cv_reproducibility_status_ = (
+            "target_reached" if reached else "budget_exhausted"
+        )
+        if not reached:
+            warnings.warn(
+                "Adaptive CV exhausted cv.n_repeats before reaching "
+                "the precision target.",
+                UserWarning,
+            )
+        return np.concatenate(paths, axis=0)[None, :, :]
 
     def _get_estimator(self):
         return Lasso()

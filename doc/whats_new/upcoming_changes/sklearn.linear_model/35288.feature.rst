@@ -1,0 +1,5 @@
+- :class:`linear_model.LassoCV` supports opt-in adaptive repetition with
+  ``RepeatedKFold`` through ``cv_tolerance``, ``cv_error_rate``, and
+  ``min_cv_repeats``, with diagnostics for relative-loss precision and budget
+  exhaustion.
+  By :user:`Gaurav Sood <soodoku>`.
