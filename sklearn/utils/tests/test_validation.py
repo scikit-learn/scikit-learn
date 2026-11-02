@@ -2587,7 +2587,11 @@ def test_check_pos_label_consistency_bool_array_api(
 
     with config_context(array_api_dispatch=True):
         y_true = xp.asarray([False, True], device=device)
+        assert _check_pos_label_consistency(True, y_true) is True
+        assert _check_pos_label_consistency(False, y_true) is False
         assert _check_pos_label_consistency(None, y_true) is True
 
         y_true = xp.ones(3, dtype=xp.bool, device=device)
+        assert _check_pos_label_consistency(True, y_true) is True
+        assert _check_pos_label_consistency(False, y_true) is False
         assert _check_pos_label_consistency(None, y_true) is True
