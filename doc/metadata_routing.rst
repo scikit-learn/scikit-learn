@@ -280,9 +280,8 @@ Auto-requested metadata
     ...     enable_metadata_auto_requests=True,
     ... )
 
-Actually auto-requests are enabled by default, so enabling metadata routing
-is enough. Set ``enable_metadata_auto_requests=False`` when you want to disable
-auto-requests.
+Auto-requests are enabled by default, so enabling metadata routing is enough.
+Set ``enable_metadata_auto_requests=False`` to disable them.
 
 In scikit-learn, `sample_weight` is auto-requested on estimator methods that accept it
 (typically `fit` and `score`), on meta-estimators that also consume it themselves, and
