@@ -2600,6 +2600,30 @@ def test_check_pos_label_consistency_signed_array_api(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
+@pytest.mark.parametrize("unsigned", [True, False])
+@pytest.mark.parametrize(
+    "label_dtype",
+    ["int8", "int16", "int32", "int64"],
+)
+@pytest.mark.parametrize("values", [[0, 1, 2], [1, 2]])
+def test_check_pos_label_consistency_integer_raises(
+    array_namespace, device_name, dtype_name, unsigned, label_dtype, values
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    if unsigned:
+        label_dtype = "u" + label_dtype
+
+    with config_context(array_api_dispatch=True):
+        y_true = xp.asarray(values, dtype=getattr(xp, label_dtype), device=device)
+        with pytest.raises(ValueError, match="y_true takes value in"):
+            _check_pos_label_consistency(None, y_true)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
 def test_check_pos_label_consistency_bool_array_api(
     array_namespace, device_name, dtype_name
 ):
