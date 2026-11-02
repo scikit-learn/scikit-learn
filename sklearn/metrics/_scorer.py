@@ -414,6 +414,9 @@ class _BaseScorer(_MetadataRequester):
                 ),
             )
 
+        if self._accept_sample_weight():
+            requests.score.add_auto_request("sample_weight")
+
         return requests
 
 
