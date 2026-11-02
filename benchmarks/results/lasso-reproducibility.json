@@ -1,0 +1,135 @@
+{
+  "seed": 1234,
+  "tolerance": 0.02,
+  "max_repeats": 1000,
+  "results": {
+    "single_randomized": {
+      "pairs": 1000,
+      "risk_curve_exceedance": 0.99,
+      "exceedance_mcse": 0.003146426544510456,
+      "exceedance_interval_95": [
+        0.9816905311296853,
+        0.9945592455544707
+      ],
+      "alpha_agreement": 0.345,
+      "support_agreement": 0.363,
+      "test_mse": 1.1035088257359689,
+      "mean_repeats": 1.0,
+      "total_path_fits": 10000,
+      "budget_exhaustion_rate": 0.0,
+      "elapsed_seconds": 2.2642636249947827
+    },
+    "fixed_10": {
+      "pairs": 1000,
+      "risk_curve_exceedance": 0.721,
+      "exceedance_mcse": 0.014183053267896867,
+      "exceedance_interval_95": [
+        0.6923963660323501,
+        0.7479122067170344
+      ],
+      "alpha_agreement": 0.935,
+      "support_agreement": 0.935,
+      "test_mse": 1.1015769883254007,
+      "mean_repeats": 10.0,
+      "total_path_fits": 100000,
+      "budget_exhaustion_rate": 0.0,
+      "elapsed_seconds": 9.512062041991157
+    },
+    "fixed_50": {
+      "pairs": 1000,
+      "risk_curve_exceedance": 0.215,
+      "exceedance_mcse": 0.012991343271578963,
+      "exceedance_interval_95": [
+        0.19065343629137976,
+        0.2415278160453867
+      ],
+      "alpha_agreement": 1.0,
+      "support_agreement": 1.0,
+      "test_mse": 1.101472662059155,
+      "mean_repeats": 50.0,
+      "total_path_fits": 500000,
+      "budget_exhaustion_rate": 0.0,
+      "elapsed_seconds": 61.22920779098058
+    },
+    "fixed_100": {
+      "pairs": 1000,
+      "risk_curve_exceedance": 0.078,
+      "exceedance_mcse": 0.008480330182251162,
+      "exceedance_interval_95": [
+        0.06294716759073615,
+        0.09628261657107237
+      ],
+      "alpha_agreement": 1.0,
+      "support_agreement": 1.0,
+      "test_mse": 1.101472662059155,
+      "mean_repeats": 100.0,
+      "total_path_fits": 1000000,
+      "budget_exhaustion_rate": 0.0,
+      "elapsed_seconds": 214.42330829100683
+    },
+    "fixed_500": {
+      "pairs": 1000,
+      "risk_curve_exceedance": 0.0,
+      "exceedance_mcse": 0.0,
+      "exceedance_interval_95": [
+        2.168404344971009e-19,
+        0.003826758485555125
+      ],
+      "alpha_agreement": 1.0,
+      "support_agreement": 1.0,
+      "test_mse": 1.101472662059155,
+      "mean_repeats": 500.0,
+      "total_path_fits": 5000000,
+      "budget_exhaustion_rate": 0.0,
+      "elapsed_seconds": 751.8059898749925
+    },
+    "adaptive": {
+      "pairs": 1000,
+      "risk_curve_exceedance": 0.003,
+      "exceedance_mcse": 0.001729450779872038,
+      "exceedance_interval_95": [
+        0.0010207838811386195,
+        0.008783014053503176
+      ],
+      "alpha_agreement": 1.0,
+      "support_agreement": 1.0,
+      "test_mse": 1.101472662059155,
+      "mean_repeats": 293.6245,
+      "total_path_fits": 2936245,
+      "budget_exhaustion_rate": 0.0,
+      "elapsed_seconds": 334.6321846250212
+    },
+    "deterministic": {
+      "pairs": 1000,
+      "risk_curve_exceedance": 0.0,
+      "exceedance_mcse": 0.0,
+      "exceedance_interval_95": [
+        2.168404344971009e-19,
+        0.003826758485555125
+      ],
+      "alpha_agreement": 1.0,
+      "support_agreement": 1.0,
+      "test_mse": 1.1115786494838071,
+      "mean_repeats": 1.0,
+      "total_path_fits": 10000,
+      "budget_exhaustion_rate": 0.0,
+      "elapsed_seconds": 1.8775332089862786
+    },
+    "approximate_loo": {
+      "pairs": 1000,
+      "risk_curve_exceedance": 0.0,
+      "exceedance_mcse": 0.0,
+      "exceedance_interval_95": [
+        2.168404344971009e-19,
+        0.003826758485555125
+      ],
+      "alpha_agreement": 1.0,
+      "support_agreement": 1.0,
+      "test_mse": 1.1115786494838071,
+      "mean_repeats": 0.0,
+      "total_path_fits": 2000,
+      "budget_exhaustion_rate": 0.0,
+      "elapsed_seconds": 1.8227008749963716
+    }
+  }
+}
