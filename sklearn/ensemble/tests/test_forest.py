@@ -2054,9 +2054,8 @@ def test_invalid_categorical(name, categorical_features, match):
 
 
 def test_categorical_absolute_error():
-    """absolute_error categorical splits are only rejected with the best splitter.
-
-    Same limit as trees.
+    """Categorical features with criterion='absolute_error' are only supported by
+    the random splitter: ExtraTrees fit, RandomForest raises.
     """
     X = np.array([[0.0], [1.0], [0.0], [1.0]], dtype=np.float64)
     y = np.array([0.0, 1.0, 0.0, 1.0])

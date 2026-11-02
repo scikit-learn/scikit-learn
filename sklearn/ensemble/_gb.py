@@ -829,10 +829,6 @@ class BaseGradientBoosting(_TreeInputValidationMixin, BaseEnsemble, metaclass=AB
 
         X_csc = csc_array(X) if issparse(X) else None
         X_csr = csr_array(X) if issparse(X) else None
-        if X_csc is not None:
-            # The early stopping split turns X into CSR: the trees need a CSC
-            # matrix with sorted indices.
-            X_csc.sort_indices()
 
         if self.n_iter_no_change is not None:
             loss_history = np.full(self.n_iter_no_change, np.inf)

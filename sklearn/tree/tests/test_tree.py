@@ -1179,7 +1179,7 @@ def test_sample_weight_invalid():
         clf.fit(X, y, sample_weight=sample_weight)
 
 
-@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+@pytest.mark.parametrize("Tree", ALL_TREES.values())
 def test_sample_weight_without_input_check(Tree):
     """With check_input=False, sample weights are not validated but still
     converted (e.g. integer bootstrap counts of forests) and shape-checked."""

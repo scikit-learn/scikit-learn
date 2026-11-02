@@ -327,7 +327,6 @@ class BaseForest(
                 "learned by trees from earlier iterations."
             )
 
-        # TODO: work on y really needed?
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
             warn(
