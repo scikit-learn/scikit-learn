@@ -7,7 +7,6 @@ from abc import ABC, abstractmethod
 from numbers import Real
 
 import numpy as np
-from scipy.special import logsumexp
 
 from sklearn.base import (
     BaseEstimator,
@@ -20,6 +19,12 @@ from sklearn.linear_model import Ridge
 from sklearn.neural_network._base import ACTIVATIONS, WEIGHTS
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import column_or_1d
+from sklearn.utils._array_api import (
+    check_same_namespace,
+    get_namespace,
+    get_namespace_and_device,
+    move_to,
+)
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.multiclass import check_classification_targets, unique_labels
 from sklearn.utils.validation import check_is_fitted, validate_data
@@ -88,9 +93,10 @@ class ExtremeLearningBase(BaseEstimator, ABC):
         self.ridge_alpha = ridge_alpha
         self.rtol = rtol
 
-    def _initialize(self):
+    def _initialize(self, X):
         # set all attributes, initialize weights etc. for first call
         # Initialize parameters
+        xp, _, device_ = get_namespace_and_device(X)
         fn = ACTIVATIONS[self.activation]
         self._activation_fn = fn
         hidden_layer_sizes = np.asarray(self.hidden_layer_sizes)
@@ -103,35 +109,32 @@ class ExtremeLearningBase(BaseEstimator, ABC):
         self.b_ = []
         rng = self._get_generator(self.random_state)
 
-        self.W_.append(
-            self._weight_mode(self.n_features_in_, hidden_layer_sizes[0], rng=rng)
-        )
-        self.b_.append(self._weight_mode(1, hidden_layer_sizes[0], rng=rng).reshape(-1))
-        for i, layer in enumerate(hidden_layer_sizes[1:]):
+        in_sizes = np.concatenate(([self.n_features_in_], hidden_layer_sizes[:-1]))
+        for n_in, n_out in zip(in_sizes, hidden_layer_sizes):
             # (n_hidden, n_features)
             self.W_.append(
-                self._weight_mode(
-                    hidden_layer_sizes[i],
-                    layer,
-                    rng=rng,
+                xp.asarray(
+                    self._weight_mode(n_in, n_out, rng=rng),
+                    dtype=X.dtype,
+                    device=device_,
                 )
             )
             # (n_hidden,)
             self.b_.append(
-                self._weight_mode(
-                    1,
-                    layer,
-                    rng=rng,
-                ).reshape(-1)
+                xp.asarray(
+                    self._weight_mode(1, n_out, rng=rng).reshape(-1),
+                    dtype=X.dtype,
+                    device=device_,
+                )
             )
 
-    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
-        self._validate_params()
+        xp, _, _ = get_namespace_and_device(X)
+
         # Assumption : X, Y have been pre-processed.
         # X shape: (n_samples, n_features)
         # Y shape: (n_samples, n_classes)
-        self._initialize()
+        self._initialize(X)
         # design matrix shape: (n_samples, sum_hidden+n_features)
         # or (n_samples, sum_hidden)
         D = self._design_matrix(X)
@@ -142,16 +145,16 @@ class ExtremeLearningBase(BaseEstimator, ABC):
         # If ridge_alpha is None, use direct solve using
         # MoorePenrose Pseudo-Inverse, otherwise use ridge regularized form.
         if self.ridge_alpha is None:
-            if self.rtol is None:
-                self.coef_ = np.linalg.pinv(D) @ y
-            else:
-                self.coef_ = np.linalg.pinv(D, rcond=self.rtol) @ y
+            self.coef_ = xp.linalg.pinv(D, rtol=self.rtol) @ y
         else:
-            ridge = Ridge(alpha=self.ridge_alpha, fit_intercept=False)
+            ridge = Ridge(alpha=self.ridge_alpha, solver="svd", fit_intercept=False)
             ridge.fit(D, y)
-            self.coef_ = ridge.coef_.T
+            if ridge.coef_.ndim == 1:
+                self.coef_ = ridge.coef_
+            else:
+                self.coef_ = ridge.coef_.mT
         if self.coef_.ndim == 2 and self.coef_.shape[1] == 1:
-            self.coef_ = self.coef_.ravel()
+            self.coef_ = xp.squeeze(self.coef_, axis=1)
         return self
 
     def partial_fit(self, X, y):
@@ -175,21 +178,22 @@ class ExtremeLearningBase(BaseEstimator, ABC):
         # It's evident that it is indeed possible to update normal equations
         # through summation
 
-        self._validate_params()
+        xp, _, device_ = get_namespace_and_device(X)
+
         # Assumption : X, Y have been pre-processed.
         # X shape: (n_samples, n_features)
         # Y shape: (n_samples, n_classes-1)
 
         if not hasattr(self, "W_"):
             # initialize params only on first call
-            self._initialize()
+            self._initialize(X)
 
         # design matrix shape: (n_samples, sum_hidden+n_features)
         # or (n_samples, sum_hidden)
         D = self._design_matrix(X)
         if not hasattr(self, "A"):
-            self.A = np.zeros((D.shape[1], D.shape[1]))
-            self.B = np.zeros((D.shape[1], y.shape[1]))
+            self.A = xp.zeros((D.shape[1], D.shape[1]), dtype=X.dtype, device=device_)
+            self.B = xp.zeros((D.shape[1], y.shape[1]), dtype=X.dtype, device=device_)
 
         self.A += D.T @ D
         self.B += D.T @ y
@@ -213,24 +217,28 @@ class ExtremeLearningBase(BaseEstimator, ABC):
         # = (D.T @ D)^-1 @ D.T @ y
 
         if self.ridge_alpha is None:
-            if self.rtol is None:
-                self.coef_ = np.linalg.pinv(self.A) @ self.B
-            else:
-                self.coef_ = np.linalg.pinv(self.A, rcond=self.rtol) @ self.B
+            self.coef_ = xp.linalg.pinv(self.A, rtol=self.rtol) @ self.B
         else:
-            # np.linalg.solve(self.A + reg_mat, self.B)
+            # xp.linalg.solve(self.A + reg_mat, self.B)
             # is equivalent to
             # ridge = Ridge(
             #   alpha=self.ridge_alpha, fit_intercept=False, solver='cholesky'
             #   )
             # ridge.fit(D_all[:current_batch], Y_all[:current_batch])
-            ridge_mat = np.eye(self.A.shape[0]) * self.ridge_alpha
-            self.coef_ = np.linalg.solve(self.A + ridge_mat, self.B)
+            ridge_mat = (
+                xp.eye(self.A.shape[0], dtype=self.A.dtype, device=device_)
+                * self.ridge_alpha
+            )
+
+            self.coef_ = xp.linalg.solve(self.A + ridge_mat, self.B)
+
+        self.coef_ = xp.astype(self.coef_, X.dtype)
         if self.coef_.ndim == 2 and self.coef_.shape[1] == 1:
-            self.coef_ = self.coef_.ravel()
+            self.coef_ = xp.squeeze(self.coef_, axis=1)
         return self
 
     def _design_matrix(self, X):
+        xp, _ = get_namespace(X)
         Hs = []
         H_prev = X
         for W, b in zip(self.W_, self.b_, strict=False):
@@ -240,7 +248,7 @@ class ExtremeLearningBase(BaseEstimator, ABC):
             Hs.append(H_prev)
         if self.direct_links:
             Hs.append(X)
-        return np.hstack(Hs)
+        return xp.concat(Hs, axis=1)
 
     def _predict(self, X):
         D = self._design_matrix(X)
@@ -444,6 +452,7 @@ class ExtremeLearningClassifier(ClassifierMixin, ExtremeLearningBase):
             rtol=rtol,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model to data matrix X and target(s) y.
 
@@ -461,22 +470,34 @@ class ExtremeLearningClassifier(ClassifierMixin, ExtremeLearningBase):
             Returns the trained gradient free neural network.
         """
         # shape: (n_samples, n_features)
-        X, y = validate_data(self, X, y)
+        xp, _, device_ = get_namespace_and_device(X)
+
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            dtype=[xp.float64, xp.float32],
+        )
+
         y = column_or_1d(y, warn=True)
         check_classification_targets(y)
 
-        self.classes_ = unique_labels(y)
-
-        self._label_binarizer = LabelBinarizer()
-        # (n_samples, n_classes) or (n_samples, 1) for binary
+        self._label_binarizer = LabelBinarizer(sparse_output=False)
         y = self._label_binarizer.fit_transform(y)
+        y = move_to(y, xp=xp, device=device_)
+        y = xp.astype(y, X.dtype, copy=False)
+        self.classes_ = self._label_binarizer.classes_
+        if self.classes_.shape[0] < 2:
+            raise ValueError("y must contain more than 1 class.")
 
-        if y.shape[1] == 1 and len(self.classes_) == 2:
-            y = np.hstack([1 - y, y])
+        # Preserve two output columns for binary classification.
+        if self.classes_.shape[0] == 2:
+            y = xp.concat((1 - y, y), axis=1)
 
         super().fit(X, y)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y, classes=None):
         """Update the model with a subset of the given data.
 
@@ -527,28 +548,59 @@ class ExtremeLearningClassifier(ClassifierMixin, ExtremeLearningBase):
         numerical stability and avoid loss of information.
         """
         # shape: (n_samples, n_features)
-        X, y = validate_data(self, X, y, reset=not hasattr(self, "n_features_in_"))
+        xp, _, device_ = get_namespace_and_device(X)
+
+        first_call = not hasattr(self, "classes_")
+        if first_call:
+            if classes is None:
+                raise TypeError("Classes must not be None for first partial_fit call")
+            dtype = [xp.float64, xp.float32]
+
+        else:
+            xp_W, _, device_W = get_namespace_and_device(self.W_[0])
+            if (xp != xp_W) or (device_ != device_W):
+                raise ValueError(
+                    f"All batches must use same device and namespace , "
+                    f"{(xp_W, device_W)!r}, but got {(xp, device_)!r}."
+                )
+            dtype = self.W_[0].dtype
+
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            dtype=dtype,
+            reset=first_call,
+        )
+
         y = column_or_1d(y, warn=True)
         check_classification_targets(y)
 
-        if not hasattr(self, "classes_"):
-            if classes is None:
-                raise TypeError("Classes must not be None for first partial_fit call")
-            self.classes_ = classes
-            self._label_binarizer = LabelBinarizer()
-            self._label_binarizer.fit(self.classes_)
+        if first_call:
+            self._label_binarizer = LabelBinarizer(sparse_output=False).fit(classes)
+            self.classes_ = self._label_binarizer.classes_
+            if self.classes_.shape[0] < 2:
+                raise ValueError("classes must contain more than 1 class")
 
-        if not set(unique_labels(y)) <= set(self.classes_):
+        # Check membership without Python sets or converting labels to NumPy.
+        xp_classes, _, device_classes = get_namespace_and_device(self.classes_)
+        y = move_to(y, xp=xp_classes, device=device_classes)
+        matches = xp_classes.expand_dims(y, axis=1) == xp_classes.expand_dims(
+            self.classes_, axis=0
+        )
+        if not xp_classes.all(xp_classes.any(matches, axis=1)):
             raise ValueError(
-                "Expected only labels in classes_ = %r, "
-                "but got %r." % (list(self.classes_), unique_labels(y))
+                f"Expected only labels in classes_ = {self.classes_!r}, "
+                f"but got {unique_labels(y)!r}."
             )
 
-        # (n_samples, n_classes) or (n_samples, 1) for binary
         y = self._label_binarizer.transform(y)
-        if y.shape[1] == 1 and len(self.classes_) == 2:
-            y = np.hstack([1 - y, y])
+        y = move_to(y, xp=xp, device=device_)
+        y = xp.astype(y, X.dtype, copy=False)
 
+        # Preserve two output columns for binary classification.
+        if self.classes_.shape[0] == 2:
+            y = xp.concat((1 - y, y), axis=1)
         super().partial_fit(X, y)
         return self
 
@@ -566,13 +618,25 @@ class ExtremeLearningClassifier(ClassifierMixin, ExtremeLearningBase):
             The predicted classes.
         """
         check_is_fitted(self)
-        X = validate_data(self, X, reset=False)
+        check_same_namespace(X, self, attribute="coef_", method="predict")
+        xp, _, device_ = get_namespace_and_device(X)
 
-        if len(self.classes_) == 1:
-            return np.full(X.shape[0], self.classes_[0], dtype=self.classes_.dtype)
+        X = validate_data(
+            self,
+            X,
+            reset=False,
+            dtype=[xp.float64, xp.float32],
+        )
 
         out = self._predict_proba(X)
-        return self.classes_[np.argmax(out, axis=1)]
+        indices = xp.argmax(out, axis=1)
+        xp_classes, _, device_classes = get_namespace_and_device(self.classes_)
+        indices = move_to(indices, xp=xp_classes, device=device_classes)
+        y_pred = xp_classes.take(self.classes_, indices, axis=0)
+
+        if isinstance(y_pred[0], str):
+            return y_pred
+        return move_to(y_pred, xp=xp, device=device_)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -589,12 +653,28 @@ class ExtremeLearningClassifier(ClassifierMixin, ExtremeLearningBase):
             model, where classes are ordered as they are in `self.classes_`.
         """
         check_is_fitted(self)
-        X = validate_data(self, X, reset=False)
+        check_same_namespace(X, self, attribute="coef_", method="predict_proba")
+        xp, _ = get_namespace(X)
+
+        X = validate_data(
+            self,
+            X,
+            reset=False,
+            dtype=[xp.float64, xp.float32],
+        )
         return self._predict_proba(X)
 
     def _predict_proba(self, X):
+        xp, _ = get_namespace(X)
         out = super()._predict(X)
-        return np.exp(out - logsumexp(out, axis=1, keepdims=True))
+        shifted = out - xp.max(out, axis=1, keepdims=True)
+        exp_out = xp.exp(shifted)
+        return exp_out / xp.sum(exp_out, axis=1, keepdims=True)
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
 
 class ExtremeLearningRegressor(RegressorMixin, MultiOutputMixin, ExtremeLearningBase):
@@ -788,6 +868,7 @@ class ExtremeLearningRegressor(RegressorMixin, MultiOutputMixin, ExtremeLearning
             rtol=rtol,
         )
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model to data matrix X and target(s) y.
 
@@ -804,15 +885,26 @@ class ExtremeLearningRegressor(RegressorMixin, MultiOutputMixin, ExtremeLearning
         self : object
             Returns the trained gradient free neural network.
         """
-        X, y = validate_data(self, X, y, multi_output=True)
+        xp, _, device_ = get_namespace_and_device(X)
 
-        if y.ndim == 2 and y.shape[1] == 1:
-            y = column_or_1d(y, warn=True)
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            dtype=[xp.float64, xp.float32],
+            multi_output=True,
+            y_numeric=True,
+        )
+
+        y = move_to(y, xp=xp, device=device_)
+        y = xp.astype(y, X.dtype, copy=False)
+
         if y.ndim == 1:
-            y = y.reshape(-1, 1)
+            y = xp.expand_dims(y, axis=-1)
         super().fit(X, y)
         return self
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y):
         """Update the model with a subset of the given data.
 
@@ -856,10 +948,35 @@ class ExtremeLearningRegressor(RegressorMixin, MultiOutputMixin, ExtremeLearning
         numerical stability and avoid loss of information.
         """
         # shape: (n_samples, n_features)
-        X, y = validate_data(self, X, y, reset=not hasattr(self, "n_features_in_"))
-        y = column_or_1d(y, warn=True)
+        xp, _, device_ = get_namespace_and_device(X)
+
+        first_call = not hasattr(self, "n_features_in_")
+        if first_call:
+            dtype = [xp.float64, xp.float32]
+        else:
+            xp_W, _, device_W = get_namespace_and_device(self.W_[0])
+            if (xp != xp_W) or (device_ != device_W):
+                raise ValueError(
+                    f"All batches must use same device and namespace , "
+                    f"{(xp_W, device_W)!r}, but got {(xp, device_)!r}."
+                )
+            dtype = self.W_[0].dtype
+
+        X, y = validate_data(
+            self,
+            X,
+            y,
+            dtype=dtype,
+            reset=first_call,
+            multi_output=True,
+            y_numeric=True,
+        )
+
+        y = move_to(y, xp=xp, device=device_)
+        y = xp.astype(y, X.dtype, copy=False)
         if y.ndim == 1:
-            y = y.reshape(-1, 1)
+            y = xp.expand_dims(y, axis=-1)
+
         super().partial_fit(X, y)
         return self
 
@@ -877,6 +994,14 @@ class ExtremeLearningRegressor(RegressorMixin, MultiOutputMixin, ExtremeLearning
             The predicted values.
         """
         check_is_fitted(self)
-        X = validate_data(self, X, reset=False)
+        check_same_namespace(X, self, attribute="coef_", method="predict")
+        xp, _ = get_namespace(X)
+
+        X = validate_data(self, X, reset=False, dtype=[xp.float64, xp.float32])
         out = super()._predict(X)
         return out
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
