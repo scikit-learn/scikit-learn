@@ -167,7 +167,7 @@ def test_assert_request_is_empty():
         WeightedMetaRegressor(estimator=ConsumingRegressor(), registry=_Registry()),
     ],
 )
-@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
+@config_context(enable_metadata_routing=True)
 def test_estimator_puts_self_in_registry(estimator):
     """Check that an estimator puts itself in the registry upon fit."""
     estimator = clone(estimator).fit(X, y)
