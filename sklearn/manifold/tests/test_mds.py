@@ -8,7 +8,6 @@ from sklearn.datasets import load_digits, load_iris, make_blobs
 from sklearn.manifold import ClassicalMDS
 from sklearn.manifold import _mds as mds
 from sklearn.metrics import euclidean_distances
-from sklearn.utils._param_validation import InvalidParameterError
 
 
 def test_smacof():
@@ -161,7 +160,7 @@ def test_normalized_stress_auto(metric_mds, monkeypatch):
     mock = Mock(side_effect=mds._smacof_single)
     monkeypatch.setattr("sklearn.manifold._mds._smacof_single", mock)
 
-    est = mds.MDS(metric_mds=metric_mds, normalized_stress="auto", random_state=rng)
+    est = mds.MDS(metric_mds=metric_mds, normalized_stress="auto")
     est.fit_transform(X)
     assert mock.call_args[1]["normalized_stress"] != metric_mds
 
@@ -198,7 +197,6 @@ def test_returned_stress(normalized_stress):
 
     mds_est = mds.MDS(
         n_components=2,
-        random_state=42,
         normalized_stress=normalized_stress,
     ).fit(X)
 
@@ -234,15 +232,6 @@ def test_convergence_does_not_depend_on_scale(metric_mds):
     n_iter2 = mds_est.n_iter_
 
     assert_equal(n_iter1, n_iter2)
-
-
-@pytest.mark.parametrize("metric", [True, False])
-def test_boolean_metric_removed(metric):
-    """Boolean `metric` was removed in 1.10 in favor of `metric_mds`."""
-    X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])
-
-    with pytest.raises(InvalidParameterError, match=f"metric_mds={metric}"):
-        mds.MDS(metric=metric).fit(X)
 
 
 def test_classical_mds_init_to_mds():

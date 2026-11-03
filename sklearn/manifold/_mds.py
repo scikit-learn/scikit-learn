@@ -17,9 +17,7 @@ from sklearn.manifold import ClassicalMDS
 from sklearn.metrics import euclidean_distances, pairwise_distances
 from sklearn.utils import check_array, check_random_state, check_symmetric
 from sklearn.utils._param_validation import (
-    Hidden,
     Interval,
-    InvalidParameterError,
     StrOptions,
     validate_params,
 )
@@ -381,7 +379,7 @@ def smacof(
 
     best_pos, best_stress = None, None
 
-    if effective_n_jobs(n_jobs) == 1:
+    if effective_n_jobs(n_jobs) == 1 or n_init == 1:
         for it in range(n_init):
             pos, stress, n_iter_ = _smacof_single(
                 dissimilarities,
@@ -447,15 +445,17 @@ class MDS(BaseEstimator):
     n_init : int, default=1
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
-        determined by the run with the smallest final stress.
+        determined by the run with the smallest final stress. Ignored if `init` is not
+        `'random'`.
 
         .. versionchanged:: 1.9
            The default value for `n_init` changed from 4 to 1.
 
-    init : {'random', 'classical_mds'}, default='classical_mds'
-        The initialization approach. If `random`, random initialization is used.
+    init : {'classical_mds', 'random'}, default='classical_mds'
+        The initialization approach.
         If `classical_mds`, then classical MDS is run and used as initialization
-        for MDS (in this case, the value of `n_init` is ignored).
+        for MDS (in this case, the values of `n_init`, `n_jobs`, and `random_state` are
+        ignored). If `random`, random initialization is used.
 
         .. versionadded:: 1.8
 
@@ -479,16 +479,16 @@ class MDS(BaseEstimator):
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
         initializations are used (``n_init``), each run of the algorithm is
-        computed in parallel.
+        computed in parallel. Ignored if `init` is not `'random'`.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     random_state : int, RandomState instance or None, default=None
-        Determines the random number generator used to initialize the centers.
-        Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`.
+        Determines the random initializations of the SMACOF algorithm. Ignored if
+        `init` is not `'random'`. Pass an int for reproducible results across multiple
+        function calls. See :term:`Glossary <random_state>`.
 
     metric : str or callable, default='euclidean'
         Metric to use for dissimilarity computation. Default is "euclidean".
@@ -507,8 +507,11 @@ class MDS(BaseEstimator):
 
         .. versionchanged:: 1.8
            Prior to 1.8, `metric=True/False` was used to select metric/non-metric
-           MDS, which is now the role of `metric_mds`.  The support for ``True``
-           and ``False`` was dropped in version 1.10, use `metric_mds` instead.
+           MDS, which is now the role of `metric_mds`.
+
+        .. versionchanged:: 1.10
+           Boolean values for `metric` are no longer supported, use `metric_mds`
+           instead.
 
     metric_params : dict, default=None
         Additional keyword arguments for the dissimilarity computation.
@@ -589,7 +592,7 @@ class MDS(BaseEstimator):
     >>> X, _ = load_digits(return_X_y=True)
     >>> X.shape
     (1797, 64)
-    >>> embedding = MDS(n_components=2, n_init=1, init="random")
+    >>> embedding = MDS(n_components=2)
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
@@ -611,7 +614,7 @@ class MDS(BaseEstimator):
         "eps": [Interval(Real, 0.0, None, closed="left")],
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
-        "metric": [str, callable, Hidden("boolean")],
+        "metric": [str, callable],
         "metric_params": [dict, None],
         "normalized_stress": ["boolean", StrOptions({"auto"})],
     }
@@ -702,14 +705,6 @@ class MDS(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             X transformed in the new space.
         """
-        if isinstance(self.metric, (bool, np.bool_)):
-            raise InvalidParameterError(
-                "The 'metric' parameter of MDS must be a str or a callable. "
-                f"Got {bool(self.metric)!r} instead. Boolean values were removed "
-                f"in 1.10. Use metric_mds={bool(self.metric)} to select metric or "
-                "non-metric MDS."
-            )
-
         X = validate_data(self, X)
         if X.shape[0] == X.shape[1] and self.metric != "precomputed":
             warnings.warn(
