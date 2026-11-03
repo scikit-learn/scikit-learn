@@ -7,8 +7,8 @@ Linear Models
 .. currentmodule:: sklearn.linear_model
 
 Linear models cover a wide range of different models, most of them regressors but
-also some important classifiers. They all have in common that their predictions are a
-linear combination of the :math:`p=n_{\text{features}}` features, or a function
+also some important classifiers. What they all have in common is that their predictions
+are a linear combination of the :math:`p=n_{\text{features}}` features, or a function
 thereof. This linear combination is learned from the data and parametrized by
 coefficients :math:`w`. In mathematical notation, the predicted value :math:`\hat{y}`
 can be written as
@@ -24,16 +24,16 @@ Across the module, we designate the vector :math:`w = (w_1, ..., w_p)` as ``coef
 
 such that it includes the intercept :math:`w_0`. You might also think of :math:`X` as
 the data matrix extended by a column of ones. In the implementation, scikit-learn
-tries to avoid as much as possible to build this extended matrix explicitly.
-For norms of the coefficients as used in penalties, the intercept is always excluded,
-for example:
+tries to avoid as much as possible to build this extended matrix explicitly which would
+more than double the memory consumption. For norms of the coefficients as used in
+penalties, the intercept is always excluded, for example:
 
 .. math:: ||w||_2^2 = w_1^2 + ... + w_p^2 \,.
 
 A consequence of the common linear predictor for all linear models is that each feature
-in `X` as passed to `fit` contributes a separate additive term. Non-linear terms and
-interactions of features must be added in the preprocessing as shown further down in
-:ref:`Polynomial regression <polynomial_regression>`. On top, it is considered good
+in `X` as passed to `fit` contributes a separate additive linear term. Non-linear terms
+and interactions of features must be added in the preprocessing as shown further down
+in :ref:`Polynomial regression <polynomial_regression>`. On top, it is considered good
 practice to standardize `X` before fitting a linear model.
 
 To perform classification with generalized linear models, see
