@@ -51,7 +51,7 @@ attributes::
            viz = RocCurveDisplay(fpr, tpr, roc_auc, name)
            return viz.plot()
 
-       def plot(self, ax=None, name=None, **kwargs):
+       def plot(self, ax=None, *, name=None, curve_kwargs=None):
            ...
            self.line_ = ...
            self.ax_ = ax
