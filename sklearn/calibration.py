@@ -837,13 +837,28 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
         Y = label_binarize(y, classes=classes)
         label_encoder = LabelEncoder().fit(classes)
         pos_class_indices = label_encoder.transform(clf.classes_)
-        for class_idx, this_pred in zip(pos_class_indices, predictions.T):
+        if len(classes) > 2 and len(clf.classes_) == 2 and predictions.shape[1] == 1:
+            # The base estimator is binary although the overall problem has
+            # more than two classes, e.g. when a cross-validation fold only
+            # contains 2 classes. `predictions` then holds a single column
+            # of scores for `clf.classes_[1]`, so a single calibrator is
+            # fitted for that class. The probability of the other class
+            # known to the estimator is derived as `1 - proba` in
+            # `_CalibratedClassifier.predict_proba`.
             if method == "isotonic":
                 calibrator = IsotonicRegression(out_of_bounds="clip")
             else:  # "sigmoid"
                 calibrator = _SigmoidCalibration()
-            calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
+            calibrator.fit(predictions[:, 0], Y[:, pos_class_indices[1]], sample_weight)
             calibrators.append(calibrator)
+        else:
+            for class_idx, this_pred in zip(pos_class_indices, predictions.T):
+                if method == "isotonic":
+                    calibrator = IsotonicRegression(out_of_bounds="clip")
+                else:  # "sigmoid"
+                    calibrator = _SigmoidCalibration()
+                calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
+                calibrators.append(calibrator)
     elif method == "temperature":
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
@@ -916,14 +931,30 @@ class _CalibratedClassifier:
         if self.method in ("sigmoid", "isotonic"):
             label_encoder = LabelEncoder().fit(self.classes)
             pos_class_indices = label_encoder.transform(self.estimator.classes_)
-            for class_idx, this_pred, calibrator in zip(
-                pos_class_indices, predictions.T, self.calibrators
+            if (
+                n_classes > 2
+                and len(self.estimator.classes_) == 2
+                and predictions.shape[1] == 1
             ):
-                if n_classes == 2:
-                    # When binary, `predictions` consists only of predictions for
-                    # clf.classes_[1] but `pos_class_indices` = 0
-                    class_idx += 1
-                proba[:, class_idx] = calibrator.predict(this_pred)
+                # The base estimator is binary although the overall problem
+                # has more than two classes, e.g. when a cross-validation
+                # fold only contains 2 classes. The single calibrator was
+                # fitted for `estimator.classes_[1]`: assign its output to
+                # that class, `1 - proba` to the other class known to the
+                # estimator, and leave the probabilities of the classes
+                # unseen by the estimator at 0.
+                pos_class_idx = pos_class_indices[1]
+                proba[:, pos_class_idx] = self.calibrators[0].predict(predictions[:, 0])
+                proba[:, pos_class_indices[0]] = 1.0 - proba[:, pos_class_idx]
+            else:
+                for class_idx, this_pred, calibrator in zip(
+                    pos_class_indices, predictions.T, self.calibrators
+                ):
+                    if n_classes == 2:
+                        # When binary, `predictions` consists only of predictions for
+                        # clf.classes_[1] but `pos_class_indices` = 0
+                        class_idx += 1
+                    proba[:, class_idx] = calibrator.predict(this_pred)
             # Normalize the probabilities
             if n_classes == 2:
                 proba[:, 0] = 1.0 - proba[:, 1]

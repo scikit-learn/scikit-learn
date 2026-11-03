@@ -1,0 +1,6 @@
+- :class:`calibration.CalibratedClassifierCV` now correctly handles folds whose
+  training set contains only 2 classes while the overall problem has more
+  classes. The calibrated probabilities of such a fold are split between its
+  2 classes and the classes unseen in the fold get a probability of 0, instead
+  of assigning all the probability mass to a single class.
+  By :user:`Dresden Goehner <DresdenGman>`.

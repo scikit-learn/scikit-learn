@@ -776,6 +776,51 @@ def test_calibration_less_classes(ensemble):
         assert_array_almost_equal(proba.sum(axis=1), np.ones(proba.shape[0]))
 
 
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+def test_calibration_binary_estimator_in_multiclass_fold(method):
+    # Non-regression test for gh-29551: when the train set of a fold only
+    # contains 2 of the 3 classes, the fold's base estimator is binary. Its
+    # calibrated probabilities must be split between the 2 classes it was
+    # trained on, and the class unseen in the fold must get a probability
+    # of exactly 0.
+    rng = np.random.RandomState(42)
+    centers = np.array([[0.0, 0.0], [6.0, 0.0], [0.0, 6.0]])
+    X = np.vstack([rng.randn(10, 2) * 0.5 + centers[c] for c in range(3)])
+    y = np.repeat([0, 1, 2], 10)
+    class_indices = {c: np.where(y == c)[0] for c in range(3)}
+
+    # Each fold trains on 2 classes only. Its calibration set contains the
+    # held-out samples of those 2 classes plus all samples of the unseen
+    # class.
+    splits = []
+    for unseen in range(3):
+        seen = [c for c in range(3) if c != unseen]
+        train_idx = np.concatenate([class_indices[c][:5] for c in seen])
+        test_idx = np.concatenate(
+            [class_indices[unseen]] + [class_indices[c][5:] for c in seen]
+        )
+        splits.append((train_idx, test_idx))
+
+    cal_clf = CalibratedClassifierCV(
+        DecisionTreeClassifier(random_state=7),
+        method=method,
+        cv=splits,
+        ensemble=True,
+    )
+    cal_clf.fit(X, y)
+
+    for unseen, calibrated_classifier in enumerate(cal_clf.calibrated_classifiers_):
+        proba = calibrated_classifier.predict_proba(X)
+        # The class unseen in the fold gets a probability of exactly 0.
+        assert_array_equal(proba[:, unseen], np.zeros(len(y)))
+        # The 2 seen classes are complementary and both receive some
+        # probability mass.
+        seen = [c for c in range(3) if c != unseen]
+        assert_array_almost_equal(proba[:, seen].sum(axis=1), np.ones(len(y)))
+        for class_idx in seen:
+            assert np.any(proba[:, class_idx] > 0)
+
+
 @pytest.mark.parametrize(
     "X",
     [
