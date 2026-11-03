@@ -219,21 +219,21 @@ def test_bin_mapper_repeated_values_invariance(n_distinct):
 
 
 @pytest.mark.parametrize("n_bins", [50, 250])
-@pytest.mark.parametrize("with_missing_values", [False, True])
+@pytest.mark.parametrize("missing_values", ["none", "some", "all-positive-weight"])
 def test_binmapper_weighted_vs_repeated_equivalence(
-    global_random_seed, n_bins, with_missing_values
+    global_random_seed, n_bins, missing_values
 ):
     rng = np.random.RandomState(global_random_seed)
 
     n_samples = 200
     X = rng.randn(n_samples, 3)
-    if with_missing_values:
+    if missing_values != "none":
         missing_mask = rng.rand(*X.shape) < 0.1
         X[missing_mask] = np.nan
 
     sw = rng.randint(0, 5, size=n_samples)
-    if with_missing_values:
-        # only zero-weighted non-missing values: no threshold for this feature
+    if missing_values == "all-positive-weight":
+        # Only zero-weighted non-missing values: no threshold for this feature.
         X[sw != 0, -1] = np.nan
     X_repeated = np.repeat(X, sw, axis=0)
 
