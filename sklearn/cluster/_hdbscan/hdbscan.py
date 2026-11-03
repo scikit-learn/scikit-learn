@@ -55,7 +55,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics._dist_metrics import DistanceMetric
 from sklearn.metrics.pairwise import _VALID_METRICS
 from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
-from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.validation import (
     _allclose_dense_sparse,
     _assert_all_finite,
@@ -527,7 +527,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
           depend on a euclidean metric.
         - `"both"` which computes and stores both forms of centers.
 
-    copy : bool, default=False
+    copy : bool, default=True
         If `copy=True` then any time an in-place modifications would be made
         that would overwrite data passed to :term:`fit`, a copy will first be
         made, guaranteeing that the original data will be unchanged.
@@ -535,7 +535,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         a dense array or a CSR sparse matrix and when `algorithm="brute"`.
 
         .. versionchanged:: 1.10
-            The default value for `copy` will change from `False` to `True`
+            The default value for `copy` changed from `False` to `True`
             in version 1.10.
 
     Attributes
@@ -628,9 +628,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     >>> from sklearn.cluster import HDBSCAN
     >>> from sklearn.datasets import load_digits
     >>> X, _ = load_digits(return_X_y=True)
-    >>> hdb = HDBSCAN(copy=True, min_cluster_size=20)
+    >>> hdb = HDBSCAN(min_cluster_size=20)
     >>> hdb.fit(X)
-    HDBSCAN(copy=True, min_cluster_size=20)
+    HDBSCAN(min_cluster_size=20)
     >>> hdb.labels_.shape == (X.shape[0],)
     True
     >>> np.unique(hdb.labels_).tolist()
@@ -659,7 +659,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": ["boolean"],
         "store_centers": [None, StrOptions({"centroid", "medoid", "both"})],
-        "copy": ["boolean", Hidden(StrOptions({"warn"}))],
+        "copy": ["boolean"],
     }
 
     def __init__(
@@ -677,7 +677,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         cluster_selection_method="eom",
         allow_single_cluster=False,
         store_centers=None,
-        copy="warn",
+        copy=True,
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
@@ -716,18 +716,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        # TODO(1.10): remove "warn" option
-        # and leave copy to its default value where applicable in examples and doctests.
-        if self.copy == "warn":
-            warn(
-                "The default value of `copy` will change from False to True in 1.10."
-                " Explicitly set a value for `copy` to silence this warning.",
-                FutureWarning,
-            )
-            _copy = False
-        else:
-            _copy = self.copy
-
         if self.metric == "precomputed" and self.store_centers is not None:
             raise ValueError(
                 "Cannot store centers when using a precomputed distance matrix."
@@ -836,7 +824,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = _copy
+                kwargs["copy"] = self.copy
             elif self.algorithm == "kd_tree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "kd_tree"
@@ -849,7 +837,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
-                kwargs["copy"] = _copy
+                kwargs["copy"] = self.copy
             elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
