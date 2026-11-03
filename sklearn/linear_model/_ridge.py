@@ -2520,13 +2520,6 @@ class _BaseRidgeCV(LinearModel):
             if self.scoring is None:
                 scorer = None
 
-            if is_classifier(self) and len(self.classes_) == 2:
-                self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
-                y_fit = self._label_binarizer.fit_transform(y)
-                self.classes_ = self._label_binarizer.classes_
-            else:
-                y_fit = y
-
             estimator = _RidgeGCV(
                 alphas,
                 fit_intercept=self.fit_intercept,
@@ -2538,7 +2531,7 @@ class _BaseRidgeCV(LinearModel):
             )
             estimator.fit(
                 X,
-                y_fit,
+                y,
                 sample_weight=sample_weight,
                 score_params=routed_params.scorer.score,
             )
