@@ -504,7 +504,7 @@ def test_precision_recall_display_string_labels(pyplot):
     average_precision = []
     for idx in range(n_cv):
         test_indices = cv_results["indices"]["test"][idx]
-        y_pred, _ = _get_response_values_binary(
+        y_score, _ = _get_response_values_binary(
             cv_results["estimator"][idx],
             _safe_indexing(X, test_indices),
             response_method="auto",
@@ -513,7 +513,7 @@ def test_precision_recall_display_string_labels(pyplot):
         average_precision.append(
             average_precision_score(
                 _safe_indexing(y, test_indices),
-                y_pred,
+                y_score,
                 pos_label=cv_results["estimator"][idx].classes_[1],
             )
         )
@@ -675,24 +675,6 @@ def test_plot_precision_recall_despine(pyplot, despine, constructor_name):
     if despine:
         for s in ["bottom", "left"]:
             assert display.ax_.spines[s].get_bounds() == (0, 1)
-
-
-# TODO(1.10): remove
-def test_y_score_and_y_pred_specified_error(pyplot):
-    """1. Check that an error is raised when both y_score and y_pred are specified.
-    2. Check that a warning is raised when y_pred is specified.
-    """
-    y_true = np.array([0, 1, 1, 0])
-    y_score = np.array([0.1, 0.4, 0.35, 0.8])
-    y_pred = np.array([0.2, 0.3, 0.5, 0.1])
-
-    with pytest.raises(
-        ValueError, match="`y_pred` and `y_score` cannot be both specified"
-    ):
-        PrecisionRecallDisplay.from_predictions(y_true, y_score=y_score, y_pred=y_pred)
-
-    with pytest.warns(FutureWarning, match="y_pred was deprecated in 1.8"):
-        PrecisionRecallDisplay.from_predictions(y_true, y_pred=y_score)
 
 
 @pytest.mark.parametrize("array_lib", ["torch", "numpy", "list"])
