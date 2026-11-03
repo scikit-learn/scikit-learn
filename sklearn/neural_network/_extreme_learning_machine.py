@@ -152,7 +152,7 @@ class ExtremeLearningBase(BaseEstimator, ABC):
             if ridge.coef_.ndim == 1:
                 self.coef_ = ridge.coef_
             else:
-                self.coef_ = ridge.coef_.mT
+                self.coef_ = ridge.coef_.T
         if self.coef_.ndim == 2 and self.coef_.shape[1] == 1:
             self.coef_ = xp.squeeze(self.coef_, axis=1)
         return self
