@@ -534,13 +534,27 @@ def dump_svmlight_file(
 
     yval = check_array(y, accept_sparse="csr", ensure_2d=False)
     if sp.issparse(yval):
+        if yval.ndim != 2:
+            raise ValueError(
+                "expected y of shape (n_samples, n_labels), got %r" % (yval.shape,)
+            )
         if yval.shape[1] != 1 and not multilabel:
             raise ValueError(
                 "expected y of shape (n_samples, 1), got %r" % (yval.shape,)
             )
+        if multilabel and yval.shape[1] < 1:
+            raise ValueError(
+                "expected y of shape (n_samples, n_labels), got %r" % (yval.shape,)
+            )
     else:
-        if yval.ndim != 1 and not multilabel:
-            raise ValueError("expected y of shape (n_samples,), got %r" % (yval.shape,))
+        if multilabel:
+            if yval.ndim != 2:
+                raise ValueError(
+                    "expected y of shape (n_samples, n_labels), got %r" % (yval.shape,)
+                )
+        else:
+            if yval.ndim != 1:
+                raise ValueError("expected y of shape (n_samples,), got %r" % (yval.shape,))
 
     Xval = check_array(X, accept_sparse="csr")
     if Xval.shape[0] != yval.shape[0]:

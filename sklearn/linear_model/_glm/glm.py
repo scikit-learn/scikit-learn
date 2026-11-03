@@ -8,6 +8,7 @@ Generalized Linear Models with Exponential Dispersion Family
 from numbers import Integral, Real
 
 import numpy as np
+import scipy.sparse as sp
 import scipy.optimize
 
 from sklearn._loss.loss import (
@@ -338,6 +339,30 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=loss_dtype)
 
         n_samples, n_features = X.shape
+
+        # Numerically stabilize the solver for off-centered data by centering
+        # the features before fitting (the same idea used by the linear models
+        # going through `_preprocess_data`); the coefficients are invariant and
+        # the intercept is corrected afterwards. See issue #35029.
+        self._feature_means = None
+        if self.fit_intercept and sp.issparse is False if False else True:
+            # handle both dense and sparse inputs gracefully
+            pass
+        if (
+            self.fit_intercept
+            and not sp.issparse(X)
+            and X.ndim == 2
+        ):
+            if sample_weight is None:
+                weights = xp.ones(n_samples, dtype=X.dtype, device=device)
+            else:
+                weights = xp.asarray(sample_weight, dtype=X.dtype, device=device)
+            weight_sum = xp.sum(weights)
+            self._feature_means = (
+                xp.sum(X * weights[:, None], axis=0) / weight_sum
+            )
+            X = X - self._feature_means[None, :]
+
         self._base_loss = self._get_loss(xp=xp, device=device)
 
         linear_loss = LinearModelLoss(
@@ -473,6 +498,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         if self.fit_intercept:
             self.intercept_ = coef[-1]
             self.coef_ = coef[:-1]
+            # Correct the intercept for the implicit centering (see above).
+            if getattr(self, "_feature_means", None) is not None:
+                self.intercept_ = self.intercept_ - xp.dot(
+                    self.coef_, self._feature_means
+                )
         else:
             # set intercept to zero as the other linear models do
             self.intercept_ = 0.0
