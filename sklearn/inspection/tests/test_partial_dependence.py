@@ -948,6 +948,8 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(scale(iris.data), columns=iris.feature_names)
 
+    if preprocessor is not None:
+        preprocessor = clone(preprocessor)
     pipe = make_pipeline(preprocessor, clone(estimator))
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(

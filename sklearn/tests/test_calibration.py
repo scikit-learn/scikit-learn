@@ -375,6 +375,7 @@ def test_calibration_frozen(csr_container, method):
 def test_calibration_ensemble_false(data, method, calibrator):
     # Test that `ensemble=False` is the same as using predictions from
     # `cross_val_predict` to train calibrator.
+    calibrator = clone(calibrator)
     X, y = data
     clf = LinearSVC(random_state=7)
 

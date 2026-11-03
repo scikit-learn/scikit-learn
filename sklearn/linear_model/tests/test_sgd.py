@@ -9,12 +9,13 @@ import scipy.sparse as sp
 from scipy.optimize import minimize
 
 from sklearn import datasets, linear_model, metrics
-from sklearn.base import clone, is_classifier
+from sklearn.base import ClassifierMixin, clone, is_classifier
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.linear_model import _stochastic_gradient
+from sklearn.linear_model._base import SPARSE_INTERCEPT_DECAY
 from sklearn.model_selection import (
     RandomizedSearchCV,
     ShuffleSplit,
@@ -31,7 +32,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import _sparse_random_array
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_random_array
 
 
 def _update_kwargs(kwargs):
@@ -2338,3 +2339,115 @@ def test_sgd_one_class_svm_formulation_with_scipy_minimize():
 
     assert_allclose(model.coef_, expected_coef, rtol=5e-3)
     assert_allclose(model.offset_, expected_offset, rtol=1e-2)
+
+
+###############################################################################
+# Passive-Aggressive classifier, special case of SGDClassifier
+
+
+class MyPassiveAggressive(ClassifierMixin):
+    def __init__(
+        self,
+        C=1.0,
+        pa_algo="pa1",
+        epsilon=_stochastic_gradient.DEFAULT_EPSILON,
+        loss="hinge",
+        fit_intercept=True,
+        n_iter=1,
+    ):
+        self.C = C
+        self.pa_algo = pa_algo
+        self.epsilon = epsilon
+        self.loss = loss
+        self.fit_intercept = fit_intercept
+        self.n_iter = n_iter
+
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+        self.w = np.zeros(n_features, dtype=np.float64)
+        self.b = 0.0
+
+        # Mimic SGD's behavior for intercept
+        intercept_decay = 1.0
+        if sp.issparse(X):
+            intercept_decay = SPARSE_INTERCEPT_DECAY
+            X = X.toarray()
+
+        for t in range(self.n_iter):
+            for i in range(n_samples):
+                p = self.project(X[i])
+                if self.loss == "hinge":
+                    # classification
+                    loss = max(1 - y[i] * p, 0)
+                else:  # loss = epsilon_insensitive
+                    # regression
+                    loss = max(np.abs(p - y[i]) - self.epsilon, 0)
+
+                sqnorm = np.dot(X[i], X[i])
+
+                if self.pa_algo == "pa1":
+                    step = min(self.C, loss / sqnorm)
+                else:  # "pa2"
+                    step = loss / (sqnorm + 1.0 / (2 * self.C))
+
+                if self.loss == "hinge":
+                    step *= y[i]  # classification
+                else:
+                    step *= np.sign(y[i] - p)  # regression
+
+                self.w += step * X[i]
+                if self.fit_intercept:
+                    self.b += intercept_decay * step
+
+    def project(self, X):
+        return np.dot(X, self.w) + self.b
+
+
+@pytest.mark.parametrize("csr_container", [np.array, *CSR_CONTAINERS])
+@pytest.mark.parametrize("lr", ("pa1", "pa2"))
+@pytest.mark.parametrize("C", (0.1, 1, 10))
+def test_passive_aggressive_classifier_correctness(C, lr, csr_container):
+    y = iris.target.copy()
+    y[y != 1] = -1  # make it binary {-1, +1}
+    X = csr_container(iris.data)
+
+    clf1 = MyPassiveAggressive(loss="hinge", C=C, pa_algo=lr, n_iter=4)
+    clf1.fit(X, y)
+
+    clf2 = SGDClassifier(
+        loss="hinge",
+        penalty=None,
+        eta0=C,
+        learning_rate=lr,
+        max_iter=4,
+        shuffle=False,
+        tol=None,
+    )
+    clf2.fit(X, y)
+
+    assert_allclose(clf1.w, clf2.coef_.ravel())
+
+
+@pytest.mark.parametrize("csr_container", [np.array, *CSR_CONTAINERS])
+@pytest.mark.parametrize("lr", ("pa1", "pa2"))
+@pytest.mark.parametrize("C", (0.1, 1, 10))
+def test_passive_aggressive_regressor_correctness(C, lr, csr_container):
+    y = iris.target.copy()
+    y[y != 1] = -1  # make it binary {-1, +1}
+    X = csr_container(iris.data)
+
+    reg1 = MyPassiveAggressive(loss="epsilon_insensitive", C=C, pa_algo=lr, n_iter=4)
+    reg1.fit(X, y)
+
+    reg2 = SGDRegressor(
+        loss="epsilon_insensitive",
+        penalty=None,
+        eta0=C,
+        learning_rate=lr,
+        max_iter=4,
+        shuffle=False,
+        tol=None,
+    )
+    reg2.fit(X, y)
+
+    assert_allclose(reg1.w, reg2.coef_.ravel())

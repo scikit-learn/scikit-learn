@@ -189,13 +189,31 @@ a linear kernel.
 Ridge Complexity
 ----------------
 
-This method has the same order of complexity as
-:ref:`ordinary_least_squares`.
+The computational cost of :class:`Ridge` depends on the solver and the shape of
+``X``. The ``"cholesky"`` and ``"sparse_cg"`` solvers use the primal formulation
+when ``n_samples >= n_features``, solving a system with ``n_features`` unknowns:
 
-.. FIXME:
-.. Not completely true: OLS is solved by an SVD, while Ridge is solved by
-.. the method of normal equations (Cholesky), there is a big flop difference
-.. between these
+.. math::
+
+   (X^T X + \alpha I) w = X^T y.
+
+When ``n_samples < n_features``, they use the dual formulation, solving a system
+with ``n_samples`` unknowns and recovering the coefficients as follows:
+
+.. math::
+
+   (X X^T + \alpha I) c = y, \qquad w = X^T c.
+
+Here, :math:`I` is the identity matrix of the appropriate size, and :math:`X` and
+:math:`y` denote the data after centering and sample-weight rescaling, when
+applicable. Using the dual formulation can be more efficient when there are many
+more features than samples.
+
+The ``"cholesky"`` solver explicitly forms the corresponding Gram matrix.
+Storing the Gram matrix requires memory proportional to
+:math:`n_{\text{features}}^2` in the primal formulation and
+:math:`n_{\text{samples}}^2` in the dual formulation. In contrast, ``"sparse_cg"`` uses
+matrix-vector products without forming it.
 
 
 Setting the regularization parameter: leave-one-out Cross-Validation
@@ -307,7 +325,7 @@ single feature :math:`j` at a time. This way, the optimization problem is reduce
 
 with index :math:`-j` meaning all features but :math:`j`. The solution is
 
-.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), \alpha)}{||x_j||_2^2}
+.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), n_{\text{samples}}\alpha)}{||x_j||_2^2}
 
 with the soft-thresholding function
 :math:`S(z, \alpha) = \operatorname{sign}(z) \max(0, |z|-\alpha)`.
@@ -325,7 +343,7 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
   :math:`P(w^\star)`, i.e. :math:`G(w, v) \geq P(w) - P(w^\star)`. It is given by
   :math:`G(w, v) = P(w) - D(v)` with dual objective function
 
-  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(y^Tv - ||v||_2^2)
+  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
 
   subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
   At optimum, the duality gap is zero, :math:`G(w^\star, v^\star) = 0` (a property
@@ -1431,9 +1449,9 @@ The ``partial_fit`` method allows online/out-of-core learning.
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
 using different (convex) loss functions and different penalties.
-E.g., with ``loss="log"``, :class:`SGDClassifier`
+For instance, :class:`SGDClassifier` with `loss="log_loss"`
 fits a logistic regression model,
-while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
+while with `loss="hinge"` it fits a linear support vector machine (SVM).
 
 You can refer to the dedicated :ref:`sgd` documentation section for more details.
 
@@ -1479,9 +1497,10 @@ eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 
-  * `"Online Passive-Aggressive Algorithms"
-    <https://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+  * Crammer, K., Dekel, O., Keshet, J., Shalev-Shwartz, S. and Singer, Y. (2006).
+    `"Online Passive-Aggressive Algorithms"
+    <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>`_
+    JMLR, 7(19), 551-585
 
 Robustness regression: outliers and modeling errors
 =====================================================
