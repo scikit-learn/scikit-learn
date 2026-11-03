@@ -189,13 +189,31 @@ a linear kernel.
 Ridge Complexity
 ----------------
 
-This method has the same order of complexity as
-:ref:`ordinary_least_squares`.
+The computational cost of :class:`Ridge` depends on the solver and the shape of
+``X``. The ``"cholesky"`` and ``"sparse_cg"`` solvers use the primal formulation
+when ``n_samples >= n_features``, solving a system with ``n_features`` unknowns:
 
-.. FIXME:
-.. Not completely true: OLS is solved by an SVD, while Ridge is solved by
-.. the method of normal equations (Cholesky), there is a big flop difference
-.. between these
+.. math::
+
+   (X^T X + \alpha I) w = X^T y.
+
+When ``n_samples < n_features``, they use the dual formulation, solving a system
+with ``n_samples`` unknowns and recovering the coefficients as follows:
+
+.. math::
+
+   (X X^T + \alpha I) c = y, \qquad w = X^T c.
+
+Here, :math:`I` is the identity matrix of the appropriate size, and :math:`X` and
+:math:`y` denote the data after centering and sample-weight rescaling, when
+applicable. Using the dual formulation can be more efficient when there are many
+more features than samples.
+
+The ``"cholesky"`` solver explicitly forms the corresponding Gram matrix.
+Storing the Gram matrix requires memory proportional to
+:math:`n_{\text{features}}^2` in the primal formulation and
+:math:`n_{\text{samples}}^2` in the dual formulation. In contrast, ``"sparse_cg"`` uses
+matrix-vector products without forming it.
 
 
 Setting the regularization parameter: leave-one-out Cross-Validation
@@ -1431,9 +1449,9 @@ The ``partial_fit`` method allows online/out-of-core learning.
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
 using different (convex) loss functions and different penalties.
-E.g., with ``loss="log"``, :class:`SGDClassifier`
+For instance, :class:`SGDClassifier` with `loss="log_loss"`
 fits a logistic regression model,
-while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
+while with `loss="hinge"` it fits a linear support vector machine (SVM).
 
 You can refer to the dedicated :ref:`sgd` documentation section for more details.
 
@@ -1479,9 +1497,10 @@ eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 
-  * `"Online Passive-Aggressive Algorithms"
-    <https://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+  * Crammer, K., Dekel, O., Keshet, J., Shalev-Shwartz, S. and Singer, Y. (2006).
+    `"Online Passive-Aggressive Algorithms"
+    <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>`_
+    JMLR, 7(19), 551-585
 
 Robustness regression: outliers and modeling errors
 =====================================================
