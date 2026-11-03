@@ -22,7 +22,6 @@ from sklearn.utils._array_api import (
     xpx,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.deprecation import deprecated
 from sklearn.utils.sparsefuncs import sparse_matmul_to_dense
 from sklearn.utils.sparsefuncs_fast import csr_row_norms
 from sklearn.utils.validation import check_array, check_random_state
