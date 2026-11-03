@@ -206,7 +206,8 @@ def safe_indexing(X, indices, *, axis=0):
     """Return rows, items or columns of X using indices.
 
     .. versionadded:: 1.10
-       Previously available as `_safe_indexing`, which remains as an alias.
+       Previously available as `_safe_indexing`, which remains as an alias
+       for now but will be deprecated in 1.14 and removed in 1.15.
 
     Parameters
     ----------
@@ -314,7 +315,10 @@ def safe_indexing(X, indices, *, axis=0):
 
 
 # Many third-party libraries import `_safe_indexing` from `sklearn.utils`, keep it
-# working without warnings.
+# working without warnings for a few releases so that they can switch to
+# `safe_indexing`.
+# TODO(1.14): deprecate `_safe_indexing` (raise a FutureWarning when called).
+# TODO(1.15): remove `_safe_indexing`.
 _safe_indexing = safe_indexing
 
 

@@ -8,7 +8,7 @@ from sklearn.utils import metadata_routing
 from sklearn.utils._bunch import Bunch
 from sklearn.utils._chunking import gen_batches, gen_even_slices
 from sklearn.utils._indexing import (
-    _safe_indexing,  # alias of safe_indexing, widely used by third-party libraries
+    _safe_indexing,  # TODO(1.15): remove, see sklearn/utils/_indexing.py
     resample,
     safe_indexing,
     shuffle,
