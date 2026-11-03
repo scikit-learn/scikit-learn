@@ -55,7 +55,7 @@ attributes::
            ...
            self.line_ = ...
            self.ax_ = ax
-           self.figure_ = ax.figure_
+           self.figure_ = ax.figure
 
 Read more in :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
 and the :ref:`User Guide <visualizations>`.
