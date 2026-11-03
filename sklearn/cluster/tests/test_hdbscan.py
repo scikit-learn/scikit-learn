@@ -8,6 +8,7 @@ import pytest
 from scipy import stats
 from scipy.spatial import distance
 
+from sklearn import config_context
 from sklearn.cluster import HDBSCAN
 from sklearn.cluster._hdbscan._tree import (
     CONDENSED_dtype,
@@ -471,6 +472,36 @@ def test_hdbscan_precomputed_dense_nan():
     hdb = HDBSCAN(metric="precomputed", copy=False)
     with pytest.raises(ValueError, match=msg):
         hdb.fit(X_nan)
+
+
+def test_hdbscan_precomputed_checks_every_row_block():
+    """
+    Tests that the checks on a dense precomputed distance matrix cover every
+    block of rows, whatever the `working_memory` configuration they are sized
+    after, and that blocking does not change the labels.
+    """
+    D = euclidean_distances(X)
+    last = D.shape[0] - 1
+    expected = HDBSCAN(metric="precomputed", copy=True).fit_predict(D)
+
+    # Small enough that both checks run on several blocks of rows. The defects
+    # below sit in the very last rows, so a check stopping after the first
+    # block would miss them.
+    with config_context(working_memory=0.01):
+        labels = HDBSCAN(metric="precomputed", copy=True).fit_predict(D)
+        assert_array_equal(labels, expected)
+
+        D_asymmetric = D.copy()
+        D_asymmetric[last, last - 1] = 10
+        msg = r"The precomputed distance matrix.*values"
+        with pytest.raises(ValueError, match=msg):
+            HDBSCAN(metric="precomputed", copy=True).fit_predict(D_asymmetric)
+
+        D_nan = D.copy()
+        D_nan[last, last] = np.nan
+        msg = "np.nan values found in precomputed-dense"
+        with pytest.raises(ValueError, match=msg):
+            HDBSCAN(metric="precomputed", copy=True).fit_predict(D_nan)
 
 
 @pytest.mark.parametrize("allow_single_cluster", [True, False])
