@@ -239,10 +239,6 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
-    # TODO(1.10) remove
-    elif Estimator.__name__ == "MDS":
-        # default raises a FutureWarning
-        est.set_params(n_init=1, init="random")
     # TODO(1.10) remove l1_ratios
     # TODO(1.11) remove completely
     elif Estimator.__name__ == "LogisticRegressionCV":
