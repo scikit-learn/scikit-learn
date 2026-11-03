@@ -819,6 +819,14 @@ def test_calibration_binary_estimator_in_multiclass_fold(method):
         assert_array_almost_equal(proba[:, seen].sum(axis=1), np.ones(len(y)))
         for class_idx in seen:
             assert np.any(proba[:, class_idx] > 0)
+        # The single calibrator of a binary fold estimator must be fitted
+        # on the indicator of the estimator's second class
+        # (`estimator.classes_[1]`): a point at the center of a seen class
+        # must get a higher calibrated probability for that class than for
+        # the other seen class.
+        center_proba = calibrated_classifier.predict_proba(centers[seen])
+        assert center_proba[0, seen[0]] > center_proba[0, seen[1]]
+        assert center_proba[1, seen[1]] > center_proba[1, seen[0]]
 
 
 @pytest.mark.parametrize(

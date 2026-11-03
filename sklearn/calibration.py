@@ -845,20 +845,19 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
             # fitted for that class. The probability of the other class
             # known to the estimator is derived as `1 - proba` in
             # `_CalibratedClassifier.predict_proba`.
+            pred_target_pairs = [(predictions[:, 0], Y[:, pos_class_indices[1]])]
+        else:
+            pred_target_pairs = [
+                (this_pred, Y[:, class_idx])
+                for class_idx, this_pred in zip(pos_class_indices, predictions.T)
+            ]
+        for this_pred, this_target in pred_target_pairs:
             if method == "isotonic":
                 calibrator = IsotonicRegression(out_of_bounds="clip")
             else:  # "sigmoid"
                 calibrator = _SigmoidCalibration()
-            calibrator.fit(predictions[:, 0], Y[:, pos_class_indices[1]], sample_weight)
+            calibrator.fit(this_pred, this_target, sample_weight)
             calibrators.append(calibrator)
-        else:
-            for class_idx, this_pred in zip(pos_class_indices, predictions.T):
-                if method == "isotonic":
-                    calibrator = IsotonicRegression(out_of_bounds="clip")
-                else:  # "sigmoid"
-                    calibrator = _SigmoidCalibration()
-                calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
-                calibrators.append(calibrator)
     elif method == "temperature":
         calibrator = _TemperatureScaling()
         calibrator.fit(predictions, y, sample_weight)
