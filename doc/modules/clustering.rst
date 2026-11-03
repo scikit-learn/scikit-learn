@@ -1375,8 +1375,7 @@ will not necessarily be close to zero::
     However, the (adjusted or unadjusted) Rand index can also compare two
     clusterings without any ground truth, for instance to measure how much
     two algorithms agree, or how stable one algorithm is across random
-    initializations or random subsamples of the data (scored on the samples
-    both clusterings share).
+    initializations or random subsamples of the data.
 
   - The **unadjusted Rand index is often close to 1.0** even if the clusterings
     themselves differ significantly. This can be understood when interpreting
@@ -1512,7 +1511,7 @@ Bad (e.g. independent labelings) have non-positive scores::
     However, MI-based measures can also compare two clusterings without any
     ground truth, for instance to measure how much two algorithms agree, or
     how stable one algorithm is across random initializations or random
-    subsamples of the data (scored on the samples both clusterings share).
+    subsamples of the data.
 
   - NMI and MI are not adjusted against chance.
 
