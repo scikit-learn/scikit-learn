@@ -277,7 +277,7 @@ Cross-Validation.
     <10.2307/1267351>`
 
   .. [RL2007] "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-    <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+    <http://hdl.handle.net/1721.1/37318>`_,
     `course slides <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 .. _lasso:
