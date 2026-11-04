@@ -75,8 +75,8 @@ approximately linear dependence, the design matrix becomes ill-conditioned (clos
 singular) and as a result, the least squares estimate becomes highly sensitive
 to random errors or small changes in the observed target :math:`y`, leading to a large
 inflation of the variance of the estimated coefficients. This situation of
-*multicollinearity* can arise, for example, in observational studies where data are
-collected without an experimental design.
+*multicollinearity* can arise, for example, when data are collected without an
+experimental design like in an observational study.
 
 One possible remedy is to add a penalty for the size of the coefficients as in
 :ref:`Ridge regression <ridge_regression>`.
