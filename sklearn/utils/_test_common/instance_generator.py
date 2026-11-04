@@ -112,8 +112,6 @@ from sklearn.linear_model import (
     MultiTaskLasso,
     MultiTaskLassoCV,
     OrthogonalMatchingPursuitCV,
-    PassiveAggressiveClassifier,
-    PassiveAggressiveRegressor,
     Perceptron,
     PoissonRegressor,
     QuantileRegressor,
@@ -370,9 +368,7 @@ INIT_PARAMS = {
     LocallyLinearEmbedding: dict(max_iter=5),
     # TODO(1.11): remove scoring because it is default now
     # TODO(1.14): remove alphas=10 because it is default now
-    LogisticRegressionCV: dict(
-        alphas=10, max_iter=7, cv=3, use_legacy_attributes=False, scoring="neg_log_loss"
-    ),
+    LogisticRegressionCV: dict(alphas=10, max_iter=7, cv=3, scoring="neg_log_loss"),
     LogisticRegression: dict(max_iter=5),
     MDS: dict(n_init=2, max_iter=5),
     # In the case of check_fit2d_1sample, bandwidth is set to None and
@@ -401,8 +397,6 @@ INIT_PARAMS = {
     OneVsRestClassifier: dict(estimator=LogisticRegression()),
     OrthogonalMatchingPursuitCV: dict(cv=3),
     OutputCodeClassifier: dict(estimator=LogisticRegression()),
-    PassiveAggressiveClassifier: dict(max_iter=5),
-    PassiveAggressiveRegressor: dict(max_iter=5),
     Perceptron: dict(max_iter=5),
     Pipeline: [
         {"steps": [("scaler", StandardScaler()), ("final_estimator", Ridge())]},
@@ -652,7 +646,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     LogisticRegression: {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
-            dict(solver="liblinear"),
+            dict(solver="newton-cd-gram"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
             dict(solver="newton-cholesky", class_weight="balanced"),
@@ -660,16 +654,12 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LogisticRegressionCV: {
         "check_sample_weight_equivalence": [
-            dict(solver="lbfgs", use_legacy_attributes=False),
-            dict(solver="newton-cholesky", use_legacy_attributes=False),
-            dict(
-                solver="newton-cholesky",
-                class_weight="balanced",
-                use_legacy_attributes=False,
-            ),
+            dict(solver="lbfgs"),
+            dict(solver="newton-cholesky"),
+            dict(solver="newton-cholesky", class_weight="balanced"),
         ],
         "check_sample_weight_equivalence_on_sparse_data": [
-            dict(solver="liblinear"),
+            dict(solver="newton-cholesky"),
         ],
     },
     MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},

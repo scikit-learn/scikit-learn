@@ -14,7 +14,7 @@ iniconfig==2.3.1
     # via pytest
 packaging==26.3
     # via pytest
-pluggy==1.6.0
+pluggy==1.7.0
     # via pytest
 polib==1.2.0
     # via sphinx-lint

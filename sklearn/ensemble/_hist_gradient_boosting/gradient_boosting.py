@@ -420,9 +420,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             To pass `X_val` through a :class:`~pipeline.Pipeline`, enable metadata
             routing. The pipeline then transforms `X_val` like `X` by default (see
             `transform_input`). Enable auto-requests as well if you want `X_val`,
-            `y_val` and `sample_weight_val` requested without `set_fit_request`
-            (:func:`~sklearn.set_config`). See
-            :ref:`metadata_routing_auto_request_user`.
+            `y_val` and `sample_weight_val` requested without `set_fit_request`. See
+            :ref:`metadata_routing_auto_request_user` and
+            :ref:`sphx_glr_auto_examples_compose_plot_metadata_routing_validation_set.py`.
 
             .. versionadded:: 1.7
 
@@ -534,7 +534,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._loss = self.loss
 
         if self.early_stopping == "auto":
-            self.do_early_stopping_ = n_samples > 10_000
+            self.do_early_stopping_ = n_samples > 10_000 or validation_data_provided
         else:
             self.do_early_stopping_ = self.early_stopping
 
@@ -1469,9 +1469,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Missing values for categorical features should be
@@ -1853,9 +1853,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
         For each categorical feature, there must be at most `max_bins` unique
         categories. Missing values for categorical features should be
