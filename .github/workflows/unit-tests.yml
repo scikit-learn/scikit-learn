@@ -348,7 +348,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     env:
-      ENABLE_PARALLELISM: "1"
+      SKLEARN_TESTS_ENABLE_PARALLELISM: "1"
       DISTRIB: conda-free-threaded
       LOCK_FILE: build_tools/github/pylatest_free_threaded_linux-64_conda.lock
       COVERAGE: false

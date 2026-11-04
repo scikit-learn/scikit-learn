@@ -61,11 +61,6 @@ if [[ "$RUN_TESTS_IN_PARALLEL" == "1" ]]; then
     TEST_CMD="$TEST_CMD --parallel-threads $NUM_CORES --iterations 1"
 fi
 
-if [[ "$ENABLE_PARALLELISM" == "1" ]]; then
-    # Set backend to threading and n_jobs to use multiple cores
-    TEST_CMD="$TEST_CMD --enable-threading-and-parallelism"
-fi
-
 TEST_CMD="$TEST_CMD --pyargs sklearn"
 
 set -x

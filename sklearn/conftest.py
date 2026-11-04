@@ -475,7 +475,13 @@ def pytest_configure(config):
         # - uses align_api_if_sparse(X) just before returning a sparse object
         munge_scipy_to_check_spmatrix_usage()
 
-    if config.option.enable_threading_and_parallelism:
+    # Because CI uses --pyargs, this conftest.py isn't loaded early enough, and
+    # therefore using the command-line option doesn't work. So also check an
+    # environment variable as an alternative mechanism.
+    if (
+        config.option.enable_threading_and_parallelism
+        or environ.get("SKLEARN_TESTS_ENABLE_PARALLELISM") == "1"
+    ):
         # Use extra threads to increase chances of race conditions:
         joblib.parallel_config(backend="threading", n_jobs=joblib.cpu_count() * 2)
 
