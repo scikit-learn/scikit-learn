@@ -106,8 +106,8 @@ penalized residual sum of squares
 
 The penalty strength :math:`\alpha \geq 0` controls the amount of shrinkage of the
 estimated coefficients: the larger the value of :math:`\alpha`, the greater the amount
-of shrinkage toward zero. This shrinkage causes a downward bias of the estimated
-coefficients but it offers at least two advantages w.r.t. ordinary least squares, see
+of shrinkage toward zero. This shrinkage causes a bias of the estimated coefficients
+but it offers at least two advantages w.r.t. ordinary least squares, see
 [HK1970]_:
 
 - The estimated coefficients become more robust to collinearity and ill-conditioning.
