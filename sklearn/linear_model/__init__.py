@@ -39,10 +39,6 @@ from sklearn.linear_model._omp import (
     orthogonal_mp,
     orthogonal_mp_gram,
 )
-from sklearn.linear_model._passive_aggressive import (
-    PassiveAggressiveClassifier,
-    PassiveAggressiveRegressor,
-)
 from sklearn.linear_model._perceptron import Perceptron
 from sklearn.linear_model._quantile import QuantileRegressor
 from sklearn.linear_model._ransac import RANSACRegressor
@@ -83,8 +79,6 @@ __all__ = [
     "MultiTaskLassoCV",
     "OrthogonalMatchingPursuit",
     "OrthogonalMatchingPursuitCV",
-    "PassiveAggressiveClassifier",
-    "PassiveAggressiveRegressor",
     "Perceptron",
     "PoissonRegressor",
     "QuantileRegressor",
