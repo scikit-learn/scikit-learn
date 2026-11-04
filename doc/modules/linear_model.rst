@@ -42,8 +42,8 @@ solves a problem of the form:
 ``sample_weight`` and stores the coefficients :math:`w` of the linear model in its
 ``coef_`` and ``intercept_`` attributes::
 
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.LinearRegression()
+    >>> from sklearn.linear_model import LinearRegression
+    >>> reg = LinearRegression()
     >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     LinearRegression()
     >>> reg.coef_
@@ -144,8 +144,8 @@ As with other linear models, :class:`Ridge` takes the arrays ``X`` and ``y`` in 
 ``fit`` methods and stores the coefficients :math:`w` in its attribute ``coef_`` and
 :math:`w_0` as ``intercept_``::
 
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.Ridge(alpha=.5)
+    >>> from sklearn.linear_model import Ridge
+    >>> reg = Ridge(alpha=.5)
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
     Ridge(alpha=0.5)
     >>> reg.coef_
@@ -257,8 +257,8 @@ formulation used to calculate Leave-One-Out error. See [RL2007]_ for details.
 Usage example::
 
     >>> import numpy as np
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
+    >>> from sklearn.linear_model import RidgeCV
+    >>> reg = RidgeCV(alphas=np.logspace(-6, 6, 13))
     >>> reg.fit([[0, 0], [0, 0.1], [1, 1]], [0, -0.1, 1])
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
           1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
@@ -307,8 +307,8 @@ The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
 for another implementation::
 
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.Lasso(alpha=0.1)
+    >>> from sklearn.linear_model import Lasso
+    >>> reg = Lasso(alpha=0.1)
     >>> reg.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1)
     >>> reg.predict([[1, 1]])
@@ -744,8 +744,8 @@ function of the norm of its coefficients.
 
 ::
 
-   >>> from sklearn import linear_model
-   >>> reg = linear_model.LassoLars(alpha=.1)
+   >>> from sklearn.linear_model import LassoLars
+   >>> reg = LassoLars(alpha=.1)
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
    LassoLars(alpha=0.1)
    >>> reg.coef_
@@ -902,10 +902,10 @@ There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 
 Bayesian Ridge Regression is used for regression::
 
-    >>> from sklearn import linear_model
+    >>> from sklearn.linear_model import BayesianRidge
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
-    >>> reg = linear_model.BayesianRidge()
+    >>> reg = BayesianRidge()
     >>> reg.fit(X, Y)
     BayesianRidge()
 
