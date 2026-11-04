@@ -667,7 +667,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="newton-cholesky"),
         ],
     },
-    MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
+    MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     MLPClassifier: {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
