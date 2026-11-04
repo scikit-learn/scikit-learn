@@ -525,9 +525,6 @@ redirects = {
     "auto_examples/applications/wikipedia_principal_eigenvector": (
         "auto_examples/applications/plot_wikipedia_principal_eigenvector"
     ),
-    "modules/generated/sklearn.utils._safe_indexing": (
-        "modules/generated/sklearn.utils.safe_indexing"
-    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
