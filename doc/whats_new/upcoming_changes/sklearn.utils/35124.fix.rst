@@ -1,0 +1,3 @@
+- :meth:`utils.Bunch.copy` now returns a :class:`utils.Bunch` instead of a plain
+  `dict`.
+  By :user:`Karunya Muddana <Karunya-Muddana>`.
