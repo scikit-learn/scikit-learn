@@ -93,4 +93,7 @@ jupyterlite_contents
 
 # file recognised by vscode IDEs containing env variables
 .env
+
+# files for AI agents
+.claude/CLAUDE.md
 .github/copilot-instructions.md
