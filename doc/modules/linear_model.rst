@@ -118,8 +118,8 @@ coefficients but it offers at least two advantages w.r.t. ordinary least squares
 
   Because Ridge penalizes coefficient magnitudes, feature scales matter: for a
   comparable effect on the target, a feature with larger values can have a smaller
-  coefficient and be penalized less. **Standardizing** features makes the penalty more
-  comparable across them.
+  coefficient and be penalized less. :ref:`Standardizing <preprocessing_scaler>`
+  features makes the penalty more comparable across them.
 
   .. dropdown:: Example
 
@@ -140,9 +140,9 @@ coefficients but it offers at least two advantages w.r.t. ordinary least squares
    :scale: 50%
 
 
-As with other linear models, :class:`Ridge` will take in its ``fit`` method
-arrays ``X``, ``y`` and will store the coefficients :math:`w` in its attribute ``coef_``
-and :math:`w_0` as ``intercept_``::
+As with other linear models, :class:`Ridge` takes the arrays ``X`` and ``y`` in its
+``fit`` methods and stores the coefficients :math:`w` in its attribute ``coef_`` and
+:math:`w_0` as ``intercept_``::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Ridge(alpha=.5)
@@ -188,9 +188,9 @@ the corresponding solver is chosen.
 
     (X X^T + \alpha I) c = y, \qquad w = X^T c.
 
-  Here, :math:`I` is the identity matrix of the appropriate size, and :math:`X` and
-  :math:`y` denote the data after mean centering and sample-weight rescaling, when
-  applicable.
+  Here, :math:`I` is the identity matrix of the appropriate size, :math:`c` denotes the
+  dual coefficients, and :math:`X` and :math:`y` denote the data after mean centering
+  and sample-weight rescaling, when applicable.
 
   The ``"cholesky"`` solver explicitly forms the corresponding Gram matrix ``X.T @ X``.
   Storing the Gram matrix requires memory proportional to
@@ -202,7 +202,7 @@ the corresponding solver is chosen.
 
   Ridge solvers have the same order of complexity as :ref:`ordinary_least_squares`.
   For a matrix :math:`X` of shape `(n, p)=(n_samples, n_features)` the cost is
-  :math:`O(\max(n, p)\min(n, p)^2)`. But depending on the selected solver the constant
+  :math:`O(\max(n, p)\min(n, p)^2)`. But depending on the selected solver, the constant
   factor, that is the effective numbers of flops, can be (significantly) smaller than
   the one of OLS.
 
