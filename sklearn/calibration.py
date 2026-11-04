@@ -1507,7 +1507,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         Probability estimates for the positive class, for each sample.
 
     name : str, default=None
-        Name for labeling the legend entry. If None, the estimator name is not shown.
+        Name for labeling the legend entry. If `None`, no name is shown in the legend.
 
         .. versionchanged:: 1.10
             `estimator_name` was deprecated in favor of `name`.
