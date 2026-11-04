@@ -25,8 +25,8 @@ Across the module, we designate the vector :math:`w = (w_1, ..., w_p)` as ``coef
 such that it includes the intercept :math:`w_0`. You might also think of :math:`X` as
 the data matrix extended by a column of ones. In the implementation, scikit-learn
 tries to avoid as much as possible to build this extended matrix explicitly which would
-more than double the memory consumption. For norms of the coefficients as used in
-penalties, the intercept is always excluded, for example:
+double the memory consumption. For norms of the coefficients as used in penalties, the
+intercept is always excluded, for example:
 
 .. math:: ||w||_2^2 = w_1^2 + ... + w_p^2 \,.
 
