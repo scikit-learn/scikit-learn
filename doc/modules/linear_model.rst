@@ -26,7 +26,7 @@ Ordinary Least Squares
 =======================
 
 :class:`LinearRegression` fits a linear model with coefficients
-:math:`w = (w_1, ..., w_p)` to minimize the residual sum
+:math:`w = (w_0, w_1, ..., w_p)` to minimize the residual sum
 of squares between the observed targets in the dataset, and the
 targets predicted by the linear approximation. Mathematically it
 solves a problem of the form:
@@ -118,7 +118,7 @@ of shrinkage and thus the coefficients become more robust to collinearity.
 
 As with other linear models, :class:`Ridge` will take in its ``fit`` method
 arrays ``X``, ``y`` and will store the coefficients :math:`w` of the linear model in
-its ``coef_`` member::
+its ``coef_`` and ``intercept_`` members::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Ridge(alpha=.5)
