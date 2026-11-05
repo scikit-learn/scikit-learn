@@ -235,3 +235,18 @@ def test_get_counts_multiple_nans():
     # themselves. So compare as Python lists:
     assert list(uniques) == list(real_uniques)
     assert_array_equal(real_counts, expected_counts)
+
+
+def test_unique_with_pandas_na():
+    """Check that _unique handles pd.NA in object arrays without raising TypeError."""
+    pd = pytest.importorskip("pandas")
+
+    values = np.array(["b", "a", pd.NA, "a", pd.NA], dtype=object)
+    uniques, inverse, counts = _unique(values, return_inverse=True, return_counts=True)
+
+    assert len(uniques) == 3
+    assert uniques[0] == "a"
+    assert uniques[1] == "b"
+    assert np.isnan(uniques[2])
+    assert_array_equal(inverse, [1, 0, 2, 0, 2])
+    assert_array_equal(counts, [2, 1, 2])
