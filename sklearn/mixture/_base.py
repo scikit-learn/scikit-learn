@@ -211,8 +211,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         raised. After fitting, it predicts the most probable label for the
         input data points.
 
-        .. versionadded:: 0.20
-
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
@@ -448,7 +446,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels.
         """
         check_is_fitted(self)
-        xp, _, device_ = get_namespace_and_device(self.means_)
+        xp, _, device = get_namespace_and_device(self.means_)
 
         if n_samples < 1:
             raise ValueError(
@@ -502,13 +500,13 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         y = xp.concat(
             [
-                xp.full(int(n_samples_comp[i]), i, dtype=xp.int64, device=device_)
+                xp.full(int(n_samples_comp[i]), i, dtype=xp.int64, device=device)
                 for i in range(len(n_samples_comp))
             ]
         )
 
-        max_float_dtype = _max_precision_float_dtype(xp=xp, device=device_)
-        return xp.asarray(X, dtype=max_float_dtype, device=device_), y
+        max_float_dtype = _max_precision_float_dtype(xp=xp, device=device)
+        return xp.asarray(X, dtype=max_float_dtype, device=device), y
 
     def _estimate_weighted_log_prob(self, X, xp=None):
         """Estimate the weighted log-probabilities, log P(X | Z) + log weights.

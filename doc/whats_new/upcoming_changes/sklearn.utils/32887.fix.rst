@@ -1,6 +1,0 @@
-- The parameter table in the HTML representation of all scikit-learn
-  estimators inheritiging from :class:`base.BaseEstimator`, displays
-  each parameter documentation as a tooltip. The last tooltip of a
-  parameter in the last table of any HTML representation was partially hidden.
-  This issue has been fixed.
-  By :user:`Dea María Léon <DeaMariaLeon>`

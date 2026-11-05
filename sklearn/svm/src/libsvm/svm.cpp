@@ -527,7 +527,10 @@ double Kernel::k_function(const PREFIX(node) *x, const PREFIX(node) *y,
 			return 0;  // Unreachable
 	}
 }
-// An SMO algorithm in Fan et al., JMLR 6(2005), p. 1889--1918
+// An SMO algorithm based on:
+// R.-E. Fan, P.-H. Chen, and C.-J. Lin. Working set selection using second
+// order information for training support vector machines. Journal of Machine
+// Learning Research 6(2005), p. 1889--1918.
 // Solves:
 //
 //	min 0.5(\alpha^T Q \alpha) + p^T \alpha

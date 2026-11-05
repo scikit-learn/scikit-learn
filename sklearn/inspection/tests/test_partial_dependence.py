@@ -3,7 +3,6 @@ Testing for the partial dependence module.
 """
 
 import re
-import warnings
 
 import numpy as np
 import pytest
@@ -238,6 +237,34 @@ def test_grid_from_X():
     assert grid.dtype == object
 
 
+def test_grid_from_X_with_nan():
+    """Check that _grid_from_X ignores NaNs."""
+    percentiles = (0.05, 0.95)
+    grid_resolution = 10
+    is_categorical = [False]
+    rng = np.random.RandomState(0)
+    X = rng.rand(50, 1)
+    X[0, 0] = np.nan
+
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution, {})
+
+    assert not np.isnan(grid).any()
+    assert not np.isnan(axes[0]).any()
+
+
+def test_grid_from_X_with_boolean_feature():
+    """Check that _grid_from_X handles booleans."""
+    percentiles = (0.05, 0.95)
+    grid_resolution = 2
+    is_categorical = [False]
+    X = np.array([[True], [False]] * 10)
+
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution, {})
+
+    assert_allclose(axes[0], [0.0, 1.0])
+    assert_allclose(grid.ravel(), [0.0, 1.0])
+
+
 @pytest.mark.parametrize(
     "grid_resolution",
     [
@@ -300,7 +327,9 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
 @pytest.mark.parametrize(
     "grid_resolution, percentiles, err_msg",
     [
-        (2, (0, 0.0001), "percentiles are too close"),
+        # percentiles gap small enough that the resulting grid endpoints are
+        # indistinguishable under linear interpolation
+        (2, (0, 1e-6), "percentiles are too close"),
         (100, (1, 2, 3, 4), "'percentiles' must be a sequence of 2 elements"),
         (100, 12345, "'percentiles' must be a sequence of 2 elements"),
         (100, (-1, 0.95), r"'percentiles' values must be in \[0, 1\]"),
@@ -527,6 +556,62 @@ def test_partial_dependence_easy_target(est, power):
 @pytest.mark.parametrize(
     "Estimator",
     (
+        DecisionTreeRegressor,
+        RandomForestRegressor,
+        HistGradientBoostingRegressor,
+        HistGradientBoostingClassifier,
+    ),
+)
+def test_partial_dependence_recursion_categorical_target_feature(Estimator):
+    # Recursion is not supported as the re-encoding of the grid is not implemented
+    X = np.array(["a", "b", "b", "a", "a"]).reshape(-1, 1)
+    y = np.array([0, 1, 1, 0, 1])
+
+    est = Estimator(categorical_features=[0]).fit(X, y)
+
+    with pytest.raises(
+        NotImplementedError, match="not supported for categorical target features"
+    ):
+        partial_dependence(
+            est, X, features=[0], method="recursion", categorical_features=[0]
+        )
+
+    # method="auto" falls back to brute
+    auto = partial_dependence(est, X, features=[0], categorical_features=[0])
+    brute = partial_dependence(
+        est, X, features=[0], method="brute", categorical_features=[0]
+    )
+    assert_allclose(auto["average"], brute["average"])
+
+
+def test_partial_dependence_recursion_decision_tree_missing_target_feature():
+    # Missing values are isolated by the split. Recursion must route np.nan
+    # according to the fitted node's missing_go_to_left flag.
+    X = np.array([0.0, 0.0, np.nan, np.nan, 1.0, 1.0, 1.0]).reshape(-1, 1)
+    y = np.array([0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0])
+
+    est = DecisionTreeRegressor(max_depth=1, random_state=0).fit(X, y)
+    assert est.tree_.missing_go_to_left[0]
+
+    custom_values = {0: [0.0, np.nan, 1.0]}
+    recursion = partial_dependence(
+        est, X, features=[0], method="recursion", custom_values=custom_values
+    )
+    brute = partial_dependence(
+        est, X, features=[0], method="brute", custom_values=custom_values
+    )
+
+    grid = recursion["grid_values"][0].reshape(-1, 1)
+    expected = est.predict(grid)
+
+    assert_array_equal(recursion["grid_values"][0], custom_values[0])
+    assert_allclose(recursion["average"][0], brute["average"][0])
+    assert_allclose(recursion["average"][0], expected)
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    (
         sklearn.tree.DecisionTreeClassifier,
         sklearn.tree.ExtraTreeClassifier,
         sklearn.ensemble.ExtraTreesClassifier,
@@ -641,7 +726,7 @@ def test_partial_dependence_unknown_feature_string(estimator):
     estimator = clone(estimator).fit(df, y)
 
     features = ["random"]
-    err_msg = "A given column is not a column of the dataframe"
+    err_msg = "Some column names are not columns of the dataframe"
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, df, features)
 
@@ -837,7 +922,7 @@ def test_partial_dependence_pipeline_custom_values(
 @pytest.mark.parametrize(
     "estimator",
     [
-        LogisticRegression(max_iter=1000, random_state=0),
+        LogisticRegression(max_iter=1000),
         GradientBoostingClassifier(random_state=0, n_estimators=5),
     ],
     ids=["estimator-brute", "estimator-recursion"],
@@ -868,6 +953,8 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(scale(iris.data), columns=iris.feature_names)
 
+    if preprocessor is not None:
+        preprocessor = clone(preprocessor)
     pipe = make_pipeline(preprocessor, clone(estimator))
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
@@ -951,9 +1038,7 @@ def test_partial_dependence_feature_type(features, custom_values, expected_pd_sh
         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)]),
     )
-    pipe = make_pipeline(
-        preprocessor, LogisticRegression(max_iter=1000, random_state=0)
-    )
+    pipe = make_pipeline(preprocessor, LogisticRegression(max_iter=1000))
     pipe.fit(df, iris.target)
     pdp_pipe = partial_dependence(
         pipe,
@@ -1144,26 +1229,21 @@ def test_reject_array_with_integer_dtype():
     y = np.array([0, 1, 0, 1])
     clf = DummyClassifier()
     clf.fit(X, y)
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 0 contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 0 contains integer data.")
     ):
         partial_dependence(clf, X, features=0)
-
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 1 contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 1 contains integer data.")
     ):
         partial_dependence(clf, X, features=[1], categorical_features=[0])
-
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 0 contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 0 contains integer data.")
     ):
         partial_dependence(clf, X, features=[0, 1])
-
     # The following should not raise as we do not compute numerical partial
     # dependence on integer columns.
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        partial_dependence(clf, X, features=1, categorical_features=[1])
+    partial_dependence(clf, X, features=1, categorical_features=[1])
 
 
 def test_reject_pandas_with_integer_dtype():
@@ -1179,22 +1259,18 @@ def test_reject_pandas_with_integer_dtype():
     clf = DummyClassifier()
     clf.fit(X, y)
 
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 'c' contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 'c' contains integer data.")
     ):
         partial_dependence(clf, X, features="c")
-
-    with pytest.warns(
-        FutureWarning, match=re.escape("The column 'c' contains integer data.")
+    with pytest.raises(
+        ValueError, match=re.escape("The column 'c' contains integer data.")
     ):
         partial_dependence(clf, X, features=["a", "c"])
-
     # The following should not raise as we do not compute numerical partial
     # dependence on integer columns.
-    with warnings.catch_warnings():
-        warnings.simplefilter("error")
-        partial_dependence(clf, X, features=["a"])
-        partial_dependence(clf, X, features=["c"], categorical_features=["c"])
+    partial_dependence(clf, X, features=["a"])
+    partial_dependence(clf, X, features=["c"], categorical_features=["c"])
 
 
 def test_partial_dependence_empty_categorical_features():

@@ -13,10 +13,10 @@ from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension, _infer_dimension
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
-from sklearn.utils._array_api import device as array_device
 from sklearn.utils._test_common.instance_generator import _get_check_estimator_ids
 from sklearn.utils._testing import _array_api_for_tests, assert_allclose
 from sklearn.utils.estimator_checks import (
@@ -157,7 +157,7 @@ def test_sparse_pca_solver_error(global_random_seed, svd_solver, sparse_containe
 
 
 @pytest.mark.parametrize("sparse_container", CSR_CONTAINERS + CSC_CONTAINERS)
-def test_sparse_pca_auto_arpack_singluar_values_consistency(
+def test_sparse_pca_auto_arpack_singular_values_consistency(
     global_random_seed, sparse_container
 ):
     """Check that "auto" and "arpack" solvers are equivalent for sparse inputs."""
@@ -877,7 +877,7 @@ def test_mle_simple_case():
     assert pca_skl.n_components_ == n_dim - 1
 
 
-def test_assess_dimesion_rank_one():
+def test_assess_dimension_rank_one():
     # Make sure assess_dimension works properly on a matrix of rank 1
     n_samples, n_features = 9, 6
     X = np.ones((n_samples, n_features))  # rank 1 matrix
@@ -938,13 +938,14 @@ def test_variance_correctness(copy):
 def check_array_api_get_precision(
     name, estimator, array_namespace, device_name, dtype_name
 ):
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     iris_np = iris.data.astype(dtype_name)
     iris_xp = xp.asarray(iris_np, device=device)
 
-    estimator.fit(iris_np)
-    precision_np = estimator.get_precision()
-    covariance_np = estimator.get_covariance()
+    with config_context(array_api_dispatch=False):
+        estimator.fit(iris_np)
+        precision_np = estimator.get_precision()
+        covariance_np = estimator.get_covariance()
 
     rtol = 2e-4 if iris_np.dtype == "float32" else 2e-7
     with config_context(array_api_dispatch=True):
@@ -1046,7 +1047,7 @@ def test_pca_mle_array_api_compliance(
 
     # Simpler variant of the generic check_array_api_input checker tailored for
     # the specific case of PCA with mle-trimmed components.
-    xp, device = _array_api_for_tests(array_namespace, device_name)
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
     X, y = make_classification(random_state=42)
     X = X.astype(dtype_name, copy=False)
@@ -1057,10 +1058,11 @@ def test_pca_mle_array_api_compliance(
     X_xp = xp.asarray(X, device=device)
     y_xp = xp.asarray(y, device=device)
 
-    est.fit(X, y)
+    with config_context(array_api_dispatch=False):
+        est.fit(X, y)
 
-    components_np = est.components_
-    explained_variance_np = est.explained_variance_
+        components_np = est.components_
+        explained_variance_np = est.explained_variance_
 
     est_xp = clone(est)
     with config_context(array_api_dispatch=True):

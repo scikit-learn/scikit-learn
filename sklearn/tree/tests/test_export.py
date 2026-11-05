@@ -19,6 +19,7 @@ from sklearn.tree import (
     export_text,
     plot_tree,
 )
+from sklearn.tree._export import _rgb_to_hexstring
 
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
@@ -29,6 +30,24 @@ y = [-1, -1, -1, 1, 1, 1]
 y2 = [[-1, 1], [-1, 1], [-1, 1], [1, 2], [1, 2], [1, 3]]
 w = [1, 1, 1, 0.5, 0.5, 0.5]
 y_degraded = [1, 1, 1, 1, 1, 1]
+
+
+def test_matplotlib_to_rgb(pyplot):
+    from sklearn.tree._export import _matplotlib_to_rgb
+
+    assert _matplotlib_to_rgb("red") == [255, 0, 0]
+    assert _matplotlib_to_rgb((0, 1.0, 0)) == [0, 255, 0]
+
+
+def test_rgb_to_hexstring():
+    """
+    Test that _rgb_to_hexstring correctly converts an RGB tuple to a hex color string.
+
+    A previous bug caused incorrect hex color string generation for zero values
+    in the RGB tuple.
+    """
+
+    assert _rgb_to_hexstring((0, 255, 0)) == "#00ff00"
 
 
 def test_graphviz_toy():
@@ -354,6 +373,30 @@ def test_graphviz_feature_class_names_array_support(constructor):
     assert contents1 == contents2
 
 
+@pytest.mark.parametrize(
+    "fill_colors",
+    [["red", "blue"], ["#FF0000", "#0000FF"], [(1.0, 0.0, 0.0), (0.0, 0.0, 1.0)]],
+)
+def test_export_graphviz_fill_colors(pyplot, fill_colors):
+    # Test export_graphviz with custom fill_colors parameter
+    clf = DecisionTreeClassifier(
+        max_depth=2, min_samples_split=2, criterion="gini", random_state=0
+    )
+    clf.fit(X, y)
+
+    contents = export_graphviz(
+        clf,
+        filled=True,
+        fill_colors=fill_colors,
+        out_file=None,
+    )
+
+    # Verify custom colors appear in output (red and blue hex codes)
+    # Red = #ff0000, Blue = #0000ff
+    assert 'fillcolor="#ff0000"' in contents and 'fillcolor="#0000ff"' in contents
+    assert "digraph Tree" in contents
+
+
 def test_graphviz_errors():
     # Check for errors of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3, min_samples_split=2)
@@ -389,6 +432,60 @@ def test_graphviz_errors():
     out = StringIO()
     with pytest.raises(IndexError):
         export_graphviz(clf, out, class_names=[])
+
+
+def test_graphviz_fill_colors_length_mismatch_error(pyplot):
+    clf = DecisionTreeClassifier(
+        max_depth=2, min_samples_split=2, criterion="gini", random_state=0
+    )
+    clf.fit(X, y)
+
+    msg = r"fill_colors has 1 elements but tree has 2 classes"
+    with pytest.raises(ValueError, match=msg):
+        export_graphviz(
+            clf,
+            filled=True,
+            fill_colors=["red"],
+            out_file=None,
+        )
+
+    with pytest.raises(ValueError, match=msg):
+        plot_tree(
+            clf,
+            filled=True,
+            fill_colors=["red"],
+        )
+
+
+def test_plot_tree_no_matplotlib(hide_available_matplotlib):
+    # Check that plot_tree raises an ImportError with a clear message when matplotlib
+    # is not available.
+    clf = DecisionTreeClassifier(
+        max_depth=2, min_samples_split=2, criterion="gini", random_state=0
+    )
+    clf.fit(X, y)
+
+    with pytest.raises(ImportError, match=r"plot_tree requires matplotlib"):
+        plot_tree(clf)
+
+
+def test_graphviz_fill_colors_no_matplotlib(hide_available_matplotlib):
+    # Check that export_graphviz raises an ImportError with a clear message when
+    # when matplotlib is not available and fill_colors is used.
+    clf = DecisionTreeClassifier(
+        max_depth=2, min_samples_split=2, criterion="gini", random_state=0
+    )
+    clf.fit(X, y)
+
+    with pytest.raises(
+        ImportError, match=r"export_graphviz.*fill_colors.*requires matplotlib"
+    ):
+        export_graphviz(
+            clf,
+            filled=True,
+            fill_colors=["red", "blue"],
+            out_file=None,
+        )
 
 
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS + REG_CRITERIONS)
@@ -627,6 +724,46 @@ def test_plot_tree_gini(pyplot, fontsize):
     assert nodes[2].get_text() == "True  "
     assert nodes[3].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
     assert nodes[4].get_text() == "  False"
+
+
+@pytest.mark.parametrize(
+    "fill_colors",
+    [["red", "blue"], ["#FF0000", "#0000FF"], [(1.0, 0.0, 0.0), (0.0, 0.0, 1.0)]],
+)
+def test_plot_tree_fill_colors(pyplot, fill_colors):
+    # Test plot_tree with custom fill_colors parameter
+    from matplotlib.colors import to_rgba
+
+    clf = DecisionTreeClassifier(
+        max_depth=2, min_samples_split=2, criterion="gini", random_state=0
+    )
+    clf.fit(X, y)
+
+    nodes = plot_tree(
+        clf,
+        filled=True,
+        fill_colors=fill_colors,
+    )
+
+    # Verify plot was created successfully (returns list of artists)
+    assert len(nodes) == 5
+
+    # Check that facecolors are applied to node bbox patches
+    facecolors = set()
+    for node in nodes:
+        if hasattr(node, "get_bbox_patch"):
+            bbox_patch = node.get_bbox_patch()
+            if bbox_patch is not None:
+                facecolors.add(bbox_patch.get_facecolor())
+
+    assert len(facecolors) > 0  # Ensure we found some boxes with colors
+
+    # Verify that all expected colors are present in the facecolors list
+    for color in fill_colors:
+        color_rgba = to_rgba(color)
+        assert color_rgba in facecolors, (
+            f"Expected color {color} not found in node facecolors"
+        )
 
 
 def test_not_fitted_tree(pyplot):

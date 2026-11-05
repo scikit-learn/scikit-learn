@@ -1,0 +1,10 @@
+- Fixes support when `average="samples"` and `sample_weight` is an array from a
+  namespace or device different from `y_pred`, for:
+  :func:`sklearn.metrics.precision_recall_fscore_support`,
+  :func:`sklearn.metrics.recall`,
+  :func:`sklearn.metrics.precision`,
+  :func:`sklearn.metrics.f1_score`,
+  :func:`sklearn.metrics.fbeta_score`.
+  Also fixes several bugs in array API compliance of
+  :func:`sklearn.metrics.roc_curve`.
+  By :user:`Lucy Liu <lucyleeow>`.

@@ -92,8 +92,6 @@ def fetch_kddcup99(
 
     Read more in the :ref:`User Guide <kddcup99_dataset>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     subset : {'SA', 'SF', 'http', 'smtp'}, default=None
@@ -103,8 +101,6 @@ def fetch_kddcup99(
     data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
-
-        .. versionadded:: 0.19
 
     shuffle : bool, default=False
         Whether to shuffle dataset.
@@ -124,16 +120,12 @@ def fetch_kddcup99(
 
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
-        below for more information about the `data` and `target` object.
-
-        .. versionadded:: 0.20
+        below for more information about the `data` and `target` objects.
 
     as_frame : bool, default=False
         If `True`, returns a pandas Dataframe for the ``data`` and ``target``
         objects in the `Bunch` returned object; `Bunch` return object will also
         have a ``frame`` member.
-
-        .. versionadded:: 0.24
 
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
@@ -170,8 +162,6 @@ def fetch_kddcup99(
         shape (n_samples, n_features) with each row representing one
         sample and each column representing the features. The second
         ndarray of shape (n_samples,) containing the target samples.
-
-        .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
     kddcup99 = _fetch_brute_kddcup99(

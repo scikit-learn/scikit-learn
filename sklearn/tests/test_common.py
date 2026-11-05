@@ -16,15 +16,12 @@ import pytest
 from scipy.linalg import LinAlgWarning
 
 import sklearn
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.compose import ColumnTransformer
 from sklearn.exceptions import ConvergenceWarning
 
 # make it possible to discover experimental estimators when calling `all_estimators`
-from sklearn.experimental import (
-    enable_halving_search_cv,  # noqa: F401
-    enable_iterative_imputer,  # noqa: F401
-)
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import FeatureUnion, make_pipeline
 from sklearn.preprocessing import (
@@ -42,6 +39,7 @@ from sklearn.utils._test_common.instance_generator import (
 )
 from sklearn.utils._testing import (
     SkipTest,
+    assert_run_python_script_without_output,
     ignore_warnings,
 )
 from sklearn.utils.estimator_checks import (
@@ -60,6 +58,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.validation import has_fit_parameter
 
 
@@ -93,16 +92,18 @@ class CallableEstimator(BaseEstimator):
         (partial(_sample_func, y=1), "_sample_func(y=1)"),
         (_sample_func, "_sample_func"),
         (partial(_sample_func, "world"), "_sample_func"),
-        (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
+        (
+            LogisticRegression(alpha=0.5),
+            "LogisticRegression(alpha=0.5)",
+        ),
         (
             LogisticRegression(
-                random_state=1,
                 solver="newton-cg",
                 class_weight="balanced",
                 warm_start=True,
             ),
             (
-                "LogisticRegression(class_weight='balanced',random_state=1,"
+                "LogisticRegression(class_weight='balanced',"
                 "solver='newton-cg',warm_start=True)"
             ),
         ),
@@ -125,9 +126,14 @@ def test_estimators(estimator, check, request):
         check(estimator)
 
 
+# TODO(1.12): remove filter
 @pytest.mark.filterwarnings(
-    "ignore:Since version 1.0, it is not needed to import "
-    "enable_hist_gradient_boosting anymore"
+    "ignore:The sklearn.experimental.enable_hist_gradient_boosting module is "
+    "deprecated:FutureWarning"
+)
+@pytest.mark.filterwarnings(
+    "ignore:Since version 1.10, it is not needed to import "
+    "enable_iterative_imputer anymore"
 )
 @pytest.mark.thread_unsafe  # import side-effects
 def test_import_all_consistency():
@@ -154,12 +160,36 @@ def test_import_all_consistency():
 def test_root_import_all_completeness():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     EXCEPTIONS = ("utils", "tests", "base", "conftest")
-    for _, modname, _ in pkgutil.walk_packages(
-        path=sklearn_path, onerror=lambda _: None
-    ):
-        if "." in modname or modname.startswith("_") or modname in EXCEPTIONS:
+    for _, modname, _ in pkgutil.iter_modules(sklearn_path):
+        if modname.startswith("_") or modname in EXCEPTIONS:
             continue
         assert modname in sklearn.__all__
+
+
+@pytest.mark.xfail(_IS_WASM, reason="cannot start subprocess")
+def test_wildcard_import_for_public_modules():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
+    modules = [
+        name
+        for _, name, _ in pkgutil.iter_modules(sklearn_path)
+        if not name.startswith("_") and name not in {"tests", "conftest"}
+    ]
+    # Run in a fresh interpreter: this test module imports
+    # sklearn.experimental.enable_halving_search_cv, which could hide wildcard
+    # import failures, see for example
+    # https://github.com/scikit-learn/scikit-learn/pull/35038
+    code = "\n".join(f"from sklearn.{name} import *" for name in modules)
+    # sanity check to make sure that nothing is imported from deeper than
+    # sklearn.experimental as an import side-effect
+    code += """
+import sys
+
+experimental_modules = [
+    name for name in sys.modules if name.startswith("sklearn.experimental.")
+]
+assert not experimental_modules, experimental_modules
+"""
+    assert_run_python_script_without_output(code)
 
 
 @pytest.mark.thread_unsafe  # import side-effects
@@ -237,7 +267,7 @@ def _estimators_that_predict_in_fit():
 column_name_estimators = list(
     chain(
         _tested_estimators(),
-        [make_pipeline(LogisticRegression(C=1))],
+        [make_pipeline(LogisticRegression())],
         _estimators_that_predict_in_fit(),
     )
 )
@@ -382,6 +412,7 @@ def test_set_output_transform_configured(estimator_orig, check_func):
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
 def test_check_inplace_ensure_writeable(estimator):
+    estimator = clone(estimator)
     name = estimator.__class__.__name__
 
     if hasattr(estimator, "copy"):

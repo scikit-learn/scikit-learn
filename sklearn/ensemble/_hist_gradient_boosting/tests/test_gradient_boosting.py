@@ -14,6 +14,7 @@ from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose, assert_array_equal
 
 import sklearn.ensemble._hist_gradient_boosting.gradient_boosting as hgb_module
+from sklearn import config_context
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -41,6 +42,7 @@ from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
 from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.metadata_routing import get_routing_for_object
 
 n_threads = _openmp_effective_n_threads()
 
@@ -61,10 +63,10 @@ def _make_dumb_dataset(n_samples):
 
 @pytest.mark.parametrize(
     "GradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
+    ),
 )
 @pytest.mark.parametrize(
     "params, err_msg",
@@ -524,7 +526,7 @@ def test_small_trainset():
 
 
 def test_missing_values_minmax_imputation():
-    # Compare the buit-in missing value handling of Histogram GBC with an
+    # Compare the built-in missing value handling of Histogram GBC with an
     # a-priori missing value imputation strategy that should yield the same
     # results in terms of decision function.
     #
@@ -943,7 +945,7 @@ def test_single_node_trees(Est):
 
 @pytest.mark.parametrize(
     "Est, loss, X, y",
-    [
+    (
         (
             HistGradientBoostingClassifier,
             HalfBinomialLoss(sample_weight=None),
@@ -956,7 +958,7 @@ def test_single_node_trees(Est):
             X_regression,
             y_regression,
         ),
-    ],
+    ),
 )
 def test_custom_loss(Est, loss, X, y):
     est = Est(loss=loss, max_iter=20)
@@ -965,7 +967,7 @@ def test_custom_loss(Est, loss, X, y):
 
 @pytest.mark.parametrize(
     "HistGradientBoosting, X, y",
-    [
+    (
         (HistGradientBoostingClassifier, X_classification, y_classification),
         (HistGradientBoostingRegressor, X_regression, y_regression),
         (
@@ -973,7 +975,7 @@ def test_custom_loss(Est, loss, X, y):
             X_multi_classification,
             y_multi_classification,
         ),
-    ],
+    ),
 )
 def test_staged_predict(HistGradientBoosting, X, y):
     # Test whether staged predictor eventually gives
@@ -1016,10 +1018,7 @@ def test_staged_predict(HistGradientBoosting, X, y):
     "Est", (HistGradientBoostingRegressor, HistGradientBoostingClassifier)
 )
 @pytest.mark.parametrize("bool_categorical_parameter", [True, False])
-@pytest.mark.parametrize("missing_value", [np.nan, -1])
-def test_unknown_categories_nan(
-    insert_missing, Est, bool_categorical_parameter, missing_value
-):
+def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter):
     # Make sure no error is raised at predict if a category wasn't seen during
     # fit. We also make sure they're treated as nans.
 
@@ -1039,7 +1038,7 @@ def test_unknown_categories_nan(
     if insert_missing:
         mask = rng.binomial(1, 0.01, size=X.shape).astype(bool)
         assert mask.sum() > 0
-        X[mask] = missing_value
+        X[mask] = np.nan
 
     est = Est(max_iter=20, categorical_features=categorical_features).fit(X, y)
     assert_array_equal(est.is_categorical_, [False, True])
@@ -1048,7 +1047,7 @@ def test_unknown_categories_nan(
     # unknown categories will be treated as nans
     X_test = np.zeros((10, X.shape[1]), dtype=float)
     X_test[:5, 1] = 30
-    X_test[5:, 1] = missing_value
+    X_test[5:, 1] = np.nan
     assert len(np.unique(est.predict(X_test))) == 1
 
 
@@ -1429,10 +1428,12 @@ def test_class_weights():
     )
 
 
-def test_unknown_category_that_are_negative():
-    """Check that unknown categories that are negative does not error.
+def test_unknown_category_at_predict_time_is_treated_as_missing():
+    """Check that categories unseen at fit time do not error, and are treated
+    like a missing category regardless of their sign.
 
-    Non-regression test for #24274.
+    We used to have a special treatment for negative value:
+    see https://github.com/scikit-learn/scikit-learn/pull/34663/
     """
     rng = np.random.RandomState(42)
     n_samples = 1000
@@ -1446,20 +1447,22 @@ def test_unknown_category_that_are_negative():
         max_iter=10,
     ).fit(X, y)
 
-    # Check that negative values from the second column are treated like a
-    # missing category
+    # Categories unseen at fit time (whether negative or positive) are
+    # treated like a missing category.
     X_test_neg = np.asarray([[1, -2], [3, -4]])
+    X_test_pos = np.asarray([[1, 99], [3, 77]])
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+    assert_allclose(hist.predict(X_test_pos), hist.predict(X_test_nan))
 
 
 @pytest.mark.parametrize(
     ("GradientBoosting", "make_X_y"),
-    [
+    (
         (HistGradientBoostingClassifier, make_classification),
         (HistGradientBoostingRegressor, make_regression),
-    ],
+    ),
 )
 @pytest.mark.parametrize("sample_weight", [False, True])
 def test_X_val_in_fit(GradientBoosting, make_X_y, sample_weight, global_random_seed):
@@ -1548,10 +1551,24 @@ def test_X_val_raises_with_early_stopping_false():
         )
 
 
+@pytest.mark.parametrize(
+    "HistGradientBoosting",
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
+)
+def test_X_val_auto_request_hgb(HistGradientBoosting):
+    """Test that HGB* correctly sets auto-requests on the validation set."""
+    with config_context(enable_metadata_auto_requests=True):
+        hist = HistGradientBoosting()
+        assert all(
+            get_routing_for_object(hist).fit.requests[k] is True
+            for k in ("X_val", "y_val", "sample_weight_val")
+        )
+
+
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
-    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
 )
 def test_dataframe_categorical_results_same_as_ndarray(
     dataframe_lib, HistGradientBoosting
@@ -1606,7 +1623,7 @@ def test_dataframe_categorical_results_same_as_ndarray(
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
-    [HistGradientBoostingClassifier, HistGradientBoostingRegressor],
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
 )
 def test_dataframe_categorical_errors(dataframe_lib, HistGradientBoosting):
     """Check error cases for pandas categorical feature."""
@@ -1762,3 +1779,31 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "Estimator, y_func",
+    [
+        (HistGradientBoostingRegressor, lambda X: np.sin(X[:, 0])),
+        (HistGradientBoostingClassifier, lambda X: np.arange(len(X)) % 2),
+    ],
+)
+def test_early_stopping_auto_with_explicit_validation_data(Estimator, y_func):
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/35032
+    # early_stopping="auto" should enable early stopping when X_val and y_val
+    # are passed to fit, even when n_samples <= 10_000.
+    X = np.arange(40.0).reshape(-1, 1)
+    y = y_func(X)
+    X_train, y_train, X_val, y_val = X[:30], y[:30], X[30:], y[30:]
+
+    params = dict(early_stopping="auto", max_iter=3, min_samples_leaf=5, random_state=0)
+
+    # Without explicit validation data, "auto" stays off on small datasets.
+    est = Estimator(**params).fit(X_train, y_train)
+    assert not est.do_early_stopping_
+
+    # With explicit validation data, "auto" turns early stopping on.
+    est = Estimator(**params).fit(X_train, y_train, X_val=X_val, y_val=y_val)
+    assert est.do_early_stopping_
+    assert est.validation_score_.shape == (est.n_iter_ + 1,)

@@ -1,0 +1,6 @@
+- Improved the performance of binning in
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`. Fitting with sample weights
+  could be slow for datasets with fewer than 200,000 samples; this is now fixed.
+  Binning without sample weights was also optimized.
+  By :user:`Arthur Lacote <cakedev0>`.

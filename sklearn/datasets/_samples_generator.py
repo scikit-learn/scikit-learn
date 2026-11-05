@@ -460,9 +460,6 @@ def make_multilabel_classification(
     sparse : bool, default=False
         If ``True``, return a sparse feature matrix.
 
-        .. versionadded:: 0.17
-           parameter to allow *sparse* output.
-
     return_indicator : {'dense', 'sparse'} or False, default='dense'
         If ``'dense'`` return ``Y`` in the dense binary indicator format. If
         ``'sparse'`` return ``Y`` in the sparse binary indicator format.
@@ -831,9 +828,6 @@ def make_circles(
         If two-element tuple, number of points in outer circle and inner
         circle.
 
-        .. versionchanged:: 0.23
-           Added two-element tuple.
-
     shuffle : bool, default=True
         Whether to shuffle the samples.
 
@@ -919,9 +913,6 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     n_samples : int or tuple of shape (2,), dtype=int, default=100
         If int, the total number of points generated.
         If two-element tuple, number of points in each of two moons.
-
-        .. versionchanged:: 0.23
-           Added two-element tuple.
 
     shuffle : bool, default=True
         Whether to shuffle the samples.
@@ -1051,8 +1042,6 @@ def make_blobs(
 
     return_centers : bool, default=False
         If True, then return the centers of each cluster.
-
-        .. versionadded:: 0.23
 
     Returns
     -------

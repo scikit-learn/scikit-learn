@@ -113,7 +113,7 @@ def test_link_inverse_array_api(
     else:
         raw_prediction = rng.uniform(low=-20, high=20, size=(n_samples))
 
-    xp, device = _array_api_for_tests(namespace, device_name)
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
     if dtype_name != "float64":
         raw_prediction *= 0.5  # avoid overflow
         rtol = 1e-3 if n_classes else 1e-4

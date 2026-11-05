@@ -165,7 +165,7 @@ although they live in the same space.
 The K-means algorithm aims to choose centroids that minimise the **inertia**,
 or **within-cluster sum-of-squares criterion**:
 
-.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
+.. math:: \sum_{i=0}^{N-1}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
 Inertia can be recognized as a measure of how internally coherent clusters are.
 It suffers from various drawbacks:
@@ -849,7 +849,7 @@ clusters from Bisecting K-Means are well ordered and create quite a visible hier
   * `"A Comparison of Document Clustering Techniques"
     <https://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
     Steinbach, George Karypis and Vipin Kumar, Department of Computer Science and
-    Egineering, University of Minnesota (June 2000)
+    Engineering, University of Minnesota (June 2000)
   * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog
     Data"
     <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
@@ -1372,9 +1372,10 @@ will not necessarily be close to zero::
     practice or requires manual assignment by human annotators (as in the
     supervised learning setting).
 
-    However (adjusted or unadjusted) Rand index can also be useful in a purely
-    unsupervised setting as a building block for a Consensus Index that can be
-    used for clustering model selection (TODO).
+    However, the (adjusted or unadjusted) Rand index can also compare two
+    clusterings without any ground truth, for instance to measure how much
+    two algorithms agree, or how stable one algorithm is across random
+    initializations or random subsamples of the data.
 
   - The **unadjusted Rand index is often close to 1.0** even if the clusterings
     themselves differ significantly. This can be understood when interpreting
@@ -1507,9 +1508,10 @@ Bad (e.g. independent labelings) have non-positive scores::
     truth classes** while almost never available in practice or requires manual
     assignment by human annotators (as in the supervised learning setting).
 
-    However MI-based measures can also be useful in purely unsupervised setting
-    as a building block for a Consensus Index that can be used for clustering
-    model selection.
+    However, MI-based measures can also compare two clusterings without any
+    ground truth, for instance to measure how much two algorithms agree, or
+    how stable one algorithm is across random initializations or random
+    subsamples of the data.
 
   - NMI and MI are not adjusted against chance.
 

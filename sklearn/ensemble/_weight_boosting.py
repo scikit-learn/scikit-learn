@@ -333,8 +333,6 @@ class AdaBoostClassifier(
 
     Read more in the :ref:`User Guide <adaboost>`.
 
-    .. versionadded:: 0.14
-
     Parameters
     ----------
     estimator : object, default=None
@@ -399,8 +397,6 @@ class AdaBoostClassifier(
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -640,8 +636,8 @@ class AdaBoostClassifier(
         -------
         score : ndarray of shape of (n_samples, k)
             The decision function of the input samples. The order of
-            outputs is the same as that of the :term:`classes_` attribute.
-            Binary classification is a special cases with ``k == 1``,
+            outputs is the same as in the :term:`classes_` attribute.
+            Binary classification is a special case with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
@@ -686,8 +682,8 @@ class AdaBoostClassifier(
         ------
         score : generator of ndarray of shape (n_samples, k)
             The decision function of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
-            Binary classification is a special cases with ``k == 1``,
+            outputs is the same as in the :term:`classes_` attribute.
+            Binary classification is a special case with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
@@ -757,7 +753,7 @@ class AdaBoostClassifier(
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            outputs is the same as in the :term:`classes_` attribute.
         """
         check_is_fitted(self)
         n_classes = self.n_classes_
@@ -790,7 +786,7 @@ class AdaBoostClassifier(
         ------
         p : generator of ndarray of shape (n_samples,)
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            outputs is the same as in the :term:`classes_` attribute.
         """
 
         n_classes = self.n_classes_
@@ -815,7 +811,7 @@ class AdaBoostClassifier(
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            outputs is the same as in the :term:`classes_` attribute.
         """
         return np.log(self.predict_proba(X))
 
@@ -823,17 +819,15 @@ class AdaBoostClassifier(
 class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
 
-    An AdaBoost [1] regressor is a meta-estimator that begins by fitting a
+    An AdaBoost [1]_ regressor is a meta-estimator that begins by fitting a
     regressor on the original dataset and then fits additional copies of the
     regressor on the same dataset but where the weights of instances are
     adjusted according to the error of the current prediction. As such,
     subsequent regressors focus more on difficult cases.
 
-    This class implements the algorithm known as AdaBoost.R2 [2].
+    This class implements the algorithm known as AdaBoost.R2 [2]_.
 
     Read more in the :ref:`User Guide <adaboost>`.
-
-    .. versionadded:: 0.14
 
     Parameters
     ----------
@@ -898,8 +892,6 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -917,7 +909,8 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
-    .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
+    .. [2] `H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
+           <https://dl.acm.org/doi/10.5555/645526.657132>`_
 
     Examples
     --------

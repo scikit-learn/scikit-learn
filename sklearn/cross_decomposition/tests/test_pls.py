@@ -354,7 +354,7 @@ def test_convergence_fail():
 
 
 @pytest.mark.parametrize("Est", (PLSSVD, PLSRegression, PLSCanonical))
-def test_attibutes_shapes(Est):
+def test_attributes_shapes(Est):
     # Make sure attributes are of the correct shape depending on n_components
     d = load_linnerud()
     X = d.data

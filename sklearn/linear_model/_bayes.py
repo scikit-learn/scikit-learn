@@ -66,13 +66,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
         Initial value for alpha (precision of the noise).
         If not set, alpha_init is 1/Var(y).
 
-        .. versionadded:: 0.22
-
     lambda_init : float, default=None
         Initial value for lambda (precision of the weights).
         If not set, lambda_init is 1.
-
-        .. versionadded:: 0.22
 
     compute_score : bool, default=False
         If True, compute the log marginal likelihood at each iteration of the
@@ -128,8 +124,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -226,9 +220,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         sample_weight : ndarray of shape (n_samples,), default=None
             Individual weights for each sample.
-
-            .. versionadded:: 0.20
-               parameter *sample_weight* support to BayesianRidge.
 
         Returns
         -------
@@ -397,6 +388,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         if not return_std:
             return y_mean
         else:
+            X = X - self.X_offset_
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
             return y_mean, y_std
@@ -553,8 +545,6 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -818,6 +808,7 @@ class ARDRegression(RegressorMixin, LinearModel):
             return y_mean
         else:
             col_index = self.lambda_ < self.threshold_lambda
+            X = X - self.X_offset_
             X = _safe_indexing(X, indices=col_index, axis=1)
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))

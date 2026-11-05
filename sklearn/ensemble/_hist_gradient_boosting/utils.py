@@ -106,7 +106,7 @@ def get_equivalent_estimator(estimator, lib="lightgbm", n_classes=None):
     catboost_loss_mapping = {
         "squared_error": "RMSE",
         # catboost does not support MAE when leaf_estimation_method is Newton
-        "absolute_error": "LEAST_ASBOLUTE_DEV_NOT_SUPPORTED",
+        "absolute_error": "LEAST_ABSOLUTE_DEV_NOT_SUPPORTED",
         "log_loss": "Logloss" if n_classes == 2 else "MultiClass",
         "gamma": None,
         "poisson": "Poisson",

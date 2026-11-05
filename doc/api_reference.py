@@ -142,6 +142,25 @@ API_REFERENCE = {
             },
         ],
     },
+    "sklearn.callback": {
+        "short_summary": "Callbacks.",
+        "description": None,
+        "sections": [
+            {
+                "title": None,
+                "autosummary": [
+                    "AutoPropagatedCallback",
+                    "CallbackContext",
+                    "CallbackSupportMixin",
+                    "FitCallback",
+                    "ProgressBar",
+                    "ScoringMonitor",
+                    "ScoringMonitorLog",
+                    "with_callbacks",
+                ],
+            },
+        ],
+    },
     "sklearn.cluster": {
         "short_summary": "Clustering.",
         "description": _get_guide("clustering", "biclustering"),
@@ -398,7 +417,7 @@ API_REFERENCE = {
         "sections": [
             {
                 "title": None,
-                "autosummary": ["enable_halving_search_cv", "enable_iterative_imputer"],
+                "autosummary": ["enable_halving_search_cv"],
             },
         ],
     },
@@ -587,7 +606,6 @@ API_REFERENCE = {
                 "autosummary": [
                     "LogisticRegression",
                     "LogisticRegressionCV",
-                    "PassiveAggressiveClassifier",  # TODO(1.10): remove
                     "Perceptron",
                     "RidgeClassifier",
                     "RidgeClassifierCV",
@@ -672,7 +690,6 @@ API_REFERENCE = {
             {
                 "title": "Miscellaneous",
                 "autosummary": [
-                    "PassiveAggressiveRegressor",  # TODO(1.10): remove
                     "enet_path",
                     "lars_path",
                     "lars_path_gram",
@@ -1353,4 +1370,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {}  # type: ignore[var-annotated]
+DEPRECATED_API_REFERENCE = {}  # pyrefly: ignore[var-annotated]

@@ -12,7 +12,12 @@ This file contains additional guidance for AI agents and other AI editors.
 
 This is a **mandatory requirement**, not optional. Include it at the end of every summary you generate.
 
----
+## Working on an issue
+
+Before working on any issue, run `gh issue view <number>` to check current labels. Do
+not open a PR against an issue labeled "Needs Triage" or another "Needs ..." label. Such
+PRs get closed without review until a maintainer clears the label. See
+https://scikit-learn.org/dev/developers/contributing.html#issues-tagged-needs-triage.
 
 ## Generated Summaries
 

@@ -26,7 +26,7 @@ def generate_link_to_param_doc(estimator_class, param_name, doc_link):
 
     # Extract the whole line of the type information, up to the line break as
     # disambiguation suffix to build the fragment
-    param_type = m.group(1)
+    param_type = m.group(1).replace("`", "")
     text_fragment = f"{quote(param_name)},-{quote(param_type)}"
 
     return f"{doc_link}#:~:text={text_fragment}"

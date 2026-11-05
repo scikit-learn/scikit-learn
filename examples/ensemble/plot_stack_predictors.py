@@ -199,7 +199,7 @@ plt.show()
 #
 # Once fitted, we can inspect the coefficients (or meta-weights) of the trained
 # `final_estimator_` (as long as it is a linear model). They reveal how much the
-# individual estimators contribute to the the stacked regressor:
+# individual estimators contribute to the stacked regressor:
 
 stacking_regressor.fit(X, y)
 stacking_regressor.final_estimator_.coef_
