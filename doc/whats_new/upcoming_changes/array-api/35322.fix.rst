@@ -1,0 +1,4 @@
+- Fixed :func:`metrics.d2_log_loss_score` to compute the null model with the dtype
+  of `y_proba`. It could use float32 for float64 inputs (e.g., with PyTorch), which
+  slightly changed the score.
+  By :user:`Arthur Lacote <cakedev0>`.
