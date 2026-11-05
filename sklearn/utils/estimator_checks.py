@@ -666,13 +666,6 @@ def parametrize_with_checks(
     estimators : list of estimators instances
         Estimators to generated checks for.
 
-        .. versionchanged:: 0.24
-           Passing a class was deprecated in version 0.23, and support for
-           classes was removed in 0.24. Pass an instance instead.
-
-        .. versionadded:: 0.24
-
-
     legacy : bool, default=True
         Whether to include legacy checks. Over time we remove checks from this category
         and move them into their specific category.
@@ -1170,12 +1163,6 @@ def _check_array_api_core(
     # Fitted attributes which are arrays must have the same namespace as `X`,
     # except `classes_`, to allow it to be string when `y` is string.
     for attribute_name, attribute_value in array_attributes.items():
-        # TODO(1.10): remove with deprecation of default l1_ratios
-        if attribute_name == "l1_ratios_":
-            # l1_ratios_ can be None and so it is skipped in this test
-            # because it is not associated with any array namespace or device.
-            continue
-
         est_xp_attr = getattr(est_xp, attribute_name)
         # `classes_` should be in same ns and device as `y`
         expected_xp, expected_ns = (
@@ -3834,8 +3821,6 @@ def check_regressors_train(
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
         regressor.alpha = 0.01
-    if name == "PassiveAggressiveRegressor":
-        regressor.C = 0.01
 
     # raises error on malformed input for fit
     with raises(

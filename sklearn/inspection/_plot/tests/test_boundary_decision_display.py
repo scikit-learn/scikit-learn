@@ -6,6 +6,7 @@ import pytest
 from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
+    clone,
 )
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
@@ -532,7 +533,7 @@ def test_class_of_interest_binary(pyplot, response_method):
     )
 
     if response_method == "predict_proba":
-        assert_allclose(disp_default.response, 1 - disp_class_0.response)
+        assert_allclose(disp_default.response, 1 - disp_class_0.response, atol=1e-15)
     else:
         assert response_method == "decision_function"
         assert_allclose(disp_default.response, -disp_class_0.response)
@@ -921,6 +922,7 @@ def test_n_classes_attribute(pyplot, estimator, n_blobs, expected_n_classes):
 
     Introduced in https://github.com/scikit-learn/scikit-learn/pull/33015.
     """
+    estimator = clone(estimator)
 
     X, y = make_blobs(n_samples=150, centers=n_blobs, n_features=2, random_state=42)
     clf = estimator.fit(X, y)

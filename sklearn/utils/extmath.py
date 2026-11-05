@@ -22,7 +22,6 @@ from sklearn.utils._array_api import (
     xpx,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.deprecation import deprecated
 from sklearn.utils.sparsefuncs import sparse_matmul_to_dense
 from sklearn.utils.sparsefuncs_fast import csr_row_norms
 from sklearn.utils.validation import check_array, check_random_state
@@ -261,8 +260,6 @@ def randomized_range_finder(
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-        .. versionadded:: 0.18
-
     random_state : int, RandomState instance or None, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data, i.e. getting the random vectors to initialize the algorithm.
@@ -452,8 +449,6 @@ def randomized_svd(
         present a slow decay, `n_iter=0` or `1` should even work fine in theory
         (see [1]_ page 9).
 
-        .. versionchanged:: 0.18
-
     power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
@@ -462,16 +457,12 @@ def randomized_svd(
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-        .. versionadded:: 0.18
-
     transpose : bool or 'auto', default='auto'
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
         trigger the transposition if M.shape[1] > M.shape[0] since this
         implementation of randomized SVD tend to be a little faster in that
         case.
-
-        .. versionchanged:: 0.18
 
     flip_sign : bool, default=True
         The output of a singular value decomposition is only unique up to a
@@ -649,8 +640,6 @@ def _randomized_eigsh(
 
     The choice of which components to select can be tuned with the `selection`
     parameter.
-
-    .. versionadded:: 0.24
 
     Parameters
     ----------
@@ -1283,54 +1272,6 @@ def _deterministic_vector_sign_flip(u):
     signs = np.sign(u[range(u.shape[0]), max_abs_rows])
     u *= signs[:, np.newaxis]
     return u
-
-
-# TODO(1.10): Remove
-@deprecated(
-    "`sklearn.utils.extmath.stable_cumsum` is deprecated in version 1.8 and "
-    "will be removed in 1.10. Use `np.cumulative_sum` with the desired dtype "
-    "directly instead."
-)
-def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
-    """Use high precision for cumsum and check that final value matches sum.
-
-    .. deprecated:: 1.8
-        This function is deprecated in version 1.8 and will be removed in 1.10.
-        Use `np.cumulative_sum` with the desired dtype directly instead.
-
-    Warns if the final cumulative sum does not match the sum (up to the chosen
-    tolerance).
-
-    Parameters
-    ----------
-    arr : array-like
-        To be cumulatively summed as flat.
-    axis : int, default=None
-        Axis along which the cumulative sum is computed.
-        The default (None) is to compute the cumsum over the flattened array.
-    rtol : float, default=1e-05
-        Relative tolerance, see ``np.allclose``.
-    atol : float, default=1e-08
-        Absolute tolerance, see ``np.allclose``.
-
-    Returns
-    -------
-    out : ndarray
-        Array with the cumulative sums along the chosen axis.
-    """
-    out = np.cumsum(arr, axis=axis, dtype=np.float64)
-    expected = np.sum(arr, axis=axis, dtype=np.float64)
-    if not np.allclose(
-        out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
-    ):
-        warnings.warn(
-            (
-                "cumsum was found to be unstable: "
-                "its last element does not correspond to sum"
-            ),
-            RuntimeWarning,
-        )
-    return out
 
 
 def _nanaverage(a, weights=None):

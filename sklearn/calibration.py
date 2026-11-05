@@ -41,6 +41,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._param_validation import (
     HasMethods,
+    Hidden,
     Interval,
     StrOptions,
     validate_params,
@@ -267,9 +268,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Refer to the :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -279,8 +277,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         iterations.
 
         See :term:`Glossary <n_jobs>` for more details.
-
-        .. versionadded:: 0.24
 
     ensemble : bool, or "auto", default="auto"
         Determines how the calibrator is fitted.
@@ -301,8 +297,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         Note that this method is also internally implemented  in
         :mod:`sklearn.svm` estimators with the `probabilities=True` parameter.
 
-        .. versionadded:: 0.24
-
         .. versionchanged:: 1.6
             `"auto"` option is added and is the default.
 
@@ -314,8 +308,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying estimator exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
@@ -330,9 +322,6 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
           `n_cv` is the number of cross-validation folds.
         - When `ensemble=False`, the `estimator`, fitted on all the data, and fitted
           calibrator.
-
-        .. versionchanged:: 0.24
-            Single calibrated classifier case when `ensemble=False`.
 
     See Also
     --------
@@ -1317,6 +1306,8 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         return tags
 
 
+# TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
+# TODO(1.12): change default strategy to 'quantile', see PR #33908.
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -1325,8 +1316,12 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         "n_bins": [
             Interval(Integral, 1, None, closed="left"),
             StrOptions({"cube_root"}),
+            Hidden(StrOptions({"warn"})),
         ],
-        "strategy": [StrOptions({"uniform", "quantile"})],
+        "strategy": [
+            StrOptions({"uniform", "quantile"}),
+            Hidden(StrOptions({"warn"})),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1335,8 +1330,8 @@ def calibration_curve(
     y_prob,
     *,
     pos_label=None,
-    n_bins=5,
-    strategy="uniform",
+    n_bins="warn",
+    strategy="warn",
 ):
     """Compute true and predicted probabilities for a calibration curve.
 
@@ -1416,7 +1411,8 @@ def calibration_curve(
     >>> from sklearn.calibration import calibration_curve
     >>> y_true = np.array([0, 0, 0, 0, 1, 1, 1, 1, 1])
     >>> y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.65, 0.7, 0.8, 0.9,  1.])
-    >>> prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=3)
+    >>> prob_true, prob_pred = calibration_curve(
+    ...     y_true, y_pred, n_bins=3, strategy='uniform')
     >>> prob_true
     array([0. , 0.5, 1. ])
     >>> prob_pred
@@ -1437,8 +1433,25 @@ def calibration_curve(
         )
     y_true = y_true == pos_label
 
+    # TODO(1.12): remove block, see PR #34326.
+    if n_bins == "warn":
+        warnings.warn(
+            "The default value of `n_bins` will change from 5 to 'cube_root' in 1.12.",
+            FutureWarning,
+        )
+        n_bins = 5
+
     if n_bins == "cube_root":
         n_bins = ceil(len(y_true) ** (1 / 3))
+
+    # TODO(1.12): remove with change of default strategy.
+    if strategy == "warn":
+        warnings.warn(
+            "The default value of `strategy` will change "
+            "from 'uniform' to 'quantile' in 1.12",
+            FutureWarning,
+        )
+        strategy = "uniform"
 
     if strategy == "quantile":  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)
@@ -1534,7 +1547,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> clf.fit(X_train, y_train)
     LogisticRegression()
     >>> y_prob = clf.predict_proba(X_test)[:, 1]
-    >>> prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
+    >>> prob_true, prob_pred = calibration_curve(
+    ...     y_test, y_prob, n_bins=10, strategy='uniform')
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
     >>> disp.plot()
     <...>
@@ -1603,6 +1617,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return self
 
+    # TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
+    # TODO(1.12): change default strategy to 'quantile', see PR #33908.
     @classmethod
     def from_estimator(
         cls,
@@ -1610,8 +1626,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         X,
         y,
         *,
-        n_bins=5,
-        strategy="uniform",
+        n_bins="warn",
+        strategy="warn",
         pos_label=None,
         name=None,
         ax=None,
@@ -1709,7 +1725,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
-        >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
+        >>> disp = CalibrationDisplay.from_estimator(
+        ...     clf, X_test, y_test, n_bins='cube_root', strategy='quantile')
         >>> plt.show()
         """
         y_prob, pos_label, name = cls._validate_and_get_response_values(
@@ -1733,14 +1750,16 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             **kwargs,
         )
 
+    # TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
+    # TODO(1.12): change default strategy to 'quantile', see PR #33908.
     @classmethod
     def from_predictions(
         cls,
         y_true,
         y_prob,
         *,
-        n_bins=5,
-        strategy="uniform",
+        n_bins="warn",
+        strategy="warn",
         pos_label=None,
         name=None,
         ax=None,
@@ -1788,6 +1807,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
 
+            .. versionchanged:: 1.12
+                The default value will change from 'uniform' to 'quantile' in 1.12.
+
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
             When `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1},
@@ -1833,7 +1855,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
-        >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
+        >>> disp = CalibrationDisplay.from_predictions(
+        ...     y_test, y_prob, n_bins='cube_root', strategy='quantile')
         >>> plt.show()
         """
         pos_label_validated, name = cls._validate_from_predictions_params(

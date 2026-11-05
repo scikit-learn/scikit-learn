@@ -246,8 +246,6 @@ def fetch_20newsgroups(
         If True, returns `(data.data, data.target)` instead of a Bunch
         object.
 
-        .. versionadded:: 0.22
-
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
@@ -279,8 +277,6 @@ def fetch_20newsgroups(
         (n_samples, n_classes) with each row representing one sample and each
         column representing the features. The second array of shape
         (n_samples,) contains the target samples.
-
-        .. versionadded:: 0.22
 
     Examples
     --------
@@ -465,21 +461,15 @@ def fetch_20newsgroups_vectorized(
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
-        .. versionadded:: 0.20
-
     normalize : bool, default=True
         If True, normalizes each document's feature vector to unit norm using
         :func:`sklearn.preprocessing.normalize`.
-
-        .. versionadded:: 0.22
 
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string, or categorical). The target is
         a pandas DataFrame or Series depending on the number of
         `target_columns`.
-
-        .. versionadded:: 0.24
 
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
@@ -510,13 +500,9 @@ def fetch_20newsgroups_vectorized(
             Only present when `as_frame=True`. Pandas DataFrame with ``data``
             and ``target``.
 
-            .. versionadded:: 0.24
-
     (data, target) : tuple if ``return_X_y`` is True
         `data` and `target` would be of the format defined in the `Bunch`
         description above.
-
-        .. versionadded:: 0.20
 
     Examples
     --------

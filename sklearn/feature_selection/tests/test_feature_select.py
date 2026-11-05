@@ -10,6 +10,7 @@ import pytest
 from numpy.testing import assert_allclose
 from scipy import sparse, stats
 
+from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification, make_regression
 from sklearn.feature_selection import (
     GenericUnivariateSelect,
@@ -1004,6 +1005,7 @@ def test_unsupervised_filter(selector):
     """Check support for unsupervised feature selection for the filter that could
     require only `X`.
     """
+    selector = clone(selector)
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
 

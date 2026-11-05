@@ -13,7 +13,7 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.compose import (
     ColumnTransformer,
     make_column_selector,
@@ -1279,6 +1279,7 @@ def test_column_transformer_no_estimators():
 )
 @pytest.mark.parametrize("method", ["fit", "fit_transform"])
 def test_column_transformer_verbose(est, pattern, method, capsys):
+    est = clone(est)
     X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
 
     func = getattr(est, method)
@@ -2876,6 +2877,7 @@ def test_metadata_routing_with_remainder_no_error(remainder):
 
     # This can only be set here because metadata routing has to be enabled first.
     if isinstance(remainder, ConsumingTransformer):
+        remainder = clone(remainder)
         remainder.set_fit_request(sample_weight=True).set_transform_request(
             sample_weight=True
         )
