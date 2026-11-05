@@ -235,6 +235,19 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
   Category labels are not rounded. Large categorical splits can produce long
   labels, including when the tree uses random categorical splits.
 
+  For a nested dictionary representation, use :func:`export_dict`. Numerical
+  thresholds retain full precision; JSON serialization is handled by Python::
+
+      >>> import json
+      >>> from sklearn.tree import DecisionTreeClassifier, export_dict
+      >>> model = DecisionTreeClassifier().fit([[0], [1]], [0, 1])
+      >>> exported = export_dict(model)
+      >>> json.loads(json.dumps(exported, allow_nan=False)) == exported
+      True
+
+  See :func:`export_dict` for the schema and traversal requirements. The output
+  does not replace estimator input validation or provide complete persistence.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`

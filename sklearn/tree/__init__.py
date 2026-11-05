@@ -10,7 +10,7 @@ from sklearn.tree._classes import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from sklearn.tree._export import export_graphviz, export_text, plot_tree
+from sklearn.tree._export import export_dict, export_graphviz, export_text, plot_tree
 
 __all__ = [
     "BaseDecisionTree",
@@ -18,6 +18,7 @@ __all__ = [
     "DecisionTreeRegressor",
     "ExtraTreeClassifier",
     "ExtraTreeRegressor",
+    "export_dict",
     "export_graphviz",
     "export_text",
     "plot_tree",
