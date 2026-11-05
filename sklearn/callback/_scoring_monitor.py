@@ -119,7 +119,7 @@ class ScoringMonitor:
         # Opened eagerly so that a worker that receives a pickled copy of this callback
         # can send data to the main process. `self._log.append` is the message consumer
         # that grows the log in the main process.
-        self._channel = Channel(self._log.append)
+        self._channel = Channel(message_consumer=self._log.append)
 
     def setup(self, estimator, context):
         pass
@@ -182,7 +182,7 @@ class ScoringMonitor:
         """Restore state, opening a fresh channel if the inherited one is unusable."""
         self.__dict__.update(state)
         if not self._channel.is_reusable():
-            self._channel = Channel(self._log.append)
+            self._channel = Channel(message_consumer=self._log.append)
 
     @validate_params(
         {

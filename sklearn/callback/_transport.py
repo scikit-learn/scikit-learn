@@ -44,7 +44,7 @@ class Channel:
         A one-argument function, `message_consumer(message)`, that processes an
         incoming message to update the callback's state. This callable may be called
         from multiple different threads, and must therefore behave in a thread-safe
-        manner.
+        manner. In particular, it must not be a bound method of the callback.
     """
 
     # Class attributes so that a copy unpickled in a worker starts out without
@@ -107,8 +107,8 @@ class Channel:
         """Close the channel, i.e. its listener and its connection, if it has one.
 
         Auto-propagated callbacks, i.e. callbacks that create one channel per fit,
-        should call this in their `teardown` hook to because the channel is not meant
-        to be reused afterwards.
+        should call this in their `teardown` hook because the channel is not meant to be
+        reused afterwards.
         """
         self.disconnect()
         close_listener(self._listener_address)

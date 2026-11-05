@@ -11,18 +11,18 @@ import pytest
 from sklearn.callback._transport import Channel
 
 
-def _assert_no_leftover_threads(n_expected, timeout=1):
+def _assert_no_leftover_threads(baseline, timeout=1):
     """Assert that the background threads of the transport have exited.
 
     They exit asynchronously, hence the polling.
     """
-    while (n_threads := threading.active_count()) > n_expected:
+    while extra := set(threading.enumerate()) - baseline:
         timeout -= 0.05
-        assert timeout > 0, f"{n_threads - n_expected} leftover threads"
+        assert timeout > 0, f"{len(extra)} leftover threads"
         time.sleep(0.05)
 
 
-@pytest.mark.thread_unsafe  # counts the threads of the whole process
+@pytest.mark.thread_unsafe  # inspects the threads of the whole process
 def test_no_leftover_connection_threads_after_worker_copy_is_dropped():
     """Check that dropping a worker copy of a channel frees its connection.
 
@@ -32,18 +32,18 @@ def test_no_leftover_connection_threads_after_worker_copy_is_dropped():
     """
     channel = Channel(lambda message: None)
 
-    # Count after initializing the channel so that the number already includes the
-    # listener's accept thread.
-    n_threads = threading.active_count()
+    # Snapshot after initializing the channel so the listener's accept thread is
+    # part of the baseline.
+    baseline = set(threading.enumerate())
 
     copy = pickle.loads(pickle.dumps(channel))
     copy.send(None)
 
-    assert threading.active_count() > n_threads
+    assert set(threading.enumerate()) - baseline
 
     del copy
     gc.collect()
 
-    _assert_no_leftover_threads(n_threads)
+    _assert_no_leftover_threads(baseline)
 
     channel.close()
