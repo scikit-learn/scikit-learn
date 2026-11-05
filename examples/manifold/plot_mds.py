@@ -55,11 +55,7 @@ mds = manifold.MDS(
     n_components=2,
     max_iter=3000,
     eps=1e-9,
-    n_init=1,
-    random_state=42,
     metric="precomputed",
-    n_jobs=1,
-    init="classical_mds",
 )
 X_mds = mds.fit(distances).embedding_
 
@@ -69,10 +65,6 @@ nmds = manifold.MDS(
     max_iter=3000,
     eps=1e-12,
     metric="precomputed",
-    random_state=42,
-    n_jobs=1,
-    n_init=1,
-    init="classical_mds",
 )
 X_nmds = nmds.fit_transform(distances)
 

@@ -1,4 +1,4 @@
-- |Feature| Added support for auto-requesting metadata through
+- Added support for auto-requesting metadata through
   ``set_config(enable_metadata_auto_requests=True)``. This enables automatic routing of
   common metadata like ``sample_weight``, or ``X_val``. :term:`Consumers <consumer>`
   (estimators, scorers, and CV splitters) and consuming :term:`routers <router>` can now

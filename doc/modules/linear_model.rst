@@ -6,16 +6,35 @@ Linear Models
 
 .. currentmodule:: sklearn.linear_model
 
-The following are a set of methods intended for regression in which
-the target value is expected to be a linear combination of the features.
-In mathematical notation, the predicted value :math:`\hat{y}` can be
-written as:
-
+Linear models cover a wide range of different models, most of them regressors but
+also some important classifiers. What they all have in common is that their predictions
+are a linear combination of the :math:`p=n_{\text{features}}` features, or a function
+thereof. This linear combination is learned from the data and parametrized by
+coefficients :math:`w`. In mathematical notation, the predicted value :math:`\hat{y}`
+can be written as
 
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
-Across the module, we designate the vector :math:`w = (w_1,
-..., w_p)` as ``coef_`` and :math:`w_0` as ``intercept_``.
+or, more generally, :math:`\hat{y}(w, x) = h(w_0 + w_1 x_1 + ...)` with some inverse
+link or response function :math:`h`.
+Across the module, we designate the vector :math:`w = (w_1, ..., w_p)` as ``coef_`` and
+:math:`w_0` as ``intercept_``. For brevity, we denote the linear predictor as
+
+.. math:: Xw = w_0 + X \cdot w \,,
+
+such that it includes the intercept :math:`w_0`. You might also think of :math:`X` as
+the data matrix extended by a column of ones. In the implementation, scikit-learn
+tries to avoid as much as possible to build this extended matrix explicitly which would
+double the memory consumption. For norms of the coefficients as used in penalties, the
+intercept is always excluded, for example:
+
+.. math:: ||w||_2^2 = w_1^2 + ... + w_p^2 \,.
+
+A consequence of the common linear predictor for all linear models is that each feature
+in `X` as passed to `fit` contributes a separate additive linear term. Non-linear terms
+and interactions of features must be added in the preprocessing as shown further down
+in :ref:`Polynomial regression <polynomial_regression>`. On top, it is considered good
+practice to standardize `X` before fitting a linear model.
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
@@ -25,11 +44,11 @@ To perform classification with generalized linear models, see
 Ordinary Least Squares
 =======================
 
-:class:`LinearRegression` fits a linear model with coefficients
-:math:`w = (w_1, ..., w_p)` to minimize the residual sum
-of squares between the observed targets in the dataset, and the
-targets predicted by the linear approximation. Mathematically it
-solves a problem of the form:
+:class:`LinearRegression` predicts the conditional expectation :math:`E(y|X)` by the
+linear predictor :math:`Xw`. The coefficients and the intercept are fitted to minimize
+the residual sum of squares between the observed targets in the dataset, and the
+targets predicted by the linear approximation. Mathematically, it solves the least
+squares problem:
 
 .. math:: \min_{w} || X w - y||_2^2
 
@@ -42,8 +61,8 @@ solves a problem of the form:
 ``sample_weight`` and stores the coefficients :math:`w` of the linear model in its
 ``coef_`` and ``intercept_`` attributes::
 
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.LinearRegression()
+    >>> from sklearn.linear_model import LinearRegression
+    >>> reg = LinearRegression()
     >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     LinearRegression()
     >>> reg.coef_
@@ -51,14 +70,33 @@ solves a problem of the form:
     >>> reg.intercept_
     0.0
 
-The coefficient estimates for Ordinary Least Squares rely on the
-independence of the features. When features are correlated and some
-columns of the design matrix :math:`X` have an approximately linear
-dependence, the design matrix becomes close to singular
-and as a result, the least-squares estimate becomes highly sensitive
-to random errors in the observed target, producing a large
-variance. This situation of *multicollinearity* can arise, for
-example, when data are collected without an experimental design.
+When features are correlated, e.g. some columns of the design matrix :math:`X` have an
+approximately linear dependence, the design matrix becomes ill-conditioned (close to
+singular) and as a result, the least squares estimate becomes highly sensitive
+to random errors or small changes in the observed target :math:`y`, leading to a large
+inflation of the variance of the estimated coefficients. This situation of
+*multicollinearity* can arise, for example, when data are collected without an
+experimental design like in an observational study.
+
+One possible remedy is to add a penalty for the size of the coefficients as in
+:ref:`Ridge regression <ridge_regression>`.
+
+.. dropdown:: Weighted Least Squares
+
+  With sample weights :math:`s=\text{sample_weight}`, :class:`LinearRegression`
+  minimizes the weighted squared error:
+
+  .. math:: \min_{w} \sum_i s_i (X_i w - y_i)^2
+
+.. dropdown:: Complexity of OLS
+
+  For dense `X`, the least squares solution is computed using the singular value
+  decomposition of :math:`X` via :func:`SciPy lstsq <scipy:scipy.linalg.lstsq>`.
+  For a matrix :math:`X` of shape `(n, p)=(n_samples, n_features)` this method has a
+  cost of :math:`O(\max(n, p)\min(n, p)^2)`.
+
+  For sparse `X`, the least squares problem is solved by the iterative solver
+  :func:`SciPy lsqr <scipy:scipy.sparse.linalg.lsqr>`.
 
 .. rubric:: Examples
 
@@ -71,21 +109,14 @@ It is possible to constrain all the coefficients to be non-negative, which may
 be useful when they represent some physical or naturally non-negative
 quantities (e.g., frequency counts or prices of goods).
 :class:`LinearRegression` accepts a boolean ``positive``
-parameter: when set to `True` `Non-Negative Least Squares
-<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied.
+parameter: when set to `True`, `Non-Negative Least Squares
+<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied via
+:func:`SciPy nnls <scipy:scipy.optimize.nnls>`.
 
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`
 
-Ordinary Least Squares Complexity
----------------------------------
-
-The least squares solution is computed using the singular value
-decomposition of :math:`X`. If :math:`X` is a matrix of shape `(n_samples, n_features)`
-this method has a cost of
-:math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
-:math:`n_{\text{samples}} \geq n_{\text{features}}`.
 
 .. _ridge_regression:
 
@@ -97,18 +128,42 @@ Regression
 
 :class:`Ridge` regression addresses some of the problems of
 :ref:`ordinary_least_squares` by imposing a penalty on the size of the
-coefficients. The ridge coefficients minimize a penalized residual sum
-of squares:
-
+coefficients in the form of an :math:`\ell_2`-norm. The ridge coefficients minimize a
+penalized residual sum of squares
 
 .. math::
 
    \min_{w} || X w - y||_2^2 + \alpha ||w||_2^2
 
+The penalty strength :math:`\alpha \geq 0` controls the amount of shrinkage of the
+estimated coefficients: the larger the value of :math:`\alpha`, the greater the amount
+of shrinkage toward zero. This shrinkage causes a bias of the estimated coefficients
+but it offers at least two advantages w.r.t. ordinary least squares, see
+[HK1970]_:
 
-The complexity parameter :math:`\alpha \geq 0` controls the amount
-of shrinkage: the larger the value of :math:`\alpha`, the greater the amount
-of shrinkage and thus the coefficients become more robust to collinearity.
+- The estimated coefficients become more robust to collinearity and ill-conditioning.
+- For an appropriate choice of `alpha`, the expected out-of-sample squared error
+  (*risk*) is lower, i.e. the expected prediction accuracy is better.
+
+.. note:: **Penalty and feature standardization**
+
+  Because Ridge penalizes coefficient magnitudes, feature scales matter: for a
+  comparable effect on the target, a feature with larger values can have a smaller
+  coefficient and be penalized less. :ref:`Standardizing <preprocessing_scaler>`
+  features makes the penalty more comparable across them.
+
+  .. dropdown:: Example
+
+    If distances of cities of a country (in meters, typically several thousands) and
+    travel times between cities (in hours, typically smaller 24) have similar effect on
+    the target, Ridge will tend to shrink the travel time coefficient more when the
+    features are unstandardized.
+
+.. dropdown:: Weighted Ridge regression
+
+  With sample weights :math:`s=\text{sample_weight}`, :class:`Ridge` minimizes:
+
+  .. math:: \min_{w} \sum_i s_i (X_i w - y_i)^2 + \alpha ||w||_2^2
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ridge_path_001.png
    :target: ../auto_examples/linear_model/plot_ridge_path.html
@@ -116,12 +171,12 @@ of shrinkage and thus the coefficients become more robust to collinearity.
    :scale: 50%
 
 
-As with other linear models, :class:`Ridge` will take in its ``fit`` method
-arrays ``X``, ``y`` and will store the coefficients :math:`w` of the linear model in
-its ``coef_`` member::
+As with other linear models, :class:`Ridge` takes the arrays ``X`` and ``y`` in its
+``fit`` methods and stores the coefficients :math:`w` in its attribute ``coef_`` and
+:math:`w_0` as ``intercept_``::
 
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.Ridge(alpha=.5)
+    >>> from sklearn.linear_model import Ridge
+    >>> reg = Ridge(alpha=.5)
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
     Ridge(alpha=0.5)
     >>> reg.coef_
@@ -129,11 +184,12 @@ its ``coef_`` member::
     >>> reg.intercept_
     np.float64(0.13636)
 
-Note that the class :class:`Ridge` allows for the user to specify that the
-solver be automatically chosen by setting `solver="auto"`. When this option
-is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"cholesky"`,
-and `"sparse_cg"` solvers. :class:`Ridge` will begin checking the conditions
-shown in the following table from top to bottom. If the condition is true,
+Note that the class :class:`Ridge` implements different algorithms, all with different
+strengths and weaknesses, to solve the minimization problem. They are exposed as
+parameter `solver`. To ease this choice, the option `solver="auto"` automatically
+selects a suitable solver for the data and settings at hand. It will choose between the
+`"lbfgs"`, `"cholesky"`, and `"sparse_cg"` solvers. :class:`Ridge` will begin checking
+the conditions shown in the following table from top to bottom. If the condition is true,
 the corresponding solver is chosen.
 
 +-------------+----------------------------------------------------+
@@ -146,6 +202,41 @@ the corresponding solver is chosen.
 | 'sparse_cg' | None of the above conditions are fulfilled.        |
 +-------------+----------------------------------------------------+
 
+.. dropdown:: Details on Ridge solvers
+
+  The ``"cholesky"`` and ``"sparse_cg"`` solvers use the primal formulation as given
+  above when ``n_samples >= n_features``. This means solving a system with
+  ``n_features`` unknowns:
+
+  .. math::
+
+    (X^T X + \alpha I) w = X^T y.
+
+  When ``n_samples < n_features``, they use the dual formulation, solving a system
+  with ``n_samples`` unknowns and recovering the coefficients as follows:
+
+  .. math::
+
+    (X X^T + \alpha I) c = y, \qquad w = X^T c.
+
+  Here, :math:`I` is the identity matrix of the appropriate size, :math:`c` denotes the
+  dual coefficients, and :math:`X` and :math:`y` denote the data after mean centering
+  and sample-weight rescaling, when applicable.
+
+  The ``"cholesky"`` solver explicitly forms the corresponding Gram matrix ``X.T @ X``.
+  Storing the Gram matrix requires memory proportional to
+  :math:`n_{\text{features}}^2` in the primal formulation and
+  :math:`n_{\text{samples}}^2` in the dual formulation. In contrast, ``"sparse_cg"``
+  uses matrix-vector products without forming the Gram matrix.
+
+.. dropdown:: Complexity of Ridge
+
+  Ridge solvers have the same order of complexity as :ref:`ordinary_least_squares`.
+  For a matrix :math:`X` of shape `(n, p)=(n_samples, n_features)` the cost is
+  :math:`O(\max(n, p)\min(n, p)^2)`. But depending on the selected solver, the constant
+  factor, that is the effective numbers of flops, can be (significantly) smaller than
+  the one of OLS.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
@@ -156,8 +247,8 @@ the corresponding solver is chosen.
 Classification
 --------------
 
-The :class:`Ridge` regressor has a classifier variant:
-:class:`RidgeClassifier`. This classifier first converts binary targets to
+The :class:`Ridge` regressor has the classifier variant :class:`RidgeClassifier`.
+This classifier first converts binary targets to
 ``{-1, 1}`` and then treats the problem as a regression task, optimizing the
 same objective as above. The predicted class corresponds to the sign of the
 regressor's prediction. For multiclass classification, the problem is
@@ -167,17 +258,16 @@ the output with the highest value.
 It might seem questionable to use a (penalized) Least Squares loss to fit a
 classification model instead of the more traditional logistic or hinge
 losses. However, in practice, all those models can lead to similar
-cross-validation scores in terms of accuracy or precision/recall, while the
-penalized least squares loss used by the :class:`RidgeClassifier` allows for
-a very different choice of the numerical solvers with distinct computational
-performance profiles.
+cross-validation scores in terms of accuracy or precision/recall on data with a good
+(and linear) class separation. The advantage with the penalized least squares loss used
+by the :class:`RidgeClassifier` is that it allows for a very different choice of the
+numerical solvers with distinct computational performance profiles.
 
 The :class:`RidgeClassifier` can be significantly faster than e.g.
-:class:`LogisticRegression` with a high number of classes because it can
+:class:`LogisticRegression` with a high number of classes because it needs to
 compute the projection matrix :math:`(X^T X)^{-1} X^T` only once.
 
-This classifier is sometimes referred to as a `Least Squares Support Vector
-Machine
+This classifier is sometimes referred to as a `Least Squares Support Vector Machine
 <https://en.wikipedia.org/wiki/Least-squares_support-vector_machine>`_ with
 a linear kernel.
 
@@ -185,34 +275,21 @@ a linear kernel.
 
 * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
-
-Ridge Complexity
-----------------
-
-This method has the same order of complexity as
-:ref:`ordinary_least_squares`.
-
-.. FIXME:
-.. Not completely true: OLS is solved by an SVD, while Ridge is solved by
-.. the method of normal equations (Cholesky), there is a big flop difference
-.. between these
-
-
 Setting the regularization parameter: leave-one-out Cross-Validation
 --------------------------------------------------------------------
 
 :class:`RidgeCV` and :class:`RidgeClassifierCV` implement ridge
-regression/classification with built-in cross-validation of the alpha parameter.
+regression/classification with built-in cross-validation of the `alpha` parameter.
 They work in the same way as :class:`~sklearn.model_selection.GridSearchCV` except
-that it defaults to efficient Leave-One-Out :term:`cross-validation`.
-When using the default :term:`cross-validation`, alpha cannot be 0 due to the
+that they default to efficient Leave-One-Out :term:`cross-validation`.
+When using the default :term:`cross-validation`, `alpha` cannot be 0 due to the
 formulation used to calculate Leave-One-Out error. See [RL2007]_ for details.
 
 Usage example::
 
     >>> import numpy as np
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
+    >>> from sklearn.linear_model import RidgeCV
+    >>> reg = RidgeCV(alphas=np.logspace(-6, 6, 13))
     >>> reg.fit([[0, 0], [0, 0.1], [1, 1]], [0, -0.1, 1])
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
           1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
@@ -226,8 +303,12 @@ Cross-Validation.
 
 .. dropdown:: References
 
+  .. [HK1970] :doi:`Hoerl, A. E., & Kennard, R. W. (1970). Ridge Regression: Biased
+    Estimation for Nonorthogonal Problems. Technometrics, 12(1), 55-67.
+    <10.2307/1267351>`
+
   .. [RL2007] "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-    <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+    <http://hdl.handle.net/1721.1/37318>`_,
     `course slides <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 .. _lasso:
@@ -257,8 +338,8 @@ The implementation in the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
 for another implementation::
 
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.Lasso(alpha=0.1)
+    >>> from sklearn.linear_model import Lasso
+    >>> reg = Lasso(alpha=0.1)
     >>> reg.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1)
     >>> reg.predict([[1, 1]])
@@ -307,7 +388,7 @@ single feature :math:`j` at a time. This way, the optimization problem is reduce
 
 with index :math:`-j` meaning all features but :math:`j`. The solution is
 
-.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), \alpha)}{||x_j||_2^2}
+.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), n_{\text{samples}}\alpha)}{||x_j||_2^2}
 
 with the soft-thresholding function
 :math:`S(z, \alpha) = \operatorname{sign}(z) \max(0, |z|-\alpha)`.
@@ -325,7 +406,7 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
   :math:`P(w^\star)`, i.e. :math:`G(w, v) \geq P(w) - P(w^\star)`. It is given by
   :math:`G(w, v) = P(w) - D(v)` with dual objective function
 
-  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(y^Tv - ||v||_2^2)
+  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
 
   subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
   At optimum, the duality gap is zero, :math:`G(w^\star, v^\star) = 0` (a property
@@ -694,8 +775,8 @@ function of the norm of its coefficients.
 
 ::
 
-   >>> from sklearn import linear_model
-   >>> reg = linear_model.LassoLars(alpha=.1)
+   >>> from sklearn.linear_model import LassoLars
+   >>> reg = LassoLars(alpha=.1)
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
    LassoLars(alpha=0.1)
    >>> reg.coef_
@@ -852,10 +933,10 @@ There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 
 Bayesian Ridge Regression is used for regression::
 
-    >>> from sklearn import linear_model
+    >>> from sklearn.linear_model import BayesianRidge
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
-    >>> reg = linear_model.BayesianRidge()
+    >>> reg = BayesianRidge()
     >>> reg.fit(X, Y)
     BayesianRidge()
 
@@ -981,7 +1062,7 @@ Once fitted, the :meth:`~sklearn.linear_model.LogisticRegression.predict_proba`
 method of :class:`~sklearn.linear_model.LogisticRegression` predicts
 the probability of the positive class :math:`P(y_i=1|X_i)` as
 
-.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w + w_0) = \frac{1}{1 + \exp(-X_i w - w_0)}.
+.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w) = \frac{1}{1 + \exp(-X_i w)}.
 
 
 As an optimization problem, binary
@@ -1431,9 +1512,9 @@ The ``partial_fit`` method allows online/out-of-core learning.
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
 using different (convex) loss functions and different penalties.
-E.g., with ``loss="log"``, :class:`SGDClassifier`
+For instance, :class:`SGDClassifier` with `loss="log_loss"`
 fits a logistic regression model,
-while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
+while with `loss="hinge"` it fits a linear support vector machine (SVM).
 
 You can refer to the dedicated :ref:`sgd` documentation section for more details.
 
@@ -1479,9 +1560,10 @@ eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 
-  * `"Online Passive-Aggressive Algorithms"
-    <https://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+  * Crammer, K., Dekel, O., Keshet, J., Shalev-Shwartz, S. and Singer, Y. (2006).
+    `"Online Passive-Aggressive Algorithms"
+    <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>`_
+    JMLR, 7(19), 551-585
 
 Robustness regression: outliers and modeling errors
 =====================================================
