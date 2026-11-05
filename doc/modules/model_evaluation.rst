@@ -903,7 +903,7 @@ as:
 
 .. math::
 
-   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{samples} * n_\text{labels}} \sum_{i=1}^{n_\text{samples}} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_{i,j} \not= y_{i,j})
+   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{samples} * n_\text{labels}} \sum_{i=1}^{n_\text{samples}} \sum_{j=1}^{n_\text{labels}} 1(\hat{y}_{i,j} \not= y_{i,j})
 
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_.
