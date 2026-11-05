@@ -42,7 +42,7 @@ jobs:
     name: Build sdist and wheels
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
-    uses: scikit-learn/scikit-learn-release/.github/workflows/build-wheels.yml
+    uses: scikit-learn/scikit-learn-release/.github/workflows/build-wheels.yml@main
     with:
       ref: ${{ github.sha }}
 
