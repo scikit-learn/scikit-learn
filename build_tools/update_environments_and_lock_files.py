@@ -293,9 +293,6 @@ build_metadata_list = [
         "platform": "linux-64",
         "channels": ["conda-forge"],
         "conda_dependencies": [
-            # Temporary limit until 3.14.11 is out, see
-            # https://github.com/scikit-learn/scikit-learn/issues/35101
-            "python<=3.14.6",
             "python-freethreading",
             "meson-python",
             "cython",
