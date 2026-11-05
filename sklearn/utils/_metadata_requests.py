@@ -1010,9 +1010,7 @@ class MetadataRouter:
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
     >>> set_config(enable_metadata_routing=True)
-    >>> meta_estimator = SelectFromModel(
-    ...     estimator=LinearRegression().set_fit_request(sample_weight=True)
-    ... )
+    >>> meta_estimator = SelectFromModel(estimator=LinearRegression())
     >>> router = MetadataRouter(owner=meta_estimator).add(
     ...     estimator=meta_estimator.estimator,
     ...     method_mapping=MethodMapping()
