@@ -479,7 +479,7 @@ class MDS(BaseEstimator):
     n_jobs : int, default=None
         The number of jobs to use for the computation. If multiple
         initializations are used (``n_init``), each run of the algorithm is
-        computed in parallel. Ignored if `init` is not `'random'`.
+        computed in parallel. Only used when `init='random'` and `n_init > 1`.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
