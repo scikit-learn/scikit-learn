@@ -1234,7 +1234,7 @@ def test_auto_requests_override_class_level_requests():
         assert routing.fit_predict.requests["prop"] is True
 
 
-@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
+@config_context(enable_metadata_routing=True)
 def test_auto_requests_on_composite_methods():
     """Auto-requests set directly on a composite method apply to metadata which
     none of its component methods request, and the requests of the component
@@ -1344,7 +1344,7 @@ def test_routing_not_frozen_by_set_request():
     assert routed.estimator.fit == {"sample_weight": [1, 2]}
 
 
-@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
+@config_context(enable_metadata_routing=True)
 @pytest.mark.parametrize("auto_requests_enabled_at_set_time", [True, False])
 def test_explicit_requests_win_over_auto_requests(auto_requests_enabled_at_set_time):
     """Requests set via `set_{method}_request` are never overridden by
