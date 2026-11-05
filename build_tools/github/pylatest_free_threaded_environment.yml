@@ -4,7 +4,8 @@
 channels:
   - conda-forge
 dependencies:
-  - python-freethreading
+  - python-freethreading<=3.14.6
+  - python<=3.14.6
   - meson-python
   - cython!=3.2.6,!=3.2.7,!=3.2.8,!=3.2.9
   - numpy
