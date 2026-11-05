@@ -267,6 +267,46 @@ def test_same_min_max(strategy):
     assert_array_equal(Xt[:, 0], np.zeros(X.shape[0]))
 
 
+@pytest.mark.parametrize("strategy", ["kmeans", "quantile"])
+@pytest.mark.parametrize("encode", ["onehot", "onehot-dense", "ordinal"])
+def test_near_constant_feature(strategy, encode):
+    """Check that near-constant features (range <= 1e-8) are treated as constant.
+
+    Non-regression test for #35300.
+    """
+    warnings.simplefilter("always")
+    X = np.array([[1.0, -2.0], [1.0 + 1e-10, -1.0], [1.0 + 2e-10, 1.0]])
+    if strategy == "quantile":
+        est = KBinsDiscretizer(
+            strategy=strategy,
+            n_bins=3,
+            encode=encode,
+            quantile_method="averaged_inverted_cdf",
+        )
+    else:
+        est = KBinsDiscretizer(strategy=strategy, n_bins=3, encode=encode)
+
+    warning_message = "Feature 0 is constant and will be replaced with 0."
+    with pytest.warns(UserWarning, match=warning_message):
+        est.fit(X)
+
+    assert est.n_bins_[0] == 1
+    assert_array_equal(est.bin_edges_[0], np.array([-np.inf, np.inf]))
+    assert est.n_bins_[1] == 3
+
+    Xt = est.transform(X)
+    if encode == "ordinal":
+        assert_array_equal(Xt[:, 0], np.zeros(X.shape[0]))
+    elif encode == "onehot":
+        assert_array_equal(Xt[:, 0].toarray().ravel(), np.ones(X.shape[0]))
+    elif encode == "onehot-dense":
+        assert_array_equal(Xt[:, 0], np.ones(X.shape[0]))
+
+    # inverse_transform must not raise IndexError
+    Xinv = est.inverse_transform(Xt)
+    assert Xinv.shape == X.shape
+
+
 def test_transform_1d_behavior():
     X = np.arange(4)
     est = KBinsDiscretizer(n_bins=2, quantile_method="averaged_inverted_cdf")

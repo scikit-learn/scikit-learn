@@ -375,7 +375,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             if self.strategy in ("quantile", "kmeans"):
                 mask = np.ediff1d(bin_edges[jj], to_begin=np.inf) > 1e-8
                 bin_edges[jj] = bin_edges[jj][mask]
-                if len(bin_edges[jj]) - 1 != n_bins[jj]:
+                if len(bin_edges[jj]) - 1 == 0:
+                    warnings.warn(
+                        f"Feature {jj} is constant and will be replaced with 0."
+                    )
+                    n_bins[jj] = 1
+                    bin_edges[jj] = np.array([-np.inf, np.inf])
+                elif len(bin_edges[jj]) - 1 != n_bins[jj]:
                     warnings.warn(
                         "Bins whose width are too small (i.e., <= "
                         "1e-8) in feature %d are removed. Consider "

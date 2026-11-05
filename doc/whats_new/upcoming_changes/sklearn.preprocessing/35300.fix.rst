@@ -1,0 +1,4 @@
+- :class:`preprocessing.KBinsDiscretizer` now treats near-constant features
+  (where all bin intervals are <= 1e-8) as constant with 1 bin instead of
+  producing zero bins and raising an `IndexError`.
+  By :user:`Santosh <shotsan>`.
