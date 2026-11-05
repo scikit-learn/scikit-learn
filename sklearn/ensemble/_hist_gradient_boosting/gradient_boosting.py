@@ -59,6 +59,24 @@ from sklearn.utils.validation import (
     validate_data,
 )
 
+# Maximum number of threads of a `fit` call, by n_samples * n_features. Each
+# parallel region costs more with more threads, so the work per region only pays
+# for a few threads on small problems. Without active wait, idle threads sleep
+# between regions and waking them up is much more costly.
+_MAX_N_THREADS_ACTIVE_WAIT = (
+    (200_000, 4),
+    (5_000_000, 8),
+    (50_000_000, 16),
+    (75_000_000, 32),
+    (math.inf, 64),
+)
+_MAX_N_THREADS_PASSIVE_WAIT = (
+    (2_000_000, 1),
+    (20_000_000, 4),
+    (75_000_000, 8),
+    (math.inf, 16),
+)
+
 _LOSSES = _LOSSES.copy()
 _LOSSES.update(
     {
@@ -987,36 +1005,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         Using the maximum number of available threads regardless of the size of
         the workload can be counter-productive: parallelizing over very few
         features or samples adds thread-management overhead that outweighs the
-        benefit. This balances ``max_n_threads`` against ``n_features`` (so that
-        threads are not left idle or unevenly loaded) and against ``n_samples``
-        (so that small datasets use fewer threads).
+        benefit. This caps ``max_n_threads`` based on the size of the data, then
+        balances it against ``n_features`` (so that threads are not left idle or
+        unevenly loaded) and ``n_samples``.
 
         Within that fixed thread count, `Splitter.split_indices` and
         `Splitter.find_node_split` still run serially when the workload of the
         node at hand is too small, a cheap per-node decision.
         """
+        n_values = n_samples * n_features
+
         # For very small problems, multi-threading is always counter-productive.
         # Checked before calling _openmp_uses_active_wait, which spawns a
         # subprocess on its first call.
-        if max_n_threads == 1 or n_samples * n_features <= 20_000:
+        if max_n_threads == 1 or n_values <= 20_000:
             return 1
 
-        # For slightly larger problems on runtime environments without
-        # active wait, multi-threading has also been shown to be counter-
-        # productive.
         active_wait = _openmp_uses_active_wait()
-        if not active_wait and n_samples * n_features <= 2_000_000:
-            return 1
-
-        # Without active wait, idle threads sleep between parallel regions and
-        # waking them up is costly: on medium-sized problems, the work per
-        # region only pays for a few threads.
-        if not active_wait and n_samples * n_features <= 20_000_000:
-            max_n_threads = min(max_n_threads, 4)
-
-        # Empirically, HGB always scales with strongly diminishing
-        # returns and often very counter-productively past 64 threads.
-        max_n_threads = min(max_n_threads, 64)
+        max_n_threads_by_size = (
+            _MAX_N_THREADS_ACTIVE_WAIT if active_wait else _MAX_N_THREADS_PASSIVE_WAIT
+        )
+        max_n_threads = min(
+            max_n_threads,
+            next(cap for limit, cap in max_n_threads_by_size if n_values <= limit),
+        )
 
         # Compute the per-thread chunk size first, then derive how many threads
         # are actually needed to cover n_features with that chunk size: this can
