@@ -112,7 +112,10 @@ def test_weighted_percentile_all_zero_weights():
 
 
 @pytest.mark.parametrize("average", [True, False])
-@pytest.mark.parametrize("percentile_rank, expected_value", [(0, 2), (50, 3), (100, 5)])
+@pytest.mark.parametrize(
+    "percentile_rank, expected_value",
+    [(0, 2), (50, 3), (100, 5), ([0, 50, 100], [2, 3, 5])],
+)
 def test_weighted_percentile_ignores_zero_weight(
     average, percentile_rank, expected_value
 ):
@@ -312,8 +315,21 @@ def test_weighted_percentile_2d(global_random_seed, percentile_rank, average):
             np.array([0, 1, 1, 1, 1, 0], dtype=np.int32),
             [25, 75],
         ),
+        # Zero weight on the `average=True` plus-one index. Only column 0 needs
+        # the correction; column 1 has strictly positive weights.
+        (
+            np.array([[1.0, 10.0], [2.0, 20.0], [3.0, 30.0]]),
+            np.array([[1.0, 1.0], [0.0, 1.0], [1.0, 1.0]]),
+            50,
+        ),
+        (
+            np.array([[1.0, 10.0], [2.0, 20.0], [3.0, 30.0]]),
+            np.array([[1.0, 1.0], [0.0, 1.0], [1.0, 1.0]]),
+            [0, 50, 100],
+        ),
     ],
 )
+@pytest.mark.parametrize("average", [True, False])
 def test_weighted_percentile_array_api_consistency(
     global_random_seed,
     array_namespace,
@@ -322,6 +338,7 @@ def test_weighted_percentile_array_api_consistency(
     data,
     weights,
     percentile,
+    average,
 ):
     """Check `_weighted_percentile` gives consistent results with array API."""
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
@@ -331,7 +348,7 @@ def test_weighted_percentile_array_api_consistency(
     # https://github.com/pytorch/pytorch/issues/150027
     zero = xp.zeros(1, device=device)
     one = xp.ones(1, device=device)
-    if percentile == 0 and xp.all(xp.nextafter(zero, one) == zero):
+    if np.any(np.asarray(percentile) == 0) and xp.all(xp.nextafter(zero, one) == zero):
         pytest.xfail(f"xp.nextafter is broken on {device}")
 
     rng = np.random.RandomState(global_random_seed)
@@ -341,13 +358,13 @@ def test_weighted_percentile_array_api_consistency(
     X_np = X_np.astype(dtype_name)
 
     with config_context(array_api_dispatch=False):
-        result_np = _weighted_percentile(X_np, weights_np, percentile)
+        result_np = _weighted_percentile(X_np, weights_np, percentile, average=average)
     # Convert to Array API arrays
     X_xp = xp.asarray(X_np, device=device)
     weights_xp = xp.asarray(weights_np, device=device)
 
     with config_context(array_api_dispatch=True):
-        result_xp = _weighted_percentile(X_xp, weights_xp, percentile)
+        result_xp = _weighted_percentile(X_xp, weights_xp, percentile, average=average)
         assert array_device(result_xp) == array_device(X_xp)
         assert get_namespace(result_xp)[0] == get_namespace(X_xp)[0]
         result_xp_np = move_to(result_xp, xp=np, device="cpu")

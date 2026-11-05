@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     get_namespace_and_device,
+    move_to,
 )
 from sklearn.utils._indexing import _safe_indexing
 
@@ -220,9 +221,9 @@ def _weighted_percentile(
             has_zero_weight = xp.any(zero_weight_mask, axis=1)
         else:
             has_zero_weight = zero_weight_mask
-        zero_weight_cols = [
-            col_idx for col_idx in range(n_features) if has_zero_weight[col_idx]
-        ]
+        zero_weight_cols = move_to(
+            xp.arange(n_features, device=device)[has_zero_weight], xp=np, device="cpu"
+        ).tolist()
         for col_idx in zero_weight_cols:
             cdf_val = weight_cdf[col_idx, percentile_indices[col_idx, ...]]
             # Search for next index where `weighted_cdf` is greater

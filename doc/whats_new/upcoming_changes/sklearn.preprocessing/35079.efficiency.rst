@@ -1,0 +1,4 @@
+- :class:`preprocessing.KBinsDiscretizer` with `strategy="quantile"` and
+  :class:`preprocessing.SplineTransformer` with `knots="quantile"` are now faster when
+  `sample_weight` is passed to `fit`.
+  By :user:`Jérémie du Boisberranger <jeremiedbb>`.
