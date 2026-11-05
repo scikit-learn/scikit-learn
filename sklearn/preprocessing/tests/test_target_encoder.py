@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
+from sklearn import config_context
 from sklearn.datasets import make_regression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
@@ -719,7 +720,7 @@ def test_pandas_copy_on_write():
     The numpy array underlying df["y"] is read-only when copy-on-write is enabled.
     Non-regression test for gh-27879.
     """
-    pd = pytest.importorskip("pandas", minversion="2.0")
+    pd = pytest.importorskip("pandas")
     # Pandas currently warns that setting copy_on_write will be removed in pandas 4
     # (and copy-on-write will always be enabled).
     # see https://github.com/scikit-learn/scikit-learn/issues/32829
@@ -772,3 +773,14 @@ def test_target_encoder_shuffle_random_state_deprecated():
     with pytest.warns(FutureWarning, match=msg):
         encoder = TargetEncoder(random_state=0)
         encoder.fit_transform(X, y)
+
+
+@config_context(enable_metadata_routing=True)
+def test_target_encoder_metadat_routing_without_groups():
+    # Regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/35139
+    rng = np.random.default_rng(0)
+    X = rng.choice(["a", "b", "c"], size=(100, 1))
+    y = rng.integers(0, 2, size=100)
+
+    TargetEncoder().fit_transform(X, y)

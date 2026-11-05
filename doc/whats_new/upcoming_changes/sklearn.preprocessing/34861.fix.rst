@@ -1,0 +1,4 @@
+- The warning raised by :class:`preprocessing.OneHotEncoder` now distinguishes
+  columns where unknown categories are encoded as the infrequent category from
+  columns where they are encoded as all zeros.
+  By :user:`oathbreaker <karansgotit>`.

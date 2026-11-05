@@ -25,7 +25,7 @@ its success and sustainability.
 
   .. div:: image-box
 
-    .. image:: images/probabl.png
+    .. image:: images/probabl.svg
       :target: https://probabl.ai
 
   .. div:: text-box
@@ -35,10 +35,10 @@ its success and sustainability.
     scikit-learn core-maintainers employed by Inria have joined the spinoff as
     co-founders, most as full-time employees.
 
-    Today, Probabl employs the following core and non-core contributors: Adrin
-    Jalali, Antoine Baker, Arturo Amor, François Goupil, Guillaume Lemaitre,
-    Jérémie du Boisberranger, Loïc Estève, Olivier Grisel, Shruti Nath and
-    Stefanie Senger, as well as Gaël Varoquaux.
+    Today, Probabl employs the following core and non-core contributors: Anne
+    Beyer, Antoine Baker, Arturo Amor, François Goupil, Francois Paugam,
+    Guillaume Lemaitre, Jérémie du Boisberranger, Loïc Estève, Olivier Grisel,
+    Arthur Lacote, Shruti Nath and Stefanie Senger, as well as Gaël Varoquaux.
 
 The above financial commitments mean that Inria initially and now Probabl have
 been and are the main source of financial support for scikit-learn, completed
@@ -53,7 +53,7 @@ Active financial participation (2026)
 In addition to the above financial commitments, the following organizations
 financially support scikit-learn as follows:
 
-.. |probabl| image:: images/probabl.png
+.. |probabl| image:: images/probabl.svg
   :target: https://probabl.ai
 
 .. |intel| image:: images/intel-small.png
