@@ -473,7 +473,7 @@ print_routing(meta_est)
 #    which apply to all instances of a class, and can even remove a metadata from the
 #    metadata routing machinery if necessary.
 # 2. Auto-requests, which apply at instance level when
-#    `enable_metadata_auto_requests` is true (the default). Set it to false to
+#    `enable_metadata_auto_requests` is true (the default). Set it to false with `set_config(enable_metadata_auto_requests=False)` to
 #    leave these requests unset.
 #    Developers can add these via the
 #    :func:`~sklearn.utils.metadata_routing.MethodMetadataRequest.add_auto_request`

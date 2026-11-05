@@ -60,7 +60,7 @@ Usage Examples
 **************
 For convenience and a faster start into metadata routing, see
 :ref:`auto-requested metadata <metadata_routing_auto_request_user>`.
-In this section auto-requests are disabled::
+For this section, we disable auto-requests (which are enabled by default)::
 
   >>> sklearn.set_config(enable_metadata_auto_requests=False)
 

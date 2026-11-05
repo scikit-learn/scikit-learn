@@ -643,9 +643,9 @@ class MetadataRequest:
     Note that requests on composite methods (`fit_transform`, `fit_predict`) are not
     stored as attributes. Accessing them, for example `request.fit_predict`, builds
     their requests from the component methods (`fit` and `predict` in this case), plus
-    auto-requests set on them. Auto-requests are included by default
-    (`enable_metadata_auto_requests=True`). Set that config to `False` to leave
-    them unset.
+    auto-requests set on them. Auto-requests are included by default. Set the
+    enable_metadata_auto_requests config to `False`
+    (`set_config(enable_metadata_auto_requests=False)`) to leave them unset.
 
     Read more on developing custom estimators that can route metadata in the
     :ref:`Metadata Routing Developing Guide
