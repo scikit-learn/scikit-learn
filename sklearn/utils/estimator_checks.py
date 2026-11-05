@@ -5818,17 +5818,19 @@ def _check_callback_begin_end_match(name, _estimator, callback):
         key = tuple(ctx.task_id for ctx in get_context_path(entry["context"]))
         events_by_context[key].append(entry)
 
+    assert len(events_by_context) > 0, f"{name} must have at least one task"
+
     for events in events_by_context.values():
         context = events[0]["context"]
         task = f"{name} task {context.task_name!r} (task_id={context.task_id})"
-        msg = f"{task}: on_fit_task_end called before on_fit_task_begin."
-        assert events[0]["name"] == "on_fit_task_begin", msg
-        assert events[-1]["name"] == "on_fit_task_end", msg
         msg = (
             f"{task}: expected one on_fit_task_begin and one on_fit_task_end, "
             f"got {len(events)} events."
         )
         assert len(events) == 2, msg
+        msg = f"{task}: on_fit_task_end called before on_fit_task_begin."
+        assert events[0]["name"] == "on_fit_task_begin", msg
+        assert events[-1]["name"] == "on_fit_task_end", msg
 
 
 def _check_callback_estimator_is_self(name, estimator, callback):
