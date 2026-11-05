@@ -747,13 +747,12 @@ def test_registry_copy():
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_default_request(metaestimator):
-    # Check that by default request is empty and the right type
+    # Check that request is empty and the right type
     metaestimator_class = metaestimator["metaestimator"]
     kwargs, *_ = get_init_args(metaestimator, sub_estimator_consumes=True)
     instance = metaestimator_class(**kwargs)
     if "cv_name" in metaestimator:
-        # Our GroupCV splitters request groups by default, which we should
-        # ignore in this test.
+        # Our GroupCV splitters request groups which we should ignore in this test
         exclude = {"splitter": ["split"]}
     else:
         exclude = None

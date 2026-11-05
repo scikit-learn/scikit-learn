@@ -214,7 +214,7 @@ def test_request_type_is_valid(val, res):
 def test_default_requests():
     class OddEstimator(BaseEstimator):
         __metadata_request__fit = {
-            # set a different default request
+            # set a different class-level request
             "sample_weight": True
         }
 
