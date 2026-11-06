@@ -150,7 +150,9 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         `copy_X=False` saves memory by storing a reference.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to use for computing the kernel matrix.
+        The matrix is split into slices that are computed in parallel using
+        threads. This parameter has no effect when ``kernel='precomputed'``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
