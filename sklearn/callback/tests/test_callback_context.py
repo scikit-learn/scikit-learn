@@ -12,13 +12,13 @@ from sklearn.callback._callback_context import (
     _from_reconstruction_attributes,
     get_context_path,
 )
-from sklearn.callback.tests._common.callbacks import (
+from sklearn.callback._testing.callbacks import (
     NotRequiredKwargsCallback,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
     StopFitCallback,
 )
-from sklearn.callback.tests._common.estimators import (
+from sklearn.callback._testing.estimators import (
     MaxIterEstimator,
     MetaEstimator,
     NoCallbackEstimator,
