@@ -10,6 +10,7 @@ from sklearn.callback.tests._common.callbacks import (
     NotValidFitTaskBeginCallback,
     NotValidSetupKwargOnlyCallback,
     NotValidSetupPositionalCallback,
+    OnePerEstimatorCallback,
     RecordingAutoPropagatedCallback,
     RecordingCallback,
 )
@@ -169,3 +170,12 @@ def test_set_callback_empty():
     # calling again doesn't raise
     estimator.set_callbacks()
     assert not hasattr(estimator, "_skl_callbacks")
+
+
+def test_one_per_estimator_callback_error():
+    """Check that a callback that is set to be one per estimator raises an error."""
+    msg = r"Only a single OnePerEstimatorCallback instance can be registered to a given"
+    with pytest.raises(ValueError, match=msg):
+        estimator = MaxIterEstimator().set_callbacks(
+            OnePerEstimatorCallback(), OnePerEstimatorCallback()
+        )

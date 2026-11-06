@@ -59,6 +59,13 @@ Multiple callbacks can be registered on the same estimator, for example a
     >>> logreg.set_callbacks(progress_bar, scoring_monitor)
     LogisticRegression(max_iter=200)
 
+.. note::
+
+  Certain callback classes, such as :class:`~ProgressBar`, can only be registered once
+  to a given estimator. If multiple instances of that callback class are registered to
+  the same estimator, an error will be raised. The `one_per_estimator` class attribute
+  identifies such callbacks, being set to True for them, and False otherwise.
+
 Callback invocation
 *******************
 
