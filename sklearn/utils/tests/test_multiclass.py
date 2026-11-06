@@ -490,8 +490,32 @@ def test_check_classification_targets():
                 check_classification_targets(example)
 
 
-def test_type_of_target():
-    for group, group_examples in EXAMPLES.items():
+@pytest.mark.parametrize(
+    "examples",
+    [pytest.param(EXAMPLES, id="existing")]
+    + [
+        pytest.param({expected: [np.array(values, dtype="T")]}, id=expected)
+        for values, expected in [
+            (["a", "b", "a"], "binary"),
+            (["a", "b", "c"], "multiclass"),
+            ([["a", "b"], ["b", "c"], ["c", "a"]], "multiclass-multioutput"),
+        ]
+        if hasattr(np.dtypes, "StringDType")
+    ],
+)
+def test_type_of_target(examples, request):
+    if examples is not EXAMPLES:
+        try:
+            np.isdtype(np.dtype("T"), "real floating")
+        except TypeError:
+            request.applymarker(
+                pytest.mark.xfail(
+                    strict=True,
+                    raises=TypeError,
+                    reason="Older NumPy rejects StringDType in isdtype (#34946)",
+                )
+            )
+    for group, group_examples in examples.items():
         for example in group_examples:
             assert type_of_target(example) == group, (
                 "type_of_target(%r) should be %r, got %r"
