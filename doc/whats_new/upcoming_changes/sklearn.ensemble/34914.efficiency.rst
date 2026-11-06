@@ -1,0 +1,7 @@
+- :meth:`ensemble.IsolationForest.predict`,
+  :meth:`ensemble.IsolationForest.score_samples` and
+  :meth:`ensemble.IsolationForest.decision_function` are faster when using
+  parallelism with `n_jobs` on a relatively small number of samples. The speed
+  comes from using a lower-overhead threading API (`ThreadPoolExecutor` from the
+  Python standard library).
+  By :user:`Itamar Turner-Trauring <itamarst>`.
