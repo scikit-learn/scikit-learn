@@ -324,7 +324,7 @@ def test_weighted_percentile_2d(global_random_seed, percentile_rank, average):
         ),
         (
             np.array([[1.0, 10.0], [2.0, 20.0], [3.0, 30.0]]),
-            np.array([[1.0, 1.0], [0.0, 1.0], [1.0, 1.0]]),
+            np.array([[1, 1], [0, 1], [1, 1]]),
             [0, 50, 100],
         ),
     ],
