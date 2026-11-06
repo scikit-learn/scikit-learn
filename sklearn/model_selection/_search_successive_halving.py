@@ -64,8 +64,11 @@ def _top_k(results, k, itr):
     return np.array(params[iter_indices][sorted_indices[-k:]])
 
 
-def _trim_cv_results_to_last_iter(results, best_index):
-    """Trim results to the last halving iteration only."""
+def _trim_cv_results_to_last_iter(results):
+    """Trim results to the last halving iteration only.
+
+    Also return the index in `results` of the first candidate of the last iteration.
+    """
     last_iter_indices = np.flatnonzero(results["iter"] == np.max(results["iter"]))
     start = int(last_iter_indices[0])  # the last iteration is always at the end
     trimmed = {key: value[start:] for key, value in results.items()}
@@ -81,11 +84,7 @@ def _trim_cv_results_to_last_iter(results, best_index):
         )
     trimmed["rank_test_score"] = rank_result
 
-    # `best_index` is guaranteed to lie in the last-iteration slice because
-    # `BaseSuccessiveHalving._select_best_index` only returns indices from it.
-    new_best_index = best_index - start
-
-    return trimmed, new_best_index
+    return trimmed, start
 
 
 class BaseSuccessiveHalving(BaseSearchCV):
@@ -222,10 +221,19 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         We want the best candidate out of the last iteration. By default
         BaseSearchCV would return the best candidate out of all iterations.
+        A callable `refit` is therefore passed the results of the last iteration
+        only, i.e. the `cv_results_` exposed at the end of `fit`.
 
-        Currently, we only support for a single metric thus `refit` and
-        `refit_metric` are not required.
+        Currently, we only support for a single metric thus `refit_metric` is not
+        required.
         """
+        if callable(refit):
+            last_iter_results, start = _trim_cv_results_to_last_iter(results)
+            best_index = BaseSearchCV._select_best_index(
+                refit, refit_metric, last_iter_results
+            )
+            return start + best_index
+
         last_iter = np.max(results["iter"])
         last_iter_indices = np.flatnonzero(results["iter"] == last_iter)
 
@@ -274,12 +282,14 @@ class BaseSuccessiveHalving(BaseSearchCV):
             for key, value in self.cv_results_.items()
             if key != "rank_test_score"
         }
-        self.cv_results_, self.best_index_ = _trim_cv_results_to_last_iter(
-            self.all_cv_results_, self.best_index_
-        )
+        self.cv_results_, start = _trim_cv_results_to_last_iter(self.all_cv_results_)
+        # `best_index_` is guaranteed to lie in the last-iteration slice because
+        # `_select_best_index` only returns indices from it.
+        self.best_index_ -= start
 
-        # Set best_score_: BaseSearchCV does not set it, as refit is a callable
-        self.best_score_ = self.cv_results_["mean_test_score"][self.best_index_]
+        # As in BaseSearchCV, `best_score_` is not available with a callable `refit`.
+        if not callable(self.refit):
+            self.best_score_ = self.cv_results_["mean_test_score"][self.best_index_]
 
         return self
 
@@ -658,6 +668,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     best_score_ : float
         Mean cross-validated score of the ``best_estimator_``.
 
+        This attribute is not available if ``refit`` is a function.
+
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
@@ -1027,6 +1039,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     best_score_ : float
         Mean cross-validated score of the ``best_estimator_``.
+
+        This attribute is not available if ``refit`` is a function.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
