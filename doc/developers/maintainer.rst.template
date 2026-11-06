@@ -124,8 +124,7 @@ Reference Steps
         * [ ] Set an upper bound on build dependencies in the release branch
         * [ ] Generate the changelog in the release branch
         * [ ] Check that the wheels for the release can be built successfully
-        * [ ] Trigger manually the `publish.yml` workflow in scikit-learn-release:
-          https://github.com/scikit-learn/scikit-learn-release/actions/workflows/publish.yml
+        * [ ] Merge the PR and manually trigger the `publish.yml` workflow in scikit-learn-release
         * [ ] Upload the wheels and source tarball to https://test.pypi.org
         * [ ] Create tag on the main repo
         * [ ] Confirm bot detected at https://github.com/conda-forge/scikit-learn-feedstock
