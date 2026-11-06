@@ -2,8 +2,10 @@ version: 2
 updates:
   # Maintain dependencies for GitHub Actions as recommended in SPEC8:
   # https://github.com/scientific-python/specs/pull/325
-  # All external actions are pinned to a full commit SHA for security reasons,
-  # with the matching version in a trailing comment.
+  # Every `uses:` pointing to another repository is pinned to a full commit
+  # SHA for security reasons, with the matching version in a trailing comment.
+  # The exception is the build-wheels workflow from scikit-learn-release,
+  # which tracks @main.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
