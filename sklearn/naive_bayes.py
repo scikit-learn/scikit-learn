@@ -12,6 +12,7 @@ from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
 import numpy as np
+from scipy.sparse import issparse
 
 import sklearn.externals.array_api_extra as xpx
 from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context
@@ -28,6 +29,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._param_validation import Interval
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.sparsefuncs import min_max_axis
 from sklearn.utils.validation import (
     _check_n_features,
     _check_sample_weight,
@@ -1442,7 +1444,6 @@ class CategoricalNB(_BaseDiscreteNB):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.categorical = True
-        tags.input_tags.sparse = False
         tags.input_tags.positive_only = True
         return tags
 
@@ -1452,10 +1453,13 @@ class CategoricalNB(_BaseDiscreteNB):
             self,
             X,
             dtype="int",
-            accept_sparse=False,
+            accept_sparse="csc",
             ensure_all_finite=True,
             reset=False,
         )
+        if issparse(X):
+            # a sample has a single category per feature
+            X.sum_duplicates()
         check_non_negative(X, "CategoricalNB (input X)")
         return X
 
@@ -1465,10 +1469,13 @@ class CategoricalNB(_BaseDiscreteNB):
             X,
             y,
             dtype="int",
-            accept_sparse=False,
+            accept_sparse="csc",
             ensure_all_finite=True,
             reset=reset,
         )
+        if issparse(X):
+            # a sample has a single category per feature
+            X.sum_duplicates()
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
@@ -1479,7 +1486,10 @@ class CategoricalNB(_BaseDiscreteNB):
     @staticmethod
     def _validate_n_categories(X, min_categories):
         # rely on max for n_categories categories are encoded between 0...n-1
-        n_categories_X = X.max(axis=0) + 1
+        if issparse(X):
+            n_categories_X = min_max_axis(X, axis=0)[1] + 1
+        else:
+            n_categories_X = X.max(axis=0) + 1
         min_categories_ = np.array(min_categories)
         if min_categories is not None:
             if not np.issubdtype(min_categories_.dtype, np.signedinteger):
@@ -1517,16 +1527,37 @@ class CategoricalNB(_BaseDiscreteNB):
                 indices = np.nonzero(counts)[0]
                 cat_count[j, indices] += counts[indices]
 
-        self.class_count_ += Y.sum(axis=0)
+        def _update_cat_count_sparse(rows, values, Y, Y_sum, cat_count, n_classes):
+            Y_stored = Y[rows]
+            for j in range(n_classes):
+                cat_count[j] += np.bincount(
+                    values, weights=Y_stored[:, j], minlength=cat_count.shape[1]
+                )
+            # samples that are not stored in the column belong to category 0,
+            # clip to avoid negative counts from rounding errors
+            cat_count[:, 0] += np.maximum(Y_sum - Y_stored.sum(axis=0), 0)
+
+        Y_sum = Y.sum(axis=0)
+        self.class_count_ += Y_sum
         self.n_categories_ = self._validate_n_categories(X, self.min_categories)
         for i in range(self.n_features_in_):
-            X_feature = X[:, i]
             self.category_count_[i] = _update_cat_count_dims(
                 self.category_count_[i], self.n_categories_[i] - 1
             )
-            _update_cat_count(
-                X_feature, Y, self.category_count_[i], self.class_count_.shape[0]
-            )
+            if issparse(X):
+                start, end = X.indptr[i], X.indptr[i + 1]
+                _update_cat_count_sparse(
+                    X.indices[start:end],
+                    X.data[start:end],
+                    Y,
+                    Y_sum,
+                    self.category_count_[i],
+                    self.class_count_.shape[0],
+                )
+            else:
+                _update_cat_count(
+                    X[:, i], Y, self.category_count_[i], self.class_count_.shape[0]
+                )
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = []
@@ -1541,8 +1572,17 @@ class CategoricalNB(_BaseDiscreteNB):
     def _joint_log_likelihood(self, X):
         _check_n_features(self, X, reset=False)
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
+        if issparse(X):
+            # samples that are not stored in X belong to category 0
+            jll += sum(log_prob[:, 0] for log_prob in self.feature_log_prob_)
         for i in range(self.n_features_in_):
-            indices = X[:, i]
-            jll += self.feature_log_prob_[i][:, indices].T
+            if issparse(X):
+                feature_log_prob = self.feature_log_prob_[i]
+                start, end = X.indptr[i], X.indptr[i + 1]
+                rows, values = X.indices[start:end], X.data[start:end]
+                jll[rows] += (feature_log_prob[:, values] - feature_log_prob[:, [0]]).T
+            else:
+                indices = X[:, i]
+                jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
