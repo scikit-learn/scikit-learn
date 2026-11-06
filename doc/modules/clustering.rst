@@ -1278,24 +1278,14 @@ truth set of classes or satisfying some assumption such that members
 belong to the same class are more similar than members of different
 classes according to some similarity metric.
 
-.. _consensus_clustering:
-
-Consensus clustering and model selection
-----------------------------------------
-
-When ground-truth labels are not available, clustering models can be compared
-by measuring how consistently they produce similar partitions under
+When ground-truth labels are not available, clustering models can still be
+compared by measuring how consistently they produce similar partitions under
 perturbations of the data. A common approach is to fit a candidate model on
-several overlapping subsamples, compare the resulting label assignments with
-an adjusted clustering metric such as
-:func:`adjusted_rand_score` or :func:`adjusted_mutual_info_score`, and
-aggregate the pairwise scores. The candidate with the highest average
-agreement can then be selected as the most stable model for the chosen
-number of clusters.
+several overlapping subsamples and compare the resulting label assignments
+with an adjusted clustering metric such as
+:func:`adjusted_rand_score` or :func:`adjusted_mutual_info_score`.
 
-This stability-based score is sometimes called a *consensus index*. It is not
-implemented as a dedicated estimator in scikit-learn, but can be constructed
-from the clustering metrics described below. The example
+The example
 :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`
 illustrates why adjusted metrics are appropriate for this use: unlike
 unadjusted metrics, they remain close to zero for random label assignments and
