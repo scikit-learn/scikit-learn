@@ -548,6 +548,8 @@ class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         Advances in neural information processing systems 16 (2004): 449-456.
         <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
         """
+        check_is_fitted(self)
+
         if not self.fit_inverse_transform:
             raise NotFittedError(
                 "The fit_inverse_transform parameter was not"

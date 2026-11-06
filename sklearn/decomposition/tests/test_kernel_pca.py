@@ -500,6 +500,24 @@ def test_kernel_pca_raise_not_fitted_error():
         kpca.inverse_transform(X)
 
 
+def test_kernel_pca_inverse_transform_unfitted():
+    """Check that inverse_transform raises NotFittedError before fit.
+
+    Non-regression test: an unfitted KernelPCA used to raise a bare
+    AttributeError (from accessing `X_transformed_fit_`), which is not
+    catchable with `except NotFittedError`.
+    """
+    X = np.random.randn(15).reshape(5, 3)
+    kpca = KernelPCA(fit_inverse_transform=True)
+    with pytest.raises(NotFittedError):
+        kpca.inverse_transform(X)
+    # control: still raises NotFittedError when fitted but the pre-image was
+    # never learned (fit_inverse_transform=False)
+    kpca_noinv = KernelPCA().fit(X)
+    with pytest.raises(NotFittedError):
+        kpca_noinv.inverse_transform(X)
+
+
 def test_32_64_decomposition_shape():
     """Test that the decomposition is similar for 32 and 64 bits data
 
