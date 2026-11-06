@@ -34,9 +34,8 @@ We adopted the following release schedule:
 
 .. rubric:: Permissions
 
-- The release manager must be a **member of the scikit-learn release team**, see
-  `scikit-learn/release-team page
-  <https://github.com/orgs/scikit-learn/teams/release-team/members>`_ to be
+- The release manager must be a **maintainer** of the `scikit-learn/scikit-learn-release
+  <https://github.com/scikit-learn/scikit-learn-release>`_ repository, to be
   able to publish on `pypi.org` and `test.pypi.org` (via a manual trigger of a
   dedicated Github Actions workflow).
 
