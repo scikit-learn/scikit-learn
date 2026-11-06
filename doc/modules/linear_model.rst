@@ -316,16 +316,18 @@ Cross-Validation.
 Lasso
 =====
 
-The :class:`Lasso` is a linear model that estimates sparse coefficients, i.e., it is
-able to set coefficients exactly to zero.
-It is useful in some contexts due to its tendency to prefer solutions
+The :class:`Lasso` is a linear model that estimates sparse coefficients, meaning that
+it is able to set coefficients exactly to zero. A feature with a coefficient of zero
+could be excluded from the model.
+Lasso is useful in some contexts due to its tendency to prefer solutions
 with fewer non-zero coefficients, effectively reducing the number of
 features upon which the given solution is dependent. For this reason,
 Lasso and its variants are fundamental to the field of compressed sensing.
 Under certain conditions, it can recover the exact set of non-zero coefficients (see
 :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`).
 
-Mathematically, it consists of a linear model with an added regularization term.
+Mathematically, it consists of a linear model with an added regularization term in the
+form of an :math:`\ell_1`-norm of the coefficients.
 The objective function to minimize is:
 
 .. math::  \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
@@ -334,7 +336,7 @@ The lasso estimate thus solves the least-squares with added penalty
 :math:`\alpha ||w||_1`, where :math:`\alpha` is a constant and :math:`||w||_1` is the
 :math:`\ell_1`-norm of the coefficient vector.
 
-.. note:: **Different scaling of penalty ``alpha``**
+.. note:: **Different scaling of penalty** ``alpha``
 
   The objective function of the Lasso has a different normalization with
   ``1/n_samples`` in front of the squared error. The Ridge objective can be expressed
@@ -350,7 +352,7 @@ The lasso estimate thus solves the least-squares with added penalty
 
   With sample weights :math:`s=\text{sample_weight}`, :class:`Lasso` minimizes:
 
-  .. math:: \min_{w} \frac{1}{\sum_i s_i}\sum_i s_i (X_i w - y_i)^2 + \alpha ||w||_2^2
+  .. math:: \min_{w} \frac{1}{\sum_i s_i}\sum_i s_i (X_i w - y_i)^2 + \alpha ||w||_1^2
 
 The implementation of the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
