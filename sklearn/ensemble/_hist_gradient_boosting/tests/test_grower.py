@@ -13,9 +13,13 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 )
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+from sklearn.utils._openmp_helpers import (
+    _openmp_effective_n_threads,
+    _openmp_uses_active_wait,
+)
 
 n_threads = _openmp_effective_n_threads()
+active_wait = _openmp_uses_active_wait()
 
 
 def _make_training_data(n_bins=256, constant_hessian=True):
@@ -100,6 +104,8 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
         n_bins=n_bins,
         shrinkage=shrinkage,
         min_samples_leaf=1,
+        n_threads=n_threads,
+        active_wait=active_wait,
         **stopping_param,
     )
 
@@ -169,6 +175,8 @@ def test_predictor_from_grower():
         shrinkage=1.0,
         max_leaf_nodes=3,
         min_samples_leaf=5,
+        n_threads=n_threads,
+        active_wait=active_wait,
     )
     grower.grow()
     assert grower.n_nodes == 5  # (2 decision nodes + 3 leaves)
@@ -244,6 +252,8 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins, constant_hessian,
         shrinkage=1.0,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=n_samples,
+        n_threads=n_threads,
+        active_wait=active_wait,
     )
     grower.grow()
     predictor = grower.make_predictor(binning_thresholds=mapper.bin_thresholds_)
@@ -282,6 +292,8 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
         shrinkage=1.0,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=n_samples,
+        n_threads=n_threads,
+        active_wait=active_wait,
     )
     grower.grow()
     if n_samples >= min_samples_leaf * 2:
@@ -313,7 +325,14 @@ def test_max_depth(max_depth):
 
     all_gradients = y.astype(G_H_DTYPE)
     all_hessians = np.ones(shape=1, dtype=G_H_DTYPE)
-    grower = TreeGrower(X, all_gradients, all_hessians, max_depth=max_depth)
+    grower = TreeGrower(
+        X,
+        all_gradients,
+        all_hessians,
+        max_depth=max_depth,
+        n_threads=n_threads,
+        active_wait=active_wait,
+    )
     grower.grow()
 
     depth = max(leaf.depth for leaf in grower.finalized_leaves)
@@ -328,22 +347,48 @@ def test_input_validation():
 
     X_binned_float = X_binned.astype(np.float32)
     with pytest.raises(NotImplementedError, match="X_binned must be of type uint8"):
-        TreeGrower(X_binned_float, all_gradients, all_hessians)
+        TreeGrower(
+            X_binned_float,
+            all_gradients,
+            all_hessians,
+            n_threads=n_threads,
+            active_wait=active_wait,
+        )
 
     X_binned_C_array = np.ascontiguousarray(X_binned)
     with pytest.raises(
         ValueError, match="X_binned should be passed as Fortran contiguous array"
     ):
-        TreeGrower(X_binned_C_array, all_gradients, all_hessians)
+        TreeGrower(
+            X_binned_C_array,
+            all_gradients,
+            all_hessians,
+            n_threads=n_threads,
+            active_wait=active_wait,
+        )
 
 
 def test_init_parameters_validation():
     X_binned, all_gradients, all_hessians = _make_training_data()
     with pytest.raises(ValueError, match="min_gain_to_split=-1 must be positive"):
-        TreeGrower(X_binned, all_gradients, all_hessians, min_gain_to_split=-1)
+        TreeGrower(
+            X_binned,
+            all_gradients,
+            all_hessians,
+            min_gain_to_split=-1,
+            n_threads=n_threads,
+            active_wait=active_wait,
+        )
 
     with pytest.raises(ValueError, match="min_hessian_to_split=-1 must be positive"):
-        TreeGrower(X_binned, all_gradients, all_hessians, min_hessian_to_split=-1)
+        TreeGrower(
+            X_binned,
+            all_gradients,
+            all_hessians,
+            min_hessian_to_split=-1,
+            n_threads=n_threads,
+            active_wait=active_wait,
+        )
 
 
 def test_missing_value_predict_only():
@@ -360,7 +405,13 @@ def test_missing_value_predict_only():
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 
     grower = TreeGrower(
-        X_binned, gradients, hessians, min_samples_leaf=5, has_missing_values=False
+        X_binned,
+        gradients,
+        hessians,
+        min_samples_leaf=5,
+        has_missing_values=False,
+        n_threads=n_threads,
+        active_wait=active_wait,
     )
     grower.grow()
 
@@ -414,6 +465,7 @@ def test_split_on_nan_with_infinite_values():
         has_missing_values=has_missing_values,
         min_samples_leaf=1,
         n_threads=n_threads,
+        active_wait=active_wait,
     )
 
     grower.grow()
@@ -458,6 +510,7 @@ def test_grow_tree_categories():
         min_samples_leaf=1,
         is_categorical=is_categorical,
         n_threads=n_threads,
+        active_wait=active_wait,
     )
     grower.grow()
     assert grower.n_nodes == 3
@@ -537,6 +590,8 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
         "min_samples_leaf": min_samples_leaf,
         "max_depth": None,
         "max_leaf_nodes": None,
+        "n_threads": n_threads,
+        "active_wait": active_wait,
     }
 
     grower = TreeGrower(
@@ -603,6 +658,7 @@ def test_grower_interaction_constraints():
             min_samples_leaf=1,
             interaction_cst=interaction_cst,
             n_threads=n_threads,
+            active_wait=active_wait,
         )
         grower.grow()
 
