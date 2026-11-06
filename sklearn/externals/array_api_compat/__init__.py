@@ -1,7 +1,7 @@
 """
 NumPy Array API compatibility library
 
-This is a small wrapper around NumPy, CuPy, JAX, sparse and others that are
+This is a small wrapper around NumPy, CuPy, JAX, mparray, sparse and others that are
 compatible with the Array API standard https://data-apis.org/array-api/latest/.
 See also NEP 47 https://numpy.org/neps/nep-0047-array-api-standard.html.
 
@@ -17,6 +17,6 @@ to ensure they are not using functionality outside of the standard, but prefer
 this implementation for the default when working with NumPy arrays.
 
 """
-__version__ = '1.15.0'
+__version__ = '1.16.0'
 
 from .common import *  # noqa: F403
