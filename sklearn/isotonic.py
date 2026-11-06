@@ -11,7 +11,7 @@ import numpy as np
 from scipy import interpolate, optimize
 from scipy.stats import spearmanr
 
-from sklearn._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
+from sklearn._isotonic import _inplace_contiguous_isotonic_regression
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
 from sklearn.utils import check_array, check_consistent_length, metadata_routing
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
@@ -95,6 +95,31 @@ def check_increasing(x, y):
             )
 
     return increasing_bool
+
+
+def _make_unique_np(X, y, sample_weights):
+    """Average targets for duplicate X, drop duplicates.
+
+    Aggregates duplicate X values into a single X value where the target y is a
+    (sample_weighted) average of the individual targets.
+
+    Assumes that X is ordered, so that all duplicates follow each other.
+
+    This groups together adjacent values of X with only an epsilon distance.
+    """
+    # TODO: Remove this comments before merge into main.
+    # Diverges from the Cython version when a chain of consecutive values is
+    # each < eps apart from its neighbor, but the cumulative drift from the
+    # first value of the chain is >= eps (the Cython version starts a new
+    # group there, this version does not).
+    X = np.asarray(X)
+    y = np.asarray(y)
+    w = np.asarray(sample_weights)
+    eps = np.finfo(X.dtype).resolution
+    starts = np.flatnonzero(np.concatenate(([True], np.diff(X) >= eps)))
+    w_out = np.add.reduceat(w, starts)
+    y_out = np.add.reduceat(y * w, starts) / w_out
+    return X[starts], y_out.astype(X.dtype, copy=False), w_out
 
 
 @validate_params(
@@ -322,7 +347,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         order = np.lexsort((y, X))
         X, y, sample_weight = [array[order] for array in [X, y, sample_weight]]
-        unique_X, unique_y, unique_sample_weight = _make_unique(X, y, sample_weight)
+        unique_X, unique_y, unique_sample_weight = _make_unique_np(X, y, sample_weight)
 
         X = unique_X
         y = isotonic_regression(
