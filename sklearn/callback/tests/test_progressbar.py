@@ -219,3 +219,20 @@ def test_estimator_without_subtasks(capsys):
     captured = capsys.readouterr()
     assert re.search(r"NoSubtaskEstimator - fit", captured.out)
     assert re.search(r"100%", captured.out)
+
+
+def test_two_progressbars(capsys):
+    """Test attaching two progress bars to the same estimator.
+
+    Only the last progress bar should be displayed. The first one should be disabled. If
+    not disabled, `_run_queues.pop(context.root_uuid)` in `teardown` would raise a
+    KeyError.
+    """
+    pytest.importorskip("rich")
+    from sklearn.callback._progressbar import ProgressBar
+
+    est = MaxIterEstimator(max_iter=5)
+    est.set_callbacks(ProgressBar(), ProgressBar())
+    est.fit()
+    captured = capsys.readouterr()
+    assert re.search(r"100%", captured.out)
