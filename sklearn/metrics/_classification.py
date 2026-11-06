@@ -3959,6 +3959,7 @@ def d2_log_loss_score(
         y_true, y_proba, sample_weight, labels
     )
     xp, _ = get_namespace(y_proba, transformed_labels)
+    transformed_labels = xp.astype(transformed_labels, y_proba.dtype, copy=False)
     y_proba_null = _average(transformed_labels, axis=0, weights=sample_weight)
     y_proba_null = xp.tile(y_proba_null, (y_proba.shape[0], 1))
 

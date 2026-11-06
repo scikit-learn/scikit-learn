@@ -1039,7 +1039,7 @@ def test_cross_validate_array_api_pipeline(
     pipeline usage pattern.
     """
 
-    xp, device_ = _array_api_for_tests(namespace, device_name)
+    xp, device_ = _array_api_for_tests(namespace, device_name, dtype_name)
     if is_classifier(estimator):
         X_np, y_np = make_classification(
             n_samples=100,
