@@ -1,0 +1,4 @@
+- :func:`utils.safe_indexing` is now public. It was previously available as
+  `utils._safe_indexing`, which remains as an alias for now but will be deprecated
+  in 1.14 and removed in 1.15.
+  By :user:`Arthur Lacote <cakedev0>`.

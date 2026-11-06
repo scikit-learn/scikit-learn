@@ -23,7 +23,7 @@ from sklearn.utils import Bunch
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
-    _safe_indexing,
+    safe_indexing,
 )
 from sklearn.utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from sklearn.utils._repr_html.estimator import _VisualBlock
@@ -872,7 +872,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 jobs.append(
                     delayed(func)(
                         transformer=clone(trans) if not fitted else trans,
-                        X=_safe_indexing(X, columns, axis=1),
+                        X=safe_indexing(X, columns, axis=1),
                         y=y,
                         weight=weight,
                         **extra_args,

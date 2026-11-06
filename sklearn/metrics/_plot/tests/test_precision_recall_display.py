@@ -19,7 +19,7 @@ from sklearn.metrics._plot.tests.test_common_curve_display import (
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import _safe_indexing
+from sklearn.utils import safe_indexing
 from sklearn.utils._response import _get_response_values_binary
 from sklearn.utils._testing import assert_allclose
 
@@ -153,11 +153,11 @@ def test_precision_recall_display_from_cv_results_plotting(
     for idx, (estimator, test_indices) in enumerate(
         zip(cv_results["estimator"], cv_results["indices"]["test"])
     ):
-        y_true = _safe_indexing(y, test_indices)
-        y_score = getattr(estimator, response_method)(_safe_indexing(X, test_indices))
+        y_true = safe_indexing(y, test_indices)
+        y_score = getattr(estimator, response_method)(safe_indexing(X, test_indices))
         y_score = y_score if y_score.ndim == 1 else y_score[:, 1]
         sample_weight_test = (
-            _safe_indexing(sample_weight, test_indices)
+            safe_indexing(sample_weight, test_indices)
             if sample_weight is not None
             else None
         )
@@ -353,7 +353,7 @@ def test_precision_recall_chance_level_line_from_cv_results(
         assert isinstance(display.chance_level_[idx], mpl.lines.Line2D)
         assert tuple(display.chance_level_[idx].get_xdata()) == (0, 1)
         test_indices = cv_results["indices"]["test"][idx]
-        pos_prevalence = Counter(_safe_indexing(y, test_indices))[1] / len(test_indices)
+        pos_prevalence = Counter(safe_indexing(y, test_indices))[1] / len(test_indices)
         pos_prevalence_folds.append(pos_prevalence)
         assert tuple(display.chance_level_[idx].get_ydata()) == (
             pos_prevalence,
@@ -413,12 +413,12 @@ def test_precision_recall_display_name(pyplot, constructor_name, default_label):
             test_indices = cv_results["indices"]["test"][idx]
             y_score, _ = _get_response_values_binary(
                 cv_results["estimator"][idx],
-                _safe_indexing(X, test_indices),
+                safe_indexing(X, test_indices),
                 response_method="auto",
             )
             average_precision.append(
                 average_precision_score(
-                    _safe_indexing(y, test_indices), y_score, pos_label=pos_label
+                    safe_indexing(y, test_indices), y_score, pos_label=pos_label
                 )
             )
         # By default, only the first curve is labelled
@@ -506,13 +506,13 @@ def test_precision_recall_display_string_labels(pyplot):
         test_indices = cv_results["indices"]["test"][idx]
         y_score, _ = _get_response_values_binary(
             cv_results["estimator"][idx],
-            _safe_indexing(X, test_indices),
+            safe_indexing(X, test_indices),
             response_method="auto",
         )
         # Note `pos_label` cannot be `None` (default=1), unlike other metrics
         average_precision.append(
             average_precision_score(
-                _safe_indexing(y, test_indices),
+                safe_indexing(y, test_indices),
                 y_score,
                 pos_label=cv_results["estimator"][idx].classes_[1],
             )

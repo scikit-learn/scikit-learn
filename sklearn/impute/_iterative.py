@@ -11,7 +11,7 @@ from scipy import stats
 from sklearn.base import _fit_context, clone
 from sklearn.impute._base import SimpleImputer, _BaseImputer, _check_inputs_dtype
 from sklearn.preprocessing import normalize
-from sklearn.utils import _safe_indexing, check_array, check_random_state
+from sklearn.utils import check_array, check_random_state, safe_indexing
 from sklearn.utils._indexing import _safe_assign
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_scalar_nan
@@ -403,13 +403,13 @@ class IterativeImputer(_BaseImputer):
 
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
-            X_train = _safe_indexing(
-                _safe_indexing(X_filled, neighbor_feat_idx, axis=1),
+            X_train = safe_indexing(
+                safe_indexing(X_filled, neighbor_feat_idx, axis=1),
                 ~missing_row_mask,
                 axis=0,
             )
-            y_train = _safe_indexing(
-                _safe_indexing(X_filled, feat_idx, axis=1),
+            y_train = safe_indexing(
+                safe_indexing(X_filled, feat_idx, axis=1),
                 ~missing_row_mask,
                 axis=0,
             )
@@ -420,8 +420,8 @@ class IterativeImputer(_BaseImputer):
             return X_filled, estimator
 
         # get posterior samples if there is at least one missing value
-        X_test = _safe_indexing(
-            _safe_indexing(X_filled, neighbor_feat_idx, axis=1),
+        X_test = safe_indexing(
+            safe_indexing(X_filled, neighbor_feat_idx, axis=1),
             missing_row_mask,
             axis=0,
         )

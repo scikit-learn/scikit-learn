@@ -25,10 +25,10 @@ from sklearn.neural_network._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTION
 from sklearn.neural_network._stochastic_optimizers import AdamOptimizer, SGDOptimizer
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import (
-    _safe_indexing,
     check_random_state,
     column_or_1d,
     gen_batches,
+    safe_indexing,
     shuffle,
 )
 from sklearn.utils._param_validation import Interval, Options, StrOptions
@@ -709,7 +709,7 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
                 for batch_slice in gen_batches(n_samples, batch_size):
                     if self.shuffle:
                         batch_idx = sample_idx[batch_slice]
-                        X_batch = _safe_indexing(X_train, batch_idx)
+                        X_batch = safe_indexing(X_train, batch_idx)
                     else:
                         batch_idx = batch_slice
                         X_batch = X_train[batch_idx]

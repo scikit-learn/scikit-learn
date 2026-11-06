@@ -59,7 +59,7 @@ from sklearn.model_selection import LeaveOneGroupOut, ShuffleSplit, train_test_s
 from sklearn.model_selection._validation import _safe_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, scale
-from sklearn.utils import _safe_indexing, shuffle
+from sklearn.utils import safe_indexing, shuffle
 from sklearn.utils._array_api import (
     NamespaceAndDevice,
     _atol_for_type,
@@ -2257,8 +2257,8 @@ def check_methods_sample_order_invariance(name, estimator_orig):
 
         if hasattr(estimator, method):
             assert_allclose_dense_sparse(
-                _safe_indexing(getattr(estimator, method)(X), idx),
-                getattr(estimator, method)(_safe_indexing(X, idx)),
+                safe_indexing(getattr(estimator, method)(X), idx),
+                getattr(estimator, method)(safe_indexing(X, idx)),
                 atol=1e-9,
                 err_msg=msg,
             )

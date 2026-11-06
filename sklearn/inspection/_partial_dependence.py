@@ -16,7 +16,7 @@ from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
 )
 from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.utils import Bunch, _safe_indexing, check_array
+from sklearn.utils import Bunch, check_array, safe_indexing
 from sklearn.utils._indexing import (
     _determine_key_type,
     _get_column_indices,
@@ -122,7 +122,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution, custom_values)
             axis = custom_values[feature]
         else:
             try:
-                uniques = np.unique(_safe_indexing(X, feature, axis=1))
+                uniques = np.unique(safe_indexing(X, feature, axis=1))
             except TypeError as exc:
                 # `np.unique` will fail in the presence of `np.nan` and `str` categories
                 # due to sorting. Temporary, we reraise an error explaining the problem.
@@ -726,7 +726,7 @@ def partial_dependence(
         if is_cat:
             continue
 
-        if _safe_indexing(X, feature_idx, axis=1).dtype.kind in "iu":
+        if safe_indexing(X, feature_idx, axis=1).dtype.kind in "iu":
             raise ValueError(
                 f"The column {feature!r} contains integer data. Partial "
                 "dependence plots are not supported for integer data: this "
@@ -735,7 +735,7 @@ def partial_dependence(
                 "to floating point dtypes ahead of time to avoid problems."
             )
 
-    X_subset = _safe_indexing(X, features_indices, axis=1)
+    X_subset = safe_indexing(X, features_indices, axis=1)
 
     custom_values_for_X_subset = {
         index: custom_values.get(feature)
