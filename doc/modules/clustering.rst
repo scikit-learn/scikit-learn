@@ -1385,7 +1385,12 @@ will not necessarily be close to zero::
     practice or requires manual assignment by human annotators (as in the
     supervised learning setting).
 
-    However, the adjusted Rand index can also be useful in a purely
+    However, the (adjusted or unadjusted) Rand index can also compare two
+    clusterings without any ground truth, for instance to measure how much
+    two algorithms agree, or how stable one algorithm is across random
+    initializations or random subsamples of the data.
+
+    In particular, the adjusted Rand index can be useful in a purely
     unsupervised setting as a building block for a consensus index. See
     :ref:`consensus_clustering` for an example workflow.
 
@@ -1520,7 +1525,12 @@ Bad (e.g. independent labelings) have non-positive scores::
     truth classes** while almost never available in practice or requires manual
     assignment by human annotators (as in the supervised learning setting).
 
-    However, adjusted MI-based measures can also be useful in a purely
+    However, MI-based measures can also compare two clusterings without any
+    ground truth, for instance to measure how much two algorithms agree, or
+    how stable one algorithm is across random initializations or random
+    subsamples of the data.
+
+    In particular, adjusted MI-based measures can be useful in a purely
     unsupervised setting as a building block for a consensus index. See
     :ref:`consensus_clustering` for an example workflow.
 
