@@ -1113,6 +1113,10 @@ def cosine_distances(X, Y=None):
 
     Cosine distance is defined as 1.0 minus the cosine similarity.
 
+    For pairs that include a zero vector, the cosine distance is therefore 1.0.
+    When only `X` is passed, the diagonal is forced to 0, including for a zero
+    vector compared with itself.
+
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
@@ -1682,6 +1686,10 @@ def cosine_similarity(X, Y=None, dense_output=True):
         K(X, Y) = <X, Y> / (||X||*||Y||)
 
     On L2-normalized data, this function is equivalent to linear_kernel.
+
+    The cosine similarity is undefined for a zero vector because its norm is 0.
+    This function returns 0, rather than `NaN`, for any pair that includes a
+    zero vector, including a zero vector compared with itself.
 
     Read more in the :ref:`User Guide <cosine_similarity>`.
 
