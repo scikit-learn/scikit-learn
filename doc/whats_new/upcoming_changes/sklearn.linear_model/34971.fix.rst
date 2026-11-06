@@ -1,4 +1,6 @@
 * :class:`linear_model.RidgeClassifierCV` with `cv=None` (Leave One Out
-  cross validation) and `scoring="accuracy"` no longer always returns a
-  `best_score_` of 1.0 for binary classification targets.
+  cross validation) and a `scoring` now computes correct scores for binary
+  classification targets. For instance, `scoring="accuracy"` always gave a
+  `best_score_` of 1.0 and always selected the first value of `alphas`, so
+  `alpha_`, `coef_` and the predictions can change.
   By :user:`Virgil Chan <virchan>`.
