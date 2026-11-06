@@ -2679,9 +2679,7 @@ def test_ridge_cv_custom_multioutput_scorer(X_shape):
 
 @pytest.mark.parametrize("n_classes", [2, 3])
 def test_ridge_classifier_cv_accuracy_loo(global_random_seed, n_classes):
-    """Binary LOO scoring used to take `argmax` over a single-column
-    `LabelBinarizer` output, making `best_score_` always 1.0. Multiclass is
-    checked alongside as a guard on the shared code path."""
+    """Check that LOO scoring matches an explicit `cv=LeaveOneOut()` search."""
     X, y = make_classification(
         n_samples=60,
         n_features=8,
