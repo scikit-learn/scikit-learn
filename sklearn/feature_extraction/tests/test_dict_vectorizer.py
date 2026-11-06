@@ -40,6 +40,47 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
         assert v.feature_names_ == sorted(v.feature_names_)
 
 
+@pytest.mark.parametrize("sort", [True, False])
+@pytest.mark.parametrize("fit_transform", [True, False])
+def test_dict_vectorizer_sparse_zeros(sort, fit_transform):
+    # Non-regression test for #14718, including an all-zero feature and empty row.
+    data = [
+        {"b": 1, "a": 1, "c": 0},
+        {"a": 0, "b": 1, "c": 1},
+        {"zero_only": -0.0},
+        {},
+    ]
+    vectorizer = DictVectorizer(sort=sort)
+    if fit_transform:
+        result = vectorizer.fit_transform(data)
+    else:
+        result = vectorizer.fit(data).transform(data)
+
+    names = ["a", "b", "c", "zero_only"] if sort else ["b", "a", "c", "zero_only"]
+    expected = [[1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+    if not sort:
+        expected = np.asarray(expected)[:, [1, 0, 2, 3]]
+    assert_array_equal(vectorizer.get_feature_names_out(), names)
+    assert_array_equal(result.toarray(), expected)
+    assert result.nnz == 4
+
+    # Removing stored zeros must not remove their features from the vocabulary.
+    result = vectorizer.transform([{"zero_only": 2}, {"zero_only": 0}])
+    assert_array_equal(result.toarray(), [[0, 0, 0, 2], [0, 0, 0, 0]])
+    assert result.nnz == 1
+
+
+@pytest.mark.parametrize("dtype, value", [(np.float32, 1e-50), (np.int64, 0.5)])
+def test_dict_vectorizer_zeros_after_dtype_conversion(dtype, value):
+    vectorizer = DictVectorizer(dtype=dtype)
+    data = [{"converted_zero": value}]
+    for result in (vectorizer.fit_transform(data), vectorizer.transform(data)):
+        assert result.shape == (1, 1)
+        assert result.nnz == 0
+        assert result.dtype == np.dtype(dtype)
+    assert_array_equal(vectorizer.get_feature_names_out(), ["converted_zero"])
+
+
 def test_feature_selection():
     # make two feature dicts with two useful features and a bunch of useless
     # ones, in terms of chi2

@@ -1,0 +1,3 @@
+- :class:`feature_extraction.DictVectorizer` no longer stores explicit zeros in
+  its sparse output, while retaining zero-valued features in its vocabulary.
+  By :user:`Liang Jingyi <LJimmy007>`.
