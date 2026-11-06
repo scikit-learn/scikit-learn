@@ -1,0 +1,4 @@
+- Fixed a bug in :class:`pipeline.FeatureUnion` where :attr:`~pipeline.FeatureUnion.n_features_in_`
+  and :attr:`~pipeline.FeatureUnion.feature_names_in_` raised an `AttributeError` when
+  the first transformer is `'drop'`.
+  By :user:`buildwithneel <buildwithneel>`.
