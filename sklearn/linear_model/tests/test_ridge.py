@@ -31,7 +31,7 @@ from sklearn.linear_model._ridge import (
     _solve_svd,
     _X_CenterStackOp,
 )
-from sklearn.metrics import get_scorer, make_scorer, mean_squared_error
+from sklearn.metrics import f1_score, get_scorer, make_scorer, mean_squared_error
 from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
@@ -2695,6 +2695,23 @@ def test_ridge_classifier_cv_accuracy_loo(global_random_seed, n_classes):
 
     assert clf.alpha_ == clf_loo.alpha_
     assert_allclose(clf.best_score_, clf_loo.best_score_)
+
+
+def test_ridge_classifier_cv_loo_scoring_original_labels(global_random_seed):
+    """Check that LOO scoring passes the original labels to the scorer.
+
+    With labels {1, 2}, `pos_label=1` must refer to label 1, not to the
+    encoded index 1.
+    """
+    X, y = make_classification(
+        n_samples=60, n_features=8, n_informative=4, random_state=global_random_seed
+    )
+    y = y + 1
+    alpha = 1.0
+    clf = RidgeClassifierCV(alphas=[alpha], scoring="f1").fit(X, y)
+
+    y_pred_loo = cross_val_predict(RidgeClassifier(alpha=alpha), X, y, cv=LeaveOneOut())
+    assert_allclose(clf.best_score_, f1_score(y, y_pred_loo))
 
 
 # Metadata Routing Tests

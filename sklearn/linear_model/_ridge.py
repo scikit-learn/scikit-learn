@@ -1852,6 +1852,7 @@ class _RidgeGCV(LinearModel):
         store_cv_results=False,
         is_clf=False,
         alpha_per_target=False,
+        classes=None,
     ):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
@@ -1861,6 +1862,7 @@ class _RidgeGCV(LinearModel):
         self.store_cv_results = store_cv_results
         self.is_clf = is_clf
         self.alpha_per_target = alpha_per_target
+        self.classes = classes
 
     @staticmethod
     def _decomp_diag(v_prime, Q):
@@ -2370,19 +2372,21 @@ class _RidgeGCV(LinearModel):
         """
         xp, _, device = get_namespace_and_device(y)
         if self.is_clf:
+            identity_estimator = _IdentityClassifier(classes=self.classes)
             # Handle binary case like `LinearClassifierMixin.predict`
             if n_y == 1:
-                identity_estimator = _IdentityClassifier(
-                    classes=xp.arange(2, device=device)
-                )
-                y_true = xp.astype(_ravel(y) > 0, indexing_dtype(xp))
+                indices = xp.astype(_ravel(y) > 0, indexing_dtype(xp))
                 _predictions = _ravel(predictions)
             else:
-                identity_estimator = _IdentityClassifier(
-                    classes=xp.arange(n_y, device=device)
-                )
-                y_true = xp.argmax(y, axis=1)
+                indices = xp.argmax(y, axis=1)
                 _predictions = predictions
+            # Map class indices back to the original labels
+            xp_classes, _, device_classes = get_namespace_and_device(self.classes)
+            y_true = xp_classes.take(
+                self.classes,
+                move_to(indices, xp=xp_classes, device=device_classes),
+                axis=0,
+            )
             _score = scorer(
                 identity_estimator,
                 _predictions,
@@ -2549,6 +2553,7 @@ class _BaseRidgeCV(LinearModel):
                 store_cv_results=self.store_cv_results,
                 is_clf=is_classifier(self),
                 alpha_per_target=self.alpha_per_target,
+                classes=getattr(self, "classes_", None),
             )
             estimator.fit(
                 X,
