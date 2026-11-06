@@ -151,6 +151,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             This solver is a good choice for `n_samples` >> `n_features`. Be aware that
             the memory usage of this solver has a quadratic dependency on `n_features`
             because it explicitly computes the Hessian matrix.
+            In case of multicollinearities in `X`, it often recovers the minimum L2-norm
+            solution.
 
             .. versionadded:: 1.2
 
@@ -717,6 +719,8 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             This solver is a good choice for `n_samples` >> `n_features`. Be aware that
             the memory usage of this solver has a quadratic dependency on `n_features`
             because it explicitly computes the Hessian matrix.
+            In case of multicollinearities in `X`, it often recovers the minimum L2-norm
+            solution.
 
             .. versionadded:: 1.2
 
@@ -929,6 +933,8 @@ class GammaRegressor(_GeneralizedLinearRegressor):
             This solver is a good choice for `n_samples` >> `n_features`. Be aware that
             the memory usage of this solver has a quadratic dependency on `n_features`
             because it explicitly computes the Hessian matrix.
+            In case of multicollinearities in `X`, it often recovers the minimum L2-norm
+            solution.
 
             .. versionadded:: 1.2
 
@@ -1162,6 +1168,8 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             This solver is a good choice for `n_samples` >> `n_features`. Be aware that
             the memory usage of this solver has a quadratic dependency on `n_features`
             because it explicitly computes the Hessian matrix.
+            In case of multicollinearities in `X`, it often recovers the minimum L2-norm
+            solution.
 
             .. versionadded:: 1.2
 
