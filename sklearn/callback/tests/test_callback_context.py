@@ -124,49 +124,54 @@ def _make_task_tree(n_children, n_grandchildren):
         estimator, max_subtasks=n_children, sequential_subtasks=False
     )
 
+    children = []
+    grandchildren = []
     for i in range(n_children):
+        grandchildren.append([])
         child = root.subcontext(
             task_name="child task",
             task_id=i,
             max_subtasks=n_grandchildren,
         )
-
+        children.append(child)
         for j in range(n_grandchildren):
             grandchild = child.subcontext(task_name="grandchild task")
-
-    return root
+            grandchildren[i].append(grandchild)
+    return root, children, grandchildren
 
 
 def test_task_tree():
     """Check that the task tree is correctly built."""
-    root = _make_task_tree(n_children=3, n_grandchildren=5)
+    root, children, grandchildren = _make_task_tree(n_children=3, n_grandchildren=5)
 
-    assert root.parent is None
     assert len(get_context_path(root)) == 1
-    assert len(root._children_map) == 3
+    assert len(root._children_ids) == 3
 
-    for child in root._children_map.values():
-        assert child.parent is root
+    for i, child in enumerate(children):
+        assert get_context_path(child)[0] is root
+        assert child.task_id in root._children_ids
         assert len(get_context_path(child)) == 2
-        assert len(child._children_map) == 5
+        assert len(child._children_ids) == 5
 
-        for grandchild in child._children_map.values():
-            assert grandchild.parent is child
+        for grandchild in grandchildren[i]:
+            assert get_context_path(grandchild)[-2] is child
+            assert grandchild.task_id in child._children_ids
             assert len(get_context_path(grandchild)) == 3
-            assert len(grandchild._children_map) == 0
+            assert len(grandchild._children_ids) == 0
 
-    # all _children_map lengths should match the max_subtasks attribute.
-    for node in root:
-        assert len(node._children_map) == node.max_subtasks
+    all_nodes = (
+        [root]
+        + children
+        + [gchild for gchild_sublist in grandchildren for gchild in gchild_sublist]
+    )
 
-    # 1 root + 1 * 3 children + 1 * 3 * 5 grandchildren
-    expected_n_nodes = np.sum(np.cumprod([1, 3, 5]))
-    actual_n_nodes = sum(1 for _ in root)
-    assert actual_n_nodes == expected_n_nodes
+    # all _children_ids lengths should match the max_subtasks attribute.
+    for node in all_nodes:
+        assert len(node._children_ids) == node.max_subtasks
 
     # None of the nodes should have been merged with another node
-    assert all(node.source_estimator_name is None for node in root)
-    assert all(node.source_task_name is None for node in root)
+    assert all(node.source_estimator_name is None for node in all_nodes)
+    assert all(node.source_task_name is None for node in all_nodes)
 
 
 def test_add_child():
@@ -177,7 +182,7 @@ def test_add_child():
 
     root._add_child(first_child)
     assert root.max_subtasks == 2
-    assert len(root._children_map) == 1
+    assert len(root._children_ids) == 1
     assert first_child.task_id == 0
 
     # root already has a child with id 0
@@ -189,7 +194,7 @@ def test_add_child():
 
     second_child.task_id = 1
     root._add_child(second_child)
-    assert len(root._children_map) == 2
+    assert len(root._children_ids) == 2
 
     # root can have at most 2 children
     third_child = _make_callback_ctx(estimator, task_name="child task", task_id=2)
@@ -202,24 +207,24 @@ def test_merge_with():
     """Sanity check for the `_merge_with` method."""
     estimator = MaxIterEstimator()
     meta_estimator = MetaEstimator(estimator)
-    outer_root = _make_callback_ctx(meta_estimator, max_subtasks=None)
+    outer_root = _make_callback_ctx(
+        meta_estimator, max_subtasks=None, sequential_subtasks=False
+    )
 
     # Add a child task within the same estimator
     outer_child = outer_root.subcontext(
-        task_name="child", max_subtasks=0, sequential_subtasks=True
+        task_name="child", task_id="outer_child", max_subtasks=0
     )
 
     # The root task of the inner estimator is merged with (and effectively replaces)
     # a leaf of the outer estimator because they correspond to the same formal task.
     inner_root = _make_callback_ctx(
-        estimator, max_subtasks=2, sequential_subtasks=False
+        estimator, max_subtasks=2, sequential_subtasks=False, task_id="inner_root"
     )
     inner_root._merge_with(outer_child)
 
     assert inner_root.parent is outer_root
-    assert inner_root.task_id == outer_child.task_id
-    assert outer_child not in outer_root._children_map.values()
-    assert inner_root in outer_root._children_map.values()
+    assert inner_root.task_id == outer_child.task_id == "outer_child"
 
     # info concerning subtasks of the context are not inherited from other context
     assert inner_root.max_subtasks == 2
