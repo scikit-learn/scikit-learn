@@ -1347,7 +1347,7 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
     (a subset of the classes in the full training set)
     and `n_classes` is the number of classes in the full training set.
     """
-    xp, _ = get_namespace(predictions, classes)
+    xp, _, device = get_namespace_and_device(predictions)
     classes_length = classes.shape[0]
     if n_classes != classes_length:
         recommendation = (
@@ -1398,7 +1398,10 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
             (_num_samples(predictions), n_classes),
             default_values[method],
             dtype=predictions.dtype,
+            device=device,
         )
+        # `classes` is a fitted attribute and so a NumPy array.
+        classes = move_to(classes, xp=xp, device=device)
         predictions_for_all_classes[:, classes] = predictions
         predictions = predictions_for_all_classes
     return predictions
