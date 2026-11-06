@@ -34,10 +34,10 @@ We adopted the following release schedule:
 
 .. rubric:: Permissions
 
-- The release manager must be a **maintainer** of the `scikit-learn/scikit-learn-release
-  <https://github.com/scikit-learn/scikit-learn-release>`_ repository, to be
-  able to publish on `pypi.org` and `test.pypi.org` (via a manual trigger of a
-  dedicated Github Actions workflow).
+- The release manager must be a **release team** member, i.e. a **maintainer**
+  of the `scikit-learn/scikit-learn-release <https://github.com/scikit-learn/scikit-learn-release>`_
+  repository, to be able to publish on `pypi.org` and `test.pypi.org` (via a manual trigger
+  of a dedicated Github Actions workflow).
 
 - The release manager must be a **maintainer** of the
   https://github.com/conda-forge/scikit-learn-feedstock repository to be able to publish
@@ -244,10 +244,6 @@ Reference Steps
         because we want to keep the history in the `{{ version_short }}.X` branch close
         to the history of the main branch which will help for future bug fix releases.
 
-        In addition if on merging, the last commit, containing the `[cd build]` marker,
-        is empty, the CD jobs won't be triggered. In this case, you can directly push
-        a commit with the marker in the `{{ version_short }}.X` branch to trigger them.
-
     - Trigger manually the `publish.yml` workflow in scikit-learn-release using
       `{{ version_short }}` in the "scikit-learn maintenance branch" input
       field:
@@ -255,8 +251,9 @@ Reference Steps
 
     - The `publish.yml` workflow will first build the wheel, then ask for
       approval from a release team member to upload it to `testPyPI` (through
-      "Required reviewers" GitHub feature). As a sanity check you can install
-      the wheel and run the tests locally.
+      the "Required reviewers" GitHub feature). As a sanity check, once
+      uploaded to `testPyPI`, you can install the wheel and run the tests
+      locally.
 
     - If the steps above went fine, proceed **with caution** to create a new tag for the
       release. This should be done only when you are almost certain that the release is
@@ -284,7 +281,8 @@ Reference Steps
       release.
       {% endif %}
 
-    - A release team member needs to authorize the upload to `PyPI` https://pypi.org/.
+    - In the same `publish.yml` workflow run, a release team member can
+      authorize the upload to `PyPI` https://pypi.org/.
 
       **Alternatively**, it is possible to collect locally the generated binary wheel
       packages and source tarball and upload them all to PyPI.
