@@ -2474,7 +2474,7 @@ def test_ohe_unknown_warning_mixed_infrequent_columns(handle_unknown):
 def test_ordinal_encoder_frequency_order_and_numeric():
     """Most frequent -> 0; works for numeric dtypes (not only object)."""
     X = np.array([[2], [1], [1], [1], [3], [3]], dtype=np.int64)
-    enc = OrdinalEncoder(categories="frequency").fit(X)
+    enc = OrdinalEncoder(categories="decreasing_frequency").fit(X)
     # frequencies: 1:3, 3:2, 2:1  -> codes 0, 1, 2
     assert_array_equal(enc.categories_[0], [1, 3, 2])
     assert enc.categories_[0].dtype == np.int64
@@ -2486,7 +2486,9 @@ def test_ordinal_encoder_frequency_numeric_unknown_and_nan():
     """Unknown and missing numeric values are handled with frequency order."""
     X = np.array([[2.0], [1.0], [1.0], [np.nan], [3.0], [3.0], [3.0]])
     enc = OrdinalEncoder(
-        categories="frequency", handle_unknown="use_encoded_value", unknown_value=-1
+        categories="decreasing_frequency",
+        handle_unknown="use_encoded_value",
+        unknown_value=-1,
     ).fit(X)
     assert_array_equal(enc.categories_[0][:-1], [3.0, 1.0, 2.0])
     assert np.isnan(enc.categories_[0][-1])
@@ -2499,7 +2501,9 @@ def test_ordinal_encoder_frequency_numeric_unknown_and_nan():
 def test_ordinal_encoder_frequency_missing_last():
     """Missing values stay last and map to encoded_missing_value."""
     X = np.array([["b"], ["a"], ["a"], ["a"], [np.nan], [np.nan]], dtype=object)
-    enc = OrdinalEncoder(categories="frequency", encoded_missing_value=-1).fit(X)
+    enc = OrdinalEncoder(
+        categories="decreasing_frequency", encoded_missing_value=-1
+    ).fit(X)
     assert_array_equal(enc.categories_[0][:-1], ["a", "b"])
     assert np.isnan(enc.categories_[0][-1])
     assert_array_equal(enc.transform([["a"], ["b"], [np.nan]]), [[0], [1], [-1]])
@@ -2509,7 +2513,7 @@ def test_ordinal_encoder_frequency_infrequent_counts_aligned():
     """Infrequent grouping must use counts aligned to frequency-ordered categories_."""
     # a:5, b:3, c:1, d:1  -> categories_: [a, b, c, d]
     X = np.array([["a"] * 5 + ["b"] * 3 + ["c"] + ["d"]], dtype=object).T
-    enc = OrdinalEncoder(categories="frequency", max_categories=3).fit(X)
+    enc = OrdinalEncoder(categories="decreasing_frequency", max_categories=3).fit(X)
     assert_array_equal(enc.categories_[0], ["a", "b", "c", "d"])
     # keep 2 frequent + 1 infrequent bucket: a=0, b=1, {c,d}=2
     assert_array_equal(
@@ -2524,8 +2528,81 @@ def test_ordinal_encoder_frequency_ties_lexicographic():
     counts = np.array([4, 3, 3, 2, 2, 1, 1, 1, 1, 4, 3, 4, 3, 3, 4, 3, 3, 3, 3, 4])
     labels = np.array([chr(ord("a") + i) for i in range(20)])
     X = np.repeat(labels, counts).astype(object).reshape(-1, 1)
-    enc = OrdinalEncoder(categories="frequency").fit(X)
+    enc = OrdinalEncoder(categories="decreasing_frequency").fit(X)
     expected = labels[np.lexsort((labels, -counts))]
     assert_array_equal(enc.categories_[0], expected)
     # five cats tied at max count 4; lex tie-break => a, j, l, o, t
     assert_array_equal(enc.categories_[0][:5], ["a", "j", "l", "o", "t"])
+
+
+def test_ordinal_encoder_frequency_shuffle():
+    """Checking if shuffle at fit will introduce problems"""
+    X = np.array([["b"], ["a"], ["a"], ["a"], ["c"], ["c"]], dtype=object)
+    enc = OrdinalEncoder(
+        categories="decreasing_frequency", encoded_missing_value=-1
+    ).fit(X)
+    assert_array_equal(enc.categories_[0], ["a", "c", "b"])
+    assert_array_equal(enc.transform([["a"], ["c"], ["b"]]), [[0], [1], [2]])
+    X = np.array([["b"], ["a"], ["a"], ["a"], ["c"], ["c"]], dtype=object)
+    np.random.shuffle(X)
+    enc = OrdinalEncoder(
+        categories="decreasing_frequency", encoded_missing_value=-1
+    ).fit(X)
+    assert_array_equal(enc.categories_[0], ["a", "c", "b"])
+    assert_array_equal(enc.transform([["a"], ["c"], ["b"]]), [[0], [1], [2]])
+
+
+def test_ordinal_encoder_frequency_two_fit():
+    """Check if two fits will break things"""
+    X_1 = np.array([["b"], ["a"], ["a"], ["a"], ["c"], ["c"]], dtype=object)
+    X_2 = np.array([["a"], ["b"], ["b"], ["a"], ["b"], ["c"]], dtype=object)
+    enc = (
+        OrdinalEncoder(categories="decreasing_frequency", encoded_missing_value=-1)
+        .fit(X_1)
+        .fit(X_2)
+    )
+    assert_array_equal(enc.categories_[0], ["b", "a", "c"])
+    assert_array_equal(enc.transform([["a"], ["c"], ["b"]]), [[1], [2], [0]])
+
+
+def test_ordinal_encoder_frequency_min_freq():
+    """Check grouping with min frequency"""
+    X = np.array([["b"], ["a"], ["a"], ["a"], ["c"], ["c"]], dtype=object)
+    enc = OrdinalEncoder(
+        categories="decreasing_frequency", min_frequency=1, encoded_missing_value=-1
+    ).fit(X)
+    assert_array_equal(enc.categories_[0], ["a", "c", "b"])
+    assert_array_equal(enc.transform([["a"], ["c"], ["b"]]), [[0], [1], [2]])
+
+
+def test_ordinal_encoder_frequency_unseen():
+    """Check grouping with unseen values and handle_unknown=error"""
+    X = np.array([["b"], ["a"], ["a"], ["a"], ["c"], ["c"]], dtype=object)
+    enc = OrdinalEncoder(
+        categories="decreasing_frequency",
+        handle_unknown="error",
+        encoded_missing_value=-1,
+    ).fit(X)
+    assert_array_equal(enc.categories_[0], ["a", "c", "b"])
+    assert_array_equal(enc.transform([["a"], ["c"], ["b"]]), [[0], [1], [2]])
+    enc.transform([["a"], ["c"], ["b"], ["un"]])
+
+
+def test_ordinal_encoder_frequency_dtype_U3():
+    """Check handling of dtype str <U3"""
+    X = np.array([["b"], ["a"], ["a"], ["a"], ["c"], ["c"]], dtype="<U3")
+    enc = OrdinalEncoder(
+        categories="decreasing_frequency", encoded_missing_value=-1
+    ).fit(X)
+    assert_array_equal(enc.categories_[0], ["a", "c", "b"])
+    assert_array_equal(enc.transform([["a"], ["c"], ["b"]]), [[0], [1], [2]])
+
+
+def test_ordinal_encoder_frequency_max_categories():
+    """Check handling of max categories"""
+    X = np.array([["b"], ["a"], ["a"], ["a"], ["c"], ["c"]], dtype=object)
+    enc = OrdinalEncoder(
+        categories="decreasing_frequency", max_categories=2, encoded_missing_value=-1
+    ).fit(X)
+    assert_array_equal(enc.categories_[0], ["a", "c", "b"])
+    assert_array_equal(enc.transform([["a"], ["c"], ["b"]]), [[0], [1], [1]])

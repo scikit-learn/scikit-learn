@@ -89,7 +89,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         )
         self.n_features_in_ = n_features
 
-        if self.categories != "auto" and self.categories != "frequency":
+        if self.categories != "auto" and self.categories != "decreasing_frequency":
             if len(self.categories) != n_features:
                 raise ValueError(
                     "Shape mismatch: if categories is an array,"
@@ -97,6 +97,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 )
 
         self.categories_ = []
+        self.frequency_map = {}
         category_counts = []
         compute_counts = return_counts or self._infrequent_enabled
 
@@ -110,7 +111,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     category_counts.append(counts)
                 else:
                     cats = result
-            elif self.categories == "frequency":
+            elif self.categories == "decreasing_frequency":
                 cats, counts = _unique(Xi, return_counts=True)
                 # `_unique` returns sorted categories with missing values
                 # (nan and/or None) last. Order by decreasing count; the
@@ -122,9 +123,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     or is_scalar_nan(cats[n_non_missing - 1])
                 ):
                     n_non_missing -= 1
-                order = np.argsort(-counts[:n_non_missing], kind="stable")
+                order = np.lexsort((cats, -counts[:n_non_missing]))
+                # order =  np.argsort(-counts[:n_non_missing], kind="stable")
                 order = np.concatenate([order, np.arange(n_non_missing, len(cats))])
                 cats = cats[order]
+                for v, k in zip(cats, order):
+                    self.frequency_map[k] = v
                 if compute_counts:
                     category_counts.append(counts[order])
             else:
@@ -227,7 +231,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         columns_with_unknown = []
         for i in range(n_features):
             Xi = X_list[i]
-            if self.categories == "frequency" and np.issubdtype(Xi.dtype, np.number):
+            if self.categories == "decreasing_frequency" and np.issubdtype(
+                Xi.dtype, np.number
+            ):
                 sorter = np.argsort(self.categories_[i], kind="stable")
                 codes = _encode(Xi, uniques=self.categories_[i][sorter])
                 known = codes != -1
@@ -248,6 +254,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     columns_with_unknown.append(i)
 
         if columns_with_unknown:
+            # Whether an unknown category is encoded as the infrequent category
+            # is decided per column by `_map_infrequent_categories` below: a
+            # column only has an infrequent category if its
+            # `_infrequent_indices` entry is not None. Unknown categories in
+            # columns where it is None are encoded as all zeros, as documented
+            # for `handle_unknown`.
             if handle_unknown == "infrequent_if_exist" and self._infrequent_enabled:
                 infrequent_columns = [
                     i
@@ -1299,6 +1311,12 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     categories : 'auto' or a list of array-like, default='auto'
         Categories (unique values) per feature:
 
+        - 'decreasing_frequency' : Determines the categories based on their
+          frequency in the training data in incremental order (the most encountered
+           value is 0 ,the second one is 1),time breaks are resolved by using
+           the values themselves with np.lexsort(vals,counts). If max_categories
+           is enabled it will drop the categories staring from the least encountered
+           till the criterion is met.
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
@@ -1459,7 +1477,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
 
     _parameter_constraints: dict = {
-        "categories": [StrOptions({"auto", "frequency"}), list],
+        "categories": [StrOptions({"auto", "decreasing_frequency"}), list],
         "dtype": "no_validation",  # validation delegated to numpy
         "encoded_missing_value": [Integral, type(np.nan)],
         "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
