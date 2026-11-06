@@ -217,12 +217,12 @@ plt.show()
 # problem and the cardinality of the ground truth classes. This is why the
 # curve goes off the chart.
 #
-# Only adjusted measures can hence be safely used as a consensus index to
-# evaluate the average stability of clustering algorithms for a given value of k
-# on various overlapping sub-samples of the dataset.
+# Only adjusted measures can hence be safely used to evaluate the average
+# stability of clustering algorithms for a given value of k on various
+# overlapping sub-samples of the dataset.
 #
-# Non-adjusted clustering evaluation metric can therefore be misleading as they
-# output large values for fine-grained labelings, one could be lead to think
+# Non-adjusted clustering evaluation metrics can therefore be misleading as they
+# output large values for fine-grained labelings, which could lead one to think
 # that the labeling has captured meaningful groups while they can be totally
 # random. In particular, such non-adjusted metrics should not be used to compare
 # the results of different clustering algorithms that output a different number

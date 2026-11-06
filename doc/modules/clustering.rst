@@ -1278,6 +1278,19 @@ truth set of classes or satisfying some assumption such that members
 belong to the same class are more similar than members of different
 classes according to some similarity metric.
 
+When ground-truth labels are not available, clustering models can still be
+compared by measuring how consistently they produce similar partitions under
+perturbations of the data. A common approach is to fit a candidate model on
+several overlapping subsamples and compare the resulting label assignments
+with an adjusted clustering metric such as
+:func:`adjusted_rand_score` or :func:`adjusted_mutual_info_score`.
+
+The example
+:ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`
+illustrates why adjusted metrics are appropriate for this use: unlike
+unadjusted metrics, they remain close to zero for random label assignments and
+are therefore comparable across different numbers of clusters.
+
 .. currentmodule:: sklearn.metrics
 
 .. _rand_score:
@@ -1376,6 +1389,10 @@ will not necessarily be close to zero::
     clusterings without any ground truth, for instance to measure how much
     two algorithms agree, or how stable one algorithm is across random
     initializations or random subsamples of the data.
+
+    In particular, the adjusted Rand index can be useful in a purely
+    unsupervised setting as a building block for a consensus index. See
+    :ref:`consensus_clustering` for an example workflow.
 
   - The **unadjusted Rand index is often close to 1.0** even if the clusterings
     themselves differ significantly. This can be understood when interpreting
@@ -1512,6 +1529,10 @@ Bad (e.g. independent labelings) have non-positive scores::
     ground truth, for instance to measure how much two algorithms agree, or
     how stable one algorithm is across random initializations or random
     subsamples of the data.
+
+    In particular, adjusted MI-based measures can be useful in a purely
+    unsupervised setting as a building block for a consensus index. See
+    :ref:`consensus_clustering` for an example workflow.
 
   - NMI and MI are not adjusted against chance.
 
