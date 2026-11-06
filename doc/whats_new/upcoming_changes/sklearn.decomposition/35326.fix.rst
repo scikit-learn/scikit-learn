@@ -1,0 +1,4 @@
+- :class:`decomposition.KernelPCA`'s :meth:`~sklearn.decomposition.KernelPCA.inverse_transform`
+  now raises :exc:`~sklearn.exceptions.NotFittedError` when the estimator is not
+  fitted, instead of a bare :exc:`AttributeError`.
+  By :user:`lau0708`.
