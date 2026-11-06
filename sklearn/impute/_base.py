@@ -725,14 +725,26 @@ class SimpleImputer(_BaseImputer):
         X_original[:, self.indicator_.features_] = missing_mask
         full_mask = X_original.astype(bool)
 
-        imputed_idx, original_idx = 0, 0
-        while imputed_idx < len(array_imputed.T):
-            if not np.all(X_original[:, original_idx]):
-                X_original[:, original_idx] = array_imputed.T[imputed_idx]
-                imputed_idx += 1
-                original_idx += 1
-            else:
-                original_idx += 1
+        # The imputed columns correspond, in order, to the features that
+        # were not dropped at fit time, i.e. the features with a valid
+        # (non-nan) statistic. Map them back to their original positions
+        # instead of inferring the mapping from the missingness of the
+        # current batch: a feature that was empty at fit time is dropped
+        # by `transform` even when it has observed values in the batch
+        # being inverted, and a feature that is entirely missing in the
+        # current batch still has an imputed column.
+        if self.keep_empty_features:
+            valid_features = np.arange(n_features_original)
+        else:
+            valid_features = np.flatnonzero(
+                np.logical_not(_get_mask(self.statistics_, np.nan))
+            )
+        X_original[:, valid_features] = array_imputed
+
+        # Features dropped at fit time are absent from the imputed data;
+        # fill them with the missing value.
+        dropped_features = np.setdiff1d(np.arange(n_features_original), valid_features)
+        X_original[:, dropped_features] = self.missing_values
 
         X_original[full_mask] = self.missing_values
         return X_original

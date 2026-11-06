@@ -1487,6 +1487,69 @@ def test_simple_imputation_inverse_transform(missing_value):
 
 
 @pytest.mark.parametrize("missing_value", [-1, np.nan])
+def test_simple_imputation_inverse_transform_empty_features(missing_value):
+    # Non-regression test for gh-27012: `inverse_transform` must not
+    # misalign columns when a feature was empty at fit time (and hence
+    # dropped by `transform`) but has observed values at transform time,
+    # or when a feature is entirely missing in the batch being inverted.
+    X_1 = np.array(
+        [
+            [missing_value, 2.0, 3.0],
+            [missing_value, 2.0, 3.0],
+        ]
+    )
+    X_2 = np.array(
+        [
+            [1.0, 2.0, 3.0],
+            [1.0, 2.0, 3.0],
+        ]
+    )
+
+    imputer = SimpleImputer(
+        missing_values=missing_value, strategy="mean", add_indicator=True
+    )
+    with pytest.warns(UserWarning, match="Skipping features without any"):
+        X_1_trans = imputer.fit_transform(X_1)
+    X_1_inv_trans = imputer.inverse_transform(X_1_trans)
+    assert_array_equal(X_1_inv_trans, X_1)
+
+    # The feature that was empty at fit time is dropped by `transform`;
+    # `inverse_transform` restores it with the missing value.
+    with pytest.warns(UserWarning, match="Skipping features without any"):
+        X_2_trans = imputer.transform(X_2)
+    X_2_inv_trans = imputer.inverse_transform(X_2_trans)
+    X_2_expected = np.array(
+        [
+            [missing_value, 2.0, 3.0],
+            [missing_value, 2.0, 3.0],
+        ]
+    )
+    assert_array_equal(X_2_inv_trans, X_2_expected)
+
+    # A feature that is entirely missing in the batch being inverted still
+    # has an imputed column: it must be restored, not shift the remaining
+    # columns.
+    X_3 = np.array(
+        [
+            [1.0, 2.0, 3.0],
+            [missing_value, 2.0, 3.0],
+        ]
+    )
+    X_4 = np.array(
+        [
+            [missing_value, 5.0, 6.0],
+            [missing_value, 5.0, 6.0],
+        ]
+    )
+    imputer = SimpleImputer(
+        missing_values=missing_value, strategy="mean", add_indicator=True
+    )
+    imputer.fit(X_3)
+    X_4_inv_trans = imputer.inverse_transform(imputer.transform(X_4))
+    assert_array_equal(X_4_inv_trans, X_4)
+
+
+@pytest.mark.parametrize("missing_value", [-1, np.nan])
 def test_simple_imputation_inverse_transform_exceptions(missing_value):
     X_1 = np.array(
         [
