@@ -591,7 +591,7 @@ defined as
 
 .. math::
 
-  \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
+  \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=1}^{n_\text{samples}} 1(\hat{y}_i = y_i)
 
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_.
@@ -636,7 +636,7 @@ corresponding true value, then the fraction of correct predictions over
 
 .. math::
 
-   \texttt{top-k accuracy}(y, \hat{f}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=1}^{k} 1(\hat{f}_{i,j} = y_i)
+   \texttt{top-k accuracy}(y, \hat{f}) = \frac{1}{n_\text{samples}} \sum_{i=1}^{n_\text{samples}} \sum_{j=1}^{k} 1(\hat{f}_{i,j} = y_i)
 
 where :math:`k` is the number of guesses allowed and :math:`1(x)` is the
 `indicator function <https://en.wikipedia.org/wiki/Indicator_function>`_.
@@ -903,7 +903,7 @@ as:
 
 .. math::
 
-   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{samples} * n_\text{labels}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_{i,j} \not= y_{i,j})
+   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{samples} * n_\text{labels}} \sum_{i=1}^{n_\text{samples}} \sum_{j=1}^{n_\text{labels}} 1(\hat{y}_{i,j} \not= y_{i,j})
 
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_.
@@ -1280,7 +1280,7 @@ output by the `decision_function` method), then the hinge loss is defined as:
 
 .. math::
 
-  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 - w_i y_i, 0\right\}
+  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}} \sum_{i=1}^{n_\text{samples}} \max\left\{1 - w_i y_i, 0\right\}
 
 If there are more than two labels, :func:`hinge_loss` uses a multiclass variant
 due to Crammer & Singer.
@@ -1298,7 +1298,7 @@ is defined by:
 .. math::
 
   L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}}
-  \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 + \hat{w}_{i, y_i}
+  \sum_{i=1}^{n_\text{samples}} \max\left\{1 + \hat{w}_{i, y_i}
   - w_{i, y_i}, 0\right\}
 
 Here is a small example demonstrating the use of the :func:`hinge_loss` function
@@ -1363,7 +1363,7 @@ Then the log loss of the whole set is
 
 .. math::
 
-    L_{\log}(Y, \hat{P}) = -\log \operatorname{Pr}(Y|\hat{P}) = - \frac{1}{N} \sum_{i=0}^{N-1} \sum_{k=0}^{K-1} y_{i,k} \log \hat{p}_{i,k}
+    L_{\log}(Y, \hat{P}) = -\log \operatorname{Pr}(Y|\hat{P}) = - \frac{1}{N} \sum_{i=1}^{N} \sum_{k=1}^{K} y_{i,k} \log \hat{p}_{i,k}
 
 To see how this generalizes the binary log loss given above,
 note that in the binary case,
@@ -1888,7 +1888,7 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
 .. math::
 
-   L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i \not= y_i)
+   L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=1}^{n_\text{samples}} 1(\hat{y}_i \not= y_i)
 
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_. The zero-one
@@ -1941,7 +1941,7 @@ Following the original definition by [Brier1950]_, the Brier score is given by:
 
 .. math::
 
-  BS(Y, \hat{P}) = \frac{1}{N}\sum_{i=0}^{N-1}\sum_{k=0}^{K-1}(y_{i,k} - \hat{p}_{i,k})^{2}
+  BS(Y, \hat{P}) = \frac{1}{N}\sum_{i=1}^{N}\sum_{k=1}^{K}(y_{i,k} - \hat{p}_{i,k})^{2}
 
 The Brier score lies in the interval :math:`[0, 2]` and the lower the value the
 better the probability estimates are (the mean squared difference is smaller).
@@ -1956,7 +1956,7 @@ for the positive class, the Brier score is then equal to:
 
 .. math::
 
-   BS(y, \hat{p}) = \frac{1}{N} \sum_{i=0}^{N - 1}(y_i - \hat{p}_i)^2
+   BS(y, \hat{p}) = \frac{1}{N} \sum_{i=1}^{N}(y_i - \hat{p}_i)^2
 
 The :func:`brier_score_loss` function computes the Brier score given the
 ground-truth labels and predicted probabilities, as returned by an estimator's
@@ -2280,7 +2280,7 @@ the coverage is defined as
 
 .. math::
   coverage(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \max_{j:y_{ij} = 1} \text{rank}_{ij}
+    \sum_{i=1}^{n_{\text{samples}}} \max_{j:y_{ij} = 1} \text{rank}_{ij}
 
 with :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`.
 Given the rank definition, ties in ``y_scores`` are broken by giving the
@@ -2322,7 +2322,7 @@ the average precision is defined as
 
 .. math::
   LRAP(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0}
+    \sum_{i=1}^{n_{\text{samples}}} \frac{1}{||y_i||_0}
     \sum_{j:y_{ij} = 1} \frac{|\mathcal{L}_{ij}|}{\text{rank}_{ij}}
 
 
@@ -2361,7 +2361,7 @@ the ranking loss is defined as
 
 .. math::
   ranking\_loss(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0(n_\text{labels} - ||y_i||_0)}
+    \sum_{i=1}^{n_{\text{samples}}} \frac{1}{||y_i||_0(n_\text{labels} - ||y_i||_0)}
     \left|\left\{(k, l): \hat{f}_{ik} \leq \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
 
 where :math:`|\cdot|` computes the cardinality of the set (i.e., the number of
@@ -2581,7 +2581,7 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 
 .. math::
 
-  \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
+  \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=1}^{n_{\text{samples}}} \left| y_i - \hat{y}_i \right|.
 
 Here is a small example of usage of the :func:`mean_absolute_error` function::
 
@@ -2615,7 +2615,7 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 
 .. math::
 
-  \text{MSE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (y_i - \hat{y}_i)^2.
+  \text{MSE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=1}^{n_\text{samples}} (y_i - \hat{y}_i)^2.
 
 Here is a small example of usage of the :func:`mean_squared_error`
 function::
@@ -2655,7 +2655,7 @@ defined as
 
 .. math::
 
-  \text{MSLE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (\log_e (1 + y_i) - \log_e (1 + \hat{y}_i) )^2.
+  \text{MSLE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=1}^{n_\text{samples}} (\log_e (1 + y_i) - \log_e (1 + \hat{y}_i) )^2.
 
 Where :math:`\log_e (x)` means the natural logarithm of :math:`x`. This metric
 is best to use when targets having exponential growth, such as population
@@ -2694,7 +2694,7 @@ error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
 
 .. math::
 
-  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{\max(\epsilon, \left| y_i \right|)}
+  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=1}^{n_{\text{samples}}} \frac{{}\left| y_i - \hat{y}_i \right|}{\max(\epsilon, \left| y_i \right|)}
 
 where :math:`\epsilon` is an arbitrary small yet strictly positive number to
 avoid undefined results when y is zero.
@@ -2881,7 +2881,7 @@ is defined as
 .. math::
 
   \text{D}(y, \hat{y}) = \frac{1}{n_\text{samples}}
-  \sum_{i=0}^{n_\text{samples} - 1}
+  \sum_{i=1}^{n_\text{samples}}
   \begin{cases}
   (y_i-\hat{y}_i)^2, & \text{for }p=0\text{ (Normal)}\\
   2(y_i \log(y_i/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\text{ (Poisson)}\\
@@ -2939,7 +2939,7 @@ performance of `quantile regression
 
 .. math::
 
-  \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
+  \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=1}^{n_{\text{samples}}}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
 
 The value of pinball loss is equivalent to half of :func:`mean_absolute_error` when the quantile
 parameter ``alpha`` is set to 0.5.
