@@ -213,6 +213,41 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       |   |   |--- class: 2
       <BLANKLINE>
 
+  :func:`export_text`, :func:`export_graphviz`, and :func:`plot_tree`
+  show categorical splits using the original labels. Text reports list the
+  known categories on each branch and mark the branch taken by missing values
+  and unknown categories::
+
+      >>> import numpy as np
+      >>> X_cat = np.array([["blue"], ["green"], ["red"], ["blue"]], dtype=object)
+      >>> cat_tree = tree.DecisionTreeClassifier(
+      ...     categorical_features=[0], random_state=0
+      ... ).fit(X_cat, [0, 1, 0, 0])
+      >>> print(export_text(cat_tree, feature_names=["color"]))
+      |--- color in {'blue', 'red'} or missing/unknown
+      |   |--- class: 0
+      |--- color in {'green'}
+      |   |--- class: 1
+      <BLANKLINE>
+
+  Graphviz and plotted nodes show the left-category membership condition and
+  a separate ``missing/unknown: left`` or ``missing/unknown: right`` annotation.
+  Category labels are not rounded. Large categorical splits can produce long
+  labels, including when the tree uses random categorical splits.
+
+  For a nested dictionary representation, use :func:`export_dict`. Numerical
+  thresholds retain full precision; JSON serialization is handled by Python::
+
+      >>> import json
+      >>> from sklearn.tree import DecisionTreeClassifier, export_dict
+      >>> model = DecisionTreeClassifier().fit([[0], [1]], [0, 1])
+      >>> exported = export_dict(model)
+      >>> json.loads(json.dumps(exported, allow_nan=False)) == exported
+      True
+
+  See :func:`export_dict` for the schema and traversal requirements. The output
+  does not replace estimator input validation or provide complete persistence.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
