@@ -1,0 +1,7 @@
+extends: existence
+message: "Hyphenate '%s' (for example 'non-zero', 'non-linear')."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-terminology
+level: warning
+ignorecase: true
+tokens:
+  - non (zero|linear|negative|euclidean|parametric|flat|convex|empty|overlapping|missing|finite|uniform|default)

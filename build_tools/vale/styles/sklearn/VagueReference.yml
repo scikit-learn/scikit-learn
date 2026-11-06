@@ -1,0 +1,8 @@
+extends: existence
+message: "'%s' assumes the reader saw earlier text. Link to it with :ref: instead."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-concise
+level: suggestion
+ignorecase: true
+tokens:
+  - as (said|mentioned|explained|discussed|noted|seen|shown) (before|above|previously|earlier)
+  - (above|below)[- ]mentioned

@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""rst2html stand-in for Vale that understands enough Sphinx to keep prose.
+
+Plain docutils drops the content of unknown directives (``dropdown``,
+``currentmodule`` ...) and flags unknown roles, so Vale never sees that text.
+Here unknown directives become containers whose body is parsed as RST, and
+unknown roles become either inline literals (code-like, skipped by Vale) or
+plain text (``:term:``, ``:ref:``, ``:doc:`` whose text is prose).
+"""
+
+import re
+
+from docutils import nodes
+from docutils.core import publish_cmdline
+from docutils.parsers.rst import Directive, directives, roles, states
+from docutils.writers import _html_base, html4css1
+
+# Directive bodies that are code, data, or API stubs rather than prose.
+LITERAL_DIRECTIVES = {
+    "code-block",
+    "sourcecode",
+    "prompt",
+    "plot",
+    "testcode",
+    "testoutput",
+    "doctest",
+    "ipython",
+    "literalinclude",
+    "autosummary",
+    "autoclass",
+    "autofunction",
+    "automodule",
+    "autoexception",
+    "automethod",
+    "autoshortsummary",
+    "minigallery",
+    "image-sg",
+    "toctree",
+    "raw",
+    "currentmodule",
+    "highlight",
+    "include",
+    "only",
+    "graphviz",
+    "math",
+}
+TITLED_DIRECTIVES = {"dropdown", "tab-item", "topic", "rubric"}
+TEXT_ROLES = {"term", "ref", "doc", "download"}
+# Roles docutils knows but renders in ways that can crash or are not prose.
+LITERAL_ROLES = {"math"}
+TARGET = re.compile(r"^(.*?)\s*<[^>]*>$", re.S)
+
+
+class AnyOptions(dict):
+    def __contains__(self, key):
+        return True
+
+    def __missing__(self, key):
+        return directives.unchanged
+
+
+class Container(Directive):
+    has_content = True
+    optional_arguments = 10
+    final_argument_whitespace = True
+    option_spec = AnyOptions()
+
+    def run(self):
+        node = nodes.container()
+        if self.arguments and self.name in TITLED_DIRECTIVES:
+            node += nodes.paragraph(text=" ".join(self.arguments))
+        self.state.nested_parse(self.content, self.content_offset, node)
+        return [node]
+
+
+class Literal(Container):
+    def run(self):
+        return [nodes.literal_block(text="\n".join(self.content))]
+
+
+_directive = directives.directive
+_role = roles.role
+
+
+def directive(name, language_module, document):
+    if name.split(":")[-1] in LITERAL_DIRECTIVES:
+        return Literal, []
+    cls, _ = _directive(name, language_module, document)
+    return (cls or Container), []
+
+
+def role(role_name, language_module, lineno, reporter):
+    if role_name == "":  # default_role = "literal" in doc/conf.py
+        return roles._roles.get("literal") or roles._role_registry["literal"], []
+    fn, msgs = _role(role_name, language_module, lineno, reporter)
+    if fn is not None and role_name not in LITERAL_ROLES:
+        return fn, msgs
+
+    def generic(name, rawtext, text, lineno, inliner, options=None, content=None):
+        if role_name.split(":")[-1] in TEXT_ROLES:
+            m = TARGET.match(text)
+            return [nodes.Text(m.group(1) if m else text)], []
+        return [nodes.literal(rawtext, text)], []
+
+    return generic, []
+
+
+def skip(self, node):
+    raise nodes.SkipNode
+
+
+# The parser looks these up through the module attributes.
+states.directives.directive = directive
+states.roles.role = role
+# Citations and footnotes mostly reproduce paper titles, which the prose rules
+# should not touch.
+for translator in (_html_base.HTMLTranslator, html4css1.HTMLTranslator):
+    translator.visit_citation = translator.visit_footnote = skip
+
+if __name__ == "__main__":
+    publish_cmdline(writer_name="html")

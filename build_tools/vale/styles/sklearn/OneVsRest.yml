@@ -1,0 +1,11 @@
+extends: substitution
+message: "Use '%s' instead of '%s' (glossary term)."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-terminology
+level: warning
+ignorecase: true
+swap:
+  one[- ]v(s|ersus)\.?[- ](the[- ])?all: one-vs-rest
+  one[- ]against[- ]all: one-vs-rest
+  one versus (the )?rest: one-vs-rest
+  one vs (the )?rest: one-vs-rest
+  OVA: OvR

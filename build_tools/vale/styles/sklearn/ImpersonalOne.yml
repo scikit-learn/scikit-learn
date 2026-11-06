@@ -1,0 +1,15 @@
+extends: substitution
+message: "Address the reader as 'you': use '%s' instead of '%s'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-reader
+level: suggestion
+ignorecase: true
+swap:
+  one can: you can
+  one could: you could
+  one may: you may
+  one might: you might
+  one should: you should
+  one must: you must
+  one needs to: you need to
+  one has to: you have to
+  one would: you would

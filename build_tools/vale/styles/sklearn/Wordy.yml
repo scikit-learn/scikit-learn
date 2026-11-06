@@ -1,0 +1,10 @@
+extends: existence
+message: "'%s' can often be shorter: 'you can', 'can', or 'we recommend'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-concise
+level: suggestion
+ignorecase: true
+tokens:
+  - it is (also )?possible to
+  - (is|are) able to
+  - it is (highly |strongly )?(recommended|advised|advisable) to
+  - one is advised to

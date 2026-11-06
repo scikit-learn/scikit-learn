@@ -1,0 +1,11 @@
+extends: existence
+message: "Malformed abbreviation '%s'. Write 'e.g.', 'i.e.', or 'etc.'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-abbreviations
+level: error
+nonword: true
+tokens:
+  - '\be\.g,'
+  - '\bi\.e,'
+  - '\b[Ee]g\.\s'
+  - '\b[Ii]e\.\s'
+  - '\betc\s'
