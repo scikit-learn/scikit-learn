@@ -254,14 +254,10 @@ Reference Steps
       field:
       https://github.com/scikit-learn/scikit-learn-release/actions/workflows/publish.yml
 
-    - You should then be able to upload the generated
-      artifacts (`.tar.gz` and `.whl` files) to https://test.pypi.org/ using the "Run
-      workflow" form for the `PyPI publishing workflow
-      <https://github.com/scikit-learn/scikit-learn/actions/workflows/publish_pypi.yml>`_.
-
-      The `publish.yml` workflow will first build the wheel, then ask for
-      approval from a release team member to upload it to `testPyPI`. As a
-      sanity check you can install the wheel and run the tests locally.
+    - The `publish.yml` workflow will first build the wheel, then ask for
+      approval from a release team member to upload it to `testPyPI` (through
+      "Required reviewers" GitHub feature). As a sanity check you can install
+      the wheel and run the tests locally.
 
     - If the steps above went fine, proceed **with caution** to create a new tag for the
       release. This should be done only when you are almost certain that the release is
