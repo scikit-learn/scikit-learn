@@ -253,10 +253,14 @@ def _update_terminal_regions(
 
 
 def set_huber_delta(loss, y_true, raw_prediction, sample_weight=None):
-    """Calculate and set self.closs.delta based on self.quantile."""
+    """Calculate and set loss.closs.delta based on loss.quantile."""
     abserr = np.abs(y_true - raw_prediction.squeeze())
-    # sample_weight is always an ndarray, never None.
-    delta = _weighted_percentile(abserr, sample_weight, 100 * loss.quantile)
+    # GradientBoostingRegressor always passes an ndarray, but
+    # HistGradientBoostingRegressor may pass None (no sample weights).
+    if sample_weight is None:
+        delta = np.percentile(abserr, 100 * loss.quantile)
+    else:
+        delta = _weighted_percentile(abserr, sample_weight, 100 * loss.quantile)
     loss.closs.delta = float(delta)
 
 
