@@ -35,8 +35,6 @@ class PartialDependenceDisplay:
     For an example on how to use this class, see the following example:
     :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence_visualization_api.py`.
 
-    .. versionadded:: 0.22
-
     Parameters
     ----------
     pd_results : list of Bunch
@@ -90,10 +88,6 @@ class PartialDependenceDisplay:
            dependencies and doing weighted averages requires using the slower
            `method='brute'`.
 
-        .. versionadded:: 0.24
-           Add `kind` parameter with `'average'`, `'individual'`, and `'both'`
-           options.
-
         .. versionadded:: 1.1
            Add the possibility to pass a list of string specifying `kind`
            for each plot.
@@ -107,13 +101,9 @@ class PartialDependenceDisplay:
         Note that the full dataset is still used to calculate partial
         dependence when `kind='both'`.
 
-        .. versionadded:: 0.24
-
     random_state : int, RandomState instance or None, default=None
         Controls the randomness of the selected samples when subsamples is not
         `None`. See :term:`Glossary <random_state>` for details.
-
-        .. versionadded:: 0.24
 
     is_categorical : list of (bool,) or list of (bool, bool), default=None
         Whether each target feature in `features` is categorical or not.
@@ -149,16 +139,12 @@ class PartialDependenceDisplay:
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a PDP plot.
 
-        .. versionadded:: 0.23
-
     deciles_hlines_ : ndarray of matplotlib LineCollection
         If `ax` is an axes or None, `vlines_[i, j]` is the line collection
         representing the y axis deciles of the i-th row and j-th column. If
         `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a 2-way plot.
-
-        .. versionadded:: 0.23
 
     contours_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `contours_[i, j]` is the partial dependence

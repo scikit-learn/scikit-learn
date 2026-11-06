@@ -57,19 +57,27 @@ jobs:
           fi
 
   build_wasm_wheel:
-    name: Build WASM wheel
+    name: Build WASM wheel (cp${{ matrix.python }})
     runs-on: ubuntu-latest
     needs: check_build_trigger
     if: needs.check_build_trigger.outputs.build
+    strategy:
+      fail-fast: false
+      matrix:
+        # TODO Add Python 3.15 when it is possible see
+        # https://github.com/scikit-learn/scikit-learn/pull/35259 for more
+        # context
+        python: ["313", "314"]
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084 # v3.4.1
+      - uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         env:
           CIBW_PLATFORM: pyodide
+          CIBW_BUILD: "cp${{ matrix.python }}-pyodide_wasm32"
           SKLEARN_SKIP_OPENMP_TEST: "true"
           SKLEARN_SKIP_NETWORK_TESTS: 1
           CIBW_TEST_REQUIRES: "pytest pandas"
@@ -80,7 +88,7 @@ jobs:
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v7
         with:
-          name: pyodide_wheel
+          name: pyodide_wheel_cp${{ matrix.python }}
           path: ./wheelhouse/*.whl
           if-no-files-found: error
 
@@ -101,7 +109,7 @@ jobs:
           merge-multiple: true
 
       - name: Push to Anaconda PyPI index
-        uses: scientific-python/upload-nightly-action@e76cfec8a4611fd02808a801b0ff5a7d7c1b2d99 # 0.6.4
+        uses: scientific-python/upload-nightly-action@5a74a2a4ec19d7ab8b5317c1cdd356c150d92cd0 # 0.6.6
         with:
           artifacts_path: wheelhouse/
           anaconda_nightly_upload_token: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}

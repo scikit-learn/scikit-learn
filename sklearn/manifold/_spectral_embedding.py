@@ -19,7 +19,7 @@ from sklearn.utils import check_array, check_random_state, check_symmetric
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
-from sklearn.utils.fixes import _sparse_eye_array, parse_version, sp_version
+from sklearn.utils.fixes import _sparse_eye_array
 from sklearn.utils.fixes import laplacian as csgraph_laplacian
 from sklearn.utils.validation import validate_data
 
@@ -84,15 +84,7 @@ def _graph_is_connected(graph):
         True means the graph is fully connected and False means not.
     """
     if sparse.issparse(graph):
-        # Before Scipy 1.11.3, `connected_components` only supports 32-bit indices.
-        # PR: https://github.com/scipy/scipy/pull/18913
-        # First integration in 1.11.3: https://github.com/scipy/scipy/pull/19279
-        # TODO(jjerphan): Once SciPy 1.11.3 is the minimum supported version, use
-        # `accept_large_sparse=True`.
-        accept_large_sparse = sp_version >= parse_version("1.11.3")
-        graph = check_array(
-            graph, accept_sparse=True, accept_large_sparse=accept_large_sparse
-        )
+        graph = check_array(graph, accept_sparse=True, accept_large_sparse=True)
         # sparse graph, find all the connected components
         n_connected_components, _ = connected_components(graph)
         return n_connected_components == 1
@@ -369,9 +361,10 @@ def _spectral_embedding(
             tol = 0 if eigen_tol == "auto" else eigen_tol
 
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
-            laplacian = check_array(
-                laplacian, accept_sparse="csr", accept_large_sparse=False
-            )
+            # `eigsh` works fine with 64-bit indices, so don't pass
+            # `accept_large_sparse=False`: sparse arrays (unlike sparse matrices)
+            # never downcast indices to 32-bit, even when the content allows it.
+            laplacian = check_array(laplacian, accept_sparse="csr")
             _, diffusion_map = eigsh(
                 laplacian, k=n_components, sigma=-1e-5, which="LM", tol=tol, v0=v0
             )
@@ -570,8 +563,6 @@ class SpectralEmbedding(BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

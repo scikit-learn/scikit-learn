@@ -13,7 +13,7 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.compose import (
     ColumnTransformer,
     make_column_selector,
@@ -40,7 +40,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_eye_array, parse_version
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_eye_array
 
 
 class Trans(TransformerMixin, BaseEstimator):
@@ -1279,6 +1279,7 @@ def test_column_transformer_no_estimators():
 )
 @pytest.mark.parametrize("method", ["fit", "fit_transform"])
 def test_column_transformer_verbose(est, pattern, method, capsys):
+    est = clone(est)
     X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T
 
     func = getattr(est, method)
@@ -2661,10 +2662,6 @@ def test_column_transformer_column_renaming(dataframe_lib):
 # TODO: remove mark once loky bug is fixed:
 # https://github.com/joblib/loky/issues/458
 @pytest.mark.thread_unsafe
-@pytest.mark.skipif(
-    parse_version(joblib.__version__) < parse_version("1.3"),
-    reason="requires joblib >= 1.3",
-)
 def test_column_transformer_auto_memmap(global_random_seed):
     """Check that ColumnTransformer works in parallel with joblib's auto-memmapping.
 
@@ -2880,6 +2877,7 @@ def test_metadata_routing_with_remainder_no_error(remainder):
 
     # This can only be set here because metadata routing has to be enabled first.
     if isinstance(remainder, ConsumingTransformer):
+        remainder = clone(remainder)
         remainder.set_fit_request(sample_weight=True).set_transform_request(
             sample_weight=True
         )

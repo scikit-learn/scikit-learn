@@ -462,8 +462,6 @@ def ridge_regression(
         will have the same weight. If sample_weight is not None and
         solver='auto', the solver will be set to 'cholesky'.
 
-        .. versionadded:: 0.17
-
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
             'sag', 'saga', 'lbfgs'}, default='auto'
         Solver to use in the computational routines:
@@ -475,13 +473,16 @@ def ridge_regression(
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
-          obtain a closed-form solution via a Cholesky decomposition of
-          dot(X.T, X)
+          obtain a closed-form solution via a Cholesky decomposition. It solves
+          the primal problem involving `X.T @ X` when `n_samples >= n_features`,
+          and the dual problem involving `X @ X.T` otherwise.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
-          more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
+          as 'cholesky', without explicitly forming `X.T @ X` or `X @ X.T`.
+          As an iterative algorithm, this solver is more appropriate than
+          'cholesky' for large-scale data (possibility to set `tol` and
+          `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
@@ -502,11 +503,6 @@ def ridge_regression(
         All solvers except 'svd' support both dense and sparse data. However, only
         'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
         `fit_intercept` is True.
-
-        .. versionadded:: 0.17
-           Stochastic Average Gradient descent solver.
-        .. versionadded:: 0.19
-           SAGA solver.
 
     max_iter : int, default=None
         Maximum number of iterations for conjugate gradient solver.
@@ -538,20 +534,14 @@ def ridge_regression(
         If True, the method also returns `n_iter`, the actual number of
         iteration performed by the solver.
 
-        .. versionadded:: 0.17
-
     return_intercept : bool, default=False
         If True and if X is sparse, the method also returns the intercept,
         and the solver is automatically changed to 'sag'. This is only a
         temporary fix for fitting the intercept with sparse data. For dense
         data, use sklearn.linear_model._preprocess_data before your regression.
 
-        .. versionadded:: 0.17
-
     check_input : bool, default=True
         If False, the input arrays X and y will not be checked.
-
-        .. versionadded:: 0.21
 
     Returns
     -------
@@ -572,8 +562,7 @@ def ridge_regression(
 
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
-    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
-    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear models such as
     :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
     assumed to be specific to the targets. Hence they must correspond in
     number.
@@ -1100,12 +1089,16 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
-          obtain a closed-form solution.
+          obtain a closed-form solution via a Cholesky decomposition. It solves
+          the primal problem involving `X.T @ X` when `n_samples >= n_features`,
+          and the dual problem involving `X @ X.T` otherwise.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
-          more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
+          as 'cholesky', without explicitly forming `X.T @ X` or `X @ X.T`.
+          As an iterative algorithm, this solver is more appropriate than
+          'cholesky' for large-scale data (possibility to set `tol` and
+          `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
@@ -1127,11 +1120,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
         `fit_intercept` is True.
 
-        .. versionadded:: 0.17
-           Stochastic Average Gradient descent solver.
-        .. versionadded:: 0.19
-           SAGA solver.
-
     positive : bool, default=False
         When set to ``True``, forces the coefficients to be positive.
         Only 'lbfgs' solver is supported in this case.
@@ -1139,9 +1127,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag' or 'saga' to shuffle the data.
         See :term:`Glossary <random_state>` for details.
-
-        .. versionadded:: 0.17
-           `random_state` to support Stochastic Average Gradient.
 
     Attributes
     ----------
@@ -1156,12 +1141,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         Actual number of iterations for each target. Available only for
         'sag' and 'lsqr' solvers. Other solvers will return None.
 
-        .. versionadded:: 0.17
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1186,8 +1167,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     -----
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
-    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
-    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear models such as
     :class:`~sklearn.svm.LinearSVC`.
 
     Examples
@@ -1403,7 +1383,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
 
         For an illustration of the effect of alpha on the model coefficients, see
@@ -1463,12 +1442,16 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
-          obtain a closed-form solution.
+          obtain a closed-form solution via a Cholesky decomposition. It solves
+          the primal problem involving `X.T @ X` when `n_samples >= n_features`,
+          and the dual problem involving `X @ X.T` otherwise.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
-          more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
+          as 'cholesky', without explicitly forming `X.T @ X` or `X @ X.T`.
+          As an iterative algorithm, this solver is more appropriate than
+          'cholesky' for large-scale data (possibility to set `tol` and
+          `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
@@ -1481,11 +1464,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
           'saga' fast convergence is only guaranteed on features with
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
-
-          .. versionadded:: 0.17
-             Stochastic Average Gradient descent solver.
-          .. versionadded:: 0.19
-             SAGA solver.
 
         - 'lbfgs' uses L-BFGS-B algorithm implemented in
           `scipy.optimize.minimize`. It can be used only when `positive`
@@ -1519,8 +1497,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1600,9 +1576,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         sample_weight : float or ndarray of shape (n_samples,), default=None
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
-
-            .. versionadded:: 0.17
-               *sample_weight* support to RidgeClassifier.
 
         Returns
         -------
@@ -2669,7 +2642,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
@@ -2738,8 +2710,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         This flag is only compatible with ``cv=None`` (i.e. using
         Leave-One-Out Cross-Validation).
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     cv_results_ : ndarray of shape (n_samples, n_alphas) or \
@@ -2768,12 +2738,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Score of base estimator with best alpha, or, if
         ``alpha_per_target=True``, a score for each target.
 
-        .. versionadded:: 0.23
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -2881,7 +2847,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
@@ -2958,15 +2923,11 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     best_score_ : float
         Score of base estimator with best alpha.
 
-        .. versionadded:: 0.23
-
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

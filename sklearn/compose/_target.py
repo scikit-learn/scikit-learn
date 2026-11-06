@@ -51,8 +51,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <transformed_target_regressor>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     regressor : object, default=None
@@ -97,8 +95,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying regressor exposes such an attribute when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
