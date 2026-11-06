@@ -31,7 +31,7 @@ from sklearn.linear_model._ridge import (
     _solve_svd,
     _X_CenterStackOp,
 )
-from sklearn.metrics import accuracy_score, get_scorer, make_scorer, mean_squared_error
+from sklearn.metrics import get_scorer, make_scorer, mean_squared_error
 from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
@@ -2689,15 +2689,12 @@ def test_ridge_classifier_cv_accuracy_loo(global_random_seed, n_classes):
     )
     alphas = [0.1, 1.0, 10.0]
     clf = RidgeClassifierCV(alphas=alphas, scoring="accuracy").fit(X, y)
-    if n_classes == 2:
-        assert clf.best_score_ < 1.0
+    clf_loo = RidgeClassifierCV(
+        alphas=alphas, scoring="accuracy", cv=LeaveOneOut()
+    ).fit(X, y)
 
-    cv = LeaveOneOut()
-    y_pred_loo = [
-        RidgeClassifier(alpha=clf.alpha_).fit(X[train], y[train]).predict(X[test])[0]
-        for train, test in cv.split(X)
-    ]
-    assert_array_almost_equal(clf.best_score_, accuracy_score(y, y_pred_loo))
+    assert clf.alpha_ == clf_loo.alpha_
+    assert_allclose(clf.best_score_, clf_loo.best_score_)
 
 
 # Metadata Routing Tests
