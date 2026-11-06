@@ -62,6 +62,7 @@ from sklearn.utils.multiclass import (
     _check_partial_fit_first_call,
     _ovr_decision_function,
     check_classification_targets,
+    type_of_target,
 )
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import (
@@ -389,6 +390,24 @@ class OneVsRestClassifier(
 
         return self
 
+    @staticmethod
+    def _multilabel_classes(y, classes):
+        """Return the classes for a multilabel indicator matrix `y`.
+
+        As in `fit`, each column of an indicator matrix is a class, labelled by
+        its column index. `classes` can be omitted, or be `range(n_columns)`.
+        """
+        expected = np.arange(y.shape[1])
+        if classes is None:
+            return expected
+        if not np.array_equal(np.asarray(classes), expected):
+            raise ValueError(
+                "For a multilabel indicator matrix y, `classes` must be omitted or "
+                f"equal to range(n_columns) = {expected.tolist()}, got "
+                f"{np.asarray(classes).tolist()}."
+            )
+        return classes
+
     @available_if(_estimators_has("partial_fit"))
     @_fit_context(
         # OneVsRestClassifier.estimator is not validated yet
@@ -415,6 +434,8 @@ class OneVsRestClassifier(
             target vector of the entire dataset.
             This argument is only required in the first call of partial_fit
             and can be omitted in the subsequent calls.
+            When `y` is a multilabel indicator matrix, each column is a class
+            labelled by its index, as in :meth:`fit`, so `classes` can be omitted.
 
         **partial_fit_params : dict
             Parameters passed to the ``estimator.partial_fit`` method of each
@@ -438,6 +459,10 @@ class OneVsRestClassifier(
             **partial_fit_params,
         )
 
+        is_multilabel = type_of_target(y).startswith("multilabel")
+        if is_multilabel and getattr(self, "classes_", None) is None:
+            classes = self._multilabel_classes(y, classes)
+
         if _check_partial_fit_first_call(self, classes):
             self.estimators_ = [clone(self.estimator) for _ in range(self.n_classes_)]
 
@@ -446,9 +471,17 @@ class OneVsRestClassifier(
             # cases and has also resulted in less or equal memory consumption
             # in the fit_ovr function overall.
             self.label_binarizer_ = LabelBinarizer(sparse_output=True)
-            self.label_binarizer_.fit(self.classes_)
+            # Like `fit`, an indicator matrix is binarized as multilabel, with
+            # one class per column.
+            self.label_binarizer_.fit(y if is_multilabel else self.classes_)
 
-        if len(np.setdiff1d(y, self.classes_)):
+        if is_multilabel:
+            if y.shape[1] != len(self.classes_):
+                raise ValueError(
+                    f"y has {y.shape[1]} columns while the classifier was fitted "
+                    f"with {len(self.classes_)} classes."
+                )
+        elif len(np.setdiff1d(y, self.classes_)):
             raise ValueError(
                 (
                     "Mini-batch contains {0} while classes " + "must be subset of {1}"
