@@ -124,7 +124,8 @@ Reference Steps
         * [ ] Set an upper bound on build dependencies in the release branch
         * [ ] Generate the changelog in the release branch
         * [ ] Check that the wheels for the release can be built successfully
-        * [ ] Merge the PR with `[cd build]` commit message to upload wheels to the staging repo
+        * [ ] Trigger manually the `publish.yml` workflow in scikit-learn-release:
+          https://github.com/scikit-learn/scikit-learn-release/actions/workflows/publish.yml
         * [ ] Upload the wheels and source tarball to https://test.pypi.org
         * [ ] Create tag on the main repo
         * [ ] Confirm bot detected at https://github.com/conda-forge/scikit-learn-feedstock
@@ -234,12 +235,9 @@ Reference Steps
         and publish packages for the development branch of scikit-learn. See also
         :ref:`install_nightly_builds`.
 
-    - Once all the CD jobs have completed successfully in the PR, merge it with the
-      `[cd build]` marker in the commit message. This time the results will be
-      uploaded to the staging area. You should then be able to upload the generated
-      artifacts (`.tar.gz` and `.whl` files) to https://test.pypi.org/ using the "Run
-      workflow" form for the `PyPI publishing workflow
-      <https://github.com/scikit-learn/scikit-learn/actions/workflows/publish_pypi.yml>`_.
+
+    - Once all the CD jobs have completed successfully in the PR, you can merge
+      it in **rebase mode**.
 
       .. warning::
 
@@ -250,6 +248,20 @@ Reference Steps
         In addition if on merging, the last commit, containing the `[cd build]` marker,
         is empty, the CD jobs won't be triggered. In this case, you can directly push
         a commit with the marker in the `{{ version_short }}.X` branch to trigger them.
+
+    - Trigger manually the `publish.yml` workflow in scikit-learn-release using
+      `{{ version_short }}` in the "scikit-learn maintenance branch" input
+      field:
+      https://github.com/scikit-learn/scikit-learn-release/actions/workflows/publish.yml
+
+    - You should then be able to upload the generated
+      artifacts (`.tar.gz` and `.whl` files) to https://test.pypi.org/ using the "Run
+      workflow" form for the `PyPI publishing workflow
+      <https://github.com/scikit-learn/scikit-learn/actions/workflows/publish_pypi.yml>`_.
+
+      The `publish.yml` workflow will first build the wheel, then ask for
+      approval from a release team member to upload it to `testPyPI`. As a
+      sanity check you can install the wheel and run the tests locally.
 
     - If the steps above went fine, proceed **with caution** to create a new tag for the
       release. This should be done only when you are almost certain that the release is
@@ -277,34 +289,19 @@ Reference Steps
       release.
       {% endif %}
 
-    - Trigger the `PyPI publishing workflow
-      <https://github.com/scikit-learn/scikit-learn/actions/workflows/publish_pypi.yml>`_
-      again, but this time to upload the artifacts to the real https://pypi.org/. To do
-      so, replace `testpypi` with `pypi` in the "Run workflow" form.
+    - A release team member needs to authorize the upload to `PyPI` https://pypi.org/.
 
       **Alternatively**, it is possible to collect locally the generated binary wheel
       packages and source tarball and upload them all to PyPI.
 
       .. dropdown:: Uploading artifacts from local
 
-        Check out at the release tag and run the following commands.
-
-        .. code-block:: console
-
-          $ rm -r dist
-          $ python -m pip install -U wheelhouse_uploader twine
-          $ python -m wheelhouse_uploader fetch \
-            --version {{ version_full }} --local-folder dist scikit-learn \
-            https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
-
-        These commands will download all the binary packages accumulated in the `staging
-        area on the anaconda.org hosting service
-        <https://anaconda.org/scikit-learn-wheels-staging/scikit-learn/files>`_ and put
-        them in your local `./dist` folder. Check the contents of the `./dist` folder:
-        it should contain all the wheels along with the source tarball `.tar.gz`. Make
-        sure you do not have developer versions or older versions of the scikit-learn
-        package in that folder. Before uploading to PyPI, you can test uploading to
-        `test.pypi.org` first.
+        Downloads all the artifacts from the wheel build GitHub workflow and
+        put them into a local `./dist` folder. Check the contents of the
+        `./dist` folder: it should contain all the wheels along with the source
+        tarball `.tar.gz`. Make sure you do not have developer versions or
+        older versions of the scikit-learn package in that folder. Before
+        uploading to PyPI, you can test uploading to `test.pypi.org` first.
 
         .. code-block:: console
 
