@@ -5,29 +5,22 @@ import time
 import numpy as np
 from sklearn._isotonic import _make_unique as _make_unique_cy
 
-
-def _make_unique_np(X, y, sample_weights):
-    """Vectorized approximation: groups by adjacent diff, not by group anchor.
-
-    Diverges from the Cython version when a chain of consecutive values is
-    each < eps apart from its neighbor, but the cumulative drift from the
-    first value of the chain is >= eps (the Cython version starts a new
-    group there, this version does not).
-    """
-    X = np.asarray(X)
-    y = np.asarray(y)
-    w = np.asarray(sample_weights)
-    eps = np.finfo(X.dtype).resolution
-    starts = np.flatnonzero(np.concatenate(([True], np.diff(X) >= eps)))
-    w_out = np.add.reduceat(w, starts)
-    y_out = np.add.reduceat(y * w, starts) / w_out
-    return X[starts], y_out.astype(X.dtype, copy=False), w_out
+from sklearn.isotonic import _make_unique_np
 
 
 def _make_unique_np_exact(X, y, sample_weights):
     """NumPy replacement that exactly replicates the Cython anchor-based
     grouping (new group when x - group_anchor >= eps), via a Python loop
-    over groups (not over all samples) using searchsorted to jump ahead.
+    over groups (not over all samples).
+
+    Note: comparing ``X[j] >= X[i] + eps`` (precomputed threshold) is *not*
+    equivalent to the Cython code's ``X[j] - X[i] >= eps`` (direct
+    subtraction): ``X[i] + eps`` can round to the same float as a nearby
+    ``X[j]``, making the threshold comparison stricter than the direct one.
+    So each candidate end-of-group index is checked with the same direct
+    subtraction the Cython loop uses, located via galloping search (doubling
+    step size, then binary search) instead of materializing an O(n) diff
+    array per group.
     """
     X = np.asarray(X)
     y = np.asarray(y)
@@ -38,10 +31,21 @@ def _make_unique_np_exact(X, y, sample_weights):
     i = 0
     while i < n:
         starts.append(i)
-        threshold = X[i] + eps
-        # first index j (relative, searching from i) with X[j] >= threshold
-        j = i + np.searchsorted(X[i:], threshold, side="left")
-        i = j if j > i else i + 1
+        x0 = X[i]
+        # Galloping search: find a step size that overshoots the group end.
+        step = 1
+        while i + step < n and (X[i + step] - x0) < eps:
+            step *= 2
+        lo, hi = i + step // 2, min(i + step, n)
+        # Binary search within [lo, hi) for the first index with
+        # X[j] - x0 >= eps, using the same direct subtraction as Cython.
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if (X[mid] - x0) < eps:
+                lo = mid + 1
+            else:
+                hi = mid
+        i = lo if lo > i else i + 1
     starts = np.asarray(starts)
     w_out = np.add.reduceat(w, starts)
     y_out = np.add.reduceat(y * w, starts) / w_out
@@ -85,6 +89,8 @@ if __name__ == "__main__":
     dtypes = [np.float32, np.float64]
     dup_fractions = [0.0, 0.5, 0.99]
 
+    print("\nBENCHMARK for _make_unique in isotonic regression\n")
+    print("NumPy vs Cython, not 100% equivalent")
     header = (
         f"{'n':>10} {'dtype':>8} {'dup_frac':>8} "
         f"{'cy (ms)':>10} {'np (ms)':>10} {'speedup(cy/np)':>15} {'match':>6}"
@@ -118,12 +124,12 @@ if __name__ == "__main__":
         "Exact-equivalent NumPy version (anchor-based grouping via "
         "searchsorted loop over groups, not over all samples)"
     )
-    header2 = (
+    header = (
         f"{'n':>10} {'dtype':>8} {'dup_frac':>8} "
         f"{'cy (ms)':>10} {'np_exact (ms)':>14} {'speedup':>10} {'match':>6}"
     )
-    print(header2)
-    print("-" * len(header2))
+    print(header)
+    print("-" * len(header))
 
     # Skip the largest, lowest-duplication cases: the group loop runs once
     # per group, so it degenerates to ~n Python-level iterations when
