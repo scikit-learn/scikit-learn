@@ -967,6 +967,10 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         )
         self._unique_knot_mask = n_unique_knots == 1
 
+        # scipy's BSpline replaces a non-contiguous `t` with a contiguous copy
+        # on first evaluation, which would make `transform` mutate `bsplines_`.
+        knots = np.asfortranarray(knots)
+
         bsplines = [
             BSpline.construct_fast(
                 knots[:, i], coef, self.degree, extrapolate=extrapolate
@@ -1002,7 +1006,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             ensure_2d=True,
             ensure_all_finite=(self.handle_missing != "zeros"),
         )
-
         n_samples, n_features = X.shape
         n_splines = self.bsplines_[0].c.shape[1]
         degree = self.degree
