@@ -346,6 +346,12 @@ The lasso estimate thus solves the least-squares with added penalty
   This shows that different estimators use a different scaling behaviour of the penalty
   parameter ``alpha`` with the sample size ``n_samples``.
 
+.. dropdown:: Weighted Lasso
+
+  With sample weights :math:`s=\text{sample_weight}`, :class:`Lasso` minimizes:
+
+  .. math:: \min_{w} \frac{1}{\sum_i s_i}\sum_i s_i (X_i w - y_i)^2 + \alpha ||w||_2^2
+
 The implementation of the class :class:`Lasso` uses coordinate descent as
 the algorithm to fit the coefficients. See :ref:`least_angle_regression`
 for another implementation::
