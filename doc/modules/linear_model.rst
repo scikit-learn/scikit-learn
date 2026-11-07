@@ -317,7 +317,7 @@ Lasso
 =====
 
 The :class:`Lasso` is a linear model that estimates sparse coefficients, meaning that
-it is able to set coefficients exactly to zero. A feature with a coefficient of zero
+it is able to set coefficients exactly to zero. A feature with a zero coefficient
 could be excluded from the model.
 Lasso is useful in some contexts due to its tendency to prefer solutions
 with fewer non-zero coefficients, effectively reducing the number of
@@ -326,8 +326,8 @@ Lasso and its variants are fundamental to the field of compressed sensing.
 Under certain conditions, it can recover the exact set of non-zero coefficients (see
 :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`).
 
-Mathematically, it consists of a linear model with an added regularization term in the
-form of an :math:`\ell_1`-norm of the coefficients.
+Mathematically, it consists of a linear model with an additional regularization term in
+the form of the :math:`\ell_1`-norm of the coefficients.
 The objective function to minimize is:
 
 .. math::  \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
@@ -354,9 +354,9 @@ The lasso estimate thus solves the least-squares with added penalty
 
   .. math:: \min_{w} \frac{1}{\sum_i s_i}\sum_i s_i (X_i w - y_i)^2 + \alpha ||w||_1^2
 
-The implementation of the class :class:`Lasso` uses coordinate descent as
-the algorithm to fit the coefficients. See :ref:`least_angle_regression`
-for another implementation::
+The implementation of the class :class:`Lasso` uses
+:ref:`coordinate descent <coordinate_descent>` as the algorithm to fit the
+coefficients. See :ref:`least_angle_regression` for another implementation::
 
     >>> from sklearn.linear_model import Lasso
     >>> reg = Lasso(alpha=0.1)
@@ -445,9 +445,9 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
   .. math:: \text{tol} \frac{||y||_2^2}{n_{\text{samples}}} \leq G(w, cr)\,.
 
 A clever method to speedup the coordinate descent algorithm is to screen features. The
-idea is to identify and exclude futures with solution :math:`w_j = 0` as early as
-possible. Gap safe screening rules are such a tool. Anywhere during the optimization
-algorithm, they can tell that a feature can safely be excluded from further
+idea is to identify and exclude features with solution :math:`w_j = 0` as early as
+possible. Gap safe screening rules are such a tool. At any point during the
+optimization, they can tell if a feature can be safely excluded from further
 optimization and set to zero with certainty. The price for the certainty is that this
 rule does not identify all of them, but the closer to the optimum the more it
 identifies.
@@ -473,7 +473,7 @@ Setting the regularization parameter
 ------------------------------------
 
 The ``alpha`` parameter controls the degree of sparsity of the estimated
-coefficients. In contrast to Ridge, there is no computational shortcut for
+coefficients. In contrast to :class:`Ridge`, there is no computational shortcut for
 leave-one-out cross-validation. At least two good options remain to select ``alpha``,
 both faster than a plain :class:`~sklearn.model_selection.GridSearchCV`:
 either compute cross-validation, which still benefits from fast ``alpha``-path
@@ -482,8 +482,8 @@ computations, or use information based selection criteria.
 Using cross-validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Scikit-learn exposes classes that select the Lasso ``alpha`` parameter by
-:term:`cross-validation`: :class:`LassoCV` and :class:`LassoLarsCV`. Both classes
+Scikit-learn exposes estimators that select the Lasso ``alpha`` parameter by
+:term:`cross-validation`: :class:`LassoCV` and :class:`LassoLarsCV`. Both estimators
 exploit the fact that computing a full path of ``alpha`` values over a single fold is
 relatively cheap.
 
@@ -517,7 +517,7 @@ when using k-fold cross-validation.
 
 Indeed, these criteria are computed on the in-sample training set. In short,
 they penalize the over-optimistic scores of the different Lasso models by
-their flexibility, see the Mathematical details of :ref:`aic_bic`.
+their flexibility, see the *Mathematical details* of :ref:`aic_bic`.
 
 However, such criteria need a proper estimation of the degrees of freedom of
 the solution, are derived for large samples (asymptotic results) and assume the
@@ -539,7 +539,7 @@ the problem is badly conditioned (e.g. more features than samples).
 AIC and BIC criteria
 ^^^^^^^^^^^^^^^^^^^^
 
-The definition of AIC and thus BIC might differ in the literature. In this
+The definition of AIC and thus BIC may differ across the literature. In this
 section, we give more information regarding the criterion computed in
 scikit-learn.
 
