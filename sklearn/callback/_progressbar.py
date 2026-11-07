@@ -1,15 +1,17 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import sys
+import time
 from datetime import timedelta
-from numbers import Integral
+from numbers import Integral, Real
 from queue import Queue
 from threading import Thread
 
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import close_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_rich_support
-from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 # Per-fit local queues and monitors, keyed by the run's `root_uuid`. Both are not
 # picklable so they live here rather than on the callback instance. Entries are added in
@@ -28,19 +30,36 @@ class ProgressBar:
         0 means that the progress of only the outermost estimator is displayed.
         If set to None, all levels are displayed.
 
+    min_duration : float, default=0
+        The minimum duration in seconds of a task to show its progress bar.
+
+    show : {'always', 'interactive_only'}, default='always'
+        When the progressbar should be displayed. Possible values are:
+          - 'always': Always show the progressbar.
+          - 'interactive_only': Only show the progressbar in ineractive environments,
+          such as a python shell or a jupyter notebook.
+
     Notes
     -----
     This callback requires rich to be installed.
     """
 
     @validate_params(
-        {"max_propagation_depth": [Interval(Integral, 0, None, closed="left"), None]},
+        {
+            "max_propagation_depth": [Interval(Integral, 0, None, closed="left"), None],
+            "min_duration": [Interval(Real, 0, None, closed="left")],
+            "show": [StrOptions({"always", "interactive_only"})],
+        },
         prefer_skip_nested_validation=True,
     )
-    def __init__(self, max_propagation_depth=1):
+    def __init__(self, max_propagation_depth=1, min_duration=0, show="always"):
         check_rich_support("Progressbar")
 
         self.max_propagation_depth = max_propagation_depth
+        self.min_duration = min_duration
+        self.show = show
+
+        self._deactivated = show == "interactive_only" and not hasattr(sys, "ps1")
 
         # Handles to the main-process per-fit listeners, keyed by `root_uuid`.
         self._listener_handles = {}
@@ -58,7 +77,9 @@ class ProgressBar:
         # information to the rich monitor thread.
         self._listener_handles[context.root_uuid] = open_listener(queue.put)
 
-        progress_monitor = RichProgressMonitor(queue=queue)
+        progress_monitor = RichProgressMonitor(
+            queue=queue, min_duration=self.min_duration
+        )
         progress_monitor.start()
 
         _run_queues[context.root_uuid] = queue
@@ -158,11 +179,15 @@ class RichProgressMonitor(Thread):
     ----------
     queue : `queue.Queue` instance
         This thread will run until the queue is empty.
+
+    min_duration : float
+        The minimum duration in seconds of a task to show its progress bar.
     """
 
-    def __init__(self, *, queue):
+    def __init__(self, *, queue, min_duration):
         super().__init__()
         self.queue = queue
+        self.min_duration = min_duration
 
     def run(self):
         self.progress_ctx = _Progress(
@@ -180,21 +205,34 @@ class RichProgressMonitor(Thread):
         # created dynamically as the task tree of the estimator is traversed.
         self.root_rich_task = None
 
+        self.start_time = time.perf_counter()
+        show_bars = False
+
         with self.progress_ctx:
             while task_info := self.queue.get():
+                if (
+                    not show_bars
+                    and time.perf_counter() - self.start_time > self.min_duration
+                ):
+                    show_bars = True
+                    for task in self.progress_ctx.tasks:
+                        task.visible = True
                 if task_info.pop("event") == "begin":
-                    self._on_task_begin(task_info)
+                    self._on_task_begin(task_info, show_bars)
                 else:
-                    self._on_task_end(task_info)
+                    self._on_task_end(task_info, show_bars)
 
             self.progress_ctx.refresh()
 
-    def _on_task_begin(self, task_info):
+    def _on_task_begin(self, task_info, visible):
         """Create a progress bar for the task and update the list of ordered tasks."""
         path = task_info.pop("path")
 
         rich_task = RichTask(
-            progress_ctx=self.progress_ctx, task_info=task_info, depth=len(path) - 1
+            progress_ctx=self.progress_ctx,
+            task_info=task_info,
+            depth=len(path) - 1,
+            visible=visible,
         )
         if rich_task.depth == 0:
             self.root_rich_task = rich_task
@@ -206,14 +244,16 @@ class RichProgressMonitor(Thread):
             self.progress_ctx.tasks[task.id] for task in self.root_rich_task
         ]
 
-    def _on_task_end(self, task_info):
+    def _on_task_end(self, task_info, visible):
         """Update the progress of the task and its ancestors recursively."""
         path = task_info.pop("path")
         *ancestors, task = self.root_rich_task.get_descendants(path)
 
         if task is None:
             # a leaf task of the estimator, no progress bar was created for it
-            task = RichTask(self.progress_ctx, task_info, depth=len(ancestors))
+            task = RichTask(
+                self.progress_ctx, task_info, depth=len(ancestors), visible=visible
+            )
             ancestors[-1].children[path[-1]] = task
         else:
             # Task is finished. Render the progress bar as 100% completed regardless of
@@ -264,7 +304,7 @@ class RichTask:
         For a leaf, it's an empty dictionary.
     """
 
-    def __init__(self, progress_ctx, task_info, *, depth):
+    def __init__(self, progress_ctx, task_info, *, depth, visible):
         self.children = {}
         self.depth = depth
         self.completed = 0
@@ -272,7 +312,9 @@ class RichTask:
 
         if task_info:
             description = self._format_task_description(task_info)
-            self.id = progress_ctx.add_task(description, total=self.total)
+            self.id = progress_ctx.add_task(
+                description, total=self.total, visible=visible
+            )
 
     @property
     def progress(self):
