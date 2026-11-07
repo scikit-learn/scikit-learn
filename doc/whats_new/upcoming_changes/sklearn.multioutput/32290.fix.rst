@@ -1,0 +1,3 @@
+- :class:`multioutput.ClassifierChain` raises informative error when attempting to fit
+  multiclass data as this estimator does not currently support multiclass-multioutput.
+  By :user:`John Hendricks <j-hendricks>`
