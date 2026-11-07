@@ -1,0 +1,3 @@
+- |Enhancement| :class:`neighbors.KernelDensity` supports a new keyword argument
+  `bounds` to attenuate density estimation bias near the boundary of a finite domain.
+  :pr:`29370` by :user:`Till Hoffmann <tillahoffmann>`.
