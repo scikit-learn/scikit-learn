@@ -71,7 +71,7 @@ themselves be divided and so on, giving them a natural :ref:`tree structure
 <example_task_tree>` where fitting the estimator is the root task.
 
 This tree structure will usually be reflected in a callback's generated objects and
-tasks will be identified by their name, id, and a reference to their parent task.
+tasks will be identified by their name, id, and their position in the task tree.
 For tasks that have a natural ordering, like the iterations of a learning algorithm, the
 ids are consecutive integers starting from 0. Some callbacks may provide additional
 contextual information about the tasks. Here's an example of the logs of the

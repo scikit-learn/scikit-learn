@@ -6,7 +6,6 @@ from numbers import Integral
 from queue import Queue
 from threading import Thread
 
-from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import close_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_rich_support
 from sklearn.utils._param_validation import Interval, validate_params
@@ -69,12 +68,12 @@ class ProgressBar:
         # leaf, except if it's also the root task of an estimator.
         if (
             context.max_subtasks != 0
-            or context.parent is None
+            or len(context.task_path) == 1
             or context.source_estimator_name is not None
         ):
             # We pass the minimal information to the queue that is necessary to create a
             # progress bar and not the context to avoid pickling the whole context tree.
-            path = [ctx.task_id for ctx in get_context_path(context)]
+            path = [task.task_id for task in context.task_path]
             send(
                 self._listener_handles[context.root_uuid],
                 {
@@ -95,7 +94,7 @@ class ProgressBar:
             self._listener_handles[context.root_uuid],
             {
                 "event": "end",
-                "path": [ctx.task_id for ctx in get_context_path(context)],
+                "path": [task.task_id for task in context.task_path],
             },
         )
 
