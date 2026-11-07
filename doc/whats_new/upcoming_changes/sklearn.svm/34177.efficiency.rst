@@ -1,0 +1,4 @@
+- :class:`svm.NuSVC` now checks the feasibility of `nu` before computing the
+  kernel, so an infeasible `nu` raises early instead of first materializing a
+  potentially expensive precomputed or callable kernel.
+  By :user:`Lawson Darrow <Lawson-Darrow>`.
