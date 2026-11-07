@@ -115,6 +115,13 @@ enhance the functionality of scikit-learn's estimators.
   ``scikit-learn`` itself. If you encounter issues while using this project,
   make sure you report potential issues in their respective repositories.
 
+- `MetalML <https://github.com/tudor-22/MetalML>`_
+  An experimental, open-source (Apache-2.0) scikit-learn-compatible Python library
+  that runs some estimators on the Mac GPU via Apple Metal and falls back to CPU
+  otherwise. Install with pip install metalml (PyPI: metalml). Repo:
+  https://github.com/tudor-22/MetalML. GPU path verified on an Intel Mac (AMD
+  Radeon Pro 5300M); Apple Silicon not validated yet. Maker: Tudor Iustin.
+
 **Interface to R with genomic applications**
 
 - `BiocSklearn <https://bioconductor.org/packages/BiocSklearn>`_
