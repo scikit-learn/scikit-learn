@@ -850,6 +850,26 @@ def test_auc_score_non_binary_class():
         roc_auc_score(y_true, y_pred)
 
 
+@pytest.mark.parametrize("average", ["macro", "weighted"])
+@pytest.mark.parametrize("n_samples", [1, 3])
+def test_auc_score_multiclass_ovo_single_class(average, n_samples):
+    # Test that the one-vs-one path warns with UndefinedMetricWarning when
+    # y_true holds a single class, instead of averaging an empty array of
+    # pairwise scores and letting a bare numpy RuntimeWarning reach the user.
+    y_true = np.ones(n_samples, dtype="int")
+    y_score = np.tile([0.2, 0.5, 0.3], (n_samples, 1))
+    warn_message = (
+        "Only one class is present in y_true. The one-vs-one multiclass "
+        "score is not defined in that case."
+    )
+    with pytest.warns(UndefinedMetricWarning, match=warn_message) as record:
+        score = roc_auc_score(
+            y_true, y_score, multi_class="ovo", average=average, labels=[0, 1, 2]
+        )
+    assert np.isnan(score)
+    assert not [w for w in record if issubclass(w.category, RuntimeWarning)]
+
+
 def test_sort_inputs_and_compute_classification_thresholds_input_validation():
     """Test `_sort_inputs_and_compute_classification_thresholds` input validation."""
     # Inconsistent lengths
