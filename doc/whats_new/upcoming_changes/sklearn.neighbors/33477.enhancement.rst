@@ -1,0 +1,1 @@
+:class:`neighbors.NearestCentroid` now accepts a ``sample_weight`` parameter in its ``fit`` method to support weighted means and medians. By :user:`prem-479`.
