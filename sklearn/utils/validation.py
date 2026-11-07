@@ -663,6 +663,16 @@ def _ensure_no_complex_data(array):
         raise ValueError("Complex data not supported\n{}\n".format(array))
 
 
+def _dtype_requests_complex(dtype, xp):
+    """Return True if the `dtype` argument of `check_array` asks for complex data."""
+    if dtype is None or (isinstance(dtype, str) and dtype == "numeric"):
+        return False
+    dtypes = dtype if isinstance(dtype, (list, tuple)) else (dtype,)
+    if _is_numpy_namespace(xp):
+        return any(np.dtype(d).kind == "c" for d in dtypes)
+    return any(xp.isdtype(d, "complex floating") for d in dtypes)
+
+
 def _check_estimator_name(estimator):
     if estimator is not None:
         if isinstance(estimator, str):
@@ -772,6 +782,8 @@ def check_array(
         If "numeric", dtype is preserved unless array.dtype is object.
         If dtype is a list of types, conversion on the first type is only
         performed if the dtype of the input is not in the list.
+        Complex data is rejected unless dtype is, or contains, a complex type
+        such as `np.complex128`.
 
     order : {'F', 'C'} or None, default=None
         Whether an array will be forced to be fortran or c-style.
@@ -866,6 +878,7 @@ def check_array(
 
     # store whether originally we wanted numeric dtype
     dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
+    accept_complex = _dtype_requests_complex(dtype, xp)
 
     dtype_orig = getattr(array, "dtype", None)
     if not is_array_api_compliant and not hasattr(dtype_orig, "kind"):
@@ -987,7 +1000,8 @@ def check_array(
         array = df_pandas.sparse.to_coo()
 
     if sp.issparse(array):
-        _ensure_no_complex_data(array)
+        if not accept_complex:
+            _ensure_no_complex_data(array)
         array = _ensure_sparse_format(
             array,
             accept_sparse=accept_sparse,
@@ -1039,7 +1053,8 @@ def check_array(
         # when no dtype conversion happened, for example dtype = None. The
         # result is that np.array(..) produces an array of complex dtype
         # and we need to catch and raise exception for such cases.
-        _ensure_no_complex_data(array)
+        if not accept_complex:
+            _ensure_no_complex_data(array)
 
         if ensure_2d:
             # If input is scalar raise error
@@ -1230,6 +1245,9 @@ def check_X_y(
         If "numeric", dtype is preserved unless array.dtype is object.
         If dtype is a list of types, conversion on the first type is only
         performed if the dtype of the input is not in the list.
+        Complex data is rejected unless dtype is, or contains, a complex type
+        such as `np.complex128`. In that case, `y` is also validated against
+        dtype, so complex targets are accepted too.
 
     order : {'F', 'C'}, default=None
         Whether an array will be forced to be fortran or c-style. If
@@ -1336,14 +1354,21 @@ def check_X_y(
         input_name="X",
     )
 
-    y = _check_y(y, multi_output=multi_output, y_numeric=y_numeric, estimator=estimator)
+    xp, _ = get_namespace(X)
+    y = _check_y(
+        y,
+        multi_output=multi_output,
+        y_numeric=y_numeric,
+        estimator=estimator,
+        dtype=dtype if _dtype_requests_complex(dtype, xp) else None,
+    )
 
     check_consistent_length(X, y)
 
     return X, y
 
 
-def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
+def _check_y(y, multi_output=False, y_numeric=False, estimator=None, dtype=None):
     """Isolated part of check_X_y dedicated to y validation"""
     if multi_output:
         y = check_array(
@@ -1351,15 +1376,16 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
             accept_sparse="csr",
             ensure_all_finite=True,
             ensure_2d=False,
-            dtype=None,
+            dtype=dtype,
             input_name="y",
             estimator=estimator,
         )
     else:
         estimator_name = _check_estimator_name(estimator)
-        y = column_or_1d(y, warn=True)
+        y = column_or_1d(y, dtype=dtype, warn=True)
         _assert_all_finite(y, input_name="y", estimator_name=estimator_name)
-        _ensure_no_complex_data(y)
+        if not _dtype_requests_complex(dtype, get_namespace(y)[0]):
+            _ensure_no_complex_data(y)
     if y_numeric and hasattr(y.dtype, "kind") and y.dtype.kind == "O":
         y = y.astype(np.float64)
 

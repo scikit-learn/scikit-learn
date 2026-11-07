@@ -879,6 +879,57 @@ def test_check_array_complex_data_error():
         _check_y(y)
 
 
+@pytest.mark.parametrize(
+    "dtype", [np.complex128, "complex128", complex, [np.float64, np.complex128]]
+)
+@pytest.mark.parametrize("container", [np.asarray, sp.csr_array])
+def test_check_array_complex_dtype_accepts_complex_data(dtype, container):
+    """Complex data passes check_array when `dtype` explicitly requests it."""
+    X = container(np.array([[1 + 2j, 0], [0, 4 + 5j]]))
+    X_checked = check_array(X, dtype=dtype, accept_sparse=True)
+    assert X_checked.dtype == np.complex128
+    assert_allclose_dense_sparse(X_checked, X)
+
+
+def test_check_array_complex_dtype_list():
+    """A list of dtypes containing a complex type preserves listed input dtypes."""
+    dtype = [np.float64, np.float32, np.complex128]
+    assert check_array(np.ones((2, 2), dtype=np.float32), dtype=dtype).dtype == (
+        np.float32
+    )
+    assert check_array([[1, 2], [3, 4]], dtype=dtype).dtype == np.float64
+    X = np.array([[1 + 2j, 3 + 4j]])
+    assert check_array(X, dtype=dtype).dtype == np.complex128
+
+    # complex64 is not in the list, so it would be cast to float64, which would
+    # silently drop the imaginary part.
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        check_array(X.astype(np.complex64), dtype=dtype)
+
+
+@pytest.mark.parametrize("dtype", [np.float64, [np.float64, np.float32]])
+def test_check_array_real_dtype_rejects_complex_data(dtype):
+    X = np.array([[1 + 2j, 3 + 4j]])
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        check_array(X, dtype=dtype)
+
+
+@pytest.mark.parametrize("multi_output", [False, True])
+def test_check_X_y_complex_dtype_accepts_complex_target(multi_output):
+    X = np.array([[1 + 2j, 3 + 4j], [5 + 6j, 7 + 8j], [9 + 1j, 2 + 3j]])
+    y = X if multi_output else X[:, 0]
+    dtype = [np.float64, np.complex128]
+
+    X_checked, y_checked = check_X_y(X, y, dtype=dtype, multi_output=multi_output)
+    assert X_checked.dtype == np.complex128
+    assert y_checked.dtype == np.complex128
+    assert_array_equal(y_checked, y)
+
+    # Complex targets are still rejected when `dtype` does not request them.
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        check_X_y(X.real, y, multi_output=multi_output)
+
+
 def test_has_fit_parameter():
     assert not has_fit_parameter(KNeighborsClassifier, "sample_weight")
     assert has_fit_parameter(RandomForestRegressor, "sample_weight")
