@@ -2,6 +2,8 @@ import itertools
 import re
 import time
 import warnings
+from threading import current_thread
+from typing import Callable, Iterable
 
 import joblib
 import numpy as np
@@ -17,7 +19,11 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.fixes import _IS_WASM
-from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.parallel import (
+    Parallel,
+    delayed,
+    parallel_thread_map,
+)
 
 
 def get_working_memory():
@@ -195,3 +201,61 @@ def test_filter_warning_propagates_no_side_effect_with_loky_backend():
             joblib.delayed(warnings.warn)("Convergence warning", ConvergenceWarning)
             for _ in range(10)
         )
+
+
+@pytest.mark.parametrize(
+    "func,arguments",
+    [
+        (lambda x: x + 1, [range(1000)]),
+        (lambda a, b: a + b, [range(1, 1001), range(2, 1002)]),
+    ],
+)
+def test_parallel_thread_map_results(func: Callable, arguments: list[Iterable]) -> None:
+    """``parallel_thread_map()`` gives the same results as ``map()``."""
+    for n_jobs in [None, 1, 2, -1]:
+        expected = list(map(func, *arguments))
+        actual = parallel_thread_map(n_jobs, func, *arguments)
+        assert not isinstance(actual, list)
+        assert expected == list(actual)
+
+
+def test_parallel_thread_map_parallelism() -> None:
+    """
+    ``parallel_thread_map()`` uses parallelism only on free-threaded Python.
+    """
+    idents = set()
+
+    def add_ident(_):
+        idents.add(current_thread().ident)
+
+    list(parallel_thread_map(-1, add_ident, range(1000)))
+
+    if joblib.effective_n_jobs(-1) == 1:
+        assert idents == {current_thread().ident}
+    else:
+        assert current_thread().ident not in idents
+        assert len(idents) > 1
+
+
+def test_parallel_thread_map_preserves_config() -> None:
+    """
+    The scikit-learn config is passed on to threads by
+    ``parallel_thread_map()``.
+    """
+    with config_context(working_memory=123):
+        results = set(
+            parallel_thread_map(-1, lambda _: get_working_memory(), range(100))
+        )
+
+    assert_array_equal(results, {123})
+
+
+def test_parallel_thread_map_warnings_settings() -> None:
+    """
+    Warning settings are propagated on to threads by ``parallel_thread_map()``.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=ConvergenceWarning)
+
+        with pytest.raises(ConvergenceWarning):
+            list(parallel_thread_map(-1, lambda _: raise_warning(), range(2)))
