@@ -1,0 +1,7 @@
+- :func:`feature_extraction.text.strip_tags` and
+  :meth:`feature_extraction.text._VectorizerMixin.build_tokenizer` no longer
+  recompile their regular expressions on every call. ``strip_tags`` consults a
+  module-level compiled pattern and ``build_tokenizer`` caches the compiled
+  ``token_pattern`` on the instance, invalidating the cache when the source
+  pattern string changes. No behavior change.
+  By :user:`Guilherme Moura <gumeeee>`
