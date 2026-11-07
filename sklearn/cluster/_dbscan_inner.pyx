@@ -39,3 +39,4 @@ def dbscan_inner(const uint8_t[::1] is_core,
             stack.pop_back()
 
         label_num += 1
+        stack.shrink_to_fit()
