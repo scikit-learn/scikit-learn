@@ -1491,6 +1491,9 @@ def permutation_test_score(
         are permuted among samples with the same group identifier.
         When not specified, ``y`` values are permuted among all samples.
 
+        A warning is raised if each group has a single value of ``y``, because
+        permuting within groups then leaves ``y`` unchanged.
+
         When a grouped cross-validator is used, the group labels are
         also passed on to the ``split`` method of the cross-validator. The
         cross-validator uses them for grouping the samples  while splitting
@@ -1615,6 +1618,15 @@ def permutation_test_score(
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
+    if groups is not None and _y_constant_within_groups(y, groups):
+        warnings.warn(
+            "Each group in `groups` has a single value of `y`, so permuting `y` "
+            "within groups leaves `y` unchanged and permutation_test_score is "
+            "not well-defined in this case (with a deterministic estimator and "
+            "cross-validation, the p-value is 1).",
+            UserWarning,
+        )
+
     if _routing_enabled():
         router = (
             MetadataRouter(owner="permutation_test_score")
@@ -1705,6 +1717,15 @@ def _permutation_test_score(
         estimator.fit(X_train, y_train, **fit_params_train)
         avg_score.append(scorer(estimator, X_test, y_test, **score_params_test))
     return np.mean(avg_score)
+
+
+def _y_constant_within_groups(y, groups):
+    """Return True if every group holds a single value of y."""
+    y = np.asarray(y)
+    _, first_sample, group_index = np.unique(
+        np.asarray(groups), return_index=True, return_inverse=True
+    )
+    return np.array_equal(y, y[first_sample][group_index.ravel()])
 
 
 def _shuffle(y, groups, random_state):
