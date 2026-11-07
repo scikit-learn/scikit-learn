@@ -380,8 +380,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             if self.fit_intercept:
                 # LinearModelLoss needs intercept at the end of coefficient array.
                 intercept = move_to(self.intercept_, xp=xp_coef, device=device_coef)
-                coef = xp_coef.concat((coef, xp_coef.array([intercept])))
-            coef = coef.astype(loss_dtype, copy=False)
+                coef = xp_coef.concat((coef, xp_coef.reshape(intercept, (1,))))
+            coef = xp_coef.astype(coef, loss_dtype, copy=False)
         else:
             coef = linear_loss.init_zero_coef(
                 X, dtype=loss_dtype, xp=xp_coef, device=device_coef
@@ -482,7 +482,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             self.coef_ = coef[:-1]
         else:
             # set intercept to zero as the other linear models do
-            self.intercept_ = 0.0
+            self.intercept_ = xp.asarray(0.0, dtype=X.dtype, device=device)
             self.coef_ = coef
 
         return self
