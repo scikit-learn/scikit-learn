@@ -14,7 +14,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_random_array
 
-eigen_solvers = ["auto", "dense", "arpack"]
+eigen_solvers = ["auto", "dense", "arpack", "randomized_value"]
 path_methods = ["auto", "FW", "D"]
 
 
