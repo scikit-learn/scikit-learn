@@ -1,0 +1,5 @@
+- The error raised by :class:`feature_extraction.text.CountVectorizer` and
+  :class:`feature_extraction.text.TfidfVectorizer` when the learned vocabulary is
+  empty now mentions `ngram_range` as a possible cause when all documents are
+  shorter than its lower bound.
+  By :user:`Chingkheinganba Rajkumar <chingkheinganba231005>`.
