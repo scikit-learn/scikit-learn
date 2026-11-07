@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 from scipy.linalg import block_diag
-from scipy.special import psi
+from scipy.special import gammaln, psi
 
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.decomposition._online_lda_fast import (
@@ -257,6 +257,21 @@ def test_lda_preplexity_mismatch():
         lda._perplexity_precomp_distr(X, invalid_n_components)
 
 
+def _beta_term_perplexity(lda):
+    components = lda.components_
+    n_features = components.shape[1]
+    exp_comp = _dirichlet_expectation_2d(components)
+
+    return (
+        np.sum((lda.topic_word_prior_ - components) * exp_comp)
+        + np.sum(gammaln(components) - gammaln(lda.topic_word_prior_))
+        + np.sum(
+            gammaln(lda.topic_word_prior_ * n_features)
+            - gammaln(np.sum(components, axis=1))
+        )
+    )
+
+
 @pytest.mark.parametrize("method", ("online", "batch"))
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 def test_lda_perplexity(method, csr_container):
@@ -346,8 +361,35 @@ def test_lda_score_perplexity(csr_container):
     perplexity_1 = lda.perplexity(X, sub_sampling=False)
 
     score = lda.score(X)
-    perplexity_2 = np.exp(-1.0 * (score / np.sum(X.data)))
+    beta_term = _beta_term_perplexity(lda)
+    perplexity_2 = np.exp(
+        -1.0
+        * ((score - beta_term) / np.sum(X.data) + beta_term / np.sum(lda.components_))
+    )
     assert_almost_equal(perplexity_1, perplexity_2)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_lda_perplexity_component_normalization(csr_container):
+    # The prior on components should be normalized by the component word mass,
+    # which is estimated from the training corpus.
+    rng = np.random.RandomState(0)
+    X = rng.poisson(3.0, size=(200, 20)).astype(np.float64)
+    X = csr_container(X)
+    X_train = X[:1]
+
+    lda = LatentDirichletAllocation(
+        n_components=5, max_iter=10, random_state=0, total_samples=200
+    )
+    lda.fit(X)
+    beta_term = _beta_term_perplexity(lda)
+
+    for data in (X_train, X):
+        score = lda.score(data)
+        expected = np.exp(
+            -((score - beta_term) / np.sum(data) + beta_term / np.sum(lda.components_))
+        )
+        assert_almost_equal(lda.perplexity(data), expected)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
