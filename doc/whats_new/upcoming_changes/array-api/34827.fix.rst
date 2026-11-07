@@ -1,0 +1,7 @@
+- Fixed :func:`~metrics.confusion_matrix_at_thresholds` to accumulate weighted
+  counts with a fixed-point integer cumulative sum on ``float32``-only array API
+  devices, choosing the largest int64-safe scale from ``n * max(weight)`` so
+  that large effective positive weight (above :math:`2^{24}`) does not saturate
+  and pre-normalized, uniformly tiny, or minority-tiny sample weights do not
+  round to zero.
+  By :user:`Olivier Grisel <ogrisel>` and :user:`Kiyarash Fazeli <Fazel94>`.
