@@ -28,12 +28,7 @@ cdef inline float64_t euclidean_dist{{name_suffix}}(
     const {{INPUT_DTYPE_t}}* x2,
     intp_t size,
 ) except -1 nogil:
-    cdef float64_t tmp, d=0
-    cdef intp_t j
-    for j in range(size):
-        tmp = <float64_t> (x1[j] - x2[j])
-        d += tmp * tmp
-    return sqrt(d)
+    return sqrt(euclidean_rdist{{name_suffix}}(x1, x2, size))
 
 
 cdef inline float64_t euclidean_rdist{{name_suffix}}(
@@ -41,12 +36,23 @@ cdef inline float64_t euclidean_rdist{{name_suffix}}(
     const {{INPUT_DTYPE_t}}* x2,
     intp_t size,
 ) except -1 nogil:
-    cdef float64_t tmp, d=0
+    cdef float64_t tmp1, tmp2, d1=0, d2=0
     cdef intp_t j
-    for j in range(size):
-        tmp = <float64_t>(x1[j] - x2[j])
-        d += tmp * tmp
-    return d
+    cdef intp_t half = size // 2
+
+    # Unroll into 2 passes to increase instruction-level parallelism:
+    for j in range(half):
+        tmp1 = <float64_t>(x1[j * 2] - x2[j * 2])
+        d1 += tmp1 * tmp1
+        tmp2 = <float64_t>(x1[j * 2 + 1] - x2[j * 2 + 1])
+        d2 += tmp2 * tmp2
+
+    # Remaining odd item, if any:
+    for j in range(half * 2, size):
+        tmp1 = <float64_t>(x1[j] - x2[j])
+        d1 += tmp1 * tmp1
+
+    return d1 + d2
 
 
 cdef inline float64_t euclidean_dist_to_rdist{{name_suffix}}(const {{INPUT_DTYPE_t}} dist) except -1 nogil:
