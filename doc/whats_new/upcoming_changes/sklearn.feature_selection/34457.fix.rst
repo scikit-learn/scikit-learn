@@ -1,0 +1,6 @@
+- :class:`feature_selection.SequentialFeatureSelector` now passes pandas dataframes
+  to the underlying estimator with their original column names and dtypes instead of
+  converting them to NumPy arrays. This allows using estimators that rely on column
+  names or dtypes, e.g. a :class:`~sklearn.pipeline.Pipeline` containing a
+  :class:`~sklearn.compose.ColumnTransformer` with callable column selectors.
+  By :user:`Shahrier Islam Arham <arham766>`.
