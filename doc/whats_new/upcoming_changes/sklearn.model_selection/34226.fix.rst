@@ -1,0 +1,7 @@
+- :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` now set `min_resources_` based on
+  the actual number of iterations that will be run when `min_resources="exhaust"`,
+  instead of the number of iterations required to reduce the candidates below
+  `factor`. This ensures the last iteration uses as many resources as possible
+  when the resource budget is the binding constraint.
+  By :user:`Guillaume Lemaitre <glemaitre>`.
