@@ -33,8 +33,17 @@ X = iris.data
 y = iris.target
 
 n_components = 2
-ipca = IncrementalPCA(n_components=n_components, batch_size=10)
-X_ipca = ipca.fit_transform(X)
+batch_size = 10
+
+# `IncrementalPCA` can be fit incrementally on batches of samples with
+# `partial_fit`. Here the batches are obtained by slicing an in-memory array,
+# but in a real out-of-core setting each batch could be loaded progressively
+# from a disk-based storage, allowing to decompose datasets too large to fit
+# in memory. Calling `fit(X)` with `batch_size=10` would be equivalent.
+ipca = IncrementalPCA(n_components=n_components)
+for idx in range(0, len(X), batch_size):
+    ipca.partial_fit(X[idx : idx + batch_size])
+X_ipca = ipca.transform(X)
 
 pca = PCA(n_components=n_components)
 X_pca = pca.fit_transform(X)
