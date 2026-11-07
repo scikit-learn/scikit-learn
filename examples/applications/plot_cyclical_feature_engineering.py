@@ -48,6 +48,42 @@ _ = ax.set(
 )
 
 # %%
+# Let us explore the hourly count of bikes over different days of the week when
+# taking the average over the whole year:
+import seaborn as sns
+
+plt.figure(figsize=(15, 10))
+sns.pointplot(x=df["hour"].astype(int), y=df["count"], hue=df["weekday"].astype(int))
+plt.title("Hourly Count for Different Days of the Week", fontsize=20)
+plt.xlabel("Hour", fontsize=15)
+plt.ylabel("Count", fontsize=15)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+plt.show()
+
+# %%
+# Exploring the hourly count of bikes over different seasons:
+plt.figure(figsize=(15, 10))
+sns.pointplot(x=df["hour"].astype(int), y=df["count"], hue=df["season"])
+plt.title("Hourly Count for Seasons", fontsize=20)
+plt.xlabel("Hour", fontsize=15)
+plt.ylabel("Count", fontsize=15)
+plt.xticks(fontsize=10)
+plt.yticks(fontsize=10)
+plt.show()
+
+# %%
+# There appears to be some kind of mislabeling of the `"season"` feature
+# as such behaviour is not realistic.
+#
+# We can confirm that the weather conditions do not match the corresponding
+# labels:
+df.groupby("season").median(numeric_only=True)
+
+# %%
+#
+# When interpreting the results this behavior of the `"season"` feature
+# should be taken into account.
 #
 # The target of the prediction problem is the absolute count of bike rentals on
 # an hourly basis:
