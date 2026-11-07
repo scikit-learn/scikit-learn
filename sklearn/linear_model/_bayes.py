@@ -352,16 +352,15 @@ class BayesianRidge(RegressorMixin, LinearModel):
         else:
             # Vh.T @ Vh != I since we set full_matrices=False for SVD
             # however, Vh @ Vh.T = I, apply the Woodbury matrix identity
-            # https://en.wikipedia.org/wiki/Woodbury_matrix_identity
             # sigma_ = (lambda_ * I + Vh.T @ diag(alpha_ * eigen_vals_) @ Vh)^-1
             #        = 1 / lambda_ * I - Vh.T @ D @ Vh, D is a diagonal matrix
             # D = diag(alpha_*eigen_vals_ / (lambda_*(lambda_+alpha_*eigen_vals_)))
             self.sigma_ = (
-                np.eye(n_features, dtype=dtype) / lambda_
-                - Vh.T
+                -Vh.T
                 * (alpha_ * eigen_vals_ / (lambda_ * (lambda_ + alpha_ * eigen_vals_)))
                 @ Vh
             )
+            self.sigma_[np.diag_indices(n_features)] += 1.0 / lambda_
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
 
