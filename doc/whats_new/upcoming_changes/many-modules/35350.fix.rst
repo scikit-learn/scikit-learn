@@ -1,0 +1,8 @@
+- :meth:`multioutput.MultiOutputRegressor.partial_fit` and
+  :meth:`neural_network.BernoulliRBM.partial_fit` now return `self`, as their
+  docstrings state, instead of `None`. This restores the documented chaining
+  idiom, so that e.g. `est.partial_fit(X, y).predict(X)` no longer raises
+  `AttributeError`. Both implementations now behave like their sibling
+  :meth:`multioutput.MultiOutputClassifier.partial_fit` and
+  :meth:`neural_network.BernoulliRBM.fit`.
+  By :user:`lau0708`.
