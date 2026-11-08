@@ -29,22 +29,14 @@ from sklearn.utils.validation import FLOAT_DTYPES, check_is_fitted, validate_dat
 __all__ = ["PLSSVD", "PLSCanonical", "PLSRegression"]
 
 
-def _pinv2_old(a):
-    # Used previous scipy pinv2 that was updated in:
-    # https://github.com/scipy/scipy/pull/10067
-    # We can not set `cond` or `rcond` for pinv2 in scipy >= 1.3 to keep the
-    # same behavior of pinv2 for scipy < 1.3, because the condition used to
-    # determine the rank is dependent on the output of svd.
-    u, s, vh = svd(a, full_matrices=False, check_finite=False)
-
-    t = u.dtype.char.lower()
-    factor = {"f": 1e3, "d": 1e6}
-    cond = np.max(s) * factor[t] * np.finfo(t).eps
-    rank = np.sum(s > cond)
-
-    u = u[:, :rank]
-    u /= s[:rank]
-    return np.transpose(np.conjugate(np.dot(u, vh[:rank])))
+def _pinv(a):
+    # Keep the rank cutoff of scipy < 1.3 pinv2 (changed in
+    # https://github.com/scipy/scipy/pull/10067): singular values below
+    # factor * eps * max(s) are discarded, i.e. atol=0, rtol=factor * eps, with
+    # factor and eps given by the precision (single or double) of the SVD.
+    t = "f" if np.result_type(a.dtype, np.float32).char in "fF" else "d"
+    rtol = {"f": 1e3, "d": 1e6}[t] * np.finfo(t).eps
+    return pinv(a, atol=0, rtol=rtol, check_finite=False)
 
 
 def _get_first_singular_vectors_power_method(
@@ -73,7 +65,7 @@ def _get_first_singular_vectors_power_method(
         # As a result, and as detailed in the Wegelin's review, CCA (i.e. mode
         # B) will be unstable if n_features > n_samples or n_targets >
         # n_samples
-        X_pinv, y_pinv = _pinv2_old(X), _pinv2_old(y)
+        X_pinv, y_pinv = _pinv(X), _pinv(y)
 
     for i in range(max_iter):
         if mode == "B":
