@@ -427,7 +427,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         self : object
             Returns a fitted instance.
         """
-        super().partial_fit(X, y, sample_weight=sample_weight, **partial_fit_params)
+        return super().partial_fit(X, y, sample_weight=sample_weight, **partial_fit_params)
 
 
 class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
