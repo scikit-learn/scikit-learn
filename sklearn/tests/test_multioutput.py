@@ -98,6 +98,27 @@ def test_multi_target_regression_partial_fit():
     assert not hasattr(MultiOutputRegressor(Lasso), "partial_fit")
 
 
+def test_partial_fit_returns_self():
+    """Check that `partial_fit` returns the estimator, as documented.
+
+    Non-regression test for gh-35347: `MultiOutputRegressor.partial_fit`
+    returned `None`, breaking the documented chaining idiom
+    `est.partial_fit(X, y).predict(X)`.
+    """
+    X, y = datasets.make_regression(n_targets=2, random_state=0)
+
+    reg = MultiOutputRegressor(SGDRegressor(random_state=0, max_iter=5))
+    assert reg.partial_fit(X, y) is reg
+    # the returned estimator is fitted, so chaining works
+    assert reg.partial_fit(X, y).predict(X).shape == (X.shape[0], 2)
+
+    # control assertion: the classifier sibling inherits `partial_fit` from
+    # `_MultiOutputEstimator`, which already returns `self`
+    y_clf = (y > np.median(y, axis=0)).astype(int)
+    clf = MultiOutputClassifier(SGDClassifier(random_state=0, max_iter=5))
+    assert clf.partial_fit(X, y_clf, classes=[np.array([0, 1])] * 2) is clf
+
+
 def test_multi_target_regression_one_target():
     # Test multi target regression raises
     X, y = datasets.make_regression(n_targets=1, random_state=0)
