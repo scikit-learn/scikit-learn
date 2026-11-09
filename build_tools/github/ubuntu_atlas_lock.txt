@@ -31,7 +31,7 @@ pygments==2.21.0
     # via pytest
 pyproject-metadata==0.12.1
     # via meson-python
-pytest==9.1.1
+pytest==9.2.0
     # via
     #   -r build_tools/github/ubuntu_atlas_requirements.txt
     #   pytest-xdist
