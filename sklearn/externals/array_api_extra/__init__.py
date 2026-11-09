@@ -1,46 +1,22 @@
 """Extra array functions built on top of the array API standard."""
 
 from . import testing
-from ._delegation import (
-    argpartition,
-    atleast_nd,
-    broadcast_shapes,
-    cov,
-    create_diagonal,
-    deg2rad,
-    diag_indices,
-    expand_dims,
-    isclose,
-    isin,
-    kron,
-    nan_to_num,
-    nanmax,
-    nanmin,
-    nansum,
-    nunique,
-    one_hot,
-    pad,
-    partition,
-    rad2deg,
-    searchsorted,
-    setdiff1d,
-    sinc,
-    tril_indices,
-    triu_indices,
-    union1d,
-    unravel_index,
-)
-from ._lib._at import at
-from ._lib._funcs import (
-    angle,
-    apply_where,
-    default_dtype,
-)
-from ._lib._lazy import lazy_apply
+from ._agnostic._elementwise import angle, apply_where
+from ._agnostic._inspection import default_dtype
+from ._at import at
+from ._creation import create_diagonal, one_hot
+from ._elementwise import deg2rad, isclose, nan_to_num, rad2deg, sinc
+from ._indexing import diag_indices, tril_indices, triu_indices, unravel_index
+from ._lazy import lazy_apply
+from ._linalg import kron
+from ._manipulation import atleast_nd, broadcast_shapes, expand_dims, pad
+from ._searching import searchsorted
+from ._set import isin, nunique, setdiff1d, union1d
+from ._sorting import argpartition, partition
+from ._statistical import cov, nanmax, nanmean, nanmin, nansum
 
-__version__ = "0.11.1"
+__version__ = "0.11.2"
 
-# pylint: disable=duplicate-code
 __all__ = [
     "__version__",
     "angle",
@@ -61,6 +37,7 @@ __all__ = [
     "lazy_apply",
     "nan_to_num",
     "nanmax",
+    "nanmean",
     "nanmin",
     "nansum",
     "nunique",

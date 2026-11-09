@@ -567,8 +567,6 @@ class GaussianMixture(BaseMixture):
 
     Read more in the :ref:`User Guide <gmm>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     n_components : int, default=1
@@ -724,8 +722,6 @@ class GaussianMixture(BaseMixture):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

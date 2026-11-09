@@ -179,7 +179,7 @@ def _check_array_api_dispatch(array_api_dispatch):
     if scipy_version < parse_version(min_scipy_version):
         raise ImportError(
             f"SciPy must be {min_scipy_version} or newer"
-            " (found {scipy.__version__}) to dispatch array using"
+            f" (found {scipy.__version__}) to dispatch array using"
             " the array API specification"
         )
 
@@ -953,74 +953,6 @@ def _xlogy(x, y, xp=None):
     return xp.where(x == 0.0, xp.asarray(0.0, dtype=temp.dtype, device=device), temp)
 
 
-def _nanmin(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmin(X, axis=axis))
-
-    else:
-        mask = xp.isnan(X)
-        X = xp.min(
-            xp.where(mask, xp.asarray(+xp.inf, dtype=X.dtype, device=device), X),
-            axis=axis,
-        )
-        # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
-        if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device), X)
-        return X
-
-
-def _nanmax(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmax(X, axis=axis))
-
-    else:
-        mask = xp.isnan(X)
-        X = xp.max(
-            xp.where(mask, xp.asarray(-xp.inf, dtype=X.dtype, device=device), X),
-            axis=axis,
-        )
-        # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
-        if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device), X)
-        return X
-
-
-def _nanmean(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmean(X, axis=axis))
-    else:
-        mask = xp.isnan(X)
-        total = xp.sum(
-            xp.where(mask, xp.asarray(0.0, dtype=X.dtype, device=device), X), axis=axis
-        )
-        count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
-        return total / count
-
-
-def _nansum(X, axis=None, xp=None, keepdims=False, dtype=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, X_device = get_namespace_and_device(X, xp=xp)
-
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nansum(X, axis=axis, keepdims=keepdims, dtype=dtype))
-
-    mask = xp.isnan(X)
-    masked_arr = xp.where(mask, xp.asarray(0, device=X_device, dtype=X.dtype), X)
-    return xp.sum(masked_arr, axis=axis, keepdims=keepdims, dtype=dtype)
-
-
 def _asarray_with_order(
     array, dtype=None, order=None, copy=None, *, xp=None, device=None
 ):
@@ -1246,7 +1178,8 @@ def _atol_for_type(dtype_or_dtype_name):
         # expect the same floating precision level as NumPy's default floating
         # point dtype.
         dtype_or_dtype_name = numpy.float64
-    return numpy.finfo(dtype_or_dtype_name).eps * 1000
+    # Since pytest 9.2.0, pytest.approx rejects np.float32 as an absolute tolerance.
+    return float(numpy.finfo(dtype_or_dtype_name).eps * 1000)
 
 
 def indexing_dtype(xp):

@@ -2623,6 +2623,7 @@ def test_missing_values_best_splitter_missing_both_classes_has_nan(criterion):
 )
 def test_missing_value_errors(sparse_container, tree):
     """Check unsupported configurations for missing values."""
+    tree = clone(tree)
 
     X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
     y = np.array([0] * 5 + [1] * 5)
@@ -3265,6 +3266,43 @@ def test_predict_categorical_list_input(Tree):
 
     assert_array_equal(est.predict([["a"], ["b"]]), y[:2])
     assert_array_equal(est.predict([["a"], ["b"]], check_input=False), y[:2])
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_categorical_preprocessor_preserves_feature_order(Tree):
+    X = np.array(
+        [
+            [0.0, "a"],
+            [1.0, "a"],
+            [2.0, "a"],
+            [3.0, "a"],
+        ],
+        dtype=object,
+    )
+    y = np.array([0, 0, 1, 1])
+
+    est = Tree(categorical_features=[1], random_state=0).fit(X, y)
+
+    assert est.tree_.feature[0] == 0
+    assert_array_equal(est.tree_._n_categories, [-1, 1])
+    assert_array_equal(est.predict(X), y)
+
+
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])
+def test_categorical_preprocessor_nullable_numerical_feature(Tree):
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame(
+        {
+            "f_num": pd.Series([0, 1, pd.NA, -1], dtype="Int64"),
+            "f_cat": pd.Categorical(["a", "a", "b", "b"]),
+        }
+    )
+    y = np.array([0, 0, 1, 1])
+
+    est = Tree(categorical_features="from_dtype", random_state=0).fit(X, y)
+
+    assert_array_equal(est.predict(X), y)
 
 
 @pytest.mark.parametrize("Tree", [DecisionTreeClassifier, DecisionTreeRegressor])

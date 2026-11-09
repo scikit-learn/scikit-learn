@@ -58,7 +58,10 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         """
         # Limit the number of threads in second level of nested parallelism for BLAS
         # to avoid threads over-subscription (in DOT or GEMM for instance).
-        with _get_threadpool_controller().limit(limits=1, user_api='blas'):
+        # With OpenBLAS's OpenMP threading layer, `limits=1, user_api="blas"` would
+        # also set the number of OpenMP threads to 1, and the constructors below read
+        # it.
+        with _get_threadpool_controller().limit(limits="sequential_blas_under_openmp"):
           if metric in ("euclidean", "sqeuclidean"):
               # Specialized implementation of ArgKmin for the Euclidean distance
               # for the dense-dense and sparse-sparse cases.

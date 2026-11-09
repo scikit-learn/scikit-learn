@@ -312,7 +312,7 @@ def test_split_impurity(
 
         tree.fit(X, y, sample_weight=w)
         X_split = (
-            tree._transform_categorical_features(X_dense)
+            tree._preprocess_X(X_dense, reset=False)
             if tree.is_categorical_ is not None
             else X_dense
         )

@@ -143,8 +143,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <huber_regression>`
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     epsilon : float, default=1.35
@@ -190,8 +188,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -201,11 +197,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` has run for.
-
-        .. versionchanged:: 0.20
-
-            In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
-            ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
     outliers_ : array, shape (n_samples,)
         A boolean mask which is set to True where the samples are identified
