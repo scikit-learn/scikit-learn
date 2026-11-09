@@ -137,7 +137,49 @@ print(f"Non-zero coefficients: {np.sum(glm.coef_ != 0)} out of {n_features}")
 # TODO: IterativeImputer is no longer experimental
 
 # %%
-# TODO: Metadata routing (auto-requests)
+# Easier metadata routing
+# -----------------------
+# Metadata routing is now much easier to use. It is still experimental and still off by
+# default, but once you enable it, scikit-learn estimators auto-request `sample_weight`
+# and, where they use a validation set, `X_val`, `y_val`, and `sample_weight_val`. You
+# no longer need to call `set_fit_request` or `set_score_request` for that metadata.
+# Other metadata (except for `groups`) still needs an explicit request.
+#
+# In the example below, `sample_weight` is auto-requested on estimator methods that
+# accept it (typically `fit` and `score`) and on scorers whose metric accepts it. The
+# same weights are used to fit :class:`~linear_model.LogisticRegression` and to score
+# each candidate, with no explicit request.
+from sklearn import set_config
+from sklearn.model_selection import GridSearchCV
+
+set_config(enable_metadata_routing=True)
+
+X, y = make_classification(n_samples=150, random_state=0)
+sample_weight = np.ones(len(y))
+sample_weight[:15] = 2
+
+search = GridSearchCV(LogisticRegression(), param_grid={"alpha": [0.01, 0.1, 1]})
+search.fit(X, y, sample_weight=sample_weight)
+print(f"Best alpha: {search.best_params_['alpha']}")
+set_config(enable_metadata_routing=False)
+
+# %%
+# A request set with `set_{method}_request` still takes precedence.
+# `set_fit_request(sample_weight=False)` opts out of receiving `sample_weight`.
+# `set_config(enable_metadata_auto_requests=False)` restores the previous behaviour:
+# passing metadata that was not explicitly requested raises `UnsetMetadataPassedError`.
+#
+# :class:`~ensemble.HistGradientBoostingClassifier` and
+# :class:`~ensemble.HistGradientBoostingRegressor` now also auto-request a validation
+# set (`X_val`, `y_val`, and `sample_weight_val`) for early stopping. See
+# :ref:`sphx_glr_auto_examples_compose_plot_metadata_routing_validation_set.py`.
+#
+# For more information about this new feature, see
+# :ref:`auto-requested metadata <metadata_routing_auto_request_user>`.
+#
+# Estimators outside scikit-learn do not follow this policy unless they implement it
+# themselves. For information on the developer API we provide for that purpose, see
+# :ref:`metadata_routing_auto_request`.
 
 # %%
 # TODO: Array API support
