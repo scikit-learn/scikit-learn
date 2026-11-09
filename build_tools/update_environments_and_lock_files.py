@@ -365,6 +365,7 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.12",
+            "blas": "[build=openblas]",
             "numpy": "min",
             "scipy": "min",
             "matplotlib": "min",
@@ -417,6 +418,7 @@ build_metadata_list = [
         ],
         "package_constraints": {
             "python": "3.14",
+            "blas": "[build=openblas]",
         },
     },
     {
