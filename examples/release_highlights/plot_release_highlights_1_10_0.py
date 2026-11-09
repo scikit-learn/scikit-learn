@@ -162,7 +162,9 @@ X = np.array([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
 print(IterativeImputer(random_state=0).fit_transform(X))
 
 # %%
-# TODO: Metadata routing (auto-requests)
+# Metadata routing
+# ----------------
+# TODO: auto-requests.
 
 # %%
 # Array API support (enables GPU computations)
@@ -217,4 +219,6 @@ print(IterativeImputer(random_state=0).fit_transform(X))
 # for the full list of supported estimators and functions.
 
 # %%
-# TODO: Callbacks
+# Callbacks
+# ---------
+# TODO
