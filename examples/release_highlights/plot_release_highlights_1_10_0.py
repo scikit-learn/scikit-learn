@@ -155,7 +155,43 @@ X = np.array([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
 print(IterativeImputer(random_state=0).fit_transform(X))
 
 # %%
-# TODO: Metadata routing (auto-requests)
+# Metadata routing: auto-requests
+# -------------------------------
+# When :ref:`metadata routing <metadata_routing>` is enabled, estimators, scorers and
+# meta-estimators now **auto-request** common metadata such as `sample_weight`. You
+# no longer need to call `set_fit_request(sample_weight=True)` or
+# `set_score_request(sample_weight=True)` on each step: passing `sample_weight` is
+# enough. In the example below, `sample_weight` is routed to both steps of the
+# pipeline and to the scorer.
+import sklearn
+from sklearn.model_selection import cross_validate
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
+sklearn.set_config(enable_metadata_routing=True)
+
+X, y = make_classification(random_state=0)
+sample_weight = rng.uniform(size=y.shape[0])
+
+pipe = make_pipeline(StandardScaler(), LogisticRegression())
+results = cross_validate(
+    pipe, X, y, scoring="accuracy", params={"sample_weight": sample_weight}
+)
+print(f"Weighted accuracy per fold: {results['test_score'].round(2)}")
+
+sklearn.set_config(enable_metadata_routing=False)
+
+# %%
+# :class:`~ensemble.HistGradientBoostingClassifier` and
+# :class:`~ensemble.HistGradientBoostingRegressor` also auto-request a validation
+# set (`X_val`, `y_val` and `sample_weight_val`), see
+# :ref:`sphx_glr_auto_examples_compose_plot_metadata_routing_validation_set.py`.
+#
+# Explicit `set_{method}_request` calls still take precedence, for instance to opt
+# out of receiving a metadata. Auto-requests can be disabled globally with
+# `sklearn.set_config(enable_metadata_auto_requests=False)`. Third-party estimators
+# can opt in with `sklearn.utils.metadata_routing.AutoRequestMixin`. See the
+# :ref:`User Guide <metadata_routing_auto_request_user>` for details.
 
 # %%
 # TODO: Array API support
