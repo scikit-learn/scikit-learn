@@ -37,7 +37,7 @@ jobs:
 
       # The ubuntu-26.04 image does not ship conda anymore ($CONDA is unset)
       - name: Set up conda
-        uses: conda-incubator/setup-miniconda@v4
+        uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
         with:
           miniforge-version: latest
           auto-activate: true
