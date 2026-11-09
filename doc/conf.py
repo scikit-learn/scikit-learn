@@ -522,6 +522,9 @@ redirects = {
     "auto_examples/miscellaneous/plot_partial_dependence_visualization_api": (
         "auto_examples/inspection/plot_partial_dependence_visualization_api"
     ),
+    "auto_examples/ensemble/plot_gradient_boosting_quantile": (
+        "auto_examples/ensemble/plot_quantile_regression_forest"
+    ),
     "auto_examples/applications/wikipedia_principal_eigenvector": (
         "auto_examples/applications/plot_wikipedia_principal_eigenvector"
     ),
