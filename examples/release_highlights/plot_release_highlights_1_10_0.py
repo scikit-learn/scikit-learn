@@ -79,6 +79,8 @@ print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 # before. Below, `C=10` and `alpha=0.1` give the same model.
 import warnings
 
+import numpy as np
+
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 
@@ -121,8 +123,11 @@ print(f"Same coefficients: {np.allclose(clf_before.coef_, clf_after.coef_)}")
 #
 # In the example below, the :math:`\ell^1` penalty sets the coefficients of the
 # features that do not influence the target to exactly zero.
+import numpy as np
+
 from sklearn.linear_model import PoissonRegressor
 
+rng = np.random.default_rng(0)
 n_samples, n_features = 500, 20
 X = rng.normal(size=(n_samples, n_features))
 true_coef = np.zeros(n_features)
@@ -149,6 +154,8 @@ print(f"Non-zero coefficients: {np.sum(glm.coef_ != 0)} out of {n_features}")
 # Similarly, `sklearn.experimental.enable_hist_gradient_boosting` is deprecated and
 # will be removed in 1.12, since :class:`~ensemble.HistGradientBoostingClassifier` and
 # :class:`~ensemble.HistGradientBoostingRegressor` have been stable for a while.
+import numpy as np
+
 from sklearn.impute import IterativeImputer
 
 X = np.array([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
@@ -163,23 +170,26 @@ print(IterativeImputer(random_state=0).fit_transform(X))
 # `set_score_request(sample_weight=True)` on each step: passing `sample_weight` is
 # enough. In the example below, `sample_weight` is routed to both steps of the
 # pipeline and to the scorer.
+import numpy as np
+
 import sklearn
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-sklearn.set_config(enable_metadata_routing=True)
-
+rng = np.random.default_rng(0)
 X, y = make_classification(random_state=0)
 sample_weight = rng.uniform(size=y.shape[0])
 
 pipe = make_pipeline(StandardScaler(), LogisticRegression())
-results = cross_validate(
-    pipe, X, y, scoring="accuracy", params={"sample_weight": sample_weight}
-)
-print(f"Weighted accuracy per fold: {results['test_score'].round(2)}")
 
-sklearn.set_config(enable_metadata_routing=False)
+with sklearn.config_context(enable_metadata_routing=True):
+    results = cross_validate(
+        pipe, X, y, scoring="accuracy", params={"sample_weight": sample_weight}
+    )
+print(f"Weighted accuracy per fold: {results['test_score'].round(2)}")
 
 # %%
 # :class:`~ensemble.HistGradientBoostingClassifier` and
@@ -188,13 +198,62 @@ sklearn.set_config(enable_metadata_routing=False)
 # :ref:`sphx_glr_auto_examples_compose_plot_metadata_routing_validation_set.py`.
 #
 # Explicit `set_{method}_request` calls still take precedence, for instance to opt
-# out of receiving a metadata. Auto-requests can be disabled globally with
+# out of receiving `sample_weight`. Auto-requests can be disabled globally with
 # `sklearn.set_config(enable_metadata_auto_requests=False)`. Third-party estimators
 # can opt in with `sklearn.utils.metadata_routing.AutoRequestMixin`. See the
 # :ref:`User Guide <metadata_routing_auto_request_user>` for details.
 
 # %%
-# TODO: Array API support
+# Array API support (enables GPU computations)
+# --------------------------------------------
+# scikit-learn continues to adopt the Python array API standard, which lets
+# estimators and functions work directly on PyTorch tensors or CuPy arrays, including
+# on GPUs. In this release, array API support was added to:
+#
+# - :class:`~linear_model.LogisticRegressionCV` (with `solver="lbfgs"` and
+#   `solver="newton-cg"`), and :class:`~linear_model.LogisticRegression` with
+#   `solver="newton-cg"`;
+# - :class:`~covariance.LedoitWolf` and :class:`~covariance.OAS`;
+# - :func:`~metrics.matthews_corrcoef` and
+#   :func:`~metrics.cluster.contingency_matrix`.
+#
+# Several estimators, metrics and cross-validation tools now also accept `y` and
+# `sample_weight` from a different namespace or device than `X`. For instance, `X`
+# can be on a GPU while `y` stays a NumPy array of string labels on the CPU, which
+# matters because PyTorch tensors do not support string values:
+#
+# .. code-block:: python
+#
+#     import os
+#
+#     # Must be set before SciPy is imported (scikit-learn imports SciPy).
+#     os.environ["SCIPY_ARRAY_API"] = "1"
+#
+#     import numpy as np
+#     import torch
+#
+#     import sklearn
+#     from sklearn.datasets import make_classification
+#     from sklearn.linear_model import LogisticRegressionCV
+#
+#     X, y = make_classification(random_state=0)
+#     X_gpu = torch.asarray(X, dtype=torch.float32, device="cuda")
+#     y_labels = np.array(["cat", "dog"])[y]  # NumPy string labels on the CPU
+#
+#     with sklearn.config_context(array_api_dispatch=True):
+#         clf = LogisticRegressionCV(solver="lbfgs", scoring="accuracy")
+#         clf.fit(X_gpu, y_labels)
+#         print(clf.coef_.device, clf.classes_)
+#         print(clf.predict(X_gpu[:5]))
+#
+# Output::
+#
+#     cuda:0 ['cat' 'dog']
+#     ['cat' 'cat' 'dog' 'dog' 'cat']
+#
+# Array API support is experimental and must be explicitly enabled both in SciPy and
+# scikit-learn. See :ref:`array_api` for instructions and :ref:`array_api_supported`
+# for the full list of supported estimators and functions.
 
 # %%
 # TODO: Callbacks
