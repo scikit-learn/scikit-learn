@@ -812,7 +812,7 @@ def cross_validation(
             default=np.empty(0)
         Weights assigned to each sample.
 
-    shrinking : int, default=1
+    shrinking : int, default=0
         Whether to use the shrinking heuristic.
 
     probability : int, default=0
