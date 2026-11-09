@@ -123,8 +123,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     or is_scalar_nan(cats[n_non_missing - 1])
                 ):
                     n_non_missing -= 1
-                order = np.lexsort((cats, -counts[:n_non_missing]))
-                # order =  np.argsort(-counts[:n_non_missing], kind="stable")
+                order = np.lexsort((cats[:n_non_missing], -counts[:n_non_missing]))
                 order = np.concatenate([order, np.arange(n_non_missing, len(cats))])
                 cats = cats[order]
                 for v, k in zip(cats, order):
