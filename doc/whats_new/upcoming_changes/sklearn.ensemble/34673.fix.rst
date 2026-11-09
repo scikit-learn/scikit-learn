@@ -1,6 +1,0 @@
-- :class:`ensemble.IsolationForest`, :class:`ensemble.BaggingClassifier`
-  and :class:`ensemble.BaggingRegressor` no longer raise a `ValueError` when
-  `sample_weight` contains zeros and `bootstrap=False`. Sampling without
-  replacement now draws at most the number of non-zero-weighted rows, so
-  zero-weighted rows are excluded exactly as if they had been removed.
-  By :user:`Koussay Mehdouani <amkkoussay>`.
