@@ -69,11 +69,11 @@ class SKExampleTitleSortKey(ExampleTitleSortKey):
         if not str(filename).startswith(prefix):
             return title
 
-        major_minor = filename[len(prefix) :].split("_")[:2]
-        version_float = float(".".join(major_minor))
+        # Compare as integers, not as a float: "1_10" must sort after "1_9".
+        major, minor = (int(v) for v in filename[len(prefix) :].split("_")[:2])
 
         # negate to place the newest version highlights first
-        return -version_float
+        return (-major, -minor)
 
 
 def notebook_modification_function(notebook_content, notebook_filename):
