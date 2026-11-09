@@ -58,8 +58,8 @@ print(f"Native categorical split accuracy: {native.score(X, y):.2f}")
 print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 
 # %%
-# With the default `splitter="best"` (decision trees and random forests), categorical
-# features are supported for binary classification and single-output regression,
+# Decision trees (with the default `splitter="best"`) and random forests support
+# categorical features for binary classification and single-output regression,
 # with up to 255 categories per feature. Extra trees use random splits and also
 # support multiclass and multi-output targets, with up to ``2**24 - 1`` categories
 # per feature.
@@ -136,7 +136,7 @@ y = rng.poisson(np.exp(X @ true_coef))
 
 glm = PoissonRegressor(alpha=0.1, l1_ratio=1.0, solver="auto").fit(X, y)
 print(f"Selected solver: {glm.solver_}")
-print(f"Non-zero coefficients: {np.sum(glm.coef_ != 0)} out of {n_features}")
+print(f"Non-zero coefficients: {np.flatnonzero(glm.coef_)}")
 
 # %%
 # :class:`~impute.IterativeImputer` is no longer experimental
@@ -162,46 +162,7 @@ X = np.array([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
 print(IterativeImputer(random_state=0).fit_transform(X))
 
 # %%
-# Metadata routing: auto-requests
-# -------------------------------
-# When :ref:`metadata routing <metadata_routing>` is enabled, estimators, scorers and
-# meta-estimators now **auto-request** common metadata such as `sample_weight`. You
-# no longer need to call `set_fit_request(sample_weight=True)` or
-# `set_score_request(sample_weight=True)` on each step: passing `sample_weight` is
-# enough. In the example below, `sample_weight` is routed to both steps of the
-# pipeline and to the scorer.
-import numpy as np
-
-import sklearn
-from sklearn.datasets import make_classification
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_validate
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-
-rng = np.random.default_rng(0)
-X, y = make_classification(random_state=0)
-sample_weight = rng.uniform(size=y.shape[0])
-
-pipe = make_pipeline(StandardScaler(), LogisticRegression())
-
-with sklearn.config_context(enable_metadata_routing=True):
-    results = cross_validate(
-        pipe, X, y, scoring="accuracy", params={"sample_weight": sample_weight}
-    )
-print(f"Weighted accuracy per fold: {results['test_score'].round(2)}")
-
-# %%
-# :class:`~ensemble.HistGradientBoostingClassifier` and
-# :class:`~ensemble.HistGradientBoostingRegressor` also auto-request a validation
-# set (`X_val`, `y_val` and `sample_weight_val`), see
-# :ref:`sphx_glr_auto_examples_compose_plot_metadata_routing_validation_set.py`.
-#
-# Explicit `set_{method}_request` calls still take precedence, for instance to opt
-# out of receiving `sample_weight`. Auto-requests can be disabled globally with
-# `sklearn.set_config(enable_metadata_auto_requests=False)`. Third-party estimators
-# can opt in with `sklearn.utils.metadata_routing.AutoRequestMixin`. See the
-# :ref:`User Guide <metadata_routing_auto_request_user>` for details.
+# TODO: Metadata routing (auto-requests)
 
 # %%
 # Array API support (enables GPU computations)
