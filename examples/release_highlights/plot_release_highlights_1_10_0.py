@@ -58,8 +58,8 @@ print(f"Native categorical split accuracy: {native.score(X, y):.2f}")
 print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 
 # %%
-# With the default `splitter="best"` (decision trees and random forests), categorical
-# features are supported for binary classification and single-output regression,
+# Decision trees (with the default `splitter="best"`) and random forests support
+# categorical features for binary classification and single-output regression,
 # with up to 255 categories per feature. Extra trees use random splits and also
 # support multiclass and multi-output targets, with up to ``2**24 - 1`` categories
 # per feature.
@@ -78,6 +78,8 @@ print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 # deprecated and will be removed in 1.14. The new defaults give the same models as
 # before. Below, `C=10` and `alpha=0.1` give the same model.
 import warnings
+
+import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
@@ -121,8 +123,11 @@ print(f"Same coefficients: {np.allclose(clf_before.coef_, clf_after.coef_)}")
 #
 # In the example below, the :math:`\ell^1` penalty sets the coefficients of the
 # features that do not influence the target to exactly zero.
+import numpy as np
+
 from sklearn.linear_model import PoissonRegressor
 
+rng = np.random.default_rng(0)
 n_samples, n_features = 500, 20
 X = rng.normal(size=(n_samples, n_features))
 true_coef = np.zeros(n_features)
@@ -131,13 +136,33 @@ y = rng.poisson(np.exp(X @ true_coef))
 
 glm = PoissonRegressor(alpha=0.1, l1_ratio=1.0, solver="auto").fit(X, y)
 print(f"Selected solver: {glm.solver_}")
-print(f"Non-zero coefficients: {np.sum(glm.coef_ != 0)} out of {n_features}")
+print(f"Non-zero coefficients: {np.flatnonzero(glm.coef_)}")
 
 # %%
-# TODO: IterativeImputer is no longer experimental
+# :class:`~impute.IterativeImputer` is no longer experimental
+# -----------------------------------------------------------
+# :class:`~impute.IterativeImputer` is now stable and can be imported directly from
+# :mod:`sklearn.impute`. Importing `sklearn.experimental.enable_iterative_imputer`
+# is no longer needed: it is now a no-op that raises a warning.
+#
+# `IterativeImputer` also no longer raises a
+# :class:`~exceptions.ConvergenceWarning` when `max_iter` is reached before meeting
+# the `tol` stopping criterion: the round-robin imputation is not guaranteed to
+# converge, and this is expected. See the :ref:`User Guide
+# <iterative_imputer_convergence>` for details.
+#
+# Similarly, `sklearn.experimental.enable_hist_gradient_boosting` is deprecated and
+# will be removed in 1.12, since :class:`~ensemble.HistGradientBoostingClassifier` and
+# :class:`~ensemble.HistGradientBoostingRegressor` have been stable for a while.
+import numpy as np
+
+from sklearn.impute import IterativeImputer
+
+X = np.array([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
+print(IterativeImputer(random_state=0).fit_transform(X))
 
 # %%
-# Easier metadata routing
+# Easier Metadata Routing
 # -----------------------
 # Metadata routing is now much easier to use. It is still experimental and still off by
 # default, but once you enable it, scikit-learn estimators auto-request `sample_weight`
@@ -182,7 +207,58 @@ set_config(enable_metadata_routing=False)
 # :ref:`metadata_routing_auto_request`.
 
 # %%
-# TODO: Array API support
+# Array API support (enables GPU computations)
+# --------------------------------------------
+# scikit-learn continues to adopt the Python array API standard, which lets
+# estimators and functions work directly on PyTorch tensors or CuPy arrays, including
+# on GPUs. In this release, array API support was added to:
+#
+# - :class:`~linear_model.LogisticRegressionCV` (with `solver="lbfgs"` and
+#   `solver="newton-cg"`), and :class:`~linear_model.LogisticRegression` with
+#   `solver="newton-cg"`;
+# - :class:`~covariance.LedoitWolf` and :class:`~covariance.OAS`;
+# - :func:`~metrics.matthews_corrcoef` and
+#   :func:`~metrics.cluster.contingency_matrix`.
+#
+# Several estimators, metrics and cross-validation tools now also accept `y` and
+# `sample_weight` from a different namespace or device than `X`. For instance, `X`
+# can be on a GPU while `y` stays a NumPy array of string labels on the CPU, which
+# matters because PyTorch tensors do not support string values:
+#
+# .. code-block:: python
+#
+#     import os
+#
+#     # Must be set before SciPy is imported (scikit-learn imports SciPy).
+#     os.environ["SCIPY_ARRAY_API"] = "1"
+#
+#     import numpy as np
+#     import torch
+#
+#     import sklearn
+#     from sklearn.datasets import make_classification
+#     from sklearn.linear_model import LogisticRegressionCV
+#
+#     X, y = make_classification(random_state=0)
+#     X_gpu = torch.asarray(X, dtype=torch.float32, device="cuda")
+#     y_labels = np.array(["cat", "dog"])[y]  # NumPy string labels on the CPU
+#
+#     with sklearn.config_context(array_api_dispatch=True):
+#         clf = LogisticRegressionCV(solver="lbfgs", scoring="accuracy")
+#         clf.fit(X_gpu, y_labels)
+#         print(clf.coef_.device, clf.classes_)
+#         print(clf.predict(X_gpu[:5]))
+#
+# Output::
+#
+#     cuda:0 ['cat' 'dog']
+#     ['cat' 'cat' 'dog' 'dog' 'cat']
+#
+# Array API support is experimental and must be explicitly enabled both in SciPy and
+# scikit-learn. See :ref:`array_api` for instructions and :ref:`array_api_supported`
+# for the full list of supported estimators and functions.
 
 # %%
-# TODO: Callbacks
+# Callbacks
+# ---------
+# TODO
