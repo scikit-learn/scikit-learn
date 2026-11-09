@@ -34,13 +34,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+
+      # The ubuntu-26.04 image does not ship conda anymore ($CONDA is unset)
+      - name: Set up conda
+        uses: conda-incubator/setup-miniconda@v4
+        with:
+          miniforge-version: latest
+          auto-activate: true
+          activate-environment: ""
+
       - name: Generate lock files
+        shell: bash -el {0}
         run: |
           source build_tools/shared.sh
-          source $CONDA/bin/activate
-          conda update -n base --all
-          conda install -n base conda conda-libmamba-solver -y
-          conda config --set solver libmamba
           conda create -n conda-lock-env -c conda-forge "$(get_dep conda-lock min)" -y
           conda activate conda-lock-env
 
