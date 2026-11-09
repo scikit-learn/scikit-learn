@@ -2585,7 +2585,8 @@ def test_ordinal_encoder_frequency_unseen():
     ).fit(X)
     assert_array_equal(enc.categories_[0], ["a", "c", "b"])
     assert_array_equal(enc.transform([["a"], ["c"], ["b"]]), [[0], [1], [2]])
-    enc.transform([["a"], ["c"], ["b"], ["un"]])
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        enc.transform([["a"], ["c"], ["b"], ["un"]])
 
 
 def test_ordinal_encoder_frequency_dtype_U3():
