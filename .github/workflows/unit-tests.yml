@@ -250,8 +250,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
-          # Miniforge3 26.9.4-0: `conda init --all` fails on Windows
-          miniforge-version: ${{ runner.os == 'Windows' && '26.7.2-1' || 'latest' }}
+          miniforge-version: latest
           auto-activate: true
           activate-environment: ""
 
@@ -383,8 +382,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v4
         if: ${{ startsWith(env.DISTRIB, 'conda') }}
         with:
-          # Miniforge3 26.9.4-0: `conda init --all` fails on Windows
-          miniforge-version: ${{ runner.os == 'Windows' && '26.7.2-1' || 'latest' }}
+          miniforge-version: latest
           auto-activate: true
           activate-environment: ""
 
