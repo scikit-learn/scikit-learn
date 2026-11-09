@@ -24,6 +24,7 @@ from sklearn.ensemble import (
     BaggingRegressor,
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor,
+    IsolationForest,
     RandomForestClassifier,
     RandomForestRegressor,
 )
@@ -743,6 +744,38 @@ def test_invalid_sample_weight_max_samples_bootstrap_combinations():
             UserWarning, match="When fitting BaggingClassifier with sample_weight"
         ):
             clf.fit(X, y, sample_weight=sample_weight)
+
+
+def test_bagging_zero_sample_weight_no_bootstrap():
+    """Zero sample weights must not raise when `bootstrap=False`.
+
+    Non-regression test for gh-34673. A zero weight is the documented way
+    to exclude a row from a fit, but sampling without replacement cannot
+    draw more rows than the number of non-zero weights, which made
+    `IsolationForest` (on its defaults) and the bagging estimators raise
+    `ValueError: Fewer non-zero entries in p than size`.
+    """
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(80, 4))
+    y_cls = (X[:, 0] > 0.5).astype(int)
+    y_reg = X[:, 0] * 2.0
+    sample_weight = np.ones(80)
+    sample_weight[0] = 0.0
+
+    # IsolationForest uses bootstrap=False by default.
+    IsolationForest(random_state=0).fit(X, sample_weight=sample_weight)
+
+    for estimator, y in [
+        (BaggingClassifier(bootstrap=False, random_state=0), y_cls),
+        (BaggingRegressor(bootstrap=False, random_state=0), y_reg),
+    ]:
+        with pytest.warns(
+            UserWarning, match="it is recommended to use bootstrap=True"
+        ):
+            estimator.fit(X, y, sample_weight=sample_weight)
+        # The zero-weighted row is never part of any drawn sample.
+        for samples in estimator.estimators_samples_:
+            assert 0 not in samples
 
 
 class EstimatorAcceptingSampleWeight(BaseEstimator):
