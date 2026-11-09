@@ -179,7 +179,7 @@ def _check_array_api_dispatch(array_api_dispatch):
     if scipy_version < parse_version(min_scipy_version):
         raise ImportError(
             f"SciPy must be {min_scipy_version} or newer"
-            " (found {scipy.__version__}) to dispatch array using"
+            f" (found {scipy.__version__}) to dispatch array using"
             " the array API specification"
         )
 
@@ -1178,7 +1178,8 @@ def _atol_for_type(dtype_or_dtype_name):
         # expect the same floating precision level as NumPy's default floating
         # point dtype.
         dtype_or_dtype_name = numpy.float64
-    return numpy.finfo(dtype_or_dtype_name).eps * 1000
+    # Since pytest 9.2.0, pytest.approx rejects np.float32 as an absolute tolerance.
+    return float(numpy.finfo(dtype_or_dtype_name).eps * 1000)
 
 
 def indexing_dtype(xp):
