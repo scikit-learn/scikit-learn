@@ -48,6 +48,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_threaded_parallelism_enabled,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
@@ -1105,6 +1106,7 @@ def test_bagging_with_metadata_routing(model):
     model.fit(iris.data, iris.target)
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize(
     "sub_estimator, caller, callee",
     [

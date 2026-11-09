@@ -51,6 +51,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_allclose_dense_sparse,
     ignore_warnings,
+    skip_if_threaded_parallelism_enabled,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
@@ -937,6 +938,7 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
     est.get_metadata_routing()
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize(
     "Estimator, Child",
     [

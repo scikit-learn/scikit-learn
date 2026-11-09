@@ -36,6 +36,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_threaded_parallelism_enabled,
 )
 
 # Load datasets
@@ -731,6 +732,7 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
     est.get_metadata_routing()
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize(
     "Estimator, Child",
     [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],

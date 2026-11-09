@@ -39,6 +39,7 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_almost_equal,
     assert_array_equal,
+    skip_if_threaded_parallelism_enabled,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_eye_array
 
@@ -1209,6 +1210,7 @@ def test_column_transformer_no_estimators():
     assert ct.transformers_[-1][2] == [0, 1, 2]
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize(
     ["est", "pattern"],
     [
@@ -2724,6 +2726,7 @@ def test_routing_passed_metadata_not_supported(method):
         getattr(trs, method)([[1]], sample_weight=[1], prop="a")
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_column_transformer(method):

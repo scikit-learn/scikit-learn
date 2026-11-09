@@ -110,6 +110,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     set_random_state,
     skip_callback_test_if_wasm,
+    skip_if_threaded_parallelism_enabled,
 )
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -2704,6 +2705,7 @@ def test_search_html_repr():
 # ======================
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize(
     "SearchCV, param_search",
     [

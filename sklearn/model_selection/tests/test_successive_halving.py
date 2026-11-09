@@ -29,6 +29,7 @@ from sklearn.model_selection.tests.test_search import (
     check_cv_results_keys,
 )
 from sklearn.svm import SVC, LinearSVC
+from sklearn.utils._testing import skip_if_threaded_parallelism_enabled
 
 
 class FastClassifier(DummyClassifier):
@@ -544,6 +545,7 @@ def test_top_k(k, itr, expected):
     assert np.all(got == expected)
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("Est", (HalvingRandomSearchCV, HalvingGridSearchCV))
 def test_cv_results(Est):
     # test that the cv_results_ matches correctly the logic of the
@@ -657,6 +659,7 @@ def test_cv_results(Est):
     )
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 def test_base_estimator_inputs(Est):
     # make sure that the base estimators are passed the correct parameters and

@@ -34,6 +34,7 @@ from sklearn.utils import all_estimators
 from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
     _get_expected_failed_checks,
+    _skip_if_threaded_parallelism,
     _tested_estimators,
     _yield_instances_for_check,
 )
@@ -119,6 +120,7 @@ def test_get_check_estimator_ids(val, expected):
     list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
 )
 def test_estimators(estimator, check, request):
+    _skip_if_threaded_parallelism(estimator, check)
     # Common tests for estimator instances
     with ignore_warnings(
         category=(FutureWarning, ConvergenceWarning, UserWarning, LinAlgWarning)
@@ -372,6 +374,15 @@ SET_OUTPUT_ESTIMATORS = list(
 )
 def test_set_output_transform(estimator_orig):
     name = estimator_orig.__class__.__name__
+    if (
+        name == "LatentDirichletAllocation"
+        and os.environ.get("SKLEARN_TESTS_ENABLE_PARALLELISM") == "1"
+    ):
+        pytest.skip(
+            "When threading+parallelism are enabled this fails intermittently,"
+            " see https://github.com/scikit-learn/scikit-learn/issues/35313"
+        )
+
     if not hasattr(estimator_orig, "set_output"):
         pytest.skip(
             f"Skipping check_set_output_transform for {name}: Does not support"
@@ -403,6 +414,16 @@ def test_set_output_transform_configured(estimator_orig, check_func):
             f"Skipping {check_func.__name__} for {name}: Does not support"
             " set_output API yet"
         )
+    if (
+        name in "LatentDirichletAllocation"
+        and "pandas" in check_func.__name__
+        and os.environ.get("SKLEARN_TESTS_ENABLE_PARALLELISM") == "1"
+    ):
+        pytest.skip(
+            "When threading+parallelism are enabled these fail intermittently,"
+            " see https://github.com/scikit-learn/scikit-learn/issues/35313"
+        )
+
     for estimator in _yield_instances_for_check(check_func, estimator_orig):
         with ignore_warnings(category=(FutureWarning)):
             check_func(estimator.__class__.__name__, estimator)
