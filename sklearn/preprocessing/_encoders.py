@@ -97,7 +97,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 )
 
         self.categories_ = []
-        self.frequency_map = {}
         category_counts = []
         compute_counts = return_counts or self._infrequent_enabled
 
@@ -126,8 +125,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 order = np.lexsort((cats[:n_non_missing], -counts[:n_non_missing]))
                 order = np.concatenate([order, np.arange(n_non_missing, len(cats))])
                 cats = cats[order]
-                for v, k in zip(cats, order):
-                    self.frequency_map[k] = v
+
                 if compute_counts:
                     category_counts.append(counts[order])
             else:
