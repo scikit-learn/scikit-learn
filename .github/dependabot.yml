@@ -17,5 +17,4 @@ updates:
     labels:
       - "Build / CI"
       - "dependencies"
-    reviewers:
-      - "scikit-learn/core-devs"
+      - "Needs Triage"
