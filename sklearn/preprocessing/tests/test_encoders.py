@@ -1510,6 +1510,61 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
 
 
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
+def test_ohe_missing_value_support_pandas_object(handle_unknown):
+    # checks pandas dataframe with object/string features containing pd.NA
+    pd = pytest.importorskip("pandas")
+
+    df = pd.DataFrame(
+        {
+            "col1": ["c", "a", pd.NA, "b", "a"],
+        }
+    )
+    expected_df_trans = np.array(
+        [
+            [0, 0, 1, 0],
+            [1, 0, 0, 0],
+            [0, 0, 0, 1],
+            [0, 1, 0, 0],
+            [1, 0, 0, 0],
+        ]
+    )
+
+    ohe = OneHotEncoder(sparse_output=False, handle_unknown=handle_unknown)
+    df_trans = ohe.fit_transform(df)
+    assert_allclose(expected_df_trans, df_trans)
+
+    assert len(ohe.categories_) == 1
+    assert_array_equal(ohe.categories_[0][:-1], ["a", "b", "c"])
+    assert np.isnan(ohe.categories_[0][-1])
+
+
+@pytest.mark.parametrize("encoded_missing_value", [np.nan, -2])
+def test_ordinal_encoder_missing_value_support_pandas_object(encoded_missing_value):
+    """Check ordinal encoder is compatible with pandas object Series with pd.NA."""
+    pd = pytest.importorskip("pandas")
+
+    df = pd.DataFrame(
+        {
+            "col1": ["c", "a", pd.NA, "b", "a"],
+        }
+    )
+
+    oe = OrdinalEncoder(encoded_missing_value=encoded_missing_value).fit(df)
+    assert len(oe.categories_) == 1
+    assert_array_equal(oe.categories_[0][:3], ["a", "b", "c"])
+    assert np.isnan(oe.categories_[0][-1])
+
+    df_trans = oe.transform(df)
+    assert_allclose(df_trans, [[2.0], [0.0], [encoded_missing_value], [1.0], [0.0]])
+
+    X_inverse = oe.inverse_transform(df_trans)
+    assert X_inverse.shape == (5, 1)
+    assert_array_equal(X_inverse[:2, 0], ["c", "a"])
+    assert_array_equal(X_inverse[3:, 0], ["b", "a"])
+    assert np.isnan(X_inverse[2, 0])
+
+
+@pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist", "warn"])
 def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
     during transform."""
