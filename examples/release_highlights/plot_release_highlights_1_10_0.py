@@ -65,8 +65,73 @@ print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 # per feature.
 
 # %%
-# TODO: Linear models (LogisticRegression API changes first, then GLM L1/Elastic-Net
-# and the "newton-cd" / "newton-cd-gram" solvers)
+# Linear models
+# -------------
+#
+# Penalty parameter `alpha` in logistic regression
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# The penalty strength of :class:`~linear_model.LogisticRegression` and
+# :class:`~linear_model.LogisticRegressionCV` is now set with `alpha` (`alphas` for
+# `LogisticRegressionCV`), as in :class:`~linear_model.Ridge` or
+# :class:`~linear_model.ElasticNet`: the larger the value, the stronger the penalty.
+# For `LogisticRegression`, `alpha = 1 / C`. The `C` and `Cs` parameters are
+# deprecated and will be removed in 1.14. The new defaults give the same models as
+# before. Below, `C=10` and `alpha=0.1` give the same model.
+import warnings
+
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
+
+X, y = make_classification(random_state=0)
+
+# Before: `C` is the inverse of the penalty strength (deprecated).
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", FutureWarning)
+    clf_before = LogisticRegression(C=10).fit(X, y)
+
+# After: `alpha` is the penalty strength, with `alpha = 1 / C`.
+clf_after = LogisticRegression(alpha=0.1).fit(X, y)
+
+print(f"Same coefficients: {np.allclose(clf_before.coef_, clf_after.coef_)}")
+
+# %%
+# New solvers
+# ^^^^^^^^^^^
+# Two new solvers, `"newton-cd"` and `"newton-cd-gram"`, support :math:`\ell^1` and
+# Elastic-Net penalties. They are available for
+# :class:`~linear_model.LogisticRegression` and for the generalized linear models
+# :class:`~linear_model.PoissonRegressor`, :class:`~linear_model.GammaRegressor` and
+# :class:`~linear_model.TweedieRegressor`, which can now fit :math:`\ell^1` and
+# Elastic-Net penalties with the new `l1_ratio` parameter.
+#
+# - The new default `solver="auto"` selects a solver that works with the chosen
+#   `l1_ratio`:
+#
+#   - `l1_ratio=0` (pure :math:`\ell^2` penalty or no penalty): `"lbfgs"`, as before;
+#   - `l1_ratio > 0` and `n_samples >= n_features`: `"newton-cd-gram"`, which
+#     builds the full Hessian matrix of size `(n_features, n_features)`;
+#   - `l1_ratio > 0` and `n_samples < n_features`: `"newton-cd"`, which avoids
+#     building that matrix.
+#
+#   The selected solver is stored in the new `solver_` attribute. The selection rule
+#   may change in future versions without deprecation.
+# - In logistic regression, `solver="liblinear"`, as well as the `dual` and
+#   `intercept_scaling` parameters, are deprecated and will be removed in 1.12. The
+#   new solvers are the recommended replacements.
+#
+# In the example below, the :math:`\ell^1` penalty sets the coefficients of the
+# features that do not influence the target to exactly zero.
+from sklearn.linear_model import PoissonRegressor
+
+n_samples, n_features = 500, 20
+X = rng.normal(size=(n_samples, n_features))
+true_coef = np.zeros(n_features)
+true_coef[:3] = [0.5, -0.4, 0.3]
+y = rng.poisson(np.exp(X @ true_coef))
+
+glm = PoissonRegressor(alpha=0.1, l1_ratio=1.0, solver="auto").fit(X, y)
+print(f"Selected solver: {glm.solver_}")
+print(f"Non-zero coefficients: {np.sum(glm.coef_ != 0)} out of {n_features}")
 
 # %%
 # TODO: IterativeImputer is no longer experimental
