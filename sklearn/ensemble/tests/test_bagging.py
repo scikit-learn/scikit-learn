@@ -769,9 +769,7 @@ def test_bagging_zero_sample_weight_no_bootstrap():
         (BaggingClassifier(bootstrap=False, random_state=0), y_cls),
         (BaggingRegressor(bootstrap=False, random_state=0), y_reg),
     ]:
-        with pytest.warns(
-            UserWarning, match="it is recommended to use bootstrap=True"
-        ):
+        with pytest.warns(UserWarning, match="it is recommended to use bootstrap=True"):
             estimator.fit(X, y, sample_weight=sample_weight)
         # The zero-weighted row is never part of any drawn sample.
         for samples in estimator.estimators_samples_:
