@@ -98,23 +98,23 @@ Example usage
 
 The example code snippet below demonstrates how to use `PyTorch
 <https://pytorch.org/>`__ to run
-:class:`~discriminant_analysis.LinearDiscriminantAnalysis` on a CUDA GPU::
+:class:`~linear_model.LogisticRegression` on a CUDA GPU::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn import config_context
-    >>> from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+    >>> from sklearn.linear_model import LogisticRegression
     >>> import torch
 
     >>> X_np, y_np = make_classification(random_state=0)
     >>> X_torch = torch.asarray(X_np, device="cuda", dtype=torch.float32)
-    >>> y_torch = torch.asarray(y_np, device="cuda", dtype=torch.float32)
+    >>> y_torch = torch.asarray(y_np, device="cuda")
 
     >>> with config_context(array_api_dispatch=True):
-    ...     lda = LinearDiscriminantAnalysis()
-    ...     X_trans = lda.fit_transform(X_torch, y_torch)
-    >>> type(X_trans)
+    ...     clf = LogisticRegression().fit(X_torch, y_torch)
+    ...     y_pred = clf.predict(X_torch)
+    >>> type(y_pred)
     <class 'torch.Tensor'>
-    >>> X_trans.device.type
+    >>> y_pred.device.type
     'cuda'
 
 This pattern works identically with any supported array library. For example,
@@ -122,31 +122,64 @@ replace ``torch.asarray(..., device="cuda")`` with ``cupy.asarray(...)`` for CuP
 or ``dpnp.asarray(...)`` for dpnp. You can also target different devices within
 PyTorch by changing the ``device=`` argument (e.g., ``"cpu"``, ``"xpu"``, ``"mps"``).
 
-After the model is trained, fitted attributes that are arrays will also be from
-the same Array API namespace as the training data. For example, if PyTorch's
-CUDA namespace was used for training, then fitted attributes will be on the GPU.
-Passing data in a different namespace or in a different device within the same
-namespace to ``transform`` or ``predict`` is an error::
+The computations of ``fit`` ran on the GPU, but the fitted attributes are stored
+as NumPy arrays, whatever the array library and device of the training data::
 
-    >>> with config_context(array_api_dispatch=True):
-    ...     lda.transform(X_np)
-    Traceback (most recent call last):
-        ...
-    ValueError: Inputs passed to LinearDiscriminantAnalysis.transform() must use the same namespace and the same device as those passed to fit()...
-
-Moving estimators between devices
----------------------------------
-
-We provide ``move_estimator_to`` to transfer an estimator's array attributes
-to a different namespace and device::
-
-    >>> from sklearn.utils._array_api import move_estimator_to
-    >>> import numpy as np
-    >>> lda_np = move_estimator_to(lda, np, device="cpu")
-    >>> with config_context(array_api_dispatch=True):
-    ...     X_trans = lda_np.transform(X_np)
-    >>> type(X_trans)
+    >>> type(clf.coef_)
     <class 'numpy.ndarray'>
+
+``predict``, ``transform`` and other methods run on the array library and device
+of the data they are called with, and return arrays of that library on that device.
+The same fitted estimator can therefore be used with NumPy input::
+
+    >>> with config_context(array_api_dispatch=True):
+    ...     y_pred = clf.predict(X_np)
+    >>> type(y_pred)
+    <class 'numpy.ndarray'>
+
+See :ref:`array_api_fitted_attributes` for details.
+
+.. TODO(#34604): remove this note once `_NUMPY_FITTED_ATTRS` is removed.
+
+.. note::
+   Storing fitted attributes as NumPy arrays is being rolled out estimator by
+   estimator. At the moment only :class:`~linear_model.LogisticRegression` and
+   :class:`~linear_model.LogisticRegressionCV` do so. All other estimators store
+   their fitted attributes in the array library and on the device of the
+   training data, and can require the data passed to ``predict``, ``transform``
+   and other methods to use the same array library and device.
+
+.. _array_api_avoid_transfers:
+
+Avoiding repeated transfers at inference time
+---------------------------------------------
+
+Each call to ``predict``, ``transform`` or another method copies the fitted
+attributes it needs to the device of its input. A copy is reused within that
+call, but not across calls. For a few calls on large inputs this copy is
+negligible. When an estimator is called many times on small inputs, or has
+large fitted attributes, the repeated copies can dominate the run time.
+
+In that case, use ``move_estimator_to`` to store the fitted attributes on the
+target array library and device once. Pass it the namespace and device of the
+data you will call the estimator with::
+
+    >>> from sklearn.utils._array_api import get_namespace_and_device
+    >>> from sklearn.utils._array_api import move_estimator_to
+    >>> with config_context(array_api_dispatch=True):
+    ...     xp, _, device = get_namespace_and_device(X_torch)
+    ...     clf_cuda = move_estimator_to(clf, xp, device)
+    ...     y_pred = clf_cuda.predict(X_torch)
+    >>> clf_cuda.coef_.device.type
+    'cuda'
+
+The moved estimator still accepts input from any array library and device, but
+input from the library and device it was moved to no longer needs a copy.
+Calling ``fit`` on the moved estimator stores its fitted attributes as NumPy
+arrays again. Note that a moved estimator can only be unpickled in an
+environment where its array library and device are available.
+``move_estimator_to`` does not yet support estimators with string class labels
+(see :issue:`35109`).
 
 .. _array_api_supported:
 
@@ -291,8 +324,9 @@ ordinal encoding). The result of this is able to be moved to the namespace and d
 of the other inputs, as string-valued arrays are not covered by the array API
 specifications.
 
-Note that the `classes_` estimator attribute always remains in the same array
-library as the original `y`, in order to support string class labels.
+Note that the `classes_` estimator attribute is a NumPy array, like all other
+fitted attributes, which allows it to hold string class labels (see
+:ref:`array_api_fitted_attributes`).
 
 When a function or method has been called with array API compatible inputs, the
 convention is to return arrays from the same array library and on the same
@@ -330,11 +364,33 @@ target encoded to numerical values in :class:`~sklearn.preprocessing.TargetEncod
 :class:`~sklearn.linear_model.Ridge` is able to accept mixed input types,
 this is not a problem and the pipeline is able to be run.
 
-The fitted attributes of an estimator fitted with an array API compatible `X`, will
-be arrays from the same library as the input and stored on the same device.
-The `predict` and `transform` method subsequently expect
-inputs from the same array library and device as the data passed to the `fit`
-method.
+.. _array_api_fitted_attributes:
+
+Fitted attributes
+-----------------
+
+The computations of `fit` run on the array library and device of `X`, but
+fitted attributes that are arrays are stored as NumPy arrays, whatever the
+array library and device of the data passed to `fit`. This includes `classes_`.
+
+Methods such as `predict`, `predict_proba`, `decision_function` and `transform`
+run on the array library and device of the `X` they are called with, and return
+arrays from that library on that device. The fitted attributes they need are
+copied to that library and device for the duration of the call. For
+classifiers, `predict` returns numerical class labels in the array library and
+on the device of `X`, and string class labels as a NumPy array.
+
+As a result:
+
+- fitted attributes can be inspected or plotted with NumPy based tools, without
+  first converting them;
+- an estimator fitted on one device can be used on another, for example fitted
+  on a GPU and then used for prediction on a CPU, or the other way around;
+- an estimator fitted on a GPU can be unpickled on a machine without a GPU, or
+  without the array library it was fitted with.
+
+The copies made at every call can be avoided, see
+:ref:`array_api_avoid_transfers`.
 
 Scoring functions
 -----------------
@@ -358,45 +414,11 @@ For scoring functions that support :term:`multiclass` or :term:`multioutput`,
 an array from the same array library and device as `y_pred` will be returned when
 multiple values need to be output.
 
-Common estimator checks (for developers)
-=========================================
+Information for developers
+==========================
 
-Add the `array_api_support` tag to an estimator's set of tags to indicate that
-it supports the array API. This will enable dedicated checks as part of the
-common tests to verify that the estimators' results are the same when using
-vanilla NumPy and array API inputs.
-
-To run these checks you need to install
-`array-api-strict <https://data-apis.org/array-api-strict/>`__ in your
-test environment. This allows you to run checks without having a
-GPU. To run checks on real GPU devices you also need to install
-`PyTorch <https://pytorch.org/>`__, `CuPy <https://cupy.dev/>`__, and/or
-`dpnp <https://intelpython.github.io/dpnp/>`__, and have compatible GPU
-hardware. Full GPU coverage is expected to be split across machines because
-CUDA, MPS, and Intel GPU backends require different hardware. Checks that can
-not be executed or have missing dependencies will be automatically skipped.
-Therefore it's important to run the tests with the `-v` flag to see which
-checks are skipped:
-
-.. code-block:: console
-
-    $ pip install array-api-strict  # and other libraries as needed
-    $ pytest -k "array_api" -v
-
-Running the scikit-learn tests against `array-api-strict` should help reveal
-most code problems related to handling multiple device inputs via the use of
-simulated non-CPU devices. This allows for fast iterative development and debugging of
-array API related code.
-
-However, to ensure full handling of PyTorch, CuPy, or dpnp inputs allocated on
-actual GPU devices, it is necessary to run the tests against those libraries and
-hardware. This can either be achieved by using
-`Google Colab <https://gist.github.com/EdAbati/ff3bdc06bafeb92452b3740686cc8d7c>`__
-for CUDA or leveraging our CI infrastructure on pull requests. CUDA and Intel
-GPU tests are manually triggered by maintainers. Intel GPU testing for PyTorch
-XPU and dpnp is run on a dedicated self-hosted runner:
-`probabl-ai/scikit-learn-intel-workflow
-<https://github.com/probabl-ai/scikit-learn-intel-workflow>`__.
+See :ref:`array_api_developers` for how to add array API support to an
+estimator and how to test it.
 
 Notes
 =====

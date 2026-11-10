@@ -13,6 +13,7 @@ Developer's Guide
    global_configuration
    minimal_reproducer
    develop
+   array_api
    tips
    utilities
    performance
