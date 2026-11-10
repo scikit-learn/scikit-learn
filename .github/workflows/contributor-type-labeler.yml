@@ -33,7 +33,7 @@ jobs:
       - name: Label contributor type
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          READ_ORG_PAT: ${{ secrets.READ_ORG_PAT }}
+          READ_ORG_TOKEN: ${{ secrets.BOT_GITHUB_READ_ORG_TOKEN }}
           GITHUB_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: python build_tools/github/label-contributor-type.py

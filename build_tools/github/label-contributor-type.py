@@ -1,7 +1,7 @@
 """Label contributor type using organization membership and merged PRs count.
 
-Requires PyGithub and the GITHUB_TOKEN, ORG_READ_PAT, GITHUB_REPO and PR_NUMBER
-environment variables. ORG_READ_PAT must be a PAT from a member of the
+Requires PyGithub and the GITHUB_TOKEN, READ_ORG_TOKEN, GITHUB_REPO and PR_NUMBER
+environment variables. READ_ORG_TOKEN must be a PAT from a member of the
 scikit-learn teams with read:org permission.
 
 Pass --dry-run to report label changes without modifying the pull request.
@@ -62,7 +62,7 @@ def main():
 
     with (
         Github(auth=Auth.Token(os.environ["GITHUB_TOKEN"])) as gh,
-        Github(auth=Auth.Token(os.environ["ORG_READ_PAT"])) as org_gh,
+        Github(auth=Auth.Token(os.environ["READ_ORG_TOKEN"])) as org_gh,
     ):
         repo = gh.get_repo(repo_name)
         pr = repo.get_pull(pr_number)
