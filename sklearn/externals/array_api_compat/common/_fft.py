@@ -21,7 +21,7 @@ def fft(
 ) -> Array:
     res = xp.fft.fft(x, n=n, axis=axis, norm=norm)
     if x.dtype in [xp.float32, xp.complex64]:
-        return res.astype(xp.complex64)
+        return res.astype(xp.complex64, copy=False)
     return res
 
 def ifft(
@@ -35,7 +35,7 @@ def ifft(
 ) -> Array:
     res = xp.fft.ifft(x, n=n, axis=axis, norm=norm)
     if x.dtype in [xp.float32, xp.complex64]:
-        return res.astype(xp.complex64)
+        return res.astype(xp.complex64, copy=False)
     return res
 
 def fftn(
@@ -49,7 +49,7 @@ def fftn(
 ) -> Array:
     res = xp.fft.fftn(x, s=s, axes=axes, norm=norm)
     if x.dtype in [xp.float32, xp.complex64]:
-        return res.astype(xp.complex64)
+        return res.astype(xp.complex64, copy=False)
     return res
 
 def ifftn(
@@ -63,7 +63,7 @@ def ifftn(
 ) -> Array:
     res = xp.fft.ifftn(x, s=s, axes=axes, norm=norm)
     if x.dtype in [xp.float32, xp.complex64]:
-        return res.astype(xp.complex64)
+        return res.astype(xp.complex64, copy=False)
     return res
 
 def rfft(
@@ -77,7 +77,7 @@ def rfft(
 ) -> Array:
     res = xp.fft.rfft(x, n=n, axis=axis, norm=norm)
     if x.dtype == xp.float32:
-        return res.astype(xp.complex64)
+        return res.astype(xp.complex64, copy=False)
     return res
 
 def irfft(
@@ -91,7 +91,7 @@ def irfft(
 ) -> Array:
     res = xp.fft.irfft(x, n=n, axis=axis, norm=norm)
     if x.dtype == xp.complex64:
-        return res.astype(xp.float32)
+        return res.astype(xp.float32, copy=False)
     return res
 
 def rfftn(
@@ -105,7 +105,7 @@ def rfftn(
 ) -> Array:
     res = xp.fft.rfftn(x, s=s, axes=axes, norm=norm)
     if x.dtype == xp.float32:
-        return res.astype(xp.complex64)
+        return res.astype(xp.complex64, copy=False)
     return res
 
 def irfftn(
@@ -119,7 +119,7 @@ def irfftn(
 ) -> Array:
     res = xp.fft.irfftn(x, s=s, axes=axes, norm=norm)
     if x.dtype == xp.complex64:
-        return res.astype(xp.float32)
+        return res.astype(xp.float32, copy=False)
     return res
 
 def hfft(
@@ -133,7 +133,7 @@ def hfft(
 ) -> Array:
     res = xp.fft.hfft(x, n=n, axis=axis, norm=norm)
     if x.dtype in [xp.float32, xp.complex64]:
-        return res.astype(xp.float32)
+        return res.astype(xp.float32, copy=False)
     return res
 
 def ihfft(
@@ -147,7 +147,7 @@ def ihfft(
 ) -> Array:
     res = xp.fft.ihfft(x, n=n, axis=axis, norm=norm)
     if x.dtype in [xp.float32, xp.complex64]:
-        return res.astype(xp.complex64)
+        return res.astype(xp.complex64, copy=False)
     return res
 
 def fftfreq(
@@ -163,7 +163,7 @@ def fftfreq(
         raise ValueError(f"Unsupported device {device!r}")
     res = xp.fft.fftfreq(n, d=d)
     if dtype is not None:
-        return res.astype(dtype)
+        return res.astype(dtype, copy=False)
     return res
 
 def rfftfreq(
@@ -179,7 +179,7 @@ def rfftfreq(
         raise ValueError(f"Unsupported device {device!r}")
     res = xp.fft.rfftfreq(n, d=d)
     if dtype is not None:
-        return res.astype(dtype)
+        return res.astype(dtype, copy=False)
     return res
 
 def fftshift(

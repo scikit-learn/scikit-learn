@@ -27,10 +27,8 @@ class _BinaryClassifierCurveDisplayMixin:
         if ax is None:
             _, ax = plt.subplots()
 
-        # Display classes are in process of changing from `estimator_name` to `name`.
-        # Try old attr name: `estimator_name` first.
         if name is None:
-            name = getattr(self, "estimator_name", getattr(self, "name", None))
+            name = self.name
         return ax, ax.figure, name
 
     @classmethod

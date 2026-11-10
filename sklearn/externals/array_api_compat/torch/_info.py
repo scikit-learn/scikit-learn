@@ -9,7 +9,6 @@ more details.
 """
 import torch
 
-from functools import cache
 
 class __array_namespace_info__:
     """
@@ -249,7 +248,6 @@ class __array_namespace_info__:
             return res
         raise ValueError(f"unsupported kind: {kind!r}")
 
-    @cache
     def dtypes(self, *, device=None, kind=None):
         """
         The array API data types supported by PyTorch.
@@ -313,7 +311,6 @@ class __array_namespace_info__:
                 del res[k]
         return res
 
-    @cache
     def devices(self):
         """
         The devices supported by PyTorch.
