@@ -9,6 +9,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.fixes import (
     _ensure_sparse_index_int32,
     _object_dtype_isnan,
+    _safely_cast_index_arrays,
     _smallest_admissible_index_dtype,
 )
 
@@ -200,3 +201,18 @@ def test_ensure_int32_raises(constructor):
             rows, cols = cols, rows
         A = sp.sparse.coo_array(([1.0, 2.0], (rows, cols)))
         _ensure_sparse_index_int32(constructor(A))
+
+
+@pytest.mark.parametrize(
+    "A",
+    [
+        sp.sparse.csr_array(np.ones((1, 128))),
+        sp.sparse.bsr_array(np.ones((2, 128)), blocksize=(2, 2)),
+    ],
+    ids=["csr", "bsr"],
+)
+def test_safely_cast_index_arrays_error_message(A):
+    """Check that the error message includes `msg`."""
+    # indptr[-1] (times the block height for bsr) is 128, which overflows int8
+    with pytest.raises(ValueError, match="indptr values too large for int8"):
+        _safely_cast_index_arrays(A, idx_dtype=np.int8, msg="int8")

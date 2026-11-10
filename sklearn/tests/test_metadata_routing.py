@@ -122,7 +122,7 @@ class SimplePipeline(BaseEstimator):
         return router
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_assert_request_is_empty():
     requests = MetadataRequest(owner="test")
     assert_request_is_empty(requests)
@@ -211,11 +211,11 @@ def test_request_type_is_valid(val, res):
     assert request_is_valid(val) == res
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_default_requests():
     class OddEstimator(BaseEstimator):
         __metadata_request__fit = {
-            # set a different default request
+            # set a different class-level request
             "sample_weight": True
         }
 
@@ -434,7 +434,7 @@ def test_process_routing_empty_params_get_with_default(method, default):
     assert default_params_for_method == params_for_method
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_simple_metadata_routing():
     # Tests that metadata is properly routed
 
@@ -842,7 +842,7 @@ def test_metadata_router_consumes_method():
         assert obj.get_metadata_routing().consumes(method="fit", params=input) == output
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metaestimator_warnings():
     class WeightedMetaRegressorWarn(WeightedMetaRegressor):
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
@@ -855,7 +855,7 @@ def test_metaestimator_warnings():
         ).fit(X, y, sample_weight=my_weights)
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_estimator_warnings():
     class ConsumingRegressorWarn(ConsumingRegressor):
         __metadata_request__fit = {"sample_weight": metadata_routing.WARN}
@@ -868,7 +868,6 @@ def test_estimator_warnings():
         )
 
 
-@config_context(enable_metadata_routing=True)
 @pytest.mark.parametrize(
     "obj, string",
     [
@@ -889,15 +888,14 @@ def test_estimator_warnings():
             ),
             (
                 "{'estimator': {'mapping': [{'caller': 'predict', 'callee':"
-                " 'predict'}], 'router': {'fit': {'sample_weight': None, 'metadata':"
-                " None}, 'partial_fit': {'sample_weight': None, 'metadata': None},"
-                " 'predict': {'sample_weight': None, 'metadata': None}, 'score':"
-                " {'sample_weight': None, 'metadata': None}}}}"
+                " 'predict'}], 'router': {'fit': {'sample_weight': True, 'metadata':"
+                " None}, 'partial_fit': {'sample_weight': True, 'metadata': None},"
+                " 'predict': {'sample_weight': True, 'metadata': None}, 'score':"
+                " {'sample_weight': True, 'metadata': None}}}}"
             ),
         ),
     ],
 )
-@config_context(enable_metadata_routing=True)
 def test_string_representations(obj, string):
     assert str(obj) == string
 
@@ -986,7 +984,7 @@ def test_metadatarouter_add_self_request():
     assert router._self_request is not est._get_metadata_request()
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_routing_add():
     # adding one with a string `method_mapping`
     router = MetadataRouter(owner="test").add(
@@ -1017,7 +1015,7 @@ def test_metadata_routing_add():
     )
 
 
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_routing_get_param_names():
     router = (
         MetadataRouter(owner="test")
@@ -1394,9 +1392,10 @@ def test_auto_requests_on_composite_methods():
     # With auto-requests disabled, the composite method only has the requests
     # composed from its component methods, and the metadata is not routed.
     est = SimpleConsumingEstimator()
-    assert get_routing_for_object(est).fit_predict.requests == {"prop": None}
-    with pytest.raises(TypeError, match="got unexpected argument"):
-        process_routing(make_router(est), "fit_predict", composite_only="value")
+    with config_context(enable_metadata_auto_requests=False):
+        assert get_routing_for_object(est).fit_predict.requests == {"prop": None}
+        with pytest.raises(TypeError, match="got unexpected argument"):
+            process_routing(make_router(est), "fit_predict", composite_only="value")
 
     with config_context(enable_metadata_auto_requests=True):
         routing = get_routing_for_object(est)

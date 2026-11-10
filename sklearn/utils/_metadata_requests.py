@@ -179,9 +179,10 @@ def _auto_requests_enabled():
     Returns
     -------
     enabled : bool
-        Whether auto-requesting metadata is enabled.
+        Whether auto-requesting metadata is enabled. If the config is not set, it
+        defaults to True.
     """
-    return get_config().get("enable_metadata_auto_requests", False)
+    return get_config().get("enable_metadata_auto_requests", True)
 
 
 def _raise_for_params(params, owner, method, allow=None):
@@ -649,8 +650,9 @@ class MetadataRequest:
     Note that requests on composite methods (`fit_transform`, `fit_predict`) are not
     stored as attributes. Accessing them, for example `request.fit_predict`, builds
     their requests from the component methods (`fit` and `predict` in this case), plus
-    auto-requests set on them. Auto-requests are included only when
-    `set_config(enable_metadata_auto_requests=True)`.
+    auto-requests set on them. Auto-requests are included by default. Set the
+    enable_metadata_auto_requests config to `False`
+    (`set_config(enable_metadata_auto_requests=False)`) to leave them unset.
 
     Read more on developing custom estimators that can route metadata in the
     :ref:`Metadata Routing Developing Guide
@@ -1015,9 +1017,7 @@ class MetadataRouter:
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
     >>> set_config(enable_metadata_routing=True)
-    >>> meta_estimator = SelectFromModel(
-    ...     estimator=LinearRegression().set_fit_request(sample_weight=True)
-    ... )
+    >>> meta_estimator = SelectFromModel(estimator=LinearRegression())
     >>> router = MetadataRouter(owner=meta_estimator).add(
     ...     estimator=meta_estimator.estimator,
     ...     method_mapping=MethodMapping()
@@ -1028,7 +1028,7 @@ class MetadataRouter:
     {'estimator': {'mapping': [{'caller': 'partial_fit', 'callee': 'partial_fit'},
                            {'caller': 'fit', 'callee': 'fit'}],
                'router': {'fit': {'sample_weight': True},
-                          'score': {'sample_weight': None}}}}
+                          'score': {'sample_weight': True}}}}
     >>> set_config(enable_metadata_routing=False)
     """
 
@@ -1440,10 +1440,10 @@ def get_routing_for_object(obj=None):
     >>> from sklearn.utils.metadata_routing import get_routing_for_object
     >>> X, y = make_classification()
     >>> pipe = Pipeline(
-    ...       [("scaler", StandardScaler()), ("lr_cv", LogisticRegressionCV())]
+    ...     [("scaler", StandardScaler()), ("lr_cv", LogisticRegressionCV(alphas=10))]
     ... )
     >>> pipe.fit(X, y) # doctest: +SKIP
-    Pipeline(steps=[('scaler', StandardScaler()), ('lr_cv', LogisticRegressionCV())])
+    Pipeline(steps=[('scaler', StandardScaler()), ('lr_cv', LogisticRegressionCV(...))])
     >>> type(get_routing_for_object(pipe))
     <class 'sklearn.utils._metadata_requests.MetadataRouter'>
     >>> type(get_routing_for_object(pipe.named_steps.scaler))
@@ -1645,6 +1645,30 @@ class RequestMethod:
         return func
 
 
+class AutoRequestMixin:
+    """Mixin to auto-request `sample_weight` when auto-requests are enabled.
+
+    Inherit from this mixin (typically to the left of
+    :class:`~sklearn.base.BaseEstimator`) to opt into auto-requesting `sample_weight` on
+    methods that accept it. scikit-learn's own estimators get the same policy
+    automatically via their `_auto_request_sample_weight` class attribute;
+    third-party estimators that only inherit from :class:`~sklearn.base.BaseEstimator`
+    do not.
+
+    See :ref:`metadata_routing_auto_request` for more details.
+
+    .. versionadded:: 1.10
+
+    Examples
+    --------
+    >>> from sklearn.utils.metadata_routing import AutoRequestMixin
+    >>> AutoRequestMixin._auto_request_sample_weight
+    True
+    """
+
+    _auto_request_sample_weight = True
+
+
 class MetadataRequester:
     """Mixin class for adding metadata request functionality.
 
@@ -1732,6 +1756,18 @@ class MetadataRequester:
             # ``get_metadata_routing`` is called. Here we are going to ignore
             # all the issues and make sure class definition does not fail.
             pass
+
+        # Set the `_auto_request_sample_weight` attribute on scikit-learn estimators
+        # that inherit from `BaseEstimator` (unless they already define it). Note that
+        # third-party do not set this attribute but they can opt in by inheriting from
+        # `AutoRequestMixin`.
+        if (
+            cls.__module__.startswith("sklearn.")
+            and "_auto_request_sample_weight" not in cls.__dict__
+            and any(base.__name__ == "BaseEstimator" for base in cls.__mro__[1:])
+        ):
+            cls._auto_request_sample_weight = True
+
         super().__init_subclass__(**kwargs)
 
     @classmethod
@@ -1858,10 +1894,21 @@ class MetadataRequester:
         request : MetadataRequest
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
-        if hasattr(self, "_metadata_request"):
-            return self._metadata_request.__sklearn_clone__()
+       if hasattr(self, "_metadata_request"):
+            requests = self._metadata_request.__sklearn_clone__()
         else:
-            return self.__sklearn_build_declared_metadata_request__()
+            requests = self.__sklearn_build_declared_metadata_request__()
+
+        # This adds auto-requests for `sample_weight` for all consuming methods of
+        # scikit-learn estimators:
+        if getattr(self, "_auto_request_sample_weight", False):
+            for method in SIMPLE_METHODS:
+                method_request = getattr(requests, method)
+                if "sample_weight" in method_request.requests:
+                    method_request.add_auto_request("sample_weight")
+
+        return requests
+
 
     def __sklearn_build_declared_metadata_request__(self):
         """Build the declared metadata requests for this consumer.
@@ -1903,7 +1950,9 @@ class MetadataRequester:
                     requests=get_declared_metadata_request_values(self, method_name),
                 ),
             )
+
         return requests
+
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

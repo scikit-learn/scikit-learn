@@ -295,7 +295,7 @@ def test_gridsearch():
     )
 
     params = {
-        "lr__C": [1.0, 100.0],
+        "lr__alpha": [1.0, 1e-2],
         "voting": ["soft", "hard"],
         "weights": [[0.5, 0.5, 0.5], [1.0, 0.5, 0.5]],
     }
@@ -774,7 +774,7 @@ def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
     "Estimator, Child",
     [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
 )
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_routing_error_for_voting_estimators(Estimator, Child):
     """Test that the right error is raised when metadata is not requested."""
     X = np.array([[0, 1], [2, 2], [4, 6]])

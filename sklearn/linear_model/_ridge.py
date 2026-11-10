@@ -472,13 +472,16 @@ def ridge_regression(
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
-          obtain a closed-form solution via a Cholesky decomposition of
-          dot(X.T, X)
+          obtain a closed-form solution via a Cholesky decomposition. It solves
+          the primal problem involving `X.T @ X` when `n_samples >= n_features`,
+          and the dual problem involving `X @ X.T` otherwise.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
-          more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
+          as 'cholesky', without explicitly forming `X.T @ X` or `X @ X.T`.
+          As an iterative algorithm, this solver is more appropriate than
+          'cholesky' for large-scale data (possibility to set `tol` and
+          `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
@@ -558,8 +561,7 @@ def ridge_regression(
 
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
-    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
-    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear models such as
     :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
     assumed to be specific to the targets. Hence they must correspond in
     number.
@@ -1086,12 +1088,16 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
-          obtain a closed-form solution.
+          obtain a closed-form solution via a Cholesky decomposition. It solves
+          the primal problem involving `X.T @ X` when `n_samples >= n_features`,
+          and the dual problem involving `X @ X.T` otherwise.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
-          more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
+          as 'cholesky', without explicitly forming `X.T @ X` or `X @ X.T`.
+          As an iterative algorithm, this solver is more appropriate than
+          'cholesky' for large-scale data (possibility to set `tol` and
+          `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
@@ -1160,8 +1166,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     -----
     Regularization improves the conditioning of the problem and
     reduces the variance of the estimates. Larger values specify stronger
-    regularization. Alpha corresponds to ``1 / (2C)`` in other linear
-    models such as :class:`~sklearn.linear_model.LogisticRegression` or
+    regularization. Alpha corresponds to ``1 / (2C)`` in other linear models such as
     :class:`~sklearn.svm.LinearSVC`.
 
     Examples
@@ -1377,7 +1382,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
 
         For an illustration of the effect of alpha on the model coefficients, see
@@ -1437,12 +1441,16 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
           for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
-          obtain a closed-form solution.
+          obtain a closed-form solution via a Cholesky decomposition. It solves
+          the primal problem involving `X.T @ X` when `n_samples >= n_features`,
+          and the dual problem involving `X @ X.T` otherwise.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
-          :func:`scipy.sparse.linalg.cg`. As an iterative algorithm, this solver is
-          more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
+          as 'cholesky', without explicitly forming `X.T @ X` or `X @ X.T`.
+          As an iterative algorithm, this solver is more appropriate than
+          'cholesky' for large-scale data (possibility to set `tol` and
+          `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           :func:`scipy.sparse.linalg.lsqr`. It is the fastest and uses an iterative
@@ -2618,7 +2626,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
@@ -2824,7 +2831,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`.
         If using Leave-One-Out cross-validation, alphas must be strictly positive.
 
