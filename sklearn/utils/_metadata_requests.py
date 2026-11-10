@@ -1894,7 +1894,7 @@ class MetadataRequester:
         request : MetadataRequest
             A :class:`~sklearn.utils.metadata_routing.MetadataRequest` instance.
         """
-       if hasattr(self, "_metadata_request"):
+        if hasattr(self, "_metadata_request"):
             requests = self._metadata_request.__sklearn_clone__()
         else:
             requests = self.__sklearn_build_declared_metadata_request__()
@@ -1908,7 +1908,6 @@ class MetadataRequester:
                     method_request.add_auto_request("sample_weight")
 
         return requests
-
 
     def __sklearn_build_declared_metadata_request__(self):
         """Build the declared metadata requests for this consumer.
@@ -1952,7 +1951,6 @@ class MetadataRequester:
             )
 
         return requests
-
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.
