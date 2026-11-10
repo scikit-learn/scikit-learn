@@ -29,6 +29,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.utils import _align_api_if_sparse
 from sklearn.utils._testing import (
+    _convert_container,
     assert_allclose_dense_sparse,
     assert_almost_equal,
     skip_if_32bit,
@@ -1240,6 +1241,30 @@ def test_vectorizer_string_object_as_input(Vectorizer):
 
     with pytest.raises(ValueError, match=message):
         vec.transform("hello world!")
+
+
+@pytest.mark.parametrize(
+    "Vectorizer", (CountVectorizer, TfidfVectorizer, HashingVectorizer)
+)
+@pytest.mark.parametrize("container", ("array", "pandas"))
+def test_vectorizer_2d_array_like_as_input(Vectorizer, container):
+    # A 2D array-like (e.g. a single-column DataFrame) used to silently
+    # produce a nonsensical result instead of raising, or hard to comprehend erros:
+    # iterating over it does not yield one document per sample.
+    message = "Iterable over raw text documents expected, 2-dimensional array-like"
+    docs = ["one two", "three four", "five six"]
+    X_2d = _convert_container([[d] for d in docs], container)
+    vec = Vectorizer()
+
+    with pytest.raises(ValueError, match=message):
+        vec.fit_transform(X_2d)
+
+    with pytest.raises(ValueError, match=message):
+        vec.fit(X_2d)
+    vec.fit(docs)
+
+    with pytest.raises(ValueError, match=message):
+        vec.transform(X_2d)
 
 
 @pytest.mark.parametrize("X_dtype", [np.float32, np.float64])
