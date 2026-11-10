@@ -1,9 +1,13 @@
-"""Label contributor type using the PR author's association and merged PRs count.
+"""Label contributor type using organization membership and merged PRs count.
 
-Requires PyGithub and the GITHUB_TOKEN, GITHUB_REPO and PR_NUMBER environment
-variables.
+Requires PyGithub and the GITHUB_TOKEN, ORG_READ_PAT, GITHUB_REPO and PR_NUMBER
+environment variables. ORG_READ_PAT must be a PAT from a member of the
+scikit-learn teams with read:org permission.
+
+Pass --dry-run to report label changes without modifying the pull request.
 """
 
+import argparse
 import os
 
 from github import Auth, Github
@@ -46,17 +50,27 @@ def get_contributor_type(gh: Github, repo_name: str, username: str) -> str:
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report label changes without modifying the pull request.",
+    )
+    args = parser.parse_args()
     repo_name = os.environ["GITHUB_REPO"]
     pr_number = int(os.environ["PR_NUMBER"])
 
-    with Github(auth=Auth.Token(os.environ["GITHUB_TOKEN"])) as gh:
+    with (
+        Github(auth=Auth.Token(os.environ["GITHUB_TOKEN"])) as gh,
+        Github(auth=Auth.Token(os.environ["ORG_READ_PAT"])) as org_gh,
+    ):
         repo = gh.get_repo(repo_name)
         pr = repo.get_pull(pr_number)
         author = pr.user.login
-        association = pr.author_association
-        if association in {"MEMBER", "OWNER"}:
+        org = org_gh.get_organization(repo_name.split("/", 1)[0])
+        if org.has_in_members(pr.user):
             label = "contributor:team-member"
-            print(f"{author}: {association} -> {label}")
+            print(f"{author}: member of {org.login} -> {label}")
         else:
             label = get_contributor_type(gh, repo_name, author)
 
@@ -64,11 +78,13 @@ def main():
 
         if label not in current_labels:
             print(f"Adding {label}")
-            pr.add_to_labels(label)
+            if not args.dry_run:
+                pr.add_to_labels(label)
         for candidate in CONTRIBUTOR_LABELS:
             if candidate != label and candidate in current_labels:
                 print(f"Removing {candidate}")
-                pr.remove_from_labels(candidate)
+                if not args.dry_run:
+                    pr.remove_from_labels(candidate)
 
 
 if __name__ == "__main__":
