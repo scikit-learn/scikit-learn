@@ -74,7 +74,7 @@ what scikit-learn recommends) by using a context manager::
         # Your scikit-learn code here
 
 Please refer to the `joblib's docs
-<https://joblib.readthedocs.io/en/latest/parallel.html#thread-based-parallelism-vs-process-based-parallelism>`_
+<https://joblib.readthedocs.io/en/latest/user_guide/parallel.html#thread-based-parallelism-vs-process-based-parallelism>`_
 for more details.
 
 In practice, whether parallelism is helpful at improving runtime depends on
