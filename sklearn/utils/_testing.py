@@ -336,8 +336,8 @@ try:
 
     # This is for tests that are known to fail when run with n_jobs > 1 and
     # backend="threading". The failures don't always happen, so it's a skip
-    # instead of xfail. The plan is for this to remove it from each test as
-    # fixes are merged; once all fixes are merged it can be deleted. See
+    # instead of xfail. The plan for this to remove it from each test as fixes
+    # are merged; once all fixes are merged it can be deleted. See
     # https://github.com/scikit-learn/scikit-learn/issues/35313 for details.
     #
     # Structured as an explicit decorator because pytest.mark.skipif checks too
