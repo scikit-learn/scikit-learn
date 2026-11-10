@@ -1,6 +1,6 @@
 """Label contributor type using the PR author's association and merged PRs count.
 
-Requires PyGithub and the same GITHUB_TOKEN, GITHUB_REPO, and PR_NUMBER environment
+Requires PyGithub and the GITHUB_TOKEN, GITHUB_REPO and PR_NUMBER environment
 variables.
 """
 
