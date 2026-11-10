@@ -4,7 +4,7 @@ Kernel PCA
 ==========
 
 This example shows the difference between the Principal Components Analysis
-(:class:`~sklearn.decomposition.PCA`) and its kernalized version
+(:class:`~sklearn.decomposition.PCA`) and its kernelized version
 (:class:`~sklearn.decomposition.KernelPCA`).
 
 On the one hand, we show that :class:`~sklearn.decomposition.KernelPCA` is able
@@ -16,10 +16,8 @@ Finally, we show that inverting this projection is an approximation with
 :class:`~sklearn.decomposition.PCA`.
 """
 
-# Authors: Mathieu Blondel
-#          Andreas Mueller
-#          Guillaume Lemaitre
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Projecting data: `PCA` vs. `KernelPCA`

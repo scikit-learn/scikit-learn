@@ -1,0 +1,4 @@
+- :func:`datasets.fetch_openml` with `parser="pandas"` no longer raises a
+  `TypeError` when a nominal column's values are inferred by pandas as numeric
+  or boolean categories instead of strings.
+  By :user:`Dea María Léon <DeaMariaLeon>`.

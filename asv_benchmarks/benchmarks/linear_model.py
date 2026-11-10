@@ -1,9 +1,9 @@
 from sklearn.linear_model import (
-    LogisticRegression,
-    Ridge,
     ElasticNet,
     Lasso,
     LinearRegression,
+    LogisticRegression,
+    Ridge,
     SGDRegressor,
 )
 
@@ -22,14 +22,14 @@ class LogisticRegressionBenchmark(Predictor, Estimator, Benchmark):
     Benchmarks for LogisticRegression.
     """
 
-    param_names = ["representation", "solver", "n_jobs"]
-    params = (["dense", "sparse"], ["lbfgs", "saga"], Benchmark.n_jobs_vals)
+    param_names = ["representation", "solver"]
+    params = (["dense", "sparse"], ["lbfgs", "saga"])
 
     def setup_cache(self):
         super().setup_cache()
 
     def make_data(self, params):
-        representation, solver, n_jobs = params
+        representation, solver = params
 
         if Benchmark.data_size == "large":
             if representation == "sparse":
@@ -45,16 +45,14 @@ class LogisticRegressionBenchmark(Predictor, Estimator, Benchmark):
         return data
 
     def make_estimator(self, params):
-        representation, solver, n_jobs = params
+        representation, solver = params
 
-        penalty = "l2" if solver == "lbfgs" else "l1"
+        l1_ratio = 0 if solver == "lbfgs" else 1
 
         estimator = LogisticRegression(
             solver=solver,
-            penalty=penalty,
-            multi_class="multinomial",
+            l1_ratio=l1_ratio,
             tol=0.01,
-            n_jobs=n_jobs,
             random_state=0,
         )
 
@@ -164,7 +162,11 @@ class SGDRegressorBenchmark(Predictor, Estimator, Benchmark):
         return data
 
     def make_estimator(self, params):
-        estimator = SGDRegressor(max_iter=1000, tol=1e-16, random_state=0)
+        (representation,) = params
+
+        max_iter = 60 if representation == "dense" else 300
+
+        estimator = SGDRegressor(max_iter=max_iter, tol=None, random_state=0)
 
         return estimator
 

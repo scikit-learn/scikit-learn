@@ -1,29 +1,32 @@
-"""Utilities for meta-estimators"""
-# Author: Joel Nothman
-#         Andreas Mueller
-# License: BSD
-from typing import List, Any
-from types import MethodType
-import warnings
-from functools import wraps
+"""Utilities for meta-estimators."""
+
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 from abc import ABCMeta, abstractmethod
-from operator import attrgetter
-from functools import update_wrapper
-import numpy as np
 from contextlib import suppress
 
-from ..utils import _safe_indexing
-from ..utils._tags import _safe_tags
-from ..base import BaseEstimator
+import numpy as np
 
-__all__ = ["available_if", "if_delegate_has_method"]
+from sklearn.base import BaseEstimator
+from sklearn.utils import _safe_indexing
+from sklearn.utils._available_if import available_if
+from sklearn.utils._tags import get_tags
+
+__all__ = ["available_if"]
 
 
 class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for classifiers composed of named estimators."""
+    """Base class for estimators that are composed of named sub-estimators.
 
-    steps: List[Any]
+    This abstract class provides parameter management functionality for
+    meta-estimators that contain collections of named estimators. It handles
+    the complex logic for getting and setting parameters on nested estimators
+    using the "estimator_name__parameter" syntax.
+
+    The class is designed to work with any attribute containing a list of
+    (name, estimator) tuples.
+    """
 
     @abstractmethod
     def __init__(self):
@@ -53,10 +56,10 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
 
     def _set_params(self, attr, **params):
         # Ensure strict ordering of parameter setting:
-        # 1. All steps
+        # 1. Replace the entire estimators collection
         if attr in params:
             setattr(self, attr, params.pop(attr))
-        # 2. Replace items with estimators in params
+        # 2. Replace individual estimators by name
         items = getattr(self, attr)
         if isinstance(items, list) and items:
             # Get item names used to identify valid names in params
@@ -68,7 +71,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
                     if "__" not in name and name in item_names:
                         self._replace_estimator(attr, name, params.pop(name))
 
-        # 3. Step parameters and other initialisation arguments
+        # 3. Individual estimator parameters and other initialisation arguments
         super().set_params(**params)
         return self
 
@@ -97,154 +100,13 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
                 "Estimator names must not contain __: got {0!r}".format(invalid_names)
             )
 
-
-class _AvailableIfDescriptor:
-    """Implements a conditional property using the descriptor protocol.
-
-    Using this class to create a decorator will raise an ``AttributeError``
-    if check(self) returns a falsey value. Note that if check raises an error
-    this will also result in hasattr returning false.
-
-    See https://docs.python.org/3/howto/descriptor.html for an explanation of
-    descriptors.
-    """
-
-    def __init__(self, fn, check, attribute_name):
-        self.fn = fn
-        self.check = check
-        self.attribute_name = attribute_name
-
-        # update the docstring of the descriptor
-        update_wrapper(self, fn)
-
-    def __get__(self, obj, owner=None):
-        attr_err = AttributeError(
-            f"This {repr(owner.__name__)} has no attribute {repr(self.attribute_name)}"
-        )
-        if obj is not None:
-            # delegate only on instances, not the classes.
-            # this is to allow access to the docstrings.
-            if not self.check(obj):
-                raise attr_err
-            out = MethodType(self.fn, obj)
-
-        else:
-            # This makes it possible to use the decorated method as an unbound method,
-            # for instance when monkeypatching.
-            @wraps(self.fn)
-            def out(*args, **kwargs):
-                if not self.check(args[0]):
-                    raise attr_err
-                return self.fn(*args, **kwargs)
-
-        return out
-
-
-def available_if(check):
-    """An attribute that is available only if check returns a truthy value
-
-    Parameters
-    ----------
-    check : callable
-        When passed the object with the decorated method, this should return
-        a truthy value if the attribute is available, and either return False
-        or raise an AttributeError if not available.
-
-    Examples
-    --------
-    >>> from sklearn.utils.metaestimators import available_if
-    >>> class HelloIfEven:
-    ...    def __init__(self, x):
-    ...        self.x = x
-    ...
-    ...    def _x_is_even(self):
-    ...        return self.x % 2 == 0
-    ...
-    ...    @available_if(_x_is_even)
-    ...    def say_hello(self):
-    ...        print("Hello")
-    ...
-    >>> obj = HelloIfEven(1)
-    >>> hasattr(obj, "say_hello")
-    False
-    >>> obj.x = 2
-    >>> hasattr(obj, "say_hello")
-    True
-    >>> obj.say_hello()
-    Hello
-    """
-    return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
-
-
-# TODO(1.3) remove
-class _IffHasAttrDescriptor(_AvailableIfDescriptor):
-    """Implements a conditional property using the descriptor protocol.
-
-    Using this class to create a decorator will raise an ``AttributeError``
-    if none of the delegates (specified in ``delegate_names``) is an attribute
-    of the base object or the first found delegate does not have an attribute
-    ``attribute_name``.
-
-    This allows ducktyping of the decorated method based on
-    ``delegate.attribute_name``. Here ``delegate`` is the first item in
-    ``delegate_names`` for which ``hasattr(object, delegate) is True``.
-
-    See https://docs.python.org/3/howto/descriptor.html for an explanation of
-    descriptors.
-    """
-
-    def __init__(self, fn, delegate_names, attribute_name):
-        super().__init__(fn, self._check, attribute_name)
-        self.delegate_names = delegate_names
-
-    def _check(self, obj):
-        warnings.warn(
-            "if_delegate_has_method was deprecated in version 1.1 and will be "
-            "removed in version 1.3. Use if_available instead.",
-            FutureWarning,
-        )
-
-        delegate = None
-        for delegate_name in self.delegate_names:
-            try:
-                delegate = attrgetter(delegate_name)(obj)
-                break
-            except AttributeError:
-                continue
-
-        if delegate is None:
-            return False
-        # raise original AttributeError
-        getattr(delegate, self.attribute_name)
-
-        return True
-
-
-# TODO(1.3) remove
-def if_delegate_has_method(delegate):
-    """Create a decorator for methods that are delegated to a sub-estimator
-
-    This enables ducktyping by hasattr returning True according to the
-    sub-estimator.
-
-    .. deprecated:: 1.3
-        `if_delegate_has_method` is deprecated in version 1.1 and will be removed in
-        version 1.3. Use `available_if` instead.
-
-    Parameters
-    ----------
-    delegate : str, list of str or tuple of str
-        Name of the sub-estimator that can be accessed as an attribute of the
-        base object. If a list or a tuple of names are provided, the first
-        sub-estimator that is an attribute of the base object will be used.
-
-    """
-    if isinstance(delegate, list):
-        delegate = tuple(delegate)
-    if not isinstance(delegate, tuple):
-        delegate = (delegate,)
-
-    return lambda fn: _IffHasAttrDescriptor(fn, delegate, attribute_name=fn.__name__)
+    def _check_estimators_are_instances(self, estimators):
+        for estimator in estimators:
+            if isinstance(estimator, type):
+                raise TypeError(
+                    f"Expected an estimator instance ({estimator.__name__}()), got "
+                    f"estimator class instead ({estimator.__name__})."
+                )
 
 
 def _safe_split(estimator, X, y, indices, train_indices=None):
@@ -291,7 +153,7 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         Indexed targets.
 
     """
-    if _safe_tags(estimator, key="pairwise"):
+    if get_tags(estimator).input_tags.pairwise:
         if not hasattr(X, "shape"):
             raise ValueError(
                 "Precomputed kernels or affinity matrices have "

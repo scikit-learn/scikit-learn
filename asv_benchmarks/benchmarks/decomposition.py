@@ -1,8 +1,8 @@
 from sklearn.decomposition import PCA, DictionaryLearning, MiniBatchDictionaryLearning
 
 from .common import Benchmark, Estimator, Transformer
-from .datasets import _olivetti_faces_dataset, _mnist_dataset
-from .utils import make_pca_scorers, make_dict_learning_scorers
+from .datasets import _mnist_dataset, _olivetti_faces_dataset
+from .utils import make_dict_learning_scorers, make_pca_scorers
 
 
 class PCABenchmark(Transformer, Estimator, Benchmark):
@@ -51,6 +51,7 @@ class DictionaryLearningBenchmark(Transformer, Estimator, Benchmark):
             n_components=15,
             fit_algorithm=fit_algorithm,
             alpha=0.1,
+            transform_alpha=1,
             max_iter=20,
             tol=1e-16,
             random_state=0,

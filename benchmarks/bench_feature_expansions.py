@@ -1,8 +1,10 @@
+from time import time
+
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.sparse as sparse
+
 from sklearn.preprocessing import PolynomialFeatures
-from time import time
+from sklearn.utils.fixes import _sparse_random_array
 
 degree = 2
 trials = 3
@@ -19,7 +21,7 @@ for trial in range(trials):
     for density in densities:
         for dim_index, dim in enumerate(dimensionalities):
             print(trial, density, dim)
-            X_csr = sparse.random(num_rows, dim, density).tocsr()
+            X_csr = _sparse_random_array((num_rows, dim), density=density, format="csr")
             X_dense = X_csr.toarray()
             # CSR
             t0 = time()
@@ -35,7 +37,6 @@ dense_linestyle = (0, ())  # solid
 
 fig, axes = plt.subplots(nrows=len(densities), ncols=1, figsize=(8, 10))
 for density, ax in zip(densities, axes):
-
     ax.plot(
         dimensionalities,
         csr_times[density] / trials,

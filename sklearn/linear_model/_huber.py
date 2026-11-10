@@ -1,16 +1,19 @@
-# Authors: Manoj Kumar mks542@nyu.edu
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from numbers import Integral, Real
 
 import numpy as np
-
 from scipy import optimize
 
-from ..base import BaseEstimator, RegressorMixin
-from ._base import LinearModel
-from ..utils import axis0_safe_slice
-from ..utils.validation import _check_sample_weight
-from ..utils.extmath import safe_sparse_dot
-from ..utils.optimize import _check_optimize_result
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.linear_model._base import LinearModel
+from sklearn.utils._mask import axis0_safe_slice
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import _check_sample_weight, validate_data
 
 
 def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
@@ -124,36 +127,37 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
 
 
 class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
-    """Linear regression model that is robust to outliers.
+    """L2-regularized linear regression model that is robust to outliers.
 
     The Huber Regressor optimizes the squared loss for the samples where
-    ``|(y - X'w) / sigma| < epsilon`` and the absolute loss for the samples
-    where ``|(y - X'w) / sigma| > epsilon``, where w and sigma are parameters
-    to be optimized. The parameter sigma makes sure that if y is scaled up
-    or down by a certain factor, one does not need to rescale epsilon to
+    ``|(y - Xw - c) / sigma| < epsilon`` and the absolute loss for the samples
+    where ``|(y - Xw - c) / sigma| > epsilon``, where the model coefficients
+    ``w``, the intercept ``c`` and the scale ``sigma`` are parameters
+    to be optimized. The parameter `sigma` makes sure that if `y` is scaled up
+    or down by a certain factor, one does not need to rescale `epsilon` to
     achieve the same robustness. Note that this does not take into account
-    the fact that the different features of X may be of different scales.
+    the fact that the different features of `X` may be of different scales.
 
-    This makes sure that the loss function is not heavily influenced by the
-    outliers while not completely ignoring their effect.
+    The Huber loss function has the advantage of not being heavily influenced
+    by the outliers while not completely ignoring their effect.
 
     Read more in the :ref:`User Guide <huber_regression>`
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
-    epsilon : float, greater than 1.0, default=1.35
+    epsilon : float, default=1.35
         The parameter epsilon controls the number of samples that should be
         classified as outliers. The smaller the epsilon, the more robust it is
-        to outliers.
+        to outliers. Epsilon must be in the range `[1, inf)`.
 
     max_iter : int, default=100
         Maximum number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` should run for.
 
     alpha : float, default=0.0001
-        Regularization parameter.
+        Strength of the squared L2 regularization. Note that the penalty is
+        equal to ``alpha * ||w||^2``.
+        Must be in the range `[0, inf)`.
 
     warm_start : bool, default=False
         This is useful if the stored attributes of a previously used model
@@ -173,18 +177,16 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Attributes
     ----------
     coef_ : array, shape (n_features,)
-        Features got by optimizing the Huber loss.
+        Features got by optimizing the L2-regularized Huber loss.
 
     intercept_ : float
         Bias.
 
     scale_ : float
-        The value by which ``|y - X'w - c|`` is scaled down.
+        The value by which ``|y - Xw - c|`` is scaled down.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -195,11 +197,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` has run for.
-
-        .. versionchanged:: 0.20
-
-            In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
-            ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
     outliers_ : array, shape (n_samples,)
         A boolean mask which is set to True where the samples are identified
@@ -214,9 +211,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     References
     ----------
     .. [1] Peter J. Huber, Elvezio M. Ronchetti, Robust Statistics
-           Concomitant scale estimates, pg 172
-    .. [2] Art B. Owen (2006), A robust hybrid of lasso and ridge regression.
-           https://statweb.stanford.edu/~owen/reports/hhu.pdf
+           Concomitant scale estimates, p. 172
+    .. [2] Art B. Owen (2006), `A robust hybrid of lasso and ridge regression.
+           <https://artowen.su.domains/reports/hhu.pdf>`_
 
     Examples
     --------
@@ -230,9 +227,9 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> y[:4] = rng.uniform(10, 20, 4)
     >>> huber = HuberRegressor().fit(X, y)
     >>> huber.score(X, y)
-    -7.284...
+    -7.284
     >>> huber.predict(X[:1,])
-    array([806.7200...])
+    array([806.7200])
     >>> linear = LinearRegression().fit(X, y)
     >>> print("True coefficients:", coef)
     True coefficients: [20.4923...  34.1698...]
@@ -241,6 +238,15 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> print("Linear Regression coefficients:", linear.coef_)
     Linear Regression coefficients: [-1.9221...  7.0226...]
     """
+
+    _parameter_constraints: dict = {
+        "epsilon": [Interval(Real, 1.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "warm_start": ["boolean"],
+        "fit_intercept": ["boolean"],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+    }
 
     def __init__(
         self,
@@ -259,6 +265,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.fit_intercept = fit_intercept
         self.tol = tol
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -279,7 +286,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Fitted `HuberRegressor` estimator.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             copy=False,
@@ -289,11 +297,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         )
 
         sample_weight = _check_sample_weight(sample_weight, X)
-
-        if self.epsilon < 1.0:
-            raise ValueError(
-                "epsilon should be greater than or equal to 1.0, got %f" % self.epsilon
-            )
 
         if self.warm_start and hasattr(self, "coef_"):
             parameters = np.concatenate((self.coef_, [self.intercept_, self.scale_]))
@@ -318,7 +321,11 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             method="L-BFGS-B",
             jac=True,
             args=(X, y, self.epsilon, self.alpha, sample_weight),
-            options={"maxiter": self.max_iter, "gtol": self.tol, "iprint": -1},
+            options={
+                "maxiter": self.max_iter,
+                "gtol": self.tol,
+                **_get_additional_lbfgs_options_dict("iprint", -1),
+            },
             bounds=bounds,
         )
 
@@ -340,3 +347,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         residual = np.abs(y - safe_sparse_dot(X, self.coef_) - self.intercept_)
         self.outliers_ = residual > self.scale_ * self.epsilon
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

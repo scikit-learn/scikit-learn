@@ -2,19 +2,28 @@
 Kernel Density Estimation
 -------------------------
 """
-# Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 
-import numbers
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import itertools
+from numbers import Integral, Real
+
 import numpy as np
 from scipy.special import gammainc
-from ..base import BaseEstimator
-from ..utils import check_random_state, check_scalar
-from ..utils.validation import _check_sample_weight, check_is_fitted
 
-from ..utils.extmath import row_norms
-from ._ball_tree import BallTree, DTYPE
-from ._kd_tree import KDTree
-
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.neighbors._ball_tree import BallTree
+from sklearn.neighbors._base import VALID_METRICS
+from sklearn.neighbors._kd_tree import KDTree
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 VALID_KERNELS = [
     "gaussian",
@@ -24,11 +33,11 @@ VALID_KERNELS = [
     "linear",
     "cosine",
 ]
+
 TREE_DICT = {"ball_tree": BallTree, "kd_tree": KDTree}
 
 
 # TODO: implement a brute force version for testing purposes
-# TODO: bandwidth estimation
 # TODO: create a density estimation base class?
 class KernelDensity(BaseEstimator):
     """Kernel Density Estimation.
@@ -50,12 +59,17 @@ class KernelDensity(BaseEstimator):
         The kernel to use.
 
     metric : str, default='euclidean'
-        The distance metric to use.  Note that not all metrics are
-        valid with all algorithms.  Refer to the documentation of
-        :class:`BallTree` and :class:`KDTree` for a description of
-        available algorithms.  Note that the normalization of the density
-        output is correct only for the Euclidean distance metric. Default
-        is 'euclidean'.
+        Metric to use for distance computation. See the
+        documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values.
+
+        Not all metrics are valid with all algorithms: refer to the
+        documentation of :class:`BallTree` and :class:`KDTree`. Note that the
+        normalization of the density output is correct only for the Euclidean
+        distance metric.
 
     atol : float, default=0
         The desired absolute tolerance of the result.  A larger tolerance will
@@ -83,8 +97,6 @@ class KernelDensity(BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     tree_ : ``BinaryTree`` instance
         The tree algorithm for fast generalized N-point problems.
 
@@ -94,7 +106,7 @@ class KernelDensity(BaseEstimator):
 
     bandwidth_ : float
         Value of the bandwidth, given directly by the bandwidth parameter or
-        estimated using the 'scott' or 'silvermann' method.
+        estimated using the 'scott' or 'silverman' method.
 
         .. versionadded:: 1.0
 
@@ -118,6 +130,25 @@ class KernelDensity(BaseEstimator):
     >>> log_density
     array([-1.52955942, -1.51462041, -1.60244657])
     """
+
+    _parameter_constraints: dict = {
+        "bandwidth": [
+            Interval(Real, 0, None, closed="neither"),
+            StrOptions({"scott", "silverman"}),
+        ],
+        "algorithm": [StrOptions(set(TREE_DICT.keys()) | {"auto"})],
+        "kernel": [StrOptions(set(VALID_KERNELS))],
+        "metric": [
+            StrOptions(
+                set(itertools.chain(*[VALID_METRICS[alg] for alg in TREE_DICT.keys()]))
+            )
+        ],
+        "atol": [Interval(Real, 0, None, closed="left")],
+        "rtol": [Interval(Real, 0, None, closed="left")],
+        "breadth_first": ["boolean"],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "metric_params": [None, dict],
+    }
 
     def __init__(
         self,
@@ -151,17 +182,17 @@ class KernelDensity(BaseEstimator):
                 return "kd_tree"
             elif metric in BallTree.valid_metrics:
                 return "ball_tree"
-            else:
-                raise ValueError("invalid metric: '{0}'".format(metric))
-        elif algorithm in TREE_DICT:
+        else:  # kd_tree or ball_tree
             if metric not in TREE_DICT[algorithm].valid_metrics:
                 raise ValueError(
                     "invalid metric for {0}: '{1}'".format(TREE_DICT[algorithm], metric)
                 )
             return algorithm
-        else:
-            raise ValueError("invalid algorithm: '{0}'".format(algorithm))
 
+    @_fit_context(
+        # KernelDensity.metric is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y=None, sample_weight=None):
         """Fit the Kernel Density model on the data.
 
@@ -178,46 +209,28 @@ class KernelDensity(BaseEstimator):
         sample_weight : array-like of shape (n_samples,), default=None
             List of sample weights attached to the data X.
 
-            .. versionadded:: 0.20
-
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
 
         if isinstance(self.bandwidth, str):
-            methods_supported = ("scott", "silvermann")
-            if self.bandwidth not in methods_supported:
-                raise ValueError(
-                    "When `bandwidth` is a string, it should be one of: "
-                    f"{', '.join(methods_supported)}. Got {self.bandwidth!r} instead."
-                )
             if self.bandwidth == "scott":
                 self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
-            elif self.bandwidth == "silvermann":
+            elif self.bandwidth == "silverman":
                 self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
                     -1 / (X.shape[1] + 4)
                 )
         else:
-            check_scalar(
-                self.bandwidth,
-                "bandwidth",
-                target_type=numbers.Real,
-                min_val=0,
-                include_boundaries="neither",
-            )
             self.bandwidth_ = self.bandwidth
-        if self.kernel not in VALID_KERNELS:
-            raise ValueError("invalid kernel: '{0}'".format(self.kernel))
 
-        X = self._validate_data(X, order="C", dtype=DTYPE)
+        X = validate_data(self, X, order="C", dtype=np.float64)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(
-                sample_weight, X, DTYPE, only_non_negative=True
+                sample_weight, X, dtype=np.float64, ensure_non_negative=True
             )
 
         kwargs = self.metric_params
@@ -252,7 +265,7 @@ class KernelDensity(BaseEstimator):
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
-        X = self._validate_data(X, order="C", dtype=DTYPE, reset=False)
+        X = validate_data(self, X, order="C", dtype=np.float64, reset=False)
         if self.tree_.sample_weight is None:
             N = self.tree_.data.shape[0]
         else:
@@ -344,12 +357,3 @@ class KernelDensity(BaseEstimator):
                 / np.sqrt(s_sq)
             )
             return data[i] + X * correction[:, np.newaxis]
-
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_sample_weights_invariance": (
-                    "sample_weight must have positive values"
-                ),
-            }
-        }

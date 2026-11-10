@@ -25,9 +25,8 @@ We will illustrate these differences with an example and we will also focus on
 tuning the kernel hyperparameters.
 """
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generating a dataset
@@ -125,6 +124,7 @@ _ = plt.title("Limitation of a linear model such as ridge")
 #
 # Thus, let's use such a :class:`~sklearn.kernel_ridge.KernelRidge`.
 import time
+
 from sklearn.gaussian_process.kernels import ExpSineSquared
 from sklearn.kernel_ridge import KernelRidge
 
@@ -171,13 +171,14 @@ kernel_ridge.kernel
 # being :math:`1`, it explains the high frequency observed in the predictions of
 # our model.
 # Similar conclusions could be drawn with the length-scale parameter. Thus, it
-# tell us that the kernel parameters need to be tuned. We will use a randomized
+# tells us that the kernel parameters need to be tuned. We will use a randomized
 # search to tune the different parameters the kernel ridge model: the `alpha`
 # parameter and the kernel parameters.
 
 # %%
+from scipy.stats import loguniform
+
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.utils.fixes import loguniform
 
 param_distributions = {
     "alpha": loguniform(1e0, 1e3),

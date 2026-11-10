@@ -1,0 +1,22 @@
+# We add sklearn_root_cython_tree and __init__.py so Cython can detect the
+# package hierarchy and set the correct __module__ on extension types.
+cluster_hdbscan_cython_tree = [
+  sklearn_root_cython_tree,
+  fs.copyfile('__init__.py'),
+]
+
+cluster_hdbscan_extension_metadata = {
+  '_linkage': {'sources': [cython_gen.process('_linkage.pyx'), metrics_cython_tree]},
+  '_reachability': {'sources': [cython_gen.process('_reachability.pyx')]},
+  '_tree': {'sources': [cython_gen.process('_tree.pyx')]}
+}
+
+foreach ext_name, ext_dict : cluster_hdbscan_extension_metadata
+  py.extension_module(
+    ext_name,
+    [ext_dict.get('sources'), cluster_hdbscan_cython_tree],
+    dependencies: [np_dep],
+    subdir: 'sklearn/cluster/_hdbscan',
+    install: true
+  )
+endforeach

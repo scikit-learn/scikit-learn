@@ -53,9 +53,12 @@ References
 
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib.font_manager
+import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.covariance import EmpiricalCovariance, MinCovDet
 
@@ -82,7 +85,6 @@ err_cov_emp_pure = np.zeros((range_n_outliers.size, repeat))
 # computation
 for i, n_outliers in enumerate(range_n_outliers):
     for j in range(repeat):
-
         rng = np.random.RandomState(i * j)
 
         # generate data
@@ -181,6 +183,7 @@ plt.errorbar(
 plt.title("Influence of outliers on the covariance estimation")
 plt.xlabel("Amount of contamination (%)")
 plt.ylabel("RMSE")
-plt.legend(loc="upper center", prop=font_prop)
+plt.legend(loc="center", prop=font_prop)
 
+plt.tight_layout()
 plt.show()

@@ -16,16 +16,17 @@ At the end, the top 10 most uncertain predictions will be shown.
 
 """
 
-# Authors: Clay Woolam <clay@woolam.org>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Data generation
 # ---------------
 #
 # We use the digits dataset. We only use a subset of randomly selected samples.
-from sklearn import datasets
 import numpy as np
+
+from sklearn import datasets
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(2)
@@ -59,8 +60,8 @@ y_train[unlabeled_set] = -1
 #
 # We fit a :class:`~sklearn.semi_supervised.LabelSpreading` and use it to predict
 # the unknown labels.
-from sklearn.semi_supervised import LabelSpreading
 from sklearn.metrics import classification_report
+from sklearn.semi_supervised import LabelSpreading
 
 lp_model = LabelSpreading(gamma=0.25, max_iter=20)
 lp_model.fit(X, y_train)

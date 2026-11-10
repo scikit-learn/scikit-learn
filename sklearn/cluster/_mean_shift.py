@@ -9,30 +9,42 @@ near-duplicates to form the final set of centroids.
 Seeding is performed using a binning technique for scalability.
 """
 
-# Authors: Conrad Lee <conradlee@gmail.com>
-#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Martino Sorbaro <martino.sorbaro@ed.ac.uk>
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import warnings
+from collections import defaultdict
+from numbers import Integral, Real
 
 import numpy as np
-import warnings
-from joblib import Parallel
 
-from collections import defaultdict
-from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed
-from ..utils import check_random_state, gen_batches, check_array
-from ..base import BaseEstimator, ClusterMixin
-from ..neighbors import NearestNeighbors
-from ..metrics.pairwise import pairwise_distances_argmin
-from .._config import config_context
+from sklearn._config import config_context
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.metrics.pairwise import pairwise_distances_argmin
+from sklearn.neighbors import NearestNeighbors
+from sklearn.utils import check_array, check_random_state, gen_batches
+from sklearn.utils._param_validation import Interval, validate_params
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "quantile": [Interval(Real, 0, 1, closed="both")],
+        "n_samples": [Interval(Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
+    },
+    prefer_skip_nested_validation=True,
+)
 def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
-    That this function takes time at least quadratic in n_samples. For large
-    datasets, it's wise to set that parameter to a small value.
+    This function takes time at least quadratic in `n_samples`. For large
+    datasets, it is wise to subsample by setting `n_samples`. Alternatively,
+    the parameter `bandwidth` can be set to a small value without estimating
+    it.
 
     Parameters
     ----------
@@ -46,7 +58,7 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     n_samples : int, default=None
         The number of samples to use. If not given, all samples are used.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance, default=0
         The generator used to randomly select the samples from input points
         for bandwidth estimation. Use an int to make the randomness
         deterministic.
@@ -62,6 +74,15 @@ def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_job
     -------
     bandwidth : float
         The bandwidth parameter.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import estimate_bandwidth
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> estimate_bandwidth(X, quantile=0.5)
+    np.float64(1.61)
     """
     X = check_array(X)
 
@@ -99,7 +120,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         my_mean = np.mean(points_within, axis=0)
         # If converged or at max_iter, adds the cluster
         if (
-            np.linalg.norm(my_mean - my_old_mean) < stop_thresh
+            np.linalg.norm(my_mean - my_old_mean) <= stop_thresh
             or completed_iterations == max_iter
         ):
             break
@@ -107,6 +128,10 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     return tuple(my_mean), len(points_within), completed_iterations
 
 
+@validate_params(
+    {"X": ["array-like"]},
+    prefer_skip_nested_validation=False,
+)
 def mean_shift(
     X,
     *,
@@ -129,9 +154,9 @@ def mean_shift(
         Input data.
 
     bandwidth : float, default=None
-        Kernel bandwidth.
+        Kernel bandwidth. If not None, must be in the range [0, +inf).
 
-        If bandwidth is not given, it is determined using a heuristic based on
+        If None, the bandwidth is determined using a heuristic based on
         the median of all pairwise distances. This will take quadratic time in
         the number of samples. The sklearn.cluster.estimate_bandwidth function
         can be used to do this more efficiently.
@@ -163,15 +188,19 @@ def mean_shift(
         operation terminates (for that seed point), if has not converged yet.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This works by computing
-        each of the n_init runs in parallel.
+        The number of jobs to use for the computation. The following tasks benefit
+        from the parallelization:
+
+        - The search of nearest neighbors for bandwidth estimation and label
+          assignments. See the details in the docstring of the
+          ``NearestNeighbors`` class.
+        - Hill-climbing optimization for all seeds.
+
+        See :term:`Glossary <n_jobs>` for more details.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-
-        .. versionadded:: 0.17
-           Parallel Execution using *n_jobs*.
 
     Returns
     -------
@@ -184,8 +213,21 @@ def mean_shift(
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_mean_shift.py
-    <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
+    For a usage example, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.cluster import mean_shift
+    >>> X = np.array([[1, 1], [2, 1], [1, 0],
+    ...               [4, 7], [3, 5], [3, 6]])
+    >>> cluster_centers, labels = mean_shift(X, bandwidth=2)
+    >>> cluster_centers
+    array([[3.33, 6.     ],
+           [1.33, 0.66]])
+    >>> labels
+    array([1, 1, 1, 0, 0, 0])
     """
     model = MeanShift(
         bandwidth=bandwidth,
@@ -263,12 +305,15 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     Seeding is performed using a binning technique for scalability.
 
+    For an example of how to use MeanShift clustering, refer to:
+    :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`.
+
     Read more in the :ref:`User Guide <mean_shift>`.
 
     Parameters
     ----------
     bandwidth : float, default=None
-        Bandwidth used in the RBF kernel.
+        Bandwidth used in the flat kernel.
 
         If not given, the bandwidth is estimated using
         sklearn.cluster.estimate_bandwidth; see the documentation for that
@@ -299,8 +344,15 @@ class MeanShift(ClusterMixin, BaseEstimator):
         If false, then orphans are given cluster label -1.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This works by computing
-        each of the n_init runs in parallel.
+        The number of jobs to use for the computation. The following tasks benefit
+        from the parallelization:
+
+        - The search of nearest neighbors for bandwidth estimation and label
+          assignments. See the details in the docstring of the
+          ``NearestNeighbors`` class.
+        - Hill-climbing optimization for all seeds.
+
+        See :term:`Glossary <n_jobs>` for more details.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -309,8 +361,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
     max_iter : int, default=300
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
-
-        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -323,12 +373,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
     n_iter_ : int
         Maximum number of iterations performed on each seed.
 
-        .. versionadded:: 0.22
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -377,7 +423,20 @@ class MeanShift(ClusterMixin, BaseEstimator):
     array([1, 0])
     >>> clustering
     MeanShift(bandwidth=2)
+
+    For a comparison of Mean Shift clustering with other clustering algorithms, see
+    :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`
     """
+
+    _parameter_constraints: dict = {
+        "bandwidth": [Interval(Real, 0, None, closed="neither"), None],
+        "seeds": ["array-like", None],
+        "bin_seeding": ["boolean"],
+        "min_bin_freq": [Interval(Integral, 1, None, closed="left")],
+        "cluster_all": ["boolean"],
+        "n_jobs": [Integral, None],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
 
     def __init__(
         self,
@@ -398,6 +457,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.max_iter = max_iter
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Perform clustering.
 
@@ -414,14 +474,10 @@ class MeanShift(ClusterMixin, BaseEstimator):
         self : object
                Fitted instance.
         """
-        X = self._validate_data(X)
+        X = validate_data(self, X)
         bandwidth = self.bandwidth
         if bandwidth is None:
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
-        elif bandwidth <= 0:
-            raise ValueError(
-                "bandwidth needs to be greater than zero or None, got %f" % bandwidth
-            )
 
         seeds = self.seeds
         if seeds is None:
@@ -509,6 +565,6 @@ class MeanShift(ClusterMixin, BaseEstimator):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         with config_context(assume_finite=True):
             return pairwise_distances_argmin(X, self.cluster_centers_)

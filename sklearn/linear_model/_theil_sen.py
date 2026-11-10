@@ -2,27 +2,26 @@
 A Theil-Sen Estimator for Multiple Linear Regression Model
 """
 
-# Author: Florian Wilhelm <florian.wilhelm@gmail.com>
-#
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-import numbers
 from itertools import combinations
+from numbers import Integral, Real
 
 import numpy as np
+from joblib import effective_n_jobs
 from scipy import linalg
-from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, effective_n_jobs
+from scipy.special import binom
 
-from ._base import LinearModel
-from ..base import RegressorMixin
-from ..utils import check_random_state
-from ..utils.validation import check_scalar
-from ..utils.fixes import delayed
-from ..exceptions import ConvergenceWarning
+from sklearn.base import RegressorMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearModel
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import validate_data
 
 _EPSILON = np.finfo(np.double).eps
 
@@ -225,9 +224,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations.
 
-    copy_X : bool, default=True
-        If True, X will be copied; else, it may be overwritten.
-
     max_subpopulation : int, default=1e4
         Instead of computing with a set of cardinality 'n choose k', where n is
         the number of samples and k is the number of subsamples (at least
@@ -289,8 +285,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -317,16 +311,27 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
     >>> reg.score(X, y)
-    0.9884...
+    0.9884
     >>> reg.predict(X[:1,])
-    array([-31.5871...])
+    array([-31.5871])
     """
+
+    _parameter_constraints: dict = {
+        "fit_intercept": ["boolean"],
+        # target_type should be Integral but can accept Real for backward compatibility
+        "max_subpopulation": [Interval(Real, 1, None, closed="left")],
+        "n_subsamples": [None, Integral],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "random_state": ["random_state"],
+        "n_jobs": [None, Integral],
+        "verbose": ["verbose"],
+    }
 
     def __init__(
         self,
         *,
         fit_intercept=True,
-        copy_X=True,
         max_subpopulation=1e4,
         n_subsamples=None,
         max_iter=300,
@@ -336,7 +341,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         verbose=False,
     ):
         self.fit_intercept = fit_intercept
-        self.copy_X = copy_X
         self.max_subpopulation = max_subpopulation
         self.n_subsamples = n_subsamples
         self.max_iter = max_iter
@@ -377,19 +381,12 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         else:
             n_subsamples = min(n_dim, n_samples)
 
-        self._max_subpopulation = check_scalar(
-            self.max_subpopulation,
-            "max_subpopulation",
-            # target_type should be numbers.Integral but can accept float
-            # for backward compatibility reasons
-            target_type=(numbers.Real, numbers.Integral),
-            min_val=1,
-        )
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))
-        n_subpopulation = int(min(self._max_subpopulation, all_combinations))
+        n_subpopulation = int(min(self.max_subpopulation, all_combinations))
 
         return n_subsamples, n_subpopulation
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit linear model.
 
@@ -406,7 +403,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             Fitted `TheilSenRegressor` estimator.
         """
         random_state = check_random_state(self.random_state)
-        X, y = self._validate_data(X, y, y_numeric=True)
+        X, y = validate_data(self, X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(
             n_samples, n_features
@@ -421,7 +418,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
             print("Number of subpopulations: {0}".format(self.n_subpopulation_))
 
         # Determine indices of subpopulation
-        if np.rint(binom(n_samples, n_subsamples)) <= self._max_subpopulation:
+        if np.rint(binom(n_samples, n_subsamples)) <= self.max_subpopulation:
             indices = list(combinations(range(n_samples), n_subsamples))
         else:
             indices = [

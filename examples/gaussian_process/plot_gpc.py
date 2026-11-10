@@ -22,18 +22,15 @@ hyperparameters used in the first figure by black dots.
 
 """
 
-# Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
-
 from matplotlib import pyplot as plt
 
-from sklearn.metrics import accuracy_score, log_loss
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF
-
+from sklearn.metrics import accuracy_score, log_loss
 
 # Generate data
 train_size = 50

@@ -1,45 +1,57 @@
-"""
-The :mod:`sklearn.cluster` module gathers popular unsupervised clustering
-algorithms.
-"""
+"""Popular unsupervised clustering algorithms."""
 
-from ._spectral import spectral_clustering, SpectralClustering
-from ._mean_shift import mean_shift, MeanShift, estimate_bandwidth, get_bin_seeds
-from ._affinity_propagation import affinity_propagation, AffinityPropagation
-from ._agglomerative import (
-    ward_tree,
-    AgglomerativeClustering,
-    linkage_tree,
-    FeatureAgglomeration,
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from sklearn.cluster._affinity_propagation import (
+    AffinityPropagation,
+    affinity_propagation,
 )
-from ._kmeans import k_means, KMeans, MiniBatchKMeans, kmeans_plusplus
-from ._bisect_k_means import BisectingKMeans
-from ._dbscan import dbscan, DBSCAN
-from ._optics import (
+from sklearn.cluster._agglomerative import (
+    AgglomerativeClustering,
+    FeatureAgglomeration,
+    linkage_tree,
+    ward_tree,
+)
+from sklearn.cluster._bicluster import SpectralBiclustering, SpectralCoclustering
+from sklearn.cluster._birch import Birch
+from sklearn.cluster._bisect_k_means import BisectingKMeans
+from sklearn.cluster._dbscan import DBSCAN, dbscan
+from sklearn.cluster._hdbscan.hdbscan import HDBSCAN
+from sklearn.cluster._kmeans import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
+from sklearn.cluster._mean_shift import (
+    MeanShift,
+    estimate_bandwidth,
+    get_bin_seeds,
+    mean_shift,
+)
+from sklearn.cluster._optics import (
     OPTICS,
     cluster_optics_dbscan,
-    compute_optics_graph,
     cluster_optics_xi,
+    compute_optics_graph,
 )
-from ._bicluster import SpectralBiclustering, SpectralCoclustering
-from ._birch import Birch
+from sklearn.cluster._spectral import SpectralClustering, spectral_clustering
 
 __all__ = [
+    "DBSCAN",
+    "HDBSCAN",
+    "OPTICS",
     "AffinityPropagation",
     "AgglomerativeClustering",
     "Birch",
-    "DBSCAN",
-    "OPTICS",
+    "BisectingKMeans",
+    "FeatureAgglomeration",
+    "KMeans",
+    "MeanShift",
+    "MiniBatchKMeans",
+    "SpectralBiclustering",
+    "SpectralClustering",
+    "SpectralCoclustering",
+    "affinity_propagation",
     "cluster_optics_dbscan",
     "cluster_optics_xi",
     "compute_optics_graph",
-    "KMeans",
-    "BisectingKMeans",
-    "FeatureAgglomeration",
-    "MeanShift",
-    "MiniBatchKMeans",
-    "SpectralClustering",
-    "affinity_propagation",
     "dbscan",
     "estimate_bandwidth",
     "get_bin_seeds",
@@ -49,6 +61,4 @@ __all__ = [
     "mean_shift",
     "spectral_clustering",
     "ward_tree",
-    "SpectralBiclustering",
-    "SpectralCoclustering",
 ]

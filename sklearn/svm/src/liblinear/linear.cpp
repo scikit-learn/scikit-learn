@@ -29,6 +29,11 @@
      Sylvain Marie, Schneider Electric
      See <https://github.com/scikit-learn/scikit-learn/pull/13511#issuecomment-481729756>
 
+   Modified 2026:
+   - Fixed a memory leak due to conditional deallocation of `newprob` attributes;
+     see <https://github.com/scikit-learn/scikit-learn/pull/34256>
+   - Fixed an out-of-bound read when solver_type=MCSVM_CS;
+     see <https://github.com/scikit-learn/scikit-learn/pull/34273>
  */
 
 #include <math.h>
@@ -73,7 +78,7 @@ static void info(const char *fmt,...)
 	char buf[BUFSIZ];
 	va_list ap;
 	va_start(ap,fmt);
-	vsprintf(buf,fmt,ap);
+	vsnprintf(buf,sizeof buf,fmt,ap);
 	va_end(ap);
 	(*liblinear_print_string)(buf);
 }
@@ -1769,6 +1774,7 @@ static int solve_l1r_lr(
 	int max_num_linesearch = 20;
 	int active_size;
 	int QP_active_size;
+	int QP_no_change = 0;
 
 	double nu = 1e-12;
 	double inner_eps = 1;
@@ -1896,8 +1902,12 @@ static int solve_l1r_lr(
 		if(newton_iter == 0)
 			Gnorm1_init = Gnorm1_new;
 
-		if(Gnorm1_new <= eps*Gnorm1_init)
+		// Break outer-loop if the accumulated violation is small.
+		// Also break if no update in QP inner-loop ten times in a row.
+		if(Gnorm1_new <= eps*Gnorm1_init || QP_no_change >= 10)
 			break;
+
+		QP_no_change++;
 
 		iter = 0;
 		QP_Gmax_old = INF;
@@ -1955,9 +1965,6 @@ static int solve_l1r_lr(
 				else
 					violation = fabs(Gn);
 
-				QP_Gmax_new = max(QP_Gmax_new, violation);
-				QP_Gnorm1_new += violation;
-
 				// obtain solution of one-variable problem
 				if(Gp < H*wpd[j])
 					z = -Gp/H;
@@ -1969,6 +1976,10 @@ static int solve_l1r_lr(
 				if(fabs(z) < 1.0e-12)
 					continue;
 				z = min(max(z,-10.0),10.0);
+
+				QP_no_change = 0;
+				QP_Gmax_new = max(QP_Gmax_new, violation);
+				QP_Gnorm1_new += violation;
 
 				wpd[j] += z;
 
@@ -2447,13 +2458,12 @@ static void remove_zero_weight(problem *newprob, const problem *prob)
 model* train(const problem *prob, const parameter *param, BlasFunctions *blas_functions)
 {
 	problem newprob;
-	remove_zero_weight(&newprob, prob);
+	remove_zero_weight(&newprob, prob);  // This allocates memory for newprob
 	prob = &newprob;
 	int i,j;
 	int l = prob->l;
 	int n = prob->n;
 	int w_size = prob->n;
-	int n_iter;
 	model *model_ = Malloc(model,1);
 
 	if(prob->bias>=0)
@@ -2582,10 +2592,10 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 		free(sub_prob.y);
 		free(sub_prob.W);
 		free(weighted_C);
-		free(newprob.x);
-		free(newprob.y);
-		free(newprob.W);
 	}
+	free(newprob.x);
+	free(newprob.y);
+	free(newprob.W);
 	return model_;
 }
 
@@ -2933,7 +2943,7 @@ void get_n_iter(const model *model_, int* n_iter)
 {
     int labels;
     labels = model_->nr_class;
-    if (labels == 2)
+    if (labels == 2 || model_->param.solver_type == MCSVM_CS)
         labels = 1;
 
     if (model_->n_iter != NULL)

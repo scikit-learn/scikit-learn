@@ -11,8 +11,8 @@ feature extraction.
 
 """
 
-# Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # %%
 # Generate data
@@ -23,13 +23,11 @@ feature extraction.
 # linear shifts of 1 pixel in each direction.
 
 import numpy as np
-
 from scipy.ndimage import convolve
 
 from sklearn import datasets
-from sklearn.preprocessing import minmax_scale
-
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import minmax_scale
 
 
 def nudge_dataset(X, Y):
@@ -97,14 +95,12 @@ rbm.n_iter = 10
 # More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 100
-logistic.C = 6000
 
 # Training RBM-Logistic Pipeline
 rbm_features_classifier.fit(X_train, Y_train)
 
 # Training the Logistic regression classifier directly on the pixel
 raw_pixel_classifier = clone(logistic)
-raw_pixel_classifier.C = 100.0
 raw_pixel_classifier.fit(X_train, Y_train)
 
 # %%

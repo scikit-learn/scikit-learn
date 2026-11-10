@@ -1,0 +1,72 @@
+# This workflow is used to trigger the commenter bot in bot-lint-comment.yml
+# file. It stores the output of the linter to be used by the commenter bot.
+name: Linter
+permissions:
+  contents: read
+
+on:
+  - pull_request
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    # setting any permission will set everything else to none for GITHUB_TOKEN
+    permissions:
+      pull-requests: none
+
+    steps:
+      - name: Checkout code from PR branch
+        uses: actions/checkout@v7
+        with:
+          # We want to check out the PR branch to report linting errors with
+          # lines that match the PR branch. GHA checkout behavior by default is
+          # to merge main into the PR branch
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      # We want to use the lint lock-file from merging main into the PR branch
+      # (default checkout behavior)
+      - name: Checkout lint lock-file from merging main into the PR branch
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: build_tools/github/lint_lock.txt
+          sparse-checkout-cone-mode: false
+          path: merge-main-into-pr-branch
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: 3.12
+
+      - name: Install dependencies
+        run: |
+          # We want to install the lint lock-file from merging main into the PR branch
+          pip install -r merge-main-into-pr-branch/build_tools/github/lint_lock.txt
+
+          # we save the versions of the linters to be used in the error message later.
+          python -c "from importlib.metadata import version; print(f\"pytest={version('pytest')}\")" >> /tmp/versions.txt
+          python -c "from importlib.metadata import version; print(f\"ruff={version('ruff')}\")" >> /tmp/versions.txt
+          python -c "from importlib.metadata import version; print(f\"pyrefly={version('pyrefly')}\")" >> /tmp/versions.txt
+          python -c "from importlib.metadata import version; print(f\"cython-lint={version('cython-lint')}\")" >> /tmp/versions.txt
+          python -c "from importlib.metadata import version; print(f\"sphinx-lint={version('sphinx-lint')}\")" >> /tmp/versions.txt
+          python -c "from importlib.metadata import version; print(f\"codespell={version('codespell')}\")" >> /tmp/versions.txt
+
+      - name: Run linting
+        run: |
+          set +e
+          ./build_tools/linting.sh &> /tmp/linting_output.txt
+          cat /tmp/linting_output.txt
+
+      - name: Upload Artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lint-log
+          path: |
+            /tmp/linting_output.txt
+            /tmp/versions.txt
+          retention-days: 1

@@ -1,7 +1,6 @@
-from sklearn.utils.fixes import threadpool_info
-from sklearn.utils._show_versions import _get_sys_info
-from sklearn.utils._show_versions import _get_deps_info
-from sklearn.utils._show_versions import show_versions
+from threadpoolctl import threadpool_info
+
+from sklearn.utils._show_versions import _get_deps_info, _get_sys_info, show_versions
 from sklearn.utils._testing import ignore_warnings
 
 
@@ -26,6 +25,7 @@ def test_get_deps_info():
     assert "pandas" in deps_info
     assert "matplotlib" in deps_info
     assert "joblib" in deps_info
+    assert "narwhals" in deps_info
 
 
 def test_show_versions(capsys):

@@ -16,35 +16,39 @@ The module structure is the following:
   (AdaBoost.R2) for regression problems.
 """
 
-# Authors: Noel Dawe <noel@dawe.me>
-#          Gilles Louppe <g.louppe@gmail.com>
-#          Hamzeh Alsalhi <ha258@cornell.edu>
-#          Arnaud Joly <arnaud.v.joly@gmail.com>
-#
-# License: BSD 3 clause
-
-from abc import ABCMeta, abstractmethod
-
-import numbers
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
-from scipy.special import xlogy
+import numpy as np
 
-from ._base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
-
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, _safe_indexing
-from ..utils import check_scalar
-from ..utils.extmath import softmax
-from ..utils.extmath import stable_cumsum
-from ..metrics import accuracy_score, r2_score
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _check_sample_weight
-from ..utils.validation import has_fit_parameter
-from ..utils.validation import _num_samples
+from sklearn.base import (
+    ClassifierMixin,
+    RegressorMixin,
+    _fit_context,
+    is_classifier,
+    is_regressor,
+)
+from sklearn.ensemble._base import BaseEnsemble
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import _safe_indexing, check_random_state
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils.extmath import softmax
+from sklearn.utils.metadata_routing import (
+    _raise_for_unsupported_routing,
+    _RoutingNotSupportedMixin,
+)
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    _num_samples,
+    check_is_fitted,
+    has_fit_parameter,
+    validate_data,
+)
 
 __all__ = [
     "AdaBoostClassifier",
@@ -59,19 +63,25 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     instead.
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit", "predict"]), None],
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "learning_rate": [Interval(Real, 0, None, closed="neither")],
+        "random_state": ["random_state"],
+    }
+
     @abstractmethod
     def __init__(
         self,
-        base_estimator=None,
+        estimator=None,
         *,
         n_estimators=50,
         estimator_params=tuple(),
         learning_rate=1.0,
         random_state=None,
     ):
-
         super().__init__(
-            base_estimator=base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
         )
@@ -81,7 +91,8 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _check_X(self, X):
         # Only called to validate X in non-fit methods, therefore reset=False
-        return self._validate_data(
+        return validate_data(
+            self,
             X,
             accept_sparse=["csr", "csc"],
             ensure_2d=True,
@@ -90,6 +101,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             reset=False,
         )
 
+    @_fit_context(
+        # AdaBoost*.estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
 
@@ -100,8 +115,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         y : array-like of shape (n_samples,)
-            The target values (class labels in classification, real numbers in
-            regression).
+            The target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
@@ -110,25 +124,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
-        # Validate scalar parameters
-        check_scalar(
-            self.n_estimators,
-            "n_estimators",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.learning_rate,
-            "learning_rate",
-            target_type=numbers.Real,
-            min_val=0,
-            include_boundaries="neither",
-        )
-
-        X, y = self._validate_data(
+        _raise_for_unsupported_routing(self, "fit", sample_weight=sample_weight)
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csr", "csc"],
@@ -139,7 +139,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         )
 
         sample_weight = _check_sample_weight(
-            sample_weight, X, np.float64, copy=True, only_non_negative=True
+            sample_weight, X, dtype=np.float64, copy=True, ensure_non_negative=True
         )
         sample_weight /= sample_weight.sum()
 
@@ -154,8 +154,15 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Initialization of the random number instance that will be used to
         # generate a seed at each iteration
         random_state = check_random_state(self.random_state)
+        epsilon = np.finfo(sample_weight.dtype).eps
 
+        zero_weight_mask = sample_weight == 0.0
         for iboost in range(self.n_estimators):
+            # avoid extremely small sample weight, for details see issue #20320
+            sample_weight = np.clip(sample_weight, a_min=epsilon, a_max=None)
+            # do not clip sample weights that were exactly zero originally
+            sample_weight[zero_weight_mask] = 0.0
+
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost, X, y, sample_weight, random_state
@@ -175,9 +182,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             if not np.isfinite(sample_weight_sum):
                 warnings.warn(
-                    "Sample weights have reached infinite values,"
-                    f" at iteration {iboost}, causing overflow. "
-                    "Iterations stopped. Try lowering the learning rate.",
+                    (
+                        "Sample weights have reached infinite values,"
+                        f" at iteration {iboost}, causing overflow. "
+                        "Iterations stopped. Try lowering the learning rate."
+                    ),
                     stacklevel=2,
                 )
                 break
@@ -299,55 +308,42 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         except AttributeError as e:
             raise AttributeError(
                 "Unable to compute feature importances "
-                "since base_estimator does not have a "
+                "since estimator does not have a "
                 "feature_importances_ attribute"
             ) from e
 
-
-def _samme_proba(estimator, n_classes, X):
-    """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
-
-    References
-    ----------
-    .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
-
-    """
-    proba = estimator.predict_proba(X)
-
-    # Displace zero probabilities so the log is defined.
-    # Also fix negative elements which may occur with
-    # negative sample weights.
-    np.clip(proba, np.finfo(proba.dtype).eps, None, out=proba)
-    log_proba = np.log(proba)
-
-    return (n_classes - 1) * (
-        log_proba - (1.0 / n_classes) * log_proba.sum(axis=1)[:, np.newaxis]
-    )
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags
 
 
-class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
+class AdaBoostClassifier(
+    _RoutingNotSupportedMixin, ClassifierMixin, BaseWeightBoosting
+):
     """An AdaBoost classifier.
 
-    An AdaBoost [1] classifier is a meta-estimator that begins by fitting a
+    An AdaBoost [1]_ classifier is a meta-estimator that begins by fitting a
     classifier on the original dataset and then fits additional copies of the
     classifier on the same dataset but where the weights of incorrectly
     classified instances are adjusted such that subsequent classifiers focus
     more on difficult cases.
 
-    This class implements the algorithm known as AdaBoost-SAMME [2].
+    This class implements the algorithm based on [2]_.
 
     Read more in the :ref:`User Guide <adaboost>`.
 
-    .. versionadded:: 0.14
-
     Parameters
     ----------
-    base_estimator : object, default=None
+    estimator : object, default=None
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required, as well as proper
         ``classes_`` and ``n_classes_`` attributes. If ``None``, then
         the base estimator is :class:`~sklearn.tree.DecisionTreeClassifier`
         initialized with `max_depth=1`.
+
+        .. versionadded:: 1.2
+           `base_estimator` was renamed to `estimator`.
 
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
@@ -360,24 +356,20 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         a trade-off between the `learning_rate` and `n_estimators` parameters.
         Values must be in the range `(0.0, inf)`.
 
-    algorithm : {'SAMME', 'SAMME.R'}, default='SAMME.R'
-        If 'SAMME.R' then use the SAMME.R real boosting algorithm.
-        ``base_estimator`` must support calculation of class probabilities.
-        If 'SAMME' then use the SAMME discrete boosting algorithm.
-        The SAMME.R algorithm typically converges faster than SAMME,
-        achieving a lower test error with fewer boosting iterations.
-
     random_state : int, RandomState instance or None, default=None
-        Controls the random seed given at each `base_estimator` at each
+        Controls the random seed given at each `estimator` at each
         boosting iteration.
-        Thus, it is only used when `base_estimator` exposes a `random_state`.
+        Thus, it is only used when `estimator` exposes a `random_state`.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
-    base_estimator_ : estimator
+    estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
@@ -397,7 +389,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     feature_importances_ : ndarray of shape (n_features,)
         The impurity-based feature importances if supported by the
-        ``base_estimator`` (when based on decision trees).
+        ``estimator`` (when based on decision trees).
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
@@ -405,8 +397,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -437,7 +427,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
-    .. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+    .. [2] :doi:`J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class adaboost."
+           Statistics and its Interface 2.3 (2009): 349-360.
+           <10.4310/SII.2009.v2.n3.a8>`
 
     Examples
     --------
@@ -452,85 +444,46 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf.score(X, y)
-    0.983...
+    0.96
+
+    For a detailed example of using AdaBoost to fit a sequence of DecisionTrees
+    as weaklearners, please refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_multiclass.py`.
+
+    For a detailed example of using AdaBoost to fit a non-linearly separable
+    classification dataset composed of two Gaussian quantiles clusters, please
+    refer to :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_twoclass.py`.
     """
 
     def __init__(
         self,
-        base_estimator=None,
+        estimator=None,
         *,
         n_estimators=50,
         learning_rate=1.0,
-        algorithm="SAMME.R",
         random_state=None,
     ):
-
         super().__init__(
-            base_estimator=base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             random_state=random_state,
         )
 
-        self.algorithm = algorithm
-
-    def fit(self, X, y, sample_weight=None):
-        """Build a boosted classifier from the training set (X, y).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
-
-        y : array-like of shape (n_samples,)
-            The target values (class labels).
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, the sample weights are initialized to
-            ``1 / n_samples``.
-
-        Returns
-        -------
-        self : object
-            Fitted estimator.
-        """
-        # Check that algorithm is supported
-        if self.algorithm not in ("SAMME", "SAMME.R"):
-            raise ValueError(
-                "Algorithm must be 'SAMME' or 'SAMME.R'."
-                f" Got {self.algorithm!r} instead."
-            )
-
-        # Fit
-        return super().fit(X, y, sample_weight)
-
     def _validate_estimator(self):
-        """Check the estimator and set the base_estimator_ attribute."""
+        """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier(max_depth=1))
 
-        #  SAMME-R requires predict_proba-enabled base estimators
-        if self.algorithm == "SAMME.R":
-            if not hasattr(self.base_estimator_, "predict_proba"):
-                raise TypeError(
-                    "AdaBoostClassifier with algorithm='SAMME.R' requires "
-                    "that the weak learner supports the calculation of class "
-                    "probabilities with a predict_proba method.\n"
-                    "Please change the base estimator or set "
-                    "algorithm='SAMME' instead."
-                )
-        if not has_fit_parameter(self.base_estimator_, "sample_weight"):
+        if not has_fit_parameter(self.estimator_, "sample_weight"):
             raise ValueError(
-                "%s doesn't support sample_weight."
-                % self.base_estimator_.__class__.__name__
+                f"{self.estimator.__class__.__name__} doesn't support sample_weight."
             )
 
     def _boost(self, iboost, X, y, sample_weight, random_state):
         """Implement a single boost.
 
-        Perform a single boost according to the real multi-class SAMME.R
-        algorithm or to the discrete SAMME algorithm and return the updated
-        sample weights.
+        Perform a single boost according to the discrete SAMME algorithm and return the
+        updated sample weights.
 
         Parameters
         ----------
@@ -564,73 +517,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The classification error for the current boost.
             If None then boosting has terminated early.
         """
-        if self.algorithm == "SAMME.R":
-            return self._boost_real(iboost, X, y, sample_weight, random_state)
-
-        else:  # elif self.algorithm == "SAMME":
-            return self._boost_discrete(iboost, X, y, sample_weight, random_state)
-
-    def _boost_real(self, iboost, X, y, sample_weight, random_state):
-        """Implement a single boost using the SAMME.R real algorithm."""
-        estimator = self._make_estimator(random_state=random_state)
-
-        estimator.fit(X, y, sample_weight=sample_weight)
-
-        y_predict_proba = estimator.predict_proba(X)
-
-        if iboost == 0:
-            self.classes_ = getattr(estimator, "classes_", None)
-            self.n_classes_ = len(self.classes_)
-
-        y_predict = self.classes_.take(np.argmax(y_predict_proba, axis=1), axis=0)
-
-        # Instances incorrectly classified
-        incorrect = y_predict != y
-
-        # Error fraction
-        estimator_error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
-
-        # Stop if classification is perfect
-        if estimator_error <= 0:
-            return sample_weight, 1.0, 0.0
-
-        # Construct y coding as described in Zhu et al [2]:
-        #
-        #    y_k = 1 if c == k else -1 / (K - 1)
-        #
-        # where K == n_classes_ and c, k in [0, K) are indices along the second
-        # axis of the y coding with c being the index corresponding to the true
-        # class label.
-        n_classes = self.n_classes_
-        classes = self.classes_
-        y_codes = np.array([-1.0 / (n_classes - 1), 1.0])
-        y_coding = y_codes.take(classes == y[:, np.newaxis])
-
-        # Displace zero probabilities so the log is defined.
-        # Also fix negative elements which may occur with
-        # negative sample weights.
-        proba = y_predict_proba  # alias for readability
-        np.clip(proba, np.finfo(proba.dtype).eps, None, out=proba)
-
-        # Boost weight using multi-class AdaBoost SAMME.R alg
-        estimator_weight = (
-            -1.0
-            * self.learning_rate
-            * ((n_classes - 1.0) / n_classes)
-            * xlogy(y_coding, y_predict_proba).sum(axis=1)
-        )
-
-        # Only boost the weights if it will fit again
-        if not iboost == self.n_estimators - 1:
-            # Only boost positive weights
-            sample_weight *= np.exp(
-                estimator_weight * ((sample_weight > 0) | (estimator_weight < 0))
-            )
-
-        return sample_weight, 1.0, estimator_error
-
-    def _boost_discrete(self, iboost, X, y, sample_weight, random_state):
-        """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator(random_state=random_state)
 
         estimator.fit(X, y, sample_weight=sample_weight)
@@ -669,7 +555,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             np.log((1.0 - estimator_error) / estimator_error) + np.log(n_classes - 1.0)
         )
 
-        # Only boost the weights if I will fit again
+        # Only boost the weights if it will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
             sample_weight = np.exp(
@@ -750,8 +636,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         -------
         score : ndarray of shape of (n_samples, k)
             The decision function of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
-            Binary classification is a special cases with ``k == 1``,
+            outputs is the same as in the :term:`classes_` attribute.
+            Binary classification is a special case with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
@@ -762,16 +648,17 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
 
-        if self.algorithm == "SAMME.R":
-            # The weights are all 1. for SAMME.R
-            pred = sum(
-                _samme_proba(estimator, n_classes, X) for estimator in self.estimators_
+        if n_classes == 1:
+            return np.zeros_like(X, shape=(X.shape[0], 1))
+
+        pred = sum(
+            np.where(
+                (estimator.predict(X) == classes).T,
+                w,
+                -1 / (n_classes - 1) * w,
             )
-        else:  # self.algorithm == "SAMME"
-            pred = sum(
-                (estimator.predict(X) == classes).T * w
-                for estimator, w in zip(self.estimators_, self.estimator_weights_)
-            )
+            for estimator, w in zip(self.estimators_, self.estimator_weights_)
+        )
 
         pred /= self.estimator_weights_.sum()
         if n_classes == 2:
@@ -795,8 +682,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         ------
         score : generator of ndarray of shape (n_samples, k)
             The decision function of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
-            Binary classification is a special cases with ``k == 1``,
+            outputs is the same as in the :term:`classes_` attribute.
+            Binary classification is a special case with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
@@ -812,12 +699,11 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         for weight, estimator in zip(self.estimator_weights_, self.estimators_):
             norm += weight
 
-            if self.algorithm == "SAMME.R":
-                # The weights are all 1. for SAMME.R
-                current_pred = _samme_proba(estimator, n_classes, X)
-            else:  # elif self.algorithm == "SAMME":
-                current_pred = estimator.predict(X)
-                current_pred = (current_pred == classes).T * weight
+            current_pred = np.where(
+                (estimator.predict(X) == classes).T,
+                weight,
+                -1 / (n_classes - 1) * weight,
+            )
 
             if pred is None:
                 pred = current_pred
@@ -835,7 +721,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     def _compute_proba_from_decision(decision, n_classes):
         """Compute probabilities from the decision function.
 
-        This is based eq. (4) of [1] where:
+        This is based eq. (15) of [1] where:
             p(y=c|X) = exp((1 / K-1) f_c(X)) / sum_k(exp((1 / K-1) f_k(X)))
                      = softmax((1 / K-1) * f(X))
 
@@ -867,7 +753,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            outputs is the same as in the :term:`classes_` attribute.
         """
         check_is_fitted(self)
         n_classes = self.n_classes_
@@ -900,7 +786,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         ------
         p : generator of ndarray of shape (n_samples,)
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            outputs is the same as in the :term:`classes_` attribute.
         """
 
         n_classes = self.n_classes_
@@ -925,33 +811,34 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         -------
         p : ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the :term:`classes_` attribute.
+            outputs is the same as in the :term:`classes_` attribute.
         """
         return np.log(self.predict_proba(X))
 
 
-class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
+class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
 
-    An AdaBoost [1] regressor is a meta-estimator that begins by fitting a
+    An AdaBoost [1]_ regressor is a meta-estimator that begins by fitting a
     regressor on the original dataset and then fits additional copies of the
     regressor on the same dataset but where the weights of instances are
     adjusted according to the error of the current prediction. As such,
     subsequent regressors focus more on difficult cases.
 
-    This class implements the algorithm known as AdaBoost.R2 [2].
+    This class implements the algorithm known as AdaBoost.R2 [2]_.
 
     Read more in the :ref:`User Guide <adaboost>`.
 
-    .. versionadded:: 0.14
-
     Parameters
     ----------
-    base_estimator : object, default=None
+    estimator : object, default=None
         The base estimator from which the boosted ensemble is built.
         If ``None``, then the base estimator is
         :class:`~sklearn.tree.DecisionTreeRegressor` initialized with
         `max_depth=3`.
+
+        .. versionadded:: 1.2
+           `base_estimator` was renamed to `estimator`.
 
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
@@ -969,18 +856,21 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         boosting iteration.
 
     random_state : int, RandomState instance or None, default=None
-        Controls the random seed given at each `base_estimator` at each
+        Controls the random seed given at each `estimator` at each
         boosting iteration.
-        Thus, it is only used when `base_estimator` exposes a `random_state`.
+        Thus, it is only used when `estimator` exposes a `random_state`.
         In addition, it controls the bootstrap of the weights used to train the
-        `base_estimator` at each boosting iteration.
+        `estimator` at each boosting iteration.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
-    base_estimator_ : estimator
+    estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     estimators_ : list of regressors
         The collection of fitted sub-estimators.
@@ -993,7 +883,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
     feature_importances_ : ndarray of shape (n_features,)
         The impurity-based feature importances if supported by the
-        ``base_estimator`` (when based on decision trees).
+        ``estimator`` (when based on decision trees).
 
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
@@ -1001,8 +891,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1021,7 +909,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
-    .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
+    .. [2] `H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
+           <https://dl.acm.org/doi/10.5555/645526.657132>`_
 
     Examples
     --------
@@ -1033,23 +922,31 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     >>> regr.fit(X, y)
     AdaBoostRegressor(n_estimators=100, random_state=0)
     >>> regr.predict([[0, 0, 0, 0]])
-    array([4.7972...])
+    array([4.7972])
     >>> regr.score(X, y)
-    0.9771...
+    0.9771
+
+    For a detailed example of utilizing :class:`~sklearn.ensemble.AdaBoostRegressor`
+    to fit a sequence of decision trees as weak learners, please refer to
+    :ref:`sphx_glr_auto_examples_ensemble_plot_adaboost_regression.py`.
     """
+
+    _parameter_constraints: dict = {
+        **BaseWeightBoosting._parameter_constraints,
+        "loss": [StrOptions({"linear", "square", "exponential"})],
+    }
 
     def __init__(
         self,
-        base_estimator=None,
+        estimator=None,
         *,
         n_estimators=50,
         learning_rate=1.0,
         loss="linear",
         random_state=None,
     ):
-
         super().__init__(
-            base_estimator=base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             random_state=random_state,
@@ -1058,39 +955,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         self.loss = loss
         self.random_state = random_state
 
-    def fit(self, X, y, sample_weight=None):
-        """Build a boosted regressor from the training set (X, y).
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The training input samples. Sparse matrix can be CSC, CSR, COO,
-            DOK, or LIL. COO, DOK, and LIL are converted to CSR.
-
-        y : array-like of shape (n_samples,)
-            The target values (real numbers).
-
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights. If None, the sample weights are initialized to
-            1 / n_samples.
-
-        Returns
-        -------
-        self : object
-            Fitted AdaBoostRegressor estimator.
-        """
-        # Check loss
-        if self.loss not in ("linear", "square", "exponential"):
-            raise ValueError(
-                "loss must be 'linear', 'square', or 'exponential'."
-                f" Got {self.loss!r} instead."
-            )
-
-        # Fit
-        return super().fit(X, y, sample_weight)
-
     def _validate_estimator(self):
-        """Check the estimator and set the base_estimator_ attribute."""
+        """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeRegressor(max_depth=3))
 
     def _boost(self, iboost, X, y, sample_weight, random_state):
@@ -1119,7 +985,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             `random_state` attribute.
             Controls also the bootstrap of the weights used to train the weak
             learner.
-            replacement.
 
         Returns
         -------
@@ -1199,7 +1064,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         sorted_idx = np.argsort(predictions, axis=1)
 
         # Find index of median prediction for each sample
-        weight_cdf = stable_cumsum(self.estimator_weights_[sorted_idx], axis=1)
+        weight_cdf = np.cumsum(self.estimator_weights_[sorted_idx], axis=1)
         median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
         median_idx = median_or_above.argmax(axis=1)
 

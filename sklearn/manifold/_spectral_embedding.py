@@ -1,30 +1,27 @@
 """Spectral Embedding."""
 
-# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#         Wei LI <kuantkid@gmail.com>
-# License: BSD 3 clause
-
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
-from scipy.sparse.linalg import eigsh
 from scipy.sparse.csgraph import connected_components
-from scipy.sparse.csgraph import laplacian as csgraph_laplacian
+from scipy.sparse.linalg import eigsh, lobpcg
 
-from ..base import BaseEstimator
-from ..utils import (
-    check_array,
-    check_random_state,
-    check_symmetric,
-)
-from ..utils._arpack import _init_arpack_v0
-from ..utils.extmath import _deterministic_vector_sign_flip
-from ..utils.fixes import lobpcg
-from ..metrics.pairwise import rbf_kernel
-from ..neighbors import kneighbors_graph, NearestNeighbors
+from sklearn.base import BaseEstimator, _fit_context
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.neighbors import NearestNeighbors, kneighbors_graph
+from sklearn.utils import check_array, check_random_state, check_symmetric
+from sklearn.utils._arpack import _init_arpack_v0
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.fixes import _sparse_eye_array
+from sklearn.utils.fixes import laplacian as csgraph_laplacian
+from sklearn.utils.validation import validate_data
 
 
 def _graph_connected_component(graph, node_id):
@@ -63,7 +60,9 @@ def _graph_connected_component(graph, node_id):
         nodes_to_explore.fill(False)
         for i in indices:
             if sparse.issparse(graph):
-                neighbors = graph[i].toarray().ravel()
+                # scipy not yet implemented 1D sparse slices; can be changed back to
+                # `neighbors = graph[i].toarray().ravel()` once implemented
+                neighbors = graph[[i], :].toarray().ravel()
             else:
                 neighbors = graph[i]
             np.logical_or(nodes_to_explore, neighbors, out=nodes_to_explore)
@@ -84,7 +83,8 @@ def _graph_is_connected(graph):
     is_connected : bool
         True means the graph is fully connected and False means not.
     """
-    if sparse.isspmatrix(graph):
+    if sparse.issparse(graph):
+        graph = check_array(graph, accept_sparse=True, accept_large_sparse=True)
         # sparse graph, find all the connected components
         n_connected_components, _ = connected_components(graph)
         return n_connected_components == 1
@@ -117,7 +117,7 @@ def _set_diag(laplacian, value, norm_laplacian):
     """
     n_nodes = laplacian.shape[0]
     # We need all entries in the diagonal to values
-    if not sparse.isspmatrix(laplacian):
+    if not sparse.issparse(laplacian):
         if norm_laplacian:
             laplacian.flat[:: n_nodes + 1] = value
     else:
@@ -139,13 +139,25 @@ def _set_diag(laplacian, value, norm_laplacian):
     return laplacian
 
 
+@validate_params(
+    {
+        "adjacency": ["array-like", "sparse matrix"],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "random_state": ["random_state"],
+        "eigen_tol": [Interval(Real, 0, None, closed="left"), StrOptions({"auto"})],
+        "norm_laplacian": ["boolean"],
+        "drop_first": ["boolean"],
+    },
+    prefer_skip_nested_validation=True,
+)
 def spectral_embedding(
     adjacency,
     *,
     n_components=8,
     eigen_solver=None,
     random_state=None,
-    eigen_tol=0.0,
+    eigen_tol="auto",
     norm_laplacian=True,
     drop_first=True,
 ):
@@ -197,9 +209,22 @@ def spectral_embedding(
             https://github.com/pyamg/pyamg/issues/139 for further
             information.
 
-    eigen_tol : float, default=0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eigen_solver.
+    eigen_tol : float, default="auto"
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
+
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
+
+        Note that when using `eigen_solver="amg"` values of `tol<1e-5` may lead
+        to convergence issues and should be avoided.
+
+        .. versionadded:: 1.2
+           Added 'auto' option.
 
     norm_laplacian : bool, default=True
         If True, then compute symmetric normalized Laplacian.
@@ -229,26 +254,59 @@ def spectral_embedding(
       Block Preconditioned Conjugate Gradient Method",
       Andrew V. Knyazev
       <10.1137/S1064827500366124>`
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.neighbors import kneighbors_graph
+    >>> from sklearn.manifold import spectral_embedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X = X[:100]
+    >>> affinity_matrix = kneighbors_graph(
+    ...     X, n_neighbors=int(X.shape[0] / 10), include_self=True
+    ... )
+    >>> # make the matrix symmetric
+    >>> affinity_matrix = 0.5 * (affinity_matrix + affinity_matrix.T)
+    >>> embedding = spectral_embedding(affinity_matrix, n_components=2, random_state=42)
+    >>> embedding.shape
+    (100, 2)
     """
+    random_state = check_random_state(random_state)
+
+    return _spectral_embedding(
+        adjacency,
+        n_components=n_components,
+        eigen_solver=eigen_solver,
+        random_state=random_state,
+        eigen_tol=eigen_tol,
+        norm_laplacian=norm_laplacian,
+        drop_first=drop_first,
+    )
+
+
+def _spectral_embedding(
+    adjacency,
+    *,
+    n_components=8,
+    eigen_solver=None,
+    random_state=None,
+    eigen_tol="auto",
+    norm_laplacian=True,
+    drop_first=True,
+):
     adjacency = check_symmetric(adjacency)
 
-    try:
-        from pyamg import smoothed_aggregation_solver
-    except ImportError as e:
-        if eigen_solver == "amg":
+    if eigen_solver == "amg":
+        try:
+            from pyamg import aggregation, smoothed_aggregation_solver
+        except ImportError as e:
             raise ValueError(
                 "The eigen_solver was set to 'amg', but pyamg is not available."
             ) from e
+        pyamg_supports_sparray = hasattr(aggregation.aggregation, "csr_array")
 
     if eigen_solver is None:
         eigen_solver = "arpack"
-    elif eigen_solver not in ("arpack", "lobpcg", "amg"):
-        raise ValueError(
-            "Unknown value for eigen_solver: '%s'."
-            "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
-        )
-
-    random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
     # Whether to drop the first eigenvector
@@ -263,57 +321,71 @@ def spectral_embedding(
     laplacian, dd = csgraph_laplacian(
         adjacency, normed=norm_laplacian, return_diag=True
     )
-    if (
-        eigen_solver == "arpack"
-        or eigen_solver != "lobpcg"
-        and (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)
-    ):
-        # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
+
+    if eigen_solver == "amg" and n_nodes < 5 * n_components:
+        # LOBPCG used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
         # /lobpcg/lobpcg.py#L237
         # or matlab:
         # https://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
+        warnings.warn(
+            "AMG solver does not work well with small graphs, using ARPACK instead.",
+            RuntimeWarning,
+        )
+        eigen_solver = "arpack"
+
+    if eigen_solver == "amg" and not sparse.issparse(laplacian):
+        warnings.warn(
+            "AMG solver does not work well with dense matrices, using ARPACK instead.",
+            RuntimeWarning,
+        )
+        eigen_solver = "arpack"
+
+    if eigen_solver == "arpack":
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # Here we'll use shift-invert mode for fast eigenvalues
-        # (see https://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
-        #  for a short explanation of what this means)
-        # Because the normalized Laplacian has eigenvalues between 0 and 2,
-        # I - L has eigenvalues between -1 and 1.  ARPACK is most efficient
-        # when finding eigenvalues of largest magnitude (keyword which='LM')
-        # and when these eigenvalues are very large compared to the rest.
-        # For very large, very sparse graphs, I - L can have many, many
-        # eigenvalues very near 1.0.  This leads to slow convergence.  So
-        # instead, we'll use ARPACK's shift-invert mode, asking for the
-        # eigenvalues near 1.0.  This effectively spreads-out the spectrum
-        # near 1.0 and leads to much faster convergence: potentially an
-        # orders-of-magnitude speedup over simply using keyword which='LA'
-        # in standard mode.
+        # (see https://docs.scipy.org/doc/scipy/tutorial/arpack.html
+        # for a short explanation of what this means)
+        # Laplacian (normalized or not) has non-negative eigenvalues
+        # and we need to find the smallest ones, i.e. closest to 0.
+        # The efficient way to do it, according to the scipy docs,
+        # is to use which="LM" and sigma=0.
+        # Andrew Kniazev recommends to set small negative sigma
+        # (see https://github.com/scikit-learn/scikit-learn/
+        # pull/14647#issuecomment-521304431) because a Laplacian
+        # has exact at least one exact zero eigenvalue, so sigma=0
+        # can lead to problems.
         try:
-            # We are computing the opposite of the laplacian inplace so as
-            # to spare a memory allocation of a possibly very large array
-            laplacian *= -1
+            tol = 0 if eigen_tol == "auto" else eigen_tol
+
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
+            # `eigsh` works fine with 64-bit indices, so don't pass
+            # `accept_large_sparse=False`: sparse arrays (unlike sparse matrices)
+            # never downcast indices to 32-bit, even when the content allows it.
+            laplacian = check_array(laplacian, accept_sparse="csr")
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which="LM", tol=eigen_tol, v0=v0
+                laplacian, k=n_components, sigma=-1e-5, which="LM", tol=tol, v0=v0
             )
-            embedding = diffusion_map.T[n_components::-1]
+            embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
-        except RuntimeError:
-            # When submatrices are exactly singular, an LU decomposition
-            # in arpack fails. We fallback to lobpcg
+        except RuntimeError:  # pragma: no cover
+            # When submatrices are exactly singular, the LU decomposition
+            # in ARPACK can fail. In this case, we fallback to LOBPCG.
+            # Note: this should actually never happen with sigma < 0,
+            # so the entire `try ... except` structure could be removed.
+            # There is no unit test for this (hence `pragma: no cover`)
+            # because it is unclear how to trigger this RuntimeError.
+            # (https://github.com/scikit-learn/scikit-learn/pull/33262)
+            warnings.warn("ARPACK has failed, falling back to LOBPCG.", RuntimeWarning)
             eigen_solver = "lobpcg"
-            # Revert the laplacian to its opposite to have lobpcg work
-            laplacian *= -1
 
     elif eigen_solver == "amg":
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
-        if not sparse.issparse(laplacian):
-            warnings.warn("AMG works better for sparse matrices")
         laplacian = check_array(
             laplacian, dtype=[np.float64, np.float32], accept_sparse=True
         )
@@ -328,8 +400,16 @@ def spectral_embedding(
         # Shift the Laplacian so its diagononal is not all ones. The shift
         # does change the eigenpairs however, so we'll feed the shifted
         # matrix to the solver and afterward set it back to the original.
-        diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
+        diag_shift = 1e-5 * _sparse_eye_array(laplacian.shape[0])
         laplacian += diag_shift
+        if hasattr(sparse, "csr_array") and isinstance(laplacian, sparse.csr_array):
+            # old version `pyamg` may not work with `csr_array` and new version
+            # may not work with `csr_matrix`. But we need to convert to CSR.
+            if pyamg_supports_sparray:
+                laplacian = sparse.csr_array(laplacian)
+            else:
+                laplacian = sparse.csr_matrix(laplacian)
+
         ml = smoothed_aggregation_solver(check_array(laplacian, accept_sparse="csr"))
         laplacian -= diag_shift
 
@@ -338,7 +418,9 @@ def spectral_embedding(
         X = random_state.standard_normal(size=(laplacian.shape[0], n_components + 1))
         X[:, 0] = dd.ravel()
         X = X.astype(laplacian.dtype)
-        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.0e-5, largest=False)
+
+        tol = None if eigen_tol == "auto" else eigen_tol
+        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=tol, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
             # recover u = D^-1/2 x from the eigenvector output x
@@ -351,10 +433,9 @@ def spectral_embedding(
             laplacian, dtype=[np.float64, np.float32], accept_sparse=True
         )
         if n_nodes < 5 * n_components + 1:
-            # see note above under arpack why lobpcg has problems with small
-            # number of nodes
-            # lobpcg will fallback to eigh, so we short circuit it
-            if sparse.isspmatrix(laplacian):
+            # See note above why lobpcg has problems with small number of nodes.
+            # lobpcg will fallback to eigh, so we short-circuit it
+            if sparse.issparse(laplacian):
                 laplacian = laplacian.toarray()
             _, diffusion_map = eigh(laplacian, check_finite=False)
             embedding = diffusion_map.T[:n_components]
@@ -371,8 +452,9 @@ def spectral_embedding(
             )
             X[:, 0] = dd.ravel()
             X = X.astype(laplacian.dtype)
+            tol = None if eigen_tol == "auto" else eigen_tol
             _, diffusion_map = lobpcg(
-                laplacian, X, tol=1e-5, largest=False, maxiter=2000
+                laplacian, X, tol=tol, largest=False, maxiter=2000
             )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
@@ -444,6 +526,23 @@ class SpectralEmbedding(BaseEstimator):
         to be installed. It can be faster on very large, sparse problems.
         If None, then ``'arpack'`` is used.
 
+    eigen_tol : float, default="auto"
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
+
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
+
+        Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
+        values of `tol<1e-5` may lead to convergence issues and should be
+        avoided.
+
+        .. versionadded:: 1.2
+
     n_neighbors : int, default=None
         Number of nearest neighbors for nearest_neighbors graph building.
         If None, n_neighbors will be set to max(n_samples/10, 1).
@@ -465,8 +564,6 @@ class SpectralEmbedding(BaseEstimator):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -487,9 +584,9 @@ class SpectralEmbedding(BaseEstimator):
       Ulrike von Luxburg
       <10.1007/s11222-007-9033-z>`
 
-    - On Spectral Clustering: Analysis and an algorithm, 2001
+    - `On Spectral Clustering: Analysis and an algorithm, 2001
       Andrew Y. Ng, Michael I. Jordan, Yair Weiss
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
+      <https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58>`_
 
     - :doi:`Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik
@@ -508,6 +605,27 @@ class SpectralEmbedding(BaseEstimator):
     (100, 2)
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "affinity": [
+            StrOptions(
+                {
+                    "nearest_neighbors",
+                    "rbf",
+                    "precomputed",
+                    "precomputed_nearest_neighbors",
+                },
+            ),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "eigen_tol": [Interval(Real, 0, None, closed="left"), StrOptions({"auto"})],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         n_components=2,
@@ -516,6 +634,7 @@ class SpectralEmbedding(BaseEstimator):
         gamma=None,
         random_state=None,
         eigen_solver=None,
+        eigen_tol="auto",
         n_neighbors=None,
         n_jobs=None,
     ):
@@ -524,14 +643,18 @@ class SpectralEmbedding(BaseEstimator):
         self.gamma = gamma
         self.random_state = random_state
         self.eigen_solver = eigen_solver
+        self.eigen_tol = eigen_tol
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
-    def _more_tags(self):
-        return {
-            "pairwise": self.affinity
-            in ["precomputed", "precomputed_nearest_neighbors"]
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.input_tags.pairwise = self.affinity in [
+            "precomputed",
+            "precomputed_nearest_neighbors",
+        ]
+        return tags
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
@@ -591,6 +714,7 @@ class SpectralEmbedding(BaseEstimator):
         self.affinity_matrix_ = self.affinity(X)
         return self.affinity_matrix_
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
@@ -613,34 +737,16 @@ class SpectralEmbedding(BaseEstimator):
         self : object
             Returns the instance itself.
         """
-
-        X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
+        X = validate_data(self, X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)
-        if isinstance(self.affinity, str):
-            if self.affinity not in {
-                "nearest_neighbors",
-                "rbf",
-                "precomputed",
-                "precomputed_nearest_neighbors",
-            }:
-                raise ValueError(
-                    "%s is not a valid affinity. Expected "
-                    "'precomputed', 'rbf', 'nearest_neighbors' "
-                    "or a callable."
-                    % self.affinity
-                )
-        elif not callable(self.affinity):
-            raise ValueError(
-                "'affinity' is expected to be an affinity name or a callable. Got: %s"
-                % self.affinity
-            )
 
         affinity_matrix = self._get_affinity_matrix(X)
-        self.embedding_ = spectral_embedding(
+        self.embedding_ = _spectral_embedding(
             affinity_matrix,
             n_components=self.n_components,
             eigen_solver=self.eigen_solver,
+            eigen_tol=self.eigen_tol,
             random_state=random_state,
         )
         return self

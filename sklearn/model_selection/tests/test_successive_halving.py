@@ -1,26 +1,34 @@
 from math import ceil
 
-import pytest
-from scipy.stats import norm, randint
 import numpy as np
+import pytest
+from scipy.stats import expon, norm, randint
 
 from sklearn.datasets import make_classification
 from sklearn.dummy import DummyClassifier
-from sklearn.experimental import enable_halving_search_cv  # noqa
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import HalvingGridSearchCV
-from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.model_selection import KFold, ShuffleSplit
-from sklearn.svm import LinearSVC
+from sklearn.experimental import enable_halving_search_cv  # noqa: F401
+from sklearn.model_selection import (
+    GroupKFold,
+    GroupShuffleSplit,
+    HalvingGridSearchCV,
+    HalvingRandomSearchCV,
+    KFold,
+    LeaveOneGroupOut,
+    LeavePGroupsOut,
+    ShuffleSplit,
+    StratifiedKFold,
+    StratifiedShuffleSplit,
+)
 from sklearn.model_selection._search_successive_halving import (
     _SubsampleMetaSplitter,
     _top_k,
+    _trim_cv_results_to_last_iter,
 )
+from sklearn.model_selection.tests.test_search import (
+    check_cv_results_array_types,
+    check_cv_results_keys,
+)
+from sklearn.svm import SVC, LinearSVC
 
 
 class FastClassifier(DummyClassifier):
@@ -28,6 +36,12 @@ class FastClassifier(DummyClassifier):
 
     These parameter don't affect the predictions and are useful for fast
     grid searching."""
+
+    # update the constraints such that we accept all parameters from a to z
+    _parameter_constraints: dict = {
+        **DummyClassifier._parameter_constraints,
+        **{chr(key): "no_validation" for key in range(ord("a"), ord("z") + 1)},
+    }
 
     def __init__(
         self, strategy="stratified", random_state=None, constant=None, **kwargs
@@ -43,16 +57,79 @@ class FastClassifier(DummyClassifier):
         return params
 
 
+class SometimesFailClassifier(DummyClassifier):
+    def __init__(
+        self,
+        strategy="stratified",
+        random_state=None,
+        constant=None,
+        n_estimators=10,
+        fail_fit=False,
+        fail_predict=False,
+        a=0,
+    ):
+        self.fail_fit = fail_fit
+        self.fail_predict = fail_predict
+        self.n_estimators = n_estimators
+        self.a = a
+
+        super().__init__(
+            strategy=strategy, random_state=random_state, constant=constant
+        )
+
+    def fit(self, X, y):
+        if self.fail_fit:
+            raise Exception("fitting failed")
+        return super().fit(X, y)
+
+    def predict(self, X):
+        if self.fail_predict:
+            raise Exception("predict failed")
+        return super().predict(X)
+
+
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.FitFailedWarning")
+@pytest.mark.filterwarnings("ignore:Scoring failed:UserWarning")
+@pytest.mark.filterwarnings("ignore:One or more of the:UserWarning")
+@pytest.mark.parametrize("HalvingSearch", (HalvingGridSearchCV, HalvingRandomSearchCV))
+@pytest.mark.parametrize("fail_at", ("fit", "predict"))
+def test_nan_handling(HalvingSearch, fail_at):
+    """Check the selection of the best scores in presence of failure represented by
+    NaN values."""
+    n_samples = 1_000
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+
+    search = HalvingSearch(
+        SometimesFailClassifier(),
+        {f"fail_{fail_at}": [False, True], "a": range(3)},
+        resource="n_estimators",
+        max_resources=6,
+        min_resources=1,
+        factor=2,
+    )
+
+    search.fit(X, y)
+
+    # estimators that failed during fit/predict should never be selected as the
+    # best candidate
+    assert not search.best_params_[f"fail_{fail_at}"]
+    assert "rank_test_score" not in search.all_cv_results_
+    assert np.isnan(search.all_cv_results_["mean_test_score"]).any()
+    assert "rank_test_score" in search.cv_results_
+
+
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
-    "aggressive_elimination,"
-    "max_resources,"
-    "expected_n_iterations,"
-    "expected_n_required_iterations,"
-    "expected_n_possible_iterations,"
-    "expected_n_remaining_candidates,"
-    "expected_n_candidates,"
-    "expected_n_resources,",
+    (
+        "aggressive_elimination,"
+        "max_resources,"
+        "expected_n_iterations,"
+        "expected_n_required_iterations,"
+        "expected_n_possible_iterations,"
+        "expected_n_remaining_candidates,"
+        "expected_n_candidates,"
+        "expected_n_resources,"
+    ),
     [
         # notice how it loops at the beginning
         # also, the number of candidates evaluated at the last iteration is
@@ -118,11 +195,13 @@ def test_aggressive_elimination(
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
-    "min_resources,"
-    "max_resources,"
-    "expected_n_iterations,"
-    "expected_n_possible_iterations,"
-    "expected_n_resources,",
+    (
+        "min_resources,"
+        "max_resources,"
+        "expected_n_iterations,"
+        "expected_n_possible_iterations,"
+        "expected_n_resources,"
+    ),
     [
         # with enough resources
         ("smallest", "auto", 2, 4, [20, 60]),
@@ -232,9 +311,9 @@ def test_resource_parameter(Est):
     sh.fit(X, y)
     assert set(sh.n_resources_) == set([1, 3, 9])
     for r_i, params, param_c in zip(
-        sh.cv_results_["n_resources"],
-        sh.cv_results_["params"],
-        sh.cv_results_["param_c"],
+        sh.all_cv_results_["n_resources"],
+        sh.all_cv_results_["params"],
+        sh.all_cv_results_["param_c"],
     ):
         assert r_i == params["c"] == param_c
 
@@ -324,7 +403,6 @@ def test_random_search_discrete_distributions(
 @pytest.mark.parametrize(
     "params, expected_error_message",
     [
-        ({"scoring": {"accuracy", "accuracy"}}, "Multimetric scoring is not supported"),
         (
             {"resource": "not_a_parameter"},
             "Cannot use resource=not_a_parameter which is not supported",
@@ -333,15 +411,9 @@ def test_random_search_discrete_distributions(
             {"resource": "a", "max_resources": 100},
             "Cannot use parameter a as the resource since it is part of",
         ),
-        ({"max_resources": "not_auto"}, "max_resources must be either"),
-        ({"max_resources": 100.5}, "max_resources must be either"),
-        ({"max_resources": -10}, "max_resources must be either"),
-        ({"min_resources": "bad str"}, "min_resources must be either"),
-        ({"min_resources": 0.5}, "min_resources must be either"),
-        ({"min_resources": -10}, "min_resources must be either"),
         (
             {"max_resources": "auto", "resource": "b"},
-            "max_resources can only be 'auto' if resource='n_samples'",
+            "resource can only be 'n_samples' when max_resources='auto'",
         ),
         (
             {"min_resources": 15, "max_resources": 14},
@@ -349,7 +421,6 @@ def test_random_search_discrete_distributions(
         ),
         ({"cv": KFold(shuffle=True)}, "must yield consistent folds"),
         ({"cv": ShuffleSplit()}, "must yield consistent folds"),
-        ({"refit": "whatever"}, "refit is expected to be a boolean"),
     ],
 )
 def test_input_errors(Est, params, expected_error_message):
@@ -370,8 +441,6 @@ def test_input_errors(Est, params, expected_error_message):
             {"n_candidates": "exhaust", "min_resources": "exhaust"},
             "cannot be both set to 'exhaust'",
         ),
-        ({"n_candidates": "bad"}, "either 'exhaust' or a positive integer"),
-        ({"n_candidates": 0}, "either 'exhaust' or a positive integer"),
     ],
 )
 def test_input_errors_randomized(params, expected_error_message):
@@ -466,7 +535,6 @@ def test_subsample_splitter_determinism(subsample_test):
     ],
 )
 def test_top_k(k, itr, expected):
-
     results = {  # this isn't a 'real world' result dict
         "iter": [0, 0, 0, 0, 1, 1, 2, 2, 2],
         "mean_test_score": [4, 3, 5, 1, 11, 10, 5, 6, 9],
@@ -504,16 +572,28 @@ def test_cv_results(Est):
 
     # non-regression check for
     # https://github.com/scikit-learn/scikit-learn/issues/19203
-    assert isinstance(sh.cv_results_["iter"], np.ndarray)
-    assert isinstance(sh.cv_results_["n_resources"], np.ndarray)
+    assert isinstance(sh.all_cv_results_["iter"], np.ndarray)
+    assert isinstance(sh.all_cv_results_["n_resources"], np.ndarray)
 
-    cv_results_df = pd.DataFrame(sh.cv_results_)
+    assert len(sh.cv_results_["params"]) == sh.n_candidates_[-1]
+    assert len(sh.all_cv_results_["params"]) == sum(sh.n_candidates_)
+    assert np.all(sh.cv_results_["iter"] == sh.n_iterations_ - 1)
+    assert np.all(sh.cv_results_["n_resources"] == sh.n_resources_[-1])
+    n_last = len(sh.cv_results_["params"])
+    assert sh.cv_results_["rank_test_score"].min() == 1
+    assert sh.cv_results_["rank_test_score"].max() == n_last
+    assert len(np.unique(sh.cv_results_["rank_test_score"])) == n_last
+    assert sh.cv_results_["rank_test_score"][sh.best_index_] == 1
+    assert sh.best_params_ == sh.cv_results_["params"][sh.best_index_]
+    assert sh.best_score_ == sh.cv_results_["mean_test_score"][sh.best_index_]
+
+    all_cv_results_df = pd.DataFrame(sh.all_cv_results_)
 
     # just make sure we don't have ties
-    assert len(cv_results_df["mean_test_score"].unique()) == len(cv_results_df)
+    assert len(all_cv_results_df["mean_test_score"].unique()) == len(all_cv_results_df)
 
-    cv_results_df["params_str"] = cv_results_df["params"].apply(str)
-    table = cv_results_df.pivot(
+    all_cv_results_df["params_str"] = all_cv_results_df["params"].apply(str)
+    table = all_cv_results_df.pivot(
         index="params_str", columns="iter", values="mean_test_score"
     )
 
@@ -560,20 +640,20 @@ def test_cv_results(Est):
     # earlier rounds (this isn't generally the case, but worth ensuring it's
     # possible).
 
-    last_iter = cv_results_df["iter"].max()
-    idx_best_last_iter = cv_results_df[cv_results_df["iter"] == last_iter][
+    last_iter = all_cv_results_df["iter"].max()
+    idx_best_last_iter = all_cv_results_df[all_cv_results_df["iter"] == last_iter][
         "mean_test_score"
     ].idxmax()
-    idx_best_all_iters = cv_results_df["mean_test_score"].idxmax()
+    idx_best_all_iters = all_cv_results_df["mean_test_score"].idxmax()
 
-    assert sh.best_params_ == cv_results_df.iloc[idx_best_last_iter]["params"]
+    assert sh.best_params_ == all_cv_results_df.iloc[idx_best_last_iter]["params"]
     assert (
-        cv_results_df.iloc[idx_best_last_iter]["mean_test_score"]
-        < cv_results_df.iloc[idx_best_all_iters]["mean_test_score"]
+        all_cv_results_df.iloc[idx_best_last_iter]["mean_test_score"]
+        < all_cv_results_df.iloc[idx_best_all_iters]["mean_test_score"]
     )
     assert (
-        cv_results_df.iloc[idx_best_last_iter]["params"]
-        != cv_results_df.iloc[idx_best_all_iters]["params"]
+        all_cv_results_df.iloc[idx_best_last_iter]["params"]
+        != all_cv_results_df.iloc[idx_best_all_iters]["params"]
     )
 
 
@@ -632,16 +712,16 @@ def test_base_estimator_inputs(Est):
     passed_n_samples = passed_n_samples[::n_splits]
     passed_params = passed_params[::n_splits]
 
-    cv_results_df = pd.DataFrame(sh.cv_results_)
+    all_cv_results_df = pd.DataFrame(sh.all_cv_results_)
 
-    assert len(passed_params) == len(passed_n_samples) == len(cv_results_df)
+    assert len(passed_params) == len(passed_n_samples) == len(all_cv_results_df)
 
     uniques, counts = np.unique(passed_n_samples, return_counts=True)
     assert (sh.n_resources_ == uniques).all()
     assert (sh.n_candidates_ == counts).all()
 
-    assert (cv_results_df["params"] == passed_params).all()
-    assert (cv_results_df["n_resources"] == passed_n_samples).all()
+    assert (all_cv_results_df["params"] == passed_params).all()
+    assert (all_cv_results_df["n_resources"] == passed_n_samples).all()
 
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
@@ -703,3 +783,126 @@ def test_select_best_index(SearchCV):
     # we expect the index of 'i'
     best_index = SearchCV._select_best_index(None, None, results)
     assert best_index == 8
+
+
+def test_trim_cv_results_to_last_iter():
+    """Check trimming cv_results_ to the last halving iteration."""
+    results = {
+        "iter": np.array([0, 0, 0, 0, 1, 1, 2, 2, 2]),
+        "n_resources": np.array([1, 1, 1, 1, 3, 3, 9, 9, 9]),
+        "mean_test_score": np.array([4, 3, 5, 1, 11, 10, 5, 6, 9]),
+        "params": ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
+        "rank_test_score": np.array([5, 6, 4, 8, 1, 2, 7, 6, 3]),
+    }
+    best_index = 8
+
+    trimmed, new_best_index = _trim_cv_results_to_last_iter(results, best_index)
+
+    assert len(trimmed["params"]) == 3
+    assert np.all(trimmed["iter"] == 2)
+    assert np.all(trimmed["n_resources"] == 9)
+    assert new_best_index == 2
+    assert trimmed["params"][new_best_index] == "i"
+    assert trimmed["rank_test_score"][new_best_index] == 1
+    assert np.array_equal(trimmed["rank_test_score"], np.array([3, 2, 1]))
+
+
+def test_trim_cv_results_to_last_iter_nan_ranking():
+    """Check that NaN scores share the lowest rank in the last iteration."""
+    results = {
+        "iter": np.array([0, 0, 1, 1, 1]),
+        "n_resources": np.array([1, 1, 3, 3, 3]),
+        "mean_test_score": np.array([4.0, 3.0, 9.0, np.nan, np.nan]),
+        "params": ["a", "b", "c", "d", "e"],
+    }
+    best_index = 2
+
+    trimmed, new_best_index = _trim_cv_results_to_last_iter(results, best_index)
+
+    assert new_best_index == 0
+    # the non-NaN candidate ranks first, the two NaN candidates share the
+    # lowest rank
+    assert np.array_equal(trimmed["rank_test_score"], np.array([1, 2, 2]))
+
+
+def test_halving_random_search_list_of_dicts():
+    """Check the behaviour of the `HalvingRandomSearchCV` with `param_distribution`
+    being a list of dictionary.
+    """
+    X, y = make_classification(n_samples=150, n_features=4, random_state=42)
+
+    params = [
+        {"kernel": ["rbf"], "C": expon(scale=10), "gamma": expon(scale=0.1)},
+        {"kernel": ["poly"], "degree": [2, 3]},
+    ]
+    param_keys = (
+        "param_C",
+        "param_degree",
+        "param_gamma",
+        "param_kernel",
+    )
+    score_keys = (
+        "mean_test_score",
+        "mean_train_score",
+        "rank_test_score",
+        "split0_test_score",
+        "split1_test_score",
+        "split2_test_score",
+        "split0_train_score",
+        "split1_train_score",
+        "split2_train_score",
+        "std_test_score",
+        "std_train_score",
+        "mean_fit_time",
+        "std_fit_time",
+        "mean_score_time",
+        "std_score_time",
+    )
+    # `all_cv_results_` does not expose a ranking column since ranking across
+    # iterations using a varying number of resources is not meaningful.
+    all_score_keys = tuple(key for key in score_keys if key != "rank_test_score")
+    extra_keys = ("n_resources", "iter")
+
+    search = HalvingRandomSearchCV(
+        SVC(), cv=3, param_distributions=params, return_train_score=True, random_state=0
+    )
+    search.fit(X, y)
+    n_candidates_last = search.n_candidates_[-1]
+    n_candidates_all = sum(search.n_candidates_)
+    cv_results = search.cv_results_
+    all_cv_results = search.all_cv_results_
+    # Check results structure
+    check_cv_results_keys(
+        cv_results, param_keys, score_keys, n_candidates_last, extra_keys
+    )
+    check_cv_results_keys(
+        all_cv_results, param_keys, all_score_keys, n_candidates_all, extra_keys
+    )
+    expected_cv_results_kinds = {
+        "param_C": "f",
+        "param_degree": "i",
+        "param_gamma": "f",
+        "param_kernel": "O",
+    }
+    check_cv_results_array_types(
+        search, param_keys, score_keys, expected_cv_results_kinds
+    )
+
+    assert all(
+        (
+            all_cv_results["param_C"].mask[i]
+            and all_cv_results["param_gamma"].mask[i]
+            and not all_cv_results["param_degree"].mask[i]
+        )
+        for i in range(n_candidates_all)
+        if all_cv_results["param_kernel"][i] == "poly"
+    )
+    assert all(
+        (
+            not all_cv_results["param_C"].mask[i]
+            and not all_cv_results["param_gamma"].mask[i]
+            and all_cv_results["param_degree"].mask[i]
+        )
+        for i in range(n_candidates_all)
+        if all_cv_results["param_kernel"][i] == "rbf"
+    )

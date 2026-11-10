@@ -25,9 +25,14 @@ n_neighbors=20 appears to work well in general.
 
 """
 
-import numpy as np
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import matplotlib
+import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.neighbors import LocalOutlierFactor
 
 np.random.seed(42)
@@ -70,18 +75,19 @@ plt.axis("tight")
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
 plt.legend(
-    [a.collections[0], b1, b2, c],
+    [mlines.Line2D([], [], color="darkred"), b1, b2, c],
     [
         "learned frontier",
         "training observations",
         "new regular observations",
         "new abnormal observations",
     ],
-    loc="upper left",
+    loc=(1.05, 0.4),
     prop=matplotlib.font_manager.FontProperties(size=11),
 )
 plt.xlabel(
     "errors novel regular: %d/40 ; errors novel abnormal: %d/40"
     % (n_error_test, n_error_outliers)
 )
+plt.tight_layout()
 plt.show()

@@ -28,14 +28,16 @@ meaningful despite the large reduction in dimension.
 
 """
 
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import datasets
-from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier, NeighborhoodComponentsAnalysis
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler

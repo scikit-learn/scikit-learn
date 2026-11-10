@@ -1,0 +1,4 @@
+- :class:`preprocessing.OneHotEncoder`, :class:`preprocessing.OrdinalEncoder`,
+  and :class:`preprocessing.TargetEncoder` are now faster by using a
+  Fortran-contiguous memory layout in their encoding paths.
+  By :user:`Arthur Lacote <cakedev0>`.

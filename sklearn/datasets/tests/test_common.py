@@ -1,16 +1,17 @@
 """Test loaders for common functionality."""
+
 import inspect
 import os
 
-import pytest
 import numpy as np
+import pytest
 
 import sklearn.datasets
 
 
 def is_pillow_installed():
     try:
-        import PIL  # noqa
+        import PIL  # noqa: F401
 
         return True
     except ImportError:
@@ -39,7 +40,7 @@ FETCH_PYTEST_MARKERS = {
 
 def check_pandas_dependency_message(fetch_func):
     try:
-        import pandas  # noqa
+        import pandas  # noqa: F401
 
         pytest.skip("This test requires pandas to not be installed")
     except ImportError:
@@ -81,7 +82,7 @@ def check_as_frame(
     frame_X, frame_y = dataset_func(as_frame=True, return_X_y=True)
     assert isinstance(frame_X, pd.DataFrame)
     if frame_y.ndim > 1:
-        assert isinstance(frame_X, pd.DataFrame)
+        assert isinstance(frame_y, pd.DataFrame)
     else:
         assert isinstance(frame_y, pd.Series)
 
@@ -115,7 +116,6 @@ def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
 @pytest.mark.parametrize(
     "name, dataset_func", _generate_func_supporting_param("return_X_y")
 )
-@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 def test_common_check_return_X_y(name, dataset_func):
     bunch = dataset_func()
     check_return_X_y(bunch, dataset_func)

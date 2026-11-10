@@ -1,12 +1,12 @@
-# Author: Mathieu Blondel <mathieu@mblondel.org>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import time
 
 import matplotlib.pyplot as plt
 
+from sklearn.metrics.pairwise import pairwise_distances, pairwise_kernels
 from sklearn.utils import check_random_state
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics.pairwise import pairwise_kernels
 
 
 def plot(func):

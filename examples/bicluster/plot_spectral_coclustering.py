@@ -15,14 +15,14 @@ the biclusters.
 
 """
 
-# Author: Kemal Eren <kemal@kemaleren.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sklearn.datasets import make_biclusters
 from sklearn.cluster import SpectralCoclustering
+from sklearn.datasets import make_biclusters
 from sklearn.metrics import consensus_score
 
 data, rows, columns = make_biclusters(

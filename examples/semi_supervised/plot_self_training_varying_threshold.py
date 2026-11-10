@@ -29,16 +29,18 @@ around 0.7.
 
 """
 
-# Authors: Oliver Rausch <rauscho@ethz.ch>
-# License: BSD
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import datasets
-from sklearn.svm import SVC
+from sklearn.calibration import CalibratedClassifierCV
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.semi_supervised import SelfTrainingClassifier
-from sklearn.metrics import accuracy_score
+from sklearn.svm import SVC
 from sklearn.utils import shuffle
 
 n_splits = 3
@@ -49,7 +51,7 @@ y_true = y.copy()
 y[50:] = -1
 total_samples = y.shape[0]
 
-base_classifier = SVC(probability=True, gamma=0.001, random_state=42)
+base_classifier = CalibratedClassifierCV(SVC(gamma=0.001, random_state=42))
 
 x_values = np.arange(0.4, 1.05, 0.05)
 x_values = np.append(x_values, 0.99999)

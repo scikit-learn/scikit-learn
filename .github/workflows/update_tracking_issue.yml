@@ -11,6 +11,9 @@
 # Where JOB_NAME is contains the status of the job you are interested in
 
 name: "Update tracking issue"
+permissions:
+  contents: read
+
 on:
   workflow_call:
     inputs:
@@ -24,13 +27,15 @@ on:
 jobs:
   update_tracking_issue:
     runs-on: ubuntu-latest
-    if: github.repository == 'scikit-learn/scikit-learn' && github.event_name == 'schedule'
+    if: github.repository == 'scikit-learn/scikit-learn' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.9'
       - name: Update tracking issue on GitHub
+        env:
+          BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
         run: |
           set -ex
           if [[ ${{ inputs.job_status }} == "success" ]]; then
@@ -41,8 +46,9 @@ jobs:
 
           pip install defusedxml PyGithub
           python maint_tools/update_tracking_issue.py \
-            ${{ secrets.BOT_GITHUB_TOKEN }} \
+            "$BOT_GITHUB_TOKEN" \
             "$GITHUB_WORKFLOW" \
             "$GITHUB_REPOSITORY" \
             https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID \
-            --tests-passed $TESTS_PASSED
+            --tests-passed $TESTS_PASSED \
+            --auto-close false

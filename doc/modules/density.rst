@@ -3,7 +3,6 @@
 ==================
 Density Estimation
 ==================
-.. sectionauthor:: Jake Vanderplas <vanderplas@astro.washington.edu>
 
 Density estimation walks the line between unsupervised learning, feature
 engineering, and data modeling.  Some of the most popular and useful
@@ -42,7 +41,7 @@ the histogram.  But what if, instead of stacking the blocks on a regular grid,
 we center each block on the point it represents, and sum the total height at
 each location?  This idea leads to the lower-left visualization.  It is perhaps
 not as clean as a histogram, but the fact that the data drive the block
-locations mean that it is a much better representation of the underlying
+locations means that it is a much better representation of the underlying
 data.
 
 This visualization is an example of a *kernel density estimation*, in this case
@@ -90,7 +89,7 @@ Here we have used ``kernel='gaussian'``, as seen above.
 Mathematically, a kernel is a positive function :math:`K(x;h)`
 which is controlled by the bandwidth parameter :math:`h`.
 Given this kernel form, the density estimate at a point :math:`y` within
-a group of points :math:`x_i; i=1\cdots N` is given by:
+a group of points :math:`x_i; i=1, \cdots, N` is given by:
 
 .. math::
     \rho_K(y) = \sum_{i=1}^{N} K(y - x_i; h)
@@ -101,7 +100,7 @@ smooth (i.e. high-bias) density distribution.  A small bandwidth leads
 to an unsmooth (i.e. high-variance) density distribution.
 
 The parameter `bandwidth` controls this smoothing. One can either set
-manually this parameter or use Scott's and Silvermann's estimation
+manually this parameter or use Scott's and Silverman's estimation
 methods.
 
 :class:`~sklearn.neighbors.KernelDensity` implements several common kernel
@@ -113,31 +112,34 @@ forms, which are shown in the following figure:
 
 .. centered:: |kde_kernels|
 
-The form of these kernels is as follows:
+.. dropdown:: Kernels' mathematical expressions
 
-* Gaussian kernel (``kernel = 'gaussian'``)
+  The form of these kernels is as follows:
 
-  :math:`K(x; h) \propto \exp(- \frac{x^2}{2h^2} )`
+  * Gaussian kernel (``kernel = 'gaussian'``)
 
-* Tophat kernel (``kernel = 'tophat'``)
+    :math:`K(x; h) \propto \exp(- \frac{x^2}{2h^2} )`
 
-  :math:`K(x; h) \propto 1` if :math:`x < h`
+  * Tophat kernel (``kernel = 'tophat'``)
 
-* Epanechnikov kernel (``kernel = 'epanechnikov'``)
+    :math:`K(x; h) \propto 1` if :math:`x < h`
 
-  :math:`K(x; h) \propto 1 - \frac{x^2}{h^2}`
+  * Epanechnikov kernel (``kernel = 'epanechnikov'``)
 
-* Exponential kernel (``kernel = 'exponential'``)
+    :math:`K(x; h) \propto 1 - \frac{x^2}{h^2}`
 
-  :math:`K(x; h) \propto \exp(-x/h)`
+  * Exponential kernel (``kernel = 'exponential'``)
 
-* Linear kernel (``kernel = 'linear'``)
+    :math:`K(x; h) \propto \exp(-x/h)`
 
-  :math:`K(x; h) \propto 1 - x/h` if :math:`x < h`
+  * Linear kernel (``kernel = 'linear'``)
 
-* Cosine kernel (``kernel = 'cosine'``)
+    :math:`K(x; h) \propto 1 - x/h` if :math:`x < h`
 
-  :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
+  * Cosine kernel (``kernel = 'cosine'``)
+
+    :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
+
 
 The kernel density estimator can be used with any of the valid distance
 metrics (see :class:`~sklearn.metrics.DistanceMetric` for a list of
@@ -171,14 +173,14 @@ on a PCA projection of the data:
 The "new" data consists of linear combinations of the input data, with weights
 probabilistically drawn given the KDE model.
 
-.. topic:: Examples:
+.. rubric:: Examples
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_kde_1d.py`: computation of simple kernel
-    density estimates in one dimension.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_kde_1d.py`: computation of simple kernel
+  density estimates in one dimension.
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_digits_kde_sampling.py`: an example of using
-    Kernel Density estimation to learn a generative model of the hand-written
-    digits data, and drawing new samples from this model.
+* :ref:`sphx_glr_auto_examples_neighbors_plot_digits_kde_sampling.py`: an example of using
+  Kernel Density estimation to learn a generative model of the hand-written
+  digits data, and drawing new samples from this model.
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_species_kde.py`: an example of Kernel Density
-    estimation using the Haversine distance metric to visualize geospatial data
+* :ref:`sphx_glr_auto_examples_neighbors_plot_species_kde.py`: an example of Kernel Density
+  estimation using the Haversine distance metric to visualize geospatial data

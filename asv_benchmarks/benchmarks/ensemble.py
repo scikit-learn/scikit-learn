@@ -1,7 +1,7 @@
 from sklearn.ensemble import (
-    RandomForestClassifier,
     GradientBoostingClassifier,
     HistGradientBoostingClassifier,
+    RandomForestClassifier,
 )
 
 from .common import Benchmark, Estimator, Predictor

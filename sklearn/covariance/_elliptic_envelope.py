@@ -1,12 +1,15 @@
-# Author: Virgile Fritsch <virgile.fritsch@inria.fr>
-#
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+from numbers import Real
 
 import numpy as np
-from . import MinCovDet
-from ..utils.validation import check_is_fitted
-from ..metrics import accuracy_score
-from ..base import OutlierMixin
+
+from sklearn.base import OutlierMixin, _fit_context
+from sklearn.covariance._robust_covariance import MinCovDet
+from sklearn.metrics import accuracy_score
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.validation import check_is_fitted
 
 
 class EllipticEnvelope(OutlierMixin, MinCovDet):
@@ -31,7 +34,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     support_fraction : float, default=None
         The proportion of points to be included in the support of the raw
         MCD estimate. If None, the minimum value of support_fraction will
-        be used within the algorithm: `[n_sample + n_features + 1] / 2`.
+        be used within the algorithm: `(n_samples + n_features + 1) / 2 * n_samples`.
         Range is (0, 1).
 
     contamination : float, default=0.1
@@ -66,8 +69,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
 
-        .. versionadded:: 0.20
-
     raw_location_ : ndarray of shape (n_features,)
         The raw robust estimated location before correction and re-weighting.
 
@@ -85,8 +86,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -132,11 +131,16 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     ...              [3, 3]])
     array([ 1, -1])
     >>> cov.covariance_
-    array([[0.7411..., 0.2535...],
-           [0.2535..., 0.3053...]])
+    array([[0.8102, 0.2736],
+           [0.2736, 0.3330]])
     >>> cov.location_
-    array([0.0813... , 0.0427...])
+    array([0.0769 , 0.0397])
     """
+
+    _parameter_constraints: dict = {
+        **MinCovDet._parameter_constraints,
+        "contamination": [Interval(Real, 0, 0.5, closed="right")],
+    }
 
     def __init__(
         self,
@@ -155,6 +159,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         )
         self.contamination = contamination
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the EllipticEnvelope model.
 
@@ -171,12 +176,6 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         self : object
             Returns the instance itself.
         """
-        if self.contamination != "auto":
-            if not (0.0 < self.contamination <= 0.5):
-                raise ValueError(
-                    "contamination must be in (0, 0.5], got: %f" % self.contamination
-                )
-
         super().fit(X)
         self.offset_ = np.percentile(-self.dist_, 100.0 * self.contamination)
         return self

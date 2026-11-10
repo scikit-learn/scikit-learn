@@ -1,30 +1,38 @@
-"""
-Linear Discriminant Analysis and Quadratic Discriminant Analysis
-"""
+"""Linear and quadratic discriminant analysis."""
 
-# Authors: Clemens Brunner
-#          Martin Billinger
-#          Matthieu Perrot
-#          Mathieu Blondel
-
-# License: BSD 3-Clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from numbers import Integral, Real
+
 import numpy as np
+import scipy.linalg
 from scipy import linalg
-from scipy.special import expit
-from numbers import Real
 
-from .base import BaseEstimator, TransformerMixin, ClassifierMixin
-from .base import _ClassNamePrefixFeaturesOutMixin
-from .linear_model._base import LinearClassifierMixin
-from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
-from .utils.multiclass import unique_labels
-from .utils.validation import check_is_fitted
-from .utils.multiclass import check_classification_targets
-from .utils.extmath import softmax
-from .preprocessing import StandardScaler
-
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.covariance import empirical_covariance, ledoit_wolf, shrunk_covariance
+from sklearn.linear_model._base import LinearClassifierMixin
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils._array_api import (
+    _expit,
+    array_device,
+    check_same_namespace,
+    get_namespace,
+    move_to,
+    size,
+)
+from sklearn.utils._encode import _encode
+from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
+from sklearn.utils.extmath import softmax
+from sklearn.utils.multiclass import check_classification_targets, unique_labels
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 __all__ = ["LinearDiscriminantAnalysis", "QuadraticDiscriminantAnalysis"]
 
@@ -51,9 +59,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
         covariance estimator (with potential shrinkage).
         The object should have a fit method and a ``covariance_`` attribute
         like the estimators in :mod:`sklearn.covariance``.
-        if None the shrinkage parameter drives the estimate.
-
-        .. versionadded:: 0.24
+        If None the shrinkage parameter drives the estimate.
 
     Returns
     -------
@@ -71,14 +77,8 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
                 s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
             elif shrinkage == "empirical":
                 s = empirical_covariance(X)
-            else:
-                raise ValueError("unknown shrinkage parameter")
         elif isinstance(shrinkage, Real):
-            if shrinkage < 0 or shrinkage > 1:
-                raise ValueError("shrinkage parameter must be between 0 and 1")
             s = shrunk_covariance(empirical_covariance(X), shrinkage)
-        else:
-            raise TypeError("shrinkage must be a float or a string")
     else:
         if shrinkage is not None and shrinkage != 0:
             raise ValueError(
@@ -95,7 +95,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
     return s
 
 
-def _class_means(X, y):
+def _class_means(X, y_encoded, *, n_classes):
     """Compute class means.
 
     Parameters
@@ -103,23 +103,35 @@ def _class_means(X, y):
     X : array-like of shape (n_samples, n_features)
         Input data.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_targets)
-        Target values.
+    y_encoded : array-like of shape (n_samples,)
+        Target values encoded as integer codes indexing `self.classes_`.
+
+    n_classes : int
+        Number of classes, i.e. `1 + max(y_encoded)`.
 
     Returns
     -------
     means : array-like of shape (n_classes, n_features)
         Class means.
     """
-    classes, y = np.unique(y, return_inverse=True)
-    cnt = np.bincount(y)
-    means = np.zeros(shape=(len(classes), X.shape[1]))
-    np.add.at(means, y, X)
-    means /= cnt[:, None]
+    xp, is_array_api_compliant = get_namespace(X)
+    means = xp.zeros((n_classes, X.shape[1]), device=array_device(X), dtype=X.dtype)
+
+    if is_array_api_compliant:
+        for i in range(n_classes):
+            means[i, :] = xp.mean(X[y_encoded == i], axis=0)
+    else:
+        # TODO: Explore the choice of using bincount + add.at as it seems sub optimal
+        # from a performance-wise
+        cnt = np.bincount(y_encoded, minlength=n_classes)
+        np.add.at(means, y_encoded, X)
+        means /= cnt[:, None]
     return means
 
 
-def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
+def _class_cov(
+    X, y_encoded, priors, shrinkage=None, covariance_estimator=None, *, n_classes
+):
     """Compute weighted within-class covariance matrix.
 
     The per-class covariance are weighted by the class priors.
@@ -129,8 +141,11 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
     X : array-like of shape (n_samples, n_features)
         Input data.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_targets)
-        Target values.
+    y_encoded : array-like of shape (n_samples,)
+        Target values encoded as integer codes indexing `self.classes_`.
+
+    n_classes : int
+        Number of classes, i.e. `1 + max(y_encoded)`.
 
     priors : array-like of shape (n_classes,)
         Class priors.
@@ -151,23 +166,98 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
         like the estimators in sklearn.covariance.
         If None, the shrinkage parameter drives the estimate.
 
-        .. versionadded:: 0.24
-
     Returns
     -------
     cov : array-like of shape (n_features, n_features)
         Weighted within-class covariance matrix
     """
-    classes = np.unique(y)
     cov = np.zeros(shape=(X.shape[1], X.shape[1]))
-    for idx, group in enumerate(classes):
-        Xg = X[y == group, :]
+    for idx in range(n_classes):
+        Xg = X[y_encoded == idx, :]
         cov += priors[idx] * np.atleast_2d(_cov(Xg, shrinkage, covariance_estimator))
     return cov
 
 
+class DiscriminantAnalysisPredictionMixin:
+    """Mixin class for QuadraticDiscriminantAnalysis and NearestCentroid."""
+
+    def decision_function(self, X):
+        """Apply decision function to an array of samples.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Array of samples (test vectors).
+
+        Returns
+        -------
+        y_scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Decision function values related to each class, per sample.
+            In the two-class case, the shape is `(n_samples,)`, giving the
+            log likelihood ratio of the positive class.
+        """
+        y_scores = self._decision_function(X)
+        if len(self.classes_) == 2:
+            return y_scores[:, 1] - y_scores[:, 0]
+        return y_scores
+
+    def predict(self, X):
+        """Perform classification on an array of vectors `X`.
+
+        Returns the class label for each sample.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            Class label for each sample.
+        """
+        scores = self._decision_function(X)
+        return self.classes_.take(scores.argmax(axis=1))
+
+    def predict_proba(self, X):
+        """Estimate class probabilities.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        y_proba : ndarray of shape (n_samples, n_classes)
+            Probability estimate of the sample for each class in the
+            model, where classes are ordered as they are in `self.classes_`.
+        """
+        return np.exp(self.predict_log_proba(X))
+
+    def predict_log_proba(self, X):
+        """Estimate log class probabilities.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        y_log_proba : ndarray of shape (n_samples, n_classes)
+            Estimated log probabilities.
+        """
+        scores = self._decision_function(X)
+        log_likelihood = scores - scores.max(axis=1)[:, np.newaxis]
+        return log_likelihood - np.log(
+            np.exp(log_likelihood).sum(axis=1)[:, np.newaxis]
+        )
+
+
 class LinearDiscriminantAnalysis(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     LinearClassifierMixin,
     TransformerMixin,
     BaseEstimator,
@@ -184,8 +274,10 @@ class LinearDiscriminantAnalysis(
     by projecting it to the most discriminative directions, using the
     `transform` method.
 
-    .. versionadded:: 0.17
-       *LinearDiscriminantAnalysis*.
+    For a comparison between
+    :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+    and :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`, see
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
@@ -201,6 +293,10 @@ class LinearDiscriminantAnalysis(
           - 'eigen': Eigenvalue decomposition.
             Can be combined with shrinkage or custom covariance estimator.
 
+        .. versionchanged:: 1.2
+            `solver="svd"` now has experimental Array API support. See the
+            :ref:`Array API User Guide <array_api>` for more details.
+
     shrinkage : 'auto' or float, default=None
         Shrinkage parameter, possible values:
           - None: no shrinkage (default).
@@ -209,6 +305,9 @@ class LinearDiscriminantAnalysis(
 
         This should be left to None if `covariance_estimator` is used.
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
+
+        For a usage example, see
+        :ref:`sphx_glr_auto_examples_classification_plot_lda.py`.
 
     priors : array-like of shape (n_classes,), default=None
         The class prior probabilities. By default, the class proportions are
@@ -220,20 +319,19 @@ class LinearDiscriminantAnalysis(
         min(n_classes - 1, n_features). This parameter only affects the
         `transform` method.
 
+        For a usage example, see
+        :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_lda.py`.
+
     store_covariance : bool, default=False
         If True, explicitly compute the weighted within-class covariance
         matrix when solver is 'svd'. The matrix is always computed
         and stored for the other solvers.
-
-        .. versionadded:: 0.17
 
     tol : float, default=1.0e-4
         Absolute threshold for a singular value of X to be considered
         significant, used to estimate the rank of X. Dimensions whose
         singular values are non-significant are discarded. Only used if
         solver is 'svd'.
-
-        .. versionadded:: 0.17
 
     covariance_estimator : covariance estimator, default=None
         If not None, `covariance_estimator` is used to estimate
@@ -246,8 +344,6 @@ class LinearDiscriminantAnalysis(
         This should be left to None if `shrinkage` is used.
         Note that `covariance_estimator` works only with 'lsqr' and 'eigen'
         solvers.
-
-        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -289,8 +385,6 @@ class LinearDiscriminantAnalysis(
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -314,6 +408,16 @@ class LinearDiscriminantAnalysis(
     [1]
     """
 
+    _parameter_constraints: dict = {
+        "solver": [StrOptions({"svd", "lsqr", "eigen"})],
+        "shrinkage": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both"), None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "priors": ["array-like", None],
+        "store_covariance": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "covariance_estimator": [HasMethods("fit"), None],
+    }
+
     def __init__(
         self,
         solver="svd",
@@ -332,7 +436,7 @@ class LinearDiscriminantAnalysis(
         self.tol = tol  # used only in svd solver
         self.covariance_estimator = covariance_estimator
 
-    def _solve_lsqr(self, X, y, shrinkage, covariance_estimator):
+    def _solve_lstsq(self, X, y_encoded, shrinkage, covariance_estimator):
         """Least squares solver.
 
         The least squares solver computes a straightforward solution of the
@@ -347,8 +451,8 @@ class LinearDiscriminantAnalysis(
         X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_classes)
-            Target values.
+        y_encoded : array-like of shape (n_samples,)
+            Target values encoded as integer codes indexing `self.classes_`.
 
         shrinkage : 'auto', float or None
             Shrinkage parameter, possible values:
@@ -356,7 +460,7 @@ class LinearDiscriminantAnalysis(
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage parameter.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` i
+            Shrinkage parameter is ignored if  `covariance_estimator` is
             not None
 
         covariance_estimator : estimator, default=None
@@ -366,8 +470,6 @@ class LinearDiscriminantAnalysis(
             The object should have a fit method and a ``covariance_`` attribute
             like the estimators in sklearn.covariance.
             if None the shrinkage parameter drives the estimate.
-
-            .. versionadded:: 0.24
 
         Notes
         -----
@@ -379,16 +481,22 @@ class LinearDiscriminantAnalysis(
            (Second Edition). John Wiley & Sons, Inc., New York, 2001. ISBN
            0-471-05669-3.
         """
-        self.means_ = _class_means(X, y)
+        n_classes = self.classes_.shape[0]
+        self.means_ = _class_means(X, y_encoded, n_classes=n_classes)
         self.covariance_ = _class_cov(
-            X, y, self.priors_, shrinkage, covariance_estimator
+            X,
+            y_encoded,
+            self.priors_,
+            shrinkage,
+            covariance_estimator,
+            n_classes=n_classes,
         )
         self.coef_ = linalg.lstsq(self.covariance_, self.means_.T)[0].T
         self.intercept_ = -0.5 * np.diag(np.dot(self.means_, self.coef_.T)) + np.log(
             self.priors_
         )
 
-    def _solve_eigen(self, X, y, shrinkage, covariance_estimator):
+    def _solve_eigen(self, X, y_encoded, shrinkage, covariance_estimator):
         """Eigenvalue solver.
 
         The eigenvalue solver computes the optimal solution of the Rayleigh
@@ -401,8 +509,8 @@ class LinearDiscriminantAnalysis(
         X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values.
+        y_encoded : array-like of shape (n_samples,)
+            Target values encoded as integer codes indexing `self.classes_`.
 
         shrinkage : 'auto', float or None
             Shrinkage parameter, possible values:
@@ -410,7 +518,7 @@ class LinearDiscriminantAnalysis(
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
-            Shrinkage parameter is ignored if  `covariance_estimator` i
+            Shrinkage parameter is ignored if  `covariance_estimator` is
             not None
 
         covariance_estimator : estimator, default=None
@@ -420,8 +528,6 @@ class LinearDiscriminantAnalysis(
             The object should have a fit method and a ``covariance_`` attribute
             like the estimators in sklearn.covariance.
             if None the shrinkage parameter drives the estimate.
-
-            .. versionadded:: 0.24
 
         Notes
         -----
@@ -433,9 +539,15 @@ class LinearDiscriminantAnalysis(
            (Second Edition). John Wiley & Sons, Inc., New York, 2001. ISBN
            0-471-05669-3.
         """
-        self.means_ = _class_means(X, y)
+        n_classes = self.classes_.shape[0]
+        self.means_ = _class_means(X, y_encoded, n_classes=n_classes)
         self.covariance_ = _class_cov(
-            X, y, self.priors_, shrinkage, covariance_estimator
+            X,
+            y_encoded,
+            self.priors_,
+            shrinkage,
+            covariance_estimator,
+            n_classes=n_classes,
         )
 
         Sw = self.covariance_  # within scatter
@@ -454,7 +566,7 @@ class LinearDiscriminantAnalysis(
             self.priors_
         )
 
-    def _solve_svd(self, X, y):
+    def _solve_svd(self, X, y_encoded):
         """SVD solver.
 
         Parameters
@@ -462,77 +574,82 @@ class LinearDiscriminantAnalysis(
         X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values.
+        y_encoded : array-like of shape (n_samples,)
+            Target values encoded as integer codes indexing `self.classes_`.
         """
-        n_samples, n_features = X.shape
-        n_classes = len(self.classes_)
+        xp, is_array_api_compliant = get_namespace(X)
 
-        self.means_ = _class_means(X, y)
+        if is_array_api_compliant:
+            svd = xp.linalg.svd
+        else:
+            svd = scipy.linalg.svd
+
+        n_samples, _ = X.shape
+        n_classes = self.classes_.shape[0]
+
+        self.means_ = _class_means(X, y_encoded, n_classes=n_classes)
         if self.store_covariance:
-            self.covariance_ = _class_cov(X, y, self.priors_)
+            self.covariance_ = _class_cov(
+                X, y_encoded, self.priors_, n_classes=n_classes
+            )
 
         Xc = []
-        for idx, group in enumerate(self.classes_):
-            Xg = X[y == group, :]
-            Xc.append(Xg - self.means_[idx])
+        # `y_encoded` holds integer class codes (see `fit`), so groups are
+        # indexed by position in `self.classes_`.
+        for idx in range(n_classes):
+            Xg = X[y_encoded == idx]
+            Xc.append(Xg - self.means_[idx, :])
 
-        self.xbar_ = np.dot(self.priors_, self.means_)
+        self.xbar_ = self.priors_ @ self.means_
 
-        Xc = np.concatenate(Xc, axis=0)
+        Xc = xp.concat(Xc, axis=0)
 
         # 1) within (univariate) scaling by with classes std-dev
-        std = Xc.std(axis=0)
+        std = xp.std(Xc, axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.0
-        fac = 1.0 / (n_samples - n_classes)
+        fac = xp.asarray(1.0 / n_samples, dtype=X.dtype, device=array_device(X))
 
         # 2) Within variance scaling
-        X = np.sqrt(fac) * (Xc / std)
+        X = xp.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        U, S, Vt = linalg.svd(X, full_matrices=False)
+        _, S, Vt = svd(X, full_matrices=False)
 
-        rank = np.sum(S > self.tol)
+        rank = xp.sum(xp.astype(S > self.tol, xp.int32))
         # Scaling of within covariance is: V' 1/S
-        scalings = (Vt[:rank] / std).T / S[:rank]
+        scalings = (Vt[:rank, :] / std).T / S[:rank]
         fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
         # 3) Between variance scaling
         # Scale weighted centers
-        X = np.dot(
-            (
-                (np.sqrt((n_samples * self.priors_) * fac))
-                * (self.means_ - self.xbar_).T
-            ).T,
-            scalings,
-        )
+        X = (
+            (xp.sqrt((n_samples * self.priors_) * fac)) * (self.means_ - self.xbar_).T
+        ).T @ scalings
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
-        _, S, Vt = linalg.svd(X, full_matrices=0)
+        _, S, Vt = svd(X, full_matrices=False)
 
         if self._max_components == 0:
-            self.explained_variance_ratio_ = np.empty((0,), dtype=S.dtype)
+            self.explained_variance_ratio_ = xp.empty((0,), dtype=S.dtype)
         else:
-            self.explained_variance_ratio_ = (S**2 / np.sum(S**2))[
+            self.explained_variance_ratio_ = (S**2 / xp.sum(S**2))[
                 : self._max_components
             ]
 
-        rank = np.sum(S > self.tol * S[0])
-        self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
-        coef = np.dot(self.means_ - self.xbar_, self.scalings_)
-        self.intercept_ = -0.5 * np.sum(coef**2, axis=1) + np.log(self.priors_)
-        self.coef_ = np.dot(coef, self.scalings_.T)
-        self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
+        rank = xp.sum(xp.astype(S > self.tol * S[0], xp.int32))
+        self.scalings_ = scalings @ Vt.T[:, :rank]
+        coef = (self.means_ - self.xbar_) @ self.scalings_
+        self.intercept_ = -0.5 * xp.sum(coef**2, axis=1) + xp.log(self.priors_)
+        self.coef_ = coef @ self.scalings_.T
+        self.intercept_ -= self.xbar_ @ self.coef_.T
 
+    @_fit_context(
+        # LinearDiscriminantAnalysis.covariance_estimator is not validated yet
+        prefer_skip_nested_validation=False
+    )
     def fit(self, X, y):
         """Fit the Linear Discriminant Analysis model.
-
-           .. versionchanged:: 0.19
-              *store_covariance* has been moved to main constructor.
-
-           .. versionchanged:: 0.19
-              *tol* has been moved to main constructor.
 
         Parameters
         ----------
@@ -547,12 +664,22 @@ class LinearDiscriminantAnalysis(
         self : object
             Fitted estimator.
         """
-        X, y = self._validate_data(
-            X, y, ensure_min_samples=2, dtype=[np.float64, np.float32]
+        xp, _ = get_namespace(X)
+
+        X, y = validate_data(
+            self, X, y, ensure_min_samples=2, dtype=[xp.float64, xp.float32]
         )
         self.classes_ = unique_labels(y)
-        n_samples, _ = X.shape
-        n_classes = len(self.classes_)
+        # `y` may hold strings, which no array API namespace can represent,
+        # therefore convert to integer codes instead.
+        # `classes_` stays in `y`'s namespace and device.
+        y_encoded = move_to(
+            _encode(y, uniques=self.classes_),
+            xp=xp,
+            device=array_device(X),
+        )
+        n_samples, n_features = X.shape
+        n_classes = self.classes_.shape[0]
 
         if n_samples == n_classes:
             raise ValueError(
@@ -560,20 +687,21 @@ class LinearDiscriminantAnalysis(
             )
 
         if self.priors is None:  # estimate priors from sample
-            _, y_t = np.unique(y, return_inverse=True)  # non-negative ints
-            self.priors_ = np.bincount(y_t) / float(len(y))
+            _, cnts = xp.unique_counts(y_encoded)  # non-negative ints
+            self.priors_ = xp.astype(cnts, X.dtype) / float(n_samples)
         else:
-            self.priors_ = np.asarray(self.priors)
+            self.priors_ = xp.asarray(self.priors, dtype=X.dtype)
 
-        if (self.priors_ < 0).any():
+        if xp.any(self.priors_ < 0):
             raise ValueError("priors must be non-negative")
-        if not np.isclose(self.priors_.sum(), 1.0):
+
+        if xp.abs(xp.sum(self.priors_) - 1.0) > 1e-5:
             warnings.warn("The priors do not sum to 1. Renormalizing", UserWarning)
             self.priors_ = self.priors_ / self.priors_.sum()
 
         # Maximum number of components no matter what n_components is
         # specified:
-        max_components = min(len(self.classes_) - 1, X.shape[1])
+        max_components = min(n_classes - 1, n_features)
 
         if self.n_components is None:
             self._max_components = max_components
@@ -586,40 +714,35 @@ class LinearDiscriminantAnalysis(
 
         if self.solver == "svd":
             if self.shrinkage is not None:
-                raise NotImplementedError("shrinkage not supported")
+                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
             if self.covariance_estimator is not None:
                 raise ValueError(
                     "covariance estimator "
                     "is not supported "
                     "with svd solver. Try another solver"
                 )
-            self._solve_svd(X, y)
+            self._solve_svd(X, y_encoded)
         elif self.solver == "lsqr":
-            self._solve_lsqr(
+            self._solve_lstsq(
                 X,
-                y,
+                y_encoded,
                 shrinkage=self.shrinkage,
                 covariance_estimator=self.covariance_estimator,
             )
         elif self.solver == "eigen":
             self._solve_eigen(
                 X,
-                y,
+                y_encoded,
                 shrinkage=self.shrinkage,
                 covariance_estimator=self.covariance_estimator,
             )
-        else:
-            raise ValueError(
-                "unknown solver {} (valid solvers are 'svd', "
-                "'lsqr', and 'eigen').".format(self.solver)
+        if size(self.classes_) == 2:  # treat binary case as a special case
+            coef_ = xp.asarray(self.coef_[1, :] - self.coef_[0, :], dtype=X.dtype)
+            self.coef_ = xp.reshape(coef_, (1, -1))
+            intercept_ = xp.asarray(
+                self.intercept_[1] - self.intercept_[0], dtype=X.dtype
             )
-        if self.classes_.size == 2:  # treat binary case as a special case
-            self.coef_ = np.array(
-                self.coef_[1, :] - self.coef_[0, :], ndmin=2, dtype=X.dtype
-            )
-            self.intercept_ = np.array(
-                self.intercept_[1] - self.intercept_[0], ndmin=1, dtype=X.dtype
-            )
+            self.intercept_ = xp.reshape(intercept_, (1,))
         self._n_features_out = self._max_components
         return self
 
@@ -643,12 +766,13 @@ class LinearDiscriminantAnalysis(
                 "transform not implemented for 'lsqr' solver (use 'svd' or 'eigen')."
             )
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="coef_", method="transform")
+        X = validate_data(self, X, reset=False)
 
-        X = self._validate_data(X, reset=False)
         if self.solver == "svd":
-            X_new = np.dot(X - self.xbar_, self.scalings_)
+            X_new = (X - self.xbar_) @ self.scalings_
         elif self.solver == "eigen":
-            X_new = np.dot(X, self.scalings_)
+            X_new = X @ self.scalings_
 
         return X_new[:, : self._max_components]
 
@@ -666,11 +790,12 @@ class LinearDiscriminantAnalysis(
             Estimated probabilities.
         """
         check_is_fitted(self)
-
+        check_same_namespace(X, self, attribute="coef_", method="predict_proba")
+        xp, _ = get_namespace(X)
         decision = self.decision_function(X)
-        if self.classes_.size == 2:
-            proba = expit(decision)
-            return np.vstack([1 - proba, proba]).T
+        if size(self.classes_) == 2:
+            proba = _expit(decision, xp=xp)
+            return xp.stack([1 - proba, proba], axis=1)
         else:
             return softmax(decision)
 
@@ -687,9 +812,13 @@ class LinearDiscriminantAnalysis(
         C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
+        check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
+        xp, _ = get_namespace(X)
         prediction = self.predict_proba(X)
-        prediction[prediction == 0.0] += np.finfo(prediction.dtype).tiny
-        return np.log(prediction)
+
+        smallest_normal = xp.finfo(prediction.dtype).smallest_normal
+        prediction[prediction == 0.0] += smallest_normal
+        return xp.log(prediction)
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.
@@ -706,16 +835,23 @@ class LinearDiscriminantAnalysis(
 
         Returns
         -------
-        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
+        y_scores : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
-            In the two-class case, the shape is (n_samples,), giving the
+            In the two-class case, the shape is `(n_samples,)`, giving the
             log likelihood ratio of the positive class.
         """
-        # Only override for the doc
+        # Only overrides for the docstring.
         return super().decision_function(X)
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.array_api_support = True
+        return tags
 
-class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
+
+class QuadraticDiscriminantAnalysis(
+    DiscriminantAnalysisPredictionMixin, ClassifierMixin, BaseEstimator
+):
     """Quadratic Discriminant Analysis.
 
     A classifier with a quadratic decision boundary, generated
@@ -724,14 +860,38 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     The model fits a Gaussian density to each class.
 
-    .. versionadded:: 0.17
-       *QuadraticDiscriminantAnalysis*
+    For a comparison between
+    :class:`~sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+    and :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`, see
+    :ref:`sphx_glr_auto_examples_classification_plot_lda_qda.py`.
 
     Read more in the :ref:`User Guide <lda_qda>`.
 
     Parameters
     ----------
-    priors : ndarray of shape (n_classes,), default=None
+    solver : {'svd', 'eigen'}, default='svd'
+        Solver to use, possible values:
+          - 'svd': Singular value decomposition (default).
+            Does not compute the covariance matrix, therefore this solver is
+            recommended for data with a large number of features.
+          - 'eigen': Eigenvalue decomposition.
+            Can be combined with shrinkage or custom covariance estimator.
+
+    shrinkage : 'auto' or float, default=None
+        Shrinkage parameter, possible values:
+          - None: no shrinkage (default).
+          - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
+          - float between 0 and 1: fixed shrinkage parameter.
+
+          Enabling shrinkage is expected to improve the model when some
+          classes have a relatively small number of training data points
+          compared to the number of features by mitigating overfitting during
+          the covariance estimation step.
+
+        This should be left to `None` if `covariance_estimator` is used.
+        Note that shrinkage works only with 'eigen' solver.
+
+    priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
         training data.
 
@@ -744,24 +904,32 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         If True, the class covariance matrices are explicitly computed and
         stored in the `self.covariance_` attribute.
 
-        .. versionadded:: 0.17
-
     tol : float, default=1.0e-4
-        Absolute threshold for a singular value to be considered significant,
-        used to estimate the rank of `Xk` where `Xk` is the centered matrix
-        of samples in class k. This parameter does not affect the
-        predictions. It only controls a warning that is raised when features
-        are considered to be colinear.
+        Absolute threshold for the covariance matrix to be considered rank
+        deficient after applying some regularization (see `reg_param`) to each
+        `Sk` where `Sk` represents covariance matrix for k-th class. This
+        parameter does not affect the predictions. It controls when a warning
+        is raised if the covariance matrix is not full rank.
 
-        .. versionadded:: 0.17
+    covariance_estimator : covariance estimator, default=None
+        If not None, `covariance_estimator` is used to estimate the covariance
+        matrices instead of relying on the empirical covariance estimator
+        (with potential shrinkage).  The object should have a fit method and
+        a ``covariance_`` attribute like the estimators in
+        :mod:`sklearn.covariance`. If None the shrinkage parameter drives the
+        estimate.
+
+        This should be left to `None` if `shrinkage` is used.
+        Note that `covariance_estimator` works only with the 'eigen' solver.
 
     Attributes
     ----------
     covariance_ : list of len n_classes of ndarray \
             of shape (n_features, n_features)
         For each class, gives the covariance matrix estimated using the
-        samples of that class. The estimations are unbiased. Only present if
-        `store_covariance` is True.
+        samples of that class. The estimates use the maximum likelihood
+        (biased) covariance estimator. Only present if `store_covariance` is
+        True.
 
     means_ : array-like of shape (n_classes, n_features)
         Class-wise means.
@@ -781,7 +949,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         For each class, contains the scaling of
         the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system. It corresponds to `S^2 /
-        (n_samples - 1)`, where `S` is the diagonal matrix of singular values
+        n_samples`, where `S` is the diagonal matrix of singular values
         from the SVD of `Xk`, where `Xk` is the centered matrix of samples
         from class k.
 
@@ -790,8 +958,6 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -816,23 +982,83 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     [1]
     """
 
+    _parameter_constraints: dict = {
+        "solver": [StrOptions({"svd", "eigen"})],
+        "shrinkage": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both"), None],
+        "priors": ["array-like", None],
+        "reg_param": [Interval(Real, 0, 1, closed="both")],
+        "store_covariance": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "covariance_estimator": [HasMethods("fit"), None],
+    }
+
     def __init__(
-        self, *, priors=None, reg_param=0.0, store_covariance=False, tol=1.0e-4
+        self,
+        *,
+        solver="svd",
+        shrinkage=None,
+        priors=None,
+        reg_param=0.0,
+        store_covariance=False,
+        tol=1.0e-4,
+        covariance_estimator=None,
     ):
-        self.priors = np.asarray(priors) if priors is not None else None
+        self.solver = solver
+        self.shrinkage = shrinkage
+        self.priors = priors
         self.reg_param = reg_param
         self.store_covariance = store_covariance
         self.tol = tol
+        self.covariance_estimator = covariance_estimator
 
+    def _solve_eigen(self, X):
+        """Eigenvalue solver.
+
+        The eigenvalue solver uses the eigen decomposition of the data
+        to compute the rotation and scaling matrices used for scoring
+        new samples. This solver supports use of any covariance estimator.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+        """
+        n_samples, n_features = X.shape
+
+        cov = _cov(X, self.shrinkage, self.covariance_estimator)
+        scaling, rotation = linalg.eigh(cov)  # scalings are eigenvalues
+        rotation = rotation[:, np.argsort(scaling)[::-1]]  # sort eigenvectors
+        scaling = scaling[np.argsort(scaling)[::-1]]  # sort eigenvalues
+        return scaling, rotation, cov
+
+    def _solve_svd(self, X):
+        """SVD solver for Quadratic Discriminant Analysis.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data.
+        """
+        n_samples, n_features = X.shape
+
+        mean = X.mean(0)
+        Xc = X - mean
+        # Xc = U * S * V.T
+        _, S, Vt = np.linalg.svd(Xc, full_matrices=False)
+        scaling = (S**2) / n_samples  # scalings are squared singular values
+        scaling = ((1 - self.reg_param) * scaling) + self.reg_param
+        rotation = Vt.T
+
+        cov = None
+        if self.store_covariance:
+            # cov = V * (S^2 / n) * V.T
+            cov = scaling * Vt.T @ Vt
+
+        return scaling, rotation, cov
+
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
-
-            .. versionchanged:: 0.19
-               ``store_covariances`` has been moved to main constructor as
-               ``store_covariance``
-
-            .. versionchanged:: 0.19
-               ``tol`` has been moved to main constructor.
 
         Parameters
         ----------
@@ -848,51 +1074,78 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        X, y = self._validate_data(X, y)
+        X, y = validate_data(self, X, y)
         check_classification_targets(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
+        self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError(
-                "The number of classes has to be greater than one; got %d class"
-                % (n_classes)
+                "The number of classes has to be greater than one. Got "
+                f"{n_classes} class."
             )
         if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
+            _, cnts = np.unique(y, return_counts=True)
+            self.priors_ = cnts / float(n_samples)
         else:
-            self.priors_ = self.priors
+            self.priors_ = np.array(self.priors)
 
-        cov = None
-        store_covariance = self.store_covariance
-        if store_covariance:
-            cov = []
+        if self.solver == "svd":
+            if self.shrinkage is not None:
+                # Support for `shrinkage` could be implemented as in
+                # https://github.com/scikit-learn/scikit-learn/issues/32590
+                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
+            if self.covariance_estimator is not None:
+                raise ValueError(
+                    "covariance_estimator is not supported with solver='svd'. "
+                    "Try solver='eigen' instead."
+                )
+            specific_solver = self._solve_svd
+        elif self.solver == "eigen":
+            specific_solver = self._solve_eigen
+
         means = []
+        cov = []
         scalings = []
         rotations = []
-        for ind in range(n_classes):
-            Xg = X[y == ind, :]
-            meang = Xg.mean(0)
-            means.append(meang)
-            if len(Xg) == 1:
+        for class_idx, class_label in enumerate(self.classes_):
+            X_class = X[y == class_label, :]
+            if len(X_class) == 1:
                 raise ValueError(
                     "y has only 1 sample in class %s, covariance is ill defined."
-                    % str(self.classes_[ind])
+                    % str(self.classes_[class_idx])
                 )
-            Xgc = Xg - meang
-            # Xgc = U * S * V.T
-            _, S, Vt = np.linalg.svd(Xgc, full_matrices=False)
-            rank = np.sum(S > self.tol)
+
+            mean_class = X_class.mean(0)
+            means.append(mean_class)
+
+            scaling_class, rotation_class, cov_class = specific_solver(X_class)
+
+            rank = np.sum(scaling_class > self.tol)
             if rank < n_features:
-                warnings.warn("Variables are collinear")
-            S2 = (S**2) / (len(Xg) - 1)
-            S2 = ((1 - self.reg_param) * S2) + self.reg_param
-            if self.store_covariance or store_covariance:
-                # cov = V * (S^2 / (n-1)) * V.T
-                cov.append(np.dot(S2 * Vt.T, Vt))
-            scalings.append(S2)
-            rotations.append(Vt.T)
-        if self.store_covariance or store_covariance:
+                n_samples_class = X_class.shape[0]
+                if self.solver == "svd" and n_samples_class <= n_features:
+                    raise linalg.LinAlgError(
+                        f"The covariance matrix of class {class_label} is not full "
+                        f"rank. When using `solver='svd'` the number of samples in "
+                        f"each class should be more than the number of features, but "
+                        f"class {class_label} has {n_samples_class} samples and "
+                        f"{n_features} features. Try using `solver='eigen'` and "
+                        f"setting the parameter `shrinkage` for regularization."
+                    )
+                else:
+                    msg_param = "shrinkage" if self.solver == "eigen" else "reg_param"
+                    raise linalg.LinAlgError(
+                        f"The covariance matrix of class {class_label} is not full "
+                        f"rank. Increase the value of `{msg_param}` to reduce the "
+                        f"collinearity.",
+                    )
+
+            cov.append(cov_class)
+            scalings.append(scaling_class)
+            rotations.append(rotation_class)
+
+        if self.store_covariance:
             self.covariance_ = cov
         self.means_ = np.asarray(means)
         self.scalings_ = scalings
@@ -903,7 +1156,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         # return log posterior, see eq (4.12) p. 110 of the ESL.
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         norm2 = []
         for i in range(len(self.classes_)):
             R = self.rotations_[i]
@@ -932,68 +1185,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         -------
         C : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
-            In the two-class case, the shape is (n_samples,), giving the
+            In the two-class case, the shape is `(n_samples,)`, giving the
             log likelihood ratio of the positive class.
         """
-        dec_func = self._decision_function(X)
-        # handle special case of two classes
-        if len(self.classes_) == 2:
-            return dec_func[:, 1] - dec_func[:, 0]
-        return dec_func
-
-    def predict(self, X):
-        """Perform classification on an array of test vectors X.
-
-        The predicted class C for each sample in X is returned.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Vector to be scored, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
-
-        Returns
-        -------
-        C : ndarray of shape (n_samples,)
-            Estimated probabilities.
-        """
-        d = self._decision_function(X)
-        y_pred = self.classes_.take(d.argmax(1))
-        return y_pred
-
-    def predict_proba(self, X):
-        """Return posterior probabilities of classification.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Array of samples/test vectors.
-
-        Returns
-        -------
-        C : ndarray of shape (n_samples, n_classes)
-            Posterior probabilities of classification per class.
-        """
-        values = self._decision_function(X)
-        # compute the likelihood of the underlying gaussian models
-        # up to a multiplicative constant.
-        likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
-        # compute posterior probabilities
-        return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
-
-    def predict_log_proba(self, X):
-        """Return log of posterior probabilities of classification.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            Array of samples/test vectors.
-
-        Returns
-        -------
-        C : ndarray of shape (n_samples, n_classes)
-            Posterior log-probabilities of classification per class.
-        """
-        # XXX : can do better to avoid precision overflows
-        probas_ = self.predict_proba(X)
-        return np.log(probas_)
+        # Only overrides for the docstring.
+        return super().decision_function(X)

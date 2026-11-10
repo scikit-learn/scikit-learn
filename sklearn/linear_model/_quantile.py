@@ -1,18 +1,20 @@
-# Authors: David Dale <dale.david@mail.ru>
-#          Christian Lorentzen <lorentzen.ch@gmail.com>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
 import warnings
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
 from scipy.optimize import linprog
 
-from ..base import BaseEstimator, RegressorMixin
-from ._base import LinearModel
-from ..exceptions import ConvergenceWarning
-from ..utils import _safe_indexing
-from ..utils.validation import _check_sample_weight
-from ..utils.fixes import sp_version, parse_version
+from sklearn.base import BaseEstimator, RegressorMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model._base import LinearModel
+from sklearn.utils import _safe_indexing
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.fixes import _sparse_eye_array
+from sklearn.utils.validation import _check_sample_weight, validate_data
 
 
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
@@ -41,19 +43,19 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     fit_intercept : bool, default=True
         Whether or not to fit the intercept.
 
-    solver : {'highs-ds', 'highs-ipm', 'highs', 'interior-point', \
-            'revised simplex'}, default='interior-point'
+    solver : {'highs-ds', 'highs-ipm', 'highs', 'revised simplex'}, default='highs'
         Method used by :func:`scipy.optimize.linprog` to solve the linear
-        programming formulation. Note that the highs methods are recommended
-        for usage with `scipy>=1.6.0` because they are the fastest ones.
-        Solvers "highs-ds", "highs-ipm" and "highs" support
-        sparse input data and, in fact, always convert to sparse csc.
+        programming formulation.
+
+        It is recommended to use the highs methods because
+        they are the fastest ones. Solvers "highs-ds", "highs-ipm" and "highs"
+        support sparse input data and, in fact, always convert to sparse csc.
+
+        .. versionchanged:: 1.4
+           The default of `solver` changed to `"highs"` in version 1.4.
 
     solver_options : dict, default=None
-        Additional parameters passed to :func:`scipy.optimize.linprog` as
-        options. If `None` and if `solver='interior-point'`, then
-        `{"lstsq": True}` is passed to :func:`scipy.optimize.linprog` for the
-        sake of stability.
+        Additional parameters passed to :func:`scipy.optimize.linprog` as options.
 
     Attributes
     ----------
@@ -65,8 +67,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -93,8 +93,16 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> X = rng.randn(n_samples, n_features)
     >>> reg = QuantileRegressor(quantile=0.8).fit(X, y)
     >>> np.mean(y <= reg.predict(X))
-    0.8
+    np.float64(0.8)
     """
+
+    _parameter_constraints: dict = {
+        "quantile": [Interval(Real, 0, 1, closed="neither")],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "fit_intercept": ["boolean"],
+        "solver": [StrOptions({"highs-ds", "highs-ipm", "highs", "revised simplex"})],
+        "solver_options": [dict, None],
+    }
 
     def __init__(
         self,
@@ -102,7 +110,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         quantile=0.5,
         alpha=1.0,
         fit_intercept=True,
-        solver="interior-point",
+        solver="highs",
         solver_options=None,
     ):
         self.quantile = quantile
@@ -111,6 +119,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self.solver = solver
         self.solver_options = solver_options
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
 
@@ -130,7 +139,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         self : object
             Returns self.
         """
-        X, y = self._validate_data(
+        X, y = validate_data(
+            self,
             X,
             y,
             accept_sparse=["csc", "csr", "coo"],
@@ -149,61 +159,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         # The objective is defined as 1/n * sum(pinball loss) + alpha * L1.
         # So we rescale the penalty term, which is equivalent.
-        if self.alpha >= 0:
-            alpha = np.sum(sample_weight) * self.alpha
-        else:
-            raise ValueError(
-                f"Penalty alpha must be a non-negative number, got {self.alpha}"
-            )
-
-        if self.quantile >= 1.0 or self.quantile <= 0.0:
-            raise ValueError(
-                f"Quantile should be strictly between 0.0 and 1.0, got {self.quantile}"
-            )
-
-        if not isinstance(self.fit_intercept, bool):
-            raise ValueError(
-                f"The argument fit_intercept must be bool, got {self.fit_intercept}"
-            )
-
-        if self.solver not in (
-            "highs-ds",
-            "highs-ipm",
-            "highs",
-            "interior-point",
-            "revised simplex",
-        ):
-            raise ValueError(f"Invalid value for argument solver, got {self.solver}")
-        elif self.solver in (
-            "highs-ds",
-            "highs-ipm",
-            "highs",
-        ) and sp_version < parse_version("1.6.0"):
-            raise ValueError(
-                f"Solver {self.solver} is only available "
-                f"with scipy>=1.6.0, got {sp_version}"
-            )
+        alpha = np.sum(sample_weight) * self.alpha
 
         if sparse.issparse(X) and self.solver not in ["highs", "highs-ds", "highs-ipm"]:
             raise ValueError(
                 f"Solver {self.solver} does not support sparse X. "
                 "Use solver 'highs' for example."
             )
-
-        if self.solver_options is not None and not isinstance(
-            self.solver_options, dict
-        ):
-            raise ValueError(
-                "Invalid value for argument solver_options, "
-                "must be None or a dictionary, got "
-                f"{self.solver_options}"
-            )
-
-        # make default solver more stable
-        if self.solver_options is None and self.solver == "interior-point":
-            solver_options = {"lstsq": True}
-        else:
-            solver_options = self.solver_options
 
         # After rescaling alpha, the minimization problem is
         #     min sum(pinball loss) + alpha * L1
@@ -248,9 +210,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             # even for optimization problems parametrized using dense numpy arrays.
             # Therefore, we work with CSC matrices as early as possible to limit
             # unnecessary repeated memory copies.
-            eye = sparse.eye(n_indices, dtype=X.dtype, format="csc")
+            eye = _sparse_eye_array(n_indices, dtype=X.dtype, format="csc")
             if self.fit_intercept:
-                ones = sparse.csc_matrix(np.ones(shape=(n_indices, 1), dtype=X.dtype))
+                ones = sparse.csc_array(np.ones(shape=(n_indices, 1), dtype=X.dtype))
                 A_eq = sparse.hstack([ones, X, -ones, -X, eye, -eye], format="csc")
             else:
                 A_eq = sparse.hstack([X, -X, eye, -eye], format="csc")
@@ -269,7 +231,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             A_eq=A_eq,
             b_eq=b_eq,
             method=self.solver,
-            options=solver_options,
+            options=self.solver_options,
         )
         solution = result.x
         if not result.success:
@@ -302,3 +264,8 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             self.coef_ = params
             self.intercept_ = 0.0
         return self
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        return tags

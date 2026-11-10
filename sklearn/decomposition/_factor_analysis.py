@@ -13,26 +13,30 @@ http://www.cs.ucl.ac.uk/staff/d.barber/brml,
 Algorithm 21.1
 """
 
-# Author: Christian Osendorfer <osendorf@gmail.com>
-#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
-
-# License: BSD3
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
-from math import sqrt, log
+from math import log, sqrt
+from numbers import Integral, Real
+
 import numpy as np
 from scipy import linalg
 
+from sklearn.base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.extmath import _randomized_svd, fast_logdet, squared_norm
+from sklearn.utils.validation import check_is_fitted, validate_data
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
-from ..utils import check_random_state
-from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
-from ..utils.validation import check_is_fitted
-from ..exceptions import ConvergenceWarning
 
-
-class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Factor Analysis (FA).
 
     A simple linear generative model with Gaussian latent variables.
@@ -45,15 +49,13 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
 
     If we would restrict the model further, by assuming that the Gaussian
     noise is even isotropic (all diagonal entries are the same) we would obtain
-    :class:`PPCA`.
+    :class:`PCA`.
 
     FactorAnalysis performs a maximum likelihood estimate of the so-called
     `loading` matrix, the transformation of the latent variables to the
     observed ones, using SVD based approach.
 
     Read more in the :ref:`User Guide <FA>`.
-
-    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -72,7 +74,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
     max_iter : int, default=1000
         Maximum number of iterations.
 
-    noise_variance_init : ndarray of shape (n_features,), default=None
+    noise_variance_init : array-like of shape (n_features,), default=None
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features).
 
@@ -95,8 +97,6 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         `"The varimax criterion for analytic rotation in factor analysis"
         <https://link.springer.com/article/10.1007%2FBF02289233>`_
         H. F. Kaiser, 1958.
-
-        .. versionadded:: 0.24
 
     random_state : int or RandomState instance, default=0
         Only used when ``svd_method`` equals 'randomized'. Pass an int for
@@ -122,8 +122,6 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -159,6 +157,18 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
     (1797, 7)
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 0, None, closed="left"), None],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "copy": ["boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "noise_variance_init": ["array-like", None],
+        "svd_method": [StrOptions({"randomized", "lapack"})],
+        "iterated_power": [Interval(Integral, 0, None, closed="left")],
+        "rotation": [StrOptions({"varimax", "quartimax"}), None],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -183,6 +193,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         self.random_state = random_state
         self.rotation = rotation
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the FactorAnalysis model to X using SVD based approach.
 
@@ -199,14 +210,9 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         self : object
             FactorAnalysis class instance.
         """
-
-        if self.svd_method not in ["lapack", "randomized"]:
-            raise ValueError(
-                f"SVD method {self.svd_method!r} is not supported. Possible methods "
-                "are either 'lapack' or 'randomized'."
-            )
-
-        X = self._validate_data(X, copy=self.copy, dtype=np.float64)
+        X = validate_data(
+            self, X, copy=self.copy, dtype=np.float64, force_writeable=True
+        )
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -248,23 +254,17 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
                     squared_norm(s[n_components:]),
                 )
 
-        elif self.svd_method == "randomized":
+        else:  # svd_method == "randomized"
             random_state = check_random_state(self.random_state)
 
             def my_svd(X):
-                _, s, Vt = randomized_svd(
+                _, s, Vt = _randomized_svd(
                     X,
                     n_components,
                     random_state=random_state,
                     n_iter=self.iterated_power,
                 )
                 return s, Vt, squared_norm(X) - squared_norm(s)
-
-        else:
-            raise ValueError(
-                "SVD method %s is not supported. Please consider the documentation"
-                % self.svd_method
-            )
 
         for i in range(self.max_iter):
             # SMALL helps numerics
@@ -289,8 +289,8 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         else:
             warnings.warn(
                 "FactorAnalysis did not converge."
-                + " You might want"
-                + " to increase the number of iterations.",
+                " You might want"
+                " to increase the number of iterations.",
                 ConvergenceWarning,
             )
 
@@ -320,7 +320,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         Ih = np.eye(len(self.components_))
 
         X_transformed = X - self.mean_
@@ -390,7 +390,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
             Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
-        X = self._validate_data(X, reset=False)
+        X = validate_data(self, X, reset=False)
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]
@@ -419,14 +419,9 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
     def _rotate(self, components, n_components=None, tol=1e-6):
         "Rotate the factor analysis solution."
         # note that tol is not exposed
-        implemented = ("varimax", "quartimax")
-        method = self.rotation
-        if method in implemented:
-            return _ortho_rotation(components.T, method=method, tol=tol)[
-                : self.n_components
-            ]
-        else:
-            raise ValueError("'method' must be in %s, not %s" % (implemented, method))
+        return _ortho_rotation(components.T, method=self.rotation, tol=tol)[
+            : self.n_components
+        ]
 
     @property
     def _n_features_out(self):

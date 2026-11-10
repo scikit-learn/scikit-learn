@@ -1,3 +1,9 @@
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import warnings
+
+
 class Bunch(dict):
     """Container object exposing keys as attributes.
 
@@ -24,6 +30,22 @@ class Bunch(dict):
     def __init__(self, **kwargs):
         super().__init__(kwargs)
 
+        # Map from deprecated key to warning message
+        self.__dict__["_deprecated_key_to_warnings"] = {}
+
+    def __getitem__(self, key):
+        if key in self.__dict__.get("_deprecated_key_to_warnings", {}):
+            warnings.warn(
+                self._deprecated_key_to_warnings[key],
+                FutureWarning,
+            )
+        return super().__getitem__(key)
+
+    def _set_deprecated(self, value, *, new_key, deprecated_key, warning_message):
+        """Set key in dictionary to be deprecated with its warning message."""
+        self.__dict__["_deprecated_key_to_warnings"][deprecated_key] = warning_message
+        self[new_key] = self[deprecated_key] = value
+
     def __setattr__(self, key, value):
         self[key] = value
 
@@ -37,7 +59,7 @@ class Bunch(dict):
             raise AttributeError(key)
 
     def __setstate__(self, state):
-        # Bunch pickles generated with scikit-learn 0.16.* have an non
+        # Bunch pickles generated with scikit-learn 0.16.* have a non
         # empty __dict__. This causes a surprising behaviour when
         # loading these pickles scikit-learn 0.17: reading bunch.key
         # uses __dict__ but assigning to bunch.key use __setattr__ and

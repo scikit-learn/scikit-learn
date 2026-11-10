@@ -1,29 +1,28 @@
-"""Restricted Boltzmann Machine
-"""
+"""Restricted Boltzmann Machine"""
 
-# Authors: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
-#          Vlad Niculae
-#          Gabriel Synnaeve
-#          Lars Buitinck
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import time
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import expit  # logistic function
 
-from ..base import BaseEstimator
-from ..base import TransformerMixin
-from ..base import _ClassNamePrefixFeaturesOutMixin
-from ..utils import check_random_state
-from ..utils import gen_even_slices
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import log_logistic
-from ..utils.validation import check_is_fitted
+from sklearn.base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.utils import check_random_state, gen_even_slices
+from sklearn.utils._param_validation import Interval
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 
-class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
@@ -89,8 +88,6 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -124,7 +121,19 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)
     BernoulliRBM(n_components=2)
+
+    For a more detailed example usage, see
+    :ref:`sphx_glr_auto_examples_neural_networks_plot_rbm_logistic_classification.py`.
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "learning_rate": [Interval(Real, 0, None, closed="neither")],
+        "batch_size": [Interval(Integral, 1, None, closed="left")],
+        "n_iter": [Interval(Integral, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,
@@ -158,8 +167,8 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         """
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, accept_sparse="csr", reset=False, dtype=(np.float64, np.float32)
+        X = validate_data(
+            self, X, accept_sparse="csr", reset=False, dtype=(np.float64, np.float32)
         )
         return self._mean_hiddens(X)
 
@@ -258,6 +267,7 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
 
         return v_
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None):
         """Fit the model to the partial segment of the data X.
 
@@ -275,8 +285,8 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
             The fitted model.
         """
         first_pass = not hasattr(self, "components_")
-        X = self._validate_data(
-            X, accept_sparse="csr", dtype=np.float64, reset=first_pass
+        X = validate_data(
+            self, X, accept_sparse="csr", dtype=np.float64, reset=first_pass
         )
         if not hasattr(self, "random_state_"):
             self.random_state_ = check_random_state(self.random_state)
@@ -350,22 +360,27 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         """
         check_is_fitted(self)
 
-        v = self._validate_data(X, accept_sparse="csr", reset=False)
+        v = validate_data(self, X, accept_sparse="csr", reset=False)
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.
         ind = (np.arange(v.shape[0]), rng.randint(0, v.shape[1], v.shape[0]))
         if sp.issparse(v):
             data = -2 * v[ind] + 1
-            v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
+            if isinstance(data, np.matrix):  # v is a sparse matrix
+                v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
+            else:  # v is a sparse array
+                v_ = v + sp.csr_array((data.ravel(), ind), shape=v.shape)
         else:
             v_ = v.copy()
             v_[ind] = 1 - v_[ind]
 
         fe = self._free_energy(v)
         fe_ = self._free_energy(v_)
-        return v.shape[1] * log_logistic(fe_ - fe)
+        # log(expit(x)) = log(1 / (1 + exp(-x)) = -np.logaddexp(0, -x)
+        return -v.shape[1] * np.logaddexp(0, -(fe_ - fe))
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model to the data X.
 
@@ -382,7 +397,7 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         self : BernoulliRBM
             The fitted model.
         """
-        X = self._validate_data(X, accept_sparse="csr", dtype=(np.float64, np.float32))
+        X = validate_data(self, X, accept_sparse="csr", dtype=(np.float64, np.float32))
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
@@ -421,14 +436,8 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
 
         return self
 
-    def _more_tags(self):
-        return {
-            "_xfail_checks": {
-                "check_methods_subset_invariance": (
-                    "fails for the decision_function method"
-                ),
-                "check_methods_sample_order_invariance": (
-                    "fails for the score_samples method"
-                ),
-            }
-        }
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.sparse = True
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

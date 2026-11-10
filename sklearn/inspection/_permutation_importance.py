@@ -1,21 +1,30 @@
 """Permutation importance for estimators."""
-import numbers
-import numpy as np
-from joblib import Parallel
 
-from ..ensemble._bagging import _generate_indices
-from ..metrics import check_scoring
-from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
-from ..model_selection._validation import _aggregate_score_dicts
-from ..utils import Bunch, _safe_indexing
-from ..utils import check_random_state
-from ..utils import check_array
-from ..utils.fixes import delayed
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
+
+import numbers
+
+import numpy as np
+
+from sklearn.ensemble._bagging import _generate_indices
+from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.model_selection._validation import _aggregate_score_dicts
+from sklearn.utils import Bunch, _safe_indexing, check_array, check_random_state
+from sklearn.utils._param_validation import (
+    HasMethods,
+    Integral,
+    Interval,
+    RealNotInt,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.parallel import Parallel, delayed
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):
     if sample_weight is not None:
-        return scorer(estimator, X, y, sample_weight)
+        return scorer(estimator, X, y, sample_weight=sample_weight)
     return scorer(estimator, X, y)
 
 
@@ -48,6 +57,8 @@ def _calculate_permutation_scores(
         )
         X_permuted = _safe_indexing(X, row_indices, axis=0)
         y = _safe_indexing(y, row_indices, axis=0)
+        if sample_weight is not None:
+            sample_weight = _safe_indexing(sample_weight, row_indices, axis=0)
     else:
         X_permuted = X.copy()
 
@@ -58,7 +69,7 @@ def _calculate_permutation_scores(
         if hasattr(X_permuted, "iloc"):
             col = X_permuted.iloc[shuffling_idx, col_idx]
             col.index = X_permuted.index
-            X_permuted.iloc[:, col_idx] = col
+            X_permuted[X_permuted.columns[col_idx]] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
@@ -100,6 +111,30 @@ def _create_importances_bunch(baseline_score, permuted_score):
     )
 
 
+@validate_params(
+    {
+        "estimator": [HasMethods(["fit"])],
+        "X": ["array-like"],
+        "y": ["array-like", None],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            tuple,
+            dict,
+            None,
+        ],
+        "n_repeats": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
+        "sample_weight": ["array-like", None],
+        "max_samples": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(RealNotInt, 0, 1, closed="right"),
+        ],
+    },
+    prefer_skip_nested_validation=True,
+)
 def permutation_importance(
     estimator,
     X,
@@ -141,21 +176,22 @@ def permutation_importance(
         Scorer to use.
         If `scoring` represents a single score, one can use:
 
-        - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+        - str: see :ref:`scoring_string_names` for options.
+        - callable: a scorer callable object (e.g., function) with signature
+          ``scorer(estimator, X, y)``. See :ref:`scoring_callable` for details.
+        - `None`: the `estimator`'s
+          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
         - a list or tuple of unique strings;
         - a callable returning a dictionary where the keys are the metric
           names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a dictionary with metric names as keys and callables as values.
 
         Passing multiple scores to `scoring` is more efficient than calling
         `permutation_importance` for each of the scores as it reuses
         predictions to avoid redundant computation.
-
-        If None, the estimator's default scorer is used.
 
     n_repeats : int, default=5
         Number of times to permute a feature.
@@ -175,8 +211,6 @@ def permutation_importance(
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights used in scoring.
-
-        .. versionadded:: 0.24
 
     max_samples : int or float, default=1.0
         The number of samples to draw from X to compute feature importance
@@ -226,12 +260,12 @@ def permutation_importance(
     >>> result = permutation_importance(clf, X, y, n_repeats=10,
     ...                                 random_state=0)
     >>> result.importances_mean
-    array([0.4666..., 0.       , 0.       ])
+    array([0.4666, 0.       , 0.       ])
     >>> result.importances_std
-    array([0.2211..., 0.       , 0.       ])
+    array([0.2211, 0.       , 0.       ])
     """
     if not hasattr(X, "iloc"):
-        X = check_array(X, force_all_finite="allow-nan", dtype=None)
+        X = check_array(X, ensure_all_finite="allow-nan", dtype=None)
 
     # Precompute random seed from the random state to be used
     # to get a fresh independent RandomState instance for each
@@ -243,17 +277,10 @@ def permutation_importance(
 
     if not isinstance(max_samples, numbers.Integral):
         max_samples = int(max_samples * X.shape[0])
-    elif not (0 < max_samples <= X.shape[0]):
-        raise ValueError("max_samples must be in (0, n_samples]")
+    elif max_samples > X.shape[0]:
+        raise ValueError("max_samples must be <= n_samples")
 
-    if callable(scoring):
-        scorer = scoring
-    elif scoring is None or isinstance(scoring, str):
-        scorer = check_scoring(estimator, scoring=scoring)
-    else:
-        scorers_dict = _check_multimetric_scoring(estimator, scoring)
-        scorer = _MultimetricScorer(**scorers_dict)
-
+    scorer = check_scoring(estimator, scoring=scoring)
     baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
     scores = Parallel(n_jobs=n_jobs)(

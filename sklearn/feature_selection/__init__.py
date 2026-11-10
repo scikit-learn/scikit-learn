@@ -1,53 +1,53 @@
+"""Feature selection algorithms.
+
+These include univariate filter selection methods and the recursive feature elimination
+algorithm.
 """
-The :mod:`sklearn.feature_selection` module implements feature selection
-algorithms. It currently includes univariate filter selection methods and the
-recursive feature elimination algorithm.
-"""
 
-from ._univariate_selection import chi2
-from ._univariate_selection import f_classif
-from ._univariate_selection import f_oneway
-from ._univariate_selection import f_regression
-from ._univariate_selection import r_regression
-from ._univariate_selection import SelectPercentile
-from ._univariate_selection import SelectKBest
-from ._univariate_selection import SelectFpr
-from ._univariate_selection import SelectFdr
-from ._univariate_selection import SelectFwe
-from ._univariate_selection import GenericUnivariateSelect
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-from ._variance_threshold import VarianceThreshold
-
-from ._rfe import RFE
-from ._rfe import RFECV
-
-from ._from_model import SelectFromModel
-
-from ._sequential import SequentialFeatureSelector
-
-from ._mutual_info import mutual_info_regression, mutual_info_classif
-
-from ._base import SelectorMixin
-
+from sklearn.feature_selection._base import SelectorMixin
+from sklearn.feature_selection._from_model import SelectFromModel
+from sklearn.feature_selection._mutual_info import (
+    mutual_info_classif,
+    mutual_info_regression,
+)
+from sklearn.feature_selection._rfe import RFE, RFECV
+from sklearn.feature_selection._sequential import SequentialFeatureSelector
+from sklearn.feature_selection._univariate_selection import (
+    GenericUnivariateSelect,
+    SelectFdr,
+    SelectFpr,
+    SelectFwe,
+    SelectKBest,
+    SelectPercentile,
+    chi2,
+    f_classif,
+    f_oneway,
+    f_regression,
+    r_regression,
+)
+from sklearn.feature_selection._variance_threshold import VarianceThreshold
 
 __all__ = [
-    "GenericUnivariateSelect",
-    "SequentialFeatureSelector",
     "RFE",
     "RFECV",
+    "GenericUnivariateSelect",
     "SelectFdr",
     "SelectFpr",
+    "SelectFromModel",
     "SelectFwe",
     "SelectKBest",
-    "SelectFromModel",
     "SelectPercentile",
+    "SelectorMixin",
+    "SequentialFeatureSelector",
     "VarianceThreshold",
     "chi2",
     "f_classif",
     "f_oneway",
     "f_regression",
-    "r_regression",
     "mutual_info_classif",
     "mutual_info_regression",
-    "SelectorMixin",
+    "r_regression",
 ]

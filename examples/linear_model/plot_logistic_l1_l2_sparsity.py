@@ -4,27 +4,25 @@ L1 Penalty and Sparsity in Logistic Regression
 ==============================================
 
 Comparison of the sparsity (percentage of zero coefficients) of solutions when
-L1, L2 and Elastic-Net penalty are used for different values of C. We can see
-that large values of C give more freedom to the model.  Conversely, smaller
-values of C constrain the model more. In the L1 penalty case, this leads to
+L1, L2 and Elastic-Net penalty are used for different values of alpha. We can see
+that small values of alpha give more freedom to the model. Conversely, larger
+values of alpha constrain the model more. In the L1 penalty case, this leads to
 sparser solutions. As expected, the Elastic-Net penalty sparsity is between
 that of L1 and L2.
 
 We classify 8x8 images of digits into two classes: 0-4 against 5-9.
-The visualization shows coefficients of the models for varying C.
+The visualization shows coefficients of the models for varying alpha.
 
 """
 
-# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Mathieu Blondel <mathieu@mblondel.org>
-#          Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
+from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
 X, y = datasets.load_digits(return_X_y=True)
@@ -39,13 +37,12 @@ l1_ratio = 0.5  # L1 weight in the Elastic-Net regularization
 fig, axes = plt.subplots(3, 3)
 
 # Set regularization parameter
-for i, (C, axes_row) in enumerate(zip((1, 0.1, 0.01), axes)):
-    # turn down tolerance for short training time
-    clf_l1_LR = LogisticRegression(C=C, penalty="l1", tol=0.01, solver="saga")
-    clf_l2_LR = LogisticRegression(C=C, penalty="l2", tol=0.01, solver="saga")
-    clf_en_LR = LogisticRegression(
-        C=C, penalty="elasticnet", solver="saga", l1_ratio=l1_ratio, tol=0.01
-    )
+params = dict(tol=0.01, solver="saga")
+for i, (alpha, axes_row) in enumerate(zip((1, 1e1, 1e2), axes)):
+    # Increase tolerance for short training time
+    clf_l1_LR = LogisticRegression(alpha=alpha, l1_ratio=1, **params)
+    clf_l2_LR = LogisticRegression(alpha=alpha, l1_ratio=0, **params)
+    clf_en_LR = LogisticRegression(alpha=alpha, l1_ratio=l1_ratio, **params)
     clf_l1_LR.fit(X, y)
     clf_l2_LR.fit(X, y)
     clf_en_LR.fit(X, y)
@@ -61,15 +58,13 @@ for i, (C, axes_row) in enumerate(zip((1, 0.1, 0.01), axes)):
     sparsity_l2_LR = np.mean(coef_l2_LR == 0) * 100
     sparsity_en_LR = np.mean(coef_en_LR == 0) * 100
 
-    print("C=%.2f" % C)
-    print("{:<40} {:.2f}%".format("Sparsity with L1 penalty:", sparsity_l1_LR))
-    print("{:<40} {:.2f}%".format("Sparsity with Elastic-Net penalty:", sparsity_en_LR))
-    print("{:<40} {:.2f}%".format("Sparsity with L2 penalty:", sparsity_l2_LR))
-    print("{:<40} {:.2f}".format("Score with L1 penalty:", clf_l1_LR.score(X, y)))
-    print(
-        "{:<40} {:.2f}".format("Score with Elastic-Net penalty:", clf_en_LR.score(X, y))
-    )
-    print("{:<40} {:.2f}".format("Score with L2 penalty:", clf_l2_LR.score(X, y)))
+    print(f"alpha={alpha:.2f}")
+    print(f"{'Sparsity with L1 penalty:':<40} {sparsity_l1_LR:.2f}%")
+    print(f"{'Sparsity with Elastic-Net penalty:':<40} {sparsity_en_LR:.2f}%")
+    print(f"{'Sparsity with L2 penalty:':<40} {sparsity_l2_LR:.2f}%")
+    print(f"{'Score with L1 penalty:':<40} {clf_l1_LR.score(X, y):.2f}")
+    print(f"{'Score with Elastic-Net penalty:':<40} {clf_en_LR.score(X, y):.2f}")
+    print(f"{'Score with L2 penalty:':<40} {clf_l2_LR.score(X, y):.2f}")
 
     if i == 0:
         axes_row[0].set_title("L1 penalty")
@@ -87,6 +82,6 @@ for i, (C, axes_row) in enumerate(zip((1, 0.1, 0.01), axes)):
         ax.set_xticks(())
         ax.set_yticks(())
 
-    axes_row[0].set_ylabel("C = %s" % C)
+    axes_row[0].set_ylabel(f"alpha = {alpha}")
 
 plt.show()

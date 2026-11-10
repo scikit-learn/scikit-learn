@@ -1,6 +1,4 @@
-.. Places parent toc into the sidebar
-
-:parenttoc: True
+:orphan:
 
 .. _developers_guide:
 
@@ -8,18 +6,19 @@
 Developer's Guide
 =================
 
-.. include:: ../includes/big_toc_css.rst
-.. include:: ../tune_toc.rst
-
 .. toctree::
 
    contributing
+   development_setup
+   global_configuration
    minimal_reproducer
    develop
    tips
    utilities
    performance
-   advanced_installation
+   cython
+   misc_info
    bug_triaging
    maintainer
    plotting
+   callbacks

@@ -5,22 +5,32 @@ Reference: Tables 8.3 and 8.4 page 196 in the book:
 Independent Component Analysis, by  Hyvarinen et al.
 """
 
-# Authors: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
-#          Bertrand Thirion, Alexandre Gramfort, Denis A. Engemann
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
-from ..exceptions import ConvergenceWarning
+from sklearn.base import (
+    BaseEstimator,
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _fit_context,
+)
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import as_float_array, check_array, check_random_state
+from sklearn.utils._param_validation import (
+    Interval,
+    Options,
+    StrOptions,
+    validate_params,
+)
+from sklearn.utils.validation import check_is_fitted, validate_data
 
-from ..utils import check_array, as_float_array, check_random_state
-from ..utils.validation import check_is_fitted
-
-__all__ = ["fastica", "FastICA"]
+__all__ = ["FastICA", "fastica"]
 
 
 def _gs_decorrelation(w, W, j):
@@ -112,30 +122,37 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_ - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
-        lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
+        # np.einsum allows having the lowest memory footprint.
+        # It is faster than np.diag(np.dot(W1, W.T)).
+        lim = max(abs(abs(np.einsum("ij,ij->i", W1, W)) - 1))
         W = W1
         if lim < tol:
             break
     else:
         warnings.warn(
-            "FastICA did not converge. Consider increasing "
-            "tolerance or the maximum number of iterations.",
+            (
+                "FastICA did not converge. Consider increasing "
+                "tolerance or the maximum number of iterations."
+            ),
             ConvergenceWarning,
         )
 
     return W, ii + 1
 
 
-# Some standard non-linear functions.
-# XXX: these should be optimized, as they can be a bottleneck.
 def _logcosh(x, fun_args=None):
-    alpha = fun_args.get("alpha", 1.0)  # comment it out?
+    alpha = fun_args.get("alpha", 1.0)
 
     x *= alpha
     gx = np.tanh(x, x)  # apply the tanh inplace
+
+    if x.ndim == 1:
+        return gx, alpha * (1 - gx**2)
+
+    # When the input is 2D, compute in a loop to avoid extra allocation
+    # of array of shape x.shape
     g_x = np.empty(x.shape[0], dtype=x.dtype)
-    # XXX compute in chunks to avoid extra allocation
-    for i, gx_i in enumerate(gx):  # please don't vectorize.
+    for i, gx_i in enumerate(gx):
         g_x[i] = (alpha * (1 - gx_i**2)).mean()
     return gx, g_x
 
@@ -151,17 +168,27 @@ def _cube(x, fun_args):
     return x**3, (3 * x**2).mean(axis=-1)
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "return_X_mean": ["boolean"],
+        "compute_sources": ["boolean"],
+        "return_n_iter": ["boolean"],
+    },
+    prefer_skip_nested_validation=False,
+)
 def fastica(
     X,
     n_components=None,
     *,
     algorithm="parallel",
-    whiten="warn",
+    whiten="unit-variance",
     fun="logcosh",
     fun_args=None,
     max_iter=200,
     tol=1e-04,
     w_init=None,
+    whiten_solver="svd",
     random_state=None,
     return_X_mean=False,
     compute_sources=True,
@@ -185,20 +212,18 @@ def fastica(
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Specify which algorithm to use for FastICA.
 
-    whiten : str or bool, default="warn"
+    whiten : str or bool, default='unit-variance'
         Specify the whitening strategy to use.
 
-        - If 'arbitrary-variance' (default), a whitening with variance
+        - If 'arbitrary-variance', a whitening with variance
           arbitrary is used.
         - If 'unit-variance', the whitening matrix is rescaled to ensure that
           each recovered source has unit variance.
         - If False, the data is already considered to be whitened, and no
           whitening is performed.
 
-        .. deprecated:: 1.1
-            Starting in v1.3, `whiten='unit-variance'` will be used by default.
-            `whiten=True` is deprecated from 1.1 and will raise ValueError in 1.3.
-            Use `whiten=arbitrary-variance` instead.
+        .. versionchanged:: 1.3
+            The default value of `whiten` changed to 'unit-variance' in 1.3.
 
     fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
         The functional form of the G function used in the
@@ -227,6 +252,18 @@ def fastica(
     w_init : ndarray of shape (n_components, n_components), default=None
         Initial un-mixing array. If `w_init=None`, then an array of values
         drawn from a normal distribution is used.
+
+    whiten_solver : {"eigh", "svd"}, default="svd"
+        The solver to use for whitening.
+
+        - "svd" is more stable numerically if the problem is degenerate, and
+          often faster when `n_samples <= n_features`.
+
+        - "eigh" is generally more memory efficient when
+          `n_samples >= n_features`, and can be faster when
+          `n_samples >= 50 * n_features`.
+
+        .. versionadded:: 1.2
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -290,6 +327,19 @@ def fastica(
     .. [1] A. Hyvarinen and E. Oja, "Fast Independent Component Analysis",
            Algorithms and Applications, Neural Networks, 13(4-5), 2000,
            pp. 411-430.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import fastica
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> K, W, S = fastica(X, n_components=7, random_state=0, whiten='unit-variance')
+    >>> K.shape
+    (7, 64)
+    >>> W.shape
+    (7, 7)
+    >>> S.shape
+    (1797, 7)
     """
     est = FastICA(
         n_components=n_components,
@@ -300,11 +350,13 @@ def fastica(
         max_iter=max_iter,
         tol=tol,
         w_init=w_init,
+        whiten_solver=whiten_solver,
         random_state=random_state,
     )
-    S = est._fit(X, compute_sources=compute_sources)
+    est._validate_params()
+    S = est._fit_transform(X, compute_sources=compute_sources)
 
-    if est._whiten in ["unit-variance", "arbitrary-variance"]:
+    if est.whiten in ["unit-variance", "arbitrary-variance"]:
         K = est.whitening_
         X_mean = est.mean_
     else:
@@ -320,7 +372,7 @@ def fastica(
     return returned_values
 
 
-class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     The implementation is based on [1]_.
@@ -335,20 +387,18 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     algorithm : {'parallel', 'deflation'}, default='parallel'
         Specify which algorithm to use for FastICA.
 
-    whiten : str or bool, default="warn"
+    whiten : str or bool, default='unit-variance'
         Specify the whitening strategy to use.
 
-        - If 'arbitrary-variance' (default), a whitening with variance
+        - If 'arbitrary-variance', a whitening with variance
           arbitrary is used.
         - If 'unit-variance', the whitening matrix is rescaled to ensure that
           each recovered source has unit variance.
         - If False, the data is already considered to be whitened, and no
           whitening is performed.
 
-        .. deprecated:: 1.1
-            Starting in v1.3, `whiten='unit-variance'` will be used by default.
-            `whiten=True` is deprecated from 1.1 and will raise ValueError in 1.3.
-            Use `whiten=arbitrary-variance` instead.
+        .. versionchanged:: 1.3
+            The default value of `whiten` changed to 'unit-variance' in 1.3.
 
     fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
         The functional form of the G function used in the
@@ -374,9 +424,21 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         A positive scalar giving the tolerance at which the
         un-mixing matrix is considered to have converged.
 
-    w_init : ndarray of shape (n_components, n_components), default=None
+    w_init : array-like of shape (n_components, n_components), default=None
         Initial un-mixing array. If `w_init=None`, then an array of values
         drawn from a normal distribution is used.
+
+    whiten_solver : {"eigh", "svd"}, default="svd"
+        The solver to use for whitening.
+
+        - "svd" is more stable numerically if the problem is degenerate, and
+          often faster when `n_samples <= n_features`.
+
+        - "eigh" is generally more memory efficient when
+          `n_samples >= n_features`, and can be faster when
+          `n_samples >= 50 * n_features`.
+
+        .. versionadded:: 1.2
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -401,8 +463,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -446,17 +506,34 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     (1797, 7)
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "algorithm": [StrOptions({"parallel", "deflation"})],
+        "whiten": [
+            StrOptions({"arbitrary-variance", "unit-variance"}),
+            Options(bool, {False}),
+        ],
+        "fun": [StrOptions({"logcosh", "exp", "cube"}), callable],
+        "fun_args": [dict, None],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "w_init": ["array-like", None],
+        "whiten_solver": [StrOptions({"eigh", "svd"})],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_components=None,
         *,
         algorithm="parallel",
-        whiten="warn",
+        whiten="unit-variance",
         fun="logcosh",
         fun_args=None,
         max_iter=200,
         tol=1e-4,
         w_init=None,
+        whiten_solver="svd",
         random_state=None,
     ):
         super().__init__()
@@ -468,9 +545,10 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self.max_iter = max_iter
         self.tol = tol
         self.w_init = w_init
+        self.whiten_solver = whiten_solver
         self.random_state = random_state
 
-    def _fit(self, X, compute_sources=False):
+    def _fit_transform(self, X, compute_sources=False):
         """Fit the model.
 
         Parameters
@@ -488,27 +566,12 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         S : ndarray of shape (n_samples, n_components) or None
             Sources matrix. `None` if `compute_sources` is `False`.
         """
-        self._whiten = self.whiten
-
-        if self._whiten == "warn":
-            warnings.warn(
-                "Starting in v1.3, whiten='unit-variance' will be used by default.",
-                FutureWarning,
-            )
-            self._whiten = "arbitrary-variance"
-
-        if self._whiten is True:
-            warnings.warn(
-                "Starting in v1.3, whiten=True should be specified as "
-                "whiten='arbitrary-variance' (its current behaviour). This "
-                "behavior is deprecated in 1.1 and will raise ValueError in 1.3.",
-                FutureWarning,
-                stacklevel=2,
-            )
-            self._whiten = "arbitrary-variance"
-
-        XT = self._validate_data(
-            X, copy=self._whiten, dtype=[np.float64, np.float32], ensure_min_samples=2
+        XT = validate_data(
+            self,
+            X,
+            copy=self.whiten,
+            dtype=[np.float64, np.float32],
+            ensure_min_samples=2,
         ).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
@@ -528,18 +591,9 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             def g(x, fun_args):
                 return self.fun(x, **fun_args)
 
-        else:
-            exc = ValueError if isinstance(self.fun, str) else TypeError
-            raise exc(
-                "Unknown function %r;"
-                " should be one of 'logcosh', 'exp', 'cube' or callable"
-                % self.fun
-            )
-
         n_features, n_samples = XT.shape
-
         n_components = self.n_components
-        if not self._whiten and n_components is not None:
+        if not self.whiten and n_components is not None:
             n_components = None
             warnings.warn("Ignoring n_components with whiten=False.")
 
@@ -551,15 +605,33 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                 "n_components is too large: it will be set to %s" % n_components
             )
 
-        if self._whiten:
+        if self.whiten:
             # Centering the features of X
             X_mean = XT.mean(axis=-1)
             XT -= X_mean[:, np.newaxis]
 
             # Whitening and preprocessing by PCA
-            u, d, _ = linalg.svd(XT, full_matrices=False, check_finite=False)
+            if self.whiten_solver == "eigh":
+                # Faster when num_samples >> n_features
+                d, u = linalg.eigh(XT.dot(X))
+                sort_indices = np.argsort(d)[::-1]
+                eps = np.finfo(d.dtype).eps * 10
+                degenerate_idx = d < eps
+                if np.any(degenerate_idx):
+                    warnings.warn(
+                        "There are some small singular values, using "
+                        "whiten_solver = 'svd' might lead to more "
+                        "accurate results."
+                    )
+                d[degenerate_idx] = eps  # For numerical issues
+                np.sqrt(d, out=d)
+                d, u = d[sort_indices], u[:, sort_indices]
+            elif self.whiten_solver == "svd":
+                u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
 
-            del _
+            # Give consistent eigenvectors for both svd solvers
+            u *= np.sign(u[0])
+
             K = (u / d).T[:n_components]  # see (6.33) p.140
             del u, d
             X1 = np.dot(K, XT)
@@ -585,13 +657,6 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
                     % {"shape": (n_components, n_components)}
                 )
 
-        if self.max_iter < 1:
-            raise ValueError(
-                "max_iter should be greater than 1, got (max_iter={})".format(
-                    self.max_iter
-                )
-            )
-
         kwargs = {
             "tol": self.tol,
             "g": g,
@@ -604,24 +669,20 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             W, n_iter = _ica_par(X1, **kwargs)
         elif self.algorithm == "deflation":
             W, n_iter = _ica_def(X1, **kwargs)
-        else:
-            raise ValueError(
-                "Invalid algorithm: must be either `parallel` or `deflation`."
-            )
         del X1
 
         self.n_iter_ = n_iter
 
         if compute_sources:
-            if self._whiten:
+            if self.whiten:
                 S = np.linalg.multi_dot([W, K, XT]).T
             else:
                 S = np.dot(W, XT).T
         else:
             S = None
 
-        if self._whiten:
-            if self._whiten == "unit-variance":
+        if self.whiten:
+            if self.whiten == "unit-variance":
                 if not compute_sources:
                     S = np.linalg.multi_dot([W, K, XT]).T
                 S_std = np.std(S, axis=0, keepdims=True)
@@ -639,6 +700,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         return S
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit_transform(self, X, y=None):
         """Fit the model and recover the sources from X.
 
@@ -657,8 +719,9 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
             Estimated sources obtained by transforming the data with the
             estimated unmixing matrix.
         """
-        return self._fit(X, compute_sources=True)
+        return self._fit_transform(X, compute_sources=True)
 
+    @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None):
         """Fit the model to X.
 
@@ -676,7 +739,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         self : object
             Returns the instance itself.
         """
-        self._fit(X, compute_sources=False)
+        self._fit_transform(X, compute_sources=False)
         return self
 
     def transform(self, X, copy=True):
@@ -699,10 +762,14 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         """
         check_is_fitted(self)
 
-        X = self._validate_data(
-            X, copy=(copy and self._whiten), dtype=[np.float64, np.float32], reset=False
+        X = validate_data(
+            self,
+            X,
+            copy=(copy and self.whiten),
+            dtype=[np.float64, np.float32],
+            reset=False,
         )
-        if self._whiten:
+        if self.whiten:
             X -= self.mean_
 
         return np.dot(X, self.components_.T)
@@ -720,14 +787,14 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
 
         Returns
         -------
-        X_new : ndarray of shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             Reconstructed data obtained with the mixing matrix.
         """
         check_is_fitted(self)
 
-        X = check_array(X, copy=(copy and self._whiten), dtype=[np.float64, np.float32])
+        X = check_array(X, copy=(copy and self.whiten), dtype=[np.float64, np.float32])
         X = np.dot(X, self.mixing_.T)
-        if self._whiten:
+        if self.whiten:
             X += self.mean_
 
         return X
@@ -737,5 +804,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         """Number of transformed output features."""
         return self.components_.shape[0]
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float32, np.float64]}
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.transformer_tags.preserves_dtype = ["float64", "float32"]
+        return tags

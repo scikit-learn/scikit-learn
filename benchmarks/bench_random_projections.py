@@ -6,19 +6,20 @@ Random projection benchmark
 Benchmarks for random projections.
 
 """
-import gc
-import sys
-import optparse
-from datetime import datetime
+
 import collections
+import gc
+import optparse
+import sys
+from datetime import datetime
 
 import numpy as np
 import scipy.sparse as sp
 
 from sklearn import clone
 from sklearn.random_projection import (
-    SparseRandomProjection,
     GaussianRandomProjection,
+    SparseRandomProjection,
     johnson_lindenstrauss_min_dim,
 )
 
@@ -69,7 +70,7 @@ def bench_scikit_transformer(X, transformer):
 # Gaussian distributed values
 def make_sparse_random_data(n_samples, n_features, n_nonzeros, random_state=None):
     rng = np.random.RandomState(random_state)
-    data_coo = sp.coo_matrix(
+    data_coo = sp.coo_array(
         (
             rng.randn(n_nonzeros),
             (

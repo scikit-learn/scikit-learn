@@ -1,39 +1,46 @@
-"""Kernels for Gaussian process regression and classification.
+"""A set of kernels that can be combined by operators and used in Gaussian processes."""
 
-The kernels in this module allow kernel-engineering, i.e., they can be
-combined via the "+" and "*" operators or be exponentiated with a scalar
-via "**". These sum and product expressions can also contain scalar values,
-which are automatically converted to a constant kernel.
+# Kernels for Gaussian process regression and classification.
+#
+# The kernels in this module allow kernel-engineering, i.e., they can be
+# combined via the "+" and "*" operators or be exponentiated with a scalar
+# via "**". These sum and product expressions can also contain scalar values,
+# which are automatically converted to a constant kernel.
+#
+# All kernels allow (analytic) gradient-based hyperparameter optimization.
+# The space of hyperparameters can be specified by giving lower und upper
+# boundaries for the value of each hyperparameter (the search space is thus
+# rectangular). Instead of specifying bounds, hyperparameters can also be
+# declared to be "fixed", which causes these hyperparameters to be excluded from
+# optimization.
 
-All kernels allow (analytic) gradient-based hyperparameter optimization.
-The space of hyperparameters can be specified by giving lower und upper
-boundaries for the value of each hyperparameter (the search space is thus
-rectangular). Instead of specifying bounds, hyperparameters can also be
-declared to be "fixed", which causes these hyperparameters to be excluded from
-optimization.
-"""
 
-# Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-# License: BSD 3 clause
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
 # Note: this module is strongly inspired by the kernel module of the george
 #       package.
 
+import inspect
+import math
+import warnings
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-import math
-from inspect import signature
+from functools import lru_cache
 
 import numpy as np
-from scipy.special import kv, gamma
-from scipy.spatial.distance import pdist, cdist, squareform
+from scipy.spatial.distance import cdist, pdist, squareform
+from scipy.special import gamma, kv
 
-from ..metrics.pairwise import pairwise_kernels
-from ..base import clone
-from ..utils.validation import _num_samples
-from ..exceptions import ConvergenceWarning
+from sklearn.base import clone
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.utils.validation import _num_samples
 
-import warnings
+# Cache constructor signature inspection for kernels as it empirically
+# proves to account for 15% or more of the total grid-search time of GP
+# model on small to medium data.
+signature = lru_cache(maxsize=32)(inspect.signature)
 
 
 def _check_length_scale(X, length_scale):
@@ -54,8 +61,6 @@ class Hyperparameter(
     )
 ):
     """A kernel hyperparameter's specification in form of a namedtuple.
-
-    .. versionadded:: 0.18
 
     Attributes
     ----------
@@ -133,9 +138,7 @@ class Hyperparameter(
 
         if fixed is None:
             fixed = isinstance(bounds, str) and bounds == "fixed"
-        return super(Hyperparameter, cls).__new__(
-            cls, name, value_type, bounds, n_elements, fixed
-        )
+        return super().__new__(cls, name, value_type, bounds, n_elements, fixed)
 
     # This is mainly a testing utility to check that two hyperparameters
     # are equal.
@@ -152,7 +155,26 @@ class Hyperparameter(
 class Kernel(metaclass=ABCMeta):
     """Base class for all kernels.
 
-    .. versionadded:: 0.18
+    Examples
+    --------
+    >>> from sklearn.gaussian_process.kernels import Kernel, RBF
+    >>> import numpy as np
+    >>> class CustomKernel(Kernel):
+    ...     def __init__(self, length_scale=1.0):
+    ...         self.length_scale = length_scale
+    ...     def __call__(self, X, Y=None):
+    ...         if Y is None:
+    ...             Y = X
+    ...         return np.inner(X, X if Y is None else Y) ** 2
+    ...     def diag(self, X):
+    ...         return np.ones(X.shape[0])
+    ...     def is_stationary(self):
+    ...         return True
+    >>> kernel = CustomKernel(length_scale=2.0)
+    >>> X = np.array([[1, 2], [3, 4]])
+    >>> print(kernel(X))
+    [[ 25 121]
+     [121 625]]
     """
 
     def get_params(self, deep=True):
@@ -174,8 +196,7 @@ class Kernel(metaclass=ABCMeta):
         # introspect the constructor arguments to find the model parameters
         # to represent
         cls = self.__class__
-        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
-        init_sign = signature(init)
+        init_sign = signature(cls.__init__)
         args, varargs = [], []
         for parameter in init_sign.parameters.values():
             if parameter.kind != parameter.VAR_KEYWORD and parameter.name != "self":
@@ -440,10 +461,7 @@ class Kernel(metaclass=ABCMeta):
 
 
 class NormalizedKernelMixin:
-    """Mixin for kernels which are normalized: k(X, X)=1.
-
-    .. versionadded:: 0.18
-    """
+    """Mixin for kernels which are normalized: k(X, X)=1."""
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -466,10 +484,7 @@ class NormalizedKernelMixin:
 
 
 class StationaryKernelMixin:
-    """Mixin for kernels which are stationary: k(X, Y)= f(X-Y).
-
-    .. versionadded:: 0.18
-    """
+    """Mixin for kernels which are stationary: k(X, Y)= f(X-Y)."""
 
     def is_stationary(self):
         """Returns whether the kernel is stationary."""
@@ -479,8 +494,6 @@ class StationaryKernelMixin:
 class GenericKernelMixin:
     """Mixin for kernels which operate on generic objects such as variable-
     length sequences, trees, and graphs.
-
-    .. versionadded:: 0.22
     """
 
     @property
@@ -491,8 +504,6 @@ class GenericKernelMixin:
 
 class CompoundKernel(Kernel):
     """Kernel which is composed of a set of other kernels.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -654,10 +665,7 @@ class CompoundKernel(Kernel):
 
 
 class KernelOperator(Kernel):
-    """Base class for all kernel operators.
-
-    .. versionadded:: 0.18
-    """
+    """Base class for all kernel operators."""
 
     def __init__(self, k1, k2):
         self.k1 = k1
@@ -785,8 +793,6 @@ class Sum(KernelOperator):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     k1 : Kernel
@@ -880,8 +886,6 @@ class Product(KernelOperator):
     with `RBF() * RBF()`.
 
     Read more in the :ref:`User Guide <gp_kernels>`.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -982,8 +986,6 @@ class Exponentiation(Kernel):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     kernel : Kernel
@@ -1004,9 +1006,9 @@ class Exponentiation(Kernel):
     >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
-    0.419...
+    0.419
     >>> gpr.predict(X[:1,:], return_std=True)
-    (array([635.5...]), array([0.559...]))
+    (array([635.5]), array([0.559]))
     """
 
     def __init__(self, kernel, exponent):
@@ -1180,8 +1182,6 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     constant_value : float, default=1.0
@@ -1203,9 +1203,9 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
     >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
-    0.3696...
+    0.3696
     >>> gpr.predict(X[:1,:], return_std=True)
-    (array([606.1...]), array([0.24...]))
+    (array([606.1]), array([0.248]))
     """
 
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
@@ -1311,8 +1311,6 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     noise_level : float, default=1.0
@@ -1333,9 +1331,9 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
-    0.3680...
+    0.3680
     >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.0..., 592.1... ]), array([316.6..., 316.6...]))
+    (array([653.0, 592.1 ]), array([316.6, 316.6]))
     """
 
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
@@ -1421,7 +1419,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
 
 
 class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
-    """Radial-basis function kernel (aka squared-exponential kernel).
+    """Radial basis function kernel (aka squared-exponential kernel).
 
     The RBF kernel is a stationary kernel. It is also known as the
     "squared exponential" kernel. It is parameterized by a length scale
@@ -1442,8 +1440,6 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     See [2]_, Chapter 4, Section 4.2, for further details of the RBF kernel.
 
     Read more in the :ref:`User Guide <gp_kernels>`.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -1477,10 +1473,10 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     >>> gpc = GaussianProcessClassifier(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpc.score(X, y)
-    0.9866...
+    0.9866
     >>> gpc.predict_proba(X[:2,:])
-    array([[0.8354..., 0.03228..., 0.1322...],
-           [0.7906..., 0.0652..., 0.1441...]])
+    array([[0.8354, 0.03228, 0.1322],
+           [0.7906, 0.0652, 0.1441]])
     """
 
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
@@ -1605,8 +1601,6 @@ class Matern(RBF):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     length_scale : float or ndarray of shape (n_features,), default=1.0
@@ -1647,10 +1641,10 @@ class Matern(RBF):
     >>> gpc = GaussianProcessClassifier(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpc.score(X, y)
-    0.9866...
+    0.9866
     >>> gpc.predict_proba(X[:2,:])
-    array([[0.8513..., 0.0368..., 0.1117...],
-            [0.8086..., 0.0693..., 0.1220...]])
+    array([[0.8513, 0.0368, 0.1117],
+            [0.8086, 0.0693, 0.1220]])
     """
 
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5), nu=1.5):
@@ -1725,17 +1719,20 @@ class Matern(RBF):
 
             # We need to recompute the pairwise dimension-wise distances
             if self.anisotropic:
-                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (
-                    length_scale**2
-                )
+                D = (X[:, np.newaxis, :] - X[np.newaxis, :, :]) ** 2 / (length_scale**2)
             else:
                 D = squareform(dists**2)[:, :, np.newaxis]
 
             if self.nu == 0.5:
                 denominator = np.sqrt(D.sum(axis=2))[:, :, np.newaxis]
-                K_gradient = K[..., np.newaxis] * np.divide(
-                    D, denominator, where=denominator != 0
+                divide_result = np.zeros_like(D)
+                np.divide(
+                    D,
+                    denominator,
+                    out=divide_result,
+                    where=denominator != 0,
                 )
+                K_gradient = K[..., np.newaxis] * divide_result
             elif self.nu == 1.5:
                 K_gradient = 3 * D * np.exp(-np.sqrt(3 * D.sum(-1)))[..., np.newaxis]
             elif self.nu == 2.5:
@@ -1791,8 +1788,6 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     length_scale : float > 0, default=1.0
@@ -1827,10 +1822,10 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     >>> gpc = GaussianProcessClassifier(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpc.score(X, y)
-    0.9733...
+    0.9733
     >>> gpc.predict_proba(X[:2,:])
-    array([[0.8881..., 0.0566..., 0.05518...],
-            [0.8678..., 0.0707... , 0.0614...]])
+    array([[0.8881, 0.0566, 0.05518],
+            [0.8678, 0.0707 , 0.0614]])
     """
 
     def __init__(
@@ -1940,12 +1935,10 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         \frac{ 2\sin^2(\pi d(x_i, x_j)/p) }{ l^ 2} \right)
 
     where :math:`l` is the length scale of the kernel, :math:`p` the
-    periodicity of the kernel and :math:`d(\\cdot,\\cdot)` is the
+    periodicity of the kernel and :math:`d(\cdot,\cdot)` is the
     Euclidean distance.
 
     Read more in the :ref:`User Guide <gp_kernels>`.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -1976,9 +1969,9 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
-    0.0144...
+    0.0144
     >>> gpr.predict(X[:2,:], return_std=True)
-    (array([425.6..., 457.5...]), array([0.3894..., 0.3467...]))
+    (array([425.6, 457.5]), array([0.3894, 0.3467]))
     """
 
     def __init__(
@@ -2094,8 +2087,6 @@ class DotProduct(Kernel):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     sigma_0 : float >= 0, default=1.0
@@ -2123,9 +2114,9 @@ class DotProduct(Kernel):
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
-    0.3680...
+    0.3680
     >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
+    (array([653.0, 592.1]), array([316.6, 316.6]))
     """
 
     def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, 1e5)):
@@ -2234,8 +2225,6 @@ class PairwiseKernel(Kernel):
           kernel parameters are set directly at initialization and are kept
           fixed.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     gamma : float, default=1.0
@@ -2273,10 +2262,10 @@ class PairwiseKernel(Kernel):
     >>> gpc = GaussianProcessClassifier(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpc.score(X, y)
-    0.9733...
+    0.9733
     >>> gpc.predict_proba(X[:2,:])
-    array([[0.8880..., 0.05663..., 0.05532...],
-           [0.8676..., 0.07073..., 0.06165...]])
+    array([[0.8880, 0.05663, 0.05532],
+           [0.8676, 0.07073, 0.06165]])
     """
 
     def __init__(

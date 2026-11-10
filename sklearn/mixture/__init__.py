@@ -1,9 +1,9 @@
-"""
-The :mod:`sklearn.mixture` module implements mixture modeling algorithms.
-"""
+"""Mixture modeling algorithms."""
 
-from ._gaussian_mixture import GaussianMixture
-from ._bayesian_mixture import BayesianGaussianMixture
+# Authors: The scikit-learn developers
+# SPDX-License-Identifier: BSD-3-Clause
 
+from sklearn.mixture._bayesian_mixture import BayesianGaussianMixture
+from sklearn.mixture._gaussian_mixture import GaussianMixture
 
-__all__ = ["GaussianMixture", "BayesianGaussianMixture"]
+__all__ = ["BayesianGaussianMixture", "GaussianMixture"]

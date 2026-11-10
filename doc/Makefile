@@ -2,18 +2,22 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    = -j auto
+SPHINXOPTS   ?= -T
 SPHINXBUILD  ?= sphinx-build
 PAPER         =
 BUILDDIR      = _build
+
 ifneq ($(EXAMPLES_PATTERN),)
     EXAMPLES_PATTERN_OPTS := -D sphinx_gallery_conf.filename_pattern="$(EXAMPLES_PATTERN)"
 endif
 
+# CircleCI sets SPHINX_NUMJOBS explicitly instead (see build_tools/circle/build_doc.sh)
+SPHINX_NUMJOBS_DEFAULT=auto
+
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -T -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
     $(EXAMPLES_PATTERN_OPTS) .
 
 
@@ -36,21 +40,33 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
+	@echo "Removed $(BUILDDIR)/*"
 	-rm -rf auto_examples/
+	@echo "Removed auto_examples/"
 	-rm -rf generated/*
+	@echo "Removed generated/"
 	-rm -rf modules/generated/
+	@echo "Removed modules/generated/"
+	-rm -rf api/*.rst
+	@echo "Removed api/*.rst"
 
+# Sphinx-Gallery picks up this -j too (`parallel` in conf.py), so it covers
+# running the examples as well as the reST read/write
+html: SPHINX_NUMJOBS ?= $(SPHINX_NUMJOBS_DEFAULT)
 html:
+	@echo $(ALLSPHINXOPTS)
 	# These two lines make the build a bit more lengthy, and the
 	# the embedding of images more robust
 	rm -rf $(BUILDDIR)/html/_images
 	#rm -rf _build/doctrees/
-	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) -j$(SPHINX_NUMJOBS) $(BUILDDIR)/html/stable
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable"
 
+html-noplot: SPHINX_NUMJOBS ?= $(SPHINX_NUMJOBS_DEFAULT)
 html-noplot:
-	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html/stable
+	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) -j$(SPHINX_NUMJOBS) \
+    $(BUILDDIR)/html/stable
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable."
 
@@ -64,7 +80,9 @@ ziphtml:
 		make html; \
 	fi
 	# Optimize the images to reduce the size of the ZIP
-	optipng $(BUILDDIR)/html/stable/_images/*.png
+	# Use 3 cores to match the CircleCI `doc` resource class (medium+).
+	find $(BUILDDIR)/html/stable/_images -name '*.png' -print0 \
+	  | xargs -0 -n 1 -P 3 optipng
 	# Exclude the output directory to avoid infinity recursion
 	cd $(BUILDDIR)/html/stable; \
 	zip -q -x _downloads \
