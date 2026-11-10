@@ -1,0 +1,38 @@
+name: Label contributor type
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  label-contributor-type:
+    if: github.repository == 'scikit-learn/scikit-learn'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Install PyGithub
+        run: pip install -Uq PyGithub
+      - name: Checkout trusted script
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          sparse-checkout: build_tools/github/label-contributor-type.py
+          sparse-checkout-cone-mode: false
+      - name: Label contributor type
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python build_tools/github/label-contributor-type.py
