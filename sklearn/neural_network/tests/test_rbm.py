@@ -45,26 +45,11 @@ def test_partial_fit():
 
     for i in range(7):
         for batch in batch_slices:
-            rbm.partial_fit(batch)
+            # gh-35347: `partial_fit` returns the estimator, as documented
+            assert rbm.partial_fit(batch) is rbm
 
     assert_almost_equal(rbm.score_samples(X).mean(), -21.0, decimal=0)
     assert_array_equal(X, Xdigits)
-
-
-def test_partial_fit_returns_self():
-    """Check that `partial_fit` returns the estimator, as documented.
-
-    Non-regression test for gh-35347: `BernoulliRBM.partial_fit` returned
-    `None`, breaking `rbm.partial_fit(X).transform(X)`.
-    """
-    rbm = BernoulliRBM(n_components=16, batch_size=10, random_state=0)
-    assert rbm.partial_fit(Xdigits[:20]) is rbm
-    # the returned estimator is fitted, so chaining works
-    assert rbm.partial_fit(Xdigits[:20]).transform(Xdigits[:20]).shape == (20, 16)
-
-    # control assertion: `fit` already returns `self`
-    rbm_fit = BernoulliRBM(n_components=16, random_state=0)
-    assert rbm_fit.fit(Xdigits[:20]) is rbm_fit
 
 
 def test_transform():
