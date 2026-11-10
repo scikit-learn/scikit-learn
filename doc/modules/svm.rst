@@ -158,9 +158,17 @@ the decision function.
 
   Note that the :class:`LinearSVC` also implements an alternative multi-class
   strategy, the so-called multi-class SVM formulated by Crammer and Singer
-  [#8]_, by using the option ``multi_class='crammer_singer'``. In practice,
-  one-vs-rest classification is usually preferred, since the results are mostly
-  similar, but the runtime is significantly less.
+  [#8]_, by using the option ``multi_class='crammer_singer'``. Unlike
+  ``"ovr"``, which trains K independent binary classifiers, the Crammer–Singer
+  formulation trains all K weight vectors jointly under a shared multiclass
+  margin constraint. Two direct consequences follow: class scores are on a
+  common scale by construction (``"ovr"`` scores from independent binary
+  problems are not guaranteed to be comparable across classes); and the
+  per-example slack is governed by the hardest competing class, not averaged
+  over all competitors [#8]_. In practice, one-vs-rest classification is
+  usually preferred: results are mostly similar, the runtime is lower, and
+  the ``loss``, ``penalty`` and ``dual`` options remain active (they are
+  silently ignored when ``multi_class='crammer_singer'``).
 
   For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
   have the shape ``(n_classes, n_features)`` and ``(n_classes,)`` respectively.
