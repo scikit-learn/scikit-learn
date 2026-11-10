@@ -1008,6 +1008,7 @@ def test_cross_val_predict(coo_container):
         )
 
 
+@skip_if_threaded_parallelism_enabled
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 

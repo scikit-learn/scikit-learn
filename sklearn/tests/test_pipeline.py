@@ -1687,6 +1687,7 @@ parameter_grid_test_verbose = (
 )
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("est, pattern, method", parameter_grid_test_verbose)
 def test_verbose(est, method, pattern, capsys):
     est = clone(est)

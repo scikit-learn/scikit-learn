@@ -310,6 +310,7 @@ def test_multi_output_classification_partial_fit_no_first_classes_exception():
         multi_target_linear.partial_fit(X, y)
 
 
+@skip_if_threaded_parallelism_enabled
 def test_multi_output_classification():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict, prodict_proba and score
