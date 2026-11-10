@@ -1421,6 +1421,10 @@ def test_feature_union_duplicate_column_names(df_lib_name, T1):
 
     Non-regression test for issue #32104
     """
+    if not isinstance(T1, str):
+        # When running with pytest-run-parallel, T1 might be mutated, so clone
+        # before using:
+        T1 = clone(T1)
     df_lib = pytest.importorskip(df_lib_name)
     df = df_lib.DataFrame({"a": [1, 2, 3, 4], "b": [1, 2, 3, 4]})
     fu = FeatureUnion([("t1", T1), ("t2", StandardScaler())])
