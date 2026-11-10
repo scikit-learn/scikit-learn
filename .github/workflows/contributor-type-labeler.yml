@@ -7,6 +7,8 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  # Needed to read private org membership for PR author_association
+  org: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
