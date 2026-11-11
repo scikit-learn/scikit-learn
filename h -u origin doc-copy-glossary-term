@@ -1,0 +1,30 @@
+[33mcommit 9d195fe2f2431a727c53e1e0ec03a2fab481c5d2[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdoc-copy-glossary-term[m[33m)[m
+Author: usmanwajid09 <its.usman.wajid@gmail.com>
+Date:   Wed Nov 11 10:12:07 2026 +0500
+
+    DOC Document copy, copy_x, copy_X in glossary and link inline
+
+ doc/glossary.rst                            | 17 [32m+++++++++++++++++[m
+ sklearn/cluster/_affinity_propagation.py    |  6 [32m+++[m[31m---[m
+ sklearn/cluster/_bisect_k_means.py          |  6 [32m+++[m[31m---[m
+ sklearn/cluster/_kmeans.py                  | 12 [32m++++++[m[31m------[m
+ sklearn/cluster/_spectral.py                |  2 [32m+[m[31m-[m
+ sklearn/cross_decomposition/_pls.py         | 29 [32m+++++++++++++++[m[31m--------------[m
+ sklearn/decomposition/_factor_analysis.py   |  4 [32m++[m[31m--[m
+ sklearn/decomposition/_fastica.py           |  6 [32m++++[m[31m--[m
+ sklearn/decomposition/_incremental_pca.py   |  4 [32m++[m[31m--[m
+ sklearn/decomposition/_kernel_pca.py        |  6 [32m+++[m[31m---[m
+ sklearn/decomposition/_pca.py               |  4 [32m++[m[31m--[m
+ sklearn/feature_extraction/text.py          |  5 [32m+++[m[31m--[m
+ sklearn/feature_selection/_mutual_info.py   | 12 [32m++++++[m[31m------[m
+ sklearn/impute/_knn.py                      |  4 [32m++[m[31m--[m
+ sklearn/linear_model/_base.py               |  2 [32m+[m[31m-[m
+ sklearn/linear_model/_bayes.py              |  4 [32m++[m[31m--[m
+ sklearn/linear_model/_coordinate_descent.py | 21 [32m+++++++++++[m[31m----------[m
+ sklearn/linear_model/_least_angle.py        | 20 [32m++++++++++[m[31m----------[m
+ sklearn/linear_model/_omp.py                | 22 [32m+++++++++++[m[31m-----------[m
+ sklearn/linear_model/_ridge.py              |  4 [32m++[m[31m--[m
+ sklearn/metrics/pairwise.py                 |  2 [32m+[m[31m-[m
+ sklearn/utils/extmath.py                    |  6 [32m+++[m[31m---[m
+ sklearn/utils/validation.py                 |  4 [32m++[m[31m--[m
+ 23 files changed, 112 insertions(+), 90 deletions(-)
