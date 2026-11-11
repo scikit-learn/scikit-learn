@@ -1049,13 +1049,13 @@ def test_min_samples_leaf(name):
 
 
 @pytest.mark.parametrize("name", FOREST_ESTIMATORS)
-def test_min_weight_fraction_leaf(name):
+def test_min_weight_fraction_leaf(name, global_random_seed):
     X, y = hastie_X, hastie_y
 
     # Test if leaves contain at least min_weight_fraction_leaf of the
     # training set
     ForestEstimator = FOREST_ESTIMATORS[name]
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     weights = rng.rand(X.shape[0])
     total_weight = np.sum(weights)
 
@@ -1841,9 +1841,9 @@ def test_estimators_samples(ForestClass, bootstrap, seed):
         *product(FOREST_CLASSIFIERS.values(), CLF_CRITERIONS),
     ],
 )
-def test_missing_values_is_resilient(Forest, criterion):
+def test_missing_values_is_resilient(Forest, criterion, global_random_seed):
     """Check that forest can deal with missing values and has decent performance."""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 500, 5
     make_data = make_regression if criterion in REG_CRITERIONS else make_classification
     X, y = make_data(n_samples=n_samples, n_features=n_features, random_state=rng)
