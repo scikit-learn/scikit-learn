@@ -479,6 +479,7 @@ def test_redundant_bins(strategy, expected_bin_edges, quantile_method):
     assert_array_almost_equal(kbd.bin_edges_[0], expected_bin_edges)
 
 
+@pytest.mark.filterwarnings("ignore:Bins whose width are too small")
 @pytest.mark.parametrize(
     "quantile_method", ["averaged_inverted_cdf", "inverted_cdf", "linear"]
 )
@@ -486,41 +487,37 @@ def test_redundant_bins(strategy, expected_bin_edges, quantile_method):
 def test_quantile_ties_at_max(quantile_method, n_bins):
     """Test that samples tied at the max keep their own bin.
 
-    When the last inner bin edge is equal to
-    the max, it should not be removed as a duplicate and the top bin should not be merged into the
-    previous one (e.g. binary features were transformed to a constant).
+    When the last inner bin edge is equal to the max, it should not be removed as
+    a duplicate, which would merge the top bin into the previous one (e.g. binary
+    features would be transformed to a constant).
     """
-    X = np.array([[0] * 3, [1] * 4])
+    X = np.array([0] * 3 + [1] * 4).reshape(-1, 1)
     kbd = KBinsDiscretizer(
         n_bins=n_bins, encode="ordinal", quantile_method=quantile_method
     )
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "Bins whose width are too small")
-        Xt = kbd.fit_transform(X)
+    Xt = kbd.fit_transform(X)
     # The 0s and the 1s are in different bins, and the 1s are in the last bin,
     # whose center is the max.
-    assert_array_equal(Xt.ravel(), [0] * 3 + [kbd.n_bins_[0] - 1] * 4)
     assert kbd.n_bins_[0] >= 2
+    assert_array_equal(Xt.ravel(), [0] * 3 + [kbd.n_bins_[0] - 1] * 4)
     assert_allclose(kbd.inverse_transform(Xt)[3:], 1)
 
     X = [[-1], [-1], [0], [0]]
     kbd = KBinsDiscretizer(n_bins=3, encode="ordinal", quantile_method=quantile_method)
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "Bins whose width are too small")
-        assert_array_equal(kbd.fit_transform(X).ravel(), [0, 0, 1, 1])
+    assert_array_equal(kbd.fit_transform(X).ravel(), [0, 0, 1, 1])
 
 
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_near_constant_feature(encode):
     """Test that a non-constant feature narrower than the tolerance gets one bin."""
-    eps = 1e-10  # the implemented theshold is 1e-8
-    X = np.array([[1.0], [1.0 + eps], [1.0 + 2*eps]])
+    eps = 1e-10  # smaller than the 1e-8 tolerance on the bin width
+    X = np.array([[1.0], [1.0 + eps], [1.0 + 2 * eps]])
     kbd = KBinsDiscretizer(n_bins=3, encode=encode)
     with pytest.warns(UserWarning, match="Consider decreasing the number of bins"):
         Xt = kbd.fit_transform(X)
     assert kbd.n_bins_[0] == 1
     assert Xt.shape == (3, 1)
-    assert_allclose(kbd.inverse_transform(Xt), np.full((3, 1), 1.0 + 1e-10))
+    assert_allclose(kbd.inverse_transform(Xt), np.full((3, 1), 1.0 + eps))
 
 
 def test_percentile_numeric_stability():

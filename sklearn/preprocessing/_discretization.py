@@ -378,7 +378,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 # is a real boundary that isolates the samples at the max. The
                 # resulting zero-width last bin is kept.
                 inner_edges = bin_edges[jj][:-1]
-                mask = np.ediff1d(inner_edges, to_begin=np.inf) > 1e-8
+                mask = np.diff(inner_edges, prepend=-np.inf) > 1e-8
                 bin_edges[jj] = np.r_[inner_edges[mask], bin_edges[jj][-1]]
                 if len(bin_edges[jj]) - 1 != n_bins[jj]:
                     warnings.warn(
