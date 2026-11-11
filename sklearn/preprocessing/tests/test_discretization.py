@@ -484,13 +484,13 @@ def test_redundant_bins(strategy, expected_bin_edges, quantile_method):
 )
 @pytest.mark.parametrize("n_bins", [2, 3, 5])
 def test_quantile_ties_at_max(quantile_method, n_bins):
-    """Samples tied at the max keep their own bin.
+    """Test that samples tied at the max keep their own bin.
 
-    Non-regression test for gh-25594: when the last inner bin edge was equal to
-    the max, it was removed as a duplicate, which merged the top bin into the
+    When the last inner bin edge is equal to
+    the max, it should not be removed as a duplicate and the top bin should not be merged into the
     previous one (e.g. binary features were transformed to a constant).
     """
-    X = np.array([[0], [0], [0], [1], [1], [1], [1]])
+    X = np.array([[0] * 3, [1] * 4])
     kbd = KBinsDiscretizer(
         n_bins=n_bins, encode="ordinal", quantile_method=quantile_method
     )
@@ -512,11 +512,9 @@ def test_quantile_ties_at_max(quantile_method, n_bins):
 
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_near_constant_feature(encode):
-    """A non-constant feature narrower than the tolerance gets one bin.
-
-    Non-regression test for gh-35300.
-    """
-    X = np.array([[1.0], [1.0 + 1e-10], [1.0 + 2e-10]])
+    """Test that a non-constant feature narrower than the tolerance gets one bin."""
+    eps = 1e-10  # the implemented theshold is 1e-8
+    X = np.array([[1.0], [1.0 + eps], [1.0 + 2*eps]])
     kbd = KBinsDiscretizer(n_bins=3, encode=encode)
     with pytest.warns(UserWarning, match="Consider decreasing the number of bins"):
         Xt = kbd.fit_transform(X)
