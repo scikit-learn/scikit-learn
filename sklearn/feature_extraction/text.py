@@ -1693,8 +1693,9 @@ class TfidfTransformer(
             A matrix of term/token counts.
 
         copy : bool, default=True
-            Whether to copy X and operate on the copy or perform in-place
-            operations. `copy=False` will only be effective with CSR sparse matrix.
+            Whether to :term:`copy` X and operate on the copy or perform
+            in-place operations. `copy=False` will only be effective with CSR
+            sparse matrix.
 
         Returns
         -------

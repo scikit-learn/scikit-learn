@@ -242,8 +242,8 @@ def as_float_array(X, *, copy=True, ensure_all_finite=True):
         The input data.
 
     copy : bool, default=True
-        If True, a copy of X will be created. If False, a copy may still be
-        returned if X's dtype is not a floating point type.
+        If True, a :term:`copy` of X will be created. If False, a copy may
+        still be returned if X's dtype is not a floating point type.
 
     ensure_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in X. The

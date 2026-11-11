@@ -52,9 +52,9 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True, return_path=Fals
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
     copy_X : bool, default=True
-        Whether the design matrix X must be copied by the algorithm. A false
-        value is only helpful if X is already Fortran-ordered, otherwise a
-        copy is made anyway.
+        Whether the design matrix X must be :term:`copied <copy_X>` by the
+        algorithm. A false value is only helpful if X is already
+        Fortran-ordered, otherwise a copy is made anyway.
 
     return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
@@ -351,9 +351,9 @@ def orthogonal_mp(
         or n_samples is very large.
 
     copy_X : bool, default=True
-        Whether the design matrix X must be copied by the algorithm. A false
-        value is only helpful if X is already Fortran-ordered, otherwise a
-        copy is made anyway.
+        Whether the design matrix X must be :term:`copied <copy_X>` by the
+        algorithm. A false value is only helpful if X is already
+        Fortran-ordered, otherwise a copy is made anyway.
 
     return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
@@ -873,8 +873,8 @@ def _omp_path_residues(
         The target variable to compute the residues on.
 
     copy : bool, default=True
-        Whether X_train, X_test, y_train and y_test should be copied.  If
-        False, they may be overwritten.
+        Whether X_train, X_test, y_train and y_test should be
+        :term:`copied <copy>`. If False, they may be overwritten.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -932,9 +932,9 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     Parameters
     ----------
     copy : bool, default=True
-        Whether the design matrix X must be copied by the algorithm. A false
-        value is only helpful if X is already Fortran-ordered, otherwise a
-        copy is made anyway.
+        Whether the design matrix X must be :term:`copied <copy>` by the
+        algorithm. A false value is only helpful if X is already
+        Fortran-ordered, otherwise a copy is made anyway.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
