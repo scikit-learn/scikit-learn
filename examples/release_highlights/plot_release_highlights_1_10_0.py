@@ -67,38 +67,6 @@ print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 # %%
 # Linear models
 # -------------
-#
-# Penalty parameter `alpha` in logistic regression
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# The penalty strength of :class:`~linear_model.LogisticRegression` and
-# :class:`~linear_model.LogisticRegressionCV` is now set with `alpha` (`alphas` for
-# `LogisticRegressionCV`), as in :class:`~linear_model.Ridge` or
-# :class:`~linear_model.ElasticNet`: the larger the value, the stronger the penalty.
-# For `LogisticRegression`, `alpha = 1 / C`. The `C` and `Cs` parameters are
-# deprecated and will be removed in 1.14. The new defaults give the same models as
-# before. Below, `C=10` and `alpha=0.1` give the same model.
-import warnings
-
-import numpy as np
-
-from sklearn.datasets import make_classification
-from sklearn.linear_model import LogisticRegression
-
-X, y = make_classification(random_state=0)
-
-# Before: `C` is the inverse of the penalty strength (deprecated).
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", FutureWarning)
-    clf_before = LogisticRegression(C=10).fit(X, y)
-
-# After: `alpha` is the penalty strength, with `alpha = 1 / C`.
-clf_after = LogisticRegression(alpha=0.1).fit(X, y)
-
-print(f"Same coefficients: {np.allclose(clf_before.coef_, clf_after.coef_)}")
-
-# %%
-# New solvers
-# ^^^^^^^^^^^
 # Two new solvers, `"newton-cd"` and `"newton-cd-gram"`, support :math:`\ell^1` and
 # Elastic-Net penalties. They are available for
 # :class:`~linear_model.LogisticRegression` and for the generalized linear models
