@@ -71,7 +71,6 @@ cdef int _split_sparse_indices(
     cdef:
         int left = 0
         int right = sample_indices.shape[0] - 1
-        int middle
         unsigned int sample_idx
         unsigned int tmp
 
