@@ -1,0 +1,4 @@
+- Fitting :class:`HistGradientBoostingClassifier` and
+  :class:`HistGradientBoostingRegressor` was speedup by up to about 10% by avoiding
+  memory copies of gradients and hessians.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
