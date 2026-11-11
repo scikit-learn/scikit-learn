@@ -34,6 +34,7 @@ from sklearn.metrics import pairwise_distances, pairwise_distances_argmin
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils._array_api import (
+    _atol_for_type,
     array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
@@ -1575,7 +1576,14 @@ def test_kmeans_array_api_compliance(init, array_namespace, device_name, dtype_n
     assert_allclose(centers_xp[order_xp], km_np.cluster_centers_[order_np], rtol=rtol)
 
     # transform: one column per cluster, so reorder the columns the same way.
-    assert_allclose(X_new_xp_np[:, order_xp], X_new_np[:, order_np], rtol=rtol)
+    # atol: small distances lose precision in float32 (e.g. on MPS, which has
+    # no float64), so a relative tolerance alone is too strict for them.
+    assert_allclose(
+        X_new_xp_np[:, order_xp],
+        X_new_np[:, order_np],
+        rtol=rtol,
+        atol=_atol_for_type(dtype_name),
+    )
     # fit_transform matches fit + transform (same random_state).
     assert_allclose(move_to(X_fit_new_xp, xp=np, device="cpu"), X_new_xp_np, rtol=rtol)
     assert array_device(X_new_xp) == array_device(X_xp)
