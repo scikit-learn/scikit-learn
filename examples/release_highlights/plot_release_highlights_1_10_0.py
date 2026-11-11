@@ -142,7 +142,11 @@ print(IterativeImputer(random_state=0).fit_transform(X))
 # accept it (typically `fit` and `score`) and on scorers whose metric accepts it. The
 # same weights are used to fit :class:`~linear_model.LogisticRegression` and to score
 # each candidate, with no explicit request.
+import numpy as np
+
 from sklearn import set_config
+from sklearn.datasets import make_classification
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 
 set_config(enable_metadata_routing=True)
