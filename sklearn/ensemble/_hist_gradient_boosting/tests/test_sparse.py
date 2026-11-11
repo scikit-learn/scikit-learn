@@ -10,6 +10,7 @@ from sklearn.ensemble import (
     HistGradientBoostingRegressor,
 )
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 
 SPARSE_CONSTRUCTORS = [
     sparse.csr_matrix,
@@ -17,6 +18,47 @@ SPARSE_CONSTRUCTORS = [
     sparse.csr_array,
     sparse.csc_array,
 ]
+
+
+@pytest.mark.parametrize("problem", ["format", "canonical", "zero_bin"])
+def test_sparse_binned_input_validation(problem):
+    X = sparse.csr_matrix(np.array([[1], [2]], dtype=np.uint8))
+    zero_bin_idx = np.array([0], dtype=np.uint8)
+    if problem == "format":
+        X = X.tocsc()
+        message = "CSR format"
+    elif problem == "canonical":
+        X = sparse.csr_matrix(
+            (np.array([1, 2], dtype=np.uint8), [0, 0], [0, 2, 2]), shape=(2, 1)
+        )
+        message = "canonical CSR"
+    else:
+        zero_bin_idx = None
+        message = "zero_bin_idx"
+
+    with pytest.raises(ValueError, match=message):
+        TreeGrower(
+            X,
+            gradients=np.ones(2, dtype=np.float32),
+            hessians=np.ones(2, dtype=np.float32),
+            zero_bin_idx=zero_bin_idx,
+        )
+
+    model = HistGradientBoostingRegressor(
+        max_iter=1, min_samples_leaf=1, early_stopping=False
+    ).fit(np.array([[0.0], [1.0]]), [0.0, 1.0])
+    predictor = model._predictors[0][0]
+    with pytest.raises(ValueError, match=message):
+        predictor.predict_binned(X, 255, 1, zero_bin_idx=zero_bin_idx)
+
+
+def test_sparse_prediction_rejected_after_categorical_fit():
+    X = np.array([[0.0], [1.0], [2.0], [1.0]])
+    model = HistGradientBoostingRegressor(
+        categorical_features=[0], max_iter=1, early_stopping=False
+    ).fit(X, np.arange(4))
+    with pytest.raises(ValueError, match="Sparse input is not supported"):
+        model.predict(sparse.csr_matrix(X))
 
 
 def _decode_sparse_bins(X_binned, zero_bin_idx, missing_values_bin_idx):
