@@ -1263,7 +1263,8 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
             assert msg in captured.out
 
 
-@pytest.mark.parametrize("solver", ["auto", "lbfgs"])
+@pytest.mark.parametrize("solver", ["auto", "lbfgs", "newton-cg"])
+@pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
@@ -1272,6 +1273,7 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_poisson_regressor_array_api_compliance(
     solver,
+    fit_intercept,
     use_sample_weight,
     array_namespace,
     device_name,
@@ -1284,7 +1286,7 @@ def test_poisson_regressor_array_api_compliance(
     n_features = 3
     X_np = rng.normal(size=(n_samples, n_features))
     beta = np.array([0.5, -0.3, 0.8])  # true coefficients
-    intercept = 1.0
+    intercept = 1.0 if fit_intercept else 0.0
     mu = np.exp(X_np @ beta + intercept)  # Poisson mean with log-link.
     y_np = rng.poisson(mu)
     # Ensure that we have non-zero targets for meaningful testing:
@@ -1304,7 +1306,7 @@ def test_poisson_regressor_array_api_compliance(
     else:
         sample_weight = None
 
-    params = dict(alpha=1, solver=solver, max_iter=500)
+    params = dict(alpha=1, fit_intercept=fit_intercept, solver=solver, max_iter=500)
     params["tol"] = 3e-6 if dtype_name == "float32" else 1e-13
     with config_context(array_api_dispatch=False):
         glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
@@ -1343,12 +1345,16 @@ def test_poisson_regressor_array_api_compliance(
         assert array_device(predict_xp) == array_device(X_xp)
 
 
+@pytest.mark.parametrize("solver", ["auto", "lbfgs", "newton-cg"])
+@pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_poisson_regressor_array_api_warm_start(
+    solver,
+    fit_intercept,
     array_namespace,
     device_name,
     dtype_name,
@@ -1364,7 +1370,11 @@ def test_poisson_regressor_array_api_warm_start(
     y_xp = xp.asarray(y, device=device)
     with config_context(array_api_dispatch=True):
         reg_xp = PoissonRegressor(
-            alpha=1.0, solver="lbfgs", max_iter=300, warm_start=True
+            alpha=1.0,
+            fit_intercept=fit_intercept,
+            solver=solver,
+            max_iter=300,
+            warm_start=True,
         )
         reg_xp.fit(X_xp, y_xp)
         reg_xp.predict(X_xp)
