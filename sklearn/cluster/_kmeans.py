@@ -3,6 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import math
 import warnings
 from abc import ABC, abstractmethod
 from numbers import Integral, Real
@@ -43,6 +44,14 @@ from sklearn.cluster._k_means_minibatch import (
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils import check_array, check_random_state
+from sklearn.utils._array_api import (
+    _is_numpy_namespace,
+    _max_precision_float_dtype,
+    check_same_namespace,
+    get_namespace,
+    get_namespace_and_device,
+    move_to,
+)
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import row_norms
@@ -440,6 +449,169 @@ def _kmeans_plusplus_trials(
 
 
 ###############################################################################
+# Array API (non-NumPy) code path.
+#
+# The functions below are used instead of the Cython kernels when X is not a
+# NumPy array (e.g. a PyTorch tensor on a GPU). They only use functions from the
+# array API standard so that they run on any array library and device.
+
+
+def _squared_distances_xp(X, x_squared_norms, Y, xp):
+    """Squared euclidean distances between the rows of X and Y.
+
+    Uses ||x - y||^2 = ||x||^2 - 2 x.y + ||y||^2, which is one matrix product.
+    Returns an array of shape (Y.shape[0], X.shape[0]).
+    """
+    y_squared_norms = xp.sum(Y * Y, axis=1)
+    dist_sq = y_squared_norms[:, None] - 2 * (Y @ X.T) + x_squared_norms[None, :]
+    # Rounding errors can make some distances slightly negative.
+    return xp.clip(dist_sq, min=0)
+
+
+def _sample_proportional_xp(weights, n_draws, random_state, xp, device):
+    """Draw `n_draws` indices with probability proportional to `weights`.
+
+    The random numbers come from the NumPy `random_state` (on the CPU) so that
+    `random_state` controls the result, as on the NumPy code path. The search
+    itself runs on the device of `weights`.
+    """
+    # Accumulate in the highest precision available on the device to limit
+    # rounding errors in the cumulative sum.
+    acc_dtype = _max_precision_float_dtype(xp, device)
+    cumsum = xp.cumulative_sum(xp.astype(weights, acc_dtype))
+    u = xp.asarray(random_state.uniform(size=n_draws), dtype=acc_dtype, device=device)
+    indices = xp.searchsorted(cumsum, u * cumsum[-1])
+    # Rounding errors can give an index equal to n_samples: clip it.
+    return xp.clip(indices, max=weights.shape[0] - 1)
+
+
+def _kmeans_plusplus_xp(
+    X, n_clusters, x_squared_norms, sample_weight, random_state, n_local_trials=None
+):
+    """Array API version of `_kmeans_plusplus` (greedy k-means++).
+
+    Same algorithm as `_kmeans_plusplus`, written with array API functions only.
+    """
+    xp, _, device = get_namespace_and_device(X)
+    n_samples, n_features = X.shape
+
+    if n_local_trials is None:
+        n_local_trials = 2 + int(math.log(n_clusters))
+
+    centers = xp.empty((n_clusters, n_features), dtype=X.dtype, device=device)
+    center_indices = [0] * n_clusters
+
+    # 1. Pick the first center with probability proportional to sample_weight.
+    first_idx = _sample_proportional_xp(sample_weight, 1, random_state, xp, device)
+    first_idx = int(first_idx[0])
+    centers[0, :] = X[first_idx, :]
+    center_indices[0] = first_idx
+
+    # closest_dist_sq[i]: squared distance of sample i to its closest center.
+    closest_dist_sq = _squared_distances_xp(
+        X, x_squared_norms, centers[0:1, :], xp
+    )[0, :]
+
+    for c in range(1, n_clusters):
+        # 2. Draw candidates with probability proportional to their potential.
+        candidate_ids = _sample_proportional_xp(
+            sample_weight * closest_dist_sq, n_local_trials, random_state, xp, device
+        )
+
+        # Closest distances if each candidate were added: (n_trials, n_samples)
+        dist_to_candidates = _squared_distances_xp(
+            X, x_squared_norms, xp.take(X, candidate_ids, axis=0), xp
+        )
+        dist_to_candidates = xp.minimum(closest_dist_sq, dist_to_candidates)
+
+        # 3. Keep the candidate that gives the smallest total potential.
+        candidates_pot = xp.sum(dist_to_candidates * sample_weight, axis=1)
+        best = int(xp.argmin(candidates_pot))
+        closest_dist_sq = dist_to_candidates[best, :]
+
+        best_idx = int(candidate_ids[best])
+        centers[c, :] = X[best_idx, :]
+        center_indices[c] = best_idx
+
+    return centers, xp.asarray(center_indices, device=device)
+
+
+def _labels_inertia_xp(X, sample_weight, centers, return_inertia=True):
+    """Array API version of `_labels_inertia` (E step)."""
+    xp, _ = get_namespace(X)
+    x_squared_norms = xp.sum(X * X, axis=1)
+    # (n_clusters, n_samples) -> min over the clusters for each sample.
+    dist_sq = _squared_distances_xp(X, x_squared_norms, centers, xp)
+    labels = xp.astype(xp.argmin(dist_sq, axis=0), xp.int32)
+    if not return_inertia:
+        return labels
+    inertia = float(xp.sum(sample_weight * xp.min(dist_sq, axis=0)))
+    return labels, inertia
+
+
+def _update_centers_xp(X, sample_weight, labels, centers, xp, device):
+    """M step: each center becomes the weighted mean of its samples.
+
+    Uses a one-hot (n_samples, n_clusters) weight matrix so that the update is
+    a single matrix product. Empty clusters keep their previous center (the
+    Cython code relocates them instead; not implemented here yet).
+    """
+    n_clusters = centers.shape[0]
+    cluster_ids = xp.arange(n_clusters, dtype=labels.dtype, device=device)
+    one_hot = xp.astype(labels[:, None] == cluster_ids[None, :], X.dtype)
+    weights = one_hot * sample_weight[:, None]
+    weight_in_clusters = xp.sum(weights, axis=0)
+    weighted_sums = weights.T @ X
+    is_empty = weight_in_clusters == 0
+    # Divide by 1 instead of 0 for empty clusters (their result is discarded).
+    safe_weight = xp.where(
+        is_empty, xp.ones_like(weight_in_clusters), weight_in_clusters
+    )
+    centers_new = weighted_sums / safe_weight[:, None]
+    return xp.where(is_empty[:, None], centers, centers_new)
+
+
+def _kmeans_single_lloyd_xp(
+    X, sample_weight, centers_init, max_iter=300, verbose=False, tol=1e-4
+):
+    """Array API version of `_kmeans_single_lloyd`. Same return values."""
+    xp, _, device = get_namespace_and_device(X)
+    centers = centers_init
+    labels_old = None
+
+    for i in range(max_iter):
+        # E step with the current centers, then M step.
+        labels = _labels_inertia_xp(X, sample_weight, centers, return_inertia=False)
+        centers_new = _update_centers_xp(
+            X, sample_weight, labels, centers, xp, device
+        )
+        center_shift_tot = float(xp.sum((centers_new - centers) ** 2))
+        centers = centers_new
+
+        if verbose:
+            _, inertia = _labels_inertia_xp(X, sample_weight, centers)
+            print(f"Iteration {i}, inertia {inertia}.")
+
+        if labels_old is not None and bool(xp.all(labels == labels_old)):
+            if verbose:
+                print(f"Converged at iteration {i}: strict convergence.")
+            break
+        elif center_shift_tot <= tol:
+            if verbose:
+                print(
+                    f"Converged at iteration {i}: center shift "
+                    f"{center_shift_tot} within tolerance {tol}."
+                )
+            break
+
+        labels_old = labels
+
+    # Recompute labels so that they match the final centers, and the inertia.
+    labels, inertia = _labels_inertia_xp(X, sample_weight, centers)
+    return labels, inertia, centers, i + 1
+
+
+###############################################################################
 # K-means batch estimation by EM (expectation maximization)
 
 
@@ -449,9 +621,10 @@ def _tolerance(X, tol):
         return 0
     if sp.issparse(X):
         variances = mean_variance_axis(X, axis=0)[1]
-    else:
-        variances = np.var(X, axis=0)
-    return np.mean(variances) * tol
+        return np.mean(variances) * tol
+    xp, _ = get_namespace(X)
+    variances = xp.var(X, axis=0)
+    return float(xp.mean(variances)) * tol
 
 
 @validate_params(
@@ -950,6 +1123,10 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
         Sum of squared distances of samples to their closest cluster center.
         Inertia is only returned if return_inertia is True.
     """
+    xp, _ = get_namespace(X)
+    if not _is_numpy_namespace(xp):
+        return _labels_inertia_xp(X, sample_weight, centers, return_inertia)
+
     n_samples = X.shape[0]
     n_clusters = centers.shape[0]
 
@@ -1104,12 +1281,13 @@ class _BaseKMeans(
             )
 
     def _check_test_data(self, X):
+        xp, _ = get_namespace(X)
         X = validate_data(
             self,
             X,
             accept_sparse="csr",
             reset=False,
-            dtype=[np.float64, np.float32],
+            dtype=[xp.float64, xp.float32],
             order="C",
             accept_large_sparse=False,
         )
@@ -1177,7 +1355,21 @@ class _BaseKMeans(
             n_samples = X.shape[0]
             sample_weight = sample_weight[init_indices]
 
-        if isinstance(init, str) and init == "k-means++":
+        xp, _ = get_namespace(X)
+        if not _is_numpy_namespace(xp):
+            # Array API path: only k-means++ is supported for now.
+            if not (isinstance(init, str) and init == "k-means++"):
+                raise NotImplementedError(
+                    f"init={init!r} is not supported yet with array API inputs."
+                )
+            centers, _ = _kmeans_plusplus_xp(
+                X,
+                n_clusters,
+                x_squared_norms=x_squared_norms,
+                sample_weight=sample_weight,
+                random_state=random_state,
+            )
+        elif isinstance(init, str) and init == "k-means++":
             centers, _ = _kmeans_plusplus(
                 X,
                 n_clusters,
@@ -1249,11 +1441,13 @@ class _BaseKMeans(
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="cluster_centers_", method="predict")
 
         X = self._check_test_data(X)
+        xp, _, device = get_namespace_and_device(X)
 
         # sample weights are not used by predict but cython helpers expect an array
-        sample_weight = np.ones(X.shape[0], dtype=X.dtype)
+        sample_weight = xp.ones(X.shape[0], dtype=X.dtype, device=device)
 
         labels = _labels_inertia_threadpool_limit(
             X,
@@ -1336,6 +1530,7 @@ class _BaseKMeans(
             Opposite of the value of X on the K-means objective.
         """
         check_is_fitted(self)
+        check_same_namespace(X, self, attribute="cluster_centers_", method="score")
 
         X = self._check_test_data(X)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -1612,17 +1807,26 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
+        xp, _ = get_namespace(X)
         X = validate_data(
             self,
             X,
             accept_sparse="csr",
-            dtype=[np.float64, np.float32],
+            dtype=[xp.float64, xp.float32],
             order="C",
             copy=self.copy_x,
             accept_large_sparse=False,
         )
+        # True when X is not a NumPy array (e.g. a PyTorch tensor): use the
+        # array API code path instead of the Cython kernels.
+        use_array_api = not _is_numpy_namespace(xp)
 
         self._check_params_vs_input(X)
+        if use_array_api and self._algorithm != "lloyd":
+            raise NotImplementedError(
+                f"algorithm={self._algorithm!r} is not supported yet with array "
+                "API inputs. Use algorithm='lloyd'."
+            )
 
         random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -1637,7 +1841,7 @@ class KMeans(_BaseKMeans):
 
         # subtract of mean of x for more accurate distance computations
         if not sp.issparse(X):
-            X_mean = X.mean(axis=0)
+            X_mean = xp.mean(X, axis=0)
             # The copy was already done above
             X -= X_mean
 
@@ -1647,7 +1851,9 @@ class KMeans(_BaseKMeans):
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
 
-        if self._algorithm == "elkan":
+        if use_array_api:
+            kmeans_single = _kmeans_single_lloyd_xp
+        elif self._algorithm == "elkan":
             kmeans_single = _kmeans_single_elkan
         else:
             kmeans_single = _kmeans_single_lloyd
@@ -1669,6 +1875,8 @@ class KMeans(_BaseKMeans):
                 print("Initialization complete")
 
             # run a k-means once
+            # (the array API version has no `n_threads`: no OpenMP there)
+            n_threads_kwarg = {} if use_array_api else {"n_threads": self._n_threads}
             labels, inertia, centers, n_iter_ = kmeans_single(
                 X,
                 sample_weight,
@@ -1676,7 +1884,7 @@ class KMeans(_BaseKMeans):
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 tol=self._tol,
-                n_threads=self._n_threads,
+                **n_threads_kwarg,
             )
 
             # determine if these results are the best so far
@@ -1686,7 +1894,12 @@ class KMeans(_BaseKMeans):
             # permuted labels, due to rounding errors)
             if best_inertia is None or (
                 inertia < best_inertia
-                and not _is_same_clustering(labels, best_labels, self.n_clusters)
+                and not _is_same_clustering(
+                    # Cython helper: needs NumPy arrays on the CPU.
+                    move_to(labels, xp=np, device="cpu"),
+                    move_to(best_labels, xp=np, device="cpu"),
+                    self.n_clusters,
+                )
             ):
                 best_labels = labels
                 best_centers = centers
@@ -1698,7 +1911,8 @@ class KMeans(_BaseKMeans):
                 X += X_mean
             best_centers += X_mean
 
-        distinct_clusters = len(set(best_labels))
+        # `set()` does not work on tensors (each 0-d tensor is a new object).
+        distinct_clusters = xp.unique_values(best_labels).shape[0]
         if distinct_clusters < self.n_clusters:
             warnings.warn(
                 "Number of distinct clusters ({}) found smaller than "
