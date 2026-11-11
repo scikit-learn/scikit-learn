@@ -460,7 +460,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         n_threads = _openmp_effective_n_threads(self.n_threads)
         if is_sparse:
-            offsets = np.zeros(X.shape[1] + 1, dtype=np.intp)
+            offsets = np.zeros(X.shape[1] + 1, dtype=np.int64)
             for feature_idx, thresholds in enumerate(self.bin_thresholds_):
                 offsets[feature_idx + 1] = offsets[feature_idx] + len(thresholds)
             flat_thresholds = np.concatenate(self.bin_thresholds_)
