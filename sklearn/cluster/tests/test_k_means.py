@@ -1550,14 +1550,18 @@ def test_kmeans_array_api_compliance(init, array_namespace, device_name, dtype_n
     params = dict(n_clusters=4, init=init, random_state=0)
     with config_context(array_api_dispatch=False):
         km_np = KMeans(**params).fit(X_np)
+        X_new_np = km_np.transform(X_np)
 
     with config_context(array_api_dispatch=True):
         km_xp = KMeans(**params).fit(X_xp)
         labels_pred_xp = km_xp.predict(X_xp)
         score_xp = km_xp.score(X_xp)
+        X_new_xp = km_xp.transform(X_xp)
+        X_fit_new_xp = KMeans(**params).fit_transform(X_xp)
 
     labels_xp = move_to(km_xp.labels_, xp=np, device="cpu")
     centers_xp = move_to(km_xp.cluster_centers_, xp=np, device="cpu")
+    X_new_xp_np = move_to(X_new_xp, xp=np, device="cpu")
 
     # Same partition; cluster ids may be permuted between the two paths.
     assert v_measure_score(km_np.labels_, labels_xp) == pytest.approx(1.0)
@@ -1569,6 +1573,12 @@ def test_kmeans_array_api_compliance(init, array_namespace, device_name, dtype_n
     order_np = np.lexsort(km_np.cluster_centers_.T)
     order_xp = np.lexsort(centers_xp.T)
     assert_allclose(centers_xp[order_xp], km_np.cluster_centers_[order_np], rtol=rtol)
+
+    # transform: one column per cluster, so reorder the columns the same way.
+    assert_allclose(X_new_xp_np[:, order_xp], X_new_np[:, order_np], rtol=rtol)
+    # fit_transform matches fit + transform (same random_state).
+    assert_allclose(move_to(X_fit_new_xp, xp=np, device="cpu"), X_new_xp_np, rtol=rtol)
+    assert array_device(X_new_xp) == array_device(X_xp)
 
     # Fitted attributes and predictions stay in the namespace and on the
     # device of X.
