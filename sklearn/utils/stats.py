@@ -38,6 +38,7 @@ def _nanquantile(X, feature, quantiles):
     return np.nanquantile(column, quantiles, axis=0)
 
 
+# TODO(1.14): remove in favor of scipy.stats.quantile
 def _weighted_percentile(
     array, sample_weight, percentile_rank=50, average=False, xp=None
 ):
