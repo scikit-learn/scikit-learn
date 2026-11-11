@@ -11,9 +11,13 @@ approximately the same number of samples.
 
 import numpy as np
 from numpy.lib.stride_tricks import sliding_window_view
+from scipy import sparse
 
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.ensemble._hist_gradient_boosting._binning import _map_to_bins
+from sklearn.ensemble._hist_gradient_boosting._binning import (
+    _map_sparse_to_bins,
+    _map_to_bins,
+)
 from sklearn.ensemble._hist_gradient_boosting.common import (
     ALMOST_INF,
     X_BINNED_DTYPE,
@@ -26,6 +30,17 @@ from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.stats import _weighted_percentile_1d_sorted
 from sklearn.utils.validation import check_is_fitted
+
+
+def _validate_sparse_input(X):
+    """Validate sparse numeric input and normalize its stored entries."""
+    X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False, accept_sparse="csr")
+    if not X.has_canonical_format or np.any(X.data == 0):
+        X = X.copy()
+        X.sum_duplicates()
+        X.sort_indices()
+        X.eliminate_zeros()
+    return X
 
 
 def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
@@ -111,6 +126,63 @@ def _find_binning_thresholds(col_data, max_bins, sample_weight=None):
     # a "split on nan" situation.
     np.clip(bin_thresholds, a_min=None, a_max=ALMOST_INF, out=bin_thresholds)
     return bin_thresholds
+
+
+def _find_sparse_binning_thresholds(col_data, max_bins, sample_weight=None):
+    """Compute quantile thresholds for stored nonzero sparse values.
+
+    Implicit zeros are represented by their own bin. When there are values on
+    both sides of zero, the largest negative value and zero are added as
+    thresholds so that the zero bin cannot absorb values from both signs.
+    """
+    missing_mask = np.isnan(col_data)
+    if missing_mask.any():
+        col_data = col_data[~missing_mask]
+        if sample_weight is not None:
+            sample_weight = sample_weight[~missing_mask]
+
+    nonzero_mask = col_data != 0
+    col_data = col_data[nonzero_mask]
+    if sample_weight is not None:
+        sample_weight = sample_weight[nonzero_mask]
+        nonzero_weight_mask = sample_weight != 0
+        col_data = col_data[nonzero_weight_mask]
+        sample_weight = sample_weight[nonzero_weight_mask]
+
+    if col_data.size == 0:
+        return np.asarray([])
+
+    has_negative = np.any(col_data < 0)
+    has_positive = np.any(col_data > 0)
+    if has_negative and has_positive:
+        n_extra_thresholds = 2 if max_bins >= 3 else (1 if max_bins == 2 else 0)
+    else:
+        n_extra_thresholds = 1
+
+    quantile_bins = max(1, max_bins - n_extra_thresholds)
+    thresholds = _find_binning_thresholds(
+        col_data, quantile_bins, sample_weight=sample_weight
+    )
+    extra = []
+    if has_negative and has_positive:
+        if max_bins >= 3:
+            largest_negative = np.max(col_data[col_data < 0])
+            if np.isneginf(largest_negative):
+                largest_negative = np.nextafter(X_DTYPE(0), X_DTYPE(-np.inf))
+            extra.extend((largest_negative, X_DTYPE(0)))
+        elif max_bins == 2:
+            extra.append(X_DTYPE(0))
+    elif has_negative:
+        largest_negative = np.max(col_data)
+        if np.isneginf(largest_negative):
+            largest_negative = np.nextafter(X_DTYPE(0), X_DTYPE(-np.inf))
+        extra.append(largest_negative)
+    elif has_positive:
+        extra.append(X_DTYPE(0))
+
+    if extra:
+        thresholds = np.unique(np.concatenate((thresholds, np.asarray(extra))))
+    return thresholds
 
 
 class _BinMapper(TransformerMixin, BaseEstimator):
@@ -219,8 +291,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The data to bin.
+        X : array-like or SciPy sparse matrix/array of shape
+            (n_samples, n_features)
+            The numeric data to bin. Sparse input is normalized to CSR.
         y: None
             Ignored.
 
@@ -236,7 +309,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 )
             )
 
-        X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
+        is_sparse = sparse.issparse(X)
+        if is_sparse:
+            X = _validate_sparse_input(X)
+        else:
+            X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         max_bins = self.n_bins - 1
         rng = check_random_state(self.random_state)
         if self.subsample is not None and X.shape[0] > self.subsample:
@@ -250,7 +327,10 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             subset = rng.choice(
                 X.shape[0], self.subsample, p=subsampling_probabilities, replace=True
             )
-            X = X.take(subset, axis=0)
+            if is_sparse:
+                X = X[subset]
+            else:
+                X = X.take(subset, axis=0)
 
             # Add a switch to replace sample weights with None
             # since sample weights were already used in subsampling
@@ -286,13 +366,35 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.bin_thresholds_ = [None] * n_features
         n_bins_non_missing = [None] * n_features
 
-        non_cat_thresholds = Parallel(n_jobs=self.n_threads, backend="threading")(
-            delayed(_find_binning_thresholds)(
-                X[:, f_idx], max_bins, sample_weight=sample_weight
+        if is_sparse and np.any(self.is_categorical_):
+            raise ValueError(
+                "Categorical features are not supported with sparse input."
             )
-            for f_idx in range(n_features)
-            if not self.is_categorical_[f_idx]
-        )
+
+        if is_sparse:
+            X_columns = X.tocsc(copy=False)
+
+            def find_sparse_thresholds(f_idx):
+                start, stop = X_columns.indptr[f_idx : f_idx + 2]
+                col_data = X_columns.data[start:stop]
+                col_sample_weight = None
+                if sample_weight is not None:
+                    col_sample_weight = sample_weight[X_columns.indices[start:stop]]
+                return _find_sparse_binning_thresholds(
+                    col_data, max_bins, sample_weight=col_sample_weight
+                )
+
+            non_cat_thresholds = Parallel(n_jobs=self.n_threads, backend="threading")(
+                delayed(find_sparse_thresholds)(f_idx) for f_idx in range(n_features)
+            )
+        else:
+            non_cat_thresholds = Parallel(n_jobs=self.n_threads, backend="threading")(
+                delayed(_find_binning_thresholds)(
+                    X[:, f_idx], max_bins, sample_weight=sample_weight
+                )
+                for f_idx in range(n_features)
+                if not self.is_categorical_[f_idx]
+            )
         non_cat_idx = 0
         for f_idx in range(n_features):
             if self.is_categorical_[f_idx]:
@@ -309,6 +411,16 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                 non_cat_idx += 1
 
         self.n_bins_non_missing_ = np.array(n_bins_non_missing, dtype=np.uint32)
+        threshold_lengths = np.fromiter(
+            (thresholds.size for thresholds in self.bin_thresholds_),
+            dtype=np.intp,
+            count=n_features,
+        )
+        flat_thresholds = np.concatenate(self.bin_thresholds_)
+        feature_indices = np.repeat(np.arange(n_features), threshold_lengths)
+        self.zero_bin_idx_ = np.bincount(
+            feature_indices[flat_thresholds < 0], minlength=n_features
+        ).astype(np.uint8)
         return self
 
     def transform(self, X):
@@ -323,15 +435,22 @@ class _BinMapper(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            The data to bin.
+        X : array-like or SciPy sparse matrix/array of shape
+            (n_samples, n_features)
+            The numeric data to bin. Sparse input is normalized to canonical CSR.
 
         Returns
         -------
-        X_binned : array-like of shape (n_samples, n_features)
-            The binned data (fortran-aligned).
+        X_binned : ndarray or CSR sparse matrix/array of shape
+            (n_samples, n_features)
+            The binned data. Dense output is Fortran-aligned; sparse output
+            uses the internal encoding for implicit zeros.
         """
-        X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
+        is_sparse = sparse.issparse(X)
+        if is_sparse:
+            X = _validate_sparse_input(X)
+        else:
+            X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         check_is_fitted(self)
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
             raise ValueError(
@@ -340,6 +459,27 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             )
 
         n_threads = _openmp_effective_n_threads(self.n_threads)
+        if is_sparse:
+            offsets = np.zeros(X.shape[1] + 1, dtype=np.intp)
+            for feature_idx, thresholds in enumerate(self.bin_thresholds_):
+                offsets[feature_idx + 1] = offsets[feature_idx] + len(thresholds)
+            flat_thresholds = np.concatenate(self.bin_thresholds_)
+            binned_data = np.empty(X.data.shape, dtype=X_BINNED_DTYPE)
+            _map_sparse_to_bins(
+                X.data,
+                X.indices,
+                X.indptr,
+                flat_thresholds,
+                offsets,
+                self.zero_bin_idx_,
+                self.missing_values_bin_idx_,
+                n_threads,
+                binned_data,
+            )
+            return type(X)(
+                (binned_data, X.indices, X.indptr), shape=X.shape, copy=False
+            )
+
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
         _map_to_bins(
             X,
