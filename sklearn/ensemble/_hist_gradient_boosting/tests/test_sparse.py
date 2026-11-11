@@ -61,6 +61,29 @@ def test_sparse_prediction_rejected_after_categorical_fit():
         model.predict(sparse.csr_matrix(X))
 
 
+def test_sparse_bin_mapper_subsampling_and_categorical_rejection():
+    X = sparse.csr_matrix(np.arange(40, dtype=np.float64).reshape(-1, 1))
+    mapper = _BinMapper(n_bins=8, subsample=10, random_state=0, n_threads=1)
+    first = mapper.fit_transform(X)
+    second = mapper.fit_transform(X)
+    assert_array_equal(first.toarray(), second.toarray())
+
+    categorical_mapper = _BinMapper(
+        is_categorical=[True], known_categories=[np.arange(40)], n_threads=1
+    )
+    with pytest.raises(ValueError, match="Categorical features are not supported"):
+        categorical_mapper.fit(X)
+
+
+def test_sparse_verbose_fit_reports_binning(capsys):
+    X = sparse.csr_matrix([[0.0], [1.0], [2.0], [0.0]])
+    model = HistGradientBoostingRegressor(
+        max_iter=1, min_samples_leaf=1, early_stopping=False, verbose=1
+    ).fit(X, [0.0, 1.0, 2.0, 0.0])
+    assert "Binning" in capsys.readouterr().out
+    assert_array_equal(model.predict(X), model.predict(X.toarray()))
+
+
 def _decode_sparse_bins(X_binned, zero_bin_idx, missing_values_bin_idx):
     decoded = X_binned.toarray()
     for feature_idx, zero_bin in enumerate(zero_bin_idx):
