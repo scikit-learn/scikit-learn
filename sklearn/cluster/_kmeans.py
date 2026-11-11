@@ -1355,20 +1355,34 @@ class _BaseKMeans(
             n_samples = X.shape[0]
             sample_weight = sample_weight[init_indices]
 
-        xp, _ = get_namespace(X)
+        xp, _, device = get_namespace_and_device(X)
         if not _is_numpy_namespace(xp):
-            # Array API path: only k-means++ is supported for now.
-            if not (isinstance(init, str) and init == "k-means++"):
+            # Array API path: only "k-means++" and "random" are supported for now.
+            if isinstance(init, str) and init == "k-means++":
+                centers, _ = _kmeans_plusplus_xp(
+                    X,
+                    n_clusters,
+                    x_squared_norms=x_squared_norms,
+                    sample_weight=sample_weight,
+                    random_state=random_state,
+                )
+            elif isinstance(init, str) and init == "random":
+                # The array API standard has no "sample without replacement",
+                # so draw the indices on the CPU with the same call as the NumPy
+                # path (same seeds for the same random_state), then gather the
+                # rows on the device of X.
+                sample_weight_np = move_to(sample_weight, xp=np, device="cpu")
+                seeds = random_state.choice(
+                    n_samples,
+                    size=n_clusters,
+                    replace=False,
+                    p=sample_weight_np / sample_weight_np.sum(),
+                )
+                centers = xp.take(X, xp.asarray(seeds, device=device), axis=0)
+            else:
                 raise NotImplementedError(
                     f"init={init!r} is not supported yet with array API inputs."
                 )
-            centers, _ = _kmeans_plusplus_xp(
-                X,
-                n_clusters,
-                x_squared_norms=x_squared_norms,
-                sample_weight=sample_weight,
-                random_state=random_state,
-            )
         elif isinstance(init, str) and init == "k-means++":
             centers, _ = _kmeans_plusplus(
                 X,
