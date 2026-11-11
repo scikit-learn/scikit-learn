@@ -549,12 +549,51 @@ def _labels_inertia_xp(X, sample_weight, centers, return_inertia=True):
     return labels, inertia
 
 
+def _relocate_empty_clusters_xp(
+    X, sample_weight, centers_old, weighted_sums, weight_in_clusters, labels, xp
+):
+    """Array API version of `_relocate_empty_clusters_dense`.
+
+    Each empty cluster takes one of the samples farthest from their current
+    center, which is removed from its old cluster. Modifies `weighted_sums` and
+    `weight_in_clusters` in place.
+    """
+    empty_clusters = xp.nonzero(weight_in_clusters == 0)[0]
+    n_empty = empty_clusters.shape[0]
+    if n_empty == 0:
+        return
+
+    # Squared distance of each sample to the center it was assigned to.
+    assigned_centers = xp.take(centers_old, xp.astype(labels, xp.int64), axis=0)
+    distances = xp.sum((X - assigned_centers) ** 2, axis=1)
+    if float(xp.max(distances)) == 0:
+        # More clusters than distinct samples: relocating is pointless.
+        return
+
+    # TODO: use `xpx.argpartition` (O(n), like the Cython code) once it works
+    # on CUDA: in array-api-extra 0.11.2 its torch branch creates an index
+    # array on the CPU and fails with a device mismatch.
+    far_from_centers = xp.argsort(distances, descending=True)[:n_empty]
+
+    # Few empty clusters in practice: a Python loop is fine.
+    for i in range(n_empty):
+        new_cluster_id = int(empty_clusters[i])
+        far_idx = int(far_from_centers[i])
+        old_cluster_id = int(labels[far_idx])
+        weight = sample_weight[far_idx]
+
+        weighted_sums[old_cluster_id, :] -= X[far_idx, :] * weight
+        weighted_sums[new_cluster_id, :] = X[far_idx, :] * weight
+        weight_in_clusters[new_cluster_id] = weight
+        weight_in_clusters[old_cluster_id] -= weight
+
+
 def _update_centers_xp(X, sample_weight, labels, centers, xp, device):
     """M step: each center becomes the weighted mean of its samples.
 
     Uses a one-hot (n_samples, n_clusters) weight matrix so that the update is
-    a single matrix product. Empty clusters keep their previous center (the
-    Cython code relocates them instead; not implemented here yet).
+    a single matrix product. Empty clusters are relocated to far-away samples,
+    as in the Cython code.
     """
     n_clusters = centers.shape[0]
     cluster_ids = xp.arange(n_clusters, dtype=labels.dtype, device=device)
@@ -562,6 +601,11 @@ def _update_centers_xp(X, sample_weight, labels, centers, xp, device):
     weights = one_hot * sample_weight[:, None]
     weight_in_clusters = xp.sum(weights, axis=0)
     weighted_sums = weights.T @ X
+    _relocate_empty_clusters_xp(
+        X, sample_weight, centers, weighted_sums, weight_in_clusters, labels, xp
+    )
+    # A cluster can still be empty if the relocation was skipped (all
+    # distances are 0) or a sample had zero weight: keep its previous center.
     is_empty = weight_in_clusters == 0
     # Divide by 1 instead of 0 for empty clusters (their result is discarded).
     safe_weight = xp.where(
