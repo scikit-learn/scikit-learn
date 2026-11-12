@@ -1,0 +1,9 @@
+extends: existence
+message: "'%s' adds nothing. State the point directly; if it is a caveat readers must not miss, use a '.. note::' block."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-concise
+level: warning
+ignorecase: true
+tokens:
+  - please note( that)?
+  - it should be noted that
+  - it is (worth|important) not(e|ing) that

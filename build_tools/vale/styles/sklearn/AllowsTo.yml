@@ -1,0 +1,9 @@
+extends: existence
+message: "'%s' is not idiomatic English. Use 'allows <verb>ing', 'allows you to <verb>' or 'makes it possible to <verb>'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-idioms
+level: warning
+ignorecase: true
+nonword: true
+tokens:
+  - '\b(allows?|allowing|permits?|enables?)\s+to\s+[a-z]+'
+  - '\b(recommends?|suggests?|advises?)\s+to\s+[a-z]+'

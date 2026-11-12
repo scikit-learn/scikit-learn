@@ -9,6 +9,7 @@ Developer's Guide
 .. toctree::
 
    contributing
+   writing_style
    development_setup
    global_configuration
    minimal_reproducer

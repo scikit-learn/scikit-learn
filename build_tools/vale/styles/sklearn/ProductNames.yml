@@ -1,0 +1,10 @@
+extends: substitution
+message: "Use '%s' instead of '%s'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-terminology
+level: error
+ignorecase: false
+swap:
+  Numpy: NumPy
+  Scipy: SciPy
+  Github: GitHub
+  Scikit-Learn: scikit-learn

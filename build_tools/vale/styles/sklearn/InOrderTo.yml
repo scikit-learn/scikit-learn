@@ -1,0 +1,10 @@
+extends: substitution
+message: "Use '%s' instead of '%s'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-concise
+level: suggestion
+ignorecase: true
+swap:
+  in order to: to
+  due to the fact that: because
+  whether or not to: whether to
+  make use of: use
