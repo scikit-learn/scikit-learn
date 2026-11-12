@@ -713,3 +713,27 @@ def test_dtype_of_classifier_probas(strategy):
     probas = model.fit(X, y).predict_proba(X)
 
     assert probas.dtype == np.float64
+
+
+@pytest.mark.parametrize("strategy", ["most_frequent", "prior"])
+def test_dummy_classifier_sparse_nonconsecutive_classes(strategy):
+    """Regression test for https://github.com/scikit-learn/scikit-learn/issues/35376
+
+    Ensure DummyClassifier predicts the correct class label rather than the argmax index
+    when fitted on sparse targets with nonconsecutive class labels.
+    """
+    from scipy import sparse
+
+    X = np.zeros((5, 1))
+    y = np.array([4, 4, 4, 0, 1])
+    y_sparse = sparse.csc_matrix(y.reshape(-1, 1))
+
+    clf_dense = DummyClassifier(strategy=strategy).fit(X, y)
+    clf_sparse = DummyClassifier(strategy=strategy).fit(X, y_sparse)
+
+    pred_dense = clf_dense.predict(X)
+    pred_sparse = clf_sparse.predict(X).toarray().ravel()
+
+    assert_array_equal(pred_dense, np.full(5, 4))
+    assert_array_equal(pred_sparse, np.full(5, 4))
+
