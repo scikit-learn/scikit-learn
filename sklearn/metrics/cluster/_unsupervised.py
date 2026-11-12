@@ -398,8 +398,12 @@ def calinski_harabasz_score(X, labels):
 
     return float(
         1.0
-        if intra_disp == 0.0
-        else extra_disp * (n_samples - n_labels) / (intra_disp * (n_labels - 1.0))
+        if intra_disp == 0.0 and extra_disp == 0.0
+        else (
+            float("inf")
+            if intra_disp == 0.0
+            else extra_disp * (n_samples - n_labels) / (intra_disp * (n_labels - 1.0))
+        )
     )
 
 
