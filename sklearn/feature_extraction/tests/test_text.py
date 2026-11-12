@@ -388,6 +388,34 @@ def test_countvectorizer_empty_vocabulary():
         v.fit(["to be or not to be", "and me too", "and so do you"])
 
 
+@pytest.mark.parametrize(
+    "analyzer, docs, unit",
+    [("char", ["a", "b"], "characters"), ("word", ["apple", "banana"], "tokens")],
+)
+def test_countvectorizer_empty_vocabulary_ngram_range(analyzer, docs, unit):
+    # Non-regression test for #33981: when all documents are shorter than the
+    # lower bound of ngram_range, the error message should mention ngram_range.
+    vect = CountVectorizer(analyzer=analyzer, ngram_range=(2, 4))
+    msg = rf"fewer than 2 {unit}, the lower bound of ngram_range=\(2, 4\)"
+    with pytest.raises(ValueError, match=msg):
+        vect.fit(docs)
+
+
+@pytest.mark.parametrize(
+    "params, docs",
+    [
+        ({"stop_words": "english", "ngram_range": (1, 2)}, ["to be or not to be"]),
+        ({"analyzer": "char_wb", "ngram_range": (2, 4)}, [" ", ""]),
+    ],
+)
+def test_countvectorizer_empty_vocabulary_no_ngram_range_hint(params, docs):
+    # ngram_range is not mentioned when it cannot be the cause of the empty
+    # vocabulary.
+    with pytest.raises(ValueError, match="empty vocabulary") as exc_info:
+        CountVectorizer(**params).fit(docs)
+    assert "ngram_range" not in str(exc_info.value)
+
+
 def test_fit_countvectorizer_twice():
     cv = CountVectorizer()
     X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
