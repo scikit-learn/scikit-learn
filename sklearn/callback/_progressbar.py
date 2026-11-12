@@ -100,14 +100,16 @@ class ProgressBar:
 
     def on_fit_task_end(self, estimator, context):
         # The path is enough to update the progress of the task and its ancestors.
-        if context.root_uuid not in self._disabled_runs:
-            send(
-                self._listener_handles[context.root_uuid],
-                {
-                    "event": "end",
-                    "path": [ctx.task_id for ctx in get_context_path(context)],
-                },
-            )
+        if context.root_uuid in self._disabled_runs:
+            return
+
+        send(
+            self._listener_handles[context.root_uuid],
+            {
+                "event": "end",
+                "path": [ctx.task_id for ctx in get_context_path(context)],
+            },
+        )
 
     def teardown(self, estimator, context):
         if context.root_uuid in self._disabled_runs:
