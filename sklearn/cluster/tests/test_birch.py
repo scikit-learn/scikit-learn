@@ -2,6 +2,10 @@
 Tests for the birch clustering algorithm.
 """
 
+import io
+from itertools import pairwise
+
+import joblib
 import numpy as np
 import pytest
 
@@ -44,6 +48,35 @@ def test_partial_fit(global_random_seed, global_dtype):
     brc_partial.set_params(n_clusters=3)
     brc_partial.partial_fit(None)
     assert_array_equal(brc_partial.subcluster_labels_, brc.subcluster_labels_)
+
+
+def test_pickle_many_leaves():
+    """Check that fitted trees with many linked leaves can be persisted."""
+    n_samples = 200
+    X = np.arange(n_samples * 2, dtype=np.float64).reshape(n_samples, 2)
+    brc = Birch(
+        threshold=1e-12, branching_factor=2, n_clusters=None, compute_labels=False
+    ).fit(X)
+
+    buffer = io.BytesIO()
+    joblib.dump(brc, buffer)
+    buffer.seek(0)
+    loaded_brc = joblib.load(buffer)
+
+    assert_allclose(loaded_brc.subcluster_centers_, brc.subcluster_centers_)
+
+    leaves = loaded_brc._get_leaves()
+    assert len(leaves) == len(brc._get_leaves())
+    assert leaves[0].prev_leaf_ is loaded_brc.dummy_leaf_
+    for previous_leaf, next_leaf in pairwise(leaves):
+        assert previous_leaf.next_leaf_ is next_leaf
+        assert next_leaf.prev_leaf_ is previous_leaf
+    assert leaves[-1].next_leaf_ is None
+
+    X_next = np.array([[n_samples * 2.0, n_samples * 2.0 + 1]])
+    brc.partial_fit(X_next)
+    loaded_brc.partial_fit(X_next)
+    assert_allclose(loaded_brc.subcluster_centers_, brc.subcluster_centers_)
 
 
 def test_birch_predict(global_random_seed, global_dtype):
