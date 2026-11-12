@@ -346,6 +346,10 @@ def test_calinski_harabasz_score():
 
     # Assert the value is 1. when all samples are equals
     assert 1.0 == calinski_harabasz_score(np.ones((10, 2)), [0] * 5 + [1] * 5)
+    # Assert infinite score for perfectly separated clusters
+    X_perfect = [[0], [0], [10], [10], [20], [20]]
+    labels_perfect = [0, 0, 1, 1, 2, 2]
+    assert np.isinf(calinski_harabasz_score(X_perfect, labels_perfect))
 
     # Assert the value is 0. when all the mean cluster are equal
     assert 0.0 == calinski_harabasz_score([[-1, -1], [1, 1]] * 10, [0] * 10 + [1] * 10)

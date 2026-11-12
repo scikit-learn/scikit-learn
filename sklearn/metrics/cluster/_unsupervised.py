@@ -396,11 +396,10 @@ def calinski_harabasz_score(X, labels):
         extra_disp += cluster_k.shape[0] * xp.sum((mean_k - mean) ** 2)
         intra_disp += xp.sum((cluster_k - mean_k) ** 2)
 
-    return float(
-        1.0
-        if intra_disp == 0.0
-        else extra_disp * (n_samples - n_labels) / (intra_disp * (n_labels - 1.0))
-    )
+    if intra_disp == 0.0:
+        return float("inf") if extra_disp > 0.0 else 1.0
+
+    return float(extra_disp * (n_samples - n_labels) / (intra_disp * (n_labels - 1.0)))
 
 
 @validate_params(
