@@ -27,7 +27,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
 ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
@@ -701,15 +701,17 @@ def test_cnb():
     assert_array_almost_equal(clf.feature_log_prob_, normed_weights)
 
 
-def test_categoricalnb(global_random_seed):
+@pytest.mark.parametrize("X_container", [np.asarray] + CSC_CONTAINERS + CSR_CONTAINERS)
+def test_categoricalnb(global_random_seed, X_container):
     # Check the ability to predict the training set.
     clf = CategoricalNB()
     X2, y2 = get_random_integer_x_three_classes_y(global_random_seed)
+    X2 = X_container(X2)
 
     y_pred = clf.fit(X2, y2).predict(X2)
     assert_array_equal(y_pred, y2)
 
-    X3 = np.array([[1, 4], [2, 5]])
+    X3 = X_container(np.array([[1, 4], [2, 5]]))
     y3 = np.array([1, 2])
     clf = CategoricalNB(alpha=1, fit_prior=False)
 
@@ -717,7 +719,7 @@ def test_categoricalnb(global_random_seed):
     assert_array_equal(clf.n_categories_, np.array([3, 6]))
 
     # Check error is raised for X with negative entries
-    X = np.array([[0, -1]])
+    X = X_container(np.array([[0, -1]]))
     y = np.array([1])
     error_msg = re.escape("Negative values in data passed to CategoricalNB (input X)")
     with pytest.raises(ValueError, match=error_msg):
@@ -726,7 +728,7 @@ def test_categoricalnb(global_random_seed):
         clf.fit(X, y)
 
     # Test alpha
-    X3_test = np.array([[2, 5]])
+    X3_test = X_container(np.array([[2, 5]]))
     # alpha=1 increases the count of all categories by one so the final
     # probability for each category is not 50/50 but 1/3 to 2/3
     bayes_numerator = np.array([[1 / 3 * 1 / 3, 2 / 3 * 2 / 3]])
@@ -739,7 +741,7 @@ def test_categoricalnb(global_random_seed):
     assert len(clf.category_count_) == X3.shape[1]
 
     # Check sample_weight
-    X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+    X = X_container(np.array([[0, 0], [0, 1], [0, 0], [1, 1]]))
     y = np.array([1, 1, 2, 2])
     clf = CategoricalNB(alpha=1, fit_prior=False)
     clf.fit(X, y)
@@ -747,7 +749,7 @@ def test_categoricalnb(global_random_seed):
     assert_array_equal(clf.n_categories_, np.array([2, 2]))
 
     for factor in [1.0, 0.3, 5, 0.0001]:
-        X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+        X = X_container(np.array([[0, 0], [0, 1], [0, 0], [1, 1]]))
         y = np.array([1, 1, 2, 2])
         sample_weight = np.array([1, 1, 10, 0.1]) * factor
         clf = CategoricalNB(alpha=1, fit_prior=False)
@@ -802,6 +804,76 @@ def test_categoricalnb_with_min_categories(
     predictions = clf.predict(new_X)
     assert_array_equal(predictions, expected_prediction)
     assert_array_equal(clf.n_categories_, exp_n_categories_)
+
+
+@pytest.mark.parametrize("min_categories", [None, 6])
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
+def test_categoricalnb_sparse(global_random_seed, sparse_container, min_categories):
+    # Check that sparse and dense X give the same fitted model and predictions.
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randint(4, size=(30, 4))
+    X[:, 0] = 0
+    X[:, 1] += 1
+    # categories 1, 2 and 3 of the last feature only show up after the first
+    # partial_fit batch
+    X[:10, 3] = 0
+    y = rng.randint(3, size=30)
+    sample_weight = rng.uniform(0.1, 2, size=30)
+
+    X_sparse = sparse_container(X)
+    # explicitly stored zeros must be treated as category 0
+    X_sparse.data[:3] = 0
+    X = X_sparse.toarray()
+
+    X_test = X
+    if min_categories is not None:
+        # categories that are never seen during fit
+        X_test = np.vstack([X, [[5, 5, 4, 5]]])
+
+    for sw in [None, sample_weight]:
+        clf_dense = CategoricalNB(min_categories=min_categories)
+        clf_sparse = CategoricalNB(min_categories=min_categories)
+        clf_dense.fit(X, y, sample_weight=sw)
+        clf_sparse.fit(X_sparse, y, sample_weight=sw)
+
+        clf_dense_pf = CategoricalNB(min_categories=min_categories)
+        clf_sparse_pf = CategoricalNB(min_categories=min_categories)
+        for batch in [slice(0, 10), slice(10, 20), slice(20, 30)]:
+            sw_batch = None if sw is None else sw[batch]
+            clf_dense_pf.partial_fit(
+                X[batch], y[batch], classes=[0, 1, 2], sample_weight=sw_batch
+            )
+            clf_sparse_pf.partial_fit(
+                X_sparse[batch], y[batch], classes=[0, 1, 2], sample_weight=sw_batch
+            )
+
+        for dense, sparse in [(clf_dense, clf_sparse), (clf_dense_pf, clf_sparse_pf)]:
+            assert_array_equal(sparse.n_categories_, dense.n_categories_)
+            for count_sparse, count_dense in zip(
+                sparse.category_count_, dense.category_count_
+            ):
+                assert_allclose(count_sparse, count_dense, atol=1e-12)
+            assert_allclose(
+                sparse.predict_proba(sparse_container(X_test)),
+                dense.predict_proba(X_test),
+            )
+
+
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_categoricalnb_sparse_duplicates(csc_container):
+    # Check that duplicate entries in sparse X are summed like in toarray().
+    X = np.array([[0], [1], [2], [2], [1]])
+    y = np.array([0, 0, 1, 1, 1])
+    X_sparse = csc_container(
+        (np.array([1, 1, 1, 1, 1, 1]), np.array([1, 2, 2, 3, 3, 4]), [0, 6]),
+        shape=(5, 1),
+    )
+    assert_array_equal(X_sparse.toarray(), X)
+
+    clf = CategoricalNB().fit(X, y)
+    assert_allclose(clf.predict_proba(X_sparse), clf.predict_proba(X))
+    clf_sparse = CategoricalNB().fit(X_sparse.copy(), y)
+    assert_allclose(clf_sparse.category_count_[0], clf.category_count_[0])
 
 
 @pytest.mark.parametrize(
@@ -859,6 +931,12 @@ def test_alpha(csr_container):
     with pytest.warns(UserWarning, match=msg):
         nb.fit(X, y)
     prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
+    assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    nb = CategoricalNB(alpha=0.0, force_alpha=False)
+    with pytest.warns(UserWarning, match=msg):
+        nb.fit(X, y)
+    prob = np.array([[1.0, 0.0], [0.0, 1.0]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
 
