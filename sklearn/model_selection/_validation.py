@@ -1441,6 +1441,7 @@ def _check_is_permutation(indices, n_samples):
         "verbose": ["verbose"],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "params": [dict, None],
+        "permutation": [StrOptions({"within_groups", "blocks"})],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
 )
@@ -1457,6 +1458,7 @@ def permutation_test_score(
     verbose=0,
     scoring=None,
     params=None,
+    permutation="within_groups",
 ):
     """Evaluate the significance of a cross-validated score with permutations.
 
@@ -1487,12 +1489,13 @@ def permutation_test_score(
         supervised learning.
 
     groups : array-like of shape (n_samples,), default=None
-        Labels to constrain permutation within groups, i.e. ``y`` values
-        are permuted among samples with the same group identifier.
-        When not specified, ``y`` values are permuted among all samples.
+        Group labels of the samples, used to permute ``y``; see
+        ``permutation``. When not specified, ``y`` values are permuted among
+        all samples.
 
-        A warning is raised if each group has a single value of ``y``, because
-        permuting within groups then leaves ``y`` unchanged.
+        With ``permutation="within_groups"``, a warning is raised if each
+        group has a single value of ``y``, because permuting within groups
+        then leaves ``y`` unchanged.
 
         When a grouped cross-validator is used, the group labels are
         also passed on to the ``split`` method of the cross-validator. The
@@ -1535,7 +1538,7 @@ def permutation_test_score(
 
     random_state : int, RandomState instance or None, default=0
         Pass an int for reproducible output for permutation of
-        ``y`` values among samples. See :term:`Glossary <random_state>`.
+        ``y``. See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         The verbosity level.
@@ -1563,6 +1566,23 @@ def permutation_test_score(
 
         .. versionadded:: 1.6
 
+    permutation : {"within_groups", "blocks"}, default="within_groups"
+        How ``y`` is permuted.
+
+        - ``"within_groups"``: ``y`` values are permuted among samples with
+          the same group identifier, or among all samples if ``groups`` is
+          None.
+        - ``"blocks"``: each group is a block whose samples share a single
+          value of ``y``, as with one diagnosis per subject or one condition
+          per recording block. The values of ``y`` are permuted between the
+          groups, and every sample receives the new value of its group.
+          ``y`` must be constant within each group. The null hypothesis is
+          that the values of ``y`` are exchangeable between groups, which
+          holds by design if ``y`` was assigned to the groups at random. See
+          the :ref:`User Guide <permutation_test_score>`.
+
+        .. versionadded:: 1.10
+
     Returns
     -------
     score : float
@@ -1588,6 +1608,13 @@ def permutation_test_score(
     Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
     <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
     Journal of Machine Learning Research (2010) vol. 11
+
+    With ``permutation="blocks"``, the values of ``y`` are permuted between
+    groups. For exchangeability blocks in permutation inference, see:
+
+    Winkler, Ridgway, Webster, Smith and Nichols. `Permutation inference for
+    the general linear model <https://doi.org/10.1016/j.neuroimage.2014.01.060>`_.
+    NeuroImage (2014) vol. 92, pp. 381-397
 
     Examples
     --------
@@ -1618,13 +1645,32 @@ def permutation_test_score(
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
-    if groups is not None and _y_constant_within_groups(y, groups):
+    if permutation == "blocks":
+        if _routing_enabled():
+            # `groups` cannot be passed directly with routing (it is None
+            # here); the blocks are taken from the metadata in `params`,
+            # whether or not the splitter requests them.
+            groups = params.get("groups")
+        if groups is None:
+            raise ValueError(
+                "permutation='blocks' requires `groups`: pass `groups`, or "
+                "`params={'groups': groups}` when metadata routing is enabled."
+            )
+        if y is None:
+            raise ValueError("permutation='blocks' requires `y`.")
+        if not _y_constant_within_groups(y, groups):
+            raise ValueError(
+                "permutation='blocks' requires `y` to be constant within each "
+                "group, but at least one group has more than one value of `y`."
+            )
+    elif groups is not None and _y_constant_within_groups(y, groups):
         warnings.warn(
             "Each group in `groups` has a single value of `y`, so permuting `y` "
             "within groups leaves `y` unchanged and permutation_test_score "
             "is not meaningful: the p-value is 1 with a deterministic estimator "
             "and CV, and otherwise only reflects randomness in the CV splits or "
-            "the estimator.",
+            "the estimator. To permute the values of `y` between groups, use "
+            "permutation='blocks'.",
             UserWarning,
         )
 
@@ -1687,7 +1733,7 @@ def permutation_test_score(
         delayed(_permutation_test_score)(
             clone(estimator),
             X,
-            _shuffle(y, groups, random_state),
+            _shuffle(y, groups, random_state, permutation=permutation),
             cv,
             scorer,
             split_params=routed_params.splitter.split,
@@ -1720,18 +1766,34 @@ def _permutation_test_score(
     return np.mean(avg_score)
 
 
-def _y_constant_within_groups(y, groups):
-    """Return True if every group holds a single value of y."""
-    y = np.asarray(y)
+def _group_first_index(groups):
+    """Index of the first sample of each group, and the group of each sample."""
     _, first_sample, group_index = np.unique(
         np.asarray(groups), return_index=True, return_inverse=True
     )
-    return np.array_equal(y, y[first_sample][group_index.ravel()])
+    return first_sample, group_index.ravel()
 
 
-def _shuffle(y, groups, random_state):
-    """Return a shuffled copy of y eventually shuffle among same groups."""
-    if groups is None:
+def _y_constant_within_groups(y, groups):
+    """Return True if every group holds a single value of y."""
+    y = np.asarray(y)
+    first_sample, group_index = _group_first_index(groups)
+    return np.array_equal(y, y[first_sample][group_index])
+
+
+def _shuffle(y, groups, random_state, permutation):
+    """Return a shuffled copy of y.
+
+    With ``permutation="within_groups"``, y is shuffled among samples of the
+    same group, or among all samples if ``groups`` is None. With
+    ``permutation="blocks"``, the values of y of the groups are shuffled
+    between groups; the caller checks that y is constant within groups.
+    """
+    if permutation == "blocks":
+        first_sample, group_index = _group_first_index(groups)
+        block_order = random_state.permutation(len(first_sample))
+        indices = first_sample[block_order][group_index]
+    elif groups is None:
         indices = random_state.permutation(len(y))
     else:
         indices = np.arange(len(groups))

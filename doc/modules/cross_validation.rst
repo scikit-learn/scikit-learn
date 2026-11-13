@@ -981,6 +981,25 @@ of permutations whose cross-validation score is better or equal than the true sc
 without permuting targets. For reliable results ``n_permutations`` should typically be
 larger than 100 and ``cv`` between 3-10 folds.
 
+When samples come in groups that share a single target value, for example
+several recordings per subject with one diagnosis per subject, or trials in
+blocks with one experimental condition per block, shuffling individual target
+values ignores that samples of the same group are not exchangeable. Pass the
+groups with ``permutation="blocks"`` to permute the target values between
+groups instead, and use a group-aware cross-validator such as
+:class:`~sklearn.model_selection.GroupKFold`. The test assumes that the target
+values are exchangeable between groups. This holds by design if they were
+assigned to the groups at random, but not, for example, when they follow a
+fixed order of groups over time and the features drift over time. The p-value
+cannot be smaller than about one over the number of distinct assignments of
+the target values to the groups, so use enough groups for the significance
+level you need; with few groups,
+:class:`~sklearn.model_selection.StratifiedGroupKFold` or
+:class:`~sklearn.model_selection.LeaveOneGroupOut` avoids training sets with a
+single class. If the cross-validator splits groups between training and test
+sets, the p-value remains valid but the score does not estimate the
+performance on new groups.
+
 A low p-value provides evidence that the dataset contains some real dependency between
 features and targets **and** that the estimator was able to utilize this dependency to
 obtain good results. A high p-value, in reverse, could be due to either one of these:
