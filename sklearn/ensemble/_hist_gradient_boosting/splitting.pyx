@@ -13,6 +13,7 @@ cimport cython
 from cython.parallel import prange
 import numpy as np
 from libc.math cimport INFINITY, ceil
+from libc.stdint cimport int32_t, int64_t
 from libc.stdlib cimport malloc, free, qsort
 from libc.string cimport memcpy
 
@@ -49,6 +50,100 @@ cdef struct split_info_struct:
 cdef struct categorical_info:
     X_BINNED_DTYPE_C bin_idx
     Y_DTYPE_C value
+
+
+ctypedef fused sparse_index_t:
+    int32_t
+    int64_t
+
+
+cdef int _split_sparse_indices(
+    const X_BINNED_DTYPE_C [::1] data,
+    const sparse_index_t [::1] indices,
+    const sparse_index_t [::1] indptr,
+    const uint8_t [::1] zero_bin_idx,
+    unsigned int [::1] sample_indices,
+    const unsigned int feature_idx,
+    const X_BINNED_DTYPE_C split_bin_idx,
+    const uint8_t missing_values_bin_idx,
+    const uint8_t missing_go_to_left,
+) noexcept nogil:
+    cdef:
+        int left = 0
+        int right = sample_indices.shape[0] - 1
+        unsigned int sample_idx
+        unsigned int tmp
+
+    while left <= right:
+        sample_idx = sample_indices[left]
+        if _sparse_sample_goes_left(
+            sample_idx, data, indices, indptr, zero_bin_idx,
+            feature_idx, split_bin_idx, missing_values_bin_idx,
+            missing_go_to_left,
+        ):
+            left += 1
+            continue
+
+        sample_idx = sample_indices[right]
+        if not _sparse_sample_goes_left(
+            sample_idx, data, indices, indptr, zero_bin_idx,
+            feature_idx, split_bin_idx, missing_values_bin_idx,
+            missing_go_to_left,
+        ):
+            right -= 1
+            continue
+
+        tmp = sample_indices[left]
+        sample_indices[left] = sample_indices[right]
+        sample_indices[right] = tmp
+        left += 1
+        right -= 1
+
+    return left
+
+
+cdef inline uint8_t _sparse_sample_goes_left(
+    const unsigned int sample_idx,
+    const X_BINNED_DTYPE_C [::1] data,
+    const sparse_index_t [::1] indices,
+    const sparse_index_t [::1] indptr,
+    const uint8_t [::1] zero_bin_idx,
+    const unsigned int feature_idx,
+    const X_BINNED_DTYPE_C split_bin_idx,
+    const uint8_t missing_values_bin_idx,
+    const uint8_t missing_go_to_left,
+) noexcept nogil:
+    cdef:
+        sparse_index_t low = indptr[sample_idx]
+        sparse_index_t high = indptr[sample_idx + 1]
+        sparse_index_t row_stop = high
+        sparse_index_t middle
+        X_BINNED_DTYPE_C encoded_bin
+        X_BINNED_DTYPE_C bin_value
+
+    while low < high:
+        middle = low + (high - low) // 2
+        if indices[middle] < feature_idx:
+            low = middle + 1
+        else:
+            high = middle
+
+    if low < row_stop and indices[low] == feature_idx:
+        encoded_bin = data[low]
+        if encoded_bin == missing_values_bin_idx:
+            bin_value = missing_values_bin_idx
+        elif encoded_bin == 0:
+            bin_value = zero_bin_idx[feature_idx]
+        elif encoded_bin <= zero_bin_idx[feature_idx]:
+            bin_value = encoded_bin - 1
+        else:
+            bin_value = encoded_bin
+    else:
+        bin_value = zero_bin_idx[feature_idx]
+
+    if bin_value == missing_values_bin_idx:
+        return missing_go_to_left
+    return bin_value <= split_bin_idx
 
 
 class SplitInfo:
@@ -121,8 +216,9 @@ cdef class Splitter:
 
     Parameters
     ----------
-    X_binned : ndarray of int, shape (n_samples, n_features)
-        The binned input samples. Must be Fortran-aligned.
+    X_binned : ndarray or CSR sparse matrix/array of int
+        The binned input samples. Dense arrays must be Fortran-aligned. Sparse
+        inputs must use the internal compressed CSR representation.
     n_bins_non_missing : ndarray, shape (n_features,)
         For each feature, gives the number of bins actually used for
         non-missing values.
@@ -162,9 +258,16 @@ cdef class Splitter:
     rng : Generator
     n_threads : int, default=1
         Number of OpenMP threads to use.
+    zero_bin_idx : ndarray of uint8, shape (n_features,), default=None
+        For sparse input, the ordinary bin containing the implicit numeric zero
+        for each feature.
     """
     cdef public:
-        const X_BINNED_DTYPE_C [::1, :] X_binned
+        object X_binned
+        const X_BINNED_DTYPE_C [::1, :] X_binned_dense
+        const X_BINNED_DTYPE_C [::1] X_binned_sparse_data
+        const uint8_t [::1] zero_bin_idx
+        uint8_t is_sparse
         unsigned int n_features
         unsigned int [::1] all_features
         const unsigned int [::1] n_bins_non_missing
@@ -186,7 +289,7 @@ cdef class Splitter:
         int n_threads
 
     def __init__(self,
-                 const X_BINNED_DTYPE_C [::1, :] X_binned,
+                 X_binned,
                  const unsigned int [::1] n_bins_non_missing,
                  const uint8_t missing_values_bin_idx,
                  const uint8_t [::1] has_missing_values,
@@ -199,9 +302,22 @@ cdef class Splitter:
                  uint8_t hessians_are_constant=False,
                  Y_DTYPE_C feature_fraction_per_split=1.0,
                  rng=np.random.RandomState(),
-                 unsigned int n_threads=1):
+                 unsigned int n_threads=1,
+                 zero_bin_idx=None):
 
         self.X_binned = X_binned
+        self.is_sparse = hasattr(X_binned, "format")
+        if self.is_sparse:
+            if X_binned.format != "csr":
+                raise ValueError("Sparse X_binned must use CSR format.")
+            if not X_binned.has_canonical_format:
+                raise ValueError("Sparse X_binned must have canonical CSR format.")
+            if zero_bin_idx is None:
+                raise ValueError("zero_bin_idx is required for sparse X_binned.")
+            self.X_binned_sparse_data = X_binned.data
+            self.zero_bin_idx = zero_bin_idx
+        else:
+            self.X_binned_dense = X_binned
         self.n_features = X_binned.shape[1]
         self.all_features = np.arange(self.n_features, dtype=np.uint32)
         self.n_bins_non_missing = n_bins_non_missing
@@ -311,8 +427,7 @@ cdef class Splitter:
             uint8_t missing_go_to_left = split_info.missing_go_to_left
             uint8_t missing_values_bin_idx = self.missing_values_bin_idx
             int feature_idx = split_info.feature_idx
-            const X_BINNED_DTYPE_C [::1] X_binned = \
-                self.X_binned[:, feature_idx]
+            const X_BINNED_DTYPE_C [::1] X_binned
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             uint8_t is_categorical = split_info.is_categorical
@@ -338,6 +453,39 @@ cdef class Splitter:
             uint8_t turn_left
             int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
             int [:] right_offset = np.zeros(n_threads, dtype=np.int32)
+
+        if self.is_sparse:
+            if self.X_binned.indices.dtype == np.int32:
+                right_child_position = _split_sparse_indices[int32_t](
+                    self.X_binned_sparse_data,
+                    self.X_binned.indices,
+                    self.X_binned.indptr,
+                    self.zero_bin_idx,
+                    sample_indices,
+                    feature_idx,
+                    bin_idx,
+                    missing_values_bin_idx,
+                    missing_go_to_left,
+                )
+            else:
+                right_child_position = _split_sparse_indices[int64_t](
+                    self.X_binned_sparse_data,
+                    self.X_binned.indices,
+                    self.X_binned.indptr,
+                    self.zero_bin_idx,
+                    sample_indices,
+                    feature_idx,
+                    bin_idx,
+                    missing_values_bin_idx,
+                    missing_go_to_left,
+                )
+            return (
+                sample_indices[:right_child_position],
+                sample_indices[right_child_position:],
+                right_child_position,
+            )
+
+        X_binned = self.X_binned_dense[:, feature_idx]
 
         # only set left_cat_bitset when is_categorical is True
         if is_categorical:

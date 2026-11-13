@@ -2,11 +2,17 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from math import log2, ceil
+from libc.stdint cimport int32_t, int64_t
 
 from cython.parallel import prange
 
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 from sklearn.utils._typedefs cimport uint8_t, inlinable_isnan
+
+
+ctypedef fused sparse_index_t:
+    int32_t
+    int64_t
 
 
 def _map_to_bins(const X_DTYPE_C [:, :] data,
@@ -42,6 +48,64 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
             n_threads,
             binned[:, feature_idx]
         )
+
+
+def _map_sparse_to_bins(
+    const X_DTYPE_C [::1] data,
+    const sparse_index_t [::1] indices,
+    const sparse_index_t [::1] indptr,
+    const X_DTYPE_C [::1] thresholds,
+    const int64_t [::1] threshold_offsets,
+    const uint8_t [::1] zero_bin_idx,
+    const uint8_t missing_values_bin_idx,
+    int n_threads,
+    X_BINNED_DTYPE_C [::1] binned_data,
+):
+    """Bin the stored values of a CSR matrix.
+
+    The value 0 in ``binned_data`` represents an implicit zero. ``zero_bin_idx``
+    records the corresponding ordinary bin. The other bins are encoded around
+    that bin so that the sparse representation does not need a separate zero
+    sentinel.
+    """
+    cdef:
+        int i
+        sparse_index_t feature_idx
+        sparse_index_t left
+        sparse_index_t right
+        sparse_index_t middle
+        int64_t offset
+        sparse_index_t n_thresholds
+        sparse_index_t raw_bin
+        uint8_t zero_bin
+        X_DTYPE_C value
+
+    for i in prange(data.shape[0], schedule="static", nogil=True,
+                    num_threads=n_threads):
+        feature_idx = indices[i]
+        value = data[i]
+        if inlinable_isnan(value):
+            binned_data[i] = missing_values_bin_idx
+            continue
+
+        offset = threshold_offsets[feature_idx]
+        n_thresholds = threshold_offsets[feature_idx + 1] - offset
+        left = 0
+        right = n_thresholds
+        while left < right:
+            middle = left + (right - left) // 2
+            if thresholds[offset + middle] < value:
+                left = middle + 1
+            else:
+                right = middle
+        raw_bin = left
+        zero_bin = zero_bin_idx[feature_idx]
+        if raw_bin == zero_bin:
+            binned_data[i] = 0
+        elif raw_bin < zero_bin:
+            binned_data[i] = raw_bin + 1
+        else:
+            binned_data[i] = raw_bin
 
 
 cdef void _map_col_to_bins(

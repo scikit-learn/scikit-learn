@@ -11,6 +11,7 @@ from numbers import Integral, Real
 from time import time
 
 import numpy as np
+from scipy import sparse
 
 from sklearn._loss.loss import (
     _LOSSES,
@@ -32,7 +33,10 @@ from sklearn.compose import ColumnTransformer
 from sklearn.ensemble._hist_gradient_boosting._gradient_boosting import (
     _update_raw_predictions,
 )
-from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.binning import (
+    _BinMapper,
+    _validate_sparse_input,
+)
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE, X_DTYPE, Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.metrics import check_scoring
@@ -260,20 +264,37 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         # If there is a preprocessor, we let the preprocessor handle the validation.
         # Otherwise, we validate the data ourselves.
-        check_X_kwargs = dict(dtype=[X_DTYPE], ensure_all_finite=False)
+        is_sparse = sparse.issparse(X)
+        check_X_kwargs = dict(
+            dtype=[X_DTYPE], ensure_all_finite=False, accept_sparse="csr"
+        )
         if not reset:
             if self._preprocessor is None:
-                return validate_data(self, X, reset=False, **check_X_kwargs)
+                X = validate_data(self, X, reset=False, **check_X_kwargs)
+                if sparse.issparse(X):
+                    X = _validate_sparse_input(X)
+                return X
+            if is_sparse:
+                raise ValueError(
+                    "Sparse input is not supported when categorical features "
+                    "were used during fitting."
+                )
             return self._preprocessor.transform(X)
 
         # At this point, reset is False, which runs during `fit`.
         self.is_categorical_ = _check_categorical_features(X, self.categorical_features)
+        if is_sparse and self.is_categorical_ is not None:
+            raise ValueError(
+                "Categorical features are not supported with sparse input."
+            )
 
         if self.is_categorical_ is None:
             self._preprocessor = None
             self._is_categorical_remapped = None
 
             X = validate_data(self, X, **check_X_kwargs)
+            if sparse.issparse(X):
+                X = _validate_sparse_input(X)
             return X, None
 
         n_features = X.shape[1]
@@ -614,11 +635,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_binned_val = None
 
         # Uses binned data to check for missing values
-        has_missing_values = (
-            (X_binned_train == self._bin_mapper.missing_values_bin_idx_)
-            .any(axis=0)
-            .astype(np.uint8)
-        )
+        if sparse.issparse(X_binned_train):
+            has_missing_values = np.zeros(X_binned_train.shape[1], dtype=np.uint8)
+            missing_mask = (
+                X_binned_train.data == self._bin_mapper.missing_values_bin_idx_
+            )
+            has_missing_values[X_binned_train.indices[missing_mask]] = 1
+        else:
+            has_missing_values = (
+                (X_binned_train == self._bin_mapper.missing_values_bin_idx_)
+                .any(axis=0)
+                .astype(np.uint8)
+            )
 
         if self.verbose:
             print("Fitting gradient boosted rounds:")
@@ -829,6 +857,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
+                    zero_bin_idx=self._bin_mapper.zero_bin_idx_,
                     is_categorical=self._is_categorical_remapped,
                     monotonic_cst=monotonic_cst_remapped,
                     interaction_cst=interaction_cst,
@@ -877,6 +906,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             X_binned_val,
                             self._bin_mapper.missing_values_bin_idx_,
                             n_threads,
+                            zero_bin_idx=self._bin_mapper.zero_bin_idx_,
                         )
 
                 if self.scoring == "loss":
@@ -991,7 +1021,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 sample_weight_small_train = sample_weight_train[indices]
             else:
                 sample_weight_small_train = None
-            X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
+            if not sparse.issparse(X_binned_small_train):
+                X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
             return (
                 X_binned_small_train,
                 y_small_train,
@@ -1115,8 +1146,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         description = "training" if is_training_data else "validation"
         if self.verbose:
+            if sparse.issparse(X):
+                n_bytes = X.data.nbytes + X.indices.nbytes + X.indptr.nbytes
+            else:
+                n_bytes = X.nbytes
             print(
-                "Binning {:.3f} GB of {} data: ".format(X.nbytes / 1e9, description),
+                "Binning {:.3f} GB of {} data: ".format(n_bytes / 1e9, description),
                 end="",
                 flush=True,
             )
@@ -1129,7 +1164,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_binned = self._bin_mapper.transform(X)  # F-aligned array
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
-            X_binned = np.ascontiguousarray(X_binned)
+            if not sparse.issparse(X_binned):
+                X_binned = np.ascontiguousarray(X_binned)
         toc = time()
         if self.verbose:
             duration = toc - tic
@@ -1202,6 +1238,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         is_binned = getattr(self, "_in_fit", False)
         if not is_binned:
             X = self._preprocess_X(X, reset=False)
+            if sparse.issparse(X):
+                X = self._bin_mapper.transform(X)
+                is_binned = True
 
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
@@ -1234,6 +1273,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     predict = partial(
                         predictor.predict_binned,
                         missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_,
+                        zero_bin_idx=self._bin_mapper.zero_bin_idx_,
                         n_threads=n_threads,
                     )
                 else:
@@ -1265,6 +1305,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         check_is_fitted(self)
         X = self._preprocess_X(X, reset=False)
+        is_binned = sparse.issparse(X)
+        if is_binned:
+            X = self._bin_mapper.transform(X)
         if X.shape[1] != self._n_features:
             raise ValueError(
                 "X has {} features but this estimator was trained with "
@@ -1287,7 +1330,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 X,
                 self._predictors[iteration : iteration + 1],
                 raw_predictions,
-                is_binned=False,
+                is_binned=is_binned,
                 n_threads=n_threads,
             )
             yield raw_predictions.copy()
@@ -1338,6 +1381,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
+        tags.input_tags.sparse = True
         return tags
 
     @abstractmethod

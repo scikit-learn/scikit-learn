@@ -6,11 +6,13 @@ This module contains the TreePredictor class which is used for prediction.
 # SPDX-License-Identifier: BSD-3-Clause
 
 import numpy as np
+from scipy import sparse
 
 from sklearn.ensemble._hist_gradient_boosting._predictor import (
     _compute_partial_dependence,
     _predict_from_binned_data,
     _predict_from_raw_data,
+    _predict_from_sparse_binned_data,
 )
 from sklearn.ensemble._hist_gradient_boosting.common import (
     PREDICTOR_RECORD_DTYPE,
@@ -51,8 +53,9 @@ class TreePredictor:
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
-            The input samples.
+        X : ndarray or CSR sparse matrix/array, shape (n_samples, n_features)
+            The binned input samples. Sparse inputs use the internal CSR
+            encoding and must have canonical indices.
 
         known_cat_bitsets : ndarray of shape (n_categorical_features, 8)
             Array of bitsets of known categories, for each categorical feature.
@@ -63,6 +66,9 @@ class TreePredictor:
 
         n_threads : int
             Number of OpenMP threads to use.
+        zero_bin_idx : ndarray of uint8, shape (n_features,), default=None
+            For sparse input, the ordinary bin containing the implicit numeric
+            zero for each feature.
 
         Returns
         -------
@@ -82,7 +88,7 @@ class TreePredictor:
         )
         return out
 
-    def predict_binned(self, X, missing_values_bin_idx, n_threads):
+    def predict_binned(self, X, missing_values_bin_idx, n_threads, zero_bin_idx=None):
         """Predict raw values for binned data.
 
         Parameters
@@ -102,14 +108,33 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_binned_data(
-            self.nodes,
-            X,
-            self.binned_left_cat_bitsets,
-            missing_values_bin_idx,
-            n_threads,
-            out,
-        )
+        if sparse.issparse(X):
+            if X.format != "csr":
+                raise ValueError("Sparse binned input must use CSR format.")
+            if not X.has_canonical_format:
+                raise ValueError("Sparse binned input must have canonical CSR format.")
+            if zero_bin_idx is None:
+                raise ValueError("zero_bin_idx is required for sparse binned input.")
+            _predict_from_sparse_binned_data(
+                self.nodes,
+                X.data,
+                X.indices,
+                X.indptr,
+                zero_bin_idx,
+                self.binned_left_cat_bitsets,
+                missing_values_bin_idx,
+                n_threads,
+                out,
+            )
+        else:
+            _predict_from_binned_data(
+                self.nodes,
+                X,
+                self.binned_left_cat_bitsets,
+                missing_values_bin_idx,
+                n_threads,
+                out,
+            )
         return out
 
     def compute_partial_dependence(self, grid, target_features, out):

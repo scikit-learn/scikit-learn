@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cython.parallel import prange
+from libc.stdint cimport int32_t, int64_t
 import numpy as np
 
 from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset_2d_memoryview
@@ -11,6 +12,11 @@ from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport node_struct
+
+
+ctypedef fused sparse_index_t:
+    int32_t
+    int64_t
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
@@ -138,6 +144,93 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
                 node_idx = node.left
             else:
                 node_idx = node.right
+        node = nodes[node_idx]
+
+
+def _predict_from_sparse_binned_data(
+        node_struct [:] nodes,
+        const X_BINNED_DTYPE_C [::1] binned_data,
+        const sparse_index_t [::1] indices,
+        const sparse_index_t [::1] indptr,
+        const uint8_t [::1] zero_bin_idx,
+        BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
+        const uint8_t missing_values_bin_idx,
+        int n_threads,
+        Y_DTYPE_C [:] out):
+    cdef int i
+
+    for i in prange(out.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
+        out[i] = _predict_one_from_sparse_binned_data(
+            nodes, binned_data, indices, indptr, zero_bin_idx,
+            binned_left_cat_bitsets, i, missing_values_bin_idx)
+
+
+cdef inline Y_DTYPE_C _predict_one_from_sparse_binned_data(
+        node_struct [:] nodes,
+        const X_BINNED_DTYPE_C [::1] binned_data,
+        const sparse_index_t [::1] indices,
+        const sparse_index_t [::1] indptr,
+        const uint8_t [::1] zero_bin_idx,
+        const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
+        const int row,
+        const uint8_t missing_values_bin_idx) noexcept nogil:
+    cdef:
+        node_struct node = nodes[0]
+        unsigned int node_idx = 0
+        sparse_index_t row_start
+        sparse_index_t row_stop
+        sparse_index_t low
+        sparse_index_t high
+        sparse_index_t middle
+        X_BINNED_DTYPE_C encoded_bin
+        X_BINNED_DTYPE_C bin_value
+        unsigned int feature_idx
+
+    while True:
+        if node.is_leaf:
+            return node.value
+
+        feature_idx = node.feature_idx
+        row_start = indptr[row]
+        row_stop = indptr[row + 1]
+        low = row_start
+        high = row_stop
+        while low < high:
+            middle = low + (high - low) // 2
+            if indices[middle] < feature_idx:
+                low = middle + 1
+            else:
+                high = middle
+
+        if low < row_stop and indices[low] == feature_idx:
+            encoded_bin = binned_data[low]
+            if encoded_bin == missing_values_bin_idx:
+                bin_value = missing_values_bin_idx
+            elif encoded_bin == 0:
+                bin_value = zero_bin_idx[feature_idx]
+            elif encoded_bin <= zero_bin_idx[feature_idx]:
+                bin_value = encoded_bin - 1
+            else:
+                bin_value = encoded_bin
+        else:
+            bin_value = zero_bin_idx[feature_idx]
+
+        if bin_value == missing_values_bin_idx:
+            if node.missing_go_to_left:
+                node_idx = node.left
+            else:
+                node_idx = node.right
+        elif node.is_categorical:
+            if in_bitset_2d_memoryview(
+                    binned_left_cat_bitsets, bin_value, node.bitset_idx):
+                node_idx = node.left
+            else:
+                node_idx = node.right
+        elif bin_value <= node.bin_threshold:
+            node_idx = node.left
+        else:
+            node_idx = node.right
         node = nodes[node_idx]
 
 

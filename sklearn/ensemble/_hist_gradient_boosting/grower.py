@@ -13,6 +13,7 @@ from heapq import heappop, heappush
 from timeit import default_timer as time
 
 import numpy as np
+from scipy import sparse
 
 from sklearn.ensemble._hist_gradient_boosting.common import (
     PREDICTOR_RECORD_DTYPE,
@@ -153,8 +154,10 @@ class TreeGrower:
 
     Parameters
     ----------
-    X_binned : ndarray of shape (n_samples, n_features), dtype=np.uint8
-        The binned input samples. Must be Fortran-aligned.
+    X_binned : ndarray or CSR sparse matrix/array of shape
+        (n_samples, n_features), dtype=np.uint8
+        The binned input samples. Dense arrays must be Fortran-aligned; sparse
+        data must use the internal canonical CSR representation.
     gradients : ndarray of shape (n_samples,)
         The gradients of each training sample. Those are the gradients of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
@@ -189,6 +192,9 @@ class TreeGrower:
     has_missing_values : bool or ndarray, dtype=bool, default=False
         Whether each feature contains missing values (in the training data).
         If it's a bool, the same value is used for all features.
+    zero_bin_idx : ndarray of uint8, shape (n_features,), default=None
+        For sparse input, the ordinary bin containing the implicit numeric zero
+        for each feature.
     is_categorical : ndarray of bool of shape (n_features,), default=None
         Indicates categorical features.
     monotonic_cst : array-like of int of shape (n_features,), dtype=int, default=None
@@ -254,6 +260,7 @@ class TreeGrower:
         n_bins=256,
         n_bins_non_missing=None,
         has_missing_values=False,
+        zero_bin_idx=None,
         is_categorical=None,
         monotonic_cst=None,
         interaction_cst=None,
@@ -267,6 +274,7 @@ class TreeGrower:
             X_binned,
             min_gain_to_split,
             min_hessian_to_split,
+            zero_bin_idx,
         )
         n_threads = _openmp_effective_n_threads(n_threads)
 
@@ -311,7 +319,13 @@ class TreeGrower:
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
-            X_binned, n_bins, gradients, hessians, hessians_are_constant, n_threads
+            X_binned,
+            n_bins,
+            gradients,
+            hessians,
+            hessians_are_constant,
+            n_threads,
+            zero_bin_idx=zero_bin_idx,
         )
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
@@ -319,6 +333,7 @@ class TreeGrower:
             n_bins_non_missing=n_bins_non_missing,
             missing_values_bin_idx=missing_values_bin_idx,
             has_missing_values=has_missing_values,
+            zero_bin_idx=zero_bin_idx,
             is_categorical=is_categorical,
             monotonic_cst=monotonic_cst,
             l2_regularization=l2_regularization,
@@ -338,6 +353,7 @@ class TreeGrower:
         self.n_bins_non_missing = n_bins_non_missing
         self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
+        self.zero_bin_idx = zero_bin_idx
         self.is_categorical = is_categorical
         self.monotonic_cst = monotonic_cst
         self.interaction_cst = interaction_cst
@@ -359,6 +375,7 @@ class TreeGrower:
         X_binned,
         min_gain_to_split,
         min_hessian_to_split,
+        zero_bin_idx,
     ):
         """Validate parameters passed to __init__.
 
@@ -366,7 +383,14 @@ class TreeGrower:
         """
         if X_binned.dtype != np.uint8:
             raise NotImplementedError("X_binned must be of type uint8.")
-        if not X_binned.flags.f_contiguous:
+        if sparse.issparse(X_binned):
+            if X_binned.format != "csr":
+                raise ValueError("Sparse X_binned must use CSR format.")
+            if not X_binned.has_canonical_format:
+                raise ValueError("Sparse X_binned must have canonical CSR format.")
+            if zero_bin_idx is None:
+                raise ValueError("zero_bin_idx must be provided for sparse X_binned.")
+        elif not X_binned.flags.f_contiguous:
             raise ValueError(
                 "X_binned should be passed as Fortran contiguous "
                 "array for maximum efficiency."

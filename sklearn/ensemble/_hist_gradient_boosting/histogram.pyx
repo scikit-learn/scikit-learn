@@ -5,6 +5,7 @@
 
 cimport cython
 from cython.parallel import prange
+from libc.stdint cimport int32_t, int64_t
 from libc.string cimport memset
 
 import numpy as np
@@ -13,7 +14,146 @@ from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport G_H_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.utils._typedefs cimport uint8_t
+
+
+ctypedef fused sparse_index_t:
+    int32_t
+    int64_t
+
+
+cdef void _build_sparse_histograms_impl(
+    const X_BINNED_DTYPE_C [::1] data,
+    const sparse_index_t [::1] indices,
+    const sparse_index_t [::1] indptr,
+    const uint8_t [::1] zero_bin_idx,
+    const uint8_t [::1] feature_mask,
+    const unsigned int [::1] sample_indices,
+    const G_H_DTYPE_C [::1] gradients,
+    const G_H_DTYPE_C [::1] hessians,
+    const uint8_t hessians_are_constant,
+    const uint8_t missing_values_bin_idx,
+    const unsigned int n_features,
+    const unsigned int n_bins,
+    const int n_threads,
+    hist_struct [:, ::1] histograms,
+) noexcept nogil:
+    cdef:
+        unsigned int n_samples = sample_indices.shape[0]
+        unsigned int i
+        unsigned int sample_idx
+        unsigned int feature_idx
+        unsigned int bin_idx
+        sparse_index_t j
+        sparse_index_t start
+        sparse_index_t stop
+        unsigned int zero_bin
+        unsigned int other_count
+        unsigned int bin
+        X_BINNED_DTYPE_C encoded_bin
+        Y_DTYPE_C total_sum_gradients = 0
+        Y_DTYPE_C total_sum_hessians = 0
+        Y_DTYPE_C other_sum_gradients
+        Y_DTYPE_C other_sum_hessians
+
+    memset(&histograms[0, 0], 0, n_features * n_bins * sizeof(hist_struct))
+
+    for i in range(n_samples):
+        sample_idx = sample_indices[i]
+        total_sum_gradients += gradients[sample_idx]
+        if hessians_are_constant:
+            total_sum_hessians += hessians[0]
+        else:
+            total_sum_hessians += hessians[sample_idx]
+
+        start = indptr[sample_idx]
+        stop = indptr[sample_idx + 1]
+        for j in range(start, stop):
+            feature_idx = indices[j]
+            if not feature_mask[feature_idx]:
+                continue
+            encoded_bin = data[j]
+            if encoded_bin == missing_values_bin_idx:
+                bin_idx = missing_values_bin_idx
+            elif encoded_bin == 0:
+                bin_idx = zero_bin_idx[feature_idx]
+            elif encoded_bin <= zero_bin_idx[feature_idx]:
+                bin_idx = encoded_bin - 1
+            else:
+                bin_idx = encoded_bin
+            histograms[feature_idx, bin_idx].sum_gradients += gradients[sample_idx]
+            if hessians_are_constant:
+                histograms[feature_idx, bin_idx].sum_hessians += hessians[0]
+            else:
+                histograms[feature_idx, bin_idx].sum_hessians += hessians[sample_idx]
+            histograms[feature_idx, bin_idx].count += 1
+
+    for feature_idx in range(n_features):
+        if not feature_mask[feature_idx]:
+            continue
+        zero_bin = zero_bin_idx[feature_idx]
+        other_sum_gradients = 0
+        other_sum_hessians = 0
+        other_count = 0
+        for bin in range(n_bins):
+            if bin != zero_bin:
+                other_sum_gradients += histograms[feature_idx, bin].sum_gradients
+                other_sum_hessians += histograms[feature_idx, bin].sum_hessians
+                other_count += histograms[feature_idx, bin].count
+        histograms[feature_idx, zero_bin].sum_gradients = (
+            total_sum_gradients - other_sum_gradients
+        )
+        histograms[feature_idx, zero_bin].sum_hessians = (
+            total_sum_hessians - other_sum_hessians
+        )
+        histograms[feature_idx, zero_bin].count = n_samples - other_count
+
+
+cdef void _build_sparse_histograms32(
+    const X_BINNED_DTYPE_C [::1] data,
+    const int32_t [::1] indices,
+    const int32_t [::1] indptr,
+    const uint8_t [::1] zero_bin_idx,
+    const uint8_t [::1] feature_mask,
+    const unsigned int [::1] sample_indices,
+    const G_H_DTYPE_C [::1] gradients,
+    const G_H_DTYPE_C [::1] hessians,
+    const uint8_t hessians_are_constant,
+    const uint8_t missing_values_bin_idx,
+    const unsigned int n_features,
+    const unsigned int n_bins,
+    const int n_threads,
+    hist_struct [:, ::1] histograms,
+) noexcept nogil:
+    _build_sparse_histograms_impl[int32_t](
+        data, indices, indptr, zero_bin_idx, feature_mask, sample_indices,
+        gradients, hessians, hessians_are_constant, missing_values_bin_idx,
+        n_features, n_bins, n_threads, histograms
+    )
+
+
+cdef void _build_sparse_histograms64(
+    const X_BINNED_DTYPE_C [::1] data,
+    const int64_t [::1] indices,
+    const int64_t [::1] indptr,
+    const uint8_t [::1] zero_bin_idx,
+    const uint8_t [::1] feature_mask,
+    const unsigned int [::1] sample_indices,
+    const G_H_DTYPE_C [::1] gradients,
+    const G_H_DTYPE_C [::1] hessians,
+    const uint8_t hessians_are_constant,
+    const uint8_t missing_values_bin_idx,
+    const unsigned int n_features,
+    const unsigned int n_bins,
+    const int n_threads,
+    hist_struct [:, ::1] histograms,
+) noexcept nogil:
+    _build_sparse_histograms_impl[int64_t](
+        data, indices, indptr, zero_bin_idx, feature_mask, sample_indices,
+        gradients, hessians, hessians_are_constant, missing_values_bin_idx,
+        n_features, n_bins, n_threads, histograms
+    )
 
 
 # Notes:
@@ -59,8 +199,10 @@ cdef class HistogramBuilder:
 
     Parameters
     ----------
-    X_binned : ndarray of int, shape (n_samples, n_features)
-        The binned input samples. Must be Fortran-aligned.
+    X_binned : ndarray or CSR sparse matrix/array of int
+        The binned input samples. Dense arrays must be Fortran-aligned. Sparse
+        inputs use the internal CSR encoding where stored value 0 represents
+        the bin containing the implicit numeric zero.
     n_bins : int
         The total number of bins, including the bin for missing values. Used
         to define the shape of the histograms.
@@ -74,7 +216,10 @@ cdef class HistogramBuilder:
         Whether hessians are constant.
     """
     cdef public:
-        const X_BINNED_DTYPE_C [::1, :] X_binned
+        object X_binned
+        const X_BINNED_DTYPE_C [::1, :] X_binned_dense
+        const X_BINNED_DTYPE_C [::1] X_binned_sparse_data
+        const uint8_t [::1] zero_bin_idx
         unsigned int n_features
         unsigned int n_bins
         G_H_DTYPE_C [::1] gradients
@@ -82,15 +227,23 @@ cdef class HistogramBuilder:
         G_H_DTYPE_C [::1] ordered_gradients
         G_H_DTYPE_C [::1] ordered_hessians
         uint8_t hessians_are_constant
+        uint8_t is_sparse
         int n_threads
 
-    def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
+    def __init__(self, X_binned,
                  unsigned int n_bins, G_H_DTYPE_C [::1] gradients,
                  G_H_DTYPE_C [::1] hessians,
                  uint8_t hessians_are_constant,
-                 int n_threads):
+                 int n_threads,
+                 zero_bin_idx=None):
 
         self.X_binned = X_binned
+        self.is_sparse = hasattr(X_binned, "format") and X_binned.format == "csr"
+        if self.is_sparse:
+            self.X_binned_sparse_data = X_binned.data
+            self.zero_bin_idx = zero_bin_idx
+        else:
+            self.X_binned_dense = X_binned
         self.n_features = X_binned.shape[1]
         # Note: all histograms will have <n_bins> bins, but some of the
         # bins may be unused if a feature has a small number of unique values.
@@ -131,6 +284,8 @@ cdef class HistogramBuilder:
             int feature_idx
             int f_idx
             int i
+            object feature_mask_array
+            const uint8_t [::1] feature_mask
             # need local views to avoid python interactions
             uint8_t hessians_are_constant = self.hessians_are_constant
             int n_allowed_features = self.n_features
@@ -145,6 +300,49 @@ cdef class HistogramBuilder:
             )
             bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
+
+        if self.is_sparse:
+            feature_mask_array = np.zeros(self.n_features, dtype=np.uint8)
+            if has_interaction_cst:
+                feature_mask_array[allowed_features] = 1
+            else:
+                feature_mask_array[:] = 1
+            feature_mask = feature_mask_array
+            if self.X_binned.indices.dtype == np.int32:
+                _build_sparse_histograms32(
+                    self.X_binned_sparse_data,
+                    self.X_binned.indices,
+                    self.X_binned.indptr,
+                    self.zero_bin_idx,
+                    feature_mask,
+                    sample_indices,
+                    gradients,
+                    hessians,
+                    hessians_are_constant,
+                    self.n_bins - 1,
+                    self.n_features,
+                    self.n_bins,
+                    n_threads,
+                    histograms,
+                )
+            else:
+                _build_sparse_histograms64(
+                    self.X_binned_sparse_data,
+                    self.X_binned.indices,
+                    self.X_binned.indptr,
+                    self.zero_bin_idx,
+                    feature_mask,
+                    sample_indices,
+                    gradients,
+                    hessians,
+                    hessians_are_constant,
+                    self.n_bins - 1,
+                    self.n_features,
+                    self.n_bins,
+                    n_threads,
+                    histograms,
+                )
+            return histograms
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
@@ -191,7 +389,7 @@ cdef class HistogramBuilder:
         cdef:
             unsigned int n_samples = sample_indices.shape[0]
             const X_BINNED_DTYPE_C [::1] X_binned = \
-                self.X_binned[:, feature_idx]
+                self.X_binned_dense[:, feature_idx]
             unsigned int root_node = X_binned.shape[0] == n_samples
             G_H_DTYPE_C [::1] ordered_gradients = \
                 self.ordered_gradients[:n_samples]

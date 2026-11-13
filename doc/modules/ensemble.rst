@@ -65,6 +65,14 @@ than tens of thousands of samples.
 They also have built-in support for missing values, which avoids the need
 for an imputer.
 
+The histogram gradient boosting estimators accept SciPy CSR and CSC sparse
+matrices and arrays for numerical features. Implicit zeros are treated as
+numeric zeros; explicitly stored zeros and duplicate entries are normalized
+to the same values. NaNs stored in a sparse matrix are still treated as
+missing values. Sparse inputs are processed without converting the full
+sample-by-feature matrix to dense storage. Categorical features are not
+supported with sparse input.
+
 These fast estimators first bin the input samples ``X`` into
 integer-valued bins (typically 256 bins) which tremendously reduces the
 number of splitting points to consider, and allows the algorithm to
