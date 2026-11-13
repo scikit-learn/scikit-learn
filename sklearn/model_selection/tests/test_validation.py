@@ -906,6 +906,25 @@ def test_permutation_test_score_params():
     permutation_test_score(clf, X, y, params={"sample_weight": np.ones(10)})
 
 
+def test_permutation_test_score_warns_when_y_constant_within_groups():
+    """Permuting within groups leaves y unchanged when each group has one value."""
+    rng = np.random.RandomState(0)
+    groups = np.repeat(np.arange(6), 5)
+    y = np.repeat([0, 1, 0, 1, 1, 0], 5)
+    X = rng.normal(size=(y.shape[0], 3))
+    with pytest.warns(UserWarning, match="single value of `y`"):
+        score, permutation_scores, pvalue = permutation_test_score(
+            LogisticRegression(),
+            X,
+            y,
+            groups=groups,
+            cv=GroupKFold(3),
+            n_permutations=5,
+        )
+    assert_array_equal(permutation_scores, np.full(5, score))
+    assert pvalue == 1.0
+
+
 def test_cross_val_score_allow_nans():
     # Check that cross_val_score allows input data with NaNs
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
