@@ -26,7 +26,7 @@ from scipy.sparse import csr_array
 from sklearn.utils import _align_api_if_sparse
 from sklearn.utils._bitset cimport N_BITSETS, BITSET_DTYPE_C, BITSET_LENGTH
 
-from sklearn.tree._utils cimport goes_left, SPLIT_LEAF
+from sklearn.tree._utils cimport goes_left, SPLIT_LEAF, SPLIT_CATEGORICAL_BITSET, SPLIT_CATEGORICAL_HASH
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport sizet_ptr_to_ndarray
 
@@ -815,6 +815,27 @@ cdef class Tree:
     @property
     def _left_cat_bitset(self):
         return self._get_node_ndarray()['left_cat_bitset'][:self.node_count]
+
+    def _get_left_categories(self, intp_t node_id):
+        """Return encoded categories routed left at a categorical split."""
+        if node_id < 0 or node_id >= self.node_count:
+            raise ValueError("node_id is out of bounds")
+        cdef Node* node = &self.nodes[node_id]
+        if node.split_kind not in (SPLIT_CATEGORICAL_BITSET, SPLIT_CATEGORICAL_HASH):
+            raise ValueError("node_id must identify a categorical split")
+        cdef intp_t n_categories = self.n_categories[node.feature]
+        cdef cnp.ndarray[intp_t, ndim=1] categories = np.empty(
+            n_categories, dtype=np.intp
+        )
+        cdef intp_t category, count = 0
+        for category in range(n_categories):
+            if goes_left(
+                node.threshold, node.left_cat_bitset, node.missing_go_to_left,
+                node.split_kind, <float32_t> category,
+            ):
+                categories[count] = category
+                count += 1
+        return categories[:count].copy()
 
     # TODO: Convert n_classes to cython.integral memory view once
     #  https://github.com/cython/cython/issues/5243 is fixed
