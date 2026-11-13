@@ -1832,6 +1832,8 @@ def dcg_score(
     Usually the Normalized Discounted Cumulative Gain (NDCG, computed by
     ndcg_score) is preferred.
 
+    Read more in the :ref:`User Guide <ndcg>`.
+
     Parameters
     ----------
     y_true : array-like of shape (n_samples, n_labels)
@@ -1998,6 +2000,8 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
 
     This ranking metric returns a high value if true labels are ranked high by
     ``y_score``.
+
+    Read more in the :ref:`User Guide <ndcg>`.
 
     Parameters
     ----------
