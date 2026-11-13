@@ -591,12 +591,13 @@ Multi-task Lasso
 ================
 
 The :class:`MultiTaskLasso` is a linear model that estimates sparse coefficients for
-multiple regression problems or tasks jointly: ``y`` is a 2-dimensional array of shape
-``(n_samples, n_targets)``, in maths often expressed as capital letter :math:`Y`. Also
-the coefficients are 2-dimensional, :math:`W` is of shape ``(n_features, n_targets)``
-and accessible as the transpose of the coefficient attribute, ``coef_.T``. The
-constraint is that the selected features are the same for all the regression problems.
-It is then the penalty that correlates each feature with all tasks.
+multiple regression problems, or tasks, jointly: ``y`` is a 2-dimensional array of
+shape ``(n_samples, n_targets)``, in maths often expressed as capital letter :math:`Y`.
+The coefficients are also 2-dimensional, :math:`W` is of shape
+``(n_features, n_targets)`` and accessible as the transpose of the coefficient
+attribute, ``coef_.T``. The constraint is that the selected features are the same for
+all the regression problems. This is enforced by the penalty, which couples each
+feature's coefficients across all tasks.
 
 The following figure compares the location of the non-zero entries in the
 coefficient matrix :math:`W` obtained with a simple Lasso or a MultiTaskLasso.
