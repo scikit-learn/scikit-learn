@@ -2090,33 +2090,32 @@ def test_extratrees_high_cardinality_categorical(Forest):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
-def test_warm_start_with_categorical_features_raises(name):
-    """Refitting with warm_start and categorical features is rejected.
-
-    A second fit rebuilds the ordinal encoding, which would invalidate splits
-    stored on trees from the first fit. ``warm_start=False`` still replaces
-    the forest.
-    """
+def test_warm_start_with_categorical_features(name):
+    """Incremental warm_start with categorical features matches a one-shot fit."""
     Forest = FOREST_CLASSIFIERS_REGRESSORS[name]
     X = np.array([["a"], ["a"], ["b"], ["b"]], dtype=object)
     y = np.array([0, 0, 1, 1])
-    est = Forest(
-        categorical_features=[0], n_estimators=2, warm_start=True, random_state=0
+
+    est_ws = None
+    for n_estimators in [2, 4]:
+        if est_ws is None:
+            est_ws = Forest(
+                categorical_features=[0],
+                n_estimators=n_estimators,
+                warm_start=True,
+                random_state=0,
+            )
+        else:
+            est_ws.set_params(n_estimators=n_estimators)
+        est_ws.fit(X, y)
+        assert len(est_ws.estimators_) == n_estimators
+
+    est_no_ws = Forest(
+        categorical_features=[0], n_estimators=4, warm_start=False, random_state=0
     )
-    est.fit(X, y)
-    assert len(est.estimators_) == 2
+    est_no_ws.fit(X, y)
 
-    with pytest.raises(
-        ValueError, match="warm_start is not supported with categorical features"
-    ):
-        est.fit(X, y)
-
-    est.set_params(n_estimators=4)
-    with pytest.raises(
-        ValueError, match="warm_start is not supported with categorical features"
-    ):
-        est.fit(X, y)
-
-    est.set_params(warm_start=False)
-    est.fit(X, y)
-    assert len(est.estimators_) == 4
+    assert set(tree.random_state for tree in est_ws) == set(
+        tree.random_state for tree in est_no_ws
+    )
+    assert_array_equal(est_ws.apply(X), est_no_ws.apply(X))
