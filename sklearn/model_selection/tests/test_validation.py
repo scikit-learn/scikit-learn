@@ -1022,8 +1022,10 @@ def test_permutation_test_score_blocks_inputs(estimator, y):
 
 
 @config_context(enable_metadata_routing=True)
-def test_permutation_test_score_blocks_metadata_routing():
-    """With metadata routing, the groups are taken from `params`."""
+@pytest.mark.parametrize("cv", [GroupKFold(4), KFold(4, shuffle=True, random_state=0)])
+def test_permutation_test_score_blocks_metadata_routing(cv):
+    """With metadata routing, the groups are taken from `params`, whether or not
+    the splitter requests them."""
     rng = np.random.RandomState(0)
     y, groups = _random_block_labels(8, 4, rng)
     X = rng.normal(size=(y.shape[0], 3))
@@ -1031,7 +1033,7 @@ def test_permutation_test_score_blocks_metadata_routing():
         LogisticRegression(),
         X,
         y,
-        cv=GroupKFold(4),
+        cv=cv,
         n_permutations=5,
         permutation="blocks",
         params={"groups": groups},

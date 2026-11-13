@@ -1581,7 +1581,7 @@ def permutation_test_score(
           holds by design if ``y`` was assigned to the groups at random. See
           the :ref:`User Guide <permutation_test_score>`.
 
-        .. versionadded:: 1.10
+        .. versionadded:: 1.11
 
     Returns
     -------
@@ -1648,8 +1648,7 @@ def permutation_test_score(
     if permutation == "blocks":
         if _routing_enabled():
             # `groups` cannot be passed directly with routing (it is None
-            # here); the blocks are taken from the metadata in `params`,
-            # whether or not the splitter requests them.
+            # here); the blocks are taken from the metadata in `params`.
             groups = params.get("groups")
         if groups is None:
             raise ValueError(
@@ -1692,6 +1691,10 @@ def permutation_test_score(
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
+        if permutation == "blocks" and not router.consumes("fit", ["groups"]):
+            # permutation_test_score uses `groups` itself to permute the
+            # blocks; route it on only if a child requests it.
+            params = {k: v for k, v in params.items() if k != "groups"}
 
         try:
             routed_params = process_routing(router, "fit", **params)
