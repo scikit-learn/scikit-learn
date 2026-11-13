@@ -169,3 +169,14 @@ def test_set_callback_empty():
     # calling again doesn't raise
     estimator.set_callbacks()
     assert not hasattr(estimator, "_skl_callbacks")
+
+
+def test_same_callback_multiple_times():
+    """Test setting the same callback multiple times to the same estimator."""
+    estimator = MaxIterEstimator(max_iter=1)
+    callback = RecordingCallback()
+    with pytest.warns(
+        UserWarning, match="The same instance was provided multiple times"
+    ):
+        estimator.set_callbacks(callback, callback, callback)
+    assert estimator._skl_callbacks == [callback]

@@ -3,6 +3,7 @@
 
 import functools
 import inspect
+import warnings
 from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
@@ -80,7 +81,21 @@ class CallbackSupportMixin:
     def _set_callbacks(self, callbacks):
         """set_callbacks without validation."""
         if callbacks:
-            self._skl_callbacks = list(callbacks)
+            unique_callabcks = []
+            duplicate_names = set()
+            for i, callback in enumerate(callbacks):
+                if callback not in callbacks[i + 1 :]:
+                    unique_callabcks.append(callback)
+                else:
+                    duplicate_names.add(callback.__class__.__name__)
+            if duplicate_names:
+                warnings.warn(
+                    "The same instance was provided multiple times for the following "
+                    f"callbacks: {duplicate_names}. Each instance will be registered "
+                    "only once.",
+                    UserWarning,
+                )
+            self._skl_callbacks = unique_callabcks
         else:
             self.__dict__.pop("_skl_callbacks", None)
 
