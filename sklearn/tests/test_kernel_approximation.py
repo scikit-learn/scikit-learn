@@ -99,6 +99,39 @@ def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0, csr_containe
     assert_allclose(Yt_dense, Yt_sparse)
 
 
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_polynomial_count_sketch_sparse_edge_cases(csr_container):
+    """Check dense/sparse equivalence on sparse-specific edge cases.
+
+    Non-regression test for the vectorized sparse branch of ``transform``,
+    which scatter-sums whole columns via a sparse matrix product instead of
+    densifying one column at a time. All-zero columns and a single feature
+    exercise shapes that the general random test data above does not cover.
+    """
+    rng = np.random.RandomState(0)
+    X_edge_dense = rng.random_sample(size=(20, 5))
+    # Zero out a couple of columns entirely.
+    X_edge_dense[:, [1, 3]] = 0.0
+
+    ps_dense = PolynomialCountSketch(n_components=30, degree=2, random_state=0)
+    Xt_dense = ps_dense.fit_transform(X_edge_dense)
+
+    ps_sparse = PolynomialCountSketch(n_components=30, degree=2, random_state=0)
+    Xt_sparse = ps_sparse.fit_transform(csr_container(X_edge_dense))
+
+    assert_allclose(Xt_dense, Xt_sparse)
+
+    # Single feature, single sample.
+    X_single = rng.random_sample(size=(1, 1))
+    ps_dense_single = PolynomialCountSketch(n_components=4, degree=1, random_state=0)
+    Xt_dense_single = ps_dense_single.fit_transform(X_single)
+
+    ps_sparse_single = PolynomialCountSketch(n_components=4, degree=1, random_state=0)
+    Xt_sparse_single = ps_sparse_single.fit_transform(csr_container(X_single))
+
+    assert_allclose(Xt_dense_single, Xt_sparse_single)
+
+
 def _linear_kernel(x, y):
     return x @ y
 
