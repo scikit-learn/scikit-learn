@@ -730,8 +730,8 @@ or *informedness*.
 .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
     B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
     <https://ieeexplore.ieee.org/document/7280767>`_, IJCNN 2015.
-.. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
-    <https://lib.dr.iastate.edu/etd/13537/>`_, IJCV 2010.
+.. [Mosley2013] L. Mosley, :doi:`A balanced approach to the multi-class imbalance problem
+    <10.31274/etd-180810-3375>`, PhD thesis, Iowa State University, 2013.
 .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
     Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
     and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
@@ -2398,6 +2398,10 @@ Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
 and :func:`~sklearn.metrics.ndcg_score` ; they compare a predicted order to
 ground-truth scores, such as the relevance of answers to a query.
 
+The input data has shape (n_samples, n_items) where each sample represents a single
+query or ranking problem, and the items are the candidates (e.g., answers) to be
+ranked by their predicted scores against ground-truth relevance.
+
 From the Wikipedia page for Discounted Cumulative Gain:
 
 "Discounted cumulative gain (DCG) is a measure of ranking quality. In
@@ -2421,16 +2425,19 @@ ordering, the ranking loss should be preferred; if the ground-truth consists of
 actual usefulness scores (e.g. 0 for irrelevant, 1 for relevant, 2 for very
 relevant), NDCG can be used.
 
-For one sample, given the vector of continuous ground-truth values for each
-target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
-the prediction :math:`\hat{y}`, which induces the ranking function :math:`f`, the
-DCG score is
+For one query, let :math:`y \in \mathbb{R}^{M}` denote the ground-truth values
+for :math:`M` items (e.g., answers), and :math:`\hat{y}` the predicted scores for each.
+The ranking function :math:`f` orders the items (e.g., answers) by :math:`\hat{y}` in
+descending order. The DCG score is then:
 
 .. math::
    \sum_{r=1}^{\min(K, M)}\frac{y_{f(r)}}{\log(1 + r)}
 
-and the NDCG score is the DCG score divided by the DCG score obtained for
-:math:`y`.
+where :math:`y_{f(r)}` is the true target value for the element at rank position
+:math:`r` in the predicted order.
+
+The NDCG score is the DCG score of the predictions :math:`\hat{y}` divided by the
+DCG score of the ideal ranking :math:`y`.
 
 .. dropdown:: References
 
