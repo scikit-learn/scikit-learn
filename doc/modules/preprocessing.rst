@@ -936,6 +936,12 @@ cardinality categories are location based such as zip code or region.
   where :math:`L_i` is the set of observations with category :math:`i` and
   :math:`n_i` is the number of observations with category :math:`i`.
 
+When `sample_weight` is passed to :meth:`~TargetEncoder.fit` or
+:meth:`~TargetEncoder.fit_transform`, the numbers of observations and the sums in
+the formulas above are replaced by sums of sample weights and weighted sums, and the
+variances used with `smooth="auto"` are weighted variances. Integer sample weights
+are thus equivalent to repeating samples.
+
 .. note::
   In :class:`TargetEncoder`, `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`.
 

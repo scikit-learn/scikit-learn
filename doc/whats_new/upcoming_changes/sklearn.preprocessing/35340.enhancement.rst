@@ -1,0 +1,7 @@
+- :class:`preprocessing.TargetEncoder` now accepts `sample_weight` in
+  :meth:`~preprocessing.TargetEncoder.fit` and
+  :meth:`~preprocessing.TargetEncoder.fit_transform`. Category encodings, the target
+  mean and, with `smooth="auto"`, the target variances are then computed as weighted
+  statistics, such that integer weights are equivalent to repeating samples.
+  By :user:`Duarte São José <DuarteSJ>`, :user:`Miguel Parece <MiguelParece>` and
+  :user:`Bhavek Jamnadas <bhavek-jamnadas>`.
