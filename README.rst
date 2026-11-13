@@ -30,18 +30,18 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
    :target: https://scikit-learn.org/scikit-learn-benchmarks
 
-.. |PythonMinVersion| replace:: 3.11
-.. |NumPyMinVersion| replace:: 1.24.1
-.. |SciPyMinVersion| replace:: 1.10.0
+.. |PythonMinVersion| replace:: 3.12
+.. |NumPyMinVersion| replace:: 1.26.0
+.. |SciPyMinVersion| replace:: 1.11.4
 .. |JoblibMinVersion| replace:: 1.4.0
 .. |NarwhalsMinVersion| replace:: 2.0.1
 .. |ThreadpoolctlMinVersion| replace:: 3.5.0
-.. |MatplotlibMinVersion| replace:: 3.6.1
-.. |Scikit-ImageMinVersion| replace:: 0.22.0
-.. |PandasMinVersion| replace:: 1.5.0
+.. |MatplotlibMinVersion| replace:: 3.8.0
+.. |Scikit-ImageMinVersion| replace:: 0.24.0
+.. |PandasMinVersion| replace:: 2.1.3
 .. |SeabornMinVersion| replace:: 0.13.0
 .. |PytestMinVersion| replace:: 7.1.2
-.. |PlotlyMinVersion| replace:: 5.22.0
+.. |PlotlyMinVersion| replace:: 5.24.0
 
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
@@ -54,7 +54,8 @@ of Code project, and since then many volunteers have contributed. See
 the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
 
-It is currently maintained by a team of volunteers.
+It is currently maintained by a community of contributors, with volunteers but also `support from several
+organisations <https://scikit-learn.org/dev/institutional_support.html>`__.
 
 Website: https://scikit-learn.org
 
@@ -144,8 +145,10 @@ directory (you will need to have ``pytest`` >= |PytestMinVersion| installed)::
 See the web page https://scikit-learn.org/dev/developers/contributing.html#testing-and-improving-test-coverage
 for more information.
 
-    Random number generation can be controlled during testing by setting
-    the ``SKLEARN_SEED`` environment variable.
+Random number generation can be controlled during testing by setting the
+``SKLEARN_SEED`` environment variable. See
+https://scikit-learn.org/dev/developers/global_configuration.html#sklearn-seed
+for details.
 
 Submitting a Pull Request
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -161,8 +164,6 @@ The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
 the `About us <https://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
-
-The project is currently maintained by a team of volunteers.
 
 **Note**: `scikit-learn` was previously referred to as `scikits.learn`.
 

@@ -370,7 +370,7 @@ def test_multiclass_multioutput_estimator_predict_proba():
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(LogisticRegression(random_state=seed))
+    clf = MultiOutputClassifier(LogisticRegression())
 
     clf.fit(X, Y)
 
@@ -741,6 +741,8 @@ def test_regressor_chain_w_fit_params():
         assert est.sample_weight_ is weight
 
 
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "MultiOutputEstimator, Estimator",
     [(MultiOutputClassifier, LogisticRegression), (MultiOutputRegressor, Ridge)],

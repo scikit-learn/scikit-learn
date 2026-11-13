@@ -25,7 +25,7 @@ its success and sustainability.
 
   .. div:: image-box
 
-    .. image:: images/probabl.png
+    .. image:: images/probabl.svg
       :target: https://probabl.ai
 
   .. div:: text-box
@@ -35,10 +35,10 @@ its success and sustainability.
     scikit-learn core-maintainers employed by Inria have joined the spinoff as
     co-founders, most as full-time employees.
 
-    Today, Probabl employs the following core and non-core contributors: Adrin
-    Jalali, Antoine Baker, Arturo Amor, François Goupil, Guillaume Lemaitre,
-    Jérémie du Boisberranger, Loïc Estève, Olivier Grisel, Shruti Nath and
-    Stefanie Senger, as well as Gaël Varoquaux.
+    Today, Probabl employs the following core and non-core contributors: Anne
+    Beyer, Antoine Baker, Arturo Amor, François Goupil, Francois Paugam,
+    Guillaume Lemaitre, Jérémie du Boisberranger, Loïc Estève, Olivier Grisel,
+    Arthur Lacote, Shruti Nath and Stefanie Senger, as well as Gaël Varoquaux.
 
 The above financial commitments mean that Inria initially and now Probabl have
 been and are the main source of financial support for scikit-learn, completed
@@ -53,8 +53,11 @@ Active financial participation (2026)
 In addition to the above financial commitments, the following organizations
 financially support scikit-learn as follows:
 
-.. |probabl| image:: images/probabl.png
+.. |probabl| image:: images/probabl.svg
   :target: https://probabl.ai
+
+.. |intel| image:: images/intel-small.png
+  :target: https://www.intel.com
 
 .. |wellcome| image:: images/wellcome-trust-small.png
   :target: https://wellcome.org
@@ -89,7 +92,8 @@ financially support scikit-learn as follows:
      - 0.5 FTE or more
      - less than 0.5 FTE
    * - |probabl|
-     - * |czi| |wellcome|
+     - * |intel|
+       * |czi| |wellcome|
        * |nvidia|
        * |nasa| |quansightlabs|
        * |chanel|
@@ -97,6 +101,10 @@ financially support scikit-learn as follows:
        * |michelin|
 
 FTE stands for Full-Time Equivalent.
+
+* `Intel <https://www.intel.com/>`_ supports scikit-learn via Probabl (2026)
+  through a `collaboration to accelerate scikit-learn on Intel hardware
+  <https://blog.probabl.ai/intel-and-probabl-announce-collaboration-to-accelerate-scikit-learn-on-intel-hardware>`_.
 
 * `The Chan-Zuckerberg Initiative <https://chanzuckerberg.com/>`_ and `Wellcome
   Trust <https://wellcome.org/>`_ support the work of Lucy Liu, Dea Maria Leon,
@@ -163,7 +171,8 @@ funded one year for a developer to work on the project full-time (2014-2015), 50
 of the time of Guillaume Lemaitre (2016-2017) and 50% of the time of Joris van den
 Bossche (2017-2018).
 
-`NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
+`NYU Moore-Sloan Data Science Environment
+<https://web.archive.org/web/20240719150041/https://cds.nyu.edu/mooresloan/>`_
 funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan
 Data Science Environment also funds several students to work on the project
 part-time.
@@ -172,7 +181,7 @@ part-time.
 (2014), Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot
 (2016-2017) and Albert Thomas (2017) to work on scikit-learn.
 
-`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix
+`The Labex DigiCosme <https://anr.fr/ProjetIA-11-LABX-0045>`_ funded Nicolas Goix
 (2015-2016), Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias
 (2018-2019) to work part time on scikit-learn during their PhDs. It also
 funded a scikit-learn coding sprint in 2015.

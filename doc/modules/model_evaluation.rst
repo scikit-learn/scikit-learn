@@ -730,8 +730,8 @@ or *informedness*.
 .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
     B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
     <https://ieeexplore.ieee.org/document/7280767>`_, IJCNN 2015.
-.. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
-    <https://lib.dr.iastate.edu/etd/13537/>`_, IJCV 2010.
+.. [Mosley2013] L. Mosley, :doi:`A balanced approach to the multi-class imbalance problem
+    <10.31274/etd-180810-3375>`, PhD thesis, Iowa State University, 2013.
 .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
     Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
     and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
@@ -1728,7 +1728,7 @@ class with the greater label for each output.
   >>> from sklearn.datasets import make_multilabel_classification
   >>> from sklearn.multioutput import MultiOutputClassifier
   >>> X, y = make_multilabel_classification(random_state=0)
-  >>> inner_clf = LogisticRegression(random_state=0)
+  >>> inner_clf = LogisticRegression()
   >>> clf = MultiOutputClassifier(inner_clf).fit(X, y)
   >>> y_score = np.transpose([y_pred[:, 1] for y_pred in clf.predict_proba(X)])
   >>> roc_auc_score(y, y_score, average=None)

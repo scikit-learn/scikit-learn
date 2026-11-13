@@ -1,12 +1,8 @@
-"""
-Private testing utilities.
-
-See also ..testing for public testing utilities.
-"""
-
-from __future__ import annotations
+"""Private testing utilities."""
 
 import pytest
+
+__all__ = ["xfail"]
 
 
 def xfail(

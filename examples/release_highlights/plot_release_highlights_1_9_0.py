@@ -64,7 +64,7 @@ log[["task_name", "task_id", "d2_log_loss_score"]]
 #
 #    X, y = load_iris(return_X_y=True)
 #    logreg = LogisticRegression(solver="lbfgs")
-#    grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1]}, n_jobs=2)
+#    grid_search = GridSearchCV(logreg, {"alpha": [10, 1, 0.1]}, n_jobs=2)
 #    grid_search.set_callbacks(ProgressBar())
 #    grid_search.fit(X, y)
 #
@@ -149,7 +149,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, metric_at_thresholds
 
 X, y = make_classification(weights=[0.9, 0.1], random_state=0)
-lr = LogisticRegression(random_state=0).fit(X, y)
+lr = LogisticRegression().fit(X, y)
 y_score = lr.predict_proba(X)[:, 1]
 
 accuracy, thresholds = metric_at_thresholds(y, y_score, accuracy_score)

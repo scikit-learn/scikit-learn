@@ -1,0 +1,6 @@
+- :class:`preprocessing.KBinsDiscretizer` with `strategy="quantile"` or
+  `strategy="kmeans"` no longer merges the samples equal to the maximum into the
+  previous bin when the last bin edges are tied. For instance, binary features are
+  no longer transformed to a constant. Features with a range smaller than `1e-8`
+  now get one bin instead of zero bins, which raised an `IndexError` before.
+  By :user:`Arthur Lacote <cakedev0>`.

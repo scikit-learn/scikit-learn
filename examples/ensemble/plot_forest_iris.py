@@ -55,13 +55,12 @@ from sklearn.ensemble import (
     ExtraTreesClassifier,
     RandomForestClassifier,
 )
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.tree import DecisionTreeClassifier
 
 # Parameters
 n_classes = 3
 n_estimators = 30
-cmap = plt.cm.RdYlBu
-plot_step = 0.02  # fine step width for decision surface contours
 plot_step_coarser = 0.5  # step widths for coarse classifier guesses
 RANDOM_SEED = 13  # fix the seed on each iteration
 
@@ -108,7 +107,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             model_details += " with {} estimators".format(len(model.estimators_))
         print(model_details + " with features", pair, "has a score of", scores)
 
-        plt.subplot(3, 4, plot_idx)
+        ax = plt.subplot(3, 4, plot_idx)
         if plot_idx <= len(models):
             # Add a title at the top of each column
             plt.title(model_title, fontsize=9)
@@ -117,16 +116,18 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         # filled contour plot
         x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
         y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-        xx, yy = np.meshgrid(
-            np.arange(x_min, x_max, plot_step), np.arange(y_min, y_max, plot_step)
-        )
 
         # Plot either a single DecisionTreeClassifier or alpha blend the
         # decision surfaces of the ensemble of classifiers
         if isinstance(model, DecisionTreeClassifier):
-            Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-            Z = Z.reshape(xx.shape)
-            cs = plt.contourf(xx, yy, Z, cmap=cmap)
+            DecisionBoundaryDisplay.from_estimator(
+                model,
+                X,
+                target_colors="RdYlBu",
+                alpha=0.8,
+                response_method="predict",
+                ax=ax,
+            )
         else:
             # Choose alpha blend level with respect to the number
             # of estimators
@@ -134,9 +135,14 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             # than its maximum if it achieves a good enough fit early on)
             estimator_alpha = 1.0 / len(model.estimators_)
             for tree in model.estimators_:
-                Z = tree.predict(np.c_[xx.ravel(), yy.ravel()])
-                Z = Z.reshape(xx.shape)
-                cs = plt.contourf(xx, yy, Z, alpha=estimator_alpha, cmap=cmap)
+                DecisionBoundaryDisplay.from_estimator(
+                    tree,
+                    X,
+                    target_colors="RdYlBu",
+                    alpha=estimator_alpha,
+                    response_method="predict",
+                    ax=ax,
+                )
 
         # Build a coarser grid to plot a set of ensemble classifications
         # to show how these are different to what we see in the decision
@@ -154,7 +160,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             yy_coarser,
             s=15,
             c=Z_points_coarser,
-            cmap=cmap,
+            cmap=plt.cm.RdYlBu,
             edgecolors="none",
         )
 

@@ -565,7 +565,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error. Default is ``np.nan``.
 
-    return_train_score : bool, default=False
+    return_train_score : bool, default=True
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
         Computing training scores is used to get insights on how different
@@ -693,8 +693,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         `best_estimator_` is defined (see the documentation for the `refit`
         parameter for more details) and that `best_estimator_` exposes
         `n_features_in_` when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if
@@ -935,7 +933,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error. Default is ``np.nan``.
 
-    return_train_score : bool, default=False
+    return_train_score : bool, default=True
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
         Computing training scores is used to get insights on how different
@@ -1065,8 +1063,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         `best_estimator_` is defined (see the documentation for the `refit`
         parameter for more details) and that `best_estimator_` exposes
         `n_features_in_` when fit.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if

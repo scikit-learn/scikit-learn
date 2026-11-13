@@ -23,13 +23,13 @@ jobs:
         (startsWith(github.event.label.name, 'Needs') || github.event.label.name == 'RFC'))
     steps:
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Install PyGithub
         run: pip install -Uq PyGithub
       - name: Checkout workflow script
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           sparse-checkout: .github/scripts/add_or_remove_no_pr_warning.py
           sparse-checkout-cone-mode: false # false for files/ true for directories
@@ -43,13 +43,13 @@ jobs:
         github.event.label.name == 'RFC')
     steps:
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.13'
       - name: Install PyGithub
         run: pip install -Uq PyGithub
       - name: Checkout workflow script
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           sparse-checkout: .github/scripts/add_or_remove_no_pr_warning.py
           sparse-checkout-cone-mode: false # false for files/ true for directories

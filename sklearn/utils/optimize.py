@@ -17,14 +17,19 @@ significant speedups.
 
 import warnings
 
-import scipy
+import numpy as np
 from scipy.optimize._linesearch import (
     line_search_wolfe2,
     scalar_search_wolfe1,
 )
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._array_api import get_namespace_and_device, size
+from sklearn.utils._array_api import (
+    _is_numpy_namespace,
+    get_namespace_and_device,
+    size,
+)
+from sklearn.utils.fixes import parse_version, sp_version
 
 
 class _LineSearchError(RuntimeError):
@@ -63,14 +68,16 @@ def _line_search_wolfe1(
 
     def phi(s):
         fc[0] += 1
-        return f(xk + s * pk, *args)
+        s = float(s)
+        return float(f(xk + s * pk, *args))
 
     def derphi(s):
+        s = float(s)
         gval[0] = fprime(xk + s * pk, *args)
         gc[0] += 1
-        return gval[0] @ pk
+        return float(gval[0] @ pk)
 
-    derphi0 = gfk @ pk
+    derphi0 = float(gfk @ pk)
 
     stp, fval, old_fval = scalar_search_wolfe1(
         phi,
@@ -89,7 +96,7 @@ def _line_search_wolfe1(
 
 
 def _line_search_wolfe12(
-    f, fprime, xk, pk, gfk, old_fval, old_old_fval, xp, device, verbose=0, **kwargs
+    f, fprime, xk, pk, gfk, old_fval, old_old_fval, tol, xp, device, verbose=0, **kwargs
 ):
     """
     Same as line_search_wolfe1, but fall back to line_search_wolfe2 if
@@ -109,36 +116,68 @@ def _line_search_wolfe12(
         print(f"    eps=16 * finfo.eps={eps}")
         print("    try line search wolfe1")
 
+    # 1. Check sufficient decrease and (strong) curvature conditions.
     ret = _line_search_wolfe1(f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs)
 
     if is_verbose:
-        _not_ = "not " if ret[0] is None else ""
-        print("    wolfe1 line search was " + _not_ + "successful")
+        if ret[0] is None:
+            print("    wolfe1 line search was not successful")
+        else:
+            print(f"    wolfe1 line search was successful with step length={ret[0]}")
 
     if ret[0] is None:
         # Have a look at the line_search method of our NewtonSolver class. We borrow
-        # the logic from there
+        # the logic from there.
         # Deal with relative loss differences around machine precision.
         args = kwargs.get("args", tuple())
         fval = f(xk + pk, *args)
-        tiny_loss = xp.abs(old_fval * eps)
+        grad = fprime(xk + pk, *args)
+        gradient_times_newton = grad @ pk
+        sigma = 0.00048828125  # 1/2**11, sometimes called c1
+        armijo_term = sigma * gradient_times_newton
+
+        # 2. Tiny gradient / Armijo term.
+        # If we are already close to the minimum, gradient and Armijo term are
+        # tiny. It is best to use a Newton step length alpha = 1.
+        if xp.abs(armijo_term) <= tol:
+            # Note that final convergence is checked with the infinity norm.
+            g_max_abs = xp.max(xp.abs(grad))
+            check = g_max_abs <= tol
+            if is_verbose:
+                print(
+                    "    check max |gradient| <= tol: "
+                    f"{float(g_max_abs)} <= {tol} {bool(check)}"
+                )
+            if check:
+                ret = (
+                    1.0,  # step size
+                    ret[1] + 1,  # number of function evaluations
+                    ret[2] + 1,  # number of gradient evaluations
+                    fval,
+                    old_fval,
+                    grad,
+                )
+    if ret[0] is None:
+        # 3. Deal with differences around machine precision.
+        # 3.1 Check relative loss difference ~ machine precision
+        tiny_loss = abs(old_fval * eps)
         loss_improvement = fval - old_fval
-        check = xp.abs(loss_improvement) <= tiny_loss
+        check = abs(loss_improvement) <= tiny_loss
         if is_verbose:
             print(
                 "    check loss |improvement| <= eps * |loss_old|:"
-                f" {xp.abs(loss_improvement)} <= {tiny_loss} {check}"
+                f" {abs(loss_improvement)} <= {tiny_loss} {check}"
             )
         if check:
-            # 2.1 Check sum of absolute gradients as alternative condition.
-            sum_abs_grad_old = scipy.linalg.norm(gfk, ord=1)
-            grad = fprime(xk + pk, *args)
-            sum_abs_grad = scipy.linalg.norm(grad, ord=1)
+            # TODO: use xp.linalg.vector_norm(gfk, axis=None, ord=1) if available
+            sum_abs_grad_old = xp.sum(xp.abs(gfk))
+            # 3.2 Check sum of absolute gradients as alternative condition.
+            sum_abs_grad = xp.sum(xp.abs(grad))
             check = sum_abs_grad < sum_abs_grad_old
             if is_verbose:
                 print(
                     "    check sum(|gradient|) < sum(|gradient_old|): "
-                    f"{sum_abs_grad} < {sum_abs_grad_old} {check}"
+                    f"{float(sum_abs_grad)} < {float(sum_abs_grad_old)} {bool(check)}"
                 )
             if check:
                 ret = (
@@ -152,11 +191,15 @@ def _line_search_wolfe12(
 
     if ret[0] is None:
         # line search failed: try different one.
-        # TODO: It seems that the new check for the sum of absolute gradients above
-        # catches all cases that, earlier, ended up here. In fact, our tests never
-        # trigger this "if branch" here and we can consider to remove it.
         if is_verbose:
             print("    last resort: try line search wolfe2")
+
+        # TODO(scipy): Remove conversion to numpy once LS supports Array API.
+        # Scipy line_search_wolfe2 does not yet support the Array API. We need to
+        # convert to numpy.
+        if not _is_numpy_namespace(xp) and sp_version < parse_version("2.0.0"):
+            msg = "Array API compatible line search requires scipy >= 2.0.0."
+            raise _LineSearchError(msg)
         ret = line_search_wolfe2(
             f, fprime, xk, pk, gfk, old_fval, old_old_fval, **kwargs
         )
@@ -166,14 +209,18 @@ def _line_search_wolfe12(
 
     if ret[0] is None:
         raise _LineSearchError()
+    elif is_verbose:
+        print(f"    line search successful with loss={ret[3]}.")
 
     return ret
 
 
 def _cg(fhess_p, fgrad, maxiter, tol, xp, device, verbose=0):
     """
-    Solve iteratively the linear system 'fhess_p . xsupi = fgrad'
-    with a conjugate gradient descent.
+    Solve iteratively the linear system H @ xsupi = -fgrad with conjugate gradient
+    descent.
+
+    H @ xsupi = fhess_p(xsupi)
 
     Parameters
     ----------
@@ -196,65 +243,59 @@ def _cg(fhess_p, fgrad, maxiter, tol, xp, device, verbose=0):
         Estimated solution.
     """
     eps = 16 * xp.finfo(fgrad.dtype).eps
+    is_verbose = verbose >= 2
     xsupi = xp.zeros(size(fgrad), dtype=fgrad.dtype, device=device)
-    ri = xp.asarray(fgrad, copy=True)  # residual = fgrad - fhess_p @ xsupi
+    # ri = residual = fgrad - H @ xsupi = fgrad - fhess_p(xsupi)
+    ri = xp.asarray(fgrad, copy=True, device=device)
     psupi = -ri
     i = 0
     dri0 = ri @ ri
-    # We also keep track of |p_i|^2.
-    psupi_norm2 = dri0
-    is_verbose = verbose >= 2
+    alphai = 1
+
+    # We keep track of ||p_i||_2^2.
+    norm2_psupi = dri0
 
     while i <= maxiter:
-        if (norm1_re := xp.sum(xp.abs(ri))) <= tol:
+        if (norm1_ri := float(xp.sum(xp.abs(ri)))) <= tol:
             if is_verbose:
                 print(
                     f"  Inner CG solver iteration {i} stopped with\n"
-                    f"    sum(|residuals|) <= tol: {norm1_re} <= {tol}"
+                    f"    sum(|residuals|) <= tol: {norm1_ri} <= {tol}"
                 )
             break
 
-        Ap = fhess_p(psupi)
-        # check curvature
-        curv = psupi @ Ap
-        if 0 <= curv <= eps * psupi_norm2:
-            # See https://arxiv.org/abs/1803.02924, Algo 1 Capped Conjugate Gradient.
+        Hp = fhess_p(psupi)
+        # Check curvature
+        # We follow some of the logic of https://arxiv.org/abs/1803.02924,
+        # Algorithm 1 Capped Conjugate Gradient.
+        curv = psupi @ Hp  # curvature at psupi
+        if curv < -eps * norm2_psupi:
+            d = psupi / xp.sqrt(norm2_psupi)  # normalized direction d
+            # direction of negative curvature
+            direction = -np.sign(d @ fgrad) * np.abs(d @ fhess_p(d)) * d
             if is_verbose:
                 print(
-                    f"  Inner CG solver iteration {i} stopped with\n"
-                    f"    tiny_|p| = eps * ||p||^2, eps = {eps}, "
-                    f"squared L2 norm ||p||^2 = {psupi_norm2}\n"
-                    f"    curvature <= tiny_|p|: {curv} <= {eps * psupi_norm2}"
+                    f"  Inner CG solver iteration {i} detected a negative "
+                    f"curvature with\n"
+                    "    curvature at p < -eps * ||p||^2: "
+                    f"{float(curv)} < {float(-eps * norm2_psupi)}"
                 )
-            break
-        elif curv < 0:
-            if i > 0:
-                if is_verbose:
-                    print(
-                        f"  Inner CG solver iteration {i} stopped with negative "
-                        f"curvature, curvature = {curv}"
-                    )
-                break
-            else:
-                # fall back to steepest descent direction
-                xsupi += dri0 / curv * psupi
-                if is_verbose:
-                    print("  Inner CG solver iteration 0 fell back to steepest descent")
-                break
+            return direction
+
         alphai = dri0 / curv
         xsupi += alphai * psupi
-        ri += alphai * Ap
+        ri += alphai * Hp
         dri1 = ri @ ri
         betai = dri1 / dri0
         psupi = -ri + betai * psupi
         # We use  |p_i|^2 = |r_i|^2 + beta_i^2 |p_{i-1}|^2
-        psupi_norm2 = dri1 + betai**2 * psupi_norm2
+        norm2_psupi = dri1 + betai**2 * norm2_psupi
         i = i + 1
         dri0 = dri1  # update ri @ri for next time.
     if is_verbose and i > maxiter:
         print(
             f"  Inner CG solver stopped reaching maxiter={i - 1} with "
-            f"sum(|residuals|) = {xp.sum(xp.abs(ri))}"
+            f"sum(|residuals|) = {float(xp.sum(xp.abs(ri)))}"
         )
     return xsupi
 
@@ -322,7 +363,7 @@ def _newton_cg(
     if x0.ndim != 1:
         msg = f"x0 must be 1-dimensional; got {x0.ndim=}"
         raise ValueError(msg)
-    xk = xp.asarray(x0, copy=True)  # np.copy(x0)
+    xk = xp.asarray(x0, copy=True, device=device)  # np.copy(x0)
     k = 0
 
     if line_search:
@@ -345,13 +386,16 @@ def _newton_cg(
         if is_verbose:
             print(f"Newton-CG iter = {k}")
             print("  Check Convergence")
-            print(f"    max |gradient| <= tol: {max_absgrad} <= {tol} {check}")
+            print(
+                f"    max |gradient| <= tol: {float(max_absgrad)} <= {tol} "
+                f"{bool(check)}"
+            )
         if check:
             break
 
         maggrad = xp.sum(absgrad)
         eta = min([0.5, xp.sqrt(maggrad)])
-        termcond = eta * maggrad
+        termcond = float(eta * maggrad)
 
         # Inner loop: solve the Newton update by conjugate gradient, to
         # avoid inverting the Hessian
@@ -377,6 +421,7 @@ def _newton_cg(
                     fgrad,
                     old_fval,
                     old_old_fval,
+                    tol=tol,
                     xp=xp,
                     device=device,
                     verbose=verbose,
@@ -386,7 +431,7 @@ def _newton_cg(
                 warnings.warn("Line Search failed")
                 break
 
-        xk += alphak * xsupi  # upcast if necessary
+        xk += float(alphak) * xsupi  # upcast if necessary
         k += 1
 
     if warn and k >= maxiter:

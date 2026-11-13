@@ -378,7 +378,7 @@ def test_stacking_regressor_error(y, params, type_err, msg_err):
         (
             StackingClassifier(
                 estimators=[
-                    ("first", LogisticRegression(random_state=0)),
+                    ("first", LogisticRegression()),
                     ("second", LinearSVC(random_state=0)),
                 ]
             ),
@@ -559,7 +559,7 @@ def test_stacking_cv_influence(stacker, X, y):
             StackingClassifier,
             DummyClassifier,
             "predict_proba",
-            LogisticRegression(random_state=42),
+            LogisticRegression(),
             X_iris,
             y_iris,
         ),
@@ -635,6 +635,7 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
 def test_stacking_prefit_error(stacker, X, y):
     # check that NotFittedError is raised
     # if base estimators are not fitted when cv="prefit"
+    stacker = clone(stacker)
     with pytest.raises(NotFittedError):
         stacker.fit(X, y)
 
@@ -676,7 +677,7 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     "estimator",
     [
         # output a 2D array of the probability of the positive class for each output
-        MLPClassifier(random_state=42),
+        MLPClassifier(random_state=42, tol=1e-2),
         # output a list of 2D array containing the probability of each class
         # for each output
         RandomForestClassifier(random_state=42),
@@ -748,7 +749,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
     n_outputs = 3
 
     estimators = [
-        ("mlp", MLPClassifier(random_state=42)),
+        ("mlp", MLPClassifier(random_state=42, tol=1e-2)),
         ("rf", RandomForestClassifier(random_state=42)),
         ("ridge", RidgeClassifier()),
     ]
@@ -788,7 +789,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(random_state=0)),
+                    ("lr", LogisticRegression()),
                     ("svm", LinearSVC(random_state=0)),
                 ]
             ),
@@ -807,7 +808,7 @@ def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
         (
             StackingClassifier(
                 estimators=[
-                    ("lr", LogisticRegression(random_state=0)),
+                    ("lr", LogisticRegression()),
                     ("other", "drop"),
                     ("svm", LinearSVC(random_state=0)),
                 ]
@@ -999,7 +1000,7 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
         (StackingRegressor, ConsumingRegressor),
     ],
 )
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_routing_error_for_stacking_estimators(Estimator, Child):
     """Test that the right error is raised when metadata is not requested."""
     sample_weight, metadata = np.ones(X_iris.shape[0]), "a"

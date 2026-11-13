@@ -1,0 +1,3 @@
+- In :class:`calibration.CalibrationDisplay` the `estimator_name` parameter is
+  deprecated in favour of `name` and will be removed in 1.12.
+  By :user:`Anne Beyer <AnneBeyer>`.

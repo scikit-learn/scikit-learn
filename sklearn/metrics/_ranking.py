@@ -19,6 +19,7 @@ from scipy.integrate import trapezoid
 from scipy.sparse import csr_array, issparse
 from scipy.stats import rankdata
 
+import sklearn.externals.array_api_extra as xpx
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics._base import _average_binary_score, _average_multiclass_ovo_score
 from sklearn.preprocessing import label_binarize
@@ -29,13 +30,14 @@ from sklearn.utils import (
     column_or_1d,
 )
 from sklearn.utils._array_api import (
+    _interp,
     _max_precision_float_dtype,
     get_namespace,
     get_namespace_and_device,
     move_to,
     size,
 )
-from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._encode import _encode_labels, _unique
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.sparsefuncs import count_nonzero
@@ -88,6 +90,9 @@ def auc(x, y):
     >>> metrics.auc(fpr, tpr)
     0.75
     """
+    # Inputs are assumed to be in the same namespace/device.
+    xp, _ = get_namespace(x)
+
     check_consistent_length(x, y)
     x = column_or_1d(x)
     y = column_or_1d(y)
@@ -99,9 +104,9 @@ def auc(x, y):
         )
 
     direction = 1
-    dx = np.diff(x)
-    if np.any(dx < 0):
-        if np.all(dx <= 0):
+    dx = xp.diff(x)
+    if xp.any(dx < 0):
+        if xp.all(dx <= 0):
             direction = -1
         else:
             raise ValueError("x is neither increasing nor decreasing : {}.".format(x))
@@ -201,9 +206,6 @@ def average_precision_score(
 
     Notes
     -----
-    .. versionchanged:: 0.19
-      Instead of linearly interpolating between operating points, precisions
-      are weighted by the change in recall since the last operating point.
 
     References
     ----------
@@ -323,8 +325,6 @@ def det_curve(
 
     Read more in the :ref:`User Guide <det_curve>`.
 
-    .. versionadded:: 0.24
-
     .. versionchanged:: 1.7
        An arbitrary threshold at infinity is added to represent a classifier
        that always predicts the negative class, i.e. `fpr=0` and `fnr=1`, unless
@@ -367,11 +367,11 @@ def det_curve(
 
     fnr : ndarray of shape (n_thresholds,)
         False negative rate (FNR) such that element i is the false negative
-        rate of predictions with score >= thresholds[i]. This is occasionally
+        rate of predictions with score < thresholds[i]. This is occasionally
         referred to as false rejection or miss rate.
 
     thresholds : ndarray of shape (n_thresholds,)
-        Decreasing thresholds on the decision function (either `predict_proba`
+        Increasing thresholds on the decision function (either `predict_proba`
         or `decision_function`) used to compute FPR and FNR.
 
         .. versionchanged:: 1.7
@@ -404,7 +404,7 @@ def det_curve(
     >>> thresholds
     array([0.35, 0.4 , 0.8 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
     )
@@ -436,7 +436,8 @@ def det_curve(
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if xp.unique_values(y_true).shape[0] != 2:
+    xp_y_true, _ = get_namespace(y_true)
+    if xp_y_true.unique_values(y_true).shape[0] != 2:
         raise ValueError(
             "Only one class is present in y_true. Detection error "
             "tradeoff curve is not defined in that case."
@@ -466,7 +467,10 @@ def det_curve(
 
 def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     """Binary roc auc score."""
-    if len(np.unique(y_true)) != 2:
+    xp, _, device = get_namespace_and_device(y_score)
+
+    xp_y_true, _ = get_namespace(y_true)
+    if xp_y_true.unique_values(y_true).shape[0] != 2:
         warnings.warn(
             (
                 "Only one class is present in y_true. ROC AUC score "
@@ -474,7 +478,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
             ),
             UndefinedMetricWarning,
         )
-        return np.nan
+        return xp.nan
 
     fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
     if max_fpr is None or max_fpr == 1:
@@ -482,12 +486,15 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     if max_fpr <= 0 or max_fpr > 1:
         raise ValueError("Expected max_fpr in range (0, 1], got: %r" % max_fpr)
 
+    max_fpr_xp = xp.asarray(max_fpr, dtype=fpr.dtype, device=device)
     # Add a single point at max_fpr by linear interpolation
-    stop = np.searchsorted(fpr, max_fpr, "right")
-    x_interp = [fpr[stop - 1], fpr[stop]]
-    y_interp = [tpr[stop - 1], tpr[stop]]
-    tpr = np.append(tpr[:stop], np.interp(max_fpr, x_interp, y_interp))
-    fpr = np.append(fpr[:stop], max_fpr)
+    stop = xp.searchsorted(fpr, max_fpr_xp, side="right")
+    x_interp = xp.stack([fpr[stop - 1], fpr[stop]])
+    y_interp = xp.stack([tpr[stop - 1], tpr[stop]])
+    interp_tpr = _interp(x=max_fpr, xp=x_interp, fp=y_interp)
+    tpr = xp.concat([tpr[:stop], xp.expand_dims(interp_tpr, axis=0)], axis=0)
+    fpr = xp.concat([fpr[:stop], xp.expand_dims(max_fpr_xp, axis=0)], axis=0)
+
     partial_auc = auc(fpr, tpr)
 
     # McClish correction: standardize result to be 0.5 if non-discriminant
@@ -639,7 +646,8 @@ def roc_auc_score(
 
     Where G is the Gini coefficient and AUC is the ROC-AUC score. This normalisation
     will ensure that random guessing will yield a score of 0 in expectation, and it is
-    upper bounded by 1.
+    upper bounded by 1. Note that there are differences between this Gini coefficient
+    as used in machine learning and the one used in economics, see [6]_.
 
     References
     ----------
@@ -653,16 +661,15 @@ def roc_auc_score(
            probability estimation trees (Section 6.2), CeDER Working Paper
            #IS-00-04, Stern School of Business, New York University.
 
-    .. [4] `Fawcett, T. (2006). An introduction to ROC analysis. Pattern
-            Recognition Letters, 27(8), 861-874.
-            <https://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
+    .. [4] :doi:`Fawcett, T. (2006). An introduction to ROC analysis. Pattern
+            Recognition Letters, 27(8), 861-874. <10.1016/j.patrec.2005.10.010>`
 
-    .. [5] `Hand, D.J., Till, R.J. (2001). A Simple Generalisation of the Area
+    .. [5] :doi:`Hand, D.J., Till, R.J. (2001). A Simple Generalisation of the Area
             Under the ROC Curve for Multiple Class Classification Problems.
-            Machine Learning, 45(2), 171-186.
-            <http://link.springer.com/article/10.1023/A:1010920819831>`_
-    .. [6] `Wikipedia entry for the Gini coefficient
-            <https://en.wikipedia.org/wiki/Gini_coefficient>`_
+            Machine Learning, 45(2), 171-186. <10.1023/A:1010920819831>`
+
+    .. [6] :doi:`Lorentzen, C., Mayer, M., & Wuthrich, M. V. (2022). Gini index and
+           friends. <10.2139/ssrn.4248143>`
 
     Examples
     --------
@@ -672,7 +679,7 @@ def roc_auc_score(
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.metrics import roc_auc_score
     >>> X, y = load_breast_cancer(return_X_y=True)
-    >>> clf = LogisticRegression(solver="newton-cholesky", random_state=0).fit(X, y)
+    >>> clf = LogisticRegression(solver="newton-cholesky").fit(X, y)
     >>> roc_auc_score(y, clf.predict_proba(X)[:, 1])
     0.99
     >>> roc_auc_score(y, clf.decision_function(X))
@@ -705,6 +712,7 @@ def roc_auc_score(
     >>> roc_auc_score(y, clf.decision_function(X), average=None)
     array([0.82, 0.847, 0.93, 0.872, 0.944])
     """
+    xp, _, device = get_namespace_and_device(y_score)
 
     y_type = type_of_target(y_true, input_name="y_true")
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
@@ -725,11 +733,19 @@ def roc_auc_score(
             )
         if multi_class == "raise":
             raise ValueError("multi_class must be in ('ovo', 'ovr')")
-        return _multiclass_roc_auc_score(
+        multiclass_roc_auc_score = _multiclass_roc_auc_score(
             y_true, y_score, labels, multi_class, average, sample_weight
         )
+        # `_average_binary_score` may return a native Python int (e.g., 0).
+        if isinstance(multiclass_roc_auc_score, (int, float)):
+            return float(multiclass_roc_auc_score)
+        # Convert 0d-array to native Python scalar
+        if multiclass_roc_auc_score.ndim == 0:
+            return float(multiclass_roc_auc_score)
+        return move_to(multiclass_roc_auc_score, xp=xp, device=device)
     elif y_type == "binary":
-        labels = np.unique(y_true)
+        xp_y_true, _ = get_namespace(y_true)
+        labels = xp_y_true.unique_values(y_true)
         y_true = label_binarize(y_true, classes=labels)[:, 0]
         return _average_binary_score(
             partial(_binary_roc_auc_score, max_fpr=max_fpr),
@@ -796,13 +812,21 @@ def _multiclass_roc_auc_score(
         Sample weights.
 
     """
+    xp, _, device = get_namespace_and_device(y_score)
+
     if not y_score.ndim == 2:
         raise ValueError(
             "`y_score` needs to be of shape `(n_samples, n_classes)`, since "
             "`y_true` contains multiple classes. Got "
             f"`y_score.shape={y_score.shape}`."
         )
-    if not np.allclose(1, y_score.sum(axis=1)):
+
+    if not xp.all(
+        xpx.isclose(
+            xp.ones((y_score.shape[0],), dtype=y_score.dtype, device=device),
+            xp.sum(y_score, axis=1),
+        )
+    ):
         raise ValueError(
             "Target scores need to be probabilities for multiclass "
             "roc_auc, i.e. they should sum up to 1.0 over classes"
@@ -831,22 +855,25 @@ def _multiclass_roc_auc_score(
         )
 
     if labels is not None:
-        labels = column_or_1d(labels)
+        xp_y_true, _, device_y_true = get_namespace_and_device(y_true)
+        labels = move_to(column_or_1d(labels), xp=xp_y_true, device=device_y_true)
         classes = _unique(labels)
-        if len(classes) != len(labels):
+        if classes.shape[0] != labels.shape[0]:
             raise ValueError("Parameter 'labels' must be unique")
-        if not np.array_equal(classes, labels):
+        if not xp_y_true.all(classes == labels):
             raise ValueError("Parameter 'labels' must be ordered")
-        if len(classes) != y_score.shape[1]:
+        if classes.shape[0] != y_score.shape[1]:
             raise ValueError(
                 "Number of given labels, {0}, not equal to the number "
-                "of columns in 'y_score', {1}".format(len(classes), y_score.shape[1])
+                "of columns in 'y_score', {1}".format(
+                    classes.shape[0], y_score.shape[1]
+                )
             )
-        if len(np.setdiff1d(y_true, classes)):
+        if xpx.setdiff1d(y_true, classes).shape[0]:
             raise ValueError("'y_true' contains labels not in parameter 'labels'")
     else:
         classes = _unique(y_true)
-        if len(classes) != y_score.shape[1]:
+        if classes.shape[0] != y_score.shape[1]:
             raise ValueError(
                 "Number of classes in y_true not equal to the number of "
                 "columns in 'y_score'"
@@ -859,10 +886,13 @@ def _multiclass_roc_auc_score(
                 "for multiclass one-vs-one ROC AUC, "
                 "'sample_weight' must be None in this case."
             )
-        y_true_encoded = _encode(y_true, uniques=classes)
+        y_true_encoded = _encode_labels(y_true, uniques=classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(
-            _binary_roc_auc_score, y_true_encoded, y_score, average=average
+            _binary_roc_auc_score,
+            y_true_encoded,
+            y_score,
+            average=average,
         )
     else:
         # ovr is same as multi-label
@@ -1023,25 +1053,33 @@ def confusion_matrix_at_thresholds(
             y_true, y_score, sample_weight
         )
     )
-    if weight is None:
-        weight = 1.0
-
     # accumulate the true positives with decreasing threshold
-    max_float_dtype = _max_precision_float_dtype(xp, device)
-    # Perform the weighted cumulative sum using float64 precision when possible
-    # to avoid numerical stability problem with tens of millions of very noisy
-    # predictions:
-    # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
-    y_true = xp.astype(y_true, max_float_dtype)
-    tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
-    if sample_weight is not None:
-        # express fps as a cumsum to ensure fps is increasing even in
-        # the presence of floating point errors
+    if sample_weight is None:
+        # Accumulate the counts using an integer datatype to avoid
+        # rounding errors on devices that do not support float64.
+        y_true_int = xp.astype(y_true, xp.int64)
+        tps_int = xp.cumulative_sum(y_true_int, dtype=xp.int64)[threshold_idxs]
+        fps_int = (xp.astype(threshold_idxs, xp.int64) + 1) - tps_int
+
+        output_dtype = (
+            y_score.dtype
+            if hasattr(y_score, "dtype") and xp.isdtype(y_score.dtype, "real floating")
+            else _max_precision_float_dtype(xp, device)
+        )
+        tps = xp.astype(tps_int, output_dtype)
+        fps = xp.astype(fps_int, output_dtype)
+    else:
+        max_float_dtype = _max_precision_float_dtype(xp, device)
+        # Perform the weighted cumulative sum using float64 precision when possible
+        # to avoid numerical stability problem with tens of millions of very noisy
+        # predictions:
+        # https://github.com/scikit-learn/scikit-learn/issues/31533#issuecomment-2967062437
+        y_true = xp.astype(y_true, max_float_dtype)
+        tps = xp.cumulative_sum(y_true * weight, dtype=max_float_dtype)[threshold_idxs]
         fps = xp.cumulative_sum((1 - y_true) * weight, dtype=max_float_dtype)[
             threshold_idxs
         ]
-    else:
-        fps = 1 + xp.astype(threshold_idxs, max_float_dtype) - tps
+
     tns = fps[-1] - fps
     fns = tps[-1] - tps
     return tns, fps, fns, tps, y_score[threshold_idxs]
@@ -1252,9 +1290,6 @@ def roc_curve(
         its neighbors in ROC space. This has no effect on the ROC AUC or visual
         shape of the curve, but reduces the number of plotted points.
 
-        .. versionadded:: 0.17
-           parameter *drop_intermediate*.
-
     Returns
     -------
     fpr : ndarray of shape (>2,)
@@ -1315,7 +1350,7 @@ def roc_curve(
     >>> thresholds
     array([ inf, 0.8 , 0.4 , 0.35, 0.1 ])
     """
-    xp, _, device = get_namespace_and_device(y_true, y_score)
+    xp, _, device = get_namespace_and_device(y_score)
 
     _, fps, _, tps, thresholds = confusion_matrix_at_thresholds(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1331,18 +1366,19 @@ def roc_curve(
     # kept, but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
     if drop_intermediate and fps.shape[0] > 2:
-        optimal_idxs = xp.where(
-            xp.concat(
-                [
-                    xp.asarray([True], device=device),
-                    xp.logical_or(xp.diff(fps, 2), xp.diff(tps, 2)),
-                    xp.asarray([True], device=device),
-                ]
-            )
-        )[0]
-        fps = fps[optimal_idxs]
-        tps = tps[optimal_idxs]
-        thresholds = thresholds[optimal_idxs]
+        mask = xp.concat(
+            [
+                xp.asarray([True], device=device),
+                xp.logical_or(
+                    xp.astype(xp.diff(fps, n=2), xp.bool),
+                    xp.astype(xp.diff(tps, n=2), xp.bool),
+                ),
+                xp.asarray([True], device=device),
+            ]
+        )
+        fps = fps[mask]
+        tps = tps[mask]
+        thresholds = thresholds[mask]
 
     # Add an extra threshold position
     # to make sure that the curve starts at (0, 0)
@@ -1366,7 +1402,7 @@ def roc_curve(
             "No positive samples in y_true, true positive value should be meaningless",
             UndefinedMetricWarning,
         )
-        tpr = xp.full(tps.shape, xp.nan)
+        tpr = xp.full(tps.shape, xp.nan, device=device)
     else:
         tpr = tps / tps[-1]
 
@@ -1410,8 +1446,6 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
@@ -1571,9 +1605,6 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     a ranking loss of zero.
 
     Read more in the :ref:`User Guide <label_ranking_loss>`.
-
-    .. versionadded:: 0.17
-       A function *label_ranking_loss*
 
     Parameters
     ----------
@@ -2231,7 +2262,7 @@ def top_k_accuracy_score(
             UndefinedMetricWarning,
         )
 
-    y_true_encoded = _encode(y_true, uniques=classes)
+    y_true_encoded = _encode_labels(y_true, uniques=classes)
 
     if y_type == "binary":
         if k == 1:

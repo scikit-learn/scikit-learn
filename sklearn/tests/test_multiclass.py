@@ -924,7 +924,7 @@ def test_support_missing_values(MultiClassClassifier):
     X = np.copy(X)  # Copy to avoid that the original data is modified
     mask = rng.choice([1, 0], X.shape, p=[0.1, 0.9]).astype(bool)
     X[mask] = np.nan
-    lr = make_pipeline(SimpleImputer(), LogisticRegression(random_state=rng))
+    lr = make_pipeline(SimpleImputer(), LogisticRegression())
 
     MultiClassClassifier(lr).fit(X, y).score(X, y)
 
@@ -974,7 +974,7 @@ def test_multiclass_estimator_attribute_error():
 
     # LogisticRegression does not implement 'partial_fit' and should raise an
     # AttributeError
-    clf = OneVsRestClassifier(estimator=LogisticRegression(random_state=42))
+    clf = OneVsRestClassifier(estimator=LogisticRegression())
 
     outer_msg = "This 'OneVsRestClassifier' has no attribute 'partial_fit'"
     inner_msg = "'LogisticRegression' object has no attribute 'partial_fit'"

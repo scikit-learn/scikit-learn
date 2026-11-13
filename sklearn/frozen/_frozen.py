@@ -51,10 +51,10 @@ class FrozenEstimator(BaseEstimator):
     >>> from sklearn.frozen import FrozenEstimator
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(random_state=0)
-    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> clf = LogisticRegression().fit(X, y)
     >>> frozen_clf = FrozenEstimator(clf)
     >>> frozen_clf.fit(X, y)  # No-op
-    FrozenEstimator(estimator=LogisticRegression(random_state=0))
+    FrozenEstimator(estimator=LogisticRegression())
     >>> frozen_clf.predict(X)  # Predictions from `clf.predict`
     array(...)
     """
@@ -141,6 +141,7 @@ class FrozenEstimator(BaseEstimator):
                 "`frozenestimator.estimator.set_params` to set parameters of the inner "
                 "estimator."
             )
+        return self
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

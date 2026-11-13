@@ -5,7 +5,7 @@ import itertools
 
 import numpy as np
 import pytest
-from scipy import linalg, sparse
+from scipy import linalg, sparse, stats
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
 
@@ -15,12 +15,10 @@ from sklearn.utils import gen_batches
 from sklearn.utils._arpack import _init_arpack_v0
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
+    array_device,
     get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
-)
-from sklearn.utils._array_api import (
-    device as array_device,
 )
 from sklearn.utils._testing import (
     _array_api_for_tests,
@@ -44,7 +42,6 @@ from sklearn.utils.extmath import (
     row_norms,
     safe_sparse_dot,
     softmax,
-    stable_cumsum,
     svd_flip,
     weighted_mode,
 )
@@ -54,7 +51,6 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     DOK_CONTAINERS,
     LIL_CONTAINERS,
-    _mode,
     _sparse_random_array,
 )
 
@@ -79,7 +75,7 @@ def test_uniform_weights():
     weights = np.ones(x.shape)
 
     for axis in (None, 0, 1):
-        mode, score = _mode(x, axis)
+        mode, score = stats.mode(x, axis=axis, keepdims=axis is not None)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
         assert_array_equal(mode, mode2)
@@ -713,7 +709,10 @@ def test_incremental_weighted_mean_and_variance_array_api(
     mult = 10
     X = rng.rand(1000, 20).astype(dtype_name) * mult
     sample_weight = rng.rand(X.shape[0]).astype(dtype_name) * mult
-    mean, var, _ = _incremental_mean_and_var(X, 0, 0, 0, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=False):
+        mean, var, _ = _incremental_mean_and_var(
+            X, 0, 0, 0, sample_weight=sample_weight
+        )
 
     X_xp = xp.asarray(X, device=device)
     sample_weight_xp = xp.asarray(sample_weight, device=device)
@@ -995,11 +994,6 @@ def test_softmax():
     assert_array_almost_equal(softmax(X), exp_X / sum_exp_X)
 
 
-def test_stable_cumsum_deprecation():
-    with pytest.warns(FutureWarning, match="stable_cumsum.+is deprecated"):
-        stable_cumsum([1, 2, 3])
-
-
 @pytest.mark.parametrize(
     "A_container",
     [np.array, *CSR_CONTAINERS],
@@ -1039,7 +1033,7 @@ def test_safe_sparse_dot_nd(csr_container):
     # sparse / dense ND
     A = rng.random_sample((2, 3))
     B = rng.random_sample((4, 5, 3, 6))
-    expected = np.dot(A, B)
+    expected = np.tensordot(A, B, axes=[-1, -2])
     A = csr_container(A)
     actual = safe_sparse_dot(A, B)
     assert_allclose(actual, expected)

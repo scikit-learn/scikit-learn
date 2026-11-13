@@ -606,7 +606,6 @@ API_REFERENCE = {
                 "autosummary": [
                     "LogisticRegression",
                     "LogisticRegressionCV",
-                    "PassiveAggressiveClassifier",  # TODO(1.10): remove
                     "Perceptron",
                     "RidgeClassifier",
                     "RidgeClassifierCV",
@@ -691,7 +690,6 @@ API_REFERENCE = {
             {
                 "title": "Miscellaneous",
                 "autosummary": [
-                    "PassiveAggressiveRegressor",  # TODO(1.10): remove
                     "enet_path",
                     "lars_path",
                     "lars_path_gram",
@@ -1372,4 +1370,4 @@ DEPRECATED_API_REFERENCE = {
 }
 """
 
-DEPRECATED_API_REFERENCE = {}  # type: ignore[var-annotated]
+DEPRECATED_API_REFERENCE = {}  # pyrefly: ignore[var-annotated]

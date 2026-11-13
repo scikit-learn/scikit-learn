@@ -15,7 +15,7 @@ from sklearn.base import _fit_context
 from sklearn.decomposition._base import _BasePCA
 from sklearn.utils import check_random_state
 from sklearn.utils._arpack import _init_arpack_v0
-from sklearn.utils._array_api import _cov, device, get_namespace
+from sklearn.utils._array_api import _cov, array_device, get_namespace
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils.extmath import _randomized_svd, fast_logdet, svd_flip
 from sklearn.utils.sparsefuncs import _implicit_column_offset, mean_variance_axis
@@ -204,8 +204,6 @@ class PCA(_BasePCA):
         "randomized" :
             Run randomized SVD by the method of Halko et al.
 
-        .. versionadded:: 0.18.0
-
         .. versionchanged:: 1.5
             Added the 'covariance_eigh' solver.
 
@@ -213,14 +211,10 @@ class PCA(_BasePCA):
         Tolerance for singular values computed by svd_solver == 'arpack'.
         Must be of range [0.0, infinity).
 
-        .. versionadded:: 0.18.0
-
     iterated_power : int or 'auto', default='auto'
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
         Must be of range [0, infinity).
-
-        .. versionadded:: 0.18.0
 
     n_oversamples : int, default=10
         This parameter is only relevant when `svd_solver="randomized"`.
@@ -242,8 +236,6 @@ class PCA(_BasePCA):
         for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-        .. versionadded:: 0.18.0
-
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
@@ -259,8 +251,6 @@ class PCA(_BasePCA):
         Equal to n_components largest eigenvalues
         of the covariance matrix of X.
 
-        .. versionadded:: 0.18
-
     explained_variance_ratio_ : ndarray of shape (n_components,)
         Percentage of variance explained by each of the selected components.
 
@@ -271,8 +261,6 @@ class PCA(_BasePCA):
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
-
-        .. versionadded:: 0.19
 
     mean_ : ndarray of shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
@@ -301,8 +289,6 @@ class PCA(_BasePCA):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -641,7 +627,7 @@ class PCA(_BasePCA):
             n_components = (
                 xp.searchsorted(
                     ratio_cumsum,
-                    xp.asarray(n_components, device=device(ratio_cumsum)),
+                    xp.asarray(n_components, device=array_device(ratio_cumsum)),
                     side="right",
                 )
                 + 1

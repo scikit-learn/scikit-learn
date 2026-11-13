@@ -363,7 +363,7 @@ class DecisionBoundaryDisplay:
         self.ylabel = ylabel
 
     # TODO(1.12): remove
-    @deprecated(  # type: ignore[prop-decorator]
+    @deprecated(
         "Attribute `multiclass_colors_` was renamed to `target_colors_` in 1.10 and"
         " will be removed in 1.12. Use `target_colors_` instead."
     )

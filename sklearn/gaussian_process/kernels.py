@@ -62,8 +62,6 @@ class Hyperparameter(
 ):
     """A kernel hyperparameter's specification in form of a namedtuple.
 
-    .. versionadded:: 0.18
-
     Attributes
     ----------
     name : str
@@ -156,8 +154,6 @@ class Hyperparameter(
 
 class Kernel(metaclass=ABCMeta):
     """Base class for all kernels.
-
-    .. versionadded:: 0.18
 
     Examples
     --------
@@ -465,10 +461,7 @@ class Kernel(metaclass=ABCMeta):
 
 
 class NormalizedKernelMixin:
-    """Mixin for kernels which are normalized: k(X, X)=1.
-
-    .. versionadded:: 0.18
-    """
+    """Mixin for kernels which are normalized: k(X, X)=1."""
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -491,10 +484,7 @@ class NormalizedKernelMixin:
 
 
 class StationaryKernelMixin:
-    """Mixin for kernels which are stationary: k(X, Y)= f(X-Y).
-
-    .. versionadded:: 0.18
-    """
+    """Mixin for kernels which are stationary: k(X, Y)= f(X-Y)."""
 
     def is_stationary(self):
         """Returns whether the kernel is stationary."""
@@ -504,8 +494,6 @@ class StationaryKernelMixin:
 class GenericKernelMixin:
     """Mixin for kernels which operate on generic objects such as variable-
     length sequences, trees, and graphs.
-
-    .. versionadded:: 0.22
     """
 
     @property
@@ -516,8 +504,6 @@ class GenericKernelMixin:
 
 class CompoundKernel(Kernel):
     """Kernel which is composed of a set of other kernels.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -679,10 +665,7 @@ class CompoundKernel(Kernel):
 
 
 class KernelOperator(Kernel):
-    """Base class for all kernel operators.
-
-    .. versionadded:: 0.18
-    """
+    """Base class for all kernel operators."""
 
     def __init__(self, k1, k2):
         self.k1 = k1
@@ -810,8 +793,6 @@ class Sum(KernelOperator):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     k1 : Kernel
@@ -905,8 +886,6 @@ class Product(KernelOperator):
     with `RBF() * RBF()`.
 
     Read more in the :ref:`User Guide <gp_kernels>`.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -1006,8 +985,6 @@ class Exponentiation(Kernel):
 
 
     Read more in the :ref:`User Guide <gp_kernels>`.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -1205,8 +1182,6 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     constant_value : float, default=1.0
@@ -1335,8 +1310,6 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
 
 
     Read more in the :ref:`User Guide <gp_kernels>`.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -1467,8 +1440,6 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     See [2]_, Chapter 4, Section 4.2, for further details of the RBF kernel.
 
     Read more in the :ref:`User Guide <gp_kernels>`.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -1629,8 +1600,6 @@ class Matern(RBF):
     variants of the Matern kernel.
 
     Read more in the :ref:`User Guide <gp_kernels>`.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -1819,8 +1788,6 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     length_scale : float > 0, default=1.0
@@ -1973,8 +1940,6 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
 
@@ -2122,8 +2087,6 @@ class DotProduct(Kernel):
 
     Read more in the :ref:`User Guide <gp_kernels>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     sigma_0 : float >= 0, default=1.0
@@ -2261,8 +2224,6 @@ class PairwiseKernel(Kernel):
           considered to be a hyperparameter and may be optimized. The other
           kernel parameters are set directly at initialization and are kept
           fixed.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------

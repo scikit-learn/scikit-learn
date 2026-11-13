@@ -309,7 +309,7 @@ def test_sample_weight():
     sample_weight = np.ones(y.shape)
     sample_weight[y == 1] *= 100
 
-    est = LogisticRegression(random_state=0, fit_intercept=False)
+    est = LogisticRegression(fit_intercept=False)
     transformer = SelectFromModel(estimator=est)
     transformer.fit(X, y, sample_weight=None)
     mask = transformer._get_support_mask()

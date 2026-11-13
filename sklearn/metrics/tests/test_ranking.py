@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from scipy import stats
 
-from sklearn import datasets
+from sklearn import config_context, datasets
 from sklearn.datasets import make_multilabel_classification
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.linear_model import LogisticRegression
@@ -37,7 +37,13 @@ from sklearn.metrics._ranking import (
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.random_projection import _sparse_random_matrix
+from sklearn.utils._array_api import (
+    move_to,
+    yield_mixed_namespace_input_permutations,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     _convert_container,
     assert_allclose,
     assert_almost_equal,
@@ -94,7 +100,7 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
     y_score = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:
@@ -638,6 +644,90 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
 
 
 @pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_multiclass_ovr_roc_auc_zero_sample_weight(
+    array_namespace, device_name, dtype_name
+):
+    """Non-regression test for OvR roc_auc_score(average="weighted")
+    with all-zero sample weights. See:
+    https://github.com/scikit-learn/scikit-learn/pull/33200#discussion_r4315296397
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    y_true = xp.asarray([0, 1, 2], device=device)
+    y_score = xp.ones(shape=(3, 3), device=device) / 3
+
+    with config_context(array_api_dispatch=True):
+        result = roc_auc_score(
+            y_true,
+            y_score,
+            multi_class="ovr",
+            average="weighted",
+            sample_weight=np.zeros(3),
+        )
+    assert isinstance(result, float)
+    assert result == 0.0
+
+
+@pytest.mark.parametrize(
+    "y_true_ns_and_device, y_score_ns_and_device",
+    [
+        pytest.param(*args[:2], id=args[2])
+        for args in yield_mixed_namespace_input_permutations()
+    ],
+)
+@pytest.mark.parametrize("dtype_name", ["float32", "float64"])
+@pytest.mark.parametrize("multi_class", ["ovr", "ovo"])
+def test_roc_auc_score_multiclass_labels_array_api(
+    y_true_ns_and_device, y_score_ns_and_device, dtype_name, multi_class
+):
+    """Check the parameter `labels` handling for mixed namespace inputs."""
+    xp_y_true, device_y_true = _array_api_for_tests(
+        y_true_ns_and_device.xp,
+        device_name=y_true_ns_and_device.device,
+        dtype_name=dtype_name,
+    )
+    xp_y_score, device_y_score = _array_api_for_tests(
+        y_score_ns_and_device.xp,
+        device_name=y_score_ns_and_device.device,
+        dtype_name=dtype_name,
+    )
+
+    y_true = np.asarray([0, 1, 2, 0, 1, 2])
+    y_score = np.asarray(
+        [
+            [0.7, 0.2, 0.1],
+            [0.2, 0.3, 0.5],
+            [0.1, 0.2, 0.7],
+            [0.3, 0.4, 0.3],
+            [0.2, 0.6, 0.2],
+            [0.4, 0.2, 0.4],
+        ],
+        dtype=dtype_name,
+    )
+    expected = roc_auc_score(y_true, y_score, multi_class=multi_class)
+
+    y_true_xp = xp_y_true.asarray(y_true, device=device_y_true)
+    y_score_xp = xp_y_score.asarray(y_score, device=device_y_score)
+
+    with config_context(array_api_dispatch=True):
+        for labels in [
+            [0, 1, 2],
+            xp_y_true.asarray([0, 1, 2], device=device_y_true),
+            xp_y_score.asarray([0, 1, 2], device=device_y_score),
+            None,
+        ]:
+            actual = roc_auc_score(
+                y_true_xp, y_score_xp, multi_class=multi_class, labels=labels
+            )
+
+            assert isinstance(actual, float)
+            assert_array_almost_equal(actual, expected)
+
+
+@pytest.mark.parametrize(
     "multi_class, average",
     [
         ("ovr", "macro"),
@@ -944,6 +1034,42 @@ def test_confusion_matrix_at_thresholds(global_random_seed):
     assert_allclose(tps + fns, n_pos)
     assert_allclose(tns + fps, n_neg)
     assert_allclose(tns + fps + fns + tps, n_samples)
+
+
+def test_confusion_matrix_at_thresholds_float32_only_unweighted_large_n():
+    """Unweighted counts stay exact on float32-only devices for n_pos > 2**24.
+
+    Float32 cumulative sums saturate once the running total exceeds 2**24, which
+    previously made ``confusion_matrix_at_thresholds`` (and ROC-AUC) wrong on
+    devices without float64. See #34813.
+    """
+    xp, device = _array_api_for_tests("array_api_strict", "no_float64", "float32")
+
+    rng = np.random.RandomState(0)
+    # Data with enough positives to exceed the float32 integer precision limit.
+    n_samples = 20_000_000
+    y_true_np = (rng.random(n_samples) < 0.9).astype(np.int32)
+    y_score_np = (rng.random(n_samples) + y_true_np * 0.01).astype(np.float32)
+    n_pos = int(y_true_np.sum())
+    assert n_pos > 2**24
+
+    _, _, _, tps_ref, _ = confusion_matrix_at_thresholds(
+        y_true_np, y_score_np.astype(np.float64)
+    )
+
+    y_true = xp.asarray(y_true_np, device=device)
+    y_score = xp.asarray(y_score_np, dtype=xp.float32, device=device)
+    with config_context(array_api_dispatch=True):
+        _, fps, _, tps, _ = confusion_matrix_at_thresholds(y_true, y_score)
+
+    tps_np = move_to(tps, xp=np, device="cpu")
+    fps_np = move_to(fps, xp=np, device="cpu")
+    # Exact integer counts before the final float cast; allow float32 rounding
+    # of integers above 2**24, after which two consecutive float32 numbers are
+    # spaced by more than 2.
+    assert_allclose(tps_np[-1], n_pos, atol=1)
+    assert_allclose(fps_np[-1], n_samples - n_pos, atol=1)
+    assert_allclose(tps_np, tps_ref, atol=1)
 
 
 @pytest.mark.parametrize("curve_func", CURVE_FUNCS)
@@ -1383,10 +1509,11 @@ def test_score_scale_invariance():
 )
 def test_det_curve_toydata(y_true, y_score, expected_fpr, expected_fnr):
     # Check on a batch of small examples.
-    fpr, fnr, _ = det_curve(y_true, y_score)
+    fpr, fnr, thresholds = det_curve(y_true, y_score)
 
     assert_allclose(fpr, expected_fpr)
     assert_allclose(fnr, expected_fnr)
+    assert np.all(np.diff(thresholds) >= 0)
 
 
 @pytest.mark.parametrize(
@@ -2198,7 +2325,7 @@ def test_top_k_accuracy_score_increasing():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
     clf.fit(X_train, y_train)
 
     for X, y in zip((X_train, X_test), (y_train, y_test)):
