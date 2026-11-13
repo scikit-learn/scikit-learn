@@ -832,7 +832,7 @@ class RFECV(RFE):
             X,
             y,
             accept_sparse="csr",
-            ensure_min_features=2,
+            ensure_min_features=1,
             ensure_all_finite=False,
             multi_output=True,
             skip_check_array=preserve_X,
@@ -856,7 +856,7 @@ class RFECV(RFE):
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
         n_features = X.shape[1]
-        if self.min_features_to_select > n_features:
+        if self.min_features_to_select >= n_features:
             warnings.warn(
                 (
                     f"Found min_features_to_select={self.min_features_to_select} > "
