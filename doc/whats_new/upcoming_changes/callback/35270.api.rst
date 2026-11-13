@@ -1,0 +1,4 @@
+- The `__iter__` method of :class:`callback.CallbackContext`, which yielded the context
+  and all its descendants in pre-order, has been removed. Callback contexts no longer
+  hold references to their children.
+  By :user:`François Paugam <FrancoisPgm>`.

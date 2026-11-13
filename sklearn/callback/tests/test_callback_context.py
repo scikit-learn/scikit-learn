@@ -159,11 +159,10 @@ def test_task_tree():
             assert len(get_context_path(grandchild)) == 3
             assert len(grandchild._children_ids) == 0
 
-    all_nodes = (
-        [root]
-        + children
-        + [gchild for gchild_sublist in grandchildren for gchild in gchild_sublist]
-    )
+    gchildren_flattened = [
+        gchild for gchild_sublist in grandchildren for gchild in gchild_sublist
+    ]
+    all_nodes = [root, *children, *gchildren_flattened]
 
     # all _children_ids lengths should match the max_subtasks attribute.
     for node in all_nodes:

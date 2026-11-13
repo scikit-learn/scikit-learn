@@ -106,11 +106,7 @@ class CallbackContext:
         new_ctx.parent = None
         new_ctx.root_uuid = uuid.uuid4()
         new_ctx.init_time = datetime.now(timezone.utc)
-        # TODO XXX: weakrefs to children contexts could be used instead of just ids
-        # to be able to iterate over the whole tree in the main process without
-        # pickling the whole tree which would introduce a large overhead (see
-        # https://github.com/scikit-learn/scikit-learn/issues/35104).
-        new_ctx._children_ids = set()
+        new_ctx._children_ids = tuple()
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
         new_ctx._subestimator_support_warnings = set()
@@ -168,7 +164,7 @@ class CallbackContext:
         new_ctx.root_uuid = parent_context.root_uuid
         new_ctx.init_time = datetime.now(timezone.utc)
         new_ctx.parent = None
-        new_ctx._children_ids = set()
+        new_ctx._children_ids = tuple()
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
 
@@ -204,7 +200,7 @@ class CallbackContext:
                 f"number of children ({self.max_subtasks})."
             )
 
-        self._children_ids.add(child_context.task_id)
+        self._children_ids = (*self._children_ids, child_context.task_id)
         child_context.parent = self
 
     def _merge_with(self, other_context):
@@ -229,7 +225,6 @@ class CallbackContext:
         self.parent = other_context.parent
         self.task_id = other_context.task_id
         self.root_uuid = other_context.root_uuid
-        other_context.parent._children_ids.add(self.task_id)
 
         # Keep information about the context it was merged with
         self.source_task_name = other_context.task_name
