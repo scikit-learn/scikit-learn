@@ -2110,9 +2110,6 @@ def test__custom_fit_no_run_search():
         BadSearchCV(SVC(), cv=KFold(n_splits=2)).fit(X, y)
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_empty_cv_iterator_error():
     # Use global X, y
 
@@ -2138,8 +2135,6 @@ def test_empty_cv_iterator_error():
         ridge.fit(X[:train_size], y[:train_size])
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
 def test_random_search_bad_cv():
     # Use global X, y
 
@@ -2640,9 +2635,6 @@ def test_search_estimator_param(SearchCV, param_search):
     assert gs.best_estimator_.named_steps["clf"].C == 0.01
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_search_with_2d_array():
     parameter_grid = {
         "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams

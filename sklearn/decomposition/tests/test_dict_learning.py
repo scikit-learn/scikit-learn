@@ -37,9 +37,6 @@ n_samples, n_features = 10, 8
 X = rng_global.randn(n_samples, n_features)
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_sparse_encode_shapes_omp():
     rng = np.random.RandomState(0)
     algorithms = ["omp", "lasso_lars", "lasso_cd", "lars", "threshold"]
@@ -220,9 +217,6 @@ def test_dict_learning_reconstruction():
     # nonzero atoms is right.
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_dict_learning_reconstruction_parallel():
     # regression test that parallel reconstruction works with n_jobs>1
     n_components = 12
@@ -241,9 +235,6 @@ def test_dict_learning_reconstruction_parallel():
     assert_array_almost_equal(np.dot(code, dico.components_), X, decimal=2)
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_dict_learning_lassocd_readonly_data():
     n_components = 12
     with TempMemmap(X) as X_read_only:
@@ -635,9 +626,6 @@ def test_sparse_coder_estimator_clone():
     np.testing.assert_allclose(cloned.transform(data), coder.transform(data))
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_sparse_coder_parallel_mmap():
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/5956
@@ -990,9 +978,6 @@ def test_get_feature_names_out(estimator):
     )
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_cd_work_on_joblib_memmapped_data(monkeypatch):
     monkeypatch.setattr(
         sklearn.decomposition._dict_learning,
