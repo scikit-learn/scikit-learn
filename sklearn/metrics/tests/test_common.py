@@ -692,7 +692,6 @@ METRICS_SAMPLEWISE = {
 
 # Metrics that do not *yet* support array API inputs
 METRICS_NOT_SUPPORTING_ARRAY_API = {
-    "coverage_error",
     "dcg_score",
     "distance_metrics",
     "haversine_distances",
