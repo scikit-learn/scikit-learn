@@ -68,8 +68,8 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
         Stopping tolerance for log-likelihood increase.
 
     copy : bool, default=True
-        Whether to make a copy of X. If ``False``, the input X gets overwritten
-        during fitting.
+        Whether to make a :term:`copy` of X. If ``False``, the input X gets
+        overwritten during fitting.
 
     max_iter : int, default=1000
         Maximum number of iterations.

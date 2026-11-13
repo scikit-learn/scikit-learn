@@ -122,7 +122,7 @@ def lars_path(
         Regression, `'lasso'` for the Lasso.
 
     copy_X : bool, default=True
-        If `False`, `X` is overwritten.
+        If `False`, `X` is overwritten (see :term:`copy_X`).
 
     eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
@@ -303,7 +303,7 @@ def lars_path_gram(
         Regression, ``'lasso'`` for the Lasso.
 
     copy_X : bool, default=True
-        If `False`, `X` is overwritten.
+        If `False`, `X` is overwritten (see :term:`copy_X`).
 
     eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
@@ -473,7 +473,7 @@ def _lars_path_solver(
         Regression, ``'lasso'`` for the Lasso.
 
     copy_X : bool, default=True
-        If ``False``, ``X`` is overwritten.
+        If ``False``, ``X`` is overwritten (see :term:`copy_X`).
 
     eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
@@ -951,7 +951,7 @@ class Lars(RegressorMixin, MultiOutputLinearModel):
         the tolerance of the optimization.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     fit_path : bool, default=True
         If True the full path is stored in the ``coef_path_`` attribute.
@@ -1248,7 +1248,7 @@ class LassoLars(Lars):
         the tolerance of the optimization.
 
     copy_X : bool, default=True
-        If True, X will be copied; else, it may be overwritten.
+        If True, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     fit_path : bool, default=True
         If ``True`` the full path is stored in the ``coef_path_`` attribute.
@@ -1424,7 +1424,7 @@ def _lars_path_residues(
         than features
 
     copy : bool, default=True
-        Whether X_train, X_test, y_train and y_test should be copied;
+        Whether X_train, X_test, y_train and y_test should be :term:`copied <copy>`;
         if False, they may be overwritten.
 
     method : {'lar' , 'lasso'}, default='lar'
@@ -1560,7 +1560,7 @@ class LarsCV(Lars):
         the tolerance of the optimization.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     Attributes
     ----------
@@ -1875,7 +1875,7 @@ class LassoLarsCV(LarsCV):
         the tolerance of the optimization.
 
     copy_X : bool, default=True
-        If True, X will be copied; else, it may be overwritten.
+        If True, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
@@ -2052,7 +2052,7 @@ class LassoLarsIC(LassoLars):
         the tolerance of the optimization.
 
     copy_X : bool, default=True
-        If True, X will be copied; else, it may be overwritten.
+        If True, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
@@ -2214,7 +2214,7 @@ class LassoLarsIC(LassoLars):
 
         copy_X : bool, default=None
             If provided, this parameter will override the choice
-            of copy_X made at instance creation.
+            of :term:`copy_X` made at instance creation.
             If ``True``, X will be copied; else, it may be overwritten.
 
         Returns
