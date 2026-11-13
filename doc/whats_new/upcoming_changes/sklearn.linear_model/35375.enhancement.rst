@@ -1,0 +1,8 @@
+- :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV` now
+  issue a :class:`~sklearn.exceptions.ConvergenceWarning` if the optimal value of
+  `alpha` lies at the boundary of the explored range of `alphas`. No warning is
+  issued when `alphas` contains a single value, nor when the optimal `alpha` is at
+  the lower boundary but negligible compared to the scale of `X`, since the best
+  model is then the unpenalized one.
+  By :user:`Divyaprabha M <divyaprabha123>`, :user:`Ben Reiniger <bmreiniger>`,
+  :user:`Meekail Zain <micky774>` and :user:`Rayen Ben Abderrahmane <RayenAbde>`.

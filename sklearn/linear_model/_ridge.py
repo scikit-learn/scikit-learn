@@ -2383,6 +2383,34 @@ class _RidgeGCV(LinearModel):
         return tags
 
 
+def _negligible_alpha_threshold(X, sample_weight, fit_intercept):
+    """Value of `alpha` below which the ridge penalty has no effect on the fit.
+
+    The ridge normal equations are ``(X_c^T X_c + alpha I) w = X_c^T y`` where
+    ``X_c`` is `X` centered if `fit_intercept=True` (with the weighted mean) and
+    with rows scaled by ``sqrt(sample_weight)``. Adding `alpha` is negligible
+    when it is below the machine precision of the largest eigenvalue of
+    ``X_c^T X_c``. We use the squared Frobenius norm of ``X_c``, a cheap upper
+    bound of this eigenvalue that also works for sparse `X`.
+    """
+    xp, _ = get_namespace(X)
+    X = check_array(
+        X, accept_sparse=["csr", "csc", "coo"], dtype=[xp.float64, xp.float32]
+    )
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+    if sparse.issparse(X):
+        # Centering would densify X: use ||X - m||^2 = ||X||^2 - sum(sw) ||m||^2.
+        squared_norm = sample_weight @ row_norms(X, squared=True)
+        if fit_intercept:
+            X_mean = (X.T @ sample_weight) / xp.sum(sample_weight)
+            squared_norm -= xp.sum(sample_weight) * (X_mean @ X_mean)
+    else:
+        if fit_intercept:
+            X = X - (sample_weight @ X) / xp.sum(sample_weight)
+        squared_norm = sample_weight @ row_norms(X, squared=True)
+    return float(xp.finfo(X.dtype).eps) * max(float(squared_norm), 0.0)
+
+
 class _BaseRidgeCV(LinearModel):
     _parameter_constraints: dict = {
         "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
@@ -2549,6 +2577,45 @@ class _BaseRidgeCV(LinearModel):
             estimator = grid_search.best_estimator_
             self.alpha_ = grid_search.best_estimator_.alpha
             self.best_score_ = grid_search.best_score_
+
+        min_alpha = np.min(alphas)
+        max_alpha = np.max(alphas)
+        # `alpha_` is an array (possibly from a non-NumPy namespace) when
+        # `alpha_per_target=True` with several targets, and a float otherwise.
+        if isinstance(self.alpha_, numbers.Real):
+            best_alphas = np.asarray([self.alpha_])
+        else:
+            best_alphas = move_to(self.alpha_, xp=np, device="cpu")
+        # `alpha_` is always one of the values of `alphas`: no absolute tolerance,
+        # which would make all values below 1e-8 "close" to each other.
+        at_upper = np.isclose(best_alphas, max_alpha, atol=0)
+        at_lower = np.isclose(best_alphas, min_alpha, atol=0)
+        # With a single value in `alphas`, there is no search hence no boundary.
+        searched = min_alpha < max_alpha
+        if searched and np.any(at_lower):
+            # A negligible `alpha` (or `alpha=0` when `cv` is not None) gives the
+            # unpenalized model: exploring smaller values would not change it.
+            threshold = _negligible_alpha_threshold(
+                X, sample_weight, self.fit_intercept
+            )
+            at_lower &= best_alphas > threshold
+        if searched and np.any(at_upper | at_lower):
+            if self.alpha_per_target:
+                msg = (
+                    "Some of the individual targets had an optimal value for the"
+                    " regularization parameter `alpha` at the boundary of the"
+                    f" explored range (between {min_alpha} and {max_alpha}); the found"
+                    f" optimal values are: {self.alpha_}\nConsider changing the"
+                    " `alphas` parameter to explore a wider range."
+                )
+            else:
+                msg = (
+                    "The optimal value for the regularization parameter 'alpha' was"
+                    f" {self.alpha_} which lies at a boundary of the explored range"
+                    f" (between {min_alpha} and {max_alpha}). Consider updating the"
+                    " `alphas` parameter to explore a wider range."
+                )
+            warnings.warn(msg, ConvergenceWarning)
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
