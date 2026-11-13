@@ -346,7 +346,8 @@ The lasso estimate thus solves the least-squares with added penalty
                             + \frac{\alpha}{2n_{\text{samples}}} ||w||_1}
 
   This shows that different estimators use a different scaling behaviour of the penalty
-  parameter ``alpha`` with the sample size ``n_samples``.
+  parameter ``alpha`` with the sample size ``n_samples``. Thus the influence of
+  ``alpha`` fades with increasing ``n_samples`` for Ridge but not for Lasso.
 
 .. dropdown:: Weighted Lasso
 
@@ -521,7 +522,7 @@ their flexibility, see the *Mathematical details* of :ref:`aic_bic`.
 
 However, such criteria need a proper estimation of the degrees of freedom of
 the solution, are derived for large samples (asymptotic results) and assume the
-correct model is candidate under investigation. They also tend to break when
+correct model is among the candidates under investigation. They also tend to break when
 the problem is badly conditioned (e.g. more features than samples).
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lars_ic_001.png
@@ -539,9 +540,8 @@ the problem is badly conditioned (e.g. more features than samples).
 AIC and BIC criteria
 ^^^^^^^^^^^^^^^^^^^^
 
-The definition of AIC and thus BIC may differ across the literature. In this
-section, we give more information regarding the criterion computed in
-scikit-learn.
+The definition of AIC, and thus BIC, may differ across the literature. In this section,
+we give more information regarding the criterion computed in scikit-learn.
 
 .. dropdown:: Mathematical details
 
@@ -550,10 +550,9 @@ scikit-learn.
   .. math::
       AIC = -2 \log(\mathcal{L}) + 2 p
 
-  where :math:`\mathcal{L}` is the maximum likelihood of the model and
-  :math:`p` is the number of parameters (as well referred to as degrees of
-  freedom in the previous section, i.e. ``n_features`` or ``n_features + 1`` if the
-  intercept is included).
+  where :math:`\mathcal{L}` is the maximum likelihood of the model and :math:`p` is the
+  number of parameters (also referred to as degrees of freedom in the previous section,
+  i.e. ``n_features`` or ``n_features + 1`` if the intercept is included).
 
   The definition of BIC replaces the constant :math:`2` by :math:`\log(N)`:
 
