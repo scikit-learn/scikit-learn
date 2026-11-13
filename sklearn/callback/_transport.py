@@ -114,12 +114,15 @@ def open_listener(message_consumer, *, owner=None):
             return
 
     def _accept():
-        while True:
-            try:
-                conn = listener.accept()
-            except OSError:
-                return
-            Thread(target=_handle, args=(conn,), daemon=True).start()
+        try:
+            while listener_handle.address in _listeners:
+                try:
+                    conn = listener.accept()
+                except (OSError, EOFError):
+                    break  # woken up by `close_listener`, or the listener failed
+                Thread(target=_handle, args=(conn,), daemon=True).start()
+        finally:
+            listener.close()
 
     Thread(target=_accept, daemon=True).start()
     return listener_handle
@@ -127,10 +130,20 @@ def open_listener(message_consumer, *, owner=None):
 
 def close_listener(listener_handle):
     """Stop listening for `listener_handle` and free its background threads."""
-    _message_consumers.pop(listener_handle.address, None)
-    listener = _listeners.pop(listener_handle.address, None)
-    if listener is not None:
-        listener.close()
+    address = listener_handle.address
+    _message_consumers.pop(address, None)
+
+    if _listeners.pop(address, None) is None:
+        return  # already closed
+
+    try:
+        # The accept thread is waiting in `accept`, and closing the listener would not
+        # interrupt that call. Connecting to it does: we connect without the authkey so
+        # that the authentication handshake fails, and that failure is what makes the
+        # accept thread break out of its loop.
+        Client(address).close()
+    except OSError:
+        pass  # the accept thread is already gone, e.g. its listener failed
 
 
 def can_reuse_listener(listener_handle):
