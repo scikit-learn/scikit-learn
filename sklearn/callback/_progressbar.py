@@ -52,6 +52,13 @@ class ProgressBar:
         id_in_cb_list = estimator._skl_callbacks.index(self)
         for cb in estimator._skl_callbacks[id_in_cb_list + 1 :]:
             if isinstance(cb, ProgressBar) and cb is not self:
+                # This callback is not the last `ProgressBar` instance in the
+                # list of registered callbacks for this estimator, therefore,
+                # it disables its own execution in the context of the current
+                # run.
+                # Note that the same instance could be also used elsewhere in
+                # different contexts, so the disabling mechanism is scoped by
+                # by the active context.
                 self._disabled_runs.add(context.root_uuid)
                 return
 
