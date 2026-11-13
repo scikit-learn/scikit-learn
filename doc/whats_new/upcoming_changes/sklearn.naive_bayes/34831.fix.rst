@@ -1,0 +1,1 @@
+- Fixed a bug in :class:`naive_bayes.GammaNB` where zero variance features caused an error.
