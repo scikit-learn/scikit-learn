@@ -1621,9 +1621,9 @@ def permutation_test_score(
     if groups is not None and _y_constant_within_groups(y, groups):
         warnings.warn(
             "Each group in `groups` has a single value of `y`, so permuting `y` "
-            "within groups leaves `y` unchanged and permutation_test_score is "
-            "not well-defined in this case (with a deterministic estimator and "
-            "cross-validation, the p-value is 1).",
+            "within groups leaves `y` unchanged and permutation_test_score "
+            "reduces to the degenerate case of testing a deterministic estimator "
+            "with a trivial p-value of 1.",
             UserWarning,
         )
 
