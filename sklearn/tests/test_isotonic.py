@@ -7,10 +7,10 @@ import pytest
 from scipy.special import expit
 
 import sklearn
+from sklearn._isotonic import _make_unique
 from sklearn.datasets import make_regression
 from sklearn.isotonic import (
     IsotonicRegression,
-    _make_unique,
     _make_unique_np,
     check_increasing,
     isotonic_regression,
