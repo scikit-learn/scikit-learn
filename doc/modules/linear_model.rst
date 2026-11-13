@@ -617,13 +617,17 @@ function optimized by the model.
 Multi-task Lasso
 ================
 
-The :class:`MultiTaskLasso` is a linear model that estimates sparse
-coefficients for multiple regression problems jointly: ``y`` is a 2D array,
-of shape ``(n_samples, n_tasks)``. The constraint is that the selected
-features are the same for all the regression problems, also called tasks.
+The :class:`MultiTaskLasso` is a linear model that estimates sparse coefficients for
+multiple regression problems, or tasks, jointly: ``y`` is a 2-dimensional array of
+shape ``(n_samples, n_targets)``, in maths often expressed as capital letter :math:`Y`.
+The coefficients are also 2-dimensional, :math:`W` is of shape
+``(n_features, n_targets)`` and accessible as the transpose of the coefficient
+attribute, ``coef_.T``. The constraint is that the selected features are the same for
+all the regression problems. This is enforced by the penalty, which couples each
+feature's coefficients across all tasks.
 
 The following figure compares the location of the non-zero entries in the
-coefficient matrix W obtained with a simple Lasso or a MultiTaskLasso.
+coefficient matrix :math:`W` obtained with a simple Lasso or a MultiTaskLasso.
 The Lasso estimates yield scattered non-zeros while the non-zeros of
 the MultiTaskLasso are full columns.
 
@@ -660,6 +664,7 @@ the MultiTaskLasso are full columns.
 
   .. math:: ||A||_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}.
 
+  In both above norms, the index :math:`j` is for the dimension of tasks.
   The implementation in the class :class:`MultiTaskLasso` uses
   coordinate descent as the algorithm to fit the coefficients.
 
