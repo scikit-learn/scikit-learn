@@ -1182,10 +1182,6 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "sample_weight is not equivalent to removing/repeating samples."
         ),
     },
-    PCA: {
-        # TODO: see gh-33205 for details
-        "check_array_api_input": "`linalg.inv` fails because input is singular",
-    },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298
         "check_sample_weight_equivalence_on_dense_data": (

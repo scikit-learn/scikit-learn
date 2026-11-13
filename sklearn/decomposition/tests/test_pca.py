@@ -714,8 +714,45 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
     pca.fit(X.T)
     assert pca.noise_variance_ == 0
     # Non-regression test for gh-12489
-    # ensure no divide-by-zero error for n_components == n_samples < n_features
-    pca.score(X.T)
+    # ensure no divide-by-zero error for n_components == n_samples < n_features.
+    # The centered data has rank n_samples - 1 < n_components, so the model is
+    # degenerate.
+    with pytest.warns(UserWarning, match="covariance of the fitted model is singular"):
+        assert pca.score(X.T) == -np.inf
+
+
+@pytest.mark.parametrize("svd_solver", ["full", "covariance_eigh", "randomized"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("whiten", [False, True])
+def test_pca_rank_deficient_data(svd_solver, dtype, whiten):
+    # Non-regression test for gh-33205: when n_components is at least the rank
+    # of the data, the covariance of the model is singular. `score` used to
+    # return backend-dependent garbage or raise in `linalg.inv`.
+    rng = np.random.RandomState(0)
+    rank, n_features = 4, 8
+    X = (rng.randn(50, rank) @ rng.randn(rank, n_features)).astype(dtype)
+
+    for n_components in [rank, n_features - 1, n_features]:
+        pca = PCA(n_components, svd_solver=svd_solver, whiten=whiten).fit(X)
+        with pytest.warns(UserWarning, match="covariance of the fitted model"):
+            score_samples = pca.score_samples(X)
+        assert score_samples.dtype == dtype
+        assert np.all(score_samples == -np.inf)
+
+        # The precision is the pseudo-inverse of the covariance.
+        cov = pca.get_covariance()
+        precision = pca.get_precision()
+        assert precision.dtype == dtype
+        assert np.all(np.isfinite(precision))
+        tol = 1e-6 if dtype == np.float32 else 1e-12
+        expected = np.linalg.pinv(cov.astype(np.float64), rtol=tol, hermitian=True)
+        assert_allclose(precision, expected, rtol=1e-3 if dtype == np.float32 else 1e-7)
+
+    # Below the rank, the model is a regular full-rank Gaussian.
+    pca = PCA(rank - 1, svd_solver=svd_solver, whiten=whiten).fit(X)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        assert np.isfinite(pca.score(X))
 
 
 @pytest.mark.parametrize(
