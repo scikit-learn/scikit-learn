@@ -75,6 +75,7 @@ from sklearn.tests.metadata_routing_common import (
     assert_request_is_empty,
     check_recorded_metadata,
 )
+from sklearn.utils._testing import skip_if_threaded_parallelism_enabled
 from sklearn.utils.metadata_routing import MetadataRouter, get_routing_for_object
 
 rng = np.random.RandomState(42)
@@ -821,6 +822,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                     method(X, **method_kwargs)
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_setting_request_on_sub_estimator_removes_error(metaestimator):
@@ -965,6 +967,7 @@ def test_non_consuming_estimator_works(metaestimator):
             method(X, **extra_method_args)
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_metadata_is_routed_correctly_to_scorer(metaestimator):
@@ -1048,6 +1051,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
             )
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):

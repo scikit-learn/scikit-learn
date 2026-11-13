@@ -430,6 +430,12 @@ def pytest_addoption(parser, pluginmanager):
         default=False,
         help="raise for spmatrix usage that breaks sparray",
     )
+    parser.addoption(
+        "--enable-threading-and-parallelism",
+        action="store_true",
+        default=False,
+        help="set default n_jobs to high number, and joblib backend to threading",
+    )
 
 
 def pytest_runtest_setup(item):
@@ -468,6 +474,18 @@ def pytest_configure(config):
         # - uses the sparray interface for manipulating the sparse object
         # - uses align_api_if_sparse(X) just before returning a sparse object
         munge_scipy_to_check_spmatrix_usage()
+
+    # Because CI uses --pyargs, this conftest.py isn't loaded early enough, and
+    # therefore using the command-line option doesn't work. So also check an
+    # environment variable as an alternative mechanism.
+    if (
+        config.option.enable_threading_and_parallelism
+        or environ.get("SKLEARN_TESTS_ENABLE_PARALLELISM") == "1"
+    ):
+        # Use extra threads to increase chances of race conditions:
+        joblib.parallel_config(backend="threading", n_jobs=joblib.cpu_count() * 2)
+        # Until we fix all failing tests in later PRs, we're going to skip them:
+        environ["SKLEARN_TESTS_ENABLE_PARALLELISM"] = "1"
 
     if not PARALLEL_RUN_AVAILABLE:
         config.addinivalue_line(

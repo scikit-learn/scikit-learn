@@ -30,6 +30,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_threaded_parallelism_enabled,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 
@@ -438,6 +439,7 @@ def test_nystroem_poly_kernel_params():
     assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
 
 
+@skip_if_threaded_parallelism_enabled
 def test_nystroem_callable():
     # Test Nystroem on a callable.
     rnd = np.random.RandomState(42)

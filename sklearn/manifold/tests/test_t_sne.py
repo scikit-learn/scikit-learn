@@ -36,6 +36,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     skip_if_32bit,
+    skip_if_threaded_parallelism_enabled,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
 
@@ -999,6 +1000,7 @@ def test_gradient_bh_multithread_match_sequential():
         assert_allclose(grad_multithread, grad_multithread)
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize(
     "metric, dist_func",
     [("manhattan", manhattan_distances), ("cosine", cosine_distances)],
@@ -1049,6 +1051,7 @@ def test_tsne_with_different_distance_metrics(metric, dist_func, method):
     assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
 def test_tsne_n_jobs(method):
     """Make sure that the n_jobs parameter doesn't impact the output"""
@@ -1079,6 +1082,7 @@ def test_tsne_n_jobs(method):
     assert_allclose(X_tr_ref, X_tr)
 
 
+@skip_if_threaded_parallelism_enabled
 def test_tsne_with_mahalanobis_distance():
     """Make sure that method_parameters works with mahalanobis distance."""
     random_state = check_random_state(0)

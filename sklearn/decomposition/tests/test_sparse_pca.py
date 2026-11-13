@@ -13,6 +13,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     if_safe_multiprocessing_with_blas,
+    skip_if_threaded_parallelism_enabled,
 )
 from sklearn.utils.extmath import svd_flip
 
@@ -191,6 +192,7 @@ def test_spca_n_components_(SPCA, n_components):
         assert model.n_components_ == n_features
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("SPCA", (SparsePCA, MiniBatchSparsePCA))
 @pytest.mark.parametrize("method", ("lars", "cd"))
 @pytest.mark.parametrize(

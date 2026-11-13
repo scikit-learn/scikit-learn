@@ -24,6 +24,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     ignore_warnings,
+    skip_if_threaded_parallelism_enabled,
 )
 from sklearn.utils.estimator_checks import (
     check_transformer_data_not_an_array,
@@ -716,6 +717,7 @@ def test_update_dict():
     assert_allclose(newd_batch, newd_online)
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize(
     "algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
 )
@@ -750,6 +752,7 @@ def test_sparse_encode_numerical_consistency(algorithm):
     assert_allclose(code_32, code_64, rtol=rtol)
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize(
     "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
 )
@@ -768,6 +771,7 @@ def test_sparse_coder_dtype_match(data_type, transform_algorithm):
     assert code.dtype == data_type
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
 @pytest.mark.parametrize(
     "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
@@ -799,6 +803,7 @@ def test_dictionary_learning_dtype_match(
     assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
 @pytest.mark.parametrize(
     "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
@@ -836,6 +841,7 @@ def test_minibatch_dictionary_learning_dtype_match(
     assert dict_learner._B.dtype == expected_type
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("method", ("lars", "cd"))
 @pytest.mark.parametrize(
     "data_type, expected_type",
@@ -897,6 +903,7 @@ def test_dict_learning_numerical_consistency(method):
     assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("method", ("lars", "cd"))
 @pytest.mark.parametrize(
     "data_type, expected_type",

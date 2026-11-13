@@ -52,6 +52,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
     skip_if_no_parallel,
+    skip_if_threaded_parallelism_enabled,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 from sklearn.utils.multiclass import type_of_target
@@ -1549,6 +1550,7 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):
 joblib.register_parallel_backend("testing", MyBackend)
 
 
+@skip_if_threaded_parallelism_enabled
 # TODO: remove mark once loky bug is fixed:
 # https://github.com/joblib/loky/issues/458
 @pytest.mark.thread_unsafe

@@ -15,7 +15,11 @@ from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import kneighbors_graph, sort_graph_by_row_values
 from sklearn.utils import shuffle
-from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils._testing import (
+    assert_allclose,
+    assert_array_equal,
+    skip_if_threaded_parallelism_enabled,
+)
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 rng = np.random.RandomState(0)
@@ -815,6 +819,7 @@ def test_extract_dbscan(global_dtype, global_random_seed):
     )
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
 def test_precomputed_dists(global_dtype, csr_container):
     redX = X[::2].astype(global_dtype, copy=False)

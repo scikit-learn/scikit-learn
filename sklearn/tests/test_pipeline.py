@@ -76,6 +76,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     skip_callback_test_if_wasm,
+    skip_if_threaded_parallelism_enabled,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 from sklearn.utils.metadata_routing import get_routing_for_object
@@ -1686,6 +1687,7 @@ parameter_grid_test_verbose = (
 )
 
 
+@skip_if_threaded_parallelism_enabled
 @pytest.mark.parametrize("est, pattern, method", parameter_grid_test_verbose)
 def test_verbose(est, method, pattern, capsys):
     est = clone(est)
@@ -2749,6 +2751,7 @@ def test_feature_union_get_metadata_routing_without_fit():
     feature_union.get_metadata_routing()
 
 
+@skip_if_threaded_parallelism_enabled
 @config_context(enable_metadata_routing=True)
 @pytest.mark.parametrize(
     "transformer", [ConsumingTransformer, ConsumingNoFitTransformTransformer]

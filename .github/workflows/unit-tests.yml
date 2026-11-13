@@ -331,6 +331,7 @@ jobs:
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     env:
+      RUN_TESTS_IN_PARALLEL: "1"
       DISTRIB: conda-free-threaded
       LOCK_FILE: build_tools/github/pylatest_free_threaded_linux-64_conda.lock
       COVERAGE: false
@@ -338,6 +339,24 @@ jobs:
       PYTEST_XDIST_VERSION: none
       # To be able to access the job name in the steps, it must be set as an env variable.
       JOB_NAME: *free-threaded-job-name
+    steps: *unit-tests-steps
+
+  free-threaded-parallelism:
+    name: &free-threaded-parallelism-job-name
+      Linux x86-64 pylatest_free_threaded_parallelism
+    runs-on: ubuntu-latest
+    needs: [lint, retrieve-commit-message, retrieve-selected-tests]
+    if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    env:
+      SKLEARN_TESTS_ENABLE_PARALLELISM: "1"
+      DISTRIB: conda-free-threaded
+      LOCK_FILE: build_tools/github/pylatest_free_threaded_linux-64_conda.lock
+      COVERAGE: false
+      # Disable pytest-xdist to use multiple cores for stress-testing with
+      # default set n_jobs
+      PYTEST_XDIST_VERSION: none
+      # To be able to access the job name in the steps, it must be set as an env variable.
+      JOB_NAME: *free-threaded-parallelism-job-name
     steps: *unit-tests-steps
 
   scipy-dev:
