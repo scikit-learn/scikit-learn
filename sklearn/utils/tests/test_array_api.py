@@ -567,6 +567,44 @@ def test_convert_estimator_to_array_api_strict():
 
 
 @skip_if_array_api_compat_not_configured
+def test_move_estimator_to_ignores_non_numeric_classes_():
+    # Non-regression test for #35109: string class labels must not be converted
+    # to target array namespace (they are incompatible with arbitrary devices).
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = SimpleEstimator().fit(X_np)
+    est.classes_ = numpy.array(["cat", "dog"])
+
+    with config_context(array_api_dispatch=True):
+        new_est = move_estimator_to(est, xp, device=None)
+
+        # Non-numeric classes_ must remain as a plain NumPy array, not moved to
+        # the new namespace, since string labels are incompatible with device
+        # conversion.
+        assert getattr(new_est.classes_, "__array_namespace__", None) is None
+        numpy.testing.assert_array_equal(new_est.classes_, est.classes_)
+
+
+@skip_if_array_api_compat_not_configured
+def test_move_estimator_to_converts_numeric_classes_():
+    # Numeric class labels (integers) can be safely converted to the target
+    # array namespace and should follow the same path as other numeric arrays.
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = SimpleEstimator().fit(X_np)
+    est.classes_ = numpy.array([0, 1])
+
+    with config_context(array_api_dispatch=True):
+        new_est = move_estimator_to(est, xp, device=None)
+
+        # Integer classes_ should be moved to the target namespace.
+        assert get_namespace(new_est.classes_)[0] == xp
+        numpy.testing.assert_array_equal(numpy.asarray(new_est.classes_), est.classes_)
+
+
+@skip_if_array_api_compat_not_configured
 def test_check_fitted_attribute():
     xp = pytest.importorskip("array_api_strict")
 

@@ -1070,6 +1070,13 @@ def _estimator_with_converted_arrays(estimator, converter):
 
     new_estimator = clone(estimator)
     for key, attribute in vars(estimator).items():
+        if key == "classes_" and isinstance(attribute, numpy.ndarray):
+            if not numpy.issubdtype(attribute.dtype, numpy.number):
+                # Non-numeric class labels (e.g. strings) cannot be converted
+                # to arbitrary array namespaces/devices, so we keep them as-is.
+                # See: https://github.com/scikit-learn/scikit-learn/issues/35109
+                setattr(new_estimator, key, attribute)
+                continue
         attribute = _estimator_with_converted_arrays(attribute, converter)
         setattr(new_estimator, key, attribute)
     return new_estimator
