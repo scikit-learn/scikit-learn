@@ -964,7 +964,10 @@ def check_array(
         # nans
         # Use the original dtype for conversion if dtype is None
         new_dtype = dtype_orig if dtype is None else dtype
-        array = array.astype(new_dtype)
+        if isinstance(array, nw.DataFrame):
+            array = nw.from_native(array.to_native().astype(new_dtype))
+        else:
+            array = array.astype(new_dtype)
         # Since we converted here, we do not need to convert again later
         dtype = None
 

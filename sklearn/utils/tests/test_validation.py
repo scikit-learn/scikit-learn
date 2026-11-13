@@ -598,31 +598,45 @@ def test_check_array_panadas_na_support_series():
     assert_allclose(X_out, [1, 2, np.nan])
     assert X_out.dtype == np.float32
 
+def _pd_or_nw_pd_as_type(df, dtype):
+    """
+    Private function for use in the `test_check_array_pandas_dtype_casting`,
+    intended to avoid repeated code for pandas vs narwhals type conversion.
+    """
+    if hasattr(df, "astype"):
+        return df.astype(dtype)
+    return nw.from_native(df.to_native().astype(dtype))
 
-def test_check_array_pandas_dtype_casting():
+@pytest.mark.parametrize("convert_to_narwhals", [False, True])
+def test_check_array_pandas_dtype_casting(convert_to_narwhals):
     # test that data-frames with homogeneous dtype are not upcast
     pd = pytest.importorskip("pandas")
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)
     X_df = pd.DataFrame(X)
+    if convert_to_narwhals:
+        X_df = nw.from_native(X_df)
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
-    X_df = X_df.astype({0: np.float16})
-    assert_array_equal(X_df.dtypes, (np.float16, np.float32, np.float32))
+    X_df = _pd_or_nw_pd_as_type(X_df, {0: np.float16})
+    assert_array_equal(
+        X_df.to_native().dtypes if convert_to_narwhals else X_df.dtypes,
+        (np.float16, np.float32, np.float32),
+    )
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
-    X_df = X_df.astype({0: np.int16})
+    X_df = _pd_or_nw_pd_as_type(X_df, {0: np.int16})
     # float16, int16, float32 casts to float32
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
-    X_df = X_df.astype({2: np.float16})
+    X_df = _pd_or_nw_pd_as_type(X_df, {2: np.float16})
     # float16, int16, float16 casts to float32
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
-    X_df = X_df.astype(np.int16)
+    X_df = _pd_or_nw_pd_as_type(X_df, np.int16)
     assert check_array(X_df).dtype == np.int16
     # we're not using upcasting rules for determining
     # the target type yet, so we cast to the default of float64
