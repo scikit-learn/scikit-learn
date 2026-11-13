@@ -58,7 +58,7 @@ decomposed into subtasks, the tasks (and therefore callback contexts) have a nat
 tree structure, with the root task being the whole fit task.
 
 The callback context objects are dynamically built during `fit` following this tree
-structure, each context holding a reference to their parent context. The root context
+structure, each context holding a reference to its parent context. The root context
 must be created by the :meth:`~CallbackSupportMixin._init_callback_context` method.
 
 .. dropdown:: examples of task / context trees
