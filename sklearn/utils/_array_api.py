@@ -183,7 +183,7 @@ def _check_array_api_dispatch(array_api_dispatch):
     if scipy_version < parse_version(min_scipy_version):
         raise ImportError(
             f"SciPy must be {min_scipy_version} or newer"
-            " (found {scipy.__version__}) to dispatch array using"
+            f" (found {scipy.__version__}) to dispatch array using"
             " the array API specification"
         )
 
@@ -589,13 +589,26 @@ def move_to(*arrays, xp, device):
             if xp == xp_array and device == device_array:
                 converted_arrays.append(array)
             else:
-                if _is_xp_namespace(xp, "torch") and _is_numpy_namespace(xp_array):
-                    if any(stride < 0 for stride in array.strides):
-                        # Work around PyTorch aborting the process when importing
-                        # negative-strided NumPy arrays with DLPack. Remove this once
-                        # https://github.com/pytorch/pytorch/issues/188023 is fixed.
-                        # See also https://github.com/scikit-learn/scikit-learn/issues/34307
-                        array = numpy.ascontiguousarray(array)
+                if (
+                    _is_numpy_namespace(xp_array)
+                    and not _is_numpy_namespace(xp)
+                    and not isinstance(array, numpy.ndarray)
+                ):
+                    # Other array-like containers (e.g. Python lists, pandas Series...)
+                    # are first converted to numpy arrays to ensure dlpack
+                    # compatibility.
+                    array = numpy.asarray(array)
+
+                if (
+                    _is_xp_namespace(xp, "torch")
+                    and _is_numpy_namespace(xp_array)
+                    and any(stride < 0 for stride in array.strides)
+                ):
+                    # Work around PyTorch aborting the process when importing
+                    # negative-strided NumPy arrays with DLPack. Remove this once
+                    # https://github.com/pytorch/pytorch/issues/188023 is fixed.
+                    # See also https://github.com/scikit-learn/scikit-learn/issues/34307
+                    array = numpy.ascontiguousarray(array)
                 try:
                     # The dlpack protocol is the future proof and library agnostic
                     # method to transfer arrays across namespace and device boundaries
@@ -944,74 +957,6 @@ def _xlogy(x, y, xp=None):
     return xp.where(x == 0.0, xp.asarray(0.0, dtype=temp.dtype, device=device), temp)
 
 
-def _nanmin(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmin(X, axis=axis))
-
-    else:
-        mask = xp.isnan(X)
-        X = xp.min(
-            xp.where(mask, xp.asarray(+xp.inf, dtype=X.dtype, device=device), X),
-            axis=axis,
-        )
-        # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
-        if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device), X)
-        return X
-
-
-def _nanmax(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmax(X, axis=axis))
-
-    else:
-        mask = xp.isnan(X)
-        X = xp.max(
-            xp.where(mask, xp.asarray(-xp.inf, dtype=X.dtype, device=device), X),
-            axis=axis,
-        )
-        # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
-        if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device), X)
-        return X
-
-
-def _nanmean(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmean(X, axis=axis))
-    else:
-        mask = xp.isnan(X)
-        total = xp.sum(
-            xp.where(mask, xp.asarray(0.0, dtype=X.dtype, device=device), X), axis=axis
-        )
-        count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
-        return total / count
-
-
-def _nansum(X, axis=None, xp=None, keepdims=False, dtype=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, X_device = get_namespace_and_device(X, xp=xp)
-
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nansum(X, axis=axis, keepdims=keepdims, dtype=dtype))
-
-    mask = xp.isnan(X)
-    masked_arr = xp.where(mask, xp.asarray(0, device=X_device, dtype=X.dtype), X)
-    return xp.sum(masked_arr, axis=axis, keepdims=keepdims, dtype=dtype)
-
-
 def _asarray_with_order(
     array, dtype=None, order=None, copy=None, *, xp=None, device=None
 ):
@@ -1237,7 +1182,8 @@ def _atol_for_type(dtype_or_dtype_name):
         # expect the same floating precision level as NumPy's default floating
         # point dtype.
         dtype_or_dtype_name = numpy.float64
-    return numpy.finfo(dtype_or_dtype_name).eps * 1000
+    # Since pytest 9.2.0, pytest.approx rejects np.float32 as an absolute tolerance.
+    return float(numpy.finfo(dtype_or_dtype_name).eps * 1000)
 
 
 def indexing_dtype(xp):
@@ -1366,6 +1312,76 @@ def _matching_numpy_dtype(X, xp=None):
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
     return np_compat.__array_namespace_info__().dtypes()[dtype_name]
+
+
+def _interp(x, xp, fp, left=None, right=None):
+    """Partial port of `numpy.interp` for array API."""
+    # TODO: Replace with `scipy.interpolate` once it supports array API:
+    # https://scipy.github.io/devdocs/dev/api-dev/array_api_modules_tables/interpolate.html
+    xp_ns, _, device = get_namespace_and_device(xp, fp)
+    fp = move_to(fp, xp=xp_ns, device=device)
+
+    if xp.ndim != 1 or fp.ndim != 1:
+        raise ValueError("Data points must be 1-D sequences")
+    if xp.shape[0] != fp.shape[0]:
+        raise ValueError("fp and xp are not of the same length")
+
+    x = xp_ns.asarray(x, device=device)
+
+    # Complex floating-point dtypes are not supported. Here, we check `x`'s own dtype
+    # before casting to the floating dtype below. Otherwise, a complex `x` will not
+    # raise the `NotImplementedError`.
+    for dtype_to_check in (xp.dtype, fp.dtype, x.dtype):
+        if xp_ns.isdtype(dtype_to_check, "complex floating"):
+            raise NotImplementedError(
+                "Complex floating-point values are not supported by interp."
+            )
+
+    dtype = _find_matching_floating_dtype(xp, fp, xp=xp_ns)
+    x = xp_ns.astype(x, dtype)
+
+    # Match NumPy when `xp` or `fp` is empty
+    if xp.shape[0] == 0 or fp.shape[0] == 0:
+        if size(x) == 0:
+            return x
+        raise ValueError("array of sample points is empty")
+
+    if _is_numpy_namespace(xp_ns):
+        return xp_ns.interp(x, xp, fp, left, right)
+
+    left_value = (
+        fp[0] if left is None else xp_ns.asarray(left, dtype=dtype, device=device)
+    )
+    right_value = (
+        fp[-1] if right is None else xp_ns.asarray(right, dtype=dtype, device=device)
+    )
+
+    # A single sample point has no interval to interpolate within.
+    if xp.shape[0] == 1:
+        return xp_ns.where(
+            x < xp[0],
+            left_value,
+            xp_ns.where(x > xp[0], right_value, fp[0]),
+        )
+
+    # Clipping avoids out-of-bounds indexing when `x` is outside the range of `xp`.
+    stop = xp_ns.clip(xp_ns.searchsorted(xp, x, side="right"), 1, xp.shape[0] - 1)
+    x0 = xp[stop - 1]
+    x1 = xp[stop]
+    y0 = fp[stop - 1]
+    y1 = fp[stop]
+    denom = x1 - x0
+
+    interp_y = xp_ns.where(
+        x == x0,
+        y0,
+        xp_ns.where(x == x1, y1, y0 + (x - x0) * (y1 - y0) / denom),
+    )
+
+    interp_y = xp_ns.where(x < xp[0], left_value, interp_y)
+    interp_y = xp_ns.where(x > xp[-1], right_value, interp_y)
+
+    return interp_y
 
 
 def _swapaxes(array, axis1, axis2, /, xp=None):

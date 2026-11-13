@@ -9,7 +9,12 @@ from numpy.testing import assert_allclose
 from scipy.special import expit, logit
 
 from sklearn._config import config_context
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, is_classifier
+from sklearn.datasets import make_classification, make_regression
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import Ridge, RidgeClassifier
+from sklearn.model_selection import cross_validate
+from sklearn.pipeline import FunctionTransformer, make_pipeline
 from sklearn.utils._array_api import (
     _add_to_diagonal,
     _asarray_with_order,
@@ -20,15 +25,13 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _expit,
     _fill_diagonal,
+    _interp,
     _is_numpy_namespace,
     _logit,
     _logsumexp,
     _matching_numpy_dtype,
     _max_precision_float_dtype,
     _median,
-    _nanmax,
-    _nanmean,
-    _nanmin,
     _ravel,
     _swapaxes,
     _validate_diagonal_args,
@@ -405,66 +408,6 @@ def test_device_inspection():
         assert array1.device == array_device(array1)
         assert array1.device == array_device(array1, array2)
         assert array1.device == array_device(array1, array1, array2)
-
-
-# TODO: add cupy to the list of libraries once the following upstream issue
-# has been fixed:
-# https://github.com/cupy/cupy/issues/8180
-@skip_if_array_api_compat_not_configured
-@pytest.mark.parametrize("library", ["numpy", "array_api_strict", "torch"])
-@pytest.mark.parametrize(
-    "X,reduction,expected",
-    [
-        ([1, 2, numpy.nan], _nanmin, 1),
-        ([1, -2, -numpy.nan], _nanmin, -2),
-        ([numpy.inf, numpy.inf], _nanmin, numpy.inf),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmin, axis=0),
-            [1.0, 2.0, 3.0],
-        ),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmin, axis=1),
-            [1.0, numpy.nan, 4.0],
-        ),
-        ([1, 2, numpy.nan], _nanmax, 2),
-        ([1, 2, numpy.nan], _nanmax, 2),
-        ([-numpy.inf, -numpy.inf], _nanmax, -numpy.inf),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmax, axis=0),
-            [4.0, 5.0, 6.0],
-        ),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmax, axis=1),
-            [3.0, numpy.nan, 6.0],
-        ),
-        ([1, 2, numpy.nan], _nanmean, 1.5),
-        ([1, -2, -numpy.nan], _nanmean, -0.5),
-        ([-numpy.inf, -numpy.inf], _nanmean, -numpy.inf),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmean, axis=0),
-            [2.5, 3.5, 4.5],
-        ),
-        (
-            [[1, 2, 3], [numpy.nan, numpy.nan, numpy.nan], [4, 5, 6.0]],
-            partial(_nanmean, axis=1),
-            [2.0, numpy.nan, 5.0],
-        ),
-    ],
-)
-def test_nan_reductions(library, X, reduction, expected):
-    """Check NaN reductions like _nanmin and _nanmax"""
-    xp = pytest.importorskip(library)
-
-    with config_context(array_api_dispatch=True):
-        result = reduction(xp.asarray(X))
-
-    result = move_to(result, xp=numpy, device="cpu")
-    assert_allclose(result, expected)
 
 
 @pytest.mark.parametrize(
@@ -1046,6 +989,161 @@ def test_matching_numpy_dtype(namespace, device_name, dtype_name):
 
 
 @pytest.mark.parametrize(
+    "x, xp, fp, left, right",
+    [
+        (1, [0, 2, 4], [1, -1, 1], None, None),
+        # test numpy.inf in fp
+        ([1, 2, 2.5, 3, 4], [1, 2, 3, 4], [1, 2, numpy.inf, 4], None, None),
+        # test numpy.nan in fp
+        ([1, 2, 2.5, 3, 4], [1, 2, 3, 4], [1, 2, numpy.nan, 4], None, None),
+        # test numpy.nan interpolation point
+        (numpy.nan, [0, 0.25, 0.5, 0.75, 1], [0, 0.25, 0.5, 0.75, 1], None, None),
+        (
+            [i / 49 for i in range(50)],
+            [i / 4 for i in range(5)],
+            [i / 4 for i in range(5)],
+            None,
+            None,
+        ),
+        # test nans in `xp` propagates to output
+        (0.5, [numpy.nan, 1], [0, 10], None, None),
+        # test left
+        (
+            [-1, 0, 7, 8],
+            [i for i in range(7)],
+            [1 for _ in range(7)],
+            0,
+            None,
+        ),
+        # test right
+        (
+            [-1, 0, 7, 8],
+            [i for i in range(7)],
+            [1 for _ in range(7)],
+            None,
+            2,
+        ),
+        # test left and right
+        (
+            [-1, 0, 4, 5],
+            [i for i in range(5)],
+            [1 for _ in range(5)],
+            0,
+            2,
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_interp(x, xp, fp, left, right, namespace, device_name, dtype_name):
+    xp_actual, device = _array_api_for_tests(namespace, device_name, dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        dtype = getattr(xp_actual, dtype_name) if dtype_name else None
+        xp_xp = xp_actual.asarray(xp, dtype=dtype, device=device)
+        fp_xp = xp_actual.asarray(fp, dtype=dtype, device=device)
+        actual = _interp(x, xp_xp, fp_xp, left, right)
+        actual = move_to(actual, xp=numpy, device="cpu")
+
+    desired = numpy.interp(x, xp, fp, left, right)
+
+    if dtype_name:
+        desired = desired.astype(dtype_name)
+
+    assert_allclose(actual, desired, atol=_atol_for_type(dtype_name))
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_interp_empty_x(namespace, device_name, dtype_name):
+    # See https://github.com/numpy/numpy/issues/30316
+    xp_actual, device = _array_api_for_tests(namespace, device_name)
+
+    with config_context(array_api_dispatch=True):
+        dtype = getattr(xp_actual, dtype_name) if dtype_name else None
+        atol = _atol_for_type(dtype_name)
+
+        xp1 = xp_actual.asarray([], dtype=dtype, device=device)
+        fp1 = xp_actual.asarray([], dtype=dtype, device=device)
+
+        actual1 = _interp([], xp1, fp1)
+        actual1 = move_to(actual1, xp=numpy, device="cpu")
+        desired1 = numpy.asarray([], dtype=dtype_name)
+
+        assert_allclose(actual1, desired1, atol=atol)
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_interp_raises(namespace, device_name, dtype_name):
+    xp_actual, device = _array_api_for_tests(namespace, device_name, dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        dtype = getattr(xp_actual, dtype_name) if dtype_name else None
+        empty = xp_actual.asarray([], dtype=dtype, device=device)
+        arr_1 = xp_actual.asarray([1, 2, 3], dtype=dtype, device=device)
+
+        # `fp` or `xp` is empty
+        msg = "array of sample points is empty"
+        with pytest.raises(ValueError, match=msg):
+            _interp(0, empty, empty)
+
+        # `fp` and `xp` are not of the same length
+        arr_2 = xp_actual.asarray([4, 5], dtype=dtype, device=device)
+        msg = "fp and xp are not of the same length"
+        with pytest.raises(ValueError, match=msg):
+            _interp(0, arr_1, empty)
+        with pytest.raises(ValueError, match=msg):
+            _interp(0, empty, arr_1)
+        with pytest.raises(ValueError, match=msg):
+            _interp(0, arr_1, arr_2)
+        with pytest.raises(ValueError, match=msg):
+            _interp(0, arr_2, arr_1)
+
+        # should run successfully when `x` is empty
+        _interp(empty, empty, empty)
+        _interp(empty, arr_1, arr_1)
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_interp_raises_with_complex(namespace, device_name, dtype_name):
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    arr_real_np = numpy.asarray([1, 2], dtype=dtype_name)
+    arr_complex_np = numpy.asarray([2, 0], dtype=dtype_name) + 1j * numpy.asarray(
+        [4, 3], dtype=dtype_name
+    )
+    complex_type_name = arr_complex_np.dtype.name
+    complex_np = numpy.asarray([7 + 8j], dtype=complex_type_name)
+
+    with config_context(array_api_dispatch=True):
+        if not hasattr(xp, complex_type_name):
+            # This is the case for cupy as of March 2024 for instance.
+            pytest.skip(f"{namespace} does not support {complex_type_name}")
+
+        complex_xp = xp.asarray(complex_np, device=device)
+        arr_complex_xp, arr_real_xp = move_to(
+            arr_complex_np, arr_real_np, xp=xp, device=device
+        )
+
+        msg = "Complex floating-point values are not supported by interp."
+        with pytest.raises(NotImplementedError, match=msg):
+            _interp(0.7, arr_real_xp, arr_complex_xp)
+        with pytest.raises(NotImplementedError, match=msg):
+            _interp(0.7, arr_complex_xp, arr_real_xp)
+        with pytest.raises(NotImplementedError, match=msg):
+            _interp(complex_xp, arr_real_xp, arr_real_xp)
+
+
+@pytest.mark.parametrize(
     "namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
@@ -1057,3 +1155,138 @@ def test_swapaxes(namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         result_xp = _swapaxes(X_xp, 0, 1)
     assert_array_equal(move_to(result_xp, xp=numpy, device="cpu"), result_np)
+
+
+@pytest.mark.parametrize(
+    "estimator, n_classes, scoring, target_dtype",
+    [
+        (Ridge(), None, ["r2", "neg_mean_absolute_error"], numpy.float32),
+        (
+            LinearDiscriminantAnalysis(),
+            2,
+            ["d2_brier_score", "d2_log_loss_score", "accuracy"],
+            numpy.int32,
+        ),
+        (
+            RidgeClassifier(),
+            3,
+            ["accuracy", "average_precision"],
+            str,
+        ),
+    ],
+    ids=["Ridge", "LinearDiscriminantAnalysis", "RidgeClassifier"],
+)
+@pytest.mark.parametrize("cv", [None, 3, 5])
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name", yield_namespace_device_dtype_combinations()
+)
+def test_cross_validate_array_api_pipeline(
+    estimator, n_classes, scoring, target_dtype, cv, namespace, device_name, dtype_name
+):
+    """Integration test for `cross_validate` with array API arrays.
+
+    The goal of this test is to ensure that `cross_validate` works as expected
+    when using array API compatible estimators and multiple scorers at once.
+
+    It is a bit redundant with individual tests for array API compliance of
+    estimators and scorers but the purpose is to check that array API
+    compatibility is preserved when composing these building blocks together,
+    in particular when only X is moved to the array API namespace via the
+    pipeline usage pattern.
+    """
+
+    xp, device_ = _array_api_for_tests(namespace, device_name, dtype_name)
+    if is_classifier(estimator):
+        X_np, y_np = make_classification(
+            n_samples=100,
+            n_features=5,
+            n_classes=n_classes,
+            n_informative=3,
+            random_state=42,
+        )
+    else:
+        X_np, y_np = make_regression(
+            n_samples=100, n_features=5, n_informative=3, random_state=42
+        )
+
+    X_np = X_np.astype(dtype_name)
+    y_np = y_np.astype(target_dtype)
+    X_xp = xp.asarray(X_np, device=device_)
+
+    xp_pipeline = make_pipeline(
+        FunctionTransformer(partial(xp.asarray, device=device_)),
+        estimator,
+    )
+
+    cv_params = {
+        "cv": cv,
+        "return_estimator": True,
+        "return_train_score": True,
+        "error_score": "raise",
+        "scoring": scoring,
+    }
+
+    cv_results_np = cross_validate(estimator, X_np, y_np, **cv_params)
+    with config_context(array_api_dispatch=True):
+        cv_results_xp = cross_validate(xp_pipeline, X_np, y_np, **cv_params)
+        expected_device = array_device(X_xp)
+        expected_dtype = X_xp.dtype
+
+    for est_xp, est_np in zip(
+        cv_results_xp["estimator"], cv_results_np["estimator"], strict=True
+    ):
+        # Ensure that the estimators returned can predict when fed with the
+        # same kind of array API inputs they were trained on and that their
+        # predictions are consistent with the NumPy baseline.
+        with config_context(array_api_dispatch=False):
+            preds_np = est_np.predict(X_np)
+        with config_context(array_api_dispatch=True):
+            if is_classifier(est_xp):
+                preds_xp = est_xp.predict(X_np)
+                # Classifier `predict` returns class labels. String labels
+                # cannot be represented by array API namespaces, so they stay
+                # as NumPy arrays on CPU (namespace/device of `y`, typically
+                # unicode or object dtype). Integer class ids follow `X`
+                # (same library and device).
+                if target_dtype is str:
+                    assert _is_numpy_namespace(get_namespace(preds_xp)[0])
+                    assert array_device(preds_xp) == array_device(y_np)
+                    assert preds_xp.dtype.kind in ("U", "S", "O")
+                else:
+                    assert (
+                        get_namespace(preds_xp)[0].__name__
+                        == get_namespace(X_xp)[0].__name__
+                    )
+                    assert array_device(preds_xp) == expected_device
+                assert_array_equal(move_to(preds_xp, xp=numpy, device="cpu"), preds_np)
+
+                if hasattr(est_xp, "predict_proba"):
+                    proba_xp = est_xp.predict_proba(X_np)
+                    assert array_device(proba_xp) == expected_device
+                    assert proba_xp.dtype == expected_dtype
+
+                raw_preds_xp = est_xp.decision_function(X_np)
+                assert array_device(raw_preds_xp) == expected_device
+                assert raw_preds_xp.dtype == expected_dtype
+            else:
+                # For regressors, also check that the prediction dtype is
+                # preserved.
+                preds_xp = est_xp.predict(X_np)
+                assert preds_xp.dtype == expected_dtype
+                assert array_device(preds_xp) == expected_device
+                assert_allclose(
+                    move_to(preds_xp, xp=numpy, device="cpu"),
+                    preds_np,
+                    rtol=1e-4 if dtype_name == "float32" else 1e-6,
+                    atol=_atol_for_type(dtype_name),
+                )
+
+    for score_name in cv_params["scoring"]:
+        for key in [f"test_{score_name}", f"train_{score_name}"]:
+            assert_allclose(
+                cv_results_xp[key],
+                cv_results_np[key],
+                rtol=1e-4 if dtype_name == "float32" else 1e-6,
+                atol=_atol_for_type(dtype_name),
+                err_msg=key,
+            )

@@ -30,8 +30,6 @@ class KNNImputer(_BaseImputer):
 
     Read more in the :ref:`User Guide <knnimpute>`.
 
-    .. versionadded:: 0.22
-
     Parameters
     ----------
     missing_values : int, float, str, np.nan or None, default=np.nan
@@ -91,8 +89,6 @@ class KNNImputer(_BaseImputer):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

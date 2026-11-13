@@ -30,8 +30,6 @@ from sklearn.linear_model import (
     MultiTaskLassoCV,
     OrthogonalMatchingPursuit,
     OrthogonalMatchingPursuitCV,
-    PassiveAggressiveClassifier,
-    PassiveAggressiveRegressor,
     Perceptron,
     PoissonRegressor,
     Ridge,
@@ -73,10 +71,9 @@ from sklearn.utils.fixes import CSR_CONTAINERS
             marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
         ),
         LogisticRegressionCV(
+            alphas=10,
             tol=1e-6,
-            use_legacy_attributes=False,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
-            l1_ratios=(0,),  # TODO(1.10): remove because it is default now
         ),
         MultiTaskElasticNet(),
         MultiTaskElasticNetCV(),
@@ -187,7 +184,6 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
         LinearRegression,
         OrthogonalMatchingPursuit,
         OrthogonalMatchingPursuitCV,
-        PassiveAggressiveRegressor,
         PoissonRegressor,
         Ridge,
         RidgeCV,
@@ -220,13 +216,11 @@ def test_linear_model_regressor_coef_shape(Regressor, ndim):
         (
             LogisticRegressionCV,
             {
+                "alphas": 10,
                 "solver": "newton-cholesky",
-                "use_legacy_attributes": False,
-                "l1_ratios": (0,),  # TODO(1.10): remove
                 "scoring": "neg_log_loss",  # TODO(1.11): remove
             },
         ),
-        (PassiveAggressiveClassifier, {}),
         (Perceptron, {}),
         (RidgeClassifier, {}),
         (RidgeClassifierCV, {}),

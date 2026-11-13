@@ -27,7 +27,7 @@ from sklearn.callback.tests._common.callbacks import (
 )
 from sklearn.callback.tests._common.estimators import MaxIterEstimator
 from sklearn.cluster import KMeans
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_classification
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import (
@@ -78,6 +78,7 @@ from sklearn.utils._testing import (
     skip_callback_test_if_wasm,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.metadata_routing import get_routing_for_object
 from sklearn.utils.validation import _check_feature_names, check_is_fitted
 
 # Load a shared tests data sets for the tests in this module. Mark them
@@ -1481,7 +1482,7 @@ def test_step_name_validation():
 def test_set_params_nested_pipeline():
     estimator = Pipeline([("a", Pipeline([("b", DummyRegressor())]))])
     estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
-    estimator.set_params(a__steps=[("b", LogisticRegression())], a__b__C=5)
+    estimator.set_params(a__steps=[("b", LogisticRegression())], a__b__alpha=0.2)
 
 
 def test_pipeline_memory():
@@ -1687,6 +1688,7 @@ parameter_grid_test_verbose = (
 
 @pytest.mark.parametrize("est, pattern, method", parameter_grid_test_verbose)
 def test_verbose(est, method, pattern, capsys):
+    est = clone(est)
     func = getattr(est, method)
 
     X = [[1, 2, 3], [4, 5, 6]]
@@ -2276,6 +2278,70 @@ def test_transform_tuple_input():
     pipe.fit(X, y, X_val=(X_val0, X_val1), y_val=(y_val0, y_val1))
 
 
+@config_context(enable_metadata_routing=True)
+def test_validation_set_auto_request():
+    """Test that Pipeline correctly routes auto-requested validation sets."""
+    X, y = make_classification(n_samples=200, random_state=42)
+    sample_weight = np.random.RandomState(42).rand(len(X))
+    (
+        X_train,
+        X_val,
+        y_train,
+        y_val,
+        sample_weight_train,
+        sample_weight_val,
+    ) = train_test_split(X, y, sample_weight, test_size=0.3, random_state=42)
+
+    hist = HistGradientBoostingClassifier(early_stopping=True).set_fit_request(
+        sample_weight=True
+    )
+    pipe = make_pipeline(StandardScaler().set_fit_request(sample_weight=True), hist)
+
+    # With `enable_metadata_auto_requests=False` the validation set should be
+    # discovered but fitting on them should raise:
+    with config_context(enable_metadata_auto_requests=False):
+        assert all(
+            get_routing_for_object(pipe)
+            ._route_mappings["histgradientboostingclassifier"]
+            .router.fit.requests[k]
+            is None
+            for k in ("X_val", "y_val", "sample_weight_val")
+        )
+        error_message = "[X_val, y_val, sample_weight_val] are passed but are not"
+        with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+            pipe.fit(
+                X_train,
+                y_train,
+                sample_weight=sample_weight_train,
+                X_val=X_val,
+                y_val=y_val,
+                sample_weight_val=sample_weight_val,
+            )
+
+    # With `enable_metadata_auto_requests=True` the validation set should be requested
+    # and fitting on them should work:
+    with config_context(enable_metadata_auto_requests=True):
+        hist = HistGradientBoostingClassifier(early_stopping=True).set_fit_request(
+            sample_weight=True
+        )
+        pipe = make_pipeline(StandardScaler().set_fit_request(sample_weight=True), hist)
+        assert all(
+            get_routing_for_object(pipe)
+            ._route_mappings["histgradientboostingclassifier"]
+            .router.fit.requests[k]
+            is True
+            for k in ("X_val", "y_val", "sample_weight_val")
+        )
+        pipe.fit(
+            X_train,
+            y_train,
+            sample_weight=sample_weight_train,
+            X_val=X_val,
+            y_val=y_val,
+            sample_weight_val=sample_weight_val,
+        )
+
+
 # end of transform_input tests
 # =============================
 
@@ -2493,11 +2559,8 @@ def test_metadata_routing_error_for_pipeline(method):
     est = SimpleEstimator()
     # here not setting sample_weight request and leaving it as None
     pipeline = Pipeline([("estimator", est)])
-    error_message = (
-        "[sample_weight, prop] are passed but are not explicitly set as requested"
-        f" or not requested for SimpleEstimator.{method}"
-    )
-    with pytest.raises(ValueError, match=re.escape(error_message)):
+
+    def call_method():
         try:
             # passing X, y positional as the first two arguments
             getattr(pipeline, method)(X, y, sample_weight=sample_weight, prop=prop)
@@ -2505,6 +2568,79 @@ def test_metadata_routing_error_for_pipeline(method):
             # not all methods accept y (like `predict`), so here we only
             # pass X as a positional arg.
             getattr(pipeline, method)(X, sample_weight=sample_weight, prop=prop)
+
+    with config_context(enable_metadata_auto_requests=False):
+        error_message = (
+            "[sample_weight, prop] are passed but are not explicitly set as requested"
+            f" or not requested for SimpleEstimator.{method}"
+        )
+        with pytest.raises(ValueError, match=re.escape(error_message)):
+            call_method()
+
+    with config_context(enable_metadata_auto_requests=True):
+        # `sample_weight` is auto-requested; `prop` is still unset.
+        error_message = (
+            "[prop] are passed but are not explicitly set as requested"
+            f" or not requested for SimpleEstimator.{method}"
+        )
+        with pytest.raises(ValueError, match=re.escape(error_message)):
+            call_method()
+
+
+@config_context(enable_metadata_routing=True)
+def test_sample_weight_routing_auto_request():
+    """Test that Pipeline correctly routes `sample_weight` auto-requested in consuming
+    estimators."""
+
+    class MyEstimator(BaseEstimator):
+        def fit(self, X, y, sample_weight=None):
+            self.sample_weight_ = sample_weight
+            return self
+
+        def transform(self, X, y=None, sample_weight=None):
+            return X
+
+        def predict(self, X, y=None, sample_weight=None):
+            return np.ones(X.shape[0])
+
+    X, y = make_classification(n_samples=200, random_state=42)
+    sample_weight = np.random.RandomState(42).rand(len(X))
+
+    scaler = StandardScaler()
+    est = MyEstimator()
+    pipe = make_pipeline(scaler, est)
+
+    with config_context(enable_metadata_auto_requests=True):
+        est_routing = get_routing_for_object(est)
+        scaler_routing = get_routing_for_object(scaler)
+        assert est_routing.fit.requests.get("sample_weight") is True
+        assert est_routing.transform.requests.get("sample_weight") is True
+        assert est_routing.predict.requests.get("sample_weight") is True
+        assert scaler_routing.fit.requests.get("sample_weight") is True
+
+        pipe.fit(X, y, sample_weight=sample_weight)
+        assert_allclose(pipe[-1].sample_weight_, sample_weight)
+
+        # smoke test
+        pipe.transform(X, sample_weight=sample_weight)
+        pipe.predict(X, sample_weight=sample_weight)
+
+    with config_context(enable_metadata_auto_requests=False):
+        est_routing = get_routing_for_object(est)
+        scaler_routing = get_routing_for_object(scaler)
+        assert est_routing.fit.requests.get("sample_weight") is None
+        assert est_routing.transform.requests.get("sample_weight") is None
+        assert est_routing.predict.requests.get("sample_weight") is None
+        assert scaler_routing.fit.requests.get("sample_weight") is None
+
+        with pytest.raises(UnsetMetadataPassedError):
+            pipe.fit(X, y, sample_weight=sample_weight)
+
+        with pytest.raises(UnsetMetadataPassedError):
+            pipe.transform(X, sample_weight=sample_weight)
+
+        with pytest.raises(UnsetMetadataPassedError):
+            pipe.predict(X, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize(
@@ -2553,13 +2689,23 @@ def test_feature_union_metadata_routing_error():
     # test lacking set_fit_request
     feature_union = FeatureUnion([("sub_transformer", ConsumingTransformer())])
 
-    error_message = (
-        "[sample_weight, metadata] are passed but are not explicitly set as requested"
-        f" or not requested for {ConsumingTransformer.__name__}.fit"
-    )
+    with config_context(enable_metadata_auto_requests=False):
+        error_message = (
+            "[sample_weight, metadata] are passed but are not explicitly set as"
+            " requested"
+            f" or not requested for {ConsumingTransformer.__name__}.fit"
+        )
+        with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+            feature_union.fit(X, y, sample_weight=sample_weight, metadata=metadata)
 
-    with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
-        feature_union.fit(X, y, sample_weight=sample_weight, metadata=metadata)
+    with config_context(enable_metadata_auto_requests=True):
+        # `sample_weight` is auto-requested; `metadata` is still unset.
+        error_message = (
+            "[metadata] are passed but are not explicitly set as requested"
+            f" or not requested for {ConsumingTransformer.__name__}.fit"
+        )
+        with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+            feature_union.fit(X, y, sample_weight=sample_weight, metadata=metadata)
 
     # test lacking set_transform_request
     feature_union = FeatureUnion(
@@ -2573,15 +2719,26 @@ def test_feature_union_metadata_routing_error():
         ]
     )
 
-    error_message = (
-        "[sample_weight, metadata] are passed but are not explicitly set as requested "
-        f"or not requested for {ConsumingTransformer.__name__}.transform"
-    )
+    with config_context(enable_metadata_auto_requests=False):
+        error_message = (
+            "[sample_weight, metadata] are passed but are not explicitly set as"
+            " requested "
+            f"or not requested for {ConsumingTransformer.__name__}.transform"
+        )
+        with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+            feature_union.fit(
+                X, y, sample_weight=sample_weight, metadata=metadata
+            ).transform(X, sample_weight=sample_weight, metadata=metadata)
 
-    with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
-        feature_union.fit(
-            X, y, sample_weight=sample_weight, metadata=metadata
-        ).transform(X, sample_weight=sample_weight, metadata=metadata)
+    with config_context(enable_metadata_auto_requests=True):
+        error_message = (
+            "[metadata] are passed but are not explicitly set as requested"
+            f" or not requested for {ConsumingTransformer.__name__}.transform"
+        )
+        with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
+            feature_union.fit(
+                X, y, sample_weight=sample_weight, metadata=metadata
+            ).transform(X, sample_weight=sample_weight, metadata=metadata)
 
 
 @config_context(enable_metadata_routing=True)

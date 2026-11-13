@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from scipy.stats.mstats import mquantiles
 
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import (
@@ -36,7 +35,7 @@ def clf_diabetes(diabetes):
 
 def custom_values_helper(feature, grid_resolution):
     return np.linspace(
-        *mquantiles(feature, (0.05, 0.95), axis=0), num=grid_resolution, endpoint=True
+        *np.quantile(feature, (0.05, 0.95), axis=0), num=grid_resolution, endpoint=True
     )
 
 
@@ -97,7 +96,7 @@ def test_plot_partial_dependence(
     for i in [0, 2]:
         assert_allclose(
             disp.deciles[i],
-            mquantiles(diabetes.data[:, i], prob=np.arange(0.1, 1.0, 0.1)),
+            np.quantile(diabetes.data[:, i], np.arange(0.1, 1.0, 0.1)),
         )
 
     single_feature_positions = [(0, (0, 0)), (2, (0, 1))]

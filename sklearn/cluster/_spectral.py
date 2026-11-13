@@ -298,8 +298,6 @@ def spectral_clustering(
     verbose : bool, default=False
         Verbosity mode.
 
-        .. versionadded:: 0.24
-
     Returns
     -------
     labels : array of integers, shape: n_samples
@@ -518,8 +516,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     verbose : bool, default=False
         Verbosity mode.
 
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     affinity_matrix_ : array-like of shape (n_samples, n_samples)
@@ -531,8 +527,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

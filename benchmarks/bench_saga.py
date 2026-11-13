@@ -250,7 +250,7 @@ def plot(outname=None):
     with open("bench_saga.json", "r") as f:
         f = json.load(f)
     res = pd.DataFrame(f)
-    res.set_index(["single_target"], inplace=True)
+    res = res.set_index(["single_target"])
 
     grouped = res.groupby(level=["single_target"])
 

@@ -63,8 +63,6 @@ class IterativeImputer(_BaseImputer):
 
     Read more in the :ref:`User Guide <iterative_imputer>`.
 
-    .. versionadded:: 0.21
-
     .. versionchanged:: 1.10
         :class:`IterativeImputer` is no longer experimental and can be imported
         directly from :mod:`sklearn.impute` without enabling it through
@@ -154,16 +152,10 @@ class IterativeImputer(_BaseImputer):
         scalar. If array-like, expects shape `(n_features,)`, one min value for
         each feature. The default is `-np.inf`.
 
-        .. versionchanged:: 0.23
-           Added support for array-like.
-
     max_value : float or array-like of shape (n_features,), default=np.inf
         Maximum possible imputed value. Broadcast to shape `(n_features,)` if
         scalar. If array-like, expects shape `(n_features,)`, one max value for
         each feature. The default is `np.inf`.
-
-        .. versionchanged:: 0.23
-           Added support for array-like.
 
     verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
@@ -213,8 +205,6 @@ class IterativeImputer(_BaseImputer):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

@@ -657,3 +657,71 @@ def test_fetch_file_with_sha256(monkeypatch, tmpdir):
                 folder=client_side,
                 sha256=non_matching_sha256,
             )
+
+
+@pytest.mark.parametrize(
+    "local_filename",
+    [
+        "../escaped.jsonl",
+        "subfolder/data.jsonl",
+        "/absolute/data.jsonl",
+        "subfolder/",
+        "/absolute/dir/",
+        "../",
+        "./",
+        "..",
+        ".",
+        "",
+    ],
+)
+def test_fetch_file_rejects_path_as_local_filename(monkeypatch, tmpdir, local_filename):
+    # Non-regression test: a path-like `local_filename` must be rejected instead
+    # of silently writing outside of `folder`.
+    client_side = Path(tmpdir.mkdir("client_side"))
+
+    urlretrieve_mock = Mock()
+    monkeypatch.setattr("sklearn.datasets._base.urlretrieve", urlretrieve_mock)
+
+    expected_error_msg = re.escape(
+        "`local_filename` should be a filename, not a path, got"
+        f" {local_filename!r}. Use the `folder` argument to control the"
+        " output folder."
+    )
+    with pytest.raises(ValueError, match=expected_error_msg):
+        fetch_file(
+            "https://example.com/data.jsonl",
+            folder=client_side,
+            local_filename=local_filename,
+        )
+
+    # The check happens before any download and nothing is written to disk.
+    assert urlretrieve_mock.call_count == 0
+    assert list(Path(tmpdir).rglob("*")) == [client_side]
+
+
+@pytest.mark.parametrize(
+    "local_filename",
+    [
+        "renamed.jsonl",
+        ".hidden.jsonl",
+        "data..jsonl",
+    ],
+)
+def test_fetch_file_accepts_plain_local_filename(monkeypatch, tmpdir, local_filename):
+    server_side = tmpdir.mkdir("server_side")
+    server_data = '{"a": 1, "b": 2}\n'
+    Path(server_side / "data.jsonl").write_text(server_data, encoding="utf-8")
+
+    client_side = Path(tmpdir.mkdir("client_side"))
+
+    monkeypatch.setattr(
+        "sklearn.datasets._base.urlretrieve", _mock_urlretrieve(server_side)
+    )
+
+    fetched_file_path = fetch_file(
+        "https://example.com/data.jsonl",
+        folder=client_side,
+        local_filename=local_filename,
+    )
+    assert fetched_file_path == client_side / local_filename
+    assert fetched_file_path.read_text(encoding="utf-8") == server_data

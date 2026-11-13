@@ -14,6 +14,7 @@ import joblib
 import narwhals.stable.v2 as nw
 import numpy as np
 import scipy.sparse as sp
+from numpy.exceptions import ComplexWarning
 
 from sklearn import get_config as _get_config
 from sklearn.exceptions import (
@@ -32,11 +33,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
-from sklearn.utils.fixes import (
-    ComplexWarning,
-    _object_dtype_isnan,
-    _preserve_dia_indices_dtype,
-)
+from sklearn.utils.fixes import _object_dtype_isnan, _preserve_dia_indices_dtype
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -563,12 +560,6 @@ def _ensure_sparse_format(
         - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
           be infinite.
 
-        .. versionadded:: 0.20
-           ``ensure_all_finite`` accepts the string ``'allow-nan'``.
-
-        .. versionchanged:: 0.23
-           Accepts `pd.NA` and converts it into `np.nan`
-
     accept_large_sparse : bool
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse will cause it to be accepted only
@@ -775,8 +766,6 @@ def check_array(
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse=False will cause it to be accepted
         only if its indices are stored with a 32-bit dtype.
-
-        .. versionadded:: 0.20
 
     dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
@@ -1235,8 +1224,6 @@ def check_X_y(
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse will cause it to be accepted only
         if its indices are stored with a 32-bit dtype.
-
-        .. versionadded:: 0.20
 
     dtype : 'numeric', type, list of type or None, default='numeric'
         Data type of result. If None, the dtype of the input is preserved.
@@ -2496,9 +2483,9 @@ def _check_categorical_features(X, categorical_features):
         - str array-like: names of categorical features (assuming the training
           data has feature names).
         - `"from_dtype"`: dataframe columns with dtype "Categorical" and "Enum" are
-          considered to be categorical features. The input must be a dataframe that
-          is supported by narwhals (or supports it): :func:`narwhals.from_native` must
-          work. This is the case, for instance, for pandas and polars DataFrames.
+          considered to be categorical features. The input must be a dataframe
+          supported by narwhals, meaning :func:`narwhals.from_native` must work.
+          This is the case, for instance, for pandas and polars DataFrames.
 
     Return
     ------
@@ -2715,15 +2702,28 @@ def _check_pos_label_consistency(pos_label, y_true):
         # Compute classes only if pos_label is not specified:
         xp, _, device = get_namespace_and_device(y_true)
         classes = xp.unique_values(y_true)
+        dtype = classes.dtype
+
+        # Unsigned integer and Boolean dtypes cannot hold -1.
+        signed_labels_possible = not xp.isdtype(dtype, ("unsigned integer", "bool"))
+
         if (
             (_is_numpy_namespace(xp) and classes.dtype.kind in "OUS")
             or classes.shape[0] > 2
             or not (
-                xp.all(classes == xp.asarray([0, 1], device=device))
-                or xp.all(classes == xp.asarray([-1, 1], device=device))
-                or xp.all(classes == xp.asarray([0], device=device))
-                or xp.all(classes == xp.asarray([-1], device=device))
-                or xp.all(classes == xp.asarray([1], device=device))
+                xp.all(classes == xp.asarray([0, 1], device=device, dtype=dtype))
+                or (
+                    signed_labels_possible
+                    and xp.all(
+                        classes == xp.asarray([-1, 1], device=device, dtype=dtype)
+                    )
+                )
+                or xp.all(classes == xp.asarray([0], device=device, dtype=dtype))
+                or (
+                    signed_labels_possible
+                    and xp.all(classes == xp.asarray([-1], device=device, dtype=dtype))
+                )
+                or xp.all(classes == xp.asarray([1], device=device, dtype=dtype))
             )
         ):
             classes = move_to(classes, xp=np, device="cpu")
@@ -2733,7 +2733,7 @@ def _check_pos_label_consistency(pos_label, y_true):
                 "specified: either make y_true take value in {0, 1} or "
                 "{-1, 1} or pass pos_label explicitly."
             )
-        pos_label = 1
+        pos_label = True if xp.isdtype(dtype, "bool") else 1
 
     return pos_label
 

@@ -132,8 +132,6 @@ class NeighborhoodComponentsAnalysis(
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     n_iter_ : int
         Counts the number of iterations performed by the optimizer.
 

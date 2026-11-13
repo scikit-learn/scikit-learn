@@ -69,9 +69,9 @@ not affect the rest of the documentation.
 Scikit-learn's support for the array API standard requires the environment variable
 `SCIPY_ARRAY_API` to be set to `1` before importing `scipy` and `scikit-learn`:
 
-.. prompt:: bash $
+.. code-block:: console
 
-   export SCIPY_ARRAY_API=1
+   $ export SCIPY_ARRAY_API=1
 
 Please note that this environment variable is intended for temporary use.
 For more details, refer to SciPy's `Array API documentation
@@ -165,7 +165,7 @@ Estimators
 - :class:`kernel_approximation.Nystroem`
 - :class:`linear_model.LogisticRegression` (with `solver="lbfgs"` and `solver="newton-cg"`)
 - :class:`linear_model.LogisticRegressionCV` (with `solver="lbfgs"` and `solver="newton-cg"`)
-- :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"`)
+- :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"` and `solver="newton-cg"`)
 - :class:`linear_model.Ridge` (with `solver="svd"`)
 - :class:`linear_model.RidgeCV` (see :ref:`device_support_for_float64`)
 - :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
@@ -201,6 +201,7 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.auc`
 - :func:`sklearn.metrics.average_precision_score`
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
@@ -254,6 +255,7 @@ Metrics
 - :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.recall_score`
+- :func:`sklearn.metrics.roc_auc_score` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.roc_curve`
 - :func:`sklearn.metrics.root_mean_squared_error`
 - :func:`sklearn.metrics.root_mean_squared_log_error`
@@ -378,10 +380,10 @@ not be executed or have missing dependencies will be automatically skipped.
 Therefore it's important to run the tests with the `-v` flag to see which
 checks are skipped:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    pip install array-api-strict  # and other libraries as needed
-    pytest -k "array_api" -v
+    $ pip install array-api-strict  # and other libraries as needed
+    $ pytest -k "array_api" -v
 
 Running the scikit-learn tests against `array-api-strict` should help reveal
 most code problems related to handling multiple device inputs via the use of
@@ -416,9 +418,9 @@ writing. See the following github issue for more details:
 To enable the MPS support in PyTorch, set the environment variable
 `PYTORCH_ENABLE_MPS_FALLBACK=1` before running the tests:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
+    $ PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
 
 At the time of writing all scikit-learn tests should pass, however, the
 computational speed is not necessarily better than with the CPU device.
