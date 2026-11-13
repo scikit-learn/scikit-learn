@@ -135,6 +135,39 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
 
 For another example on usage, see :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
 
+.. _impute_categorical:
+
+Imputing categorical data
+-------------------------
+
+Only :class:`SimpleImputer` imputes non-numeric data, and only with the
+``'most_frequent'`` or ``'constant'`` strategy. The strategies that average a
+column (``'mean'``, ``'median'``) and the multivariate imputers
+:class:`IterativeImputer` and :class:`KNNImputer` require numeric input: they
+raise a ``ValueError`` on data with a string or object dtype, including pandas
+categoricals.
+
+To keep the information that an entry was missing, combine the imputer with
+``add_indicator=True`` or fit a :class:`MissingIndicator` on the original data::
+
+    >>> import numpy as np
+    >>> from sklearn.impute import SimpleImputer
+    >>> X = np.array([["a", "x"],
+    ...               [np.nan, "y"],
+    ...               ["a", np.nan],
+    ...               ["b", "y"]], dtype=object)
+    >>> print(SimpleImputer(strategy="most_frequent").fit_transform(X))
+    [['a' 'x']
+     ['a' 'y']
+     ['a' 'y']
+     ['b' 'y']]
+    >>> print(SimpleImputer(strategy="most_frequent",
+    ...                     add_indicator=True).fit_transform(X))
+    [['a' 'x' False False]
+     ['a' 'y' True False]
+     ['a' 'y' False True]
+     ['b' 'y' False False]]
+
 .. _iterative_imputer:
 
 
