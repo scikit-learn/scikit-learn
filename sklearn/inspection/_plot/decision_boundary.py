@@ -8,7 +8,7 @@ import numpy as np
 
 from sklearn.base import is_classifier, is_clusterer, is_outlier_detector, is_regressor
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import _safe_indexing
+from sklearn.utils import safe_indexing
 from sklearn.utils._dataframe import is_polars_df
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._response import _get_response_values
@@ -752,7 +752,7 @@ class DecisionBoundaryDisplay:
                 f"n_features must be equal to 2. Got {num_features} instead."
             )
 
-        x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
+        x0, x1 = safe_indexing(X, 0, axis=1), safe_indexing(X, 1, axis=1)
 
         x0_min, x0_max = x0.min() - eps, x0.max() + eps
         x1_min, x1_max = x1.min() - eps, x1.max() + eps

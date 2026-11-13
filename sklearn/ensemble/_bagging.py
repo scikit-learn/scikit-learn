@@ -17,7 +17,7 @@ from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
 from sklearn.ensemble._bootstrap import _get_n_samples_bootstrap
 from sklearn.metrics import accuracy_score, r2_score
 from sklearn.tree import BaseDecisionTree, DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.utils import _safe_indexing, check_random_state, column_or_1d
+from sklearn.utils import check_random_state, column_or_1d, safe_indexing
 from sklearn.utils._mask import indices_to_mask
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
 from sklearn.utils._tags import get_tags
@@ -172,8 +172,8 @@ def _parallel_build_estimators(
             estimator_fit(X_, y, **fit_params_)
         else:
             # Row sampling by indexing
-            y_ = _safe_indexing(y, indices)
-            X_ = _safe_indexing(X, indices)
+            y_ = safe_indexing(y, indices)
+            X_ = safe_indexing(X, indices)
             fit_params_ = _check_method_params(X, params=fit_params_, indices=indices)
             if requires_feature_indexing:
                 X_ = X_[:, features]

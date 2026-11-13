@@ -32,7 +32,7 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.model_selection import LeaveOneOut, check_cv, cross_val_predict
 from sklearn.preprocessing import LabelEncoder, label_binarize
 from sklearn.svm import LinearSVC
-from sklearn.utils import _safe_indexing, column_or_1d, get_tags, indexable
+from sklearn.utils import column_or_1d, get_tags, indexable, safe_indexing
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     get_namespace,
@@ -766,8 +766,8 @@ def _fit_classifier_calibrator_pair(
     calibrated_classifier : _CalibratedClassifier instance
     """
     fit_params_train = _check_method_params(X, params=fit_params, indices=train)
-    X_train, y_train = _safe_indexing(X, train), _safe_indexing(y, train)
-    X_test, y_test = _safe_indexing(X, test), _safe_indexing(y, test)
+    X_train, y_train = safe_indexing(X, train), safe_indexing(y, train)
+    X_test, y_test = safe_indexing(X, test), safe_indexing(y, test)
 
     estimator.fit(X_train, y_train, **fit_params_train)
 
@@ -781,7 +781,7 @@ def _fit_classifier_calibrator_pair(
         # Check that the sample_weight dtype is consistent with the predictions
         # to avoid unintentional upcasts.
         sample_weight = _check_sample_weight(sample_weight, X, dtype=predictions.dtype)
-        sw_test = _safe_indexing(sample_weight, test)
+        sw_test = safe_indexing(sample_weight, test)
     else:
         sw_test = None
     calibrated_classifier = _fit_calibrator(

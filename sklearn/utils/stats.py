@@ -7,7 +7,7 @@ from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     get_namespace_and_device,
 )
-from sklearn.utils._indexing import _safe_indexing
+from sklearn.utils._indexing import safe_indexing
 
 
 def _nanquantile(X, feature, quantiles):
@@ -29,7 +29,7 @@ def _nanquantile(X, feature, quantiles):
     quantiles : ndarray of shape (n_quantiles,)
         The computed quantiles.
     """
-    column = np.asarray(_safe_indexing(X, feature, axis=1))
+    column = np.asarray(safe_indexing(X, feature, axis=1))
     if column.dtype == bool:
         # `np.nanquantile` does not support boolean arrays.
         column = column.astype(np.float64)

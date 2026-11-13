@@ -4,7 +4,7 @@
 import numpy as np
 
 from sklearn.metrics._ranking import average_precision_score, precision_recall_curve
-from sklearn.utils import _safe_indexing, check_array
+from sklearn.utils import check_array, safe_indexing
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _check_param_lengths,
@@ -853,17 +853,17 @@ class PrecisionRecallDisplay(_BinaryClassifierCurveDisplayMixin):
         for estimator, test_indices in zip(
             cv_results["estimator"], cv_results["indices"]["test"]
         ):
-            y_true = _safe_indexing(y, test_indices)
+            y_true = safe_indexing(y, test_indices)
             y_score, pos_label_ = _get_response_values_binary(
                 estimator,
-                _safe_indexing(X, test_indices),
+                safe_indexing(X, test_indices),
                 response_method=response_method,
                 pos_label=pos_label,
             )
             sample_weight_fold = (
                 None
                 if sample_weight is None
-                else _safe_indexing(sample_weight, test_indices)
+                else safe_indexing(sample_weight, test_indices)
             )
             precision, recall, _ = precision_recall_curve(
                 y_true,
