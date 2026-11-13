@@ -221,7 +221,7 @@ def test_estimator_without_subtasks(capsys):
     assert re.search(r"100%", captured.out)
 
 
-def test_two_progressbars(capsys):
+def test_two_different_progressbars(capsys):
     """Test attaching two progress bars to the same estimator.
 
     Only the last progress bar should be displayed. The first one should be disabled. If
@@ -229,10 +229,28 @@ def test_two_progressbars(capsys):
     KeyError.
     """
     pytest.importorskip("rich")
-    from sklearn.callback._progressbar import ProgressBar
 
     est = MaxIterEstimator(max_iter=5)
-    est.set_callbacks(ProgressBar(), ProgressBar())
-    est.fit()
+    meta_est = MetaEstimator(est, n_outer=2, n_inner=1)
+    meta_est.set_callbacks(
+        ProgressBar(max_propagation_depth=1), ProgressBar(max_propagation_depth=0)
+    )
+    meta_est.fit()
     captured = capsys.readouterr()
-    assert re.search(r"100%", captured.out)
+    assert re.search(r"MetaEstimator - fit", captured.out)
+    # "MaxIterEstimator - fit" should not be displayed as the first progressbar should
+    # be disabled.
+    assert not re.search(r"MaxIterEstimator - fit", captured.out)
+
+
+def test_twice_same_progressbar():
+    """Test attaching the same progress bar twice to the same estimator."""
+    pytest.importorskip("rich")
+
+    est = MaxIterEstimator(max_iter=5)
+    pg = ProgressBar()
+    with pytest.warns(
+        UserWarning, match="The same instance was provided multiple times"
+    ):
+        est.set_callbacks(pg, pg)
+    est.fit()
