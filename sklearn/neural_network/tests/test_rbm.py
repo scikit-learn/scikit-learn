@@ -45,7 +45,8 @@ def test_partial_fit():
 
     for i in range(7):
         for batch in batch_slices:
-            rbm.partial_fit(batch)
+            # gh-35347: `partial_fit` returns the estimator, as documented
+            assert rbm.partial_fit(batch) is rbm
 
     assert_almost_equal(rbm.score_samples(X).mean(), -21.0, decimal=0)
     assert_array_equal(X, Xdigits)
