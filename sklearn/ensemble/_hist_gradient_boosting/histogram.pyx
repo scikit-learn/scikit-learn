@@ -97,7 +97,9 @@ cdef class HistogramBuilder:
         self.n_bins = n_bins
         self.gradients = gradients
         self.hessians = hessians
-        # for root node, gradients and hessians are already ordered
+        # For root nodes, gradients and hessians are already ordered and we pass them
+        # directly to the histogram computation. For non-root nodes, we allocate
+        # ordered_gradients (and ordered_hessians). They will be populated later.
         self.ordered_gradients = np.empty_like(gradients)
         self.ordered_hessians = np.empty_like(hessians)
         self.hessians_are_constant = hessians_are_constant
