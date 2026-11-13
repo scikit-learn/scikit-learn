@@ -66,7 +66,7 @@ MAX_NUM_CATEGORIES_PY = N_BITSETS
 # Instead, we explicitly construct NODE_DTYPE, which mirrors the flattened Node struct
 # in _utils.pxd. It has to be "aligned" because the C struct is packed.
 # In parenthesis, we give the memory offsets on 64-bit platforms. In total size
-# is 96 bytes because numpy pads it to to match sizeof(Node).
+# is 96 bytes because numpy pads it to match sizeof(Node).
 NODE_DTYPE = np.dtype([
     ('left_child',              np.intp),            # 8 bytes  (offset 0)
     ('right_child',             np.intp),            # 8 bytes  (offset 8)
