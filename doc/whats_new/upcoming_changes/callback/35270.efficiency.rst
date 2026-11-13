@@ -1,0 +1,5 @@
+- :class:`callback.CallbackContext` objects no longer hold references to their child
+  contexts. Pickling a context no longer serializes the whole callback context tree,
+  which removes a large overhead when estimators with callbacks are fitted with
+  `n_jobs > 1`.
+  By :user:`François Paugam <FrancoisPgm>`.
