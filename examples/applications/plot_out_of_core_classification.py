@@ -52,7 +52,7 @@ def _not_in_sphinx():
 
 
 class ReutersParser(HTMLParser):
-    """Utility class to parse a SGML file and yield documents one at a time."""
+    """Utility class to parse an SGML file and yield documents one at a time."""
 
     def __init__(self, encoding="latin-1"):
         HTMLParser.__init__(self)

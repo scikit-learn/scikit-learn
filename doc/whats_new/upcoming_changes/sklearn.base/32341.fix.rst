@@ -1,2 +1,0 @@
-- Fixed the handling of pandas missing values in HTML display of all estimators.
-  By :user: `Dea María Léon <deamarialeon>`.

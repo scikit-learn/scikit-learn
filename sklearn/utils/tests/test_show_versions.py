@@ -25,6 +25,7 @@ def test_get_deps_info():
     assert "pandas" in deps_info
     assert "matplotlib" in deps_info
     assert "joblib" in deps_info
+    assert "narwhals" in deps_info
 
 
 def test_show_versions(capsys):

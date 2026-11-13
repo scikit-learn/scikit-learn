@@ -14,7 +14,7 @@ response [1]_ and a set of input features of interest.
 Both PDPs [H2009]_ and ICEs [G2015]_ assume that the input features of interest
 are independent from the complement features, and this assumption is often
 violated in practice. Thus, in the case of correlated features, we will
-create absurd data points to compute the PDP/ICE [M2019]_.
+create absurd data points to compute the PDP/ICE [M2025]_.
 
 Partial dependence plots
 ========================
@@ -105,7 +105,7 @@ the plots, you can use the
     >>> results["average"]
     array([[ 2.466...,  2.466..., ...
     >>> results["grid_values"]
-    [array([-1.624..., -1.592..., ...
+    [array([-1.624..., -1.591..., ...
 
 The values at which the partial dependence should be evaluated are directly
 generated from ``X``. For 2-way partial dependence, a 2D-grid of values is
@@ -279,10 +279,10 @@ estimators that support it, and 'brute' is used for the rest.
     <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
     Second Edition, Section 10.13.2, Springer, 2009.
 
-.. [M2019] C. Molnar,
+.. [M2025] C. Molnar,
     `Interpretable Machine Learning
     <https://christophm.github.io/interpretable-ml-book/>`_,
-    Section 5.1, 2019.
+    Sections 13 and 19, 2025.
 
 .. [G2015] :arxiv:`A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin,
     "Peeking Inside the Black Box: Visualizing Statistical

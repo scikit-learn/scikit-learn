@@ -165,7 +165,7 @@ although they live in the same space.
 The K-means algorithm aims to choose centroids that minimise the **inertia**,
 or **within-cluster sum-of-squares criterion**:
 
-.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
+.. math:: \sum_{i=0}^{N-1}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
 Inertia can be recognized as a measure of how internally coherent clusters are.
 It suffers from various drawbacks:
@@ -237,7 +237,7 @@ clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
 and example usage.
 
 The algorithm supports sample weights, which can be given by a parameter
-``sample_weight``. This allows to assign more weight to some samples when
+``sample_weight``. This allows assigning more weight to some samples when
 computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
@@ -847,9 +847,9 @@ clusters from Bisecting K-Means are well ordered and create quite a visible hier
 .. dropdown:: References
 
   * `"A Comparison of Document Clustering Techniques"
-    <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
+    <https://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_ Michael
     Steinbach, George Karypis and Vipin Kumar, Department of Computer Science and
-    Egineering, University of Minnesota (June 2000)
+    Engineering, University of Minnesota (June 2000)
   * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog
     Data"
     <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
@@ -1069,9 +1069,9 @@ hyperparameter.
 
 HDBSCAN can be smoothed with an additional hyperparameter `min_cluster_size`
 which specifies that during the hierarchical clustering, components with fewer
-than `minimum_cluster_size` many samples are considered noise. In practice, one
-can set `minimum_cluster_size = min_samples` to couple the parameters and
-simplify the hyperparameter space.
+than `min_cluster_size` samples are considered noise. By default
+(`min_samples=None`), `min_samples` is set to `min_cluster_size`, which couples
+the two parameters and simplifies the hyperparameter space.
 
 .. rubric:: References
 
@@ -1372,9 +1372,10 @@ will not necessarily be close to zero::
     practice or requires manual assignment by human annotators (as in the
     supervised learning setting).
 
-    However (adjusted or unadjusted) Rand index can also be useful in a purely
-    unsupervised setting as a building block for a Consensus Index that can be
-    used for clustering model selection (TODO).
+    However, the (adjusted or unadjusted) Rand index can also compare two
+    clusterings without any ground truth, for instance to measure how much
+    two algorithms agree, or how stable one algorithm is across random
+    initializations or random subsamples of the data.
 
   - The **unadjusted Rand index is often close to 1.0** even if the clusterings
     themselves differ significantly. This can be understood when interpreting
@@ -1492,7 +1493,7 @@ Bad (e.g. independent labelings) have non-positive scores::
 
 .. topic:: Advantages:
 
-  - **Random (uniform) label assignments have a AMI score close to 0.0** for any
+  - **Random (uniform) label assignments have an AMI score close to 0.0** for any
     value of ``n_clusters`` and ``n_samples`` (which is not the case for raw
     Mutual Information or the V-measure for instance).
 
@@ -1507,9 +1508,10 @@ Bad (e.g. independent labelings) have non-positive scores::
     truth classes** while almost never available in practice or requires manual
     assignment by human annotators (as in the supervised learning setting).
 
-    However MI-based measures can also be useful in purely unsupervised setting
-    as a building block for a Consensus Index that can be used for clustering
-    model selection.
+    However, MI-based measures can also compare two clusterings without any
+    ground truth, for instance to measure how much two algorithms agree, or
+    how stable one algorithm is across random initializations or random
+    subsamples of the data.
 
   - NMI and MI are not adjusted against chance.
 
@@ -1584,7 +1586,7 @@ Bad (e.g. independent labelings) have non-positive scores::
   * Strehl, Alexander, and Joydeep Ghosh (2002). "Cluster ensembles - a
     knowledge reuse framework for combining multiple partitions". Journal of
     Machine Learning Research 3: 583-617. `doi:10.1162/153244303321897735
-    <http://strehl.com/download/strehl-jmlr02.pdf>`_.
+    <https://strehl.com/download/strehl-jmlr02.pdf>`_.
 
   * `Wikipedia entry for the (normalized) Mutual Information
     <https://en.wikipedia.org/wiki/Mutual_Information>`_
@@ -1769,7 +1771,7 @@ homogeneous but not complete::
   Hirschberg, 2007
 
 .. [B2011] `Identification and Characterization of Events in Social Media
-  <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
+  <https://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
   Becker, PhD Thesis.
 
 
@@ -2120,7 +2122,7 @@ of classes.
 
 .. topic:: Advantages:
 
-  - Allows to examine the spread of each true cluster across predicted clusters
+  - Allows examining the spread of each true cluster across predicted clusters
     and vice versa.
 
   - The contingency table calculated is typically utilized in the calculation of

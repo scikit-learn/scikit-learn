@@ -6,6 +6,7 @@
 import copy
 import functools
 import inspect
+import numbers
 import platform
 import re
 import warnings
@@ -21,6 +22,7 @@ from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import validate_parameter_constraints
 from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
 from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.fitted_attributes import AttrsDict
 from sklearn.utils._repr_html.params import ParamsDict
 from sklearn.utils._set_output import _SetOutputMixin
 from sklearn.utils._tags import (
@@ -128,11 +130,18 @@ def _clone_parametrized(estimator, *, safe=True):
 
     new_object = klass(**new_object_params)
     try:
-        new_object._metadata_request = copy.deepcopy(estimator._metadata_request)
+        new_object._metadata_request = clone(estimator._metadata_request)
     except AttributeError:
         pass
 
     params_set = new_object.get_params(deep=False)
+
+    if hasattr(estimator, "_skl_callbacks"):
+        # Callback classes are expected to be designed in a way that a single instance
+        # can be used by multiple clones of the same estimator as is typically the case
+        # in ensembles or during cross-validation. Therefore it is safe to pass the
+        # callback instances by reference.
+        new_object._skl_callbacks = estimator._skl_callbacks
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
@@ -209,9 +218,8 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
-        # fetch the constructor or the original constructor before
-        # deprecation wrapping if any
-        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+        # fetch the constructor
+        init = cls.__init__
         if init is object.__init__:
             # No explicit constructor to introspect
             return []
@@ -285,8 +293,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         """
         out = self.get_params(deep=deep)
 
-        init_func = getattr(self.__init__, "deprecated_original", self.__init__)
-        init_default_params = inspect.signature(init_func).parameters
+        init_default_params = inspect.signature(self.__init__).parameters
         init_default_params = {
             name: param.default for name, param in init_default_params.items()
         }
@@ -318,19 +325,74 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
             return False
 
-        # reorder the parameters from `self.get_params` using the `__init__`
-        # signature
-        remaining_params = [name for name in out if name not in init_default_params]
-        ordered_out = {name: out[name] for name in init_default_params if name in out}
-        ordered_out.update({name: out[name] for name in remaining_params})
-
-        non_default_ls = tuple(
-            [name for name, value in ordered_out.items() if is_non_default(name, value)]
+        # Sort parameters so non-default parameters are shown first
+        unordered_params = {
+            name: out[name] for name in init_default_params if name in out
+        }
+        unordered_params.update(
+            {
+                name: value
+                for name, value in out.items()
+                if name not in init_default_params
+            }
         )
 
+        non_default_params, default_params = [], []
+        for name, value in unordered_params.items():
+            if is_non_default(name, value):
+                non_default_params.append(name)
+            else:
+                default_params.append(name)
+
+        params = {name: out[name] for name in non_default_params + default_params}
+
         return ParamsDict(
-            params=ordered_out,
-            non_default=non_default_ls,
+            params=params,
+            non_default=tuple(non_default_params),
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
+
+    def _get_fitted_attr_html(self, doc_link=""):
+        """Get fitted attributes of the estimator."""
+
+        fitted_attr = {}
+        # Ignore deprecation warnings for deprecated fitted attributes when
+        # generating the repr.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            members = inspect.getmembers(self)
+
+        for name, value in members:
+            # We display up to 100 fitted attributes
+            if len(fitted_attr) > 100:
+                fitted_attr["..."] = {
+                    "type_name": "...",
+                    "value": "",
+                }
+                break
+            if name.startswith("_") or not name.endswith("_"):
+                continue
+            if (
+                hasattr(value, "shape")
+                and hasattr(value, "dtype")
+                and not isinstance(value, numbers.Number)
+            ):
+                # array-like attribute with shape and dtype
+                fitted_attr[name] = {
+                    "type_name": type(value).__name__,
+                    "shape": value.shape,
+                    "dtype": value.dtype,
+                    "value": value,
+                }
+            else:
+                fitted_attr[name] = {
+                    "type_name": type(value).__name__,
+                    "value": value,
+                }
+
+        return AttrsDict(
+            fitted_attrs=fitted_attr,
             estimator_class=self.__class__,
             doc_link=doc_link,
         )
@@ -1170,7 +1232,7 @@ class MultiOutputMixin:
 
 
 class _UnstableArchMixin:
-    """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+    """Mark estimators that are non-deterministic on 32bit or PowerPC"""
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1318,6 +1380,8 @@ def _fit_context(*, prefer_skip_nested_validation):
     def decorator(fit_method):
         @functools.wraps(fit_method)
         def wrapper(estimator, *args, **kwargs):
+            from sklearn.callback._callback_support import callback_management_context
+
             global_skip_validation = get_config()["skip_parameter_validation"]
 
             # we don't want to validate again for each call to partial_fit
@@ -1328,10 +1392,13 @@ def _fit_context(*, prefer_skip_nested_validation):
             if not global_skip_validation and not partial_fit_and_fitted:
                 estimator._validate_params()
 
-            with config_context(
-                skip_parameter_validation=(
-                    prefer_skip_nested_validation or global_skip_validation
-                )
+            with (
+                config_context(
+                    skip_parameter_validation=(
+                        prefer_skip_nested_validation or global_skip_validation
+                    )
+                ),
+                callback_management_context(estimator),
             ):
                 return fit_method(estimator, *args, **kwargs)
 

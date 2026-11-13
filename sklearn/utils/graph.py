@@ -59,7 +59,7 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
     if sparse.issparse(graph):
         graph = graph.tolil()
     else:
-        graph = sparse.lil_matrix(graph)
+        graph = sparse.lil_array(graph)
     seen = {}  # level (number of hops) when seen in BFS
     level = 0  # the current level
     next_level = [source]  # dict of nodes to check at next level

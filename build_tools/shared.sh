@@ -64,7 +64,10 @@ create_conda_environment_from_lock_file() {
     if [[ "$lock_file_has_pip_packages" == "false" ]]; then
         conda create --quiet --name $ENV_NAME --file $LOCK_FILE
     else
+        # Update pip>=26.2.2 as mitigation for eMudhra certificate incident
+        python -m pip install 'pip>=26.2.2'
+
         python -m pip install "$(get_dep conda-lock min)"
-        conda-lock install --log-level WARNING --name $ENV_NAME $LOCK_FILE
+        conda-lock install --name $ENV_NAME $LOCK_FILE
     fi
 }

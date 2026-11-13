@@ -708,7 +708,7 @@ Changelog
   generates 31bits/63bits random numbers on all platforms. In addition, the
   crude "modulo" postprocessor used to get a random number in a bounded
   interval was replaced by the tweaked Lemire method as suggested by `this blog
-  post <http://www.pcg-random.org/posts/bounded-rands.html>`_.
+  post <https://www.pcg-random.org/posts/bounded-rands.html>`_.
   Any model using the `svm.libsvm` or the `svm.liblinear` solver,
   including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
   :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,

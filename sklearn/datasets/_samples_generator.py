@@ -18,6 +18,12 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.utils import Bunch, check_array, check_random_state
 from sklearn.utils import shuffle as util_shuffle
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.fixes import (
+    _sparse_diags_array,
+    _sparse_eye_array,
+    _sparse_random_array,
+)
 from sklearn.utils.random import sample_without_replacement
 
 
@@ -454,9 +460,6 @@ def make_multilabel_classification(
     sparse : bool, default=False
         If ``True``, return a sparse feature matrix.
 
-        .. versionadded:: 0.17
-           parameter to allow *sparse* output.
-
     return_indicator : {'dense', 'sparse'} or False, default='dense'
         If ``'dense'`` return ``Y`` in the dense binary indicator format. If
         ``'sparse'`` return ``Y`` in the sparse binary indicator format.
@@ -549,10 +552,12 @@ def make_multilabel_classification(
         X_indptr.append(len(X_indices))
         Y.append(y)
     X_data = np.ones(len(X_indices), dtype=np.float64)
-    X = sp.csr_matrix((X_data, X_indices, X_indptr), shape=(n_samples, n_features))
+    X = sp.csr_array((X_data, X_indices, X_indptr), shape=(n_samples, n_features))
     X.sum_duplicates()
     if not sparse:
         X = X.toarray()
+    else:
+        X = _align_api_if_sparse(X)
 
     # return_indicator can be True due to backward compatibility
     if return_indicator in (True, "sparse", "dense"):
@@ -823,9 +828,6 @@ def make_circles(
         If two-element tuple, number of points in outer circle and inner
         circle.
 
-        .. versionchanged:: 0.23
-           Added two-element tuple.
-
     shuffle : bool, default=True
         Whether to shuffle the samples.
 
@@ -911,9 +913,6 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     n_samples : int or tuple of shape (2,), dtype=int, default=100
         If int, the total number of points generated.
         If two-element tuple, number of points in each of two moons.
-
-        .. versionchanged:: 0.23
-           Added two-element tuple.
 
     shuffle : bool, default=True
         Whether to shuffle the samples.
@@ -1043,8 +1042,6 @@ def make_blobs(
 
     return_centers : bool, default=False
         If True, then return the centers of each cluster.
-
-        .. versionadded:: 0.23
 
     Returns
     -------
@@ -1817,13 +1814,12 @@ def make_sparse_spd_matrix(
     """
     random_state = check_random_state(random_state)
 
-    chol = -sp.eye(n_dim)
-    aux = sp.random(
-        m=n_dim,
-        n=n_dim,
+    chol = -_sparse_eye_array(n_dim)
+    aux = _sparse_random_array(
+        shape=(n_dim, n_dim),
         density=1 - alpha,
-        data_rvs=lambda x: random_state.uniform(
-            low=smallest_coef, high=largest_coef, size=x
+        data_sampler=lambda size: random_state.uniform(
+            low=smallest_coef, high=largest_coef, size=size
         ),
         random_state=random_state,
     )
@@ -1839,13 +1835,13 @@ def make_sparse_spd_matrix(
 
     if norm_diag:
         # Form the diagonal vector into a row matrix
-        d = sp.diags(1.0 / np.sqrt(prec.diagonal()))
+        d = _sparse_diags_array(1.0 / np.sqrt(prec.diagonal()))
         prec = d @ prec @ d
 
     if sparse_format is None:
         return prec.toarray()
     else:
-        return prec.asformat(sparse_format)
+        return _align_api_if_sparse(prec.asformat(sparse_format))
 
 
 @validate_params(

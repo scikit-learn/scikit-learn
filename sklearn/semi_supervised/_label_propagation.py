@@ -68,6 +68,7 @@ from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.neighbors import NearestNeighbors
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
 from sklearn.utils.fixes import laplacian as csgraph_laplacian
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted, validate_data
@@ -391,8 +392,6 @@ class LabelPropagation(BaseLabelPropagation):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -461,14 +460,17 @@ class LabelPropagation(BaseLabelPropagation):
         # handle spmatrix (make normalizer 1D)
         if sparse.isspmatrix(affinity_matrix):
             normalizer = np.ravel(normalizer)
-        # TODO: when SciPy 1.12+ is min dependence, replace up to ---- with:
-        # affinity_matrix /= normalizer[:, np.newaxis]
-        if sparse.issparse(affinity_matrix):
-            inv_normalizer = sparse.diags(1.0 / normalizer)
-            affinity_matrix = inv_normalizer @ affinity_matrix
-        else:  # Dense affinity_matrix
-            affinity_matrix /= normalizer[:, np.newaxis]
-        # ----
+
+        if SCIPY_VERSION_BELOW_1_12:
+            if sparse.issparse(affinity_matrix):
+                inv_normalizer = sparse.diags(1.0 / normalizer)
+                affinity_matrix = inv_normalizer @ affinity_matrix
+            else:  # Dense affinity_matrix
+                affinity_matrix /= normalizer[:, np.newaxis]
+            return affinity_matrix
+
+        # same syntax for sparse or dense
+        affinity_matrix /= normalizer[:, np.newaxis]
         return affinity_matrix
 
     def fit(self, X, y):
@@ -552,8 +554,6 @@ class LabelSpreading(BaseLabelPropagation):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

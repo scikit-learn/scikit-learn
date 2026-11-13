@@ -85,8 +85,12 @@ for path_details in root_listing:
     if not (name[:1].isdigit() or name in NAMED_DIRS):
         continue
     if path_details["type"] == "dir":
-        html = urlopen(RAW_FMT % name).read().decode("utf8")
-        version_num = VERSION_RE.search(html).group(1)
+        url = RAW_FMT % name
+        html = urlopen(url).read().decode("utf8")
+        regex_match = VERSION_RE.search(html)
+        if regex_match is None:
+            raise ValueError(f"Could not find scikit-learn version in {url}")
+        version_num = regex_match.group(1)
         file_size = get_file_size(name)
         dirs[name] = (version_num, file_size)
 
@@ -114,6 +118,7 @@ for i, name in enumerate(
 
     full_name = f"{version_num}" if name[:1].isdigit() else f"{version_num} ({name})"
     path = f"https://scikit-learn.org/{name}/"
+    docs_root_path = f"https://github.com/scikit-learn/scikit-learn.github.io/raw/refs/heads/main/{name}"
 
     # Update JSON for the version switcher; only keep the 8 latest versions to avoid
     # overloading the version switcher dropdown
@@ -128,7 +133,7 @@ for i, name in enumerate(
     if file_size is not None:
         file_extension = get_file_extension(version_num)
         out += (
-            f" (`{file_extension.upper()} {file_size} <{path}/"
+            f" (`{file_extension.upper()} {file_size} <{docs_root_path}/"
             f"_downloads/scikit-learn-docs.{file_extension}>`_)"
         )
     rst_content.append(out)

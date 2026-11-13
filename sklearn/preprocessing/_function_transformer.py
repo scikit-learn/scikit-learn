@@ -4,9 +4,11 @@
 import warnings
 from functools import partial
 
+import narwhals.stable.v2 as nw
 import numpy as np
 
 from sklearn.base import BaseEstimator, TransformerMixin, _fit_context
+from sklearn.utils._dataframe import is_polars_df
 from sklearn.utils._param_validation import StrOptions
 from sklearn.utils._repr_html.estimator import _VisualBlock
 from sklearn.utils._set_output import _get_adapter_from_container, _get_output_config
@@ -15,8 +17,6 @@ from sklearn.utils.validation import (
     _allclose_dense_sparse,
     _check_feature_names_in,
     _get_feature_names,
-    _is_pandas_df,
-    _is_polars_df,
     check_array,
     validate_data,
 )
@@ -37,8 +37,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     Note: If a lambda is used as the function, then the resulting
     transformer will not be pickleable.
-
-    .. versionadded:: 0.17
 
     Read more in the :ref:`User Guide <function_transformer>`.
 
@@ -64,9 +62,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
           sparse matrix. If the conversion is not possible an exception is
           raised.
 
-        .. versionchanged:: 0.22
-           The default of ``validate`` changed from True to False.
-
     accept_sparse : bool, default=False
         Indicate that func accepts a sparse matrix as input. If validate is
         False, this has no effect. Otherwise, if accept_sparse is false,
@@ -76,8 +71,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
        Whether to check that or ``func`` followed by ``inverse_func`` leads to
        the original inputs. It can be used for a sanity check, raising a
        warning when the condition is not fulfilled.
-
-       .. versionadded:: 0.20
 
     feature_names_out : callable, 'one-to-one' or None, default=None
         Determines the list of feature names that will be returned by the
@@ -96,19 +89,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     kw_args : dict, default=None
         Dictionary of additional keyword arguments to pass to func.
 
-        .. versionadded:: 0.18
-
     inv_kw_args : dict, default=None
         Dictionary of additional keyword arguments to pass to inverse_func.
-
-        .. versionadded:: 0.18
 
     Attributes
     ----------
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X` has feature
@@ -302,9 +289,11 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
                 "a {0} DataFrame to follow the `set_output` API  or `feature_names_out`"
                 " should be defined."
             )
-            if output_config == "pandas" and not _is_pandas_df(out):
+            if output_config == "pandas" and not nw.dependencies.is_pandas_dataframe(
+                out
+            ):
                 warnings.warn(warn_msg.format("pandas"))
-            elif output_config == "polars" and not _is_polars_df(out):
+            elif output_config == "polars" and not is_polars_df(out):
                 warnings.warn(warn_msg.format("polars"))
 
         return out
@@ -382,7 +371,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         return func(X, **(kw_args if kw_args else {}))
 
     def __sklearn_is_fitted__(self):
-        """Return True since FunctionTransfomer is stateless."""
+        """Return True since FunctionTransformer is stateless."""
         return True
 
     def __sklearn_tags__(self):
@@ -395,8 +384,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     def set_output(self, *, transform=None):
         """Set output container.
 
-        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
-        for an example on how to use the API.
+        Refer to the :ref:`user guide <df_output_transform>` for more details
+        and :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` for an
+        example on how to use the API.
 
         Parameters
         ----------

@@ -12,7 +12,7 @@ based on applying Bayes' theorem with the "naive" assumption of
 conditional independence between every pair of features given the
 value of the class variable. Bayes' theorem states the following
 relationship, given class variable :math:`y` and dependent feature
-vector :math:`x_1` through :math:`x_n`, :
+vector :math:`x_1` through :math:`x_n`:
 
 .. math::
 
@@ -61,7 +61,7 @@ the references below.)
 Naive Bayes learners and classifiers can be extremely fast compared to more
 sophisticated methods.
 The decoupling of the class conditional feature distributions means that each
-distribution can be independently estimated as a one dimensional distribution.
+distribution can be independently estimated as a one-dimensional distribution.
 This in turn helps to alleviate problems stemming from the curse of
 dimensionality.
 

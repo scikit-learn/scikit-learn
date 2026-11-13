@@ -1,18 +1,20 @@
 import pickle
-import warnings
 from unittest.mock import Mock
 
 import joblib
 import numpy as np
 import pytest
 import scipy.sparse as sp
+from scipy.optimize import minimize
 
 from sklearn import datasets, linear_model, metrics
-from sklearn.base import clone, is_classifier
+from sklearn.base import ClassifierMixin, clone, is_classifier
+from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.linear_model import _stochastic_gradient
+from sklearn.linear_model._base import SPARSE_INTERCEPT_DECAY
 from sklearn.model_selection import (
     RandomizedSearchCV,
     ShuffleSplit,
@@ -22,12 +24,14 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder, MinMaxScaler, StandardScaler, scale
 from sklearn.svm import OneClassSVM
 from sklearn.utils import get_tags
+from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
 )
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_random_array
 
 
 def _update_kwargs(kwargs):
@@ -42,48 +46,49 @@ def _update_kwargs(kwargs):
 
 class _SparseSGDClassifier(linear_model.SGDClassifier):
     def fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().fit(X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().partial_fit(X, y, *args, **kw)
 
     def decision_function(self, X):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().decision_function(X)
 
     def predict_proba(self, X):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return super().predict_proba(X)
 
 
 class _SparseSGDRegressor(linear_model.SGDRegressor):
     def fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDRegressor.fit(self, X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDRegressor.partial_fit(self, X, y, *args, **kw)
 
     def decision_function(self, X, *args, **kw):
         # XXX untested as of v0.22
-        X = sp.csr_matrix(X)
-        return linear_model.SGDRegressor.decision_function(self, X, *args, **kw)
+        return linear_model.SGDRegressor.decision_function(
+            self, _align_api_if_sparse(X), *args, **kw
+        )
 
 
 class _SparseSGDOneClassSVM(linear_model.SGDOneClassSVM):
     def fit(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDOneClassSVM.fit(self, X, *args, **kw)
 
     def partial_fit(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDOneClassSVM.partial_fit(self, X, *args, **kw)
 
     def decision_function(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
+        X = _align_api_if_sparse(sp.csr_array(X))
         return linear_model.SGDOneClassSVM.decision_function(self, X, *args, **kw)
 
 
@@ -519,35 +524,6 @@ def test_sgd_failing_penalty_validation(Estimator):
         clf.fit(X, Y)
 
 
-# TODO(1.10): remove this test
-@pytest.mark.parametrize(
-    "klass",
-    [
-        SGDClassifier,
-        SparseSGDClassifier,
-        SGDRegressor,
-        SparseSGDRegressor,
-        SGDOneClassSVM,
-        SparseSGDOneClassSVM,
-    ],
-)
-def test_power_t_limits(klass):
-    """Check that a warning is raised when `power_t` is negative."""
-
-    # Check that negative values of `power_t` raise a warning
-    clf = klass(power_t=-1.0)
-    with pytest.warns(
-        FutureWarning, match="Negative values for `power_t` are deprecated"
-    ):
-        clf.fit(X, Y)
-
-    # Check that values of 'power_t in range [0, inf) do not raise a warning
-    with warnings.catch_warnings(record=True) as w:
-        clf = klass(power_t=0.5)
-        clf.fit(X, Y)
-    assert len(w) == 0
-
-
 ###############################################################################
 # Classification Test Case
 
@@ -879,6 +855,7 @@ def test_sgd_proba(klass):
         assert_array_almost_equal(p[0], [1 / 3.0] * 3)
 
 
+@pytest.mark.no_check_spmatrix  # pickle breaks check_spmatrix
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
 def test_sgd_l1(klass):
     # Test L1 regularization
@@ -1006,7 +983,7 @@ def test_balanced_weight(klass):
     # to use "balanced"
     assert_array_almost_equal(clf.coef_, clf_balanced.coef_, 6)
 
-    # build an very very imbalanced dataset out of iris data
+    # build a very very imbalanced dataset out of iris data
     X_0 = X[y == 0, :]
     y_0 = y[y == 0]
 
@@ -1496,7 +1473,7 @@ def asgd_oneclass(klass, X, eta, nu, coef_init=None, offset_init=0.0):
             gradient = -1
         else:
             gradient = 0
-        coef *= max(0, 1.0 - (eta * nu / 2))
+        coef *= max(0, 1.0 - eta * nu)
         coef += -(eta * gradient * entry)
         intercept += -(eta * (nu + gradient)) * decay
 
@@ -1708,28 +1685,6 @@ def test_average_sparse_oneclass(klass):
     assert_allclose(clf.offset_, average_offset)
 
 
-def test_sgd_oneclass():
-    # Test fit, decision_function, predict and score_samples on a toy
-    # dataset
-    X_train = np.array([[-2, -1], [-1, -1], [1, 1]])
-    X_test = np.array([[0.5, -2], [2, 2]])
-    clf = SGDOneClassSVM(
-        nu=0.5, eta0=1, learning_rate="constant", shuffle=False, max_iter=1
-    )
-    clf.fit(X_train)
-    assert_allclose(clf.coef_, np.array([-0.125, 0.4375]))
-    assert clf.offset_[0] == -0.5
-
-    scores = clf.score_samples(X_test)
-    assert_allclose(scores, np.array([-0.9375, 0.625]))
-
-    dec = clf.score_samples(X_test) - clf.offset_
-    assert_allclose(clf.decision_function(X_test), dec)
-
-    pred = clf.predict(X_test)
-    assert_array_equal(pred, np.array([-1, 1]))
-
-
 def test_ocsvm_vs_sgdocsvm():
     # Checks SGDOneClass SVM gives a good approximation of kernelized
     # One-Class SVM
@@ -1785,12 +1740,13 @@ def test_sgd_oneclass_convergence():
         assert model.n_iter_ > 6
 
 
-def test_sgd_oneclass_vs_linear_oneclass():
+@pytest.mark.parametrize("eta0, max_iter", [(1e-3, 10000), (3e-4, 20000)])
+def test_sgd_oneclass_vs_linear_oneclass(eta0, max_iter):
     # Test convergence vs. liblinear `OneClassSVM` with kernel="linear"
     for nu in [0.1, 0.5, 0.9]:
         # allow enough iterations, small dataset
         model = SGDOneClassSVM(
-            nu=nu, max_iter=20000, tol=None, learning_rate="constant", eta0=1e-3
+            nu=nu, max_iter=max_iter, tol=None, learning_rate="constant", eta0=eta0
         )
         model_ref = OneClassSVM(kernel="linear", nu=nu, tol=1e-6)  # reference model
         model.fit(iris.data)
@@ -1815,7 +1771,30 @@ def test_sgd_oneclass_vs_linear_oneclass():
         assert dec_fn_corr > 0.99
         assert preds_corr > 0.95
         assert coef_corr > 0.99
-        assert_allclose(1 - share_ones, nu)
+        assert_allclose(1 - share_ones, nu, atol=1e-2)
+
+
+@pytest.mark.parametrize("nu", [0.1, 0.9])
+def test_sgd_oneclass_vs_linear_oneclass_offsets_match(nu):
+    """Test that the `offset_` of `SGDOneClassSVM` is close to the `offset_`
+    of `OneClassSVM` with `kernel="linear"`, given enough iterations and a
+    suitable value for the `eta0` parameter, while also ensuring that the
+    dataset is scaled.
+    """
+    X = iris.data
+    X_scaled = StandardScaler().fit_transform(X)
+    model = SGDOneClassSVM(
+        nu=nu,
+        max_iter=40000,
+        tol=None,
+        learning_rate="optimal",
+        eta0=1e-6,
+        random_state=42,
+    )
+    model_ref = OneClassSVM(kernel="linear", nu=nu, tol=5e-6)
+    model.fit(X_scaled)
+    model_ref.fit(X_scaled)
+    assert_allclose(model.offset_, model_ref.offset_, atol=1.3e-6)
 
 
 def test_l1_ratio():
@@ -1853,7 +1832,7 @@ def test_l1_ratio():
     assert_array_almost_equal(est_en.coef_, est_l2.coef_)
 
 
-def test_underflow_or_overlow():
+def test_underflow_or_overflow():
     with np.errstate(all="raise"):
         # Generate some weird data with hugely unscaled features
         rng = np.random.RandomState(0)
@@ -2125,14 +2104,14 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # Create a classification problem with 50000 features and 20 classes. Using
     # loky or multiprocessing this make the clf.coef_ exceed the threshold
     # above which memmaping is used in joblib and loky (1MB as of 2018/11/1).
-    X = sp.random(500, 2000, density=0.02, format="csr", random_state=random_state)
+    X = _sparse_random_array((500, 2000), density=0.02, format="csr", rng=random_state)
     y = random_state.choice(20, 500)
 
-    # Begin by fitting a SGD classifier sequentially
+    # Begin by fitting an SGD classifier sequentially
     clf_sequential = SGDClassifier(max_iter=1000, n_jobs=1, random_state=42)
     clf_sequential.fit(X, y)
 
-    # Fit a SGDClassifier using the specified backend, and make sure the
+    # Fit an SGDClassifier using the specified backend, and make sure the
     # coefficients are equal to those obtained using a sequential fit
     clf_parallel = SGDClassifier(max_iter=1000, n_jobs=4, random_state=42)
     with joblib.parallel_backend(backend=backend):
@@ -2265,10 +2244,10 @@ def test_sgd_numerical_consistency(SGDEstimator):
     X_32 = X.astype(dtype=np.float32)
     Y_32 = np.array(Y, dtype=np.float32)
 
-    sgd_64 = SGDEstimator(max_iter=20)
+    sgd_64 = SGDEstimator(max_iter=22, shuffle=False)
     sgd_64.fit(X_64, Y_64)
 
-    sgd_32 = SGDEstimator(max_iter=20)
+    sgd_32 = SGDEstimator(max_iter=22, shuffle=False)
     sgd_32.fit(X_32, Y_32)
 
     assert_allclose(sgd_64.coef_, sgd_32.coef_)
@@ -2281,3 +2260,164 @@ def test_sgd_one_class_svm_estimator_type():
     """
     sgd_ocsvm = SGDOneClassSVM()
     assert get_tags(sgd_ocsvm).estimator_type == "outlier_detector"
+
+
+def test_sgd_one_class_svm_formulation_with_scipy_minimize():
+    """Test that SGDOneClassSVM minimizes the correct objective function."""
+    nu = 0.5
+    hinge_threshold = 1.0
+    n_samples, n_features = 300, 3
+    random_seed = 42
+
+    def objective(w, X, y, alpha):
+        weights = w[:-1]
+        intercept = w[-1]
+        p = X @ weights + intercept
+        z = p * y
+        avg_loss = np.mean(np.maximum(hinge_threshold - z, 0.0))
+        reg = 0.5 * alpha * weights @ weights
+        obj = avg_loss + reg + intercept * alpha
+        return obj
+
+    X, _ = make_blobs(
+        n_samples=n_samples,
+        n_features=n_features,
+        random_state=random_seed,
+    )
+    y = np.ones(n_samples, dtype=X.dtype)
+    w0 = np.zeros(n_features + 1)
+    scipy_output = minimize(
+        objective,
+        w0,
+        method="Nelder-Mead",
+        args=(X, y, nu),
+        options={"maxiter": 1000},
+    )
+    w_out = scipy_output.x
+    expected_coef = w_out[:-1]
+    expected_offset = 1 - w_out[-1]
+
+    model = SGDOneClassSVM(
+        nu=nu,
+        learning_rate="constant",
+        max_iter=4000,
+        tol=None,
+        eta0=1e-4,
+        random_state=random_seed,
+    )
+    model.fit(X, y)
+
+    assert_allclose(model.coef_, expected_coef, rtol=5e-3)
+    assert_allclose(model.offset_, expected_offset, rtol=1e-2)
+
+
+###############################################################################
+# Passive-Aggressive classifier, special case of SGDClassifier
+
+
+class MyPassiveAggressive(ClassifierMixin):
+    def __init__(
+        self,
+        C=1.0,
+        pa_algo="pa1",
+        epsilon=_stochastic_gradient.DEFAULT_EPSILON,
+        loss="hinge",
+        fit_intercept=True,
+        n_iter=1,
+    ):
+        self.C = C
+        self.pa_algo = pa_algo
+        self.epsilon = epsilon
+        self.loss = loss
+        self.fit_intercept = fit_intercept
+        self.n_iter = n_iter
+
+    def fit(self, X, y):
+        n_samples, n_features = X.shape
+        self.w = np.zeros(n_features, dtype=np.float64)
+        self.b = 0.0
+
+        # Mimic SGD's behavior for intercept
+        intercept_decay = 1.0
+        if sp.issparse(X):
+            intercept_decay = SPARSE_INTERCEPT_DECAY
+            X = X.toarray()
+
+        for t in range(self.n_iter):
+            for i in range(n_samples):
+                p = self.project(X[i])
+                if self.loss == "hinge":
+                    # classification
+                    loss = max(1 - y[i] * p, 0)
+                else:  # loss = epsilon_insensitive
+                    # regression
+                    loss = max(np.abs(p - y[i]) - self.epsilon, 0)
+
+                sqnorm = np.dot(X[i], X[i])
+
+                if self.pa_algo == "pa1":
+                    step = min(self.C, loss / sqnorm)
+                else:  # "pa2"
+                    step = loss / (sqnorm + 1.0 / (2 * self.C))
+
+                if self.loss == "hinge":
+                    step *= y[i]  # classification
+                else:
+                    step *= np.sign(y[i] - p)  # regression
+
+                self.w += step * X[i]
+                if self.fit_intercept:
+                    self.b += intercept_decay * step
+
+    def project(self, X):
+        return np.dot(X, self.w) + self.b
+
+
+@pytest.mark.parametrize("csr_container", [np.array, *CSR_CONTAINERS])
+@pytest.mark.parametrize("lr", ("pa1", "pa2"))
+@pytest.mark.parametrize("C", (0.1, 1, 10))
+def test_passive_aggressive_classifier_correctness(C, lr, csr_container):
+    y = iris.target.copy()
+    y[y != 1] = -1  # make it binary {-1, +1}
+    X = csr_container(iris.data)
+
+    clf1 = MyPassiveAggressive(loss="hinge", C=C, pa_algo=lr, n_iter=4)
+    clf1.fit(X, y)
+
+    clf2 = SGDClassifier(
+        loss="hinge",
+        penalty=None,
+        eta0=C,
+        learning_rate=lr,
+        max_iter=4,
+        shuffle=False,
+        tol=None,
+    )
+    clf2.fit(X, y)
+
+    assert_allclose(clf1.w, clf2.coef_.ravel())
+
+
+@pytest.mark.parametrize("csr_container", [np.array, *CSR_CONTAINERS])
+@pytest.mark.parametrize("lr", ("pa1", "pa2"))
+@pytest.mark.parametrize("C", (0.1, 1, 10))
+def test_passive_aggressive_regressor_correctness(C, lr, csr_container):
+    y = iris.target.copy()
+    y[y != 1] = -1  # make it binary {-1, +1}
+    X = csr_container(iris.data)
+
+    reg1 = MyPassiveAggressive(loss="epsilon_insensitive", C=C, pa_algo=lr, n_iter=4)
+    reg1.fit(X, y)
+
+    reg2 = SGDRegressor(
+        loss="epsilon_insensitive",
+        penalty=None,
+        eta0=C,
+        learning_rate=lr,
+        max_iter=4,
+        shuffle=False,
+        tol=None,
+    )
+    reg2.fit(X, y)
+
+    assert_allclose(reg1.w, reg2.coef_.ravel())

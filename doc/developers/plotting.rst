@@ -31,31 +31,31 @@ For example, the `RocCurveDisplay` defines the following methods and
 attributes::
 
    class RocCurveDisplay:
-       def __init__(self, fpr, tpr, roc_auc, estimator_name):
+       def __init__(self, fpr, tpr, roc_auc, name):
            ...
            self.fpr = fpr
            self.tpr = tpr
            self.roc_auc = roc_auc
-           self.estimator_name = estimator_name
+           self.name = name
 
        @classmethod
        def from_estimator(cls, estimator, X, y):
            # get the predictions
-           y_pred = estimator.predict_proba(X)[:, 1]
-           return cls.from_predictions(y, y_pred, estimator.__class__.__name__)
+           y_score = estimator.predict_proba(X)[:, 1]
+           return cls.from_predictions(y, y_score, estimator.__class__.__name__)
 
        @classmethod
-       def from_predictions(cls, y, y_pred, estimator_name):
-           # do ROC computation from y and y_pred
+       def from_predictions(cls, y, y_score, name):
+           # do ROC computation from y and y_score
            fpr, tpr, roc_auc = ...
-           viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator_name)
+           viz = RocCurveDisplay(fpr, tpr, roc_auc, name)
            return viz.plot()
 
-       def plot(self, ax=None, name=None, **kwargs):
+       def plot(self, ax=None, *, name=None, curve_kwargs=None):
            ...
            self.line_ = ...
            self.ax_ = ax
-           self.figure_ = ax.figure_
+           self.figure_ = ax.figure
 
 Read more in :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
 and the :ref:`User Guide <visualizations>`.
@@ -95,3 +95,21 @@ the grid. Positions that are not used are set to `None`. Furthermore, the
 matplotlib Artists are stored in `lines_` and `contours_` where the key is the
 position on the grid. When a list of axes is passed in, the `axes_`, `lines_`,
 and `contours_` are a 1d ndarray corresponding to the list of axes passed in.
+
+Using `matplotlib`
+------------------
+
+To keep `scikit-learn` as lightweight as possible, `matplotlib` is not a required
+dependency for building and using the package (it is only required for building the
+docs). Therefore, it is also not imported globally in the display classes, but only
+within the plotting functions where it is actually needed. Before importing it, use
+`check_matplotlib_support` from `_optional_dependencies.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_optional_dependencies.py>`_.
+This will check if it is installed, and if not, also raises a comprehensive error
+message including the caller that requested it, for reference.
+
+For testing, use the `pyplot` fixture from `conftest.py
+<https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/conftest.py>`_ as
+the first argument in every test that requires it. This imports `matplotlib.pyplot` (or
+skips the test, if it is not installed) and also takes care of closing all figures
+before and after running the test.

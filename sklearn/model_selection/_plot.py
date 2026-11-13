@@ -354,7 +354,7 @@ class LearningCurveDisplay(_BaseCurveDisplay):
             - None, to use the default 5-fold cross validation,
             - int, to specify the number of folds in a `(Stratified)KFold`,
             - :term:`CV splitter`,
-            - An iterable yielding (train, test) splits as arrays of indices.
+            - an iterable yielding (train, test) splits as arrays of indices.
 
             For int/None inputs, if the estimator is a classifier and `y` is
             either binary or multiclass,
@@ -580,7 +580,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(n_samples=1_000, random_state=0)
     >>> logistic_regression = LogisticRegression()
-    >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
+    >>> param_name, param_range = "alpha", np.logspace(8, -3, 10)
     >>> train_scores, test_scores = validation_curve(
     ...     logistic_regression, X, y, param_name=param_name, param_range=param_range
     ... )
@@ -741,7 +741,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
             - None, to use the default 5-fold cross validation,
             - int, to specify the number of folds in a `(Stratified)KFold`,
             - :term:`CV splitter`,
-            - An iterable yielding (train, test) splits as arrays of indices.
+            - an iterable yielding (train, test) splits as arrays of indices.
 
             For int/None inputs, if the estimator is a classifier and `y` is
             either binary or multiclass,
@@ -839,7 +839,7 @@ class ValidationCurveDisplay(_BaseCurveDisplay):
         >>> from sklearn.linear_model import LogisticRegression
         >>> X, y = make_classification(n_samples=1_000, random_state=0)
         >>> logistic_regression = LogisticRegression()
-        >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
+        >>> param_name, param_range = "alpha", np.logspace(8, -3, 10)
         >>> ValidationCurveDisplay.from_estimator(
         ...     logistic_regression, X, y, param_name=param_name,
         ...     param_range=param_range,

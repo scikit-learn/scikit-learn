@@ -390,8 +390,8 @@ Who is using scikit-learn?
       :target: https://www.phimeca.com/?lang=en
 
 
-`HowAboutWe <http://www.howaboutwe.com/>`_
-------------------------------------------
+`HowAboutWe <https://www.howaboutwe.com/>`_
+-------------------------------------------
 
 .. div:: sk-text-image-grid-large
 
@@ -413,7 +413,7 @@ Who is using scikit-learn?
   .. div:: image-box
 
     .. image:: images/howaboutwe.png
-      :target: http://www.howaboutwe.com/
+      :target: https://www.howaboutwe.com/
 
 
 `PeerIndex <https://www.brandwatch.com/peerindex-and-brandwatch>`_
@@ -598,8 +598,8 @@ Who is using scikit-learn?
       :target: https://www.solidodesign.com/
 
 
-`INFONEA <http://www.infonea.com/en/>`_
----------------------------------------
+`INFONEA <https://www.infonea.com/en/>`_
+----------------------------------------
 
 .. div:: sk-text-image-grid-large
 
@@ -620,7 +620,7 @@ Who is using scikit-learn?
   .. div:: image-box
 
     .. image:: images/infonea.jpg
-      :target: http://www.infonea.com/en/
+      :target: https://www.infonea.com/en/
 
 
 `Dataiku <https://www.dataiku.com/>`_

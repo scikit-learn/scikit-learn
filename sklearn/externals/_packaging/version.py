@@ -1,4 +1,4 @@
-"""Vendoered from
+"""Vendored from
 https://github.com/pypa/packaging/blob/main/packaging/version.py
 """
 # Copyright (c) Donald Stufft and individual contributors.

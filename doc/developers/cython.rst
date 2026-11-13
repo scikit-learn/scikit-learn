@@ -66,7 +66,7 @@ Tips to ease development
       # This generates `source.c` as if you had recompiled scikit-learn entirely.
       cythonX --annotate source.pyx
 
-* Using the ``--annotate`` option with this flag allows generating a HTML report of code annotation.
+* Using the ``--annotate`` option with this flag allows generating an HTML report of code annotation.
   This report indicates interactions with the CPython interpreter on a line-by-line basis.
   Interactions with the CPython interpreter must be avoided as much as possible in
   the computationally intensive sections of the algorithms.
@@ -74,7 +74,7 @@ Tips to ease development
 
   .. code-block::
 
-      # This generates a HTML report (`source.html`) for `source.c`.
+      # This generates an HTML report (`source.html`) for `source.c`.
       cythonX --annotate source.pyx
 
 Tips for performance

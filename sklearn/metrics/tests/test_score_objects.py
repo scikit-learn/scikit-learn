@@ -3,6 +3,7 @@ import pickle
 import re
 from copy import deepcopy
 from functools import partial
+from inspect import signature
 
 import joblib
 import numpy as np
@@ -10,16 +11,19 @@ import pytest
 from numpy.testing import assert_allclose
 
 from sklearn import config_context
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
+    load_iris,
     make_blobs,
     make_classification,
     make_multilabel_classification,
     make_regression,
 )
-from sklearn.linear_model import LogisticRegression, Perceptron, Ridge
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.exceptions import UnsetMetadataPassedError
+from sklearn.linear_model import LogisticRegression, Perceptron, Ridge, RidgeClassifier
 from sklearn.metrics import (
     accuracy_score,
     average_precision_score,
@@ -57,12 +61,22 @@ from sklearn.tests.metadata_routing_common import (
     assert_request_is_empty,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_almost_equal,
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
+from sklearn.utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    get_routing_for_object,
+)
+from sklearn.utils.multiclass import type_of_target
 
 REGRESSION_SCORERS = [
     "d2_absolute_error_score",
@@ -475,7 +489,7 @@ def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
     clf.fit(X_train, y_train)
     score1 = get_scorer("roc_auc")(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.decision_function(X_test))
@@ -1017,7 +1031,7 @@ def string_labeled_classification_problem():
     from sklearn.utils import shuffle
 
     X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced classification task
+    # create a highly imbalanced classification task
     idx_positive = np.flatnonzero(y == 1)
     idx_negative = np.flatnonzero(y == 0)
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
@@ -1180,6 +1194,38 @@ def test_scorer_select_proba_error(scorer):
         scorer(lr, X, y)
 
 
+def test_invalid_default_pos_label_ignored_on_multiclass():
+    iris = load_iris()
+    X = iris.data
+    y = np.array(iris.target_names)[iris.target]
+
+    assert type_of_target(y) == "multiclass"
+
+    clf = LogisticRegression(max_iter=1000).fit(X, y)
+
+    # The default of average_precision_score pos_label is 1. It's not one of
+    # the string class labels but it should be ignored when the scorer is
+    # called on a multiclass problem.
+    scorer = make_scorer(
+        average_precision_score,
+        response_method=("decision_function", "predict_proba"),
+    )
+    assert scorer(clf, X, y) > 0.7
+
+    # Passing an invalid pos_label explicitly should raise an error.
+    scorer = make_scorer(
+        average_precision_score,
+        response_method=("decision_function", "predict_proba"),
+        pos_label="invalid_label",
+    )
+    expected_msg = re.escape(
+        "Parameter pos_label is fixed to 1 for multiclass y_true. Do not set pos_label "
+        "or set pos_label to 1."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        scorer(clf, X, y)
+
+
 def test_get_scorer_return_copy():
     # test that get_scorer returns a copy
     assert get_scorer("roc_auc") is not get_scorer("roc_auc")
@@ -1218,53 +1264,108 @@ def test_scorer_set_score_request_raises(name):
 
 @pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
 @config_context(enable_metadata_routing=True)
-def test_scorer_metadata_request(name):
-    """Testing metadata requests for scorers.
-
-    This test checks many small things in a large test, to reduce the
-    boilerplate required for each section.
-    """
-    # Make sure they expose the routing methods.
+def test_scorer_metadata_request_empty_without_auto_requests(name):
+    """Test that scorers expose routing API and request nothing when auto-request is
+    off."""
     scorer = get_scorer(name)
     assert hasattr(scorer, "set_score_request")
     assert hasattr(scorer, "get_metadata_routing")
 
-    # Check that by default no metadata is requested.
-    assert_request_is_empty(scorer.get_metadata_routing())
+    with config_context(enable_metadata_auto_requests=False):
+        assert_request_is_empty(scorer.get_metadata_routing())
 
+
+@config_context(enable_metadata_routing=True)
+def test_scorer_set_score_request_mutates_and_requests():
+    """Check that `set_score_request` mutates object in place and only requests on
+    `score`."""
+    scorer = get_scorer("accuracy")
     weighted_scorer = scorer.set_score_request(sample_weight=True)
-    # set_score_request should mutate the instance, rather than returning a
-    # new instance
     assert weighted_scorer is scorer
 
-    # make sure the scorer doesn't request anything on methods other than
-    # `score`, and that the requested value on `score` is correct.
     assert_request_is_empty(weighted_scorer.get_metadata_routing(), exclude="score")
     assert (
         weighted_scorer.get_metadata_routing().score.requests["sample_weight"] is True
     )
 
-    # make sure putting the scorer in a router doesn't request anything by
-    # default
-    router = MetadataRouter(owner="test").add(
-        scorer=get_scorer(name),
-        method_mapping=MethodMapping().add(caller="score", callee="score"),
-    )
-    # make sure `sample_weight` is refused if passed.
-    with pytest.raises(TypeError, match="got unexpected argument"):
-        router.validate_metadata(params={"sample_weight": 1}, method="score")
-    # make sure `sample_weight` is not routed even if passed.
-    routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
-    assert not routed_params.scorer.score
 
-    # make sure putting weighted_scorer in a router requests sample_weight
-    router = MetadataRouter(owner="test").add(
-        scorer=weighted_scorer,
+def _scorer_in_router(scorer):
+    # helper to create a metadata router routing to a scorer
+    return MetadataRouter(owner="test").add(
+        scorer=scorer,
         method_mapping=MethodMapping().add(caller="score", callee="score"),
     )
+
+
+@pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
+@config_context(enable_metadata_routing=True)
+def test_scorer_validate_metadata_sample_weight(name):
+    """Test that `validate_metadata` accepts `sample_weight` only if the metric does."""
+    scorer = get_scorer(name)
+    accepts_sample_weight = "sample_weight" in signature(scorer._score_func).parameters
+    router = _scorer_in_router(scorer)
+
+    if accepts_sample_weight:
+        router.validate_metadata(params={"sample_weight": 1}, method="score")
+    else:
+        err_msg = re.escape(
+            "test.score got unexpected argument(s) {'sample_weight'}, which are not"
+            " routed to any object."
+        )
+        with pytest.raises(TypeError, match=err_msg):
+            router.validate_metadata(params={"sample_weight": 1}, method="score")
+
+
+@pytest.mark.parametrize("name", get_scorer_names(), ids=get_scorer_names())
+@config_context(enable_metadata_routing=True)
+def test_scorer_sample_weight_requests(name):
+    """Test that scorers accepting `sample_weight` auto-request it depending on
+    whether auto-requests are enabled or disabled."""
+    scorer = get_scorer(name)
+    accepts_sample_weight = scorer._accept_sample_weight()
+
+    with config_context(enable_metadata_auto_requests=False):
+        assert (
+            get_routing_for_object(scorer).score.requests.get("sample_weight") is None
+        )
+
+        if accepts_sample_weight:
+            # `route_params` raises when `sample_weight` is accepted but not requested
+            router = _scorer_in_router(scorer)
+            scorer_repr = repr(scorer)
+            err_msg = "[sample_weight] are passed but are not explicitly set as"
+            with pytest.raises(UnsetMetadataPassedError, match=re.escape(err_msg)):
+                router.route_params(params={"sample_weight": 1}, caller="score")
+
+    with config_context(enable_metadata_auto_requests=True):
+        request = get_routing_for_object(scorer).score.requests.get("sample_weight")
+        if accepts_sample_weight:
+            assert request is True
+            routed_params = _scorer_in_router(scorer).route_params(
+                params={"sample_weight": 1}, caller="score"
+            )
+            assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
+        else:
+            assert request is None
+
+
+@config_context(enable_metadata_routing=True)
+def test_scorer_requested_sample_weight_routed():
+    """Test that a scorer with `sample_weight` requested receives it through a
+    router."""
+    weighted_scorer = get_scorer("accuracy").set_score_request(sample_weight=True)
+    router = _scorer_in_router(weighted_scorer)
     router.validate_metadata(params={"sample_weight": 1}, method="score")
     routed_params = router.route_params(params={"sample_weight": 1}, caller="score")
     assert list(routed_params.scorer.score.keys()) == ["sample_weight"]
+
+
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
+def test_scorer_set_score_request_false_opts_out_of_auto_request():
+    """Check that explicitly requesting `sample_weight=False` overrides the
+    auto-request."""
+    scorer = get_scorer("accuracy").set_score_request(sample_weight=False)
+    assert get_routing_for_object(scorer).score.requests["sample_weight"] is False
 
 
 @config_context(enable_metadata_routing=True)
@@ -1455,7 +1556,7 @@ def test_get_scorer_multimetric(pass_estimator):
     """Check that check_scoring is compatible with multi-metric configurations."""
     X, y = make_classification(n_samples=150, n_features=10, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = LogisticRegression(random_state=0)
+    clf = LogisticRegression()
 
     if pass_estimator:
         check_scoring_ = check_scoring
@@ -1521,7 +1622,7 @@ def test_check_scoring_multimetric_raise_exc():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LogisticRegression().fit(X_train, y_train)
 
-    # "raising_scorer" is raising ValueError and should return an string representation
+    # "raising_scorer" is raising ValueError and should return a string representation
     # of the error of the last scorer:
     scoring = {
         "accuracy": make_scorer(accuracy_score),
@@ -1663,5 +1764,140 @@ def test_Pipeline_in_PassthroughScorer():
             )
         ]
     )
-    search = GridSearchCV(pipe, {"logistic__C": [0.1, 1]}, n_jobs=1, cv=3)
+    search = GridSearchCV(pipe, {"logistic__alpha": [10, 1]}, n_jobs=1, cv=3)
     search.fit(X, y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize(
+    "target_namespace_dtype", ["xp_int32", "np_int32", "np_str_object"]
+)
+@pytest.mark.parametrize(
+    "estimator, scoring",
+    [
+        (
+            RidgeClassifier(solver="svd"),
+            "accuracy",
+        ),  # TODO: add "roc_auc" when supported
+        (LinearDiscriminantAnalysis(), "d2_brier_score"),  # has predict_proba
+    ],
+)
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_classification_scorer_array_api_compliance(
+    namespace,
+    device_name,
+    dtype_name,
+    estimator,
+    scoring,
+    target_namespace_dtype,
+    n_classes,
+):
+    """Test that scorers work with array API compliant arrays.
+
+    The purpose of this test is to check that the scorer API works with
+    array API compliant arrays from different namespaces.
+
+    We do not exhaustively test all scorers here since the array compliance
+    of the metrics functions are tested in a common test. Similarly, the
+    estimators' array API compliance is also tested in a dedicated test.
+    """
+    estimator = clone(estimator)
+    scorer = check_scoring(estimator=estimator, scoring=scoring)
+    xp, device = _array_api_for_tests(namespace, device_name)
+
+    # Check compliance of the scorer API for binary classification tasks.
+    X_np, y_np = make_classification(
+        n_samples=100,
+        n_classes=n_classes,
+        n_features=20,
+        n_informative=10,
+        random_state=0,
+    )
+    X_np = X_np.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+
+    if target_namespace_dtype == "np_str_object":
+        y_np = np.array(
+            ["class_" + str(class_idx + 1) for class_idx in y_np],
+            dtype=object,
+        )
+        y = y_np
+        # XXX: there is no public API to build a classification scoring object
+        # from the combination of a scoring name and string labels.
+        if n_classes == 2 and scoring in ["d2_brier_score"]:
+            scorer._kwargs["labels"] = np.unique(y)
+            scorer._kwargs["pos_label"] = "class_1"
+    else:
+        y_np = y_np.astype("int32")
+        if target_namespace_dtype == "xp_int32":
+            y = xp.asarray(y_np, device=device)
+        else:  # np_int32
+            y = y_np
+
+    score_np = scorer(estimator.fit(X_np, y_np), X_np, y_np)
+    with config_context(array_api_dispatch=True):
+        score_xp = scorer(estimator.fit(X_xp, y), X_xp, y)
+
+    assert score_np == pytest.approx(
+        score_xp,
+        rel=1e-4 if dtype_name == "float32" else 1e-6,
+        abs=_atol_for_type(dtype_name),
+    )
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name", yield_namespace_device_dtype_combinations()
+)
+@pytest.mark.parametrize("target_namespace_dtype", ["xp_float32", "np_float64"])
+@pytest.mark.parametrize(
+    "estimator, scoring",
+    [
+        (Ridge(solver="svd"), "r2"),
+    ],
+)
+@pytest.mark.parametrize("n_targets", [1, 3])
+def test_regression_scorer_array_api_compliance(
+    namespace,
+    device_name,
+    dtype_name,
+    estimator,
+    scoring,
+    target_namespace_dtype,
+    n_targets,
+):
+    """Test that scorers work with array API compliant arrays.
+
+    Similar comment as in `test_classification_scorer_array_api_compliance`.
+    """
+    estimator = clone(estimator)
+    scorer = check_scoring(estimator=estimator, scoring=scoring)
+    xp, device = _array_api_for_tests(namespace, device_name)
+
+    # Check compliance of the scorer API for regression tasks.
+    X_np, y_np = make_regression(
+        n_samples=100,
+        n_features=20,
+        n_targets=n_targets,
+        n_informative=10,
+        random_state=0,
+    )
+    X_np = X_np.astype(dtype_name)
+    X_xp = xp.asarray(X_np, device=device)
+
+    if target_namespace_dtype == "xp_float32":
+        y = xp.asarray(y_np, device=device, dtype=xp.float32)
+    else:  # np_float64
+        y = y_np
+
+    with config_context(array_api_dispatch=False):
+        score_np = scorer(estimator.fit(X_np, y_np), X_np, y_np)
+    with config_context(array_api_dispatch=True):
+        score_xp = scorer(estimator.fit(X_xp, y), X_xp, y)
+
+    assert score_np == pytest.approx(
+        score_xp,
+        rel=1e-4 if dtype_name == "float32" else 1e-6,
+        abs=_atol_for_type(dtype_name),
+    )

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 __all__ = ["Array", "DType", "Device"]
-_all_ignore = ["cp"]
 
 from typing import TYPE_CHECKING
 

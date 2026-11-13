@@ -22,13 +22,13 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
     [
         (
             "uniform",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
             None,
         ),
         (
             "kmeans",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
             None,
         ),
@@ -40,13 +40,13 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
         ),
         (
             "uniform",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
             [1, 1, 2, 1],
         ),
         (
             "uniform",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [1, 1, 1, 0], [2, 2, 2, 1], [2, 2, 2, 2]],
             [1, 1, 1, 1],
         ),
@@ -70,13 +70,13 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
         ),
         (
             "kmeans",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
             [1, 0, 3, 1],
         ),
         (
             "kmeans",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
             [1, 1, 1, 1],
         ),
@@ -145,13 +145,13 @@ def test_invalid_n_bins_array():
     [
         (
             "uniform",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [0, 1, 1, 0], [1, 2, 2, 1], [1, 2, 2, 2]],
             None,
         ),
         (
             "kmeans",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]],
             None,
         ),
@@ -187,7 +187,7 @@ def test_invalid_n_bins_array():
         ),
         (
             "kmeans",
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
             [[0, 0, 0, 0], [0, 1, 1, 0], [1, 1, 1, 1], [1, 2, 2, 2]],
             [1, 0, 3, 1],
         ),
@@ -222,8 +222,8 @@ def test_kbinsdiscretizer_effect_sample_weight():
         quantile_method="averaged_inverted_cdf",
     )
     est.fit(X, sample_weight=[1, 1, 1, 1, 0, 0])
-    assert_allclose(est.bin_edges_[0], [-2, -1, 0, 1, 3])
-    assert_allclose(est.transform(X), [[0.0], [1.0], [3.0], [3.0], [3.0], [3.0]])
+    assert_allclose(est.bin_edges_[0], [-2, -1, 0, 1, 3, 3])
+    assert_allclose(est.transform(X), [[0.0], [1.0], [3.0], [4.0], [4.0], [4.0]])
 
 
 @pytest.mark.parametrize("strategy", ["kmeans", "quantile"])
@@ -328,8 +328,20 @@ def test_encode_options():
 @pytest.mark.parametrize(
     "strategy, quantile_method, expected_2bins, expected_3bins, expected_5bins",
     [
-        ("uniform", "warn", [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 2, 2], [0, 0, 1, 1, 4, 4]),
-        ("kmeans", "warn", [0, 0, 0, 0, 1, 1], [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 3, 4]),
+        (
+            "uniform",
+            "averaged_inverted_cdf",
+            [0, 0, 0, 0, 1, 1],
+            [0, 0, 0, 0, 2, 2],
+            [0, 0, 1, 1, 4, 4],
+        ),
+        (
+            "kmeans",
+            "averaged_inverted_cdf",
+            [0, 0, 0, 0, 1, 1],
+            [0, 0, 1, 1, 2, 2],
+            [0, 0, 1, 2, 3, 4],
+        ),
         (
             "quantile",
             "averaged_inverted_cdf",
@@ -377,7 +389,7 @@ def test_nonuniform_strategies(
                 [0.5, 4.0, -1.5, 0.5],
                 [0.5, 4.0, -1.5, 1.5],
             ],
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
         ),
         (
             "kmeans",
@@ -387,7 +399,7 @@ def test_nonuniform_strategies(
                 [-0.125, 3.375, -2.125, 0.5625],
                 [0.75, 4.25, -1.25, 1.625],
             ],
-            "warn",  # default, will not warn when strategy != "quantile"
+            "averaged_inverted_cdf",  # default
         ),
         (
             "quantile",
@@ -452,7 +464,7 @@ def test_overwrite():
     "strategy, expected_bin_edges, quantile_method",
     [
         ("quantile", [0, 1.5, 3], "averaged_inverted_cdf"),
-        ("kmeans", [0, 1.5, 3], "warn"),
+        ("kmeans", [0, 1.5, 3], "averaged_inverted_cdf"),
     ],
 )
 def test_redundant_bins(strategy, expected_bin_edges, quantile_method):
@@ -465,6 +477,47 @@ def test_redundant_bins(strategy, expected_bin_edges, quantile_method):
         kbd.fit(X)
 
     assert_array_almost_equal(kbd.bin_edges_[0], expected_bin_edges)
+
+
+@pytest.mark.filterwarnings("ignore:Bins whose width are too small")
+@pytest.mark.parametrize(
+    "quantile_method", ["averaged_inverted_cdf", "inverted_cdf", "linear"]
+)
+@pytest.mark.parametrize("n_bins", [2, 3, 5])
+def test_quantile_ties_at_max(quantile_method, n_bins):
+    """Test that samples tied at the max keep their own bin.
+
+    When the last inner bin edge is equal to the max, it should not be removed as
+    a duplicate, which would merge the top bin into the previous one (e.g. binary
+    features would be transformed to a constant).
+    """
+    X = np.array([0] * 3 + [1] * 4).reshape(-1, 1)
+    kbd = KBinsDiscretizer(
+        n_bins=n_bins, encode="ordinal", quantile_method=quantile_method
+    )
+    Xt = kbd.fit_transform(X)
+    # The 0s and the 1s are in different bins, and the 1s are in the last bin,
+    # whose center is the max.
+    assert kbd.n_bins_[0] >= 2
+    assert_array_equal(Xt.ravel(), [0] * 3 + [kbd.n_bins_[0] - 1] * 4)
+    assert_allclose(kbd.inverse_transform(Xt)[3:], 1)
+
+    X = [[-1], [-1], [0], [0]]
+    kbd = KBinsDiscretizer(n_bins=3, encode="ordinal", quantile_method=quantile_method)
+    assert_array_equal(kbd.fit_transform(X).ravel(), [0, 0, 1, 1])
+
+
+@pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
+def test_near_constant_feature(encode):
+    """Test that a non-constant feature narrower than the tolerance gets one bin."""
+    eps = 1e-10  # smaller than the 1e-8 tolerance on the bin width
+    X = np.array([[1.0], [1.0 + eps], [1.0 + 2 * eps]])
+    kbd = KBinsDiscretizer(n_bins=3, encode=encode)
+    with pytest.warns(UserWarning, match="Consider decreasing the number of bins"):
+        Xt = kbd.fit_transform(X)
+    assert kbd.n_bins_[0] == 1
+    assert Xt.shape == (3, 1)
+    assert_allclose(kbd.inverse_transform(Xt), np.full((3, 1), 1.0 + eps))
 
 
 def test_percentile_numeric_stability():
@@ -632,20 +685,6 @@ def test_kbinsdiscretizer_subsample(strategy, global_random_seed):
     assert_allclose(
         kbd_subsampling.bin_edges_[0], kbd_no_subsampling.bin_edges_[0], rtol=1e-2
     )
-
-
-def test_quantile_method_future_warnings():
-    X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
-    with pytest.warns(
-        FutureWarning,
-        match="The current default behavior, quantile_method='linear', will be "
-        "changed to quantile_method='averaged_inverted_cdf' in "
-        "scikit-learn version 1.9 to naturally support sample weight "
-        "equivalence properties by default. Pass "
-        "quantile_method='averaged_inverted_cdf' explicitly to silence this "
-        "warning.",
-    ):
-        KBinsDiscretizer(strategy="quantile").fit(X)
 
 
 def test_invalid_quantile_method_with_sample_weight():

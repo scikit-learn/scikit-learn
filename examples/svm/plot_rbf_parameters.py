@@ -22,8 +22,7 @@ SVM.
 The first plot is a visualization of the decision function for a variety of
 parameter values on a simplified classification problem involving only 2 input
 features and 2 possible target classes (binary classification). Note that this
-kind of plot is not possible to do for problems with more features or target
-classes.
+kind of plot is not possible to do for problems with more features.
 
 The second plot is a heatmap of the classifier's cross-validation accuracy as a
 function of ``C`` and ``gamma``. For this example we explore a relatively large
@@ -149,16 +148,16 @@ grid = GridSearchCV(SVC(), param_grid=param_grid, cv=cv)
 grid.fit(X, y)
 
 print(
-    "The best parameters are %s with a score of %0.2f"
-    % (grid.best_params_, grid.best_score_)
+    f"The best parameters are {grid.best_params_} "
+    f"with a score of {grid.best_score_:0.2f}"
 )
 
 # %%
 # Now we need to fit a classifier for all parameters in the 2d version
 # (we use a smaller set of parameters here because it takes a while to train)
 
-C_2d_range = [1e-2, 1, 1e2]
-gamma_2d_range = [1e-1, 1, 1e1]
+C_2d_range = [0.01, 1, 100]
+gamma_2d_range = [0.1, 1, 10]
 classifiers = []
 for C in C_2d_range:
     for gamma in gamma_2d_range:
@@ -170,29 +169,30 @@ for C in C_2d_range:
 # Visualization
 # -------------
 #
-# draw visualization of parameter effects
+# We plot the decision boundaries for different values of gamma and C.
 
 import matplotlib.pyplot as plt
 
+from sklearn.inspection import DecisionBoundaryDisplay
+
 plt.figure(figsize=(8, 6))
-xx, yy = np.meshgrid(np.linspace(-3, 3, 200), np.linspace(-3, 3, 200))
 for k, (C, gamma, clf) in enumerate(classifiers):
-    # evaluate decision function in a grid
-    Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
-    Z = Z.reshape(xx.shape)
-
-    # visualize decision function for these parameters
     plt.subplot(len(C_2d_range), len(gamma_2d_range), k + 1)
-    plt.title("gamma=10^%d, C=10^%d" % (np.log10(gamma), np.log10(C)), size="medium")
-
-    # visualize parameter's effect on decision function
-    plt.pcolormesh(xx, yy, -Z, cmap=plt.cm.RdBu)
+    plt.title(f"gamma={gamma}, C={C}", size="medium")
+    # visualize decision boundary for these parameters
+    DecisionBoundaryDisplay.from_estimator(
+        clf,
+        X_2d,
+        eps=0.5,
+        cmap="RdBu_r",
+        ax=plt.gca(),
+        response_method="decision_function",
+        plot_method="pcolormesh",
+    )
+    # also plot the data
     plt.scatter(X_2d[:, 0], X_2d[:, 1], c=y_2d, cmap=plt.cm.RdBu_r, edgecolors="k")
     plt.xticks(())
     plt.yticks(())
-    plt.axis("tight")
-
-scores = grid.cv_results_["mean_test_score"].reshape(len(C_range), len(gamma_range))
 
 # %%
 # Draw heatmap of the validation accuracy as a function of gamma and C
@@ -204,6 +204,7 @@ scores = grid.cv_results_["mean_test_score"].reshape(len(C_range), len(gamma_ran
 # interesting range while not brutally collapsing all the low score values to
 # the same color.
 
+scores = grid.cv_results_["mean_test_score"].reshape(len(C_range), len(gamma_range))
 plt.figure(figsize=(8, 6))
 plt.subplots_adjust(left=0.2, right=0.95, bottom=0.15, top=0.95)
 plt.imshow(

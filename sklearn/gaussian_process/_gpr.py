@@ -24,6 +24,7 @@ from sklearn.preprocessing._data import _handle_zeros_in_scale
 from sklearn.utils import check_random_state
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.parallel import Parallel, delayed
 from sklearn.utils.validation import validate_data
 
 GPR_CHOLESKY_LOWER = True
@@ -50,16 +51,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     kernel : kernel instance, default=None
-        The kernel specifying the covariance function of the GP. If None is
-        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed")
-        * RBF(1.0, length_scale_bounds="fixed")`` is used as default. Note that
-        the kernel hyperparameters are optimized during fitting unless the
-        bounds are marked as "fixed".
+        The kernel specifying the covariance function of the GP.
+        If `None` is passed,
+        the kernel `ConstantKernel() * RBF()` is used as default.
+        Note that
+        the kernel hyperparameters are optimized during fitting
+        unless the bounds are marked as `"fixed"`
+        or the argument `optimizer` is set to `None`.
 
     alpha : float or ndarray of shape (n_samples,), default=1e-10
         Value added to the diagonal of the kernel matrix during fitting.
@@ -115,8 +116,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         implementation, the normalisation is reversed before the GP predictions
         are reported.
 
-        .. versionchanged:: 0.23
-
     copy_X_train : bool, default=True
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
@@ -135,6 +134,13 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Determines random number generation used to initialize the centers.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
+
+    n_jobs : int, default=None
+        The number of jobs to run in parallel. :meth:`fit` will perform
+        hyperparameter search in parallel if `n_restarts_optimizers` is >0.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. ``-1`` means using all processors. See :term:`Glossary
+        <n_jobs>` for more details.
 
     Attributes
     ----------
@@ -160,8 +166,6 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -204,6 +208,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         "copy_X_train": ["boolean"],
         "n_targets": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
     }
 
     def __init__(
@@ -217,6 +222,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         copy_X_train=True,
         n_targets=None,
         random_state=None,
+        n_jobs=None,
     ):
         self.kernel = kernel
         self.alpha = alpha
@@ -226,6 +232,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.copy_X_train = copy_X_train
         self.n_targets = n_targets
         self.random_state = random_state
+        self.n_jobs = n_jobs
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -244,12 +251,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             GaussianProcessRegressor class instance.
         """
-        if self.kernel is None:  # Use an RBF kernel as default
-            self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
-                1.0, length_scale_bounds="fixed"
-            )
-        else:
-            self.kernel_ = clone(self.kernel)
+        self.kernel_ = C() * RBF() if self.kernel is None else clone(self.kernel)
 
         self._rng = check_random_state(self.random_state)
 
@@ -305,20 +307,14 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             def obj_func(theta, eval_gradient=True):
                 if eval_gradient:
                     lml, grad = self.log_marginal_likelihood(
-                        theta, eval_gradient=True, clone_kernel=False
+                        theta, eval_gradient=True, clone_kernel=True
                     )
                     return -lml, -grad
                 else:
-                    return -self.log_marginal_likelihood(theta, clone_kernel=False)
+                    return -self.log_marginal_likelihood(theta, clone_kernel=True)
 
             # First optimize starting from theta specified in kernel
-            optima = [
-                (
-                    self._constrained_optimization(
-                        obj_func, self.kernel_.theta, self.kernel_.bounds
-                    )
-                )
-            ]
+            theta_initials = [self.kernel_.theta]
 
             # Additional runs are performed from log-uniform chosen initial
             # theta
@@ -328,12 +324,22 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                         "Multiple optimizer restarts (n_restarts_optimizer>0) "
                         "requires that all bounds are finite."
                     )
-                bounds = self.kernel_.bounds
-                for iteration in range(self.n_restarts_optimizer):
-                    theta_initial = self._rng.uniform(bounds[:, 0], bounds[:, 1])
-                    optima.append(
-                        self._constrained_optimization(obj_func, theta_initial, bounds)
+                theta_initials.extend(
+                    self._rng.uniform(
+                        self.kernel_.bounds[:, 0], self.kernel_.bounds[:, 1]
                     )
+                    for _ in range(self.n_restarts_optimizer)
+                )
+
+            optima = Parallel(n_jobs=self.n_jobs)(
+                delayed(self._constrained_optimization)(
+                    bounds=self.kernel_.bounds,
+                    initial_theta=theta_initial,
+                    obj_func=obj_func,
+                )
+                for theta_initial in theta_initials
+            )
+
             # Select result from run with minimal (negative) log-marginal
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
@@ -643,7 +649,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             # it is equivalent to:
             # for param_idx in range(n_kernel_params):
             #     for output_idx in range(n_output):
-            #         log_likehood_gradient_dims[param_idx, output_idx] = (
+            #         log_likelihood_gradient_dims[param_idx, output_idx] = (
             #             inner_term[..., output_idx] @
             #             K_gradient[..., param_idx]
             #         )

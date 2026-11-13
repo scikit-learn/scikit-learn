@@ -42,14 +42,14 @@ logger = logging.getLogger(__name__)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = "1.8.dev0"
+__version__ = "1.10.dev0"
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
 # simultaneously. This can happen for instance when calling BLAS inside a
 # prange. Setting the following environment variable allows multiple OpenMP
 # libraries to be loaded. It should not degrade performances since we manually
-# take care of potential over-subcription performance issues, in sections of
+# take care of potential over-subscription performance issues, in sections of
 # the code where nested OpenMP loops can happen, by dynamically reconfiguring
 # the inner OpenMP runtime to temporarily disable it while under the scope of
 # the outer OpenMP parallel section.
@@ -72,6 +72,7 @@ from sklearn.utils._show_versions import show_versions  # noqa: E402
 
 _submodules = [
     "calibration",
+    "callback",
     "cluster",
     "covariance",
     "cross_decomposition",

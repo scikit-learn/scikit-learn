@@ -1,0 +1,8 @@
+- Add support for array inputs from mixed namespaces and devices for:
+  :func:`sklearn.metrics.det_curve`,
+  :func:`sklearn.metrics.roc_curve`,
+  :func:`sklearn.metrics.zero_one_loss`,
+  :func:`sklearn.metrics.jaccard_score`,
+  :func:`sklearn.metrics.balanced_accuracy_score`,
+  :func:`sklearn.metrics.cohen_kappa_score`.
+  By :user:`Lucy Liu <lucyleeow>`.

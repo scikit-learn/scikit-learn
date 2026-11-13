@@ -1,0 +1,3 @@
+- :class:`neighbors.NeighborhoodComponentsAnalysis` now supports sparse
+  input matrices for ``init`` in ``['pca', 'random', 'identity']``. By
+  :user:`Arturo Amor <ArturoAmorQ>`.

@@ -4,7 +4,7 @@ Benchmark for explicit feature map approximation of polynomial kernels
 ========================================================================
 
 An example illustrating the approximation of the feature map
-of an Homogeneous Polynomial kernel.
+of a Homogeneous Polynomial kernel.
 
 .. currentmodule:: sklearn.kernel_approximation
 
@@ -136,7 +136,7 @@ ax.set_ylabel("Accuracy (%)")
 ax.set_xlim([out_dims[0], out_dims[-1]])
 fig.tight_layout()
 
-# Now lets evaluate the scalability of PolynomialCountSketch vs Nystroem
+# Now let's evaluate the scalability of PolynomialCountSketch vs Nystroem
 # First we generate some fake data with a lot of samples
 
 fakeData = np.random.randn(10000, 100)
