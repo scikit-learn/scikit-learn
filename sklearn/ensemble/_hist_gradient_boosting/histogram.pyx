@@ -77,16 +77,16 @@ cdef class HistogramBuilder:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
         unsigned int n_bins
-        G_H_DTYPE_C [::1] gradients
-        G_H_DTYPE_C [::1] hessians
+        const G_H_DTYPE_C [::1] gradients
+        const G_H_DTYPE_C [::1] hessians
         G_H_DTYPE_C [::1] ordered_gradients
         G_H_DTYPE_C [::1] ordered_hessians
         uint8_t hessians_are_constant
         int n_threads
 
     def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
-                 unsigned int n_bins, G_H_DTYPE_C [::1] gradients,
-                 G_H_DTYPE_C [::1] hessians,
+                 unsigned int n_bins, const G_H_DTYPE_C [::1] gradients,
+                 const G_H_DTYPE_C [::1] hessians,
                  uint8_t hessians_are_constant,
                  int n_threads):
 
@@ -97,9 +97,11 @@ cdef class HistogramBuilder:
         self.n_bins = n_bins
         self.gradients = gradients
         self.hessians = hessians
-        # for root node, gradients and hessians are already ordered
-        self.ordered_gradients = gradients.copy()
-        self.ordered_hessians = hessians.copy()
+        # For root nodes, gradients and hessians are already ordered and we pass them
+        # directly to the histogram computation. For non-root nodes, we allocate
+        # ordered_gradients (and ordered_hessians). They will be populated later.
+        self.ordered_gradients = np.empty_like(gradients)
+        self.ordered_hessians = np.empty_like(hessians)
         self.hessians_are_constant = hessians_are_constant
         self.n_threads = n_threads
 
@@ -131,13 +133,10 @@ cdef class HistogramBuilder:
             int feature_idx
             int f_idx
             int i
+            bint root_node
             # need local views to avoid python interactions
             uint8_t hessians_are_constant = self.hessians_are_constant
             int n_allowed_features = self.n_features
-            G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
-            G_H_DTYPE_C [::1] gradients = self.gradients
-            G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
-            G_H_DTYPE_C [::1] hessians = self.hessians
             # Histograms will be initialized to zero later within a prange
             hist_struct [:, ::1] histograms = np.empty(
                 shape=(self.n_features, self.n_bins),
@@ -151,20 +150,22 @@ cdef class HistogramBuilder:
 
         with nogil:
             n_samples = sample_indices.shape[0]
+            # gradients have always the length of training data X.shape[0]
+            root_node = n_samples == self.gradients.shape[0]
 
             # Populate ordered_gradients and ordered_hessians. (Already done
             # for root) Ordering the gradients and hessians helps to improve
             # cache hit.
-            if sample_indices.shape[0] != gradients.shape[0]:
+            if not root_node:
                 if hessians_are_constant:
                     for i in prange(n_samples, schedule='static',
                                     num_threads=n_threads):
-                        ordered_gradients[i] = gradients[sample_indices[i]]
+                        self.ordered_gradients[i] = self.gradients[sample_indices[i]]
                 else:
                     for i in prange(n_samples, schedule='static',
                                     num_threads=n_threads):
-                        ordered_gradients[i] = gradients[sample_indices[i]]
-                        ordered_hessians[i] = hessians[sample_indices[i]]
+                        self.ordered_gradients[i] = self.gradients[sample_indices[i]]
+                        self.ordered_hessians[i] = self.hessians[sample_indices[i]]
 
             # Compute histogram of each feature
             for f_idx in prange(
@@ -206,11 +207,11 @@ cdef class HistogramBuilder:
         if root_node:
             if hessians_are_constant:
                 _build_histogram_root_no_hessian(feature_idx, X_binned,
-                                                 ordered_gradients,
+                                                 self.gradients,
                                                  histograms)
             else:
                 _build_histogram_root(feature_idx, X_binned,
-                                      ordered_gradients, ordered_hessians,
+                                      self.gradients, self.hessians,
                                       histograms)
         else:
             if hessians_are_constant:
