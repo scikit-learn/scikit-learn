@@ -39,6 +39,7 @@ __all__ = [
     "BaseCrossValidator",
     "GroupKFold",
     "GroupShuffleSplit",
+    "GroupTimeSeriesSplit",
     "KFold",
     "LeaveOneGroupOut",
     "LeaveOneOut",
@@ -2419,6 +2420,170 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             )
         y = check_array(y, input_name="y", ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
+
+
+class GroupTimeSeriesSplit(GroupsConsumerMixin, _BaseKFold):
+    """Time Series cross-validator variant with non-overlapping groups.
+
+    Provides train/test indices to split time series data samples that are
+    observed at fixed time intervals according to a third-party provided group.
+    In each split, test indices must be higher than before, and thus shuffling
+    in cross validator is inappropriate.
+
+    The same group will not appear in two different folds (the number of
+    distinct groups has to be at least equal to the number of folds).
+
+    Groups are never split: `test_size`, `max_train_size` and `gap` count whole
+    groups, not samples. Every test set therefore contains the same number of
+    groups, but test sets can contain different numbers of samples when groups
+    have different sizes.
+
+    Note that, unlike standard cross-validation methods, successive training
+    sets are supersets of those that come before them.
+
+    The group labels should be contiguous such as the following:
+
+    .. code-block::
+
+        valid_groups = np.array([
+            'a', 'a', 'b', 'b', 'b', 'b', 'b', 'c', 'c', 'c', 'c', 'd', 'd', 'd'
+        ])
+
+    Non-contiguous groups like below will give an error.
+
+    .. code-block::
+
+        invalid_groups = np.array([
+            'a', 'a', 'b', 'b', 'b', 'b', 'b', 'a', 'c', 'c', 'c', 'b', 'd', 'd'
+        ])
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of splits. Must be at least 2.
+
+    max_train_size : int, default=None
+        Maximum number of groups in a single training set. When set, training
+        uses only the `max_train_size` groups that come right before the `gap`.
+
+    test_size : int, default=None
+        Number of groups in each test set. Defaults to
+        ``n_groups // (n_splits + 1)``, where ``n_groups`` is the number of
+        distinct groups. This is the maximum allowed value with ``gap=0``.
+
+    gap : int, default=0
+        Number of groups to exclude from the end of each training set before
+        the test set.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GroupTimeSeriesSplit
+    >>> groups = np.array([
+    ...     'a', 'a', 'a', 'a', 'b', 'b', 'b', 'c', 'c', 'c', 'c', 'd', 'd', 'd']
+    ... )
+    >>> gtss = GroupTimeSeriesSplit(n_splits=3)
+    >>> for train_idx, test_idx in gtss.split(groups, groups=groups):
+    ...     print("TRAIN:", train_idx, "TEST:", test_idx)
+    ...     print(
+    ...         "TRAIN GROUP:", groups[train_idx], "TEST GROUP:", groups[test_idx]
+    ...     )
+    TRAIN: [0 1 2 3] TEST: [4 5 6]
+    TRAIN GROUP: ['a' 'a' 'a' 'a'] TEST GROUP: ['b' 'b' 'b']
+    TRAIN: [0 1 2 3 4 5 6] TEST: [ 7  8  9 10]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'b' 'b' 'b'] TEST GROUP: ['c' 'c' 'c' 'c']
+    TRAIN: [ 0  1  2  3  4  5  6  7  8  9 10] TEST: [11 12 13]
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'b' 'b' 'b' 'c' 'c' 'c' 'c'] TEST GROUP: ['d' 'd' 'd']
+    >>> # `test_size`, `max_train_size` and `gap` count groups, not samples
+    >>> gtss = GroupTimeSeriesSplit(n_splits=2, test_size=1, gap=1)
+    >>> for train_idx, test_idx in gtss.split(groups, groups=groups):
+    ...     print("TRAIN GROUP:", groups[train_idx], "TEST GROUP:", groups[test_idx])
+    TRAIN GROUP: ['a' 'a' 'a' 'a'] TEST GROUP: ['c' 'c' 'c' 'c']
+    TRAIN GROUP: ['a' 'a' 'a' 'a' 'b' 'b' 'b'] TEST GROUP: ['d' 'd' 'd']
+    """
+
+    def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
+        super().__init__(n_splits, shuffle=False, random_state=None)
+        self.max_train_size = max_train_size
+        self.test_size = test_size
+        self.gap = gap
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Always ignored, exists for compatibility.
+
+        groups : array-like of shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        if groups is None:
+            raise ValueError("The 'groups' parameter should not be None.")
+        X, y, groups = indexable(X, y, groups)
+        n_splits = self.n_splits
+        n_folds = n_splits + 1
+        gap = self.gap
+        # `np.unique` will reorder the group. We need to keep the original
+        # ordering.
+        reordered_unique_groups, indices = np.unique(groups, return_index=True)
+        unique_groups = reordered_unique_groups[np.argsort(indices)]
+        n_groups = len(unique_groups)
+        test_size = (
+            self.test_size if self.test_size is not None else n_groups // n_folds
+        )
+        # Validate here rather than in `TimeSeriesSplit`, whose error messages
+        # would count the groups as samples.
+        if n_folds > n_groups:
+            raise ValueError(
+                f"Cannot have number of folds={n_folds} "
+                f"greater than the number of groups={n_groups}"
+            )
+        if n_groups - gap - (test_size * n_splits) <= 0:
+            raise ValueError(
+                f"Too many splits={n_splits} for number of groups={n_groups} "
+                f"with test_size={test_size} and gap={gap}."
+            )
+        seen_groups = set()
+        prev_group = None
+        for idx, group in enumerate(groups):
+            if group != prev_group and group in seen_groups:
+                raise ValueError(
+                    "The groups should be contiguous."
+                    " Found a non-contiguous group at"
+                    f" index={idx}"
+                )
+            prev_group = group
+            seen_groups.add(group)
+        # Splitting the ordered unique groups, rather than the samples, keeps
+        # every group whole: `test_size`, `max_train_size` and `gap` all count
+        # groups.
+        tss = TimeSeriesSplit(
+            n_splits=n_splits,
+            max_train_size=self.max_train_size,
+            test_size=self.test_size,
+            gap=gap,
+        )
+        for train_idx, test_idx in tss.split(unique_groups):
+            train_array = np.where(np.isin(groups, unique_groups[train_idx]))[0]
+            test_array = np.where(np.isin(groups, unique_groups[test_idx]))[0]
+            yield train_array, test_array
 
 
 def _validate_shuffle_split(n_samples, test_size, train_size, default_test_size=None):

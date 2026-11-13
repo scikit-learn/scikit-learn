@@ -17,6 +17,7 @@ from sklearn.model_selection import (
     GridSearchCV,
     GroupKFold,
     GroupShuffleSplit,
+    GroupTimeSeriesSplit,
     KFold,
     LeaveOneGroupOut,
     LeaveOneOut,
@@ -79,6 +80,7 @@ GROUP_SPLITTERS = [
     StratifiedGroupKFold(),
     LeaveOneGroupOut(),
     GroupShuffleSplit(),
+    GroupTimeSeriesSplit(),
 ]
 GROUP_SPLITTER_NAMES = set(splitter.__class__.__name__ for splitter in GROUP_SPLITTERS)
 
@@ -2031,6 +2033,150 @@ def test_random_state_shuffle_false(Klass):
         Klass(3, shuffle=False, random_state=0)
 
 
+def test_group_time_series_fail_groups_are_none():
+    # The GroupTimeSeriesSplit with no group should raise an Error
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
+
+    # Should fail if the 'groups' is None
+    with pytest.raises(ValueError, match="The 'groups' parameter should not be None"):
+        next(GroupTimeSeriesSplit(n_splits=7).split(X))
+
+
+@pytest.mark.parametrize("max_train_size", [None, 1, 3])
+@pytest.mark.parametrize("gap", [0, 1])
+@pytest.mark.parametrize("test_size", [None, 1, 2])
+@pytest.mark.parametrize("n_splits", [2, 3])
+def test_group_time_series_split_invariants(n_splits, test_size, gap, max_train_size):
+    # Whatever the parameters, groups are never split and every size counts
+    # whole groups.
+    n_groups = 12
+    rng = np.random.RandomState(0)
+    # Contiguous groups labelled in time order, with 1 to 5 samples each.
+    groups = np.repeat(np.arange(n_groups), rng.randint(1, 6, size=n_groups))
+    expected_test_size = n_groups // (n_splits + 1) if test_size is None else test_size
+    cv = GroupTimeSeriesSplit(
+        n_splits=n_splits, test_size=test_size, gap=gap, max_train_size=max_train_size
+    )
+
+    splits = list(cv.split(groups, groups=groups))
+
+    assert len(splits) == n_splits
+    for train, test in splits:
+        test_groups = np.unique(groups[test])
+        assert len(test_groups) == expected_test_size
+        # Training uses the most recent groups before the gap.
+        train_end = test_groups[0] - gap
+        train_start = (
+            0 if max_train_size is None else max(train_end - max_train_size, 0)
+        )
+        train_groups = np.arange(train_start, train_end)
+        # Each selected group contributes all of its samples.
+        assert_array_equal(train, np.flatnonzero(np.isin(groups, train_groups)))
+        assert_array_equal(test, np.flatnonzero(np.isin(groups, test_groups)))
+    # Test sets follow each other and the last one ends with the last group.
+    all_test_groups = np.concatenate([np.unique(groups[test]) for _, test in splits])
+    n_test_groups = n_splits * expected_test_size
+    assert_array_equal(all_test_groups, np.arange(n_groups - n_test_groups, n_groups))
+
+
+def test_group_time_series_more_folds_than_group():
+    # Should fail if there are more folds than groups
+    groups = np.array([1, 1, 1, 2, 2])
+    X = y = np.ones(len(groups))
+    with pytest.raises(
+        ValueError,
+        match="Cannot have number of folds=4 greater than the number of groups=2",
+    ):
+        next(GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
+
+
+def test_group_time_series_split_too_many_splits():
+    # 2 test sets of 2 groups after a gap of 2 groups leave no group to train
+    # on. The error must count groups, not samples.
+    groups = np.repeat(np.arange(6), 3)
+    cv = GroupTimeSeriesSplit(n_splits=2, test_size=2, gap=2)
+    with pytest.raises(
+        ValueError,
+        match="Too many splits=2 for number of groups=6 with test_size=2 and gap=2",
+    ):
+        next(cv.split(groups, groups=groups))
+
+
+@pytest.mark.parametrize(
+    "params, expected_splits",
+    [
+        # By default, each test set holds n_groups // (n_splits + 1) = 2 groups.
+        ({"n_splits": 3}, [("abcde", "fg"), ("abcdefg", "hi"), ("abcdefghi", "jk")]),
+        (
+            {"n_splits": 3, "gap": 1},
+            [("abcd", "fg"), ("abcdef", "hi"), ("abcdefgh", "jk")],
+        ),
+        (
+            {"n_splits": 3, "test_size": 1},
+            [("abcdefgh", "i"), ("abcdefghi", "j"), ("abcdefghij", "k")],
+        ),
+        (
+            {"n_splits": 3, "max_train_size": 2},
+            [("de", "fg"), ("fg", "hi"), ("hi", "jk")],
+        ),
+        (
+            {"n_splits": 2, "test_size": 3, "gap": 1, "max_train_size": 2},
+            [("cd", "fgh"), ("fg", "ijk")],
+        ),
+    ],
+)
+def test_group_time_series_split_counts_whole_groups(params, expected_splits):
+    # Groups of very different sizes. Since `test_size`, `max_train_size` and
+    # `gap` count groups, test sets hold the same number of groups but not the
+    # same number of samples (50, 5 and 5 samples with the default parameters).
+    groups = np.repeat(list("abcdefghijk"), [20, 12, 30, 2, 3, 20, 30, 2, 3, 2, 3])
+
+    splits = list(GroupTimeSeriesSplit(**params).split(groups, groups=groups))
+
+    assert len(splits) == len(expected_splits)
+    for (train, test), (train_groups, test_groups) in zip(splits, expected_splits):
+        assert_array_equal(train, np.flatnonzero(np.isin(groups, list(train_groups))))
+        assert_array_equal(test, np.flatnonzero(np.isin(groups, list(test_groups))))
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"n_splits": 3},
+        {"n_splits": 3, "gap": 2},
+        {"n_splits": 2, "test_size": 3},
+        {"n_splits": 3, "max_train_size": 2},
+        {"n_splits": 2, "test_size": 2, "gap": 1, "max_train_size": 3},
+    ],
+)
+def test_group_time_series_split_matches_time_series_split(params):
+    # With one sample per group, groups and samples coincide: the parameters
+    # must then behave exactly as in TimeSeriesSplit.
+    X = np.zeros((12, 1))
+    groups = np.arange(12)
+
+    group_splits = GroupTimeSeriesSplit(**params).split(X, groups=groups)
+    sample_splits = TimeSeriesSplit(**params).split(X)
+
+    for (train, test), (expected_train, expected_test) in zip(
+        group_splits, sample_splits, strict=True
+    ):
+        assert_array_equal(train, expected_train)
+        assert_array_equal(test, expected_test)
+
+
+def test_group_time_series_non_contiguous():
+    groups = np.array(["a", "a", "a", "a", "a", "b", "a", "b", "c", "c"])
+    X = y = np.ones(len(groups))
+    with pytest.raises(
+        ValueError,
+        match=(
+            "The groups should be contiguous. Found a non-contiguous group at index=6"
+        ),
+    ):
+        next(GroupTimeSeriesSplit(n_splits=2).split(X, y, groups))
+
+
 @pytest.mark.parametrize(
     "cv, expected",
     [
@@ -2066,6 +2212,9 @@ def test_random_state_shuffle_false(Klass):
         (GroupShuffleSplit(random_state=np.random.RandomState(0)), False),
         (StratifiedShuffleSplit(random_state=None), False),
         (StratifiedShuffleSplit(random_state=np.random.RandomState(0)), False),
+        (GroupTimeSeriesSplit(), True),
+        (GroupTimeSeriesSplit(n_splits=3), True),
+        (GroupTimeSeriesSplit(n_splits=3, max_train_size=3), True),
     ],
 )
 def test_yields_constant_splits(cv, expected):
