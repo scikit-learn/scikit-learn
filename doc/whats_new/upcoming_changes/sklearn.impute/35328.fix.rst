@@ -1,0 +1,6 @@
+- :class:`impute.SimpleImputer` now correctly restores features that were
+  empty at fit time in :meth:`impute.SimpleImputer.inverse_transform`
+  instead of misaligning columns, and no longer raises ``IndexError``
+  when an indicator feature is entirely missing in the batch being
+  inverted.
+  By :user:`Tabish Ahmad <ThebishAhmad>`.
