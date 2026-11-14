@@ -1,0 +1,6 @@
+- Fix: Fixed a numerical stability issue in :func:`feature_selection.r_regression`
+  and :func:`feature_selection.f_regression` where constant features or constant targets
+  could cause catastrophic floating-point cancellation, triggering
+  ``RuntimeWarning: invalid value encountered in sqrt``, negative F-statistics, or
+  spurious correlations.
+  By :user:`Kaynup`

@@ -16,6 +16,7 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.sparsefuncs import min_max_axis
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 
@@ -368,11 +369,24 @@ def r_regression(X, y, *, center=True, force_finite=True):
     # Note that E[(x - mean(x))*(y - mean(y))] = E[x*(y - mean(y))], so we
     # need not center X
     if center:
-        y = y - np.mean(y)
+        if np.ptp(y) == 0.0:
+            y = np.zeros_like(y)
+        else:
+            y = y - np.mean(y)
         # Sparse matrices return a 2d np.matrix; dense and sparse arrays a 1d ndarray.
         X_means = np.asarray(X.mean(axis=0)).ravel()
         # Compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
+        sq_norms = np.maximum(
+            row_norms(X.T, squared=True) - n_samples * X_means**2, 0.0
+        )
+        if issparse(X):
+            X_csr = X.tocsc() if X.format == "csc" else X.tocsr()
+            mins, maxes = min_max_axis(X_csr, axis=0)
+            constant_features = (maxes - mins) == 0.0
+        else:
+            constant_features = np.ptp(X, axis=0) == 0.0
+        sq_norms[constant_features] = 0.0
+        X_norms = np.sqrt(sq_norms)
     else:
         X_norms = row_norms(X.T)
 
@@ -381,12 +395,15 @@ def r_regression(X, y, *, center=True, force_finite=True):
         correlation_coefficient /= X_norms
         correlation_coefficient /= np.linalg.norm(y)
 
-    if force_finite and not np.isfinite(correlation_coefficient).all():
-        # case where the target or some features are constant
-        # the correlation coefficient(s) is/are set to the minimum (i.e. 0.0)
-        nan_mask = np.isnan(correlation_coefficient)
-        correlation_coefficient[nan_mask] = 0.0
-    return correlation_coefficient
+    if force_finite:
+        if not np.isfinite(correlation_coefficient).all():
+            # case where the target or some features are constant
+            # the correlation coefficient(s) is/are set to the minimum (i.e. 0.0)
+            correlation_coefficient[~np.isfinite(correlation_coefficient)] = 0.0
+    else:
+        correlation_coefficient[np.isinf(correlation_coefficient)] = np.nan
+
+    return np.clip(correlation_coefficient, -1.0, 1.0)
 
 
 @validate_params(
@@ -507,6 +524,7 @@ def f_regression(X, y, *, center=True, force_finite=True):
         # f-statistics can be set to the maximum and p-values to zero
         mask_inf = np.isinf(f_statistic)
         f_statistic[mask_inf] = np.finfo(f_statistic.dtype).max
+        p_values[mask_inf] = 0.0
         # case where the target or some features are constant
         # f-statistics would be minimum and thus p-values large
         mask_nan = np.isnan(f_statistic)

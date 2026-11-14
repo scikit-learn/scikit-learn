@@ -304,6 +304,124 @@ def test_f_regression_corner_case(
     np.testing.assert_array_almost_equal(p_values, expected_p_values)
 
 
+@pytest.mark.parametrize("val", [0.7, 0.1, 1.0 / 3.0, 7.0])
+@pytest.mark.parametrize("sparse_format", [None, "csr", "csc", "coo"])
+def test_r_and_f_regression_constant_features_float(val, sparse_format):
+    """Check that constant float columns in X do not raise RuntimeWarning:
+    invalid value encountered in sqrt and return valid scores.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/11395
+    """
+    rng = np.random.RandomState(42)
+    X = np.ones((100, 2), dtype=np.float64)
+    X[:, 0] = val
+    X[:, 1] = rng.randn(100)
+    y = rng.randn(100)
+
+    if sparse_format is not None:
+        X = getattr(sparse, f"{sparse_format}_matrix")(X)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        r = r_regression(X, y, force_finite=True)
+        f, p = f_regression(X, y, force_finite=True)
+
+    assert r[0] == 0.0
+    assert f[0] == 0.0
+    assert p[0] == 1.0
+    assert np.isfinite(r[1])
+    assert np.isfinite(f[1])
+    assert np.isfinite(p[1])
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        r_nf = r_regression(X, y, force_finite=False)
+        f_nf, p_nf = f_regression(X, y, force_finite=False)
+
+    assert np.isnan(r_nf[0])
+    assert np.isnan(f_nf[0])
+    assert np.isnan(p_nf[0])
+    assert np.isfinite(r_nf[1])
+    assert np.isfinite(f_nf[1])
+    assert np.isfinite(p_nf[1])
+
+
+@pytest.mark.parametrize("val", [0.7, 0.1, 10.0])
+def test_r_and_f_regression_constant_target_float(val):
+    """Check that constant float target vectors y do not amplify cancellation
+    residuals or produce negative F-statistics or warnings.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/11395
+    """
+    rng = np.random.RandomState(42)
+    X = rng.randn(100, 3)
+    y = np.full(100, val)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        r = r_regression(X, y, force_finite=True)
+        f, p = f_regression(X, y, force_finite=True)
+
+    np.testing.assert_array_equal(r, [0.0, 0.0, 0.0])
+    np.testing.assert_array_equal(f, [0.0, 0.0, 0.0])
+    np.testing.assert_array_equal(p, [1.0, 1.0, 1.0])
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        r_nf = r_regression(X, y, force_finite=False)
+        f_nf, p_nf = f_regression(X, y, force_finite=False)
+
+    assert np.isnan(r_nf).all()
+    assert np.isnan(f_nf).all()
+    assert np.isnan(p_nf).all()
+
+
+def test_f_regression_collinear_features_ranking():
+    """Check that collinear features bounded in [-1.0, 1.0] do not yield
+    negative F-statistics and are correctly ranked 1st by SelectKBest.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/11395
+    """
+    np.random.seed(11)
+    X = np.random.randn(20, 5)
+    y = X[:, 0].copy()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        r = r_regression(X, y)
+        f, p = f_regression(X, y)
+
+    assert r[0] == 1.0
+    assert f[0] == np.finfo(np.float64).max
+    assert p[0] == 0.0
+    assert (f >= 0.0).all()
+
+    selector = SelectKBest(score_func=f_regression, k=1).fit(X, y)
+    assert selector.get_support(indices=True)[0] == 0
+
+
+def test_r_and_f_regression_center_false_bounds():
+    """Check that center=False strictly respects Cauchy-Schwarz bounds
+    and non-negative F-scores.
+    """
+    rng = np.random.RandomState(42)
+    X = rng.randn(50, 3)
+    y = X[:, 0].copy()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        r = r_regression(X, y, center=False)
+        f, p = f_regression(X, y, center=False)
+
+    assert_allclose(r[0], 1.0, atol=1e-14)
+    assert np.all(r >= -1.0) and np.all(r <= 1.0)
+    assert np.all(f >= 0.0)
+    assert p[0] == 0.0
+
+
 def test_f_classif_multi_class():
     # Test whether the F test yields meaningful results
     # on a simple simulated classification problem
