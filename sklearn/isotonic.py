@@ -97,7 +97,7 @@ def check_increasing(x, y):
     return increasing_bool
 
 
-def _make_unique_np(X, y, sample_weights):
+def _make_unique(X, y, sample_weights):
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where the target y is a
@@ -107,11 +107,6 @@ def _make_unique_np(X, y, sample_weights):
 
     This groups together adjacent values of X with only an epsilon distance.
     """
-    # TODO: Remove this comments before merge into main.
-    # Diverges from the Cython version when a chain of consecutive values is
-    # each < eps apart from its neighbor, but the cumulative drift from the
-    # first value of the chain is >= eps (the Cython version starts a new
-    # group there, this version does not).
     X = np.asarray(X)
     y = np.asarray(y)
     w = np.asarray(sample_weights)
@@ -355,7 +350,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         order = np.lexsort((y, X))
         X, y, sample_weight = [array[order] for array in [X, y, sample_weight]]
-        unique_X, unique_y, unique_sample_weight = _make_unique_np(X, y, sample_weight)
+        unique_X, unique_y, unique_sample_weight = _make_unique(X, y, sample_weight)
 
         X = unique_X
         y = isotonic_regression(

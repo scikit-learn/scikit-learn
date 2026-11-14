@@ -6,11 +6,10 @@ import pytest
 from scipy.special import expit
 
 import sklearn
-from sklearn._isotonic import _make_unique
 from sklearn.datasets import make_regression
 from sklearn.isotonic import (
     IsotonicRegression,
-    _make_unique_np,
+    _make_unique,
     check_increasing,
     isotonic_regression,
 )
@@ -469,25 +468,23 @@ def test_isotonic_mismatched_dtype(y_dtype):
     assert reg.predict(X).dtype == X.dtype
 
 
-@pytest.mark.parametrize("make_unique", [_make_unique, _make_unique_np])
-def test_make_unique_dtype(make_unique):
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_make_unique_dtype(dtype):
     x_list = [2, 2, 2, 3, 5]
-    for dtype in (np.float32, np.float64):
-        x = np.array(x_list, dtype=dtype)
-        y = x.copy()
-        w = np.ones_like(x)
-        x, y, w = make_unique(x, y, w)
-        assert_array_equal(x, [2, 3, 5])
+    x = np.array(x_list, dtype=dtype)
+    y = x.copy()
+    w = np.ones_like(x)
+    x, y, w = _make_unique(x, y, w)
+    assert_array_equal(x, [2, 3, 5])
 
 
-@pytest.mark.parametrize("make_unique", [_make_unique, _make_unique_np])
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
-def test_make_unique_tolerance(make_unique, dtype):
+def test_make_unique_tolerance(dtype):
     # Check that equality takes account of np.finfo tolerance
     x = np.array([0, 1e-16, 1, 1 + 1e-14], dtype=dtype)
     y = x.copy()
     w = np.ones_like(x)
-    x, y, w = make_unique(x, y, w)
+    x, y, w = _make_unique(x, y, w)
     if dtype == np.float64:
         x_out = np.array([0, 1, 1 + 1e-14])
     else:
@@ -537,13 +534,13 @@ def test_isotonic_non_regression_inf_slope_large_y_range():
 
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
-def test_make_unique_np_constant_X(dtype):
+def test_make_unique_constant_X(dtype):
     """Non-regression test: a constant (all-duplicate) X, including all-zero,
     must still collapse to a single unique value."""
     x = np.zeros(5, dtype=dtype)
     y = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=dtype)
     w = np.ones_like(x)
-    x_out, y_out, w_out = _make_unique_np(x, y, w)
+    x_out, y_out, w_out = _make_unique(x, y, w)
     assert_array_equal(x_out, [0])
     assert w_out[0] == 5
     assert_allclose(y_out, [y.mean()])
