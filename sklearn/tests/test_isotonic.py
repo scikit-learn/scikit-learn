@@ -17,7 +17,6 @@ from sklearn.isotonic import (
 from sklearn.utils import shuffle
 from sklearn.utils._testing import (
     assert_allclose,
-    assert_array_almost_equal,
     assert_array_equal,
 )
 from sklearn.utils.validation import check_array
@@ -92,95 +91,71 @@ def test_isotonic_regression():
     assert_array_equal(ir.fit_transform(np.ones(len(x)), y), np.mean(y))
 
 
-def test_isotonic_regression_ties_min():
-    # Setup examples with ties on minimum
-    x = [1, 1, 2, 3, 4, 5]
-    y = [1, 2, 3, 4, 5, 6]
-    y_true = [1.5, 1.5, 3, 4, 5, 6]
-
-    # Check that we get identical results for fit/transform and fit_transform
+@pytest.mark.parametrize(
+    "x, y, y_true",
+    [
+        # ties on minimum
+        (
+            [1, 1, 2, 3, 4, 5],  # x
+            [1, 2, 3, 4, 5, 6],  # y
+            [1.5, 1.5, 3, 4, 5, 6],  # y_true
+        ),
+        # ties on maximum
+        (
+            [1, 2, 3, 4, 5, 5],  # x
+            [1, 2, 3, 4, 5, 6],  # y
+            [1, 2, 3, 4, 5.5, 5.5],  # y_true
+        ),
+        # outliers in x
+        (
+            [0.0, 1e-10, 1.1e-10, 1e10],
+            [0.0, 1.0, 2.0, 3.0],
+            [0.0, 1.0, 2.0, 3.0],
+        ),
+        # The "secondary" ties method and "pituitary" data from R "isotone" package,
+        # as detailed in: Leeuw, Hornik, Mair (2009) "Isotone Optimization in R:
+        # Pool-Adjacent-Violators Algorithm (PAVA) and Active Set Methods"
+        # https://doi.org/10.18637/JSS.V032.I05
+        # The following R command is detailed in the paper above:
+        # > library("isotone")
+        # > data("pituitary")
+        # > res1 <- gpava(pituitary$age, pituitary$size, ties="secondary")
+        # > res1$x
+        #
+        # `isotone` version: 1.0-2, 2014-09-07
+        # R version: R version 3.1.1 (2014-07-10)
+        (
+            [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14],  # x
+            [21, 23.5, 23, 24, 21, 25, 21.5, 22, 19, 23.5, 25],  # y
+            [22.22222222222222] * 9 + [24.25] * 2,  # y_true
+        ),
+        # ties in differently sized groups / repeated X values
+        # Compare against output in R:
+        # > library("isotone")
+        # > x <- c(0, 1, 1, 2, 3, 4)
+        # > y <- c(0, 0, 1, 0, 0, 1)
+        # > res1 <- gpava(x, y, ties="secondary")
+        # > res1$x
+        #
+        # `isotone` version: 1.1-0, 2015-07-24
+        # R version: R version 3.3.2 (2016-10-31)
+        (
+            [0, 1, 1, 2, 3, 4],  # x
+            [0, 0, 1, 0, 0, 1],  # y
+            [0.0, 0.25, 0.25, 0.25, 0.25, 1.0],  # y_true
+        ),
+        # single-sample input
+        ([3.0], [1.0], [1]),
+    ],
+)
+@pytest.mark.filterwarnings("error")
+def test_isotonic_regression_with_ties_and_edge_cases(x, y, y_true):
+    """Test isotonic regression with ties and other edge cases."""
     ir = IsotonicRegression()
     ir.fit(x, y)
-    assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
     assert_array_equal(y_true, ir.fit_transform(x, y))
-
-
-def test_isotonic_regression_ties_max():
-    # Setup examples with ties on maximum
-    x = [1, 2, 3, 4, 5, 5]
-    y = [1, 2, 3, 4, 5, 6]
-    y_true = [1, 2, 3, 4, 5.5, 5.5]
-
     # Check that we get identical results for fit/transform and fit_transform
-    ir = IsotonicRegression()
-    ir.fit(x, y)
     assert_array_equal(ir.fit(x, y).transform(x), ir.fit_transform(x, y))
-    assert_array_equal(y_true, ir.fit_transform(x, y))
-
-
-def test_isotonic_regression_ties_secondary_():
-    """
-    Test isotonic regression fit, transform  and fit_transform
-    against the "secondary" ties method and "pituitary" data from R
-    "isotone" package, as detailed in: J. d. Leeuw, K. Hornik, P. Mair,
-    Isotone Optimization in R: Pool-Adjacent-Violators Algorithm
-    (PAVA) and Active Set Methods
-
-    Set values based on pituitary example and
-    the following R command detailed in the paper above:
-    > library("isotone")
-    > data("pituitary")
-    > res1 <- gpava(pituitary$age, pituitary$size, ties="secondary")
-    > res1$x
-
-    `isotone` version: 1.0-2, 2014-09-07
-    R version: R version 3.1.1 (2014-07-10)
-    """
-    x = [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14]
-    y = [21, 23.5, 23, 24, 21, 25, 21.5, 22, 19, 23.5, 25]
-    y_true = [
-        22.22222,
-        22.22222,
-        22.22222,
-        22.22222,
-        22.22222,
-        22.22222,
-        22.22222,
-        22.22222,
-        22.22222,
-        24.25,
-        24.25,
-    ]
-
-    # Check fit, transform and fit_transform
-    ir = IsotonicRegression()
-    ir.fit(x, y)
-    assert_array_almost_equal(ir.transform(x), y_true, 4)
-    assert_array_almost_equal(ir.fit_transform(x, y), y_true, 4)
-
-
-def test_isotonic_regression_with_ties_in_differently_sized_groups():
-    """Test isotonic predictions with repeated X values.
-
-    https://github.com/scikit-learn/scikit-learn/issues/9432
-
-    Compare against output in R:
-    > library("isotone")
-    > x <- c(0, 1, 1, 2, 3, 4)
-    > y <- c(0, 0, 1, 0, 0, 1)
-    > res1 <- gpava(x, y, ties="secondary")
-    > res1$x
-
-    `isotone` version: 1.1-0, 2015-07-24
-    R version: R version 3.3.2 (2016-10-31)
-    """
-    x = np.array([0, 1, 1, 2, 3, 4])
-    y = np.array([0, 0, 1, 0, 0, 1])
-    y_true = np.array([0.0, 0.25, 0.25, 0.25, 0.25, 1.0])
-    ir = IsotonicRegression()
-    ir.fit(x, y)
-    assert_array_almost_equal(ir.transform(x), y_true)
-    assert_array_almost_equal(ir.fit_transform(x, y), y_true)
 
 
 def test_isotonic_regression_reversed():
