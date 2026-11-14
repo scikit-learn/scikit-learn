@@ -1289,24 +1289,20 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
     @property
     def n_features_in_(self):
         """Number of features seen during first step `fit` method."""
-        # delegate to first step (which will call check_is_fitted)
-        try:
-            return self.steps[0][1].n_features_in_
-        except IndexError:
-            raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute 'n_features_in_'"
-            )
+        for _, _, step in self._iter(with_final=True, filter_passthrough=True):
+            return step.n_features_in_
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute 'n_features_in_'"
+        )
 
     @property
     def feature_names_in_(self):
         """Names of features seen during first step `fit` method."""
-        # delegate to first step (which will call check_is_fitted)
-        try:
-            return self.steps[0][1].feature_names_in_
-        except IndexError:
-            raise AttributeError(
-                f"'{type(self).__name__}' object has no attribute 'feature_names_in_'"
-            )
+        for _, _, step in self._iter(with_final=True, filter_passthrough=True):
+            return step.feature_names_in_
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute 'feature_names_in_'"
+        )
 
     def __sklearn_is_fitted__(self):
         """Indicate whether pipeline has been fit.
