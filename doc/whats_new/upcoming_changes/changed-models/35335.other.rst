@@ -1,0 +1,6 @@
+- :class:`isotonic.IsotonicRegression` and :func:`isotonic.isotonic_regression`
+  replaced a helper function written in Cython by a pure Python function relying on
+  numpy. For very rare edge cases, this may result in slightly changed results. What is
+  gained is a reduced wheel size (less compiled Cython code) and especially for ``X`` with
+  many duplicate values the fit time is improved.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
