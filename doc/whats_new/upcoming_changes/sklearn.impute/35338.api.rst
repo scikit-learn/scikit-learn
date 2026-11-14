@@ -1,2 +1,2 @@
-- :class:`impute.IterativeImputer` now supports ``sample_weight`` argument.
+- :class:`impute.SimpleImputer` now supports ``sample_weight`` argument.
   By :user:`Szymon Jaroszewicz <jszymon>`.
