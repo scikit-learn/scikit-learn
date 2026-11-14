@@ -70,10 +70,11 @@ def log_likelihood(emp_cov, precision):
     {
         "X": ["array-like"],
         "assume_centered": ["boolean"],
+        "sample_weight": ["array-like"],
     },
     prefer_skip_nested_validation=True,
 )
-def empirical_covariance(X, *, assume_centered=False):
+def empirical_covariance(X, *, assume_centered=False, sample_weight=np.ones(0)):
     """Compute the Maximum likelihood covariance estimator.
 
     Parameters
@@ -86,6 +87,9 @@ def empirical_covariance(X, *, assume_centered=False):
         Useful when working with data whose mean is almost, but not exactly
         zero.
         If `False`, data will be centered before computation.
+
+    sample_weight : array-like of shape (n_samples,)
+        Non-negative weights for weighing the training data.
 
     Returns
     -------
@@ -112,15 +116,25 @@ def empirical_covariance(X, *, assume_centered=False):
         warnings.warn(
             "Only one sample available. You may want to reshape your data array"
         )
+    if not len(sample_weight):
+        sample_weight = np.ones(X.shape[0])
+
+    if len(sample_weight.shape) > 1:
+        if sample_weight.shape[1] != 1:
+            raise ValueError("weights can only be 1-D")
+        else:
+            sample_weight = sample_weight.flatten()
 
     if assume_centered:
-        covariance = X.T @ X / X.shape[0]
+        X = np.multiply(np.sqrt(sample_weight).reshape(-1, 1), X)
+        covariance = X.T @ X / sample_weight.sum()
     elif _is_numpy_namespace(xp):
         # Preserve numpy path, because `np.cov` always returns float64
         # and callers like GraphicalLasso and GraphicalLassoCV rely on
         # this behavior.
-        covariance = np.cov(X.T, bias=1)
+        covariance = np.cov(X.T, bias=1, aweights=sample_weight / sample_weight.sum())
     else:
+        # need to add weights to here
         covariance = _cov(X, xp=xp)
 
     if covariance.ndim == 0:
