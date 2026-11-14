@@ -2797,7 +2797,7 @@ def test_metadata_routing_no_fit_transform():
 
 
 @pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_routing_error_for_column_transformer(method):
     """Test that the right error is raised when metadata is not requested."""
     X = np.array([[0, 1, 2], [2, 4, 6]]).T

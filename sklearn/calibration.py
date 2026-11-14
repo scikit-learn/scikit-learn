@@ -48,6 +48,7 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _deprecate_estimator_name,
     _validate_style_kwargs,
 )
 from sklearn.utils._response import _get_response_values, _process_predict_proba
@@ -1505,14 +1506,24 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     y_prob : ndarray of shape (n_samples,)
         Probability estimates for the positive class, for each sample.
 
-    estimator_name : str, default=None
-        Name of estimator. If None, the estimator name is not shown.
+    name : str, default=None
+        Name for labeling the legend entry. If `None`, no name is shown in the legend.
+
+        .. versionchanged:: 1.10
+            `estimator_name` was deprecated in favor of `name`.
 
     pos_label : int, float, bool or str, default=None
         The positive class when calibration curve computed.
         If not `None`, this value is displayed in the x- and y-axes labels.
 
         .. versionadded:: 1.1
+
+    estimator_name : str, default=None
+        Name of estimator. If None, the estimator name is not shown.
+
+        .. deprecated:: 1.10
+            `estimator_name` is deprecated and will be removed in 1.12. Use `name`
+            instead.
 
     Attributes
     ----------
@@ -1555,12 +1566,19 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     """
 
     def __init__(
-        self, prob_true, prob_pred, y_prob, *, estimator_name=None, pos_label=None
+        self,
+        prob_true,
+        prob_pred,
+        y_prob,
+        *,
+        name=None,
+        pos_label=None,
+        estimator_name="deprecated",
     ):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
-        self.estimator_name = estimator_name
+        self.name = _deprecate_estimator_name(estimator_name, name, "1.10")
         self.pos_label = pos_label
 
     def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
@@ -1576,8 +1594,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         name : str, default=None
-            Name for labeling curve. If `None`, use `estimator_name` if
-            not `None`, otherwise no labeling is shown.
+            Name for labeling curve. If `None`, use `name` provided at
+            `CalibrationDisplay` initialization if not `None`, otherwise no
+            labeling is shown.
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
@@ -1871,7 +1890,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             prob_true=prob_true,
             prob_pred=prob_pred,
             y_prob=y_prob,
-            estimator_name=name,
+            name=name,
             pos_label=pos_label_validated,
         )
         return disp.plot(ax=ax, ref_line=ref_line, **kwargs)

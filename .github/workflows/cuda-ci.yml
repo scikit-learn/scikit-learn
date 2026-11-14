@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@8c2dcd2e96041a619f5ff03c9638d7941e2553a4 # v4.3.3
+        uses: pypa/cibuildwheel@f9b966cfadf4109556cadc5bb39ddb72d0ce664e # v4.3.5
         env:
           CIBW_BUILD: cp314-manylinux_x86_64
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
@@ -45,7 +45,7 @@ jobs:
           pattern: cibw-wheels
           path: ~/dist
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           # XXX: The 3.12.4 release of Python on GitHub Actions is corrupted:
           # https://github.com/actions/setup-python/issues/886
