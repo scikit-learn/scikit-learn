@@ -180,7 +180,6 @@ def safe_mean(arr, *args, **kwargs):
     return np.nan if length == 0 else np.average(arr, *args, **kwargs)
 
 
-
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 @pytest.mark.parametrize("sample_weight", _generate_test_sample_weights(100))
 def test_imputation_mean_median(csc_container, sample_weight):
@@ -242,7 +241,6 @@ def test_imputation_mean_median(csc_container, sample_weight):
                 )
 
             # Shuffle them the same way
-            # For weighted sample all records suffled the same way
             if sample_weight is None:
                 np.random.RandomState(j).shuffle(X[:, j])
                 np.random.RandomState(j).shuffle(X_true[:, j])
@@ -255,6 +253,7 @@ def test_imputation_mean_median(csc_container, sample_weight):
 
         X_true = X_true[:, cols_to_keep]
 
+        # For weighted sample shuffle all columns together
         if sample_weight is not None:
             np.random.RandomState(0).shuffle(X)
             np.random.RandomState(0).shuffle(X_true)
@@ -680,7 +679,7 @@ def test_imputation_pipeline_grid_search_weighted(sample_weight):
         [
             ("imputer", SimpleImputer(missing_values=missing_values).set_fit_request(
                 sample_weight=True)
-             ),
+            ),
             ("tree", tree.DecisionTreeRegressor(random_state=0)),
         ]
     )
@@ -1445,8 +1444,7 @@ def test_missing_indicator_string():
         ),
     ],
 )
-@pytest.mark.parametrize("sample_weight", [None, [1,1]])
-def test_missing_indicator_with_imputer(X, missing_values, X_trans_exp, sample_weight):
+def test_missing_indicator_with_imputer(X, missing_values, X_trans_exp):
     trans = make_union(
         SimpleImputer(missing_values=missing_values, strategy="most_frequent"),
         MissingIndicator(missing_values=missing_values),
@@ -1533,7 +1531,7 @@ def test_simple_imputation_add_indicator_sparse_matrix(arr_type, sample_weight):
     )
 
     imputer = SimpleImputer(missing_values=np.nan, add_indicator=True)
-    X_trans = imputer.fit_transform(X_sparse)
+    X_trans = imputer.fit_transform(X_sparse, sample_weight=sample_weight)
 
     assert sparse.issparse(X_trans)
     assert X_trans.shape == X_true.shape
@@ -1679,6 +1677,19 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     assert expected == _most_frequent(
         np.array(array, dtype=dtype), extra_value, n_repeat
     )
+
+
+def test_most_frequent_weighted():
+    x = np.array([1,1,1,2,2])
+    w = np.ones(5)
+    m1 = _most_frequent(x, 0, 0)
+    m2 = _most_frequent(x, 0, 0, w)
+    assert_allclose(m1, m2)
+
+    w2 = np.array([1,1,1,2.3,2.7])
+    m1 = _most_frequent(x, 0, 0)
+    m2 = _most_frequent(x, 0, 0, w)
+    m1 != m2
 
 
 @pytest.mark.parametrize(

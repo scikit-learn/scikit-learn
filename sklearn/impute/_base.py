@@ -457,7 +457,6 @@ class SimpleImputer(_BaseImputer):
         -------
         self : object
             Fitted estimator.
-
         """
         X = self._validate_input(X, in_fit=True)
 
@@ -495,8 +494,7 @@ class SimpleImputer(_BaseImputer):
 
         return self
 
-    def _sparse_fit(self, X, strategy, missing_values, fill_value,
-                    sample_weight=None):
+    def _sparse_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on sparse data."""
         missing_mask = _get_mask(X, missing_values)
         mask_data = missing_mask.data
@@ -536,24 +534,14 @@ class SimpleImputer(_BaseImputer):
                     statistics[i] = 0
                 else:
                     if strategy == "mean":
-                        if sample_weight is not None:
-                            column_idx = X.indices[X.indptr[i] : X.indptr[i + 1]]
-                            column_weight = sample_weight[column_idx]
-                            column_weight = column_weight[~mask_column]
-                            nonzero_column_weight = column_weight[~mask_zeros]
-                            s = column_weight.sum()
-                            statistics[i] = np.nan if s == 0 else \
-                                (column @ nonzero_column_weight) / s
-                        else:
-                            s = column.size + n_zeros
-                            statistics[i] = np.nan if s == 0 else column.sum() / s
+                        s = column.size + n_zeros
+                        statistics[i] = np.nan if s == 0 else column.sum() / s
 
                     elif strategy == "median":
                         statistics[i] = _get_median(column, n_zeros)
 
                     elif strategy == "most_frequent":
-                        statistics[i] = _most_frequent(column, 0, n_zeros,
-                                                       sample_weight)
+                        statistics[i] = _most_frequent(column, 0, n_zeros)
 
                     elif isinstance(strategy, Callable):
                         statistics[i] = self.strategy(column)
@@ -569,9 +557,11 @@ class SimpleImputer(_BaseImputer):
             return self._sparse_fit(X, strategy, missing_values, fill_value)
 
         statistics = np.empty(X.shape[1])
-        # Do a dense fit on each column separately.  sample_weight is
-        # dense and its values over all records need to be taken into
-        # account precluding a sparse fit.
+
+        # Do a dense fit on each column separately.  Delegate each
+        # column to dense fit: sample_weight is dense and its values
+        # over all records need to be taken into account negating
+        # benefits of a sparse fit.
         for i in range(X.shape[1]):
             Xi_dense = X[:, [i]].toarray()
             statistics[i] = self._dense_fit(Xi_dense, strategy, missing_values,
@@ -610,7 +600,7 @@ class SimpleImputer(_BaseImputer):
                 # only float arrays can be filled with nans
                 if not masked_X.dtype.kind == "f":
                     masked_X = masked_X.astype(float)
-                # use average=True to agree with unweighted version
+                # use average=True for agreement with unweighted version
                 weighted_median = _weighted_percentile(
                     masked_X.filled(np.nan), sample_weight,
                     average=True
