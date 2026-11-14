@@ -46,8 +46,13 @@ def _assert_allclose_and_same_dtype(x, y):
 
 
 def _check_statistics(
-    X, X_true, strategy, statistics, missing_values,
-    sparse_container, sample_weight=None
+    X,
+    X_true,
+    strategy,
+    statistics,
+    missing_values,
+    sparse_container,
+    sample_weight=None,
 ):
     """Utility function for testing imputation for a given strategy.
 
@@ -84,8 +89,10 @@ def _check_statistics(
     assert_ae(imputer.statistics_, statistics, err_msg=err_msg.format(True))
     assert_ae(X_trans, X_true, err_msg=err_msg.format(True))
 
+
 def _generate_test_sample_weights(n):
     return [None, np.ones(n), np.arange(n)]
+
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
@@ -101,7 +108,7 @@ def test_imputation_shape(strategy, csr_container, sample_weight):
     X_imputed = imputer.fit_transform(X, sample_weight=sample_weight)
     assert X_imputed.shape == (10, 2)
 
-    if sample_weight is None: # avoid recomputation
+    if sample_weight is None:  # avoid recomputation
         iterative_imputer = IterativeImputer(initial_strategy=strategy)
         X_imputed = iterative_imputer.fit_transform(X)
         assert X_imputed.shape == (10, 2)
@@ -169,10 +176,12 @@ def safe_median(arr, *args, **kwargs):
     weights = kwargs.pop("weights", None)
     if weights is None:
         return np.nan if length == 0 else np.median(arr, *args, **kwargs)
-    return np.nan if length == 0 else _weighted_percentile(
-                    arr, weights, *args,
-                    average=True, **kwargs
-                )
+    return (
+        np.nan
+        if length == 0
+        else _weighted_percentile(arr, weights, *args, average=True, **kwargs)
+    )
+
 
 def safe_mean(arr, *args, **kwargs):
     # np.mean([]) raises a RuntimeWarning for numpy >= 1.10.1
@@ -196,10 +205,12 @@ def test_imputation_mean_median(csc_container, sample_weight):
     values[4::2] = -values[4::2]
 
     tests = [
-        ("mean", np.nan, lambda z, v, p, w: safe_mean(np.hstack((z, v)),
-                                                      weights=w)),
-        ("median", np.nan, lambda z, v, p, w: safe_median(np.hstack((z, v)),
-                                                          weights=w)),
+        ("mean", np.nan, lambda z, v, p, w: safe_mean(np.hstack((z, v)), weights=w)),
+        (
+            "median",
+            np.nan,
+            lambda z, v, p, w: safe_median(np.hstack((z, v)), weights=w),
+        ),
     ]
 
     for strategy, test_missing_values, true_value_fun in tests:
@@ -221,7 +232,7 @@ def test_imputation_mean_median(csc_container, sample_weight):
             p = np.repeat(test_missing_values, nb_missing_values)
             v = values[rng.permutation(len(values))[:nb_values]]
             if sample_weight is not None:
-                w = sample_weight[:(nb_zeros + nb_values)]
+                w = sample_weight[: (nb_zeros + nb_values)]
             else:
                 w = None
 
@@ -263,8 +274,13 @@ def test_imputation_mean_median(csc_container, sample_weight):
             X_w = None
 
         _check_statistics(
-            X, X_true, strategy, true_statistics, test_missing_values,
-            csc_container, sample_weight=X_w
+            X,
+            X_true,
+            strategy,
+            true_statistics,
+            test_missing_values,
+            csc_container,
+            sample_weight=X_w,
         )
 
 
@@ -374,6 +390,7 @@ def test_imputation_most_frequent(csc_container):
     # updated to be consistent with the new (correct) behaviour
     _check_statistics(X, X_true, "most_frequent", [np.nan, 2, 3, 3], -1, csc_container)
 
+
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
 def test_imputation_most_frequent_weighted(csc_container):
     # Test imputation using the most-frequent strategy.
@@ -396,8 +413,15 @@ def test_imputation_most_frequent_weighted(csc_container):
         ]
     )
 
-    _check_statistics(X, X_true, "most_frequent", [np.nan, 1, 0, 5],
-                      -1, csc_container, sample_weight=sample_weight)
+    _check_statistics(
+        X,
+        X_true,
+        "most_frequent",
+        [np.nan, 1, 0, 5],
+        -1,
+        csc_container,
+        sample_weight=sample_weight,
+    )
 
 
 @pytest.mark.parametrize("marker", [None, np.nan, "NAN", "", 0])
@@ -427,6 +451,7 @@ def test_imputation_most_frequent_objects(marker):
     X_trans = imputer.fit(X).transform(X)
 
     assert_array_equal(X_trans, X_true)
+
 
 @pytest.mark.parametrize("marker", [None, np.nan, "NAN", "", 0])
 def test_imputation_most_frequent_objects_weighted(marker):
@@ -477,6 +502,7 @@ def test_imputation_most_frequent_pandas(dtype):
     X_trans = imputer.fit_transform(df)
 
     assert_array_equal(X_trans, X_true)
+
 
 @pytest.mark.parametrize("dtype", [object, "category"])
 def test_imputation_most_frequent_pandas_weighted(dtype):
@@ -539,8 +565,9 @@ def test_imputation_constant_integer(keep_empty_features, sample_weight):
 @pytest.mark.parametrize("array_constructor", CSR_CONTAINERS + [np.asarray])
 @pytest.mark.parametrize("keep_empty_features", [True, False])
 @pytest.mark.parametrize("sample_weight", _generate_test_sample_weights(4))
-def test_imputation_constant_float(array_constructor, keep_empty_features,
-                                   sample_weight):
+def test_imputation_constant_float(
+    array_constructor, keep_empty_features, sample_weight
+):
     # Test imputation using the constant strategy on floats
     X = np.array(
         [
@@ -649,6 +676,7 @@ def test_iterative_imputer_one_feature(X):
     imputer.fit([[1], [np.nan]])
     assert imputer.n_iter_ == 0
 
+
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     X = _sparse_random_matrix(100, 100, density=0.10)
@@ -677,8 +705,11 @@ def test_imputation_pipeline_grid_search_weighted(sample_weight):
 
     pipeline = Pipeline(
         [
-            ("imputer", SimpleImputer(missing_values=missing_values).set_fit_request(
-                sample_weight=True)
+            (
+                "imputer",
+                SimpleImputer(missing_values=missing_values).set_fit_request(
+                    sample_weight=True
+                ),
             ),
             ("tree", tree.DecisionTreeRegressor(random_state=0)),
         ]
@@ -1507,18 +1538,20 @@ def test_imputer_without_indicator(imputer_constructor):
 
     assert imputer.indicator_ is None
 
+
 def test_weighted_imputer_without_indicator():
     X = np.array([[1, 1], [1, 1]])
     imputer = SimpleImputer()
-    imputer.fit(X, sample_weight=[1,1])
+    imputer.fit(X, sample_weight=[1, 1])
 
     assert imputer.indicator_ is None
+
 
 @pytest.mark.parametrize(
     "arr_type",
     CSC_CONTAINERS + CSR_CONTAINERS + COO_CONTAINERS + LIL_CONTAINERS + BSR_CONTAINERS,
 )
-@pytest.mark.parametrize("sample_weight", [None, [1,1,1,1]])
+@pytest.mark.parametrize("sample_weight", [None, [1, 1, 1, 1]])
 def test_simple_imputation_add_indicator_sparse_matrix(arr_type, sample_weight):
     X_sparse = arr_type([[np.nan, 1, 5], [2, np.nan, 1], [6, 3, np.nan], [1, 2, 9]])
     X_true = np.array(
@@ -1680,13 +1713,13 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
 
 
 def test_most_frequent_weighted():
-    x = np.array([1,1,1,2,2])
+    x = np.array([1, 1, 1, 2, 2])
     w = np.ones(5)
     m1 = _most_frequent(x, 0, 0)
     m2 = _most_frequent(x, 0, 0, w)
     assert_allclose(m1, m2)
 
-    w2 = np.array([1,1,1,2.3,2.7])
+    w2 = np.array([1, 1, 1, 2.3, 2.7])
     m1 = _most_frequent(x, 0, 0)
     m2 = _most_frequent(x, 0, 0, w)
     m1 != m2
@@ -1710,8 +1743,9 @@ def test_most_frequent_tie_object(expected, array, sample_weight):
 
     Non-regression test for issue #31717.
     """
-    assert expected == _most_frequent(np.array(array, dtype=object), None, 0,
-                                      sample_weight=sample_weight)
+    assert expected == _most_frequent(
+        np.array(array, dtype=object), None, 0, sample_weight=sample_weight
+    )
 
 
 @pytest.mark.parametrize(
@@ -1938,8 +1972,9 @@ def test_imputer_transform_preserves_numeric_dtype(dtype_test, sample_weight):
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
 @pytest.mark.parametrize("keep_empty_features", [True, False])
 @pytest.mark.parametrize("sample_weight", _generate_test_sample_weights(3))
-def test_simple_imputer_keep_empty_features(strategy, array_type, keep_empty_features,
-                                            sample_weight):
+def test_simple_imputer_keep_empty_features(
+    strategy, array_type, keep_empty_features, sample_weight
+):
     """Check the behaviour of `keep_empty_features` with all strategies but
     'constant'.
     """
@@ -1997,15 +2032,16 @@ def test_imputation_custom(csc_container):
     X_trans = imputer.fit_transform(csc_container(X))
     assert_array_equal(X_trans.toarray(), X_true)
 
-    err_msg = "sample_weight can only be used with mean, median,"\
+    err_msg = (
+        "sample_weight can only be used with mean, median,"
         " most_frequent, and constant strategies"
+    )
     with pytest.raises(ValueError, match=re.escape(err_msg)):
         imputer = SimpleImputer(missing_values=np.nan, strategy=np.min)
         X_trans = imputer.fit(X, sample_weight=np.ones(X.shape[0]))
     with pytest.raises(ValueError, match=re.escape(err_msg)):
         imputer = SimpleImputer(missing_values=np.nan, strategy=np.min)
-        X_trans = imputer.fit(csc_container(X),
-                              sample_weight=np.ones(X.shape[0]))
+        X_trans = imputer.fit(csc_container(X), sample_weight=np.ones(X.shape[0]))
 
 
 def test_simple_imputer_constant_fill_value_casting():

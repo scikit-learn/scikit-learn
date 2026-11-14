@@ -85,8 +85,9 @@ def _most_frequent(array, extra_value, n_repeat, sample_weight=None):
             )
         else:
             if sample_weight is not None:
-                most_frequent_value, most_frequent_count = \
-                    weighted_mode(array, sample_weight)
+                most_frequent_value, most_frequent_count = weighted_mode(
+                    array, sample_weight
+                )
                 # keep same shape and dtype as stats.mode
                 most_frequent_value = most_frequent_value[0].astype(array.dtype)
                 most_frequent_count = most_frequent_count[0]
@@ -462,8 +463,10 @@ class SimpleImputer(_BaseImputer):
 
         if sample_weight is not None:
             if self.strategy not in {"mean", "median", "most_frequent", "constant"}:
-                raise ValueError("sample_weight can only be used with mean, median,"
-                                 " most_frequent, and constant strategies")
+                raise ValueError(
+                    "sample_weight can only be used with mean, median,"
+                    " most_frequent, and constant strategies"
+                )
             sample_weight = _check_sample_weight(sample_weight, X)
 
         # default fill_value is 0 for numerical input and "missing_value"
@@ -550,8 +553,9 @@ class SimpleImputer(_BaseImputer):
 
         return statistics
 
-    def _sparse_weighted_fit(self, X, strategy, missing_values, fill_value,
-                             sample_weight):
+    def _sparse_weighted_fit(
+        self, X, strategy, missing_values, fill_value, sample_weight
+    ):
         if strategy == "constant":
             # constant strategy is not affected by weights
             return self._sparse_fit(X, strategy, missing_values, fill_value)
@@ -564,17 +568,29 @@ class SimpleImputer(_BaseImputer):
         # benefits of a sparse fit.
         for i in range(X.shape[1]):
             Xi_dense = X[:, [i]].toarray()
-            statistics[i] = self._dense_fit(Xi_dense, strategy, missing_values,
-                                            fill_value, sample_weight,
-                                            fit_indicator=False).item()
+            statistics[i] = self._dense_fit(
+                Xi_dense,
+                strategy,
+                missing_values,
+                fill_value,
+                sample_weight,
+                fit_indicator=False,
+            ).item()
         if self.add_indicator:
             missing_mask = _get_mask(X, missing_values)
             super()._fit_indicator(missing_mask)
 
         return statistics
 
-    def _dense_fit(self, X, strategy, missing_values, fill_value,
-                   sample_weight=None, fit_indicator=True):
+    def _dense_fit(
+        self,
+        X,
+        strategy,
+        missing_values,
+        fill_value,
+        sample_weight=None,
+        fit_indicator=True,
+    ):
         """Fit the transformer on dense data."""
         missing_mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=missing_mask)
@@ -602,8 +618,7 @@ class SimpleImputer(_BaseImputer):
                     masked_X = masked_X.astype(float)
                 # use average=True for agreement with unweighted version
                 weighted_median = _weighted_percentile(
-                    masked_X.filled(np.nan), sample_weight,
-                    average=True
+                    masked_X.filled(np.nan), sample_weight, average=True
                 )
                 median_masked = np.ma.masked_invalid(weighted_median)
             else:
