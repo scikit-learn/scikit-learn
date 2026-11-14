@@ -1038,10 +1038,69 @@ def test_permutation_test_score_blocks_metadata_routing(cv):
         permutation="blocks",
         params={"groups": groups},
     )
-    assert permutation_scores.shape == (5,)
+    with config_context(enable_metadata_routing=False):
+        _, expected, _ = permutation_test_score(
+            LogisticRegression(),
+            X,
+            y,
+            groups=groups,
+            cv=cv,
+            n_permutations=5,
+            permutation="blocks",
+        )
+    assert_allclose(permutation_scores, expected)
     with pytest.raises(ValueError, match="requires `groups`"):
         permutation_test_score(
             LogisticRegression(), X, y, cv=GroupKFold(4), permutation="blocks"
+        )
+    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+        permutation_test_score(
+            LogisticRegression(),
+            X,
+            y,
+            cv=cv,
+            permutation="blocks",
+            params={"groups": groups[:-1]},
+        )
+
+
+@config_context(enable_metadata_routing=True)
+def test_permutation_test_score_blocks_routing_consumers():
+    """With routing, `groups` still reaches a child that requests it, and an
+    unset request still raises."""
+    rng = np.random.RandomState(0)
+    y, groups = _random_block_labels(8, 4, rng)
+    X = rng.normal(size=(y.shape[0], 3))
+    registry = _Registry()
+    estimator = ConsumingClassifier(registry=registry).set_fit_request(
+        metadata="groups"
+    )
+    permutation_test_score(
+        estimator,
+        X,
+        y,
+        cv=KFold(4),
+        n_permutations=2,
+        permutation="blocks",
+        params={"groups": groups},
+    )
+    assert registry
+    records = [est._records["fit"]["permutation_test_score"] for est in registry]
+    assert all("metadata" in r for rec in records for r in rec)
+
+    class GroupsClassifier(LogisticRegression):
+        def fit(self, X, y, groups=None):
+            return super().fit(X, y)
+
+    with pytest.raises(UnsetMetadataPassedError, match=r"\[groups\]"):
+        permutation_test_score(
+            GroupsClassifier(),
+            X,
+            y,
+            cv=KFold(4),
+            n_permutations=2,
+            permutation="blocks",
+            params={"groups": groups},
         )
 
 

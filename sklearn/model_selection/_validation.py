@@ -1638,6 +1638,10 @@ def permutation_test_score(
     """
     _check_groups_routing_disabled(groups)
     params = {} if params is None else params
+    if permutation == "blocks" and _routing_enabled():
+        # `groups` cannot be passed directly with routing; the blocks are
+        # taken from the metadata in `params`.
+        groups = params.get("groups")
 
     X, y, groups = indexable(X, y, groups)
 
@@ -1646,10 +1650,6 @@ def permutation_test_score(
     random_state = check_random_state(random_state)
 
     if permutation == "blocks":
-        if _routing_enabled():
-            # `groups` cannot be passed directly with routing (it is None
-            # here); the blocks are taken from the metadata in `params`.
-            groups = params.get("groups")
         if groups is None:
             raise ValueError(
                 "permutation='blocks' requires `groups`: pass `groups`, or "
@@ -1691,9 +1691,12 @@ def permutation_test_score(
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
-        if permutation == "blocks" and not router.consumes("fit", ["groups"]):
+        if permutation == "blocks" and "groups" not in router._get_param_names(
+            method="fit", return_alias=True, ignore_self_request=False
+        ):
             # permutation_test_score uses `groups` itself to permute the
-            # blocks; route it on only if a child requests it.
+            # blocks; route it on only if a child requests it or has an
+            # unset request (which then raises as usual).
             params = {k: v for k, v in params.items() if k != "groups"}
 
         try:
