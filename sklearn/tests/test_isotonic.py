@@ -1,6 +1,5 @@
 import copy
 import pickle
-import warnings
 
 import numpy as np
 import pytest
@@ -38,70 +37,28 @@ def test_permutation_invariance():
     assert_array_equal(y_transformed, y_transformed_s)
 
 
-def test_check_increasing_small_number_of_samples():
-    x = [0, 1, 2]
-    y = [1, 1.1, 1.05]
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        is_increasing = check_increasing(x, y)
-
-    assert is_increasing
-
-
-def test_check_increasing_up():
-    x = [0, 1, 2, 3, 4, 5]
-    y = [0, 1.5, 2.77, 8.99, 8.99, 50]
-
-    # Check that we got increasing=True and no warnings
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        is_increasing = check_increasing(x, y)
-
-    assert is_increasing
-
-
-def test_check_increasing_up_extreme():
-    x = [0, 1, 2, 3, 4, 5]
-    y = [0, 1, 2, 3, 4, 5]
-
-    # Check that we got increasing=True and no warnings
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        is_increasing = check_increasing(x, y)
-
-    assert is_increasing
-
-
-def test_check_increasing_down():
-    x = [0, 1, 2, 3, 4, 5]
-    y = [0, -1.5, -2.77, -8.99, -8.99, -50]
-
-    # Check that we got increasing=False and no warnings
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        is_increasing = check_increasing(x, y)
-
-    assert not is_increasing
-
-
-def test_check_increasing_down_extreme():
-    x = [0, 1, 2, 3, 4, 5]
-    y = [0, -1, -2, -3, -4, -5]
-
-    # Check that we got increasing=False and no warnings
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", UserWarning)
-        is_increasing = check_increasing(x, y)
-
-    assert not is_increasing
+@pytest.mark.parametrize(
+    "x, y, expected",
+    [
+        ([0, 1, 2], [1, 1.1, 1.05], True),
+        ([0, 1, 2, 3, 4, 5], [0, 1.5, 2.77, 8.99, 8.99, 50], True),
+        ([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5], True),
+        ([0, 1, 2, 3, 4, 5], [0, -1.5, -2.77, -8.99, -8.99, -50], False),
+        ([0, 1, 2, 3, 4, 5], [0, -1, -2, -3, -4, -5], False),
+    ],
+)
+@pytest.mark.filterwarnings("error")
+def test_check_increasing(x, y, expected):
+    """Test that check_increasing returns as expected."""
+    is_increasing = check_increasing(x, y)
+    assert is_increasing == expected
 
 
 def test_check_ci_warn():
+    # Check that we got increasing=False and CI interval warning
     x = [0, 1, 2, 3, 4, 5]
     y = [0, -1, 2, -3, 4, -5]
 
-    # Check that we got increasing=False and CI interval warning
     msg = "interval"
     with pytest.warns(UserWarning, match=msg):
         is_increasing = check_increasing(x, y)
@@ -165,12 +122,12 @@ def test_isotonic_regression_ties_secondary_():
     """
     Test isotonic regression fit, transform  and fit_transform
     against the "secondary" ties method and "pituitary" data from R
-     "isotone" package, as detailed in: J. d. Leeuw, K. Hornik, P. Mair,
-     Isotone Optimization in R: Pool-Adjacent-Violators Algorithm
+    "isotone" package, as detailed in: J. d. Leeuw, K. Hornik, P. Mair,
+    Isotone Optimization in R: Pool-Adjacent-Violators Algorithm
     (PAVA) and Active Set Methods
 
     Set values based on pituitary example and
-     the following R command detailed in the paper above:
+    the following R command detailed in the paper above:
     > library("isotone")
     > data("pituitary")
     > res1 <- gpava(pituitary$age, pituitary$size, ties="secondary")
@@ -203,8 +160,8 @@ def test_isotonic_regression_ties_secondary_():
 
 
 def test_isotonic_regression_with_ties_in_differently_sized_groups():
-    """
-    Non-regression test to handle issue 9432:
+    """Test isotonic predictions with repeated X values.
+
     https://github.com/scikit-learn/scikit-learn/issues/9432
 
     Compare against output in R:
@@ -392,8 +349,10 @@ def test_isotonic_duplicate_min_entry():
 
 
 def test_isotonic_ymin_ymax():
-    # Test from @NelleV's issue:
-    # https://github.com/scikit-learn/scikit-learn/issues/6921
+    """Test that isotonic regression respects y_min and y_max.
+
+    https://github.com/scikit-learn/scikit-learn/issues/6921
+    """
     x = np.array(
         [
             1.263,
@@ -436,14 +395,13 @@ def test_isotonic_ymin_ymax():
 
 
 def test_isotonic_zero_weight_loop():
-    # Test from @ogrisel's issue:
-    # https://github.com/scikit-learn/scikit-learn/issues/4297
+    """Test that isotonic regression can deal with zero sample weights.
 
-    # Get deterministic RNG with seed
+    https://github.com/scikit-learn/scikit-learn/issues/4297
+    """
     rng = np.random.RandomState(42)
 
-    # Create regression and samples
-    regression = IsotonicRegression()
+    # Create data
     n_samples = 50
     x = np.linspace(-3, 3, n_samples)
     y = x + rng.uniform(size=n_samples)
@@ -451,6 +409,8 @@ def test_isotonic_zero_weight_loop():
     # Get some random weights and zero out
     w = rng.uniform(size=n_samples)
     w[5:8] = 0
+
+    regression = IsotonicRegression()
     regression.fit(x, y, sample_weight=w)
 
     # This will hang in failure case.
@@ -458,9 +418,11 @@ def test_isotonic_zero_weight_loop():
 
 
 def test_fast_predict():
-    # test that the faster prediction change doesn't
-    # affect out-of-sample predictions:
-    # https://github.com/scikit-learn/scikit-learn/pull/6206
+    """Test that trim_duplicates=True doesn't affect predictions.
+
+    The trim_duplicates in _build_y was introduced to speedup prediction time.
+    Here we make sure that it does not alter the out-of-sample predictions.
+    """
     rng = np.random.RandomState(123)
     n_samples = 10**3
     # X values over the -10,10 range
@@ -487,6 +449,7 @@ def test_fast_predict():
     # fit with just the necessary data
     fast_model.fit(X_train, y_train, sample_weight=weights)
 
+    # Generate test data for prediction
     X_test = 20.0 * rng.rand(n_samples) - 10
     y_pred_slow = slow_model.predict(X_test)
     y_pred_fast = fast_model.predict(X_test)
@@ -523,8 +486,7 @@ def test_isotonic_dtype(dtype):
 
 @pytest.mark.parametrize("y_dtype", [np.int32, np.int64, np.float32, np.float64])
 def test_isotonic_mismatched_dtype(y_dtype):
-    # regression test for #15004
-    # check that data are converted when X and y dtype differ
+    """Test that data are converted when X and y dtype differ."""
     reg = IsotonicRegression()
     y = np.array([2, 1, 4, 3, 5], dtype=y_dtype)
     X = np.arange(len(y), dtype=np.float32)
@@ -572,8 +534,11 @@ def test_isotonic_make_unique_tolerance():
 
 
 def test_isotonic_non_regression_inf_slope():
-    # Non-regression test to ensure that inf values are not returned
-    # see: https://github.com/scikit-learn/scikit-learn/issues/10903
+    """Test that isotonic regression predictions stay finite.
+
+    For tiny distance between X values, the slope of the linear interpolant, dy/dx,
+    might overflow and result in predicting inf.
+    """
     X = np.array([0.0, 4.1e-320, 4.4e-314, 1.0])
     y = np.array([0.42, 0.42, 0.44, 0.44])
     ireg = IsotonicRegression().fit(X, y)
