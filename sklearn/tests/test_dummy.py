@@ -621,6 +621,31 @@ def test_most_frequent_and_prior_strategy_sparse_target(csc_container):
         assert_array_equal(y_pred.toarray(), y_expected)
 
 
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+def test_most_frequent_and_prior_strategy_sparse_target_nonconsecutive_classes(
+    csc_container,
+):
+    # Non-regression test for gh-35376: with sparse targets whose class
+    # labels are nonconsecutive, the predicted label must be the majority
+    # class label, not the index of the majority class within `classes_`.
+    X = np.zeros((5, 1))
+    y = csc_container(np.array([4, 4, 4, 0, 1]).reshape(-1, 1))
+
+    n_samples = len(X)
+    for strategy in ("most_frequent", "prior"):
+        clf = DummyClassifier(strategy=strategy, random_state=0)
+        clf.fit(X, y)
+
+        y_pred = clf.predict(X)
+        assert sp.issparse(y_pred)
+        assert_array_equal(y_pred.toarray().ravel(), np.full(n_samples, 4))
+
+        # The dense target must give the same predictions.
+        dense_clf = DummyClassifier(strategy=strategy, random_state=0)
+        dense_clf.fit(X, np.array([4, 4, 4, 0, 1]))
+        assert_array_equal(dense_clf.predict(X), np.full(n_samples, 4))
+
+
 def test_dummy_regressor_sample_weight(global_random_seed, n_samples=10):
     random_state = np.random.RandomState(seed=global_random_seed)
 

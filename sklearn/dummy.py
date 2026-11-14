@@ -282,7 +282,9 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         if self.sparse_output_:
             class_prob = None
             if self._strategy in ("most_frequent", "prior"):
-                classes_ = [np.array([cp.argmax()]) for cp in class_prior_]
+                classes_ = [
+                    np.array([c[cp.argmax()]]) for c, cp in zip(classes_, class_prior_)
+                ]
 
             elif self._strategy == "stratified":
                 class_prob = class_prior_
