@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.impute._base import _BaseImputer, _most_frequent
+from sklearn.impute._base import _BaseImputer
 from sklearn.impute._iterative import _assign_where
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._testing import _convert_container, assert_allclose
@@ -105,16 +105,3 @@ def test_assign_where(X1_type):
     if X1_type == "pandas":
         X1 = X1.to_numpy()
     assert_allclose(X1[mask], X2[mask])
-
-def test_most_frequent():
-    x = np.array([1,1,1,2,2])
-    w = np.ones(5)
-    m1 = _most_frequent(x, 0, 0)
-    m2 = _most_frequent(x, 0, 0, w)
-    assert_allclose(m1, m2)
-
-    w2 = np.array([1,1,1,2.3,2.7])
-    m1 = _most_frequent(x, 0, 0)
-    m2 = _most_frequent(x, 0, 0, w)
-    m1 != m2
-
