@@ -115,7 +115,15 @@ def _make_unique_np(X, y, sample_weights):
     X = np.asarray(X)
     y = np.asarray(y)
     w = np.asarray(sample_weights)
-    eps = np.finfo(X.dtype).resolution
+    # We select an eps that protects against overflow of the slope dy/dx of the
+    # linear interpolation. Pooling y values means taking averages of y (both here and
+    # in isotonic_regression). Therefore a safe bound on |dy| is dy_max:
+    dy_max = float(y.max() - y.min())
+    # Requiring |dx| >= eps = safety_factor * dy_max / finfo.max
+    # keeps dy/dx comfortably below the largest finite float.
+    finfo = np.finfo(X.dtype)
+    safety_factor = 100
+    eps = max(safety_factor * dy_max / finfo.max, finfo.resolution)
     starts = np.flatnonzero(np.concatenate(([True], np.diff(X) >= eps)))
     w_out = np.add.reduceat(w, starts)
     y_out = np.add.reduceat(y * w, starts) / w_out

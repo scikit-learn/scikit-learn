@@ -508,17 +508,45 @@ def test_isotonic_make_unique_tolerance():
     assert_array_equal(ireg.y_thresholds_, np.array([0.0, 1.5, 3.0]))
 
 
-def test_isotonic_non_regression_inf_slope():
+@pytest.mark.parametrize(
+    "X_train, X_predict",
+    [
+        ([0.0, 4.1e-320, 4.4e-314, 1.0], [0, 2.1e-319, 5.4e-316, 1e-10]),
+        ([0.0, 1e-320, 2e-320, 3e-320], [0, 5e-321, 1.5e-320, 2.5e-320, 3e-320]),
+    ],
+)
+def test_isotonic_non_regression_inf_slope(X_train, X_predict):
     """Test that isotonic regression predictions stay finite.
 
     For tiny distance between X values, the slope of the linear interpolant, dy/dx,
     might overflow and result in predicting inf.
     """
-    X = np.array([0.0, 4.1e-320, 4.4e-314, 1.0])
     y = np.array([0.42, 0.42, 0.44, 0.44])
-    ireg = IsotonicRegression().fit(X, y)
-    y_pred = ireg.predict(np.array([0, 2.1e-319, 5.4e-316, 1e-10]))
+    ireg = IsotonicRegression().fit(X_train, y)
+    y_pred = ireg.predict(X_predict)
     assert np.all(np.isfinite(y_pred))
+
+
+def test_isotonic_non_regression_inf_slope_large_y_range():
+    """Test that dy/dx does not overflow from large y values."""
+    X = np.array([0.0, 1e-10, 2e-10])
+    y = np.array([0.0, 1e300, 2e300])
+    ireg = IsotonicRegression().fit(X, y)
+    y_pred = ireg.predict([0, 5e-11, 1e-10, 1.5e-10, 2e-10])
+    assert np.all(np.isfinite(y_pred))
+
+
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_make_unique_np_constant_X(dtype):
+    """Non-regression test: a constant (all-duplicate) X, including all-zero,
+    must still collapse to a single unique value."""
+    x = np.zeros(5, dtype=dtype)
+    y = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=dtype)
+    w = np.ones_like(x)
+    x_out, y_out, w_out = _make_unique_np(x, y, w)
+    assert_array_equal(x_out, [0])
+    assert w_out[0] == 5
+    assert_allclose(y_out, [y.mean()])
 
 
 @pytest.mark.parametrize("increasing", [True, False])
