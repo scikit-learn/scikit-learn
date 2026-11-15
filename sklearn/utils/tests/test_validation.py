@@ -2396,7 +2396,8 @@ def test_check_array_writeable_mmap():
     assert out.flags.writeable
 
 
-def test_check_array_writeable_df():
+@pytest.mark.parametrize("convert_to_narwhals", [False, True])
+def test_check_array_writeable_df(convert_to_narwhals):
     """Check the behavior of check_array when a writeable array is requested
     without copy if possible, on a dataframe.
     """
@@ -2404,16 +2405,18 @@ def test_check_array_writeable_df():
 
     X = np.random.uniform(size=(10, 10))
     df = pd.DataFrame(X, copy=False)
+    df_input = nw.from_native(df) if convert_to_narwhals else df
 
-    out = check_array(df, copy=False, force_writeable=True)
+    out = check_array(df_input, copy=False, force_writeable=True)
     # df is backed by a writeable array, no copy is needed
     assert np.may_share_memory(out, df)
     assert out.flags.writeable
 
     X.flags.writeable = False
     df = pd.DataFrame(X, copy=False)
+    df_input = nw.from_native(df) if convert_to_narwhals else df
 
-    out = check_array(df, copy=False, force_writeable=True)
+    out = check_array(df_input, copy=False, force_writeable=True)
     # df is backed by a read-only array, a copy is made
     assert not np.may_share_memory(out, df)
     assert out.flags.writeable
