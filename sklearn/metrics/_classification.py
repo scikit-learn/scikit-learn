@@ -2452,9 +2452,11 @@ def class_likelihood_ratios(
             )
         else:
             msg_beginning = "`positive_likelihood_ratio` is ill-defined and "
-        msg_end = "set to `np.nan`. Use the `replace_undefined_by` param to "
-        "control this behavior. To suppress this warning or turn it into an error, "
-        "see Python's `warnings` module and `warnings.catch_warnings()`."
+        msg_end = (
+            "set to `np.nan`. Use the `replace_undefined_by` param to "
+            "control this behavior. To suppress this warning or turn it into an error, "
+            "see Python's `warnings` module and `warnings.catch_warnings()`."
+        )
         warnings.warn(msg_beginning + msg_end, UndefinedMetricWarning, stacklevel=2)
         if isinstance(replace_undefined_by, float) and np.isnan(replace_undefined_by):
             positive_likelihood_ratio = replace_undefined_by
@@ -3957,6 +3959,7 @@ def d2_log_loss_score(
         y_true, y_proba, sample_weight, labels
     )
     xp, _ = get_namespace(y_proba, transformed_labels)
+    transformed_labels = xp.astype(transformed_labels, y_proba.dtype, copy=False)
     y_proba_null = _average(transformed_labels, axis=0, weights=sample_weight)
     y_proba_null = xp.tile(y_proba_null, (y_proba.shape[0], 1))
 

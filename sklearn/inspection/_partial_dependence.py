@@ -496,7 +496,8 @@ def partial_dependence(
           :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
           :class:`~sklearn.tree.DecisionTreeRegressor`,
           :class:`~sklearn.ensemble.RandomForestRegressor`,
-          ) when `kind='average'`.
+          ) when `kind='average'`, and not for target features that are
+          categorical for the estimator.
           This is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
@@ -510,6 +511,7 @@ def partial_dependence(
 
         - `'auto'`: the `'recursion'` is used for estimators that support it,
           and `'brute'` is used otherwise. If `sample_weight` is not `None`,
+          or if any of the target features is categorical for the estimator,
           then `'brute'` is used regardless of the estimator.
 
         Please see :ref:`this note <pdp_method_differences>` for
@@ -604,8 +606,26 @@ def partial_dependence(
             "The 'recursion' method can only be applied when sample_weight is None."
         )
 
+    if _determine_key_type(features, accept_slice=False) == "int":
+        # _get_column_indices() supports negative indexing. Here, we limit
+        # the indexing to be positive. The upper bound will be checked
+        # by _get_column_indices()
+        if np.any(np.less(features, 0)):
+            raise ValueError(f"all features must be in [0, {X.shape[1] - 1}]")
+
+    features_indices = np.asarray(
+        _get_column_indices(X, features), dtype=np.intp, order="C"
+    ).ravel()
+
+    # The recursion method evaluates the trees on raw grid values, but the
+    # trees split on the categories as encoded by the estimator.
+    estimator_is_categorical = getattr(estimator, "is_categorical_", None)
+    has_categorical_target = estimator_is_categorical is not None and np.any(
+        estimator_is_categorical[features_indices]
+    )
+
     if method == "auto":
-        if sample_weight is not None:
+        if sample_weight is not None or has_categorical_target:
             method = "brute"
         elif isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
             method = "recursion"
@@ -642,6 +662,12 @@ def partial_dependence(
                     ", ".join(supported_classes_recursion)
                 )
             )
+        if has_categorical_target:
+            raise NotImplementedError(
+                "The 'recursion' method for partial dependence is not "
+                "supported for categorical target features. Use "
+                "method='brute' instead."
+            )
         if response_method == "auto":
             response_method = "decision_function"
 
@@ -653,17 +679,6 @@ def partial_dependence(
 
     if sample_weight is not None:
         sample_weight = _check_sample_weight(sample_weight, X)
-
-    if _determine_key_type(features, accept_slice=False) == "int":
-        # _get_column_indices() supports negative indexing. Here, we limit
-        # the indexing to be positive. The upper bound will be checked
-        # by _get_column_indices()
-        if np.any(np.less(features, 0)):
-            raise ValueError(f"all features must be in [0, {X.shape[1] - 1}]")
-
-    features_indices = np.asarray(
-        _get_column_indices(X, features), dtype=np.intp, order="C"
-    ).ravel()
 
     feature_names = _check_feature_names(X, feature_names)
 

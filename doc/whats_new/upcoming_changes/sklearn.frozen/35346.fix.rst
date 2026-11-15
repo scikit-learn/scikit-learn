@@ -1,0 +1,3 @@
+- :meth:`frozen.FrozenEstimator.set_params` now returns `self`,
+  like :meth:`base.BaseEstimator.set_params`, instead of `None`.
+  By :user:`Yi-111-a <Yi-111-a>`.

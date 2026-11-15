@@ -622,7 +622,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self)
+        router = MetadataRouter(owner=self).add_self_request(self)
 
         method_mapping = MethodMapping()
         method_mapping.add(caller="fit", callee="fit").add(
