@@ -1139,7 +1139,9 @@ def check_array(
             # ensure that the output is writeable, even if avoidable, to not overwrite
             # the user's data by surprise.
 
-            if is_pandas_df_or_series(array_orig):
+            if is_pandas_df_or_series(array_orig) or (
+                array_df is not None and array_df.implementation.is_pandas()
+            ):
                 try:
                     # In pandas >= 3, np.asarray(df), called earlier in check_array,
                     # returns a read-only intermediate array. It can be made writeable
