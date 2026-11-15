@@ -97,7 +97,7 @@ def sag(
                 continue
             p = np.dot(entry, weights) + intercept
             gradient = dloss(p, y[idx])
-            weights_gradient_update = entry * gradient + alpha * weights
+            update = entry * gradient + alpha * weights
             weights_gradient_correction = (
                 weights_gradient_update - weigths_gradient_memory[idx]
             )
