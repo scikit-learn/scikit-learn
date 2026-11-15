@@ -19,9 +19,11 @@ from sklearn.datasets import (
     make_multilabel_classification,
     make_regression,
 )
+from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import PoissonRegressor
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import LabelBinarizer, MinMaxScaler, scale
 from sklearn.utils._testing import (
@@ -547,7 +549,7 @@ def test_predict_proba_binary():
     y_proba = clf.predict_proba(X)
     y_log_proba = clf.predict_log_proba(X)
 
-    (n_samples, n_classes) = y.shape[0], 2
+    n_samples, n_classes = y.shape[0], 2
 
     proba_max = y_proba.argmax(axis=1)
     proba_log_max = y_log_proba.argmax(axis=1)
@@ -570,7 +572,7 @@ def test_predict_proba_multiclass():
     y_proba = clf.predict_proba(X)
     y_log_proba = clf.predict_log_proba(X)
 
-    (n_samples, n_classes) = y.shape[0], np.unique(y).size
+    n_samples, n_classes = y.shape[0], np.unique(y).size
 
     proba_max = y_proba.argmax(axis=1)
     proba_log_max = y_log_proba.argmax(axis=1)
@@ -1082,6 +1084,92 @@ def test_mlp_sample_weight_with_early_stopping():
 
     m2 = MLPRegressor(**params).fit(X, y, sample_weight=None)
     assert_allclose(m1.predict(X), m2.predict(X))
+
+
+@pytest.mark.parametrize(
+    "Estimator, y",
+    [
+        (MLPClassifier, np.array([0, 1] * 30)),
+        (MLPClassifier, np.array([0, 1, 2] * 20)),
+        (MLPRegressor, np.linspace(-1, 1, 60)),
+    ],
+)
+@ignore_warnings(category=ConvergenceWarning)
+def test_mlp_fit_with_zero_sum_minibatch_sample_weight(Estimator, y):
+    """Check that zero-weight rows do not lead to a division by zero.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/35381
+    """
+    rng = np.random.RandomState(0)
+    X = rng.randn(y.shape[0], 10)
+    # Only the first mini-batch has a non-zero total weight. Before the fix,
+    # fitting the second mini-batch divided by a zero weight sum.
+    sample_weight = np.zeros(y.shape[0])
+    n_nonzero = 3
+    sample_weight[:n_nonzero] = 1.0
+
+    mlp = Estimator(
+        hidden_layer_sizes=(5,),
+        batch_size=n_nonzero,
+        max_iter=10,
+        shuffle=False,
+        random_state=0,
+    )
+    mlp.fit(X, y, sample_weight=sample_weight)
+
+    assert np.isfinite(mlp.loss_)
+    assert np.all(np.isfinite(mlp.coefs_[0]))
+    assert mlp.predict(X).shape == (X.shape[0],)
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_mlp_zero_weight_rows_with_lbfgs():
+    """Zero-weight rows are removed before the LBFGS solver sees them."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(20, 4)
+    y = rng.randint(0, 2, size=20)
+    sample_weight = np.zeros(20)
+    sample_weight[:5] = 1.0
+
+    mlp = MLPClassifier(
+        hidden_layer_sizes=(3,),
+        solver="lbfgs",
+        max_iter=5,
+        random_state=0,
+    ).fit(X, y, sample_weight=sample_weight)
+
+    assert np.isfinite(mlp.loss_)
+    assert mlp.predict(X).shape == (20,)
+
+
+def test_mlp_rejects_negative_sample_weight():
+    """Negative sample weights are not meaningful for the MLP losses."""
+    X = np.arange(20, dtype=float).reshape(10, 2)
+    y = np.array([0, 1] * 5)
+    sample_weight = np.ones(10)
+    sample_weight[0] = -1.0
+
+    with pytest.raises(ValueError, match="Negative values"):
+        MLPClassifier(max_iter=2).fit(X, y, sample_weight=sample_weight)
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_mlp_bagging_with_small_max_samples():
+    """Bagging can produce all-zero weight mini-batches via row resampling."""
+    data = load_digits()
+    X_train, X_test, y_train, y_test = train_test_split(
+        data.data, data.target, test_size=0.3, random_state=42
+    )
+    bag = BaggingClassifier(
+        estimator=MLPClassifier(hidden_layer_sizes=(8,), max_iter=30, random_state=0),
+        n_estimators=2,
+        max_samples=10,
+        random_state=42,
+    )
+    bag.fit(X_train, y_train)
+
+    assert np.isfinite(bag.score(X_test, y_test))
 
 
 def test_mlp_vs_poisson_glm_equivalent(global_random_seed):

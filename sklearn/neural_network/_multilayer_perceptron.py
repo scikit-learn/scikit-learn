@@ -473,9 +473,22 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
         )
 
         X, y = self._validate_input(X, y, incremental, reset=first_pass)
-        n_samples, n_features = X.shape
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, ensure_non_negative=True
+            )
+            # Zero-weight samples do not contribute to the loss nor to the
+            # gradients. Drop them before splitting into mini-batches so that a
+            # mini-batch can never have a zero total weight. This happens for
+            # instance with resampling meta-estimators such as BaggingClassifier,
+            # which encode row sampling as frequency weights.
+            nonzero_weight = sample_weight != 0
+            if not np.all(nonzero_weight):
+                X = _safe_indexing(X, nonzero_weight)
+                y = _safe_indexing(y, nonzero_weight)
+                sample_weight = sample_weight[nonzero_weight]
+
+        n_features = X.shape[1]
 
         # Ensure y is 2D
         if y.ndim == 1:
