@@ -1,0 +1,12 @@
+- Scorers created with :func:`~metrics.make_scorer` and :func:`~metrics.get_scorer`
+  now route metadata to the response method they call on the estimator (e.g.
+  `predict`, `predict_proba` or `decision_function`) according to its requests.
+  :func:`~model_selection.cross_validate`, :func:`~model_selection.cross_val_score`,
+  :func:`~model_selection.learning_curve`, :func:`~model_selection.validation_curve`,
+  :func:`~model_selection.permutation_test_score`, the ``*SearchCV`` estimators,
+  :class:`~model_selection.TunedThresholdClassifierCV`,
+  :class:`~feature_selection.RFECV` and
+  :class:`~feature_selection.SequentialFeatureSelector` forward this metadata to the
+  scorer, so that, for instance, a :class:`~pipeline.Pipeline` step requesting
+  metadata in `transform` also receives it on the validation folds.
+  By :user:`Thomas Moreau <tomMoral>` and :user:`Hamza Abdelhedi <BabaSanfour>`.
