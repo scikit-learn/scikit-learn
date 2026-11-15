@@ -262,11 +262,9 @@ def _generate_meta_estimator_instances_with_pipeline():
     Are considered meta-estimators all estimators accepting one of "estimator",
     "base_estimator" or "estimators".
     """
-    print("estimators: ", len(all_estimators()))
     for _, Estimator in sorted(all_estimators()):
         sig = set(signature(Estimator).parameters)
 
-        print("\n", Estimator.__name__, sig)
         if not sig.intersection(
             {
                 "estimator",
@@ -280,7 +278,6 @@ def _generate_meta_estimator_instances_with_pipeline():
 
         with suppress(SkipTest):
             for meta_estimator in _construct_instances(Estimator):
-                print(meta_estimator)
                 yield _get_instance_with_pipeline(meta_estimator, sig)
 
 
