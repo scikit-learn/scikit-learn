@@ -1,0 +1,5 @@
+- :func:`utils.check_array` now correctly handles :class:`narwhals.DataFrame`
+  backed by pandas containing extension dtypes without raising an
+  ``AttributeError``.
+  By :user:`Direk Kakkar <direkkakkar319-ops>`.
+
