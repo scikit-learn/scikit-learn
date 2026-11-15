@@ -214,7 +214,12 @@ def _get_instance_with_pipeline(meta_estimator, init_params):
         if init_params.intersection(
             {"param_grid", "param_distributions"}
         ):  # SearchCV estimators
-            extra_params = {"n_iter": 2} if "n_iter" in init_params else {}
+            # Do not sample more candidates than the size of param_grid.
+            extra_params = {}
+            if "n_iter" in init_params:  # RandomizedSearchCV
+                extra_params["n_iter"] = 2
+            if "n_candidates" in init_params:  # HalvingRandomSearchCV
+                extra_params["n_candidates"] = 2
             return type(meta_estimator)(estimator, param_grid, **extra_params)
         else:
             return type(meta_estimator)(estimator)
