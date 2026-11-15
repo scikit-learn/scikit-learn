@@ -1024,6 +1024,67 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
+def test_metadata_is_routed_correctly_to_scorer_response_method(metaestimator):
+    """Test that the scorer routes requested metadata to the response method it
+    calls on the sub-estimator.
+
+    Non-regression test for gh-27977.
+    """
+    if "scorer_name" not in metaestimator or "estimator_name" not in metaestimator:
+        # This test only makes sense for CV estimators scoring a sub-estimator
+        return
+
+    X = metaestimator["X"]
+    y = metaestimator["y"]
+    metaestimator_class = metaestimator["metaestimator"]
+    method_mapping = metaestimator.get("method_mapping", {})
+    response_methods = metaestimator.get("scorer_response_methods", ["predict"])
+
+    for method_name in metaestimator["scorer_routing_methods"]:
+        kwargs, (estimator, registry, _), (scorer, _), (cv, _) = get_init_args(
+            metaestimator, sub_estimator_consumes=True
+        )
+        scorer.set_score_request(metadata=False)
+        if cv:
+            cv.set_split_request(groups=False, metadata=False)
+        set_requests(
+            estimator,
+            method_mapping=method_mapping,
+            methods=["fit"],
+            metadata_name="metadata",
+            value=False,
+        )
+        set_requests(
+            estimator,
+            method_mapping={},
+            methods=response_methods,
+            metadata_name="metadata",
+        )
+        instance = metaestimator_class(**kwargs)
+        method = getattr(instance, method_name)
+        if "fit" not in method_name:
+            instance.fit(X, y)
+        method(X, y, metadata=metadata)
+
+        # the first available response method is the one called by the scorer
+        scored = [
+            est
+            for est in registry
+            if method_name in est._records.get(response_methods[0], {})
+        ]
+        assert scored
+        for _estimator in scored:
+            check_recorded_metadata(
+                obj=_estimator,
+                method=response_methods[0],
+                parent=method_name,
+                split_params=("metadata",),
+                metadata=metadata,
+            )
+
+
+@pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
+@config_context(enable_metadata_routing=True)
 def test_metadata_is_routed_correctly_to_splitter(metaestimator):
     """Test that any requested metadata is correctly routed to the underlying
     splitters in CV estimators.

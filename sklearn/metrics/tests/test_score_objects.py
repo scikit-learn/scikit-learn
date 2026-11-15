@@ -22,7 +22,6 @@ from sklearn.datasets import (
     make_regression,
 )
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.dummy import DummyClassifier
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LogisticRegression, Perceptron, Ridge, RidgeClassifier
 from sklearn.metrics import (
@@ -59,7 +58,11 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifier,
+    ConsumingScorer,
+    _Registry,
     assert_request_is_empty,
+    check_recorded_metadata,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._array_api import (
@@ -1486,28 +1489,48 @@ def test_multimetric_scoring_kwargs():
 
 
 @config_context(enable_metadata_routing=True)
-def test_scorer_metadata_routing():
-    class MyClf(DummyClassifier):
-        def fit(self, X, y, metadata=None):
-            return super().fit(X, y)
+def test_scorer_raises_for_unset_request_of_response_method():
+    """Check that a scorer raises when it is passed metadata that the response
+    method of the estimator accepts but has no request for."""
+    X, y = make_classification(n_samples=10, random_state=0)
+    metadata = np.ones(len(y))
+    estimator = ConsumingClassifier().fit(X, y)
+    scorer = ConsumingScorer().set_score_request(metadata=True)
 
-        def predict(self, X, metadata=None):
-            return super().predict(X)
+    with pytest.raises(UnsetMetadataPassedError, match="ConsumingClassifier.predict"):
+        scorer(estimator, X, y, metadata=metadata)
 
-    X, y = make_classification(
-        n_samples=50, n_features=2, n_redundant=0, random_state=0
+
+@config_context(enable_metadata_routing=True)
+def test_scorer_ignores_requests_of_response_method_not_called():
+    """Check that a scorer only applies the requests of the response method it
+    calls, and not those of the other response methods it could call."""
+    X, y = make_classification(n_samples=20, random_state=0)
+    metadata = np.ones(len(y))
+    registry = _Registry()
+    # `predict_proba` accepts `metadata` but has no request for it
+    estimator = (
+        ConsumingClassifier(registry=registry)
+        .set_fit_request(metadata=False)
+        .set_decision_function_request(metadata=True)
     )
-    metadata = np.ones(X.shape[0])
-
-    clf = (
-        MyClf()
-        .set_fit_request(metadata=True)
-        .set_predict_request(metadata=True)
-        .fit(X, y, metadata=metadata)
+    scorer = make_scorer(
+        roc_auc_score, response_method=("decision_function", "predict_proba")
     )
 
-    score = make_scorer(accuracy_score)
-    score(clf, X, y, metadata=metadata)
+    cross_val_score(
+        estimator, X, y, cv=2, scoring=scorer, params={"metadata": metadata}
+    )
+
+    assert len(registry)
+    for _estimator in registry:
+        check_recorded_metadata(
+            obj=_estimator,
+            method="decision_function",
+            parent="cross_val_score",
+            split_params=("metadata",),
+            metadata=metadata,
+        )
 
 
 def test_kwargs_without_metadata_routing_error():
