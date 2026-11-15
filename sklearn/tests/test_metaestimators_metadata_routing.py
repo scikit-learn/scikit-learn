@@ -221,6 +221,7 @@ METAESTIMATORS: list = [
         "preserves_metadata": "subset",
         "scorer_name": "scoring",
         "scorer_routing_methods": ["fit"],
+        "scorer_response_methods": ["predict_proba", "decision_function"],
         "cv_name": "cv",
         "cv_routing_methods": ["fit"],
     },
@@ -510,6 +511,8 @@ The keys are as follows:
 - scorer_name: The name of the argument for the scorer
 - scorer_routing_methods: list of all methods to check for routing metadata
   to the scorer
+- scorer_response_methods: the methods of the sub-estimator to which the scorer
+  routes metadata. If not present, `["predict"]` is assumed.
 - cv_name: The name of the argument for the CV splitter
 - cv_routing_methods: list of all methods to check for routing metadata
   to the splitter
@@ -852,6 +855,12 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
                 set_requests(
                     scorer, method_mapping={}, methods=["score"], metadata_name=key
                 )
+                set_requests(
+                    estimator,
+                    method_mapping={},
+                    methods=metaestimator.get("scorer_response_methods", ["predict"]),
+                    metadata_name=key,
+                )
             if cv:
                 cv.set_split_request(groups=True, metadata=True)
 
@@ -1036,6 +1045,13 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
             estimator.set_fit_request(sample_weight=False, metadata=False)
         if scorer:
             scorer.set_score_request(sample_weight=False, metadata=False)
+        if scorer and estimator:
+            for response_method in metaestimator.get(
+                "scorer_response_methods", ["predict"]
+            ):
+                getattr(estimator, f"set_{response_method}_request")(
+                    sample_weight=False, metadata=False
+                )
         cv.set_split_request(groups=True, metadata=True)
         instance = metaestimator_class(**kwargs)
         method_kwargs = {"groups": groups, "metadata": metadata}

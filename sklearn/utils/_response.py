@@ -176,9 +176,8 @@ def _get_response_values(
 
         .. versionadded:: 1.4
 
-    **metadata : dict, default=None
-        Metadata dictionary that can be used to pass additional information
-        to the estimator.
+    **metadata : dict
+        Metadata passed to the response method of `estimator`.
 
     Returns
     -------

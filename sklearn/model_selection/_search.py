@@ -35,6 +35,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics import check_scoring
 from sklearn.metrics._scorer import (
     _check_multimetric_scoring,
+    _get_scorer_routing,
     _MultimetricScorer,
     get_scorer_names,
 )
@@ -1316,7 +1317,7 @@ class BaseSearchCV(
 
         scorer, _ = self._get_scorers()
         router.add(
-            scorer=scorer,
+            scorer=_get_scorer_routing(scorer, self.estimator),
             method_mapping=MethodMapping()
             .add(caller="score", callee="score")
             .add(caller="fit", callee="score"),

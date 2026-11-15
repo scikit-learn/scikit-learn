@@ -68,7 +68,6 @@ from sklearn.metrics.cluster import (
     rand_score,
     v_measure_score,
 )
-from sklearn.utils import Bunch
 from sklearn.utils._metadata_requests import MethodMetadataRequest
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -142,17 +141,41 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
-        routed_params = self._route_scorer_metadata(estimator, kwargs)
+        if _routing_enabled():
+            routed_params = process_routing(
+                _get_scorer_routing(self, estimator), "score", **kwargs
+            )
+        else:
+            # Scorers all get the same args, and get all of them except sample_weight.
+            # Only the ones having `sample_weight` in their signature will receive it.
+            # This does not work for metadata other than sample_weight, and for those
+            # users have to enable metadata routing.
+            common_kwargs = {
+                arg: value for arg, value in kwargs.items() if arg != "sample_weight"
+            }
+            sw = kwargs.get("sample_weight")
+            routed_params = _manual_routing(
+                {
+                    name: {
+                        "score": {
+                            **common_kwargs,
+                            **(
+                                {"sample_weight": sw}
+                                if sw is not None and scorer._accept_sample_weight()
+                                else {}
+                            ),
+                        }
+                    }
+                    for name, scorer in self._scorers.items()
+                }
+            )
 
         for name, scorer in self._scorers.items():
             try:
                 if isinstance(scorer, _BaseScorer):
-                    method_name = _get_response_method_name(scorer, estimator)
-                    score_kwargs = {
-                        **routed_params.estimator[method_name],
-                        **routed_params.get(name).score,
-                    }
-                    score = scorer._score(cached_call, estimator, *args, **score_kwargs)
+                    score = scorer._score(
+                        cached_call, estimator, *args, **routed_params.get(name).score
+                    )
                 else:
                     score = scorer(estimator, *args, **routed_params.get(name).score)
                 scores[name] = score
@@ -211,53 +234,6 @@ class _MultimetricScorer:
             method_mapping=MethodMapping().add(caller="score", callee="score"),
         )
 
-    def _route_scorer_metadata(self, estimator, kwargs):
-        """Route metadata parameters for the scorer.
-
-        This cannot be computed in the constructor, because it needs to be
-        computed for each estimator separately, as the metadata routing depends
-        on the estimator.
-        """
-        all_methods = list(
-            set(
-                _get_response_method_name(scorer, estimator)
-                for scorer in self._scorers.values()
-                if isinstance(scorer, _BaseScorer)
-            )
-        )
-        if _routing_enabled():
-            request_routing = self.get_metadata_routing()
-            method_mapping = MethodMapping()
-            for method_name in all_methods:
-                method_mapping.add(caller="score", callee=method_name)
-            request_routing.add(estimator=estimator, method_mapping=method_mapping)
-
-            request_routing.validate_metadata(params=kwargs, method="score")
-            return request_routing.route_params(params=kwargs, caller="score")
-
-        # Scorers all get the same args, and get all of them except sample_weight.
-        # Only the ones having `sample_weight` in their signature will receive it.
-        # This does not work for metadata other than sample_weight, and for those
-        # users have to enable metadata routing.
-        common_kwargs = {
-            arg: value for arg, value in kwargs.items() if arg != "sample_weight"
-        }
-        routed_params = Bunch(
-            **{name: Bunch(score=common_kwargs.copy()) for name in self._scorers},
-            estimator=Bunch(**{method_name: {} for method_name in all_methods}),
-        )
-        if kwargs.get("sample_weight") is not None:
-            any_accept = False
-            for name, scorer in self._scorers.items():
-                if scorer._accept_sample_weight():
-                    routed_params[name].score["sample_weight"] = kwargs["sample_weight"]
-                    any_accept = True
-            if not any_accept:
-                raise TypeError(
-                    "sample_weight parameter is not accepted by any of the scorers."
-                )
-        return routed_params
-
 
 class _BaseScorer(_MetadataRequester):
     """Base scorer that is used as `scorer(estimator, X, y_true)`.
@@ -295,8 +271,7 @@ class _BaseScorer(_MetadataRequester):
 
     def _accept_sample_weight(self):
         # TODO(slep006): remove when metadata routing is the only way
-        params = signature(self._score_func).parameters
-        return "sample_weight" in params or "kwargs" in params
+        return "sample_weight" in signature(self._score_func).parameters
 
     def __repr__(self):
         sign_string = "" if self._sign > 0 else ", greater_is_better=False"
@@ -366,6 +341,30 @@ class _BaseScorer(_MetadataRequester):
             warnings.warn(
                 f"{message} Overlapping parameters are: {overlap}", UserWarning
             )
+
+    def _split_metadata(self, estimator, response_method, kwargs):
+        """Split `kwargs` between the response method and the score function.
+
+        Return the metadata routed to `response_method` of `estimator` and the
+        metadata requested by the score function.
+        """
+        if not (_routing_enabled() and kwargs):
+            return {}, kwargs
+        # Validate against all response methods, but route only to the called one.
+        _get_scorer_routing(self, estimator).validate_metadata(
+            method="score", params=kwargs
+        )
+        routed_params = _get_scorer_routing(
+            self, estimator, response_method=response_method
+        ).route_params(caller="score", params=kwargs)
+        # The score function's metadata are passed under their own names.
+        score_requests = get_routing_for_object(self).score.requests
+        score_params = {
+            key: value
+            for key, value in kwargs.items()
+            if score_requests.get(key, False) is not False
+        }
+        return routed_params["estimator"][response_method], score_params
 
     def set_score_request(self, **kwargs):
         """Set requested parameters by the scorer.
@@ -477,6 +476,13 @@ class _Scorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        response_method = _get_response_method_name(
+            _check_response_method(estimator, self._response_method)
+        )
+        response_params, kwargs = self._split_metadata(
+            estimator, response_method, kwargs
+        )
+
         self._warn_overlap(
             message=(
                 "There is an overlap between set kwargs of this scorer instance and"
@@ -487,56 +493,12 @@ class _Scorer(_BaseScorer):
         )
 
         pos_label = None if is_regressor(estimator) else self._get_pos_label()
-        routed_params = self._route_scorer_metadata(estimator, kwargs)
-
-        method_name = _get_response_method_name(self, estimator)
         y_pred = method_caller(
-            estimator,
-            method_name,
-            X,
-            pos_label=pos_label,
-            **routed_params.estimator[method_name],
+            estimator, response_method, X, pos_label=pos_label, **response_params
         )
 
-        scoring_kwargs = {**self._kwargs, **routed_params.score.score}
+        scoring_kwargs = {**self._kwargs, **kwargs}
         return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
-
-    def _route_scorer_metadata(self, estimator, kwargs):
-        """Route metadata parameters for the scorer.
-
-        This cannot be computed in the constructor, because it needs to be
-        computed for each estimator separately, as the metadata routing depends
-        on the estimator.
-        """
-        method_name = _get_response_method_name(self, estimator)
-        if _routing_enabled():
-            request_routing = (
-                MetadataRouter(owner=self.__class__.__name__)
-                .add(
-                    estimator=estimator,
-                    method_mapping=MethodMapping().add(
-                        caller="score",
-                        callee=method_name,
-                    ),
-                )
-                .add(
-                    score=self,
-                    method_mapping=MethodMapping().add(caller="score", callee="score"),
-                )
-            )
-
-            request_routing.validate_metadata(params=kwargs, method="score")
-            return request_routing.route_params(params=kwargs, caller="score")
-
-        # Scorers all get the same args, and we get a specific error if sample_weight
-        # is passed but unsupported. This does not work for metadata other than
-        # sample_weight, which would require the user to enable metadata routing.
-        if "sample_weight" in kwargs and not self._accept_sample_weight():
-            raise TypeError("sample_weight parameter is not accepted by this scorer.")
-        return Bunch(
-            estimator=Bunch(**{method_name: {}}),
-            score=Bunch(score=kwargs.copy()),
-        )
 
 
 @validate_params(
@@ -632,13 +594,6 @@ class _PassthroughScorer(_MetadataRequester):
         """
         return get_routing_for_object(self._estimator)
 
-    def _route_scorer_metadata(self, estimator, kwargs):
-        return Bunch(
-            score={
-                k: kwargs[k] for k in self.get_metadata_routing().consumes("score", kwargs)
-            }
-        )
-
 
 def _check_multimetric_scoring(estimator, scoring):
     """Check the scoring parameter in cases when multiple metrics are allowed.
@@ -729,16 +684,62 @@ def _check_multimetric_scoring(estimator, scoring):
     return scorers
 
 
-def _get_response_method_name(scorer, estimator):
-    response_method = _check_response_method(estimator, scorer._response_method)
+def _get_response_method_name(response_method):
+    try:
+        return response_method.__name__
+    except AttributeError:
+        return _get_response_method_name(response_method.func)
 
-    def get_name(response_method):
-        try:
-            return response_method.__name__
-        except AttributeError:
-            return get_name(response_method.func)
 
-    return get_name(response_method)
+def _get_scorer_routing(scorer, estimator, response_method=None):
+    """Get the metadata routing of a scorer for a given estimator.
+
+    A scorer consumes metadata in its score function and routes metadata to the
+    response method it calls on the estimator (e.g. `predict`). Hence, routers
+    should add this routing instead of the scorer itself.
+
+    Parameters
+    ----------
+    scorer : callable
+        The scorer, as returned by :func:`check_scoring`.
+
+    estimator : sklearn estimator instance
+        The estimator for which the scoring will be applied.
+
+    response_method : str, default=None
+        The response method called on `estimator`. If None, the routing covers all
+        the response methods the scorer may call.
+
+    Returns
+    -------
+    routing : MetadataRouter or MetadataRequest
+        The metadata routing of `scorer`. For a scorer created by
+        :func:`make_scorer`, `score` routes to the response method(s) of `estimator`.
+    """
+    if isinstance(scorer, _MultimetricScorer):
+        return MetadataRouter(owner=scorer).add(
+            **{
+                name: _get_scorer_routing(sub_scorer, estimator)
+                for name, sub_scorer in scorer._scorers.items()
+            },
+            method_mapping=MethodMapping().add(caller="score", callee="score"),
+        )
+    if not isinstance(scorer, _BaseScorer):
+        return get_routing_for_object(scorer)
+
+    # Routers build this before fitting, when the available method may be unknown.
+    response_methods = response_method or scorer._response_method
+    if isinstance(response_methods, str):
+        response_methods = [response_methods]
+    method_mapping = MethodMapping()
+    for method in response_methods:
+        method_mapping.add(caller="score", callee=method)
+    # `get_routing_for_object` applies the scorer's auto-requests (`sample_weight`).
+    return (
+        MetadataRouter(owner=scorer)
+        .add_self_request(get_routing_for_object(scorer))
+        .add(estimator=estimator, method_mapping=method_mapping)
+    )
 
 
 @validate_params(
@@ -1224,9 +1225,15 @@ class _CurveScorer(_BaseScorer):
         potential_thresholds : ndarray of shape (thresholds,)
             The potential thresholds used to compute the scores.
         """
+        response_method = _get_response_method_name(
+            _check_response_method(estimator, self._response_method)
+        )
+        response_params, kwargs = self._split_metadata(
+            estimator, response_method, kwargs
+        )
         pos_label = self._get_pos_label()
         y_score = method_caller(
-            estimator, self._response_method, X, pos_label=pos_label
+            estimator, response_method, X, pos_label=pos_label, **response_params
         )
 
         scoring_kwargs = {**self._kwargs, **kwargs}

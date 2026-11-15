@@ -18,6 +18,7 @@ from sklearn.base import (
 )
 from sklearn.feature_selection._base import SelectorMixin
 from sklearn.metrics import check_scoring, get_scorer_names
+from sklearn.metrics._scorer import _get_scorer_routing
 from sklearn.model_selection import check_cv, cross_val_score
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
@@ -359,7 +360,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
             method_mapping=MethodMapping().add(caller="fit", callee="split"),
         )
         router.add(
-            scorer=check_scoring(self.estimator, scoring=self.scoring),
+            scorer=_get_scorer_routing(
+                check_scoring(self.estimator, scoring=self.scoring), self.estimator
+            ),
             method_mapping=MethodMapping().add(caller="fit", callee="score"),
         )
         return router

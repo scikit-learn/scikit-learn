@@ -19,6 +19,7 @@ from sklearn.base import (
 )
 from sklearn.feature_selection._base import SelectorMixin, _get_feature_importances
 from sklearn.metrics import get_scorer
+from sklearn.metrics._scorer import _get_scorer_routing
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._validation import _score
 from sklearn.utils import _safe_indexing, metadata_routing
@@ -1002,7 +1003,7 @@ class RFECV(RFE):
             ),
         )
         router.add(
-            scorer=self._get_scorer(),
+            scorer=_get_scorer_routing(self._get_scorer(), self.estimator),
             method_mapping=MethodMapping()
             .add(caller="fit", callee="score")
             .add(caller="score", callee="score"),

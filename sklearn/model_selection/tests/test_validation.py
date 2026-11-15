@@ -2552,6 +2552,7 @@ def test_validation_functions_routing(func, extra_args):
         .set_partial_fit_request(
             sample_weight="fit_sample_weight", metadata="fit_metadata"
         )
+        .set_predict_request(sample_weight=False, metadata=False)
     )
 
     n_samples = _num_samples(X)
