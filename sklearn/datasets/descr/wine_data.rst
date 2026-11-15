@@ -63,7 +63,7 @@ wine.
 Original Owners:
 
 Forina, M. et al, PARVUS -
-An Extendible Package for Data Exploration, Classification and Correlation.
+An Extendable Package of Programs for Data Exploration, Classification and Correlation.
 Institute of Pharmaceutical and Food Analysis and Technologies,
 Via Brigata Salerno, 16147 Genoa, Italy.
 

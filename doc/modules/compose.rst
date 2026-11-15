@@ -177,7 +177,7 @@ syntax::
 
       >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
       ...                   clf=[SVC(), LogisticRegression()],
-      ...                   clf__C=[0.1, 10, 100])
+      ...                   clf__alpha=[1e1, 1e-1, 1e-2])
       >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
   .. seealso::
@@ -507,7 +507,7 @@ on data type or column name::
   ...       make_column_selector(dtype_include=np.number)),
   ...       ('onehot',
   ...       OneHotEncoder(),
-  ...       make_column_selector(pattern='city', dtype_include=object))])
+  ...       make_column_selector(pattern='city', dtype_include=[object, "string"]))])
   >>> ct.fit_transform(X)
   array([[ 0.904,  0.      ,  1. ,  0. ,  0. ],
          [-1.507,  1.414,  1. ,  0. ,  0. ],

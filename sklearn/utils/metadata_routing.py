@@ -5,14 +5,16 @@
 #
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
-
-from ._metadata_requests import (  # noqa: F401
+from sklearn.utils._metadata_requests import (  # noqa: F401
     UNCHANGED,
     UNUSED,
     WARN,
+    AutoRequestMixin,
     MetadataRequest,
     MetadataRouter,
     MethodMapping,
+    MethodMetadataRequest,
+    _manual_routing,
     _MetadataRequester,
     _raise_for_params,
     _raise_for_unsupported_routing,

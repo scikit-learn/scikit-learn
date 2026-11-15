@@ -61,7 +61,10 @@ def load_mnist(n_samples=None, class_0="0", class_1="8"):
     mnist = fetch_openml("mnist_784", version=1, as_frame=False)
 
     # take only two classes for binary classification
-    mask = np.logical_or(mnist.target == class_0, mnist.target == class_1)
+    mask = np.logical_or(
+        mnist.target.astype(str) == str(class_0),
+        mnist.target.astype(str) == str(class_1),
+    )
 
     X, y = shuffle(mnist.data[mask], mnist.target[mask], random_state=42)
     if n_samples is not None:

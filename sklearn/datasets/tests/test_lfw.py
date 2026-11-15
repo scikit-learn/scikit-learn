@@ -105,7 +105,7 @@ def test_load_fake_lfw_people(mock_data_home):
         data_home=mock_data_home, min_faces_per_person=3, download_if_missing=False
     )
 
-    # The data is croped around the center as a rectangular bounding box
+    # The data is cropped around the center as a rectangular bounding box
     # around the face. Colors are converted to gray levels:
     assert lfw_people.images.shape == (10, 62, 47)
     assert lfw_people.data.shape == (10, 2914)
@@ -177,7 +177,7 @@ def test_load_fake_lfw_pairs(mock_data_home):
         data_home=mock_data_home, download_if_missing=False
     )
 
-    # The data is croped around the center as a rectangular bounding box
+    # The data is cropped around the center as a rectangular bounding box
     # around the face. Colors are converted to gray levels:
     assert lfw_pairs_train.pairs.shape == (10, 2, 62, 47)
 

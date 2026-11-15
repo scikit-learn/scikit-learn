@@ -9,19 +9,19 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 
-from .base import (
+from sklearn.base import (
     BaseEstimator,
     ClassifierMixin,
     MultiOutputMixin,
     RegressorMixin,
     _fit_context,
 )
-from .utils import check_random_state
-from .utils._param_validation import Interval, StrOptions
-from .utils.multiclass import class_distribution
-from .utils.random import _random_choice_csc
-from .utils.stats import _weighted_percentile
-from .utils.validation import (
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.multiclass import class_distribution
+from sklearn.utils.random import _random_choice_csc
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.validation import (
     _check_sample_weight,
     _num_samples,
     check_array,
@@ -52,8 +52,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
-    .. versionadded:: 0.13
-
     Parameters
     ----------
     strategy : {"most_frequent", "prior", "stratified", "uniform", \
@@ -82,10 +80,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         * "constant": always predicts a constant label that is provided by
           the user. This is useful for metrics that evaluate a non-majority
           class.
-
-          .. versionchanged:: 0.24
-             The default value of `strategy` has changed to "prior" in version
-             0.24.
 
     random_state : int, RandomState instance or None, default=None
         Controls the randomness to generate the predictions when
@@ -466,8 +460,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
-    .. versionadded:: 0.13
-
     Parameters
     ----------
     strategy : {"mean", "median", "quantile", "constant"}, default="mean"
@@ -581,10 +573,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             if sample_weight is None:
                 self.constant_ = np.median(y, axis=0)
             else:
-                self.constant_ = [
-                    _weighted_percentile(y[:, k], sample_weight, percentile_rank=50.0)
-                    for k in range(self.n_outputs_)
-                ]
+                self.constant_ = _weighted_percentile(
+                    y, sample_weight, percentile_rank=50.0
+                )
 
         elif self.strategy == "quantile":
             if self.quantile is None:
@@ -596,12 +587,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             if sample_weight is None:
                 self.constant_ = np.percentile(y, axis=0, q=percentile_rank)
             else:
-                self.constant_ = [
-                    _weighted_percentile(
-                        y[:, k], sample_weight, percentile_rank=percentile_rank
-                    )
-                    for k in range(self.n_outputs_)
-                ]
+                self.constant_ = _weighted_percentile(
+                    y, sample_weight, percentile_rank=percentile_rank
+                )
 
         elif self.strategy == "constant":
             if self.constant is None:
@@ -636,8 +624,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return_std : bool, default=False
             Whether to return the standard deviation of posterior prediction.
             All zeros in this case.
-
-            .. versionadded:: 0.20
 
         Returns
         -------

@@ -38,25 +38,29 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csgraph, issparse
 
-from ...base import BaseEstimator, ClusterMixin, _fit_context
-from ...metrics import pairwise_distances
-from ...metrics._dist_metrics import DistanceMetric
-from ...metrics.pairwise import _VALID_METRICS
-from ...neighbors import BallTree, KDTree, NearestNeighbors
-from ...utils._param_validation import Interval, StrOptions
-from ...utils.validation import (
-    _allclose_dense_sparse,
-    _assert_all_finite,
-    validate_data,
-)
-from ._linkage import (
+from sklearn.base import BaseEstimator, ClusterMixin, _fit_context
+from sklearn.cluster._hdbscan._linkage import (
     MST_edge_dtype,
     make_single_linkage,
     mst_from_data_matrix,
     mst_from_mutual_reachability,
 )
-from ._reachability import mutual_reachability_graph
-from ._tree import HIERARCHY_dtype, labelling_at_cut, tree_to_labels
+from sklearn.cluster._hdbscan._reachability import mutual_reachability_graph
+from sklearn.cluster._hdbscan._tree import (
+    HIERARCHY_dtype,
+    labelling_at_cut,
+    tree_to_labels,
+)
+from sklearn.metrics import pairwise_distances
+from sklearn.metrics._dist_metrics import DistanceMetric
+from sklearn.metrics.pairwise import _VALID_METRICS
+from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.validation import (
+    _allclose_dense_sparse,
+    _assert_all_finite,
+    validate_data,
+)
 
 FAST_METRICS = set(KDTree.valid_metrics + BallTree.valid_metrics)
 
@@ -89,7 +93,7 @@ def _brute_mst(mutual_reachability, min_samples):
 
     Parameters
     ----------
-    mututal_reachability_graph: {ndarray, sparse matrix} of shape \
+    mutual_reachability : {ndarray, sparse matrix} of shape \
             (n_samples, n_samples)
         Weighted adjacency matrix of the mutual reachability graph.
 
@@ -523,12 +527,16 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
           depend on a euclidean metric.
         - `"both"` which computes and stores both forms of centers.
 
-    copy : bool, default=False
+    copy : bool, default=True
         If `copy=True` then any time an in-place modifications would be made
         that would overwrite data passed to :term:`fit`, a copy will first be
         made, guaranteeing that the original data will be unchanged.
         Currently, it only applies when `metric="precomputed"`, when passing
         a dense array or a CSR sparse matrix and when `algorithm="brute"`.
+
+        .. versionchanged:: 1.10
+            The default value for `copy` changed from `False` to `True`
+            in version 1.10.
 
     Attributes
     ----------
@@ -609,7 +617,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     .. [4] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and
        Sander, J. Density-Based Clustering Validation.
-       <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
+       <https://epubs.siam.org/doi/pdf/10.1137/1.9781611973440.96>`_
 
     .. [5] :arxiv:`Malzer, C., & Baum, M. "A Hybrid Approach To Hierarchical
        Density-based Cluster Selection."<1911.02282>`.
@@ -669,7 +677,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         cluster_selection_method="eom",
         allow_single_cluster=False,
         store_centers=None,
-        copy=False,
+        copy=True,
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples

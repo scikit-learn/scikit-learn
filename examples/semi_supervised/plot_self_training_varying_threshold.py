@@ -36,6 +36,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn import datasets
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedKFold
 from sklearn.semi_supervised import SelfTrainingClassifier
@@ -50,7 +51,7 @@ y_true = y.copy()
 y[50:] = -1
 total_samples = y.shape[0]
 
-base_classifier = SVC(probability=True, gamma=0.001, random_state=42)
+base_classifier = CalibratedClassifierCV(SVC(gamma=0.001, random_state=42))
 
 x_values = np.arange(0.4, 1.05, 0.05)
 x_values = np.append(x_values, 0.99999)

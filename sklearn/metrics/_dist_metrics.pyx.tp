@@ -21,9 +21,9 @@ cnp.import_array()  # required in order to use C-API
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 
 from scipy.sparse import csr_matrix, issparse
-from ..utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
-from ..utils import check_array
-from ..utils.fixes import parse_version, sp_base_version
+from sklearn.utils._typedefs cimport float64_t, float32_t, int32_t, intp_t
+from sklearn.utils import check_array
+from sklearn.utils.fixes import parse_version, sp_base_version
 
 cdef inline double fmax(double a, double b) noexcept nogil:
     return max(a, b)
@@ -50,16 +50,6 @@ if sp_base_version < parse_version("1.17"):
     BOOL_METRICS += ["sokalmichener"]
 if sp_base_version >= parse_version("1.15"):
     DEPRECATED_METRICS.append("sokalmichener")
-if sp_base_version < parse_version("1.11"):
-    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
-    BOOL_METRICS += ["kulsinski"]
-if sp_base_version >= parse_version("1.9"):
-    DEPRECATED_METRICS.append("kulsinski")
-if sp_base_version < parse_version("1.9"):
-    # Deprecated in SciPy 1.0 and removed in SciPy 1.9
-    BOOL_METRICS += ["matching"]
-if sp_base_version >= parse_version("1.0"):
-    DEPRECATED_METRICS.append("matching")
 
 def get_valid_metric_ids(L):
     """Given an iterable of metric class names or class identifiers,
@@ -155,9 +145,7 @@ cdef class DistanceMetric:
     identifier         class name               distance function
     -----------------  -----------------------  -------------------------------
     "jaccard"          JaccardDistance          NNEQ / NNZ
-    "matching"         MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
-    "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
     "russellrao"       RussellRaoDistance       (N - NTT) / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
@@ -246,10 +234,8 @@ METRIC_MAPPING{{name_suffix}} = {
     'hamming': HammingDistance{{name_suffix}},
     'canberra': CanberraDistance{{name_suffix}},
     'braycurtis': BrayCurtisDistance{{name_suffix}},
-    'matching': MatchingDistance{{name_suffix}},
     'jaccard': JaccardDistance{{name_suffix}},
     'dice': DiceDistance{{name_suffix}},
-    'kulsinski': KulsinskiDistance{{name_suffix}},
     'rogerstanimoto': RogersTanimotoDistance{{name_suffix}},
     'russellrao': RussellRaoDistance{{name_suffix}},
     'sokalmichener': SokalMichenerDistance{{name_suffix}},
@@ -348,9 +334,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
     identifier         class name               distance function
     -----------------  -----------------------  -------------------------------
     "jaccard"          JaccardDistance          NNEQ / NNZ
-    "matching"         MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
-    "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
     "russellrao"       RussellRaoDistance       (N - NTT) / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
@@ -846,7 +830,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
 
             intp_t i1, i2
             intp_t x1_start, x1_end
-            {{INPUT_DTYPE_t}} * x2_data
+            const {{INPUT_DTYPE_t}} * x2_data
 
         with nogil:
             # Use the exact same adaptation for CSR than in SparseDenseDatasetsPair
@@ -910,7 +894,7 @@ cdef class DistanceMetric{{name_suffix}}(DistanceMetric):
             {{INPUT_DTYPE_t}}[:, ::1] Darr = np.empty((n_X, n_Y), dtype={{INPUT_DTYPE}}, order='C')
 
             intp_t i1, i2
-            {{INPUT_DTYPE_t}} * x1_data
+            const {{INPUT_DTYPE_t}} * x1_data
 
             intp_t x2_start, x2_end
 

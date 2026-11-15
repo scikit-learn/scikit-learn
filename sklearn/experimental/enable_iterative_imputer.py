@@ -1,23 +1,23 @@
-"""Enables IterativeImputer
+"""This is now a no-op and can be safely removed from your code.
 
-The API and results of this estimator might change without any deprecation
-cycle.
-
-Importing this file dynamically sets :class:`~sklearn.impute.IterativeImputer`
-as an attribute of the impute module::
-
-    >>> # explicitly require this experimental feature
-    >>> from sklearn.experimental import enable_iterative_imputer  # noqa
-    >>> # now you can import normally from impute
-    >>> from sklearn.impute import IterativeImputer
+It used to enable the use of :class:`~sklearn.impute.IterativeImputer` when it
+was still :term:`experimental`, but this estimator is now stable and can be
+imported normally from ``sklearn.impute``.
 """
 
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from .. import impute
-from ..impute._iterative import IterativeImputer
+# Don't remove this file, we don't want to break users code just because the
+# feature isn't experimental anymore.
 
-# use settattr to avoid mypy errors when monkeypatching
-setattr(impute, "IterativeImputer", IterativeImputer)
-impute.__all__ += ["IterativeImputer"]
+# TODO(1.14): is it long enough to start a full deprecation cycle?
+
+import warnings
+
+warnings.warn(
+    "Since version 1.10, "
+    "it is not needed to import enable_iterative_imputer anymore. "
+    "IterativeImputer is now stable and can be normally imported from "
+    "sklearn.impute."
+)

@@ -1,4 +1,4 @@
-from ..utils._typedefs cimport intp_t
+from sklearn.utils._typedefs cimport intp_t
 
 cdef class UnionFind:
     cdef intp_t next_label

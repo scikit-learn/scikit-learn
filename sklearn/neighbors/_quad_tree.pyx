@@ -10,7 +10,7 @@ from libc.string cimport memcpy
 from libc.stdio cimport printf
 from libc.stdint cimport SIZE_MAX
 
-from ..tree._utils cimport safe_realloc
+from sklearn.tree._utils cimport safe_realloc
 
 import numpy as np
 cimport numpy as cnp
@@ -31,6 +31,8 @@ cdef Cell dummy
 CELL_DTYPE = np.asarray(<Cell[:1]>(&dummy)).dtype
 
 assert CELL_DTYPE.itemsize == sizeof(Cell)
+
+cdef const float EPSILON = 1e-6
 
 
 cdef class _QuadTree:
@@ -340,7 +342,7 @@ cdef class _QuadTree:
 
             if not cell.is_leaf:
                 # Compute the number of point in children and compare with
-                # its cummulative_size.
+                # its cumulative_size.
                 n_points = 0
                 for idx in range(self.n_cells_per_cell):
                     child_id = cell.children[idx]

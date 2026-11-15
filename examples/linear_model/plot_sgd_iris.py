@@ -26,7 +26,7 @@ iris = datasets.load_iris()
 # avoid this ugly slicing by using a two-dim dataset
 X = iris.data[:, :2]
 y = iris.target
-colors = "bry"
+colors = "byr"
 
 # shuffle
 idx = np.arange(X.shape[0])
@@ -45,7 +45,6 @@ ax = plt.gca()
 DecisionBoundaryDisplay.from_estimator(
     clf,
     X,
-    cmap=plt.cm.Paired,
     ax=ax,
     response_method="predict",
     xlabel=iris.feature_names[0],

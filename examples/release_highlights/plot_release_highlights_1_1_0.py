@@ -59,6 +59,8 @@ _ = ax.legend(loc="lower left")
 # :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
 
 # %%
+# .. _get_feature_names_out_release_highlights_1_1_0:
+#
 # `get_feature_names_out` Available in all Transformers
 # -----------------------------------------------------
 # :term:`get_feature_names_out` is now available in all transformers, thereby

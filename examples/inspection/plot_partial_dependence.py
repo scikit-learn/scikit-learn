@@ -461,7 +461,7 @@ _ = display.figure_.suptitle(
 # The two-way partial dependence plot shows the dependence of the number of bike rentals
 # on joint values of temperature and humidity.
 # We clearly see an interaction between the two features. For a temperature higher than
-# 20 degrees Celsius, the humidity has a impact on the number of bike rentals
+# 20 degrees Celsius, the humidity has an impact on the number of bike rentals
 # that seems independent on the temperature.
 #
 # On the other hand, for temperatures lower than 20 degrees Celsius, both the
@@ -543,8 +543,6 @@ _ = display.figure_.suptitle(
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
 
-# unused but required import for doing 3d projections with matplotlib < 3.2
-import mpl_toolkits.mplot3d  # noqa: F401
 import numpy as np
 
 from sklearn.inspection import partial_dependence

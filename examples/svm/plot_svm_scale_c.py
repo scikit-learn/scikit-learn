@@ -28,7 +28,7 @@ amount of regularization with `C`, there would be a different amount of samples
 between the main problem and the smaller problems within the folds of the cross
 validation.
 
-Since the loss function dependens on the amount of samples, the latter
+Since the loss function depends on the amount of samples, the latter
 influences the selected value of `C`. The question that arises is "How do we
 optimally adjust C to account for the different amount of training samples?"
 """
@@ -138,7 +138,7 @@ _ = fig.suptitle("Effect of scaling C with L1 penalty")
 #
 # Using the default scale results in a somewhat stable optimal value of `C`,
 # whereas the transition out of the underfitting region depends on the number of
-# training samples. The reparametrization leads to even more stable results.
+# training samples. The reparameterization leads to even more stable results.
 #
 # See e.g. theorem 3 of :arxiv:`On the prediction performance of the Lasso
 # <1402.1700>` or :arxiv:`Simultaneous analysis of Lasso and Dantzig selector
@@ -198,7 +198,7 @@ fig.suptitle("Effect of scaling C with L2 penalty")
 plt.show()
 
 # %%
-# For the L2 penalty case, the reparametrization seems to have a smaller impact
+# For the L2 penalty case, the reparameterization seems to have a smaller impact
 # on the stability of the optimal value for the regularization. The transition
 # out of the overfitting region occurs in a more spread range and the accuracy
 # does not seem to be degraded up to chance level.

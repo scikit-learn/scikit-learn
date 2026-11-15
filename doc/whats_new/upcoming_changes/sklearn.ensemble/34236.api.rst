@@ -1,0 +1,6 @@
+- The :mod:`sklearn.experimental.enable_hist_gradient_boosting` module is
+  deprecated and will be removed in 1.12. It is no longer needed since
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` are stable and can be
+  imported normally from :mod:`sklearn.ensemble`.
+  By :user:`Guillaume Lemaitre <glemaitre>`.

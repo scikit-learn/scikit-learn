@@ -31,7 +31,7 @@ _datasets_pair_pyx = custom_target(
   output: '_datasets_pair.pyx',
   input: '_datasets_pair.pyx.tp',
   command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO in principle this should go in py.exension_module below. This is
+  # TODO in principle this should go in py.extension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_datasets_pair_pxd, _pairwise_distances_reduction_cython_tree, utils_cython_tree],
@@ -55,7 +55,7 @@ _base_pyx = custom_target(
   output: '_base.pyx',
   input: '_base.pyx.tp',
   command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO in principle this should go in py.exension_module below. This is
+  # TODO in principle this should go in py.extension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_base_pxd, _pairwise_distances_reduction_cython_tree,
@@ -80,7 +80,7 @@ _middle_term_computer_pyx = custom_target(
   output: '_middle_term_computer.pyx',
   input: '_middle_term_computer.pyx.tp',
   command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO in principle this should go in py.exension_module below. This is
+  # TODO in principle this should go in py.extension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_middle_term_computer_pxd,
@@ -106,7 +106,7 @@ _argkmin_pyx = custom_target(
     output: '_argkmin.pyx',
     input: '_argkmin.pyx.tp',
     command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO in principle this should go in py.exension_module below. This is
+    # TODO in principle this should go in py.extension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [_argkmin_pxd,
@@ -132,7 +132,7 @@ _radius_neighbors_pyx = custom_target(
     output: '_radius_neighbors.pyx',
     input: '_radius_neighbors.pyx.tp',
     command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-    # TODO in principle this should go in py.exension_module below. This is
+    # TODO in principle this should go in py.extension_module below. This is
     # temporary work-around for dependency issue with .pyx.tp files. For more
     # details, see https://github.com/mesonbuild/meson/issues/13212
     depends: [_radius_neighbors_pxd,
@@ -152,7 +152,7 @@ _argkmin_classmode_pyx = custom_target(
   output: '_argkmin_classmode.pyx',
   input: '_argkmin_classmode.pyx.tp',
   command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO in principle this should go in py.exension_module below. This is
+  # TODO in principle this should go in py.extension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_classmode_pxd,
@@ -176,7 +176,7 @@ _radius_neighbors_classmode_pyx = custom_target(
   output: '_radius_neighbors_classmode.pyx',
   input: '_radius_neighbors_classmode.pyx.tp',
   command: [tempita, '@INPUT@', '-o', '@OUTDIR@'],
-  # TODO in principle this should go in py.exension_module below. This is
+  # TODO in principle this should go in py.extension_module below. This is
   # temporary work-around for dependency issue with .pyx.tp files. For more
   # details, see https://github.com/mesonbuild/meson/issues/13212
   depends: [_classmode_pxd,

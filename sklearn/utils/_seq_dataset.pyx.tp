@@ -26,8 +26,8 @@ import numpy as np
 cimport cython
 from libc.limits cimport INT_MAX
 
-from ._random cimport our_rand_r
-from ._typedefs cimport float32_t, float64_t, uint32_t
+from sklearn.utils._random cimport our_rand_r
+from sklearn.utils._typedefs cimport float32_t, float64_t, uint32_t
 
 {{for name_suffix, c_type, np_type in dtypes}}
 

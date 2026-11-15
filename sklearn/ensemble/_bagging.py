@@ -12,31 +12,29 @@ from warnings import warn
 
 import numpy as np
 
-from ..base import ClassifierMixin, RegressorMixin, _fit_context
-from ..metrics import accuracy_score, r2_score
-from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import (
-    Bunch,
-    _safe_indexing,
-    check_random_state,
-    column_or_1d,
-)
-from ..utils._mask import indices_to_mask
-from ..utils._param_validation import HasMethods, Interval, RealNotInt
-from ..utils._tags import get_tags
-from ..utils.metadata_routing import (
+from sklearn.base import ClassifierMixin, RegressorMixin, _fit_context
+from sklearn.ensemble._base import BaseEnsemble, _partition_estimators
+from sklearn.ensemble._bootstrap import _get_n_samples_bootstrap
+from sklearn.metrics import accuracy_score, r2_score
+from sklearn.tree import BaseDecisionTree, DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import _safe_indexing, check_random_state, column_or_1d
+from sklearn.utils._mask import indices_to_mask
+from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt
+from sklearn.utils._tags import get_tags
+from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    _manual_routing,
     _raise_for_params,
     _routing_enabled,
     get_routing_for_object,
     process_routing,
 )
-from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import Parallel, delayed
-from ..utils.random import sample_without_replacement
-from ..utils.validation import (
+from sklearn.utils.metaestimators import available_if
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import (
     _check_method_params,
     _check_sample_weight,
     _estimator_has,
@@ -44,7 +42,6 @@ from ..utils.validation import (
     has_fit_parameter,
     validate_data,
 )
-from ._base import BaseEnsemble, _partition_estimators
 
 __all__ = ["BaggingClassifier", "BaggingRegressor"]
 
@@ -150,7 +147,7 @@ def _parallel_build_estimators(
             estimator_fit = estimator.fit
 
         # Draw random feature, sample indices (using normalized sample_weight
-        # as probabilites if provided).
+        # as probabilities if provided).
         features, indices = _generate_bagging_indices(
             random_state,
             bootstrap_features,
@@ -203,7 +200,7 @@ def _parallel_predict_proba(
     for estimator, features in zip(estimators, estimators_features):
         if hasattr(estimator, "predict_proba"):
             proba_estimator = estimator.predict_proba(
-                X[:, features], **(predict_params or {})
+                X[:, features], **(predict_proba_params or {})
             )
 
             if n_classes == len(estimator.classes_):
@@ -216,9 +213,7 @@ def _parallel_predict_proba(
 
         else:
             # Resort to voting
-            predictions = estimator.predict(
-                X[:, features], **(predict_proba_params or {})
-            )
+            predictions = estimator.predict(X[:, features], **(predict_params or {}))
 
             for i in range(n_samples):
                 proba[i, predictions[i]] += 1
@@ -278,6 +273,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "estimator": [HasMethods(["fit", "predict"]), None],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
+            None,
             Interval(Integral, 1, None, closed="left"),
             Interval(RealNotInt, 0, 1, closed="right"),
         ],
@@ -300,7 +296,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         estimator=None,
         n_estimators=10,
         *,
-        max_samples=1.0,
+        max_samples=None,
         max_features=1.0,
         bootstrap=True,
         bootstrap_features=False,
@@ -345,7 +341,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Sample weights. If None, then samples are equally weighted. Used as
             probabilities to sample the training set. Note that the expected
             frequency semantics for the `sample_weight` parameter are only
-            fulfilled when sampling with replacement `bootstrap=True`.
+            fulfilled when sampling with replacement `bootstrap=True` and using
+            a float or integer `max_samples` (instead of the default
+            `max_samples=None`).
 
         **fit_params : dict
             Parameters to pass to the underlying estimators.
@@ -392,9 +390,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             sample_weight=sample_weight,
             **fit_params,
         )
-
-    def _parallel_args(self):
-        return {}
 
     def _fit(
         self,
@@ -457,8 +452,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         if _routing_enabled():
             routed_params = process_routing(self, "fit", **fit_params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(fit=fit_params)
+            routed_params = _manual_routing({"estimator": {"fit": fit_params}})
 
         if max_depth is not None:
             self.estimator_.max_depth = max_depth
@@ -467,20 +461,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         if max_samples is None:
             max_samples = self.max_samples
 
-        if not isinstance(max_samples, numbers.Integral):
-            if sample_weight is None:
-                max_samples = max(int(max_samples * X.shape[0]), 1)
-            else:
-                sw_sum = np.sum(sample_weight)
-                if sw_sum <= 1:
-                    raise ValueError(
-                        f"The total sum of sample weights is {sw_sum}, which prevents "
-                        "resampling with a fractional value for max_samples="
-                        f"{max_samples}. Either pass max_samples as an integer or "
-                        "use a larger sample_weight."
-                    )
-                max_samples = max(int(max_samples * sw_sum), 1)
-
+        max_samples = _get_n_samples_bootstrap(X.shape[0], max_samples, sample_weight)
         if not self.bootstrap and max_samples > X.shape[0]:
             raise ValueError(
                 f"Effective max_samples={max_samples} must be <= n_samples="
@@ -641,7 +622,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__)
+        router = MetadataRouter(owner=self).add_self_request(self)
 
         method_mapping = MethodMapping()
         method_mapping.add(caller="fit", callee="fit").add(
@@ -685,6 +666,13 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         router.add(estimator=self._get_estimator(), method_mapping=method_mapping)
         return router
 
+    def _parallel_args(self):
+        if isinstance(self.estimator_, BaseDecisionTree):
+            # Subclasses of BaseDecisionTree are known to be faster with
+            # threads.
+            return {"prefer": "threads"}
+        return {}
+
     @abstractmethod
     def _get_estimator(self):
         """Resolve which estimator to return."""
@@ -718,8 +706,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <bagging>`.
 
-    .. versionadded:: 0.15
-
     Parameters
     ----------
     estimator : object, default=None
@@ -733,13 +719,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, default=1.0
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator (with
         replacement by default, see `bootstrap` for more details).
 
+        - If None, then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` unweighted samples
-          or `max_samples * sample_weight.sum()` weighted samples.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples or
+          `max_samples * sample_weight.sum()` weighted samples.
 
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator (
@@ -766,9 +753,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         When set to True, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit
         a whole new ensemble. See :term:`the Glossary <warm_start>`.
-
-        .. versionadded:: 0.17
-           *warm_start* constructor parameter.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel for both :meth:`fit` and
@@ -797,8 +781,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -872,7 +854,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         estimator=None,
         n_estimators=10,
         *,
-        max_samples=1.0,
+        max_samples=None,
         max_features=1.0,
         bootstrap=True,
         bootstrap_features=False,
@@ -1032,8 +1014,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         if _routing_enabled():
             routed_params = process_routing(self, "predict_proba", **params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(predict_proba=Bunch())
+            routed_params = _manual_routing({"estimator": {}})
 
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
@@ -1107,13 +1088,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             if _routing_enabled():
                 routed_params = process_routing(self, "predict_log_proba", **params)
             else:
-                routed_params = Bunch()
-                routed_params.estimator = Bunch(predict_log_proba=Bunch())
+                routed_params = _manual_routing({"estimator": {}})
 
             # Parallel loop
             n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-            all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            all_log_proba = Parallel(
+                n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+            )(
                 delayed(_parallel_predict_log_proba)(
                     self.estimators_[starts[i] : starts[i + 1]],
                     self.estimators_features_[starts[i] : starts[i + 1]],
@@ -1185,13 +1167,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         if _routing_enabled():
             routed_params = process_routing(self, "decision_function", **params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(decision_function=Bunch())
+            routed_params = _manual_routing({"estimator": {}})
 
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_decisions = Parallel(
+            n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+        )(
             delayed(_parallel_decision_function)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
@@ -1229,8 +1212,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <bagging>`.
 
-    .. versionadded:: 0.15
-
     Parameters
     ----------
     estimator : object, default=None
@@ -1244,12 +1225,14 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
 
-    max_samples : int or float, default=1.0
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator (with
         replacement by default, see `bootstrap` for more details).
 
+        - If None, then draw `X.shape[0]` samples irrespective of `sample_weight`.
         - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples.
+        - If float, then draw `max_samples * X.shape[0]` unweighted samples or
+          `max_samples * sample_weight.sum()` weighted samples.
 
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator (
@@ -1304,8 +1287,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -1373,7 +1354,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         estimator=None,
         n_estimators=10,
         *,
-        max_samples=1.0,
+        max_samples=None,
         max_features=1.0,
         bootstrap=True,
         bootstrap_features=False,
@@ -1441,13 +1422,14 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         if _routing_enabled():
             routed_params = process_routing(self, "predict", **params)
         else:
-            routed_params = Bunch()
-            routed_params.estimator = Bunch(predict=Bunch())
+            routed_params = _manual_routing({"estimator": {}})
 
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_y_hat = Parallel(
+            n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
+        )(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],

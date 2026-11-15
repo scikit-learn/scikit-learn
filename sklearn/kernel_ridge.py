@@ -7,11 +7,15 @@ from numbers import Real
 
 import numpy as np
 
-from .base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context
-from .linear_model._ridge import _solve_cholesky_kernel
-from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
-from .utils._param_validation import Interval, StrOptions
-from .utils.validation import _check_sample_weight, check_is_fitted, validate_data
+from sklearn.base import BaseEstimator, MultiOutputMixin, RegressorMixin, _fit_context
+from sklearn.linear_model._ridge import _solve_cholesky_kernel
+from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.validation import (
+    _check_sample_weight,
+    check_is_fitted,
+    validate_data,
+)
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -44,7 +48,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
-        :class:`~sklearn.linear_model.LogisticRegression` or
         :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number. See :ref:`ridge_regression` for formula.
@@ -92,8 +95,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

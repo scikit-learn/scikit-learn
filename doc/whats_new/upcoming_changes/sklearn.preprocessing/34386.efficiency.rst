@@ -1,0 +1,5 @@
+- Improved fit time of :class:`preprocessing.OneHotEncoder`
+  and :class:`preprocessing.OrdinalEncoder` on object/string categorical
+  features when category counts are needed, for instance with ``min_frequency``
+  or ``max_categories``.
+  By :user:`Itamar Turner-Trauring <itamarst>`.

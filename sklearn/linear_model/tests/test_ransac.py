@@ -220,20 +220,18 @@ def test_ransac_exceed_max_skips():
 
 
 def test_ransac_warn_exceed_max_skips():
-    global cause_skip
-    cause_skip = False
+    class IsDataValid:
+        def __init__(self):
+            self.call_counter = 0
 
-    def is_data_valid(X, y):
-        global cause_skip
-        if not cause_skip:
-            cause_skip = True
-            return True
-        else:
-            return False
+        def __call__(self, X, y):
+            result = self.call_counter == 0
+            self.call_counter += 1
+            return result
 
     estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
-        estimator, is_data_valid=is_data_valid, max_skips=3, max_trials=5
+        estimator, is_data_valid=IsDataValid(), max_skips=3, max_trials=5
     )
     warning_message = (
         "RANSAC found a valid consensus set but exited "

@@ -11,15 +11,15 @@ import scipy.optimize
 from scipy.linalg import cho_solve, cholesky, solve
 from scipy.special import erf, expit
 
-from ..base import BaseEstimator, ClassifierMixin, _fit_context, clone
-from ..multiclass import OneVsOneClassifier, OneVsRestClassifier
-from ..preprocessing import LabelEncoder
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions
-from ..utils.optimize import _check_optimize_result
-from ..utils.validation import check_is_fitted, validate_data
-from .kernels import RBF, CompoundKernel, Kernel
-from .kernels import ConstantKernel as C
+from sklearn.base import BaseEstimator, ClassifierMixin, _fit_context, clone
+from sklearn.gaussian_process.kernels import RBF, CompoundKernel, Kernel
+from sklearn.gaussian_process.kernels import ConstantKernel as C
+from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions
+from sklearn.utils.optimize import _check_optimize_result
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 # Values required for approximating the logistic sigmoid by
 # error functions. coefs are obtained via:
@@ -43,8 +43,6 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     Currently, the implementation is restricted to using the logistic link
     function.
-
-    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -528,8 +526,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     kernel : kernel instance, default=None
@@ -638,8 +634,6 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
