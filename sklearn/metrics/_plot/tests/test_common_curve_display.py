@@ -128,6 +128,14 @@ def _check_pos_label_statistics(
     check_metric(display, constructor_name, pos_label)
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -154,6 +162,14 @@ def test_display_curve_error_binary_classifier(pyplot, data, data_binary, Displa
         Display.from_estimator(clf, X, y)
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -228,6 +244,14 @@ def test_display_curve_error_no_response_method(
         Display.from_estimator(clf, X, y, response_method=response_method)
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
@@ -245,7 +269,7 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
     X, y = data_binary
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
-    y_pred = clf.predict_proba(X)[:, 1]
+    y_score = clf.predict_proba(X)[:, 1]
     cv_results = cross_validate(
         LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
     )
@@ -253,18 +277,14 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
     if constructor_name == "from_estimator":
         disp = Display.from_estimator(clf, X, y, name=clf_name)
     elif constructor_name == "from_predictions":
-        disp = Display.from_predictions(y, y_pred, name=clf_name)
+        disp = Display.from_predictions(y, y_score, name=clf_name)
     else:  # constructor_name = "from_cv_results"
         if Display in (RocCurveDisplay, PrecisionRecallDisplay):
             disp = Display.from_cv_results(cv_results, X, y, name=clf_name)
         else:
             pytest.skip(f"`from_cv_results` not implemented in {Display}")
 
-    # TODO: Clean-up once `estimator_name` deprecated in all displays
-    if Display in (PrecisionRecallDisplay, RocCurveDisplay, DetCurveDisplay):
-        assert disp.name == clf_name
-    else:
-        assert disp.estimator_name == clf_name
+    assert disp.name == clf_name
     pyplot.close("all")
     disp.plot()
     if constructor_name == "from_cv_results":
@@ -280,6 +300,14 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
         assert clf_name in disp.line_.get_label()
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "clf",
     [
@@ -305,19 +333,23 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     model.fit(X, y)
     disp = Display.from_estimator(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
-    # TODO: Clean-up once `estimator_name` deprecated in all displays
-    if Display in (PrecisionRecallDisplay, RocCurveDisplay, DetCurveDisplay):
-        assert disp.name == model.__class__.__name__
-    else:
-        assert disp.estimator_name == model.__class__.__name__
+    assert disp.name == model.__class__.__name__
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display",
     [CalibrationDisplay, DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay],
 )
 def test_display_curve_n_samples_consistency(pyplot, data_binary, Display):
-    """Check error raised when `y_pred` or `sample_weight` have inconsistent length."""
+    """Check error raised when `y_score` or `sample_weight` have inconsistent length."""
     X, y = data_binary
     classifier = DecisionTreeClassifier().fit(X, y)
 
@@ -344,12 +376,20 @@ def test_display_curve_error_pos_label(pyplot, data_binary, Display):
     y = y + 10
 
     classifier = DecisionTreeClassifier().fit(X, y)
-    y_pred = classifier.predict_proba(X)[:, -1]
+    y_score = classifier.predict_proba(X)[:, -1]
     msg = r"y_true takes value in {10, 11} and pos_label is not specified"
     with pytest.raises(ValueError, match=msg):
-        Display.from_predictions(y, y_pred)
+        Display.from_predictions(y, y_score)
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display",
     [
@@ -377,7 +417,7 @@ def test_classifier_display_curve_named_constructor_return_type(
 
     # This can be anything - we just need to check the named constructor return
     # type so the only requirement here is instantiating the class without error
-    y_pred = y
+    y_score = y
 
     classifier = LogisticRegression().fit(X, y)
     cv_results = cross_validate(
@@ -388,7 +428,7 @@ def test_classifier_display_curve_named_constructor_return_type(
         pass
 
     if constructor == "from_predictions":
-        curve = SubclassOfDisplay.from_predictions(y, y_pred)
+        curve = SubclassOfDisplay.from_predictions(y, y_score)
     elif constructor == "from_estimator":
         curve = SubclassOfDisplay.from_estimator(classifier, X, y)
     else:  # `from_cv_results`
@@ -797,15 +837,19 @@ def test_display_from_cv_results_curve_kwargs_default_kwargs(
 @pytest.mark.parametrize(
     "Display, display_kwargs",
     [
-        # TODO(1.10): Remove
-        (
-            PrecisionRecallDisplay,
-            {"precision": np.array([1, 0.5, 0]), "recall": np.array([0, 0.5, 1])},
-        ),
         # TODO(1.12): Remove
         (
             DetCurveDisplay,
             {"fpr": np.array([0, 0.5, 1]), "fnr": np.array([1, 0.5, 0])},
+        ),
+        # TODO(1.12): Remove
+        (
+            CalibrationDisplay,
+            {
+                "prob_true": np.array([0, 0.5, 1]),
+                "prob_pred": np.array([0, 0.5, 1]),
+                "y_prob": np.array([0, 0.5, 1]),
+            },
         ),
     ],
 )

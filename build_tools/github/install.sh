@@ -64,6 +64,9 @@ python_environment_install_and_activate() {
     elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" ]]; then
         python3 -m venv --system-site-packages $VIRTUALENV
         activate_environment
+        # Update pip>=26.2.2 as mitigation for eMudhra certificate incident
+        pip install -U 'pip>=26.2.2'
+
         pip install -r "${LOCK_FILE}"
 
     fi

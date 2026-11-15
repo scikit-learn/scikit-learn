@@ -11,15 +11,8 @@ ifneq ($(EXAMPLES_PATTERN),)
     EXAMPLES_PATTERN_OPTS := -D sphinx_gallery_conf.filename_pattern="$(EXAMPLES_PATTERN)"
 endif
 
-ifeq ($(CI), true)
-    # On CircleCI using -j2 does not seem to speed up the html-noplot build
-    SPHINX_NUMJOBS_NOPLOT_DEFAULT=1
-else ifeq ($(shell uname), Darwin)
-    # Avoid stalling issues on MacOS
-    SPHINX_NUMJOBS_NOPLOT_DEFAULT=1
-else
-    SPHINX_NUMJOBS_NOPLOT_DEFAULT=auto
-endif
+# CircleCI sets SPHINX_NUMJOBS explicitly instead (see build_tools/circle/build_doc.sh)
+SPHINX_NUMJOBS_DEFAULT=auto
 
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
@@ -57,12 +50,9 @@ clean:
 	-rm -rf api/*.rst
 	@echo "Removed api/*.rst"
 
-# Default to SPHINX_NUMJOBS=1 for full documentation build. Using
-# SPHINX_NUMJOBS!=1 may actually slow down the build, or cause weird issues in
-# the CI (job stalling or EOFError), see
-# https://github.com/scikit-learn/scikit-learn/pull/25836 or
-# https://github.com/scikit-learn/scikit-learn/pull/25809
-html: SPHINX_NUMJOBS ?= 1
+# Sphinx-Gallery picks up this -j too (`parallel` in conf.py), so it covers
+# running the examples as well as the reST read/write
+html: SPHINX_NUMJOBS ?= $(SPHINX_NUMJOBS_DEFAULT)
 html:
 	@echo $(ALLSPHINXOPTS)
 	# These two lines make the build a bit more lengthy, and the
@@ -73,9 +63,7 @@ html:
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html/stable"
 
-# Default to SPHINX_NUMJOBS=auto (except on MacOS and CI) since this makes
-# html-noplot build faster
-html-noplot: SPHINX_NUMJOBS ?= $(SPHINX_NUMJOBS_NOPLOT_DEFAULT)
+html-noplot: SPHINX_NUMJOBS ?= $(SPHINX_NUMJOBS_DEFAULT)
 html-noplot:
 	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) -j$(SPHINX_NUMJOBS) \
     $(BUILDDIR)/html/stable

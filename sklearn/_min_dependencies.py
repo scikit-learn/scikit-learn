@@ -51,7 +51,6 @@ dependent_packages = {
     "numpydoc": ("1.2.0", "docs, tests"),
     "Pillow": ("12.1.1", "docs"),
     "pooch": ("1.8.0", "docs, examples, tests"),
-    "sphinx-prompt": ("1.4.0", "docs"),
     "sphinxext-opengraph": ("0.9.1", "docs"),
     "plotly": ("5.24.0", "docs, examples"),
     "sphinx-remove-toctrees": ("1.0.0.post1", "docs"),
@@ -60,7 +59,7 @@ dependent_packages = {
     "towncrier": ("24.8.0", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("3.0.1", "maintenance"),
+    "conda-lock": ("4.0.5", "maintenance"),
 }
 
 

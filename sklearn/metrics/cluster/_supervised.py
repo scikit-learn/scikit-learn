@@ -17,7 +17,7 @@ from scipy import sparse as sp
 from sklearn.metrics.cluster._expected_mutual_info_fast import (
     expected_mutual_information,
 )
-from sklearn.utils import _align_api_if_sparse, deprecated
+from sklearn.utils import _align_api_if_sparse
 from sklearn.utils._array_api import (
     _max_precision_float_dtype,
     get_namespace_and_device,
@@ -128,12 +128,8 @@ def contingency_matrix(
         If `True`, return a sparse CSR contingency matrix. If `eps` is not
         `None` and `sparse` is `True` will raise ValueError.
 
-        .. versionadded:: 0.18
-
     dtype : numeric type, default=np.int64
         Output dtype. Ignored if `eps` is not `None`.
-
-        .. versionadded:: 0.24
 
     Returns
     -------
@@ -992,12 +988,6 @@ def adjusted_mutual_info_score(
     average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
         How to compute the normalizer in the denominator.
 
-        .. versionadded:: 0.20
-
-        .. versionchanged:: 0.22
-           The default value of ``average_method`` changed from 'max' to
-           'arithmetic'.
-
     Returns
     -------
     ami: float (upperlimited by 1.0)
@@ -1126,12 +1116,6 @@ def normalized_mutual_info_score(
     average_method : {'min', 'geometric', 'arithmetic', 'max'}, default='arithmetic'
         How to compute the normalizer in the denominator.
 
-        .. versionadded:: 0.20
-
-        .. versionchanged:: 0.22
-           The default value of ``average_method`` changed from 'geometric' to
-           'arithmetic'.
-
     Returns
     -------
     nmi : float
@@ -1203,8 +1187,6 @@ def normalized_mutual_info_score(
 )
 def fowlkes_mallows_score(labels_true, labels_pred):
     """Measure the similarity of two clusterings of a set of points.
-
-    .. versionadded:: 0.18
 
     The Fowlkes-Mallows index (FMI) is defined as the geometric mean of
     the precision and recall::
@@ -1311,25 +1293,3 @@ def _entropy(labels):
     # Always convert the result as a Python scalar (on CPU) instead of a device
     # specific scalar array.
     return float(-xp.sum((pi / pi_sum) * (xp.log(pi) - log(pi_sum))))
-
-
-# TODO(1.10): Remove
-@deprecated("`entropy` is deprecated in 1.8 and will be removed in 1.10.")
-def entropy(labels):
-    """Calculate the entropy for a labeling.
-
-    Parameters
-    ----------
-    labels : array-like of shape (n_samples,)
-        The labels.
-
-    Returns
-    -------
-    entropy : float
-       The entropy for a labeling.
-
-    Notes
-    -----
-    The logarithm used is the natural logarithm (base-e).
-    """
-    return _entropy(labels)

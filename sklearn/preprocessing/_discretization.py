@@ -27,8 +27,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
 
-    .. versionadded:: 0.20
-
     Parameters
     ----------
     n_bins : int or array-like of shape (n_features,), default=5
@@ -75,8 +73,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         consistent with input dtype. Only np.float32 and np.float64 are
         supported.
 
-        .. versionadded:: 0.24
-
     subsample : int or None, default=200_000
         Maximum number of samples, used to fit the model, for computational
         efficiency.
@@ -115,8 +111,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -379,8 +373,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             # Remove bins whose width are too small (i.e., <= 1e-8)
             if self.strategy in ("quantile", "kmeans"):
-                mask = np.ediff1d(bin_edges[jj], to_begin=np.inf) > 1e-8
-                bin_edges[jj] = bin_edges[jj][mask]
+                # The last edge (the max) is left out of the deduplication:
+                # transform treats it as +inf, so an inner edge equal to the max
+                # is a real boundary that isolates the samples at the max. The
+                # resulting zero-width last bin is kept.
+                inner_edges = bin_edges[jj][:-1]
+                mask = np.diff(inner_edges, prepend=-np.inf) > 1e-8
+                bin_edges[jj] = np.r_[inner_edges[mask], bin_edges[jj][-1]]
                 if len(bin_edges[jj]) - 1 != n_bins[jj]:
                     warnings.warn(
                         "Bins whose width are too small (i.e., <= "

@@ -333,8 +333,6 @@ class AdaBoostClassifier(
 
     Read more in the :ref:`User Guide <adaboost>`.
 
-    .. versionadded:: 0.14
-
     Parameters
     ----------
     estimator : object, default=None
@@ -399,8 +397,6 @@ class AdaBoostClassifier(
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
@@ -833,8 +829,6 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
 
     Read more in the :ref:`User Guide <adaboost>`.
 
-    .. versionadded:: 0.14
-
     Parameters
     ----------
     estimator : object, default=None
@@ -897,8 +891,6 @@ class AdaBoostRegressor(_RoutingNotSupportedMixin, RegressorMixin, BaseWeightBoo
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

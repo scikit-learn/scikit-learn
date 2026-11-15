@@ -60,9 +60,6 @@ _ = sns.pairplot(iris.frame, hue="target")
 
 import matplotlib.pyplot as plt
 
-# unused but required import for doing 3d projections with matplotlib < 3.2
-import mpl_toolkits.mplot3d  # noqa: F401
-
 from sklearn.decomposition import PCA
 
 fig = plt.figure(1, figsize=(8, 6))
