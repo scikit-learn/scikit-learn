@@ -1069,9 +1069,9 @@ hyperparameter.
 
 HDBSCAN can be smoothed with an additional hyperparameter `min_cluster_size`
 which specifies that during the hierarchical clustering, components with fewer
-than `minimum_cluster_size` many samples are considered noise. In practice, one
-can set `minimum_cluster_size = min_samples` to couple the parameters and
-simplify the hyperparameter space.
+than `min_cluster_size` samples are considered noise. By default
+(`min_samples=None`), `min_samples` is set to `min_cluster_size`, which couples
+the two parameters and simplifies the hyperparameter space.
 
 .. rubric:: References
 
@@ -1372,9 +1372,10 @@ will not necessarily be close to zero::
     practice or requires manual assignment by human annotators (as in the
     supervised learning setting).
 
-    However (adjusted or unadjusted) Rand index can also be useful in a purely
-    unsupervised setting as a building block for a Consensus Index that can be
-    used for clustering model selection (TODO).
+    However, the (adjusted or unadjusted) Rand index can also compare two
+    clusterings without any ground truth, for instance to measure how much
+    two algorithms agree, or how stable one algorithm is across random
+    initializations or random subsamples of the data.
 
   - The **unadjusted Rand index is often close to 1.0** even if the clusterings
     themselves differ significantly. This can be understood when interpreting
@@ -1507,9 +1508,10 @@ Bad (e.g. independent labelings) have non-positive scores::
     truth classes** while almost never available in practice or requires manual
     assignment by human annotators (as in the supervised learning setting).
 
-    However MI-based measures can also be useful in purely unsupervised setting
-    as a building block for a Consensus Index that can be used for clustering
-    model selection.
+    However, MI-based measures can also compare two clusterings without any
+    ground truth, for instance to measure how much two algorithms agree, or
+    how stable one algorithm is across random initializations or random
+    subsamples of the data.
 
   - NMI and MI are not adjusted against chance.
 

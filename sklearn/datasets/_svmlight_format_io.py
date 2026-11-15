@@ -514,9 +514,6 @@ def dump_svmlight_file(
         Samples may have several labels each (see
         https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html).
 
-        .. versionadded:: 0.17
-           parameter `multilabel` to support multilabel datasets.
-
     Examples
     --------
     >>> from sklearn.datasets import dump_svmlight_file, make_classification

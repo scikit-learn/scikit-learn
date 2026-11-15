@@ -1,0 +1,5 @@
+- :class:`manifold.SpectralEmbedding` and :class:`cluster.SpectralClustering` no
+  longer raise a ``ValueError`` about 64-bit sparse indices when fitted under
+  ``config_context(sparse_interface="sparray")`` with the default
+  ``eigen_solver="arpack"``.
+  By :user:`Adrin Jalali <adrinjalali>`.

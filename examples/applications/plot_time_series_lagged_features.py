@@ -379,7 +379,7 @@ _ = ax.legend()
 # - Finally, it is expected that 10% of the time, the actual demand does not lie
 #   between the 5% and 95% percentile estimates. On this test span, the actual
 #   demand seems to be higher, especially during the rush hours. It might reveal that
-#   our 95% percentile estimator underestimates the demand peaks. This could be be
+#   our 95% percentile estimator underestimates the demand peaks. This could be
 #   quantitatively confirmed by computing empirical coverage numbers as done in
 #   the :ref:`calibration of confidence intervals <calibration-section>`.
 #
