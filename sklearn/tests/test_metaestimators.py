@@ -44,6 +44,13 @@ class DelegatorData:
         self.skip_methods = skip_methods
 
 
+def _make_semi_supervised_classification():
+    """Classification data where every other sample is unlabeled (y=-1)."""
+    X, y = make_classification(random_state=0)
+    y[::2] = -1
+    return X, y
+
+
 # For the following meta estimators we check for the existence of relevant
 # methods only if the sub estimator also contains them. Any methods that
 # are implemented in the meta estimator themselves and are not dependent
@@ -80,8 +87,10 @@ DELEGATING_METAESTIMATORS = [
     ),
     DelegatorData(
         "SelfTrainingClassifier",
-        lambda est: SelfTrainingClassifier(est),
+        # max_iter=0 because the dummy sub-estimator cannot run self-training.
+        lambda est: SelfTrainingClassifier(est, max_iter=0),
         skip_methods=["transform", "inverse_transform", "predict_proba"],
+        fit_args=_make_semi_supervised_classification(),
     ),
 ]
 
