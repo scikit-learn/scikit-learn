@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 from cython.parallel import prange
+from libc.stdlib cimport calloc, free
 import numpy as np
 
 from sklearn.utils._bitset cimport BITSET_INNER_DTYPE_C, in_bitset_2d_memoryview
@@ -249,3 +250,85 @@ def _compute_partial_dependence(
         # Sanity check. Should never happen.
         if not (0.999 < total_weight < 1.001):
             raise ValueError("Total weight should be 1.0 but was %.9f" %total_weight)
+
+
+def _check_nodes(
+    const node_struct [:] nodes,
+    const intp_t n_features,
+    const uint8_t [:] is_categorical,
+):
+    """Check the values of a node array in a single pass over the nodes.
+
+    See `TreePredictor.check_state` for what is checked and why.
+
+    Parameters
+    ----------
+    nodes : view on array of PREDICTOR_RECORD_DTYPE, shape (n_nodes)
+        The array representing the predictor tree.
+    n_features : int
+        The number of columns of `X` at prediction time.
+    is_categorical : view on 1d ndarray of uint8, shape (n_features)
+        Whether each feature is categorical.
+
+    Returns
+    -------
+    invalid : str or None
+        What the first invalid split node gets wrong: the name of the field
+        that is out of bounds, "shared child" if one of its children already
+        is the child of a node, "numerical feature" if it is a categorical
+        split on a feature that is not categorical. None if all nodes are
+        valid.
+    n_bitsets : int
+        The number of rows the categorical splits need in the bitset arrays.
+    """
+    cdef:
+        intp_t n_nodes = nodes.shape[0]
+        intp_t i, left, right
+        intp_t n_bitsets = 0
+        uint8_t* has_parent
+        str invalid = None
+
+    if is_categorical.shape[0] != n_features:
+        raise ValueError(
+            f"is_categorical has {is_categorical.shape[0]} entries, expected "
+            f"{n_features}."
+        )
+    if n_nodes == 0:
+        return None, 0
+
+    has_parent = <uint8_t*> calloc(n_nodes, sizeof(uint8_t))
+    if has_parent == NULL:
+        raise MemoryError()
+
+    for i in range(n_nodes):
+        if nodes[i].is_leaf:
+            continue
+
+        if nodes[i].feature_idx < 0 or nodes[i].feature_idx >= n_features:
+            invalid = "feature_idx"
+            break
+        # `left` / `right` must be node ids strictly greater than the own index:
+        # this keeps them in `[0, n_nodes)` and rules out cycles.
+        left = nodes[i].left
+        right = nodes[i].right
+        if left <= i or left >= n_nodes:
+            invalid = "left"
+            break
+        if right <= i or right >= n_nodes:
+            invalid = "right"
+            break
+        if left == right or has_parent[left] or has_parent[right]:
+            invalid = "shared child"
+            break
+        has_parent[left] = 1
+        has_parent[right] = 1
+
+        if nodes[i].is_categorical:
+            if not is_categorical[nodes[i].feature_idx]:
+                invalid = "numerical feature"
+                break
+            if nodes[i].bitset_idx >= n_bitsets:
+                n_bitsets = <intp_t> nodes[i].bitset_idx + 1
+
+    free(has_parent)
+    return invalid, n_bitsets
