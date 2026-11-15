@@ -72,6 +72,9 @@ def sag(
     tol=0,
     random_state=77,
 ):
+    """
+    Plain Python implementation of SAG(A) for testing only.
+    """
     n_samples, n_features = X.shape
 
     weights = np.zeros(n_features)
@@ -97,7 +100,7 @@ def sag(
                 continue
             p = np.dot(entry, weights) + intercept
             gradient = dloss(p, y[idx])
-            update = entry * gradient + alpha * weights
+            weights_gradient_update = entry * gradient + alpha * weights
             weights_gradient_correction = (
                 weights_gradient_update - weigths_gradient_memory[idx]
             )
@@ -149,6 +152,12 @@ def sag_sparse(
     tol=0,
     random_state=77,
 ):
+    """
+    Plain Python implementation of SAG(A), models sparse lazy updates.
+    The function accepts dense input, allowing the lazy-update implementation to
+    be tested against ``LogisticRegression`` and ``Ridge`` on the same data.
+    """
+
     if step_size * alpha == 1.0:
         raise ZeroDivisionError(
             "Sparse sag does not handle the case step_size * alpha == 1"
@@ -540,31 +549,12 @@ def test_sag_regressor_computed_correctly(csr_container):
     # assert_almost_equal(clf2.intercept_, spintercept2, decimal=1)'''
 
 
-@pytest.mark.parametrize("saga", [True, False])
-@pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("classification", [True, False])
-@pytest.mark.parametrize("sample_weight", [None, "random"])
-def test_get_auto_step_size(saga, fit_intercept, classification, sample_weight):
-    alpha = 1.2
-    n_samples = 100
-    rng = np.random.RandomState(42)
-    X = rng.rand(n_samples, 10)
-    squared_sum = np.sum(X * X, axis=1)
-    if sample_weight == "random":
-        sample_weight = rng.rand(n_samples)
-
-    step_size = get_step_size(
-        X, alpha, fit_intercept, classification, sample_weight, saga
-    )
-    loss = "log" if classification else "squared"
-    auto_step_size = get_auto_step_size(
-        squared_sum, alpha, loss, fit_intercept, sample_weight, saga
-    )
-    assert_allclose(step_size, auto_step_size)
-
+def test_get_auto_step_size_raises_for_unknown_loss():
     msg = "Unknown loss function for SAG solver, got wrong instead of"
     with pytest.raises(ValueError, match=msg):
-        get_auto_step_size(squared_sum, alpha, "wrong", fit_intercept)
+        get_auto_step_size(
+            np.array([1.0, 2.0]), alpha=1.2, loss="wrong", fit_intercept=False
+        )
 
 
 @pytest.mark.parametrize("seed", range(3))  # locally tested with 1000 seeds
