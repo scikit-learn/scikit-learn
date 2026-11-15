@@ -919,6 +919,17 @@ cdef class Tree:
         model) would make them access memory out of bounds or loop forever.
         See `_check_node_ndarray_values` for the exact invariants.
         """
+        # Only the first `node_count` nodes are checked below, whereas the
+        # traversals start at the first node whatever `node_count` is and the
+        # loops over all nodes run up to `node_count`. It therefore has to
+        # cover the root and stay within the allocated nodes.
+        if not 0 < self.node_count <= self.capacity:
+            raise ValueError(
+                f"node array has an inconsistent node_count: it must be "
+                f"positive and at most the number of allocated nodes "
+                f"({self.capacity}), got {self.node_count}"
+            )
+
         _check_node_ndarray_values(
             self._get_node_ndarray(),
             n_features=self.n_features,

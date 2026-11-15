@@ -2544,6 +2544,33 @@ def test_tree_validate_model_rejects_understated_max_depth():
         validate_model(clf)
 
 
+def test_tree_validate_model_rejects_inconsistent_node_count():
+    """``validate_model`` raises on a tree whose ``node_count`` is inconsistent.
+
+    Non-regression test for a memory-safety issue: only the first
+    ``node_count`` nodes are checked, while the traversals start at the first
+    node whatever ``node_count`` is, so a ``node_count`` of zero left the
+    whole node array unchecked.
+    """
+    clf, cls, args, state = _fit_tree_and_reduce()
+    state["node_count"] = 0
+    tree = cls(*args)
+    tree.__setstate__(state)
+
+    with pytest.raises(ValueError, match="node_count"):
+        tree.check_state()
+    clf.tree_ = tree
+    with pytest.raises(ValueError, match="node_count"):
+        validate_model(clf)
+
+    # `node_count` past the allocated nodes: the loops over all nodes, e.g. in
+    # `compute_feature_importances`, would read past the node buffer.
+    clf, *_ = _fit_tree_and_reduce()
+    clf.tree_.node_count = clf.tree_.capacity + 1
+    with pytest.raises(ValueError, match="node_count"):
+        validate_model(clf)
+
+
 def test_tree_validate_model_rejects_n_features_mismatch():
     """``validate_model`` raises when the tree and ``n_features_in_`` disagree.
 

@@ -178,6 +178,14 @@ def predict_stages(
     cdef Py_ssize_t K = estimators.shape[1]
     cdef Tree tree
 
+    # `out[i, k]` is written without bounds checking for each sample of `X` and
+    # each column of `estimators`.
+    if out.shape[0] != X.shape[0] or out.shape[1] != K:
+        raise ValueError(
+            f"out should have shape ({X.shape[0]}, {K}), got "
+            f"({out.shape[0]}, {out.shape[1]})"
+        )
+
     if issparse(X):
         if X.format != 'csr':
             raise ValueError("When X is a sparse matrix, a CSR format is"
