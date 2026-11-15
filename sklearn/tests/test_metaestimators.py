@@ -1,7 +1,6 @@
 """Common tests for metaestimators"""
 
 import functools
-from contextlib import suppress
 from inspect import signature
 
 import numpy as np
@@ -19,8 +18,11 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import MaxAbsScaler, StandardScaler
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.utils import all_estimators
-from sklearn.utils._test_common.instance_generator import _construct_instances
-from sklearn.utils._testing import SkipTest, set_random_state
+from sklearn.utils._test_common.instance_generator import (
+    SKIPPED_ESTIMATORS,
+    _construct_instances,
+)
+from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
@@ -276,9 +278,12 @@ def _generate_meta_estimator_instances_with_pipeline():
         ):
             continue
 
-        with suppress(SkipTest):
-            for meta_estimator in _construct_instances(Estimator):
-                yield _get_instance_with_pipeline(meta_estimator, sig)
+        if Estimator in SKIPPED_ESTIMATORS:
+            # _construct_instances would raise SkipTest and a SkipTestWarning.
+            continue
+
+        for meta_estimator in _construct_instances(Estimator):
+            yield _get_instance_with_pipeline(meta_estimator, sig)
 
 
 # TODO: remove data validation for the following estimators
