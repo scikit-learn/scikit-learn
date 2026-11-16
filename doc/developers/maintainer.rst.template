@@ -296,6 +296,14 @@ Reference Steps
         older versions of the scikit-learn package in that folder. Before
         uploading to PyPI, you can test uploading to `test.pypi.org` first.
 
+        Note: manual uploads are forbidden by the trusted publishing setting
+        for security reasons. In the unlikely event where the current trusted
+        publisher (i.e. the `scikit-learn-release` GitHub Actions workflow) cannot
+        be used anymore, it would be necessary to reconfigure the
+        `scikit-learn` project on pypi.org and test.pypi.org to disable trusted
+        publishing so as to allow manual uploads again. But we should not do
+        this unless we have a good reason to.
+
         .. code-block:: console
 
           $ twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
