@@ -621,6 +621,45 @@ def test_most_frequent_and_prior_strategy_sparse_target(csc_container):
         assert_array_equal(y_pred.toarray(), y_expected)
 
 
+@pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
+@pytest.mark.parametrize("strategy", ["most_frequent", "prior"])
+def test_most_frequent_and_prior_strategy_sparse_target_nonconsecutive_classes(
+    csc_container, strategy
+):
+    # Non-regression test for gh-35376. When class labels are not
+    # ``0 .. n_classes - 1``, the majority class is not equal to its index
+    # in ``classes_``. Sparse ``most_frequent`` and ``prior`` predictions
+    # must still return that label.
+    X = [[0]] * 5  # ignored
+
+    y = np.array([4, 4, 4, 0, 1])
+    clf = DummyClassifier(strategy=strategy).fit(X, csc_container(y.reshape(-1, 1)))
+    y_pred = clf.predict(X)
+    assert sp.issparse(y_pred)
+    assert_array_equal(y_pred.toarray().ravel(), np.full(len(X), 4))
+
+    dense = DummyClassifier(strategy=strategy).fit(X, y)
+    assert_array_equal(dense.predict(X), np.full(len(X), 4))
+
+    # column 0: labels {0, 3, 7}, majority 7 (index 2)
+    # column 1: labels {0, 2}, majority 2 (index 1)
+    y_multi = np.array([[7, 2], [7, 2], [7, 0], [3, 2], [0, 0]])
+    clf_multi = DummyClassifier(strategy=strategy).fit(X, csc_container(y_multi))
+    y_pred_multi = clf_multi.predict(X)
+    assert sp.issparse(y_pred_multi)
+    assert_array_equal(y_pred_multi.toarray(), np.tile([7, 2], (len(X), 1)))
+
+    # Sparse targets insert an implicit 0 at index 0, so a negative majority
+    # label is not stored at the argmax position either.
+    y_neg = np.array([-5, -5, -5, 0, 3])
+    clf_neg = DummyClassifier(strategy=strategy).fit(
+        X, csc_container(y_neg.reshape(-1, 1))
+    )
+    y_pred_neg = clf_neg.predict(X)
+    assert sp.issparse(y_pred_neg)
+    assert_array_equal(y_pred_neg.toarray().ravel(), np.full(len(X), -5))
+
+
 def test_dummy_regressor_sample_weight(global_random_seed, n_samples=10):
     random_state = np.random.RandomState(seed=global_random_seed)
 
