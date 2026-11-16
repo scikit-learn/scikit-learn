@@ -316,16 +316,18 @@ Cross-Validation.
 Lasso
 =====
 
-The :class:`Lasso` is a linear model that estimates sparse coefficients, i.e., it is
-able to set coefficients exactly to zero.
-It is useful in some contexts due to its tendency to prefer solutions
+The :class:`Lasso` is a linear model that estimates sparse coefficients, meaning that
+it is able to set coefficients exactly to zero. A feature with a zero coefficient
+could be excluded from the model.
+Lasso is useful in some contexts due to its tendency to prefer solutions
 with fewer non-zero coefficients, effectively reducing the number of
 features upon which the given solution is dependent. For this reason,
 Lasso and its variants are fundamental to the field of compressed sensing.
 Under certain conditions, it can recover the exact set of non-zero coefficients (see
 :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`).
 
-Mathematically, it consists of a linear model with an added regularization term.
+Mathematically, it consists of a linear model with an additional regularization term in
+the form of the :math:`\ell_1`-norm of the coefficients.
 The objective function to minimize is:
 
 .. math::  \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
@@ -334,9 +336,28 @@ The lasso estimate thus solves the least-squares with added penalty
 :math:`\alpha ||w||_1`, where :math:`\alpha` is a constant and :math:`||w||_1` is the
 :math:`\ell_1`-norm of the coefficient vector.
 
-The implementation in the class :class:`Lasso` uses coordinate descent as
-the algorithm to fit the coefficients. See :ref:`least_angle_regression`
-for another implementation::
+.. note:: **Different scaling of penalty** ``alpha``
+
+  The objective function of the Lasso has a different normalization with
+  ``1/n_samples`` in front of the squared error. The Ridge objective can be expressed
+  in the same way and then reads
+
+  .. math:: \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2
+                            + \frac{\alpha}{2n_{\text{samples}}} ||w||_1}
+
+  This shows that different estimators use a different scaling behaviour of the penalty
+  parameter ``alpha`` with the sample size ``n_samples``. Thus the influence of
+  ``alpha`` fades with increasing ``n_samples`` for Ridge but not for Lasso.
+
+.. dropdown:: Weighted Lasso
+
+  With sample weights :math:`s=\text{sample_weight}`, :class:`Lasso` minimizes:
+
+  .. math:: \min_{w} \frac{1}{\sum_i s_i}\sum_i s_i (X_i w - y_i)^2 + \alpha ||w||_1^2
+
+The implementation of the class :class:`Lasso` uses
+:ref:`coordinate descent <coordinate_descent>` as the algorithm to fit the
+coefficients. See :ref:`least_angle_regression` for another implementation::
 
     >>> from sklearn.linear_model import Lasso
     >>> reg = Lasso(alpha=0.1)
@@ -377,7 +398,7 @@ computes the coefficients along the full path of possible values.
 
 .. _coordinate_descent:
 
-Coordinate Descent with Gap Safe Screening Rules
+Coordinate descent with gap safe screening rules
 ------------------------------------------------
 
 Coordinate descent (CD) is a strategy to solve a minimization problem that considers a
@@ -422,12 +443,15 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
 
   the stopping criterion is
 
-  .. math:: \text{tol} \frac{||y||_2^2}{n_{\text{samples}}} < G(w, cr)\,.
+  .. math:: \text{tol} \frac{||y||_2^2}{n_{\text{samples}}} \leq G(w, cr)\,.
 
-A clever method to speedup the coordinate descent algorithm is to screen features such
-that at optimum :math:`w_j = 0`. Gap safe screening rules are such a
-tool. Anywhere during the optimization algorithm, they can tell which feature we can
-safely exclude, i.e., set to zero with certainty.
+A clever method to speedup the coordinate descent algorithm is to screen features. The
+idea is to identify and exclude features with solution :math:`w_j = 0` as early as
+possible. Gap safe screening rules are such a tool. At any point during the
+optimization, they can tell if a feature can be safely excluded from further
+optimization and set to zero with certainty. The price for the certainty is that this
+rule does not identify all of them, but the closer to the optimum the more it
+identifies.
 
 .. dropdown:: References
 
@@ -446,22 +470,27 @@ safely exclude, i.e., set to zero with certainty.
     Journal of Machine Learning Research 18(128):1-33, 2017.
     <1611.05780>`
 
-Setting regularization parameter
---------------------------------
+Setting the regularization parameter
+------------------------------------
 
 The ``alpha`` parameter controls the degree of sparsity of the estimated
-coefficients.
+coefficients. In contrast to :class:`Ridge`, there is no computational shortcut for
+leave-one-out cross-validation. At least two good options remain to select ``alpha``,
+both faster than a plain :class:`~sklearn.model_selection.GridSearchCV`:
+either compute cross-validation, which still benefits from fast ``alpha``-path
+computations, or use information based selection criteria.
 
 Using cross-validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-scikit-learn exposes objects that set the Lasso ``alpha`` parameter by
-cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
-:class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
-explained below.
+Scikit-learn exposes estimators that select the Lasso ``alpha`` parameter by
+:term:`cross-validation`: :class:`LassoCV` and :class:`LassoLarsCV`. Both estimators
+exploit the fact that computing a full path of ``alpha`` values over a single fold is
+relatively cheap.
 
-For high-dimensional datasets with many collinear features,
-:class:`LassoCV` is most often preferable. However, :class:`LassoLarsCV` has
+For high-dimensional datasets with many collinear features, :class:`LassoCV` with its
+coordinate descent solver is most often preferable. However, :class:`LassoLarsCV` with
+its :ref:`least angle algorithm <least_angle_regression>` has
 the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
 features, it is often faster than :class:`LassoCV`.
@@ -483,17 +512,17 @@ Information-criteria based model selection
 
 Alternatively, the estimator :class:`LassoLarsIC` proposes to use the
 Akaike information criterion (AIC) and the Bayes Information criterion (BIC).
-It is a computationally cheaper alternative to find the optimal value of alpha
+It is a computationally cheaper alternative to find the optimal value of ``alpha``
 as the regularization path is computed only once instead of k+1 times
 when using k-fold cross-validation.
 
 Indeed, these criteria are computed on the in-sample training set. In short,
 they penalize the over-optimistic scores of the different Lasso models by
-their flexibility (cf. to "Mathematical details" section below).
+their flexibility, see the *Mathematical details* of :ref:`aic_bic`.
 
 However, such criteria need a proper estimation of the degrees of freedom of
 the solution, are derived for large samples (asymptotic results) and assume the
-correct model is candidates under investigation. They also tend to break when
+correct model is among the candidates under investigation. They also tend to break when
 the problem is badly conditioned (e.g. more features than samples).
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lars_ic_001.png
@@ -511,41 +540,40 @@ the problem is badly conditioned (e.g. more features than samples).
 AIC and BIC criteria
 ^^^^^^^^^^^^^^^^^^^^
 
-The definition of AIC (and thus BIC) might differ in the literature. In this
-section, we give more information regarding the criterion computed in
-scikit-learn.
+The definition of AIC, and thus BIC, may differ across the literature. In this section,
+we give more information regarding the criterion computed in scikit-learn.
 
 .. dropdown:: Mathematical details
 
   The AIC criterion is defined as:
 
   .. math::
-      AIC = -2 \log(\hat{L}) + 2 d
+      AIC = -2 \log(\mathcal{L}) + 2 p
 
-  where :math:`\hat{L}` is the maximum likelihood of the model and
-  :math:`d` is the number of parameters (as well referred to as degrees of
-  freedom in the previous section).
+  where :math:`\mathcal{L}` is the maximum likelihood of the model and :math:`p` is the
+  number of parameters (also referred to as degrees of freedom in the previous section,
+  i.e. ``n_features`` or ``n_features + 1`` if the intercept is included).
 
   The definition of BIC replaces the constant :math:`2` by :math:`\log(N)`:
 
   .. math::
-      BIC = -2 \log(\hat{L}) + \log(N) d
+      BIC = -2 \log(\mathcal{L}) + \log(N) p
 
   where :math:`N` is the number of samples.
 
   For a linear Gaussian model, the maximum log-likelihood is defined as:
 
   .. math::
-      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
+      \log(\mathcal{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
 
-  where :math:`\sigma^2` is an estimate of the noise variance,
+  where :math:`\sigma^2` is the noise variance and is estimated from the given ``y``,
   :math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
   targets, and :math:`n` is the number of samples.
 
   Plugging the maximum log-likelihood in the AIC formula yields:
 
   .. math::
-      AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2} + 2 d
+      AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2} + 2 p
 
   The first term of the above expression is sometimes discarded since it is a
   constant when :math:`\sigma^2` is provided. In addition,
@@ -559,11 +587,10 @@ scikit-learn.
   estimator [13]_ defined as:
 
   .. math::
-      \sigma^2 = \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{n - p}
+      \sigma^2 = \frac{\sum_{i=1}^{n} (y_i - \tilde{y}_i)^2}{n - p}
 
-  where :math:`p` is the number of features and :math:`\hat{y}_i` is the
-  predicted target using an ordinary least squares regression. Note, that this
-  formula is valid only when `n_samples > n_features`.
+  where :math:`\tilde{y}_i` is the predicted target using an ordinary least squares
+  regression. Note, that this formula is valid only when `n_samples > n_features`.
 
   .. rubric:: References
 
@@ -580,23 +607,27 @@ scikit-learn.
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The equivalence between ``alpha`` and the regularization parameter ``C`` of SVM
-is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``,
-depending on the estimator and the exact objective function optimized by the
-model.
+The equivalence between ``alpha`` and the regularization parameter ``C`` of
+:ref:`Support Vector Machines <svm>` is given by ``alpha = 1 / C`` or
+``alpha = 1 / (n_samples * C)``, depending on the estimator and the exact objective
+function optimized by the model.
 
 .. _multi_task_lasso:
 
 Multi-task Lasso
 ================
 
-The :class:`MultiTaskLasso` is a linear model that estimates sparse
-coefficients for multiple regression problems jointly: ``y`` is a 2D array,
-of shape ``(n_samples, n_tasks)``. The constraint is that the selected
-features are the same for all the regression problems, also called tasks.
+The :class:`MultiTaskLasso` is a linear model that estimates sparse coefficients for
+multiple regression problems, or tasks, jointly: ``y`` is a 2-dimensional array of
+shape ``(n_samples, n_targets)``, in maths often expressed as capital letter :math:`Y`.
+The coefficients are also 2-dimensional, :math:`W` is of shape
+``(n_features, n_targets)`` and accessible as the transpose of the coefficient
+attribute, ``coef_.T``. The constraint is that the selected features are the same for
+all the regression problems. This is enforced by the penalty, which couples each
+feature's coefficients across all tasks.
 
 The following figure compares the location of the non-zero entries in the
-coefficient matrix W obtained with a simple Lasso or a MultiTaskLasso.
+coefficient matrix :math:`W` obtained with a simple Lasso or a MultiTaskLasso.
 The Lasso estimates yield scattered non-zeros while the non-zeros of
 the MultiTaskLasso are full columns.
 
@@ -633,6 +664,7 @@ the MultiTaskLasso are full columns.
 
   .. math:: ||A||_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}.
 
+  In both above norms, the index :math:`j` is for the dimension of tasks.
   The implementation in the class :class:`MultiTaskLasso` uses
   coordinate descent as the algorithm to fit the coefficients.
 
