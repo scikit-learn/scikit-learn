@@ -480,12 +480,12 @@ def pytest_configure(config):
     # environment variable as an alternative mechanism.
     if (
         config.option.enable_threading_and_parallelism
-        or environ.get("SKLEARN_TESTS_ENABLE_PARALLELISM") == "1"
+        or environ.get("SKLEARN_TESTS_ENABLE_THREADING_AND_PARALLELISM") == "1"
     ):
         # Use extra threads to increase chances of race conditions:
         joblib.parallel_config(backend="threading", n_jobs=joblib.cpu_count() * 2)
         # Until we fix all failing tests in later PRs, we're going to skip them:
-        environ["SKLEARN_TESTS_ENABLE_PARALLELISM"] = "1"
+        environ["SKLEARN_TESTS_ENABLE_THREADING_AND_PARALLELISM"] = "1"
 
     if not PARALLEL_RUN_AVAILABLE:
         config.addinivalue_line(

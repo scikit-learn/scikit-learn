@@ -376,7 +376,7 @@ def test_set_output_transform(estimator_orig):
     name = estimator_orig.__class__.__name__
     if (
         name == "LatentDirichletAllocation"
-        and os.environ.get("SKLEARN_TESTS_ENABLE_PARALLELISM") == "1"
+        and os.environ.get("SKLEARN_TESTS_ENABLE_THREADING_AND_PARALLELISM") == "1"
     ):
         pytest.skip(
             "When threading+parallelism are enabled this fails intermittently,"
@@ -417,7 +417,7 @@ def test_set_output_transform_configured(estimator_orig, check_func):
     if (
         name in "LatentDirichletAllocation"
         and "pandas" in check_func.__name__
-        and os.environ.get("SKLEARN_TESTS_ENABLE_PARALLELISM") == "1"
+        and os.environ.get("SKLEARN_TESTS_ENABLE_THREADING_AND_PARALLELISM") == "1"
     ):
         pytest.skip(
             "When threading+parallelism are enabled these fail intermittently,"
