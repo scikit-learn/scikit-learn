@@ -73,7 +73,7 @@ grid_search = GridSearchCV(
 
 # %%
 # Let's fit the grid search with the auto-propagating progress bar callback.
-# Feel free to set max_propagation_depth=3 in the ProgressBar constructor to
+# Feel free to set ``max_propagation_depth=3`` in the ``ProgressBar`` constructor to
 # get a more detailed output by displaying the progress bars for the pipeline,
 # the standard scaler and the logistic regression.
 grid_search.set_callbacks(ProgressBar()).fit(X, y)
