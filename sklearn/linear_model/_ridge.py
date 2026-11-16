@@ -212,10 +212,18 @@ def _solve_lsqr(
     return coefs, n_iter
 
 
+class _SingularMatrixError(Exception):
+    """Raised by `_solve_spd` for a singular matrix in a non-NumPy namespace.
+
+    Caught in `_ridge_regression` to fall back to the SVD solver.
+    """
+
+
 def _solve_spd(A, b, xp, overwrite_a=False):
     """Solve `A @ x = b` for a symmetric positive definite `A`.
 
-    Raise a `LinAlgError` when `A` is singular, whatever the namespace.
+    When `A` is singular, raise SciPy's `LinAlgError` for NumPy inputs and
+    `_SingularMatrixError` for the other namespaces.
     """
     if _is_numpy_namespace(xp):
         return linalg.solve(A, b, assume_a="pos", overwrite_a=overwrite_a)
@@ -228,10 +236,10 @@ def _solve_spd(A, b, xp, overwrite_a=False):
     try:
         x = xp.linalg.solve(A, b)
     except (linalg.LinAlgError, xp_linalg_error) as exc:
-        raise linalg.LinAlgError(str(exc)) from exc
+        raise _SingularMatrixError(str(exc)) from exc
     if not bool(xp.all(xp.isfinite(x))):
         # Some namespaces (CuPy) return non-finite values instead of raising.
-        raise linalg.LinAlgError("Singular matrix.")
+        raise _SingularMatrixError("Singular matrix.")
     return x
 
 
@@ -315,8 +323,6 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
             #       is raised
             dual_coef = _solve_spd(K_alpha, y, xp, overwrite_a=False)
         except np.linalg.LinAlgError:
-            if not is_numpy_namespace:
-                raise
             warnings.warn(
                 "Singular matrix in solving dual problem. Using "
                 "least-squares solution instead."
@@ -795,13 +801,13 @@ def _ridge_regression(
                 dual_coef = _solve_cholesky_kernel(K, y, alpha, xp=xp)
 
                 coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
-            except linalg.LinAlgError:
+            except (linalg.LinAlgError, _SingularMatrixError):
                 # use SVD solver if matrix is singular
                 solver = "svd"
         else:
             try:
                 coef = _solve_cholesky(X, y, alpha, xp=xp)
-            except linalg.LinAlgError:
+            except (linalg.LinAlgError, _SingularMatrixError):
                 # use SVD solver if matrix is singular
                 solver = "svd"
 
