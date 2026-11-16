@@ -222,13 +222,15 @@ def _solve_spd(A, b, xp, overwrite_a=False):
 
     # The array API has no solver dedicated to positive definite matrices:
     # `xp.linalg.solve` relies on a LU decomposition instead of a Cholesky one.
+    # It has no standard exception for singular matrices either: namespaces
+    # raise NumPy's `LinAlgError` or their own `xp.linalg.LinAlgError`.
+    xp_linalg_error = getattr(xp.linalg, "LinAlgError", linalg.LinAlgError)
     try:
         x = xp.linalg.solve(A, b)
-    except Exception as exc:
-        # Each namespace has its own exception type for singular matrices.
+    except (linalg.LinAlgError, xp_linalg_error) as exc:
         raise linalg.LinAlgError(str(exc)) from exc
     if not bool(xp.all(xp.isfinite(x))):
-        # Some namespaces return non-finite values instead of raising.
+        # Some namespaces (CuPy) return non-finite values instead of raising.
         raise linalg.LinAlgError("Singular matrix.")
     return x
 
