@@ -1,0 +1,3 @@
+- :class:`isotonic.IsotonicRegression` is now faster to fit, up to 3x or more on
+  large datasets, by sorting the training data by `X` only.
+  By :user:`Arthur Lacote <cakedev0>`.
