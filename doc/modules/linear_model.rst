@@ -330,7 +330,7 @@ Mathematically, it consists of a linear model with an additional regularization 
 the form of the :math:`\ell_1`-norm of the coefficients.
 The objective function to minimize is:
 
-.. math::  \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
+.. math::  \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2^2 + \alpha ||w||_1}
 
 The lasso estimate thus solves the least-squares with added penalty
 :math:`\alpha ||w||_1`, where :math:`\alpha` is a constant and :math:`||w||_1` is the
@@ -342,8 +342,8 @@ The lasso estimate thus solves the least-squares with added penalty
   ``1/n_samples`` in front of the squared error. The Ridge objective can be expressed
   in the same way and then reads
 
-  .. math:: \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2
-                            + \frac{\alpha}{2n_{\text{samples}}} ||w||_1}
+  .. math:: \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2^2
+                            + \frac{\alpha}{2n_{\text{samples}}} ||w||_2^2}
 
   This shows that different estimators use a different scaling behaviour of the penalty
   parameter ``alpha`` with the sample size ``n_samples``. Thus the influence of
@@ -405,7 +405,7 @@ Coordinate descent (CD) is a strategy to solve a minimization problem that consi
 single feature :math:`j` at a time. This way, the optimization problem is reduced to a
 1-dimensional problem which is easier to solve:
 
-.. math::  \min_{w_j} {\frac{1}{2n_{\text{samples}}} ||x_j w_j + X_{-j}w_{-j} - y||_2 ^ 2 + \alpha |w_j|}
+.. math::  \min_{w_j} {\frac{1}{2n_{\text{samples}}} ||x_j w_j + X_{-j}w_{-j} - y||_2^2 + \alpha |w_j|}
 
 with index :math:`-j` meaning all features but :math:`j`. The solution is
 
@@ -548,23 +548,26 @@ we give more information regarding the criterion computed in scikit-learn.
   The AIC criterion is defined as:
 
   .. math::
-      AIC = -2 \log(\mathcal{L}) + 2 p
+      AIC = -2 \log(\mathcal{L}) + 2 \mathrm{df}
 
-  where :math:`\mathcal{L}` is the maximum likelihood of the model and :math:`p` is the
-  number of parameters (also referred to as degrees of freedom in the previous section,
-  i.e. ``n_features`` or ``n_features + 1`` if the intercept is included).
+  where :math:`\mathcal{L}` is the maximum likelihood of the model and
+  :math:`\mathrm{df}` is the effective number of degrees of freedom. For the Lasso,
+  :math:`\mathrm{df}` is the number of non-zero coefficients (without penalty,
+  ``alpha=0``, we would simply have ``df=n_features`` or ``n_features + 1`` if the
+  intercept is included).
 
   The definition of BIC replaces the constant :math:`2` by :math:`\log(N)`:
 
   .. math::
-      BIC = -2 \log(\mathcal{L}) + \log(N) p
+      BIC = -2 \log(\mathcal{L}) + \log(N) \mathrm{df}
 
   where :math:`N` is the number of samples.
 
   For a linear Gaussian model, the maximum log-likelihood is defined as:
 
   .. math::
-      \log(\mathcal{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
+      \log(\mathcal{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log(\sigma^2)
+                          - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
 
   where :math:`\sigma^2` is the noise variance and is estimated from the given ``y``,
   :math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
@@ -573,7 +576,8 @@ we give more information regarding the criterion computed in scikit-learn.
   Plugging the maximum log-likelihood in the AIC formula yields:
 
   .. math::
-      AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2} + 2 p
+      AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2}
+            + 2 \mathrm{df}
 
   The first term of the above expression is sometimes discarded since it is a
   constant when :math:`\sigma^2` is provided. In addition,
@@ -584,13 +588,15 @@ we give more information regarding the criterion computed in scikit-learn.
   At last, we mentioned above that :math:`\sigma^2` is an estimate of the
   noise variance. In :class:`LassoLarsIC` when the parameter `noise_variance` is
   not provided (default), the noise variance is estimated via the unbiased
-  estimator [13]_ defined as:
+  estimator of the variance of the corresponding Ordinary Least Squares (OLS) model
+  defined as:
 
   .. math::
       \sigma^2 = \frac{\sum_{i=1}^{n} (y_i - \tilde{y}_i)^2}{n - p}
 
-  where :math:`\tilde{y}_i` is the predicted target using an ordinary least squares
-  regression. Note, that this formula is valid only when `n_samples > n_features`.
+  where :math:`\tilde{y}_i` are the predictions of the OLS regression with :math:`p`
+  number of coefficients (also counting the intercept). Note, that this formula is
+  valid only when `n_samples > n_features`.
 
   .. rubric:: References
 
@@ -598,11 +604,6 @@ we give more information regarding the criterion computed in scikit-learn.
           "On the degrees of freedom of the lasso."
           The Annals of Statistics 35.5 (2007): 2173-2192.
           <0712.0881.pdf>`
-
-  .. [13] :doi:`Cherkassky, Vladimir, and Yunqian Ma.
-          "Comparison of model selection for regression."
-          Neural computation 15.7 (2003): 1691-1714.
-          <10.1162/089976603321891864>`
 
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -654,7 +655,7 @@ the MultiTaskLasso are full columns.
   :math:`\ell_1` :math:`\ell_2`-norm for regularization.
   The objective function to minimize is:
 
-  .. math::  \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}} ^ 2 + \alpha ||W||_{21}}
+  .. math::  \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}}^2 + \alpha ||W||_{21}}
 
   where :math:`\text{Fro}` indicates the Frobenius norm
 
@@ -672,27 +673,24 @@ the MultiTaskLasso are full columns.
 
 Elastic-Net
 ===========
-:class:`ElasticNet` is a linear regression model trained with both
-:math:`\ell_1` and :math:`\ell_2`-norm regularization of the coefficients.
-This combination  allows for learning a sparse model where few of
-the weights are non-zero like :class:`Lasso`, while still maintaining
-the regularization properties of :class:`Ridge`. We control the convex
-combination of :math:`\ell_1` and :math:`\ell_2` using the ``l1_ratio``
-parameter.
+:class:`ElasticNet` is a linear regression model that combines the :math:`\ell_2`-norm
+penalty of :class:`Ridge` with the :math:`\ell_1`-norm penalty of :class:`Lasso`.
+Thereby, we get the best of both: :math:`\ell_1` is able to produce sparse models with
+only a few non-zero coefficients while :math:`\ell_2` guards against numerical
+instabilities and can potentially achieve a better out-of-sample squared error loss.
+The convex combination of :math:`\ell_1` and :math:`\ell_2` is called elastic-net
+penalty. This mixing is controlled by the ``l1_ratio`` parameter.
 
 Elastic-net is useful when there are multiple features that are
 correlated with one another. Lasso is likely to pick one of these
 at random, while elastic-net is likely to pick both.
 
-A practical advantage of trading-off between Lasso and Ridge is that it
-allows Elastic-Net to inherit some of Ridge's stability under rotation.
-
-The objective function to minimize is in this case
+With :math:`\rho=\text{l1_ratio}`, the objective function to minimize is
 
 .. math::
 
-    \min_{w} { \frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
-    \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
+    \min_{w} { \frac{1}{2n_{\text{samples}}} ||X w - y||_2^2 + \alpha \rho ||w||_1 +
+    \frac{\alpha(1-\rho)}{2} ||w||_2^2}
 
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_002.png
@@ -711,35 +709,33 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 
 .. dropdown:: References
 
-  The following two references explain the iterations
-  used in the coordinate descent solver of scikit-learn, as well as
-  the duality gap computation used for convergence control.
+  Below is the reference that introduced the elastic-net. For references on the
+  coordinate descent algorithm to solve it, see
+  :ref:`coordinate descent <coordinate_descent>` above.
 
-  * "Regularization Path For Generalized linear Models by Coordinate Descent",
-    Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-    <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
-  * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
-    S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
-    in IEEE Journal of Selected Topics in Signal Processing, 2007
-    (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
+  * :doi:`Zou, H., & Hastie, T. (2005).
+    Regularization and variable selection via the elastic net.
+    Journal of the Royal Statistical Society Series B: Statistical Methodology, 67(2), 301-320.
+    <10.1111/j.1467-9868.2005.00503.x>`
 
 .. _multi_task_elastic_net:
 
 Multi-task Elastic-Net
 ======================
 
-The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
-coefficients for multiple regression problems jointly: ``Y`` is a 2D array
-of shape ``(n_samples, n_tasks)``. The constraint is that the selected
-features are the same for all the regression problems, also called tasks.
+The :class:`MultiTaskElasticNet` is the ``n_tasks`` counterpart to :class:`ElasticNet` in
+the same way that :class:`MultiTaskLasso` extends :class:`Lasso` to ``n_tasks``
+with the task-coupling :math:`\ell_1` :math:`\ell_2`-norm.
+The additional Ridge-like :math:`\ell_2`-norm has the same beneficial properties as
+before, but it does not mix tasks.
 
-Mathematically, it consists of a linear model trained with a mixed
-:math:`\ell_1` :math:`\ell_2`-norm and :math:`\ell_2`-norm for regularization.
-The objective function to minimize is:
+Mathematically, the multi-task elastic-net uses a convex combination of the
+:math:`\ell_1` :math:`\ell_2`-norm with the :math:`\ell_2`-norm, parametrized by
+``l1_ratio``. The objective function to minimize is:
 
 .. math::
 
-    \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}}^2 + \alpha \rho ||W||_{2 1} +
+    \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}}^2 + \alpha \rho ||W||_{21} +
     \frac{\alpha(1-\rho)}{2} ||W||_{\text{Fro}}^2}
 
 The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
