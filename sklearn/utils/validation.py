@@ -899,7 +899,10 @@ def check_array(
             return isinstance(dtype, SparseDtype)
 
         # Note that array may be a narwhals.DataFrame backed by a pandas.DataFrame.
-        array = df_pandas = array_df.to_native()
+        df_pandas = array_df.to_native()
+        # Work on the native pandas.DataFrame from here: `array.astype` is called
+        # below for extension dtypes, and narwhals has no `astype`.
+        array = df_pandas
         if hasattr(df_pandas, "sparse") and df_pandas.dtypes.apply(is_pd_sparse).all():
             # All columns of the pandas.DataFrame are sparse. Note that the `sparse`
             # attribute is not a guaranteed detection for all sparse columns.
