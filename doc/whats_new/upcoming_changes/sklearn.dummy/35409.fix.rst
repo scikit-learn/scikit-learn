@@ -1,0 +1,4 @@
+- :class:`dummy.DummyClassifier` with `strategy="most_frequent"` or
+  `strategy="prior"` now returns the majority class label when predicting
+  from a sparse target whose classes are not consecutive integers.
+  By :user:`Ranjith Guggilla <ranjithguggilla>`.
