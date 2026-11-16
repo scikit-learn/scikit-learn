@@ -3,7 +3,6 @@
 
 import functools
 import inspect
-import warnings
 from contextlib import contextmanager
 
 from sklearn.callback._base import AutoPropagatedCallback, FitCallback
@@ -11,9 +10,17 @@ from sklearn.callback._callback_context import CallbackContext
 
 
 def validate_callbacks(callbacks):
-    """Validate that callbacks follow the protocol and correctly implement hooks."""
-    for callback in callbacks:
+    """Validate that callbacks follow the protocol and correctly implement hooks.
+
+    Also check that the same callback instance is not provided multiple times.
+    """
+    for i, callback in enumerate(callbacks):
         callback_name = callback.__class__.__name__
+        if callback in callbacks[i + 1 :]:
+            raise ValueError(
+                "The same instance was provided multiple times for the callback "
+                f"{callback_name}. An instance can only be registered once."
+            )
 
         # isinstance for a Protocol returns True for classes too (not only instances).
         # Hence the additional check for classes.
@@ -81,21 +88,7 @@ class CallbackSupportMixin:
     def _set_callbacks(self, callbacks):
         """set_callbacks without validation."""
         if callbacks:
-            unique_callabcks = []
-            duplicate_names = set()
-            for i, callback in enumerate(callbacks):
-                if callback not in callbacks[i + 1 :]:
-                    unique_callabcks.append(callback)
-                else:
-                    duplicate_names.add(callback.__class__.__name__)
-            if duplicate_names:
-                warnings.warn(
-                    "The same instance was provided multiple times for the following "
-                    f"callbacks: {duplicate_names}. Each instance will be registered "
-                    "only once.",
-                    UserWarning,
-                )
-            self._skl_callbacks = unique_callabcks
+            self._skl_callbacks = list(callbacks)
         else:
             self.__dict__.pop("_skl_callbacks", None)
 

@@ -221,7 +221,7 @@ def test_estimator_without_subtasks(capsys):
     assert re.search(r"100%", captured.out)
 
 
-def test_two_different_progressbars(capsys):
+def test_two_progressbars(capsys):
     """Test attaching two progress bars to the same estimator.
 
     Only the last progress bar should be displayed. The first one should be disabled. If
@@ -241,16 +241,3 @@ def test_two_different_progressbars(capsys):
     # "MaxIterEstimator - fit" should not be displayed as the first progressbar should
     # be disabled.
     assert not re.search(r"MaxIterEstimator - fit", captured.out)
-
-
-def test_twice_same_progressbar():
-    """Test attaching the same progress bar twice to the same estimator."""
-    pytest.importorskip("rich")
-
-    est = MaxIterEstimator(max_iter=5)
-    pg = ProgressBar()
-    with pytest.warns(
-        UserWarning, match="The same instance was provided multiple times"
-    ):
-        est.set_callbacks(pg, pg)
-    est.fit()
