@@ -1779,3 +1779,31 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "Estimator, y_func",
+    [
+        (HistGradientBoostingRegressor, lambda X: np.sin(X[:, 0])),
+        (HistGradientBoostingClassifier, lambda X: np.arange(len(X)) % 2),
+    ],
+)
+def test_early_stopping_auto_with_explicit_validation_data(Estimator, y_func):
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/35032
+    # early_stopping="auto" should enable early stopping when X_val and y_val
+    # are passed to fit, even when n_samples <= 10_000.
+    X = np.arange(40.0).reshape(-1, 1)
+    y = y_func(X)
+    X_train, y_train, X_val, y_val = X[:30], y[:30], X[30:], y[30:]
+
+    params = dict(early_stopping="auto", max_iter=3, min_samples_leaf=5, random_state=0)
+
+    # Without explicit validation data, "auto" stays off on small datasets.
+    est = Estimator(**params).fit(X_train, y_train)
+    assert not est.do_early_stopping_
+
+    # With explicit validation data, "auto" turns early stopping on.
+    est = Estimator(**params).fit(X_train, y_train, X_val=X_val, y_val=y_val)
+    assert est.do_early_stopping_
+    assert est.validation_score_.shape == (est.n_iter_ + 1,)

@@ -30,8 +30,6 @@ from sklearn.linear_model import (
     MultiTaskLassoCV,
     OrthogonalMatchingPursuit,
     OrthogonalMatchingPursuitCV,
-    PassiveAggressiveClassifier,
-    PassiveAggressiveRegressor,
     Perceptron,
     PoissonRegressor,
     Ridge,
@@ -74,9 +72,7 @@ from sklearn.utils.fixes import CSR_CONTAINERS
         ),
         LogisticRegressionCV(
             alphas=10,
-            l1_ratios=(0.0,),  # TODO(1.10): remove because it is default now.
             tol=1e-6,
-            use_legacy_attributes=False,
             scoring="neg_log_loss",  # TODO(1.11): remove because it is default now
         ),
         MultiTaskElasticNet(),
@@ -188,7 +184,6 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
         LinearRegression,
         OrthogonalMatchingPursuit,
         OrthogonalMatchingPursuitCV,
-        PassiveAggressiveRegressor,
         PoissonRegressor,
         Ridge,
         RidgeCV,
@@ -223,12 +218,9 @@ def test_linear_model_regressor_coef_shape(Regressor, ndim):
             {
                 "alphas": 10,
                 "solver": "newton-cholesky",
-                "use_legacy_attributes": False,
-                "l1_ratios": (0,),  # TODO(1.10): remove
                 "scoring": "neg_log_loss",  # TODO(1.11): remove
             },
         ),
-        (PassiveAggressiveClassifier, {}),
         (Perceptron, {}),
         (RidgeClassifier, {}),
         (RidgeClassifierCV, {}),

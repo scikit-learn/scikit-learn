@@ -64,9 +64,15 @@ _promotion_table.update({(b, a): c for (a, b), c in _promotion_table.items()})
 _promotion_table.update({(a, a): a for a in _array_api_dtypes})
 
 
-def _two_arg(f):
+def _two_arg(f, *, scalar_x1=False, scalar_x2=False):
+    # scalar_x1, scalar_x2: convert a Python scalar in this position to a tensor,
+    # for torch functions which do not accept Python scalars there.
     @_wraps(f)
     def _f(x1, x2, /, **kwargs):
+        if scalar_x1:
+            x1 = _scalar_to_tensor(x1, x2)
+        if scalar_x2:
+            x2 = _scalar_to_tensor(x2, x1)
         x1, x2 = _fix_promotion(x1, x2)
         return f(x1, x2, **kwargs)
     if _f.__doc__ is None:
@@ -95,6 +101,12 @@ def _fix_promotion(x1, x2, only_scalar=True):
 
 
 _py_scalars = (bool, int, float, complex)
+
+
+def _scalar_to_tensor(x, other):
+    if isinstance(x, _py_scalars) and isinstance(other, torch.Tensor):
+        return torch.asarray(x, dtype=result_type(x, other), device=other.device)
+    return x
 
 
 def result_type(*arrays_and_dtypes: Array | DType | complex) -> DType:
@@ -161,29 +173,33 @@ conj = torch.conj_physical
 # Two-arg elementwise functions
 # These require a wrapper to do the correct type promotion on 0-D tensors
 add = _two_arg(torch.add)
-atan2 = _two_arg(torch.atan2)
+atan2 = _two_arg(torch.atan2, scalar_x1=True, scalar_x2=True)
 bitwise_and = _two_arg(torch.bitwise_and)
 bitwise_left_shift = _two_arg(torch.bitwise_left_shift)
 bitwise_or = _two_arg(torch.bitwise_or)
 bitwise_right_shift = _two_arg(torch.bitwise_right_shift)
 bitwise_xor = _two_arg(torch.bitwise_xor)
-copysign = _two_arg(torch.copysign)
+copysign = _two_arg(torch.copysign, scalar_x1=True)
 divide = _two_arg(torch.divide)
 # Also a rename. torch.equal does not broadcast
-equal = _two_arg(torch.eq)
+equal = _two_arg(torch.eq, scalar_x1=True)
 floor_divide = _two_arg(torch.floor_divide)
-greater = _two_arg(torch.greater)
-greater_equal = _two_arg(torch.greater_equal)
-hypot = _two_arg(torch.hypot)
-less = _two_arg(torch.less)
-less_equal = _two_arg(torch.less_equal)
-logaddexp = _two_arg(torch.logaddexp)
-# logical functions are not included here because they only accept bool in the
-# spec, so type promotion is irrelevant.
-maximum = _two_arg(torch.maximum)
-minimum = _two_arg(torch.minimum)
+greater = _two_arg(torch.greater, scalar_x1=True)
+greater_equal = _two_arg(torch.greater_equal, scalar_x1=True)
+hypot = _two_arg(torch.hypot, scalar_x1=True, scalar_x2=True)
+less = _two_arg(torch.less, scalar_x1=True)
+less_equal = _two_arg(torch.less_equal, scalar_x1=True)
+logaddexp = _two_arg(torch.logaddexp, scalar_x1=True, scalar_x2=True)
+# logical functions only accept bool in the spec, so type promotion is
+# irrelevant, but torch does not accept Python scalars for them.
+logical_and = _two_arg(torch.logical_and, scalar_x1=True, scalar_x2=True)
+logical_or = _two_arg(torch.logical_or, scalar_x1=True, scalar_x2=True)
+logical_xor = _two_arg(torch.logical_xor, scalar_x1=True, scalar_x2=True)
+maximum = _two_arg(torch.maximum, scalar_x1=True, scalar_x2=True)
+minimum = _two_arg(torch.minimum, scalar_x1=True, scalar_x2=True)
 multiply = _two_arg(torch.multiply)
-not_equal = _two_arg(torch.not_equal)
+nextafter = _two_arg(torch.nextafter, scalar_x1=True, scalar_x2=True)
+not_equal = _two_arg(torch.not_equal, scalar_x1=True)
 pow = _two_arg(torch.pow)
 remainder = _two_arg(torch.remainder)
 subtract = _two_arg(torch.subtract)
@@ -585,15 +601,19 @@ def where(condition: Array, x1: Array | complex, x2: Array | complex, /) -> Arra
     return torch.where(condition, x1, x2)
 
 
-# torch.reshape doesn't have the copy keyword
 def reshape(x: Array,
             /,
             shape: tuple[int, ...],
             *,
             copy: bool | None = None,
             **kwargs: object) -> Array:
-    if copy is not None:
-        raise NotImplementedError("torch.reshape doesn't yet support the copy keyword")
+    if copy is True:
+        return x.clone(memory_format=torch.contiguous_format).view(shape, **kwargs)
+    if copy is False:
+        try:
+            return x.view(shape, **kwargs)
+        except RuntimeError as error:
+            raise ValueError(str(error)) from error
     return torch.reshape(x, shape, **kwargs)
 
 # torch.arange doesn't support returning empty arrays
@@ -947,8 +967,9 @@ __all__ = ['asarray', 'result_type', 'can_cast',
            'bitwise_right_shift', 'bitwise_xor', 'copysign', 'count_nonzero',
            'diff', 'divide', 'round',
            'equal', 'floor_divide', 'greater', 'greater_equal', 'hypot',
-           'less', 'less_equal', 'logaddexp', 'maximum', 'minimum',
-           'multiply', 'not_equal', 'pow', 'remainder', 'subtract', 'max',
+           'less', 'less_equal', 'logaddexp', 'logical_and', 'logical_or',
+           'logical_xor', 'maximum', 'minimum', 'multiply', 'nextafter',
+           'not_equal', 'pow', 'remainder', 'subtract', 'max',
            'min', 'clip', 'unstack', 'cumulative_sum', 'cumulative_prod', 'sort',
            'argsort', 'prod', 'sum', 'any', 'all', 'mean', 'std', 'var', 'concat',
            'squeeze', 'broadcast_to', 'flip', 'roll', 'nonzero', 'where', 'reshape',
