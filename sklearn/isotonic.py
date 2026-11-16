@@ -105,21 +105,30 @@ def _make_unique(X, y, sample_weights):
 
     Assumes that X is ordered, so that all duplicates follow each other.
 
-    This groups together adjacent values of X with only an epsilon distance.
+    On top of exact duplicates, adjacent values of X that are so close that the slope
+    dy/dx of the linear interpolation between them could overflow are merged, too.
     """
     X = np.asarray(X)
     y = np.asarray(y)
     w = np.asarray(sample_weights)
-    # We select an eps that protects against overflow of the slope dy/dx of the
-    # linear interpolation. Pooling y values means taking averages of y (both here and
-    # in isotonic_regression). Therefore a safe bound on |dy| is dy_max:
-    dy_max = float(y.max() - y.min())
-    # Requiring |dx| >= eps = safety_factor * dy_max / finfo.max
-    # keeps dy/dx comfortably below the largest finite float.
-    finfo = np.finfo(X.dtype)
+    # Only exact duplicates of X need to be merged, with one exception: for tiny
+    # distances dx between adjacent X values, the slope dy/dx of the linear
+    # interpolation can overflow and predictions become inf. Pooling y values means
+    # taking averages of y (both here and in isotonic_regression). Therefore, a safe
+    # bound on |dy| is dy_max = y.max() - y.min().
+    # Requiring dx > eps = safety_factor * dy_max / finfo.max keeps dy/dx comfortably
+    # below the largest finite float. We divide by finfo.max first, such that eps
+    # itself cannot overflow.
+    # Note that we deliberately do not use a larger, data independent tolerance like
+    # finfo.resolution. The reason is that we only compare adjacent values: a long
+    # run of X values, each closer than the tolerance to its neighbor, would be
+    # chained into one single group. With finfo.resolution = 1e-6 for float32, e.g.
+    # np.linspace(0, 1, 2_000_000, dtype=np.float32) would collapse into a single
+    # value.
     safety_factor = 100
-    eps = max(safety_factor * dy_max / finfo.max, finfo.resolution)
-    starts = np.flatnonzero(np.concatenate(([True], np.diff(X) >= eps)))
+    float_max = float(np.finfo(X.dtype).max)
+    eps = safety_factor * (float(y.max()) / float_max - float(y.min()) / float_max)
+    starts = np.flatnonzero(np.concatenate(([True], np.diff(X) > eps)))
     w_out = np.add.reduceat(w, starts)
     y_out = np.add.reduceat(y * w, starts) / w_out
     return X[starts], y_out.astype(X.dtype, copy=False), w_out

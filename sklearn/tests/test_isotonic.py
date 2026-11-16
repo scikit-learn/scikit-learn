@@ -480,16 +480,43 @@ def test_make_unique_dtype(dtype):
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_make_unique_tolerance(dtype):
-    # Check that equality takes account of np.finfo tolerance
+    """Check that only X values that are equal in the given dtype are merged."""
     x = np.array([0, 1e-16, 1, 1 + 1e-14], dtype=dtype)
     y = x.copy()
     w = np.ones_like(x)
     x, y, w = _make_unique(x, y, w)
     if dtype == np.float64:
-        x_out = np.array([0, 1, 1 + 1e-14])
+        x_out = np.array([0, 1e-16, 1, 1 + 1e-14])
     else:
-        x_out = np.array([0, 1])
+        # 1 + 1e-14 == 1 in float32
+        x_out = np.array([0, 1e-16, 1], dtype=dtype)
     assert_array_equal(x, x_out)
+
+
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+@pytest.mark.parametrize("scale", [1, 1e-12, 1e-30])
+def test_make_unique_no_chaining_of_dense_X(dtype, scale):
+    """Check that densely spaced but distinct X values are not merged.
+
+    Non-regression test for a version of _make_unique that merged adjacent X values
+    closer than finfo.resolution. As each value was only compared to its neighbor, a
+    dense X was chained into one single group, resulting in a constant fit.
+    """
+    n = 2000
+    # The spacing is 5e-7 * scale, i.e. smaller than the resolution of float32, 1e-6,
+    # and for small scale also smaller than the one of float64, 1e-15.
+    x = (scale * np.linspace(0, 1e-3, n)).astype(dtype)
+    assert np.all(np.diff(x) > 0)
+    y = np.linspace(0, 1, n).astype(dtype)
+    w = np.ones_like(x)
+    x_out, y_out, w_out = _make_unique(x, y, w)
+    assert_array_equal(x_out, x)
+    assert_array_equal(y_out, y)
+    assert_array_equal(w_out, w)
+
+    ireg = IsotonicRegression().fit(x, y)
+    assert_array_equal(ireg.X_thresholds_, x)
+    assert_allclose(ireg.predict(x), y)
 
 
 def test_isotonic_make_unique_tolerance():
