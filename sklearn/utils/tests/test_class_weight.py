@@ -354,3 +354,15 @@ def test_compute_sample_weight_sparse(csc_container):
     y = csc_container(np.asarray([[0], [1], [1]]))
     sample_weight = compute_sample_weight("balanced", y)
     assert_allclose(sample_weight, [1.5, 0.75, 0.75])
+
+
+def test_compute_class_weight_and_sample_weight_balanced_empty():
+    # Non-regression test for empty inputs with class_weight="balanced"
+    classes = np.array([])
+    y = np.array([])
+    cw = compute_class_weight("balanced", classes=classes, y=y)
+    assert cw.shape == (0,)
+
+    sw = compute_sample_weight("balanced", y=y)
+    assert sw.shape == (0,)
+

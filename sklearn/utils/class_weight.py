@@ -83,20 +83,23 @@ def compute_class_weight(class_weight, *, classes, y, sample_weight=None):
         weight = xp.ones(classes.shape[0], device=device)
     elif class_weight == "balanced":
         # Find the weight of each class as present in y.
-        le = LabelEncoder()
-        y_ind = le.fit_transform(y)
-        if not all(xpx.isin(classes, xp.astype(le.classes_, classes.dtype), xp=xp)):
-            raise ValueError("classes should have valid labels that are in y")
+        if classes.shape[0] == 0:
+            weight = xp.empty(0, dtype=xp.float64, device=device)
+        else:
+            le = LabelEncoder()
+            y_ind = le.fit_transform(y)
+            if not all(xpx.isin(classes, xp.astype(le.classes_, classes.dtype), xp=xp)):
+                raise ValueError("classes should have valid labels that are in y")
 
-        if _is_numpy_namespace(xp) and sample_weight is not None:
-            sample_weight = move_to(sample_weight, xp=np, device="cpu")
+            if _is_numpy_namespace(xp) and sample_weight is not None:
+                sample_weight = move_to(sample_weight, xp=np, device="cpu")
 
-        sample_weight = _check_sample_weight(sample_weight, y)
-        weighted_class_counts = _bincount(y_ind, weights=sample_weight, xp=xp)
-        recip_freq = xp.sum(weighted_class_counts) / (
-            size(le.classes_) * weighted_class_counts
-        )
-        weight = recip_freq[le.transform(classes)]
+            sample_weight = _check_sample_weight(sample_weight, y)
+            weighted_class_counts = _bincount(y_ind, weights=sample_weight, xp=xp)
+            recip_freq = xp.sum(weighted_class_counts) / (
+                size(le.classes_) * weighted_class_counts
+            )
+            weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
         weight = xp.ones(size(classes), device=device)
