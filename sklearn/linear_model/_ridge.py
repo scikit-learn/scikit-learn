@@ -528,7 +528,9 @@ def ridge_regression(
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution via a Cholesky decomposition. It solves
           the primal problem involving `X.T @ X` when `n_samples >= n_features`,
-          and the dual problem involving `X @ X.T` otherwise.
+          and the dual problem involving `X @ X.T` otherwise. With array API
+          inputs, the system is solved with `xp.linalg.solve`, which uses a
+          LU decomposition instead (see :ref:`array_api`).
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
@@ -1133,7 +1135,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
           obtain a closed-form solution via a Cholesky decomposition. It solves
           the primal problem involving `X.T @ X` when `n_samples >= n_features`,
-          and the dual problem involving `X @ X.T` otherwise.
+          and the dual problem involving `X @ X.T` otherwise. With array API
+          inputs, the system is solved with `xp.linalg.solve`, which uses a
+          LU decomposition instead (see :ref:`array_api`).
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
@@ -1486,7 +1490,9 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
           obtain a closed-form solution via a Cholesky decomposition. It solves
           the primal problem involving `X.T @ X` when `n_samples >= n_features`,
-          and the dual problem involving `X @ X.T` otherwise.
+          and the dual problem involving `X @ X.T` otherwise. With array API
+          inputs, the system is solved with `xp.linalg.solve`, which uses a
+          LU decomposition instead (see :ref:`array_api`).
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
