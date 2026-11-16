@@ -245,7 +245,7 @@ Reference Steps
         to the history of the main branch which will help for future bug fix releases.
 
     - Trigger manually the `publish.yml` workflow in scikit-learn-release using
-      `{{ version_short }}` in the "scikit-learn maintenance branch" input
+      `{{ version_short }}.X` in the "scikit-learn maintenance branch" input
       field:
       https://github.com/scikit-learn/scikit-learn-release/actions/workflows/publish.yml
 
@@ -289,7 +289,7 @@ Reference Steps
 
       .. dropdown:: Uploading artifacts from local
 
-        Downloads all the artifacts from the wheel build GitHub workflow and
+        Download all the artifacts from the wheel build GitHub workflow and
         put them into a local `./dist` folder. Check the contents of the
         `./dist` folder: it should contain all the wheels along with the source
         tarball `.tar.gz`. Make sure you do not have developer versions or
