@@ -234,18 +234,27 @@ def _solve_spd(A, b, xp, overwrite_a=False):
 
 
 def _add_alpha_to_diagonal(A, value, xp):
-    # Return A + value * Id. NumPy arrays are modified in place.
+    """Return `A + value * Id`, computed in place when the namespace allows it.
+
+    The caller must check whether the returned array is `A`.
+    """
     n = A.shape[0]
     if _is_numpy_namespace(xp):
         # A.flat is a view even when A is Fortran-ordered.
         A.flat[:: n + 1] += value
         return A
-    # The array API has no way to index the diagonal in place: use in-place
-    # operations to allocate a single new (n, n) array.
-    D = xp.eye(n, dtype=A.dtype, device=array_device(A))
-    D *= value
-    D += A
-    return D
+    diag_idx = xp.arange(n, device=array_device(A))
+    try:
+        # Setting items with integer arrays is not part of the array API, but
+        # most namespaces support it and it avoids allocating a (n, n) array.
+        A[diag_idx, diag_idx] += value
+        return A
+    except (IndexError, TypeError, NotImplementedError):
+        # In-place operations, to allocate a single new (n, n) array.
+        D = xp.eye(n, dtype=A.dtype, device=array_device(A))
+        D *= value
+        D += A
+        return D
 
 
 def _solve_cholesky(X, y, alpha, xp=None):
