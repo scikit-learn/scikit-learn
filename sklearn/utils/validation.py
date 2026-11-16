@@ -30,7 +30,6 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
-from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import _object_dtype_isnan, _preserve_dia_indices_dtype
@@ -1139,9 +1138,7 @@ def check_array(
             # ensure that the output is writeable, even if avoidable, to not overwrite
             # the user's data by surprise.
 
-            if is_pandas_df_or_series(array_orig) or (
-                array_df is not None and array_df.implementation.is_pandas()
-            ):
+            if array_df is not None and array_df.implementation.is_pandas():
                 try:
                     # In pandas >= 3, np.asarray(df), called earlier in check_array,
                     # returns a read-only intermediate array. It can be made writeable
