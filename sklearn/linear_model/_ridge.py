@@ -240,7 +240,12 @@ def _add_alpha_to_diagonal(A, value, xp):
         # A.flat is a view even when A is Fortran-ordered.
         A.flat[:: n + 1] += value
         return A
-    return A + value * xp.eye(n, dtype=A.dtype, device=array_device(A))
+    # The array API has no way to index the diagonal in place: use in-place
+    # operations to allocate a single new (n, n) array.
+    D = xp.eye(n, dtype=A.dtype, device=array_device(A))
+    D *= value
+    D += A
+    return D
 
 
 def _solve_cholesky(X, y, alpha, xp=None):
