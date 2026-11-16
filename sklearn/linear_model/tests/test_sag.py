@@ -18,6 +18,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_almost_equal,
     assert_array_almost_equal,
+    assert_array_equal,
 )
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -867,3 +868,36 @@ def test_sag_classifier_raises_error(solver):
 
     with pytest.raises(ValueError, match="Floating-point under-/overflow"):
         clf.fit(X, y)
+
+
+@pytest.mark.parametrize("solver", ["sag", "saga"])
+@pytest.mark.parametrize("Estimator", [LogisticRegression, Ridge])
+@pytest.mark.parametrize("scale", [1e-3, 1, 1e3])
+def test_sag_sample_weight_scale_invariance(solver, Estimator, scale):
+    """Check convergence for sample weights of any scale.
+
+    Multiplying sample_weight and alpha by the same constant does not change the
+    minimum of the objective. The solver must converge to it, in the very same
+    number of epochs as its step size must not depend on that constant.
+    """
+    rng = np.random.RandomState(42)
+    n_samples, n_features = 100, 5
+    X = rng.randn(n_samples, n_features)
+    y = X @ rng.randn(n_features) + rng.randn(n_samples) > 0
+    # Zero weights, here 20%, must be equivalent to removing the samples.
+    sample_weight = rng.randint(0, 5, size=n_samples).astype(X.dtype)
+    alpha = 0.01 * sample_weight.sum()
+
+    def fit(scale, **params):
+        return Estimator(alpha=scale * alpha, random_state=0, **params).fit(
+            X, y, sample_weight=scale * sample_weight
+        )
+
+    exact_solver = "cholesky" if Estimator is Ridge else "newton-cholesky"
+    reference = fit(1, solver=exact_solver, tol=1e-12)
+    unscaled = fit(1, solver=solver, tol=1e-8)
+    scaled = fit(scale, solver=solver, tol=1e-8)
+
+    assert_allclose(scaled.coef_, reference.coef_, rtol=1e-5)
+    assert_allclose(scaled.intercept_, reference.intercept_, rtol=1e-5, atol=1e-7)
+    assert_array_equal(scaled.n_iter_, unscaled.n_iter_)

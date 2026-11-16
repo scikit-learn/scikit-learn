@@ -16,7 +16,13 @@ from sklearn.utils.validation import _check_sample_weight
 
 
 def get_auto_step_size(
-    max_squared_sum, alpha_scaled, loss, fit_intercept, n_samples=None, is_saga=False
+    max_squared_sum,
+    alpha_scaled,
+    loss,
+    fit_intercept,
+    n_samples=None,
+    is_saga=False,
+    max_sample_weight=1.0,
 ):
     """Compute automatic step size for SAG solver.
 
@@ -46,6 +52,12 @@ def get_auto_step_size(
         Whether to return step size for the SAGA algorithm or the SAG
         algorithm.
 
+    max_sample_weight : float, default=1.0
+        Maximum of the sample weights, which must be normalized to have a mean
+        of 1. The loss of sample i, `sample_weight[i] * loss_i`, has a gradient
+        Lipschitz constant proportional to `sample_weight[i]`. We bound the
+        maximum over all samples by the product of the maxima.
+
     Returns
     -------
     step_size : float
@@ -62,15 +74,16 @@ def get_auto_step_size(
     for Non-Strongly Convex Composite Objectives" <1407.0202>`
     """
     if loss in ("log", "multinomial"):
-        L = 0.25 * (max_squared_sum + int(fit_intercept)) + alpha_scaled
+        L = 0.25 * (max_squared_sum + int(fit_intercept))
     elif loss == "squared":
         # inverse Lipschitz constant for squared loss
-        L = max_squared_sum + int(fit_intercept) + alpha_scaled
+        L = max_squared_sum + int(fit_intercept)
     else:
         raise ValueError(
             "Unknown loss function for SAG solver, got %s instead of 'log' or 'squared'"
             % loss
         )
+    L = max_sample_weight * L + alpha_scaled
     if is_saga:
         # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
         # See Defazio et al. 2014
@@ -245,15 +258,20 @@ def sag_solver(
         y = check_array(y, dtype=_dtype, ensure_2d=False, order="C")
 
     n_samples, n_features = X.shape[0], X.shape[1]
-    # As in SGD, the alpha is scaled by n_samples.
-    alpha_scaled = float(alpha) / n_samples
-    beta_scaled = float(beta) / n_samples
-
     # if loss == 'multinomial', y should be label encoded.
     n_classes = int(y.max()) + 1 if loss == "multinomial" else 1
 
     # initialization
     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+    # SAG(A) minimizes an average over samples. We therefore divide the objective
+    #     sum_i sample_weight[i] * loss_i + alpha/2 * ||w||^2 + beta * ||w||_1
+    # by sum(sample_weight). This gives the average of the losses weighted with sample
+    # weights of mean 1, and makes the solver, in particular its step size, invariant
+    # under a rescaling of sample_weight.
+    sw_sum = sample_weight.sum()
+    sample_weight = sample_weight * (n_samples / sw_sum)
+    alpha_scaled = float(alpha) / sw_sum
+    beta_scaled = float(beta) / sw_sum
 
     if "coef" in warm_start_mem.keys():
         coef_init = warm_start_mem["coef"]
@@ -307,6 +325,7 @@ def sag_solver(
         fit_intercept,
         n_samples=n_samples,
         is_saga=is_saga,
+        max_sample_weight=sample_weight.max(),
     )
     if step_size * alpha_scaled == 1:
         raise ZeroDivisionError(
