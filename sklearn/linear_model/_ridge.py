@@ -212,38 +212,74 @@ def _solve_lsqr(
     return coefs, n_iter
 
 
-def _solve_cholesky(X, y, alpha):
+def _solve_spd(A, b, xp, overwrite_a=False):
+    """Solve `A @ x = b` for a symmetric positive definite `A`.
+
+    Raise a `LinAlgError` when `A` is singular, whatever the namespace.
+    """
+    if _is_numpy_namespace(xp):
+        return linalg.solve(A, b, assume_a="pos", overwrite_a=overwrite_a)
+
+    # The array API has no solver dedicated to positive definite matrices:
+    # `xp.linalg.solve` relies on a LU decomposition instead of a Cholesky one.
+    try:
+        x = xp.linalg.solve(A, b)
+    except Exception as exc:
+        # Each namespace has its own exception type for singular matrices.
+        raise linalg.LinAlgError(str(exc)) from exc
+    if not bool(xp.all(xp.isfinite(x))):
+        # Some namespaces return non-finite values instead of raising.
+        raise linalg.LinAlgError("Singular matrix.")
+    return x
+
+
+def _add_alpha_to_diagonal(A, value, xp):
+    # Return A + value * Id. NumPy arrays are modified in place.
+    n = A.shape[0]
+    if _is_numpy_namespace(xp):
+        # A.flat is a view even when A is Fortran-ordered.
+        A.flat[:: n + 1] += value
+        return A
+    return A + value * xp.eye(n, dtype=A.dtype, device=array_device(A))
+
+
+def _solve_cholesky(X, y, alpha, xp=None):
     # w = inv(X^t X + alpha*Id) * X.T y
+    xp, _ = get_namespace(X, xp=xp)
     n_features = X.shape[1]
     n_targets = y.shape[1]
 
     A = safe_sparse_dot(X.T, X, dense_output=True)
     Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
-    one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
+    one_alpha = bool(xp.all(alpha == alpha[0]))
 
     if one_alpha:
-        A.flat[:: n_features + 1] += alpha[0]
-        return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
+        A = _add_alpha_to_diagonal(A, alpha[0], xp)
+        return _solve_spd(A, Xy, xp, overwrite_a=True).T
     else:
-        coefs = np.empty([n_targets, n_features], dtype=X.dtype)
-        for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
-            A.flat[:: n_features + 1] += current_alpha
-            coef[:] = linalg.solve(A, target, assume_a="pos", overwrite_a=False).ravel()
-            A.flat[:: n_features + 1] -= current_alpha
+        coefs = xp.empty((n_targets, n_features), dtype=X.dtype, device=array_device(X))
+        for i in range(n_targets):
+            A_i = _add_alpha_to_diagonal(A, alpha[i], xp)
+            coefs[i, :] = _solve_spd(A_i, Xy[:, i : i + 1], xp)[:, 0]
+            if A_i is A:
+                _add_alpha_to_diagonal(A, -alpha[i], xp)
         return coefs
 
 
-def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
+def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None):
     # dual_coef = inv(X X^t + alpha*Id) y
+    xp, _ = get_namespace(K, xp=xp)
+    is_numpy_namespace = _is_numpy_namespace(xp)
     n_samples = K.shape[0]
     n_targets = y.shape[1]
 
     if copy:
         K = K.copy()
 
-    alpha = np.atleast_1d(alpha)
-    one_alpha = (alpha == alpha[0]).all()
+    if is_numpy_namespace:
+        alpha = np.atleast_1d(alpha)
+    one_alpha = bool(xp.all(alpha == alpha[0]))
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight not in [1.0, None]
 
     if has_sw:
@@ -255,23 +291,26 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
 
     if one_alpha:
         # Only one penalty, we can solve multi-target problems in one time.
-        K.flat[:: n_samples + 1] += alpha[0]
+        K_alpha = _add_alpha_to_diagonal(K, alpha[0], xp)
 
         try:
             # Note: we must use overwrite_a=False in order to be able to
             #       use the fall-back solution below in case a LinAlgError
             #       is raised
-            dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
+            dual_coef = _solve_spd(K_alpha, y, xp, overwrite_a=False)
         except np.linalg.LinAlgError:
+            if not is_numpy_namespace:
+                raise
             warnings.warn(
                 "Singular matrix in solving dual problem. Using "
                 "least-squares solution instead."
             )
             dual_coef = linalg.lstsq(K, y)[0]
 
-        # K is expensive to compute and store in memory so change it back in
-        # case it was user-given.
-        K.flat[:: n_samples + 1] -= alpha[0]
+        if K_alpha is K:
+            # K is expensive to compute and store in memory so change it back
+            # in case it was user-given.
+            _add_alpha_to_diagonal(K, -alpha[0], xp)
 
         if has_sw:
             dual_coef *= sw[:, np.newaxis]
@@ -279,16 +318,15 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         return dual_coef
     else:
         # One penalty per target. We need to solve each target separately.
-        dual_coefs = np.empty([n_targets, n_samples], K.dtype)
+        dual_coefs = xp.empty(
+            (n_targets, n_samples), dtype=K.dtype, device=array_device(K)
+        )
 
-        for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
-            K.flat[:: n_samples + 1] += current_alpha
-
-            dual_coef[:] = linalg.solve(
-                K, target, assume_a="pos", overwrite_a=False
-            ).ravel()
-
-            K.flat[:: n_samples + 1] -= current_alpha
+        for i in range(n_targets):
+            K_alpha = _add_alpha_to_diagonal(K, alpha[i], xp)
+            dual_coefs[i, :] = _solve_spd(K_alpha, y[:, i : i + 1], xp)[:, 0]
+            if K_alpha is K:
+                _add_alpha_to_diagonal(K, -alpha[i], xp)
 
         if has_sw:
             dual_coefs *= sw[np.newaxis, :]
@@ -632,10 +670,10 @@ def _ridge_regression(
     if is_numpy_namespace and not X_is_sparse:
         X = np.asarray(X)
 
-    if not is_numpy_namespace and solver != "svd":
+    if not is_numpy_namespace and solver not in ("svd", "cholesky"):
         raise ValueError(
             f"Array API dispatch to namespace {xp.__name__} only supports "
-            f"solver 'svd'. Got '{solver}'."
+            f"solvers 'svd' and 'cholesky'. Got '{solver}'."
         )
 
     if positive and solver != "lbfgs":
@@ -736,7 +774,7 @@ def _ridge_regression(
         if n_features > n_samples:
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
-                dual_coef = _solve_cholesky_kernel(K, y, alpha)
+                dual_coef = _solve_cholesky_kernel(K, y, alpha, xp=xp)
 
                 coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
             except linalg.LinAlgError:
@@ -744,7 +782,7 @@ def _ridge_regression(
                 solver = "svd"
         else:
             try:
-                coef = _solve_cholesky(X, y, alpha)
+                coef = _solve_cholesky(X, y, alpha, xp=xp)
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = "svd"
@@ -839,18 +877,7 @@ def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
             "namespace, or set `positive=False`."
         )
 
-    # At the moment, Array API dispatch only supports the "svd" solver.
-    solver = "svd"
-    if solver != auto_solver_np:
-        warnings.warn(
-            f"Using Array API dispatch to namespace {xp.__name__} with "
-            f"`solver='auto'` will result in using the solver '{solver}'. "
-            "The results may differ from those when using a Numpy array, "
-            f"because in that case the preferred solver would be {auto_solver_np}. "
-            f"Set `solver='{solver}'` to suppress this warning."
-        )
-
-    return solver
+    return auto_solver_np
 
 
 def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
