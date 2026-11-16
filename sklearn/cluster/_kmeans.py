@@ -1725,6 +1725,7 @@ def _mini_batch_step(
     random_state,
     random_reassign=False,
     reassignment_ratio=0.01,
+    adaptive_lr=False,
     verbose=False,
     n_threads=1,
 ):
@@ -1764,6 +1765,9 @@ def _mini_batch_step(
         model will take longer to converge, but should converge in a
         better clustering.
 
+    adaptive_lr : bool, default=False
+        If True, use the adaptive learning rate.
+
     verbose : bool, default=False
         Controls the verbosity.
 
@@ -1785,7 +1789,14 @@ def _mini_batch_step(
     # Update centers according to the labels
     if sp.issparse(X):
         _minibatch_update_sparse(
-            X, sample_weight, centers, centers_new, weight_sums, labels, n_threads
+            X,
+            sample_weight,
+            centers,
+            centers_new,
+            weight_sums,
+            labels,
+            adaptive_lr,
+            n_threads,
         )
     else:
         _minibatch_update_dense(
@@ -1795,6 +1806,7 @@ def _mini_batch_step(
             centers_new,
             weight_sums,
             labels,
+            adaptive_lr,
             n_threads,
         )
 
@@ -1947,6 +1959,12 @@ class MiniBatchKMeans(_BaseKMeans):
         a value may cause convergence issues, especially with a small batch
         size.
 
+    adaptive_lr : bool, default=False
+        If True, use the adaptive learning rate described in [1]_ which can be
+        more effective than the standard learning rate.
+
+        .. versionadded:: 1.9
+
     Attributes
     ----------
 
@@ -2000,6 +2018,13 @@ class MiniBatchKMeans(_BaseKMeans):
     See :ref:`sphx_glr_auto_examples_cluster_plot_birch_vs_minibatchkmeans.py` for a
     comparison with :class:`~sklearn.cluster.BIRCH`.
 
+    References
+    ----------
+
+    .. [1] Gregory Schwartzman (2023).
+        "Mini-batch k-means terminates within O(d/ɛ) iterations".
+        :arxiv:`2304.00419`
+
     Examples
     --------
     >>> from sklearn.cluster import MiniBatchKMeans
@@ -2043,6 +2068,7 @@ class MiniBatchKMeans(_BaseKMeans):
         "max_no_improvement": [Interval(Integral, 0, None, closed="left"), None],
         "init_size": [Interval(Integral, 1, None, closed="left"), None],
         "reassignment_ratio": [Interval(Real, 0, None, closed="left")],
+        "adaptive_lr": ["boolean"],
     }
 
     def __init__(
@@ -2060,6 +2086,7 @@ class MiniBatchKMeans(_BaseKMeans):
         init_size=None,
         n_init="auto",
         reassignment_ratio=0.01,
+        adaptive_lr=False,
     ):
         super().__init__(
             n_clusters=n_clusters,
@@ -2070,12 +2097,12 @@ class MiniBatchKMeans(_BaseKMeans):
             tol=tol,
             n_init=n_init,
         )
-
         self.max_no_improvement = max_no_improvement
         self.batch_size = batch_size
         self.compute_labels = compute_labels
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
+        self.adaptive_lr = adaptive_lr
 
     def _check_params_vs_input(self, X):
         super()._check_params_vs_input(X, default_n_init=3)
@@ -2237,7 +2264,12 @@ class MiniBatchKMeans(_BaseKMeans):
 
         self._check_params_vs_input(X)
         random_state = check_random_state(self.random_state)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        sample_weight = _check_sample_weight(
+            sample_weight,
+            X,
+            dtype=X.dtype,
+            ensure_non_negative=self.adaptive_lr,
+        )
         self._n_threads = _openmp_effective_n_threads()
         n_samples, n_features = X.shape
 
@@ -2335,6 +2367,7 @@ class MiniBatchKMeans(_BaseKMeans):
                     random_state=random_state,
                     random_reassign=self._random_reassign(),
                     reassignment_ratio=self.reassignment_ratio,
+                    adaptive_lr=self.adaptive_lr,
                     verbose=self.verbose,
                     n_threads=self._n_threads,
                 )
@@ -2390,6 +2423,9 @@ class MiniBatchKMeans(_BaseKMeans):
             The weights for each observation in X. If None, all observations
             are assigned equal weight. `sample_weight` is not used during
             initialization if `init` is a callable or a user provided array.
+            When ``adaptive_lr=True``, `sample_weight` must be non-negative
+            and the sum of the weights over the batch must be strictly
+            positive.
 
         Returns
         -------
@@ -2411,7 +2447,12 @@ class MiniBatchKMeans(_BaseKMeans):
         self._random_state = getattr(
             self, "_random_state", check_random_state(self.random_state)
         )
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        sample_weight = _check_sample_weight(
+            sample_weight,
+            X,
+            dtype=X.dtype,
+            ensure_non_negative=self.adaptive_lr,
+        )
         self.n_steps_ = getattr(self, "n_steps_", 0)
 
         # precompute squared norms of data points
@@ -2457,6 +2498,7 @@ class MiniBatchKMeans(_BaseKMeans):
                 random_state=self._random_state,
                 random_reassign=self._random_reassign(),
                 reassignment_ratio=self.reassignment_ratio,
+                adaptive_lr=self.adaptive_lr,
                 verbose=self.verbose,
                 n_threads=self._n_threads,
             )
