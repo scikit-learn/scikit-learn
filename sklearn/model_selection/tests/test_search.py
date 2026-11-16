@@ -2852,13 +2852,13 @@ def test_search_routes_metadata_to_response_method_enabled_by_param_grid():
                 .set_fit_request(metadata=True)
                 .set_transform_request(metadata=True),
             ),
-            ("classifier", SVC(probability=False, random_state=0)),
+            ("classifier", SGDClassifier(loss="hinge", random_state=0)),
         ]
     )
     # `pipe` has no `predict_proba`, which the scorer calls on the candidates
     search = GridSearchCV(
         pipe,
-        param_grid={"classifier__probability": [True]},
+        param_grid={"classifier__loss": ["log_loss"]},
         cv=2,
         scoring="neg_log_loss",
     )
