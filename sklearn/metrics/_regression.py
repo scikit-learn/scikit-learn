@@ -1600,10 +1600,11 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
             Interval(Real, None, 0, closed="right"),
             Interval(Real, 1, None, closed="left"),
         ],
+        "force_finite": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
-def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
+def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0, force_finite=True):
     """
     :math:`D^2` regression score function, fraction of Tweedie deviance explained.
 
@@ -1645,6 +1646,15 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
         - otherwise : Positive stable distribution. Requires: y_true > 0
           and y_pred > 0.
 
+    force_finite : bool, default=True
+        Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
+        data should be replaced with real numbers (``1.0`` if prediction is
+        perfect, ``0.0`` otherwise). Default is ``True``, a convenient setting
+        for hyperparameters' search procedures (e.g. grid search
+        cross-validation).
+
+        .. versionadded:: 1.10
+
     Returns
     -------
     z : float
@@ -1659,6 +1669,14 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
 
     This metric is not well-defined for single samples and will return a NaN
     value if n_samples is less than two.
+
+    In the particular case when ``y_true`` is constant, the D^2 score is not
+    finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
+    predictions). To prevent such non-finite numbers to pollute higher-level
+    experiments such as a grid search cross-validation, by default these cases
+    are replaced with 1.0 (perfect predictions) or 0.0 (imperfect predictions)
+    respectively. You can set ``force_finite`` to ``False`` to prevent this fix
+    from happening.
 
     References
     ----------
@@ -1679,6 +1697,15 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     0.630...
     >>> d2_tweedie_score(y_true, y_true, power=2)
     1.0
+    >>> y_true = [1, 1, 1]
+    >>> y_pred = [1, 1, 1]
+    >>> d2_tweedie_score(y_true, y_pred, power=1.5)
+    1.0
+    >>> y_pred = [1, 1, 1.1]
+    >>> d2_tweedie_score(y_true, y_pred, power=1.5)
+    0.0
+    >>> d2_tweedie_score(y_true, y_pred, power=1.5, force_finite=False)
+    -inf
     """
     xp, _, device = get_namespace_and_device(y_pred)
     y_type, y_true, y_pred, sample_weight, _ = _check_reg_targets_with_floating_dtype(
@@ -1698,11 +1725,53 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     )
 
     y_avg = _average(y_true, weights=sample_weight, xp=xp)
-    denominator = _mean_tweedie_deviance(
-        y_true, y_avg, sample_weight=sample_weight, power=power
+
+    if sample_weight is None:
+        constant_y_true = xp.all(y_true == y_true[0])
+        perfect_predictions = xp.all(y_pred == y_true)
+    else:
+        # Samples with a zero weight do not contribute to the deviance.
+        nonzero_weight = sample_weight != 0
+        y_true_nonzero_weight = y_true[nonzero_weight]
+        constant_y_true = xp.all(y_true_nonzero_weight == y_true_nonzero_weight[0])
+        perfect_predictions = xp.all((y_pred == y_true) | ~nonzero_weight)
+
+    # When y_true is constant, the deviance of the null model is zero, which
+    # makes D^2 undefined. Computing the deviance directly is not reliable in
+    # that case: with y_avg == 0 and some values of power, the formula
+    # evaluates 0 * inf and returns NaN instead of zero.
+    if constant_y_true:
+        denominator = 0.0
+
+        # The Tweedie deviance can be numerically non-zero for exact perfect
+        # predictions (e.g. tiny negative values for power < 0). Make sure
+        # that perfect predictions are consistently mapped to a score of 1.0.
+        if perfect_predictions:
+            numerator = 0.0
+    else:
+        denominator = _mean_tweedie_deviance(
+            y_true, y_avg, sample_weight=sample_weight, power=power
+        )
+
+    # Use arrays to let `_assemble_fraction_of_explained_deviance` handle the
+    # division by zero with the usual NumPy/Array API semantics when
+    # `force_finite=False`. Python floats would raise a ZeroDivisionError.
+    numerator = xp.reshape(
+        xp.asarray(numerator, dtype=y_true.dtype, device=device), (1,)
+    )
+    denominator = xp.reshape(
+        xp.asarray(denominator, dtype=y_true.dtype, device=device), (1,)
     )
 
-    return 1 - numerator / denominator
+    return _assemble_fraction_of_explained_deviance(
+        numerator=numerator,
+        denominator=denominator,
+        n_outputs=1,
+        multioutput="uniform_average",
+        force_finite=force_finite,
+        xp=xp,
+        device=device,
+    )
 
 
 @validate_params(

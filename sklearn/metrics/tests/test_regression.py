@@ -1,3 +1,4 @@
+import warnings
 from itertools import product
 
 import numpy as np
@@ -316,6 +317,72 @@ def test_regression_metrics_at_limits():
         mean_tweedie_deviance([0.0], [0.0], power=power)
     with pytest.raises(ValueError, match=msg):
         d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
+
+
+@pytest.mark.parametrize("power", [-1.5, 0, 1, 1.5, 2, 3])
+def test_d2_tweedie_score_constant_y_true(power):
+    # Non-regression test for gh-35402: a constant y_true should neither raise
+    # a ZeroDivisionError nor return NaN with a runtime warning.
+    y_true = np.ones(3)
+    y_pred_perfect = np.ones(3)
+    y_pred_imperfect = np.ones(3) + 0.1
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        assert d2_tweedie_score(y_true, y_pred_perfect, power=power) == 1.0
+        assert d2_tweedie_score(y_true, y_pred_imperfect, power=power) == 0.0
+
+    assert np.isnan(
+        d2_tweedie_score(y_true, y_pred_perfect, power=power, force_finite=False)
+    )
+    assert (
+        d2_tweedie_score(y_true, y_pred_imperfect, power=power, force_finite=False)
+        == -np.inf
+    )
+
+
+@pytest.mark.parametrize("power", [-1.5, 0, 1, 1.5])
+def test_d2_tweedie_score_constant_zero_y_true(power):
+    # A zero constant y_true is the common case of an all-zero CV fold. It used
+    # to produce NaN + RuntimeWarning for 1 < power < 2 and a ZeroDivisionError
+    # for power=1.
+    y_true = np.zeros(3)
+    y_pred = np.array([0.1, 0.2, 0.1])
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        assert d2_tweedie_score(y_true, y_pred, power=power) == 0.0
+
+    if power == 0:
+        # Only the normal distribution (power=0) accepts y_pred == 0.
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            assert d2_tweedie_score(y_true, y_true, power=power) == 1.0
+
+
+@pytest.mark.parametrize("power", [-1.5, 0, 1, 1.5, 2, 3])
+def test_d2_tweedie_score_constant_y_true_zero_weight(power):
+    # Samples with a zero weight do not contribute to the score. They should
+    # not prevent the constant-y_true handling from kicking in.
+    y_true = np.array([1.0, 1.0, 2.0])
+    sample_weight = np.array([1.0, 1.0, 0.0])
+    y_pred_perfect = np.array([1.0, 1.0, 100.0])
+    y_pred_imperfect = np.array([1.1, 1.1, 100.0])
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        assert (
+            d2_tweedie_score(
+                y_true, y_pred_perfect, sample_weight=sample_weight, power=power
+            )
+            == 1.0
+        )
+        assert (
+            d2_tweedie_score(
+                y_true, y_pred_imperfect, sample_weight=sample_weight, power=power
+            )
+            == 0.0
+        )
 
 
 def test__check_reg_targets():

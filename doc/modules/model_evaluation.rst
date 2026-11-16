@@ -3035,6 +3035,12 @@ of 0.0.
   :func:`mean_tweedie_deviance`. Note that for `power=0`,
   :func:`d2_tweedie_score` equals :func:`r2_score` (for single targets).
 
+  As for :func:`r2_score`, when ``y_true`` is constant the score is not finite:
+  it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
+  predictions). By default, these cases are replaced with 1.0 (perfect
+  predictions) or 0.0 (imperfect predictions). Set ``force_finite=False`` to
+  return the non-finite values instead.
+
   A scorer object with a specific choice of ``power`` can be built by::
 
     >>> from sklearn.metrics import d2_tweedie_score, make_scorer

@@ -1,0 +1,6 @@
+- :func:`metrics.d2_tweedie_score` now consistently handles a constant `y_true`
+  instead of raising a `ZeroDivisionError` or returning `NaN` with a runtime
+  warning, depending on `power`. As for :func:`metrics.r2_score`, the score is
+  set to 1.0 for perfect predictions and 0.0 otherwise, and a new `force_finite`
+  parameter can be set to `False` to return non-finite values instead.
+  By :user:`Carlos <Charly21r>`.
