@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
+from scipy.linalg import pinvh
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
@@ -745,7 +746,7 @@ def test_pca_rank_deficient_data(svd_solver, dtype, whiten):
         assert precision.dtype == dtype
         assert np.all(np.isfinite(precision))
         tol = 1e-6 if dtype == np.float32 else 1e-12
-        expected = np.linalg.pinv(cov.astype(np.float64), rtol=tol, hermitian=True)
+        expected = pinvh(cov.astype(np.float64), rtol=tol)
         assert_allclose(precision, expected, rtol=1e-3 if dtype == np.float32 else 1e-7)
 
     # Below the rank, the model is a regular full-rank Gaussian.
