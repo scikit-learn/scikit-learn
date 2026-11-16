@@ -931,6 +931,8 @@ def _sort_inputs_and_compute_classification_thresholds(
         sample_weight = column_or_1d(sample_weight)
         sample_weight = _check_sample_weight(sample_weight, y_true)
         nonzero_weight_mask = sample_weight != 0
+        if not xp.any(nonzero_weight_mask):
+            raise ValueError("sample_weight cannot be all zeros.")
         y_true = y_true[nonzero_weight_mask]
         y_score = y_score[nonzero_weight_mask]
         sample_weight = sample_weight[nonzero_weight_mask]

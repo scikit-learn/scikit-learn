@@ -1134,6 +1134,16 @@ def test_confusion_matrix_at_thresholds_zero_sample_weight(curve_func):
         assert_allclose(arr_1, arr_2)
 
 
+@pytest.mark.parametrize("curve_func", CURVE_FUNCS)
+def test_confusion_matrix_at_thresholds_all_zero_sample_weight(curve_func):
+    y_true = [0, 1]
+    y_score = [0.2, 0.8]
+    sample_weight = [0.0, 0.0]
+
+    with pytest.raises(ValueError, match="sample_weight cannot be all zeros."):
+        curve_func(y_true, y_score, sample_weight=sample_weight)
+
+
 @pytest.mark.parametrize("drop", [True, False])
 def test_precision_recall_curve(drop):
     y_true, _, y_score = make_prediction(binary=True)
