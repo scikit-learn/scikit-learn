@@ -50,7 +50,7 @@
 
 .. _Andreas Müller: https://amueller.github.io/
 
-.. _Matthieu Perrot: http://brainvisa.info/biblio/lnao/en/Author/PERROT-M.html
+.. _Matthieu Perrot: https://github.com/MatthieuPerrot
 
 .. _Jake Vanderplas: https://staff.washington.edu/jakevdp/
 
@@ -74,7 +74,7 @@
 
 .. _Christian Osendorfer: https://osdf.github.io
 
-.. _Arnaud Joly: http://www.ajoly.org
+.. _Arnaud Joly: https://github.com/arjoly
 
 .. _Rob Zinkov: https://www.zinkov.com/
 
@@ -108,7 +108,7 @@
 
 .. _Jan Hendrik Metzen: https://jmetzen.github.io/
 
-.. _Will Dawson: http://www.dawsonresearch.com
+.. _Will Dawson: https://github.com/willdawson
 
 .. _Andrew Tulloch: https://tullo.ch/
 

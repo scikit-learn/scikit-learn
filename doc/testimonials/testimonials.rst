@@ -148,7 +148,6 @@ Who is using scikit-learn?
     evaluating them. For many of these tasks, we relied on the excellent
     scikit-learn package for Python.
 
-    `Read more <http://blog.evernote.com/tech/2013/01/22/stay-classified/>`_
 
     .. rst-class:: annotation
 
