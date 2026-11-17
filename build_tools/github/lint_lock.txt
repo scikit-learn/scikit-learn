@@ -26,7 +26,7 @@ pyrefly==1.2.0
     # via -r build_tools/github/lint_requirements.txt
 pytest==9.1.0
     # via -r build_tools/github/lint_requirements.txt
-regex==2026.9.29
+regex==2026.11.9
     # via sphinx-lint
 ruff==0.12.2
     # via -r build_tools/github/lint_requirements.txt

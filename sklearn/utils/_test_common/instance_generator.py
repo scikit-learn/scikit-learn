@@ -687,7 +687,14 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_dict_unchanged": dict(max_iter=5, n_components=1)
     },
     Nystroem: {"check_dict_unchanged": dict(n_components=1)},
-    PCA: {"check_dict_unchanged": dict(n_components=1)},
+    PCA: {
+        "check_dict_unchanged": dict(n_components=1),
+        # The array API checks use rank-deficient data (rank 8, 10 features). With
+        # n_components >= rank, the model covariance is singular and the result of
+        # `score` depends on the LAPACK implementation.
+        "check_array_api_input": dict(n_components=5),
+        "check_array_api_mixed_inputs": dict(n_components=5),
+    },
     PLSCanonical: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSRegression: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
@@ -1181,10 +1188,6 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
-    },
-    PCA: {
-        # TODO: see gh-33205 for details
-        "check_array_api_input": "`linalg.inv` fails because input is singular",
     },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298
