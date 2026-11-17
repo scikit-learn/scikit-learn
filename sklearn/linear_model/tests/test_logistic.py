@@ -3299,7 +3299,7 @@ def test_logistic_regression_callback_metadata(solver):
         .set_on_fit_task_begin_request(requested_arg_begin=True)
         .set_on_fit_task_end_request(requested_arg_end="alias")
     )
-    X, y = load_iris(return_X_y=True)
+    X, y = make_classification(n_samples=20)
     LogisticRegression(solver=solver).set_callbacks(cb).fit(
         X, y, requested_arg_begin="val_begin", alias="val_end"
     )
