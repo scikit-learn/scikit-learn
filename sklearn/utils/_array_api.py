@@ -1339,6 +1339,8 @@ def _interp(x, xp, fp, left=None, right=None):
 
     dtype = _find_matching_floating_dtype(xp, fp, xp=xp_ns)
     x = xp_ns.astype(x, dtype)
+    xp = xp_ns.astype(xp, dtype)
+    fp = xp_ns.astype(fp, dtype)
 
     # Match NumPy when `xp` or `fp` is empty
     if xp.shape[0] == 0 or fp.shape[0] == 0:

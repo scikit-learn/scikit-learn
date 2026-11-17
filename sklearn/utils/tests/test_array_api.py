@@ -1059,6 +1059,8 @@ def test_interp(x, xp, fp, left, right, namespace, device_name, dtype_name):
     "x, xp, fp",
     [
         (1, [0, 2, 4], [1, -1, 1]),
+        (1, [0, 2, 4], [1.1, -1.2, 1.1]),
+        (0.5, [0, 2, 4], [1, -1, 1]),
     ],
 )
 @pytest.mark.parametrize(
