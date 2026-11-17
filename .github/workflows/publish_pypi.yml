@@ -21,7 +21,9 @@ jobs:
     - uses: actions/checkout@v7
     - uses: actions/setup-python@v7
       with:
-        python-version: '3.8'
+        # wheelhouse_uploader depends on an old apache-libcloud that imports
+        # ssl.match_hostname, which was removed in Python 3.12.
+        python-version: '3.11'
     - name: Install dependencies
       run: |
         pip install -U wheelhouse_uploader pyyaml
