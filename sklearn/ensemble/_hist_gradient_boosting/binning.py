@@ -357,6 +357,8 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             )
 
         max_n_threads = _openmp_effective_n_threads(self.max_n_threads)
+        # Each feature is binned in its own parallel region: below ~2000 samples
+        # per thread, starting and joining the threads costs more than the binning.
         n_threads = max(1, min(round(X.shape[0] / 2000), max_n_threads))
 
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order="F")
