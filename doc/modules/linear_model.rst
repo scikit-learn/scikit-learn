@@ -751,14 +751,18 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 
 .. dropdown:: References
 
-  Below is the reference that introduced the elastic-net. For references on the
-  coordinate descent algorithm to solve it, see
+  The first reference is the one that introduced the elastic-net, the second provides
+  the alternative dual objective function. For references on the coordinate descent
+  algorithm that underlyies this estimator, see
   :ref:`coordinate descent <coordinate_descent>` above.
 
   * :doi:`Zou, H., & Hastie, T. (2005).
     Regularization and variable selection via the elastic net.
     Journal of the Royal Statistical Society Series B: Statistical Methodology, 67(2), 301-320.
     <10.1111/j.1467-9868.2005.00503.x>`
+  * :arxiv:`Mendler-Dünner, C., Forte, S., Takác, M., & Jaggi, M. (2016).
+    Primal-Dual Rates and Certificates. International Conference on Machine Learning.
+    <1602.05205>`
 
 .. _multi_task_elastic_net:
 
