@@ -309,6 +309,8 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
 
         self._fit(X, self.random_state_)
 
+        return self
+
     def _fit(self, v_pos, rng):
         """Inner fit for one mini-batch.
 

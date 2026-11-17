@@ -90,7 +90,7 @@ def test_multi_target_regression_partial_fit():
 
     sgr = MultiOutputRegressor(SGDRegressor(random_state=0, max_iter=5))
 
-    sgr.partial_fit(X_train[:half_index], y_train[:half_index])
+    assert sgr.partial_fit(X_train[:half_index], y_train[:half_index]) is sgr
     sgr.partial_fit(X_train[half_index:], y_train[half_index:])
 
     y_pred = sgr.predict(X_test)
