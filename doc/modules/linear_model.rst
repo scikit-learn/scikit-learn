@@ -525,6 +525,10 @@ the solution, are derived for large samples (asymptotic results) and assume the
 correct model is among the candidates under investigation. They also tend to break when
 the problem is badly conditioned (e.g. more features than samples).
 
+If the assumptions are met, AIC tends to select the model with optimal prediction
+performance, while BIC tends to identify the true sparse model if the true model is
+in the candidate list.
+
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lars_ic_001.png
     :target: ../auto_examples/linear_model/plot_lasso_lars_ic.html
     :align: center
