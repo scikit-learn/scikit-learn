@@ -137,7 +137,7 @@ def _openmp_uses_active_wait():
     failure = None
     timeout = 5
     try:
-        completed = subprocess.run(
+        detection_result = subprocess.run(
             [sys.executable, "-c", import_script],
             check=False,
             capture_output=True,
@@ -150,13 +150,13 @@ def _openmp_uses_active_wait():
     except Exception as exc:
         failure = f"failed with {type(exc).__name__}: {exc}"
     else:
-        if completed.returncode != 0:
+        if detection_result.returncode != 0:
             # The last line of a traceback names the exception. Not indexed with
             # [-1], which is invalid under the wraparound=False directive.
-            last_line = completed.stderr.strip().rpartition("\n")[2]
-            failure = f"exited with code {completed.returncode}: {last_line}"
+            last_line = detection_result.stderr.strip().rpartition("\n")[2]
+            failure = f"exited with code {detection_result.returncode}: {last_line}"
         else:
-            output = completed.stdout + "\n" + completed.stderr
+            output = detection_result.stdout + "\n" + detection_result.stderr
             if any(pattern.search(output) for pattern in _PASSIVE_WAIT_PATTERNS):
                 active_wait = False
 
