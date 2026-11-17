@@ -76,7 +76,7 @@ thread_unsafe_fixtures = [
 faulthandler_timeout = 600
 faulthandler_exit_on_timeout = true
 # Custom markers
-markers = ["no_check_spmatrix:skip due to check_spmatrix scipy patch breaking this test"]
+markers = ["no_check_spmatrix:do not apply the check_spmatrix scipy patch as it breaks this test"]
 
 
 [tool.ruff]
