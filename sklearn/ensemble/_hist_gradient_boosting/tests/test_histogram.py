@@ -129,12 +129,13 @@ def test_histogram_sample_order_independence():
 
 
 @pytest.mark.parametrize("constant_hessian", [True, False])
-def test_unrolled_equivalent_to_naive(constant_hessian):
+@pytest.mark.parametrize("n_samples", [3, 10, 1001])
+@pytest.mark.parametrize("n_bins", [2, 5, 256])
+def test_unrolled_equivalent_to_naive(constant_hessian, n_samples, n_bins):
     # Make sure the different unrolled histogram computations give the same
-    # results as the naive one.
+    # results as the naive one. Few bins means that consecutive samples often
+    # fall into the same bin, n_bins=2 even puts all samples into the first bin.
     rng = np.random.RandomState(42)
-    n_samples = 10
-    n_bins = 5
     sample_indices = np.arange(n_samples).astype(np.uint32)
     binned_feature = rng.randint(0, n_bins - 1, size=n_samples, dtype=np.uint8)
     ordered_gradients = rng.randn(n_samples).astype(G_H_DTYPE)
