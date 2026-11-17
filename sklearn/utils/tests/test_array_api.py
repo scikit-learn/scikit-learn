@@ -234,7 +234,7 @@ def test_asarray_with_order(array_api):
 
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(include_integers=True),
+    yield_namespace_device_dtype_combinations(),
 )
 @pytest.mark.parametrize(
     "weights, axis, normalize, expected",
@@ -1035,7 +1035,7 @@ def test_matching_numpy_dtype(namespace, device_name, dtype_name):
 )
 @pytest.mark.parametrize(
     "namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(include_integers=True),
+    yield_namespace_device_dtype_combinations(),
 )
 def test_interp(x, xp, fp, left, right, namespace, device_name, dtype_name):
     xp_actual, device = _array_api_for_tests(namespace, device_name, dtype_name)
@@ -1048,6 +1048,34 @@ def test_interp(x, xp, fp, left, right, namespace, device_name, dtype_name):
         actual = move_to(actual, xp=numpy, device="cpu")
 
     desired = numpy.interp(x, xp, fp, left, right)
+
+    if dtype_name:
+        desired = desired.astype(dtype_name)
+
+    assert_allclose(actual, desired, atol=_atol_for_type(dtype_name))
+
+
+@pytest.mark.parametrize(
+    "x, xp, fp",
+    [
+        (1, [0, 2, 4], [1, -1, 1]),
+    ],
+)
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(include_integers=True),
+)
+def test_interp_integer(x, xp, fp, namespace, device_name, dtype_name):
+    xp_actual, device = _array_api_for_tests(namespace, device_name, dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        dtype = getattr(xp_actual, dtype_name) if dtype_name else None
+        xp_xp = xp_actual.asarray(xp, dtype=dtype, device=device)
+        fp_xp = xp_actual.asarray(fp, dtype=dtype, device=device)
+        actual = _interp(x, xp_xp, fp_xp)
+        actual = move_to(actual, xp=numpy, device="cpu")
+
+    desired = numpy.interp(x, xp, fp)
 
     if dtype_name:
         desired = desired.astype(dtype_name)
