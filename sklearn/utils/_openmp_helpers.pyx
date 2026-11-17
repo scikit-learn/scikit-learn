@@ -1,4 +1,3 @@
-import multiprocessing.spawn
 import os
 import re
 import subprocess
@@ -89,14 +88,10 @@ def _openmp_uses_active_wait():
         return _ACTIVE_WAIT_CACHE
 
     # Only a Python interpreter can run the script below. A frozen application
-    # (PyInstaller, cx_Freeze, ...) would relaunch itself instead, and so would
-    # an application embedding Python (uWSGI, Blender, ...) unless it was pointed
-    # to an interpreter with `multiprocessing.set_executable`, which this honors
-    # like multiprocessing does.
+    # (PyInstaller, cx_Freeze, ...) would relaunch itself instead.
     if getattr(sys, "frozen", False):
         _ACTIVE_WAIT_CACHE = True  # conservative fallback
         return _ACTIVE_WAIT_CACHE
-    executable = multiprocessing.spawn.get_executable()
 
     env = os.environ.copy()
     env["OMP_DISPLAY_ENV"] = "VERBOSE"
@@ -143,7 +138,7 @@ def _openmp_uses_active_wait():
     timeout = 5
     try:
         completed = subprocess.run(
-            [os.fsdecode(executable), "-c", import_script],
+            [sys.executable, "-c", import_script],
             check=False,
             capture_output=True,
             env=env,
