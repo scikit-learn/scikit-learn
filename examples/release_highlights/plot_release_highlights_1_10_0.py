@@ -7,7 +7,7 @@ Release Highlights for scikit-learn 1.10
 .. currentmodule:: sklearn
 
 We are pleased to announce the release of scikit-learn 1.10! Many bug fixes
-and improvements were added, as well as some key new features. Below we
+and improvements were added, as well as some new key features. Below we
 detail the highlights of this release. **For an exhaustive list of
 all the changes**, please refer to the :ref:`release notes <release_notes_1_10>`.
 
@@ -24,11 +24,18 @@ or with conda::
 # %%
 # Native categorical support in decision trees and random forests
 # ----------------------------------------------------------------
-# The tree models in :mod:`sklearn.tree`, as well as the random forests and extra
-# trees ensembles (:class:`~ensemble.RandomForestClassifier`,
-# :class:`~ensemble.RandomForestRegressor`, :class:`~ensemble.ExtraTreesClassifier`
-# and :class:`~ensemble.ExtraTreesRegressor`), now accept a `categorical_features`
-# parameter, like :class:`~ensemble.HistGradientBoostingClassifier` already does.
+# The following tree-based models now accept a `categorical_features` parameter,
+# like :class:`~ensemble.HistGradientBoostingClassifier` already does:
+#
+# - :class:`~tree.DecisionTreeClassifier`
+# - :class:`~tree.DecisionTreeRegressor`
+# - :class:`~tree.ExtraTreeClassifier`
+# - :class:`~tree.ExtraTreeRegressor`
+# - :class:`~ensemble.RandomForestClassifier`
+# - :class:`~ensemble.RandomForestRegressor`
+# - :class:`~ensemble.ExtraTreesClassifier`
+# - :class:`~ensemble.ExtraTreesRegressor`
+#
 # A split on a categorical feature can send any group of categories to each
 # child, instead of being limited to a threshold on an arbitrary encoding of the
 # categories (such as ordinal codes).
@@ -116,7 +123,7 @@ print(f"Non-zero coefficients: {np.flatnonzero(glm.coef_)}")
 # `IterativeImputer` also no longer raises a
 # :class:`~exceptions.ConvergenceWarning` when `max_iter` is reached before meeting
 # the `tol` stopping criterion: the round-robin imputation is not guaranteed to
-# converge, and this is expected. See the :ref:`User Guide
+# converge, and this is expected. See :ref:`Convergence and diminishing returns
 # <iterative_imputer_convergence>` for details.
 #
 # Similarly, `sklearn.experimental.enable_hist_gradient_boosting` is deprecated and
@@ -134,8 +141,9 @@ print(IterativeImputer(random_state=0).fit_transform(X))
 # -----------------------
 # Metadata routing is now much easier to use. It is still experimental and still off by
 # default, but once you enable it, scikit-learn estimators auto-request `sample_weight`
-# and, where they use a validation set, `X_val`, `y_val`, and `sample_weight_val`. You
-# no longer need to call `set_fit_request` or `set_score_request` for that metadata.
+# and, where they use a validation set, they also auto-request `X_val`, `y_val`, and
+# `sample_weight_val`. You no longer need to call `set_fit_request` or
+# `set_score_request` for that metadata.
 # Other metadata (except for `groups`) still needs an explicit request.
 #
 # In the example below, `sample_weight` is auto-requested on estimator methods that
@@ -157,11 +165,12 @@ sample_weight[:15] = 2
 
 search = GridSearchCV(LogisticRegression(), param_grid={"alpha": [0.01, 0.1, 1]})
 search.fit(X, y, sample_weight=sample_weight)
-print(f"Best alpha: {search.best_params_['alpha']}")
 set_config(enable_metadata_routing=False)
 
 # %%
-# A request set with `set_{method}_request` still takes precedence.
+# A request set with `set_{method}_request` still takes precedence
+# over the auto-requests.
+#
 # `set_fit_request(sample_weight=False)` opts out of receiving `sample_weight`.
 # `set_config(enable_metadata_auto_requests=False)` restores the previous behaviour:
 # passing metadata that was not explicitly requested raises `UnsetMetadataPassedError`.
@@ -221,7 +230,7 @@ set_config(enable_metadata_routing=False)
 #         print(clf.coef_.device, clf.classes_)
 #         print(clf.predict(X_gpu[:5]))
 #
-# Output::
+# Out::
 #
 #     cuda:0 ['cat' 'dog']
 #     ['cat' 'cat' 'dog' 'dog' 'cat']
@@ -229,8 +238,3 @@ set_config(enable_metadata_routing=False)
 # Array API support is experimental and must be explicitly enabled both in SciPy and
 # scikit-learn. See :ref:`array_api` for instructions and :ref:`array_api_supported`
 # for the full list of supported estimators and functions.
-
-# %%
-# Callbacks
-# ---------
-# TODO
