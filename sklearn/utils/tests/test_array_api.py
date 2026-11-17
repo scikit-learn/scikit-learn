@@ -234,7 +234,7 @@ def test_asarray_with_order(array_api):
 
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 @pytest.mark.parametrize(
     "weights, axis, normalize, expected",
@@ -412,7 +412,7 @@ def test_device_inspection():
 
 @pytest.mark.parametrize(
     "namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 def test_ravel(namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
@@ -665,7 +665,7 @@ def test_get_namespace_and_device():
 
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
 @pytest.mark.parametrize("axis", [0, 1, None, -1, -2])
@@ -765,7 +765,7 @@ def test_fill_and_add_to_diagonal(c_contiguity, function):
 @pytest.mark.parametrize("array", ["standard", "transposed", "non-contiguous"])
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 def test_fill_diagonal(array, array_namespace, device_name, dtype_name):
     """Check array API `_fill_diagonal` consistent with `numpy._fill_diagonal`."""
@@ -790,7 +790,7 @@ def test_fill_diagonal(array, array_namespace, device_name, dtype_name):
 
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 def test_add_to_diagonal(array_namespace, device_name, dtype_name):
     """Check `_add_to_diagonal` consistent between array API xp and numpy namespace."""
@@ -827,7 +827,7 @@ def test_sparse_device(csr_container, dispatch):
 
 @pytest.mark.parametrize(
     "namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 @pytest.mark.parametrize("axis", [None, 0, 1])
 def test_median(namespace, device_name, dtype_name, axis):
@@ -856,7 +856,7 @@ def test_median(namespace, device_name, dtype_name, axis):
 
 @pytest.mark.parametrize(
     "namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 def test_expit_logit(namespace, device_name, dtype_name):
     rtol = 1e-6 if "float32" in str(dtype_name) else 1e-12
@@ -977,7 +977,7 @@ def test_supported_float_types(namespace, device, expected_types):
 
 @pytest.mark.parametrize(
     "namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 def test_matching_numpy_dtype(namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
@@ -1035,7 +1035,7 @@ def test_matching_numpy_dtype(namespace, device_name, dtype_name):
 )
 @pytest.mark.parametrize(
     "namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 def test_interp(x, xp, fp, left, right, namespace, device_name, dtype_name):
     xp_actual, device = _array_api_for_tests(namespace, device_name, dtype_name)
@@ -1145,7 +1145,7 @@ def test_interp_raises_with_complex(namespace, device_name, dtype_name):
 
 @pytest.mark.parametrize(
     "namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 def test_swapaxes(namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
@@ -1178,7 +1178,8 @@ def test_swapaxes(namespace, device_name, dtype_name):
 )
 @pytest.mark.parametrize("cv", [None, 3, 5])
 @pytest.mark.parametrize(
-    "namespace, device_name, dtype_name", yield_namespace_device_dtype_combinations()
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(include_integers=True),
 )
 def test_cross_validate_array_api_pipeline(
     estimator, n_classes, scoring, target_dtype, cv, namespace, device_name, dtype_name
