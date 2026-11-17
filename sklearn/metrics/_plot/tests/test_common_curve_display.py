@@ -284,11 +284,7 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
         else:
             pytest.skip(f"`from_cv_results` not implemented in {Display}")
 
-    # TODO: Clean-up once `estimator_name` deprecated in all displays
-    if Display in (PrecisionRecallDisplay, RocCurveDisplay, DetCurveDisplay):
-        assert disp.name == clf_name
-    else:
-        assert disp.estimator_name == clf_name
+    assert disp.name == clf_name
     pyplot.close("all")
     disp.plot()
     if constructor_name == "from_cv_results":
@@ -337,11 +333,7 @@ def test_display_curve_not_fitted_errors(pyplot, data_binary, clf, Display):
     model.fit(X, y)
     disp = Display.from_estimator(model, X, y)
     assert model.__class__.__name__ in disp.line_.get_label()
-    # TODO: Clean-up once `estimator_name` deprecated in all displays
-    if Display in (PrecisionRecallDisplay, RocCurveDisplay, DetCurveDisplay):
-        assert disp.name == model.__class__.__name__
-    else:
-        assert disp.estimator_name == model.__class__.__name__
+    assert disp.name == model.__class__.__name__
 
 
 # TODO(1.12): remove warning filter, see PR #34326
@@ -849,6 +841,15 @@ def test_display_from_cv_results_curve_kwargs_default_kwargs(
         (
             DetCurveDisplay,
             {"fpr": np.array([0, 0.5, 1]), "fnr": np.array([1, 0.5, 0])},
+        ),
+        # TODO(1.12): Remove
+        (
+            CalibrationDisplay,
+            {
+                "prob_true": np.array([0, 0.5, 1]),
+                "prob_pred": np.array([0, 0.5, 1]),
+                "y_prob": np.array([0, 0.5, 1]),
+            },
         ),
     ],
 )
