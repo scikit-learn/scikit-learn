@@ -15,7 +15,7 @@ _CPU_COUNTS = {}
 # because it spawns a subprocess. None means "not computed yet".
 _ACTIVE_WAIT_CACHE = None
 
-# Lets users tell _openmp_uses_active_wait the answer instead of detecting it.
+# Lets users tell the answer to _openmp_uses_active_wait instead of detecting it.
 _WAIT_POLICY_ENV_VAR = "SKLEARN_OMP_WAIT_POLICY"
 
 
