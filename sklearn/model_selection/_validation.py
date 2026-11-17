@@ -651,6 +651,26 @@ def cross_val_score(
     return cv_results["test_score"]
 
 
+def _reindex_params(X, params, indices):
+    """Helper function to reindex the parameters based on the indices."""
+    params = {} if params is None else params
+    # `_check_method_params` considers that all params that are arrays of same length as
+    # X should be resampled with the provided `indices`. But it is not always the case,
+    # e.g. X_val, y_val and sample_weight_val which are thus explicitly excluded.
+    # TODO XXX: a more general solution for this problem is still needed, as
+    # aliased validation data would still get sliced.
+    params_to_index = {
+        key: value
+        for key, value in params.items()
+        if key not in ("X_val", "y_val", "sample_weight_val")
+    }
+    reindexed_params = params.copy()
+    reindexed_params.update(
+        _check_method_params(X, params=params_to_index, indices=indices)
+    )
+    return reindexed_params
+
+
 def _fit_and_score(
     estimator,
     X,
@@ -800,19 +820,15 @@ def _fit_and_score(
         print(f"{start_msg}{(80 - len(start_msg)) * '.'}")
 
     # Adjust length of sample weights
-    fit_params = fit_params if fit_params is not None else {}
-    fit_params = _check_method_params(X, params=fit_params, indices=train)
-    score_params = score_params if score_params is not None else {}
-    score_params_train = _check_method_params(X, params=score_params, indices=train)
-    score_params_test = _check_method_params(X, params=score_params, indices=test)
+    fit_params = _reindex_params(X, fit_params, train)
+    score_params_train = _reindex_params(X, score_params, train)
+    score_params_test = _reindex_params(X, score_params, test)
     # Adjust length of callbacks metadata
     if callback_params is not None:
         callback_params_checked = {}
         for hook_name in CALLBACK_METHODS:
-            callback_params_checked[hook_name] = _check_method_params(
-                X,
-                params=callback_params[hook_name],
-                indices=train,
+            callback_params_checked[hook_name] = _reindex_params(
+                X, callback_params[hook_name], train
             )
         callback_params = Bunch(**callback_params_checked)
 

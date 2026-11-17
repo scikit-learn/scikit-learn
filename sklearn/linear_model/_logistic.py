@@ -1517,15 +1517,15 @@ class LogisticRegression(
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where `n_samples` is the number of samples and `n_features`
-            is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X.
 
         sample_weight : array-like of shape (n_samples,) default=None
-            Array of weights that are assigned to individual samples. If not provided,
-            then each sample is given unit weight.
+            Array of weights that are assigned to individual samples.
+            If not provided, then each sample is given unit weight.
 
         **params : dict
             Parameters safely routed to the callbacks if `enable_metadata_routing=True`.

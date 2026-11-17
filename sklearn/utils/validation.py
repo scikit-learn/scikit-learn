@@ -2311,15 +2311,8 @@ def _check_method_params(X, params, indices=None):
     method_params_validated = {}
     for param_key, param_value in params.items():
         if (
-            (not _is_arraylike(param_value) and not sp.issparse(param_value))
-            or _num_samples(param_value) != _num_samples(X)
-            # `_check_method_params` considers that all params that are arrays of same
-            # length as X should be resampled with the provided `indices`. But it is not
-            # always the case, e.g. X_val and y_val which are thus explicitly excluded.
-            # TODO XXX: a more general solution for this problem is still needed, as
-            # aliased validation data would still get sliced.
-            or param_key in ("X_val", "y_val", "sample_weight_val")
-        ):
+            not _is_arraylike(param_value) and not sp.issparse(param_value)
+        ) or _num_samples(param_value) != _num_samples(X):
             # Non-indexable pass-through (for now for backward-compatibility).
             # https://github.com/scikit-learn/scikit-learn/issues/15805
             method_params_validated[param_key] = param_value
