@@ -1,0 +1,2 @@
+- :meth:`neural_network.BernoulliRBM.partial_fit` now returns ``self``, as
+  documented, instead of ``None``. By :user:`laasyapriya2007 <laasyapriya2007>`.
