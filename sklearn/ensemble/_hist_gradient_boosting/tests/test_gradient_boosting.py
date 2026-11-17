@@ -1855,9 +1855,10 @@ def test_get_heuristic_optimal_n_threads_monotonic_in_max_n_threads(
 def test_feature_thread_count_preserves_static_chunk_size(
     max_n_threads, active, monkeypatch
 ):
-    # The feature term chooses the smallest team whose static schedule has the
-    # same maximum features-per-thread as a team of the allowed size. This is not
-    # monotonic: 10 features need 10 threads, while 11 features need only 6.
+    # Features are split into equal chunks, one per thread. The heuristic picks
+    # the fewest threads that keep the largest chunk as small as with the allowed
+    # number of threads. This is not monotonic in n_features: 10 features need 10
+    # threads (1 per thread), while 11 features need only 6 (2 per thread).
     # n_samples is chosen so that only the feature term matters: with active
     # wait, few enough samples that the samples term stays below it; with
     # passive wait, enough samples to allow the most threads.
@@ -1867,10 +1868,10 @@ def test_feature_thread_count_preserves_static_chunk_size(
 
     for n_features in range(5, 41):
         n_threads = _get_heuristic_n_threads(max_n_threads, n_samples, n_features)
-        full_team_chunk = math.ceil(n_features / allowed)
-        assert math.ceil(n_features / n_threads) == full_team_chunk
+        max_chunk = math.ceil(n_features / allowed)
+        assert math.ceil(n_features / n_threads) == max_chunk
         if n_threads > 1:
-            assert math.ceil(n_features / (n_threads - 1)) > full_team_chunk
+            assert math.ceil(n_features / (n_threads - 1)) > max_chunk
 
     if max_n_threads == 10 and not active:
         assert _get_heuristic_n_threads(max_n_threads, n_samples, 10) == 10

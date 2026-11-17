@@ -11,23 +11,20 @@ import warnings
 # only_physical_cores.
 _CPU_COUNTS = {}
 
-# Module level cache for _openmp_uses_active_wait, since computing it spawns
-# a subprocess. None means "not computed yet".
+# Module level cache for _openmp_uses_active_wait. Its computation is costly
+# because it spawns a subprocess. None means "not computed yet".
 _ACTIVE_WAIT_CACHE = None
 
 # Lets users tell _openmp_uses_active_wait the answer instead of detecting it.
 _WAIT_POLICY_ENV_VAR = "SKLEARN_OMP_WAIT_POLICY"
 
 
-# Patterns matched against the block an OpenMP runtime prints on stderr when
-# OMP_DISPLAY_ENV is set: they identify a *resolved* spin-count setting (as
-# opposed to what was requested through environment variables, which the
-# runtime may ignore, normalize, or default differently) that means idle
-# threads do not spin. Note that ``OMP_WAIT_POLICY`` is not a reliable
-# signal by itself: e.g. libgomp can report it as ``PASSIVE`` while
-# ``GOMP_SPINCOUNT`` was explicitly set to a large value, which still makes
-# threads spin in practice. Values may be prefixed by a device scope (e.g.
-# "[host] ") and wrapped in quotes, hence the loose whitespace/quoting.
+# Used by _openmp_uses_active_wait to parse the settings that the OpenMP runtime
+# prints on stderr when OMP_DISPLAY_ENV=VERBOSE. Each pattern matches a value
+# meaning that idle threads sleep right away instead of spinning, e.g.
+# "[host] KMP_BLOCKTIME='0ms'" (libomp) or "GOMP_SPINCOUNT = '1'" (libgomp).
+# OMP_WAIT_POLICY is not checked: libgomp can report it as PASSIVE while
+# a large GOMP_SPINCOUNT still makes threads spin.
 _PASSIVE_WAIT_PATTERNS = tuple(
     re.compile(pattern)
     for pattern in (
@@ -40,39 +37,39 @@ _PASSIVE_WAIT_PATTERNS = tuple(
 
 
 def _openmp_uses_active_wait():
-    """Whether idle OpenMP threads actually spin (busy-wait) rather than sleep while
-    waiting for work.
+    """Whether idle OpenMP threads spin (active wait) rather than sleep.
 
-    A thread that actively waits can rejoin a parallel region with much lower latency
-    than one that has gone to sleep, which makes it worth spinning up more threads for
-    smaller workloads. This is controlled by ``GOMP_SPINCOUNT`` (GNU's ``libgomp``) and
-    ``KMP_BLOCKTIME`` (Intel's and LLVM's OpenMP runtimes).
+    OpenMP keeps its threads alive for the whole process. Between two parallel
+    regions (the body of a ``prange`` loop or of a ``with parallel()`` block), only
+    the main thread works: the other threads either spin on their CPU core for a
+    while ("active wait") or go to sleep ("passive wait"). Handing work to spinning
+    threads at the start of the next parallel region is fast, while waking up
+    sleeping threads is slow. So with passive wait, multi-threading only pays off on
+    larger workloads.
 
-    If the ``SKLEARN_OMP_WAIT_POLICY`` environment variable is set to ``"active"`` or
-    ``"passive"`` (case-insensitive), its value is used without any detection. It does
-    not change the wait policy of the OpenMP runtime itself.
+    How long idle threads spin before sleeping is set by ``GOMP_SPINCOUNT`` for GNU's
+    ``libgomp`` (a number of iterations) and by ``KMP_BLOCKTIME`` for Intel's and
+    LLVM's ``libomp`` (a duration). Their defaults depend on the runtime, its version,
+    its build options and even the CPU, and ``OMP_WAIT_POLICY`` changes them too. So
+    rather than guessing from environment variables, this starts a short-lived
+    subprocess with ``OMP_DISPLAY_ENV=VERBOSE``, in which the runtime prints the
+    values it uses, and looks for one meaning passive wait (see
+    ``_PASSIVE_WAIT_PATTERNS``).
 
-    Otherwise, this asks the runtime for its own resolved settings: it spawns a
-    short-lived subprocess with ``OMP_DISPLAY_ENV=VERBOSE``, which makes the OpenMP
-    runtime print its settings, then scans that output for ``_PASSIVE_WAIT_PATTERNS``
-    above.
+    The result is cached for the process, and written to ``SKLEARN_OMP_WAIT_POLICY``
+    in ``os.environ`` so that processes started later (e.g. joblib workers) skip the
+    detection.
 
-    If no Python interpreter is available to run the subprocess (e.g. in a frozen
-    application), or if it fails, times out, or none of these patterns are found, this
-    conservatively assumes active waiting is enabled. When the subprocess fails or
-    times out, it also warns and points to ``SKLEARN_OMP_WAIT_POLICY``. Finding none of
-    the patterns is not a failure: some runtimes, such as MSVC's ``vcomp``, do not
-    support ``OMP_DISPLAY_ENV``.
+    If ``SKLEARN_OMP_WAIT_POLICY`` is set to ``"active"`` or ``"passive"``
+    (case-insensitive), its value is used without any detection. It does not change
+    the wait policy of the OpenMP runtime itself.
 
-    Spawning a subprocess is too costly to redo on every call, so the result is cached
-    at the module level after the first call, and written to ``SKLEARN_OMP_WAIT_POLICY``
-    in ``os.environ`` so that subprocesses started later (e.g. joblib workers) inherit
-    it instead of probing again. The subprocess itself is kept as cheap as
-    possible: rather than ``import sklearn`` (which pulls in the whole package, ~0.3s on
-    its own), it loads only this compiled extension module directly from its file,
-    stubbing out its parent packages in ``sys.modules`` (with the ``__path__`` they
-    have in this process, so genuine subpackage imports such as ``sklearn._cyutility``
-    resolve to the same files) to skip running ``sklearn/__init__.py``.
+    Active wait is assumed when the detection is not possible, fails or finds nothing:
+    in a frozen application (no Python interpreter to run the subprocess), when the
+    subprocess fails or times out (with a warning pointing to
+    ``SKLEARN_OMP_WAIT_POLICY``), or when its output has no value meaning passive
+    wait. The latter is not a failure: some runtimes, such as MSVC's ``vcomp`` (which
+    waits actively by default), do not support ``OMP_DISPLAY_ENV``.
     """
     global _ACTIVE_WAIT_CACHE
 
@@ -105,15 +102,21 @@ def _openmp_uses_active_wait():
     env["OMP_DISPLAY_ENV"] = "VERBOSE"
     # Protect against accidental recursive inspections.
     env[_WAIT_POLICY_ENV_VAR] = "active"
-    # Forces the OpenMP runtime to actually initialize (and thus dump its
-    # resolved environment) in this fresh subprocess: GNU libgomp
-    # initializes eagerly on load, but the LLVM/Intel libomp runtime only
-    # initializes lazily, on the first real OpenMP call (triggered here by
-    # _force_openmp_runtime_init).
+    # The subprocess loads only this compiled module, directly from its file:
+    # `import sklearn` would pull in the whole package (~0.3 s on its own). Its
+    # parent packages are stubbed in sys.modules to skip sklearn/__init__.py,
+    # with the __path__ they have in this process, so that genuine subpackage
+    # imports (e.g. sklearn._cyutility) resolve to the same files even when the
+    # subprocess's sys.path would not find this scikit-learn (e.g. when it was
+    # made importable by editing sys.path).
     #
-    # The parent packages' __path__ is taken from this process rather than
-    # looked up in the subprocess, whose sys.path may not find the same
-    # scikit-learn (e.g. when it was made importable by editing sys.path).
+    # It then calls _force_openmp_runtime_init: libgomp initializes (and prints
+    # its settings) as soon as it is loaded, but libomp only on the first OpenMP
+    # call.
+    #
+    # TODO: move this detection to threadpoolctl. For libomp, it could read the
+    # value directly with kmp_get_blocktime, without any subprocess:
+    # https://github.com/joblib/threadpoolctl/issues/270
     parts = __name__.split(".")
     parent_paths = [
         (name, list(sys.modules[name].__path__))

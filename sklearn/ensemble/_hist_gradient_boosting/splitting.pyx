@@ -327,9 +327,9 @@ cdef class Splitter:
             BITSET_DTYPE_C left_cat_bitset
             int n_threads = self.n_threads
 
-            # An actively-waiting OpenMP runtime can rejoin a parallel region cheaply
-            # enough to make threading worth it on smaller workloads; a passively
-            # waiting one needs a much bigger workload to amortize that cost.
+            # Starting the parallel loop below is cheap when idle threads spin
+            # (active wait) but costly when they sleep, which then needs much more
+            # work per thread to pay off.
             int min_samples_per_thread_to_split = 500 if self.active_wait else 5000
             bint use_threads = (
                 n_threads > 1
@@ -550,10 +550,9 @@ cdef class Splitter:
             )
             split_features = np.sort(split_features)
 
-        # Parallelizing over too few features relative to the number of threads
-        # leaves some threads with no work while still paying for the overhead
-        # of spinning up the parallel region. An actively-waiting OpenMP runtime
-        # makes that overhead cheap enough that it's not worth guarding against.
+        # With too few features per thread, waking up sleeping threads costs more
+        # than the work they get. When idle threads spin (active wait), starting
+        # the parallel loop is cheap enough to always use threads.
         use_threads = self.active_wait or (n_split_candidates >= n_threads * 5)
 
         with nogil:

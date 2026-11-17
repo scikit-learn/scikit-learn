@@ -44,17 +44,25 @@ especially with respect to their caches' sizes.
 
 .. _envvar_SKLEARN_OMP_WAIT_POLICY:
 
-`SKLEARN_OMP_WAIT_POLICY`
-~~~~~~~~~~~~~~~~~~~~~~~~~
+`SKLEARN_OMP_WAIT_POLICY` (experimental)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 1.10
+
+This variable is **experimental**: it might change or be removed without any
+deprecation cycle.
 
 Tells scikit-learn whether idle OpenMP threads spin (`"active"`) or sleep
-(`"passive"`) while waiting for work, which some estimators such as
-:class:`~sklearn.ensemble.HistGradientBoostingClassifier` use to pick how many
-threads to use. When unset, scikit-learn detects it by asking the OpenMP
-runtime for its settings in a short-lived subprocess, and assumes `"active"` if
-that fails (with a warning when the subprocess itself fails or times out).
-scikit-learn then sets this variable in its own environment, so that the
-processes it starts later, such as joblib workers, skip the detection.
+(`"passive"`) between two parallel loops. Waking up sleeping threads is slow,
+so some estimators such as
+:class:`~sklearn.ensemble.HistGradientBoostingClassifier` use fewer threads
+when they sleep.
+
+When unset, scikit-learn starts a short-lived subprocess in which the OpenMP
+runtime prints its settings, and reads the wait policy from them. If that
+fails, it assumes `"active"` (with a warning when the subprocess itself fails or
+times out). scikit-learn then sets this variable in its own environment, so
+that the processes it starts later, such as joblib workers, skip the detection.
 
 This variable does not change the behavior of the OpenMP runtime: to do so, set
 `OMP_WAIT_POLICY` or a runtime-specific variable such as `GOMP_SPINCOUNT`
