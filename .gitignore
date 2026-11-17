@@ -97,3 +97,4 @@ jupyterlite_contents
 # files for AI agents
 .claude/CLAUDE.md
 .github/copilot-instructions.md
+AGENTS.override.md
