@@ -1,3 +1,3 @@
-- :class:`isotonic.IsotonicRegression` is now faster to fit, up to 3x or more on
-  large datasets, by sorting the training data by `X` only.
+- :class:`isotonic.IsotonicRegression` is now faster to fit by up to a factor of 3 or more on
+  large data. This is made possible by using numpy's fast sorting functions and only (arg-) sorting `X` instead of a `np.lexsort` on `X` and `y`.
   By :user:`Arthur Lacote <cakedev0>`.
