@@ -1550,6 +1550,11 @@ class GridSearchCV(BaseSearchCV):
         scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
         above. ('split0_test_precision', 'mean_train_precision' etc.)
 
+        Candidates with the same mean test score are tied: they share the
+        same ``rank_test_score``, equal to the smallest rank of the group.
+        Among the candidates tied at the best rank, the first one in the
+        ``cv_results_`` arrays is selected as the best one.
+
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
@@ -1578,6 +1583,10 @@ class GridSearchCV(BaseSearchCV):
         The dict at ``search.cv_results_['params'][search.best_index_]`` gives
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
+
+        When several candidates tie for the highest mean test score, they
+        share the same ``rank_test_score`` and the first one in the
+        ``cv_results_`` arrays is selected.
 
         For multi-metric evaluation, this is present only if ``refit`` is
         specified.
@@ -1930,6 +1939,11 @@ class RandomizedSearchCV(BaseSearchCV):
         scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
         above. ('split0_test_precision', 'mean_train_precision' etc.)
 
+        Candidates with the same mean test score are tied: they share the
+        same ``rank_test_score``, equal to the smallest rank of the group.
+        Among the candidates tied at the best rank, the first one in the
+        ``cv_results_`` arrays is selected as the best one.
+
     best_estimator_ : estimator
         Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
@@ -1961,6 +1975,10 @@ class RandomizedSearchCV(BaseSearchCV):
         The dict at ``search.cv_results_['params'][search.best_index_]`` gives
         the parameter setting for the best model, that gives the highest
         mean score (``search.best_score_``).
+
+        When several candidates tie for the highest mean test score, they
+        share the same ``rank_test_score`` and the first one in the
+        ``cv_results_`` arrays is selected.
 
         For multi-metric evaluation, this is not available if ``refit`` is
         ``False``. See ``refit`` parameter for more information.
