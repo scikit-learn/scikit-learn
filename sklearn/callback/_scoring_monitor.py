@@ -288,11 +288,7 @@ class ScoringMonitor(FitCallback):
         routed_params = process_routing(self, "on_fit_task_end", **score_params)
         for dataset in ("train", "val"):
             data_X, data_y = (X, y) if dataset == "train" else (X_val, y_val)
-            if (
-                self._scorers[dataset] == f"no_{dataset}_score"
-                or data_X is None
-                or data_y is None
-            ):
+            if self._scorers[dataset] == f"no_{dataset}_score" or data_X is None:
                 continue
 
             scorer = self._scorers[dataset]

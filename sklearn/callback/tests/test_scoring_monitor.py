@@ -7,7 +7,7 @@ import re
 import numpy as np
 import pytest
 
-from sklearn import config_context, set_config
+from sklearn import config_context
 from sklearn.base import clone
 from sklearn.callback import ScoringMonitor
 from sklearn.callback._scoring_monitor import ScoringMonitorLog
@@ -202,7 +202,6 @@ def test_logged_values(scoring_train, scoring_val, as_pandas):
         pytest.skip("At least one scorer must be set.")
 
     if scoring_val != "no_val_score":
-        set_config(enable_metadata_routing=True, enable_metadata_auto_requests=True)
         X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=1)
     else:
         X_val, y_val = None, None
@@ -213,7 +212,8 @@ def test_logged_values(scoring_train, scoring_val, as_pandas):
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
 
     if scoring_val != "no_val_score":
-        estimator.fit(X=X, y=y, X_val=X_val, y_val=y_val)
+        with config_context(enable_metadata_routing=True):
+            estimator.fit(X=X, y=y, X_val=X_val, y_val=y_val)
     else:
         estimator.fit(X=X, y=y)
 
@@ -236,7 +236,6 @@ def test_logged_values(scoring_train, scoring_val, as_pandas):
     else:
         assert log_train == expected_log_train
         assert log_val == expected_log_val
-    set_config(enable_metadata_routing=False, enable_metadata_auto_requests=False)
 
 
 @pytest.mark.parametrize("prefer", ["processes", "threads"])
@@ -373,7 +372,11 @@ def test_scoringmonitor_metadata_routing_meta_estimator():
 
 @pytest.mark.parametrize("enable_metadata_routing", [True, False])
 def test_scoringmonitor_sample_weights(enable_metadata_routing):
-    """Check that the ScoringMonitor works with sample weights."""
+    """Check that the ScoringMonitor works with sample weights.
+
+    If enable_metadata_routing is True, a validation scorer is used in addition to the
+    training scorer.
+    """
     rng = np.random.RandomState(0)
     X, y = make_regression(n_samples=100, n_features=2, random_state=rng)
     sample_weight = rng.randint(0, 5, size=X.shape[0])
@@ -381,34 +384,34 @@ def test_scoringmonitor_sample_weights(enable_metadata_routing):
     scorer_val = "no_val_score"
 
     if enable_metadata_routing:
-        set_config(enable_metadata_routing=True, enable_metadata_auto_requests=True)
         X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=rng)
         scorer_val = get_scorer("r2")
 
     # no sample weights
     callback = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
     if enable_metadata_routing:
-        MaxIterEstimator().set_callbacks(callback).fit(
-            X=X, y=y, X_val=X_val, y_val=y_val
-        )
+        with config_context(enable_metadata_routing=True):
+            MaxIterEstimator().set_callbacks(callback).fit(
+                X=X, y=y, X_val=X_val, y_val=y_val
+            )
     else:
         MaxIterEstimator().set_callbacks(callback).fit(X=X, y=y)
     log_no_sw = callback.get_logs()
 
     # sample weights
-    if enable_metadata_routing:
-        scorer_train.set_score_request(sample_weight=True)
-        scorer_val.set_score_request(sample_weight="sample_weight_val")
     callback = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
     if enable_metadata_routing:
-        MaxIterEstimator().set_callbacks(callback).fit(
-            X=X,
-            y=y,
-            X_val=X_val,
-            y_val=y_val,
-            sample_weight=sample_weight,
-            sample_weight_val=sample_weight[:10],
-        )
+        with config_context(enable_metadata_routing=True):
+            scorer_train.set_score_request(sample_weight=True)
+            scorer_val.set_score_request(sample_weight="sample_weight_val")
+            MaxIterEstimator().set_callbacks(callback).fit(
+                X=X,
+                y=y,
+                X_val=X_val,
+                y_val=y_val,
+                sample_weight=sample_weight,
+                sample_weight_val=sample_weight[:10],
+            )
     else:
         MaxIterEstimator().set_callbacks(callback).fit(
             X=X, y=y, sample_weight=sample_weight
@@ -418,8 +421,6 @@ def test_scoringmonitor_sample_weights(enable_metadata_routing):
     assert log_no_sw.train_scores != log_sw.train_scores
     if enable_metadata_routing:
         assert log_no_sw.val_scores != log_sw.val_scores
-
-    set_config(enable_metadata_routing=False, enable_metadata_auto_requests=False)
 
 
 def _get_ancestors_info_path(log, parent_task_id_path):

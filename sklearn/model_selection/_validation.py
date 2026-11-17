@@ -809,23 +809,10 @@ def _fit_and_score(
     if callback_params is not None:
         callback_params_checked = {}
         for hook_name in CALLBACK_METHODS:
-            callback_params_checked[hook_name] = {}
-            # `_check_method_params` considers that all params that are arrays of same
-            # length as X should be resampled with the provided `indices`. But it is not
-            # always the case, e.g. X_val and y_val which are thus explicitly excluded.
-            # TODO: a more general solution for this problem is still needed.
-            params_to_check = {}
-            for param_name, param_value in callback_params[hook_name].items():
-                if param_name in ("X_val", "y_val"):
-                    callback_params_checked[hook_name][param_name] = param_value
-                else:
-                    params_to_check[param_name] = param_value
-            callback_params_checked[hook_name].update(
-                _check_method_params(
-                    X,
-                    params=params_to_check,
-                    indices=train,
-                )
+            callback_params_checked[hook_name] = _check_method_params(
+                X,
+                params=callback_params[hook_name],
+                indices=train,
             )
         callback_params = Bunch(**callback_params_checked)
 
