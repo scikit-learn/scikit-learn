@@ -422,6 +422,9 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
 
 .. dropdown:: Mathematical details
 
+  To simplify the math, we assume here no intercept and ``y`` and ``X`` are mean
+  centered.
+
   The duality gap :math:`G(w, v)` is an upper bound of the difference between the
   current primal objective function of the Lasso, :math:`P(w)`, and its minimum
   :math:`P(w^\star)`, i.e. :math:`G(w, v) \geq P(w) - P(w^\star)`. It is given by
@@ -710,6 +713,41 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py`
+
+.. dropdown:: Mathematical details
+
+  To simplify the math, we assume here no intercept and ``y`` and ``X`` are mean
+  centered.
+
+  Interestingly, there are two different dual formulations for Elastic-Net. The
+  first one can be derived by starting with the Lasso and adding ``n_features``
+  artificial observations to ``X`` and ``y`` to incorporate the :math:`\ell_2` penalty.
+  The dual objective function reads
+
+  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
+                 - \frac{\alpha(1-\rho)}{2} ||w||_2^2
+
+  with the dual feasible set
+  :math:`\{v: ||X^Tv - n_{\text{samples}}\alpha (1-\rho)w||_{\infty}
+  \leq n_{\text{samples}}\alpha \rho\}`.
+  The disadvantage is that for pure Ridge regression with
+  :math:`\rho = \text{l1_ratio} = 0`, this constraint becomes an equality and
+  a dual feasible point is hard to find, simply rescaling the residual :math:`y - Xw`
+  does not work anymore.
+
+  The alternative formulation is derived by a direct computation of the dual and
+  results in
+
+  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
+                 - \frac{1}{2n_{\text{samples}}^2 \alpha(1-\rho)}
+                   \sum_j (\left|x_j \cdot v \right| - n_{\text{samples}}\alpha\rho)_+^2
+
+  Here, :math:`(x)_+= \max(x, 0)` denotes the positive part and :math:`x_j` the
+  :math:`j`-th column of ``X``. Surprisingly, the dual feasible set equals the whole of
+  :math:`\mathbb{R}^{n_{\text{samples}}}`, i.e. there are no restrictions on :math:`v`.
+  The disadvantage is that this formulation only holds for :math:`\alpha(1-\rho) > 0`
+  (in particular ``l1_ratio`` must be smaller than 1). This second formulation is used
+  in case of pure Ridge with ``l1_ratio=0`` where the first dual version breaks down.
 
 .. dropdown:: References
 
