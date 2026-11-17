@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from sklearn.callback import FitCallback
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import can_reuse_listener, open_listener, send
-from sklearn.utils._metadata_requests import _routing_enabled
+from sklearn.utils._metadata_requests import _auto_requests_enabled, _routing_enabled
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 from sklearn.utils.metadata_routing import (
@@ -320,6 +320,10 @@ class ScoringMonitor(FitCallback):
         self_request = self._get_metadata_request()
         if self._scorers["val"] != "no_val_score":
             self_request.on_fit_task_end.add_auto_request("X_val", "y_val")
+            if _auto_requests_enabled():
+                for scorer in self._scorers["val"]._scorers.values():
+                    if scorer._accept_sample_weight():
+                        scorer.set_score_request(sample_weight="sample_weight_val")
 
         router = MetadataRouter(owner=self).add_self_request(self_request)
         for dataset in ("train", "val"):

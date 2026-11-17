@@ -402,8 +402,6 @@ def test_scoringmonitor_sample_weights(enable_metadata_routing):
     callback = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
     if enable_metadata_routing:
         with config_context(enable_metadata_routing=True):
-            scorer_train.set_score_request(sample_weight=True)
-            scorer_val.set_score_request(sample_weight="sample_weight_val")
             MaxIterEstimator().set_callbacks(callback).fit(
                 X=X,
                 y=y,
@@ -644,10 +642,10 @@ def test_val_scorer_with_alias_request():
 def test_val_scorer_only_X():
     """Smoke test for the validation scorer on a scorer that only requires X."""
 
-    def score_func(estimator, X, y=None):
-        return estimator.predict(X).sum()
+    def score_func(y_true, y_pred):
+        return y_pred.sum()
 
-    cb = ScoringMonitor(scoring_val=score_func)
+    cb = ScoringMonitor(scoring_val=make_scorer(score_func))
 
     X, _ = make_regression(n_samples=10, n_features=2)
     X_val, _ = make_regression(n_samples=10, n_features=2)
