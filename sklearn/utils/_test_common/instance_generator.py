@@ -639,13 +639,15 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
+        # TODO(callbacks): extend to other solvers once they support callbacks.
+        "check_callback_support": dict(solver="lbfgs"),
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
             dict(solver="newton-cd-gram"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
             dict(solver="newton-cholesky", class_weight="balanced"),
-        ]
+        ],
     },
     LogisticRegressionCV: {
         "check_sample_weight_equivalence": [
