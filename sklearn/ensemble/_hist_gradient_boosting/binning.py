@@ -293,10 +293,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             not self.is_categorical_[f_idx] for f_idx in range(n_features)
         )
         max_n_threads = _openmp_effective_n_threads(self.max_n_threads)
+        # Starting joblib threads is expensive: only use one per ~1M values to bin.
+        # This heuristic might need to be re-tuned if the overhead of joblib's
+        # threading backend gets lower.
         n_threads = max(
             1,
             min(
-                # starting joblib threads is expensive
                 (n_features_to_bin * X.shape[0]) // 1_000_000,
                 n_features_to_bin,
                 max_n_threads,
