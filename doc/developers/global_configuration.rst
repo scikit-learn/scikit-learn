@@ -105,7 +105,7 @@ admissible seeds on your local machine:
     $ SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
 
 `SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As background, scikit-learn uses joblib for parallelism. joblib supports
 multiple backends, and in many cases scikit-learn defaults to using a
