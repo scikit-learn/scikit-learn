@@ -104,6 +104,22 @@ admissible seeds on your local machine:
 
     $ SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
 
+`SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As background, scikit-learn uses joblib for parallelism. joblib supports
+multiple backends, and in many cases scikit-learn defaults to using a
+process-pool based backend, with parallelism disabled.
+
+When this environment variable is set to ``1``, joblib is globally configured
+with the ``"threading"`` backend, and joblib's ``n_jobs`` is set to a high
+number of threads compared to number of cores. This can catch parallelism bugs,
+and potentially some thread-safety bugs, in cases where by default no
+parallelism is used.
+
+Given the focus on threading, it's recommended that these be run on
+free-threaded Python builds.
+
 `SKLEARN_SKIP_NETWORK_TESTS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
