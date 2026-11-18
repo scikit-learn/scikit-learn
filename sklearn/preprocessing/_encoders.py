@@ -17,7 +17,7 @@ from sklearn.base import (
 from sklearn.utils import _align_api_if_sparse, _safe_indexing, check_array
 from sklearn.utils._encode import _encode, _get_counts, _unique
 from sklearn.utils._mask import _get_mask
-from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
 from sklearn.utils._set_output import _get_output_config
 from sklearn.utils.fixes import _ensure_sparse_index_int32
@@ -134,7 +134,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
                 # `nan` must be the last stated category
                 for category in cats[:-1]:
-                    if is_scalar_nan(category):
+                    if is_scalar_nan(category) or is_pandas_na(category):
                         raise ValueError(
                             "Nan should be the last element in user"
                             f" provided categories, see categories {cats}"
@@ -178,7 +178,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         missing_indices = {}
         if return_and_ignore_missing_for_infrequent:
             for feature_idx, categories_for_idx in enumerate(self.categories_):
-                if is_scalar_nan(categories_for_idx[-1]):
+                if is_scalar_nan(categories_for_idx[-1]) or is_pandas_na(
+                    categories_for_idx[-1]
+                ):
                     # `nan` values can only be placed in the latest position
                     missing_indices[feature_idx] = categories_for_idx.size - 1
             output["missing_indices"] = missing_indices
@@ -860,7 +862,7 @@ class OneHotEncoder(_BaseEncoder):
             for feature_idx, (drop_val, cat_list) in enumerate(
                 zip(drop_array, self.categories_)
             ):
-                if not is_scalar_nan(drop_val):
+                if not (is_scalar_nan(drop_val) or is_pandas_na(drop_val)):
                     drop_idx = np.where(cat_list == drop_val)[0]
                     if drop_idx.size:  # found drop idx
                         drop_indices.append(
@@ -871,7 +873,7 @@ class OneHotEncoder(_BaseEncoder):
                     continue
 
                 # drop_val is nan, find nan in categories manually
-                if is_scalar_nan(cat_list[-1]):
+                if is_scalar_nan(cat_list[-1]) or is_pandas_na(cat_list[-1]):
                     drop_indices.append(
                         self._map_drop_idx_to_infrequent(feature_idx, cat_list.size - 1)
                     )
@@ -1518,7 +1520,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
         # missing values are not considered part of the cardinality
         # when considering unknown categories or encoded_missing_value
         for cat_idx, categories_for_idx in enumerate(self.categories_):
-            if is_scalar_nan(categories_for_idx[-1]):
+            if is_scalar_nan(categories_for_idx[-1]) or is_pandas_na(
+                categories_for_idx[-1]
+            ):
                 cardinalities[cat_idx] -= 1
 
         if self.handle_unknown == "use_encoded_value":
@@ -1532,8 +1536,9 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     )
 
         if self._missing_indices:
-            if np.dtype(self.dtype).kind != "f" and is_scalar_nan(
-                self.encoded_missing_value
+            if np.dtype(self.dtype).kind != "f" and (
+                is_scalar_nan(self.encoded_missing_value)
+                or is_pandas_na(self.encoded_missing_value)
             ):
                 raise ValueError(
                     "There are missing values in features "
@@ -1543,7 +1548,10 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     "set dtype to a float"
                 )
 
-            if not is_scalar_nan(self.encoded_missing_value):
+            if not (
+                is_scalar_nan(self.encoded_missing_value)
+                or is_pandas_na(self.encoded_missing_value)
+            ):
                 # Features are invalid when they contain a missing category
                 # and encoded_missing_value was already used to encode a
                 # known category
