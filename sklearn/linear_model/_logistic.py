@@ -168,7 +168,8 @@ class _LbfgsCallbackBridge:
     initial weights ``w0``. After ``scipy.optimize.minimize`` returns, the last
     subcontext created by ``__call__`` corresponds to an iteration that never ran.
     ``close`` ends it as an empty task so every ``on_fit_task_begin`` call has a
-    matching ``on_fit_task_end`` call.
+    matching ``on_fit_task_end`` call. When a callback stops the fit, ``__call__``
+    has already ended the last subcontext and ``close`` does nothing.
     """
 
     def __init__(
@@ -226,6 +227,8 @@ class _LbfgsCallbackBridge:
             metadata=self._metadata,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
         ):
+            # The subcontext has been ended, there is nothing left for close.
+            self._iter_ctx = None
             raise StopIteration()
 
         # Begin hook for the next iteration's subcontext.
@@ -238,7 +241,12 @@ class _LbfgsCallbackBridge:
         that ``scipy.optimize.minimize`` did not actually run. It corresponds to
         an empty task so we don't forward anything to the ``on_fit_task_end``
         hooks.
+
+        If the fit was stopped by a callback, the last subcontext was already
+        ended by ``__call__`` and there is nothing to do.
         """
+        if self._iter_ctx is None:
+            return
         self._iter_ctx.call_on_fit_task_end(estimator=self._estimator)
 
 

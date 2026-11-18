@@ -3267,6 +3267,8 @@ def test_logistic_regression_fit_stopped_by_callback():
     lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
     lr.fit(X, y)
     assert lr.n_iter_ == 1
+    # Every task that was begun is ended exactly once.
+    assert cb.count_hooks("on_fit_task_begin") == cb.count_hooks("on_fit_task_end")
 
 
 # TODO(1.14): remove filterwarnings with deprecation period of C and Cs
