@@ -4,6 +4,7 @@ from itertools import product
 import numpy as np
 import pytest
 from scipy import linalg
+from scipy.optimize import lsq_linear
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
@@ -2324,6 +2325,61 @@ def test_ridge_positive_regression_test(solver, fit_intercept, alpha):
     assert np.all(model.coef_ >= 0)
 
 
+@pytest.mark.parametrize("positive", [[True, "foo"], [0, True], np.array([1, 0])])
+def test_ridge_positive_list_type_error(positive):
+    """
+    Test that Ridge raises ValueError when positive is List
+    and all values within positive list are not boolean.
+    """
+    X, y = make_regression(n_samples=4, n_features=2, random_state=42)
+    with pytest.raises(
+        ValueError,
+        match="'positive' must be either a boolean or an array-like of booleans",
+    ):
+        Ridge(positive=positive, solver="lbfgs").fit(X, y)
+
+
+def test_ridge_positive_list_length_error():
+    """
+    Test that Ridge raises ValueError when positive is List
+    and X.shape[1] != len(positive).
+    """
+    X, y = make_regression(n_samples=4, n_features=2, random_state=42)
+
+    with pytest.raises(
+        ValueError,
+        match="Length of 'positive' must be equal to the number of features of X",
+    ):
+        Ridge(positive=[True, False, True], solver="lbfgs").fit(X, y)
+
+
+def test_ridge_positive_ndarray_mask():
+    """A boolean ndarray constrains only the selected coefficients."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(40, 3)
+    coef = np.array([-1.5, -2.0, -0.5])
+    y = X @ coef
+    mask = np.array([True, False, True])
+    model = Ridge(positive=mask, solver="lbfgs", fit_intercept=False, alpha=1e-8).fit(
+        X, y
+    )
+
+    assert model.positive is mask
+    assert model.coef_[0] >= 0
+    assert model.coef_[1] < 0
+    assert model.coef_[2] >= 0
+
+
+def test_ridge_positive_all_false_matches_false():
+    """An all-false mask is unconstrained, including for a direct solver."""
+    X, y = make_regression(n_samples=20, n_features=3, random_state=0)
+    mask_model = Ridge(positive=[False, False, False], solver="cholesky").fit(X, y)
+    bool_model = Ridge(positive=False, solver="cholesky").fit(X, y)
+
+    assert mask_model.solver_ == "cholesky"
+    assert_allclose(mask_model.coef_, bool_model.coef_)
+
+
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("alpha", [1e-3, 1e-2, 0.1, 1.0])
 def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
@@ -2354,20 +2410,21 @@ def test_ridge_ground_truth_positive_test(fit_intercept, alpha):
 @pytest.mark.parametrize(
     "solver", ["svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga"]
 )
-def test_ridge_positive_error_test(solver):
+@pytest.mark.parametrize("positive", [True, [True, False]])
+def test_ridge_positive_unsupported_solver_error(solver, positive):
     """Test input validation for positive argument in Ridge."""
     alpha = 0.1
     X = np.array([[1, 2], [3, 4]])
     coef = np.array([1, -1])
     y = X @ coef
 
-    model = Ridge(alpha=alpha, positive=True, solver=solver, fit_intercept=False)
+    model = Ridge(alpha=alpha, positive=positive, solver=solver, fit_intercept=False)
     with pytest.raises(ValueError, match="does not support positive"):
         model.fit(X, y)
 
     with pytest.raises(ValueError, match="only 'lbfgs' solver can be used"):
         _, _ = ridge_regression(
-            X, y, alpha, positive=True, solver=solver, return_intercept=False
+            X, y, alpha, positive=positive, solver=solver, return_intercept=False
         )
 
 
@@ -2441,6 +2498,40 @@ def test_lbfgs_solver_error():
     )
     with pytest.warns(ConvergenceWarning, match="lbfgs solver did not converge"):
         model.fit(X, y)
+
+
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
+def test_ridge_positive_mask_matches_bounded_lstsq(
+    fit_intercept, csr_container, global_random_seed
+):
+    """Check a masked positive Ridge against a bounded least squares solution."""
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_features, alpha = 60, 5, 0.5
+    X = rng.randn(n_samples, n_features) + 3
+    y = X @ np.array([-2.0, 1.0, -1.0, 0.5, -3.0]) + 4 + 0.1 * rng.randn(n_samples)
+    sample_weight = rng.uniform(0.5, 2, n_samples)
+    mask = np.array([True, False, True, False, False])
+
+    # min_w,b ||sqrt(sw) * (y - X w - b)||^2 + alpha ||w||^2  s.t.  w[mask] >= 0
+    A = np.c_[X, np.ones(n_samples)] if fit_intercept else X
+    penalty = np.sqrt(alpha) * np.eye(A.shape[1])
+    if fit_intercept:
+        penalty[-1, -1] = 0
+    lower = np.full(A.shape[1], -np.inf)
+    lower[:n_features][mask] = 0
+    expected = lsq_linear(
+        np.r_[np.sqrt(sample_weight)[:, None] * A, penalty],
+        np.r_[np.sqrt(sample_weight) * y, np.zeros(A.shape[1])],
+        bounds=(lower, np.inf),
+        tol=1e-12,
+    ).x
+
+    X_fit = X if csr_container is None else csr_container(X)
+    model = Ridge(alpha=alpha, positive=mask, fit_intercept=fit_intercept, tol=1e-10)
+    model.fit(X_fit, y, sample_weight=sample_weight)
+    coef = np.r_[model.coef_, model.intercept_] if fit_intercept else model.coef_
+    assert_allclose(coef, expected, atol=1e-4)
 
 
 @pytest.mark.parametrize("fit_intercept", [False, True])
