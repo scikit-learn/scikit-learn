@@ -85,6 +85,13 @@ def _generate_bagging_indices(
         )
     else:
         normalized_sample_weight = sample_weight / np.sum(sample_weight)
+        if not bootstrap_samples:
+            # Sampling without replacement can only draw rows with a
+            # non-zero weight, so requesting more than that cannot be
+            # satisfied. Clamp the request to the available support:
+            # zero-weighted rows are then excluded exactly as if they
+            # had been removed from the data.
+            max_samples = min(max_samples, np.count_nonzero(sample_weight))
         sample_indices = random_state.choice(
             n_samples,
             max_samples,
