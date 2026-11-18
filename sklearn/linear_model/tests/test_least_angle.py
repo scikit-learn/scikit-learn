@@ -26,7 +26,6 @@ from sklearn.utils._testing import (
     ignore_warnings,
 )
 
-# TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
 G = np.dot(X.T, X)
@@ -97,6 +96,51 @@ def test_lars_path_gram_equivalent(method, return_path):
         ),
         linear_model.lars_path(X, y, Gram=G, method=method, return_path=return_path),
     )
+
+
+@pytest.mark.parametrize("precompute", [False, True])
+def test_lasso_lars_simultaneous_drops(precompute):
+    """Dropping multiple features must preserve the Lasso path (issue #9603)."""
+    # The fixtures reach a simultaneous zero crossing in the corresponding
+    # Gram and direct-data computations, which can round differently.
+    if precompute:
+        X = np.array(
+            [
+                [0, -2, 0, 1],
+                [1, -1, 1, 2],
+                [-1, -1, 1, 1],
+                [-1, -1, 1, 0],
+                [2, -2, -2, -1],
+            ],
+            dtype=float,
+        )
+        y = np.array([1, -1, -4, 4, -4], dtype=float)
+    else:
+        X = np.array(
+            [
+                [1, 2, 0, -1, 1],
+                [1, -2, 0, 2, 1],
+                [0, 2, -2, 2, 0],
+                [0, 2, -2, 1, 2],
+                [-1, -1, -2, 1, 1],
+            ],
+            dtype=float,
+        )
+        y = np.array([1, 1, 1, -2, -3], dtype=float)
+    Gram = X.T @ X if precompute else None
+
+    alphas, _, coefs = lars_path(X, y, Gram=Gram, method="lasso")
+
+    # Check the Lasso optimality conditions at each knot of the fitted path.
+    correlations = X.T @ (y[:, None] - X @ coefs) / len(y)
+    assert_allclose(np.max(np.abs(correlations), axis=0), alphas, atol=1e-12)
+    nonzero = np.abs(coefs) > 1e-12
+    assert_allclose(
+        correlations[nonzero], (np.sign(coefs) * alphas)[nonzero], atol=1e-12
+    )
+    # The unpenalized fit at the end must agree with ordinary least squares.
+    assert_allclose(alphas[-1], 0, atol=1e-12)
+    assert_allclose(coefs[:, -1], np.linalg.lstsq(X, y, rcond=None)[0], atol=1e-12)
 
 
 def test_x_none_gram_none_raises_value_error():

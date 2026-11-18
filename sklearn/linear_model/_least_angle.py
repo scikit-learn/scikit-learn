@@ -854,46 +854,32 @@ def _lars_path_solver(
 
         # See if any coefficient has changed sign
         if drop and method == "lasso":
-            # handle the case when idx is not length of 1
+            # Drop in descending order so that the remaining positions in
+            # idx still refer to the same features after each deletion.
             for ii in idx:
                 arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii)
-
-            n_active -= 1
-            # handle the case when idx is not length of 1
-            drop_idx = [active.pop(ii) for ii in idx]
-
-            if Gram is None:
-                # propagate dropped variable
-                for ii in idx:
-                    for i in range(ii, n_active):
+                n_active -= 1
+                active.pop(ii)
+                for i in range(ii, n_active):
+                    indices[i], indices[i + 1] = indices[i + 1], indices[i]
+                    if Gram is None:
                         X.T[i], X.T[i + 1] = swap(X.T[i], X.T[i + 1])
-                        # yeah this is stupid
-                        indices[i], indices[i + 1] = indices[i + 1], indices[i]
-
-                # TODO: this could be updated
-                residual = y - np.dot(X[:, :n_active], coef[active])
-                temp = np.dot(X.T[n_active], residual)
-
-                Cov = np.r_[temp, Cov]
-            else:
-                for ii in idx:
-                    for i in range(ii, n_active):
-                        indices[i], indices[i + 1] = indices[i + 1], indices[i]
+                    else:
                         Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
                         Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i], Gram[:, i + 1])
 
-                # Cov_n = Cov_j + x_j * X + increment(betas) TODO:
-                # will this still work with multiple drops ?
-
-                # recompute covariance. Probably could be done better
-                # wrong as Xy is not swapped with the rest of variables
-
-                # TODO: this could be updated
+            dropped = slice(n_active, n_active + len(idx))
+            drop_idx = indices[dropped]
+            # Restore correlations in the same order as the inactive columns.
+            if Gram is None:
+                residual = y - np.dot(X[:, :n_active], coef[active])
+                temp = np.dot(X.T[dropped], residual)
+            else:
                 temp = Cov_copy[drop_idx] - np.dot(Gram_copy[drop_idx], coef)
-                Cov = np.r_[temp, Cov]
+            Cov = np.r_[temp, Cov]
 
             sign_active = np.delete(sign_active, idx)
-            sign_active = np.append(sign_active, 0.0)  # just to maintain size
+            sign_active = np.append(sign_active, np.zeros(len(idx)))
             if verbose > 1:
                 print(
                     "%s\t\t%s\t\t%s\t\t%s\t\t%s"
