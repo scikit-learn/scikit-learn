@@ -5746,7 +5746,7 @@ class _StatePickler(Pickler):
 
     def reducer_override(self, obj: object) -> tuple:
         if isinstance(obj, (KDTree, BallTree)):
-            # This should be removed in 1.12 when these deprecated stats are
+            # TODO(1.12): this should be removed when these deprecated stats are
             # removed. These are not really thread-safe, but they're also just
             # deprecated stats, so they don't meaningfully affect anything.
             state = obj.__getstate__()
@@ -5836,7 +5836,7 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
             if after_attr_hashes.get(k, missing) != attr_hashes[k]
         }
         err_message = (
-            f"Hash of {estimator} changed when running {method_name}(),"
+            f"State of {estimator} changed when running {method_name}(),"
             + f" mismatching attributes are {mismatching_attrs}"
         )
         assert after_hash == before_hash, err_message

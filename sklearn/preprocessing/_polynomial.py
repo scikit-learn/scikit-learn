@@ -969,6 +969,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         # scipy's BSpline replaces a non-contiguous `t` with a contiguous copy
         # on first evaluation, which would make `transform` mutate `bsplines_`.
+        # https://github.com/scipy/scipy/issues/26600
         knots = np.asfortranarray(knots)
 
         bsplines = [
