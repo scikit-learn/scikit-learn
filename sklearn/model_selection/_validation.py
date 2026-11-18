@@ -1622,8 +1622,9 @@ def permutation_test_score(
         warnings.warn(
             "Each group in `groups` has a single value of `y`, so permuting `y` "
             "within groups leaves `y` unchanged and permutation_test_score "
-            "reduces to the degenerate case of testing a deterministic estimator "
-            "with a trivial p-value of 1.",
+            "is not meaningful: the p-value is 1 with a deterministic estimator "
+            "and CV, and otherwise only reflects randomness in the CV splits or "
+            "the estimator.",
             UserWarning,
         )
 
