@@ -90,9 +90,25 @@ example:
 under a different name, for example
 `set_on_fit_task_end_request(sample_weight="sw_val")`.
 
-Until metadata routing is always enabled, `sample_weight` can still be forwarded while
-routing is disabled. Override `_accept_sample_weight` and return `True` for each hook
-that should receive it.
+
+.. dropdown:: Forwarding `sample_weight` while metadata routing is disabled
+
+    Until metadata routing is always enabled, `sample_weight` can still be forwarded
+    while routing is disabled. Override `_accept_sample_weight` and return `True` for
+    each hook that should receive it. For example, to have a callback accepting
+    `sample_weight` only for the `on_fit_task_end` hook while routing is disabled, the
+    `_accept_sample_weight` method should look like this:
+
+    .. code-block:: python
+
+        class MyCallback(FitCallback):
+
+            def _accept_sample_weight(self, hook_name):
+                """Whether the callback accepts sample_weight for a given hook."""
+                if hook_name == "on_fit_task_end":
+                    return True
+                return False
+
 
 Auto-propagated callbacks
 -------------------------
