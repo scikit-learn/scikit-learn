@@ -480,7 +480,7 @@ def nan_euclidean_distances(
         Representation of missing value.
 
     copy : bool, default=True
-        Make and use a deep copy of X and Y (if Y exists).
+        Make and use a deep :term:`copy` of X and Y (if Y exists).
 
     Returns
     -------

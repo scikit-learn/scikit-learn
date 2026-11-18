@@ -63,8 +63,8 @@ class KNNImputer(_BaseImputer):
           The callable should returns a scalar distance value.
 
     copy : bool, default=True
-        If True, a copy of X will be created. If False, imputation will
-        be done in-place whenever possible.
+        If True, a :term:`copy` of X will be created. If False, imputation
+        will be done in-place whenever possible.
 
     add_indicator : bool, default=False
         If True, a :class:`MissingIndicator` transform will stack onto the

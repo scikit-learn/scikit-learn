@@ -65,7 +65,7 @@ def discretize(
         The embedding space of the samples.
 
     copy : bool, default=True
-        Whether to copy vectors, or perform in-place normalization.
+        Whether to :term:`copy` vectors, or perform in-place normalization.
 
     max_svd_restarts : int, default=30
         Maximum number of attempts to restart SVD if convergence fails

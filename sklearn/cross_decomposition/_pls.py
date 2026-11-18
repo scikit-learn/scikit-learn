@@ -377,7 +377,8 @@ class _PLS(
             Target vectors.
 
         copy : bool, default=True
-            Whether to copy `X` and `y`, or perform in-place normalization.
+            Whether to :term:`copy` `X` and `y`, or perform in-place
+            normalization.
 
         Returns
         -------
@@ -457,7 +458,7 @@ class _PLS(
             Samples.
 
         copy : bool, default=True
-            Whether to copy `X` or perform in-place normalization.
+            Whether to :term:`copy` `X` or perform in-place normalization.
 
         Returns
         -------
@@ -533,9 +534,9 @@ class PLSRegression(_PLS):
         than `tol`, where `u` corresponds to the left singular vector.
 
     copy : bool, default=True
-        Whether to copy `X` and `y` in :term:`fit` before applying centering,
-        and potentially scaling. If `False`, these operations will be done
-        inplace, modifying both arrays.
+        Whether to :term:`copy` `X` and `y` in :term:`fit` before applying
+        centering, and potentially scaling. If `False`, these operations will
+        be done inplace, modifying both arrays.
 
     Attributes
     ----------
@@ -687,9 +688,9 @@ class PLSCanonical(_PLS):
         than `tol`, where `u` corresponds to the left singular vector.
 
     copy : bool, default=True
-        Whether to copy `X` and `y` in fit before applying centering, and
-        potentially scaling. If False, these operations will be done inplace,
-        modifying both arrays.
+        Whether to :term:`copy` `X` and `y` in fit before applying centering,
+        and potentially scaling. If False, these operations will be done
+        inplace, modifying both arrays.
 
     Attributes
     ----------
@@ -812,9 +813,9 @@ class CCA(_PLS):
         than `tol`, where `u` corresponds to the left singular vector.
 
     copy : bool, default=True
-        Whether to copy `X` and `y` in fit before applying centering, and
-        potentially scaling. If False, these operations will be done inplace,
-        modifying both arrays.
+        Whether to :term:`copy` `X` and `y` in fit before applying centering,
+        and potentially scaling. If False, these operations will be done
+        inplace, modifying both arrays.
 
     Attributes
     ----------
@@ -916,9 +917,9 @@ class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         Whether to scale `X` and `y`.
 
     copy : bool, default=True
-        Whether to copy `X` and `y` in fit before applying centering, and
-        potentially scaling. If `False`, these operations will be done inplace,
-        modifying both arrays.
+        Whether to :term:`copy` `X` and `y` in fit before applying centering,
+        and potentially scaling. If `False`, these operations will be done
+        inplace, modifying both arrays.
 
     Attributes
     ----------

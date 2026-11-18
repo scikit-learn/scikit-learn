@@ -1632,6 +1632,23 @@ functions or non-estimator constructors.
         The ``class_weight`` parameter is validated and interpreted with
         :func:`utils.class_weight.compute_class_weight`.
 
+    ``copy``
+    ``copy_x``
+    ``copy_X``
+        Controls whether input data is copied before computation. When
+        ``True``, a copy is made so the input is not modified in place. When
+        ``False``, the algorithm tries to avoid copying to reduce memory usage
+        and may modify the input in place (exact behavior, such as whether
+        values are overwritten, restored, or referenced, depends on the
+        estimator or function).
+
+        Setting ``copy=False`` (or ``copy_x=False`` / ``copy_X=False``) does
+        not guarantee in-place modification: a copy may still be made if type
+        conversion, memory-layout changes, or other internal requirements
+        apply. As a general rule, do not rely on the input data either
+        remaining intact or being modified in a specific way after calling
+        with copying disabled.
+
     ``cv``
         Determines a cross validation splitting strategy, as used in
         cross-validation based routines. ``cv`` is also available in estimators
