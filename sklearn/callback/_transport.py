@@ -64,6 +64,10 @@ _message_consumers: dict[str, Callable] = {}
 # same listener reuse the cached connection.
 _worker_connections: dict[str, Connection] = {}
 
+# Names need not be unique. The shared prefix lets tests and debuggers tell these
+# threads apart from unrelated ones (joblib, pytest plugins, ...).
+_TRANSPORT_THREAD_NAME_PREFIX = "sklearn_callback_transport_"
+
 
 def open_listener(message_consumer, *, owner=None):
     """Create a listener for incoming messages on the main process.
@@ -120,11 +124,18 @@ def open_listener(message_consumer, *, owner=None):
                     conn = listener.accept()
                 except (OSError, EOFError):
                     break  # woken up by `close_listener`, or the listener failed
-                Thread(target=_handle, args=(conn,), daemon=True).start()
+                Thread(
+                    target=_handle,
+                    args=(conn,),
+                    name=f"{_TRANSPORT_THREAD_NAME_PREFIX}handle",
+                    daemon=True,
+                ).start()
         finally:
             listener.close()
 
-    Thread(target=_accept, daemon=True).start()
+    Thread(
+        target=_accept, name=f"{_TRANSPORT_THREAD_NAME_PREFIX}accept", daemon=True
+    ).start()
     return listener_handle
 
 
