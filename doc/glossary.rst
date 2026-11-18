@@ -674,7 +674,10 @@ General Concepts
         :term:`set_params`.  To enable this, parameters are not ordinarily
         validated or altered when the estimator is constructed, or when each
         parameter is set. Parameter validation is performed when :term:`fit` is
-        called.
+        called. Changing parameters after fitting results in undefined
+        behavior and is done at your own risk: fitted attributes (ending
+        in ``_``) are not recomputed. Call :term:`fit` again to apply
+        updated parameter values.
 
         Common parameters are listed :ref:`below <glossary_parameters>`.
 
@@ -1565,7 +1568,10 @@ Methods
         :class:`base.BaseEstimator`, which handles nested parameters and
         otherwise sets the parameter as an attribute on the estimator.
         The method is overridden in :class:`pipeline.Pipeline` and related
-        estimators.
+        estimators. ``set_params`` is supported between construction and
+        fitting. Calling it after fitting results in undefined behavior:
+        fitted attributes are not updated. Re-fit the estimator to apply
+        new parameter values.
 
     ``split``
         On a :term:`CV splitter` (not an estimator), this method accepts
