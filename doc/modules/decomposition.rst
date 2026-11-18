@@ -370,7 +370,14 @@ eigensolvers can provide speedup with very low precision loss.
       <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_
       R. B. Lehoucq, D. C. Sorensen, and C. Yang, (1998)
 
-
+.. note::
+   **Eigenvectors shape difference between PCA and KernelPCA:**
+   In standard :class:`PCA`, eigenvectors (:attr:`~PCA.components_`) have shape 
+   ``(n_components, n_features)`` as they represent principal axes in the original feature space. 
+   In :class:`KernelPCA`, eigenvectors (:attr:`~KernelPCA.alphas_`) have shape 
+   ``(n_samples, n_components)`` because the algorithm performs eigen-decomposition on the 
+   centered Gram/Kernel matrix of shape ``(n_samples, n_samples)``.
+   
 .. _LSA:
 
 Truncated singular value decomposition and latent semantic analysis
