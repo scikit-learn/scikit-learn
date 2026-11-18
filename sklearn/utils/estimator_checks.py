@@ -5801,8 +5801,8 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
     """
     estimator, X_train, y_train, X_test, y_test = _fit_estimator(estimator_orig)
 
-    before_hash = _pickled_bytes(estimator)
-    attr_hashes = {
+    estimator_before_bytes = _pickled_bytes(estimator)
+    attrs_before_bytes = {
         key: _pickled_bytes(value) for (key, value) in estimator.__dict__.items()
     }
     for method_name in _INFERENCE_METHODS:
@@ -5820,23 +5820,23 @@ def check_estimator_internal_state_unchanged_by_inference(name, estimator_orig):
                 # Call list() to handle methods that return generators or other
                 # lazy iterables.
                 list(result)
-        after_hash = _pickled_bytes(estimator)
-        after_attr_hashes = {
+        estimator_after_bytes = _pickled_bytes(estimator)
+        attrs_after_bytes = {
             key: _pickled_bytes(value) for (key, value) in estimator.__dict__.items()
         }
         missing = object()
         mismatching_attrs = {
             k
-            for k in after_attr_hashes
-            if attr_hashes.get(k, missing) != after_attr_hashes[k]
+            for k in attrs_after_bytes
+            if attrs_before_bytes.get(k, missing) != attrs_after_bytes[k]
         }
         mismatching_attrs |= {
             k
-            for k in attr_hashes
-            if after_attr_hashes.get(k, missing) != attr_hashes[k]
+            for k in attrs_before_bytes
+            if attrs_after_bytes.get(k, missing) != attrs_before_bytes[k]
         }
         err_message = (
             f"State of {estimator} changed when running {method_name}(),"
             + f" mismatching attributes are {mismatching_attrs}"
         )
-        assert after_hash == before_hash, err_message
+        assert estimator_after_bytes == estimator_before_bytes, err_message
