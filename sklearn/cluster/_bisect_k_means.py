@@ -127,10 +127,15 @@ class BisectingKMeans(_BaseKMeans):
         Verbosity mode.
 
     tol : float, default=1e-4
-        Relative tolerance with regards to Frobenius norm of the difference
-        in the cluster centers of two consecutive iterations  to declare
-        convergence. Used in inner k-means algorithm at each bisection to pick
-        best possible clusters.
+        Tolerance on the squared change of the cluster centers between two
+        consecutive iterations to declare convergence, applied as an absolute
+        threshold on the squared center shift itself: convergence is declared
+        when ``(center_shift ** 2).sum() <= tol``. This differs from
+        :class:`KMeans`, whose `tol` is instead rescaled by the mean variance
+        of the features before being compared to the squared center shift, so
+        the same `tol` value does not mean the same thing for both estimators.
+        Used in inner k-means algorithm at each bisection to pick best
+        possible clusters.
 
     copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
