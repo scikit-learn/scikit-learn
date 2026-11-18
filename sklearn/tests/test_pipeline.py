@@ -1703,6 +1703,37 @@ def test_verbose(est, method, pattern, capsys):
     assert re.match(pattern, capsys.readouterr().out)
 
 
+def test_pipeline_passthrough_features_in():
+    # Regression test for BUG-001: passthrough / None steps and features_in
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    y = [0, 1, 0]
+
+    pipe = Pipeline([("pass", "passthrough"), ("scaler", StandardScaler())])
+    assert not hasattr(pipe, "n_features_in_")
+    assert not hasattr(pipe, "feature_names_in_")
+
+    pipe.fit(X, y)
+    assert pipe.n_features_in_ == 2
+    assert_array_equal(pipe.feature_names_in_, ["a", "b"])
+
+    pipe_none = Pipeline([("pass", None), ("scaler", StandardScaler())])
+    pipe_none.fit(X, y)
+    assert pipe_none.n_features_in_ == 2
+    assert_array_equal(pipe_none.feature_names_in_, ["a", "b"])
+
+    pipe_all_pass = Pipeline([("pass1", "passthrough"), ("pass2", None)])
+    pipe_all_pass.fit(X, y)
+    assert not hasattr(pipe_all_pass, "n_features_in_")
+    assert not hasattr(pipe_all_pass, "feature_names_in_")
+    msg = "'Pipeline' object has no attribute 'n_features_in_'"
+    with pytest.raises(AttributeError, match=msg):
+        pipe_all_pass.n_features_in_
+    msg = "'Pipeline' object has no attribute 'feature_names_in_'"
+    with pytest.raises(AttributeError, match=msg):
+        pipe_all_pass.feature_names_in_
+
+
 def test_n_features_in_pipeline():
     # make sure pipelines delegate n_features_in to the first step
 
