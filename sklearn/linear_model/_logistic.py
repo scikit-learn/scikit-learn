@@ -219,14 +219,17 @@ class _LbfgsCallbackBridge:
     def __call__(self, xk):
         coef, intercept = _compute_coef_intercept(xk, **self._coef_kwargs)
         # End hook for the iteration that scipy just finished.
-        if self._iter_ctx.call_on_fit_task_end(
+        self._iter_ctx.call_on_fit_task_end(
             estimator=self._estimator,
             X=self._X,
             y=self._y,
             metadata=self._metadata,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
-        ):
-            raise StopIteration()
+        )
+        # TODO(1.10): use the return value of ``call_on_fit_task_end`` (a bool
+        # requesting early stopping) to ``raise StopIteration()``. scipy's
+        # ``callback`` honours ``StopIteration`` only from scipy > 1.10, which
+        # is the min supported scipy in scikit-learn 1.10.
 
         # Begin hook for the next iteration's subcontext.
         self._iter_ctx = self._start_iter(xk)
