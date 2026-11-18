@@ -69,6 +69,7 @@ from sklearn.utils.estimator_checks import (
     check_dont_overwrite_parameters,
     check_estimator,
     check_estimator_cloneable,
+    check_estimator_internal_state_unchanged_by_inference,
     check_estimator_repr,
     check_estimator_sparse_array,
     check_estimator_sparse_matrix,
@@ -148,6 +149,22 @@ class ChangesDict(BaseEstimator):
     def predict(self, X):
         X = check_array(X)
         self.key = 1000
+        return np.ones(X.shape[0])
+
+
+class ChangesHarderToCatch(BaseEstimator):
+    """Change that won't get caught by ``check_dict_unchanged``."""
+
+    def __init__(self, key):
+        self.key = key
+
+    def fit(self, X, y=None):
+        X, y = validate_data(self, X, y)
+        return self
+
+    def predict(self, X):
+        X = check_array(X)
+        self.key[0] = 1000
         return np.ones(X.shape[0])
 
 
@@ -1786,4 +1803,15 @@ def test_check_positive_only_tag_during_fit():
     ):
         check_positive_only_tag_during_fit(
             "RequiresPositiveXBadTag", RequiresPositiveXBadTag()
+        )
+
+
+def test_estimator_internal_state_unchanged_by_inference():
+    # This check validates that estimator state does not change at
+    # transform/predict/predict_proba/etc time, in ways that
+    # check_dict_unchanged can't catch.
+    msg = "Hash of ChangesHarderToCatch.* changed"
+    with raises(AssertionError, match=msg):
+        check_estimator_internal_state_unchanged_by_inference(
+            "test", ChangesHarderToCatch(np.array([0]))
         )
