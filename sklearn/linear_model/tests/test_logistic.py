@@ -3258,11 +3258,11 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
             assert iter_end["kwargs"]["fitted_estimator"] is None
 
 
-# TODO: Uncomment when scipy callbacks can be interrupted with StopIteration in
-# min dependencies (i.e. when min scipy version > 1.10 and StopIteration gets used
-# in the scipy callback function, see TODO in _make_scipy_callback_fun). Note:
-# we need to find a way to avoid raising the ConvergenceWarning when the fit is
-# interrupted by the callback.
+# TODO(callbacks): Uncomment when scipy callbacks can be interrupted with
+# StopIteration in min dependencies (i.e. when min scipy version > 1.10 and
+# StopIteration gets used in the scipy callback function, see TODO in
+# _make_scipy_callback_fun). Note: we need to find a way to avoid raising the
+# ConvergenceWarning when the fit is interrupted by the callback.
 # TODO(callbacks): also test for other solvers when they get supported.
 # def test_logistic_regression_fit_stopped_by_callback():
 #     """Test that a callback can interrupt the fit."""
