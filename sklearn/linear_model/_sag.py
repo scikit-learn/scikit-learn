@@ -16,13 +16,7 @@ from sklearn.utils.validation import _check_sample_weight
 
 
 def get_auto_step_size(
-    max_squared_sum,
-    alpha_scaled,
-    loss,
-    fit_intercept,
-    n_samples=None,
-    is_saga=False,
-    max_sample_weight=1.0,
+    max_squared_sum, alpha_scaled, loss, fit_intercept, n_samples=None, is_saga=False
 ):
     """Compute automatic step size for SAG solver.
 
@@ -52,12 +46,6 @@ def get_auto_step_size(
         Whether to return step size for the SAGA algorithm or the SAG
         algorithm.
 
-    max_sample_weight : float, default=1.0
-        Maximum of the sample weights, which must be normalized to have a mean
-        of 1. The loss of sample i, `sample_weight[i] * loss_i`, has a gradient
-        Lipschitz constant proportional to `sample_weight[i]`. We bound the
-        maximum over all samples by the product of the maxima.
-
     Returns
     -------
     step_size : float
@@ -74,16 +62,15 @@ def get_auto_step_size(
     for Non-Strongly Convex Composite Objectives" <1407.0202>`
     """
     if loss in ("log", "multinomial"):
-        L = 0.25 * (max_squared_sum + int(fit_intercept))
+        L = 0.25 * (max_squared_sum + int(fit_intercept)) + alpha_scaled
     elif loss == "squared":
         # inverse Lipschitz constant for squared loss
-        L = max_squared_sum + int(fit_intercept)
+        L = max_squared_sum + int(fit_intercept) + alpha_scaled
     else:
         raise ValueError(
             "Unknown loss function for SAG solver, got %s instead of 'log' or 'squared'"
             % loss
         )
-    L = max_sample_weight * L + alpha_scaled
     if is_saga:
         # SAGA theoretical step size is 1/3L or 1 / (2 * (L + mu n))
         # See Defazio et al. 2014
@@ -109,7 +96,6 @@ def sag_solver(
     verbose=0,
     random_state=None,
     check_input=True,
-    max_squared_sum=None,
     warm_start_mem=None,
     is_saga=False,
 ):
@@ -176,11 +162,6 @@ def sag_solver(
 
     check_input : bool, default=True
         If False, the input arrays X and y will not be checked.
-
-    max_squared_sum : float, default=None
-        Maximum squared sum of X over samples. If None, it will be computed,
-        going through all the samples. The value should be precomputed
-        to speed up cross validation.
 
     warm_start_mem : dict, default=None
         The initialization parameters used for warm starting. Warm starting is
@@ -316,16 +297,19 @@ def sag_solver(
 
     dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
 
-    if max_squared_sum is None:
-        max_squared_sum = row_norms(X, squared=True).max()
+    # The loss of sample i, sample_weight[i] * loss_i, has a gradient Lipschitz
+    # constant proportional to sample_weight[i] * ||(x_i, 1)||^2, where the 1 accounts
+    # for the intercept. As it is already included here, we pass fit_intercept=False.
+    max_squared_sum = np.max(
+        sample_weight * (row_norms(X, squared=True) + int(fit_intercept))
+    )
     step_size = get_auto_step_size(
         max_squared_sum,
         alpha_scaled,
         loss,
-        fit_intercept,
+        fit_intercept=False,
         n_samples=n_samples,
         is_saga=is_saga,
-        max_sample_weight=sample_weight.max(),
     )
     if step_size * alpha_scaled == 1:
         raise ZeroDivisionError(

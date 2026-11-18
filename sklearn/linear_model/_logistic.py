@@ -59,7 +59,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._indexing import _array_indexing
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.extmath import row_norms, softmax
+from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import (
     _get_additional_lbfgs_options_dict,
     _is_gil_enabled,
@@ -287,7 +287,6 @@ def _logistic_regression_path(
     intercept_scaling=1.0,
     random_state=None,
     check_input=True,
-    max_squared_sum=None,
     sample_weight=None,
     n_threads=1,
     callback_ctx=None,
@@ -385,11 +384,6 @@ def _logistic_regression_path(
 
     check_input : bool, default=True
         If False, the input arrays X and y (and sample_weight) will not be checked.
-
-    max_squared_sum : float, default=None
-        Maximum squared sum of X over samples. Used only in SAG solver.
-        If None, it will be computed, going through all the samples.
-        The value should be precomputed to speed up cross validation.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Array of weights that are assigned to individual samples.
@@ -781,7 +775,6 @@ def _logistic_regression_path(
                 verbose,
                 random_state,
                 False,
-                max_squared_sum,
                 warm_start_sag,
                 is_saga=(solver == "saga"),
             )
@@ -847,7 +840,6 @@ def _log_reg_scoring_path(
     dual,
     intercept_scaling,
     random_state,
-    max_squared_sum,
     sample_weight,
     score_params,
 ):
@@ -940,11 +932,6 @@ def _log_reg_scoring_path(
         Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
         data. See :term:`Glossary <random_state>` for details.
 
-    max_squared_sum : float
-        Maximum squared sum of X over samples. Used only in SAG solver.
-        If None, it will be computed, going through all the samples.
-        The value should be precomputed to speed up cross validation.
-
     sample_weight : array-like of shape (n_samples,)
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
@@ -1018,7 +1005,6 @@ def _log_reg_scoring_path(
         intercept_scaling=intercept_scaling,
         random_state=random_state,
         check_input=False,
-        max_squared_sum=max_squared_sum,
         sample_weight=sw_train,
         callback_ctx=None,
         estimator=None,
@@ -1676,11 +1662,6 @@ class LogisticRegression(
                     "solver or rescale the input X."
                 )
 
-        if self.solver_ in ["sag", "saga"]:
-            max_squared_sum = row_norms(X, squared=True).max()
-        else:
-            max_squared_sum = None
-
         if self.warm_start:
             warm_start_coef = getattr(self, "coef_", None)
         else:
@@ -1714,7 +1695,6 @@ class LogisticRegression(
             random_state=self.random_state,
             coef=warm_start_coef,
             intercept_scaling=intercept_scaling,
-            max_squared_sum=max_squared_sum,
             sample_weight=sample_weight,
             n_threads=n_threads,
             callback_ctx=callback_ctx,
@@ -2484,11 +2464,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 )
             X = sparse.csr_array(X)
 
-        if self.solver_ in ["sag", "saga"]:
-            max_squared_sum = row_norms(X, squared=True).max()
-        else:
-            max_squared_sum = None
-
         if _routing_enabled():
             routed_params = process_routing(
                 self,
@@ -2537,7 +2512,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 scoring=scoring,
                 intercept_scaling=intercept_scaling,
                 random_state=self.random_state,
-                max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
                 score_params=routed_params.scorer.score,
             )
@@ -2653,7 +2627,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 verbose=max(0, self.verbose - 1),
                 random_state=self.random_state,
                 check_input=False,
-                max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
             )
             w = w[0, ...]
