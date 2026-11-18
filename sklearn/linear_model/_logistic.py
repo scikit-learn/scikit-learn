@@ -226,10 +226,10 @@ class _LbfgsCallbackBridge:
             metadata=self._metadata,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
         )
-        # TODO(1.10): use the return value of ``call_on_fit_task_end`` (a bool
+        # TODO: use the return value of ``call_on_fit_task_end`` (a bool
         # requesting early stopping) to ``raise StopIteration()``. scipy's
         # ``callback`` honours ``StopIteration`` only from scipy > 1.10, which
-        # is the min supported scipy in scikit-learn 1.10.
+        # is the min supported scipy in scikit-learn 1.10 and later.
 
         # Begin hook for the next iteration's subcontext.
         self._iter_ctx = self._start_iter(xk)
