@@ -28,8 +28,9 @@ def _get_dense_mask(X, value_to_mask):
             # can't have NaNs in integer array.
             Xt = np.zeros(X.shape, dtype=bool)
         else:
-            # np.isnan does not work on object dtypes.
-            Xt = _object_dtype_isnan(X)
+            # np.isnan does not work on object dtypes. None is also treated as
+            # NaN so that it is considered missing in object arrays.
+            Xt = _object_dtype_isnan(X) | np.equal(X, None)
     else:
         Xt = X == value_to_mask
 
