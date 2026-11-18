@@ -8,7 +8,7 @@ from sklearn.datasets import load_digits, load_iris, make_blobs
 from sklearn.manifold import ClassicalMDS
 from sklearn.manifold import _mds as mds
 from sklearn.metrics import euclidean_distances
-from sklearn.utils._testing import skip_if_threaded_parallelism_enabled
+from sklearn.utils._testing import skip_if_use_threading_backend_with_high_parallelism
 
 
 def test_smacof():
@@ -88,7 +88,7 @@ def test_nonmetric_mds_optimization():
     assert stress_after_2_iter > stress_after_3_iter
 
 
-@skip_if_threaded_parallelism_enabled
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("metric_mds", [True, False])
 def test_mds_recovers_true_data(metric_mds):
     X = np.array([[1, 1], [1, 4], [1, 5], [3, 3]])

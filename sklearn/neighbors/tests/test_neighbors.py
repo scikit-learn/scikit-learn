@@ -45,7 +45,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
     ignore_warnings,
-    skip_if_threaded_parallelism_enabled,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import (
     BSR_CONTAINERS,
@@ -1640,7 +1640,7 @@ def test_nearest_neighbors_validate_params():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
-@skip_if_threaded_parallelism_enabled
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "metric",
     sorted(

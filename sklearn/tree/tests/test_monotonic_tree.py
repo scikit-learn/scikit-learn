@@ -14,7 +14,10 @@ from sklearn.tree import (
     ExtraTreeClassifier,
     ExtraTreeRegressor,
 )
-from sklearn.utils._testing import assert_allclose, skip_if_threaded_parallelism_enabled
+from sklearn.utils._testing import (
+    assert_allclose,
+    skip_if_use_threading_backend_with_high_parallelism,
+)
 from sklearn.utils.fixes import CSC_CONTAINERS
 
 TREE_CLASSIFIER_CLASSES = [DecisionTreeClassifier, ExtraTreeClassifier]
@@ -29,7 +32,7 @@ TREE_BASED_REGRESSOR_CLASSES = TREE_REGRESSOR_CLASSES + [
 ]
 
 
-@skip_if_threaded_parallelism_enabled
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("TreeClassifier", TREE_BASED_CLASSIFIER_CLASSES)
 @pytest.mark.parametrize(
     "sparse_splitter, with_missing",
@@ -108,7 +111,7 @@ def test_monotonic_constraints_classifications(
     assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= proba_test[:, 1])
 
 
-@skip_if_threaded_parallelism_enabled
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("TreeRegressor", TREE_BASED_REGRESSOR_CLASSES)
 @pytest.mark.parametrize(
     "sparse_splitter, with_missing",

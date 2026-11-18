@@ -18,7 +18,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     if_safe_multiprocessing_with_blas,
-    skip_if_threaded_parallelism_enabled,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 
@@ -472,7 +472,7 @@ def test_lda_dtype_match(learning_method, global_dtype):
     assert lda.exp_dirichlet_component_.dtype == global_dtype
 
 
-@skip_if_threaded_parallelism_enabled
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("learning_method", ("batch", "online"))
 def test_lda_numerical_consistency(learning_method, global_random_seed):
     """Check numerical consistency between np.float32 and np.float64."""

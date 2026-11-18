@@ -342,7 +342,7 @@ try:
     #
     # Structured as an explicit decorator because pytest.mark.skipif checks too
     # early: at import instead of at runtime.
-    def skip_if_threaded_parallelism_enabled(func):
+    def skip_if_use_threading_backend_with_high_parallelism(func):
         @functools.wraps(func)
         def test(*args, **kwargs):
             if (

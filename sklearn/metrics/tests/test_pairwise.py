@@ -60,7 +60,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_equal,
     ignore_warnings,
-    skip_if_threaded_parallelism_enabled,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import (
     BSR_CONTAINERS,
@@ -1725,7 +1725,7 @@ def test_pairwise_distances_data_derived_params_error(metric):
         pairwise_distances(X, Y, metric=metric)
 
 
-@skip_if_threaded_parallelism_enabled
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "metric",
     [
