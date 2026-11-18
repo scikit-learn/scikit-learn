@@ -820,7 +820,10 @@ try:
     import pytest
 
     def _skip_if_threaded_parallelism(estimator, check):
-        if os.environ.get("SKLEARN_TESTS_ENABLE_THREADING_AND_PARALLELISM") != "1":
+        if (
+            os.environ.get("SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM")
+            != "1"
+        ):
             return
         # Once this is empty, can delete this function:
         skips = {

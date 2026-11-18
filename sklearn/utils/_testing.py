@@ -345,7 +345,12 @@ try:
     def skip_if_threaded_parallelism_enabled(func):
         @functools.wraps(func)
         def test(*args, **kwargs):
-            if os.environ.get("SKLEARN_TESTS_ENABLE_THREADING_AND_PARALLELISM") == "1":
+            if (
+                os.environ.get(
+                    "SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM"
+                )
+                == "1"
+            ):
                 pytest.skip(
                     "Known intermittent failure that needs to be fixed; see "
                     + "https://github.com/scikit-learn/scikit-learn/issues/35313"

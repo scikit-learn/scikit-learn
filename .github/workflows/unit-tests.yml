@@ -348,7 +348,7 @@ jobs:
     needs: [lint, retrieve-commit-message, retrieve-selected-tests]
     if: contains(needs.retrieve-commit-message.outputs.message, '[free-threaded]') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     env:
-      SKLEARN_TESTS_ENABLE_THREADING_AND_PARALLELISM: "1"
+      SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM: "1"
       DISTRIB: conda-free-threaded
       LOCK_FILE: build_tools/github/pylatest_free_threaded_linux-64_conda.lock
       COVERAGE: false
