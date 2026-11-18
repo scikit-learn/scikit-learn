@@ -1281,9 +1281,17 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             # disable defaultdict behaviour
             vocabulary = dict(vocabulary)
             if not vocabulary:
-                raise ValueError(
-                    "empty vocabulary; perhaps the documents only contain stop words"
-                )
+                msg = "empty vocabulary; perhaps the documents only contain stop words"
+                min_n = self.ngram_range[0]
+                # "char_wb" pads words with spaces so it always yields n-grams, and
+                # a callable analyzer ignores ngram_range.
+                if min_n > 1 and self.analyzer in ("word", "char"):
+                    unit = "tokens" if self.analyzer == "word" else "characters"
+                    msg += (
+                        f", or every document has fewer than {min_n} {unit}, the "
+                        f"lower bound of ngram_range={self.ngram_range}"
+                    )
+                raise ValueError(msg)
 
         if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
             if _IS_32BIT:
