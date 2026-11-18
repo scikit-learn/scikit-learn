@@ -676,3 +676,62 @@ def test_pls_regression_scaling_coef():
 
     # we therefore should be able to predict `y` from `X`
     assert_allclose(pls.predict(X), y)
+
+
+def test_pls_regression_vip():
+    """Check the Variable Importance in Projection (VIP) scores of PLSRegression."""
+    rng = np.random.RandomState(42)
+    n_samples, n_features = 100, 6
+    X = rng.normal(size=(n_samples, n_features))
+    # y depends only on the first 2 features
+    y = 3.0 * X[:, 0] + 2.0 * X[:, 1] + 0.1 * rng.normal(size=n_samples)
+
+    pls = PLSRegression(n_components=2)
+    pls.fit(X, y)
+
+    assert hasattr(pls, "vip_")
+    assert pls.vip_.shape == (n_features,)
+    assert pls.vip_.dtype == X.dtype
+
+    # Fundamental property: average of squared VIP scores is 1 (sum equals n_features)
+    assert_allclose(np.sum(pls.vip_**2), n_features)
+
+    # Relevant features should have VIP > 1, noise features < 1
+    assert pls.vip_[0] > 1.0
+    assert pls.vip_[1] > 1.0
+    assert np.all(pls.vip_[2:] < 1.0)
+
+
+def test_pls_regression_vip_multitarget():
+    """Check VIP calculation with multiple targets."""
+    rng = np.random.RandomState(42)
+    n_samples, n_features = 100, 5
+    X = rng.normal(size=(n_samples, n_features))
+    y1 = 2.0 * X[:, 0] + 0.1 * rng.normal(size=n_samples)
+    y2 = -1.5 * X[:, 1] + 0.1 * rng.normal(size=n_samples)
+    y = np.column_stack([y1, y2])
+
+    pls = PLSRegression(n_components=2).fit(X, y)
+    assert pls.vip_.shape == (n_features,)
+    assert_allclose(np.sum(pls.vip_**2), n_features)
+    assert pls.vip_[0] > 1.0
+    assert pls.vip_[1] > 1.0
+
+
+def test_pls_regression_vip_edge_cases():
+    """Check VIP calculation with n_components=1 and zero variance response."""
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(50, 4))
+    y = rng.normal(size=50)
+
+    # 1 component
+    pls1 = PLSRegression(n_components=1).fit(X, y)
+    assert pls1.vip_.shape == (4,)
+    assert_allclose(np.sum(pls1.vip_**2), 4.0)
+
+    # Constant y (zero variance)
+    y_const = np.ones(50)
+    with pytest.warns(UserWarning, match="y residual is constant"):
+        pls_const = PLSRegression(n_components=2).fit(X, y_const)
+    assert pls_const.vip_.shape == (4,)
+    assert_allclose(pls_const.vip_, np.zeros(4))
