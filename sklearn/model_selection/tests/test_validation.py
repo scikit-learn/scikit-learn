@@ -2552,6 +2552,7 @@ def test_validation_functions_routing(func, extra_args):
         .set_partial_fit_request(
             sample_weight="fit_sample_weight", metadata="fit_metadata"
         )
+        .set_predict_request(sample_weight=False, metadata=False)
     )
 
     n_samples = _num_samples(X)
@@ -2627,6 +2628,74 @@ def test_validation_functions_routing(func, extra_args):
             split_params=("sample_weight", "metadata"),
             sample_weight=fit_sample_weight,
             metadata=fit_metadata,
+        )
+
+
+@pytest.mark.parametrize(
+    "func, extra_args",
+    [
+        (cross_validate, {}),
+        (cross_val_score, {}),
+        (learning_curve, {}),
+        (permutation_test_score, {"n_permutations": 2}),
+        (validation_curve, {"param_name": "alpha", "param_range": np.array([1])}),
+    ],
+)
+@config_context(enable_metadata_routing=True)
+def test_validation_functions_route_metadata_to_scorer_response_method(
+    func, extra_args
+):
+    """Check that the validation functions route metadata to the response method
+    called by the scorer and to the score function, each according to its own
+    requests.
+
+    Non-regression test for gh-27977.
+    """
+    rng = np.random.RandomState(0)
+    sample_weight, metadata = rng.rand(len(y)), rng.rand(len(y))
+    estimator_registry, scorer_registry = _Registry(), _Registry()
+    estimator = (
+        ConsumingClassifier(registry=estimator_registry)
+        .set_fit_request(sample_weight=False, metadata=False)
+        .set_partial_fit_request(sample_weight=False, metadata=False)
+        .set_predict_request(sample_weight=False, metadata=True)
+    )
+    scorer = ConsumingScorer(registry=scorer_registry).set_score_request(
+        sample_weight=True, metadata=False
+    )
+    # also cover a multimetric scorer
+    if func is cross_validate:
+        scoring = {"consuming": scorer, "accuracy": "accuracy"}
+    else:
+        scoring = scorer
+
+    func(
+        estimator,
+        X,
+        y,
+        cv=2,
+        scoring=scoring,
+        params={"sample_weight": sample_weight, "metadata": metadata},
+        **extra_args,
+    )
+
+    assert len(estimator_registry)
+    for _estimator in estimator_registry:
+        check_recorded_metadata(
+            obj=_estimator,
+            method="predict",
+            parent=func.__name__,
+            split_params=("metadata",),
+            metadata=metadata,
+        )
+    assert len(scorer_registry)
+    for _scorer in scorer_registry:
+        check_recorded_metadata(
+            obj=_scorer,
+            method="consuming_metric",
+            parent=func.__name__,
+            split_params=("sample_weight",),
+            sample_weight=sample_weight,
         )
 
 

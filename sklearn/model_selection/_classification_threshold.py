@@ -15,7 +15,11 @@ from sklearn.base import (
 )
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics import check_scoring, get_scorer_names
-from sklearn.metrics._scorer import _CurveScorer, _threshold_scores_to_class_labels
+from sklearn.metrics._scorer import (
+    _CurveScorer,
+    _get_scorer_routing,
+    _threshold_scores_to_class_labels,
+)
 from sklearn.model_selection._split import StratifiedShuffleSplit, check_cv
 from sklearn.utils import _safe_indexing, get_tags
 from sklearn.utils._param_validation import HasMethods, Interval, RealNotInt, StrOptions
@@ -869,7 +873,7 @@ class TunedThresholdClassifierCV(BaseThresholdClassifier):
                 method_mapping=MethodMapping().add(callee="split", caller="fit"),
             )
             .add(
-                scorer=self._get_curve_scorer(),
+                scorer=_get_scorer_routing(self._get_curve_scorer(), self.estimator),
                 method_mapping=MethodMapping().add(callee="score", caller="fit"),
             )
         )

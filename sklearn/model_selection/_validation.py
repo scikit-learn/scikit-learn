@@ -22,7 +22,7 @@ from joblib import logger
 from sklearn.base import clone, is_classifier
 from sklearn.exceptions import FitFailedWarning, UnsetMetadataPassedError
 from sklearn.metrics import check_scoring, get_scorer_names
-from sklearn.metrics._scorer import _MultimetricScorer
+from sklearn.metrics._scorer import _get_scorer_routing, _MultimetricScorer
 from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import _safe_indexing, check_random_state, indexable
@@ -323,12 +323,10 @@ def cross_validate(
             )
             .add(
                 estimator=estimator,
-                # TODO(SLEP6): also pass metadata to the predict method for
-                # scoring?
                 method_mapping=MethodMapping().add(caller="fit", callee="fit"),
             )
             .add(
-                scorer=scorers,
+                scorer=_get_scorer_routing(scorers, estimator),
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
@@ -1620,8 +1618,6 @@ def permutation_test_score(
             MetadataRouter(owner="permutation_test_score")
             .add(
                 estimator=estimator,
-                # TODO(SLEP6): also pass metadata to the predict method for
-                # scoring?
                 method_mapping=MethodMapping().add(caller="fit", callee="fit"),
             )
             .add(
@@ -1629,7 +1625,7 @@ def permutation_test_score(
                 method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
             .add(
-                scorer=scorer,
+                scorer=_get_scorer_routing(scorer, estimator),
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
@@ -1954,8 +1950,6 @@ def learning_curve(
             MetadataRouter(owner="learning_curve")
             .add(
                 estimator=estimator,
-                # TODO(SLEP6): also pass metadata to the predict method for
-                # scoring?
                 method_mapping=MethodMapping()
                 .add(caller="fit", callee="fit")
                 .add(caller="fit", callee="partial_fit"),
@@ -1965,7 +1959,7 @@ def learning_curve(
                 method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
             .add(
-                scorer=scorer,
+                scorer=_get_scorer_routing(scorer, estimator),
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )
@@ -2415,7 +2409,7 @@ def validation_curve(
                 method_mapping=MethodMapping().add(caller="fit", callee="split"),
             )
             .add(
-                scorer=scorer,
+                scorer=_get_scorer_routing(scorer, estimator),
                 method_mapping=MethodMapping().add(caller="fit", callee="score"),
             )
         )

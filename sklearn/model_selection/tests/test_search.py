@@ -86,7 +86,9 @@ from sklearn.preprocessing import (
 )
 from sklearn.svm import SVC, LinearSVC
 from sklearn.tests.metadata_routing_common import (
+    ConsumingClassifier,
     ConsumingScorer,
+    ConsumingTransformer,
     NonConsumingClassifier,
     WeightedMetaClassifier,
     _Registry,
@@ -2787,6 +2789,91 @@ def test_search_sample_weight_auto_request(auto_request, expected):
         else:
             with pytest.raises(UnsetMetadataPassedError, match="sample_weight"):
                 search.fit(X, y, sample_weight=sample_weight)
+
+
+@config_context(enable_metadata_routing=True)
+def test_search_routes_metadata_to_transform_when_scoring():
+    """Check that metadata requested by `transform` of a step in a `Pipeline` reaches
+    it on the validation folds that `GridSearchCV` scores.
+
+    Non-regression test for gh-27977.
+    """
+    X, y = make_classification(n_samples=20, random_state=0)
+    metadata = np.random.RandomState(0).rand(len(y))
+    registry = _Registry()
+    pipe = Pipeline(
+        [
+            (
+                "transformer",
+                ConsumingTransformer(registry=registry)
+                .set_fit_request(metadata=True)
+                .set_transform_request(metadata=True),
+            ),
+            (
+                "classifier",
+                ConsumingClassifier()
+                .set_fit_request(metadata=False)
+                .set_predict_request(metadata=False),
+            ),
+        ]
+    )
+    search = GridSearchCV(
+        pipe, param_grid={"classifier__alpha": [0.0]}, cv=2, scoring="accuracy"
+    )
+
+    search.fit(X, y, metadata=metadata)
+
+    assert len(registry)
+    for transformer in registry:
+        check_recorded_metadata(
+            obj=transformer,
+            method="transform",
+            parent="fit",
+            split_params=("metadata",),
+            metadata=metadata,
+        )
+
+
+@config_context(enable_metadata_routing=True)
+def test_search_routes_metadata_to_response_method_enabled_by_param_grid():
+    """Check that metadata reaches the response method called by the scorer when
+    it is only available on the candidates set by the parameter grid.
+
+    Non-regression test for gh-27977.
+    """
+    X, y = make_classification(n_samples=20, random_state=0)
+    metadata = np.random.RandomState(0).rand(len(y))
+    registry = _Registry()
+    pipe = Pipeline(
+        [
+            (
+                "transformer",
+                ConsumingTransformer(registry=registry)
+                .set_fit_request(metadata=True)
+                .set_transform_request(metadata=True),
+            ),
+            ("classifier", SGDClassifier(loss="hinge", random_state=0)),
+        ]
+    )
+    # `pipe` has no `predict_proba`, which the scorer calls on the candidates
+    search = GridSearchCV(
+        pipe,
+        param_grid={"classifier__loss": ["log_loss"]},
+        cv=2,
+        scoring="neg_log_loss",
+    )
+
+    search.fit(X, y, metadata=metadata)
+
+    assert len(registry)
+    for transformer in registry:
+        check_recorded_metadata(
+            obj=transformer,
+            method="transform",
+            parent="fit",
+            split_params=("metadata",),
+            metadata=metadata,
+        )
 
 
 # End of Metadata Routing Tests
