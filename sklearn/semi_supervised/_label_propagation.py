@@ -74,6 +74,18 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 
+def _normalize_probabilities(probabilities):
+    """Normalize probabilities, using a uniform distribution for zero-sum rows."""
+    normalizer = np.sum(probabilities, axis=1)[:, np.newaxis]
+    uniform_probabilities = np.full_like(probabilities, 1 / probabilities.shape[1])
+    return np.divide(
+        probabilities,
+        normalizer,
+        out=uniform_probabilities,
+        where=normalizer != 0,
+    )
+
+
 class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for label propagation module.
 
@@ -228,9 +240,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             weight_matrices = weight_matrices.T
             probabilities = safe_sparse_dot(weight_matrices, self.label_distributions_)
-        normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
-        probabilities /= normalizer
-        return probabilities
+        return _normalize_probabilities(probabilities)
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y):
@@ -310,9 +320,9 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             )
 
             if self._variant == "propagation":
-                normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
-                normalizer[normalizer == 0] = 1
-                self.label_distributions_ /= normalizer
+                self.label_distributions_ = _normalize_probabilities(
+                    self.label_distributions_
+                )
                 self.label_distributions_ = np.where(
                     unlabeled, self.label_distributions_, y_static
                 )
@@ -328,9 +338,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             )
             self.n_iter_ += 1
 
-        normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
-        normalizer[normalizer == 0] = 1
-        self.label_distributions_ /= normalizer
+        self.label_distributions_ = _normalize_probabilities(self.label_distributions_)
 
         # set the transduction item
         transduction = self.classes_[np.argmax(self.label_distributions_, axis=1)]
