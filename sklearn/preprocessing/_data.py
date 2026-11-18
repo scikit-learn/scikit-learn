@@ -2827,15 +2827,21 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
         for feature_idx in range(n_features):
             column_nnz_data = X.data[X.indptr[feature_idx] : X.indptr[feature_idx + 1]]
             if self.subsample is not None and len(column_nnz_data) > self.subsample:
-                column_data = np.zeros(shape=self.subsample, dtype=X.dtype)
-                column_subsample = (
-                    self.subsample
-                    if self.ignore_implicit_zeros
-                    else self.subsample * len(column_nnz_data) // n_samples
+                column_data = random_state.choice(
+                    column_nnz_data, size=self.subsample, replace=False
                 )
-                column_data[:column_subsample] = random_state.choice(
-                    column_nnz_data, size=column_subsample, replace=False
-                )
+                if self.ignore_implicit_zeros:
+                    column_weights = None
+                else:
+                    # Keep all sampled non-zero values while accounting for the
+                    # implicit zeros with their exact weight.
+                    column_data = np.concatenate(([0], column_data))
+                    column_weights = np.full(
+                        self.subsample + 1,
+                        len(column_nnz_data) / self.subsample,
+                        dtype=float,
+                    )
+                    column_weights[0] = n_samples - len(column_nnz_data)
             else:
                 if self.ignore_implicit_zeros:
                     column_data = np.zeros(shape=len(column_nnz_data), dtype=X.dtype)
@@ -2848,13 +2854,27 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(self.references_))
             else:
-                self.quantiles_.append(
-                    np.nanpercentile(
-                        column_data,
-                        references,
-                        method="averaged_inverted_cdf",
+                if (
+                    self.subsample is not None
+                    and len(column_nnz_data) > self.subsample
+                    and not self.ignore_implicit_zeros
+                ):
+                    self.quantiles_.append(
+                        _weighted_percentile(
+                            column_data,
+                            column_weights,
+                            percentile_rank=references,
+                            average=True,
+                        )
                     )
-                )
+                else:
+                    self.quantiles_.append(
+                        np.nanpercentile(
+                            column_data,
+                            references,
+                            method="averaged_inverted_cdf",
+                        )
+                    )
         self.quantiles_ = np.transpose(self.quantiles_)
 
     @_fit_context(prefer_skip_nested_validation=True)
