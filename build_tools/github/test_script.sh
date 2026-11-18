@@ -56,7 +56,7 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
-if [[ "$RUN_TESTS_IN_PARALLEL" == "1" ]]; then
+if [[ "$USE_PYTEST_RUN_PARALLEL" == "1" ]]; then
     # Use pytest-run-parallel
     TEST_CMD="$TEST_CMD --parallel-threads $NUM_CORES --iterations 1"
 fi
