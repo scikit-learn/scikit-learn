@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout code from PR branch
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # We want to check out the PR branch to report linting errors with
           # lines that match the PR branch. GHA checkout behavior by default is
@@ -31,14 +31,14 @@ jobs:
       # We want to use the lint lock-file from merging main into the PR branch
       # (default checkout behavior)
       - name: Checkout lint lock-file from merging main into the PR branch
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: build_tools/github/lint_lock.txt
           sparse-checkout-cone-mode: false
           path: merge-main-into-pr-branch
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: 3.12
 
@@ -63,7 +63,7 @@ jobs:
 
       - name: Upload Artifact
         if: always()
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lint-log
           path: |

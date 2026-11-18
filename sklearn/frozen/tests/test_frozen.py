@@ -210,5 +210,5 @@ def test_frozen_params():
     assert frozen.get_params() == {"estimator": est}
 
     other_est = LocalOutlierFactor()
-    frozen.set_params(estimator=other_est)
+    assert frozen.set_params(estimator=other_est) is frozen
     assert frozen.get_params() == {"estimator": other_est}

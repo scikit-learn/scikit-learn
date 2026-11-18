@@ -14,7 +14,7 @@ jobs:
     name: A reviewer will let you know if it is required or can be bypassed
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: '0'
       - name: Check if tests have changed
@@ -30,7 +30,7 @@ jobs:
 
       - name: Check changelog entry
         if: steps.tests_changed.outputs.check_changelog == 'true'
-        uses: scientific-python/action-towncrier-changelog@v2
+        uses: scientific-python/action-towncrier-changelog@f9c7df9a9f8b55cb0c12d94d14b281e9bcd101c0 # v2.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BOT_USERNAME: changelog-bot

@@ -368,7 +368,7 @@ INIT_PARAMS = {
     # TODO(1.14): remove alphas=10 because it is default now
     LogisticRegressionCV: dict(alphas=10, max_iter=7, cv=3, scoring="neg_log_loss"),
     LogisticRegression: dict(max_iter=5),
-    MDS: dict(n_init=2, max_iter=5),
+    MDS: dict(max_iter=5),
     # In the case of check_fit2d_1sample, bandwidth is set to None and
     # is thus estimated. De facto it is 0.0 as a single sample is provided
     # and this makes the test fails. Hence we give it a placeholder value.
@@ -659,7 +659,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="newton-cholesky"),
         ],
     },
-    MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
+    MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     MLPClassifier: {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
@@ -689,7 +689,14 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_dict_unchanged": dict(max_iter=5, n_components=1)
     },
     Nystroem: {"check_dict_unchanged": dict(n_components=1)},
-    PCA: {"check_dict_unchanged": dict(n_components=1)},
+    PCA: {
+        "check_dict_unchanged": dict(n_components=1),
+        # The array API checks use rank-deficient data (rank 8, 10 features). With
+        # n_components >= rank, the model covariance is singular and the result of
+        # `score` depends on the LAPACK implementation.
+        "check_array_api_input": dict(n_components=5),
+        "check_array_api_mixed_inputs": dict(n_components=5),
+    },
     PLSCanonical: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSRegression: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
@@ -1183,10 +1190,6 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
-    },
-    PCA: {
-        # TODO: see gh-33205 for details
-        "check_array_api_input": "`linalg.inv` fails because input is singular",
     },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298

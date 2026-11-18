@@ -434,7 +434,9 @@ def pytest_addoption(parser, pluginmanager):
 
 def pytest_runtest_setup(item):
     if "no_check_spmatrix" in item.keywords and item.config.option.check_spmatrix:
-        pytest.skip("skip due to check_spmatrix scipy patch breaking this test")
+        pytest.skip(
+            "do not apply the check_spmatrix scipy patch as it breaks this test"
+        )
 
 
 def pytest_configure(config):
