@@ -2135,15 +2135,22 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     @property
     def n_features_in_(self):
         """Number of features seen during :term:`fit`."""
-
-        # X is passed to all transformers so we just delegate to the first one
-        return self.transformer_list[0][1].n_features_in_
+        for _, trans in self.transformer_list:
+            if trans not in ("drop", None):
+                return trans.n_features_in_
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute 'n_features_in_'"
+        )
 
     @property
     def feature_names_in_(self):
         """Names of features seen during :term:`fit`."""
-        # X is passed to all transformers -- delegate to the first one
-        return self.transformer_list[0][1].feature_names_in_
+        for _, trans in self.transformer_list:
+            if trans not in ("drop", None):
+                return trans.feature_names_in_
+        raise AttributeError(
+            f"'{type(self).__name__}' object has no attribute 'feature_names_in_'"
+        )
 
     def __sklearn_is_fitted__(self):
         # Delegate whether feature union was fitted
