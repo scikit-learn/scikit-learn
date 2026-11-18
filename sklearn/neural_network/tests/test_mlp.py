@@ -549,7 +549,7 @@ def test_predict_proba_binary():
     y_proba = clf.predict_proba(X)
     y_log_proba = clf.predict_log_proba(X)
 
-    n_samples, n_classes = y.shape[0], 2
+    (n_samples, n_classes) = y.shape[0], 2
 
     proba_max = y_proba.argmax(axis=1)
     proba_log_max = y_log_proba.argmax(axis=1)
@@ -572,7 +572,7 @@ def test_predict_proba_multiclass():
     y_proba = clf.predict_proba(X)
     y_log_proba = clf.predict_log_proba(X)
 
-    n_samples, n_classes = y.shape[0], np.unique(y).size
+    (n_samples, n_classes) = y.shape[0], np.unique(y).size
 
     proba_max = y_proba.argmax(axis=1)
     proba_log_max = y_log_proba.argmax(axis=1)
@@ -1170,6 +1170,26 @@ def test_mlp_bagging_with_small_max_samples():
     bag.fit(X_train, y_train)
 
     assert np.isfinite(bag.score(X_test, y_test))
+
+
+def test_mlp_bagging_small_max_samples_early_stopping_error():
+    """Too few non-zero-weight rows for the validation split gives a clear error.
+
+    Zero-weight rows are dropped before the validation split, so with
+    `max_samples=10` the 10% validation set has a single sample.
+    """
+    X, y = load_digits(return_X_y=True)
+    bag = BaggingClassifier(
+        estimator=MLPClassifier(
+            hidden_layer_sizes=(8,), early_stopping=True, random_state=0
+        ),
+        n_estimators=2,
+        max_samples=10,
+        random_state=42,
+    )
+    msg = "validation set is too small.*zero sample_weight are removed"
+    with pytest.raises(ValueError, match=msg):
+        bag.fit(X, y)
 
 
 def test_mlp_vs_poisson_glm_equivalent(global_random_seed):

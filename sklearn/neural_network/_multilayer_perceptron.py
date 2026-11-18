@@ -685,10 +685,16 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
                     stratify=stratify,
                 )
             if X_val.shape[0] < 2:
-                raise ValueError(
+                msg = (
                     "The validation set is too small. Increase 'validation_fraction' "
                     "or the size of your dataset."
                 )
+                if sample_weight is not None:
+                    msg += (
+                        " Note that samples with zero sample_weight are removed "
+                        "before the validation split."
+                    )
+                raise ValueError(msg)
 
             if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)
