@@ -10,7 +10,11 @@ from dataclasses import dataclass
 from sklearn.callback import FitCallback
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import can_reuse_listener, open_listener, send
-from sklearn.utils._metadata_requests import _auto_requests_enabled, _routing_enabled
+from sklearn.utils._metadata_requests import (
+    _auto_requests_enabled,
+    _routing_enabled,
+    request_is_alias,
+)
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 from sklearn.utils.metadata_routing import (
@@ -322,8 +326,15 @@ class ScoringMonitor(FitCallback):
             self_request.on_fit_task_end.add_auto_request("X_val", "y_val")
             if _auto_requests_enabled():
                 for scorer in self._scorers["val"]._scorers.values():
+                    # Automatically add a request for "sample_weight_val" if the scorer
+                    # accepts sample weight and there is not already an alias request
+                    # for "sample_weight".
                     if scorer._accept_sample_weight():
-                        scorer.set_score_request(sample_weight="sample_weight_val")
+                        sw_request = scorer.get_metadata_routing().score.requests.get(
+                            "sample_weight"
+                        )
+                        if not request_is_alias(sw_request):
+                            scorer.set_score_request(sample_weight="sample_weight_val")
 
         router = MetadataRouter(owner=self).add_self_request(self_request)
         for dataset in ("train", "val"):

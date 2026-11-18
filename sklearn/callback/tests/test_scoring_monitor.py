@@ -608,9 +608,9 @@ def test_accept_sample_weight():
         )
 
 
-@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
-def test_val_scorer_with_alias_request():
-    """Test that the validation scorer with alias request is working."""
+@config_context(enable_metadata_routing=True)
+def test_val_scorer_with_aliased_data_request():
+    """Test that the validation scorer with aliased data request is working."""
     cb_no_alias = ScoringMonitor(scoring_val="r2")
     cb_alias = ScoringMonitor(scoring_val="r2")
     X, y = make_regression(n_samples=10, n_features=2)
@@ -638,7 +638,30 @@ def test_val_scorer_with_alias_request():
     assert_allclose(no_alias_score_values, alias_score_values)
 
 
-@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
+@config_context(enable_metadata_routing=True)
+def test_val_scorer_with_aliased_sample_weight_request():
+    """Test that the validation scorer with aliased sample weight request is working."""
+    cb_no_alias = ScoringMonitor(scoring_val="r2")
+    scorer = get_scorer("r2").set_score_request(sample_weight="sample_weight_alias")
+    cb_alias = ScoringMonitor(scoring_val=scorer)
+    X, y = make_regression(n_samples=10, n_features=2)
+    X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=0)
+    sample_weight = np.random.randint(0, 5, size=X_val.shape[0])
+
+    MaxIterEstimator().set_callbacks(cb_no_alias, cb_alias).fit(
+        X, y, X_val=X_val, y_val=y_val, sample_weight_alias=sample_weight
+    )
+    alias_score_values = [
+        log_item["score"] for log_item in cb_alias.get_logs().val_scores
+    ]
+    no_alias_score_values = [
+        log_item["r2"] for log_item in cb_no_alias.get_logs().val_scores
+    ]
+    # Verify that requesting the sample weights result in different scores
+    assert not np.allclose(alias_score_values, no_alias_score_values)
+
+
+@config_context(enable_metadata_routing=True)
 def test_val_scorer_only_X():
     """Smoke test for the validation scorer on a scorer that only requires X."""
 
