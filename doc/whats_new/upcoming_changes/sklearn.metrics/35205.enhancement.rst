@@ -1,0 +1,4 @@
+- :func:`metrics.pairwise_distances` now supports asymmetric callable
+  distance functions through the new `assume_symmetric` parameter.
+  Setting it to `False` computes ordered pairs independently.
+  By :user:`Prince Subedi <Dev-PrinceSubedi>`.
