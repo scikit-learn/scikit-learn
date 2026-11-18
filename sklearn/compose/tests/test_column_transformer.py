@@ -2659,9 +2659,6 @@ def test_column_transformer_column_renaming(dataframe_lib):
         transformer.fit_transform(df)
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_column_transformer_auto_memmap(global_random_seed):
     """Check that ColumnTransformer works in parallel with joblib's auto-memmapping.
 

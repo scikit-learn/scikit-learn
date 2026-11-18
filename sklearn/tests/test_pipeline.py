@@ -1045,9 +1045,6 @@ def test_feature_union_weights():
     assert X_fit_transformed_wo_method.shape == (X.shape[0], 7)
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_feature_union_parallel():
     # test that n_jobs work for FeatureUnion
     X = JUNK_FOOD_DOCS
@@ -1424,6 +1421,10 @@ def test_feature_union_duplicate_column_names(df_lib_name, T1):
 
     Non-regression test for issue #32104
     """
+    if not isinstance(T1, str):
+        # When running with pytest-run-parallel, T1 might be mutated, so clone
+        # before using:
+        T1 = clone(T1)
     df_lib = pytest.importorskip(df_lib_name)
     df = df_lib.DataFrame({"a": [1, 2, 3, 4], "b": [1, 2, 3, 4]})
     fu = FeatureUnion([("t1", T1), ("t2", StandardScaler())])

@@ -470,9 +470,6 @@ def test_error():
     assert not hasattr(BaggingClassifier(base).fit(X, y), "decision_function")
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_parallel_classification():
     # Check parallel classification.
     X_train, X_test, y_train, y_test = train_test_split(
@@ -514,9 +511,6 @@ def test_parallel_classification():
     assert_array_almost_equal(decisions1, decisions3)
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_parallel_regression():
     # Check parallel regression.
     rng = check_random_state(0)
@@ -555,9 +549,6 @@ def test_gridsearch():
     GridSearchCV(BaggingClassifier(SVC()), parameters, scoring="roc_auc").fit(X, y)
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 def test_estimator():
     # Check estimator and its default values.
     rng = check_random_state(0)

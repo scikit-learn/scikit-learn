@@ -2115,9 +2115,6 @@ def test_radius_neighbors_parallel_array_radius(algorithm):
         assert_array_equal(np.sort(ind[i]), np.sort(ind_parallel[i]))
 
 
-# TODO: remove mark once loky bug is fixed:
-# https://github.com/joblib/loky/issues/458
-@pytest.mark.thread_unsafe
 @pytest.mark.parametrize("backend", ["threading", "loky"])
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 def test_knn_forcing_backend(backend, algorithm):
