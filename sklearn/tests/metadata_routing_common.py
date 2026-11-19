@@ -70,7 +70,13 @@ def caller_context(caller):
 
 
 def run_routing_caller(func, *args, **kwargs):
-    """Run a function, setting the caller context to its name."""
+    """Wrapper for calling estimator methods for tests that check routing.
+
+    Instead of ``estimator.fit(X, y)``, instead you should do
+    ``run_routing_caller(estimator.fit, X, y)``. This ensures
+    ``check_recorded_metadata`` can correctly identify callers in the face
+    of parallelism.
+    """
     with caller_context(func.__name__):
         return func(*args, **kwargs)
 
@@ -124,6 +130,9 @@ def check_recorded_metadata(
     obj, method, parent, split_params=tuple(), preserves_metadata=True, **kwargs
 ):
     """Check whether the expected metadata is passed to the object's method.
+
+    Estimator methods should be called with ``run_routing_caller``, otherwise
+    this might fail when parallelism is used.
 
     Parameters
     ----------
