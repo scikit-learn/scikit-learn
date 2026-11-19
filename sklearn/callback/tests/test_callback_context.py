@@ -350,7 +350,7 @@ def test_autopropagation_to_callback_agnostic_subestimator():
     ) as caught_warnings:
         meta_estimator.fit()
 
-    assert len(caught_warnings) == 1
+        assert len(caught_warnings) == 1, list(caught_warnings)
 
     assert callback.count_hooks("setup") == 1
     expected_n_tasks = np.sum(np.cumprod([1, n_outer, n_inner]))
