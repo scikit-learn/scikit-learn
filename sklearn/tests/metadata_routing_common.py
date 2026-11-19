@@ -28,6 +28,7 @@ from sklearn.utils.metadata_routing import (
     process_routing,
 )
 from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.parallel import __file__ as parallel_filename
 from sklearn.utils.parallel import _FuncWrapper
 
 _MetadataCaller = ContextVar("_MetadataCaller", default=None)
@@ -98,12 +99,25 @@ def record_metadata(obj, record_default=True, **kwargs):
         "validation_curve",
     ]
     stack = inspect.stack()
-    # for callee, extract the innermost `function` (which is in METHODS) from the
-    # stack; for caller, extract the *outermost* matching function so the expected
-    # `parent` is the top-level public entry point (e.g. `cross_validate`) rather
-    # than an internal helper whose name may change. Fall back to positional frames:
+    # for callee, extract the innermost `function` (which is in METHODS) from
+    # the stack; for caller, rely on metadata available in _MetadataCaller,
+    # inserted via run_routing_caller(), and fall back to the stack if that
+    # isn't available. The need for a special mechanism for callers is because
+    # of parallelism: when using threads or processes, the original caller may
+    # well be unreachable via the stack.
     callee = None
     caller = _MetadataCaller.get()
+    if caller is None:
+        # This is fine only if we're not going through a Parallel. So much sure
+        # we're not.
+        for frame in stack:
+            if frame.filename == parallel_filename:
+                raise RuntimeError(
+                    "In order to write metadata routing tests that work with"
+                    " parallelism, you need to "
+                    "use sklearn.tests.metadata_routing.run_routing_caller()"
+                )
+
     for i, frame in enumerate(stack):
         if frame.function in METHODS + ["consuming_metric"]:
             callee = frame.function
