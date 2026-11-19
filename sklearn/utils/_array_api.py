@@ -725,8 +725,9 @@ def _fill_diagonal(array, value, xp):
 
     diag_idx = xp.arange(min_rows_columns, device=array_device(array))
     try:
-        # Setting items with integer arrays is not part of the array API, but
-        # most namespaces support it. It is a single operation, while the loop
+        # Setting items with integer arrays is not specified by the array API
+        # yet (see https://github.com/data-apis/array-api/issues/864), but most
+        # namespaces support it. It is a single operation, while the loop
         # below costs one device write per diagonal element.
         array[diag_idx, diag_idx] = value
     except (IndexError, TypeError, NotImplementedError):
