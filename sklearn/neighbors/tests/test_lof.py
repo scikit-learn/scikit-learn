@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import re
+import warnings
 from math import sqrt
 
 import numpy as np
@@ -391,4 +392,56 @@ def test_lof_duplicate_samples():
 
     # Catch the warning
     with pytest.warns(UserWarning, match=re.escape(error_msg)):
+        lof.fit_predict(X)
+
+
+def test_lof_duplicate_samples_novelty():
+    """The duplicate-sample warning must also fire when `novelty=True`.
+
+    The score-based check introduced for gh-27839 was gated on
+    `not self.novelty`, so users scoring new data in novelty mode never
+    saw the warning although their scores explode identically.
+    """
+    rng = np.random.RandomState(0)
+    X = np.vstack([rng.normal(size=(200, 2)), np.tile([[5.0, 5.0]], (30, 1))])
+
+    lof = neighbors.LocalOutlierFactor(n_neighbors=20, novelty=True)
+    with pytest.warns(UserWarning, match="Duplicate values"):
+        lof.fit(X)
+
+
+def test_lof_duplicate_samples_moderate_scores():
+    """Warn even when the score explosion stays below the old -1e7 cutoff.
+
+    A sample at distance 5e-4 from a duplicated cluster gets a score of
+    roughly -5e6: driven by the internal 1e-10 epsilon just as much as the
+    extreme cases, but silently accepted by the previous check.
+    """
+    rng = np.random.RandomState(0)
+    X = np.vstack(
+        [
+            rng.normal(size=(200, 2)),
+            np.tile([[5.0, 5.0]], (30, 1)),
+            [[5.0005, 5.0]],
+        ]
+    )
+
+    lof = neighbors.LocalOutlierFactor(n_neighbors=20)
+    with pytest.warns(UserWarning, match="Duplicate values"):
+        lof.fit_predict(X)
+
+
+def test_lof_no_duplicate_warning_genuine_outliers():
+    """No duplicate warning on clean data with one genuine extreme outlier.
+
+    The previous check compared scores against -1e7, so a legitimate far
+    outlier without any duplicated samples produced a spurious
+    "Duplicate values" warning.
+    """
+    rng = np.random.RandomState(0)
+    X = np.vstack([rng.uniform(size=(200, 2)), [[1e8, 1e8]]])
+
+    lof = neighbors.LocalOutlierFactor(n_neighbors=20)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         lof.fit_predict(X)
