@@ -294,15 +294,12 @@ def _solve_cholesky(X, y, alpha, xp=None):
 def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None):
     # dual_coef = inv(X X^t + alpha*Id) y
     xp, _ = get_namespace(K, xp=xp)
-    is_numpy_namespace = _is_numpy_namespace(xp)
     n_samples = K.shape[0]
     n_targets = y.shape[1]
 
     if copy:
         K = K.copy()
 
-    if is_numpy_namespace:
-        alpha = np.atleast_1d(alpha)
     one_alpha = bool(xp.all(alpha == alpha[0]))
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight not in [1.0, None]
 
