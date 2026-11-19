@@ -41,6 +41,7 @@ from sklearn.utils import (
     compute_sample_weight,
 )
 from sklearn.utils._array_api import (
+    _add_to_diagonal,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _ravel,
@@ -243,30 +244,6 @@ def _solve_spd(A, b, xp, overwrite_a=False):
     return x
 
 
-def _add_alpha_to_diagonal(A, value, xp):
-    """Return `A + value * Id`, computed in place when the namespace allows it.
-
-    The caller must check whether the returned array is `A`.
-    """
-    n = A.shape[0]
-    if _is_numpy_namespace(xp):
-        # A.flat is a view even when A is Fortran-ordered.
-        A.flat[:: n + 1] += value
-        return A
-    diag_idx = xp.arange(n, device=array_device(A))
-    try:
-        # Setting items with integer arrays is not part of the array API, but
-        # most namespaces support it and it avoids allocating a (n, n) array.
-        A[diag_idx, diag_idx] += value
-        return A
-    except (IndexError, TypeError, NotImplementedError):
-        # In-place operations, to allocate a single new (n, n) array.
-        D = xp.eye(n, dtype=A.dtype, device=array_device(A))
-        D *= value
-        D += A
-        return D
-
-
 def _solve_cholesky(X, y, alpha, xp=None):
     # w = inv(X^t X + alpha*Id) * X.T y
     xp, _ = get_namespace(X, xp=xp)
@@ -279,15 +256,14 @@ def _solve_cholesky(X, y, alpha, xp=None):
     one_alpha = bool(xp.all(alpha == alpha[0]))
 
     if one_alpha:
-        A = _add_alpha_to_diagonal(A, alpha[0], xp)
+        _add_to_diagonal(A, alpha[0], xp)
         return _solve_spd(A, Xy, xp, overwrite_a=True).T
     else:
         coefs = xp.empty((n_targets, n_features), dtype=X.dtype, device=array_device(X))
         for i in range(n_targets):
-            A_i = _add_alpha_to_diagonal(A, alpha[i], xp)
-            coefs[i, :] = _solve_spd(A_i, Xy[:, i : i + 1], xp)[:, 0]
-            if A_i is A:
-                _add_alpha_to_diagonal(A, -alpha[i], xp)
+            _add_to_diagonal(A, alpha[i], xp)
+            coefs[i, :] = _solve_spd(A, Xy[:, i : i + 1], xp)[:, 0]
+            _add_to_diagonal(A, -alpha[i], xp)
         return coefs
 
 
@@ -312,13 +288,13 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
 
     if one_alpha:
         # Only one penalty, we can solve multi-target problems in one time.
-        K_alpha = _add_alpha_to_diagonal(K, alpha[0], xp)
+        _add_to_diagonal(K, alpha[0], xp)
 
         try:
             # Note: we must use overwrite_a=False in order to be able to
             #       use the fall-back solution below in case a LinAlgError
             #       is raised
-            dual_coef = _solve_spd(K_alpha, y, xp, overwrite_a=False)
+            dual_coef = _solve_spd(K, y, xp, overwrite_a=False)
         except np.linalg.LinAlgError:
             warnings.warn(
                 "Singular matrix in solving dual problem. Using "
@@ -326,10 +302,9 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
             )
             dual_coef = linalg.lstsq(K, y)[0]
 
-        if K_alpha is K:
-            # K is expensive to compute and store in memory so change it back
-            # in case it was user-given.
-            _add_alpha_to_diagonal(K, -alpha[0], xp)
+        # K is expensive to compute and store in memory so change it back in
+        # case it was user-given.
+        _add_to_diagonal(K, -alpha[0], xp)
 
         if has_sw:
             dual_coef *= sw[:, np.newaxis]
@@ -342,10 +317,9 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None)
         )
 
         for i in range(n_targets):
-            K_alpha = _add_alpha_to_diagonal(K, alpha[i], xp)
-            dual_coefs[i, :] = _solve_spd(K_alpha, y[:, i : i + 1], xp)[:, 0]
-            if K_alpha is K:
-                _add_alpha_to_diagonal(K, -alpha[i], xp)
+            _add_to_diagonal(K, alpha[i], xp)
+            dual_coefs[i, :] = _solve_spd(K, y[:, i : i + 1], xp)[:, 0]
+            _add_to_diagonal(K, -alpha[i], xp)
 
         if has_sw:
             dual_coefs *= sw[np.newaxis, :]
