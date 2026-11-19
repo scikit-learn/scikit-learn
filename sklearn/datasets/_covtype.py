@@ -23,16 +23,16 @@ from tempfile import TemporaryDirectory
 import joblib
 import numpy as np
 
-from ..utils import Bunch, check_random_state
-from ..utils._param_validation import Interval, validate_params
-from . import get_data_home
-from ._base import (
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _convert_data_dataframe,
     _fetch_remote,
     _pkl_filepath,
     load_descr,
 )
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._param_validation import Interval, validate_params
 
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
@@ -122,16 +122,12 @@ def fetch_covtype(
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
-        .. versionadded:: 0.20
-
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric). The target is a pandas DataFrame or
         Series depending on the number of target columns. If `return_X_y` is
         True, then (`data`, `target`) will be pandas DataFrames or Series as
         described below.
-
-        .. versionadded:: 0.24
 
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
@@ -168,8 +164,6 @@ def fetch_covtype(
         shape (n_samples, n_features) with each row representing one
         sample and each column representing the features. The second
         ndarray of shape (n_samples,) containing the target samples.
-
-        .. versionadded:: 0.20
 
     Examples
     --------

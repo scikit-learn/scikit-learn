@@ -18,10 +18,12 @@ jobs:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+    - uses: actions/checkout@v7.0.1
+    - uses: actions/setup-python@v7.1.0
       with:
-        python-version: '3.8'
+        # wheelhouse_uploader depends on an old apache-libcloud that imports
+        # ssl.match_hostname, which was removed in Python 3.12.
+        python-version: '3.11'
     - name: Install dependencies
       run: |
         pip install -U wheelhouse_uploader pyyaml
@@ -39,13 +41,10 @@ jobs:
       run: |
         python build_tools/github/check_wheels.py
     - name: Publish package to TestPyPI
-      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+      uses: pypa/gh-action-pypi-publish@v1.14.3
       with:
         repository-url: https://test.pypi.org/legacy/
-        print-hash: true
       if: ${{ github.event.inputs.pypi_repo == 'testpypi' }}
     - name: Publish package to PyPI
-      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+      uses: pypa/gh-action-pypi-publish@v1.14.3
       if: ${{ github.event.inputs.pypi_repo == 'pypi' }}
-      with:
-        print-hash: true

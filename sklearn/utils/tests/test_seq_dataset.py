@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+from functools import partial
 from itertools import product
 
 import numpy as np
@@ -55,28 +56,31 @@ def _make_sparse_dataset(csr_container, float_dtype):
     return csr_dataset(X.data, X.indptr, X.indices, y, sample_weight, seed=42)
 
 
-def _make_dense_datasets():
-    return [_make_dense_dataset(float_dtype) for float_dtype in floating]
+def _dense_dataset_factories():
+    return [partial(_make_dense_dataset, float_dtype) for float_dtype in floating]
 
 
-def _make_sparse_datasets():
+def _sparse_dataset_factories():
     return [
-        _make_sparse_dataset(csr_container, float_dtype)
+        partial(_make_sparse_dataset, csr_container, float_dtype)
         for csr_container, float_dtype in product(CSR_CONTAINERS, floating)
     ]
 
 
-def _make_fused_types_datasets():
-    all_datasets = _make_dense_datasets() + _make_sparse_datasets()
+def _fused_types_dataset_factories():
+    all_factories = _dense_dataset_factories() + _sparse_dataset_factories()
     # group dataset by array types to get a tuple (float32, float64)
-    return (all_datasets[idx : idx + 2] for idx in range(0, len(all_datasets), 2))
+    return [all_factories[idx : idx + 2] for idx in range(0, len(all_factories), 2)]
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
-@pytest.mark.parametrize("dataset", _make_dense_datasets() + _make_sparse_datasets())
-def test_seq_dataset_basic_iteration(dataset, csr_container):
+@pytest.mark.parametrize(
+    "dataset_factory", _dense_dataset_factories() + _sparse_dataset_factories()
+)
+def test_seq_dataset_basic_iteration(dataset_factory, csr_container):
     NUMBER_OF_RUNS = 5
     X_csr64 = csr_container(X64)
+    dataset = dataset_factory()
     for _ in range(NUMBER_OF_RUNS):
         # next sample
         xi_, yi, swi, idx = dataset._next_py()
@@ -96,16 +100,11 @@ def test_seq_dataset_basic_iteration(dataset, csr_container):
 
 
 @pytest.mark.parametrize(
-    "dense_dataset,sparse_dataset",
-    [
-        (
-            _make_dense_dataset(float_dtype),
-            _make_sparse_dataset(csr_container, float_dtype),
-        )
-        for float_dtype, csr_container in product(floating, CSR_CONTAINERS)
-    ],
+    "float_dtype, csr_container", product(floating, CSR_CONTAINERS)
 )
-def test_seq_dataset_shuffle(dense_dataset, sparse_dataset):
+def test_seq_dataset_shuffle(float_dtype, csr_container):
+    dense_dataset = _make_dense_dataset(float_dtype)
+    sparse_dataset = _make_sparse_dataset(csr_container, float_dtype)
     # not shuffled
     for i in range(5):
         _, _, _, idx1 = dense_dataset._next_py()
@@ -137,8 +136,11 @@ def test_seq_dataset_shuffle(dense_dataset, sparse_dataset):
         assert idx2 == j
 
 
-@pytest.mark.parametrize("dataset_32,dataset_64", _make_fused_types_datasets())
-def test_fused_types_consistency(dataset_32, dataset_64):
+@pytest.mark.parametrize(
+    "dataset_32_factory, dataset_64_factory", _fused_types_dataset_factories()
+)
+def test_fused_types_consistency(dataset_32_factory, dataset_64_factory):
+    dataset_32, dataset_64 = dataset_32_factory(), dataset_64_factory()
     NUMBER_OF_RUNS = 5
     for _ in range(NUMBER_OF_RUNS):
         # next sample

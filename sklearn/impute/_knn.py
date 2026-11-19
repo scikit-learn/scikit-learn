@@ -5,20 +5,20 @@ from numbers import Integral
 
 import numpy as np
 
-from ..base import _fit_context
-from ..metrics import pairwise_distances_chunked
-from ..metrics.pairwise import _NAN_METRICS
-from ..neighbors._base import _get_weights
-from ..utils._mask import _get_mask
-from ..utils._missing import is_scalar_nan
-from ..utils._param_validation import Hidden, Interval, StrOptions
-from ..utils.validation import (
+from sklearn.base import _fit_context
+from sklearn.impute._base import _BaseImputer
+from sklearn.metrics import pairwise_distances_chunked
+from sklearn.metrics.pairwise import _NAN_METRICS
+from sklearn.neighbors._base import _get_weights
+from sklearn.utils._mask import _get_mask
+from sklearn.utils._missing import is_scalar_nan
+from sklearn.utils._param_validation import Hidden, Interval, StrOptions
+from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
     check_is_fitted,
     validate_data,
 )
-from ._base import _BaseImputer
 
 
 class KNNImputer(_BaseImputer):
@@ -29,8 +29,6 @@ class KNNImputer(_BaseImputer):
     close if the features that neither is missing are close.
 
     Read more in the :ref:`User Guide <knnimpute>`.
-
-    .. versionadded:: 0.22
 
     Parameters
     ----------
@@ -91,8 +89,6 @@ class KNNImputer(_BaseImputer):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

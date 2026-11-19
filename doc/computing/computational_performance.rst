@@ -77,8 +77,8 @@ Scikit-learn does some validation on data that increases the overhead per
 call to ``predict`` and similar functions. In particular, checking that
 features are finite (not NaN or infinite) involves a full pass over the
 data. If you ensure that your data is acceptable, you may suppress
-checking for finiteness by setting the environment variable
-``SKLEARN_ASSUME_FINITE`` to a non-empty string before importing
+checking for finiteness by setting
+:ref:`SKLEARN_ASSUME_FINITE <envvar_SKLEARN_ASSUME_FINITE>` before importing
 scikit-learn, or configure it in Python with :func:`set_config`.
 For more control than these global settings, a :func:`config_context`
 allows you to set this configuration within a specified context::
@@ -154,10 +154,9 @@ prediction latency too much. We will now review this idea for different
 families of supervised models.
 
 For :mod:`sklearn.linear_model` (e.g. Lasso, ElasticNet,
-SGDClassifier/Regressor, Ridge & RidgeClassifier,
-PassiveAggressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
-decision function that is applied at prediction time is the same (a dot product)
-, so latency should be equivalent.
+SGDClassifier/Regressor, Ridge & RidgeClassifier, LinearSVC, LogisticRegression...) the
+decision function that is applied at prediction time is the same (a dot product), so
+latency should be equivalent.
 
 Here is an example using
 :class:`~linear_model.SGDClassifier` with the
@@ -179,7 +178,7 @@ non-zero coefficients.
 For the :mod:`sklearn.svm` family of algorithms with a non-linear kernel,
 the latency is tied to the number of support vectors (the fewer the faster).
 Latency and throughput should (asymptotically) grow linearly with the number
-of support vectors in a SVC or SVR model. The kernel will also influence the
+of support vectors in an SVC or SVR model. The kernel will also influence the
 latency as it is used to compute the projection of the input vector once per
 support vector. In the following graph the ``nu`` parameter of
 :class:`~svm.NuSVR` was used to influence the number of
@@ -281,8 +280,7 @@ scikit-learn install with the following command::
 
 Optimized BLAS / LAPACK implementations include:
 
-- Atlas (need hardware specific tuning by rebuilding on the target machine)
-- OpenBLAS
+- OpenBLAS (e.g. default in Numpy and SciPy PyPI wheels)
 - MKL
 - Apple Accelerate and vecLib frameworks (OSX only)
 
@@ -302,8 +300,10 @@ involve using a large amount of temporary memory.  This may potentially exhaust
 system memory.  Where computations can be performed in fixed-memory chunks, we
 attempt to do so, and allow the user to hint at the maximum size of this
 working memory (defaulting to 1GB) using :func:`set_config` or
-:func:`config_context`.  The following suggests to limit temporary working
-memory to 128 MiB::
+:func:`config_context`. See :ref:`SKLEARN_WORKING_MEMORY <envvar_SKLEARN_WORKING_MEMORY>`
+which can be used to change the global default.
+
+The following suggests to limit temporary working memory to 128 MiB::
 
   >>> import sklearn
   >>> with sklearn.config_context(working_memory=128):

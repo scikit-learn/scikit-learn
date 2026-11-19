@@ -10,8 +10,8 @@ efficiently generate polynomial kernel feature-space approximations.
 This is used to train linear classifiers that approximate the accuracy
 of kernelized ones.
 
-We use the Covtype dataset [2], trying to reproduce the experiments on the
-original paper of Tensor Sketch [1], i.e. the algorithm implemented by
+We use the Covtype dataset [2]_, trying to reproduce the experiments on the
+original paper of Tensor Sketch [1]_, i.e. the algorithm implemented by
 :class:`PolynomialCountSketch`.
 
 First, we compute the accuracy of a linear classifier on the original
@@ -33,7 +33,7 @@ approximating the accuracy of a kernelized classifier in a scalable manner.
 # is to predict forest cover type from cartographic variables only
 # (no remotely sensed data). After loading, we transform it into a binary
 # classification problem to match the version of the dataset in the
-# LIBSVM webpage [2], which was the one used in [1].
+# LIBSVM webpage [2]_, which was the one used in [1]_.
 
 from sklearn.datasets import fetch_covtype
 
@@ -62,7 +62,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 #
 # Now scale features to the range [0, 1] to match the format of the dataset in
 # the LIBSVM webpage, and then normalize to unit length as done in the
-# original Tensor Sketch paper [1].
+# original Tensor Sketch paper [1]_.
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import MinMaxScaler, Normalizer
@@ -243,9 +243,9 @@ plt.show()
 # References
 # ==========
 #
-# [1] Pham, Ninh and Rasmus Pagh. "Fast and scalable polynomial kernels via
-# explicit feature maps." KDD '13 (2013).
-# https://doi.org/10.1145/2487575.2487591
+# .. [1] Pham, Ninh and Rasmus Pagh. "Fast and scalable polynomial kernels via
+#        explicit feature maps." KDD '13 (2013).
+#        https://doi.org/10.1145/2487575.2487591
 #
-# [2] LIBSVM binary datasets repository
-# https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html
+# .. [2] LIBSVM binary datasets repository
+#        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary.html

@@ -1,13 +1,12 @@
 """Common tests for metaestimators"""
 
 import functools
-from contextlib import suppress
 from inspect import signature
 
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, is_regressor
+from sklearn.base import BaseEstimator, clone, is_regressor
 from sklearn.datasets import make_classification
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
@@ -19,8 +18,11 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import MaxAbsScaler, StandardScaler
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.utils import all_estimators
-from sklearn.utils._test_common.instance_generator import _construct_instances
-from sklearn.utils._testing import SkipTest, set_random_state
+from sklearn.utils._test_common.instance_generator import (
+    SKIPPED_ESTIMATORS,
+    _construct_instances,
+)
+from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import (
     _enforce_estimator_tags_X,
     _enforce_estimator_tags_y,
@@ -40,6 +42,13 @@ class DelegatorData:
         self.construct = construct
         self.fit_args = fit_args
         self.skip_methods = skip_methods
+
+
+def _make_semi_supervised_classification():
+    """Classification data where every other sample is unlabeled (y=-1)."""
+    X, y = make_classification(random_state=0)
+    y[::2] = -1
+    return X, y
 
 
 # For the following meta estimators we check for the existence of relevant
@@ -78,8 +87,10 @@ DELEGATING_METAESTIMATORS = [
     ),
     DelegatorData(
         "SelfTrainingClassifier",
-        lambda est: SelfTrainingClassifier(est),
+        # max_iter=0 because the dummy sub-estimator cannot run self-training.
+        lambda est: SelfTrainingClassifier(est, max_iter=0),
         skip_methods=["transform", "inverse_transform", "predict_proba"],
+        fit_args=_make_semi_supervised_classification(),
     ),
 ]
 
@@ -208,13 +219,18 @@ def _get_instance_with_pipeline(meta_estimator, init_params):
             estimator = make_pipeline(TfidfVectorizer(), Ridge())
             param_grid = {"ridge__alpha": [0.1, 1.0]}
         else:
-            estimator = make_pipeline(TfidfVectorizer(), LogisticRegression())
-            param_grid = {"logisticregression__C": [0.1, 1.0]}
+            estimator = make_pipeline(TfidfVectorizer(), LogisticRegression(alpha=1e-4))
+            param_grid = {"logisticregression__alpha": [0.1, 1.0]}
 
         if init_params.intersection(
             {"param_grid", "param_distributions"}
         ):  # SearchCV estimators
-            extra_params = {"n_iter": 2} if "n_iter" in init_params else {}
+            # Do not sample more candidates than the size of param_grid.
+            extra_params = {}
+            if "n_iter" in init_params:  # RandomizedSearchCV
+                extra_params["n_iter"] = 2
+            if "n_candidates" in init_params:  # HalvingRandomSearchCV
+                extra_params["n_candidates"] = 2
             return type(meta_estimator)(estimator, param_grid, **extra_params)
         else:
             return type(meta_estimator)(estimator)
@@ -241,9 +257,12 @@ def _get_instance_with_pipeline(meta_estimator, init_params):
             estimator = [
                 (
                     "est1",
-                    make_pipeline(TfidfVectorizer(), LogisticRegression(C=0.1)),
+                    make_pipeline(TfidfVectorizer(), LogisticRegression(alpha=0.1)),
                 ),
-                ("est2", make_pipeline(TfidfVectorizer(), LogisticRegression(C=1))),
+                (
+                    "est2",
+                    make_pipeline(TfidfVectorizer(), LogisticRegression(alpha=1)),
+                ),
             ]
         return type(meta_estimator)(estimator)
 
@@ -254,11 +273,9 @@ def _generate_meta_estimator_instances_with_pipeline():
     Are considered meta-estimators all estimators accepting one of "estimator",
     "base_estimator" or "estimators".
     """
-    print("estimators: ", len(all_estimators()))
     for _, Estimator in sorted(all_estimators()):
         sig = set(signature(Estimator).parameters)
 
-        print("\n", Estimator.__name__, sig)
         if not sig.intersection(
             {
                 "estimator",
@@ -270,10 +287,12 @@ def _generate_meta_estimator_instances_with_pipeline():
         ):
             continue
 
-        with suppress(SkipTest):
-            for meta_estimator in _construct_instances(Estimator):
-                print(meta_estimator)
-                yield _get_instance_with_pipeline(meta_estimator, sig)
+        if Estimator in SKIPPED_ESTIMATORS:
+            # _construct_instances would raise SkipTest and a SkipTestWarning.
+            continue
+
+        for meta_estimator in _construct_instances(Estimator):
+            yield _get_instance_with_pipeline(meta_estimator, sig)
 
 
 # TODO: remove data validation for the following estimators
@@ -307,12 +326,17 @@ def _get_meta_estimator_id(estimator):
     return estimator.__class__.__name__
 
 
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "estimator", DATA_VALIDATION_META_ESTIMATORS, ids=_get_meta_estimator_id
 )
 def test_meta_estimators_delegate_data_validation(estimator):
     # Check that meta-estimators delegate data validation to the inner
     # estimator(s).
+
+    # clone to avoid side effects and ensure thread-safe test execution.
+    estimator = clone(estimator)
     rng = np.random.RandomState(0)
     set_random_state(estimator)
 

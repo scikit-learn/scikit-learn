@@ -17,6 +17,7 @@ from sklearn.metrics import (
     balanced_accuracy_score,
     f1_score,
     fbeta_score,
+    get_scorer,
     make_scorer,
 )
 from sklearn.metrics._scorer import _CurveScorer
@@ -359,9 +360,11 @@ def test_tuned_threshold_classifier_refit(with_sample_weight, global_random_seed
 
     # check that `estimator_` if fitted on the full dataset when `refit=True`
     estimator = LogisticRegression().set_fit_request(sample_weight=True)
-    model = TunedThresholdClassifierCV(estimator, refit=True).fit(
-        X, y, sample_weight=sample_weight
-    )
+    model = TunedThresholdClassifierCV(
+        estimator,
+        refit=True,
+        scoring=get_scorer("balanced_accuracy").set_score_request(sample_weight=True),
+    ).fit(X, y, sample_weight=sample_weight)
 
     assert model.estimator_ is not estimator
     estimator.fit(X, y, sample_weight=sample_weight)
@@ -372,9 +375,12 @@ def test_tuned_threshold_classifier_refit(with_sample_weight, global_random_seed
     estimator = LogisticRegression().set_fit_request(sample_weight=True)
     estimator.fit(X, y, sample_weight=sample_weight)
     coef = estimator.coef_.copy()
-    model = TunedThresholdClassifierCV(estimator, cv="prefit", refit=False).fit(
-        X, y, sample_weight=sample_weight
-    )
+    model = TunedThresholdClassifierCV(
+        estimator,
+        cv="prefit",
+        refit=False,
+        scoring=get_scorer("balanced_accuracy").set_score_request(sample_weight=True),
+    ).fit(X, y, sample_weight=sample_weight)
 
     assert model.estimator_ is estimator
     assert_allclose(model.estimator_.coef_, coef)
@@ -384,9 +390,12 @@ def test_tuned_threshold_classifier_refit(with_sample_weight, global_random_seed
     cv = [
         (np.arange(50), np.arange(50, 100)),
     ]  # single split
-    model = TunedThresholdClassifierCV(estimator, cv=cv, refit=False).fit(
-        X, y, sample_weight=sample_weight
-    )
+    model = TunedThresholdClassifierCV(
+        estimator,
+        cv=cv,
+        refit=False,
+        scoring=get_scorer("balanced_accuracy").set_score_request(sample_weight=True),
+    ).fit(X, y, sample_weight=sample_weight)
 
     assert model.estimator_ is not estimator
     if with_sample_weight:
@@ -427,9 +436,17 @@ def test_tuned_threshold_classifier_cv_zeros_sample_weights_equivalence():
     sample_weight = np.zeros_like(y)
     sample_weight[::2] = 1
 
-    estimator = LogisticRegression().set_fit_request(sample_weight=True)
+    estimator = (
+        LogisticRegression()
+        .set_fit_request(sample_weight=True)
+        .set_score_request(sample_weight=True)
+    )
     model_without_weights = TunedThresholdClassifierCV(estimator, cv=2)
-    model_with_weights = clone(model_without_weights)
+    model_with_weights = TunedThresholdClassifierCV(
+        estimator,
+        cv=2,
+        scoring=get_scorer("balanced_accuracy").set_score_request(sample_weight=True),
+    )
 
     model_with_weights.fit(X, y, sample_weight=sample_weight)
     model_without_weights.fit(X[::2], y[::2])

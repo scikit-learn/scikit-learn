@@ -8,12 +8,12 @@ refurbished versions of :class:`~sklearn.pipeline.Pipeline` and
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-from ._column_transformer import (
+from sklearn.compose._column_transformer import (
     ColumnTransformer,
     make_column_selector,
     make_column_transformer,
 )
-from ._target import TransformedTargetRegressor
+from sklearn.compose._target import TransformedTargetRegressor
 
 __all__ = [
     "ColumnTransformer",

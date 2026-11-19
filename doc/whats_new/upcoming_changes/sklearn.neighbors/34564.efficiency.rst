@@ -1,0 +1,2 @@
+* :class:`sklearn.neighbors.KNeighborsClassifier` is now faster when fitting when used with :class:`sklearn.neighbors.BallTree` or :class:`sklearn.neighbors.KDTree`.
+  By :user:`Itamar Turner-Trauring <itamarst>`.

@@ -10,14 +10,15 @@ normally from `sklearn.ensemble`.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-# Don't remove this file, we don't want to break users code just because the
-# feature isn't experimental anymore.
+# TODO(1.12): remove this file
 
 import warnings
 
 warnings.warn(
-    "Since version 1.0, "
-    "it is not needed to import enable_hist_gradient_boosting anymore. "
-    "HistGradientBoostingClassifier and HistGradientBoostingRegressor are now "
-    "stable and can be normally imported from sklearn.ensemble."
+    "The sklearn.experimental.enable_hist_gradient_boosting module is "
+    "deprecated since version 1.10 and will be removed in 1.12. It is no "
+    "longer needed: HistGradientBoostingClassifier and "
+    "HistGradientBoostingRegressor are stable and can be imported normally "
+    "from sklearn.ensemble.",
+    FutureWarning,
 )

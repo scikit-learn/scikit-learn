@@ -6,6 +6,7 @@
 import copy
 import functools
 import inspect
+import numbers
 import platform
 import re
 import warnings
@@ -13,17 +14,18 @@ from collections import defaultdict
 
 import numpy as np
 
-from . import __version__
-from ._config import config_context, get_config
-from .exceptions import InconsistentVersionWarning
-from .utils._metadata_requests import _MetadataRequester, _routing_enabled
-from .utils._missing import is_scalar_nan
-from .utils._param_validation import validate_parameter_constraints
-from .utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
-from .utils._repr_html.estimator import estimator_html_repr
-from .utils._repr_html.params import ParamsDict
-from .utils._set_output import _SetOutputMixin
-from .utils._tags import (
+from sklearn import __version__
+from sklearn._config import config_context, get_config
+from sklearn.exceptions import InconsistentVersionWarning
+from sklearn.utils._metadata_requests import _MetadataRequester, _routing_enabled
+from sklearn.utils._missing import is_pandas_na, is_scalar_nan
+from sklearn.utils._param_validation import validate_parameter_constraints
+from sklearn.utils._repr_html.base import ReprHTMLMixin, _HTMLDocumentationLinkMixin
+from sklearn.utils._repr_html.estimator import estimator_html_repr
+from sklearn.utils._repr_html.fitted_attributes import AttrsDict
+from sklearn.utils._repr_html.params import ParamsDict
+from sklearn.utils._set_output import _SetOutputMixin
+from sklearn.utils._tags import (
     ClassifierTags,
     RegressorTags,
     Tags,
@@ -31,8 +33,8 @@ from .utils._tags import (
     TransformerTags,
     get_tags,
 )
-from .utils.fixes import _IS_32BIT
-from .utils.validation import (
+from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.validation import (
     _check_feature_names_in,
     _generate_get_feature_names_out,
     _is_fitted,
@@ -128,11 +130,18 @@ def _clone_parametrized(estimator, *, safe=True):
 
     new_object = klass(**new_object_params)
     try:
-        new_object._metadata_request = copy.deepcopy(estimator._metadata_request)
+        new_object._metadata_request = clone(estimator._metadata_request)
     except AttributeError:
         pass
 
     params_set = new_object.get_params(deep=False)
+
+    if hasattr(estimator, "_skl_callbacks"):
+        # Callback classes are expected to be designed in a way that a single instance
+        # can be used by multiple clones of the same estimator as is typically the case
+        # in ensembles or during cross-validation. Therefore it is safe to pass the
+        # callback instances by reference.
+        new_object._skl_callbacks = estimator._skl_callbacks
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
@@ -197,14 +206,20 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
     array([3, 3, 3])
     """
 
+    def __dir__(self):
+        # Filters conditional methods that should be hidden based
+        # on the `available_if` decorator
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=FutureWarning)
+            return [attr for attr in super().__dir__() if hasattr(self, attr)]
+
     _html_repr = estimator_html_repr
 
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
-        # fetch the constructor or the original constructor before
-        # deprecation wrapping if any
-        init = getattr(cls.__init__, "deprecated_original", cls.__init__)
+        # fetch the constructor
+        init = cls.__init__
         if init is object.__init__:
             # No explicit constructor to introspect
             return []
@@ -254,7 +269,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
             out[key] = value
         return out
 
-    def _get_params_html(self, deep=True):
+    def _get_params_html(self, deep=True, doc_link=""):
         """
         Get parameters for this estimator with a specific HTML representation.
 
@@ -263,6 +278,11 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
+
+        doc_link : str
+            URL to the estimator documentation.
+            Used for linking to the estimator's parameters documentation
+            available in HTML displays.
 
         Returns
         -------
@@ -273,8 +293,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         """
         out = self.get_params(deep=deep)
 
-        init_func = getattr(self.__init__, "deprecated_original", self.__init__)
-        init_default_params = inspect.signature(init_func).parameters
+        init_default_params = inspect.signature(self.__init__).parameters
         init_default_params = {
             name: param.default for name, param in init_default_params.items()
         }
@@ -292,6 +311,10 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
                 init_default_params[param_name]
             ):
                 return True
+            if is_pandas_na(param_value) and not is_pandas_na(
+                init_default_params[param_name]
+            ):
+                return True
             if not np.array_equal(
                 param_value, init_default_params[param_name]
             ) and not (
@@ -302,17 +325,77 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
 
             return False
 
-        # reorder the parameters from `self.get_params` using the `__init__`
-        # signature
-        remaining_params = [name for name in out if name not in init_default_params]
-        ordered_out = {name: out[name] for name in init_default_params if name in out}
-        ordered_out.update({name: out[name] for name in remaining_params})
-
-        non_default_ls = tuple(
-            [name for name, value in ordered_out.items() if is_non_default(name, value)]
+        # Sort parameters so non-default parameters are shown first
+        unordered_params = {
+            name: out[name] for name in init_default_params if name in out
+        }
+        unordered_params.update(
+            {
+                name: value
+                for name, value in out.items()
+                if name not in init_default_params
+            }
         )
 
-        return ParamsDict(ordered_out, non_default=non_default_ls)
+        non_default_params, default_params = [], []
+        for name, value in unordered_params.items():
+            if is_non_default(name, value):
+                non_default_params.append(name)
+            else:
+                default_params.append(name)
+
+        params = {name: out[name] for name in non_default_params + default_params}
+
+        return ParamsDict(
+            params=params,
+            non_default=tuple(non_default_params),
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
+
+    def _get_fitted_attr_html(self, doc_link=""):
+        """Get fitted attributes of the estimator."""
+
+        fitted_attr = {}
+        # Ignore deprecation warnings for deprecated fitted attributes when
+        # generating the repr.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            members = inspect.getmembers(self)
+
+        for name, value in members:
+            # We display up to 100 fitted attributes
+            if len(fitted_attr) > 100:
+                fitted_attr["..."] = {
+                    "type_name": "...",
+                    "value": "",
+                }
+                break
+            if name.startswith("_") or not name.endswith("_"):
+                continue
+            if (
+                hasattr(value, "shape")
+                and hasattr(value, "dtype")
+                and not isinstance(value, numbers.Number)
+            ):
+                # array-like attribute with shape and dtype
+                fitted_attr[name] = {
+                    "type_name": type(value).__name__,
+                    "shape": value.shape,
+                    "dtype": value.dtype,
+                    "value": value,
+                }
+            else:
+                fitted_attr[name] = {
+                    "type_name": type(value).__name__,
+                    "value": value,
+                }
+
+        return AttrsDict(
+            fitted_attrs=fitted_attr,
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
 
     def set_params(self, **params):
         """Set the parameters of this estimator.
@@ -366,7 +449,7 @@ class BaseEstimator(ReprHTMLMixin, _HTMLDocumentationLinkMixin, _MetadataRequest
         # characters to render. We pass it as an optional parameter to ease
         # the tests.
 
-        from .utils._pprint import _EstimatorPrettyPrinter
+        from sklearn.utils._pprint import _EstimatorPrettyPrinter
 
         N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
 
@@ -509,9 +592,6 @@ class ClassifierMixin:
     0.66...
     """
 
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "classifier"
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.estimator_type = "classifier"
@@ -543,7 +623,7 @@ class ClassifierMixin:
         score : float
             Mean accuracy of ``self.predict(X)`` w.r.t. `y`.
         """
-        from .metrics import accuracy_score
+        from sklearn.metrics import accuracy_score
 
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
@@ -581,9 +661,6 @@ class RegressorMixin:
     >>> estimator.score(X, y)
     0.0
     """
-
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "regressor"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -633,7 +710,7 @@ class RegressorMixin:
         :class:`~sklearn.multioutput.MultiOutputRegressor`).
         """
 
-        from .metrics import r2_score
+        from sklearn.metrics import r2_score
 
         y_pred = self.predict(X)
         return r2_score(y, y_pred, sample_weight=sample_weight)
@@ -657,9 +734,6 @@ class ClusterMixin:
     >>> MyClusterer().fit_predict(X)
     array([1, 1, 1])
     """
-
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "clusterer"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -854,6 +928,7 @@ class TransformerMixin(_SetOutputMixin):
 
         **fit_params : dict
             Additional fit parameters.
+            Pass only if the estimator accepts additional params in its `fit` method.
 
         Returns
         -------
@@ -1011,9 +1086,6 @@ class DensityMixin:
     True
     """
 
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "DensityEstimator"
-
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         tags.estimator_type = "density_estimator"
@@ -1060,9 +1132,6 @@ class OutlierMixin:
     >>> estimator.fit_predict(X)
     array([1., 1., 1.])
     """
-
-    # TODO(1.8): Remove this attribute
-    _estimator_type = "outlier_detector"
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1163,7 +1232,7 @@ class MultiOutputMixin:
 
 
 class _UnstableArchMixin:
-    """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+    """Mark estimators that are non-deterministic on 32bit or PowerPC"""
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
@@ -1178,7 +1247,7 @@ def is_classifier(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -1201,15 +1270,6 @@ def is_classifier(estimator):
     >>> is_classifier(kmeans)
     False
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "classifier"
-
     return get_tags(estimator).estimator_type == "classifier"
 
 
@@ -1241,15 +1301,6 @@ def is_regressor(estimator):
     >>> is_regressor(kmeans)
     False
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "regressor"
-
     return get_tags(estimator).estimator_type == "regressor"
 
 
@@ -1260,7 +1311,7 @@ def is_clusterer(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -1283,15 +1334,6 @@ def is_clusterer(estimator):
     >>> is_clusterer(kmeans)
     True
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "clusterer"
-
     return get_tags(estimator).estimator_type == "clusterer"
 
 
@@ -1308,15 +1350,6 @@ def is_outlier_detector(estimator):
     out : bool
         True if estimator is an outlier detector and False otherwise.
     """
-    # TODO(1.8): Remove this check
-    if isinstance(estimator, type):
-        warnings.warn(
-            f"passing a class to {print(inspect.stack()[0][3])} is deprecated and "
-            "will be removed in 1.8. Use an instance of the class instead.",
-            FutureWarning,
-        )
-        return getattr(estimator, "_estimator_type", None) == "outlier_detector"
-
     return get_tags(estimator).estimator_type == "outlier_detector"
 
 
@@ -1347,6 +1380,8 @@ def _fit_context(*, prefer_skip_nested_validation):
     def decorator(fit_method):
         @functools.wraps(fit_method)
         def wrapper(estimator, *args, **kwargs):
+            from sklearn.callback._callback_support import callback_management_context
+
             global_skip_validation = get_config()["skip_parameter_validation"]
 
             # we don't want to validate again for each call to partial_fit
@@ -1357,10 +1392,13 @@ def _fit_context(*, prefer_skip_nested_validation):
             if not global_skip_validation and not partial_fit_and_fitted:
                 estimator._validate_params()
 
-            with config_context(
-                skip_parameter_validation=(
-                    prefer_skip_nested_validation or global_skip_validation
-                )
+            with (
+                config_context(
+                    skip_parameter_validation=(
+                        prefer_skip_nested_validation or global_skip_validation
+                    )
+                ),
+                callback_management_context(estimator),
             ):
                 return fit_method(estimator, *args, **kwargs)
 

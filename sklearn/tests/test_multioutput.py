@@ -25,7 +25,6 @@ from sklearn.linear_model import (
     LinearRegression,
     LogisticRegression,
     OrthogonalMatchingPursuit,
-    PassiveAggressiveClassifier,
     Ridge,
     SGDClassifier,
     SGDRegressor,
@@ -47,6 +46,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import (
     BSR_CONTAINERS,
@@ -196,6 +196,10 @@ n_classes = len(np.unique(y1))
 classes = list(map(np.unique, (y1, y2, y3)))
 
 
+@skip_if_use_threading_backend_with_high_parallelism
+# TODO: remove mark once loky bug is fixed:
+# https://github.com/joblib/loky/issues/458
+@pytest.mark.thread_unsafe
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss="log_loss", random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
@@ -306,6 +310,7 @@ def test_multi_output_classification_partial_fit_no_first_classes_exception():
         multi_target_linear.partial_fit(X, y)
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 def test_multi_output_classification():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict, prodict_proba and score
@@ -368,7 +373,7 @@ def test_multiclass_multioutput_estimator_predict_proba():
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(LogisticRegression(random_state=seed))
+    clf = MultiOutputClassifier(LogisticRegression())
 
     clf.fit(X, Y)
 
@@ -423,14 +428,14 @@ def test_multi_output_classification_partial_fit_sample_weights():
     Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     yw = [[3, 2], [2, 3], [3, 2]]
     w = np.asarray([2.0, 1.0, 1.0])
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20, tol=None)
     clf_w = MultiOutputClassifier(sgd_linear_clf)
     clf_w.fit(Xw, yw, w)
 
     # unweighted, but with repeated samples
     X = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     y = [[3, 2], [3, 2], [2, 3], [3, 2]]
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20, tol=None)
     clf = MultiOutputClassifier(sgd_linear_clf)
     clf.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]
@@ -677,7 +682,7 @@ def test_base_chain_crossval_fit_and_predict(chain_type, chain_method):
 def test_multi_output_classes_(estimator):
     # Tests classes_ attribute of multioutput classifiers
     # RandomForestClassifier supports multioutput out-of-the-box
-    estimator.fit(X, y)
+    estimator = clone(estimator).fit(X, y)
     assert isinstance(estimator.classes_, list)
     assert len(estimator.classes_) == n_outputs
     for estimator_classes, expected_classes in zip(classes, estimator.classes_):
@@ -710,6 +715,7 @@ class DummyClassifierWithFitParams(DummyClassifier):
     ],
 )
 def test_multioutput_estimator_with_fit_params(estimator, dataset):
+    estimator = clone(estimator)  # Avoid side effects from shared instances
     X, y = dataset
     some_param = np.zeros_like(X)
     estimator.fit(X, y, some_param=some_param)
@@ -738,6 +744,8 @@ def test_regressor_chain_w_fit_params():
         assert est.sample_weight_ is weight
 
 
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "MultiOutputEstimator, Estimator",
     [(MultiOutputClassifier, LogisticRegression), (MultiOutputRegressor, Ridge)],
@@ -849,7 +857,7 @@ def test_fit_params_no_routing(Cls, method):
     underlying classifier.
     """
     X, y = make_classification(n_samples=50)
-    clf = Cls(PassiveAggressiveClassifier())
+    clf = Cls(SGDClassifier())
 
     with pytest.raises(ValueError, match="is only supported if"):
         getattr(clf, method)(X, y, test=1)
@@ -862,19 +870,3 @@ def test_multioutput_regressor_has_partial_fit():
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
         getattr(est, "partial_fit")
-
-
-# TODO(1.9):  remove when deprecated `base_estimator` is removed
-@pytest.mark.parametrize("Estimator", [ClassifierChain, RegressorChain])
-def test_base_estimator_deprecation(Estimator):
-    """Check that we warn about the deprecation of `base_estimator`."""
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([[1, 0], [0, 1]])
-
-    estimator = LogisticRegression()
-
-    with pytest.warns(FutureWarning):
-        Estimator(base_estimator=estimator).fit(X, y)
-
-    with pytest.raises(ValueError):
-        Estimator(base_estimator=estimator, estimator=estimator).fit(X, y)

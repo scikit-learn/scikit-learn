@@ -7,14 +7,14 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.special import digamma
 
-from ..metrics.cluster import mutual_info_score
-from ..neighbors import KDTree, NearestNeighbors
-from ..preprocessing import scale
-from ..utils import check_random_state
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from ..utils.multiclass import check_classification_targets
-from ..utils.parallel import Parallel, delayed
-from ..utils.validation import check_array, check_X_y
+from sklearn.metrics.cluster import mutual_info_score
+from sklearn.neighbors import KDTree, NearestNeighbors
+from sklearn.preprocessing import scale
+from sklearn.utils import check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.parallel import Parallel, delayed
+from sklearn.utils.validation import check_array, check_X_y
 
 
 def _compute_mi_cc(x, y, n_neighbors):

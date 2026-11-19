@@ -29,8 +29,8 @@ Authors
 
 import  numpy as np
 from libc.stdlib cimport free
-from ..utils._cython_blas cimport _dot
-from ..utils._typedefs cimport float64_t, int32_t, intp_t
+from sklearn.utils._cython_blas cimport _dot
+from sklearn.utils._typedefs cimport float64_t, int32_t, intp_t
 
 include "_libsvm.pxi"
 

@@ -11,14 +11,12 @@ import numpy as np
 from scipy import interpolate, optimize
 from scipy.stats import spearmanr
 
-from sklearn.utils import metadata_routing
-
-from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
-from .base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
-from .utils import check_array, check_consistent_length
-from .utils._param_validation import Interval, StrOptions, validate_params
-from .utils.fixes import parse_version, sp_base_version
-from .utils.validation import _check_sample_weight, check_is_fitted
+from sklearn._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
+from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin, _fit_context
+from sklearn.utils import check_array, check_consistent_length, metadata_routing
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.fixes import parse_version, sp_base_version
+from sklearn.utils.validation import _check_sample_weight, check_is_fitted
 
 __all__ = ["IsotonicRegression", "check_increasing", "isotonic_regression"]
 
@@ -185,8 +183,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <isotonic>`.
 
-    .. versionadded:: 0.13
-
     Parameters
     ----------
     y_min : float, default=None
@@ -223,13 +219,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         Unique ascending `X` values used to interpolate
         the y = f(X) monotonic function.
 
-        .. versionadded:: 0.24
-
     y_thresholds_ : ndarray of shape (n_thresholds,)
         De-duplicated `y` values suitable to interpolate the y = f(X)
         monotonic function.
-
-        .. versionadded:: 0.24
 
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.
@@ -328,7 +320,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         mask = sample_weight > 0
         X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
 
-        order = np.lexsort((y, X))
+        order = np.argsort(X)
         X, y, sample_weight = [array[order] for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(X, y, sample_weight)
 
@@ -368,9 +360,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         ----------
         X : array-like of shape (n_samples,) or (n_samples, 1)
             Training data.
-
-            .. versionchanged:: 0.24
-               Also accepts 2d array with 1 feature.
 
         y : array-like of shape (n_samples,)
             Training target.
@@ -447,9 +436,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         ----------
         T : array-like of shape (n_samples,) or (n_samples, 1)
             Data to transform.
-
-            .. versionchanged:: 0.24
-               Also accepts 2d array with 1 feature.
 
         Returns
         -------

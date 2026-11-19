@@ -14,8 +14,10 @@ from sklearn.metrics._pairwise_distances_reduction import (
     BaseDistancesReductionDispatcher,
     RadiusNeighbors,
     RadiusNeighborsClassMode,
+    _base,
     sqeuclidean_row_norms,
 )
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
@@ -1213,6 +1215,32 @@ def test_n_threads_agnosticism(
     ASSERT_RESULT[(Dispatcher, dtype)](
         ref_dist, dist, ref_indices, indices, **check_parameters
     )
+
+
+@pytest.mark.parametrize("metric", ["euclidean", "manhattan"])
+def test_argkmin_n_threads_under_blas_limit(metric, monkeypatch):
+    """Check that ArgKmin uses the number of OpenMP threads of the caller.
+
+    ArgKmin limits BLAS to sequential calls. With OpenBLAS's OpenMP threading layer,
+    `limits=1, user_api="blas"` also sets the number of OpenMP threads to 1.
+    """
+    n_threads_seen = []
+
+    def spy_openmp_effective_n_threads(*args, **kwargs):
+        n_threads = _openmp_effective_n_threads(*args, **kwargs)
+        n_threads_seen.append(n_threads)
+        return n_threads
+
+    monkeypatch.setattr(
+        _base, "_openmp_effective_n_threads", spy_openmp_effective_n_threads
+    )
+    X = np.random.RandomState(0).rand(100, 10)
+
+    with _get_threadpool_controller().limit(limits=2, user_api="openmp"):
+        expected_n_threads = _openmp_effective_n_threads()
+        ArgKmin.compute(X, X, k=3, metric=metric)
+
+    assert n_threads_seen == [expected_n_threads]
 
 
 @pytest.mark.parametrize(

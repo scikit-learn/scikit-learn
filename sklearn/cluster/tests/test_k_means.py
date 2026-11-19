@@ -3,19 +3,22 @@
 import re
 import sys
 from io import StringIO
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
-from scipy import sparse as sp
+from threadpoolctl import threadpool_info
 
 from sklearn.base import clone
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
 from sklearn.cluster._k_means_common import (
+    CHUNK_SIZE,
     _euclidean_dense_dense_wrapper,
     _euclidean_sparse_dense_wrapper,
     _inertia_dense,
     _inertia_sparse,
     _is_same_clustering,
+    _kmeans_plusplus_sample_candidates,
     _relocate_empty_clusters_dense,
     _relocate_empty_clusters_sparse,
 )
@@ -31,7 +34,7 @@ from sklearn.utils._testing import (
     create_memmap_backed_data,
 )
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSR_CONTAINERS, _sparse_random_array
 from sklearn.utils.parallel import _get_threadpool_controller
 
 # non centered, sparse centers to check the
@@ -287,7 +290,7 @@ def _check_fitted_model(km):
 )
 @pytest.mark.parametrize(
     "init",
-    ["random", "k-means++", centers, lambda X, k, random_state: centers],
+    ["random", "k-means++", centers.copy(), lambda X, k, random_state: centers.copy()],
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
@@ -302,10 +305,14 @@ def test_all_init(Estimator, input_data, init):
 
 @pytest.mark.parametrize(
     "init",
-    ["random", "k-means++", centers, lambda X, k, random_state: centers],
+    ["random", "k-means++", centers, lambda X, k, random_state: centers.copy()],
     ids=["random", "k-means++", "ndarray", "callable"],
 )
 def test_minibatch_kmeans_partial_fit_init(init):
+    if hasattr(init, "copy"):
+        # Avoid mutating a shared array in place to avoid side effects in other tests.
+        init = init.copy()
+
     # Check MiniBatchKMeans init with partial_fit
     n_init = 10 if isinstance(init, str) else 1
     km = MiniBatchKMeans(
@@ -740,7 +747,7 @@ def test_transform(Estimator, global_random_seed):
     # In particular, diagonal must be 0
     assert_array_equal(Xt.diagonal(), np.zeros(n_clusters))
 
-    # Transorfming X should return the pairwise distances between X and the
+    # Transforming X should return the pairwise distances between X and the
     # centers
     Xt = km.transform(X)
     assert_allclose(Xt, pairwise_distances(X, km.cluster_centers_))
@@ -790,6 +797,13 @@ def test_k_means_function(global_random_seed):
     ids=data_containers_ids,
 )
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+@pytest.mark.skipif(
+    not any(i for i in threadpool_info() if i["user_api"] == "blas"),
+    reason=(
+        "Fails for some global_random_seed on Atlas which cannot be detected by "
+        "threadpoolctl."
+    ),
+)
 def test_float_precision(Estimator, input_data, global_random_seed):
     # Check that the results are the same for single and double precision.
     km = Estimator(n_init=1, random_state=global_random_seed)
@@ -818,10 +832,11 @@ def test_float_precision(Estimator, input_data, global_random_seed):
 
     # compare arrays with low precision since the difference between 32 and
     # 64 bit comes from an accumulation of rounding errors.
-    assert_allclose(inertia[np.float32], inertia[np.float64], rtol=1e-4)
-    assert_allclose(Xt[np.float32], Xt[np.float64], atol=Xt[np.float64].max() * 1e-4)
+    rtol = 1e-4
+    assert_allclose(inertia[np.float32], inertia[np.float64], rtol=rtol)
+    assert_allclose(Xt[np.float32], Xt[np.float64], atol=Xt[np.float64].max() * rtol)
     assert_allclose(
-        centers[np.float32], centers[np.float64], atol=centers[np.float64].max() * 1e-4
+        centers[np.float32], centers[np.float64], atol=centers[np.float64].max() * rtol
     )
     assert_array_equal(labels[np.float32], labels[np.float64])
 
@@ -1030,8 +1045,8 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
     # Check that the _euclidean_(dense/sparse)_dense helpers produce correct
     # results
     rng = np.random.RandomState(global_random_seed)
-    a_sparse = sp.random(
-        1, 100, density=0.5, format="csr", random_state=rng, dtype=dtype
+    a_sparse = _sparse_random_array(
+        (1, 100), density=0.5, format="csr", rng=rng, dtype=dtype
     )
     a_dense = a_sparse.toarray().reshape(-1)
     b = rng.randn(100).astype(dtype, copy=False)
@@ -1055,8 +1070,8 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
 def test_inertia(dtype, global_random_seed):
     # Check that the _inertia_(dense/sparse) helpers produce correct results.
     rng = np.random.RandomState(global_random_seed)
-    X_sparse = sp.random(
-        100, 10, density=0.5, format="csr", random_state=rng, dtype=dtype
+    X_sparse = _sparse_random_array(
+        (100, 10), density=0.5, format="csr", rng=rng, dtype=dtype
     )
     X_dense = X_sparse.toarray()
     sample_weight = rng.randn(100).astype(dtype, copy=False)
@@ -1214,6 +1229,145 @@ def test_kmeans_plusplus_dataorder(global_random_seed):
     )
 
     assert_allclose(centers_c, centers_fortran)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_kmeans_plusplus_dense_sparse(csr_container, global_random_seed):
+    # Check that dense and sparse inputs give the same centers. Use enough samples
+    # to have several chunks of samples and several threads (if available), and
+    # many zeros in X so that the sparse kernel skips most of the values.
+    rng = np.random.RandomState(global_random_seed)
+    X, _ = make_blobs(
+        n_samples=20_000, n_features=10, centers=20, random_state=global_random_seed
+    )
+    X[rng.uniform(size=X.shape) < 0.8] = 0
+    sample_weight = rng.uniform(size=20_000)
+
+    centers_dense, indices_dense = kmeans_plusplus(
+        X, 20, sample_weight=sample_weight, random_state=global_random_seed
+    )
+    centers_sparse, indices_sparse = kmeans_plusplus(
+        csr_container(X),
+        20,
+        sample_weight=sample_weight,
+        random_state=global_random_seed,
+    )
+
+    assert_array_equal(indices_dense, indices_sparse)
+    assert_allclose(centers_dense, centers_sparse)
+
+
+@pytest.mark.parametrize("array_constr", [np.asarray] + CSR_CONTAINERS)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_kmeans_plusplus_far_from_origin(array_constr, dtype, global_random_seed):
+    # Check that a sample identical to a chosen center is never chosen again far
+    # from the origin, where ||x||² - 2 x.c + ||c||² is dominated by rounding
+    # errors for the distances between samples (in float32).
+    rng = np.random.RandomState(global_random_seed)
+    X = np.repeat(rng.uniform(size=(10, 2)) + 1e3, 50, axis=0).astype(dtype)
+
+    centers, _ = kmeans_plusplus(array_constr(X), 10, random_state=global_random_seed)
+
+    assert np.unique(centers, axis=0).shape[0] == 10
+
+
+@pytest.mark.parametrize("array_constr", [np.asarray] + CSR_CONTAINERS)
+@pytest.mark.parametrize("shape", [(30_000, 10), (600, 2_000)])
+def test_kmeans_plusplus_n_threads(array_constr, shape, global_random_seed):
+    # Check that k-means++ gives the same centers with 1 and 4 threads. The data
+    # is large enough to use several threads, with more chunks of samples than
+    # threads or the opposite.
+    X, _ = make_blobs(
+        n_samples=shape[0],
+        n_features=shape[1],
+        centers=10,
+        random_state=global_random_seed,
+    )
+    X = array_constr(X)
+
+    indices = []
+    for n_threads in [1, 4]:
+        with _get_threadpool_controller().limit(limits=n_threads, user_api="openmp"):
+            indices.append(kmeans_plusplus(X, 10, random_state=global_random_seed)[1])
+
+    assert_array_equal(indices[0], indices[1])
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_kmeans_plusplus_sparse_read_only(csr_container):
+    # Check that k-means++ accepts read-only sparse data.
+    X = csr_container(np.random.RandomState(0).uniform(size=(100, 5)))
+    for array in (X.data, X.indices, X.indptr):
+        array.setflags(write=False)
+
+    centers, _ = kmeans_plusplus(X, 3, random_state=0)
+
+    assert centers.shape == (3, 5)
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_kmeans_plusplus_sparse_int64_indices(csr_container):
+    # Check that sparse data with 64-bit indices is rejected, as in KMeans.
+    X = csr_container(np.random.RandomState(0).uniform(size=(100, 5)))
+    X.indices = X.indices.astype(np.int64)
+    X.indptr = X.indptr.astype(np.int64)
+
+    with pytest.raises(ValueError, match="32-bit integer indices"):
+        kmeans_plusplus(X, 3, random_state=0)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_kmeans_plusplus_sample_candidates(global_random_seed, dtype):
+    # Check the sampling of the k-means++ candidates, done per chunk of samples,
+    # against a search in the cumulative sum of the potential over all samples.
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_candidates = 1000, 50
+    closest_dist_sq = rng.uniform(size=n_samples).astype(dtype)
+    closest_dist_sq[rng.uniform(size=n_samples) < 0.3] = 0
+    sample_weight = rng.uniform(size=n_samples).astype(dtype)
+    sample_potentials = (sample_weight * closest_dist_sq).astype(np.float64)
+    chunk_potentials = np.add.reduceat(
+        sample_potentials, np.arange(0, n_samples, CHUNK_SIZE)
+    )
+
+    candidate_indices = np.empty(n_candidates, dtype=np.intp)
+    _kmeans_plusplus_sample_candidates(
+        np.random.RandomState(global_random_seed),
+        chunk_potentials,
+        closest_dist_sq,
+        sample_weight,
+        candidate_indices,
+    )
+
+    random_values = np.random.RandomState(global_random_seed).uniform(size=n_candidates)
+    potential_cumsum = np.cumsum(sample_potentials)
+    expected = np.searchsorted(potential_cumsum, random_values * potential_cumsum[-1])
+    assert_array_equal(candidate_indices, expected)
+    assert np.all(closest_dist_sq[candidate_indices] > 0)
+
+
+def test_kmeans_plusplus_sample_candidates_rounding():
+    # Check that the sampling of the k-means++ candidates never picks a sample with
+    # a zero potential, when the random value is 0 or larger than the cumulative
+    # potential of the samples of the chunk because of rounding errors.
+    closest_dist_sq = np.ones(CHUNK_SIZE)
+    closest_dist_sq[:3] = 0
+    closest_dist_sq[-3:] = 0
+    sample_weight = np.ones(CHUNK_SIZE)
+    chunk_potentials = np.array([closest_dist_sq.sum() * (1 + 1e-12)])
+    random_state = Mock()
+    random_state.uniform.return_value = np.array([0, 1 - 1e-15])
+
+    candidate_indices = np.empty(2, dtype=np.intp)
+    _kmeans_plusplus_sample_candidates(
+        random_state,
+        chunk_potentials,
+        closest_dist_sq,
+        sample_weight,
+        candidate_indices,
+    )
+
+    assert_array_equal(candidate_indices, [3, CHUNK_SIZE - 4])
 
 
 def test_is_same_clustering():

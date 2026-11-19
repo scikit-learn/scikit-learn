@@ -9,8 +9,10 @@ import warnings
 
 import numpy as np
 import pytest
+from joblib import parallel_backend
 from scipy.optimize import approx_fprime
 
+from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import (
@@ -140,17 +142,31 @@ def test_solution_inside_bounds(kernel):
     assert_array_less(gpr.kernel_.theta, bounds[:, 1] + tiny)
 
 
-@pytest.mark.parametrize("kernel", kernels)
-def test_lml_gradient(kernel):
+@pytest.mark.xfail(
+    raises=AssertionError,
+    reason="https://github.com/scikit-learn/scikit-learn/issues/31366",
+)
+@pytest.mark.parametrize("kernel", non_fixed_kernels)
+@pytest.mark.parametrize("length_scale", np.logspace(-3, 3, 13))
+def test_lml_gradient(kernel, length_scale):
+    # Clone the kernel object prior to mutating it to avoid any side effects between
+    # GP tests:
+    kernel = clone(kernel)
+    length_scale_param_name = next(
+        name for name in kernel.get_params() if name.endswith("length_scale")
+    )
+    kernel.set_params(**{length_scale_param_name: length_scale})
+
     # Compare analytic and numeric gradient of log marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-
-    lml, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, True)
+    _, lml_gradient = gpr.log_marginal_likelihood(kernel.theta, eval_gradient=True)
+    epsilon = 1e-9
     lml_gradient_approx = approx_fprime(
-        kernel.theta, lambda theta: gpr.log_marginal_likelihood(theta, False), 1e-10
+        kernel.theta.copy(),
+        lambda theta: gpr.log_marginal_likelihood(theta, False),
+        epsilon=epsilon,
     )
-
-    assert_almost_equal(lml_gradient, lml_gradient_approx, 3)
+    assert_allclose(lml_gradient, lml_gradient_approx, rtol=1e-4, atol=epsilon * 100)
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -186,11 +202,13 @@ def test_sample_statistics(kernel):
     )
 
 
-def test_no_optimizer():
-    # Test that kernel parameters are unmodified when optimizer is None.
-    kernel = RBF(1.0)
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
-    assert np.exp(gpr.kernel_.theta) == 1.0
+@pytest.mark.parametrize("optimizer", [None, "fmin_l_bfgs_b"])
+@pytest.mark.parametrize("kernel", [None, RBF()])
+def test_no_optimizer(optimizer, kernel):
+    """Test that kernel parameters are unmodified when optimizer is None."""
+    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
+    gpr.fit(X, y)
+    assert bool((gpr.kernel_.theta == 0.0).all()) is (optimizer is None)
 
 
 @pytest.mark.parametrize("kernel", kernels)
@@ -289,7 +307,7 @@ def test_y_normalization(kernel):
 
 def test_large_variance_y():
     """
-    Here we test that, when noramlize_y=True, our GP can produce a
+    Here we test that, when normalize_y=True, our GP can produce a
     sensible fit to training data whose variance is significantly
     larger than unity. This test was made in response to issue #15612.
 
@@ -859,3 +877,25 @@ def test_gpr_predict_no_cov_no_std_return(kernel):
     y_pred = gpr.predict(X, return_cov=False, return_std=False)
 
     assert_allclose(y_pred, y)
+
+
+@pytest.mark.parametrize("backend", ["loky", "threading"])
+def test_n_jobs_parallel(backend):
+    with parallel_backend(backend):
+        gpr1 = GaussianProcessRegressor(
+            n_restarts_optimizer=5, random_state=42, n_jobs=1
+        ).fit(X, y)
+        gpr2 = GaussianProcessRegressor(
+            n_restarts_optimizer=5, random_state=42, n_jobs=2
+        ).fit(X, y)
+        gpr3 = GaussianProcessRegressor(
+            n_restarts_optimizer=5, random_state=42, n_jobs=-1
+        ).fit(X, y)
+    y1, y1_cov = gpr1.predict(X, return_cov=True)
+    y2, y2_cov = gpr2.predict(X, return_cov=True)
+    y3, y3_cov = gpr3.predict(X, return_cov=True)
+
+    assert_almost_equal(y1, y2)
+    assert_almost_equal(y1, y3)
+    assert_almost_equal(y1_cov, y2_cov)
+    assert_almost_equal(y1_cov, y3_cov)

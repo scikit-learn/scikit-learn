@@ -55,7 +55,8 @@ gs_time = time() - tic
 
 def make_heatmap(ax, gs, is_sh=False, make_cbar=False):
     """Helper to make a heatmap."""
-    results = pd.DataFrame(gs.cv_results_)
+    cv_results = getattr(gs, "all_cv_results_", gs.cv_results_)
+    results = pd.DataFrame(cv_results)
     results[["param_C", "param_gamma"]] = results[["param_C", "param_gamma"]].astype(
         np.float64
     )

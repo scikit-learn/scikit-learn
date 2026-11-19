@@ -39,18 +39,18 @@ import joblib
 import numpy as np
 import scipy.sparse as sp
 
-from .. import preprocessing
-from ..feature_extraction.text import CountVectorizer
-from ..utils import Bunch, check_random_state
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from . import get_data_home, load_files
-from ._base import (
+from sklearn import preprocessing
+from sklearn.datasets import get_data_home, load_files
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _convert_data_dataframe,
     _fetch_remote,
     _pkl_filepath,
     load_descr,
 )
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +81,6 @@ def _download_20newsgroups(target_dir, cache_path, n_retries, delay):
 
     logger.debug("Decompressing %s", archive_path)
     with tarfile.open(archive_path, "r:gz") as fp:
-        # Use filter="data" to prevent the most dangerous security issues.
-        # For more details, see
-        # https://docs.python.org/3.9/library/tarfile.html#tarfile.TarFile.extractall
         fp.extractall(path=target_dir, filter="data")
 
     with suppress(FileNotFoundError):
@@ -249,8 +246,6 @@ def fetch_20newsgroups(
         If True, returns `(data.data, data.target)` instead of a Bunch
         object.
 
-        .. versionadded:: 0.22
-
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
@@ -282,8 +277,6 @@ def fetch_20newsgroups(
         (n_samples, n_classes) with each row representing one sample and each
         column representing the features. The second array of shape
         (n_samples,) contains the target samples.
-
-        .. versionadded:: 0.22
 
     Examples
     --------
@@ -457,7 +450,7 @@ def fetch_20newsgroups_vectorized(
         that appear to be quoting another post.
 
     data_home : str or path-like, default=None
-        Specify an download and cache folder for the datasets. If None,
+        Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : bool, default=True
@@ -468,21 +461,15 @@ def fetch_20newsgroups_vectorized(
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
-        .. versionadded:: 0.20
-
     normalize : bool, default=True
         If True, normalizes each document's feature vector to unit norm using
         :func:`sklearn.preprocessing.normalize`.
-
-        .. versionadded:: 0.22
 
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string, or categorical). The target is
         a pandas DataFrame or Series depending on the number of
         `target_columns`.
-
-        .. versionadded:: 0.24
 
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
@@ -513,13 +500,9 @@ def fetch_20newsgroups_vectorized(
             Only present when `as_frame=True`. Pandas DataFrame with ``data``
             and ``target``.
 
-            .. versionadded:: 0.24
-
     (data, target) : tuple if ``return_X_y`` is True
         `data` and `target` would be of the format defined in the `Bunch`
         description above.
-
-        .. versionadded:: 0.20
 
     Examples
     --------

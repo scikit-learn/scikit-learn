@@ -15,10 +15,12 @@ jobs:
   labeler:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+    - uses: actions/checkout@v7.0.1
       with:
-        python-version: '3.9'
+        persist-credentials: false
+    - uses: actions/setup-python@v7.1.0
+      with:
+        python-version: '3.13'
     - name: Install PyGithub
       run: pip install -Uq PyGithub
     - name: Label pull request

@@ -21,16 +21,16 @@ from os.path import exists, join
 import joblib
 import numpy as np
 
-from ..utils import Bunch, check_random_state
-from ..utils import shuffle as shuffle_method
-from ..utils._param_validation import Interval, StrOptions, validate_params
-from . import get_data_home
-from ._base import (
+from sklearn.datasets import get_data_home
+from sklearn.datasets._base import (
     RemoteFileMetadata,
     _convert_data_dataframe,
     _fetch_remote,
     load_descr,
 )
+from sklearn.utils import Bunch, check_random_state
+from sklearn.utils import shuffle as shuffle_method
+from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 # The original data can be found at:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
@@ -92,8 +92,6 @@ def fetch_kddcup99(
 
     Read more in the :ref:`User Guide <kddcup99_dataset>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     subset : {'SA', 'SF', 'http', 'smtp'}, default=None
@@ -103,8 +101,6 @@ def fetch_kddcup99(
     data_home : str or path-like, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
-
-        .. versionadded:: 0.19
 
     shuffle : bool, default=False
         Whether to shuffle dataset.
@@ -124,16 +120,12 @@ def fetch_kddcup99(
 
     return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
-        below for more information about the `data` and `target` object.
-
-        .. versionadded:: 0.20
+        below for more information about the `data` and `target` objects.
 
     as_frame : bool, default=False
         If `True`, returns a pandas Dataframe for the ``data`` and ``target``
         objects in the `Bunch` returned object; `Bunch` return object will also
         have a ``frame`` member.
-
-        .. versionadded:: 0.24
 
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
@@ -170,8 +162,6 @@ def fetch_kddcup99(
         shape (n_samples, n_features) with each row representing one
         sample and each column representing the features. The second
         ndarray of shape (n_samples,) containing the target samples.
-
-        .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
     kddcup99 = _fetch_brute_kddcup99(
@@ -386,12 +376,13 @@ def _fetch_brute_kddcup99(
         DT = np.dtype(dt)
         logger.debug("extracting archive")
         archive_path = join(kddcup_dir, archive.filename)
-        file_ = GzipFile(filename=archive_path, mode="r")
         Xy = []
-        for line in file_.readlines():
-            line = line.decode()
-            Xy.append(line.replace("\n", "").split(","))
-        file_.close()
+
+        with GzipFile(filename=archive_path, mode="r") as file_:
+            for line in file_.readlines():
+                line = line.decode()
+                Xy.append(line.replace("\n", "").split(","))
+
         logger.debug("extraction done")
         os.remove(archive_path)
 
@@ -401,12 +392,8 @@ def _fetch_brute_kddcup99(
 
         X = Xy[:, :-1]
         y = Xy[:, -1]
-        # XXX bug when compress!=0:
-        # (error: 'Incorrect data length while decompressing[...] the file
-        #  could be corrupted.')
-
-        joblib.dump(X, samples_path, compress=0)
-        joblib.dump(y, targets_path, compress=0)
+        joblib.dump(X, samples_path, compress=3)
+        joblib.dump(y, targets_path, compress=3)
     else:
         raise OSError("Data not found and `download_if_missing` is False")
 

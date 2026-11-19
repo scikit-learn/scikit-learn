@@ -83,14 +83,14 @@ def test_hdbscan_distance_matrix():
     """
     D = euclidean_distances(X)
     D_original = D.copy()
-    labels = HDBSCAN(metric="precomputed", copy=True).fit_predict(D)
+    labels = HDBSCAN(metric="precomputed").fit_predict(D)
 
     assert_allclose(D, D_original)
     check_label_quality(labels)
 
     msg = r"The precomputed distance matrix.*has shape"
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="precomputed", copy=True).fit_predict(X)
+        HDBSCAN(metric="precomputed").fit_predict(X)
 
     msg = r"The precomputed distance matrix.*values"
     # Ensure the matrix is not symmetric
@@ -116,6 +116,35 @@ def test_hdbscan_sparse_distance_matrix(sparse_constructor):
 
     labels = HDBSCAN(metric="precomputed").fit_predict(D)
     check_label_quality(labels)
+
+
+@pytest.mark.parametrize("copy", [True, False])
+@pytest.mark.parametrize("csr_container", [None, *CSR_CONTAINERS])
+def test_hdbscan_precomputed_copy(copy, csr_container):
+    """Check that `copy` controls in-place updates of precomputed distances.
+
+    With `metric="precomputed"`, `copy=True` leaves the array passed to `fit`
+    unchanged, while `copy=False` overwrites it. This applies to a dense array
+    and to a CSR sparse array.
+    """
+    distances = euclidean_distances(X)
+    if csr_container is not None:
+        distances = csr_container(distances)
+    distances_original = distances.copy()
+
+    HDBSCAN(metric="precomputed", algorithm="brute", copy=copy).fit(distances)
+
+    if csr_container is not None:
+        distances_after = distances.toarray()
+        distances_before = distances_original.toarray()
+    else:
+        distances_after = distances
+        distances_before = distances_original
+
+    if copy:
+        assert_allclose(distances_after, distances_before)
+    else:
+        assert not np.allclose(distances_after, distances_before)
 
 
 def test_hdbscan_feature_array():
@@ -274,8 +303,7 @@ def test_hdbscan_sparse(csr_container):
     dense_labels = HDBSCAN().fit(X).labels_
     check_label_quality(dense_labels)
 
-    _X_sparse = csr_container(X)
-    X_sparse = _X_sparse.copy()
+    X_sparse = csr_container(X)
     sparse_labels = HDBSCAN().fit(X_sparse).labels_
     assert_array_equal(dense_labels, sparse_labels)
 
@@ -288,7 +316,6 @@ def test_hdbscan_sparse(csr_container):
         check_label_quality(dense_labels)
         assert dense_labels[0] == _OUTLIER_ENCODING[outlier_type]["label"]
 
-        X_sparse = _X_sparse.copy()
         X_sparse[0, 0] = outlier_val
         sparse_labels = HDBSCAN().fit(X_sparse).labels_
         assert_array_equal(dense_labels, sparse_labels)

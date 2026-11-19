@@ -25,9 +25,9 @@ dtypes = [('64', 'double', 1e-9),
 
 cimport cython
 from libc.limits cimport INT_MAX
-from libc.math cimport sqrt
+from libc.math cimport sqrt, fabs
 
-from ._cython_blas cimport _dot, _scal, _axpy
+from sklearn.utils._cython_blas cimport _dot, _scal, _axpy, _asum
 
 {{for name_suffix, c_type, reset_wscale_threshold in dtypes}}
 
@@ -53,6 +53,8 @@ cdef class WeightVector{{name_suffix}}(object):
         The number of features (= dimensionality of ``w``).
     sq_norm : {{c_type}}
         The squared norm of ``w``.
+    l1_norm : {{c_type}}
+        The L1 norm of ``w``.
     """
 
     def __cinit__(self,
@@ -67,6 +69,7 @@ cdef class WeightVector{{name_suffix}}(object):
         self.wscale = 1.0
         self.n_features = w.shape[0]
         self.sq_norm = _dot(self.n_features, self.w_data_ptr, 1, self.w_data_ptr, 1)
+        self.l1_norm = _asum(self.n_features, self.w_data_ptr, 1)
 
         self.aw = aw
         if self.aw is not None:
@@ -78,7 +81,7 @@ cdef class WeightVector{{name_suffix}}(object):
                   {{c_type}} c) noexcept nogil:
         """Scales sample x by constant c and adds it to the weight vector.
 
-        This operation updates ``sq_norm``.
+        This operation updates ``sq_norm`` and ``l1_norm``.
 
         Parameters
         ----------
@@ -94,8 +97,8 @@ cdef class WeightVector{{name_suffix}}(object):
         cdef int j
         cdef int idx
         cdef double val
-        cdef double innerprod = 0.0
-        cdef double xsqnorm = 0.0
+        cdef double l2norm_accumulator = 0.0
+        cdef double l1norm_accumulator = 0.0
 
         # the next two lines save a factor of 2!
         cdef {{c_type}} wscale = self.wscale
@@ -104,11 +107,13 @@ cdef class WeightVector{{name_suffix}}(object):
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
-            innerprod += (w_data_ptr[idx] * val)
-            xsqnorm += (val * val)
             w_data_ptr[idx] += val * (c / wscale)
 
-        self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
+            l2norm_accumulator += w_data_ptr[idx] * w_data_ptr[idx]
+            l1norm_accumulator += fabs(w_data_ptr[idx])
+
+        self.sq_norm = l2norm_accumulator * (wscale * wscale)
+        self.l1_norm = l1norm_accumulator * wscale
 
     # Update the average weights according to the sparse trick defined
     # here: https://research.microsoft.com/pubs/192769/tricks-2012.pdf
@@ -180,10 +185,11 @@ cdef class WeightVector{{name_suffix}}(object):
     cdef void scale(self, {{c_type}} c) noexcept nogil:
         """Scales the weight vector by a constant ``c``.
 
-        It updates ``wscale`` and ``sq_norm``. If ``wscale`` gets too
-        small we call ``reset_swcale``."""
+        It updates ``wscale``, ``sq_norm``, and ``l1_norm``. If ``wscale`` gets too
+        small we call ``reset_wscale``."""
         self.wscale *= c
         self.sq_norm *= (c * c)
+        self.l1_norm *= fabs(c)
 
         if self.wscale < {{reset_wscale_threshold}}:
             self.reset_wscale()
@@ -203,5 +209,9 @@ cdef class WeightVector{{name_suffix}}(object):
     cdef {{c_type}} norm(self) noexcept nogil:
         """The L2 norm of the weight vector. """
         return sqrt(self.sq_norm)
+
+    cdef {{c_type}} l1norm(self) noexcept nogil:
+        """The L1 norm of the weight vector. """
+        return self.l1_norm
 
 {{endfor}}
