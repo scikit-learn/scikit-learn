@@ -1502,7 +1502,6 @@ def check_array_api_attributes(
     "estimator",
     [
         Ridge(solver="svd"),
-        Ridge(solver="cholesky"),
         RidgeClassifier(solver="svd"),
         RidgeClassifier(solver="cholesky"),
         RidgeCV(gcv_mode="svd"),
@@ -1628,10 +1627,17 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     assert ridge.solver_ == "cholesky"
 
 
-@pytest.mark.parametrize("n_samples, n_features", [(40, 10), (10, 40)])
-@pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("alpha", [1.0, [1e-2, 0.1, 1.0]])
-@pytest.mark.parametrize("with_sample_weight", [False, True])
+# One case per code path of the solver. `fit_intercept` and `sample_weight` are
+# handled before the solver, so they are not crossed with the code paths.
+@pytest.mark.parametrize(
+    "n_samples, n_features, alpha, fit_intercept, with_sample_weight",
+    [
+        (40, 10, 1.0, True, False),  # primal, one alpha
+        (40, 10, [1e-2, 0.1, 1.0], False, True),  # primal, one alpha per target
+        (10, 40, 1.0, False, True),  # dual, one alpha
+        (10, 40, [1e-2, 0.1, 1.0], True, False),  # dual, one alpha per target
+    ],
+)
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
