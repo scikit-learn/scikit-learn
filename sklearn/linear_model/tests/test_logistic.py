@@ -3272,6 +3272,10 @@ def test_logistic_regression_fit_stopped_by_callback():
         warnings.simplefilter("error", ConvergenceWarning)
         lr.fit(X, y)
     assert lr.n_iter_ == 1
+    # Every task that was begun is ended exactly once.
+    begins = [rec["context"] for rec in cb.record if rec["name"] == "on_fit_task_begin"]
+    ends = [rec["context"] for rec in cb.record if rec["name"] == "on_fit_task_end"]
+    assert sorted(map(id, begins)) == sorted(map(id, ends))
 
 
 # TODO(callbacks): also test for other solvers when they get supported.
