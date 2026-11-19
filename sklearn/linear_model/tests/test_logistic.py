@@ -3259,14 +3259,31 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
 
 
 # TODO(callbacks): also test for other solvers when they get supported.
-@ignore_warnings(category=ConvergenceWarning)
 def test_logistic_regression_fit_stopped_by_callback():
-    """Test that a callback can interrupt the fit."""
+    """Test that a callback can interrupt the fit.
+
+    Stopping the fit through a callback is on purpose, so no ConvergenceWarning
+    should be raised.
+    """
     X, y = load_iris(return_X_y=True)
     cb = StopFitCallback()
     lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
-    lr.fit(X, y)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        lr.fit(X, y)
     assert lr.n_iter_ == 1
+
+
+# TODO(callbacks): also test for other solvers when they get supported.
+def test_logistic_regression_callback_max_iter_convergence_warning():
+    """Test that a ConvergenceWarning is still raised when callbacks are set but
+    don't stop the fit and max_iter is reached before convergence."""
+    X, y = load_iris(return_X_y=True)
+    lr = LogisticRegression(solver="lbfgs", max_iter=1).set_callbacks(
+        RecordingCallback()
+    )
+    with pytest.warns(ConvergenceWarning):
+        lr.fit(X, y)
 
 
 # TODO(1.14): remove filterwarnings with deprecation period of C and Cs
