@@ -256,7 +256,7 @@ if lightning_clf is not None and not fit_intercept:
     alpha = 1.0 / C / n_samples
     # compute the same step_size than in LR-sag
     max_squared_sum = get_max_squared_sum(X)
-    step_size = get_auto_step_size(max_squared_sum, alpha, "log", fit_intercept)
+    step_size = get_auto_step_size(max_squared_sum, alpha, "log")
 
     clfs.append(
         (

@@ -498,7 +498,6 @@ def test_sag_regressor_computed_correctly(csr_container):
 def test_get_auto_step_size():
     X = np.array([[1, 2, 3], [2, 3, 4], [2, 3, 2]], dtype=np.float64)
     alpha = 1.2
-    fit_intercept = False
     # sum the squares of the second sample because that's the largest
     max_squared_sum = 4 + 9 + 16
     max_squared_sum_ = row_norms(X, squared=True).max()
@@ -506,43 +505,30 @@ def test_get_auto_step_size():
     assert_almost_equal(max_squared_sum, max_squared_sum_, decimal=4)
 
     for saga in [True, False]:
-        for fit_intercept in (True, False):
-            if saga:
-                L_sqr = max_squared_sum + alpha + int(fit_intercept)
-                L_log = (max_squared_sum + 4.0 * alpha + int(fit_intercept)) / 4.0
-                mun_sqr = min(2 * n_samples * alpha, L_sqr)
-                mun_log = min(2 * n_samples * alpha, L_log)
-                step_size_sqr = 1 / (2 * L_sqr + mun_sqr)
-                step_size_log = 1 / (2 * L_log + mun_log)
-            else:
-                step_size_sqr = 1.0 / (max_squared_sum + alpha + int(fit_intercept))
-                step_size_log = 4.0 / (
-                    max_squared_sum + 4.0 * alpha + int(fit_intercept)
-                )
+        if saga:
+            L_sqr = max_squared_sum + alpha
+            L_log = (max_squared_sum + 4.0 * alpha) / 4.0
+            mun_sqr = min(2 * n_samples * alpha, L_sqr)
+            mun_log = min(2 * n_samples * alpha, L_log)
+            step_size_sqr = 1 / (2 * L_sqr + mun_sqr)
+            step_size_log = 1 / (2 * L_log + mun_log)
+        else:
+            step_size_sqr = 1.0 / (max_squared_sum + alpha)
+            step_size_log = 4.0 / (max_squared_sum + 4.0 * alpha)
 
-            step_size_sqr_ = get_auto_step_size(
-                max_squared_sum_,
-                alpha,
-                "squared",
-                fit_intercept,
-                n_samples=n_samples,
-                is_saga=saga,
-            )
-            step_size_log_ = get_auto_step_size(
-                max_squared_sum_,
-                alpha,
-                "log",
-                fit_intercept,
-                n_samples=n_samples,
-                is_saga=saga,
-            )
+        step_size_sqr_ = get_auto_step_size(
+            max_squared_sum_, alpha, "squared", n_samples=n_samples, is_saga=saga
+        )
+        step_size_log_ = get_auto_step_size(
+            max_squared_sum_, alpha, "log", n_samples=n_samples, is_saga=saga
+        )
 
-            assert_almost_equal(step_size_sqr, step_size_sqr_, decimal=4)
-            assert_almost_equal(step_size_log, step_size_log_, decimal=4)
+        assert_almost_equal(step_size_sqr, step_size_sqr_, decimal=4)
+        assert_almost_equal(step_size_log, step_size_log_, decimal=4)
 
     msg = "Unknown loss function for SAG solver, got wrong instead of"
     with pytest.raises(ValueError, match=msg):
-        get_auto_step_size(max_squared_sum_, alpha, "wrong", fit_intercept)
+        get_auto_step_size(max_squared_sum_, alpha, "wrong")
 
 
 @pytest.mark.parametrize("seed", range(3))  # locally tested with 1000 seeds
