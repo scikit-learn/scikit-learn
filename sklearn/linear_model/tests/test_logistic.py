@@ -3259,6 +3259,7 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
 
 
 # TODO(callbacks): also test for other solvers when they get supported.
+@skip_callback_test_if_wasm
 def test_logistic_regression_fit_stopped_by_callback():
     """Test that a callback can interrupt the fit.
 
@@ -3279,6 +3280,7 @@ def test_logistic_regression_fit_stopped_by_callback():
 
 
 # TODO(callbacks): also test for other solvers when they get supported.
+@skip_callback_test_if_wasm
 def test_logistic_regression_callback_max_iter_convergence_warning():
     """Test that a ConvergenceWarning is still raised when callbacks are set but
     don't stop the fit and max_iter is reached before convergence."""
