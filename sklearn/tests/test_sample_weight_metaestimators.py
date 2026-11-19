@@ -61,9 +61,10 @@ EQUIVALENCE_ESTIMATORS = [
 def test_integer_sample_weight_equivalence(estimator):
     """Integer weights and repeated rows agree on the meta-estimator's outputs.
 
-    ``sample_weight`` is not passed to ``set_*_request``. Routing and
-    auto-requests have to deliver it to every consuming sub-estimator for the
-    fitted predictions to match.
+    Auto-requests are enabled, so the test does not call ``set_*_request``. The
+    outputs should match only when routing delivers ``sample_weight`` to every
+    consuming sub-estimator and scorer, and each of those pieces itself treats
+    integer weights as repeated rows.
     """
     check_sample_weight_equivalence_on_dense_data(
         estimator.__class__.__name__, estimator
