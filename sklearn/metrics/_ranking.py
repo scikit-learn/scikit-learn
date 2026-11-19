@@ -385,6 +385,8 @@ def det_curve(
         some data.
     DetCurveDisplay.from_predictions : Plot DET curve given the true and
         predicted labels.
+    DetCurveDisplay.from_cv_results : Plot multi-fold DET curves given
+        cross-validation results.
     DetCurveDisplay : DET curve visualization.
     roc_curve : Compute Receiver operating characteristic (ROC) curve.
     precision_recall_curve : Compute precision-recall curve.
