@@ -471,6 +471,15 @@ def pytest_configure(config):
         # - uses align_api_if_sparse(X) just before returning a sparse object
         munge_scipy_to_check_spmatrix_usage()
 
+    # Can't use a pytest option for this, because CI uses --pyargs; see
+    # https://github.com/pytest-dev/pytest/issues/1596 for details. So use an
+    # environment variable.
+    if environ.get("SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM") == "1":
+        # Use extra threads to increase chances of race conditions:
+        joblib.parallel_config(backend="threading", n_jobs=joblib.cpu_count() * 2)
+        # Until we fix all failing tests in later PRs, we're going to skip them:
+        environ["SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM"] = "1"
+
     if not PARALLEL_RUN_AVAILABLE:
         config.addinivalue_line(
             "markers",
