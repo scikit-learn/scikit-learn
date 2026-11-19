@@ -37,7 +37,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         If plotting multiple curves, `fpr` should be a list of the same length as
         `fnr`.
 
-        .. versionchanged:: 1.10
+        .. versionchanged:: 1.11
             Now accepts a list for plotting multiple curves.
 
     fnr : ndarray or list of ndarrays
@@ -45,7 +45,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         If plotting multiple curves, `fnr` should be a list of the same length as
         `fpr`.
 
-        .. versionchanged:: 1.10
+        .. versionchanged:: 1.11
             Now accepts a list for plotting multiple curves.
 
     name : str or list of str, default=None
@@ -63,8 +63,10 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         If `None`, no name is shown in the legend.
 
         .. versionchanged:: 1.10
-            `estimator_name` was deprecated in favor of `name`, which now accepts a
-            list for plotting multiple curves.
+            `estimator_name` was deprecated in favor of `name`.
+
+        .. versionchanged:: 1.11
+            Now accepts a list for plotting multiple curves.
 
     pos_label : int, float, bool or str, default=None
         The label of the positive class. If not `None`, this value is displayed in
@@ -82,8 +84,8 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     line_ : matplotlib Artist or list of matplotlib Artists
         DET Curve.
 
-        .. versionchanged:: 1.10
-            This attribute can now be a list of Artists, for when multiple curves
+        .. versionchanged:: 1.11
+            This attribute can now be a list of Artists when multiple curves
             are plotted.
 
     ax_ : matplotlib Axes
@@ -415,7 +417,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     ):
         """Create a multi-fold DET curve display given cross-validation results.
 
-        .. versionadded:: 1.10
+        .. versionadded:: 1.11
 
         Parameters
         ----------
@@ -571,7 +573,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
             If `None`, set to `name` provided at `DetCurveDisplay` initialization. If
             still `None`, no name is shown in the legend.
 
-            .. versionchanged:: 1.10
+            .. versionchanged:: 1.11
                 Now accepts a list for plotting multiple curves.
 
         curve_kwargs : dict or list of dict, default=None
