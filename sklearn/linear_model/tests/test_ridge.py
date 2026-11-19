@@ -24,6 +24,7 @@ from sklearn.linear_model import (
 )
 from sklearn.linear_model._ridge import (
     _check_gcv_mode,
+    _negligible_alpha_threshold,
     _RidgeGCV,
     _solve_cholesky,
     _solve_cholesky_kernel,
@@ -1292,6 +1293,7 @@ def test_ridge_best_score(ridge, make_dataset, cv):
     assert isinstance(ridge.best_score_, float)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_ridge_cv_individual_penalties():
     # Tests the ridge_cv object optimizing individual penalties for each target
 
@@ -2280,6 +2282,114 @@ def test_ridge_sag_with_X_fortran():
     X = X[::2, :]
     y = y[::2]
     Ridge(solver="sag").fit(X, y)
+
+
+def _make_alpha_boundary_data(dtype):
+    """Data whose optimal alpha is known: y_exact pushes alpha_ to the lower
+    boundary, y_noise (independent of X) to the upper boundary and y_noisy
+    to the interior of a wide grid."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(100, 5)
+    coef = rng.randn(5)
+    y_exact = X @ coef
+    y_noise = rng.randn(100)
+    y_noisy = y_exact + rng.randn(100)
+    return [a.astype(dtype) for a in (X, y_exact, y_noise, y_noisy)]
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("cv", [None, 5])
+def test_ridge_cv_alpha_boundary_warning(dtype, cv):
+    """Check the warning when the optimal alpha is at a boundary of `alphas`."""
+    X, y_exact, y_noise, _ = _make_alpha_boundary_data(dtype)
+    msg = "The optimal value for the regularization parameter"
+
+    # upper boundary
+    with pytest.warns(ConvergenceWarning, match=msg):
+        ridge = RidgeCV(alphas=[0.1, 1, 10], cv=cv).fit(X, y_noise)
+    assert ridge.alpha_ == 10
+
+    # lower boundary, with an alpha that is not negligible
+    with pytest.warns(ConvergenceWarning, match=msg):
+        ridge = RidgeCV(alphas=[1e-3, 1e-2, 1e-1], cv=cv).fit(X, y_exact)
+    assert ridge.alpha_ == 1e-3
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize(
+    "scale, alphas, cv, target, expected_alpha",
+    [
+        # optimum inside the grid
+        (1, np.logspace(-3, 3, 7), None, "noisy", None),
+        (1, np.logspace(-3, 3, 7), 5, "noisy", None),
+        # a single value: no search, hence no boundary
+        (1, [1.0], None, "noise", 1.0),
+        (1, 1.0, None, "noise", 1.0),
+        (1, [1.0], 5, "noise", 1.0),
+        # alpha_ == 0 is the unpenalized model (only allowed when cv is not None)
+        (1, [0, 0.1, 1], 5, "exact", 0),
+        # alpha_ negligible in front of X^T X (cv=None does not allow 0)
+        (1, [1e-16, 1e-1], None, "exact", 1e-16),
+        # negligible relative to the scale of X, although larger than 1e-12
+        (1000, [1e-8, 1e-1], None, "exact", 1e-8),
+    ],
+)
+def test_ridge_cv_alpha_boundary_no_warning(
+    dtype, scale, alphas, cv, target, expected_alpha
+):
+    """Check that no boundary warning is raised when it would not be helpful."""
+    X, y_exact, y_noise, y_noisy = _make_alpha_boundary_data(dtype)
+    y = {"exact": y_exact, "noise": y_noise, "noisy": y_noisy}[target]
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        ridge = RidgeCV(alphas=alphas, cv=cv).fit(scale * X, scale * y)
+    if expected_alpha is None:
+        assert np.min(alphas) < ridge.alpha_ < np.max(alphas)
+    else:
+        assert ridge.alpha_ == pytest.approx(expected_alpha)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_ridge_cv_alpha_boundary_warning_alpha_per_target(dtype):
+    """Check the boundary warning with one alpha per target."""
+    X, y_exact, y_noise, _ = _make_alpha_boundary_data(dtype)
+    ridge = RidgeCV(alphas=[1e-3, 1e-1, 10], alpha_per_target=True)
+
+    # first target at the (non negligible) lower boundary, second at the upper one
+    with pytest.warns(ConvergenceWarning, match="Some of the individual targets"):
+        ridge.fit(X, np.c_[y_exact, y_noise])
+    assert_allclose(ridge.alpha_, [1e-3, 10])
+
+    # all targets at a negligible lower boundary
+    ridge.set_params(alphas=[1e-16, 1e-1])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        ridge.fit(X, np.c_[y_exact, 2 * y_exact])
+    assert_allclose(ridge.alpha_, [1e-16, 1e-16])
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("with_sample_weight", [False, True])
+def test_negligible_alpha_threshold(csr_container, fit_intercept, with_sample_weight):
+    """Check the threshold is eps * ||sqrt(sw) X_c||_F^2, for dense and sparse X,
+    and that it bounds eps * s_max^2 from above."""
+    rng = np.random.RandomState(0)
+    X = rng.randn(50, 4) + 3.0  # non-zero mean so that centering matters
+    X[X < 3] = 0.0
+    sample_weight = rng.uniform(0.5, 2, size=50) if with_sample_weight else None
+
+    sw = np.ones(50) if sample_weight is None else sample_weight
+    X_c = X - sw @ X / sw.sum() if fit_intercept else X
+    X_c = np.sqrt(sw)[:, None] * X_c
+    eps = np.finfo(X.dtype).eps
+
+    threshold = _negligible_alpha_threshold(X, sample_weight, fit_intercept)
+    assert threshold == pytest.approx(eps * np.sum(X_c**2))
+    assert threshold >= eps * np.linalg.norm(X_c, 2) ** 2
+    assert _negligible_alpha_threshold(
+        csr_container(X), sample_weight, fit_intercept
+    ) == pytest.approx(threshold)
 
 
 @pytest.mark.parametrize(
