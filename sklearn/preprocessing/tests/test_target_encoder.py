@@ -6,6 +6,7 @@ import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
 from sklearn import config_context
+from sklearn.compose import make_column_transformer
 from sklearn.datasets import make_regression
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import Ridge
@@ -27,32 +28,39 @@ from sklearn.utils.fixes import parse_version
 from sklearn.utils.multiclass import type_of_target
 
 
-def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
-    """Simple Python implementation of target encoding."""
+def _encode_target(X_ordinal, y_numeric, n_categories, smooth, sample_weight=None):
+    """Simple Python implementation of (weighted) target encoding."""
+    if sample_weight is None:
+        sample_weight = np.ones_like(y_numeric, dtype=np.float64)
     cur_encodings = np.zeros(n_categories, dtype=np.float64)
-    y_mean = np.mean(y_numeric)
+    y_mean = np.average(y_numeric, weights=sample_weight)
 
     if smooth == "auto":
-        y_variance = np.var(y_numeric)
+        y_variance = np.average((y_numeric - y_mean) ** 2, weights=sample_weight)
         for c in range(n_categories):
-            y_subset = y_numeric[X_ordinal == c]
-            n_i = y_subset.shape[0]
+            mask = X_ordinal == c
+            y_subset, weights_subset = y_numeric[mask], sample_weight[mask]
+            n_i = np.sum(weights_subset)
 
             if n_i == 0:
                 cur_encodings[c] = y_mean
                 continue
 
-            y_subset_variance = np.var(y_subset)
+            y_subset_mean = np.average(y_subset, weights=weights_subset)
+            y_subset_variance = np.average(
+                (y_subset - y_subset_mean) ** 2, weights=weights_subset
+            )
             m = y_subset_variance / y_variance
             lambda_ = n_i / (n_i + m)
 
-            cur_encodings[c] = lambda_ * np.mean(y_subset) + (1 - lambda_) * y_mean
+            cur_encodings[c] = lambda_ * y_subset_mean + (1 - lambda_) * y_mean
         return cur_encodings
     else:  # float
         for c in range(n_categories):
-            y_subset = y_numeric[X_ordinal == c]
-            current_sum = np.sum(y_subset) + y_mean * smooth
-            current_cnt = y_subset.shape[0] + smooth
+            mask = X_ordinal == c
+            y_subset, weights_subset = y_numeric[mask], sample_weight[mask]
+            current_sum = np.sum(weights_subset * y_subset) + y_mean * smooth
+            current_cnt = np.sum(weights_subset) + smooth
             cur_encodings[c] = current_sum / current_cnt
         return cur_encodings
 
@@ -66,14 +74,17 @@ def _encode_target(X_ordinal, y_numeric, n_categories, smooth):
         ("auto", 3),
     ],
 )
+@pytest.mark.parametrize("weighted", [False, True])
 @pytest.mark.parametrize("smooth", [5.0, "auto"])
 @pytest.mark.parametrize("target_type", ["binary", "continuous"])
-def test_encoding(categories, unknown_value, global_random_seed, smooth, target_type):
+def test_encoding(
+    categories, unknown_value, global_random_seed, smooth, target_type, weighted
+):
     """Check encoding for binary and continuous targets.
 
     Compare the values returned by `TargetEncoder.fit_transform` against the
     expected encodings for cv splits from a naive reference Python
-    implementation in _encode_target.
+    implementation in _encode_target, with and without sample weights.
     """
 
     n_categories = 3
@@ -108,6 +119,8 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
     y_train = y_train[shuffled_idx]
     y_numeric = y_numeric[shuffled_idx]
 
+    sample_weight = data_rng.uniform(0.1, 5.0, size=n_samples) if weighted else None
+
     # Define our CV splitting strategy
     if target_type == "binary":
         cv = StratifiedKFold(
@@ -122,7 +135,10 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
 
     for train_idx, test_idx in cv.split(X_train_int_array, y_train):
         X_, y_ = X_train_int_array[train_idx, 0], y_numeric[train_idx]
-        cur_encodings = _encode_target(X_, y_, n_categories, smooth)
+        sample_weight_ = None if sample_weight is None else sample_weight[train_idx]
+        cur_encodings = _encode_target(
+            X_, y_, n_categories, smooth, sample_weight=sample_weight_
+        )
         expected_X_fit_transform[test_idx, 0] = cur_encodings[
             X_train_int_array[test_idx, 0]
         ]
@@ -135,7 +151,9 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         cv=cv,
     )
 
-    X_fit_transform = target_encoder.fit_transform(X_train, y_train)
+    X_fit_transform = target_encoder.fit_transform(
+        X_train, y_train, sample_weight=sample_weight
+    )
 
     assert target_encoder.target_type_ == target_type
     assert_allclose(X_fit_transform, expected_X_fit_transform)
@@ -146,9 +164,13 @@ def test_encoding(categories, unknown_value, global_random_seed, smooth, target_
         assert target_encoder.classes_ is None
 
     # compute encodings for all data to validate `transform`
-    y_mean = np.mean(y_numeric)
+    y_mean = np.average(y_numeric, weights=sample_weight)
     expected_encodings = _encode_target(
-        X_train_int_array[:, 0], y_numeric, n_categories, smooth
+        X_train_int_array[:, 0],
+        y_numeric,
+        n_categories,
+        smooth,
+        sample_weight=sample_weight,
     )
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
     assert target_encoder.target_mean_ == pytest.approx(y_mean)
@@ -784,3 +806,87 @@ def test_target_encoder_metadat_routing_without_groups():
     y = rng.integers(0, 2, size=100)
 
     TargetEncoder().fit_transform(X, y)
+
+
+@pytest.mark.parametrize("smooth", [3.0, "auto"])
+@pytest.mark.parametrize("target_type", ["binary", "multiclass", "continuous"])
+def test_sample_weight_equivalent_to_repetition(
+    smooth, target_type, global_random_seed
+):
+    """Check that integer sample weights are equivalent to repeating samples.
+
+    This holds for `fit` (and thus `transform`) and, provided that both encoders
+    use the same folds, for the cross fitting in `fit_transform`. Null weights are
+    included, which are equivalent to removing samples.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 60
+    X = rng.randint(0, 5, size=(n_samples, 2))
+    if target_type == "binary":
+        y = rng.randint(0, 2, size=n_samples)
+    elif target_type == "multiclass":
+        y = rng.randint(0, 3, size=n_samples)
+    else:
+        y = rng.normal(size=n_samples)
+    sample_weight = rng.randint(0, 4, size=n_samples)
+
+    repeated_idx = np.repeat(np.arange(n_samples), sample_weight)
+    X_repeated, y_repeated = X[repeated_idx], y[repeated_idx]
+
+    # Express the same folds in terms of the indices of the repeated dataset.
+    folds = list(
+        KFold(n_splits=3, shuffle=True, random_state=global_random_seed).split(X)
+    )
+    folds_repeated = [
+        (
+            np.flatnonzero(np.isin(repeated_idx, train_idx)),
+            np.flatnonzero(np.isin(repeated_idx, test_idx)),
+        )
+        for train_idx, test_idx in folds
+    ]
+
+    encoder_weighted = TargetEncoder(smooth=smooth, target_type=target_type, cv=folds)
+    X_out_weighted = encoder_weighted.fit_transform(X, y, sample_weight=sample_weight)
+    encoder_repeated = TargetEncoder(
+        smooth=smooth, target_type=target_type, cv=folds_repeated
+    )
+    X_out_repeated = encoder_repeated.fit_transform(X_repeated, y_repeated)
+
+    assert_allclose(X_out_repeated, X_out_weighted[repeated_idx])
+    assert_allclose(encoder_weighted.target_mean_, encoder_repeated.target_mean_)
+    assert_allclose(encoder_weighted.transform(X), encoder_repeated.transform(X))
+
+    # `fit` learns the same encodings as `fit_transform`.
+    encoder_fit = TargetEncoder(smooth=smooth, target_type=target_type)
+    encoder_fit.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(encoder_fit.transform(X), encoder_weighted.transform(X))
+
+
+@pytest.mark.parametrize("method", ["fit", "fit_transform"])
+def test_sample_weight_negative_raises(method):
+    """Check that negative sample weights are rejected."""
+    X = np.array([[0], [1], [0], [1]])
+    y = np.array([1.0, 2.0, 3.0, 4.0])
+    sample_weight = np.array([1.0, -1.0, 1.0, 1.0])
+    with pytest.raises(ValueError, match="Negative values in data passed"):
+        getattr(TargetEncoder(cv=2), method)(X, y, sample_weight=sample_weight)
+
+
+@config_context(enable_metadata_routing=True)
+def test_sample_weight_metadata_routing(global_random_seed):
+    """Check that a meta-estimator can route `sample_weight` to `fit_transform`."""
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 50
+    X = rng.randint(0, 5, size=(n_samples, 2))
+    y = rng.normal(size=n_samples)
+    sample_weight = rng.uniform(0.1, 5.0, size=n_samples)
+    cv = KFold(n_splits=3, shuffle=True, random_state=global_random_seed)
+
+    expected = TargetEncoder(cv=cv).fit_transform(X, y, sample_weight=sample_weight)
+    unweighted = TargetEncoder(cv=cv).fit_transform(X, y)
+    assert not np.allclose(expected, unweighted)
+
+    encoder = TargetEncoder(cv=cv).set_fit_request(sample_weight=True)
+    column_transformer = make_column_transformer((encoder, [0, 1]))
+    X_out = column_transformer.fit_transform(X, y, sample_weight=sample_weight)
+    assert_allclose(X_out, expected)
