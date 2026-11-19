@@ -23,13 +23,13 @@ jobs:
 
     steps:
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.13'
       - name: Install PyGithub
         run: pip install -Uq PyGithub
       - name: Checkout workflow scripts
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           sparse-checkout: |
             .github/scripts/close-pr-if-issue-not-ready.py

@@ -30,6 +30,7 @@ from sklearn.utils import (
     column_or_1d,
 )
 from sklearn.utils._array_api import (
+    _average,
     _interp,
     _max_precision_float_dtype,
     get_namespace,
@@ -1566,6 +1567,8 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     >>> coverage_error(y_true, y_score)
     1.5
     """
+    xp, _, device = get_namespace_and_device(y_score)
+    y_true, sample_weight = move_to(y_true, sample_weight, xp=xp, device=device)
     y_true = check_array(y_true, ensure_2d=True)
     y_score = check_array(y_score, ensure_2d=True)
     check_consistent_length(y_true, y_score, sample_weight)
@@ -1577,12 +1580,12 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
 
-    y_score_mask = np.ma.masked_array(y_score, mask=np.logical_not(y_true))
-    y_min_relevant = y_score_mask.min(axis=1).reshape((-1, 1))
-    coverage = (y_score >= y_min_relevant).sum(axis=1)
-    coverage = coverage.filled(0)
+    y_true_bool = xp.astype(y_true, xp.bool, device=device, copy=False)
+    y_score_masked = xp.where(y_true_bool, y_score, xp.inf)
+    y_min_relevant = xp.reshape(xp.min(y_score_masked, axis=1), (-1, 1))
+    coverage = xp.count_nonzero(y_score >= y_min_relevant, axis=1)
 
-    return float(np.average(coverage, weights=sample_weight))
+    return float(_average(coverage, weights=sample_weight, xp=xp))
 
 
 @validate_params(
