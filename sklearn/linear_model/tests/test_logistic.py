@@ -641,7 +641,7 @@ def test_logistic_cv_refit_false_non_elasticnet(global_random_seed, n_jobs):
     """
     X, y = make_classification(random_state=global_random_seed)
     lr_cv = LogisticRegressionCV(
-        alphas=10,
+        alphas=[0.1, 1.0, 10.0],
         l1_ratios=[0.0],
         refit=False,
         random_state=global_random_seed,
