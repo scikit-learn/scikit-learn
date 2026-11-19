@@ -422,7 +422,7 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
 
 .. dropdown:: Mathematical details
 
-  To simplify the math, we assume here no intercept and ``y`` and ``X`` are mean
+  To simplify the math, we assume here no intercept, and ``y`` and ``X`` are mean
   centered.
 
   The duality gap :math:`G(w, v)` is an upper bound of the difference between the
@@ -514,7 +514,7 @@ Information-criteria based model selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Alternatively, the estimator :class:`LassoLarsIC` proposes to use the
-Akaike information criterion (AIC) and the Bayes Information criterion (BIC).
+Akaike information criterion (AIC) or the Bayes Information criterion (BIC).
 It is a computationally cheaper alternative to find the optimal value of ``alpha``
 as the regularization path is computed only once instead of k+1 times
 when using k-fold cross-validation.
@@ -716,7 +716,7 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 
 .. dropdown:: Mathematical details
 
-  To simplify the math, we assume here no intercept and ``y`` and ``X`` are mean
+  To simplify the math, we assume here no intercept, and ``y`` and ``X`` are mean
   centered.
 
   Interestingly, there are two different dual formulations for Elastic-Net. The
@@ -753,7 +753,7 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 
   The first reference is the one that introduced the elastic-net, the second provides
   the alternative dual objective function. For references on the coordinate descent
-  algorithm that underlyies this estimator, see
+  algorithm that underlies this estimator, see
   :ref:`coordinate descent <coordinate_descent>` above.
 
   * :doi:`Zou, H., & Hastie, T. (2005).
