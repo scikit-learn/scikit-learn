@@ -95,6 +95,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
@@ -1026,6 +1027,7 @@ def test_cross_val_predict(coo_container):
         )
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
@@ -1542,6 +1544,7 @@ def test_learning_curve_with_shuffle():
     )
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 def test_learning_curve_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
@@ -2541,6 +2544,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         )
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2649,6 +2653,7 @@ def test_validation_functions_routing(func, extra_args):
         )
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @config_context(enable_metadata_routing=True)
 def test_learning_curve_exploit_incremental_learning_routing():
     """Test that learning_curve routes metadata to the estimator correctly while
