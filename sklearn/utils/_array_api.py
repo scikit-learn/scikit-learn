@@ -1063,6 +1063,12 @@ def _estimator_with_converted_arrays(estimator, converter):
     if hasattr(estimator, "__dlpack__") or isinstance(
         estimator, (numpy.ndarray, numpy.generic)
     ):
+        xp = array_api_compat.get_namespace(estimator)
+        if hasattr(xp, "isdtype") and not (
+            xp.isdtype(estimator.dtype, "numeric")
+            or xp.isdtype(estimator.dtype, "bool")
+        ):
+            return estimator
         return converter(estimator)
 
     if not hasattr(estimator, "get_params") or isinstance(estimator, type):
