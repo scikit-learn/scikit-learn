@@ -9,6 +9,7 @@ import numpy as np
 import pytest
 from threadpoolctl import threadpool_info
 
+from sklearn import config_context
 from sklearn.base import clone
 from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
 from sklearn.cluster._k_means_common import (
@@ -22,13 +23,24 @@ from sklearn.cluster._k_means_common import (
     _relocate_empty_clusters_dense,
     _relocate_empty_clusters_sparse,
 )
-from sklearn.cluster._kmeans import _labels_inertia, _mini_batch_step
+from sklearn.cluster._kmeans import (
+    _labels_inertia,
+    _mini_batch_step,
+    _relocate_empty_clusters_xp,
+)
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import pairwise_distances, pairwise_distances_argmin
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.utils._array_api import (
+    _atol_for_type,
+    array_device,
+    move_to,
+    yield_namespace_device_dtype_combinations,
+)
 from sklearn.utils._testing import (
+    _array_api_for_tests,
     assert_allclose,
     assert_array_equal,
     create_memmap_backed_data,
@@ -1516,3 +1528,123 @@ def test_relocating_with_duplicates(algorithm, array_constr):
         km.fit(array_constr(X))
 
     assert km.n_iter_ == 1
+
+
+@pytest.mark.parametrize("init", ["k-means++", "random"])
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_kmeans_array_api_compliance(init, array_namespace, device_name, dtype_name):
+    """Check that KMeans gives the same clustering with NumPy and array API inputs."""
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    # 4 well-separated blobs: both code paths must find the same clusters,
+    # even though they draw the k-means++ candidates differently.
+    blob_centers = np.array([[-10, -10], [-10, 10], [10, -10], [10, 10]])
+    X_np, _ = make_blobs(
+        n_samples=200, centers=blob_centers, cluster_std=1.0, random_state=0
+    )
+    X_np = X_np.astype(dtype_name, copy=False)
+    X_xp = xp.asarray(X_np, device=device)
+
+    params = dict(n_clusters=4, init=init, random_state=0)
+    with config_context(array_api_dispatch=False):
+        km_np = KMeans(**params).fit(X_np)
+        X_new_np = km_np.transform(X_np)
+
+    with config_context(array_api_dispatch=True):
+        km_xp = KMeans(**params).fit(X_xp)
+        labels_pred_xp = km_xp.predict(X_xp)
+        score_xp = km_xp.score(X_xp)
+        X_new_xp = km_xp.transform(X_xp)
+        X_fit_new_xp = KMeans(**params).fit_transform(X_xp)
+
+    labels_xp = move_to(km_xp.labels_, xp=np, device="cpu")
+    centers_xp = move_to(km_xp.cluster_centers_, xp=np, device="cpu")
+    X_new_xp_np = move_to(X_new_xp, xp=np, device="cpu")
+
+    # Same partition; cluster ids may be permuted between the two paths.
+    assert v_measure_score(km_np.labels_, labels_xp) == pytest.approx(1.0)
+    rtol = 1e-4 if dtype_name == "float32" else 1e-10
+    assert km_xp.inertia_ == pytest.approx(km_np.inertia_, rel=rtol)
+    assert score_xp == pytest.approx(-km_np.inertia_, rel=rtol)
+
+    # Sort the centers to compare them independently of the cluster ids.
+    order_np = np.lexsort(km_np.cluster_centers_.T)
+    order_xp = np.lexsort(centers_xp.T)
+    assert_allclose(centers_xp[order_xp], km_np.cluster_centers_[order_np], rtol=rtol)
+
+    # transform: one column per cluster, so reorder the columns the same way.
+    # atol: small distances lose precision in float32 (e.g. on MPS, which has
+    # no float64), so a relative tolerance alone is too strict for them.
+    assert_allclose(
+        X_new_xp_np[:, order_xp],
+        X_new_np[:, order_np],
+        rtol=rtol,
+        atol=_atol_for_type(dtype_name),
+    )
+    # fit_transform matches fit + transform (same random_state).
+    assert_allclose(move_to(X_fit_new_xp, xp=np, device="cpu"), X_new_xp_np, rtol=rtol)
+    assert array_device(X_new_xp) == array_device(X_xp)
+
+    # Fitted attributes and predictions stay in the namespace and on the
+    # device of X.
+    assert km_xp.cluster_centers_.dtype == X_xp.dtype
+    assert array_device(km_xp.cluster_centers_) == array_device(X_xp)
+    assert array_device(km_xp.labels_) == array_device(X_xp)
+    assert_array_equal(move_to(labels_pred_xp, xp=np, device="cpu"), labels_xp)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_relocate_empty_clusters_array_api(array_namespace, device_name, dtype_name):
+    """Array API version of `test_relocate_empty_clusters`."""
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    def to_xp(a, dtype=dtype_name):
+        return xp.asarray(np.asarray(a, dtype=dtype), device=device)
+
+    # Same data as `test_relocate_empty_clusters`: all the points are assigned
+    # to the first center, so clusters 1 and 2 are empty.
+    X_np = np.array([-10.0, -9.5, -9, -8.5, -8, -1, 1, 9, 9.5, 10]).reshape(-1, 1)
+    X_xp = to_xp(X_np)
+    sample_weight = to_xp(np.ones(10))
+    centers_old = to_xp([[-10.0], [-10], [-10]])
+    weighted_sums = to_xp([[-16.5], [-10], [-10]])
+    weight_in_clusters = to_xp([10.0, 0, 0])
+    labels = to_xp(np.zeros(10), dtype=np.int32)
+
+    _relocate_empty_clusters_xp(
+        X_xp, sample_weight, centers_old, weighted_sums, weight_in_clusters, labels, xp
+    )
+
+    # The 2 points farthest from their center (10 and 9.5) move to the empty
+    # clusters, in that order; the first cluster keeps the other 8 points.
+    assert_array_equal(move_to(weight_in_clusters, xp=np, device="cpu"), [8, 1, 1])
+    assert_allclose(move_to(weighted_sums, xp=np, device="cpu"), [[-36], [10], [9.5]])
+
+
+@pytest.mark.parametrize(
+    "params",
+    [{"algorithm": "elkan"}, {"init": lambda X, n_clusters, random_state: X[:2]}],
+    ids=["elkan", "callable_init"],
+)
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_kmeans_array_api_not_implemented(
+    params, array_namespace, device_name, dtype_name
+):
+    """Options not ported to the array API path raise NotImplementedError."""
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    X_xp = xp.asarray(X.astype(dtype_name), device=device)
+
+    with config_context(array_api_dispatch=True):
+        with pytest.raises(
+            NotImplementedError, match="is not supported yet with array API"
+        ):
+            KMeans(n_clusters=2, **params).fit(X_xp)
