@@ -2265,6 +2265,7 @@ def test_check_array_array_api_has_non_finite():
             check_array(X_inf)
 
 
+@pytest.mark.parametrize("convert_to_narwhals", [False, True])
 @pytest.mark.parametrize(
     "extension_dtype, regular_dtype",
     [
@@ -2276,7 +2277,7 @@ def test_check_array_array_api_has_non_finite():
 )
 @pytest.mark.parametrize("include_object", [True, False])
 def test_check_array_multiple_extensions(
-    extension_dtype, regular_dtype, include_object
+    convert_to_narwhals, extension_dtype, regular_dtype, include_object
 ):
     """Check pandas extension arrays give the same result as non-extension arrays."""
     pd = pytest.importorskip("pandas")
@@ -2290,10 +2291,31 @@ def test_check_array_multiple_extensions(
         X_regular["b"] = pd.Series(["a", "b", "c", "d"], dtype="object")
 
     X_extension = X_regular.assign(a=X_regular["a"].astype(extension_dtype))
+    if convert_to_narwhals:
+        X_extension = nw.from_native(X_extension)
 
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)
     assert_array_equal(X_regular_checked, X_extension_checked)
+
+
+def test_check_array_narwhals_extension_dtype():
+    """Non-regression test for gh-35384.
+
+    check_array with narwhals.stable.v2 DataFrame backed by pandas
+    with extension dtype should not raise AttributeError.
+    """
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {
+            "a": pd.Series([1, 2], dtype="Int64"),
+            "b": [True, False],
+        }
+    )
+    df_nw = nw.from_native(df)
+    res_df = check_array(df)
+    res_nw = check_array(df_nw)
+    assert_array_equal(res_df, res_nw)
 
 
 @pytest.mark.parametrize(

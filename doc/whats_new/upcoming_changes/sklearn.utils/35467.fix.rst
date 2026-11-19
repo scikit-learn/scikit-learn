@@ -1,0 +1,3 @@
+- :func:`utils.check_array` now correctly handles :mod:`narwhals.stable.v2`
+  DataFrames with pandas extension dtypes, avoiding an :exc:`AttributeError`.
+  By :user:`direkkakkar319-ops` and :user:`Kevin Raj <kevinraj23>`.
