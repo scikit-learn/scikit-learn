@@ -17,12 +17,12 @@ from scipy.stats import bernoulli, expon, randint, uniform
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from sklearn.callback import ScoringMonitor
-from sklearn.callback.tests._common.callbacks import (
+from sklearn.callback._testing.callbacks import (
     RecordingAutoPropagatedCallback,
     RecordingCallback,
     SampleWeightCallback,
 )
-from sklearn.callback.tests._common.estimators import (
+from sklearn.callback._testing.estimators import (
     MaxIterEstimator,
     NoCallbackEstimator,
 )
@@ -112,6 +112,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     set_random_state,
     skip_callback_test_if_wasm,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -2706,6 +2707,7 @@ def test_search_html_repr():
 # ======================
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "SearchCV, param_search",
     [

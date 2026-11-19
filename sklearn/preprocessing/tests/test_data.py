@@ -11,10 +11,7 @@ from scipy import sparse, stats
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
-from sklearn.callback.tests._common.callbacks import (
-    RecordingCallback,
-    SampleWeightCallback,
-)
+from sklearn.callback._testing.callbacks import RecordingCallback, SampleWeightCallback
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel

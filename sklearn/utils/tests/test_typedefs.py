@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.utils._typedefs import testing_isnan, testing_make_array_from_typed_val
+from sklearn.utils._typedefs import py_isnan, py_make_array_from_typed_val
 
 
 @pytest.mark.parametrize(
@@ -22,7 +22,7 @@ def test_types(type_t, value, expected_dtype):
     """Check that the types defined in _typedefs correspond to the expected
     numpy dtypes.
     """
-    assert testing_make_array_from_typed_val[type_t](value).dtype == expected_dtype
+    assert py_make_array_from_typed_val[type_t](value).dtype == expected_dtype
 
 
 @pytest.mark.parametrize(
@@ -45,4 +45,4 @@ def test_types(type_t, value, expected_dtype):
 )
 def test_isnan(type_t, dtype, value, expected):
     """Check the bit-pattern-based isnan matches the expected NaN status."""
-    assert testing_isnan[type_t](dtype(value)) is expected
+    assert py_isnan[type_t](dtype(value)) is expected

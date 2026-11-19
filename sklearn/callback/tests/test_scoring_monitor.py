@@ -11,12 +11,12 @@ from sklearn import config_context
 from sklearn.base import clone
 from sklearn.callback import ScoringMonitor
 from sklearn.callback._scoring_monitor import ScoringMonitorLog
-from sklearn.callback._transport import _listeners, _message_consumers
-from sklearn.callback.tests._common.estimators import (
+from sklearn.callback._testing.estimators import (
     MaxIterEstimator,
     MetaEstimator,
     WhileEstimator,
 )
+from sklearn.callback._transport import _listeners, _message_consumers
 from sklearn.datasets import make_regression
 from sklearn.metrics import check_scoring, get_scorer, make_scorer
 from sklearn.utils._testing import assert_allclose
