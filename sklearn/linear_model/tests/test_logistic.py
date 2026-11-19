@@ -3268,7 +3268,9 @@ def test_logistic_regression_fit_stopped_by_callback():
     lr.fit(X, y)
     assert lr.n_iter_ == 1
     # Every task that was begun is ended exactly once.
-    assert cb.count_hooks("on_fit_task_begin") == cb.count_hooks("on_fit_task_end")
+    begins = [rec["context"] for rec in cb.record if rec["name"] == "on_fit_task_begin"]
+    ends = [rec["context"] for rec in cb.record if rec["name"] == "on_fit_task_end"]
+    assert sorted(map(id, begins)) == sorted(map(id, ends))
 
 
 # TODO(1.14): remove filterwarnings with deprecation period of C and Cs
