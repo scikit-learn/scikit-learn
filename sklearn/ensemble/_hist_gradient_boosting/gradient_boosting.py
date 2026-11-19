@@ -774,7 +774,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             begin_at_stage = self.n_iter_
 
-        # Allocate arrays only ones for reuse in every boosting round. They are used in
+        # Allocate arrays only once for reuse in every boosting round. They are used in
         # Splitter, passed to it via TreeGrower.
         partition_buffer = np.empty(n_samples, dtype=np.uint32)
         left_indices_buffer = np.empty(n_samples, dtype=np.uint32)
