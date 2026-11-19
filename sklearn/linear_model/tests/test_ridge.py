@@ -1503,7 +1503,6 @@ def check_array_api_attributes(
     [
         Ridge(solver="svd"),
         RidgeClassifier(solver="svd"),
-        RidgeClassifier(solver="cholesky"),
         RidgeCV(gcv_mode="svd"),
         RidgeCV(gcv_mode="eigen"),
         RidgeClassifierCV(),
@@ -1625,6 +1624,19 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
         with config_context(array_api_dispatch=True):
             ridge = Ridge().fit(X_iris_xp, y_iris_xp)
     assert ridge.solver_ == "cholesky"
+
+
+@pytest.mark.parametrize("Estimator", [Ridge, RidgeClassifier])
+def test_ridge_array_api_support_tag(Estimator):
+    """Check that the array API support tag depends on the solver."""
+    available_solvers = Estimator._parameter_constraints["solver"][0].options
+    for solver in available_solvers:
+        tags = Estimator(solver=solver).__sklearn_tags__()
+        assert tags.array_api_support is (solver in ("auto", "svd", "cholesky"))
+
+    for solver in ["auto", "lbfgs"]:
+        tags = Estimator(solver=solver, positive=True).__sklearn_tags__()
+        assert tags.array_api_support is False
 
 
 # One case per code path of the solver. `fit_intercept` and `sample_weight` are

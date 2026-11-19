@@ -1029,6 +1029,17 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # With `positive=True`, "auto" resolves to "lbfgs", which does not support
+        # array API inputs.
+        supported_solver = self.solver in ("auto", "svd", "cholesky")
+        tags.array_api_support = supported_solver and not self.positive
+        tags.input_tags.sparse = (self.solver != "svd") and (
+            self.solver != "cholesky" or not self.fit_intercept
+        )
+        return tags
+
 
 class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     """Linear least squares with l2 regularization.
@@ -1281,14 +1292,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             Predicted values.
         """
         return super().predict(X)
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.array_api_support = True
-        tags.input_tags.sparse = (self.solver != "svd") and (
-            self.solver != "cholesky" or not self.fit_intercept
-        )
-        return tags
 
 
 class _RidgeClassifierMixin(LinearClassifierMixin):
@@ -1611,13 +1614,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
         super().fit(X, Y, sample_weight=sample_weight)
         return self
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = (self.solver != "svd") and (
-            self.solver != "cholesky" or not self.fit_intercept
-        )
-        return tags
 
 
 def _check_gcv_mode(X, gcv_mode):
