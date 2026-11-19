@@ -432,7 +432,7 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
 
   .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
 
-  subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
+  subject to :math:`||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
   At optimum, the duality gap is zero, :math:`G(w^\star, v^\star) = 0` (a property
   called strong duality).
   With (scaled) dual variable :math:`v = c r`, current residual :math:`r = y - Xw` and
@@ -514,7 +514,7 @@ Information-criteria based model selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Alternatively, the estimator :class:`LassoLarsIC` proposes to use the
-Akaike information criterion (AIC) or the Bayes Information criterion (BIC).
+Akaike information criterion (AIC) or the Bayesian information criterion (BIC).
 It is a computationally cheaper alternative to find the optimal value of ``alpha``
 as the regularization path is computed only once instead of k+1 times
 when using k-fold cross-validation.
@@ -563,12 +563,12 @@ we give more information regarding the criterion computed in scikit-learn.
   ``alpha=0``, we would simply have ``df=n_features`` or ``n_features + 1`` if the
   intercept is included).
 
-  The definition of BIC replaces the constant :math:`2` by :math:`\log(N)`:
+  The definition of BIC replaces the constant :math:`2` by :math:`\log(n)`:
 
   .. math::
-      BIC = -2 \log(\mathcal{L}) + \log(N) \mathrm{df}
+      BIC = -2 \log(\mathcal{L}) + \log(n) \mathrm{df}
 
-  where :math:`N` is the number of samples.
+  where :math:`n` is the number of samples.
 
   For a linear Gaussian model, the maximum log-likelihood is defined as:
 
@@ -602,8 +602,8 @@ we give more information regarding the criterion computed in scikit-learn.
       \sigma^2 = \frac{\sum_{i=1}^{n} (y_i - \tilde{y}_i)^2}{n - p}
 
   where :math:`\tilde{y}_i` are the predictions of the OLS regression with :math:`p`
-  number of coefficients (also counting the intercept). Note, that this formula is
-  valid only when `n_samples > n_features`.
+  number of coefficients (also counting the intercept). Note that this formula is
+  valid only when :math:`n > p`.
 
   .. rubric:: References
 
@@ -682,8 +682,8 @@ Elastic-Net
 ===========
 :class:`ElasticNet` is a linear regression model that combines the :math:`\ell_2`-norm
 penalty of :class:`Ridge` with the :math:`\ell_1`-norm penalty of :class:`Lasso`.
-Thereby, we get the best of both: :math:`\ell_1` is able to produce sparse models with
-only a few non-zero coefficients while :math:`\ell_2` guards against numerical
+This combines the strengths of both: :math:`\ell_1` is able to produce sparse models
+with only a few non-zero coefficients while :math:`\ell_2` guards against numerical
 instabilities and can potentially achieve a better out-of-sample squared error loss.
 The convex combination of :math:`\ell_1` and :math:`\ell_2` is called elastic-net
 penalty. This mixing is controlled by the ``l1_ratio`` parameter.
@@ -722,18 +722,21 @@ The class :class:`ElasticNetCV` can be used to set the parameters
   Interestingly, there are two different dual formulations for Elastic-Net. The
   first one can be derived by starting with the Lasso and adding ``n_features``
   artificial observations to ``X`` and ``y`` to incorporate the :math:`\ell_2` penalty.
-  The dual objective function reads
+  The artificial observations come with ``n_features`` additional dual variables
+  :math:`u`, and the dual objective function reads
 
-  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
-                 - \frac{\alpha(1-\rho)}{2} ||w||_2^2
+  .. math:: D(v, u) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
+                    - \frac{\alpha(1-\rho)}{2} ||u||_2^2
 
   with the dual feasible set
-  :math:`\{v: ||X^Tv - n_{\text{samples}}\alpha (1-\rho)w||_{\infty}
+  :math:`\{(v, u): ||X^Tv - n_{\text{samples}}\alpha (1-\rho)u||_{\infty}
   \leq n_{\text{samples}}\alpha \rho\}`.
+  At the optimum, :math:`v^\star = y - Xw^\star` and :math:`u^\star = w^\star`.
+  As for the Lasso, a dual feasible point is obtained by rescaling the current
+  residual and coefficients, :math:`(v, u) = c \cdot (y - Xw, w)`.
   The disadvantage is that for pure Ridge regression with
   :math:`\rho = \text{l1_ratio} = 0`, this constraint becomes an equality and
-  a dual feasible point is hard to find, simply rescaling the residual :math:`y - Xw`
-  does not work anymore.
+  this simple rescaling does not yield a dual feasible point anymore.
 
   The alternative formulation is derived by a direct computation of the dual and
   results in
@@ -760,7 +763,7 @@ The class :class:`ElasticNetCV` can be used to set the parameters
     Regularization and variable selection via the elastic net.
     Journal of the Royal Statistical Society Series B: Statistical Methodology, 67(2), 301-320.
     <10.1111/j.1467-9868.2005.00503.x>`
-  * :arxiv:`Mendler-Dünner, C., Forte, S., Takác, M., & Jaggi, M. (2016).
+  * :arxiv:`Dünner, C., Forte, S., Takáč, M., & Jaggi, M. (2016).
     Primal-Dual Rates and Certificates. International Conference on Machine Learning.
     <1602.05205>`
 
@@ -769,15 +772,20 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 Multi-task Elastic-Net
 ======================
 
-The :class:`MultiTaskElasticNet` is the ``n_tasks`` counterpart to :class:`ElasticNet` in
-the same way that :class:`MultiTaskLasso` extends :class:`Lasso` to ``n_tasks``
-with the task-coupling :math:`\ell_1` :math:`\ell_2`-norm.
-The additional Ridge-like :math:`\ell_2`-norm has the same beneficial properties as
-before, but it does not mix tasks.
+The :class:`MultiTaskElasticNet` is the multi-task counterpart of :class:`ElasticNet`:
+it fits multiple regression problems (tasks) jointly, with ``Y`` being a 2D array of
+shape ``(n_samples, n_tasks)``.
+It extends :class:`MultiTaskLasso` in the same way that :class:`ElasticNet` extends
+:class:`Lasso`, i.e. by adding a Ridge-like penalty.
+The mixed :math:`\ell_1` :math:`\ell_2`-norm couples each feature's coefficients across
+all tasks such that the selected features are the same for all tasks.
+The additional squared Frobenius norm has the same beneficial properties as the
+:math:`\ell_2` penalty of :class:`ElasticNet`. As it is a plain sum of squares
+over all coefficients, it does not couple the tasks.
 
-Mathematically, the multi-task elastic-net uses a convex combination of the
-:math:`\ell_1` :math:`\ell_2`-norm with the :math:`\ell_2`-norm, parametrized by
-``l1_ratio``. The objective function to minimize is:
+Mathematically, the multi-task elastic-net penalty is a convex combination of the
+:math:`\ell_1` :math:`\ell_2`-norm and the squared Frobenius norm, controlled by
+:math:`\rho=\text{l1_ratio}`. The objective function to minimize is:
 
 .. math::
 
