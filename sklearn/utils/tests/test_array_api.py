@@ -811,7 +811,7 @@ def test_add_to_diagonal(array, array_namespace, device_name, dtype_name):
 
     for add_val in [
         1,  # scalar
-        list(range(1, min(array_np.shape) + 1))  # array-like
+        list(range(1, min(array_np.shape) + 1)),  # array-like
     ]:
         with config_context(array_api_dispatch=False):
             _add_to_diagonal(array_np, value=add_val, xp=np_xp)
