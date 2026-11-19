@@ -80,6 +80,7 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingSplitter,
     _Registry,
     check_recorded_metadata,
+    run_routing_caller,
 )
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
@@ -1027,7 +1028,6 @@ def test_cross_val_predict(coo_container):
         )
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
@@ -2544,7 +2544,6 @@ def test_passed_unrequested_metadata(func, extra_args):
         )
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2608,7 +2607,8 @@ def test_validation_functions_routing(func, extra_args):
             score_metadata=score_metadata,
         )
 
-    func(
+    run_routing_caller(
+        func,
         estimator,
         X=X,
         y=y,
@@ -2653,7 +2653,6 @@ def test_validation_functions_routing(func, extra_args):
         )
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @config_context(enable_metadata_routing=True)
 def test_learning_curve_exploit_incremental_learning_routing():
     """Test that learning_curve routes metadata to the estimator correctly while
@@ -2671,7 +2670,8 @@ def test_learning_curve_exploit_incremental_learning_routing():
         sample_weight="fit_sample_weight", metadata="fit_metadata"
     )
 
-    learning_curve(
+    run_routing_caller(
+        learning_curve,
         estimator,
         X=X,
         y=y,

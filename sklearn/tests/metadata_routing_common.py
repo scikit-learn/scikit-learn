@@ -1,5 +1,7 @@
 import inspect
 from collections import defaultdict
+from contextlib import contextmanager
+from contextvars import ContextVar
 from functools import partial
 
 import numpy as np
@@ -26,6 +28,51 @@ from sklearn.utils.metadata_routing import (
     process_routing,
 )
 from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.parallel import _FuncWrapper
+
+_MetadataCaller = ContextVar("_MetadataCaller", default=None)
+
+
+_orig_funcwrapper_call = _FuncWrapper.__call__
+_orig_with_config_and_warning_filters = _FuncWrapper.with_config_and_warning_filters
+
+
+def _funcwrapper_with_config_and_warning_filters(self, config, warning_filters):
+    result = _orig_with_config_and_warning_filters(self, config, warning_filters)
+    result._metadata_caller = _MetadataCaller.get()
+    return result
+
+
+def _funcwrapper_call(self, *args, **kwargs):
+    token = _MetadataCaller.set(self._metadata_caller)
+    try:
+        return _orig_funcwrapper_call(self, *args, **kwargs)
+    finally:
+        _MetadataCaller.reset(token)
+
+
+@contextmanager
+def caller_context(caller):
+    """Set the caller so it is known to workers created via ``Parallel``."""
+    token = _MetadataCaller.set(caller)
+    try:
+        _FuncWrapper.__call__ = _funcwrapper_call
+        _FuncWrapper.with_config_and_warning_filters = (
+            _funcwrapper_with_config_and_warning_filters
+        )
+        yield
+    finally:
+        _FuncWrapper.__call__ = _orig_funcwrapper_call
+        _FuncWrapper.with_config_and_warning_filters = (
+            _orig_with_config_and_warning_filters
+        )
+        _MetadataCaller.reset(token)
+
+
+def run_routing_caller(func, *args, **kwargs):
+    """Run a function, setting the caller context to its name."""
+    with caller_context(func.__name__):
+        return func(*args, **kwargs)
 
 
 def record_metadata(obj, record_default=True, **kwargs):
@@ -49,14 +96,16 @@ def record_metadata(obj, record_default=True, **kwargs):
     # stack; for caller, extract the *outermost* matching function so the expected
     # `parent` is the top-level public entry point (e.g. `cross_validate`) rather
     # than an internal helper whose name may change. Fall back to positional frames:
-    callee = caller = None
+    callee = None
+    caller = _MetadataCaller.get()
     for i, frame in enumerate(stack):
         if frame.function in METHODS + ["consuming_metric"]:
             callee = frame.function
             break
-    for frame in stack[i + 1 :]:
-        if frame.function in METHODS + validation_functions:
-            caller = frame.function
+    if caller is None:
+        for frame in stack[i + 1 :]:
+            if frame.function in METHODS + validation_functions:
+                caller = frame.function
     callee = callee or stack[1].function
     caller = caller or stack[2].function
 

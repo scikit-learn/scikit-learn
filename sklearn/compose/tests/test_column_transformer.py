@@ -32,6 +32,7 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingTransformer,
     _Registry,
     check_recorded_metadata,
+    run_routing_caller,
 )
 from sklearn.utils._indexing import _safe_indexing
 from sklearn.utils._testing import (
@@ -2726,7 +2727,6 @@ def test_routing_passed_metadata_not_supported(method):
         getattr(trs, method)([[1]], sample_weight=[1], prop="a")
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("method", ["transform", "fit_transform", "fit"])
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_column_transformer(method):
@@ -2748,10 +2748,16 @@ def test_metadata_routing_for_column_transformer(method):
     )
 
     if method == "transform":
-        trs.fit(X, y, sample_weight=sample_weight, metadata=metadata)
-        trs.transform(X, sample_weight=sample_weight, metadata=metadata)
+        run_routing_caller(
+            trs.fit, X, y, sample_weight=sample_weight, metadata=metadata
+        )
+        run_routing_caller(
+            trs.transform, X, sample_weight=sample_weight, metadata=metadata
+        )
     else:
-        getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
+        run_routing_caller(
+            getattr(trs, method), X, y, sample_weight=sample_weight, metadata=metadata
+        )
 
     assert len(registry)
     for _trs in registry:

@@ -30,13 +30,13 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingRegressor,
     _Registry,
     check_recorded_metadata,
+    run_routing_caller,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
-    skip_if_use_threading_backend_with_high_parallelism,
 )
 
 # Load datasets
@@ -732,7 +732,6 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
     est.get_metadata_routing()
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "Estimator, Child",
     [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
@@ -758,7 +757,9 @@ def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
         ]
     )
 
-    est.fit(X, y, **{prop: sample_weight if prop == "sample_weight" else metadata})
+    run_routing_caller(
+        est.fit, X, y, **{prop: sample_weight if prop == "sample_weight" else metadata}
+    )
 
     for estimator in est.estimators:
         if prop == "sample_weight":

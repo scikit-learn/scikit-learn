@@ -41,6 +41,7 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingClassifierWithoutPredictProba,
     _Registry,
     check_recorded_metadata,
+    run_routing_caller,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import check_random_state
@@ -48,7 +49,6 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_almost_equal,
     assert_array_equal,
-    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
@@ -1103,10 +1103,9 @@ def test_bagging_allow_nan_tag(bagging, expected_allow_nan):
 def test_bagging_with_metadata_routing(model):
     """Make sure that metadata routing works with non-default estimator."""
     model = clone(model)
-    model.fit(iris.data, iris.target)
+    run_routing_caller(model.fit, iris.data, iris.target)
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "sub_estimator, caller, callee",
     [
@@ -1137,11 +1136,14 @@ def test_metadata_routing_with_dynamic_method_selection(sub_estimator, caller, c
     registry = _Registry()
     estimator = sub_estimator(registry=registry)
     set_callee_request = "set_" + callee + "_request"
-    getattr(estimator, set_callee_request)(sample_weight=True, metadata=True)
+    run_routing_caller(
+        getattr(estimator, set_callee_request), sample_weight=True, metadata=True
+    )
 
     bagging = BaggingClassifier(estimator=estimator)
-    bagging.fit(X, y)
-    getattr(bagging, caller)(
+    run_routing_caller(bagging.fit, X, y)
+    run_routing_caller(
+        getattr(bagging, caller),
         X=np.array([[1, 1], [1, 3], [0, 2]]),
         sample_weight=sample_weight,
         metadata=metadata,
