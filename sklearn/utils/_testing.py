@@ -334,6 +334,31 @@ try:
         reason="SCIPY_ARRAY_API not set, or versions of NumPy/SciPy too old.",
     )
 
+    # This is for tests that are known to fail when run with n_jobs > 1 and
+    # backend="threading". The failures don't always happen, so it's a skip
+    # instead of xfail. The plan for this to remove it from each test as fixes
+    # are merged; once all fixes are merged it can be deleted. See
+    # https://github.com/scikit-learn/scikit-learn/issues/35313 for details.
+    #
+    # Structured as an explicit decorator because pytest.mark.skipif checks too
+    # early: at import instead of at runtime.
+    def skip_if_use_threading_backend_with_high_parallelism(func):
+        @functools.wraps(func)
+        def test(*args, **kwargs):
+            if (
+                os.environ.get(
+                    "SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM"
+                )
+                == "1"
+            ):
+                pytest.skip(
+                    "Known intermittent failure that needs to be fixed; see "
+                    + "https://github.com/scikit-learn/scikit-learn/issues/35313"
+                )
+            return func(*args, **kwargs)
+
+        return test
+
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #
     #  Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction
@@ -1512,12 +1537,6 @@ def _get_warnings_filters_info_list():
             # Use `.` below instead of `:` to avoid string being split incorrectly
             message="vert. bool was deprecated in Matplotlib",
             category=DeprecationWarning,
-        ),
-        # TODO(1.10): remove PassiveAggressive
-        WarningInfo(
-            "ignore",
-            message="Class PassiveAggressive.+is deprecated",
-            category=FutureWarning,
         ),
         # TODO: remove once the version where scipy has removed all the sparse matrix
         # classes is our min version; note that scipy did not yet announce when this

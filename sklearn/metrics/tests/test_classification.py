@@ -3491,6 +3491,35 @@ def test_d2_log_loss_score_raises():
         d2_log_loss_score(y_true, y_proba, labels=labels)
 
 
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_d2_log_loss_score_array_api_precision(
+    array_namespace, device_name, dtype_name
+):
+    """Check that the null model uses the precision of `y_proba`.
+
+    The labels are integers: the default floating point dtype of the namespace can
+    be lower than the dtype of `y_proba`.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    rng = np.random.RandomState(0)
+    y_true = rng.randint(0, 2, size=21)
+    y_proba = rng.uniform(0.05, 0.95, size=21)
+    y_proba = np.stack([1 - y_proba, y_proba], axis=1).astype(dtype_name)
+
+    expected = d2_log_loss_score(y_true, y_proba)
+    with config_context(array_api_dispatch=True):
+        score = d2_log_loss_score(
+            xp.asarray(y_true, device=device), xp.asarray(y_proba, device=device)
+        )
+
+    assert score == pytest.approx(
+        expected, rel=1e-4 if dtype_name == "float32" else 1e-12
+    )
+
+
 # TODO(1.11): Remove
 def test_d2_log_loss_score_y_pred_deprecation():
     """Test `y_pred` deprecation in favor of `y_proba` for `d2_log_loss_score`."""

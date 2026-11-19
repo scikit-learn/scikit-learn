@@ -1018,7 +1018,7 @@ def test_implit_center_rmatvec(global_random_seed, centered_matrices):
             _sparse_eye_array(2, format="csr"),
             _sparse_eye_array(2, format="csr"),
             np.eye(3),
-            "Shape of out",
+            r"Shape of out must be \(2, 2\), got \(3, 3\)",
         ),
         (
             _sparse_eye_array(2, format="coo"),
