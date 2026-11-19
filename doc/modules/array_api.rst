@@ -96,6 +96,12 @@ when `array_api_dispatch=True` the output array will depend on the input array (
 Example usage
 =============
 
+.. seealso::
+
+   See :ref:`sphx_glr_auto_examples_applications_plot_array_api_gpu_pipeline.py`
+   for an end-to-end example demonstrating how to hardware-accelerate cross-validation
+   of a non-trivial mixed-type CPU/GPU pipeline using PyTorch.
+
 The example code snippet below demonstrates how to use `PyTorch
 <https://pytorch.org/>`__ to run
 :class:`~discriminant_analysis.LinearDiscriminantAnalysis` on a CUDA GPU::
