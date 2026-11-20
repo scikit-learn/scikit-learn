@@ -188,53 +188,6 @@ set_config(enable_metadata_routing=False)
 # :ref:`metadata_routing_auto_request`.
 
 # %%
-# Array API support (enables GPU computations)
-# --------------------------------------------
-# scikit-learn continues to adopt the Python array API standard, which lets
-# estimators and functions work directly on PyTorch tensors or CuPy arrays, including
-# on GPUs. In this release, array API support was added to:
-#
-# - :class:`~linear_model.LogisticRegressionCV` (with `solver="lbfgs"` and
-#   `solver="newton-cg"`), and :class:`~linear_model.LogisticRegression` with
-#   `solver="newton-cg"`;
-# - :class:`~covariance.LedoitWolf` and :class:`~covariance.OAS`;
-# - :func:`~metrics.matthews_corrcoef` and
-#   :func:`~metrics.cluster.contingency_matrix`.
-#
-# Several estimators, metrics and cross-validation tools now also accept `y` and
-# `sample_weight` from a different namespace or device than `X`. For instance, `X`
-# can be on a GPU while `y` stays a NumPy array of string labels on the CPU, which
-# matters because PyTorch tensors do not support string values:
-#
-# .. code-block:: python
-#
-#     import os
-#
-#     # Must be set before SciPy is imported (scikit-learn imports SciPy).
-#     os.environ["SCIPY_ARRAY_API"] = "1"
-#
-#     import numpy as np
-#     import torch
-#
-#     import sklearn
-#     from sklearn.datasets import make_classification
-#     from sklearn.linear_model import LogisticRegressionCV
-#
-#     X, y = make_classification(random_state=0)
-#     X_gpu = torch.asarray(X, dtype=torch.float32, device="cuda")
-#     y_labels = np.array(["cat", "dog"])[y]  # NumPy string labels on the CPU
-#
-#     with sklearn.config_context(array_api_dispatch=True):
-#         clf = LogisticRegressionCV(solver="lbfgs", scoring="accuracy")
-#         clf.fit(X_gpu, y_labels)
-#         print(clf.coef_.device, clf.classes_)
-#         print(clf.predict(X_gpu[:5]))
-#
-# Out::
-#
-#     cuda:0 ['cat' 'dog']
-#     ['cat' 'cat' 'dog' 'dog' 'cat']
-#
-# Array API support is experimental and must be explicitly enabled both in SciPy and
-# scikit-learn. See :ref:`array_api` for instructions and :ref:`array_api_supported`
-# for the full list of supported estimators and functions.
+# Performance Update
+# ------------------
+# TODO
