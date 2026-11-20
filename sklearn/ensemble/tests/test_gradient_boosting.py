@@ -2,6 +2,7 @@
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 
+import pickle
 import re
 import warnings
 
@@ -22,7 +23,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import scale
 from sklearn.svm import NuSVR
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, validate_model
 from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.utils._testing import (
@@ -1675,3 +1676,64 @@ def test_criterion_param_deprecation(GradientBoosting):
     with pytest.warns(FutureWarning, match="criterion"):
         reg = GradientBoosting(criterion="friedman_mse")
         reg.fit(X, y)
+
+
+def test_validate_model_rejects_n_features_in_mismatch():
+    """``validate_model`` raises when a tree disagrees with the ensemble on features.
+
+    ``predict_stages`` traverses the trees directly on ``X``, which is only
+    checked against the ensemble's ``n_features_in_``, so every tree must
+    expect that many features.
+    """
+    X, y = make_classification(n_samples=50, n_features=4, random_state=0)
+    gb = GradientBoostingClassifier(n_estimators=3, random_state=0).fit(X, y)
+    validate_model(gb)
+    validate_model(pickle.loads(pickle.dumps(gb)))
+
+    gb.estimators_[1, 0].n_features_in_ = 10
+    with pytest.raises(ValueError, match="one of its estimators expects 10"):
+        gb.__sklearn_validate_model__()
+    with pytest.raises(ValueError, match="features"):
+        validate_model(gb)
+
+
+def test_validate_model_rejects_estimators_shape_mismatch():
+    """``validate_model`` raises when ``estimators_`` has the wrong number of columns.
+
+    ``predict_stages`` adds the predictions of the trees in a column of
+    ``estimators_`` to the same column of the raw predictions, so
+    ``estimators_`` must have ``n_trees_per_iteration_`` columns.
+    """
+    X, y = make_classification(n_samples=50, n_features=4, random_state=0)
+    gb = GradientBoostingClassifier(n_estimators=4, random_state=0).fit(X, y)
+    validate_model(gb)
+
+    gb.estimators_ = gb.estimators_.reshape(1, -1)
+    with pytest.raises(ValueError, match="n_trees_per_iteration_ is 1"):
+        gb.__sklearn_validate_model__()
+    with pytest.raises(ValueError, match="n_trees_per_iteration_"):
+        validate_model(gb)
+
+
+def test_predict_stages_rejects_out_shape_mismatch():
+    """``predict_stages`` raises when ``out`` does not match ``X`` and ``estimators``.
+
+    Non-regression test for a memory-safety issue: ``out[i, k]`` is written
+    without bounds checking for each sample of ``X`` and each column of
+    ``estimators``, so a smaller ``out`` was written past its end.
+    """
+    X, y = make_classification(n_samples=50, n_features=4, random_state=0)
+    gb = GradientBoostingClassifier(n_estimators=4, random_state=0).fit(X, y)
+    X = X.astype(np.float32)
+    # `out` is a view on a larger array, so that the writes stay within
+    # allocated memory should the check ever go missing.
+    buffer = np.zeros((X.shape[0], 4), dtype=np.float64)
+
+    # Fewer columns than `estimators`.
+    estimators = gb.estimators_.reshape(1, -1)
+    with pytest.raises(ValueError, match="out should have shape"):
+        predict_stages(estimators, X, gb.learning_rate, buffer[:, :1])
+
+    # Fewer rows than `X`.
+    with pytest.raises(ValueError, match="out should have shape"):
+        predict_stages(gb.estimators_, X, gb.learning_rate, buffer[:10, :1])

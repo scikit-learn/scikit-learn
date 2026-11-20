@@ -185,3 +185,161 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
         n_threads,
     )
     assert_allclose(predictions, [1, 1])
+
+
+def _make_valid_nodes(n_nodes=3, categorical=False):
+    """A single split at the root with two leaf children."""
+    nodes = np.zeros(n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
+    nodes[0]["left"] = 1
+    nodes[0]["right"] = 2
+    nodes[0]["is_categorical"] = categorical
+    nodes[1]["is_leaf"] = True
+    nodes[2]["is_leaf"] = True
+    return nodes
+
+
+def test_check_state_rejects_out_of_bounds_children():
+    """``check_state`` should reject out-of-bounds child indices.
+
+    Non-regression test for a memory-safety issue, making sure a corrupted
+    predictor is rejected instead of segfaulting at prediction time.
+    """
+    nodes = _make_valid_nodes()
+    is_categorical = np.zeros(1, dtype=np.uint8)
+    TreePredictor(nodes, None, None).check_state(1, is_categorical)
+
+    for field in ("left", "right"):
+        tampered = nodes.copy()
+        tampered[field][0] = 999_999_999
+        with pytest.raises(ValueError, match=f"out-of-bounds '{field}'"):
+            TreePredictor(tampered, None, None).check_state(1, is_categorical)
+
+
+def test_check_state_rejects_out_of_bounds_feature_idx():
+    """``check_state`` should reject a split on a feature ``X`` doesn't have.
+
+    Non-regression test for a memory-safety issue: ``feature_idx`` is
+    dereferenced as a column index into ``X`` in the nogil traversal.
+    """
+    nodes = _make_valid_nodes()
+    is_categorical = np.zeros(2, dtype=np.uint8)
+    nodes[0]["feature_idx"] = 1
+    TreePredictor(nodes, None, None).check_state(2, is_categorical)
+
+    for bad_value in (2, -1):
+        tampered = nodes.copy()
+        tampered[0]["feature_idx"] = bad_value
+        with pytest.raises(ValueError, match="out-of-bounds 'feature_idx'"):
+            TreePredictor(tampered, None, None).check_state(2, is_categorical)
+
+    # Leaves never dereference `feature_idx`.
+    tampered = nodes.copy()
+    tampered[1]["feature_idx"] = 999
+    TreePredictor(tampered, None, None).check_state(2, is_categorical)
+
+
+def test_check_state_rejects_cyclic_children():
+    """``check_state`` should reject children that don't strictly increase.
+
+    Non-regression test for corrupted node arrays that make ``predict`` loop
+    forever over the nodes because it never reaches a leaf.
+    """
+    nodes = _make_valid_nodes()
+    is_categorical = np.zeros(1, dtype=np.uint8)
+
+    # Self-loop: the root points at itself.
+    tampered = nodes.copy()
+    tampered[0]["left"] = 0
+    with pytest.raises(ValueError, match="out-of-bounds 'left'"):
+        TreePredictor(tampered, None, None).check_state(1, is_categorical)
+
+    # Back-edge: node 1 becomes a split pointing back to the root (0 <= 1), so
+    # traversal would cycle 0 -> 1 -> 0 -> ... forever.
+    tampered = nodes.copy()
+    tampered[1]["is_leaf"] = False
+    tampered[1]["left"] = 0
+    tampered[1]["right"] = 2
+    with pytest.raises(ValueError, match="out-of-bounds 'left'"):
+        TreePredictor(tampered, None, None).check_state(1, is_categorical)
+
+
+def test_check_state_rejects_shared_children():
+    """``check_state`` should reject a node being the child of several nodes.
+
+    Non-regression test for corrupted node arrays that are a DAG instead of a
+    tree: the number of root-to-leaf paths then grows exponentially with the
+    number of nodes, and ``compute_partial_dependence`` walks all of them.
+    """
+    nodes = np.zeros(4, dtype=PREDICTOR_RECORD_DTYPE)
+    nodes[0]["left"] = 1
+    nodes[0]["right"] = 2
+    nodes[1]["left"] = 3
+    nodes[1]["right"] = 3  # same child twice
+    nodes[2]["is_leaf"] = True
+    nodes[3]["is_leaf"] = True
+
+    with pytest.raises(ValueError, match="child of at most one node"):
+        TreePredictor(nodes, None, None).check_state(1, np.zeros(1, dtype=np.uint8))
+
+
+def test_check_state_rejects_categorical_split_on_numerical_feature():
+    """``check_state`` should reject a categorical split on a numerical feature.
+
+    Non-regression test for a memory-safety issue: ``predict`` looks the known
+    categories of the split's feature up in an array that only has a row per
+    categorical feature.
+    """
+    nodes = _make_valid_nodes(categorical=True)
+    bitsets = np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE)
+    predictor = TreePredictor(nodes, bitsets, bitsets)
+    predictor.check_state(1, np.ones(1, dtype=np.uint8))
+
+    with pytest.raises(ValueError, match="on a categorical feature"):
+        predictor.check_state(1, np.zeros(1, dtype=np.uint8))
+
+
+def test_check_state_rejects_out_of_bounds_bitset_idx():
+    """``check_state`` should reject out-of-bounds ``bitset_idx`` values.
+
+    Non-regression test for a memory-safety issue: a categorical split node's
+    ``bitset_idx`` is used as a row index into the categorical bitset arrays in
+    the nogil traversal, so an out-of-range value would read out of bounds.
+    """
+    nodes = _make_valid_nodes(categorical=True)
+    is_categorical = np.ones(1, dtype=np.uint8)
+    # A single categorical split -> a single bitset row (index 0 is the only
+    # valid value).
+    binned_cat_bitsets = np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE)
+    raw_cat_bitsets = np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE)
+    predictor = TreePredictor(nodes, binned_cat_bitsets, raw_cat_bitsets)
+    predictor.check_state(1, is_categorical)
+
+    tampered = nodes.copy()
+    tampered[0]["bitset_idx"] = 5
+    predictor = TreePredictor(tampered, binned_cat_bitsets, raw_cat_bitsets)
+    with pytest.raises(ValueError, match="out-of-bounds 'bitset_idx'"):
+        predictor.check_state(1, is_categorical)
+
+
+@pytest.mark.parametrize("name", ["binned_left_cat_bitsets", "raw_left_cat_bitsets"])
+def test_check_state_rejects_narrow_cat_bitsets(name):
+    """``check_state`` should reject bitset arrays with too few columns.
+
+    Non-regression test for a memory-safety issue: the bitset arrays are indexed
+    as ``bitsets[bitset_idx, binned_value // 32]`` with ``binned_value`` a uint8,
+    so an array with fewer than ``X_BITSET_LENGTH`` columns is read out of bounds
+    even when ``bitset_idx`` itself is a valid row.
+    """
+    nodes = _make_valid_nodes(categorical=True)
+    bitsets = {
+        "binned_left_cat_bitsets": np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE),
+        "raw_left_cat_bitsets": np.zeros((1, 8), dtype=X_BITSET_INNER_DTYPE),
+    }
+    # Right number of rows, but too few columns.
+    bitsets[name] = np.zeros((1, 1), dtype=X_BITSET_INNER_DTYPE)
+
+    predictor = TreePredictor(
+        nodes, bitsets["binned_left_cat_bitsets"], bitsets["raw_left_cat_bitsets"]
+    )
+    with pytest.raises(ValueError, match=f"'{name}' has an invalid shape"):
+        predictor.check_state(1, np.ones(1, dtype=np.uint8))
