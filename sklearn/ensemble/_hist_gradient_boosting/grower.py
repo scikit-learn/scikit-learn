@@ -268,6 +268,9 @@ class TreeGrower:
         shrinkage=1.0,
         n_threads=None,
         active_wait=False,
+        partition_buffer=None,
+        left_indices_buffer=None,
+        right_indices_buffer=None,
     ):
         self._validate_parameters(
             X_binned,
@@ -336,6 +339,9 @@ class TreeGrower:
             rng=rng,
             n_threads=n_threads,
             active_wait=active_wait,
+            partition_buffer=partition_buffer,
+            left_indices_buffer=left_indices_buffer,
+            right_indices_buffer=right_indices_buffer,
         )
         self.X_binned = X_binned
         self.max_leaf_nodes = max_leaf_nodes

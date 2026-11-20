@@ -41,7 +41,7 @@ We adopted the following release schedule:
 
 - The release manager must be a **maintainer** of the
   https://github.com/conda-forge/scikit-learn-feedstock repository to be able to publish
-  on `conda-forge`. This can be changed by editing the `recipe/meta.yaml` file in the
+  on `conda-forge`. This can be changed by editing the `recipe/recipe.yaml` file in the
   first release pull request.
 
 Reference Steps
