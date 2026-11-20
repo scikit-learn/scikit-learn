@@ -75,6 +75,7 @@ from sklearn.tests.metadata_routing_common import (
     assert_request_is_empty,
     check_recorded_metadata,
 )
+from sklearn.utils._testing import skip_if_use_threading_backend_with_high_parallelism
 from sklearn.utils.metadata_routing import MetadataRouter, get_routing_for_object
 
 rng = np.random.RandomState(42)
@@ -745,15 +746,14 @@ def test_registry_copy():
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_default_request(metaestimator):
-    # Check that by default request is empty and the right type
+    # Check that request is empty and the right type
     metaestimator_class = metaestimator["metaestimator"]
     kwargs, *_ = get_init_args(metaestimator, sub_estimator_consumes=True)
     instance = metaestimator_class(**kwargs)
     if "cv_name" in metaestimator:
-        # Our GroupCV splitters request groups by default, which we should
-        # ignore in this test.
+        # Our GroupCV splitters request groups which we should ignore in this test
         exclude = {"splitter": ["split"]}
     else:
         exclude = None
@@ -762,7 +762,7 @@ def test_default_request(metaestimator):
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_error_on_missing_requests_for_sub_estimator(metaestimator):
     # Test that a UnsetMetadataPassedError is raised when the sub-estimator's
     # requests are not set
@@ -822,8 +822,9 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                     method(X, **method_kwargs)
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_setting_request_on_sub_estimator_removes_error(metaestimator):
     # When the metadata is explicitly requested on the sub-estimator, there
     # should be no errors.
@@ -966,6 +967,7 @@ def test_non_consuming_estimator_works(metaestimator):
             method(X, **extra_method_args)
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_metadata_is_routed_correctly_to_scorer(metaestimator):
@@ -1049,6 +1051,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
             )
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):

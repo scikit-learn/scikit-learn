@@ -17,7 +17,7 @@ from scipy.optimize import minimize
 from sklearn import config_context
 from sklearn._loss import HalfMultinomialLoss
 from sklearn.base import clone
-from sklearn.callback.tests._common.callbacks import RecordingCallback
+from sklearn.callback._testing.callbacks import RecordingCallback, StopFitCallback
 from sklearn.datasets import load_iris, make_classification, make_low_rank_matrix
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression, LogisticRegressionCV, SGDClassifier
@@ -641,7 +641,7 @@ def test_logistic_cv_refit_false_non_elasticnet(global_random_seed, n_jobs):
     """
     X, y = make_classification(random_state=global_random_seed)
     lr_cv = LogisticRegressionCV(
-        alphas=10,
+        alphas=[0.1, 1.0, 10.0],
         l1_ratios=[0.0],
         refit=False,
         random_state=global_random_seed,
@@ -3258,17 +3258,38 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
             assert iter_end["kwargs"]["fitted_estimator"] is None
 
 
-# TODO(1.10): Uncomment when scipy callbacks can be interrupted with StopIteration in
-# min dependencies (i.e. when min scipy version > 1.10 and StopIteration gets used
-# in the scipy callback function, see TODO in _make_scipy_callback_fun).
 # TODO(callbacks): also test for other solvers when they get supported.
-# def test_logistic_regression_fit_stopped_by_callback():
-#     """Test that a callback can interrupt the fit."""
-#     X, y = load_iris(return_X_y=True)
-#     cb = StopFitCallback()
-#     lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
-#     lr.fit(X, y)
-#     assert lr.n_iter_ == 1
+@skip_callback_test_if_wasm
+def test_logistic_regression_fit_stopped_by_callback():
+    """Test that a callback can interrupt the fit.
+
+    Stopping the fit through a callback is on purpose, so no ConvergenceWarning
+    should be raised.
+    """
+    X, y = load_iris(return_X_y=True)
+    cb = StopFitCallback()
+    lr = LogisticRegression(solver="lbfgs").set_callbacks(cb)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        lr.fit(X, y)
+    assert lr.n_iter_ == 1
+    # Every task that was begun is ended exactly once.
+    begins = [rec["context"] for rec in cb.record if rec["name"] == "on_fit_task_begin"]
+    ends = [rec["context"] for rec in cb.record if rec["name"] == "on_fit_task_end"]
+    assert sorted(map(id, begins)) == sorted(map(id, ends))
+
+
+# TODO(callbacks): also test for other solvers when they get supported.
+@skip_callback_test_if_wasm
+def test_logistic_regression_callback_max_iter_convergence_warning():
+    """Test that a ConvergenceWarning is still raised when callbacks are set but
+    don't stop the fit and max_iter is reached before convergence."""
+    X, y = load_iris(return_X_y=True)
+    lr = LogisticRegression(solver="lbfgs", max_iter=1).set_callbacks(
+        RecordingCallback()
+    )
+    with pytest.warns(ConvergenceWarning):
+        lr.fit(X, y)
 
 
 # TODO(1.14): remove filterwarnings with deprecation period of C and Cs

@@ -18,6 +18,7 @@ API or give up cross-process capabilities.
 
 import os
 import weakref
+from multiprocessing import AuthenticationError
 from multiprocessing.connection import Client, Listener
 from threading import Thread
 
@@ -27,6 +28,10 @@ from threading import Thread
 # unpickled copy that does not hold the listener, whether this process is the one that
 # opened it.
 _listeners: dict[str, Listener] = {}
+
+# Names need not be unique. The shared prefix lets tests and debuggers tell these
+# threads apart from unrelated ones (joblib, pytest plugins, ...).
+_TRANSPORT_THREAD_NAME_PREFIX = "sklearn_callback_transport_"
 
 
 class Channel:
@@ -176,19 +181,40 @@ def open_listener(message_consumer):
             return
 
     def _accept():
-        while True:
-            try:
-                conn = listener.accept()
-            except OSError:
-                return
-            Thread(target=_handle, args=(conn,), daemon=True).start()
+        try:
+            while listener.address in _listeners:
+                try:
+                    conn = listener.accept()
+                except AuthenticationError:
+                    # Rejected handshake. The listening socket is still open.
+                    continue
+                except (OSError, EOFError):
+                    break  # woken up by `close_listener`, or the listener failed
+                Thread(
+                    target=_handle,
+                    args=(conn,),
+                    name=f"{_TRANSPORT_THREAD_NAME_PREFIX}handle",
+                    daemon=True,
+                ).start()
+        finally:
+            listener.close()
 
-    Thread(target=_accept, daemon=True).start()
+    Thread(
+        target=_accept, name=f"{_TRANSPORT_THREAD_NAME_PREFIX}accept", daemon=True
+    ).start()
     return listener.address, authkey
 
 
 def close_listener(address):
     """Stop listening at `address` and free its background threads."""
-    listener = _listeners.pop(address, None)
-    if listener is not None:
-        listener.close()
+    if _listeners.pop(address, None) is None:
+        return  # already closed
+
+    try:
+        # The accept thread is waiting in `accept`, and closing the listener would not
+        # interrupt that call. Connecting to it does: we connect without the authkey so
+        # that the authentication handshake fails, and that failure is what makes the
+        # accept thread break out of its loop.
+        Client(address).close()
+    except OSError:
+        pass  # the accept thread is already gone, e.g. its listener failed
