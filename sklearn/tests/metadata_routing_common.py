@@ -111,7 +111,7 @@ def record_metadata(obj, record_default=True, **kwargs):
     if caller is None:
         # This means the caller was not set via run_routing_caller(). Which is
         # fine, we can get it from the stack—but that is only consistently
-        # reliable if we're not going through a Parallel. So much sure we're
+        # reliable if we're not going through a Parallel. So make sure we're
         # not.
         for frame in stack:
             if frame.filename == parallel_filename:
