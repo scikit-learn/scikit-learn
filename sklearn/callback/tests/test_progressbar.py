@@ -219,3 +219,25 @@ def test_estimator_without_subtasks(capsys):
     captured = capsys.readouterr()
     assert re.search(r"NoSubtaskEstimator - fit", captured.out)
     assert re.search(r"100%", captured.out)
+
+
+def test_two_progressbars(capsys):
+    """Test attaching two progress bars to the same estimator.
+
+    Only the last progress bar should be displayed. The first one should be disabled. If
+    not disabled, `_run_queues.pop(context.root_uuid)` in `teardown` would raise a
+    KeyError.
+    """
+    pytest.importorskip("rich")
+
+    est = MaxIterEstimator(max_iter=5)
+    meta_est = MetaEstimator(est, n_outer=2, n_inner=1)
+    meta_est.set_callbacks(
+        ProgressBar(max_propagation_depth=1), ProgressBar(max_propagation_depth=0)
+    )
+    meta_est.fit()
+    captured = capsys.readouterr()
+    assert re.search(r"MetaEstimator - fit", captured.out)
+    # "MaxIterEstimator - fit" should not be displayed as the first progressbar should
+    # be disabled.
+    assert not re.search(r"MaxIterEstimator - fit", captured.out)
