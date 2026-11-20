@@ -1,0 +1,6 @@
+- :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, and :class:`ensemble.ExtraTreesRegressor`
+  now support ``warm_start`` together with categorical features, matching
+  :class:`~sklearn.ensemble.HistGradientBoostingClassifier` /
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
+  By :user:`Adam Li <adam2392>`.
