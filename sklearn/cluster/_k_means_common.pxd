@@ -11,6 +11,8 @@ cdef floating _euclidean_dense_dense(
 cdef floating _euclidean_sparse_dense(
     const floating[::1],
     const int[::1],
+    int,
+    int,
     const floating[::1],
     floating,
     bint
@@ -46,3 +48,10 @@ cdef void _center_shift(
     const floating[:, ::1],
     floating[::1]
 )
+
+cdef void _reduce_thread_buffers(
+    floating[:, ::1],
+    int,
+    floating[:, ::1],
+    floating[::1]
+) noexcept nogil
