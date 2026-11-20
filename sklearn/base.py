@@ -1401,9 +1401,9 @@ def _fit_context(*, prefer_skip_nested_validation):
                 ),
                 callback_management_context(estimator),
             ):
-                fitted = fit_method(estimator, *args, **kwargs)
+                out = fit_method(estimator, *args, **kwargs)
                 _fitted_attrs_as_numpy(estimator)
-                return fitted
+                return out
 
         return wrapper
 
