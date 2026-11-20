@@ -15,36 +15,53 @@ from sklearn.callback._transport import (
 )
 
 
-def _transport_name_counts():
-    return Counter(
-        thread.name
+def _transport_threads():
+    return [
+        thread
         for thread in threading.enumerate()
         if thread.name.startswith(_TRANSPORT_THREAD_NAME_PREFIX)
-    )
+    ]
 
 
-def _assert_accept_thread_running(baseline):
+def _snapshot_transport_threads():
+    # Thread objects, not their names or counts. A listener finalized on another
+    # thread can exit between the snapshot and the check; comparing counts then
+    # hides the thread this test just started, or reports it as a leak.
+    return set(_transport_threads())
+
+
+def _new_transport_threads(baseline):
+    return [thread for thread in _transport_threads() if thread not in baseline]
+
+
+def _assert_accept_thread_running(baseline, timeout=1):
     """This test's accept thread is alive and carries the transport name.
 
-    The count is relative to `baseline` so threads left by earlier tests are
-    ignored. Without this check, `_assert_no_leftover_threads` would pass
-    vacuously if the threads were no longer named with the prefix.
+    Threads already in `baseline` are ignored. Without this check,
+    `_assert_no_leftover_threads` would pass vacuously if the threads were no
+    longer named with the prefix.
     """
-    delta = _transport_name_counts() - baseline
-    assert delta == Counter({f"{_TRANSPORT_THREAD_NAME_PREFIX}accept": 1}), delta
+    accept = f"{_TRANSPORT_THREAD_NAME_PREFIX}accept"
+    while True:
+        new = _new_transport_threads(baseline)
+        if [thread.name for thread in new] == [accept] and new[0].is_alive():
+            return
+        timeout -= 0.05
+        assert timeout > 0, [thread.name for thread in new]
+        time.sleep(0.05)
 
 
 def _assert_no_leftover_threads(baseline, timeout=1):
     """Assert that the background threads started by this test have exited.
 
     They exit asynchronously, hence the polling. Only threads whose names start
-    with the transport prefix are considered, and only the ones beyond
-    `baseline`, so unrelated threads and threads left by earlier tests cannot
-    hide a leak or fail the test.
+    with the transport prefix are considered, and only the ones that were not
+    already in `baseline`, so unrelated threads and threads left by earlier
+    tests cannot hide a leak or fail the test.
     """
-    while delta := _transport_name_counts() - baseline:
+    while new := _new_transport_threads(baseline):
         timeout -= 0.05
-        assert timeout > 0, f"leftover threads: {delta}"
+        assert timeout > 0, f"leftover threads: {[thread.name for thread in new]}"
         time.sleep(0.05)
 
 
@@ -56,7 +73,7 @@ def test_close_listener_stops_accept_thread():
     accepted, because its frame keeps a reference to it. Both ends of that socket then
     stay open even though nothing reads from them anymore.
     """
-    baseline = _transport_name_counts()
+    baseline = _snapshot_transport_threads()
     listener_handle = open_listener(lambda message: None)
     _assert_accept_thread_running(baseline)
 
@@ -74,7 +91,7 @@ def test_close_listener_whose_accept_thread_is_already_gone():
     out, and the address stays registered until someone closes it, so `close_listener`
     then has an address it cannot connect to.
     """
-    baseline = _transport_name_counts()
+    baseline = _snapshot_transport_threads()
     listener_handle = open_listener(lambda message: None)
     _assert_accept_thread_running(baseline)
 
@@ -100,7 +117,7 @@ def test_handle_thread_is_named_and_exits():
         started.set()
         release.wait()
 
-    baseline = _transport_name_counts()
+    baseline = _snapshot_transport_threads()
     listener_handle = open_listener(consumer)
 
     def send_one():
@@ -115,13 +132,13 @@ def test_handle_thread_is_named_and_exits():
     sender.start()
     try:
         assert started.wait(timeout=2)
-        delta = _transport_name_counts() - baseline
-        assert delta == Counter(
+        new = _new_transport_threads(baseline)
+        assert Counter(thread.name for thread in new) == Counter(
             {
                 f"{_TRANSPORT_THREAD_NAME_PREFIX}accept": 1,
                 f"{_TRANSPORT_THREAD_NAME_PREFIX}handle": 1,
             }
-        ), delta
+        ), [thread.name for thread in new]
     finally:
         release.set()
         sender.join(timeout=2)
@@ -140,7 +157,7 @@ def test_rejected_handshake_keeps_accept_thread():
     answers and is rejected must leave the listener open.
     """
     received = []
-    baseline = _transport_name_counts()
+    baseline = _snapshot_transport_threads()
     listener_handle = open_listener(received.append)
     try:
         _assert_accept_thread_running(baseline)
@@ -166,13 +183,15 @@ def test_rejected_handshake_keeps_accept_thread():
         assert received == ["ok"]
         # The handler for "ok" exits after the client closes, so wait it out.
         # The accept thread itself must stay.
+        accept = f"{_TRANSPORT_THREAD_NAME_PREFIX}accept"
         timeout = 1
-        while (delta := _transport_name_counts() - baseline) != Counter(
-            {f"{_TRANSPORT_THREAD_NAME_PREFIX}accept": 1}
-        ):
-            assert delta[f"{_TRANSPORT_THREAD_NAME_PREFIX}accept"] >= 1, delta
+        while Counter(
+            thread.name for thread in _new_transport_threads(baseline)
+        ) != Counter({accept: 1}):
+            names = [thread.name for thread in _new_transport_threads(baseline)]
+            assert names.count(accept) >= 1, names
             timeout -= 0.05
-            assert timeout > 0, delta
+            assert timeout > 0, names
             time.sleep(0.05)
     finally:
         close_listener(listener_handle)
