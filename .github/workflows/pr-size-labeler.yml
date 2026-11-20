@@ -31,7 +31,7 @@ jobs:
               [Pull Request guidelines](https://scikit-learn.org/dev/developers/contributing.html#pull-request-checklist)
     steps:
       - name: Label PR by size
-        uses: codelytv/pr-size-labeler@19c335e7695ba922de938806dd129f0a9b992644 # v1.12.0
+        uses: codelytv/pr-size-labeler@v1.12.0
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           xs_label: "size/XS"
