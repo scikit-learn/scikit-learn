@@ -1113,6 +1113,52 @@ def check_supervised_y_no_nan(name, estimator_orig):
             estimator.fit(X, y)
 
 
+def _non_numpy_array_paths(obj, path="", seen=None):
+    """Return the paths of all arrays inside `obj` that are not NumPy arrays.
+
+    Walks containers and the attributes of scikit-learn objects, including
+    nested estimators and private helper objects, but not the constructor
+    parameters of estimators. A fitted estimator that stores its attributes as
+    NumPy should hold no other arrays, for example so that it can be unpickled
+    without the array library it was fitted with.
+    """
+    if isinstance(obj, (np.ndarray, np.generic)):
+        return []
+    if hasattr(obj, "__dlpack__"):
+        return [path]
+
+    # Arrays can be shared without harm, only containers and objects can form
+    # reference cycles.
+    if seen is None:
+        seen = set()
+    if id(obj) in seen:
+        return []
+    seen.add(id(obj))
+
+    if isinstance(obj, dict):
+        items = ((f"{path}[{key!r}]", value) for key, value in obj.items())
+    elif isinstance(obj, (list, tuple, set, frozenset)):
+        items = ((f"{path}[{i}]", value) for i, value in enumerate(obj))
+    elif (
+        not isinstance(obj, type)
+        and type(obj).__module__.startswith("sklearn.")
+        and hasattr(obj, "__dict__")
+    ):
+        params = obj.get_params(deep=False) if hasattr(obj, "get_params") else {}
+        items = (
+            (f"{path}.{name}", value)
+            for name, value in vars(obj).items()
+            if name not in params
+        )
+    else:
+        return []
+
+    paths = []
+    for item_path, value in items:
+        paths.extend(_non_numpy_array_paths(value, item_path, seen))
+    return paths
+
+
 def _check_array_api_core(
     estimator_orig,
     X_ns_and_device,
@@ -1181,6 +1227,13 @@ def _check_array_api_core(
     # `_NUMPY_FITTED_ATTRS`. Once every array API estimator stores its fitted
     # arrays as NumPy, only the NumPy branch is left.
     stores_numpy = type(est_xp).__name__ in _NUMPY_FITTED_ATTRS
+
+    if stores_numpy:
+        non_numpy_paths = _non_numpy_array_paths(est_xp, type(est_xp).__name__)
+        assert not non_numpy_paths, (
+            "Fitted estimators should only hold NumPy arrays, found other arrays "
+            f"at: {', '.join(non_numpy_paths)}"
+        )
 
     # Fitted attributes which are arrays must have the same namespace as `X`,
     # except `classes_`, to allow it to be string when `y` is string.
