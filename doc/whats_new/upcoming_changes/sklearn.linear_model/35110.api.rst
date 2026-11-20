@@ -9,8 +9,10 @@
 
   The new option `"auto"` is set as the default. The idea is to select a solver that
   works no matter which `l1_ratio` is chosen. For pure L2-penalties or no penalty,
-  the behavior stays unchanged and `"lbfgs"` is selected. Note that the selection of
-  `"auto"` might change in future versions without deprecation.
+  the behavior stays unchanged and `"lbfgs"` is selected. For `l1_ratio > 0`,
+  `"newton-cd-gram"` is selected if `n_samples >= n_features` and `"newton-cd"`
+  otherwise. Note that the selection of `"auto"` might change in future versions
+  without deprecation.
 
   To record which solver was selected, the attribute `solver_` was also added.
   By :user:`Christian Lorentzen <lorentzenchr>`.

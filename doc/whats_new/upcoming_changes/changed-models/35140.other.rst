@@ -1,0 +1,5 @@
+- The k-means++ initialization of :class:`cluster.KMeans`,
+  :class:`cluster.MiniBatchKMeans` and :func:`cluster.kmeans_plusplus` now draws
+  the candidate centers differently. For a fixed `random_state`, the selected
+  initial centers, and hence the fitted clusters, may differ from previous versions.
+  By :user:`Arthur Lacote <cakedev0>`.

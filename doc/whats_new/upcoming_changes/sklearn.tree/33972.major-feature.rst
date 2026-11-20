@@ -7,3 +7,4 @@
   up to ``2**24 - 1`` categories via random hash splits.
   By :user:`Adam Li <adam2392>`, :user:`Arthur Lacote <cakedev0>`,
   :user:`Adrin Jalali <adrinjalali>` and :user:`Christian Lorentzen <lorentzenchr>`.
+  :pr:`33354` and
