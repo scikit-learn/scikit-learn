@@ -59,7 +59,7 @@ method to register callbacks on them. The following example shows how to registe
 Now that the progress bar is registered on the estimator, calling its `fit` method will
 display a progress bar::
 
-    >>> logreg.fit(X, y) # doctest: +SKIP
+    >>> logreg.fit(X, y)
     LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
     LogisticRegression(max_iter=200, solver='lbfgs')
 
@@ -89,7 +89,7 @@ ids are consecutive integers starting from 0. Some callbacks may provide additio
 contextual information about the tasks. Here's an example of the logs of the
 :class:`~ScoringMonitor`::
 
-    >>> logreg.fit(X, y, X_val=X_val, y_val=y_val) # doctest: +SKIP
+    >>> logreg.fit(X, y, X_val=X_val, y_val=y_val)
     LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
     LogisticRegression(max_iter=200, solver='lbfgs')
     >>> log = scoring_monitor.get_logs().val_scores_as_pandas
