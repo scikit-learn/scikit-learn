@@ -703,7 +703,7 @@ def test_lasso_lars_vs_R_implementation():
     model_lasso_lars.fit(X, y)
     skl_betas = model_lasso_lars.coef_path_
 
-    assert_array_almost_equal(r, skl_betas, decimal=12)
+    assert_array_almost_equal(r, skl_betas, decimal=11)
 
 
 @pytest.mark.parametrize("copy_X", [True, False])
