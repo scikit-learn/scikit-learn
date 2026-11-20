@@ -2,7 +2,8 @@ name: AgentScan
 # Scan the activity of the authors of new PRs and issues with AgentScan
 # (https://agentscan.tools). When the activity looks automated, label the PR
 # or issue and post a comment linking to the analysis and to our Automated
-# Contributions Policy. Nothing is posted for organic activity.
+# Contributions Policy. Accounts with too little public activity only get a
+# short "Insufficient data" comment. Nothing is posted for organic activity.
 
 permissions:
   contents: read
@@ -16,22 +17,33 @@ on:
     types:
       - opened
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
 jobs:
   agentscan:
     if: github.repository == 'scikit-learn/scikit-learn'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
       issues: write
       pull-requests: write
     steps:
       - name: AgentScan
-        uses: MatteoGabriele/agentscan-action@7ad606f1e21df2119da8be99b763f282a670a1c5 # v2.8.0
+        uses: MatteoGabriele/agentscan-action@v2.8.0
+        # A failed scan (GitHub API error, rate limit) should not show up as a
+        # failed check on the PR of a contributor.
+        continue-on-error: true
         with:
           mode: full
           scan-pull-requests: true
           scan-issues: true
           trusted-author-associations: "owner,member,collaborator"
+          # Org members with a private membership are not seen as members by
+          # the workflow token, so they are listed here.
+          allowed-users: "scikit-learn-bot,glouppe"
           message-mixed: >-
             The activity of this account shows a mix of organic and automated
             patterns. This is a heuristic, not a proof that this contribution
