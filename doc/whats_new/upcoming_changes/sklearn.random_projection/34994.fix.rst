@@ -1,0 +1,5 @@
+- :class:`random_projection.GaussianRandomProjection` and
+  :class:`random_projection.SparseRandomProjection` now return the correct feature
+  names from `get_feature_names_out` when `n_components="auto"`. This also fixes
+  `set_output(transform="pandas")` with the default `n_components`.
+  By :user:`区梓灏 <Nicholas022400701>`.
