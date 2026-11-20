@@ -280,10 +280,10 @@ def test_split_impurity(
 ):
     is_clf = criterion in CLF_CRITERIONS
 
-    if categorical and criterion == "absolute_error":
+    if categorical and criterion == "absolute_error" and "Extra" not in Tree.__name__:
         pytest.skip(
             "absolute_error is not supported with categorical features in "
-            "DecisionTreeRegressor and ExtraTreeRegressor"
+            "DecisionTreeRegressor"
         )
     rng = np.random.default_rng(global_random_seed)
 
@@ -312,7 +312,7 @@ def test_split_impurity(
 
         tree.fit(X, y, sample_weight=w)
         X_split = (
-            tree._preprocess_X(X_dense, reset=False)
+            tree._encode_categorical_features(X_dense, reset=False, dtype=np.float32)
             if tree.is_categorical_ is not None
             else X_dense
         )

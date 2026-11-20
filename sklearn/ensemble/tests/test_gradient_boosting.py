@@ -1675,3 +1675,19 @@ def test_criterion_param_deprecation(GradientBoosting):
     with pytest.warns(FutureWarning, match="criterion"):
         reg = GradientBoosting(criterion="friedman_mse")
         reg.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "sparse_container", COO_CONTAINERS + CSC_CONTAINERS + CSR_CONTAINERS
+)
+def test_sparse_input_early_stopping(sparse_container):
+    """Sparse and dense inputs give the same model with an early stopping split."""
+    X, y = make_regression(n_samples=200, n_features=5, random_state=0)
+    X[X < 0.5] = 0
+    params = dict(n_estimators=50, n_iter_no_change=3, random_state=0)
+
+    dense = GradientBoostingRegressor(**params).fit(X, y)
+    sparse = GradientBoostingRegressor(**params).fit(sparse_container(X), y)
+
+    assert sparse.n_estimators_ == dense.n_estimators_
+    assert_allclose(sparse.predict(X), dense.predict(X))
