@@ -315,8 +315,8 @@ def _fit_and_score_cv(estimator, X, y, cv, score_func, outer_subcontext, caller)
         inner_subcontext = outer_subcontext.subcontext(task_name=f"fold {i}")
         # Since a sub-estimator is fitted in this task, the callbacks must be propagated
         # to that estimator with the `propagate_callback_context` context manager. Note
-        # that only the callbacks following the `AutoPropagatedCallback` protocol can be
-        # propagated.
+        # that only callbacks inheriting from the `AutoPropagatedCallbackMixin` class
+        # can be propagated.
         with inner_subcontext.propagate_callback_context(cloned_estimator):
             # After the propagation, the inner sub-context's `call_on_fit_task_begin`
             # method must be called.
@@ -407,8 +407,8 @@ class SimpleGridSearch(CallbackSupportMixin, BaseEstimator):  # noqa: F811
 # Registering callbacks to the meta-estimator
 # -------------------------------------------
 # Callbacks are registered to a meta-estimator the same way as to regular estimators.
-# The callbacks which respect the :class:`~AutoPropagatedCallback` protocol (such as
-# :class:`~ProgressBar`) are propagated to the sub-estimators.
+# The callbacks which inherit from the :class:`~AutoPropagatedCallbackMixin` class (such
+# as :class:`~ProgressBar`) are propagated to the sub-estimators.
 
 
 param_list = [{"n_clusters": 5, "n_iter": 20}, {"n_clusters": 4, "n_iter": 50}]

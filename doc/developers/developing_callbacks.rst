@@ -68,27 +68,53 @@ Requesting metadata
 -------------------
 
 In addition to values produced by the estimator (such as `X`, `y`, and
-`fitted_estimator`), callbacks can receive routed metadata (e.g. `sample_weight`). The
+`fitted_estimator`), callbacks can receive routed metadata (e.g. `sample_weight`). To be
+requestable, parameters must be declared as keyword-only parameters of the hook. The
 routed metadata reach a hook only when :ref:`metadata routing <metadata_routing>` is
-enabled and the callback requests them for that hook using the
-`set_on_fit_task_begin_request` or `set_on_fit_task_end_request` methods. Parameters
-that can be requested must be declared as keyword-only parameters of the hook. For
-example:
+enabled and the callback requested it for that hook. Commonly used metadata such as
+`sample_weight`, `X_val`, `y_val` and `sample_weight_val` are expected to be
+automatically requested by the callback, see :ref:`auto-requested metadata
+<metadata_routing_auto_request_user>`. For example, the `sample_weight` metadata is
+automatically requested for the `on_fit_task_end` hook in the following example:
 
 .. code-block:: python
 
     from sklearn.callback import FitCallback
+    from sklearn.utils.metadata_routing import MetadataRouter
 
     class MyCallback(FitCallback):
 
         def on_fit_task_end(self, estimator, context, *, sample_weight=None):
             ...
 
-    callback = MyCallback().set_on_fit_task_end_request(sample_weight=True)
+        def get_metadata_routing(self):
+            self_request = self._get_metadata_request()
+            self_request.on_fit_task_end.add_auto_request("sample_weight")
+            router = MetadataRouter(owner=self).add_self_request(self_request)
+            return router
 
-`True` requests the parameter under its own name. A string requests a `fit` argument
-under a different name, for example
-`set_on_fit_task_end_request(sample_weight="sw_val")`.
+
+.. dropdown:: Manually requesting metadata
+
+    When auto-requests are disabled or if the metadata must be requested under
+    different names, manual requests can be made using the
+    `set_on_fit_task_begin_request` or `set_on_fit_task_end_request` methods.
+    For example:
+
+    .. code-block:: python
+
+        from sklearn.callback import FitCallback
+
+        class MyCallback(FitCallback):
+
+            def on_fit_task_end(self, estimator, context, *, sample_weight=None):
+                ...
+
+        callback = MyCallback().set_on_fit_task_end_request(sample_weight=True)
+
+    `True` requests the parameter under its own name. A string requests a `fit` argument
+    under a different name, for example
+    `set_on_fit_task_end_request(sample_weight="sw_val")`.
 
 
 .. dropdown:: Forwarding `sample_weight` while metadata routing is disabled
@@ -115,7 +141,21 @@ Auto-propagated callbacks
 
 :term:`Auto-propagated <auto-propagated>` callbacks, i.e. callbacks that are expected to
 be propagated from meta-estimators to their sub-estimators, must inherit from the
-:class:`~AutoPropagatedCallback` class.
+:class:`~AutoPropagatedCallbackMixin` class in addition to the :class:`~FitCallback`
+class. They must also set the `max_propagation_depth` property to indicate the maximum
+depth of the propagation. For example:
+
+.. code-block:: python
+
+    class MyAutopropagatedCallback(AutoPropagatedCallbackMixin, FitCallback):
+        def __init__(self, max_propagation_depth=2):
+            self.max_propagation_depth = max_propagation_depth
+
+        def on_fit_task_begin(self, estimator, context, *, X=None, y=None):
+            ...
+
+        def on_fit_task_end(self, estimator, context, *, X=None, y=None):
+            ...
 
 By contrast with regular callbacks that are only invoked at the tasks of the estimator
 on which they are registered, auto-propagated callbacks are invoked at the tasks of
@@ -175,8 +215,9 @@ every time it is invoked:
             self, estimator, context, *, X=None, y=None, fitted_estimator=None
         ):
             msg = f"{context.task_name} task is ending."
-            mean_squared_error = ((y - fitted_estimator.predict(X))**2).mean()
-            msg += f" With a mean squared error of {mean_squared_error}."
+            if y is not None and X is not None and fitted_estimator is not None:
+                mean_squared_error = ((y - fitted_estimator.predict(X))**2).mean()
+                msg += f" With a mean squared error of {mean_squared_error}."
             print(msg)
 
 

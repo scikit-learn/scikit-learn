@@ -409,7 +409,6 @@ class ScoringMonitor(FitCallback):
             run logs.
         """
         logs = defaultdict(lambda: {"train_scores": [], "val_scores": []})
-        run_to_task_id_path = defaultdict(set)
 
         if len(self._log) == 0:
             raise ValueError(
@@ -432,11 +431,11 @@ class ScoringMonitor(FitCallback):
                     **scores,
                 }
             )
-            run_to_task_id_path[run_id].add(task_id_path)
 
         for run_id, log in logs.items():
             if include_lineage:
                 for score_dataset in ("train_scores", "val_scores"):
+                    seen = {row["task_id_path"] for row in log[score_dataset]}
                     extra_rows = []
                     for row in log[score_dataset]:
                         for i in range(len(row["parent_task_info_path"])):
@@ -444,7 +443,7 @@ class ScoringMonitor(FitCallback):
                             task_id_path = tuple(
                                 task_info["task_id"] for task_info in task_info_path
                             )
-                            if task_id_path not in run_to_task_id_path[run_id]:
+                            if task_id_path not in seen:
                                 extra_rows.append(
                                     {
                                         "task_id_path": task_id_path,
@@ -453,7 +452,7 @@ class ScoringMonitor(FitCallback):
                                         **task_info_path[-1],
                                     }
                                 )
-                                run_to_task_id_path[run_id].add(task_id_path)
+                                seen.add(task_id_path)
                     log[score_dataset] += extra_rows
 
             # sort rows by recursive task ids so that tasks of a same parent are grouped

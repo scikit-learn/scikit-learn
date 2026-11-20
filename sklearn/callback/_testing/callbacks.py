@@ -5,7 +5,7 @@
 
 import copy
 
-from sklearn.callback import AutoPropagatedCallback, FitCallback
+from sklearn.callback import AutoPropagatedCallbackMixin, FitCallback
 from sklearn.callback._transport import open_listener, send
 
 
@@ -15,7 +15,7 @@ class RecordingCallback(FitCallback):
     This callback keeps a record of the hooks called for introspection.
 
     This callback doesn't define `max_propagation_depth` and is therefore not an
-    `AutoPropagatedCallback`: it should not be propagated to sub-estimators.
+    auto-propagated callback: it should not be propagated to sub-estimators.
     """
 
     def __init__(self):
@@ -154,13 +154,13 @@ class RecordingCallback(FitCallback):
         return len([rec for rec in self.record if rec["name"] == hook_name])
 
 
-class RecordingAutoPropagatedCallback(RecordingCallback, AutoPropagatedCallback):
+class RecordingAutoPropagatedCallback(AutoPropagatedCallbackMixin, RecordingCallback):
     """A minimal auto-propagated callback used for smoke testing purposes.
 
     This callback keeps a record of the hooks called for introspection.
 
     This callback defines `max_propagation_depth` and is therefore an
-    `AutoPropagatedCallback`: it should be set on a top-level estimator and propagated
+    auto-propagated callback: it should be set on a top-level estimator and propagated
     to sub-estimators.
     """
 

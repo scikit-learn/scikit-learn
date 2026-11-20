@@ -6,7 +6,7 @@ from numbers import Integral
 from queue import Queue
 from threading import Thread
 
-from sklearn.callback import AutoPropagatedCallback, FitCallback
+from sklearn.callback import AutoPropagatedCallbackMixin, FitCallback
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import close_listener, open_listener, send
 from sklearn.utils._optional_dependencies import check_rich_support
@@ -19,7 +19,7 @@ _run_queues = {}
 _run_monitors = {}
 
 
-class ProgressBar(FitCallback, AutoPropagatedCallback):
+class ProgressBar(AutoPropagatedCallbackMixin, FitCallback):
     """Callback that displays progress bars for each iterative step of an estimator.
 
     Parameters

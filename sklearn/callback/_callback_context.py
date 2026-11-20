@@ -9,7 +9,7 @@ import warnings
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
-from sklearn.callback._base import AutoPropagatedCallback
+from sklearn.callback._base import AutoPropagatedCallbackMixin
 from sklearn.utils.metadata_routing import _routing_enabled, process_routing
 
 # Set of the hook parameters that do not come from metadata routing
@@ -525,7 +525,7 @@ class CallbackContext:
         bad_callbacks = [
             callback.__class__.__name__
             for callback in getattr(sub_estimator, "_skl_callbacks", [])
-            if isinstance(callback, AutoPropagatedCallback)
+            if isinstance(callback, AutoPropagatedCallbackMixin)
         ]
         if bad_callbacks:
             raise TypeError(
@@ -545,7 +545,7 @@ class CallbackContext:
         callbacks_to_propagate = [
             callback
             for callback in self._callbacks
-            if isinstance(callback, AutoPropagatedCallback)
+            if isinstance(callback, AutoPropagatedCallbackMixin)
             and (
                 callback.max_propagation_depth is None
                 or self._propagation_depth < callback.max_propagation_depth

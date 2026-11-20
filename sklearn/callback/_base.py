@@ -120,8 +120,8 @@ class FitCallback(BaseCallback, _MetadataRequester):
         """
 
 
-class AutoPropagatedCallback(BaseCallback):
-    """Base class for the auto-propagated callbacks
+class AutoPropagatedCallbackMixin:
+    """Mixin for the auto-propagated callbacks
 
     An auto-propagated callback is a callback that is meant to be set on a top-level
     estimator and that is automatically propagated to its sub-estimators (if any).

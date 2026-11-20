@@ -33,7 +33,7 @@ def _get_score_names(scoring, scorer):
 
 
 def _make_expected_output_MaxIterEstimator(
-    max_iter, scoring, as_pandas, X, y, root_task_id=0
+    max_iter, scoring, as_pandas, X, y, sample_weight=None, root_task_id=0
 ):
     """Generate the expected output of a ScoringMonitor on a MaxIterEstimator."""
     scorer = (
@@ -58,7 +58,11 @@ def _make_expected_output_MaxIterEstimator(
         "sequential_subtasks": True,
     }
     if scorer is not None:
-        scores = scorer(fitted_est, X, y)
+        scores = (
+            scorer(fitted_est, X, y, sample_weight=sample_weight)
+            if scorer._accept_sample_weight()
+            else scorer(fitted_est, X, y)
+        )
         if not isinstance(scores, dict):
             scores = {score_names[0]: scores}
         expected_log.append({**log_item, **scores})
@@ -75,7 +79,11 @@ def _make_expected_output_MaxIterEstimator(
             "sequential_subtasks": True,
         }
         if scorer is not None:
-            scores = scorer(fitted_est, X, y)
+            scores = (
+                scorer(fitted_est, X, y, sample_weight=sample_weight)
+                if scorer._accept_sample_weight()
+                else scorer(fitted_est, X, y)
+            )
             if not isinstance(scores, dict):
                 scores = {score_names[0]: scores}
             expected_log.append({**log_item, **scores})
@@ -96,6 +104,7 @@ def _make_expected_output_MetaEstimator(
     include_lineage,
     X,
     y,
+    sample_weight=None,
 ):
     """Generate the expected output of a ScoringMonitor on a MetaEstimator.
 
@@ -104,10 +113,22 @@ def _make_expected_output_MetaEstimator(
     meta_est_name = MetaEstimator.__name__
 
     expected_log = []
+    if scoring in ("no_train_score", "no_val_score"):
+        if as_pandas:
+            pd = pytest.importorskip("pandas")
+            expected_log = pd.DataFrame(expected_log)
+        return expected_log
+
     for i in range(n_outer):
         for j in range(n_inner):
             estimator_log = _make_expected_output_MaxIterEstimator(
-                max_iter, scoring, False, X, y, root_task_id=j
+                max_iter,
+                scoring,
+                False,
+                X,
+                y,
+                root_task_id=j,
+                sample_weight=sample_weight,
             )
             for row in estimator_log:
                 row["task_id_path"] = (0, i) + row["task_id_path"]
@@ -157,6 +178,50 @@ def _custom_score_func(y_true, y_pred):
 custom_score = make_scorer(_custom_score_func)
 
 
+def _fit_for_logged_values(estimator, scoring_val, with_sample_weight):
+    """Generates the inputs and fits the estimator for testing the logged values.
+
+    Helper function for test_logged_values and test_logged_values_meta_estimator.
+    Returns the training data, the optional validation data, and the sample
+    weights passed to `fit`, so the expected logs can be built from the same
+    inputs.
+    """
+    X, y = make_regression(n_samples=100, n_features=2, random_state=0)
+    if scoring_val != "no_val_score":
+        X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=1)
+    else:
+        X_val, y_val = None, None
+
+    rng = np.random.RandomState(0)
+    sample_weight = rng.randint(1, 5, size=X.shape[0]) if with_sample_weight else None
+    sample_weight_val = (
+        rng.randint(1, 5, size=X_val.shape[0])
+        if with_sample_weight and scoring_val != "no_val_score"
+        else None
+    )
+
+    if scoring_val != "no_val_score":
+        with config_context(enable_metadata_routing=True):
+            if with_sample_weight:
+                estimator.fit(
+                    X=X,
+                    y=y,
+                    X_val=X_val,
+                    y_val=y_val,
+                    sample_weight=sample_weight,
+                    sample_weight_val=sample_weight_val,
+                )
+            else:
+                estimator.fit(X=X, y=y, X_val=X_val, y_val=y_val)
+    else:
+        if with_sample_weight:
+            estimator.fit(X=X, y=y, sample_weight=sample_weight)
+        else:
+            estimator.fit(X=X, y=y)
+
+    return X, y, X_val, y_val, sample_weight, sample_weight_val
+
+
 def test_score_after_fit():
     """Check that the logged scores are the same as if the fit ended at each step."""
     X, y = make_regression(n_samples=100, n_features=2, random_state=0)
@@ -188,12 +253,10 @@ def test_score_after_fit():
         "no_train_score",
     ],
 )
-@pytest.mark.parametrize(
-    "scoring_val",
-    ["neg_mean_squared_error", "no_val_score"],
-)
+@pytest.mark.parametrize("scoring_val", ["neg_mean_squared_error", "no_val_score"])
+@pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("as_pandas", [True, False])
-def test_logged_values(scoring_train, scoring_val, as_pandas):
+def test_logged_values(scoring_train, scoring_val, with_sample_weight, as_pandas):
     """Test that the correct values are logged with a simple estimator."""
     if as_pandas:
         pytest.importorskip("pandas")
@@ -201,33 +264,27 @@ def test_logged_values(scoring_train, scoring_val, as_pandas):
     if scoring_train == "no_train_score" and scoring_val == "no_val_score":
         pytest.skip("At least one scorer must be set.")
 
-    if scoring_val != "no_val_score":
-        X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=1)
-    else:
-        X_val, y_val = None, None
+    if scoring_train is custom_score and with_sample_weight:
+        pytest.skip("Custom score does not accept sample weight.")
 
     max_iter = 3
     callback = ScoringMonitor(scoring_train=scoring_train, scoring_val=scoring_val)
     estimator = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
-    X, y = make_regression(n_samples=100, n_features=2, random_state=0)
-
-    if scoring_val != "no_val_score":
-        with config_context(enable_metadata_routing=True):
-            estimator.fit(X=X, y=y, X_val=X_val, y_val=y_val)
-    else:
-        estimator.fit(X=X, y=y)
+    X, y, X_val, y_val, sample_weight, sample_weight_val = _fit_for_logged_values(
+        estimator, scoring_val, with_sample_weight
+    )
 
     log = callback.get_logs()
     log_train = getattr(
         log, "train_scores" if not as_pandas else "train_scores_as_pandas"
     )
     expected_log_train = _make_expected_output_MaxIterEstimator(
-        max_iter, scoring_train, as_pandas, X, y
+        max_iter, scoring_train, as_pandas, X, y, sample_weight
     )
 
     log_val = getattr(log, "val_scores" if not as_pandas else "val_scores_as_pandas")
     expected_log_val = _make_expected_output_MaxIterEstimator(
-        max_iter, scoring_val, as_pandas, X_val, y_val
+        max_iter, scoring_val, as_pandas, X_val, y_val, sample_weight_val
     )
 
     if as_pandas:
@@ -243,37 +300,59 @@ def test_logged_values(scoring_train, scoring_val, as_pandas):
     "scoring_train",
     ["neg_mean_squared_error", ("neg_mean_squared_error", "r2"), custom_score],
 )
+@pytest.mark.parametrize("scoring_val", ["neg_mean_squared_error", "no_val_score"])
 @pytest.mark.parametrize("as_pandas", [True, False])
 @pytest.mark.parametrize("include_lineage", [True, False])
-def test_logged_values_meta_estimator_train(
-    prefer, scoring_train, as_pandas, include_lineage
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+def test_logged_values_meta_estimator(
+    prefer, scoring_train, scoring_val, as_pandas, include_lineage, with_sample_weight
 ):
     """Test that the correct values are logged with a meta-estimator."""
     if as_pandas:
         pytest.importorskip("pandas")
 
     n_outer, n_inner, max_iter = 3, 2, 5
-    callback = ScoringMonitor(scoring_train=scoring_train)
+    callback = ScoringMonitor(scoring_train=scoring_train, scoring_val=scoring_val)
     est = MaxIterEstimator(max_iter=max_iter).set_callbacks(callback)
     meta_est = MetaEstimator(
         est, n_outer=n_outer, n_inner=n_inner, n_jobs=2, prefer=prefer
     )
-    X, y = make_regression(n_samples=100, n_features=2, random_state=0)
+    X, y, X_val, y_val, sample_weight, sample_weight_val = _fit_for_logged_values(
+        meta_est, scoring_val, with_sample_weight
+    )
 
-    meta_est.fit(X=X, y=y)
-
-    attr = "train_scores" if not as_pandas else "train_scores_as_pandas"
     log = callback.get_logs(include_lineage=include_lineage)
-    log_train = getattr(log, attr)
+    log_train = log.train_scores_as_pandas if as_pandas else log.train_scores
+    log_val = log.val_scores_as_pandas if as_pandas else log.val_scores
     expected_log_train = _make_expected_output_MetaEstimator(
-        n_outer, n_inner, max_iter, scoring_train, as_pandas, include_lineage, X, y
+        n_outer,
+        n_inner,
+        max_iter,
+        scoring_train,
+        as_pandas,
+        include_lineage,
+        X,
+        y,
+        sample_weight,
+    )
+    expected_log_val = _make_expected_output_MetaEstimator(
+        n_outer,
+        n_inner,
+        max_iter,
+        scoring_val,
+        as_pandas,
+        include_lineage,
+        X_val,
+        y_val,
+        sample_weight_val,
     )
 
     if as_pandas:
         assert log_train.equals(expected_log_train)
+        assert log_val.equals(expected_log_val)
     else:
         assert log_train == expected_log_train
-    assert not log.val_scores
+        assert log_val == expected_log_val
 
 
 @pytest.mark.parametrize("select", ["all", "most_recent"])
@@ -368,57 +447,6 @@ def test_scoringmonitor_metadata_routing_meta_estimator():
     assert all([ll["score"] == "train_value" for ll in logs.train_scores])
     assert logs.val_scores
     assert all([ll["score"] == "val_value" for ll in logs.val_scores])
-
-
-@pytest.mark.parametrize("enable_metadata_routing", [True, False])
-def test_scoringmonitor_sample_weights(enable_metadata_routing):
-    """Check that the ScoringMonitor works with sample weights.
-
-    If enable_metadata_routing is True, a validation scorer is used in addition to the
-    training scorer.
-    """
-    rng = np.random.RandomState(0)
-    X, y = make_regression(n_samples=100, n_features=2, random_state=rng)
-    sample_weight = rng.randint(0, 5, size=X.shape[0])
-    scorer_train = get_scorer("r2")
-    scorer_val = "no_val_score"
-
-    if enable_metadata_routing:
-        X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=rng)
-        scorer_val = get_scorer("r2")
-
-    # no sample weights
-    callback = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
-    if enable_metadata_routing:
-        with config_context(enable_metadata_routing=True):
-            MaxIterEstimator().set_callbacks(callback).fit(
-                X=X, y=y, X_val=X_val, y_val=y_val
-            )
-    else:
-        MaxIterEstimator().set_callbacks(callback).fit(X=X, y=y)
-    log_no_sw = callback.get_logs()
-
-    # sample weights
-    callback = ScoringMonitor(scoring_train=scorer_train, scoring_val=scorer_val)
-    if enable_metadata_routing:
-        with config_context(enable_metadata_routing=True):
-            MaxIterEstimator().set_callbacks(callback).fit(
-                X=X,
-                y=y,
-                X_val=X_val,
-                y_val=y_val,
-                sample_weight=sample_weight,
-                sample_weight_val=sample_weight[:10],
-            )
-    else:
-        MaxIterEstimator().set_callbacks(callback).fit(
-            X=X, y=y, sample_weight=sample_weight
-        )
-    log_sw = callback.get_logs()
-
-    assert log_no_sw.train_scores != log_sw.train_scores
-    if enable_metadata_routing:
-        assert log_no_sw.val_scores != log_sw.val_scores
 
 
 def _get_ancestors_info_path(log, parent_task_id_path):

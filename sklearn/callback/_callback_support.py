@@ -6,7 +6,7 @@ import inspect
 from collections import UserList
 from contextlib import contextmanager
 
-from sklearn.callback._base import AutoPropagatedCallback, FitCallback
+from sklearn.callback._base import AutoPropagatedCallbackMixin, FitCallback
 from sklearn.callback._callback_context import CallbackContext
 from sklearn.utils import Bunch
 from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
@@ -139,7 +139,7 @@ class CallbackSupportMixin:
             # Only call the setup hook of callbacks that are not propagated from a
             # meta-estimator.
             if not (
-                isinstance(callback, AutoPropagatedCallback)
+                isinstance(callback, AutoPropagatedCallbackMixin)
                 and hasattr(self, "_parent_callback_ctx")
             ):
                 self._skl_callbacks_to_teardown.append(callback)
