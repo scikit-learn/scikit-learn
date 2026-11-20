@@ -66,7 +66,9 @@ def yield_namespaces(include_numpy_namespaces=True):
         yield array_namespace
 
 
-def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
+def yield_namespace_device_dtype_combinations(
+    include_numpy_namespaces=True, include_integers=False
+):
     """Yield supported namespace, device_name, dtype_name tuples for testing.
 
     Use this to test that an estimator works with all combinations.
@@ -77,6 +79,9 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     ----------
     include_numpy_namespaces : bool, default=True
         If True, also yield numpy namespaces.
+
+    include_integers : bool, default=False
+        Whether to include integer dtypes.
 
     Returns
     -------
@@ -94,18 +99,15 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
     for array_namespace in yield_namespaces(
         include_numpy_namespaces=include_numpy_namespaces
     ):
+        dtypes = ("float64", "float32") + (("int64",) if include_integers else ())
         if array_namespace == "torch":
-            for device_name, dtype in itertools.product(
-                ("cpu", "cuda", "xpu"), ("float64", "float32")
-            ):
+            for device_name, dtype in itertools.product(("cpu", "cuda", "xpu"), dtypes):
                 yield array_namespace, device_name, dtype
             yield array_namespace, "mps", "float32"
 
         elif array_namespace == "dpnp":  # pragma: nocover
             # XXX: add "accelerator" device type?
-            for device_name, dtype in itertools.product(
-                ("cpu", "gpu"), ("float64", "float32")
-            ):
+            for device_name, dtype in itertools.product(("cpu", "gpu"), dtypes):
                 yield array_namespace, device_name, dtype
 
         elif array_namespace == "array_api_strict":
@@ -113,6 +115,8 @@ def yield_namespace_device_dtype_combinations(include_numpy_namespaces=True):
             # creates Device objects when needed.
             yield array_namespace, "CPU_DEVICE", "float64"
             yield array_namespace, "device1", "float32"
+            if include_integers:
+                yield array_namespace, "CPU_DEVICE", "int64"
         else:
             yield array_namespace, None, None
 
@@ -1334,6 +1338,8 @@ def _interp(x, xp, fp, left=None, right=None):
 
     dtype = _find_matching_floating_dtype(xp, fp, xp=xp_ns)
     x = xp_ns.astype(x, dtype)
+    xp = xp_ns.astype(xp, dtype)
+    fp = xp_ns.astype(fp, dtype)
 
     # Match NumPy when `xp` or `fp` is empty
     if xp.shape[0] == 0 or fp.shape[0] == 0:
