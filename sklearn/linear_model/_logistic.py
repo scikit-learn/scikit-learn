@@ -169,6 +169,11 @@ class _LbfgsCallbackBridge:
     subcontext created by ``__call__`` corresponds to an iteration that never ran.
     ``close`` ends it as an empty task so every ``on_fit_task_begin`` call has a
     matching ``on_fit_task_end`` call.
+
+    If a callback requests to stop the fit, ``__call__`` raises ``StopIteration``
+    which makes ``scipy.optimize.minimize`` return early, and ``stopped_by_callback``
+    is set to True. In that case ``__call__`` has already ended the last subcontext
+    and ``close`` does nothing.
     """
 
     def __init__(
@@ -192,6 +197,7 @@ class _LbfgsCallbackBridge:
         self._X = X
         self._y = y
         self._metadata = metadata
+        self.stopped_by_callback = False
         self._coef_kwargs = dict(
             n_classes=n_classes,
             is_binary=is_binary,
@@ -226,6 +232,9 @@ class _LbfgsCallbackBridge:
             metadata=self._metadata,
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
         ):
+            self.stopped_by_callback = True
+            # The subcontext has been ended, there is nothing left for close.
+            self._iter_ctx = None
             raise StopIteration()
 
         # Begin hook for the next iteration's subcontext.
@@ -238,7 +247,12 @@ class _LbfgsCallbackBridge:
         that ``scipy.optimize.minimize`` did not actually run. It corresponds to
         an empty task so we don't forward anything to the ``on_fit_task_end``
         hooks.
+
+        If the fit was stopped by a callback, the last subcontext was already
+        ended by ``__call__`` and there is nothing to do.
         """
+        if self._iter_ctx is None:
+            return
         self._iter_ctx.call_on_fit_task_end(estimator=self._estimator)
 
 
@@ -667,12 +681,18 @@ def _logistic_regression_path(
                 },
                 callback=lbfgs_bridge,
             )
-            n_iter_i = _check_optimize_result(
-                solver,
-                opt_res,
-                max_iter,
-                extra_warning_msg=_LOGISTIC_SOLVER_CONVERGENCE_MSG,
-            )
+            if lbfgs_bridge is not None and lbfgs_bridge.stopped_by_callback:
+                # Stopping the fit is requested by the user through a callback, e.g.
+                # to implement early stopping, so it is not a convergence failure and
+                # we don't raise a ConvergenceWarning.
+                n_iter_i = opt_res.nit
+            else:
+                n_iter_i = _check_optimize_result(
+                    solver,
+                    opt_res,
+                    max_iter,
+                    extra_warning_msg=_LOGISTIC_SOLVER_CONVERGENCE_MSG,
+                )
             w0, loss = opt_res.x, opt_res.fun
             if lbfgs_bridge is not None:
                 lbfgs_bridge.close()
