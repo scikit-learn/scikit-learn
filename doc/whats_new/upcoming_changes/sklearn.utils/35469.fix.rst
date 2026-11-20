@@ -1,7 +1,10 @@
 - :func:`utils.check_array` with `copy=False` and `force_writeable=True` now
-  copies the read-only array that pandas Copy-on-Write (the default in
-  pandas >= 3) returns for a DataFrame, instead of making it writeable. This
-  fixes estimators with `copy=False`, such as
-  :class:`preprocessing.StandardScaler`, modifying other DataFrames that share
-  memory with the input.
+  copies the read-only array that pandas Copy-on-Write returns for a
+  DataFrame or Series, instead of making it writeable.
+  Previously, an estimator with `copy=False` could overwrite the data
+  of other DataFrames sharing memory with the input.
+  For example, transforming `df[:]` also changed `df`.
+  Now, with Copy-on-Write enabled (pandas >= 3, or pandas 2 with
+  `pd.options.mode.copy_on_write = True`), the input DataFrame or Series is
+  no longer modified in place and a copy is always made.
   By :user:`Dea María Léon <deamarialeon>`.

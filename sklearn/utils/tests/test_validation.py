@@ -61,6 +61,7 @@ from sklearn.utils.fixes import (
     DIA_CONTAINERS,
     DOK_CONTAINERS,
     _sparse_random_array,
+    parse_version,
 )
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -2407,11 +2408,16 @@ def test_check_array_writeable_df():
 
     out = check_array(df, copy=False, force_writeable=True)
     assert out.flags.writeable
-    if np.asarray(df).flags.writeable:
+    copy_on_write = (
+        parse_version(pd.__version__).major >= 3
+        or pd.options.mode.copy_on_write is True
+    )
+    if not copy_on_write:
         # without Copy-on-Write, df is backed by a writeable array, no copy is needed
         assert np.may_share_memory(out, df)
     else:
-        # with Copy-on-Write (default in pandas >= 3), np.asarray(df) is read-only to
+        # with Copy-on-Write (default in pandas >= 3 or
+        # pd.options.mode.copy_on_write == True), np.asarray(df) is read-only to
         # protect other DataFrames that may share its memory, a copy is made
         assert not np.may_share_memory(out, df)
 
@@ -2424,17 +2430,20 @@ def test_check_array_writeable_df():
     assert out.flags.writeable
 
 
-def test_check_array_writeable_df_copy_on_write():
+def test_check_array_writeable_df_copy_on_write(monkeypatch):
     """Check that writing to the output of check_array does not modify another
     DataFrame sharing memory with the input under pandas Copy-on-Write.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/35440
     """
-    pd = pytest.importorskip("pandas", minversion="3")
+    pd = pytest.importorskip("pandas")
+    if parse_version(pd.__version__).major < 3:
+        monkeypatch.setattr(pd.options.mode, "copy_on_write", True)
 
     df = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
     view = df[:]
+    assert not np.asarray(view).flags.writeable
 
     out = check_array(view, copy=False, force_writeable=True)
     out[0, 0] = 100.0
