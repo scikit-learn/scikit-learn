@@ -1189,12 +1189,15 @@ class _FittedAttrsLike:
     through the estimator itself when only their metadata is needed
     (``self.coef_.ndim``, ``self.classes_.shape[0]``), since metadata is the same
     either way and reading it here would trigger a pointless transfer.
+
+    When `dtype` is given, floating point attributes are also cast to it.
     """
 
-    def __init__(self, estimator, xp, device):
+    def __init__(self, estimator, xp, device, dtype=None):
         self._estimator = estimator
         self._xp = xp
         self._device = device
+        self._dtype = dtype
 
     def __getattr__(self, name):
         value = getattr(self._estimator, name)
@@ -1202,21 +1205,30 @@ class _FittedAttrsLike:
             value, (numpy.ndarray, numpy.generic)
         ):
             value = move_to(value, xp=self._xp, device=self._device)
+            if (
+                self._dtype is not None
+                and value.dtype != self._dtype
+                and self._xp.isdtype(value.dtype, "real floating")
+            ):
+                value = self._xp.astype(value, self._dtype)
         # `__getattr__` is only consulted for names that are not already in the
         # instance dict, so writing to it makes the next access "cached".
         self.__dict__[name] = value
         return value
 
     def __setattr__(self, name, value):
-        if name not in ("_estimator", "_xp", "_device"):
+        if name not in ("_estimator", "_xp", "_device", "_dtype"):
             raise AttributeError(
                 "Fitted attribute views are read-only, assign to the estimator instead."
             )
         object.__setattr__(self, name, value)
 
 
-def _fitted_attrs_like(estimator, X=None, *, xp=None, device=None):
+def _fitted_attrs_like(estimator, X, *, xp=None, device=None):
     """Return `estimator`'s fitted attributes in the namespace and device of `X`.
+
+    For non-NumPy `X` with a real floating dtype, floating point attributes are
+    also cast to the dtype of `X`.
 
     Pass `xp` and `device` directly when the caller has already resolved them, to
     avoid inspecting `X` twice.
@@ -1226,8 +1238,8 @@ def _fitted_attrs_like(estimator, X=None, *, xp=None, device=None):
     estimator : estimator object
         The fitted estimator.
 
-    X : array, default=None
-        The data the method was called with. Ignored when `xp` is given.
+    X : array
+        The validated data the method was called with.
 
     xp : namespace, default=None
         Array API namespace to move attributes to. Resolved from `X` when None.
@@ -1242,7 +1254,13 @@ def _fitted_attrs_like(estimator, X=None, *, xp=None, device=None):
     """
     if xp is None:
         xp, _, device = get_namespace_and_device(X)
-    return _FittedAttrsLike(estimator, xp, device)
+    # NumPy promotes mixed float dtypes, so NumPy inputs keep the output dtype they
+    # had before fitted attributes were stored as NumPy, with or without dispatch.
+    # Other namespaces, for example PyTorch, refuse to mix float dtypes in `matmul`.
+    dtype = None
+    if not _is_numpy_namespace(xp) and xp.isdtype(X.dtype, "real floating"):
+        dtype = X.dtype
+    return _FittedAttrsLike(estimator, xp, device, dtype)
 
 
 def check_same_namespace(X, estimator, *, attribute, method):

@@ -386,7 +386,7 @@ class LinearClassifierMixin(ClassifierMixin):
         xp, _, device = get_namespace_and_device(X)
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
-        fitted = _fitted_attrs_like(self, xp=xp, device=device)
+        fitted = _fitted_attrs_like(self, X, xp=xp, device=device)
         coef_ = fitted.coef_
         coef_T = coef_.T if coef_.ndim == 2 else coef_
         scores = safe_sparse_dot(X, coef_T, dense_output=True) + fitted.intercept_

@@ -1310,9 +1310,10 @@ def test_fitted_attrs_like(namespace, device_name, dtype_name):
     est = MixedAttributesEstimator().fit(X_np)
 
     with config_context(array_api_dispatch=True):
+        X = xp.asarray(X_np, device=device)
         # `device` is a name, `array_device` returns the namespace's device object.
-        device_reference = array_device(xp.asarray(1, device=device))
-        fitted = _fitted_attrs_like(est, xp=xp, device=device)
+        device_reference = array_device(X)
+        fitted = _fitted_attrs_like(est, X, xp=xp, device=device)
 
         moved = fitted.array_
         assert get_namespace(moved)[0] == xp
@@ -1327,6 +1328,48 @@ def test_fitted_attrs_like(namespace, device_name, dtype_name):
         assert fitted.str_ == "auto"
 
 
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_fitted_attrs_like_follows_floating_dtype_of_X(
+    namespace, device_name, dtype_name
+):
+    """Floating attributes are cast to the floating dtype of `X`.
+
+    Fitting on NumPy gives float64 attributes, while GPU inputs are usually
+    float32. Namespaces like PyTorch do not promote mixed float dtypes in
+    operations such as `matmul`, so the attributes have to follow `X`.
+    """
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    est = MixedAttributesEstimator().fit(numpy.asarray([[1.3, 4.5]]))
+    est.labels_ = numpy.asarray([0, 1])
+
+    with config_context(array_api_dispatch=True):
+        X = xp.asarray([[1.3, 4.5]], dtype=getattr(xp, dtype_name), device=device)
+        fitted = _fitted_attrs_like(est, X)
+
+        assert fitted.array_.dtype == X.dtype
+        assert xp.isdtype(fitted.labels_.dtype, "integral")
+
+
+@pytest.mark.parametrize("dtype", [numpy.float32, numpy.float64])
+def test_fitted_attrs_like_keeps_dtype_for_numpy_X(dtype):
+    """NumPy promotes mixed float dtypes, so the attributes keep their dtype.
+
+    This keeps the output dtype of NumPy inputs the same with and without
+    array API dispatch.
+    """
+    est = MixedAttributesEstimator().fit(numpy.asarray([[1.3, 4.5]]))
+    X = numpy.asarray([[1.3, 4.5]], dtype=dtype)
+
+    for dispatch in (False, True):
+        with config_context(array_api_dispatch=dispatch):
+            fitted = _fitted_attrs_like(est, X)
+            assert fitted.array_.dtype == numpy.float64
+
+
 def test_fitted_attrs_like_resolves_namespace_from_X():
     """`xp`/`device` are derived from `X` when the caller has not resolved them."""
     X_np = numpy.asarray([[1.3, 4.5]])
@@ -1337,8 +1380,9 @@ def test_fitted_attrs_like_resolves_namespace_from_X():
 
 
 def test_fitted_attrs_like_is_read_only():
-    est = MixedAttributesEstimator().fit(numpy.asarray([[1.3, 4.5]]))
-    fitted = _fitted_attrs_like(est, xp=np_compat, device="cpu")
+    X = numpy.asarray([[1.3, 4.5]])
+    est = MixedAttributesEstimator().fit(X)
+    fitted = _fitted_attrs_like(est, X, xp=np_compat, device="cpu")
 
     with pytest.raises(AttributeError, match="read-only"):
         fitted.array_ = numpy.asarray([1.0])
