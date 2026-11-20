@@ -41,9 +41,9 @@ jobs:
           scan-pull-requests: true
           scan-issues: true
           trusted-author-associations: "owner,member,collaborator"
-          # Org members with a private membership are not seen as members by
-          # the workflow token, so they are listed here.
-          allowed-users: "scikit-learn-bot,glouppe"
+          # The org membership of scikit-learn-bot is private, so the workflow
+          # token does not see it as a member.
+          allowed-users: "scikit-learn-bot"
           message-mixed: >-
             The activity of this account shows a mix of organic and automated
             patterns. This is a heuristic, not a proof that this contribution
