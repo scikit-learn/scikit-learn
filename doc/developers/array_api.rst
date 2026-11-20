@@ -34,8 +34,13 @@ of users.
    Storing fitted attributes as NumPy arrays is being rolled out estimator by
    estimator. Only estimators whose class name is listed in
    ``_NUMPY_FITTED_ATTRS`` follow the contract described here. The other
-   estimators store their fitted attributes in the namespace of ``X`` and call
-   ``check_same_namespace`` in their inference methods.
+   estimators store their fitted attributes in the namespace of ``X``, and their
+   inference methods can require ``X`` to use the same namespace and device.
+   Some of them check this upfront with ``check_same_namespace``. Those that
+   share inference code with a converted estimator, for example the subclasses
+   of ``LinearModel`` such as ``Ridge``, already read their attributes through
+   ``_fitted_attrs_like``: they accept ``X`` from any namespace and move their
+   attributes on every call.
 
 Fitting
 =======
