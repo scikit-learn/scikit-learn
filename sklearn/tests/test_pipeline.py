@@ -2758,7 +2758,6 @@ def test_feature_union_get_metadata_routing_without_fit():
     feature_union.get_metadata_routing()
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @config_context(enable_metadata_routing=True)
 @pytest.mark.parametrize(
     "transformer", [ConsumingTransformer, ConsumingNoFitTransformTransformer]
@@ -2789,7 +2788,8 @@ def test_feature_union_metadata_routing(transformer):
     kwargs = {"sample_weight": sample_weight, "metadata": metadata}
     run_routing_caller(feature_union.fit, X, y, **kwargs)
     run_routing_caller(feature_union.fit_transform, X, y, **kwargs)
-    run_routing_caller(feature_union.fit, X, y, **kwargs).transform(X, **kwargs)
+    result = run_routing_caller(feature_union.fit, X, y, **kwargs)
+    run_routing_caller(result.transform, X, **kwargs)
 
     for transformer in feature_union.transformer_list:
         # access sub-transformer in (name, trans) with transformer[1]
