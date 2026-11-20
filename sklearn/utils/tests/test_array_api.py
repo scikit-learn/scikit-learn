@@ -1348,6 +1348,12 @@ def test_fitted_attrs_like(namespace, device_name, dtype_name):
         # A second read of the same attribute does not pay for another transfer.
         assert fitted.array_ is moved
 
+        # Containers are walked like `_fitted_attrs_as_numpy` walks them.
+        assert get_namespace(fitted.list_[0])[0] == xp
+        assert get_namespace(fitted.dict_["X"])[0] == xp
+        # Nested estimators convert themselves, the view does not descend.
+        assert fitted.nested_ is est.nested_
+
         assert fitted.none_ is None
         assert fitted.int_ == 3
         assert fitted.str_ == "auto"
@@ -1376,6 +1382,7 @@ def test_fitted_attrs_like_follows_floating_dtype_of_X(
         fitted = _fitted_attrs_like(est, X)
 
         assert fitted.array_.dtype == X.dtype
+        assert fitted.list_[0].dtype == X.dtype
         assert xp.isdtype(fitted.labels_.dtype, "integral")
 
 

@@ -1204,18 +1204,22 @@ class _FittedAttrsLike:
         self._device = device
         self._dtype = dtype
 
-    def __getattr__(self, name):
-        value = getattr(self._estimator, name)
-        if hasattr(value, "__dlpack__") or isinstance(
-            value, (numpy.ndarray, numpy.generic)
+    def _convert(self, array):
+        array = move_to(array, xp=self._xp, device=self._device)
+        if (
+            self._dtype is not None
+            and array.dtype != self._dtype
+            and self._xp.isdtype(array.dtype, "real floating")
         ):
-            value = move_to(value, xp=self._xp, device=self._device)
-            if (
-                self._dtype is not None
-                and value.dtype != self._dtype
-                and self._xp.isdtype(value.dtype, "real floating")
-            ):
-                value = self._xp.astype(value, self._dtype)
+            array = self._xp.astype(array, self._dtype)
+        return array
+
+    def __getattr__(self, name):
+        # Walk containers the same way `_fitted_attrs_as_numpy` does, so that
+        # every array it stored as NumPy is moved back here.
+        value = _convert_arrays(
+            getattr(self._estimator, name), self._convert, recurse_estimators=False
+        )
         # `__getattr__` is only consulted for names that are not already in the
         # instance dict, so writing to it makes the next access "cached".
         self.__dict__[name] = value
