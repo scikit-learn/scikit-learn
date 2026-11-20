@@ -1,0 +1,4 @@
+- :class:`preprocessing.KBinsDiscretizer` with `strategy="quantile"` or
+  `strategy="kmeans"` now correctly removes duplicated bins based on data
+  type and ranges of the feature.
+  By :user:`Hleb Levitski <glevv>`.
