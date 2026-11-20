@@ -1130,7 +1130,8 @@ def _fitted_attrs_as_numpy(estimator):
 
     Nested estimators are left alone: each one converts itself when its own fit
     returns, so descending into them would re-walk every sub-estimator of an
-    ensemble on top of the walks they already did.
+    ensemble on top of the walks they already did. Constructor parameters are left
+    alone as well, even when they are arrays.
 
     Parameters
     ----------
@@ -1146,8 +1147,12 @@ def _fitted_attrs_as_numpy(estimator):
         return
 
     converter = partial(move_to, xp=np_compat, device="cpu")
+    # Fit must not change constructor parameters, which also live in `vars()`.
+    params = estimator.get_params(deep=False)
     # `vars()` is a live view, so materialise it before assigning back into it.
     for name, value in list(vars(estimator).items()):
+        if name in params:
+            continue
         converted = _convert_arrays(value, converter, recurse_estimators=False)
         if converted is not value:
             setattr(estimator, name, converted)

@@ -1191,6 +1191,10 @@ def opt_in_numpy_attrs(monkeypatch):
 class MixedAttributesEstimator(BaseEstimator):
     """Estimator whose fitted attributes cover every branch of the array walk."""
 
+    def __init__(self, weights=None, init=None):
+        self.weights = weights
+        self.init = init
+
     def fit(self, X, y=None):
         self.array_ = X
         self.dict_ = {"X": X}
@@ -1282,6 +1286,27 @@ def test_fitted_attrs_as_numpy_leaves_nested_estimators_alone(opt_in_numpy_attrs
 
         assert isinstance(est.array_, numpy.ndarray)
         assert get_namespace(est.nested_.X_)[0] == xp
+
+
+@skip_if_array_api_compat_not_configured
+def test_fitted_attrs_as_numpy_leaves_params_alone(opt_in_numpy_attrs):
+    """Constructor parameters are not fitted attributes, so they are not touched.
+
+    The common checks that fit does not change parameters run without dispatch,
+    where the conversion is skipped, so they cannot catch this.
+    """
+    xp = pytest.importorskip("array_api_strict")
+    weights = {"a": 1.0}
+
+    with config_context(array_api_dispatch=True):
+        init = xp.asarray([1.0, 2.0])
+        est = MixedAttributesEstimator(weights=weights, init=init)
+        est.fit(xp.asarray([[1.3, 4.5]]))
+        _fitted_attrs_as_numpy(est)
+
+    assert est.weights is weights
+    assert est.init is init
+    assert isinstance(est.array_, numpy.ndarray)
 
 
 @skip_if_array_api_compat_not_configured
