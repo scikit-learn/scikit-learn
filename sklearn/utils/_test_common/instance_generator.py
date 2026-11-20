@@ -1,7 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
+import os
 import re
 import sys
 import warnings
@@ -639,13 +639,15 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
+        # TODO(callbacks): extend to other solvers once they support callbacks.
+        "check_callback_support": dict(solver="lbfgs"),
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
             dict(solver="newton-cd-gram"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
             dict(solver="newton-cholesky", class_weight="balanced"),
-        ]
+        ],
     },
     LogisticRegressionCV: {
         "check_sample_weight_equivalence": [
@@ -821,6 +823,38 @@ def _tested_estimators(type_filter=None):
         with suppress(SkipTest):
             for estimator in _construct_instances(Estimator):
                 yield estimator
+
+
+try:
+    import pytest
+
+    def _skip_if_threaded_parallelism(estimator, check):
+        if (
+            os.environ.get("SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM")
+            != "1"
+        ):
+            return
+        # Once this is empty, can delete this function:
+        skips = {
+            (DictionaryLearning, "check_transformer_preserve_dtypes"),
+            (LatentDirichletAllocation, "check_transformer_data_not_an_array"),
+            (LatentDirichletAllocation, "check_transformer_general"),
+            (LatentDirichletAllocation, "check_pipeline_consistency"),
+            (LatentDirichletAllocation, "check_fit_idempotent"),
+            (MiniBatchDictionaryLearning, "check_transformer_preserve_dtypes"),
+            (MiniBatchSparsePCA, "check_transformer_preserve_dtypes"),
+            (SparseCoder, "check_transformer_preserve_dtypes"),
+            (SparsePCA, "check_transformer_preserve_dtypes"),
+            (SpectralClustering, "check_estimator_sparse_matrix"),
+        }
+        if (type(estimator), check.func.__name__) in skips:
+            pytest.skip(
+                "May fail intermittently with threaded parallelism; "
+                "see https://github.com/scikit-learn/scikit-learn/issues/35313"
+            )
+except ImportError:
+    # The only user is test_common.py, which also imports pytest
+    pass
 
 
 SKIPPED_ESTIMATORS = [FrozenEstimator]

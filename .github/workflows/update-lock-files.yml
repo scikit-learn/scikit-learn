@@ -33,11 +33,11 @@ jobs:
             update_script_args: "--select-tag lint"
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
 
       # The ubuntu-26.04 image does not ship conda anymore ($CONDA is unset)
       - name: Set up conda
-        uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
+        uses: conda-incubator/setup-miniconda@v4.1.0
         with:
           miniforge-version: latest
           auto-activate: true
@@ -54,7 +54,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@v8.1.3
         with:
           token: ${{ secrets.BOT_GITHUB_TOKEN }}
           push-to-fork: scikit-learn-bot/scikit-learn
