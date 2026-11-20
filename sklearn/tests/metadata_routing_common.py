@@ -73,10 +73,11 @@ def caller_context(caller):
 def run_routing_caller(func, *args, **kwargs):
     """Wrapper for calling estimator methods for tests that check routing.
 
-    Instead of ``estimator.fit(X, y)``, instead you should do
-    ``run_routing_caller(estimator.fit, X, y)``. This ensures
-    ``check_recorded_metadata`` can correctly identify callers in the face
-    of parallelism.
+    Instead of ``estimator.fit(X, y)`` in your test, you should do
+    ``run_routing_caller(estimator.fit, X, y)``.  And similarly for other
+    methods you expect to be callers in ``check_recorded_metadata()``, like
+    ``predict()`` and so on.  This ensures ``check_recorded_metadata()`` can
+    correctly identify callers in the face of parallelism.
     """
     with caller_context(func.__name__):
         return func(*args, **kwargs)
@@ -108,8 +109,10 @@ def record_metadata(obj, record_default=True, **kwargs):
     callee = None
     caller = _MetadataCaller.get()
     if caller is None:
-        # This is fine only if we're not going through a Parallel. So much sure
-        # we're not.
+        # This means the caller was not set via run_routing_caller(). Which is
+        # fine, we can get it from the stack—but that is only consistently
+        # reliable if we're not going through a Parallel. So much sure we're
+        # not.
         for frame in stack:
             if frame.filename == parallel_filename:
                 raise RuntimeError(
