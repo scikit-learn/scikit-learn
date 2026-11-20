@@ -18,6 +18,7 @@ API or give up cross-process capabilities.
 
 import os
 import weakref
+from multiprocessing import AuthenticationError
 from multiprocessing.connection import Client, Connection, Listener
 from threading import Thread
 from typing import Callable, NamedTuple
@@ -122,6 +123,9 @@ def open_listener(message_consumer, *, owner=None):
             while listener_handle.address in _listeners:
                 try:
                     conn = listener.accept()
+                except AuthenticationError:
+                    # Rejected handshake. The listening socket is still open.
+                    continue
                 except (OSError, EOFError):
                     break  # woken up by `close_listener`, or the listener failed
                 Thread(

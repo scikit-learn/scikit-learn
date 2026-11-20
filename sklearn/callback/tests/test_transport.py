@@ -121,3 +121,52 @@ def test_handle_thread_is_named_and_exits():
 
     assert not sender.is_alive()
     _assert_no_leftover_threads()
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
+def test_rejected_handshake_keeps_accept_thread():
+    """A wrong auth digest does not stop the accept thread.
+
+    `AuthenticationError` is not an `OSError`. `close_listener` wakes the accept
+    thread by closing without answering, which raises `EOFError`. A peer that
+    answers and is rejected must leave the listener open.
+    """
+    received = []
+    listener_handle = open_listener(received.append)
+    try:
+        _assert_accept_thread_running()
+
+        client = Client(listener_handle.address)  # no authkey: handshake is manual
+        try:
+            client.recv_bytes(256)  # the challenge
+            client.send_bytes(b"not-a-valid-mac")
+            try:
+                client.recv_bytes(256)  # the server's rejection, if it is still open
+            except (EOFError, OSError):
+                pass
+        finally:
+            client.close()
+
+        good = Client(listener_handle.address, authkey=listener_handle.authkey)
+        try:
+            good.send("ok")
+            good.recv()
+        finally:
+            good.close()
+
+        assert received == ["ok"]
+        # The handler for "ok" exits after the client closes, so wait it out.
+        # The accept thread itself must stay.
+        timeout = 1
+        accept_name = f"{_TRANSPORT_THREAD_NAME_PREFIX}accept"
+        while (names := [thread.name for thread in _transport_threads()]) != [
+            accept_name
+        ]:
+            assert accept_name in names, names
+            timeout -= 0.05
+            assert timeout > 0, names
+            time.sleep(0.05)
+    finally:
+        close_listener(listener_handle)
+
+    _assert_no_leftover_threads()
