@@ -72,35 +72,49 @@ print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 # per feature.
 
 # %%
-# Linear models
-# -------------
-# Two new solvers, `"newton-cd"` and `"newton-cd-gram"`, support :math:`\ell^1` and
-# Elastic-Net penalties. They are available for
-# :class:`~linear_model.LogisticRegression` and for the generalized linear models
-# :class:`~linear_model.PoissonRegressor`, :class:`~linear_model.GammaRegressor` and
-# :class:`~linear_model.TweedieRegressor`, which can now fit :math:`\ell^1` and
-# Elastic-Net penalties with the new `l1_ratio` parameter.
+# Lasso and Elastic-Net penalties for GLMs and new solvers
+# ---------------------------------------------------------
+# The generalized linear models :class:`~linear_model.PoissonRegressor`,
+# :class:`~linear_model.GammaRegressor` and :class:`~linear_model.TweedieRegressor`
+# can now fit :math:`\ell_1` (Lasso) and Elastic-Net penalties with the new `l1_ratio`
+# parameter. This brings feature selection to models for counts and for positive,
+# skewed targets. On top, you no longer need to pick a solver yourself.
 #
-# - The new default `solver="auto"` selects a solver that works with the chosen
-#   `l1_ratio`:
+# **Two new solvers.** `"newton-cd"` and `"newton-cd-gram"` support :math:`\ell_1` and
+# Elastic-Net penalties. They are available for the three models above as well as for
+# :class:`~linear_model.LogisticRegression` and
+# :class:`~linear_model.LogisticRegressionCV`. Both run Newton iterations around the
+# coordinate descent solver of :class:`~linear_model.ElasticNet`, and so benefit from
+# its large speed-ups over the last two releases.
 #
-#   - `l1_ratio=0` (pure :math:`\ell^2` penalty or no penalty): `"lbfgs"`, as before;
-#   - `l1_ratio > 0` and `n_samples >= n_features`: `"newton-cd-gram"`, which
-#     builds the full Hessian matrix of size `(n_features, n_features)`;
-#   - `l1_ratio > 0` and `n_samples < n_features`: `"newton-cd"`, which avoids
-#     building that matrix.
+# - Prefer `"newton-cd-gram"` when `n_samples > n_features`. It builds the full
+#   Hessian matrix of size `(n_features, n_features)`.
+# - Prefer `"newton-cd"` when `n_features > n_samples`. It avoids building that
+#   matrix.
 #
-#   The selected solver is stored in the new `solver_` attribute. The selection rule
-#   may change in future versions without deprecation.
-# - In logistic regression, `solver="liblinear"`, as well as the `dual` and
-#   `intercept_scaling` parameters, are deprecated and will be removed in 1.12. The
-#   new solvers are the recommended replacements.
+# **No need to choose a solver.** The new default `solver="auto"` always selects a
+# solver that works with the chosen `l1_ratio` (or `l1_ratios` in
+# :class:`~linear_model.LogisticRegressionCV`). Switching from an :math:`\ell_2` to an
+# :math:`\ell_1` or Elastic-Net penalty is now a matter of changing `l1_ratio` and
+# nothing else. With the default `l1_ratio=0` (pure :math:`\ell_2` penalty), `"auto"`
+# still selects `"lbfgs"`, so existing models do not change. The selected solver is
+# stored in the new `solver_` attribute. The selection rule may change in future
+# versions without deprecation.
 #
-# In the example below, the :math:`\ell^1` penalty sets the coefficients of the
-# features that do not influence the target to exactly zero.
+# **`alpha` instead of `C`.** The penalty strength of
+# :class:`~linear_model.LogisticRegression` is now set by `alpha = 1 / C`, as in
+# :class:`~linear_model.Ridge`, :class:`~linear_model.Lasso` and almost all other
+# penalized linear models: the larger `alpha`, the stronger the penalty. The default
+# `alpha=1.0` gives the same model as the previous default `C=1.0`. `C` is deprecated
+# and will be removed in 1.14.
+#
+# In the example below, the :math:`\ell_1` penalty sets the coefficients of the
+# features that do not influence the target to exactly zero, for a Poisson regression
+# on counts and for a logistic regression on whether the count is positive. Only
+# `l1_ratio` is set, the solver is selected automatically.
 import numpy as np
 
-from sklearn.linear_model import PoissonRegressor
+from sklearn.linear_model import LogisticRegression, PoissonRegressor
 
 rng = np.random.default_rng(0)
 n_samples, n_features = 500, 20
@@ -109,9 +123,13 @@ true_coef = np.zeros(n_features)
 true_coef[:3] = [0.5, -0.4, 0.3]
 y = rng.poisson(np.exp(X @ true_coef))
 
-glm = PoissonRegressor(alpha=0.1, l1_ratio=1.0, solver="auto").fit(X, y)
-print(f"Selected solver: {glm.solver_}")
+glm = PoissonRegressor(alpha=0.1, l1_ratio=1.0).fit(X, y)
+print(f"PoissonRegressor selected solver: {glm.solver_}")
 print(f"Non-zero coefficients: {np.flatnonzero(glm.coef_)}")
+
+clf = LogisticRegression(alpha=30, l1_ratio=1.0).fit(X, y > 0)
+print(f"LogisticRegression selected solver: {clf.solver_}")
+print(f"Non-zero coefficients: {np.flatnonzero(clf.coef_)}")
 
 # %%
 # :class:`~impute.IterativeImputer` is no longer experimental
@@ -137,8 +155,8 @@ X = np.array([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
 print(IterativeImputer(random_state=0).fit_transform(X))
 
 # %%
-# Easier Metadata Routing
-# -----------------------
+# Easier metadata routing
+# ------------------------
 # Metadata routing is now much easier to use. It is still experimental and still off by
 # default, but once you enable it, scikit-learn estimators auto-request `sample_weight`
 # and, where they use a validation set, they also auto-request `X_val`, `y_val`, and
@@ -165,6 +183,7 @@ sample_weight[:15] = 2
 
 search = GridSearchCV(LogisticRegression(), param_grid={"alpha": [0.01, 0.1, 1]})
 search.fit(X, y, sample_weight=sample_weight)
+print(f"Best parameters: {search.best_params_}")
 set_config(enable_metadata_routing=False)
 
 # %%
@@ -179,6 +198,9 @@ set_config(enable_metadata_routing=False)
 # :class:`~ensemble.HistGradientBoostingRegressor` now also auto-request a validation
 # set (`X_val`, `y_val`, and `sample_weight_val`) for early stopping. See
 # :ref:`sphx_glr_auto_examples_compose_plot_metadata_routing_validation_set.py`.
+# In a :class:`~pipeline.Pipeline`, the default of `transform_input` changed to
+# `("X_val",)`, so that a validation set passed to `fit` is always transformed by the
+# preceding steps alongside `X`.
 #
 # For more information about this new feature, see
 # :ref:`auto-requested metadata <metadata_routing_auto_request_user>`.
@@ -188,6 +210,6 @@ set_config(enable_metadata_routing=False)
 # :ref:`metadata_routing_auto_request`.
 
 # %%
-# Performance Update
+# Performance update
 # ------------------
 # TODO
