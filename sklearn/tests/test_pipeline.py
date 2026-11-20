@@ -58,6 +58,7 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingTransformer,
     _Registry,
     check_recorded_metadata,
+    run_routing_caller,
 )
 from sklearn.utils import get_tags
 from sklearn.utils._array_api import (
@@ -2728,9 +2729,12 @@ def test_feature_union_metadata_routing_error():
             f"or not requested for {ConsumingTransformer.__name__}.transform"
         )
         with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
-            feature_union.fit(
-                X, y, sample_weight=sample_weight, metadata=metadata
-            ).transform(X, sample_weight=sample_weight, metadata=metadata)
+            result = run_routing_caller(
+                feature_union.fit, X, y, sample_weight=sample_weight, metadata=metadata
+            )
+            run_routing_caller(
+                result.transform, X, sample_weight=sample_weight, metadata=metadata
+            )
 
     with config_context(enable_metadata_auto_requests=True):
         error_message = (
@@ -2738,9 +2742,12 @@ def test_feature_union_metadata_routing_error():
             f" or not requested for {ConsumingTransformer.__name__}.transform"
         )
         with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
-            feature_union.fit(
-                X, y, sample_weight=sample_weight, metadata=metadata
-            ).transform(X, sample_weight=sample_weight, metadata=metadata)
+            result = run_routing_caller(
+                feature_union.fit, X, y, sample_weight=sample_weight, metadata=metadata
+            )
+            run_routing_caller(
+                result.transform, X, sample_weight=sample_weight, metadata=metadata
+            )
 
 
 @config_context(enable_metadata_routing=True)

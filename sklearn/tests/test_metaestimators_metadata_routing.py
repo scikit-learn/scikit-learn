@@ -802,7 +802,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                         methods=["fit"],
                         metadata_name=key,
                     )
-                    instance.fit(X, y, **method_kwargs)
+                    run_routing_caller(instance.fit, X, y, **method_kwargs)
                 # making sure the requests are unset, in case they were set as a
                 # side effect of setting them for fit. For instance, if method
                 # mapping for fit is: `"fit": ["fit", "score"]`, that would mean
@@ -817,9 +817,9 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                 )
                 try:
                     # `fit`, `partial_fit`, 'score' accept y, others don't.
-                    method(X, y, **method_kwargs)
+                    run_routing_caller(method, X, y, **method_kwargs)
                 except TypeError:
-                    method(X, **method_kwargs)
+                    run_routing_caller(method, X, **method_kwargs)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -957,13 +957,13 @@ def test_non_consuming_estimator_works(metaestimator):
         method = getattr(instance, method_name)
         extra_method_args = metaestimator.get("method_args", {}).get(method_name, {})
         if "fit" not in method_name:
-            instance.fit(X, y, **extra_method_args)
+            run_routing_caller(instance.fit, X, y, **extra_method_args)
         # The following should pass w/o raising a routing error.
         try:
             # `fit` and `partial_fit` accept y, others don't.
-            method(X, y, **extra_method_args)
+            run_routing_caller(method, X, y, **extra_method_args)
         except TypeError:
-            method(X, **extra_method_args)
+            run_routing_caller(method, X, **extra_method_args)
 
 
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
@@ -1041,7 +1041,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         instance = metaestimator_class(**kwargs)
         method_kwargs = {"groups": groups, "metadata": metadata}
         method = getattr(instance, method_name)
-        method(X_, y_, **method_kwargs)
+        run_routing_caller(method, X_, y_, **method_kwargs)
         assert registry
         for _splitter in registry:
             check_recorded_metadata(
@@ -1122,7 +1122,8 @@ def test_metadata_routed_to_group_splitter(metaestimator):
     # remove `ConsumingSplitter` from kwargs, so 'cv' param isn't passed twice:
     kwargs.pop("cv", None)
     instance = metaestimator_class(cv=GroupKFold(n_splits=2), **kwargs)
-    cross_validate(
+    run_routing_caller(
+        cross_validate,
         instance,
         X_,
         y_,

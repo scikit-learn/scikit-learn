@@ -2820,10 +2820,18 @@ def test_metadata_routing_error_for_column_transformer(method):
     )
     with pytest.raises(ValueError, match=re.escape(error_message)):
         if method == "transform":
-            trs.fit(X, y)
-            trs.transform(X, sample_weight=sample_weight, metadata=metadata)
+            run_routing_caller(trs.fit, X, y)
+            run_routing_caller(
+                trs.transform, X, sample_weight=sample_weight, metadata=metadata
+            )
         else:
-            getattr(trs, method)(X, y, sample_weight=sample_weight, metadata=metadata)
+            run_routing_caller(
+                getattr(trs, method),
+                X,
+                y,
+                sample_weight=sample_weight,
+                metadata=metadata,
+            )
 
 
 @config_context(enable_metadata_routing=True)
@@ -2899,7 +2907,7 @@ def test_metadata_routing_with_remainder_no_error(remainder):
     ct = ColumnTransformer([("trans", transformer, [0])], remainder=remainder)
 
     # Check that no error is raised
-    ct.fit_transform(X, y=y, sample_weight=sample_weight)
+    run_routing_caller(ct.fit_transform, X, y=y, sample_weight=sample_weight)
 
 
 # End of Metadata Routing Tests
