@@ -2424,6 +2424,23 @@ def test_check_array_writeable_df():
     assert out.flags.writeable
 
 
+def test_check_array_writeable_df_copy_on_write():
+    """Check that writing to the output of check_array does not modify another
+    DataFrame sharing memory with the input under pandas Copy-on-Write.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/35440
+    """
+    pd = pytest.importorskip("pandas", minversion="3")
+
+    df = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
+    view = df[:]
+
+    out = check_array(view, copy=False, force_writeable=True)
+    out[0, 0] = 100.0
+    assert df["a"].iloc[0] == 1.0
+
+
 @skip_if_array_api_compat_not_configured
 def test_check_array_on_sparse_inputs_with_array_api_enabled():
     X_sp = sp.csr_array([[0, 1, 0], [1, 0, 1]])
