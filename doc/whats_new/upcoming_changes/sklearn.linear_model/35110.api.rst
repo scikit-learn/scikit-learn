@@ -1,11 +1,11 @@
-- For a better user experience the following estimators got a new option
+- For a better user experience, the following estimators got a new option
   `solver="auto"`:
 
   - :class:`linear_model.LogisticRegression`
   - :class:`linear_model.LogisticRegressionCV`
   - :class:`linear_model.GammaRegressor`
   - :class:`linear_model.PoissonRegressor`
-  - :class:`linear_model.TweedieRegressor`.
+  - :class:`linear_model.TweedieRegressor`
 
   The new option `"auto"` is set as the default. The idea is to select a solver that
   works no matter which `l1_ratio` is chosen. For pure L2-penalties or no penalty,
