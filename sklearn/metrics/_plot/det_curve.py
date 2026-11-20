@@ -498,11 +498,19 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> from sklearn.metrics import DetCurveDisplay
         >>> from sklearn.model_selection import cross_validate
         >>> from sklearn.svm import SVC
-        >>> X, y = make_classification(random_state=0)
+        >>> X, y = make_classification(n_samples=1000, random_state=0)
         >>> clf = SVC(random_state=0)
         >>> cv_results = cross_validate(
         ...     clf, X, y, cv=3, return_estimator=True, return_indices=True)
-        >>> DetCurveDisplay.from_cv_results(cv_results, X, y)
+        >>> n_splits = len(cv_results["estimator"])
+        >>> colors = ["#3f90da", "#ffa90e", "#bd1f01"]
+        >>> DetCurveDisplay.from_cv_results(
+        ...     cv_results,
+        ...     X,
+        ...     y,
+        ...     name=[f"SVC fold {idx}" for idx in range(n_splits)],
+        ...     curve_kwargs=[{"color": color} for color in colors],
+        ... )
         <...>
         >>> plt.show()
         """
@@ -643,7 +651,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         self.ax_.set(xlabel=xlabel, ylabel=ylabel)
 
         if curve_kwargs[0].get("label") is not None:
-            self.ax_.legend(loc="lower right")
+            self.ax_.legend(loc="upper right")
 
         ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]
         tick_locations = sp.stats.norm.ppf(ticks)
