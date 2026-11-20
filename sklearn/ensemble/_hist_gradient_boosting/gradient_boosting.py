@@ -1045,14 +1045,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # faster: the maximum workload per thread stays the same but there are
         # fewer threads to coordinate.
 
-        # 1) First, compute the per-thread chunk size: the maximum number of
-        # features a thread processes if we were to use max_n_threads threads.
+        # 1) First, compute the maximum number of features a thread would
+        # process if we were to use max_n_threads threads.
         n_features_per_thread = math.ceil(n_features / max_n_threads)
 
         # 2) Then, derive how many threads are actually needed to cover
-        # n_features with that chunk size. This can intentionally be lower than
-        # min(n_features, max_n_threads), avoiding threads with little to no
-        # work.
+        # n_features with that many features per thread. This can intentionally
+        # be lower than min(n_features, max_n_threads), avoiding threads with
+        # little to no work.
         n_threads_for_features = math.ceil(n_features / n_features_per_thread)
 
         if not active_wait:
