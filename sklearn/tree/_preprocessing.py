@@ -113,8 +113,8 @@ class _CategoricalEncodingMixin:
         error if it is None at fit time. It is neither validated nor returned.
         """
         if check_input:
-            # Check feature names on the original input before categorical
-            # encoding converts it to a NumPy array and drops dataframe metadata.
+            # Check feature names on the original input (before categorical
+            # encoding converts it to a NumPy array and drops dataframe metadata).
             # The number of features is checked after check_array
             # (ensure_2d=False here), so that 1D inputs get check_array's
             # informative error.
