@@ -981,25 +981,6 @@ of permutations whose cross-validation score is better or equal than the true sc
 without permuting targets. For reliable results ``n_permutations`` should typically be
 larger than 100 and ``cv`` between 3-10 folds.
 
-When samples come in groups that share a single target value, for example
-several recordings per subject with one diagnosis per subject, or trials in
-blocks with one experimental condition per block, shuffling individual target
-values ignores that samples of the same group are not exchangeable. Pass the
-groups with ``permutation="blocks"`` to permute the target values between
-groups instead, and use a group-aware cross-validator such as
-:class:`~sklearn.model_selection.GroupKFold`. The test assumes that the target
-values are exchangeable between groups. This holds by design if they were
-assigned to the groups at random, but not, for example, when they follow a
-fixed order of groups over time and the features drift over time. The p-value
-cannot be smaller than about one over the number of distinct assignments of
-the target values to the groups, so use enough groups for the significance
-level you need; with few groups,
-:class:`~sklearn.model_selection.StratifiedGroupKFold` or
-:class:`~sklearn.model_selection.LeaveOneGroupOut` avoids training sets with a
-single class. If the cross-validator splits groups between training and test
-sets, the p-value remains valid but the score does not estimate the
-performance on new groups.
-
 A low p-value provides evidence that the dataset contains some real dependency between
 features and targets **and** that the estimator was able to utilize this dependency to
 obtain good results. A high p-value, in reverse, could be due to either one of these:
@@ -1028,6 +1009,19 @@ corresponding permutated datasets there is absolutely no structure. This
 test is therefore only able to show whether the model reliably outperforms
 random guessing.
 
+When all samples of a group share one target value, for example several
+recordings per subject with one diagnosis per subject, pass ``groups`` with
+``permutation="blocks"``. The target values are then permuted between groups,
+and every sample of a group receives the permuted value of its group. The test
+assumes that the target values are exchangeable between groups. This holds by
+design if they were assigned to the groups at random, but not, for example, if
+the groups follow a fixed order in time and the features drift over time. With
+few groups there are few distinct assignments of the target values to the
+groups (20 for six groups with three per class), so small p-values cannot be
+reached reliably. Use a group-aware cross-validator such as
+:class:`~sklearn.model_selection.GroupKFold` so that the score estimates the
+performance on new groups.
+
 Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
 using brute force and internally fits ``(n_permutations + 1) * n_cv`` models.
 It is therefore only tractable with small datasets for which fitting an
@@ -1043,3 +1037,6 @@ computation and thus speeds it up.
   * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
     <https://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
     J. Mach. Learn. Res. 2010.
+  * Winkler, Ridgway, Webster, Smith and Nichols. `Permutation inference for
+    the general linear model <https://doi.org/10.1016/j.neuroimage.2014.01.060>`_.
+    NeuroImage 2014.

@@ -40,6 +40,7 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.metadata_routing import (
+    MetadataRequest,
     MetadataRouter,
     MethodMapping,
     _manual_routing,
@@ -1570,16 +1571,14 @@ def permutation_test_score(
         How ``y`` is permuted.
 
         - ``"within_groups"``: ``y`` values are permuted among samples with
-          the same group identifier, or among all samples if ``groups`` is
-          None.
-        - ``"blocks"``: each group is a block whose samples share a single
-          value of ``y``, as with one diagnosis per subject or one condition
-          per recording block. The values of ``y`` are permuted between the
-          groups, and every sample receives the new value of its group.
-          ``y`` must be constant within each group. The null hypothesis is
-          that the values of ``y`` are exchangeable between groups, which
-          holds by design if ``y`` was assigned to the groups at random. See
-          the :ref:`User Guide <permutation_test_score>`.
+          the same group identifier.
+        - ``"blocks"``: the values of ``y`` are permuted between groups, and
+          every sample receives the new value of its group, as with one
+          diagnosis per subject. Requires ``groups``, and ``y`` must be
+          constant within each group. The test assumes that the values of
+          ``y`` are exchangeable between groups, which holds by design if
+          ``y`` was assigned to the groups at random. See the
+          :ref:`User Guide <permutation_test_score>`.
 
         .. versionadded:: 1.11
 
@@ -1609,8 +1608,7 @@ def permutation_test_score(
     <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
     Journal of Machine Learning Research (2010) vol. 11
 
-    With ``permutation="blocks"``, the values of ``y`` are permuted between
-    groups. For exchangeability blocks in permutation inference, see:
+    For permutation tests with exchangeability blocks, see:
 
     Winkler, Ridgway, Webster, Smith and Nichols. `Permutation inference for
     the general linear model <https://doi.org/10.1016/j.neuroimage.2014.01.060>`_.
@@ -1662,6 +1660,9 @@ def permutation_test_score(
                 "permutation='blocks' requires `y` to be constant within each "
                 "group, but at least one group has more than one value of `y`."
             )
+        _, first_sample, group_index = np.unique(
+            np.asarray(groups), return_index=True, return_inverse=True
+        )
     elif groups is not None and _y_constant_within_groups(y, groups):
         warnings.warn(
             "Each group in `groups` has a single value of `y`, so permuting `y` "
@@ -1669,35 +1670,30 @@ def permutation_test_score(
             "is not meaningful: the p-value is 1 with a deterministic estimator "
             "and CV, and otherwise only reflects randomness in the CV splits or "
             "the estimator. To permute the values of `y` between groups, use "
-            "permutation='blocks'.",
+            "`permutation='blocks'`.",
             UserWarning,
         )
 
     if _routing_enabled():
-        router = (
-            MetadataRouter(owner="permutation_test_score")
-            .add(
-                estimator=estimator,
-                # TODO(SLEP6): also pass metadata to the predict method for
-                # scoring?
-                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
-            )
-            .add(
-                splitter=cv,
-                method_mapping=MethodMapping().add(caller="fit", callee="split"),
-            )
-            .add(
-                scorer=scorer,
-                method_mapping=MethodMapping().add(caller="fit", callee="score"),
-            )
+        router = MetadataRouter(owner="permutation_test_score")
+        if permutation == "blocks":
+            # `groups` is used here to permute the blocks, so it is valid
+            # metadata even if no child requests it.
+            self_request = MetadataRequest(owner="permutation_test_score")
+            self_request.fit.add_request(param="groups", alias=True)
+            router.add_self_request(self_request)
+        router.add(
+            estimator=estimator,
+            # TODO(SLEP6): also pass metadata to the predict method for
+            # scoring?
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        ).add(
+            splitter=cv,
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
+        ).add(
+            scorer=scorer,
+            method_mapping=MethodMapping().add(caller="fit", callee="score"),
         )
-        if permutation == "blocks" and "groups" not in router._get_param_names(
-            method="fit", return_alias=True, ignore_self_request=False
-        ):
-            # permutation_test_score uses `groups` itself to permute the
-            # blocks; route it on only if a child requests it or has an
-            # unset request (which then raises as usual).
-            params = {k: v for k, v in params.items() if k != "groups"}
 
         try:
             routed_params = process_routing(router, "fit", **params)
@@ -1739,7 +1735,9 @@ def permutation_test_score(
         delayed(_permutation_test_score)(
             clone(estimator),
             X,
-            _shuffle(y, groups, random_state, permutation=permutation),
+            _shuffle_blocks(y, first_sample, group_index, random_state)
+            if permutation == "blocks"
+            else _shuffle(y, groups, random_state),
             cv,
             scorer,
             split_params=routed_params.splitter.split,
@@ -1772,34 +1770,18 @@ def _permutation_test_score(
     return np.mean(avg_score)
 
 
-def _group_first_index(groups):
-    """Index of the first sample of each group, and the group of each sample."""
-    _, first_sample, group_index = np.unique(
-        np.asarray(groups), return_index=True, return_inverse=True
-    )
-    return first_sample, group_index.ravel()
-
-
 def _y_constant_within_groups(y, groups):
     """Return True if every group holds a single value of y."""
     y = np.asarray(y)
-    first_sample, group_index = _group_first_index(groups)
-    return np.array_equal(y, y[first_sample][group_index])
+    _, first_sample, group_index = np.unique(
+        np.asarray(groups), return_index=True, return_inverse=True
+    )
+    return np.array_equal(y, y[first_sample][group_index.ravel()])
 
 
-def _shuffle(y, groups, random_state, permutation):
-    """Return a shuffled copy of y.
-
-    With ``permutation="within_groups"``, y is shuffled among samples of the
-    same group, or among all samples if ``groups`` is None. With
-    ``permutation="blocks"``, the values of y of the groups are shuffled
-    between groups; the caller checks that y is constant within groups.
-    """
-    if permutation == "blocks":
-        first_sample, group_index = _group_first_index(groups)
-        block_order = random_state.permutation(len(first_sample))
-        indices = first_sample[block_order][group_index]
-    elif groups is None:
+def _shuffle(y, groups, random_state):
+    """Return a shuffled copy of y eventually shuffle among same groups."""
+    if groups is None:
         indices = random_state.permutation(len(y))
     else:
         indices = np.arange(len(groups))
@@ -1807,6 +1789,16 @@ def _shuffle(y, groups, random_state, permutation):
             this_mask = groups == group
             indices[this_mask] = random_state.permutation(indices[this_mask])
     return _safe_indexing(y, indices)
+
+
+def _shuffle_blocks(y, first_sample, group_index, random_state):
+    """Return a copy of y with the values of the groups shuffled between groups.
+
+    ``first_sample`` and ``group_index`` come from ``np.unique(groups,
+    return_index=True, return_inverse=True)``; y is constant within groups.
+    """
+    group_order = random_state.permutation(len(first_sample))
+    return _safe_indexing(y, first_sample[group_order][group_index.ravel()])
 
 
 @validate_params(
