@@ -1,7 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
+import os
 import re
 import sys
 import warnings
@@ -368,7 +368,7 @@ INIT_PARAMS = {
     # TODO(1.14): remove alphas=10 because it is default now
     LogisticRegressionCV: dict(alphas=10, max_iter=7, cv=3, scoring="neg_log_loss"),
     LogisticRegression: dict(max_iter=5),
-    MDS: dict(n_init=2, max_iter=5),
+    MDS: dict(max_iter=5),
     # In the case of check_fit2d_1sample, bandwidth is set to None and
     # is thus estimated. De facto it is 0.0 as a single sample is provided
     # and this makes the test fails. Hence we give it a placeholder value.
@@ -639,13 +639,15 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
+        # TODO(callbacks): extend to other solvers once they support callbacks.
+        "check_callback_support": dict(solver="lbfgs"),
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
             dict(solver="newton-cd-gram"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
             dict(solver="newton-cholesky", class_weight="balanced"),
-        ]
+        ],
     },
     LogisticRegressionCV: {
         "check_sample_weight_equivalence": [
@@ -657,7 +659,7 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
             dict(solver="newton-cholesky"),
         ],
     },
-    MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1, n_init=2)},
+    MDS: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     MLPClassifier: {
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
@@ -687,7 +689,14 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
         "check_dict_unchanged": dict(max_iter=5, n_components=1)
     },
     Nystroem: {"check_dict_unchanged": dict(n_components=1)},
-    PCA: {"check_dict_unchanged": dict(n_components=1)},
+    PCA: {
+        "check_dict_unchanged": dict(n_components=1),
+        # The array API checks use rank-deficient data (rank 8, 10 features). With
+        # n_components >= rank, the model covariance is singular and the result of
+        # `score` depends on the LAPACK implementation.
+        "check_array_api_input": dict(n_components=5),
+        "check_array_api_mixed_inputs": dict(n_components=5),
+    },
     PLSCanonical: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSRegression: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     PLSSVD: {"check_dict_unchanged": dict(n_components=1)},
@@ -814,6 +823,38 @@ def _tested_estimators(type_filter=None):
         with suppress(SkipTest):
             for estimator in _construct_instances(Estimator):
                 yield estimator
+
+
+try:
+    import pytest
+
+    def _skip_if_threaded_parallelism(estimator, check):
+        if (
+            os.environ.get("SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM")
+            != "1"
+        ):
+            return
+        # Once this is empty, can delete this function:
+        skips = {
+            (DictionaryLearning, "check_transformer_preserve_dtypes"),
+            (LatentDirichletAllocation, "check_transformer_data_not_an_array"),
+            (LatentDirichletAllocation, "check_transformer_general"),
+            (LatentDirichletAllocation, "check_pipeline_consistency"),
+            (LatentDirichletAllocation, "check_fit_idempotent"),
+            (MiniBatchDictionaryLearning, "check_transformer_preserve_dtypes"),
+            (MiniBatchSparsePCA, "check_transformer_preserve_dtypes"),
+            (SparseCoder, "check_transformer_preserve_dtypes"),
+            (SparsePCA, "check_transformer_preserve_dtypes"),
+            (SpectralClustering, "check_estimator_sparse_matrix"),
+        }
+        if (type(estimator), check.func.__name__) in skips:
+            pytest.skip(
+                "May fail intermittently with threaded parallelism; "
+                "see https://github.com/scikit-learn/scikit-learn/issues/35313"
+            )
+except ImportError:
+    # The only user is test_common.py, which also imports pytest
+    pass
 
 
 SKIPPED_ESTIMATORS = [FrozenEstimator]
@@ -1199,8 +1240,6 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
-        # TODO: see gh-33205 for details
-        "check_array_api_input": "`linalg.inv` fails because input is singular",
     },
     Perceptron: {
         # TODO: replace by a statistical test, see meta-issue #16298

@@ -187,10 +187,6 @@ def _construct_sparse_coder(Estimator):
 
 # TODO(1.14): remove filterwarnings with deprecation period of C and Cs
 @pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
-# TODO(1.10): remove copy warning filter
-@pytest.mark.filterwarnings(
-    "ignore:The default value of `copy` will change from False to True in 1.10."
-)
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("name, Estimator", all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
@@ -239,10 +235,6 @@ def test_fit_docstring_attributes(name, Estimator):
     elif Estimator.__name__ == "TSNE":
         # default raises an error, perplexity must be less than n_samples
         est.set_params(perplexity=2)
-    # TODO(1.10) remove
-    elif Estimator.__name__ == "MDS":
-        # default raises a FutureWarning
-        est.set_params(n_init=1, init="random")
     # TODO(1.11) remove completely
     elif Estimator.__name__ == "LogisticRegressionCV":
         # default 'scoring' value creates a FutureWarning

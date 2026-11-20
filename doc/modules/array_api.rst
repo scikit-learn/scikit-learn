@@ -198,10 +198,10 @@ Estimators
 - :class:`kernel_approximation.Nystroem`
 - :class:`linear_model.LogisticRegression` (with `solver="lbfgs"` and `solver="newton-cg"`)
 - :class:`linear_model.LogisticRegressionCV` (with `solver="lbfgs"` and `solver="newton-cg"`)
-- :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"`)
-- :class:`linear_model.Ridge` (with `solver="svd"`)
+- :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"` and `solver="newton-cg"`)
+- :class:`linear_model.Ridge` (with `solver="cholesky"` and `solver="svd"`)
 - :class:`linear_model.RidgeCV` (see :ref:`device_support_for_float64`)
-- :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
+- :class:`linear_model.RidgeClassifier` (with `solver="cholesky"` and `solver="svd"`)
 - :class:`linear_model.RidgeClassifierCV` (see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`naive_bayes.GaussianNB`
@@ -234,6 +234,7 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.auc`
 - :func:`sklearn.metrics.average_precision_score`
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
@@ -241,6 +242,7 @@ Metrics
 - :func:`sklearn.metrics.cluster.contingency_matrix`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
+- :func:`sklearn.metrics.coverage_error`
 - :func:`sklearn.metrics.d2_absolute_error_score`
 - :func:`sklearn.metrics.d2_brier_score`
 - :func:`sklearn.metrics.d2_log_loss_score`
@@ -287,6 +289,7 @@ Metrics
 - :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.recall_score`
+- :func:`sklearn.metrics.roc_auc_score` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.roc_curve`
 - :func:`sklearn.metrics.root_mean_squared_error`
 - :func:`sklearn.metrics.root_mean_squared_log_error`

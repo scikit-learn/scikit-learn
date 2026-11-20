@@ -1,0 +1,5 @@
+- :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientBoostingClassifier` now correctly enable
+  early stopping when ``early_stopping="auto"`` and explicit validation
+  data is passed to ``fit``.
+  By :user:`RugvedBane`.
