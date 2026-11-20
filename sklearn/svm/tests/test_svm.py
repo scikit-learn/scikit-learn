@@ -4,6 +4,10 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 
+import copy
+import pickle
+from functools import partial
+
 import numpy as np
 import pytest
 from numpy.testing import (
@@ -32,7 +36,7 @@ from sklearn.svm import (
     _libsvm,
 )
 from sklearn.svm._classes import _validate_dual_parameter
-from sklearn.utils import check_random_state, shuffle
+from sklearn.utils import check_random_state, shuffle, validate_model
 from sklearn.utils.fixes import _IS_32BIT, CSR_CONTAINERS, LIL_CONTAINERS
 from sklearn.utils.validation import _num_samples
 
@@ -1437,6 +1441,182 @@ def test_svc_raises_error_internal_representation():
     msg = "The internal representation of SVC was altered"
     with pytest.raises(ValueError, match=msg):
         clf.predict(X)
+
+
+def _linear_kernel(X, Y):
+    return X @ Y.T
+
+
+def _fit_libsvm_estimator(Estimator, kernel="rbf", csr_container=None, **params):
+    """Fit a libsvm estimator on 40 samples, 4 features and 3 classes."""
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(40, 4))
+    y = np.digitize(X[:, 0], [0.33, 0.66])
+    if kernel == "precomputed":
+        X = X @ X.T
+    if csr_container is not None:
+        X = csr_container(X)
+    return Estimator(kernel=kernel, **params).fit(X, y)
+
+
+def _check_validate_model_raises(est, match, **corrupted):
+    """Check `validate_model` on a copy of `est` with `corrupted` attributes."""
+    est = copy.deepcopy(est)
+    for name, value in corrupted.items():
+        setattr(est, name, value)
+    with pytest.raises(ValueError, match=match):
+        validate_model(est)
+
+
+# TODO(1.11): remove the cases with probability=True.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize(
+    "Estimator, params",
+    [
+        (svm.SVC, {}),
+        (svm.SVC, {"probability": True, "random_state": 0}),
+        (svm.NuSVC, {}),
+        (svm.NuSVC, {"probability": True, "random_state": 0}),
+        (svm.SVR, {}),
+        (svm.SVR, {"epsilon": 100.0}),  # no support vectors
+        (svm.NuSVR, {}),
+        (svm.OneClassSVM, {}),
+    ],
+)
+@pytest.mark.parametrize(
+    "kernel, csr_container",
+    [
+        ("rbf", None),
+        ("precomputed", None),
+        (_linear_kernel, None),
+        *[("rbf", csr_container) for csr_container in CSR_CONTAINERS],
+    ],
+)
+def test_libsvm_validate_model_fitted(Estimator, params, kernel, csr_container):
+    """``validate_model`` passes on fitted libsvm estimators."""
+    est = _fit_libsvm_estimator(Estimator, kernel, csr_container, **params)
+    validate_model(est)
+    validate_model(pickle.loads(pickle.dumps(est)))
+
+
+def test_libsvm_validate_model_rejects_corrupted_arrays():
+    """``validate_model`` raises on libsvm estimators with corrupted arrays.
+
+    Non-regression test for a memory-safety issue: libsvm takes the number of
+    support vectors from ``support_`` and the number of classes from
+    ``_n_support``, and reads the other fitted arrays accordingly without
+    looking at their shapes, so predicting with inconsistent arrays read or
+    wrote out of bounds.
+    """
+    clf = _fit_libsvm_estimator(svm.SVC)
+    n_SV = clf.support_.shape[0]
+    check = partial(_check_validate_model_raises, clf)
+
+    check("support_vectors_ has 0 rows", support_vectors_=np.empty((0, 4)))
+    check("does not add up to 1000", support_=np.zeros(1000, dtype=np.int32))
+    check(r"_n_support has shape \(0,\)", _n_support=np.empty(0, dtype=np.int32))
+    # The counts add up to the number of support vectors.
+    check(
+        "_n_support holds negative values",
+        _n_support=np.array([n_SV + 10, -10, 0], dtype=np.int32),
+    )
+    # They add up to it in 32 bits only.
+    int32_max = np.iinfo(np.int32).max
+    check(
+        f"does not add up to {n_SV}",
+        _n_support=np.array([int32_max, int32_max, n_SV + 2], dtype=np.int32),
+    )
+    # The number of pairs of classes does not fit in a C int.
+    check("more than libsvm can index", _n_support=np.zeros(65537, dtype=np.int32))
+    # Neither does the size of the dual coefficients.
+    check(
+        "more than libsvm can index",
+        _n_support=np.zeros(40000, dtype=np.int32),
+        support_=np.zeros(60000, dtype=np.int32),
+    )
+    check(r"dual coefficients have shape \(2, 0\)", _dual_coef_=np.empty((2, 0)))
+    check(r"_intercept_ has shape \(0,\)", _intercept_=np.empty(0))
+    check(r"_probA and _probB have shapes \(1,\) and \(0,\)", _probA=np.zeros(1))
+    check(r"_probA and _probB have shapes \(0,\) and \(1,\)", _probB=np.zeros(1))
+    check(r"_probA and _probB .* expected \(3,\)", _effective_probability=True)
+
+    # Regression and one-class models have neither classes nor pairs of them.
+    reg = _fit_libsvm_estimator(svm.SVR)
+    check = partial(_check_validate_model_raises, reg)
+    check(r"expected \(2,\)", _n_support=np.zeros(3, dtype=np.int32))
+    check("support_ has 1000 entries", support_=np.zeros(1000, dtype=np.int32))
+    check(r"dual coefficients have shape \(1, 0\)", _dual_coef_=np.empty((1, 0)))
+    check(r"_intercept_ has shape \(3,\)", _intercept_=np.zeros(3))
+
+    # The columns of a precomputed kernel are indexed with `support_`.
+    clf = _fit_libsvm_estimator(svm.SVC, kernel="precomputed")
+    check = partial(_check_validate_model_raises, clf)
+    msg = "support_ holds indices outside of the 40 samples"
+    check(msg, support_=np.full_like(clf.support_, 40))
+    check(msg, support_=np.full_like(clf.support_, -1))
+
+
+@pytest.mark.parametrize("csr_container", CSR_CONTAINERS)
+def test_libsvm_validate_model_rejects_corrupted_sparse_arrays(csr_container):
+    """``validate_model`` raises on sparse libsvm estimators with corrupted arrays.
+
+    Non-regression test for a memory-safety issue: on sparse data, libsvm takes
+    the number of support vectors from ``support_vectors_.indptr`` and reads
+    ``indptr[i + 1] - indptr[i]`` values of ``data`` and ``indices`` for each of
+    them, so predicting with inconsistent arrays read or wrote out of bounds.
+    """
+    clf = _fit_libsvm_estimator(svm.SVC, csr_container=csr_container)
+    check = partial(_check_validate_model_raises, clf)
+
+    def check_support_vectors(**corrupted):
+        support_vectors = clf.support_vectors_.copy()
+        for name, value in corrupted.items():
+            setattr(support_vectors, name, value)
+        check("support_vectors_ is not a valid CSR", support_vectors_=support_vectors)
+
+    sv = clf.support_vectors_
+    indptr_first, indptr_second = sv.indptr.copy(), sv.indptr.copy()
+    indptr_first[0] = -1  # the first row has one value more
+    indptr_second[1] = sv.indptr[-1]  # the second row has a negative size
+    check_support_vectors(indptr=sv.indptr[:-1])  # one row less than `support_`
+    check_support_vectors(indptr=indptr_first)
+    check_support_vectors(indptr=indptr_second)
+    check_support_vectors(data=sv.data[:-1])  # shorter than `indptr[-1]`
+    check_support_vectors(indices=sv.indices[:-1])
+    # Same arrays as a CSC array.
+    check("support_vectors_ is not a valid CSR", support_vectors_=sv.T)
+    check("support_vectors_ is not a valid CSR", support_vectors_=sv.toarray())
+
+    dual_coef = clf._dual_coef_.copy()
+    dual_coef.data = dual_coef.data[:-1]
+    check("dual coefficients have shape", _dual_coef_=dual_coef)
+    # The sparse code reads `_probA` and `_probB` in every prediction method.
+    check(r"_probA and _probB .* expected \(3,\)", _effective_probability=True)
+    # The sparse kernels index a precomputed kernel with the values of the
+    # support vectors.
+    check("_sparse is set but the kernel is precomputed", kernel="precomputed")
+    check("_sparse is set but the kernel is precomputed", kernel=_linear_kernel)
+
+
+# TODO(1.11): remove probability=True and predict_proba.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.parametrize("method", ["predict", "decision_function", "predict_proba"])
+def test_callable_kernel_wrong_number_of_columns(method):
+    """Check the error raised when a callable kernel returns too few columns.
+
+    Non-regression test for a memory-safety issue: libsvm indexes the columns of
+    the kernel matrix with ``support_``, and only ``predict`` checked that the
+    matrix returned by a callable kernel has one column per training sample.
+    """
+
+    def kernel(X, Y):
+        # Square at fit time, too narrow when predicting on fewer samples.
+        return (X @ Y.T)[:, : X.shape[0]]
+
+    clf = _fit_libsvm_estimator(svm.SVC, kernel, probability=True, random_state=0)
+    msg = r"X.shape\[1\] = 2 should be equal to 40"
+    with pytest.raises(ValueError, match=msg):
+        getattr(clf, method)(np.ones((2, 4)))
 
 
 @pytest.mark.parametrize(

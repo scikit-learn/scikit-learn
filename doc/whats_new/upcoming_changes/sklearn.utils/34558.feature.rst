@@ -1,0 +1,5 @@
+- Added :func:`utils.validate_model` to check that the fitted state of a model,
+  for instance one loaded from a persisted file, is consistent before using it.
+  Estimators define what a consistent state means for them by implementing a
+  `__sklearn_validate_model__` method, see :ref:`developer_api_validate_model`.
+  By `Adrin Jalali`_
