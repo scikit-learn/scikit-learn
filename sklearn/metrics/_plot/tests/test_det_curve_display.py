@@ -22,20 +22,6 @@ def data_binary():
     return X, y
 
 
-def _check_figure_axes_and_labels(display, pos_label):
-    """Check mpl axes and figure labels are correct."""
-    import matplotlib as mpl
-
-    assert isinstance(display.ax_, mpl.axes.Axes)
-    assert isinstance(display.figure_, mpl.figure.Figure)
-
-    expected_pos_label = 1 if pos_label is None else pos_label
-    expected_ylabel = f"False Negative Rate (Positive label: {expected_pos_label})"
-    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
-    assert display.ax_.get_ylabel() == expected_ylabel
-    assert display.ax_.get_xlabel() == expected_xlabel
-
-
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
@@ -96,12 +82,20 @@ def test_det_curve_display(
 
     assert disp.name == "LogisticRegression"
 
+    # cannot fail thanks to pyplot fixture
     import matplotlib as mpl
 
-    _check_figure_axes_and_labels(disp, pos_label)
     assert isinstance(disp.line_, mpl.lines.Line2D)
     assert disp.line_.get_alpha() == 0.8
+    assert isinstance(disp.ax_, mpl.axes.Axes)
+    assert isinstance(disp.figure_, mpl.figure.Figure)
     assert disp.line_.get_label() == "LogisticRegression"
+
+    expected_pos_label = 1 if pos_label is None else pos_label
+    expected_ylabel = f"False Negative Rate (Positive label: {expected_pos_label})"
+    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
+    assert disp.ax_.get_ylabel() == expected_ylabel
+    assert disp.ax_.get_xlabel() == expected_xlabel
 
 
 def test_det_curve_display_from_cv_results(pyplot, data_binary):
