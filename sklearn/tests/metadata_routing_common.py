@@ -102,10 +102,10 @@ def record_metadata(obj, record_default=True, **kwargs):
     stack = inspect.stack()
     # for callee, extract the innermost `function` (which is in METHODS) from
     # the stack; for caller, rely on metadata available in _MetadataCaller,
-    # inserted via run_routing_caller(), and fall back to the stack if that
-    # isn't available. The need for a special mechanism for callers is because
-    # of parallelism: when using threads or processes, the original caller may
-    # well be unreachable via the stack.
+    # inserted via explicit use of run_routing_caller(), and fall back to the
+    # stack if that isn't available. The need for a special mechanism for
+    # callers is because of parallelism: when using threads or processes, the
+    # original caller may well be unreachable via the stack.
     callee = None
     caller = _MetadataCaller.get()
     if caller is None:
