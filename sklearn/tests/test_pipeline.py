@@ -1791,9 +1791,9 @@ def test_feature_union_fit_params_without_fit_transform():
     )
 
     with pytest.raises(ValueError):
-        t.fit_transform(X, y, metadata=0)
+        run_routing_caller(t.fit_transform, X, y, metadata=0)
 
-    t.fit_transform(X, y, metadata=1)
+    run_routing_caller(t.fit_transform, X, y, metadata=1)
 
 
 def test_pipeline_missing_values_leniency():

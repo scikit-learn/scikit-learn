@@ -2785,10 +2785,10 @@ def test_search_sample_weight_auto_request(auto_request, expected):
         assert routing._self_request.score.requests.get("sample_weight") is expected
 
         if auto_request:
-            search.fit(X, y, sample_weight=sample_weight)
+            run_routing_caller(search.fit, X, y, sample_weight=sample_weight)
         else:
             with pytest.raises(UnsetMetadataPassedError, match="sample_weight"):
-                search.fit(X, y, sample_weight=sample_weight)
+                run_routing_caller(search.fit, X, y, sample_weight=sample_weight)
 
 
 # End of Metadata Routing Tests

@@ -2492,7 +2492,7 @@ def test_cross_validate_params_none(func, extra_args):
     Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/30447
     """
     X, y = make_classification(n_samples=100, n_classes=2, random_state=0)
-    func(estimator=ConsumingClassifier(), X=X, y=y, **extra_args)
+    run_routing_caller(func, estimator=ConsumingClassifier(), X=X, y=y, **extra_args)
 
 
 @pytest.mark.parametrize(
@@ -2533,7 +2533,8 @@ def test_passed_unrequested_metadata(func, extra_args):
         "requested for ConsumingClassifier.score, which is used within"
     )
     with pytest.raises(UnsetMetadataPassedError, match=err_msg):
-        func(
+        run_routing_caller(
+            func,
             estimator=ConsumingClassifier()
             .set_fit_request(metadata=True)
             .set_partial_fit_request(metadata=True),
