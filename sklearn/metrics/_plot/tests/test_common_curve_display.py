@@ -524,6 +524,17 @@ auc_metrics = [[1.0, 1.0, 1.0], None]
             },
         )
         for auc_metric in auc_metrics
+    ]
+    + [
+        pytest.param(
+            DetCurveDisplay,
+            None,
+            None,
+            {
+                "fpr": [np.array([0, 0.5, 1])] * 3,
+                "fnr": [np.array([1, 0.5, 0])] * 3,
+            },
+        )
     ],
 )
 @pytest.mark.parametrize(
@@ -546,7 +557,8 @@ def test_display_plot_legend_label(
 
     display = Display(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
     legend = display.ax_.get_legend()
-    auc_metric = display_args[auc_arg_name]
+    # DetCurveDisplay has no AUC metric
+    auc_metric = display_args.get(auc_arg_name)
 
     if legend is None:
         # No legend is created, exit test early
