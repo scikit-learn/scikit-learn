@@ -156,7 +156,9 @@ tests. They verify that:
 - the outputs of the inference methods are in the namespace and on the device of
   their input;
 - an estimator fitted with one namespace can be used for inference with another,
-  and the other way around (``check_array_api_cross_namespace_inference``).
+  and the other way around (``check_array_api_cross_namespace_inference``),
+  also when the input has a different floating point dtype than the data used
+  to fit (``check_array_api_cross_namespace_inference_mixed_dtypes``).
 
 To run these checks you need to install
 `array-api-strict <https://data-apis.org/array-api-strict/>`__ in your

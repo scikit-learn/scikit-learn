@@ -409,6 +409,21 @@ def _yield_array_api_checks(estimator, only_numpy=False):
             check_array_api_cross_namespace_inference,
             array_namespace="array_api_strict",
         )
+        # 5. Same as 4., with a float dtype that differs from the one used to
+        # fit. This depends on the namespace: array-api-strict promotes mixed
+        # float dtypes, PyTorch does not.
+        for (
+            array_namespace,
+            device_name,
+            dtype_name,
+        ) in yield_namespace_device_dtype_combinations(include_numpy_namespaces=False):
+            if dtype_name != "float32":
+                continue
+            yield partial(
+                check_array_api_cross_namespace_inference_mixed_dtypes,
+                array_namespace=array_namespace,
+                device_name=device_name,
+            )
 
 
 def _yield_all_checks(estimator, legacy: bool):
@@ -1623,6 +1638,74 @@ def check_array_api_cross_namespace_inference(
             f"a {result_ns.__name__} array, the output should follow the input"
         )
         assert_allclose(result, expected, atol=atol, err_msg=method_name)
+
+
+def check_array_api_cross_namespace_inference_mixed_dtypes(
+    name, estimator_orig, array_namespace, device_name=None
+):
+    """Check inference with a float dtype that differs from the one used to fit.
+
+    Fitting on NumPy usually gives float64 attributes, while GPU inputs are often
+    float32. Some namespaces, for example PyTorch, do not promote mixed float
+    dtypes in operations like `matmul`, so the attributes have to follow the
+    dtype of the input. Floating point outputs have the dtype of the input.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name, "float32")
+    fit_and_predict_dtypes = [("float64", "float32")]
+    try:
+        _array_api_for_tests(array_namespace, device_name, "float64")
+        fit_and_predict_dtypes.append(("float32", "float64"))
+    except SkipTest:
+        # The device does not support float64, for example MPS.
+        pass
+
+    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    methods = (
+        "decision_function",
+        "predict",
+        "predict_log_proba",
+        "predict_proba",
+        "transform",
+    )
+    atol = _atol_for_type("float32")
+    # The result is computed in float32 and the expected value in float64, for
+    # example `predict_log_proba` of tiny probabilities differs by ~2e-4.
+    rtol = 1e-3
+
+    for fit_dtype, predict_dtype in fit_and_predict_dtypes:
+        est = clone(estimator_orig)
+        set_random_state(est)
+        X_fit = X.astype(fit_dtype)
+        X_predict = X.astype(predict_dtype)
+        with config_context(array_api_dispatch=False):
+            est.fit(X_fit, y)
+        with config_context(array_api_dispatch=True):
+            X_xp = xp.asarray(X_predict, device=device)
+
+        for method_name in methods:
+            if getattr(est, method_name, None) is None:
+                continue
+            err_msg = (
+                f"{name}.{method_name}() fitted on {fit_dtype} NumPy data and "
+                f"called with {predict_dtype} {xp.__name__} input"
+            )
+
+            with config_context(array_api_dispatch=False):
+                expected = getattr(est, method_name)(X_predict)
+
+            with config_context(array_api_dispatch=True):
+                result = getattr(est, method_name)(X_xp)
+                assert array_device(result) == array_device(X_xp), err_msg
+                if xp.isdtype(result.dtype, "real floating"):
+                    assert result.dtype == X_xp.dtype, (
+                        f"{err_msg} returned {result.dtype}, floating point "
+                        "outputs should have the dtype of the input"
+                    )
+                result = move_to(result, xp=np, device="cpu")
+            assert_allclose(result, expected, rtol=rtol, atol=atol, err_msg=err_msg)
 
 
 def check_estimator_sparse_tag(name, estimator_orig):

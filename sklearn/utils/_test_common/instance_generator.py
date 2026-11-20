@@ -1023,6 +1023,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
         # Fails because StandardScaler, which gets wrapped by FeatureUnion, supports
         # array API but FeatureUnion itself does not
         "check_estimators_overwrite_params": "FIXME",
@@ -1042,6 +1046,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     },
     GaussianNB: {
         "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
@@ -1124,6 +1132,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
     },
     KernelDensity: {
         "check_sample_weight_equivalence_on_dense_data": (
@@ -1144,6 +1156,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     },
     LinearDiscriminantAnalysis: {
         "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
@@ -1192,6 +1208,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
     },
     NuSVC: {
         "check_class_weight_classifiers": "class_weight is ignored.",
@@ -1222,6 +1242,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
         "check_transformer_preserve_dtypes": (
             "dtypes are preserved but not at a close enough precision"
         ),
@@ -1237,6 +1261,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     },
     PCA: {
         "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
@@ -1262,6 +1290,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     },
     PoissonRegressor: {
         "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
@@ -1383,6 +1415,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     },
     StandardScaler: {
         "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
