@@ -19,13 +19,13 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Setup Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@v7.1.0
         with:
           python-version: '3.13'
       - name: Install PyGithub
         run: pip install -Uq PyGithub
       - name: Checkout trusted script
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
           sparse-checkout: build_tools/github/label-contributor-type.py
