@@ -2306,7 +2306,7 @@ def _check_method_params(X, params, indices=None):
     method_params_validated : dict
         Validated parameters. We ensure that the values support indexing.
     """
-    from sklearn.utils import _safe_indexing
+    from sklearn.utils import safe_indexing
 
     method_params_validated = {}
     for param_key, param_value in params.items():
@@ -2320,7 +2320,7 @@ def _check_method_params(X, params, indices=None):
             # Any other method_params should support indexing
             # (e.g. for cross-validation).
             method_params_validated[param_key] = _make_indexable(param_value)
-            method_params_validated[param_key] = _safe_indexing(
+            method_params_validated[param_key] = safe_indexing(
                 method_params_validated[param_key], indices
             )
 

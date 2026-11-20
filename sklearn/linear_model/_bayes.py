@@ -14,7 +14,7 @@ from scipy.linalg import pinvh
 
 from sklearn.base import RegressorMixin, _fit_context
 from sklearn.linear_model._base import LinearModel, _preprocess_data
-from sklearn.utils import _safe_indexing
+from sklearn.utils import safe_indexing
 from sklearn.utils._param_validation import Interval
 from sklearn.utils.extmath import fast_logdet
 from sklearn.utils.validation import _check_sample_weight, validate_data
@@ -809,7 +809,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         else:
             col_index = self.lambda_ < self.threshold_lambda
             X = X - self.X_offset_
-            X = _safe_indexing(X, indices=col_index, axis=1)
+            X = safe_indexing(X, indices=col_index, axis=1)
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
             return y_mean, y_std

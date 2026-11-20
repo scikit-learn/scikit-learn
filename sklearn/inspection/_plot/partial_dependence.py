@@ -11,7 +11,7 @@ from scipy import sparse
 from sklearn.base import is_regressor
 from sklearn.inspection import partial_dependence
 from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_index
-from sklearn.utils import Bunch, _safe_indexing, check_array, check_random_state
+from sklearn.utils import Bunch, check_array, check_random_state, safe_indexing
 from sklearn.utils._encode import _unique
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._plotting import _validate_style_kwargs
@@ -654,7 +654,7 @@ class PartialDependenceDisplay:
             if categorical_features_targeted:
                 min_n_cats = min(
                     [
-                        len(_unique(_safe_indexing(X, idx, axis=1)))
+                        len(_unique(safe_indexing(X, idx, axis=1)))
                         for idx in categorical_features_targeted
                     ]
                 )

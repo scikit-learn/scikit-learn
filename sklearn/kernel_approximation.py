@@ -27,7 +27,7 @@ from sklearn.utils._array_api import (
     _find_matching_floating_dtype,
     get_namespace_and_device,
 )
-from sklearn.utils._indexing import _safe_indexing
+from sklearn.utils._indexing import safe_indexing
 from sklearn.utils._param_validation import Interval, StrOptions
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.validation import (
@@ -1036,7 +1036,7 @@ class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
         if sp.issparse(X):
             basis = X[basis_inds]
         else:
-            basis = _safe_indexing(X, basis_inds, axis=0)
+            basis = safe_indexing(X, basis_inds, axis=0)
 
         basis_kernel = pairwise_kernels(
             basis,

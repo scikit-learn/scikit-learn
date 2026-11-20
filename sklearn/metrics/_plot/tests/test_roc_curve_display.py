@@ -15,7 +15,7 @@ from sklearn.metrics._plot.tests.test_common_curve_display import (
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import _safe_indexing
+from sklearn.utils import safe_indexing
 from sklearn.utils._response import _get_response_values_binary
 
 
@@ -250,17 +250,17 @@ def test_roc_curve_display_plotting_from_cv_results(
     for idx, (estimator, test_indices) in enumerate(
         zip(cv_results["estimator"], cv_results["indices"]["test"])
     ):
-        y_true = _safe_indexing(y, test_indices)
+        y_true = safe_indexing(y, test_indices)
         y_pred = _get_response_values_binary(
             estimator,
-            _safe_indexing(X, test_indices),
+            safe_indexing(X, test_indices),
             response_method=response_method,
             pos_label=pos_label,
         )[0]
         sample_weight_fold = (
             None
             if sample_weight is None
-            else _safe_indexing(sample_weight, test_indices)
+            else safe_indexing(sample_weight, test_indices)
         )
         fpr, tpr, _ = roc_curve(
             y_true,

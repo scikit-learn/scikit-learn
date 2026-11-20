@@ -4,7 +4,7 @@ from numpy.testing import assert_array_equal
 from scipy import sparse
 
 from sklearn.datasets import load_iris
-from sklearn.utils import _safe_indexing, check_array
+from sklearn.utils import check_array, safe_indexing
 from sklearn.utils._mocking import (
     CheckingClassifier,
     _MockEstimatorOnOffPrediction,
@@ -105,8 +105,8 @@ def test_checking_classifier(iris, input_type):
 
     # check the shape in case of binary classification
     first_2_classes = np.logical_or(y == 0, y == 1)
-    X = _safe_indexing(X, first_2_classes)
-    y = _safe_indexing(y, first_2_classes)
+    X = safe_indexing(X, first_2_classes)
+    y = safe_indexing(y, first_2_classes)
     clf.fit(X, y)
 
     y_proba = clf.predict_proba(X)

@@ -16,7 +16,7 @@ from sklearn.metrics.pairwise import (
     pairwise_distances_chunked,
 )
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import _safe_indexing, check_random_state, check_X_y
+from sklearn.utils import check_random_state, check_X_y, safe_indexing
 from sklearn.utils._array_api import (
     _average,
     _is_numpy_namespace,
@@ -464,7 +464,7 @@ def davies_bouldin_score(X, labels):
     intra_dists = xp.zeros(n_labels, dtype=dtype, device=device)
     centroids = xp.zeros((n_labels, X.shape[1]), dtype=dtype, device=device)
     for k in range(n_labels):
-        cluster_k = _safe_indexing(X, xp.nonzero(labels == k)[0])
+        cluster_k = safe_indexing(X, xp.nonzero(labels == k)[0])
         centroid = _average(cluster_k, axis=0, xp=xp)
         centroids[k, ...] = centroid
         intra_dists[k] = _average(
