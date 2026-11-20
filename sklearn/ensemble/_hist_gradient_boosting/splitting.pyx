@@ -312,7 +312,6 @@ cdef class Splitter:
         cdef:
             int i
 
-
         self.X_binned = X_binned
         self.is_sparse = hasattr(X_binned, "format")
         if self.is_sparse:
