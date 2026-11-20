@@ -450,3 +450,12 @@ Note on Intel GPU support
 PyTorch XPU support is only available in PyTorch >= 2.12. For detailed compatibility
 information and setup instructions, see the `PyTorch XPU documentation
 <https://docs.pytorch.org/docs/2.12/notes/get_start_xpu.html>`__.
+
+Earlier PyTorch versions are known to have bugs that prevent several
+scikit-learn components from working robustly with the XPU backend: float
+precision issues (fixed in 2.12), JIT hangs and hangs for large matrix
+multiplications (fixed in 2.13), and severe slowdowns for large matrix
+multiplications (fixed in 2.15). We therefore recommend using PyTorch
+>= 2.15. Also make sure the Intel GPU driver (compute-runtime) and kernel
+are up to date: driver-level bugs can cause device errors that affect both
+PyTorch XPU and dpnp.
