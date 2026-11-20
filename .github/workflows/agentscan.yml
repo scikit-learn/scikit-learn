@@ -4,6 +4,7 @@ name: AgentScan
 # or issue and post a comment linking to the analysis and to our Automated
 # Contributions Policy. Accounts with too little public activity only get a
 # short "Insufficient data" comment. Nothing is posted for organic activity.
+# Org members and authors with at least 10 merged PRs are not scanned.
 
 permissions:
   contents: read
@@ -34,17 +35,28 @@ jobs:
       # The author association of the event reports org members with a private
       # membership as contributors, so membership is checked with a token that
       # can read it.
-      - name: Check org membership
-        id: membership
+      - name: Check if the author is a member or a seasoned contributor
+        id: author
         env:
-          GH_TOKEN: ${{ secrets.BOT_GITHUB_READ_ORG_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          READ_ORG_TOKEN: ${{ secrets.BOT_GITHUB_READ_ORG_TOKEN }}
           AUTHOR: ${{ github.event.pull_request.user.login || github.event.issue.user.login }}
         run: |
-          if gh api "orgs/scikit-learn/members/$AUTHOR" --silent; then
-            echo "is_member=true" >> "$GITHUB_OUTPUT"
+          if GH_TOKEN="$READ_ORG_TOKEN" gh api "orgs/scikit-learn/members/$AUTHOR" --silent; then
+            echo "$AUTHOR is an org member"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A failed search (bot account, API error) leaves the scan enabled.
+          merged=$(gh api -X GET search/issues \
+            -f q="repo:$GITHUB_REPOSITORY is:pr is:merged author:$AUTHOR" \
+            -f per_page=1 --jq .total_count || true)
+          echo "$AUTHOR has '$merged' merged PRs"
+          if [[ "$merged" =~ ^[0-9]+$ ]] && (( merged >= 10 )); then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
       - name: AgentScan
-        if: steps.membership.outputs.is_member != 'true'
+        if: steps.author.outputs.skip != 'true'
         uses: MatteoGabriele/agentscan-action@v2.8.0
         # A failed scan (GitHub API error, rate limit) should not show up as a
         # failed check on the PR of a contributor.
