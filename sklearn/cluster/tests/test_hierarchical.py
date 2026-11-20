@@ -388,6 +388,103 @@ def test_vector_scikit_single_vs_scipy_single(global_random_seed):
     assess_same_labelling(cut, cut_scipy)
 
 
+@pytest.mark.parametrize("metric", ["mahalanobis", "seuclidean"])
+def test_single_linkage_parametrized_metric(metric, global_random_seed):
+    # Non-regression test for gh-26961: single linkage used to fail for
+    # metrics that require extra parameters (V/VI), while the other
+    # linkages worked by delegating to scipy.
+    n_samples, n_features, n_clusters = 20, 5, 3
+    rng = np.random.RandomState(global_random_seed)
+    # Plain random data: full-rank covariance, so the Mahalanobis inverse
+    # covariance exists.
+    X = rng.normal(size=(n_samples, n_features))
+
+    out = hierarchy.linkage(X, method="single", metric=metric)
+    children_scipy = out[:, :2].astype(int)
+
+    children, _, n_leaves, _ = _TREE_BUILDERS["single"](X, affinity=metric)
+
+    # Sort the order of child nodes per row for consistency
+    children.sort(axis=1)
+    assert_array_equal(
+        children,
+        children_scipy,
+        "linkage tree differs from scipy impl for single linkage.",
+    )
+
+    cut = _hc_cut(n_clusters, children, n_leaves)
+    cut_scipy = _hc_cut(n_clusters, children_scipy, n_leaves)
+    assess_same_labelling(cut, cut_scipy)
+
+    # The estimator itself should fit, as it does for the other linkages
+    clustering = AgglomerativeClustering(
+        n_clusters=n_clusters, metric=metric, linkage="single"
+    )
+    clustering.fit(X)
+    assert len(set(clustering.labels_)) == n_clusters
+
+
+def test_single_linkage_mahalanobis_single_feature(global_random_seed):
+    # Non-regression test for the follow-up on gh-26961: with a single
+    # feature np.cov returns a 0-d array, which np.linalg.inv rejects,
+    # while scipy handles it. Single linkage must match scipy here.
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.normal(size=(10, 1))
+
+    out = hierarchy.linkage(X, method="single", metric="mahalanobis")
+    children_scipy = out[:, :2].astype(int)
+
+    children, _, n_leaves, _ = _TREE_BUILDERS["single"](X, affinity="mahalanobis")
+
+    children.sort(axis=1)
+    assert_array_equal(
+        children,
+        children_scipy,
+        "linkage tree differs from scipy impl for single linkage.",
+    )
+
+    clustering = AgglomerativeClustering(
+        n_clusters=3, metric="mahalanobis", linkage="single"
+    )
+    clustering.fit(X)
+    assert len(set(clustering.labels_)) == 3
+
+
+def test_single_linkage_mahalanobis_too_few_samples(global_random_seed):
+    # With fewer observations than features the covariance is singular
+    # and scipy raises; single linkage must raise the same way instead
+    # of silently building a tree from a rank-deficient inverse.
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.normal(size=(5, 8))
+
+    with pytest.raises(ValueError, match="too small"):
+        _TREE_BUILDERS["single"](X, affinity="mahalanobis")
+
+    clustering = AgglomerativeClustering(
+        n_clusters=2, metric="mahalanobis", linkage="single"
+    )
+    with pytest.raises(ValueError, match="too small"):
+        clustering.fit(X)
+
+
+def test_single_linkage_seuclidean_zero_variance(global_random_seed):
+    # A constant feature makes the standardized distances non-finite
+    # and scipy raises; single linkage must raise the same way instead
+    # of silently returning an unusable tree.
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.normal(size=(10, 3))
+    X[:, 1] = 2.0
+
+    with pytest.raises(ValueError, match="zero variance"):
+        _TREE_BUILDERS["single"](X, affinity="seuclidean")
+
+    clustering = AgglomerativeClustering(
+        n_clusters=2, metric="seuclidean", linkage="single"
+    )
+    with pytest.raises(ValueError, match="zero variance"):
+        clustering.fit(X)
+
+
 def test_union_find_fast_find_compresses_path():
     """Check that fast_find compresses the queried path to its root."""
     union_find = PytestUnionFind(5)
