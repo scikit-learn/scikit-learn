@@ -1,0 +1,3 @@
+- |Feature| Add :func:`tree.export_dict` to represent fitted decision trees as
+  nested dictionaries at full precision.
+  :pr:`34809` by :user:`Lucas Morin <lcrmorin>`.

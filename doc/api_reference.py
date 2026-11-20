@@ -1164,7 +1164,7 @@ API_REFERENCE = {
             },
             {
                 "title": "Exporting",
-                "autosummary": ["export_graphviz", "export_text"],
+                "autosummary": ["export_dict", "export_graphviz", "export_text"],
             },
             {
                 "title": "Plotting",

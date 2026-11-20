@@ -5,9 +5,12 @@ This module defines export functions for decision trees.
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import json
 from collections.abc import Iterable
+from html import escape
 from io import StringIO
 from numbers import Integral
+from typing import NamedTuple
 
 import numpy as np
 
@@ -19,6 +22,7 @@ from sklearn.tree import (
     _tree,
 )
 from sklearn.tree._reingold_tilford import Tree, buchheim
+from sklearn.tree._utils import SPLIT_NUMERIC
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -27,6 +31,60 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.validation import check_array, check_is_fitted
+
+
+class _SplitInfo(NamedTuple):
+    """Unformatted split data shared by tree exporters (internal nodes only)."""
+
+    feature: int
+    threshold: float
+    categories_left: np.ndarray | None
+    missing_go_to_left: bool
+
+
+def _get_split_info(tree, node_id):
+    """Read a split without imposing an export format or rounding its values."""
+    return _SplitInfo(
+        feature=int(tree.feature[node_id]),
+        threshold=float(tree.threshold[node_id]),
+        categories_left=(
+            None
+            if tree.split_kind[node_id] == SPLIT_NUMERIC
+            else tree._get_left_categories(node_id)
+        ),
+        missing_go_to_left=bool(tree.missing_go_to_left[node_id]),
+    )
+
+
+def _get_categorical_features(decision_tree):
+    """Map original feature indices to known labels in their encoded order."""
+    if isinstance(decision_tree, _tree.Tree):
+        return {
+            feature: np.arange(count)
+            for feature, count in enumerate(decision_tree._n_categories)
+            if count
+        }
+    if decision_tree.is_categorical_ is None:
+        return {}
+    return {
+        feature: categories[: decision_tree.tree_._n_categories[feature]]
+        for feature, categories in zip(
+            np.flatnonzero(decision_tree.is_categorical_),
+            decision_tree._categorical_encoder.categories_,
+        )
+    }
+
+
+def _format_category_set(categories):
+    """Use original labels and distinguish strings from numeric categories."""
+    return (
+        "{"
+        + ", ".join(
+            repr(value.item() if isinstance(value, np.generic) else value)
+            for value in categories
+        )
+        + "}"
+    )
 
 
 def _matplotlib_to_rgb(color):
@@ -131,6 +189,9 @@ def plot_tree(
     fill_colors=None,
 ):
     """Plot a decision tree.
+
+    Categorical splits show membership in a set of original category labels
+    and the direction taken by missing values and unknown categories.
 
     The sample counts that are shown are weighted with any sample_weights that
     might be present.
@@ -270,6 +331,7 @@ class _BaseTreeExporter:
         self.fontsize = fontsize
         self.colors = {"bounds": None}
         self.fill_colors = fill_colors
+        self.categorical_features = {}
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -354,21 +416,34 @@ class _BaseTreeExporter:
         # Write decision criteria
         if tree.children_left[node_id] != _tree.TREE_LEAF:
             # Always write node decision criteria, except for leaves
+            split = _get_split_info(tree, node_id)
             if self.feature_names is not None:
-                feature = self.feature_names[tree.feature[node_id]]
+                feature = self.feature_names[split.feature]
                 feature = self.str_escape(feature)
             else:
                 feature = "x%s%s%s" % (
                     characters[1],
-                    tree.feature[node_id],
+                    split.feature,
                     characters[2],
                 )
-            node_string += "%s %s %s%s" % (
-                feature,
-                characters[3],
-                round(tree.threshold[node_id], self.precision),
-                characters[4],
-            )
+            if split.categories_left is None:
+                node_string += "%s %s %s%s" % (
+                    feature,
+                    characters[3],
+                    round(split.threshold, self.precision),
+                    characters[4],
+                )
+            else:
+                categories = self.categorical_features[split.feature]
+                categories_left = categories[split.categories_left]
+                category_set = self.category_escape(
+                    _format_category_set(categories_left)
+                )
+                direction = "left" if split.missing_go_to_left else "right"
+                node_string += (
+                    f"{feature} in {category_set} "
+                    f"(missing/unknown: {direction}){characters[4]}"
+                )
 
         # Write impurity
         if self.impurity:
@@ -445,6 +520,9 @@ class _BaseTreeExporter:
 
         return node_string + characters[5]
 
+    def category_escape(self, string):
+        return string
+
     def str_escape(self, string):
         return string
 
@@ -500,6 +578,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         self.colors = {"bounds": None}
 
     def export(self, decision_tree):
+        self.categorical_features = _get_categorical_features(decision_tree)
         # Check length of feature_names before getting into the tree node
         # Raise error if length of feature_names does not match
         # n_features_in_ in the decision_tree
@@ -624,6 +703,11 @@ class _DOTTreeExporter(_BaseTreeExporter):
                 # Add edge to parent
                 self.out_file.write("%d -> %d ;\n" % (parent, node_id))
 
+    def category_escape(self, string):
+        if self.special_characters:
+            return escape(string)
+        return string.replace("\\", "\\\\").replace('"', r"\"")
+
     def str_escape(self, string):
         # override default escaping for graphviz
         return string.replace('"', r"\"")
@@ -672,6 +756,10 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         self.arrow_args = dict(arrowstyle="<-")
 
+    def category_escape(self, string):
+        # Render category labels literally rather than as Matplotlib mathtext.
+        return string.replace("$", r"\$")
+
     def _make_tree(self, node_id, et, criterion, depth=0):
         # traverses _tree.Tree recursively, builds intermediate
         # "_reingold_tilford.Tree" object
@@ -699,6 +787,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax = plt.gca()
         ax.clear()
         ax.set_axis_off()
+        self.categorical_features = _get_categorical_features(decision_tree)
         my_tree = self._make_tree(0, decision_tree.tree_, decision_tree.criterion)
         draw_tree = buchheim(my_tree)
 
@@ -851,6 +940,9 @@ def export_graphviz(
     fill_colors=None,
 ):
     """Export a decision tree in DOT format.
+
+    Categorical splits show membership in a set of original category labels
+    and the direction taken by missing values and unknown categories.
 
     This function generates a GraphViz representation of the decision tree,
     which is then written into `out_file`. Once exported, graphical renderings
@@ -1053,6 +1145,9 @@ def export_text(
 ):
     """Build a text report showing the rules of a decision tree.
 
+    Categorical branches show sets of original category labels. The branch
+    taken by missing values and unknown categories is marked explicitly.
+
     Note that backwards compatibility may not be supported.
 
     Parameters
@@ -1138,6 +1233,7 @@ def export_text(
                 f" {len(class_names)} while the tree was fitted with"
                 f" {len(decision_tree.classes_)} classes."
             )
+    categorical_features = _get_categorical_features(decision_tree)
     right_child_fmt = "{} {} <= {}\n"
     left_child_fmt = "{} {} >  {}\n"
     truncation_fmt = "{} {}\n"
@@ -1203,14 +1299,31 @@ def export_text(
             info_fmt_right = info_fmt
 
             if tree_.feature[node] != _tree.TREE_UNDEFINED:
+                split = _get_split_info(tree_, node)
                 name = feature_names_[node]
-                threshold = tree_.threshold[node]
-                threshold = "{1:.{0}f}".format(decimals, threshold)
-                report.write(right_child_fmt.format(indent, name, threshold))
+                if split.categories_left is None:
+                    threshold = "{1:.{0}f}".format(decimals, split.threshold)
+                    left_rule = right_child_fmt.format(indent, name, threshold)
+                    right_rule = left_child_fmt.format(indent, name, threshold)
+                else:
+                    categories = categorical_features[split.feature]
+                    left_mask = np.zeros(len(categories), dtype=bool)
+                    left_mask[split.categories_left] = True
+                    left_categories = _format_category_set(categories[left_mask])
+                    left_rule = f"{indent} {name} in {left_categories}"
+                    right_categories = _format_category_set(categories[~left_mask])
+                    right_rule = f"{indent} {name} in {right_categories}"
+                    if split.missing_go_to_left:
+                        left_rule += " or missing/unknown"
+                    else:
+                        right_rule += " or missing/unknown"
+                    left_rule += "\n"
+                    right_rule += "\n"
+                report.write(left_rule)
                 report.write(info_fmt_left)
                 print_tree_recurse(report, tree_.children_left[node], depth + 1)
 
-                report.write(left_child_fmt.format(indent, name, threshold))
+                report.write(right_rule)
                 report.write(info_fmt_right)
                 print_tree_recurse(report, tree_.children_right[node], depth + 1)
             else:  # leaf
@@ -1225,3 +1338,120 @@ def export_text(
 
     print_tree_recurse(report, 0, 1)
     return report.getvalue()
+
+
+@validate_params(
+    {"decision_tree": [DecisionTreeClassifier, DecisionTreeRegressor]},
+    prefer_skip_nested_validation=True,
+)
+def export_dict(decision_tree):
+    """Export a fitted decision tree as nested dictionaries at full precision.
+
+    Parameters
+    ----------
+    decision_tree : DecisionTreeClassifier or DecisionTreeRegressor
+        Fitted estimator, including the corresponding ExtraTree subclasses.
+
+    Returns
+    -------
+    tree_dict : dict
+        Every node contains ``node_id``, ``n_node_samples``,
+        ``weighted_n_node_samples`` and ``impurity``. Internal nodes also
+        contain ``feature`` (column index), ``threshold``,
+        ``missing_go_to_left``, ``left`` and ``right``.
+        Infinite thresholds are encoded as "Infinity" or "-Infinity" strings.
+
+        Leaves contain ``value``: class proportions for classification or a
+        one-element prediction list for regression. Multiple outputs produce
+        a list of these lists, with class proportions padded to the maximum
+        number of classes. Interpret output k using ``classes_[k]`` and
+        ``n_classes_[k]``; multi-output class labels are not exported.
+        Single-output classifiers also include the predicted ``class`` label.
+
+        Categorical splits replace ``threshold`` with ``categories_left``, a list
+        of left-routing codes. The root's ``categorical_features`` maps each
+        categorical feature index to its known labels in code order. Missing and
+        unknown labels follow ``missing_go_to_left``. Labels must be strings,
+        finite numbers, booleans or None; NaN represents missingness. Do not cast
+        categorical inputs to float32. Random splits expand to explicit code
+        lists, so export size grows with category count per split.
+
+    Notes
+    -----
+    This is an inspection/conversion format, not complete model persistence.
+    Numerical inputs must be converted to float32, then compared at float64
+    precision to ``float(threshold)``. Values less than or equal to the
+    threshold go left; NaNs follow ``missing_go_to_left``. This does not enable
+    missing inputs for estimators that reject them.
+
+    Write the result with ``json.dump``. Labels must be JSON-compatible for
+    JSON serialization; unsupported target-label objects are not converted.
+    Very deep trees can exceed Python's recursion limit during export or
+    serialization.
+
+    Examples
+    --------
+    >>> from sklearn.tree import DecisionTreeClassifier, export_dict
+    >>> model = DecisionTreeClassifier().fit([[0], [1]], [0, 1])
+    >>> export_dict(model)["threshold"]
+    0.5
+    """
+    check_is_fitted(decision_tree)
+    tree_ = decision_tree.tree_
+    single_output_clf = is_classifier(decision_tree) and tree_.n_outputs == 1
+
+    def _native(value):
+        return value.item() if hasattr(value, "item") else value
+
+    def _recurse(node_id):
+        node = {
+            "node_id": int(node_id),
+            "n_node_samples": int(tree_.n_node_samples[node_id]),
+            "weighted_n_node_samples": float(tree_.weighted_n_node_samples[node_id]),
+            "impurity": float(tree_.impurity[node_id]),
+        }
+
+        is_leaf = tree_.feature[node_id] == _tree.TREE_UNDEFINED
+
+        if is_leaf:
+            value = tree_.value[node_id]
+            node["value"] = (value[0] if tree_.n_outputs == 1 else value).tolist()
+            if single_output_clf:
+                class_idx = int(np.argmax(tree_.value[node_id][0]))
+                node["class"] = _native(decision_tree.classes_[class_idx])
+            return node
+
+        split = _get_split_info(tree_, node_id)
+        feature = split.feature
+        node["feature"] = feature
+        if split.categories_left is None:
+            threshold = split.threshold
+            if np.isinf(threshold):
+                threshold = "Infinity" if threshold > 0 else "-Infinity"
+            node["threshold"] = threshold
+        else:
+            node["categories_left"] = split.categories_left.tolist()
+        node["missing_go_to_left"] = split.missing_go_to_left
+        node["left"] = _recurse(tree_.children_left[node_id])
+        node["right"] = _recurse(tree_.children_right[node_id])
+        return node
+
+    tree_dict = _recurse(0)
+    if decision_tree.is_categorical_ is not None:
+        categorical_features = []
+        for feature, categories in _get_categorical_features(decision_tree).items():
+            # Missing values are encoded as NaN, not as a category index.
+            categories = [_native(v) for v in categories]
+            try:
+                json.dumps(categories, allow_nan=False)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "Categorical labels must be JSON-compatible scalars "
+                    "(strings, finite numbers, booleans, or None)."
+                ) from exc
+            categorical_features.append(
+                {"feature": int(feature), "categories": categories}
+            )
+        tree_dict["categorical_features"] = categorical_features
+
+    return tree_dict
