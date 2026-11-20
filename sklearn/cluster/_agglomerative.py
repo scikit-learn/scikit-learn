@@ -574,13 +574,38 @@ def linkage_tree(
             # defaults scipy uses, so that single linkage behaves like
             # the other linkages, which delegate to scipy.
             if affinity == "mahalanobis":
+                # scipy requires more observations than features for
+                # the covariance to be invertible, and raises through
+                # the other linkages; raise here too instead of
+                # silently building a tree from a rank-deficient
+                # inverse covariance.
+                n_samples, n_features = X.shape
+                if n_samples <= n_features:
+                    raise ValueError(
+                        f"The number of observations ({n_samples}) is too small; "
+                        "the covariance matrix is singular. For observations "
+                        f"with {n_features} dimensions, at least "
+                        f"{n_features + 1} observations are required."
+                    )
+                # np.cov returns a 0-d array for a single feature, which
+                # np.linalg.inv rejects; atleast_2d matches scipy.
                 dist_metric = DistanceMetric.get_metric(
-                    affinity, VI=np.linalg.inv(np.cov(X, rowvar=False))
+                    affinity,
+                    VI=np.linalg.inv(np.atleast_2d(np.cov(X, rowvar=False))),
                 )
             elif affinity == "seuclidean":
-                dist_metric = DistanceMetric.get_metric(
-                    affinity, V=np.var(X, axis=0, ddof=1)
-                )
+                V = np.var(X, axis=0, ddof=1)
+                # A zero-variance feature makes the standardized
+                # distances non-finite; scipy raises for the other
+                # linkages, so raise here instead of silently
+                # returning an unusable tree.
+                if np.any(V == 0):
+                    raise ValueError(
+                        "The 'seuclidean' metric cannot be used when a "
+                        "feature has zero variance: the distances would "
+                        "contain non-finite values."
+                    )
+                dist_metric = DistanceMetric.get_metric(affinity, V=V)
             else:
                 dist_metric = DistanceMetric.get_metric(affinity)
 
