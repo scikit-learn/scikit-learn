@@ -2406,9 +2406,14 @@ def test_check_array_writeable_df():
     df = pd.DataFrame(X, copy=False)
 
     out = check_array(df, copy=False, force_writeable=True)
-    # df is backed by a writeable array, no copy is needed
-    assert np.may_share_memory(out, df)
     assert out.flags.writeable
+    if np.asarray(df).flags.writeable:
+        # without Copy-on-Write, df is backed by a writeable array, no copy is needed
+        assert np.may_share_memory(out, df)
+    else:
+        # with Copy-on-Write (default in pandas >= 3), np.asarray(df) is read-only to
+        # protect other DataFrames that may share its memory, a copy is made
+        assert not np.may_share_memory(out, df)
 
     X.flags.writeable = False
     df = pd.DataFrame(X, copy=False)
