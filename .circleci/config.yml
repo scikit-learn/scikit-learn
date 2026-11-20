@@ -32,6 +32,18 @@ _ccache_stats: &ccache_stats
     # `ccache -z` in build_doc.sh means these cover just this build
     command: CCACHE_DIR=$HOME/.cache/ccache ccache -s || true
 
+# The datasets caches are keyed by the list of downloaded files, so that a build
+# that downloads new datasets saves a new cache. An existing cache key is never
+# overwritten: with one key per branch, the first build of a PR (often a noplot
+# build that downloads few datasets) would freeze the cache for the whole PR.
+_list_datasets: &list_datasets
+  run:
+    name: list the downloaded datasets for the cache key
+    command: |
+      mkdir -p ~/scikit_learn_data
+      find ~/scikit_learn_data -type f -printf '%P %s\n' | sort > /tmp/datasets_listing.txt
+      wc -l /tmp/datasets_listing.txt
+
 jobs:
   lint:
     docker:
@@ -83,8 +95,9 @@ jobs:
           paths:
             - ~/.cache/ccache
             - ~/.cache/pip
+      - *list_datasets
       - save_cache:
-          key: v2-doc-min-deps-datasets-{{ .Branch }}
+          key: v2-doc-min-deps-datasets-{{ .Branch }}-{{ checksum "/tmp/datasets_listing.txt" }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
@@ -130,8 +143,9 @@ jobs:
           paths:
             - ~/.cache/ccache
             - ~/.cache/pip
+      - *list_datasets
       - save_cache:
-          key: v1-doc-datasets-{{ .Branch }}
+          key: v1-doc-datasets-{{ .Branch }}-{{ checksum "/tmp/datasets_listing.txt" }}
           paths:
             - ~/scikit_learn_data
       - store_artifacts:
