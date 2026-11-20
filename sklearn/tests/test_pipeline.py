@@ -2787,9 +2787,9 @@ def test_feature_union_metadata_routing(transformer):
     )
 
     kwargs = {"sample_weight": sample_weight, "metadata": metadata}
-    feature_union.fit(X, y, **kwargs)
-    feature_union.fit_transform(X, y, **kwargs)
-    feature_union.fit(X, y, **kwargs).transform(X, **kwargs)
+    run_routing_caller(feature_union.fit, X, y, **kwargs)
+    run_routing_caller(feature_union.fit_transform, X, y, **kwargs)
+    run_routing_caller(feature_union.fit, X, y, **kwargs).transform(X, **kwargs)
 
     for transformer in feature_union.transformer_list:
         # access sub-transformer in (name, trans) with transformer[1]
