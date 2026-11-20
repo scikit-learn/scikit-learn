@@ -71,13 +71,20 @@ view moves it to the namespace and device of ``X``::
         fitted = _fitted_attrs_like(self, X)
         return X @ fitted.coef_.T + fitted.intercept_
 
-If the namespace and device of ``X`` are already known, pass them instead of
-``X`` to avoid inspecting ``X`` again::
+If the namespace and device of ``X`` are already known, pass them as well to
+avoid inspecting ``X`` again::
 
     xp, _, device = get_namespace_and_device(X)
-    fitted = _fitted_attrs_like(self, xp=xp, device=device)
+    fitted = _fitted_attrs_like(self, X, xp=xp, device=device)
 
 Keep the following in mind:
+
+- If ``X`` is not a NumPy array and has a floating point dtype, floating point
+  attributes are also cast to the dtype of ``X``. Namespaces like PyTorch do not
+  promote mixed float dtypes, so an estimator fitted on float64 NumPy data would
+  otherwise fail on float32 GPU data. NumPy inputs are not cast: NumPy promotes
+  mixed float dtypes, so their output dtype does not depend on whether array API
+  dispatch is enabled.
 
 - Read attributes from ``self`` when only their metadata is needed (for example
   ``self.coef_.ndim`` or ``self.classes_.shape[0]``). Metadata does not depend
@@ -100,11 +107,17 @@ computation before using it, for example with
 ``move_to(self.coef_, xp=xp, device=device)``.
 
 ``classes_`` is a NumPy array, which allows it to hold string class labels that
-cannot be represented in every namespace. To turn scores into class labels,
-compute the indices in the namespace of ``X``, move them to NumPy, take the
-labels from ``classes_`` and move numerical labels back to the namespace and
-device of ``X``. String labels are returned as a NumPy array. See
-``LinearClassifierMixin.predict`` in ``sklearn/linear_model/_base.py``.
+cannot be represented in every namespace. Predicted labels follow ``X``, unless
+they cannot be represented in the namespace of ``X``, in which case they are a
+NumPy array. Which one applies depends only on the dtype of ``classes_``, so a
+fitted classifier always returns the same type. To turn scores into class
+labels, compute the indices in the namespace of ``X`` and pass them to
+``_take_classes``::
+
+    from sklearn.utils._array_api import _take_classes
+
+    indices = xp.argmax(scores, axis=1)
+    return _take_classes(self.classes_, indices, xp=xp, device=device)
 
 Code that combines ``classes_`` with arrays that follow ``X``, for example
 predictions or ``labels=estimator.classes_`` passed to a metric, has to convert

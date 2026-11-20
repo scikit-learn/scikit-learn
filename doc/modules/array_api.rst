@@ -379,7 +379,9 @@ array library and device of the data passed to `fit`. This includes `classes_`.
 Methods such as `predict`, `predict_proba`, `decision_function` and `transform`
 run on the array library and device of the `X` they are called with, and return
 arrays from that library on that device. The fitted attributes they need are
-copied to that library and device for the duration of the call. For
+copied to that library and device for the duration of the call. If `X` is not a
+NumPy array, floating point attributes are also cast to the floating point dtype
+of `X`, so an estimator fitted on float64 data can be used on float32 data. For
 classifiers, `predict` returns numerical class labels in the array library and
 on the device of `X`, and string class labels as a NumPy array.
 

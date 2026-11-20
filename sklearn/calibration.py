@@ -35,6 +35,7 @@ from sklearn.svm import LinearSVC
 from sklearn.utils import _safe_indexing, column_or_1d, get_tags, indexable
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
+    _take_classes,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -677,11 +678,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         xp, _, device = get_namespace_and_device(X)
         check_is_fitted(self)
         class_indices = xp.argmax(self.predict_proba(X), axis=1)
-        class_indices = move_to(class_indices, xp=np, device="cpu")
-        y_pred = self.classes_[class_indices]
-        if isinstance(y_pred[0], str):
-            return y_pred
-        return move_to(y_pred, xp=xp, device=device)
+        return _take_classes(self.classes_, class_indices, xp=xp, device=device)
 
     def get_metadata_routing(self):
         """Get metadata routing of this object.

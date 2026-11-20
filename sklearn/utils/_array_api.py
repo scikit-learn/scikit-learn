@@ -1272,6 +1272,41 @@ def _fitted_attrs_like(estimator, X, *, xp=None, device=None):
     return _FittedAttrsLike(estimator, xp, device, dtype)
 
 
+def _take_classes(classes, indices, *, xp, device):
+    """Return the class labels at `indices`, for use in `predict`.
+
+    Numeric labels are returned in `xp` on `device`, the namespace and device of
+    `indices`. Labels that cannot be represented there, for example strings, are
+    returned as a NumPy array.
+
+    Parameters
+    ----------
+    classes : array of shape (n_classes,)
+        The class labels, usually the fitted `classes_` attribute.
+
+    indices : array of shape (n_samples,)
+        Integer indices into `classes`, in `xp` on `device`.
+
+    xp : namespace
+        Array API namespace of `indices`.
+
+    device : device
+        Array API device of `indices`.
+
+    Returns
+    -------
+    y_pred : array of shape (n_samples,)
+        The labels at `indices`.
+    """
+    if isinstance(classes, numpy.ndarray) and classes.dtype.kind not in "biuf":
+        indices = move_to(indices, xp=np_compat, device="cpu")
+        return classes[indices]
+    # `classes` is small, moving it is cheaper than moving `indices` to the CPU
+    # and the labels back.
+    classes = move_to(classes, xp=xp, device=device)
+    return xp.take(classes, indices, axis=0)
+
+
 def check_same_namespace(X, estimator, *, attribute, method):
     """Check that estimator's fitted attribute is compatible with X.
 

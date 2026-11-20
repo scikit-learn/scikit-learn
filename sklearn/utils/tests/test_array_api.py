@@ -37,6 +37,7 @@ from sklearn.utils._array_api import (
     _median,
     _ravel,
     _swapaxes,
+    _take_classes,
     _validate_diagonal_args,
     array_device,
     check_same_namespace,
@@ -1421,6 +1422,70 @@ def test_fitted_attrs_like_is_read_only():
 
     with pytest.raises(AttributeError):
         fitted.does_not_exist_
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize(
+    "classes", [[3, 5, 7], [0.5, 1.5, 2.5], [True, False, True]], ids=str
+)
+def test_take_classes_numeric(namespace, device_name, dtype_name, classes):
+    """Numeric labels follow the namespace and device of the indices."""
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    classes = numpy.asarray(classes)
+
+    with config_context(array_api_dispatch=True):
+        indices = xp.asarray([2, 0, 0], device=device)
+        y_pred = _take_classes(classes, indices, xp=xp, device=device)
+
+        assert get_namespace(y_pred)[0] == xp
+        assert array_device(y_pred) == array_device(indices)
+        assert_array_equal(_convert_to_numpy(y_pred, xp=xp), classes[[2, 0, 0]])
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize(
+    "classes", [["a", "b"], numpy.asarray(["a", "b"], dtype=object)]
+)
+@pytest.mark.parametrize("n_samples", [0, 3])
+def test_take_classes_strings(namespace, device_name, dtype_name, classes, n_samples):
+    """Labels that the namespace of the indices cannot hold are returned as NumPy.
+
+    The dtype of `classes` decides, so empty predictions work as well.
+    """
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    classes = numpy.asarray(classes)
+
+    with config_context(array_api_dispatch=True):
+        indices = xp.asarray([1, 0, 1][:n_samples], dtype=xp.int64, device=device)
+        y_pred = _take_classes(classes, indices, xp=xp, device=device)
+
+    assert isinstance(y_pred, numpy.ndarray)
+    assert_array_equal(y_pred, classes[[1, 0, 1][:n_samples]])
+
+
+@skip_if_array_api_compat_not_configured
+def test_take_classes_from_array_api_classes():
+    """`classes` that already follow `y` work, for estimators not converted yet.
+
+    TODO(#34604): delete once every estimator stores `classes_` as NumPy.
+    """
+    xp = pytest.importorskip("array_api_strict")
+
+    with config_context(array_api_dispatch=True):
+        classes = xp.asarray([3, 5])
+        indices = xp.asarray([1, 0])
+        y_pred = _take_classes(classes, indices, xp=xp, device=array_device(indices))
+
+        assert get_namespace(y_pred)[0] == xp
+        assert_array_equal(_convert_to_numpy(y_pred, xp=xp), [5, 3])
 
 
 @pytest.mark.parametrize(
