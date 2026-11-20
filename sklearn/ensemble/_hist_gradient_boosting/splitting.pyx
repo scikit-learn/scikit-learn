@@ -185,21 +185,28 @@ cdef class Splitter:
         unsigned int [::1] right_indices_buffer
         int n_threads
 
-    def __init__(self,
-                 const X_BINNED_DTYPE_C [::1, :] X_binned,
-                 const unsigned int [::1] n_bins_non_missing,
-                 const uint8_t missing_values_bin_idx,
-                 const uint8_t [::1] has_missing_values,
-                 const uint8_t [::1] is_categorical,
-                 const signed char [::1] monotonic_cst,
-                 Y_DTYPE_C l2_regularization,
-                 Y_DTYPE_C min_hessian_to_split=1e-3,
-                 unsigned int min_samples_leaf=20,
-                 Y_DTYPE_C min_gain_to_split=0.,
-                 uint8_t hessians_are_constant=False,
-                 Y_DTYPE_C feature_fraction_per_split=1.0,
-                 rng=np.random.RandomState(),
-                 unsigned int n_threads=1):
+    def __init__(
+        self,
+        const X_BINNED_DTYPE_C [::1, :] X_binned,
+        const unsigned int [::1] n_bins_non_missing,
+        const uint8_t missing_values_bin_idx,
+        const uint8_t [::1] has_missing_values,
+        const uint8_t [::1] is_categorical,
+        const signed char [::1] monotonic_cst,
+        Y_DTYPE_C l2_regularization,
+        Y_DTYPE_C min_hessian_to_split=1e-3,
+        unsigned int min_samples_leaf=20,
+        Y_DTYPE_C min_gain_to_split=0.,
+        uint8_t hessians_are_constant=False,
+        Y_DTYPE_C feature_fraction_per_split=1.0,
+        rng=np.random.RandomState(),
+        unsigned int n_threads=1,
+        unsigned int [::1] partition_buffer=None,
+        unsigned int [::1] left_indices_buffer=None,
+        unsigned int [::1] right_indices_buffer=None,
+    ):
+        cdef:
+            int i
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -227,10 +234,21 @@ cdef class Splitter:
         # partition = [cef|abdghijkl]
         # we have 2 leaves, the left one is at position 0 and the second one at
         # position 3. The order of the samples is irrelevant.
-        self.partition = np.arange(X_binned.shape[0], dtype=np.uint32)
+        if partition_buffer is None:
+            self.partition = np.arange(X_binned.shape[0], dtype=np.uint32)
+        else:
+            for i in range(X_binned.shape[0]):
+                partition_buffer[i] = i
+            self.partition = partition_buffer
         # buffers used in split_indices to support parallel splitting.
-        self.left_indices_buffer = np.empty_like(self.partition)
-        self.right_indices_buffer = np.empty_like(self.partition)
+        if left_indices_buffer is None:
+            self.left_indices_buffer = np.empty_like(self.partition)
+        else:
+            self.left_indices_buffer = left_indices_buffer
+        if right_indices_buffer is None:
+            self.right_indices_buffer = np.empty_like(self.partition)
+        else:
+            self.right_indices_buffer = right_indices_buffer
 
     def split_indices(Splitter self, split_info, unsigned int [::1]
                       sample_indices):
