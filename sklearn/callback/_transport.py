@@ -104,9 +104,13 @@ class Channel:
         callbacks, i.e. callbacks that are meant to be torn down in the workers, should
         call this in their `teardown` hook to free resources.
         """
-        # dropping the last reference to the Client will close the socket, and therefore
-        # the handler thread, when it is collected.
+        # Close the socket here. Waiting for the Client to be collected is too late:
+        # the worker copy often stays reachable through a reference cycle until cyclic
+        # GC, and the main-process handler stays blocked in `recv` until this end closes.
+        connection = self._connection
         self._connection = None
+        if connection is not None:
+            connection.close()
 
     def close(self):
         """Close the channel, i.e. its listener and its connection, if it has one.

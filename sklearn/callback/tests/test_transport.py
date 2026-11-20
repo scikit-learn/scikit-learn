@@ -94,6 +94,31 @@ def test_no_leftover_connection_threads_after_worker_copy_is_dropped():
 
 
 @pytest.mark.thread_unsafe  # module-level listener registries
+def test_disconnect_frees_connection_while_copy_is_alive():
+    """Check that `disconnect` closes the connection before the copy is collected.
+
+    Simulates a non-propagated callback (e.g. `ScoringMonitor`) running in a loky
+    worker. The unpickled copy often outlives the task because of reference cycles in
+    the callback context tree, so `teardown` calls `disconnect` to free the socket and
+    the main-process handler thread without waiting for cyclic GC.
+    """
+    channel = Channel(lambda message: None)
+    # Snapshot after initializing the channel so the listener's accept thread is
+    # part of the baseline.
+    baseline = _snapshot_transport_threads()
+
+    copy = pickle.loads(pickle.dumps(channel))
+    copy.send(None)
+    assert _new_transport_threads(baseline)
+
+    copy.disconnect()
+    _assert_no_leftover_threads(baseline)
+    assert copy._connection is None
+
+    channel.close()
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
 def test_close_listener_stops_accept_thread():
     """Check that closing a channel doesn't leave its accept thread behind.
 
