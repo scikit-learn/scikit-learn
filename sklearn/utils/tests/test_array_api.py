@@ -1387,6 +1387,7 @@ def test_fitted_attrs_like_follows_floating_dtype_of_X(
         assert xp.isdtype(fitted.labels_.dtype, "integral")
 
 
+@skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("dtype", [numpy.float32, numpy.float64])
 def test_fitted_attrs_like_keeps_dtype_for_numpy_X(dtype):
     """NumPy promotes mixed float dtypes, so the attributes keep their dtype.
