@@ -84,6 +84,7 @@ from sklearn.tests.metadata_routing_common import (
 from sklearn.utils import shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
+    array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
@@ -2734,6 +2735,44 @@ def test_cross_val_predict_array_api_compliance(
         pred_np = cross_val_predict(estimator, X_np, y_np, cv=cv)
     assert_allclose(
         move_to(pred_xp, xp=np, device="cpu"), pred_np, atol=_atol_for_type(dtype_name)
+    )
+
+
+@pytest.mark.parametrize(
+    "method", ["predict_proba", "predict_log_proba", "decision_function"]
+)
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_cross_val_predict_array_api_rare_class(
+    method, namespace, device_name, dtype_name
+):
+    """Predictions of a fold whose training set misses a class are reordered.
+
+    The fold's `classes_` is a NumPy array while the predictions follow `X`.
+    """
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    rng = np.random.RandomState(0)
+    X_np = rng.normal(0, 1, size=(14, 10)).astype(dtype_name)
+    y_np = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 3])
+    X_xp = xp.asarray(X_np, device=device)
+    y_xp = xp.asarray(y_np, device=device)
+    est = LogisticRegression()
+
+    with warnings.catch_warnings():
+        # Suppress warning about too few examples of a class
+        warnings.simplefilter("ignore")
+        with config_context(array_api_dispatch=True):
+            pred_xp = cross_val_predict(est, X_xp, y_xp, cv=3, method=method)
+            assert array_device(pred_xp) == array_device(X_xp)
+        pred_np = cross_val_predict(est, X_np, y_np, cv=3, method=method)
+
+    assert_allclose(
+        move_to(pred_xp, xp=np, device="cpu"),
+        pred_np,
+        rtol=1e-3,
+        atol=_atol_for_type(dtype_name),
     )
 
 
