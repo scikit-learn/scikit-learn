@@ -820,6 +820,9 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
 
 def _tested_estimators(type_filter=None):
     for _, Estimator in all_estimators(type_filter=type_filter):
+        if Estimator in SKIPPED_ESTIMATORS:
+            # _construct_instances would raise SkipTest and a SkipTestWarning.
+            continue
         with suppress(SkipTest):
             for estimator in _construct_instances(Estimator):
                 yield estimator
