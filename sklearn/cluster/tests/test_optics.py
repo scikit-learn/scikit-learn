@@ -3,6 +3,7 @@
 
 import warnings
 
+import joblib
 import numpy as np
 import pytest
 
@@ -18,7 +19,6 @@ from sklearn.utils import shuffle
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
-    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS
 
@@ -819,11 +819,17 @@ def test_extract_dbscan(global_dtype, global_random_seed):
     )
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("csr_container", [None] + CSR_CONTAINERS)
 def test_precomputed_dists(global_dtype, csr_container):
     redX = X[::2].astype(global_dtype, copy=False)
-    dists = pairwise_distances(redX, metric="euclidean")
+    # Try to match number of workers pairwise_distance() will use when called
+    # inside OPTICS, since different splits can result in (very slightly)
+    # different results due to floating point usage.
+    dists = pairwise_distances(
+        redX,
+        n_jobs=max(joblib.cpu_count() // joblib.effective_n_jobs(None), 1),
+        metric="euclidean",
+    )
     dists = csr_container(dists) if csr_container is not None else dists
     clust1 = OPTICS(min_samples=10, algorithm="brute", metric="precomputed").fit(dists)
     clust2 = OPTICS(min_samples=10, algorithm="brute", metric="euclidean").fit(redX)
