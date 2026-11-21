@@ -1,4 +1,4 @@
 - Fitting :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` was speedup by up to about 10% by
+  :class:`ensemble.HistGradientBoostingRegressor` was sped up by up to about 10% by
   avoiding memory copies of gradients and hessians.
   By :user:`Christian Lorentzen <lorentzenchr>`.

@@ -1,3 +1,4 @@
-- :class:`gaussian_process.GaussianProcessRegressor` now performs the
-  hyperparameter search in parallel using `joblib`.
+- :class:`gaussian_process.GaussianProcessRegressor` has a new parameter `n_jobs`
+  to run the restarts of the hyperparameter optimizer in parallel when
+  `n_restarts_optimizer > 0`.
   By :user:`Michelle Laurenti <michelle-laurenti>`.
