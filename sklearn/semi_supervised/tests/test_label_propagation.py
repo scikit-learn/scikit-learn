@@ -79,6 +79,19 @@ def test_predict_proba(global_dtype, Estimator, parameters):
     assert_allclose(clf.predict_proba([[1.0, 1.0]]), np.array([[0.5, 0.5]]))
 
 
+@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
+def test_predict_proba_finite_for_far_query(global_dtype, Estimator, parameters):
+    # Non-regression: a query point far from all training samples can drive the
+    # RBF affinity (and hence the row normalizer) to zero. predict_proba must
+    # apply the same zero-normalizer guard that fit uses, returning finite
+    # values instead of nan (which would silently corrupt predict).
+    samples = np.asarray([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], dtype=global_dtype)
+    labels = [0, 1, -1]
+    clf = Estimator(**parameters).fit(samples, labels)
+    proba = clf.predict_proba(np.asarray([[1e6, 1e6]], dtype=global_dtype))
+    assert np.all(np.isfinite(proba))
+
+
 @pytest.mark.parametrize("alpha", [0.1, 0.3, 0.5, 0.7, 0.9])
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
 def test_label_spreading_closed_form(global_dtype, Estimator, parameters, alpha):
