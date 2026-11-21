@@ -473,9 +473,22 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
         )
 
         X, y = self._validate_input(X, y, incremental, reset=first_pass)
-        n_samples, n_features = X.shape
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
+            sample_weight = _check_sample_weight(
+                sample_weight, X, ensure_non_negative=True
+            )
+            # Zero-weight samples do not contribute to the loss nor to the
+            # gradients. Drop them before splitting into mini-batches so that a
+            # mini-batch can never have a zero total weight. This happens for
+            # instance with resampling meta-estimators such as BaggingClassifier,
+            # which encode row sampling as frequency weights.
+            nonzero_weight = sample_weight != 0
+            if not np.all(nonzero_weight):
+                X = _safe_indexing(X, nonzero_weight)
+                y = _safe_indexing(y, nonzero_weight)
+                sample_weight = sample_weight[nonzero_weight]
+
+        n_features = X.shape[1]
 
         # Ensure y is 2D
         if y.ndim == 1:
@@ -672,10 +685,16 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
                     stratify=stratify,
                 )
             if X_val.shape[0] < 2:
-                raise ValueError(
+                msg = (
                     "The validation set is too small. Increase 'validation_fraction' "
                     "or the size of your dataset."
                 )
+                if sample_weight is not None:
+                    msg += (
+                        " Note that samples with zero sample_weight are removed "
+                        "before the validation split."
+                    )
+                raise ValueError(msg)
 
             if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)

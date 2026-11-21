@@ -1,0 +1,8 @@
+- :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
+  no longer raise ``ZeroDivisionError`` when a mini-batch has a zero total
+  ``sample_weight``. Zero-weight samples are dropped before the validation split
+  and mini-batching. As a consequence, `early_stopping=True` can raise a
+  ``ValueError`` about a too small validation set when very few samples have a
+  non-zero weight. Negative ``sample_weight`` values are now rejected with a
+  ``ValueError``.
+  By :user:`DeviousCardi <DeviousCardi>`.
