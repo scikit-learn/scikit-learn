@@ -16,28 +16,28 @@ from sklearn.utils.validation import _check_sample_weight
 
 
 def get_auto_step_size(
-    max_squared_sum, alpha_scaled, loss, fit_intercept, n_samples=None, is_saga=False
+    max_squared_sum, alpha_scaled, loss, n_samples=None, is_saga=False
 ):
     """Compute automatic step size for SAG solver.
 
-    The step size is set to 1 / (alpha_scaled + L + fit_intercept) where L is
-    the max sum of squares for over all samples.
+    The step size is set to 1 / L for SAG, where L = c * max_squared_sum + alpha_scaled
+    is the gradient Lipschitz constant of the loss of a single sample, with c = 1 for
+    the squared loss and c = 1/4 for the log and multinomial loss.
 
     Parameters
     ----------
     max_squared_sum : float
-        Maximum squared sum of X over samples.
+        Maximum over samples of `sample_weight[i] * (||X[i]||^2 + fit_intercept)`,
+        i.e. the weighted squared norm of a row of X, including the constant 1 for
+        the intercept if one is fit. The sample weights must be normalized to have
+        a mean of 1.
 
     alpha_scaled : float
         Constant that multiplies the regularization term, scaled by
-        1. / n_samples, the number of samples.
+        1. / sum(sample_weight), which equals 1. / n_samples without sample weights.
 
     loss : {'log', 'squared', 'multinomial'}
         The loss function used in SAG solver.
-
-    fit_intercept : bool
-        Specifies if a constant (a.k.a. bias or intercept) will be
-        added to the decision function.
 
     n_samples : int, default=None
         Number of rows in X. Useful if is_saga=True.
@@ -62,10 +62,10 @@ def get_auto_step_size(
     for Non-Strongly Convex Composite Objectives" <1407.0202>`
     """
     if loss in ("log", "multinomial"):
-        L = 0.25 * (max_squared_sum + int(fit_intercept)) + alpha_scaled
+        L = 0.25 * max_squared_sum + alpha_scaled
     elif loss == "squared":
         # inverse Lipschitz constant for squared loss
-        L = max_squared_sum + int(fit_intercept) + alpha_scaled
+        L = max_squared_sum + alpha_scaled
     else:
         raise ValueError(
             "Unknown loss function for SAG solver, got %s instead of 'log' or 'squared'"
@@ -96,7 +96,6 @@ def sag_solver(
     verbose=0,
     random_state=None,
     check_input=True,
-    max_squared_sum=None,
     warm_start_mem=None,
     is_saga=False,
 ):
@@ -163,11 +162,6 @@ def sag_solver(
 
     check_input : bool, default=True
         If False, the input arrays X and y will not be checked.
-
-    max_squared_sum : float, default=None
-        Maximum squared sum of X over samples. If None, it will be computed,
-        going through all the samples. The value should be precomputed
-        to speed up cross validation.
 
     warm_start_mem : dict, default=None
         The initialization parameters used for warm starting. Warm starting is
@@ -245,15 +239,20 @@ def sag_solver(
         y = check_array(y, dtype=_dtype, ensure_2d=False, order="C")
 
     n_samples, n_features = X.shape[0], X.shape[1]
-    # As in SGD, the alpha is scaled by n_samples.
-    alpha_scaled = float(alpha) / n_samples
-    beta_scaled = float(beta) / n_samples
-
     # if loss == 'multinomial', y should be label encoded.
     n_classes = int(y.max()) + 1 if loss == "multinomial" else 1
 
     # initialization
     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+    # SAG(A) minimizes an average over samples. We therefore divide the objective
+    #     sum_i sample_weight[i] * loss_i + alpha/2 * ||w||^2 + beta * ||w||_1
+    # by sum(sample_weight). This gives the average of the losses weighted with sample
+    # weights of mean 1, and makes the solver, in particular its step size, invariant
+    # under a rescaling of sample_weight.
+    sw_sum = sample_weight.sum()
+    sample_weight = sample_weight * (n_samples / sw_sum)
+    alpha_scaled = float(alpha) / sw_sum
+    beta_scaled = float(beta) / sw_sum
 
     if "coef" in warm_start_mem.keys():
         coef_init = warm_start_mem["coef"]
@@ -298,13 +297,16 @@ def sag_solver(
 
     dataset, intercept_decay = make_dataset(X, y, sample_weight, random_state)
 
-    if max_squared_sum is None:
-        max_squared_sum = row_norms(X, squared=True).max()
+    # The loss of sample i, sample_weight[i] * loss_i, has a gradient Lipschitz
+    # constant proportional to sample_weight[i] * ||(x_i, 1)||^2, where the 1 accounts
+    # for the intercept.
+    max_squared_sum = np.max(
+        sample_weight * (row_norms(X, squared=True) + int(fit_intercept))
+    )
     step_size = get_auto_step_size(
         max_squared_sum,
         alpha_scaled,
         loss,
-        fit_intercept,
         n_samples=n_samples,
         is_saga=is_saga,
     )

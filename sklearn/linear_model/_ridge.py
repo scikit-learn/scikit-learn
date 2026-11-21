@@ -51,7 +51,7 @@ from sklearn.utils._array_api import (
     move_to,
 )
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
-from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.fixes import _sparse_linalg_cg
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
@@ -783,9 +783,6 @@ def _ridge_regression(
                 solver = "svd"
 
     elif solver in ["sag", "saga"]:
-        # precompute max_squared_sum for all targets
-        max_squared_sum = row_norms(X, squared=True).max()
-
         coef = np.empty((y.shape[1], n_features), dtype=X.dtype)
         n_iter = np.empty(y.shape[1], dtype=np.int32)
         intercept = np.zeros((y.shape[1],), dtype=X.dtype)
@@ -805,7 +802,6 @@ def _ridge_regression(
                 verbose,
                 random_state,
                 False,
-                max_squared_sum,
                 init,
                 is_saga=solver == "saga",
             )
