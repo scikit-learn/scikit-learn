@@ -116,7 +116,7 @@ def _mark_thread_unsafe_if_pytest_imported(f):
 def _mark_no_check_spmatrix_if_pytest_imported(f):
     pytest = sys.modules.get("pytest")
     if pytest is not None:
-        return pytest.mark.no_check_spmatrix
+        return pytest.mark.no_check_spmatrix(f)
     else:
         return f
 
