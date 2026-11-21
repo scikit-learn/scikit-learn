@@ -1,0 +1,3 @@
+- The constant-feature warning of :func:`feature_selection.f_classif` now
+  reports the correct feature indices for `scipy.sparse` matrix inputs.
+  By :user:`Mruthunjai Govindaraju <n-o-t-mugen>`.
