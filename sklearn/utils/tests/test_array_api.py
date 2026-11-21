@@ -568,6 +568,46 @@ def test_convert_estimator_to_array_api_strict():
 
 
 @skip_if_array_api_compat_not_configured
+def test_move_estimator_to_ignores_non_numeric_arrays():
+    # Non-regression test for #35109: non-numeric/non-boolean array attributes
+    # (such as string classes_ or object feature_names_in_) must not be converted
+    # to target array namespace since they are incompatible with array API devices.
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = SimpleEstimator().fit(X_np)
+    est.classes_ = numpy.array(["cat", "dog"])
+    est.feature_names_in_ = numpy.array(["f1", "f2"], dtype=object)
+
+    with config_context(array_api_dispatch=True):
+        new_est = move_estimator_to(est, xp, device=None)
+
+        assert getattr(new_est.classes_, "__array_namespace__", None) is None
+        numpy.testing.assert_array_equal(new_est.classes_, est.classes_)
+
+        assert getattr(new_est.feature_names_in_, "__array_namespace__", None) is None
+        numpy.testing.assert_array_equal(
+            new_est.feature_names_in_, est.feature_names_in_
+        )
+
+
+@skip_if_array_api_compat_not_configured
+def test_move_estimator_to_converts_numeric_classes():
+    # Numeric class labels can be safely converted to the target array namespace.
+    xp = pytest.importorskip("array_api_strict")
+
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = SimpleEstimator().fit(X_np)
+    est.classes_ = numpy.array([0, 1])
+
+    with config_context(array_api_dispatch=True):
+        new_est = move_estimator_to(est, xp, device=None)
+
+        assert get_namespace(new_est.classes_)[0] == xp
+        numpy.testing.assert_array_equal(numpy.asarray(new_est.classes_), est.classes_)
+
+
+@skip_if_array_api_compat_not_configured
 def test_check_fitted_attribute():
     xp = pytest.importorskip("array_api_strict")
 
