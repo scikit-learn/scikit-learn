@@ -25,7 +25,7 @@ from sklearn.metrics import check_scoring, get_scorer_names
 from sklearn.metrics._scorer import _MultimetricScorer
 from sklearn.model_selection._split import check_cv
 from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import _safe_indexing, check_random_state, indexable
+from sklearn.utils import Bunch, _safe_indexing, check_random_state, indexable
 from sklearn.utils._array_api import (
     array_device,
     get_namespace,
@@ -40,6 +40,7 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.metadata_routing import (
+    CALLBACK_METHODS,
     MetadataRouter,
     MethodMapping,
     _manual_routing,
@@ -650,6 +651,26 @@ def cross_val_score(
     return cv_results["test_score"]
 
 
+def _reindex_params(X, params, indices):
+    """Helper function to reindex the parameters based on the indices."""
+    params = {} if params is None else params
+    # `_check_method_params` considers that all params that are arrays of same length as
+    # X should be resampled with the provided `indices`. But it is not always the case,
+    # e.g. X_val, y_val and sample_weight_val which are thus explicitly excluded.
+    # TODO XXX: a more general solution for this problem is still needed, as
+    # aliased validation data would still get sliced.
+    params_to_index = {
+        key: value
+        for key, value in params.items()
+        if key not in ("X_val", "y_val", "sample_weight_val")
+    }
+    reindexed_params = params.copy()
+    reindexed_params.update(
+        _check_method_params(X, params=params_to_index, indices=indices)
+    )
+    return reindexed_params
+
+
 def _fit_and_score(
     estimator,
     X,
@@ -672,6 +693,7 @@ def _fit_and_score(
     error_score=np.nan,
     caller=None,
     callback_ctx=None,
+    callback_params=None,
 ):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -748,6 +770,10 @@ def _fit_and_score(
     callback_ctx : `CallbackContext` object or None, default=None
         Callback context for the evaluation task.
 
+    callback_params : dict or None
+        Parameters that will be passed to the callbacks' on_fit_task_begin and
+        on_fit_task_end hooks.
+
     Returns
     -------
     result : dict with the following attributes
@@ -794,11 +820,17 @@ def _fit_and_score(
         print(f"{start_msg}{(80 - len(start_msg)) * '.'}")
 
     # Adjust length of sample weights
-    fit_params = fit_params if fit_params is not None else {}
-    fit_params = _check_method_params(X, params=fit_params, indices=train)
-    score_params = score_params if score_params is not None else {}
-    score_params_train = _check_method_params(X, params=score_params, indices=train)
-    score_params_test = _check_method_params(X, params=score_params, indices=test)
+    fit_params = _reindex_params(X, fit_params, train)
+    score_params_train = _reindex_params(X, score_params, train)
+    score_params_test = _reindex_params(X, score_params, test)
+    # Adjust length of callbacks metadata
+    if callback_params is not None:
+        callback_params_checked = {}
+        for hook_name in CALLBACK_METHODS:
+            callback_params_checked[hook_name] = _reindex_params(
+                X, callback_params[hook_name], train
+            )
+        callback_params = Bunch(**callback_params_checked)
 
     if parameters is not None:
         # here we clone the parameters, since sometimes the parameters
@@ -812,18 +844,16 @@ def _fit_and_score(
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
-    if (sample_weight := fit_params.get("sample_weight")) is not None:
-        metadata_callbacks = {"sample_weight": sample_weight}
-    else:
-        metadata_callbacks = None
-
     result = {}
 
     try:
         if callback_ctx is not None:
             with callback_ctx.propagate_callback_context(estimator):
                 callback_ctx.call_on_fit_task_begin(
-                    estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
+                    estimator=caller,
+                    X=X_train,
+                    y=y_train,
+                    metadata=callback_params.on_fit_task_begin,
                 )
                 if y_train is None:
                     estimator.fit(X_train, **fit_params)
@@ -866,7 +896,10 @@ def _fit_and_score(
     finally:
         if callback_ctx is not None:
             callback_ctx.call_on_fit_task_end(
-                estimator=caller, X=X_train, y=y_train, metadata=metadata_callbacks
+                estimator=caller,
+                X=X_train,
+                y=y_train,
+                metadata=callback_params.on_fit_task_end,
             )
 
     if verbose > 1:

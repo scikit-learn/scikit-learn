@@ -149,7 +149,7 @@ API_REFERENCE = {
             {
                 "title": None,
                 "autosummary": [
-                    "AutoPropagatedCallback",
+                    "AutoPropagatedCallbackMixin",
                     "CallbackContext",
                     "CallbackSupportMixin",
                     "FitCallback",
