@@ -98,9 +98,8 @@ def test_disconnect_frees_connection_while_copy_is_alive():
     """Check that `disconnect` closes the connection before the copy is collected.
 
     Simulates a non-propagated callback (e.g. `ScoringMonitor`) running in a loky
-    worker. The unpickled copy often outlives the task because of reference cycles in
-    the callback context tree, so `teardown` calls `disconnect` to free the socket and
-    the main-process handler thread without waiting for cyclic GC.
+    worker: `teardown` calls `disconnect` to free the socket and the main-process
+    handler thread right away, without relying on the unpickled copy being collected.
     """
     channel = Channel(lambda message: None)
     # Snapshot after initializing the channel so the listener's accept thread is

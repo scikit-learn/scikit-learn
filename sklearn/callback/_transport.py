@@ -92,11 +92,6 @@ class Channel:
         self._connection.send(message)
         self._connection.recv()
 
-    # callbacks are usually only reachable through reference cycles (because the context
-    # trees hold references to their children and parents) so they can survive many fits
-    # in the workers before being garbage collected. So we need this method to free the
-    # resources manually. In the future, we should investigate if this reference cycle
-    # can be avoided.
     def disconnect(self):
         """Release the connection in this process, leaving the listener open.
 
@@ -104,9 +99,10 @@ class Channel:
         callbacks, i.e. callbacks that are meant to be torn down in the workers, should
         call this in their `teardown` hook to free resources.
         """
-        # Close the socket here. Waiting for the Client to be collected is too late:
-        # the worker copy often stays reachable through a reference cycle until cyclic
-        # GC, and the main-process handler stays blocked in `recv` until this end closes.
+        # Close explicitly instead of relying on the Client being collected: the
+        # handler thread in the listening process stays blocked in `recv` until this end
+        # closes, and this channel may stay reachable (e.g. cached by a long-lived
+        # worker) well after the fit it was used for.
         connection = self._connection
         self._connection = None
         if connection is not None:
