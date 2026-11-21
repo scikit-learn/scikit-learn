@@ -886,6 +886,7 @@ def check_array(
 
     # pandas.DataFrame may have sparse columns
     is_pandas_fully_sparse_df = False
+    df_pandas = None
     if (
         array_df is not None
         and array_df.implementation.is_pandas()
@@ -964,7 +965,10 @@ def check_array(
         # nans
         # Use the original dtype for conversion if dtype is None
         new_dtype = dtype_orig if dtype is None else dtype
-        array = array.astype(new_dtype)
+        if df_pandas is not None:
+            array = df_pandas.astype(new_dtype)
+        else:
+            array = array.astype(new_dtype)
         # Since we converted here, we do not need to convert again later
         dtype = None
 
