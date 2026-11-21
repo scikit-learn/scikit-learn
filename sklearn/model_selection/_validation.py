@@ -1347,7 +1347,7 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
     (a subset of the classes in the full training set)
     and `n_classes` is the number of classes in the full training set.
     """
-    xp, _ = get_namespace(predictions, classes)
+    xp, _, device = get_namespace_and_device(predictions)
     classes_length = classes.shape[0]
     if n_classes != classes_length:
         recommendation = (
@@ -1398,8 +1398,15 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
             (_num_samples(predictions), n_classes),
             default_values[method],
             dtype=predictions.dtype,
+            device=device,
         )
-        predictions_for_all_classes[:, classes] = predictions
+        # The array API does not support assigning with an array of indices, so
+        # assign one column at a time. A single `xp.take` from `predictions`
+        # padded with a column of default values would avoid the loop, but this
+        # path only runs for folds that miss a class and there are few classes,
+        # so the simpler loop is preferred.
+        for column, class_index in enumerate(classes):
+            predictions_for_all_classes[:, int(class_index)] = predictions[:, column]
         predictions = predictions_for_all_classes
     return predictions
 

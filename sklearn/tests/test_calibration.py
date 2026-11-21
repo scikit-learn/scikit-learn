@@ -54,8 +54,6 @@ from sklearn.preprocessing import (
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    array_device,
-    get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
@@ -582,6 +580,30 @@ def test_temperature_scaling(n_classes, ensemble):
         y_scores_train = clf.predict_proba(X_train)
         ts = _TemperatureScaling().fit(y_scores_train, y_train)
         assert_allclose(ts.beta_, 1.0, atol=1e-6, rtol=0)
+
+
+@pytest.mark.parametrize("ensemble", [True, False])
+def test_temperature_scaling_numeric_labels(ensemble):
+    """Check that temperature scaling does not depend on the values of numeric
+    labels.
+
+    Non-regression test: labels that are not 0, ..., n_classes - 1 used to be
+    passed to the calibrator without being encoded, which led to `beta_` = 0
+    and uniform probabilities.
+    """
+    X, y = make_classification(
+        n_samples=300, n_classes=3, n_informative=4, random_state=0
+    )
+    labels = np.asarray([1, 3, 5])
+
+    cal_clf = CalibratedClassifierCV(
+        LogisticRegression(), method="temperature", ensemble=ensemble
+    )
+    proba = cal_clf.fit(X, y).predict_proba(X)
+    proba_relabelled = cal_clf.fit(X, labels[y]).predict_proba(X)
+
+    assert_allclose(proba_relabelled, proba)
+    assert_array_equal(cal_clf.predict(X), labels[np.argmax(proba, axis=1)])
 
 
 def test_temperature_scaling_input_validation(global_dtype):
@@ -1499,14 +1521,9 @@ def test_temperature_scaling_array_api_compliance(
 
         calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
         rtol = 2e-3 if dtype_name == "float32" else 1e-7
-        assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
-        assert calibrator_xp.beta_.dtype == X_cal_xp.dtype
-        assert array_device(calibrator_xp.beta_) == array_device(X_cal_xp)
-        assert_allclose(
-            move_to(calibrator_xp.beta_, xp=np, device="cpu"),
-            calibrator_np.beta_,
-            rtol=rtol,
-        )
+        assert isinstance(cal_clf_xp.classes_, np.ndarray)
+        assert isinstance(calibrator_xp.beta_, float)
+        assert_allclose(calibrator_xp.beta_, calibrator_np.beta_, rtol=rtol)
         pred_xp = cal_clf_xp.predict(X_train_xp)
         assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
 
@@ -1572,13 +1589,8 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
 
         calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
         rtol = 2e-3 if dtype_name == "float32" else 1e-7
-        assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
-        assert calibrator_xp.beta_.dtype == X_xp.dtype
-        assert array_device(calibrator_xp.beta_) == array_device(X_xp)
-        assert_allclose(
-            move_to(calibrator_xp.beta_, xp=np, device="cpu"),
-            calibrator_np.beta_,
-            rtol=rtol,
-        )
+        assert isinstance(cal_clf_xp.classes_, np.ndarray)
+        assert isinstance(calibrator_xp.beta_, float)
+        assert_allclose(calibrator_xp.beta_, calibrator_np.beta_, rtol=rtol)
         pred_xp = cal_clf_xp.predict(X_xp)
         assert_array_equal(pred_xp, pred_np)

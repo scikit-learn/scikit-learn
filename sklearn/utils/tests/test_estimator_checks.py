@@ -53,6 +53,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import (
     _check_name,
+    _non_numpy_array_paths,
     _NotAnArray,
     _yield_all_checks,
     check_array_api_input,
@@ -602,6 +603,48 @@ def test_check_array_api_input():
             array_namespace="array_api_strict",
             check_values=True,
         )
+
+
+class _Helper:
+    def __init__(self, value):
+        self.value = value
+
+
+class _NestedEstimator(BaseEstimator):
+    def fit(self, X, y=None):
+        self.X_ = X
+        return self
+
+
+class NestedArraysEstimator(BaseEstimator):
+    def __init__(self, init=None):
+        self.init = init
+
+    def fit(self, X, y=None):
+        self.coef_ = np.asarray([1.0])
+        self.helpers_ = [_Helper({"a": X})]
+        self.nested_ = _NestedEstimator().fit(X)
+        self.cycle_ = self
+        return self
+
+
+def test_non_numpy_array_paths():
+    """Arrays are found in containers, helper objects and nested estimators."""
+    try:
+        xp = importlib.import_module("array_api_strict")
+    except ModuleNotFoundError:  # pragma: nocover
+        raise SkipTest("array-api-strict is required to run this test")
+
+    X = xp.asarray([[1.0, 2.0]])
+    est = NestedArraysEstimator(init=xp.asarray([0.0])).fit(X)
+
+    assert sorted(_non_numpy_array_paths(est, "est")) == [
+        "est.helpers_[0].value['a']",
+        "est.nested_.X_",
+    ]
+
+    est = NestedArraysEstimator().fit(np.asarray([[1.0, 2.0]]))
+    assert _non_numpy_array_paths(est, "est") == []
 
 
 def test_not_an_array_array_function():
@@ -1740,7 +1783,11 @@ def test_estimator_with_set_output():
                     "this check is expected to fail because pandas and polars"
                     " are not compatible with the array api."
                 ),
-                "check_array_api_same_namespace": (
+                "check_array_api_cross_namespace_inference": (
+                    "this check is expected to fail because pandas and polars"
+                    " are not compatible with the array api."
+                ),
+                "check_array_api_cross_namespace_inference_mixed_dtypes": (
                     "this check is expected to fail because pandas and polars"
                     " are not compatible with the array api."
                 ),

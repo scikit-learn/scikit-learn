@@ -15,6 +15,7 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model import Ridge, RidgeClassifier
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import FunctionTransformer, make_pipeline
+from sklearn.utils import _array_api
 from sklearn.utils._array_api import (
     _add_to_diagonal,
     _asarray_with_order,
@@ -25,6 +26,8 @@ from sklearn.utils._array_api import (
     _estimator_with_converted_arrays,
     _expit,
     _fill_diagonal,
+    _fitted_attrs_as_numpy,
+    _fitted_attrs_like,
     _interp,
     _is_numpy_namespace,
     _logit,
@@ -34,6 +37,7 @@ from sklearn.utils._array_api import (
     _median,
     _ravel,
     _swapaxes,
+    _take_classes,
     _validate_diagonal_args,
     array_device,
     check_same_namespace,
@@ -1167,6 +1171,322 @@ def test_swapaxes(namespace, device_name, dtype_name):
     with config_context(array_api_dispatch=True):
         result_xp = _swapaxes(X_xp, 0, 1)
     assert_array_equal(move_to(result_xp, xp=numpy, device="cpu"), result_np)
+
+
+@pytest.fixture
+def opt_in_numpy_attrs(monkeypatch):
+    """Opt the estimators used below into the temporary rollout allow-list.
+
+    These tests exercise `_fitted_attrs_as_numpy` itself, which is independent of
+    which estimators the rollout has reached so far.
+
+    TODO(#34604): delete together with `_NUMPY_FITTED_ATTRS`.
+    """
+    monkeypatch.setattr(
+        _array_api,
+        "_NUMPY_FITTED_ATTRS",
+        _array_api._NUMPY_FITTED_ATTRS | {"MixedAttributesEstimator", "GridSearchCV"},
+    )
+
+
+class MixedAttributesEstimator(BaseEstimator):
+    """Estimator whose fitted attributes cover every branch of the array walk."""
+
+    def __init__(self, weights=None, init=None):
+        self.weights = weights
+        self.init = init
+
+    def fit(self, X, y=None):
+        self.array_ = X
+        self.dict_ = {"X": X}
+        self.list_ = [X]
+        self.nested_ = SimpleEstimator().fit(X)
+        self.sparse_ = sp.csr_array(numpy.asarray([[1.0, 0.0]]))
+        self.none_ = None
+        self.int_ = 3
+        self.str_ = "auto"
+        return self
+
+
+@pytest.mark.parametrize(
+    "array, description",
+    [
+        (numpy.ma.masked_array([1.0, 2.0], mask=[True, False]), "masked array"),
+        (numpy.float64(3.0), "numpy scalar"),
+        (numpy.rec.array([(1, 2.0)], dtype=[("a", "i4"), ("b", "f8")]), "recarray"),
+    ],
+)
+def test_move_to_numpy_leaves_numpy_untouched(array, description):
+    """NumPy inputs are returned as-is when the target namespace is NumPy.
+
+    The general conversion path round trips through dlpack, which returns a plain
+    ``ndarray`` and so would drop a mask or a record dtype. Estimators store their
+    fitted attributes as NumPy, so this path is taken on every attribute lookup
+    and must not be lossy.
+    """
+    assert move_to(array, xp=np_compat, device="cpu") is array
+    assert move_to(array, xp=numpy, device=None) is array
+
+
+@skip_if_array_api_compat_not_configured
+def test_fitted_attrs_as_numpy_preserves_masked_cv_results(opt_in_numpy_attrs):
+    """`cv_results_` holds masked arrays whose mask marks inapplicable params."""
+    from sklearn.linear_model import Ridge
+    from sklearn.model_selection import GridSearchCV
+
+    X = numpy.arange(20.0).reshape(10, 2)
+    y = numpy.arange(10.0)
+    search = GridSearchCV(Ridge(), {"alpha": [0.1, 1.0]}, cv=2).fit(X, y)
+
+    with config_context(array_api_dispatch=True):
+        _fitted_attrs_as_numpy(search)
+
+    param_alpha = search.cv_results_["param_alpha"]
+    assert isinstance(param_alpha, numpy.ma.MaskedArray)
+    assert param_alpha.mask is not None
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_fitted_attrs_as_numpy(namespace, device_name, dtype_name, opt_in_numpy_attrs):
+    """Arrays reachable from the estimator become NumPy, everything else is left."""
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    X_np = numpy.asarray([[1.3, 4.5]], dtype=dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        est = MixedAttributesEstimator().fit(xp.asarray(X_np, device=device))
+        _fitted_attrs_as_numpy(est)
+
+    assert isinstance(est.array_, numpy.ndarray)
+    assert isinstance(est.dict_["X"], numpy.ndarray)
+    assert isinstance(est.list_[0], numpy.ndarray)
+    assert_allclose(est.array_, X_np)
+
+    assert sp.issparse(est.sparse_)
+    assert est.none_ is None
+    assert est.int_ == 3
+    assert est.str_ == "auto"
+
+
+@skip_if_array_api_compat_not_configured
+def test_fitted_attrs_as_numpy_leaves_nested_estimators_alone(opt_in_numpy_attrs):
+    """Nested estimators convert themselves when their own fit returns.
+
+    Descending into them would re-walk every sub-estimator of an ensemble on top
+    of the walks they already did, so the walk stops at the estimator boundary.
+    """
+    xp = pytest.importorskip("array_api_strict")
+    X = xp.asarray([[1.3, 4.5]])
+
+    with config_context(array_api_dispatch=True):
+        est = MixedAttributesEstimator().fit(X)
+        _fitted_attrs_as_numpy(est)
+
+        assert isinstance(est.array_, numpy.ndarray)
+        assert get_namespace(est.nested_.X_)[0] == xp
+
+
+@skip_if_array_api_compat_not_configured
+def test_fitted_attrs_as_numpy_leaves_params_alone(opt_in_numpy_attrs):
+    """Constructor parameters are not fitted attributes, so they are not touched.
+
+    The common checks that fit does not change parameters run without dispatch,
+    where the conversion is skipped, so they cannot catch this.
+    """
+    xp = pytest.importorskip("array_api_strict")
+    weights = {"a": 1.0}
+
+    with config_context(array_api_dispatch=True):
+        init = xp.asarray([1.0, 2.0])
+        est = MixedAttributesEstimator(weights=weights, init=init)
+        est.fit(xp.asarray([[1.3, 4.5]]))
+        _fitted_attrs_as_numpy(est)
+
+    assert est.weights is weights
+    assert est.init is init
+    assert isinstance(est.array_, numpy.ndarray)
+
+
+@skip_if_array_api_compat_not_configured
+def test_fitted_attrs_as_numpy_without_dispatch_is_a_no_op(opt_in_numpy_attrs):
+    """Without dispatch every input is already NumPy, so the walk is skipped."""
+    xp = pytest.importorskip("array_api_strict")
+
+    with config_context(array_api_dispatch=True):
+        est = MixedAttributesEstimator().fit(xp.asarray([[1.3, 4.5]]))
+
+    _fitted_attrs_as_numpy(est)
+
+    with config_context(array_api_dispatch=True):
+        assert get_namespace(est.array_)[0] == xp
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_fitted_attrs_like(namespace, device_name, dtype_name):
+    """Attributes are moved to the requested namespace on first read only."""
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    X_np = numpy.asarray([[1.3, 4.5]], dtype=dtype_name)
+    est = MixedAttributesEstimator().fit(X_np)
+
+    with config_context(array_api_dispatch=True):
+        X = xp.asarray(X_np, device=device)
+        # `device` is a name, `array_device` returns the namespace's device object.
+        device_reference = array_device(X)
+        fitted = _fitted_attrs_like(est, X, xp=xp, device=device)
+
+        moved = fitted.array_
+        assert get_namespace(moved)[0] == xp
+        assert array_device(moved) == device_reference
+        # The estimator itself is not touched, the view holds the moved copy.
+        assert isinstance(est.array_, numpy.ndarray)
+        # A second read of the same attribute does not pay for another transfer.
+        assert fitted.array_ is moved
+
+        # Containers are walked like `_fitted_attrs_as_numpy` walks them.
+        assert get_namespace(fitted.list_[0])[0] == xp
+        assert get_namespace(fitted.dict_["X"])[0] == xp
+        # Nested estimators convert themselves, the view does not descend.
+        assert fitted.nested_ is est.nested_
+
+        assert fitted.none_ is None
+        assert fitted.int_ == 3
+        assert fitted.str_ == "auto"
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_fitted_attrs_like_follows_floating_dtype_of_X(
+    namespace, device_name, dtype_name
+):
+    """Floating attributes are cast to the floating dtype of `X`.
+
+    Fitting on NumPy gives float64 attributes, while GPU inputs are usually
+    float32. Namespaces like PyTorch do not promote mixed float dtypes in
+    operations such as `matmul`, so the attributes have to follow `X`.
+    """
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    est = MixedAttributesEstimator().fit(numpy.asarray([[1.3, 4.5]]))
+    est.labels_ = numpy.asarray([0, 1])
+
+    with config_context(array_api_dispatch=True):
+        X = xp.asarray([[1.3, 4.5]], dtype=getattr(xp, dtype_name), device=device)
+        fitted = _fitted_attrs_like(est, X)
+
+        assert fitted.array_.dtype == X.dtype
+        assert fitted.list_[0].dtype == X.dtype
+        assert xp.isdtype(fitted.labels_.dtype, "integral")
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize("dtype", [numpy.float32, numpy.float64])
+def test_fitted_attrs_like_keeps_dtype_for_numpy_X(dtype):
+    """NumPy promotes mixed float dtypes, so the attributes keep their dtype.
+
+    This keeps the output dtype of NumPy inputs the same with and without
+    array API dispatch.
+    """
+    est = MixedAttributesEstimator().fit(numpy.asarray([[1.3, 4.5]]))
+    X = numpy.asarray([[1.3, 4.5]], dtype=dtype)
+
+    for dispatch in (False, True):
+        with config_context(array_api_dispatch=dispatch):
+            fitted = _fitted_attrs_like(est, X)
+            assert fitted.array_.dtype == numpy.float64
+
+
+def test_fitted_attrs_like_resolves_namespace_from_X():
+    """`xp`/`device` are derived from `X` when the caller has not resolved them."""
+    X_np = numpy.asarray([[1.3, 4.5]])
+    est = MixedAttributesEstimator().fit(X_np)
+
+    fitted = _fitted_attrs_like(est, X_np)
+    assert fitted.array_ is est.array_
+
+
+def test_fitted_attrs_like_is_read_only():
+    X = numpy.asarray([[1.3, 4.5]])
+    est = MixedAttributesEstimator().fit(X)
+    fitted = _fitted_attrs_like(est, X, xp=np_compat, device="cpu")
+
+    with pytest.raises(AttributeError, match="read-only"):
+        fitted.array_ = numpy.asarray([1.0])
+
+    with pytest.raises(AttributeError):
+        fitted.does_not_exist_
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize(
+    "classes", [[3, 5, 7], [0.5, 1.5, 2.5], [True, False, True]], ids=str
+)
+def test_take_classes_numeric(namespace, device_name, dtype_name, classes):
+    """Numeric labels follow the namespace and device of the indices."""
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    classes = numpy.asarray(classes)
+
+    with config_context(array_api_dispatch=True):
+        indices = xp.asarray([2, 0, 0], device=device)
+        y_pred = _take_classes(classes, indices, xp=xp, device=device)
+
+        assert get_namespace(y_pred)[0] == xp
+        assert array_device(y_pred) == array_device(indices)
+        assert_array_equal(_convert_to_numpy(y_pred, xp=xp), classes[[2, 0, 0]])
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize(
+    "classes", [["a", "b"], numpy.asarray(["a", "b"], dtype=object)]
+)
+@pytest.mark.parametrize("n_samples", [0, 3])
+def test_take_classes_strings(namespace, device_name, dtype_name, classes, n_samples):
+    """Labels that the namespace of the indices cannot hold are returned as NumPy.
+
+    The dtype of `classes` decides, so empty predictions work as well.
+    """
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    classes = numpy.asarray(classes)
+
+    with config_context(array_api_dispatch=True):
+        indices = xp.asarray([1, 0, 1][:n_samples], dtype=xp.int64, device=device)
+        y_pred = _take_classes(classes, indices, xp=xp, device=device)
+
+    assert isinstance(y_pred, numpy.ndarray)
+    assert_array_equal(y_pred, classes[[1, 0, 1][:n_samples]])
+
+
+@skip_if_array_api_compat_not_configured
+def test_take_classes_from_array_api_classes():
+    """`classes` that already follow `y` work, for estimators not converted yet.
+
+    TODO(#34604): delete once every estimator stores `classes_` as NumPy.
+    """
+    xp = pytest.importorskip("array_api_strict")
+
+    with config_context(array_api_dispatch=True):
+        classes = xp.asarray([3, 5])
+        indices = xp.asarray([1, 0])
+        y_pred = _take_classes(classes, indices, xp=xp, device=array_device(indices))
+
+        assert get_namespace(y_pred)[0] == xp
+        assert_array_equal(_convert_to_numpy(y_pred, xp=xp), [5, 3])
 
 
 @pytest.mark.parametrize(
