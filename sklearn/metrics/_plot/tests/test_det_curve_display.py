@@ -2,9 +2,24 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose
 
-from sklearn.datasets import load_iris
+from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import DetCurveDisplay, det_curve
+from sklearn.model_selection import cross_validate
+
+
+@pytest.fixture(scope="module")
+def data_binary():
+    X, y = make_classification(
+        n_samples=200,
+        n_features=20,
+        n_informative=5,
+        n_redundant=2,
+        flip_y=0.1,
+        class_sep=0.8,
+        random_state=42,
+    )
+    return X, y
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
@@ -14,15 +29,14 @@ from sklearn.metrics import DetCurveDisplay, det_curve
 @pytest.mark.parametrize("with_strings", [True, False])
 def test_det_curve_display(
     pyplot,
+    data_binary,
     constructor_name,
     response_method,
     with_sample_weight,
     drop_intermediate,
     with_strings,
 ):
-    X, y = load_iris(return_X_y=True)
-    # Binarize the data with only the two first classes
-    X, y = X[y < 2], y[y < 2]
+    X, y = data_binary
 
     pos_label = None
     if with_strings:
@@ -84,30 +98,56 @@ def test_det_curve_display(
     assert disp.ax_.get_xlabel() == expected_xlabel
 
 
-@pytest.mark.parametrize(
-    "constructor_name, expected_clf_name",
-    [
-        ("from_estimator", "LogisticRegression"),
-        ("from_predictions", "Classifier"),
-    ],
-)
-def test_det_curve_display_default_name(
-    pyplot,
-    constructor_name,
-    expected_clf_name,
-):
-    # Check the default name display in the figure when `name` is not provided
-    X, y = load_iris(return_X_y=True)
-    # Binarize the data with only the two first classes
-    X, y = X[y < 2], y[y < 2]
+def test_det_curve_display_from_cv_results(pyplot, data_binary):
+    """Check one `from_cv_results` call forwards its arguments to `det_curve`."""
+    X, y = data_binary
+    y = np.array(["c", "b"])[y]
+    sample_weight = np.ones(X.shape[0])
+    sample_weight[::2] = 2
 
-    lr = LogisticRegression().fit(X, y)
-    y_score = lr.predict_proba(X)[:, 1]
+    cv_results = cross_validate(
+        LogisticRegression(), X, y, cv=3, return_estimator=True, return_indices=True
+    )
+    display = DetCurveDisplay.from_cv_results(
+        cv_results,
+        X,
+        y,
+        sample_weight=sample_weight,
+        drop_intermediate=False,
+        response_method="decision_function",
+        pos_label="c",
+        name="test",
+    )
 
-    if constructor_name == "from_estimator":
-        disp = DetCurveDisplay.from_estimator(lr, X, y)
-    else:
-        disp = DetCurveDisplay.from_predictions(y, y_score)
+    for fpr, fnr, estimator, test_indices in zip(
+        display.fpr, display.fnr, cv_results["estimator"], cv_results["indices"]["test"]
+    ):
+        y_score = estimator.decision_function(X[test_indices])
+        expected_fpr, expected_fnr, _ = det_curve(
+            y[test_indices],
+            y_score,
+            sample_weight=sample_weight[test_indices],
+            drop_intermediate=False,
+            pos_label="c",
+        )
+        assert_allclose(fpr, expected_fpr)
+        assert_allclose(fnr, expected_fnr)
 
-    assert disp.name == expected_clf_name
-    assert disp.line_.get_label() == expected_clf_name
+    assert display.pos_label == "c"
+    assert [line.get_label() for line in display.line_] == [
+        "test",
+        "_child1",
+        "_child2",
+    ]
+    assert display.line_[0].get_linestyle() == "--"
+
+
+def test_det_curve_plot_parameter_length_validation(pyplot):
+    """Check `plot` rejects `fpr`, `fnr`, and `name` lists of different lengths."""
+    fpr = [np.array([0.5, 0.5, 0.0])] * 2
+    with pytest.raises(ValueError, match="self.fpr and self.fnr"):
+        DetCurveDisplay(fpr=fpr, fnr=[np.array([0.0, 1.0, 1.0])]).plot()
+
+    fnr = [np.array([0.0, 1.0, 1.0])] * 2
+    with pytest.raises(ValueError, match="'name'"):
+        DetCurveDisplay(fpr=fpr, fnr=fnr, name=["a", "b", "c"]).plot()

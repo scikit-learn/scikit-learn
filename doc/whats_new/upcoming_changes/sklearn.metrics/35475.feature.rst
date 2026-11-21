@@ -1,0 +1,4 @@
+- Add class method `from_cv_results` to :class:`metrics.DetCurveDisplay`,
+  which allows easy plotting of multiple DET curves from
+  :func:`model_selection.cross_validate` results.
+  By :user:`Lucy Liu <lucyleeow>` and :user:`Anne Beyer <AnneBeyer>`.
