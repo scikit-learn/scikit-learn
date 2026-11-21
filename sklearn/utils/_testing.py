@@ -21,7 +21,7 @@ from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from dataclasses import dataclass
 from difflib import context_diff
-from functools import wraps
+from functools import partial, wraps
 from inspect import signature
 from itertools import chain, groupby
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
@@ -1565,3 +1565,11 @@ def turn_warnings_into_errors():
             message=warning_info.message,
             category=warning_info.category,
         )
+
+
+def _check_name(check):
+    if hasattr(check, "__wrapped__"):
+        return _check_name(check.__wrapped__)
+    if isinstance(check, partial):
+        return check.keywords.get("check_name", check.func.__name__)
+    return check.__name__

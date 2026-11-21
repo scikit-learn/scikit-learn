@@ -184,7 +184,7 @@ from sklearn.svm import SVC, SVR, LinearSVC, LinearSVR, NuSVC, NuSVR, OneClassSV
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
-from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import SkipTest, _check_name
 from sklearn.utils.fixes import _IS_32BIT, parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
@@ -847,7 +847,7 @@ try:
             (SparsePCA, "check_transformer_preserve_dtypes"),
             (SpectralClustering, "check_estimator_sparse_matrix"),
         }
-        if (type(estimator), check.func.__name__) in skips:
+        if (type(estimator), _check_name(check)) in skips:
             pytest.skip(
                 "May fail intermittently with threaded parallelism; "
                 "see https://github.com/scikit-learn/scikit-learn/issues/35313"
@@ -910,10 +910,12 @@ def _get_check_estimator_ids(obj):
     if isfunction(obj):
         return obj.__name__
     if isinstance(obj, partial):
-        if not obj.keywords:
-            return obj.func.__name__
-        kwstring = ",".join(["{}={}".format(k, v) for k, v in obj.keywords.items()])
-        return "{}({})".format(obj.func.__name__, kwstring)
+        kwargs = dict(obj.keywords)
+        name = kwargs.pop("check_name", obj.func.__name__)
+        if not kwargs:
+            return name
+        kwstring = ",".join(f"{k}={v}" for k, v in kwargs.items())
+        return f"{name}({kwstring})"
     if hasattr(obj, "get_params"):
         with config_context(print_changed_only=True):
             return re.sub(r"\s", "", str(obj))
@@ -933,12 +935,7 @@ def _yield_instances_for_check(check, estimator_orig):
         return
 
     check_params = PER_ESTIMATOR_CHECK_PARAMS[type(estimator_orig)]
-
-    try:
-        check_name = check.__name__
-    except AttributeError:
-        # partial tests
-        check_name = check.func.__name__
+    check_name = _check_name(check)
 
     if check_name not in check_params:
         yield estimator_orig
