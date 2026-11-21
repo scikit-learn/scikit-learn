@@ -1384,11 +1384,12 @@ def check_array_api_input_and_values(
     dtype_name="float64",
     check_sample_weight=False,
 ):
+    X_ns_and_device = NamespaceAndDevice(array_namespace, device_name)
     return check_array_api_input(
         name,
         estimator_orig,
-        array_namespace=array_namespace,
-        device_name=device_name,
+        X_ns_and_device=X_ns_and_device,
+        other_ns_and_device=X_ns_and_device,
         dtype_name=dtype_name,
         check_values=True,
         check_sample_weight=check_sample_weight,
