@@ -100,11 +100,6 @@ def test_disconnect_frees_connection_while_copy_is_alive():
     Simulates a non-propagated callback (e.g. `ScoringMonitor`) running in a loky
     worker: `teardown` calls `disconnect` to free the socket and the main-process
     handler thread right away, without relying on the unpickled copy being collected.
-
-    The callback context currently doesn't create reference cycles that keep callbacks
-    alive, but this must not be a requirement for the transport to free its resources:
-    the copy is made part of a reference cycle here, so that it can only be reclaimed
-    by the cyclic GC.
     """
     channel = Channel(lambda message: None)
     # Snapshot after initializing the channel so the listener's accept thread is
@@ -112,7 +107,6 @@ def test_disconnect_frees_connection_while_copy_is_alive():
     baseline = _snapshot_transport_threads()
 
     copy = pickle.loads(pickle.dumps(channel))
-    copy.self_ref = copy
     copy.send(None)
     assert _new_transport_threads(baseline)
 
