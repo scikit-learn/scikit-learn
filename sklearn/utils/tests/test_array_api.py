@@ -586,7 +586,9 @@ def test_move_estimator_to_ignores_non_numeric_arrays():
         numpy.testing.assert_array_equal(new_est.classes_, est.classes_)
 
         assert getattr(new_est.feature_names_in_, "__array_namespace__", None) is None
-        numpy.testing.assert_array_equal(new_est.feature_names_in_, est.feature_names_in_)
+        numpy.testing.assert_array_equal(
+            new_est.feature_names_in_, est.feature_names_in_
+        )
 
 
 @skip_if_array_api_compat_not_configured
