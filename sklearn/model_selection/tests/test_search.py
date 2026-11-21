@@ -91,6 +91,7 @@ from sklearn.tests.metadata_routing_common import (
     WeightedMetaClassifier,
     _Registry,
     check_recorded_metadata,
+    run_routing_caller,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils._array_api import (
@@ -110,7 +111,6 @@ from sklearn.utils._testing import (
     assert_array_equal,
     set_random_state,
     skip_callback_test_if_wasm,
-    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.fixes import CSR_CONTAINERS
@@ -2705,7 +2705,6 @@ def test_search_html_repr():
 # ======================
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "SearchCV, param_search",
     [
@@ -2730,8 +2729,9 @@ def test_multi_metric_search_forwards_metadata(SearchCV, param_search):
         sample_weight="score_weights", metadata="score_metadata"
     )
     scoring = dict(my_scorer=scorer, accuracy="accuracy")
-    SearchCV(est, refit="accuracy", cv=2, scoring=scoring, **param_grid_search).fit(
-        X, y, score_weights=score_weights, score_metadata=score_metadata
+    scv = SearchCV(est, refit="accuracy", cv=2, scoring=scoring, **param_grid_search)
+    run_routing_caller(
+        scv.fit, X, y, score_weights=score_weights, score_metadata=score_metadata
     )
     assert len(scorer_registry)
     for _scorer in scorer_registry:
@@ -2785,10 +2785,10 @@ def test_search_sample_weight_auto_request(auto_request, expected):
         assert routing._self_request.score.requests.get("sample_weight") is expected
 
         if auto_request:
-            search.fit(X, y, sample_weight=sample_weight)
+            run_routing_caller(search.fit, X, y, sample_weight=sample_weight)
         else:
             with pytest.raises(UnsetMetadataPassedError, match="sample_weight"):
-                search.fit(X, y, sample_weight=sample_weight)
+                run_routing_caller(search.fit, X, y, sample_weight=sample_weight)
 
 
 # End of Metadata Routing Tests

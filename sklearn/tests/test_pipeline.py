@@ -58,6 +58,7 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingTransformer,
     _Registry,
     check_recorded_metadata,
+    run_routing_caller,
 )
 from sklearn.utils import get_tags
 from sklearn.utils._array_api import (
@@ -1790,9 +1791,9 @@ def test_feature_union_fit_params_without_fit_transform():
     )
 
     with pytest.raises(ValueError):
-        t.fit_transform(X, y, metadata=0)
+        run_routing_caller(t.fit_transform, X, y, metadata=0)
 
-    t.fit_transform(X, y, metadata=1)
+    run_routing_caller(t.fit_transform, X, y, metadata=1)
 
 
 def test_pipeline_missing_values_leniency():
@@ -2728,9 +2729,12 @@ def test_feature_union_metadata_routing_error():
             f"or not requested for {ConsumingTransformer.__name__}.transform"
         )
         with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
-            feature_union.fit(
-                X, y, sample_weight=sample_weight, metadata=metadata
-            ).transform(X, sample_weight=sample_weight, metadata=metadata)
+            result = run_routing_caller(
+                feature_union.fit, X, y, sample_weight=sample_weight, metadata=metadata
+            )
+            run_routing_caller(
+                result.transform, X, sample_weight=sample_weight, metadata=metadata
+            )
 
     with config_context(enable_metadata_auto_requests=True):
         error_message = (
@@ -2738,9 +2742,12 @@ def test_feature_union_metadata_routing_error():
             f" or not requested for {ConsumingTransformer.__name__}.transform"
         )
         with pytest.raises(UnsetMetadataPassedError, match=re.escape(error_message)):
-            feature_union.fit(
-                X, y, sample_weight=sample_weight, metadata=metadata
-            ).transform(X, sample_weight=sample_weight, metadata=metadata)
+            result = run_routing_caller(
+                feature_union.fit, X, y, sample_weight=sample_weight, metadata=metadata
+            )
+            run_routing_caller(
+                result.transform, X, sample_weight=sample_weight, metadata=metadata
+            )
 
 
 @config_context(enable_metadata_routing=True)
@@ -2751,7 +2758,6 @@ def test_feature_union_get_metadata_routing_without_fit():
     feature_union.get_metadata_routing()
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @config_context(enable_metadata_routing=True)
 @pytest.mark.parametrize(
     "transformer", [ConsumingTransformer, ConsumingNoFitTransformTransformer]
@@ -2780,9 +2786,10 @@ def test_feature_union_metadata_routing(transformer):
     )
 
     kwargs = {"sample_weight": sample_weight, "metadata": metadata}
-    feature_union.fit(X, y, **kwargs)
-    feature_union.fit_transform(X, y, **kwargs)
-    feature_union.fit(X, y, **kwargs).transform(X, **kwargs)
+    run_routing_caller(feature_union.fit, X, y, **kwargs)
+    run_routing_caller(feature_union.fit_transform, X, y, **kwargs)
+    result = run_routing_caller(feature_union.fit, X, y, **kwargs)
+    run_routing_caller(result.transform, X, **kwargs)
 
     for transformer in feature_union.transformer_list:
         # access sub-transformer in (name, trans) with transformer[1]
