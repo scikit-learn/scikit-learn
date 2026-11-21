@@ -1,0 +1,3 @@
+:class:`model_selection.RollingTimeSeriesSplit` was added to provide a fixed-window 
+sliding cross-validator, enabling strict walk-forward optimization for time series data. 
+By :user:`Dat-Al`.
