@@ -35,7 +35,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
 ##############################################################################
 # Test the score functions
@@ -93,6 +93,91 @@ def test_f_classif(csr_container):
     assert (pv[5:] > 1.0e-4).all()
     assert_array_almost_equal(F_sparse, F)
     assert_array_almost_equal(pv_sparse, pv)
+
+
+def test_f_oneway_vs_scipy_stats_groups():
+    # Check f_oneway against scipy.stats.f_oneway for more than 2 groups of
+    # unequal sizes, given as dense, sparse or 1D samples.
+    rng = np.random.RandomState(0)
+    groups = [loc + rng.randn(n, 4) for loc, n in [(0, 7), (1, 12), (0.5, 20)]]
+    f_expected, pv_expected = stats.f_oneway(*groups)
+
+    for samples in (
+        groups,
+        [sparse.csr_matrix(g) for g in groups],
+        [sparse.csc_array(g) for g in groups],
+        [sparse.coo_array(g) for g in groups],
+    ):
+        f, pv = f_oneway(*samples)
+        assert_allclose(f, f_expected)
+        assert_allclose(pv, pv_expected)
+
+    f, pv = f_oneway(*[g[:, 0] for g in groups])
+    assert f.shape == pv.shape == (1,)
+    assert_allclose(f, f_expected[0])
+    assert_allclose(pv, pv_expected[0])
+
+
+@pytest.mark.parametrize(
+    "container", [np.asarray, *CSR_CONTAINERS, *CSC_CONTAINERS, *COO_CONTAINERS]
+)
+@pytest.mark.parametrize("n_classes", [2, 5])
+@pytest.mark.parametrize("label_type", ["int", "str"])
+def test_f_classif_vs_per_class_f_oneway(container, n_classes, label_type):
+    # Check that f_classif, which is computed from per-class aggregates,
+    # matches the ANOVA computed on the per-class subsets of X, both with
+    # f_oneway and with scipy.stats.f_oneway.
+    X, y = make_classification(
+        n_samples=150,
+        n_features=8,
+        n_informative=3,
+        n_classes=n_classes,
+        n_clusters_per_class=1,
+        random_state=0,
+    )
+    # Introduce zeros so that the sparse containers have implicit zeros.
+    X[np.abs(X) < 0.5] = 0.0
+    # Non-contiguous int labels or string labels.
+    y = 10 * y + 3 if label_type == "int" else np.array(["a", "b", "c", "d", "e"])[y]
+
+    groups = [X[y == k] for k in np.unique(y)]
+    f_expected, pv_expected = f_oneway(*groups)
+    f_scipy, pv_scipy = stats.f_oneway(*groups)
+    assert_allclose(f_expected, f_scipy)
+    assert_allclose(pv_expected, pv_scipy)
+
+    f, pv = f_classif(container(X), y)
+    assert f.dtype == pv.dtype == np.float64
+    assert_allclose(f, f_expected)
+    assert_allclose(pv, pv_expected)
+
+
+@pytest.mark.parametrize("container", [np.asarray, *CSR_CONTAINERS])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
+def test_f_classif_dtype(container, dtype):
+    # Check that f_classif returns float64 for any input dtype and that its
+    # values match the float64 computation.
+    rng = np.random.RandomState(0)
+    y = rng.randint(3, size=200)
+    X = rng.randint(-5, 6, size=(200, 6)) + y[:, np.newaxis]
+
+    f_expected, pv_expected = stats.f_oneway(
+        *[X[y == k].astype(np.float64) for k in np.unique(y)]
+    )
+    f, pv = f_classif(container(X.astype(dtype)), y)
+    assert f.dtype == pv.dtype == np.float64
+    assert_allclose(f, f_expected)
+    assert_allclose(pv, pv_expected)
+
+
+@pytest.mark.parametrize("value, msg", [(np.nan, "NaN"), (np.inf, "infinity")])
+def test_f_oneway_non_finite(value, msg):
+    # Check that f_oneway rejects non-finite values.
+    rng = np.random.RandomState(0)
+    X1, X2 = rng.randn(10, 3), rng.randn(10, 3)
+    X1[0, 1] = value
+    with pytest.raises(ValueError, match=f"Input contains {msg}"):
+        f_oneway(X1, X2)
 
 
 @pytest.mark.parametrize("center", [True, False])
@@ -840,13 +925,14 @@ def test_invalid_k():
         GenericUnivariateSelect(mode="k_best", param=4).fit(X, y)
 
 
-def test_f_classif_constant_feature():
+@pytest.mark.parametrize("container", [np.asarray, *CSR_CONTAINERS, *CSC_CONTAINERS])
+def test_f_classif_constant_feature(container):
     # Test that f_classif warns if a feature is constant throughout.
 
     X, y = make_classification(n_samples=10, n_features=5)
-    X[:, 0] = 2.0
-    with pytest.warns(UserWarning):
-        f_classif(X, y)
+    X[:, [0, 3]] = 2.0
+    with pytest.warns(UserWarning, match=r"Features \[0 3\] are constant."):
+        f_classif(container(X), y)
 
 
 def test_no_feature_selected():
