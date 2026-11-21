@@ -474,7 +474,9 @@ def _yield_all_checks(estimator, legacy: bool):
 def _check_name(check):
     if hasattr(check, "__wrapped__"):
         return _check_name(check.__wrapped__)
-    return check.func.__name__ if isinstance(check, partial) else check.__name__
+    if isinstance(check, partial):
+        return check.keywords.get("check_name", check.func.__name__)
+    return check.__name__
 
 
 def _maybe_mark(
