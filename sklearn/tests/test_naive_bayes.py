@@ -234,6 +234,26 @@ def test_gnb_naive_bayes_scale_invariance():
     assert_array_equal(labels[1], labels[2])
 
 
+def test_gnb_var_smoothing():
+    # Non-regression test for #14054: var_smoothing adds epsilon_ to every
+    # estimated variance so that (nearly) constant features do not cause
+    # numerical instabilities.
+    rng = np.random.RandomState(0)
+    # the last feature is constant and therefore has zero variance
+    X = np.hstack([rng.randn(40, 2), np.zeros((40, 1))])
+    y = np.repeat([0, 1], 20)
+
+    var_smoothing = 1e-2
+    clf = GaussianNB(var_smoothing=var_smoothing).fit(X, y)
+
+    # epsilon_ is var_smoothing times the largest feature variance
+    assert_allclose(clf.epsilon_, var_smoothing * X.var(axis=0).max())
+    # the constant feature's variance is exactly epsilon_ after smoothing
+    assert_allclose(clf.var_[:, 2], clf.epsilon_)
+    # predictions are finite and well-defined despite the zero variance
+    assert np.all(np.isfinite(clf.predict_proba(X)))
+
+
 @pytest.mark.parametrize("DiscreteNaiveBayes", DISCRETE_NAIVE_BAYES_CLASSES)
 def test_discretenb_prior(DiscreteNaiveBayes, global_random_seed):
     # Test whether class priors are properly set.
