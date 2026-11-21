@@ -582,10 +582,11 @@ def test_move_estimator_to_ignores_non_numeric_arrays():
     with config_context(array_api_dispatch=True):
         new_est = move_estimator_to(est, xp, device=None)
 
-        assert getattr(new_est.classes_, "__array_namespace__", None) is None
+        assert get_namespace(new_est.X_)[0] == xp
+        assert new_est.classes_ is est.classes_
         numpy.testing.assert_array_equal(new_est.classes_, est.classes_)
 
-        assert getattr(new_est.feature_names_in_, "__array_namespace__", None) is None
+        assert new_est.feature_names_in_ is est.feature_names_in_
         numpy.testing.assert_array_equal(
             new_est.feature_names_in_, est.feature_names_in_
         )
