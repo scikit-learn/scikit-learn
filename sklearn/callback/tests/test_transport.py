@@ -237,9 +237,9 @@ def test_rejected_handshake_keeps_accept_thread():
         # The accept thread itself must stay.
         accept = f"{_TRANSPORT_THREAD_NAME_PREFIX}accept"
         timeout = 1
-        while Counter(thread.name for thread in _new_transport_threads(baseline)) != (
-            Counter({accept: 1})
-        ):
+        while Counter(
+            thread.name for thread in _new_transport_threads(baseline)
+        ) != Counter({accept: 1}):
             names = [thread.name for thread in _new_transport_threads(baseline)]
             assert names.count(accept) >= 1, names
             timeout -= 0.05

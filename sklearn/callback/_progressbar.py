@@ -73,7 +73,8 @@ class ProgressBar:
             or context.source_estimator_name is not None
         ):
             # We pass the minimal information to the queue that is necessary to create a
-            # progress bar and not the context to avoid pickling the context and its ancestors.
+            # progress bar and not the context to avoid pickling the context and its
+            # ancestors.
             path = [ctx.task_id for ctx in get_context_path(context)]
             self._channels[context.root_uuid].send(
                 {
