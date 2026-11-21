@@ -389,8 +389,8 @@ def _yield_array_api_checks(estimator, only_numpy=False):
             yield partial(
                 check_array_api_input,
                 check_name="check_array_api_mixed_inputs",
-                other_ns_and_device=other_ns_and_device,
                 X_ns_and_device=X_ns_and_device,
+                other_ns_and_device=other_ns_and_device,
             )
         # 3. String `y` and numeric `X` from all supported namespace/devices
         if is_classifier(estimator):
@@ -1106,6 +1106,8 @@ def check_array_api_input(
     check_values=False,
     check_sample_weight=False,
     expect_only_array_outputs=True,
+    *,
+    check_name=None,
 ):
     """Check that the estimator can work consistently with the Array API.
 
@@ -1146,6 +1148,10 @@ def check_array_api_input(
         Whether to expect non-array outputs such as sparse data structures and lists.
         If `False` the checks are looser; device, shape and dtype checks for method
         outputs are skipped and only a smoke test is performed for `inverse_transform`.
+
+    check_name : str, default=None
+        Name used to identify this check (e.g. in `expected_failed_checks`)
+        when it is yielded as a partial. Not used by the check itself.
     """
     xp_X, device_X = _array_api_for_tests(
         X_ns_and_device.xp, X_ns_and_device.device, dtype_name
