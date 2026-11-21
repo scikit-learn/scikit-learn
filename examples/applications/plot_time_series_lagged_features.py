@@ -111,8 +111,8 @@ print("X shape: {}\ny shape: {}".format(X.shape, y.shape))
 # Naive evaluation of the next hour bike demand regression
 # --------------------------------------------------------
 # Let's randomly split our tabularized dataset to train a gradient
-# boosting regression tree (GBRT) model and evaluate it using Mean
-# Absolute Percentage Error (MAPE). If our model is aimed at forecasting
+# boosting regression tree (GBRT) model and evaluate it with the Mean
+# Absolute Error (MAE). If our model is aimed at forecasting
 # (i.e., predicting future data from past data), we should not use training
 # data that are ulterior to the testing data. In time series machine learning
 # the "i.i.d" (independent and identically distributed) assumption does not
@@ -129,10 +129,10 @@ model = HistGradientBoostingRegressor().fit(X_train, y_train)
 
 # %%
 # Taking a look at the performance of the model.
-from sklearn.metrics import mean_absolute_percentage_error
+from sklearn.metrics import mean_absolute_error
 
 y_pred = model.predict(X_test)
-mean_absolute_percentage_error(y_test, y_pred)
+mean_absolute_error(y_test, y_pred)
 
 # %%
 # Proper next hour forecasting evaluation
@@ -152,14 +152,14 @@ ts_cv = TimeSeriesSplit(
 all_splits = list(ts_cv.split(X, y))
 
 # %%
-# Training the model and evaluating its performance based on MAPE.
+# Training the model and evaluating its performance based on MAE.
 train_idx, test_idx = all_splits[0]
 X_train, X_test = X[train_idx, :], X[test_idx, :]
 y_train, y_test = y[train_idx], y[test_idx]
 
 model = HistGradientBoostingRegressor().fit(X_train, y_train)
 y_pred = model.predict(X_test)
-mean_absolute_percentage_error(y_test, y_pred)
+mean_absolute_error(y_test, y_pred)
 
 # %%
 # The generalization error measured via a shuffled trained test split
@@ -169,25 +169,26 @@ mean_absolute_percentage_error(y_test, y_pred)
 # cross-validation:
 from sklearn.model_selection import cross_val_score
 
-cv_mape_scores = -cross_val_score(
-    model, X, y, cv=ts_cv, scoring="neg_mean_absolute_percentage_error"
+cv_mae_scores = -cross_val_score(
+    model, X, y, cv=ts_cv, scoring="neg_mean_absolute_error"
 )
-cv_mape_scores
+cv_mae_scores
 
 # %%
 # The variability across splits is quite large! In a real life setting
 # it would be advised to use more splits to better assess the variability.
 # Let's report the mean CV scores and their standard deviation from now on.
-print(f"CV MAPE: {cv_mape_scores.mean():.3f} ± {cv_mape_scores.std():.3f}")
+print(f"CV MAE: {cv_mae_scores.mean():.3f} ± {cv_mae_scores.std():.3f}")
 
 # %%
 # We can compute several combinations of evaluation metrics and loss functions,
-# which are reported a bit below.
+# which are reported a bit below. Note that the 50%-quantile pinball loss is
+# equal to :math:`\frac{1}{2}\,\mathrm{MAE}`, so we only report MAE to avoid
+# redundancy.
 from collections import defaultdict
 
 from sklearn.metrics import (
     make_scorer,
-    mean_absolute_error,
     mean_pinball_loss,
     root_mean_squared_error,
 )
@@ -195,20 +196,14 @@ from sklearn.model_selection import cross_validate
 
 
 def consolidate_scores(cv_results, scores, metric):
-    if metric == "MAPE":
-        scores[metric].append(f"{value.mean():.2f} ± {value.std():.2f}")
-    else:
-        scores[metric].append(f"{value.mean():.1f} ± {value.std():.1f}")
-
+    scores[metric].append(f"{value.mean():.1f} ± {value.std():.1f}")
     return scores
 
 
 scoring = {
-    "MAPE": make_scorer(mean_absolute_percentage_error),
     "RMSE": make_scorer(root_mean_squared_error),
     "MAE": make_scorer(mean_absolute_error),
     "pinball_loss_05": make_scorer(mean_pinball_loss, alpha=0.05),
-    "pinball_loss_50": make_scorer(mean_pinball_loss, alpha=0.50),
     "pinball_loss_95": make_scorer(mean_pinball_loss, alpha=0.95),
 }
 loss_functions = ["squared_error", "poisson", "absolute_error"]
@@ -294,10 +289,8 @@ scores_df.select(
 # %%
 # Even if the score distributions overlap due to the variance in the dataset,
 # it is true that the average RMSE is lower when `loss="squared_error"`, whereas
-# the average MAPE is lower when `loss="absolute_error"` as expected. That is
-# also the case for the Mean Pinball Loss with the quantiles 5 and 95. The score
-# corresponding to the 50 quantile loss is overlapping with the score obtained
-# by minimizing other loss functions, which is also the case for the MAE.
+# the average MAE is lower when `loss="absolute_error"` as expected. That is
+# also the case for the Mean Pinball Loss with the quantiles 5 and 95.
 #
 # A qualitative look at the predictions
 # -------------------------------------
@@ -383,12 +376,11 @@ _ = ax.legend()
 #   quantitatively confirmed by computing empirical coverage numbers as done in
 #   the :ref:`calibration of confidence intervals <calibration-section>`.
 #
-# Looking at the performance of non-linear regression models vs
-# the best models:
+# Looking at the residuals (`y_test - y_pred`) of each quantile estimator:
 from sklearn.metrics import PredictionErrorDisplay
 
 fig, axes = plt.subplots(ncols=3, figsize=(15, 6), sharey=True)
-fig.suptitle("Non-linear regression models")
+fig.suptitle("Residuals vs. predicted demand for each quantile estimator")
 predictions = [
     median_predictions,
     percentile_5_predictions,
@@ -407,10 +399,28 @@ for ax, pred, label in zip(axes, predictions, labels):
         scatter_kwargs={"alpha": 0.3},
         ax=ax,
     )
-    ax.set(xlabel="Predicted demand", ylabel="True demand")
-    ax.legend(["Best model", label])
+    ax.set(xlabel="Predicted demand", ylabel="Residual (true - predicted)")
+    ax.legend([label])
 
 plt.show()
+
+# %%
+# A residual-vs-predicted plot is most informative for estimators that target
+# the conditional mean or median: in that case we expect the residuals to be
+# roughly symmetric and centered on zero. For extreme quantiles the plot is
+# not centered on zero by design:
+#
+# - For a well-calibrated 5th-percentile estimator, roughly 95% of the
+#   residuals should be *positive* (the true value typically lies above the
+#   lower quantile).
+# - For a well-calibrated 95th-percentile estimator, roughly 95% of the
+#   residuals should be *negative* (the true value typically lies below the
+#   upper quantile).
+#
+# Reading these panels as if they were mean-regression residual plots would
+# therefore be misleading; a reliability diagram for quantiles is better suited
+# to diagnosing calibration of such estimators, though it is not currently
+# implemented in scikit-learn.
 
 # %%
 # Conclusion
@@ -422,7 +432,7 @@ plt.show()
 # :class:`~sklearn.model_selection.TimeSeriesSplit`. We observed that the
 # model trained using :class:`~sklearn.model_selection.train_test_split`,
 # having a default value of `shuffle` set to `True` produced an overly
-# optimistic Mean Average Percentage Error (MAPE). The results
+# optimistic Mean Absolute Error (MAE). The results
 # produced from the time-based split better represent the performance
 # of our time-series regression model. We also analyzed the predictive uncertainty
 # of our model via Quantile Regression. Predictions based on the 5th and
