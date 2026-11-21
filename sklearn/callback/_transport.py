@@ -20,7 +20,7 @@ import os
 import weakref
 from multiprocessing import AuthenticationError
 from multiprocessing.connection import Client, Listener
-from threading import Thread
+from threading import Lock, Thread
 
 # Process-local registry of live listeners, keyed by address. There is one listener
 # per call to `open_listener` (one per ScoringMonitor instance, one per ProgressBar
@@ -59,14 +59,19 @@ class Channel:
 
     def __init__(self, message_consumer):
         self._message_consumer = message_consumer
+        self._lock = Lock()
         self._listener_address, self._authkey = open_listener(message_consumer)
         weakref.finalize(self, close_listener, self._listener_address)
 
     def __getstate__(self):
-        # exclude the connection: a worker that is itself pickling this channel should
-        # not share its live client and the copied channel should open its own
-        # connection on first send.
+        # exclude the connection and lock: a worker that is itself pickling this channel
+        # should not share its live client, and the copied channel opens its own
+        # connection and lock when unpickled.
         return {"_listener_address": self._listener_address, "_authkey": self._authkey}
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self._lock = Lock()
 
     def send(self, message):
         """Deliver `message` to whoever is listening on the other end.
@@ -81,16 +86,25 @@ class Channel:
           It connects to the listener on first use and reuses that connection for the
           following messages. `send` then waits for an acknowledgement from the main
           process so that, by the time it returns, the message has actually been
-          processed by the consumer.
+          processed by the consumer. Access to the connection is serialized with a lock
+          because nested thread parallelism inside a worker process shares the same
+          unpickled channel across threads.
         """
         if self._message_consumer is not None:  # fast path
             self._message_consumer(message)
             return
 
-        if self._connection is None:
-            self._connection = Client(self._listener_address, authkey=self._authkey)
-        self._connection.send(message)
-        self._connection.recv()
+        with self._lock:
+            if self._connection is None:
+                self._connection = Client(self._listener_address, authkey=self._authkey)
+            try:
+                self._connection.send(message)
+                self._connection.recv()
+            except BaseException:
+                connection = self._connection
+                self._connection = None
+                connection.close()
+                raise
 
     def disconnect(self):
         """Release the connection in this process, leaving the listener open.
@@ -103,10 +117,11 @@ class Channel:
         # handler thread in the listening process stays blocked in `recv` until this end
         # closes, and this channel may stay reachable (e.g. cached by a long-lived
         # worker) well after the fit it was used for.
-        connection = self._connection
-        self._connection = None
-        if connection is not None:
-            connection.close()
+        with self._lock:
+            connection = self._connection
+            self._connection = None
+            if connection is not None:
+                connection.close()
 
     def close(self):
         """Close the channel, i.e. its listener and its connection, if it has one.
@@ -164,8 +179,8 @@ def open_listener(message_consumer):
     # small: while the accept thread is busy with the authentication handshake of
     # an in-flight connection, any concurrent worker that calls `Client(...)` on a
     # full queue gets `ConnectionRefusedError` (macOS in particular enforces this
-    # strictly). A channel only connects once per process-local copy, so 128 is
-    # comfortably more than enough.
+    # strictly). At most one connection is active at a time per process-local copy, so
+    # 128 is comfortably more than enough.
     listener = Listener(authkey=authkey, backlog=128)
     _listeners[listener.address] = listener
 
@@ -179,6 +194,8 @@ def open_listener(message_consumer):
                 conn.send(None)
         except (EOFError, OSError):
             return
+        finally:
+            conn.close()
 
     def _accept():
         try:
@@ -196,6 +213,7 @@ def open_listener(message_consumer):
                     name=f"{_TRANSPORT_THREAD_NAME_PREFIX}handle",
                     daemon=True,
                 ).start()
+                del conn
         finally:
             listener.close()
 

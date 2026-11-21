@@ -118,6 +118,58 @@ def test_disconnect_frees_connection_while_copy_is_alive():
 
 
 @pytest.mark.thread_unsafe  # module-level listener registries
+def test_concurrent_send_and_disconnect_on_worker_copy():
+    """Check that concurrent threads in a worker can share an unpickled channel.
+
+    Nested thread parallelism inside a loky worker shares a single unpickled callback
+    and channel across threads (`clone` copies `_skl_callbacks` by reference), so
+    sibling threads concurrently call `send` and `disconnect`.
+    """
+    received = []
+    channel = Channel(received.append)
+    baseline = _snapshot_transport_threads()
+
+    copy = pickle.loads(pickle.dumps(channel))
+    n_threads = 4
+    n_tasks = 5
+    n_steps = 10
+    barrier = threading.Barrier(n_threads)
+    errors = []
+
+    def worker_thread(thread_id):
+        try:
+            barrier.wait()
+            for task_id in range(n_tasks):
+                for step_id in range(n_steps):
+                    copy.send((thread_id, task_id, step_id))
+                copy.disconnect()
+        except BaseException as exc:  # pragma: no cover
+            errors.append(exc)
+
+    threads = [
+        threading.Thread(target=worker_thread, args=(tid,)) for tid in range(n_threads)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    try:
+        assert not errors, errors
+        expected = [
+            (tid, task_id, step_id)
+            for tid in range(n_threads)
+            for task_id in range(n_tasks)
+            for step_id in range(n_steps)
+        ]
+        assert sorted(received) == expected
+        assert copy._connection is None
+        _assert_no_leftover_threads(baseline)
+    finally:
+        channel.close()
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
 def test_close_listener_stops_accept_thread():
     """Check that closing a channel doesn't leave its accept thread behind.
 
