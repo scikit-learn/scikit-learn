@@ -113,10 +113,10 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph
     """
-    knn = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs).fit(X)
+    knn = NearestNeighbors(n_neighbors=n_neighbors, n_jobs=n_jobs).fit(X)
     X = knn._fit_X
     n_samples = knn.n_samples_fit_
-    ind = knn.kneighbors(X, return_distance=False)[:, 1:]
+    ind = knn.kneighbors(None, return_distance=False)
     data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
     csr = csr_array((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
