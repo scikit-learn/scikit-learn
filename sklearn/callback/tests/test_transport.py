@@ -15,6 +15,7 @@ import pytest
 from sklearn.callback._transport import (
     _TRANSPORT_THREAD_NAME_PREFIX,
     Channel,
+    _listeners,
 )
 
 
@@ -205,16 +206,24 @@ def test_failed_send_drops_connection_and_next_send_reconnects():
 
 
 @pytest.mark.thread_unsafe  # module-level listener registries
-def test_is_reusable_is_false_when_listener_is_unreachable(tmp_path):
-    """Check that an unpickled channel whose listener cannot be reached is not reusable.
+def test_is_reusable_depends_on_owner_and_reachability(tmp_path):
+    """Check when an unpickled channel can be reused as is.
 
-    Connecting fails with an `OSError`, which must be reported as "not reusable" rather
-    than propagated, so that the callback opens a fresh channel instead.
+    A reachable listener that this process did not open is reusable. Connecting to a
+    listener that cannot be reached fails with an `OSError`, which must be reported as
+    "not reusable" rather than propagated, so that the callback opens a fresh channel.
     """
+    baseline = _snapshot_transport_threads()
     channel = Channel(lambda message: None)
     copy = pickle.loads(pickle.dumps(channel))
-    channel.close()
 
+    # Drop this process's registration, as if another process had opened the listener.
+    # Connecting makes the accept thread exit, so it must not be left behind.
+    _listeners.pop(channel._listener_address)
+    assert copy.is_reusable() is True
+    _assert_no_leftover_threads(baseline)
+
+    channel.close()
     if sys.platform == "win32":
         copy._listener_address = rf"\\.\pipe\sklearn-missing-{os.getpid()}"
     else:
