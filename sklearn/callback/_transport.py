@@ -64,9 +64,10 @@ class Channel:
         weakref.finalize(self, close_listener, self._listener_address)
 
     def __getstate__(self):
-        # exclude the connection and lock: a worker that is itself pickling this channel
-        # should not share its live client, and the copied channel opens its own
-        # connection and lock when unpickled.
+        # Exclude the message consumer, the connection and the lock. Without a consumer,
+        # a copy takes the cross-process path of `send` instead of the in-process fast
+        # path. A worker that is itself pickling this channel should not share its live
+        # client, and the copy opens its own connection and lock when unpickled.
         return {"_listener_address": self._listener_address, "_authkey": self._authkey}
 
     def __setstate__(self, state):
@@ -113,7 +114,10 @@ class Channel:
             except BaseException:
                 connection = self._connection
                 self._connection = None
-                connection.close()
+                try:
+                    connection.close()
+                except OSError:
+                    pass  # do not mask the error of the failed exchange
                 raise
 
     def disconnect(self):

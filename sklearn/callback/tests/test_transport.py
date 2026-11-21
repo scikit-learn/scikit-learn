@@ -206,6 +206,32 @@ def test_failed_send_drops_connection_and_next_send_reconnects():
 
 
 @pytest.mark.thread_unsafe  # module-level listener registries
+def test_failed_send_is_not_masked_by_failure_to_close_connection():
+    """Check that the error of a failed exchange is the one that `send` raises.
+
+    Closing the connection of a failed exchange can fail too, e.g. if it was already
+    closed, which must not replace the original error.
+    """
+
+    class BrokenConnection:
+        def send(self, message):
+            raise EOFError("exchange failed")
+
+        def close(self):
+            raise OSError("close failed")
+
+    channel = Channel(lambda message: None)
+    copy = pickle.loads(pickle.dumps(channel))
+    copy._connection = BrokenConnection()
+    try:
+        with pytest.raises(EOFError, match="exchange failed"):
+            copy.send("message")
+        assert copy._connection is None
+    finally:
+        channel.close()
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
 def test_is_reusable_depends_on_owner_and_reachability(tmp_path):
     """Check when an unpickled channel can be reused as is.
 
