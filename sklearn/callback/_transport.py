@@ -224,15 +224,19 @@ def open_listener(message_consumer):
 
 
 def close_listener(address):
-    """Stop listening at `address` and free its background threads."""
+    """Stop accepting connections at `address` and stop its accept thread.
+
+    Handler threads of connections already accepted at `address` are not affected.
+    They exit when the worker side closes its connection.
+    """
     if _listeners.pop(address, None) is None:
         return  # already closed
 
     try:
-        # The accept thread is waiting in `accept`, and closing the listener would not
-        # interrupt that call. Connecting to it does: we connect without the authkey so
-        # that the authentication handshake fails, and that failure is what makes the
-        # accept thread break out of its loop.
+        # The accept thread is blocked in `accept`, and closing the listener does not
+        # interrupt that call. Connecting without the authkey does: the client skips
+        # the handshake and closes right away, so the server's challenge read hits EOF.
+        # That raises `EOFError`, which ends the accept loop.
         Client(address).close()
     except OSError:
         pass  # the accept thread is already gone, e.g. its listener failed
