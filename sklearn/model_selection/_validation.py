@@ -40,6 +40,7 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.metadata_routing import (
+    MetadataRequest,
     MetadataRouter,
     MethodMapping,
     _manual_routing,
@@ -1441,6 +1442,7 @@ def _check_is_permutation(indices, n_samples):
         "verbose": ["verbose"],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "params": [dict, None],
+        "permutation": [StrOptions({"within_groups", "blocks"})],
     },
     prefer_skip_nested_validation=False,  # estimator is not validated yet
 )
@@ -1457,6 +1459,7 @@ def permutation_test_score(
     verbose=0,
     scoring=None,
     params=None,
+    permutation="within_groups",
 ):
     """Evaluate the significance of a cross-validated score with permutations.
 
@@ -1487,12 +1490,13 @@ def permutation_test_score(
         supervised learning.
 
     groups : array-like of shape (n_samples,), default=None
-        Labels to constrain permutation within groups, i.e. ``y`` values
-        are permuted among samples with the same group identifier.
-        When not specified, ``y`` values are permuted among all samples.
+        Group labels of the samples, used to permute ``y``; see
+        ``permutation``. When not specified, ``y`` values are permuted among
+        all samples.
 
-        A warning is raised if each group has a single value of ``y``, because
-        permuting within groups then leaves ``y`` unchanged.
+        With ``permutation="within_groups"``, a warning is raised if each
+        group has a single value of ``y``, because permuting within groups
+        then leaves ``y`` unchanged.
 
         When a grouped cross-validator is used, the group labels are
         also passed on to the ``split`` method of the cross-validator. The
@@ -1535,7 +1539,7 @@ def permutation_test_score(
 
     random_state : int, RandomState instance or None, default=0
         Pass an int for reproducible output for permutation of
-        ``y`` values among samples. See :term:`Glossary <random_state>`.
+        ``y``. See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         The verbosity level.
@@ -1563,6 +1567,21 @@ def permutation_test_score(
 
         .. versionadded:: 1.6
 
+    permutation : {"within_groups", "blocks"}, default="within_groups"
+        How ``y`` is permuted.
+
+        - ``"within_groups"``: ``y`` values are permuted among samples with
+          the same group identifier.
+        - ``"blocks"``: the values of ``y`` are permuted between groups, and
+          every sample receives the new value of its group, as with one
+          diagnosis per subject. Requires ``groups``, and ``y`` must be
+          constant within each group. The test assumes that the values of
+          ``y`` are exchangeable between groups, which holds by design if
+          ``y`` was assigned to the groups at random. See the
+          :ref:`User Guide <permutation_test_score>`.
+
+        .. versionadded:: 1.11
+
     Returns
     -------
     score : float
@@ -1589,6 +1608,12 @@ def permutation_test_score(
     <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
     Journal of Machine Learning Research (2010) vol. 11
 
+    For permutation tests with exchangeability blocks, see:
+
+    Winkler, Ridgway, Webster, Smith and Nichols. `Permutation inference for
+    the general linear model <https://doi.org/10.1016/j.neuroimage.2014.01.060>`_.
+    NeuroImage (2014) vol. 92, pp. 381-397
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
@@ -1611,6 +1636,10 @@ def permutation_test_score(
     """
     _check_groups_routing_disabled(groups)
     params = {} if params is None else params
+    if permutation == "blocks" and _routing_enabled():
+        # `groups` cannot be passed directly with routing; the blocks are
+        # taken from the metadata in `params`.
+        groups = params.get("groups")
 
     X, y, groups = indexable(X, y, groups)
 
@@ -1618,33 +1647,52 @@ def permutation_test_score(
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
-    if groups is not None and _y_constant_within_groups(y, groups):
+    if permutation == "blocks":
+        if groups is None:
+            raise ValueError(
+                "permutation='blocks' requires `groups`: pass `groups`, or "
+                "`params={'groups': groups}` when metadata routing is enabled."
+            )
+        if y is None:
+            raise ValueError("permutation='blocks' requires `y`.")
+        if not _y_constant_within_groups(y, groups):
+            raise ValueError(
+                "permutation='blocks' requires `y` to be constant within each "
+                "group, but at least one group has more than one value of `y`."
+            )
+        _, first_sample, group_index = np.unique(
+            np.asarray(groups), return_index=True, return_inverse=True
+        )
+    elif groups is not None and _y_constant_within_groups(y, groups):
         warnings.warn(
             "Each group in `groups` has a single value of `y`, so permuting `y` "
             "within groups leaves `y` unchanged and permutation_test_score "
             "is not meaningful: the p-value is 1 with a deterministic estimator "
             "and CV, and otherwise only reflects randomness in the CV splits or "
-            "the estimator.",
+            "the estimator. To permute the values of `y` between groups, use "
+            "`permutation='blocks'`.",
             UserWarning,
         )
 
     if _routing_enabled():
-        router = (
-            MetadataRouter(owner="permutation_test_score")
-            .add(
-                estimator=estimator,
-                # TODO(SLEP6): also pass metadata to the predict method for
-                # scoring?
-                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
-            )
-            .add(
-                splitter=cv,
-                method_mapping=MethodMapping().add(caller="fit", callee="split"),
-            )
-            .add(
-                scorer=scorer,
-                method_mapping=MethodMapping().add(caller="fit", callee="score"),
-            )
+        router = MetadataRouter(owner="permutation_test_score")
+        if permutation == "blocks":
+            # `groups` is used here to permute the blocks, so it is valid
+            # metadata even if no child requests it.
+            self_request = MetadataRequest(owner="permutation_test_score")
+            self_request.fit.add_request(param="groups", alias=True)
+            router.add_self_request(self_request)
+        router.add(
+            estimator=estimator,
+            # TODO(SLEP6): also pass metadata to the predict method for
+            # scoring?
+            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        ).add(
+            splitter=cv,
+            method_mapping=MethodMapping().add(caller="fit", callee="split"),
+        ).add(
+            scorer=scorer,
+            method_mapping=MethodMapping().add(caller="fit", callee="score"),
         )
 
         try:
@@ -1687,7 +1735,9 @@ def permutation_test_score(
         delayed(_permutation_test_score)(
             clone(estimator),
             X,
-            _shuffle(y, groups, random_state),
+            _shuffle_blocks(y, first_sample, group_index, random_state)
+            if permutation == "blocks"
+            else _shuffle(y, groups, random_state),
             cv,
             scorer,
             split_params=routed_params.splitter.split,
@@ -1739,6 +1789,16 @@ def _shuffle(y, groups, random_state):
             this_mask = groups == group
             indices[this_mask] = random_state.permutation(indices[this_mask])
     return _safe_indexing(y, indices)
+
+
+def _shuffle_blocks(y, first_sample, group_index, random_state):
+    """Return a copy of y with the values of the groups shuffled between groups.
+
+    ``first_sample`` and ``group_index`` come from ``np.unique(groups,
+    return_index=True, return_inverse=True)``; y is constant within groups.
+    """
+    group_order = random_state.permutation(len(first_sample))
+    return _safe_indexing(y, first_sample[group_order][group_index.ravel()])
 
 
 @validate_params(

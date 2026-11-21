@@ -65,6 +65,7 @@ from sklearn.model_selection._validation import (
     _check_is_permutation,
     _fit_and_score,
     _score,
+    _shuffle_blocks,
 )
 from sklearn.model_selection.tests.common import OneTimeSplitter
 from sklearn.model_selection.tests.test_search import FailingClassifier
@@ -913,17 +914,176 @@ def test_permutation_test_score_warns_when_y_constant_within_groups():
     groups = np.repeat(np.arange(6), 5)
     y = np.repeat([0, 1, 0, 1, 1, 0], 5)
     X = rng.normal(size=(y.shape[0], 3))
-    with pytest.warns(UserWarning, match="single value of `y`"):
+    kwargs = dict(groups=groups, cv=GroupKFold(3), n_permutations=5)
+    with pytest.warns(UserWarning, match=r"single value of `y`.*permutation='blocks'"):
         score, permutation_scores, pvalue = permutation_test_score(
-            LogisticRegression(),
-            X,
-            y,
-            groups=groups,
-            cv=GroupKFold(3),
-            n_permutations=5,
+            LogisticRegression(), X, y, **kwargs
         )
     assert_array_equal(permutation_scores, np.full(5, score))
     assert pvalue == 1.0
+
+    # Permuting between groups instead gives a null distribution and no warning.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "error", message="Each group in `groups`", category=UserWarning
+        )
+        _, permutation_scores, _ = permutation_test_score(
+            LogisticRegression(), X, y, permutation="blocks", **kwargs
+        )
+    assert np.unique(permutation_scores).size > 1
+
+
+def _random_block_labels(n_blocks, block_size, rng):
+    """Labels assigned at random to blocks of consecutive samples."""
+    groups = np.repeat(np.arange(n_blocks), block_size)
+    block_y = rng.permutation(np.arange(n_blocks) % 2)
+    return block_y[groups], groups
+
+
+def test_shuffle_blocks():
+    """Each permutation maps the group values one-to-one onto the groups."""
+    rng = np.random.RandomState(0)
+    # Unequal, unsorted and non-contiguous groups with string identifiers.
+    groups = np.array(list("ccabdbbadddd"))
+    y = np.searchsorted(list("abcd"), groups)
+    first = [np.flatnonzero(groups == g)[0] for g in "abcd"]
+    _, first_sample, group_index = np.unique(
+        groups, return_index=True, return_inverse=True
+    )
+    orderings = set()
+    for _ in range(500):
+        y_perm = _shuffle_blocks(y, first_sample, group_index, rng)
+        group_values = y_perm[first]
+        assert_array_equal(y_perm, group_values[y])
+        orderings.add(tuple(group_values))
+    # All 24 orderings of the four group values occur.
+    assert len(orderings) == 24
+
+
+def test_permutation_test_score_blocks_errors():
+    rng = np.random.RandomState(0)
+    y, groups = _random_block_labels(6, 5, rng)
+    X = rng.normal(size=(y.shape[0], 3))
+    with pytest.raises(ValueError, match="requires `groups`"):
+        permutation_test_score(LogisticRegression(), X, y, permutation="blocks")
+    with pytest.raises(ValueError, match="requires `y`"):
+        permutation_test_score(
+            LogisticRegression(), X, None, groups=groups, permutation="blocks"
+        )
+    y_mixed = y.copy()
+    y_mixed[0] = 1 - y_mixed[0]
+    with pytest.raises(ValueError, match="constant within each group"):
+        permutation_test_score(
+            LogisticRegression(), X, y_mixed, groups=groups, permutation="blocks"
+        )
+
+
+def test_permutation_test_score_blocks_detects_group_effect():
+    """A difference between the labels of the groups is detected."""
+    rng = np.random.RandomState(0)
+    y, groups = _random_block_labels(12, 5, rng)
+    X = rng.normal(size=(y.shape[0], 3))
+    X[:, 0] += 4 * y
+    kwargs = dict(groups=groups, cv=GroupKFold(3), n_permutations=19)
+    _, _, pvalue = permutation_test_score(
+        LogisticRegression(), X, y, permutation="blocks", **kwargs
+    )
+    assert pvalue <= 0.1
+
+
+@pytest.mark.parametrize(
+    "estimator, y",
+    [
+        (LogisticRegression(), np.repeat(list("abbaabab"), 4)),
+        (Ridge(), np.repeat([[0, 0], [1, 2], [1, 2], [0, 0]] * 2, 4, axis=0)),
+    ],
+    ids=["string-y", "multioutput-y"],
+)
+def test_permutation_test_score_blocks_inputs(estimator, y):
+    """String labels, multi-output y and string groups."""
+    groups = np.repeat(list("abcdefgh"), 4)
+    X = np.random.RandomState(0).normal(size=(groups.shape[0], 3))
+    _, permutation_scores, _ = permutation_test_score(
+        estimator,
+        X,
+        y,
+        groups=groups,
+        cv=GroupKFold(4),
+        n_permutations=5,
+        permutation="blocks",
+    )
+    assert permutation_scores.shape == (5,)
+
+
+@config_context(enable_metadata_routing=True)
+@pytest.mark.parametrize("cv", [GroupKFold(4), KFold(4, shuffle=True, random_state=0)])
+def test_permutation_test_score_blocks_metadata_routing(cv):
+    """With metadata routing, the groups are taken from `params`, whether or not
+    the splitter requests them."""
+    rng = np.random.RandomState(0)
+    y, groups = _random_block_labels(8, 4, rng)
+    X = rng.normal(size=(y.shape[0], 3))
+    kwargs = dict(cv=cv, n_permutations=5, permutation="blocks")
+    _, permutation_scores, _ = permutation_test_score(
+        LogisticRegression(), X, y, params={"groups": groups}, **kwargs
+    )
+    with config_context(enable_metadata_routing=False):
+        _, expected, _ = permutation_test_score(
+            LogisticRegression(), X, y, groups=groups, **kwargs
+        )
+    assert_allclose(permutation_scores, expected)
+    with pytest.raises(ValueError, match="requires `groups`"):
+        permutation_test_score(LogisticRegression(), X, y, **kwargs)
+    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+        permutation_test_score(
+            LogisticRegression(), X, y, params={"groups": groups[:-1]}, **kwargs
+        )
+
+
+@config_context(enable_metadata_routing=True)
+def test_permutation_test_score_blocks_routing_consumers():
+    """With routing, `groups` still reaches a child that requests it, and an
+    unset request still raises."""
+    rng = np.random.RandomState(0)
+    y, groups = _random_block_labels(8, 4, rng)
+    X = rng.normal(size=(y.shape[0], 3))
+    registry = _Registry()
+    estimator = ConsumingClassifier(registry=registry).set_fit_request(
+        metadata="groups"
+    )
+    permutation_test_score(
+        estimator,
+        X,
+        y,
+        cv=KFold(4),
+        n_permutations=2,
+        permutation="blocks",
+        params={"groups": groups},
+    )
+    assert registry
+    for est in registry:
+        check_recorded_metadata(
+            obj=est,
+            method="fit",
+            parent="permutation_test_score",
+            split_params=("metadata",),
+            metadata=groups,
+        )
+
+    class GroupsClassifier(LogisticRegression):
+        def fit(self, X, y, groups=None):
+            return super().fit(X, y)
+
+    with pytest.raises(UnsetMetadataPassedError, match=r"\[groups\]"):
+        permutation_test_score(
+            GroupsClassifier(),
+            X,
+            y,
+            cv=KFold(4),
+            n_permutations=2,
+            permutation="blocks",
+            params={"groups": groups},
+        )
 
 
 def test_cross_val_score_allow_nans():
