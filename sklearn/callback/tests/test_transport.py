@@ -232,6 +232,35 @@ def test_failed_send_is_not_masked_by_failure_to_close_connection():
 
 
 @pytest.mark.thread_unsafe  # module-level listener registries
+def test_close_on_copy_in_owner_process_keeps_listener_open():
+    """Check that only the channel that opened the listener closes it.
+
+    A copy unpickled in the process that owns the listener, e.g. by a `deepcopy`, must
+    not cut off the original channel when it is closed.
+    """
+    received = []
+    channel = Channel(received.append)
+    baseline = _snapshot_transport_threads()
+
+    copy = pickle.loads(pickle.dumps(channel))
+    copy.send("through the socket")
+    assert received == ["through the socket"]
+
+    copy.close()
+    assert copy._connection is None
+    assert channel._listener_address in _listeners
+
+    other_copy = pickle.loads(pickle.dumps(channel))
+    other_copy.send("still reachable")
+    assert received == ["through the socket", "still reachable"]
+    other_copy.disconnect()
+
+    channel.close()
+    assert channel._listener_address not in _listeners
+    _assert_no_leftover_threads(baseline)
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
 def test_is_reusable_depends_on_owner_and_reachability(tmp_path):
     """Check when an unpickled channel can be reused as is.
 

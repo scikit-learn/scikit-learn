@@ -143,9 +143,14 @@ class Channel:
         Auto-propagated callbacks, i.e. callbacks that create one channel per fit,
         should call this in their `teardown` hook because the channel is not meant to be
         reused afterwards.
+
+        Only the channel that opened the listener closes it. On an unpickled copy, this
+        only releases the connection, even in the process that opened the listener,
+        where closing the listener would cut off the original channel.
         """
         self.disconnect()
-        close_listener(self._listener_address)
+        if self._message_consumer is not None:
+            close_listener(self._listener_address)
 
     def is_reusable(self):
         """Whether this channel, freshly unpickled, can be used as is.
