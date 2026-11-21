@@ -1,0 +1,6 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now accept CSR and CSC sparse
+  matrices and arrays for numerical features. Implicit zeros are treated as
+  numeric zeros without densifying the full input. Sparse categorical features
+  are not supported.
+  By :user:`Atomicdjt <atomicdjt>`
