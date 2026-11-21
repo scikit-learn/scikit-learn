@@ -1,11 +1,17 @@
 """
-=====================================================
-Prediction Intervals for Gradient Boosting Regression
-=====================================================
+============================================
+Prediction Intervals for Quantile Regression
+============================================
 
 This example shows how quantile regression can be used to create prediction
-intervals. See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py`
-for an example showcasing some other features of
+intervals with :class:`~sklearn.ensemble.GradientBoostingRegressor`. A
+companion section then shows how the same idea applies to
+:class:`~sklearn.ensemble.RandomForestRegressor` and how, for forests, the
+calibration of the resulting interval is especially sensitive to the
+tree-growth parameters.
+
+See :ref:`sphx_glr_auto_examples_ensemble_plot_hgbt_regression.py` for an
+example showcasing some other features of
 :class:`~ensemble.HistGradientBoostingRegressor`.
 
 """
@@ -128,8 +134,128 @@ plt.show()
 # shape of the signal, in particular around x=8. Tuning hyper-parameters can
 # reduce this effect as shown in the last part of this notebook.
 #
+# Quantile regression with random forests
+# ----------------------------------------
+#
+# :class:`~sklearn.ensemble.RandomForestRegressor` and
+# :class:`~sklearn.ensemble.ExtraTreesRegressor` also support quantile
+# regression, through ``criterion="quantile"`` together with the ``quantile``
+# parameter used to select the desired quantile level. Under the hood, each
+# tree in the forest predicts the empirical quantile of the training samples
+# that reach a given leaf (instead of their mean), and the forest predicts the
+# average of those per-tree quantile estimates.
+from sklearn.ensemble import RandomForestRegressor
+
+rf_models = {}
+rf_common_params = dict(
+    # `min_samples_leaf=20` follows the rule of thumb `1 / min(alpha, 1 - alpha)`
+    # for `alpha=0.05`/`0.95`: leaves must hold enough samples to estimate such
+    # an extreme quantile, see the discussion below.
+    n_estimators=200,
+    min_samples_leaf=20,
+    min_samples_split=50,
+    random_state=0,
+)
+for alpha in [0.05, 0.5, 0.95]:
+    rf = RandomForestRegressor(criterion="quantile", quantile=alpha, **rf_common_params)
+    rf_models["rf q %1.2f" % alpha] = rf.fit(X_train, y_train)
+
+# %%
+rf_y_lower = rf_models["rf q 0.05"].predict(x_plot)
+rf_y_upper = rf_models["rf q 0.95"].predict(x_plot)
+rf_y_med = rf_models["rf q 0.50"].predict(x_plot)
+
+fig = plt.figure(figsize=(10, 10))
+plt.plot(x_plot, f(x_plot), "black", linewidth=3, label=r"$f(x) = x\,\sin(x)$")
+plt.plot(X_test, y_test, "b.", markersize=10, label="Test observations")
+plt.plot(x_plot, rf_y_med, "tab:orange", linewidth=3, label="Predicted median")
+plt.fill_between(
+    x_plot.ravel(),
+    rf_y_lower,
+    rf_y_upper,
+    alpha=0.4,
+    label="Predicted 90% interval",
+)
+plt.xlabel("$x$")
+plt.ylabel("$f(x)$")
+plt.ylim(-10, 25)
+plt.legend(loc="upper left")
+plt.title("Random forest quantile regression")
+plt.show()
+
+# %%
+# The overall shape of the prediction interval is similar to the one obtained
+# with :class:`~sklearn.ensemble.GradientBoostingRegressor`.
+#
+# Calibration depends on the tree-growth parameters
+# ----------------------------------------------------
+#
+# A forest's quantile prediction averages many per-tree quantile estimates.
+# Whether the resulting interval is *valid* (close to 90% coverage) is a
+# different question from whether it is *useful* (as narrow as possible for
+# that coverage), and the tree-growth parameters (`max_depth`,
+# `min_samples_leaf`, `min_samples_split`, `max_leaf_nodes`, etc.) affect
+# these two aspects very differently.
+#
+# We compare three configurations, averaging coverage and interval width
+# over 10 random train/test splits to smooth out the noise of evaluating on
+# a single test set:
+for max_depth, min_samples_leaf in [(1, 20), (None, 20), (None, 5)]:
+    coverage = []
+    width = []
+    for split_seed in range(10):
+        X_tr, X_te, y_tr, y_te = train_test_split(X, y, random_state=split_seed)
+        rf_lower = RandomForestRegressor(
+            criterion="quantile",
+            quantile=0.05,
+            n_estimators=200,
+            max_depth=max_depth,
+            min_samples_leaf=min_samples_leaf,
+            random_state=0,
+        ).fit(X_tr, y_tr)
+        rf_upper = RandomForestRegressor(
+            criterion="quantile",
+            quantile=0.95,
+            n_estimators=200,
+            max_depth=max_depth,
+            min_samples_leaf=min_samples_leaf,
+            random_state=0,
+        ).fit(X_tr, y_tr)
+        lower_pred, upper_pred = rf_lower.predict(X_te), rf_upper.predict(X_te)
+        coverage.append(np.mean((y_te >= lower_pred) & (y_te <= upper_pred)))
+        width.append(np.mean(upper_pred - lower_pred))
+
+    print(
+        f"max_depth={max_depth!s:<4} min_samples_leaf={min_samples_leaf:<2} "
+        f"coverage = {np.mean(coverage):>5.1%}  "
+        f"interval width = {np.mean(width):>4.2f}"
+    )
+
+# %%
+# Both `max_depth=1` and `max_depth=None` respect the
+# `min_samples_leaf = 1 / min(alpha, 1 - alpha)` floor (20 samples for
+# `alpha=0.05`/`0.95`), and both land close to the target 90% coverage: on
+# this dataset, depth alone does not bias the coverage rate one way or the
+# other. Where they do differ is efficiency: shallow trees produce leaves
+# that mix together heterogeneous regions of the input space, so their
+# (still valid) interval is needlessly wide.
+#
+# `min_samples_leaf=5`, which violates the floor, tells a different story:
+# coverage drops to ~69%, well short of the 90% target. Leaves this small
+# rarely contain enough samples to estimate the 5th/95th percentiles
+# reliably, so the interval is both invalid and (deceptively) narrower.
+#
+# The `min_samples_leaf` floor is a hard requirement to check first; above
+# it, as for :class:`~sklearn.ensemble.GradientBoostingRegressor`, there is
+# no universally good setting and these hyperparameters are still best tuned
+# by cross-validating on the pinball loss for the target quantile level, as
+# done for the gradient boosting model in the next section.
+#
 # Analysis of the error metrics
 # -----------------------------
+#
+# We now go back to the gradient boosting models fitted at the beginning of
+# this example and dig further into their calibration.
 #
 # Measure the models with :func:`~sklearn.metrics.mean_squared_error` and
 # :func:`~sklearn.metrics.mean_pinball_loss` metrics on the training dataset.
