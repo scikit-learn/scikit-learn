@@ -23,10 +23,9 @@ from multiprocessing.connection import Client, Listener
 from threading import Lock, Thread
 
 # Process-local registry of live listeners, keyed by address. There is one listener
-# per call to `open_listener` (one per ScoringMonitor instance, one per ProgressBar
-# fit). It is intentionally module-level so that `is_reusable` can tell, from an
-# unpickled copy that does not hold the listener, whether this process is the one that
-# opened it.
+# per `Channel` (one per ScoringMonitor instance, one per ProgressBar fit). It is
+# intentionally module-level so that `is_reusable` can tell, from an unpickled copy
+# that does not hold the listener, whether this process is the one that opened it.
 _listeners: dict[str, Listener] = {}
 
 # Names need not be unique. The shared prefix lets tests and debuggers tell these
