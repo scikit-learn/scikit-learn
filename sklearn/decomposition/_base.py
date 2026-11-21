@@ -59,11 +59,37 @@ class _BasePCA(
         _add_to_diagonal(cov, self.noise_variance_, xp)
         return cov
 
+    def _variance_tol(self, xp):
+        """Variance below which a direction of the model is treated as zero."""
+        exp_var = self.explained_variance_
+        eps = xp.finfo(exp_var.dtype).eps
+        return float(xp.max(exp_var)) * self.components_.shape[1] * eps
+
+    def _is_degenerate(self, xp):
+        """Whether the covariance of the generative model is singular.
+
+        The model has variance `explained_variance_` along `components_` and
+        `noise_variance_` along the remaining `n_features - n_components_`
+        directions. When the smallest of these is negligible compared to the
+        largest, the model is a Gaussian supported on a subspace, which has no
+        density in `n_features` dimensions. This happens when `n_components`
+        is at least the rank of the training data.
+        """
+        if self.n_components_ == 0:
+            return not self.noise_variance_ > 0
+        smallest = float(xp.min(self.explained_variance_))
+        if self.n_components_ < self.components_.shape[1]:
+            smallest = min(smallest, float(self.noise_variance_))
+        return smallest <= self._variance_tol(xp)
+
     def get_precision(self):
         """Compute data precision matrix with the generative model.
 
         Equals the inverse of the covariance but computed with
         the matrix inversion lemma for efficiency.
+
+        If the covariance is singular, which happens when `n_components` is at
+        least the rank of the training data, its pseudo-inverse is returned.
 
         Returns
         -------
@@ -78,12 +104,28 @@ class _BasePCA(
         if self.n_components_ == 0:
             return xp.eye(n_features) / self.noise_variance_
 
+        if self._is_degenerate(xp):
+            # Pseudo-inverse computed from the spectrum, dropping the directions
+            # with negligible variance. This avoids calling `inv` on a singular
+            # matrix, whose outcome depends on the LAPACK implementation.
+            exp_var = self.explained_variance_
+            model_var = exp_var
+            if self.whiten:
+                # Match the scaling of the components in `get_covariance`.
+                model_var = exp_var * exp_var
+            keep = exp_var > self._variance_tol(xp)
+            one = xp.asarray(1.0, device=array_device(exp_var), dtype=exp_var.dtype)
+            zero = xp.asarray(0.0, device=array_device(exp_var), dtype=exp_var.dtype)
+            inv_var = xp.where(keep, one / xp.where(keep, model_var, one), zero)
+            return (self.components_.T * inv_var) @ self.components_
+
         if is_array_api_compliant:
             linalg_inv = xp.linalg.inv
         else:
             linalg_inv = linalg.inv
 
         if self.noise_variance_ == 0.0:
+            # n_components_ == n_features and the covariance is full rank.
             return linalg_inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma

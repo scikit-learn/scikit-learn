@@ -3,6 +3,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from math import lgamma, log, sqrt
 from numbers import Integral, Real
 
@@ -770,11 +771,25 @@ class PCA(_BasePCA):
         Returns
         -------
         ll : ndarray of shape (n_samples,)
-            Log-likelihood of each sample under the current model.
+            Log-likelihood of each sample under the current model. If the
+            covariance of the model is singular, which happens when
+            `n_components` is at least the rank of the training data, the
+            model has no density and `-inf` is returned with a warning.
         """
         check_is_fitted(self)
         xp, _ = get_namespace(X)
         X = validate_data(self, X, dtype=[xp.float64, xp.float32], reset=False)
+        if self._is_degenerate(xp):
+            warnings.warn(
+                "The covariance of the fitted model is singular because "
+                f"n_components={self.n_components_} is at least the rank of the "
+                "training data. The log-likelihood is undefined and -inf is "
+                "returned. Use a smaller n_components.",
+                UserWarning,
+            )
+            return xp.full(
+                (X.shape[0],), -xp.inf, dtype=X.dtype, device=array_device(X)
+            )
         Xr = X - self.mean_
         n_features = X.shape[1]
         precision = self.get_precision()
