@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import gc
+import os
 import pickle
+import sys
 import threading
 import time
 from collections import Counter
@@ -167,6 +169,58 @@ def test_concurrent_send_and_disconnect_on_worker_copy():
         _assert_no_leftover_threads(baseline)
     finally:
         channel.close()
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
+def test_failed_send_drops_connection_and_next_send_reconnects():
+    """Check that a `send` whose exchange fails leaves the copy usable.
+
+    The main-process consumer raises, so the handler closes the connection without
+    acknowledging the message. The worker-side `send` then fails, and must drop its
+    connection so that the next `send` opens a fresh one.
+    """
+    received = []
+
+    def consumer(message):
+        if message == "boom":
+            raise OSError("consumer failed")
+        received.append(message)
+
+    channel = Channel(consumer)
+    baseline = _snapshot_transport_threads()
+
+    copy = pickle.loads(pickle.dumps(channel))
+    try:
+        with pytest.raises(EOFError):
+            copy.send("boom")
+        assert copy._connection is None
+
+        copy.send("ok")
+        assert received == ["ok"]
+    finally:
+        copy.disconnect()
+        channel.close()
+
+    _assert_no_leftover_threads(baseline)
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
+def test_is_reusable_is_false_when_listener_is_unreachable(tmp_path):
+    """Check that an unpickled channel whose listener cannot be reached is not reusable.
+
+    Connecting fails with an `OSError`, which must be reported as "not reusable" rather
+    than propagated, so that the callback opens a fresh channel instead.
+    """
+    channel = Channel(lambda message: None)
+    copy = pickle.loads(pickle.dumps(channel))
+    channel.close()
+
+    if sys.platform == "win32":
+        copy._listener_address = rf"\\.\pipe\sklearn-missing-{os.getpid()}"
+    else:
+        copy._listener_address = str(tmp_path / "missing.sock")
+
+    assert copy.is_reusable() is False
 
 
 @pytest.mark.thread_unsafe  # module-level listener registries

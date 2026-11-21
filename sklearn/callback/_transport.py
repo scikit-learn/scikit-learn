@@ -89,6 +89,16 @@ class Channel:
           processed by the consumer. Access to the connection is serialized with a lock
           because nested thread parallelism inside a worker process shares the same
           unpickled channel across threads.
+
+        If the exchange fails, the connection is dropped and the error is re-raised, so
+        that the next `send` reconnects instead of reusing a connection that may be out
+        of sync. This happens when the message consumer in the main process raises,
+        which makes its handler close the connection without acknowledging the message,
+        and when the connection breaks, e.g. because the main process went away. It also
+        covers interruptions such as `KeyboardInterrupt` in the middle of the exchange,
+        which can leave a message unacknowledged. Dropping the connection is
+        conservative when the message cannot be pickled, since nothing has been written
+        in that case.
         """
         if self._message_consumer is not None:  # fast path
             self._message_consumer(message)
