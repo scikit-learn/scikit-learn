@@ -773,6 +773,9 @@ additions in the following areas:
   (e.g., the :ref:`contributing` guide) and live in
   `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_.
 
+For language and terminology (how to address the reader, which spelling of a
+term to use, and so on), see the :ref:`writing_style`.
+
 
 .. dropdown:: Guidelines for writing docstrings
 

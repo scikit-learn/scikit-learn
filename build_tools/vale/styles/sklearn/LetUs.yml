@@ -1,0 +1,7 @@
+extends: existence
+message: "Do not use contractions. Rephrase '%s', for example 'We now look at ...' instead of 'Let's look at ...'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-contractions
+level: warning
+ignorecase: true
+tokens:
+  - let's

@@ -1,0 +1,31 @@
+extends: substitution
+message: "Write out '%s' instead of '%s'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-contractions
+level: warning
+ignorecase: true
+swap:
+  aren't: are not
+  can't: cannot
+  couldn't: could not
+  didn't: did not
+  doesn't: does not
+  don't: do not
+  hasn't: has not
+  haven't: have not
+  isn't: is not
+  shouldn't: should not
+  wasn't: was not
+  weren't: were not
+  won't: will not
+  wouldn't: would not
+  it's: it is
+  that's: that is
+  there's: there is
+  what's: what is
+  we're: we are
+  we've: we have
+  we'll: we will
+  you're: you are
+  you've: you have
+  you'll: you will
+  they're: they are

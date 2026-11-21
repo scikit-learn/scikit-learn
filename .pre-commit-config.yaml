@@ -55,3 +55,18 @@ repos:
     rev: v2.4.1
     hooks:
     -   id: codespell
+-   repo: local
+    hooks:
+    # Prose linter enforcing doc/developers/writing_style.rst. It only reports
+    # alerts on changed lines, and only error-level alerts fail the hook.
+    # The vale package downloads the Vale binary of the same version on first use.
+    # Keep docutils in sync with build_tools/circle/doc_linux-64_conda.lock.
+    -   id: vale
+        name: Vale (writing style)
+        entry: python build_tools/vale/run_vale.py
+        language: python
+        additional_dependencies: [vale==3.25.1.0, docutils==0.22.4]
+        types_or: [rst, python]
+        files: ^(doc|sklearn|examples)/
+        exclude: ^doc/(whats_new|templates)/|/tests/
+        verbose: true

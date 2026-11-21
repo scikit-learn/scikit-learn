@@ -1,0 +1,8 @@
+extends: substitution
+message: "Consider '%s' instead of '%s'. If a direct swap reads badly, rephrase (for example with 'such as', or by dropping the aside)."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-abbreviations
+level: suggestion
+nonword: true
+swap:
+  '\b[Ee]\.g\.,?': for example
+  '\b[Ii]\.e\.,?': that is

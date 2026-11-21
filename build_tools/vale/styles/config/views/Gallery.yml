@@ -1,0 +1,25 @@
+engine: tree-sitter
+scopes:
+  - name: comment
+    expr: (comment)+ @comment
+    type: rst
+
+  - name: docstring
+    expr: |
+      ((module . (expression_statement (string) @docstring))
+      (#offset! @docstring 0 3 0 -3))
+    type: rst
+
+  - name: docstring
+    expr: |
+      ((class_definition
+        body: (block . (expression_statement (string) @docstring)))
+      (#offset! @docstring 0 3 0 -3))
+    type: rst
+
+  - name: docstring
+    expr: |
+      ((function_definition
+        body: (block . (expression_statement (string) @docstring)))
+      (#offset! @docstring 0 3 0 -3))
+    type: rst
