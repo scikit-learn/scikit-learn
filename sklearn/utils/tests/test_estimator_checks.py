@@ -596,10 +596,12 @@ def test_check_array_api_input():
         raise SkipTest("array-api-strict is required to run this test")
 
     with raises(AssertionError, match="Not equal to tolerance"):
+        X_ns_and_device = _array_api.NamespaceAndDevice("array_api_strict", None)
         check_array_api_input(
             "BrokenArrayAPI",
             BrokenArrayAPI(),
-            array_namespace="array_api_strict",
+            X_ns_and_device=X_ns_and_device,
+            other_ns_and_device=X_ns_and_device,
             check_values=True,
         )
 
