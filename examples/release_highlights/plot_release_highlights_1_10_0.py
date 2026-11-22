@@ -132,29 +132,6 @@ print(f"LogisticRegression selected solver: {clf.solver_}")
 print(f"Non-zero coefficients: {np.flatnonzero(clf.coef_)}")
 
 # %%
-# :class:`~impute.IterativeImputer` is no longer experimental
-# -----------------------------------------------------------
-# :class:`~impute.IterativeImputer` is now stable and can be imported directly from
-# :mod:`sklearn.impute`. Importing `sklearn.experimental.enable_iterative_imputer`
-# is no longer needed: it is now a no-op that raises a warning.
-#
-# `IterativeImputer` also no longer raises a
-# :class:`~exceptions.ConvergenceWarning` when `max_iter` is reached before meeting
-# the `tol` stopping criterion: the round-robin imputation is not guaranteed to
-# converge, and this is expected. See :ref:`Convergence and diminishing returns
-# <iterative_imputer_convergence>` for details.
-#
-# Similarly, `sklearn.experimental.enable_hist_gradient_boosting` is deprecated and
-# will be removed in 1.12, since :class:`~ensemble.HistGradientBoostingClassifier` and
-# :class:`~ensemble.HistGradientBoostingRegressor` have been stable for a while.
-import numpy as np
-
-from sklearn.impute import IterativeImputer
-
-X = np.array([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
-print(IterativeImputer(random_state=0).fit_transform(X))
-
-# %%
 # Easier metadata routing
 # ------------------------
 # Metadata routing is now much easier to use. It is still experimental and still off by
