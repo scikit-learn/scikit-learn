@@ -1156,6 +1156,10 @@ def test_baseestimator_sample_weight_auto_request():
         for method in methods:
             assert getattr(routing, method).requests.get("sample_weight") is None
 
+    with config_context(enable_metadata_auto_requests=False):
+        routing = get_routing_for_object(est)
+        assert routing.fit.requests.get("sample_weight") is None
+
 
 def test_third_party_baseestimator_no_sample_weight_auto_request():
     # Test that third-party subclasses of `BaseEstimator` do not auto-request

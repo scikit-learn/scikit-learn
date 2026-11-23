@@ -420,9 +420,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             To pass `X_val` through a :class:`~pipeline.Pipeline`, enable metadata
             routing. The pipeline then transforms `X_val` like `X` by default (see
             `transform_input`). Enable auto-requests as well if you want `X_val`,
-            `y_val` and `sample_weight_val` requested without `set_fit_request`
-            (:func:`~sklearn.set_config`). See
-            :ref:`metadata_routing_auto_request_user`.
+            `y_val` and `sample_weight_val` requested without `set_fit_request`. See
+            :ref:`metadata_routing_auto_request_user` and
+            :ref:`sphx_glr_auto_examples_compose_plot_metadata_routing_validation_set.py`.
 
             .. versionadded:: 1.7
 
@@ -534,7 +534,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._loss = self.loss
 
         if self.early_stopping == "auto":
-            self.do_early_stopping_ = n_samples > 10_000
+            self.do_early_stopping_ = n_samples > 10_000 or validation_data_provided
         else:
             self.do_early_stopping_ = self.early_stopping
 
@@ -774,6 +774,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             begin_at_stage = self.n_iter_
 
+        # Allocate arrays only once for reuse in every boosting round. They are used in
+        # Splitter, passed to it via TreeGrower.
+        partition_buffer = np.empty(n_samples, dtype=np.uint32)
+        left_indices_buffer = np.empty(n_samples, dtype=np.uint32)
+        right_indices_buffer = np.empty(n_samples, dtype=np.uint32)
+
         # initialize gradients and hessians (empty arrays).
         # shape = (n_samples, n_trees_per_iteration).
         gradient, hessian = self._loss.init_gradient_and_hessian(
@@ -840,6 +846,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     rng=self._feature_subsample_rng,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
+                    partition_buffer=partition_buffer,
+                    left_indices_buffer=left_indices_buffer,
+                    right_indices_buffer=right_indices_buffer,
                 )
                 grower.grow()
 

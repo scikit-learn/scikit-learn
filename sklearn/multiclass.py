@@ -1260,9 +1260,13 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             routing information.
         """
 
-        router = MetadataRouter(owner=self).add(
-            estimator=self.estimator,
-            method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+        router = (
+            MetadataRouter(owner=self)
+            .add_self_request(self)
+            .add(
+                estimator=self.estimator,
+                method_mapping=MethodMapping().add(caller="fit", callee="fit"),
+            )
         )
         return router
 

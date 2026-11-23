@@ -186,7 +186,7 @@ def predict_stages(
             estimators=estimators, X=X, scale=scale, out=out
         )
     else:
-        if not isinstance(X, np.ndarray) or np.isfortran(X):
+        if not isinstance(X, np.ndarray) or X.flags.fnc:
             raise ValueError(f"X should be C-ordered np.ndarray, got {type(X)}")
 
         for i in range(n_estimators):
