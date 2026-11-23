@@ -788,25 +788,37 @@ def test_fill_diagonal(array, array_namespace, device_name, dtype_name):
     assert_array_equal(move_to(array_xp, xp=numpy, device="cpu"), array_np)
 
 
+@pytest.mark.parametrize("array", ["standard", "transposed", "non-contiguous"])
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
-def test_add_to_diagonal(array_namespace, device_name, dtype_name):
+def test_add_to_diagonal(array, array_namespace, device_name, dtype_name):
     """Check `_add_to_diagonal` consistent between array API xp and numpy namespace."""
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     np_xp, _ = _array_api_for_tests("numpy", device_name=None)
 
-    array_np = numpy.zeros((3, 4), dtype=dtype_name)
-    array_xp = xp.asarray(array_np.copy(), device=device)
+    array_np = numpy.arange(20, dtype=dtype_name).reshape(4, 5)
 
-    add_val = [1, 2, 3]
-    with config_context(array_api_dispatch=False):
-        _fill_diagonal(array_np, value=add_val, xp=np_xp)
-    with config_context(array_api_dispatch=True):
-        _fill_diagonal(array_xp, value=add_val, xp=xp)
+    if array == "transposed":
+        array_xp = xp.asarray(array_np.copy(), device=device).T
+        array_np = array_np.T
+    elif array == "non-contiguous":
+        array_xp = xp.asarray(array_np.copy(), device=device)[::2, ::2]
+        array_np = array_np[::2, ::2]
+    else:
+        array_xp = xp.asarray(array_np.copy(), device=device)
 
-    assert_array_equal(move_to(array_xp, xp=numpy, device="cpu"), array_np)
+    for add_val in [
+        1,  # scalar
+        list(range(1, min(array_np.shape) + 1)),  # array-like
+    ]:
+        with config_context(array_api_dispatch=False):
+            _add_to_diagonal(array_np, value=add_val, xp=np_xp)
+        with config_context(array_api_dispatch=True):
+            _add_to_diagonal(array_xp, value=add_val, xp=xp)
+
+        assert_array_equal(move_to(array_xp, xp=numpy, device="cpu"), array_np)
 
 
 @pytest.mark.parametrize("csr_container", CSR_CONTAINERS)

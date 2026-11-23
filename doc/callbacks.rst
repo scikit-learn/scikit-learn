@@ -35,7 +35,7 @@ The examples in this section require the following imports and data::
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = load_iris(return_X_y=True)
-    >>> X, X_val, y, y_val = train_test_split(X, y, test_size=0.1, random_state=42)
+    >>> X, X_val, y, y_val = train_test_split(X, y, test_size=0.25, random_state=42)
 
 The examples will use the :class:`~ScoringMonitor` callback with a scorer on the
 validation data, which requires the :ref:`Metadata Routing API <metadata_routing>` to be
