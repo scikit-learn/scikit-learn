@@ -1312,6 +1312,8 @@ class LogisticRegression(
             This solver is a good choice for `n_samples` >> `n_features * n_classes`.
             Be aware that the memory usage of this solver has a quadratic dependency on
             `n_features * n_classes` because it explicitly computes the Hessian matrix.
+            In case of multicollinearities in `X`, it often recovers the minimum L2-norm
+            solution for binary classification.
 
             .. versionadded:: 1.2
                newton-cholesky solver. Multinomial support in version 1.6.
@@ -2006,6 +2008,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             This solver is a good choice for `n_samples` >> `n_features * n_classes`.
             Be aware that the memory usage of this solver has a quadratic dependency on
             `n_features * n_classes` because it explicitly computes the Hessian matrix.
+            In case of multicollinearities in `X`, it often recovers the minimum L2-norm
+            solution for binary classification.
 
             .. versionadded:: 1.2
                newton-cholesky solver. Multinomial support in version 1.6.
