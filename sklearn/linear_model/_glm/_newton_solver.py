@@ -330,8 +330,7 @@ class NewtonSolver(ABC):
 
             phi(alpha) <= phi(0) + sigma * alpha * phi'(0)
 
-        with sigma = 1/2 ** 11 ~ 5e-4. It starts with the Newton step length alpha = 1
-        and halves alpha until the condition is met.
+        with sigma = 1/2 ** 11 ~ 5e-4.
 
         Sets:
             - self.coef_old
@@ -344,7 +343,7 @@ class NewtonSolver(ABC):
         """
         # line search parameters
         ls_converged = False
-        beta, sigma = 0.5, 0.00048828125  # 1/2, 1/2**11 (sigma is often called c1)
+        sigma = 0.00048828125  # 1/2**11, also called c1
         # Remember: dtype follows X, also the dtype of self.loss_value. For Array API
         # support, self.loss_value might be float instead of np.floatXX.
         eps = 16 * np.finfo(X.dtype).eps
@@ -381,7 +380,7 @@ class NewtonSolver(ABC):
             print("  Backtracking Line Search")
             print(f"    eps=16 * finfo.eps={eps}")
 
-        for i in range(21):  # until and including alpha = beta**20 ~ 1e-6
+        for i in range(21):  # until and including alpha = 1/2**20 ~ 1e-6
             self.coef = self.coef_old + alpha * self.coef_newton
             raw = self.raw_prediction + alpha * raw_prediction_newton
             self.loss_value, self.gradient = self.linear_loss.loss_gradient(
@@ -430,10 +429,7 @@ class NewtonSolver(ABC):
                     ls_converged = True
                     break
             # 3. Deal with differences around machine precision.
-            #    Hager & Zhang (2005) "A New Conjugate Gradient Method with Guaranteed
-            #    Descent and an Efficient Line Search".
             # 3.1 Check relative loss difference ~ machine precision
-            #     Hager & Zhang (2005) Eq. 4.2
             tiny_loss = np.abs(self.loss_value_old * eps)
             check = np.abs(loss_improvement) <= tiny_loss
             if is_verbose:
@@ -443,11 +439,13 @@ class NewtonSolver(ABC):
                 )
             if check:
                 # 3.2 Check the approximate Armijo condition, i.e. the first inequality
-                # of Eq. 4.1 of Hager & Zhang (2005):
+                # of Eq. 4.1 of Hager & Zhang (2005) "A New Conjugate Gradient Method
+                # with Guaranteed Descent and an Efficient Line Search":
                 #   phi'(alpha) <= (2 * sigma - 1) * phi'(0)
-                # (our sigma is their delta). It is the Armijo condition with phi
-                # replaced by its quadratic interpolant, and phi'(alpha) can be
-                # computed much more precisely than differences of phi.
+                # (our sigma is their delta, 3.1 is their Eq. 4.2). It is the Armijo
+                # condition with phi replaced by its quadratic interpolant, and
+                # phi'(alpha) can be computed much more precisely than differences of
+                # phi.
                 # With an L1 penalty, phi is not differentiable. We then interpolate
                 # only the smooth part of phi and use the convexity of the L1 norm,
                 # ||w + alpha * d||_1 - ||w||_1 <= alpha * (||w + d||_1 - ||w||_1).
@@ -469,14 +467,9 @@ class NewtonSolver(ABC):
                         ls_converged = True
                         break
 
-            # Decrease the step size.
-            # Note: Quadratic and cubic interpolation of phi to find the next step size
-            # alpha, see Nocedal & Wright 2nd ed. Chapter 3.5, was tried and found to
-            # be no better than halving. For losses that grow exponentially along the
-            # Newton direction, e.g. with a log link, the interpolated step sizes get
-            # too small, which results in more (expensive) Newton iterations, see
-            # https://github.com/scikit-learn/scikit-learn/issues/35483.
-            alpha *= beta
+            # Halve the step size. Polynomial interpolation was found to be no better,
+            # see https://github.com/scikit-learn/scikit-learn/issues/35483.
+            alpha *= 0.5
 
         if not ls_converged:
             warnings.warn(
