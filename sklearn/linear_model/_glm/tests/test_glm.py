@@ -1156,6 +1156,48 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     )
 
 
+@pytest.mark.parametrize("Estimator", [GammaRegressor, PoissonRegressor])
+@pytest.mark.parametrize("n_features, max_n_iter", [(10, 14), (20, 10)])
+def test_newton_cholesky_heavy_tailed_features(Estimator, n_features, max_n_iter):
+    """Test newton-cholesky on data where the line search needs to backtrack a lot.
+
+    With heavy-tailed features and a log link, the loss along the first Newton
+    directions grows extremely fast and can overflow. Line search should cope
+    with this.
+    """
+    # We do not use global_random_seed because the expected number of iterations
+    # depends on the data.
+    rng = np.random.RandomState(4)
+    n_samples = 1000
+    X = rng.lognormal(0, 1.5, size=(n_samples, n_features))
+    X_scaled = (X - X.mean(axis=0)) / X.std(axis=0)
+    mu = np.exp(X_scaled @ rng.standard_normal(n_features) / np.sqrt(n_features))
+    if Estimator is PoissonRegressor:
+        y = rng.poisson(mu).astype(np.float64)
+    else:
+        y = rng.gamma(2.0, mu / 2.0)
+
+    alpha = 1e-2
+    model = Estimator(solver="newton-cholesky", alpha=alpha, max_iter=100)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        # Non-finite pointwise gradients in the line search may trigger "invalid
+        # value encountered in matmul".
+        warnings.simplefilter("ignore", RuntimeWarning)
+        model.fit(X, y)
+
+    # The objective is strictly convex. Therefore, a vanishing gradient is a
+    # sufficient condition for having found the minimum.
+    linear_loss = LinearModelLoss(base_loss=model._get_loss(), fit_intercept=True)
+    gradient = linear_loss.gradient(
+        coef=np.r_[model.coef_, model.intercept_], X=X, y=y, l2_reg_strength=alpha
+    )
+    assert_allclose(gradient, 0, atol=model.tol)
+    # At the time of writing this test, n_iter_ is 11 (Gamma and Poisson) for
+    # n_features=10, and 8 (Gamma) and 7 (Poisson) for n_features=20.
+    assert model.n_iter_ <= max_n_iter
+
+
 @pytest.mark.parametrize("solver", [NewtonCholeskySolver, NewtonCDGramSolver])
 @pytest.mark.parametrize("l1_reg", [0, 1e-10])
 @pytest.mark.parametrize("verbose", [0, 1, 2])

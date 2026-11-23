@@ -3,23 +3,27 @@
 
 # Most of the solvers are tested elsewhere. Here, we only test certain low level
 # aspects.
+import warnings
+
 import numpy as np
 import pytest
 from scipy import sparse
 
-from sklearn._loss import HalfMultinomialLoss, HalfSquaredError
+from sklearn._loss import HalfMultinomialLoss, HalfPoissonLoss, HalfSquaredError
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent_gram,
     enet_coordinate_descent_multinomial,
 )
 from sklearn.linear_model._glm._newton_solver import (
+    NewtonCholeskySolver,
     min_norm_subgradient,
 )
 from sklearn.linear_model._linear_loss import (
     LinearModelLoss,
     Multinomial_LDL_Decomposition,
 )
-from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.utils.extmath import softmax
 from sklearn.utils.fixes import parse_version, sp_version
 
@@ -87,6 +91,80 @@ def test_min_norm_subgradient():
     # alpha = 0
     mnsg = min_norm_subgradient(0, grad, coef, linear_loss)
     assert mnsg is grad
+
+
+def _newton_solver_before_line_search(coef_newton):
+    """Return a tiny Poisson problem and its solver, ready to call line_search."""
+    y, X = np.array([1.0, 2.0]), np.eye(2)
+    linear_loss = LinearModelLoss(base_loss=HalfPoissonLoss(), fit_intercept=False)
+    sol = NewtonCholeskySolver(
+        coef=linear_loss.init_zero_coef(X), linear_loss=linear_loss, l2_reg_strength=0
+    )
+    sol.setup(X=X, y=y, sample_weight=None)
+    sol.iteration = 1
+    sol.use_fallback_lbfgs_solve = False
+    # loss = 0.5, gradient = [0, -0.5], hessian = [[0.5, 0], [0, 0.5]]
+    sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
+    sol.coef_newton = np.asarray(coef_newton, dtype=float)
+    sol.gradient_times_newton = sol.gradient @ sol.coef_newton
+    return X, y, sol
+
+
+def test_newton_solver_line_search_huge_step():
+    """Test that line search copes with non-finite and huge loss values.
+
+    The Newton step is a descent direction, but way too large. For step size
+    alpha=1, the loss is exp(1000) = inf, for alpha=1/2 it is exp(500) ~ 1e217.
+    The minimum along this direction is at alpha = log(2) / 1000 ~ 0.0007.
+    Note: This can happens in the first Newton step with a log-link.
+    """
+    coef_newton = np.array([0.0, 1000])
+    X, y, sol = _newton_solver_before_line_search(coef_newton=coef_newton)
+    loss_old = sol.loss_value
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        # Non-finite pointwise gradients may trigger "invalid value in matmul".
+        warnings.simplefilter("ignore", RuntimeWarning)
+        sol.line_search(X=X, y=y, sample_weight=None)
+
+    assert not sol.use_fallback_lbfgs_solve
+    assert sol.loss_value < loss_old
+    # The largest step size 1/2**k that satisfies the Armijo condition is k=10.
+    assert_allclose(sol.coef, coef_newton / 2**10)
+
+
+@pytest.mark.parametrize(
+    "coef_newton",
+    [
+        [1, -1],  # not a descent direction
+        [0, np.nan],
+        [0, np.inf],
+    ],
+)
+def test_newton_solver_line_search_failure_restores_state(coef_newton):
+    """Test that a failed line search restores coef, loss and gradient.
+
+    The fallback solver (lbfgs) should not start from a failed, possibly non-finite,
+    trial point of the line search.
+    """
+    X, y, sol = _newton_solver_before_line_search(coef_newton=coef_newton)
+    coef_old = sol.coef.copy()
+    loss_old = sol.loss_value
+    gradient_old = sol.gradient.copy()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        with pytest.warns(ConvergenceWarning, match="Line search of Newton solver"):
+            sol.line_search(X=X, y=y, sample_weight=None)
+
+    assert sol.use_fallback_lbfgs_solve
+    assert_array_equal(sol.coef, coef_old)
+    assert sol.loss_value == loss_old
+    assert_array_equal(sol.gradient, gradient_old)
+
+    # The fallback solver then finds the solution exp(coef) = y.
+    sol.fallback_lbfgs_solve(X=X, y=y, sample_weight=None)
+    assert sol.converged
+    assert_allclose(sol.coef, np.log(y), atol=1e-3)
 
 
 @pytest.mark.skipif(

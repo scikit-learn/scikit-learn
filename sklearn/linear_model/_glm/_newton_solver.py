@@ -5,7 +5,6 @@
 Newton solver for Generalized Linear Models
 """
 
-import math
 import warnings
 from abc import ABC, abstractmethod
 
@@ -331,7 +330,8 @@ class NewtonSolver(ABC):
 
             phi(alpha) <= phi(0) + sigma * alpha * phi'(0)
 
-        with sigma = 1/2 ** 11 ~ 5e-4.
+        with sigma = 1/2 ** 11 ~ 5e-4. It starts with the Newton step length alpha = 1
+        and halves alpha until the condition is met.
 
         Sets:
             - self.coef_old
@@ -344,22 +344,17 @@ class NewtonSolver(ABC):
         """
         # line search parameters
         ls_converged = False
-        sigma = 0.00048828125  # 1/2**11, sometimes called c1
-        min_step_reduction = 1e-2  # minimum factor of decrease of alpha per step
-        min_step_length = 1e-12  # absolute minimum value of alpha
+        beta, sigma = 0.5, 0.00048828125  # 1/2, 1/2**11 (sigma is often called c1)
         # Remember: dtype follows X, also the dtype of self.loss_value. For Array API
         # support, self.loss_value might be float instead of np.floatXX.
         eps = 16 * np.finfo(X.dtype).eps
         alpha = 1  # initial step size, Newton methods should always try 1 first.
-        alpha_old = 1
 
         self.coef_old = self.coef
         self.loss_value_old = self.loss_value
         self.gradient_old = self.gradient
-        phi_0 = phi_old = self.loss_value_old  # phi(0)
-        phi_prime_0 = self.gradient_times_newton  # phi'(0) = gradient @ coef_newton
 
-        # gradient_times_newton = self.gradient @ self.coef_newton
+        # phi'(0) = gradient_times_newton = self.gradient @ self.coef_newton
         # was computed in inner_solve.
         armijo_term = sigma * self.gradient_times_newton
         if self.l1_reg_strength > 0:
@@ -383,7 +378,7 @@ class NewtonSolver(ABC):
             print("  Backtracking Line Search")
             print(f"    eps=16 * finfo.eps={eps}")
 
-        for i in range(21):
+        for i in range(21):  # until and including alpha = beta**20 ~ 1e-6
             self.coef = self.coef_old + alpha * self.coef_newton
             raw = self.raw_prediction + alpha * raw_prediction_newton
             self.loss_value, self.gradient = self.linear_loss.loss_gradient(
@@ -464,42 +459,14 @@ class NewtonSolver(ABC):
                     ls_converged = True
                     break
 
-            # Set a smart new value of alpha, smaller than previous one, larger than 0.
-            # We know that
-            #   - phi(0) = phi_0
-            #   - phi(alpha) = phi_1
-            #   - phi'(0) = phi_prime_0
-            # We fit a quadratic polynomial through those 3 points and take the minimum
-            # alpha as next trial step length.
-            # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, Eq 3.58.
-            phi_1 = self.loss_value
-            alpha_trial = (
-                -phi_prime_0 * alpha**2 / (2 * (phi_1 - phi_0 - phi_prime_0 * alpha))
-            )
-            if i > 0:
-                # We additionally know phi(alpha_old) = phi_old and use cubic
-                # interpolation.
-                # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, below Eq 3.58.
-                denom = (alpha_old * alpha) ** 2 * (alpha - alpha_old)
-                vec0 = phi_1 - phi_0 - phi_prime_0 * alpha
-                vec1 = phi_old - phi_0 - phi_prime_0 * alpha_old
-                a = (alpha_old**2 * vec0 - alpha**2 * vec1) / denom
-                b = (alpha**3 * vec1 - alpha_old**3 * vec0) / denom
-                if a != 0 and b**2 - 3 * a * phi_prime_0 >= 0:
-                    alpha_trial = (-b + math.sqrt(b**2 - 3 * a * phi_prime_0)) / (3 * a)
-                # else we keep the quadratic alpha_trial from above
-
-            alpha_old = alpha
-            phi_old = phi_1
-            # Safeguards
-            if alpha_trial >= alpha or alpha_trial <= min_step_length:
-                alpha_trial = 0.5 * alpha
-            # Avoid too large a reduction of alpha.
-            alpha = max(alpha_trial, min_step_reduction * alpha, min_step_length)
-            if alpha == alpha_old:
-                # For example if alpha = alpha_old = min_step_length.
-                # The early exit avoids dividing by denom = 0 in the next iteration.
-                break
+            # Decrease the step size.
+            # Note: Quadratic and cubic interpolation of phi to find the next step size
+            # alpha, see Nocedal & Wright 2nd ed. Chapter 3.5, was tried and found to
+            # be no better than halving. For losses that grow exponentially along the
+            # Newton direction, e.g. with a log link, the interpolated step sizes get
+            # too small, which results in more (expensive) Newton iterations, see
+            # https://github.com/scikit-learn/scikit-learn/issues/35483.
+            alpha *= beta
 
         if not ls_converged:
             warnings.warn(
@@ -512,6 +479,11 @@ class NewtonSolver(ABC):
             )
             if self.verbose:
                 print("  Line search did not converge and resorts to lbfgs instead.")
+            # Restore the state before the line search. The last trial point did not
+            # pass the checks above and might even be non-finite.
+            self.coef = self.coef_old
+            self.loss_value = self.loss_value_old
+            self.gradient = self.gradient_old
             self.use_fallback_lbfgs_solve = True
             return
 
