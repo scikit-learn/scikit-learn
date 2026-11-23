@@ -48,7 +48,7 @@ from sklearn.utils.sparsefuncs_fast import (
     inplace_csr_row_normalize_l1,
     inplace_csr_row_normalize_l2,
 )
-from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.stats import _nanpercentile_axis0, _weighted_percentile
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_sample_weight,
@@ -1672,25 +1672,27 @@ class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
                     "Cannot center sparse matrices: use `with_centering=False`"
                     " instead. See docstring for motivation and alternatives."
                 )
-            self.center_ = np.nanmedian(X, axis=0)
-        else:
-            self.center_ = None
+
+        median = None
+        if not sparse.issparse(X) and (self.with_centering or self.with_scaling):
+            # Sort each column once to get both the median and the quantiles.
+            quantiles, median = _nanpercentile_axis0(
+                X, self.quantile_range, return_median=True
+            )
+
+        self.center_ = median if self.with_centering else None
 
         if self.with_scaling:
-            quantiles = []
-            for feature_idx in range(X.shape[1]):
-                if sparse.issparse(X):
+            if sparse.issparse(X):
+                quantiles = []
+                for feature_idx in range(X.shape[1]):
                     column_nnz_data = X.data[
                         X.indptr[feature_idx] : X.indptr[feature_idx + 1]
                     ]
                     column_data = np.zeros(shape=X.shape[0], dtype=X.dtype)
                     column_data[: len(column_nnz_data)] = column_nnz_data
-                else:
-                    column_data = X[:, feature_idx]
-
-                quantiles.append(np.nanpercentile(column_data, self.quantile_range))
-
-            quantiles = np.transpose(quantiles)
+                    quantiles.append(np.nanpercentile(column_data, self.quantile_range))
+                quantiles = np.transpose(quantiles)
 
             self.scale_ = quantiles[1] - quantiles[0]
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
@@ -2797,11 +2799,8 @@ class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator)
             )
             self.quantiles_ = np.asarray(self.quantiles_).T
         else:
-            self.quantiles_ = np.nanpercentile(
-                X,
-                references,
-                method="averaged_inverted_cdf",
-                axis=0,
+            self.quantiles_ = _nanpercentile_axis0(
+                X, references, method="averaged_inverted_cdf"
             )
 
     def _sparse_fit(self, X, random_state):

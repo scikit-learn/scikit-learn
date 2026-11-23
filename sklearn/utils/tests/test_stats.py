@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -13,6 +15,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils.estimator_checks import _array_api_for_tests
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils.stats import (
+    _nanpercentile_axis0,
     _nanquantile,
     _weighted_percentile,
     _weighted_percentile_1d_sorted,
@@ -551,3 +554,42 @@ def test_nanquantile_boolean_column():
     X = np.array([[True], [False], [True], [False]])
     quantiles = _nanquantile(X, 0, (0.0, 1.0))
     assert_allclose(quantiles, [0.0, 1.0])
+
+
+@pytest.mark.parametrize("method", ["linear", "averaged_inverted_cdf"])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+@pytest.mark.parametrize("nan_fraction", [0.0, 0.3, 0.95])
+@pytest.mark.parametrize(
+    "percentile_rank", [(50.0,), (25.0, 75.0), np.linspace(0, 100, 23)]
+)
+def test_nanpercentile_axis0_like_numpy(
+    global_random_seed, method, dtype, nan_fraction, percentile_rank
+):
+    """Check `_nanpercentile_axis0` gives the same results as NumPy."""
+    rng = np.random.RandomState(global_random_seed)
+    for n_samples in (1, 2, 5, 50):
+        X = rng.normal(size=(n_samples, 7)).round(1).astype(dtype)
+        X[rng.uniform(size=X.shape) < nan_fraction] = np.nan
+        X[0, 0] = 0.5  # NumPy infers the output dtype from the first column
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            expected = np.nanpercentile(X, percentile_rank, axis=0, method=method)
+            expected_median = np.nanmedian(X, axis=0)
+            percentiles, median = _nanpercentile_axis0(
+                X, percentile_rank, method=method, return_median=True
+            )
+
+        assert percentiles.dtype == expected.dtype
+        assert_array_equal(percentiles, expected)
+        assert median.dtype == expected_median.dtype
+        assert_array_equal(median, expected_median)
+
+
+def test_nanpercentile_axis0_all_nan_column():
+    """Check that a column with only missing values gives NaN and a warning."""
+    X = np.array([[1.0, np.nan], [3.0, np.nan]])
+    with pytest.warns(RuntimeWarning, match="All-NaN slice encountered"):
+        percentiles, median = _nanpercentile_axis0(X, [0, 100], return_median=True)
+    assert_array_equal(percentiles, [[1.0, np.nan], [3.0, np.nan]])
+    assert_array_equal(median, [2.0, np.nan])

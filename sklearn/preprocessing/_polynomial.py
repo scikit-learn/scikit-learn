@@ -29,7 +29,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._mask import _get_mask
 from sklearn.utils._param_validation import Interval, StrOptions
-from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils.stats import _nanpercentile_axis0, _weighted_percentile
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
@@ -768,7 +768,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             )
 
             if sample_weight is None:
-                knots = np.nanpercentile(X, percentile_ranks, axis=0)
+                knots = _nanpercentile_axis0(X, percentile_ranks)
             else:
                 knots = _weighted_percentile(X, sample_weight, percentile_ranks).T
 

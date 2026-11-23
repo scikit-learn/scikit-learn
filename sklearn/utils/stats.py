@@ -1,6 +1,8 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
+
 import numpy as np
 
 from sklearn.utils._array_api import (
@@ -36,6 +38,95 @@ def _nanquantile(X, feature, quantiles):
     # Use `nanquantile` so that missing values do not propagate to every
     # quantile.
     return np.nanquantile(column, quantiles, axis=0)
+
+
+def _nanpercentile_axis0(X, percentile_rank, method="linear", return_median=False):
+    """Compute percentiles of each column of `X`, ignoring missing values.
+
+    Equivalent to `np.nanpercentile(X, percentile_rank, axis=0, method=method)`
+    but sorts each column only once and then reads all percentiles from the
+    sorted columns. `np.nanpercentile` processes one column at a time, which
+    is slow when `X` has many columns or when many percentiles are requested.
+
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+        Input data of floating dtype. It is not modified.
+
+    percentile_rank : array-like of shape (n_percentiles,)
+        Percentile ranks to compute, each in `[0, 100]`.
+
+    method : {"linear", "averaged_inverted_cdf"}, default="linear"
+        Method used to estimate the percentiles, with the same meaning as in
+        `np.nanpercentile`.
+
+    return_median : bool, default=False
+        If True, also return the median of each column, computed like
+        `np.nanmedian(X, axis=0)`.
+
+    Returns
+    -------
+    percentiles : ndarray of shape (n_percentiles, n_features)
+        The percentiles of each column, of dtype float64. Columns with only
+        missing values give NaN.
+
+    median : ndarray of shape (n_features,)
+        The median of each column, of the dtype of `X`. Only returned if
+        `return_median=True`.
+    """
+    if method not in ("linear", "averaged_inverted_cdf"):
+        raise ValueError(f"Unsupported method: {method!r}")
+    n_samples, n_features = X.shape
+    quantiles = np.true_divide(np.asarray(percentile_rank, dtype=np.float64), 100)
+    quantiles = quantiles.reshape(-1, 1)
+    percentiles = np.empty((quantiles.shape[0], n_features), dtype=np.float64)
+    median = np.empty(n_features, dtype=X.dtype) if return_median else None
+    has_all_nan_column = False
+
+    # Work on blocks of columns to bound the memory used by the temporary arrays.
+    max_block_size = 2**19
+    n_block_features = max(1, max_block_size // max(n_samples, quantiles.shape[0]))
+    for start in range(0, n_features, n_block_features):
+        block = slice(start, start + n_block_features)
+        # NaNs are sorted to the end of each column.
+        X_sorted = np.sort(X[:, block], axis=0)
+        n_valid = n_samples - np.isnan(X_sorted).sum(axis=0)
+        has_all_nan_column = has_all_nan_column or (n_valid == 0).any()
+        last = np.maximum(n_valid - 1, 0)
+
+        if method == "linear":
+            virtual_idx = (n_valid - 1) * quantiles
+        else:
+            virtual_idx = n_valid * quantiles - 1
+        lower = np.floor(virtual_idx)
+        gamma = virtual_idx - lower
+        if method == "averaged_inverted_cdf":
+            gamma = np.where(gamma == 0, 0.5, 1.0)
+        lower = np.clip(lower, 0, last).astype(np.intp)
+        upper = np.where(virtual_idx < 0, 0, np.minimum(lower + 1, last))
+        lower_val = np.take_along_axis(X_sorted, lower, axis=0)
+        upper_val = np.take_along_axis(X_sorted, upper, axis=0)
+        # Same interpolation as in NumPy so that the results are identical.
+        diff = upper_val - lower_val
+        result = lower_val + diff * gamma
+        np.subtract(upper_val, diff * (1 - gamma), out=result, where=gamma >= 0.5)
+        percentiles[:, block] = result
+
+        if return_median:
+            # Middle value, or mean of the two middle values, as `np.nanmedian`.
+            mid_upper = np.minimum(n_valid // 2, last)
+            mid_lower = np.maximum(mid_upper - (n_valid % 2 == 0), 0)
+            upper_val = np.take_along_axis(X_sorted, mid_upper[np.newaxis, :], axis=0)
+            lower_val = np.take_along_axis(X_sorted, mid_lower[np.newaxis, :], axis=0)
+            median[block] = np.where(
+                n_valid % 2 == 1, upper_val[0], (lower_val[0] + upper_val[0]) / 2
+            )
+
+    if has_all_nan_column:
+        warnings.warn("All-NaN slice encountered", RuntimeWarning, stacklevel=2)
+    if return_median:
+        return percentiles, median
+    return percentiles
 
 
 def _weighted_percentile(

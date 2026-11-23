@@ -1,0 +1,5 @@
+- :class:`preprocessing.RobustScaler`, :class:`preprocessing.QuantileTransformer`
+  and :class:`preprocessing.SplineTransformer` with `knots="quantile"` are now
+  faster to fit on dense data without `sample_weight`, in particular when the
+  data has many features. The fitted attributes are unchanged.
+  By :user:`TODO <TODO>`.
