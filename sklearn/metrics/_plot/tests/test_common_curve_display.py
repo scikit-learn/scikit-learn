@@ -859,6 +859,14 @@ def test_display_estimator_name_deprecation(pyplot, Display, display_kwargs):
         Display(**display_kwargs, estimator_name="test")
 
 
+# TODO(1.12): remove warning filter, see PR #34326
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `n_bins` will change.*:FutureWarning"
+)
+# TODO(1.12): remove warning filter with change of default strategy
+@pytest.mark.filterwarnings(
+    "ignore:The default value of `strategy` will change.*:FutureWarning"
+)
 @pytest.mark.parametrize(
     "Display, display_kwargs",
     [
