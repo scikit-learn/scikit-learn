@@ -16,7 +16,7 @@ from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent_multinomial,
 )
 from sklearn.linear_model._glm._newton_solver import (
-    NewtonCholeskySolver,
+    NewtonCDGramSolver,
     min_norm_subgradient,
 )
 from sklearn.linear_model._linear_loss import (
@@ -93,22 +93,28 @@ def test_min_norm_subgradient():
     assert mnsg is grad
 
 
-def _newton_solver_before_line_search(coef_newton, coef=None, tol=1e-4):
+def _newton_solver_before_line_search(
+    coef_newton, coef=None, tol=1e-4, fit_intercept=False, l1_reg_strength=0
+):
     """Return a tiny Poisson problem and its solver, ready to call line_search.
 
-    The loss is 1/2 * sum(exp(coef) - y * coef) with minimum at coef = log(y).
+    Without intercept and penalty, the loss is 1/2 * sum(exp(coef) - y * coef) with
+    minimum at coef = log(y).
     """
     y, X = np.array([1.0, 2.0]), np.eye(2)
-    linear_loss = LinearModelLoss(base_loss=HalfPoissonLoss(), fit_intercept=False)
+    linear_loss = LinearModelLoss(
+        base_loss=HalfPoissonLoss(), fit_intercept=fit_intercept
+    )
     if coef is None:
         coef = linear_loss.init_zero_coef(X)
-    sol = NewtonCholeskySolver(
-        coef=coef, linear_loss=linear_loss, l2_reg_strength=0, tol=tol
+    # line_search is the one of the base class NewtonSolver.
+    sol = NewtonCDGramSolver(
+        coef=coef, linear_loss=linear_loss, l1_reg_strength=l1_reg_strength, tol=tol
     )
     sol.setup(X=X, y=y, sample_weight=None)
     sol.iteration = 1
     sol.use_fallback_lbfgs_solve = False
-    # For coef = 0:
+    # For coef = 0 and without intercept:
     # loss = 0.5, gradient = [0, -0.5], hessian = [[0.5, 0], [0, 0.5]]
     sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
     sol.coef_newton = np.asarray(coef_newton, dtype=float)
@@ -137,6 +143,28 @@ def test_newton_solver_line_search_huge_step():
     assert sol.loss_value < loss_old
     # The largest step size 1/2**k that satisfies the Armijo condition is k=10.
     assert_allclose(sol.coef, coef_newton / 2**10)
+
+
+def test_newton_solver_line_search_l1_excludes_intercept():
+    """Test that the L1 term of the Armijo condition does not include the intercept.
+
+    We take a step only for the intercept. It is a descent direction but too large:
+    the loss is exp(alpha) - 1.5 * alpha, i.e. 1 for alpha=0, 1.22 for alpha=1 and
+    0.90 for alpha=1/2.
+    If the change of the absolute value of the intercept is added to the Armijo
+    term, weighted with the large L1 penalty strength, then the Armijo term gets
+    positive and the full step is accepted despite the increased loss.
+    """
+    coef_newton = np.array([0.0, 0.0, 1.0])
+    X, y, sol = _newton_solver_before_line_search(
+        coef_newton=coef_newton, fit_intercept=True, l1_reg_strength=1000
+    )
+    loss_old = sol.loss_value
+    assert sol.gradient_times_newton == pytest.approx(-0.5)
+    sol.line_search(X=X, y=y, sample_weight=None)
+
+    assert sol.loss_value < loss_old
+    assert_allclose(sol.coef, coef_newton / 2)
 
 
 def test_newton_solver_line_search_inexact_step_at_machine_precision():

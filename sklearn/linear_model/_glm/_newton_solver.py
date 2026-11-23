@@ -360,10 +360,11 @@ class NewtonSolver(ABC):
         if self.l1_reg_strength > 0:
             # Add ||coef||_1 - ||coef_old||_1, see Eq. 2.19 and 2.14 of
             # Lee, Sun, Saunder (2012) "Proximal Newton-Type Methods".
-            L1 = self.linear_loss.l1_penalty(
-                self.coef + self.coef_newton, self.l1_reg_strength
-            )
-            L1_old = self.linear_loss.l1_penalty(self.coef_old, self.l1_reg_strength)
+            # Note that the L1 penalty does not include the intercept.
+            weights, _ = self.linear_loss.weight_intercept(self.coef + self.coef_newton)
+            weights_old, _ = self.linear_loss.weight_intercept(self.coef_old)
+            L1 = self.linear_loss.l1_penalty(weights, self.l1_reg_strength)
+            L1_old = self.linear_loss.l1_penalty(weights_old, self.l1_reg_strength)
             armijo_term += sigma * (L1 - L1_old)
 
         _, _, raw_prediction_newton = self.linear_loss.weight_intercept_raw(
