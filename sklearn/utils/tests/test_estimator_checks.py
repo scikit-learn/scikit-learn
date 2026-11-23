@@ -1806,7 +1806,7 @@ def test_estimator_internal_state_unchanged_by_inference():
     # This check validates that estimator state does not change at
     # transform/predict/predict_proba/etc time, in ways that
     # check_dict_unchanged can't catch.
-    msg = "Hash of ChangesHarderToCatch.* changed"
+    msg = "State of ChangesHarderToCatch.* changed"
     with raises(AssertionError, match=msg):
         check_estimator_internal_state_unchanged_by_inference(
             "test", ChangesHarderToCatch(np.array([0]))
