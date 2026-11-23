@@ -51,7 +51,6 @@ devices might also work out of the box.
    * - `dpnp <https://intelpython.github.io/dpnp/>`__
      - `Install <https://intelpython.github.io/dpnp/quick_start_guide.html>`__
      - CPU, Intel GPU (SYCL)
-     - See install link for driver setup; see :ref:`xpu_support`;
 - :ref:`device_support_for_float64`
 
 
