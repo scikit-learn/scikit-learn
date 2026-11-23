@@ -180,6 +180,29 @@ def R_and_X_colnorm2(
     return R, norm2_cols_X
 
 
+cdef inline floating gap_safe_radius(
+    floating gap,
+    floating alpha,  # L1 penalty
+    floating y_norm2,  # y @ y
+) noexcept nogil:
+    """Compute the radius of the gap safe sphere: sqrt(2 * gap) / alpha.
+
+    The dual gap is computed as the difference of primal and dual objective. In
+    floating point arithmetic, it is therefore only accurate up to an error of the
+    order of eps * y_norm2. Close to the optimum, e.g. with a very good warm start,
+    this error dominates and the computed gap might even be exactly zero or negative.
+    A too small (or nan) radius would then wrongly screen out features with non-zero
+    coefficients. Therefore, we add an upper bound of this error to the absolute
+    value of the gap.
+    """
+    if floating is float:
+        eps = FLT_EPSILON
+    else:
+        eps = DBL_EPSILON
+    # The additional factor of 4 is a reasonable choice, not magic, not random.
+    return sqrt(2 * (fabs(gap) + 4 * eps * y_norm2)) / alpha
+
+
 cdef inline floating dual_gap_formulation_A(
     floating alpha,  # L1 penalty
     floating beta,  # L1 penalty
@@ -444,6 +467,8 @@ def enet_coordinate_descent(
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
+    cdef floating radius
+    cdef floating y_norm2
     cdef unsigned int n_active = n_features
     cdef uint32_t[::1] active_set
     # TODO: use binset instead of array of bools
@@ -469,7 +494,8 @@ def enet_coordinate_descent(
     with nogil:
 
         # tol *= np.dot(y, y)
-        tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
+        y_norm2 = _dot(n_samples, &y[0], 1, &y[0], 1)
+        tol *= y_norm2
 
         # Check convergence before entering the main loop.
         # We want to avoid stopping too early and set gap_smaller_eps=False.
@@ -483,6 +509,7 @@ def enet_coordinate_descent(
 
         # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
         if do_screening:
+            radius = gap_safe_radius(gap, alpha, y_norm2)
             n_active = 0
             for j in range(n_features):
                 if norm2_cols_X[j] == 0:
@@ -491,7 +518,7 @@ def enet_coordinate_descent(
                     continue
                 Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
                 d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X[j] + beta)
-                if d_j <= sqrt(2 * gap) / alpha:
+                if d_j <= radius:
                     # include feature j
                     active_set[n_active] = j
                     excluded_set[j] = 0
@@ -560,13 +587,14 @@ def enet_coordinate_descent(
 
                 # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
                 if do_screening:
+                    radius = gap_safe_radius(gap, alpha, y_norm2)
                     n_active = 0
                     for j in range(n_features):
                         if excluded_set[j]:
                             continue
                         Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X @ dual_theta
                         d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X[j] + beta)
-                        if d_j <= sqrt(2 * gap) / alpha:
+                        if d_j <= radius:
                             # include feature j
                             active_set[n_active] = j
                             excluded_set[j] = 0
@@ -937,6 +965,8 @@ def enet_coordinate_descent_sparse(
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
+    cdef floating radius
+    cdef floating y_norm2
     cdef floating X_mean_j
     cdef floating R_sum = 0.0
     cdef unsigned int n_active = n_features
@@ -994,7 +1024,8 @@ def enet_coordinate_descent_sparse(
 
         # tol *= np.dot(y, y)
         # with sample weights: tol *= y @ (sw * y)
-        tol *= _dot(n_samples, &y[0], 1, &yw[0], 1)
+        y_norm2 = _dot(n_samples, &y[0], 1, &yw[0], 1)
+        tol *= y_norm2
 
         # Check convergence before entering the main loop.
         # We want to avoid stopping too early and set gap_smaller_eps=False.
@@ -1024,6 +1055,7 @@ def enet_coordinate_descent_sparse(
 
         # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
         if do_screening:
+            radius = gap_safe_radius(gap, alpha, y_norm2)
             n_active = 0
             for j in range(n_features):
                 if norm2_cols_X[j] == 0:
@@ -1032,7 +1064,7 @@ def enet_coordinate_descent_sparse(
                     continue
                 Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
                 d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X[j] + beta)
-                if d_j <= sqrt(2 * gap) / alpha:
+                if d_j <= radius:
                     # include feature j
                     active_set[n_active] = j
                     excluded_set[j] = 0
@@ -1152,13 +1184,14 @@ def enet_coordinate_descent_sparse(
 
                 # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
                 if do_screening:
+                    radius = gap_safe_radius(gap, alpha, y_norm2)
                     n_active = 0
                     for j in range(n_features):
                         if excluded_set[j]:
                             continue
                         Xj_theta = XtA[j] / fmax(alpha, dual_norm_XtA)  # X @ dual_theta
                         d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X[j] + beta)
-                        if d_j <= sqrt(2 * gap) / alpha:
+                        if d_j <= radius:
                             # include feature j
                             active_set[n_active] = j
                             excluded_set[j] = 0
@@ -1405,8 +1438,7 @@ def enet_coordinate_descent_gram(
 
         # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
         if do_screening:
-            # Due to floating point issues, gap might be negative.
-            radius = sqrt(2 * fabs(gap)) / alpha
+            radius = gap_safe_radius(gap, alpha, y_norm2)
             n_active = 0
             for j in range(n_features):
                 if Q[j, j] == 0:
@@ -1487,8 +1519,7 @@ def enet_coordinate_descent_gram(
 
                 # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
                 if do_screening:
-                    # Due to floating point issues, gap might be negative.
-                    radius = sqrt(2 * fabs(gap)) / alpha
+                    radius = gap_safe_radius(gap, alpha, y_norm2)
                     n_active = 0
                     for j in range(n_features):
                         if excluded_set[j]:
@@ -1870,6 +1901,8 @@ def enet_coordinate_descent_multi_task(
     cdef floating gap = tol + 1.0
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
+    cdef floating radius
+    cdef floating y_norm2
     cdef floating[::1] R_sum
     cdef unsigned int n_active = n_features
     cdef uint32_t[::1] active_set
@@ -1927,7 +1960,8 @@ def enet_coordinate_descent_multi_task(
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
         # with sample weights: tol *= y @ (sw * y)
-        tol *= _dot(n_samples * n_tasks, &Y[0, 0], 1, &Yw[0, 0], 1)
+        y_norm2 = _dot(n_samples * n_tasks, &Y[0, 0], 1, &Yw[0, 0], 1)
+        tol *= y_norm2
 
         # Check convergence before entering the main loop.
         # We want to avoid stopping too early and set gap_smaller_eps=False.
@@ -1961,6 +1995,7 @@ def enet_coordinate_descent_multi_task(
         # Gap Safe Screening Rules for multi-task Lasso, see
         # https://arxiv.org/abs/1703.07285 Eq 2.2. (also arxiv:1506.03736)
         if do_screening:
+            radius = gap_safe_radius(gap, alpha, y_norm2)
             n_active = 0
             for j in range(n_features):
                 if norm2_cols_X[j] == 0:
@@ -1971,7 +2006,7 @@ def enet_coordinate_descent_multi_task(
                 # Xj_theta = ||X[:,j] @ dual_theta||_2
                 Xj_theta = XtA_row_norms[j] / fmax(alpha, dual_norm_XtA)
                 d_j = (1 - Xj_theta) / sqrt(norm2_cols_X[j] + beta)
-                if d_j <= sqrt(2 * gap) / alpha:
+                if d_j <= radius:
                     # include feature j
                     active_set[n_active] = j
                     excluded_set[j] = 0
@@ -2122,6 +2157,7 @@ def enet_coordinate_descent_multi_task(
                 # Gap Safe Screening Rules for multi-task Lasso, see
                 # https://arxiv.org/abs/1703.07285 Eq 2.2. (also arxiv:1506.03736)
                 if do_screening:
+                    radius = gap_safe_radius(gap, alpha, y_norm2)
                     n_active = 0
                     for j in range(n_features):
                         if excluded_set[j]:
@@ -2129,7 +2165,7 @@ def enet_coordinate_descent_multi_task(
                         # Xj_theta = ||X[:,j] @ dual_theta||_2
                         Xj_theta = XtA_row_norms[j] / fmax(alpha, dual_norm_XtA)
                         d_j = (1 - Xj_theta) / sqrt(norm2_cols_X[j] + beta)
-                        if d_j <= sqrt(2 * gap) / alpha:
+                        if d_j <= radius:
                             # include feature j
                             active_set[n_active] = j
                             excluded_set[j] = 0
@@ -2657,6 +2693,8 @@ def enet_coordinate_descent_multinomial(
     cdef float64_t gap = tol + 1.0
     cdef float64_t d_w_tol = tol
     cdef float64_t dual_norm_XtA
+    cdef float64_t radius
+    cdef float64_t y_norm2
     cdef uint32_t[::1] n_active = np.full(shape=n_classes, fill_value=n_features, dtype=np.uint32)
     cdef uint32_t[:, ::1] active_set
     # TODO: use binset instead of array of bools
@@ -2760,7 +2798,8 @@ def enet_coordinate_descent_multinomial(
     # b = A w - (L sqrt(D))^-1 g
     b = sqrt_D_Lt_raw + R  # shape (n_samples, n_classes)
 
-    tol = tol * np.linalg.norm(b, ord="fro") ** 2
+    y_norm2 = np.linalg.norm(b, ord="fro") ** 2
+    tol = tol * y_norm2
 
     # Rotated residual: L sqrt(D) R sqrt(sw)
     # LD_R[:, :] = LDL.L_sqrt_D_matmul(R * sqrt_sw[:, None])
@@ -2866,6 +2905,7 @@ def enet_coordinate_descent_multinomial(
 
     # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
     if do_screening:
+        radius = gap_safe_radius(gap, alpha, y_norm2)
         for k in range(n_classes):
             n_active[k] = 0
             for j in range(n_features):
@@ -2875,7 +2915,7 @@ def enet_coordinate_descent_multinomial(
                     continue
                 Xj_theta = XtA_[k, j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
                 d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X_[k, j] + beta)
-                if d_j <= sqrt(2 * gap) / alpha:
+                if d_j <= radius:
                     # include feature j of class k
                     active_set[k, n_active[k]] = j
                     excluded_set[k, j] = 0
@@ -3135,6 +3175,7 @@ def enet_coordinate_descent_multinomial(
 
                 # Gap Safe Screening Rules, see https://arxiv.org/abs/1802.07481, Eq. 11
                 if do_screening:
+                    radius = gap_safe_radius(gap, alpha, y_norm2)
                     for k in range(n_classes):
                         n_active[k] = 0
                         for j in range(n_features):
@@ -3142,7 +3183,7 @@ def enet_coordinate_descent_multinomial(
                                 continue
                             Xj_theta = XtA_[k, j] / fmax(alpha, dual_norm_XtA)  # X[:,j] @ dual_theta
                             d_j = (1 - fabs(Xj_theta)) / sqrt(norm2_cols_X_[k, j] + beta)
-                            if d_j <= sqrt(2 * gap) / alpha:
+                            if d_j <= radius:
                                 # include feature j of class k
                                 active_set[k, n_active[k]] = j
                                 excluded_set[k, j] = 0
