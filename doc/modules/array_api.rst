@@ -46,7 +46,7 @@ devices might also work out of the box.
        see :ref:`device_support_for_float64`
    * - `CuPy <https://cupy.dev/>`__
      - `Install <https://docs.cupy.dev/en/stable/install.html>`__
-     - CUDA
+     - NVIDIA GPU (CUDA)
      -
    * - `dpnp <https://intelpython.github.io/dpnp/>`__
      - `Install <https://intelpython.github.io/dpnp/quick_start_guide.html>`__
@@ -444,8 +444,8 @@ with `float64` support.
 
 .. _xpu_support:
 
-Note on Intel GPU support
--------------------------
+Note on XPU device support
+--------------------------
 
 PyTorch XPU support is only available in PyTorch >= 2.12. For detailed compatibility
 information and setup instructions, see the `PyTorch XPU documentation
