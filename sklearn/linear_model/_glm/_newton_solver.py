@@ -357,15 +357,20 @@ class NewtonSolver(ABC):
         # phi'(0) = gradient_times_newton = self.gradient @ self.coef_newton
         # was computed in inner_solve.
         armijo_term = sigma * self.gradient_times_newton
+        l1_term = 0
         if self.l1_reg_strength > 0:
-            # Add ||coef||_1 - ||coef_old||_1, see Eq. 2.19 and 2.14 of
-            # Lee, Sun, Saunder (2012) "Proximal Newton-Type Methods".
+            # Add ||coef_old + coef_newton||_1 - ||coef_old||_1, see Eq. 2.19 and 2.14
+            # of Lee, Sun, Saunder (2012) "Proximal Newton-Type Methods".
             # Note that the L1 penalty does not include the intercept.
-            weights, _ = self.linear_loss.weight_intercept(self.coef + self.coef_newton)
-            weights_old, _ = self.linear_loss.weight_intercept(self.coef_old)
-            L1 = self.linear_loss.l1_penalty(weights, self.l1_reg_strength)
-            L1_old = self.linear_loss.l1_penalty(weights_old, self.l1_reg_strength)
-            armijo_term += sigma * (L1 - L1_old)
+            # To avoid cancellation errors for tiny steps, we use, with s = sign(w),
+            #   |w + d| - |w| = max(s * d, -s * d - 2 * |w|)
+            w, _ = self.linear_loss.weight_intercept(self.coef_old)
+            d, _ = self.linear_loss.weight_intercept(self.coef_newton)
+            sd = np.where(w < 0, -d, d)
+            l1_term = self.l1_reg_strength * float(
+                np.sum(np.maximum(sd, -sd - 2 * np.abs(w)))
+            )
+            armijo_term += sigma * l1_term
 
         _, _, raw_prediction_newton = self.linear_loss.weight_intercept_raw(
             self.coef_newton, X
@@ -470,10 +475,16 @@ class NewtonSolver(ABC):
                 # computed much more precisely than differences of phi.
                 # An inexact Newton step, e.g. from an inner solver that stopped early,
                 # may decrease the loss without decreasing the norm of the gradient.
-                # Note that phi(alpha) is not differentiable with an L1 penalty.
-                if self.l1_reg_strength == 0 and self.gradient_times_newton < 0:
+                # With an L1 penalty, phi is not differentiable. We then interpolate
+                # only the smooth part of phi and use the convexity of the L1 norm,
+                # ||w + alpha * d||_1 - ||w||_1 <= alpha * (||w + d||_1 - ||w||_1).
+                # This gives the same condition as above with phi'(alpha) replaced by
+                #   gradient(alpha) @ coef_newton + l1_term
+                # which equals armijo_term / sigma for alpha = 0.
+                if armijo_term < 0:
                     phi_prime = self.gradient.ravel() @ self.coef_newton.ravel()
-                    phi_prime_max = (2 * sigma - 1) * self.gradient_times_newton
+                    phi_prime += l1_term
+                    phi_prime_max = (2 * sigma - 1) * armijo_term / sigma
                     check = phi_prime <= phi_prime_max
                     if is_verbose:
                         print(

@@ -94,14 +94,19 @@ def test_min_norm_subgradient():
 
 
 def _newton_solver_before_line_search(
-    coef_newton, coef=None, tol=1e-4, fit_intercept=False, l1_reg_strength=0
+    coef_newton,
+    coef=None,
+    y=(1.0, 2.0),
+    tol=1e-4,
+    fit_intercept=False,
+    l1_reg_strength=0,
 ):
     """Return a tiny Poisson problem and its solver, ready to call line_search.
 
     Without intercept and penalty, the loss is 1/2 * sum(exp(coef) - y * coef) with
     minimum at coef = log(y).
     """
-    y, X = np.array([1.0, 2.0]), np.eye(2)
+    y, X = np.asarray(y, dtype=float), np.eye(2)
     linear_loss = LinearModelLoss(
         base_loss=HalfPoissonLoss(), fit_intercept=fit_intercept
     )
@@ -114,7 +119,7 @@ def _newton_solver_before_line_search(
     sol.setup(X=X, y=y, sample_weight=None)
     sol.iteration = 1
     sol.use_fallback_lbfgs_solve = False
-    # For coef = 0 and without intercept:
+    # For coef = 0, y = [1, 2] and without intercept:
     # loss = 0.5, gradient = [0, -0.5], hessian = [[0.5, 0], [0, 0.5]]
     sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
     sol.coef_newton = np.asarray(coef_newton, dtype=float)
@@ -167,7 +172,8 @@ def test_newton_solver_line_search_l1_excludes_intercept():
     assert_allclose(sol.coef, coef_newton / 2)
 
 
-def test_newton_solver_line_search_inexact_step_at_machine_precision():
+@pytest.mark.parametrize("l1_reg_strength", [0, 0.25])
+def test_newton_solver_line_search_inexact_step_at_machine_precision(l1_reg_strength):
     """Test line search for an inexact Newton step very close to the minimum.
 
     Close to the minimum, the change of the loss can be smaller than what floating
@@ -176,26 +182,32 @@ def test_newton_solver_line_search_inexact_step_at_machine_precision():
     decreasing the norm of the gradient. The line search must then rely on the
     directional derivative and accept the step.
     """
-    # At coef = log(y), the hessian is diag(y) / 2 = diag([0.5, 1]). We set the
-    # gradient to g = [eps, 0].
+    # We choose y such that the minimum is at coef = log([2, 4]), also with L1
+    # penalty. There, the hessian is diag([1, 2]). We start at a point where the
+    # gradient, or the minimum norm subgradient in case of L1, is g = [eps, 0].
     eps = 1e-9
-    y = np.array([1.0, 2.0])
-    coef = np.log(y) + np.array([2 * eps, 0])
-    # The exact Newton step is [-2 * eps, 0]. Our inexact step has
-    #   gradient @ coef_newton = -eps**2
-    #   coef_newton @ hessian @ coef_newton = 1.0625 * eps**2
+    y = np.array([2.0, 4.0]) + 2 * l1_reg_strength
+    coef = np.log([2.0, 4.0]) + np.array([eps, 0])
+    # The exact Newton step is [-eps, 0]. Our inexact step has
+    #   g @ coef_newton = -0.5 * eps**2
+    #   coef_newton @ hessian @ coef_newton = 0.53125 * eps**2
     # The quadratic approximation of the loss, which is very good for such tiny steps,
-    # decreases by (-1 + 1.0625 / 2) * eps**2 ~ -0.47e-18. This is far below the
-    # resolution of the loss value of about 0.8.
+    # decreases by (-0.5 + 0.53125 / 2) * eps**2 ~ -0.23e-18. This is far below the
+    # resolution of the loss value of about -0.5.
     # The gradient at coef + alpha * coef_newton is eps * [1 - alpha/2, 3/4 * alpha].
     # Its 1-norm, eps * (1 + alpha / 4), increases for all step sizes alpha > 0.
-    coef_newton = np.array([-eps, 0.75 * eps])
+    coef_newton = np.array([-eps / 2, 0.375 * eps])
     # We set a tiny tol to avoid that the line search stops because of
     # max|gradient| <= tol.
     X, y, sol = _newton_solver_before_line_search(
-        coef_newton=coef_newton, coef=coef, tol=1e-12
+        coef_newton=coef_newton,
+        coef=coef,
+        y=y,
+        tol=1e-12,
+        l1_reg_strength=l1_reg_strength,
     )
-    assert_allclose(sol.gradient, [eps, 0], rtol=1e-6, atol=1e-15)
+    g = min_norm_subgradient(l1_reg_strength, sol.gradient, sol.coef, sol.linear_loss)
+    assert_allclose(g, [eps, 0], rtol=1e-6, atol=1e-15)
     coef_old = sol.coef.copy()
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
