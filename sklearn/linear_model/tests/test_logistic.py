@@ -3395,7 +3395,7 @@ def test_newton_cd_scipy_below_1_16_raises(csr_container):
 @pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
 def test_liblinear_deprecated(est):
     """Check that solver liblinear emits a deprecattion warning."""
-    X, y = make_classification(n_classes=2, n_samples=20)
+    X, y = make_classification(n_classes=2, n_samples=20, random_state=0)
     lr = est(solver="liblinear")
     msg = "The solver 'liblinear' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
@@ -3410,7 +3410,7 @@ def test_liblinear_deprecated(est):
 @pytest.mark.parametrize("dual", [True, False])
 def test_dual_deprecated(est, dual):
     """Check that setting dual to a value emits a deprecation warning."""
-    X, y = make_classification(n_classes=2, n_samples=20)
+    X, y = make_classification(n_classes=2, n_samples=20, random_state=0)
     lr = est(solver="liblinear", dual=dual)
     msg = "The parameter 'dual' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
@@ -3424,7 +3424,7 @@ def test_dual_deprecated(est, dual):
 @pytest.mark.parametrize("intercept_scaling", [1.0, 2])
 def test_intercept_scaling_deprecated(est, intercept_scaling):
     """Check that setting intercept_scaling to a value emits a deprecation warning."""
-    X, y = make_classification(n_classes=2, n_samples=20)
+    X, y = make_classification(n_classes=2, n_samples=20, random_state=0)
     lr = est(intercept_scaling=intercept_scaling)
     msg = "The parameter 'intercept_scaling' was deprecated"
     with pytest.warns(FutureWarning, match=msg):

@@ -1446,6 +1446,7 @@ class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         tags = super().__sklearn_tags__()
         tags.input_tags.allow_nan = True
         tags.input_tags.sparse = True
+        tags.array_api_support = True
         return tags
 
 
