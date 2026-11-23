@@ -1,0 +1,5 @@
+- :class:`cluster.HDBSCAN` no longer raises a `TypeError` when
+  `cluster_selection_epsilon` is large enough for epsilon selection to reach the top of
+  the condensed tree. `traverse_upwards` assigned one-element array slices to typed
+  scalars, which NumPy allowed with a `DeprecationWarning` and rejects from 2.4 onwards.
+  By :user:`SapereAudeAI`.
