@@ -447,6 +447,7 @@ with `float64` support.
 Note on XPU device support
 --------------------------
 
+XPU is PyTorch's device name for Intel GPUs.
 PyTorch XPU support is only available in PyTorch >= 2.12. For detailed compatibility
 information and setup instructions, see the `PyTorch XPU documentation
 <https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html>`__.
@@ -454,3 +455,7 @@ information and setup instructions, see the `PyTorch XPU documentation
 PyTorch 2.15 or later is strongly recommended since previous versions
 are known to suffer from serious correctness or performance bugs when
 using the XPU device on scikit-learn related workloads.
+
+`dpnp <https://intelpython.github.io/dpnp/>`__ also runs on Intel GPUs, through
+SYCL, independently of PyTorch. See the dpnp install link in the table above for
+its driver setup.
