@@ -356,8 +356,11 @@ def test_update_leaves_values_matches_numpy(
     """Check the parallel leaf update against loss.fit_intercept_only per leaf.
 
     Without sample weights, _update_leaves_values computes the median or quantile
-    of the residuals of all leaves in Cython. It must give exactly the same values
-    as np.median / np.percentile, which loss.fit_intercept_only uses.
+    of the residuals of all leaves in Cython. It must give the same values as
+    np.median / np.percentile, which loss.fit_intercept_only uses. They are
+    bitwise identical on x86-64, but the interpolation may differ by a few ULPs
+    on platforms that fuse the multiply-add (ARM) or compute in extended
+    precision (32-bit x86), hence the small tolerance.
     """
     rng = np.random.RandomState(global_random_seed)
     n_samples, n_bins = 2_000, 32
@@ -395,7 +398,7 @@ def test_update_leaves_values_matches_numpy(
         for leaf in grower.finalized_leaves
     ]
     assert len(values) > 2
-    assert_array_equal(values, expected)
+    assert_allclose(values, expected, rtol=1e-12, atol=1e-15)
 
 
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 0.0, 0.0])])

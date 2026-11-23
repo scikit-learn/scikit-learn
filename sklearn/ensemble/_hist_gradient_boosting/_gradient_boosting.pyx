@@ -74,10 +74,13 @@ def _update_leaves_values_quantile(
     `grower.shrinkage * quantile` in `leaf.value`. Leaves are processed in
     parallel.
 
-    The result is identical to `np.median` (if `is_median`) or to
+    The result is the same as `np.median` (if `is_median`) or as
     `np.percentile(..., 100 * quantile)` with the default "linear" method,
     which is what `AbsoluteError.fit_intercept_only` and
-    `PinballLoss.fit_intercept_only` compute without sample weights.
+    `PinballLoss.fit_intercept_only` compute without sample weights. It is
+    bitwise identical on x86-64, but may differ by a few ULPs on platforms where
+    the compiler fuses the multiply-add of the interpolation (e.g. ARM) or
+    computes in extended precision (32-bit x86).
     """
     cdef:
         list leaves = grower.finalized_leaves
@@ -202,7 +205,8 @@ cdef Y_DTYPE_C _percentile_linear(
     gamma = virtual_index - k
     a = _select(arr, n, k)
     b = _min(&arr[k + 1], n - k - 1)
-    # Same arithmetic as numpy's _lerp to get bitwise identical results.
+    # Same arithmetic as numpy's _lerp, which gives bitwise identical results
+    # unless the compiler contracts it into fused multiply-add instructions.
     diff_b_a = b - a
     if gamma >= 0.5:
         return b - diff_b_a * (1 - gamma)
