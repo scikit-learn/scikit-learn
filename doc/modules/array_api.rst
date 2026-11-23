@@ -51,7 +51,7 @@ devices might also work out of the box.
    * - `dpnp <https://intelpython.github.io/dpnp/>`__
      - `Install <https://intelpython.github.io/dpnp/quick_start_guide.html>`__
      - CPU, Intel GPU (SYCL)
-    - :ref:`device_support_for_float64`
+     - :ref:`device_support_for_float64`
 
 
 Coverage is expected to grow over time.
