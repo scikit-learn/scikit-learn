@@ -6,7 +6,7 @@
 import copy
 
 from sklearn.callback import AutoPropagatedCallbackMixin, FitCallback
-from sklearn.callback._transport import open_listener, send
+from sklearn.callback._transport import Channel
 
 
 class RecordingCallback(FitCallback):
@@ -20,7 +20,7 @@ class RecordingCallback(FitCallback):
 
     def __init__(self):
         self.record = []
-        self._listener_handle = open_listener(self.record.append, owner=self)
+        self._channel = Channel(self.record.append)
 
     def __getstate__(self):
         # We never access the record from a worker so there's no need to ship it.
@@ -29,8 +29,7 @@ class RecordingCallback(FitCallback):
         return {**self.__dict__, "record": []}
 
     def setup(self, estimator, context):
-        send(
-            self._listener_handle,
+        self._channel.send(
             {"name": "setup", "estimator": estimator, "context": context},
         )
 
@@ -68,8 +67,7 @@ class RecordingCallback(FitCallback):
         requested_arg_begin : object
             An argument that can be requested by the callback for this hook.
         """
-        send(
-            self._listener_handle,
+        self._channel.send(
             {
                 "name": "on_fit_task_begin",
                 "estimator": estimator,
@@ -117,8 +115,7 @@ class RecordingCallback(FitCallback):
         requested_arg_end : object
             An argument that can be requested by the callback for this hook.
         """
-        send(
-            self._listener_handle,
+        self._channel.send(
             {
                 "name": "on_fit_task_end",
                 "estimator": estimator,
@@ -133,10 +130,10 @@ class RecordingCallback(FitCallback):
         )
 
     def teardown(self, estimator, context):
-        send(
-            self._listener_handle,
+        self._channel.send(
             {"name": "teardown", "estimator": estimator, "context": context},
         )
+        self._channel.disconnect()
 
     def count_hooks(self, hook_name):
         """Count the recorded calls for a given hook.

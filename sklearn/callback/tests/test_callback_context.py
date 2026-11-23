@@ -337,6 +337,47 @@ def test_meta_estimator_callback_hooks_called(n_jobs):
     assert callback.count_hooks("teardown") == n_fits
 
 
+def test_nested_parallel_meta_estimator_callbacks():
+    """Check callbacks under nested loky (process) and threading parallelism.
+
+    Inside a loky worker, joblib's `LokyBackend.get_nested_backend()` switches nested
+    `Parallel(n_jobs=2)` calls to `ThreadingBackend`, so multiple threads share the
+    same unpickled callbacks and channels.
+    """
+    n_top_outer, n_top_inner = 2, 1
+    n_sub_outer, n_sub_inner = 4, 2
+    max_iter = 10
+
+    sub_callback = RecordingCallback()
+    top_callback = RecordingAutoPropagatedCallback()
+
+    est = MaxIterEstimator(max_iter=max_iter).set_callbacks(sub_callback)
+    sub_meta = MetaEstimator(est, n_outer=n_sub_outer, n_inner=n_sub_inner, n_jobs=2)
+    top_meta = MetaEstimator(
+        sub_meta, n_outer=n_top_outer, n_inner=n_top_inner, n_jobs=2
+    ).set_callbacks(top_callback)
+
+    top_meta.fit()
+
+    n_leaf_fits = n_top_outer * n_top_inner * n_sub_outer * n_sub_inner
+    assert sub_callback.count_hooks("setup") == n_leaf_fits
+    assert sub_callback.count_hooks("on_fit_task_begin") == n_leaf_fits * (1 + max_iter)
+    assert sub_callback.count_hooks("on_fit_task_end") == n_leaf_fits * (1 + max_iter)
+    assert sub_callback.count_hooks("teardown") == n_leaf_fits
+
+    expected_total_tasks = int(
+        np.sum(
+            np.cumprod(
+                [1, n_top_outer, n_top_inner, n_sub_outer, n_sub_inner, max_iter]
+            )
+        )
+    )
+    assert top_callback.count_hooks("setup") == 1
+    assert top_callback.count_hooks("on_fit_task_begin") == expected_total_tasks
+    assert top_callback.count_hooks("on_fit_task_end") == expected_total_tasks
+    assert top_callback.count_hooks("teardown") == 1
+
+
 def test_autopropagation_to_callback_agnostic_subestimator():
     """Check the number of hook calls when the sub-estimator doesn't support callbacks.
 

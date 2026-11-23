@@ -26,9 +26,17 @@ class MultiCallback(UserList):
 
 
 def validate_callbacks(callbacks):
-    """Validate that callbacks follow the protocol and correctly implement hooks."""
-    for callback in callbacks:
+    """Validate that callbacks follow the protocol and correctly implement hooks.
+
+    Also check that the same callback instance is not provided multiple times.
+    """
+    for i, callback in enumerate(callbacks):
         callback_name = callback.__class__.__name__
+        if callback in callbacks[i + 1 :]:
+            raise ValueError(
+                "The same instance was provided multiple times for the callback "
+                f"{callback_name}. An instance can only be registered once."
+            )
 
         if not isinstance(callback, FitCallback):
             raise TypeError(

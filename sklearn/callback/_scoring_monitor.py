@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from sklearn.callback import FitCallback
 from sklearn.callback._callback_context import get_context_path
-from sklearn.callback._transport import can_reuse_listener, open_listener, send
+from sklearn.callback._transport import Channel
 from sklearn.utils._metadata_requests import (
     _auto_requests_enabled,
     _routing_enabled,
@@ -186,11 +186,10 @@ class ScoringMonitor(FitCallback):
 
         self._log = []
 
-        # Handle to the main-process listener, opened eagerly so that any worker that
-        # receives a pickled copy of this callback can send data to the main process.
-        # `self._log.append` is the message consumer that `send` calls will use to
-        # to grow the main process's log.
-        self._listener_handle = open_listener(self._log.append, owner=self)
+        # Opened eagerly so that a worker that receives a pickled copy of this callback
+        # can send data to the main process. `self._log.append` is the message consumer
+        # that grows the log in the main process.
+        self._channel = Channel(message_consumer=self._log.append)
 
     def _accept_sample_weight(self, hook_name):
         """Whether the callback accepts sample_weight for a given hook."""
@@ -208,6 +207,12 @@ class ScoringMonitor(FitCallback):
                     "evaluating estimators using sample_weight in fit."
                 )
         return self._scorers["train"]._accept_sample_weight()
+
+    def teardown(self, estimator, context):
+        # Nothing more will be sent for this fit. The channel itself outlives the fit,
+        # since this callback keeps logging across fits, but the connection a worker
+        # copy holds is released here rather than whenever that copy is collected.
+        self._channel.disconnect()
 
     def setup(self, estimator, context):
         if self._scorers["val"] != "no_val_score" and not _routing_enabled():
@@ -303,22 +308,19 @@ class ScoringMonitor(FitCallback):
                 data_y,
                 **scorer_routed_params,
             )
-            send(
-                self._listener_handle,
-                (run_id, run_info, task_info_path, dataset, scores),
-            )
+            self._channel.send((run_id, run_info, task_info_path, scores))
 
     def __getstate__(self):
-        # `_log` is grown by the listener thread, which can run while this callback is
+        # `_log` is grown by a background thread, which can run while this callback is
         # being pickled by another thread, e.g. loky's queue feeder when a task is
         # dispatched to a worker. The pickler must therefore never walk the live list.
         return {**self.__dict__, "_log": list(self._log)}
 
     def __setstate__(self, state):
-        """Restore state, opening a fresh listener if the inherited one is unusable."""
+        """Restore state, opening a fresh channel if the inherited one is unusable."""
         self.__dict__.update(state)
-        if not can_reuse_listener(self._listener_handle):
-            self._listener_handle = open_listener(self._log.append, owner=self)
+        if not self._channel.is_reusable():
+            self._channel = Channel(message_consumer=self._log.append)
 
     def get_metadata_routing(self):
         self_request = self._get_metadata_request()
