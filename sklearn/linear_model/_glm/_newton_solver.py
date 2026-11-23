@@ -376,9 +376,6 @@ class NewtonSolver(ABC):
             self.coef_newton, X
         )
 
-        # np.sum(np.abs(self.gradient_old))
-        sum_abs_grad_old = -1
-
         is_verbose = self.verbose >= 2
         if is_verbose:
             print("  Backtracking Line Search")
@@ -445,36 +442,12 @@ class NewtonSolver(ABC):
                     f" {np.abs(loss_improvement)} <= {tiny_loss} {check}"
                 )
             if check:
-                if sum_abs_grad_old < 0:
-                    mnsg_old = min_norm_subgradient(
-                        self.l1_reg_strength,
-                        self.gradient_old,
-                        self.coef_old,
-                        self.linear_loss,
-                    )
-                    sum_abs_grad_old = np.linalg.norm(mnsg_old.ravel(), ord=1)
-                # 3.2 Check sum of absolute gradients as alternative condition.
-                mnsg = min_norm_subgradient(
-                    self.l1_reg_strength, self.gradient, self.coef, self.linear_loss
-                )  # equals gradient if l1_reg_strength = 0.
-                sum_abs_grad = np.linalg.norm(mnsg.ravel(), ord=1)
-                check = sum_abs_grad < sum_abs_grad_old
-                if is_verbose:
-                    print(
-                        "      check sum(|gradient|) < sum(|gradient_old|): "
-                        f"{sum_abs_grad} < {sum_abs_grad_old} {check}"
-                    )
-                if check:
-                    ls_converged = True
-                    break
-                # 3.3 Check the approximate Armijo condition, i.e. the first inequality
+                # 3.2 Check the approximate Armijo condition, i.e. the first inequality
                 # of Eq. 4.1 of Hager & Zhang (2005):
                 #   phi'(alpha) <= (2 * sigma - 1) * phi'(0)
                 # (our sigma is their delta). It is the Armijo condition with phi
                 # replaced by its quadratic interpolant, and phi'(alpha) can be
                 # computed much more precisely than differences of phi.
-                # An inexact Newton step, e.g. from an inner solver that stopped early,
-                # may decrease the loss without decreasing the norm of the gradient.
                 # With an L1 penalty, phi is not differentiable. We then interpolate
                 # only the smooth part of phi and use the convexity of the L1 norm,
                 # ||w + alpha * d||_1 - ||w||_1 <= alpha * (||w + d||_1 - ||w||_1).

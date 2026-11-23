@@ -1256,7 +1256,7 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
     # Set the Newton solver to a state with bad Newton step such that the loss
     # improvement in line search is tiny.
     sol = solver(
-        coef=np.array([1e-12, 0.69314758]),
+        coef=np.array([4e-8, 0.69314758]),
         linear_loss=linear_loss,
         tol=1e-12,
         **params,
@@ -1264,8 +1264,11 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
     sol.setup(X=X, y=y, sample_weight=None)
     sol.iteration = 1
     sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
-    # gradient = [5.00044450e-13, 3.99440135e-07], hessian = [[0.5, 0], [0, 1.0000004]]
-    sol.coef_newton = np.array([1e-7, 0])
+    # gradient = [2e-08, 3.99440135e-07], hessian = [[0.5, 0], [0, 1.0000004]]
+    # The Newton step is 3 times too large for the first coefficient. This increases
+    # the loss by 0.75 * 4e-8**2 = 1.2e-15, which is about 10 times the spacing of
+    # floating point numbers around the loss value of 0.8.
+    sol.coef_newton = np.array([-12e-8, 0])
     sol.gradient_times_newton = sol.gradient @ sol.coef_newton
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", ConvergenceWarning)
@@ -1277,7 +1280,7 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
             "check loss improvement <= armijo term:",
             "check max |gradient| <= tol:",
             "check loss |improvement| <= eps * |loss_old|:",
-            "check sum(|gradient|) < sum(|gradient_old|):",
+            "check gradient @ newton step <= (2 * sigma - 1) *",
         ]
         for m in msg:
             assert m in captured.out
