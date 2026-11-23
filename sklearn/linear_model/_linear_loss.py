@@ -28,11 +28,15 @@ def sandwich_dot(X, W):
     # that use the full hessian matrix. Here, thread parallelism would pay-off the
     # most.
     # While a dedicated Cython routine could exploit the symmetry, it is very hard to
-    # beat BLAS GEMM, even thought the latter cannot exploit the symmetry, unless one
-    # pays the price of taking square roots and implements
-    #    sqrtWX = sqrt(W)[: None] * X
+    # beat BLAS GEMM, even though the latter cannot exploit the symmetry.
+    # For non-negative W, one could pay the price of taking square roots and implement
+    #    sqrtWX = sqrt(W)[:, None] * X
     #    return sqrtWX.T @ sqrtWX
-    # which (might) detect the symmetry and use BLAS SYRK under the hood.
+    # for which numpy detects the symmetry and uses BLAS SYRK under the hood. This was
+    # tried in https://github.com/scikit-learn/scikit-learn/pull/35283: With a single
+    # thread, SYRK is up to 1.8 times faster than GEMM. But for n_samples >> n_features,
+    # SYRK scales much worse with the number of threads than GEMM (OpenBLAS and MKL),
+    # resulting in slowdowns of a factor of 2 and more on multi-core machines.
     n_samples = X.shape[0]
     if sparse.issparse(X):
         return _align_api_if_sparse(
