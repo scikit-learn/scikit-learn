@@ -26,7 +26,7 @@ _global_config = {
     "array_api_dispatch": False,
     "transform_output": "default",
     "enable_metadata_routing": False,
-    "enable_metadata_auto_requests": False,
+    "enable_metadata_auto_requests": True,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
     "default_callbacks": ("progressbar",) if _rich_available else (),
@@ -204,16 +204,17 @@ def set_config(
         Consumer objects, i.e. estimators, splitters, and scorers, can automatically
         request metadata for convenience. Note that these are subject to change and
         stability guarantees applied to the rest of the scikit-learn API do not apply
-        here. If you want these to be enabled, you set the value to `True` on this
-        config.
+        here. Set this to `False` to require explicit `set_{method}_request` calls.
 
         - `False`: auto-requests are not enabled
         - `True`: Metadata are requested per each consumer's internal policy
         - `None`: configuration is unchanged
 
-        Global default: `False`.
+        Global default: `True`.
 
-        Refer to :ref:`metadata_routing_auto_request` for more details.
+        Refer to the :ref:`Metadata Routing User Guide
+        <metadata_routing_auto_request_user>` for usage, and to
+        :ref:`metadata_routing_auto_request` for the developer API.
 
         .. versionadded:: 1.10
 
@@ -420,16 +421,17 @@ def config_context(
         Consumer objects, i.e. estimators, splitters, and scorers, can automatically
         request metadata for convenience. Note that these are subject to change and
         stability guarantees applied to the rest of the scikit-learn API do not apply
-        here. If you want these to be enabled, you set the value to `True` on this
-        config.
+        here. Set this to `False` to require explicit `set_{method}_request` calls.
 
         - `False`: auto-requests are not enabled
         - `True`: Metadata are requested per each consumer's internal policy
         - `None`: configuration is unchanged
 
-        Global default: `False`.
+        Global default: `True`.
 
-        Refer to :ref:`metadata_routing_auto_request` for more details.
+        Refer to the :ref:`Metadata Routing User Guide
+        <metadata_routing_auto_request_user>` for usage, and to
+        :ref:`metadata_routing_auto_request` for the developer API.
 
         .. versionadded:: 1.10
 

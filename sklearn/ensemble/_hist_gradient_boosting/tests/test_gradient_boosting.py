@@ -14,6 +14,7 @@ from joblib.numpy_pickle import NumpyPickler
 from numpy.testing import assert_allclose, assert_array_equal
 
 import sklearn.ensemble._hist_gradient_boosting.gradient_boosting as hgb_module
+from sklearn import config_context
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
@@ -41,6 +42,7 @@ from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._testing import _convert_container
 from sklearn.utils.fixes import _IS_32BIT
+from sklearn.utils.metadata_routing import get_routing_for_object
 
 n_threads = _openmp_effective_n_threads()
 
@@ -1549,6 +1551,20 @@ def test_X_val_raises_with_early_stopping_false():
         )
 
 
+@pytest.mark.parametrize(
+    "HistGradientBoosting",
+    (HistGradientBoostingClassifier, HistGradientBoostingRegressor),
+)
+def test_X_val_auto_request_hgb(HistGradientBoosting):
+    """Test that HGB* correctly sets auto-requests on the validation set."""
+    with config_context(enable_metadata_auto_requests=True):
+        hist = HistGradientBoosting()
+        assert all(
+            get_routing_for_object(hist).fit.requests[k] is True
+            for k in ("X_val", "y_val", "sample_weight_val")
+        )
+
+
 @pytest.mark.parametrize("dataframe_lib", ["pandas", "polars"])
 @pytest.mark.parametrize(
     "HistGradientBoosting",
@@ -1763,3 +1779,31 @@ def test_pandas_nullable_dtype():
 
     clf = HistGradientBoostingClassifier()
     clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "Estimator, y_func",
+    [
+        (HistGradientBoostingRegressor, lambda X: np.sin(X[:, 0])),
+        (HistGradientBoostingClassifier, lambda X: np.arange(len(X)) % 2),
+    ],
+)
+def test_early_stopping_auto_with_explicit_validation_data(Estimator, y_func):
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/35032
+    # early_stopping="auto" should enable early stopping when X_val and y_val
+    # are passed to fit, even when n_samples <= 10_000.
+    X = np.arange(40.0).reshape(-1, 1)
+    y = y_func(X)
+    X_train, y_train, X_val, y_val = X[:30], y[:30], X[30:], y[30:]
+
+    params = dict(early_stopping="auto", max_iter=3, min_samples_leaf=5, random_state=0)
+
+    # Without explicit validation data, "auto" stays off on small datasets.
+    est = Estimator(**params).fit(X_train, y_train)
+    assert not est.do_early_stopping_
+
+    # With explicit validation data, "auto" turns early stopping on.
+    est = Estimator(**params).fit(X_train, y_train, X_val=X_val, y_val=y_val)
+    assert est.do_early_stopping_
+    assert est.validation_score_.shape == (est.n_iter_ + 1,)

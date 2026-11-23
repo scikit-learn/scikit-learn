@@ -5,9 +5,16 @@ import pytest
 
 import sklearn
 from sklearn import config_context, get_config, set_config
-from sklearn.callback.tests._common.callbacks import RecordingCallback
+from sklearn.callback._testing.callbacks import RecordingCallback
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
+
+try:
+    import rich  # noqa: F401
+
+    default_callbacks = ("progressbar",)
+except ImportError:
+    default_callbacks = ()
 
 
 def test_config_context():
@@ -21,10 +28,10 @@ def test_config_context():
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
         "enable_metadata_routing": False,
-        "enable_metadata_auto_requests": False,
+        "enable_metadata_auto_requests": True,
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
-        "default_callbacks": (),
+        "default_callbacks": default_callbacks,
     }
 
     # Not using as a context manager affects nothing
@@ -42,10 +49,10 @@ def test_config_context():
             "enable_cython_pairwise_dist": True,
             "transform_output": "default",
             "enable_metadata_routing": False,
-            "enable_metadata_auto_requests": False,
+            "enable_metadata_auto_requests": True,
             "skip_parameter_validation": False,
             "sparse_interface": "spmatrix",
-            "default_callbacks": (),
+            "default_callbacks": default_callbacks,
         }
     assert get_config()["assume_finite"] is False
 
@@ -80,10 +87,10 @@ def test_config_context():
         "enable_cython_pairwise_dist": True,
         "transform_output": "default",
         "enable_metadata_routing": False,
-        "enable_metadata_auto_requests": False,
+        "enable_metadata_auto_requests": True,
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
-        "default_callbacks": (),
+        "default_callbacks": default_callbacks,
     }
 
     # No positional arguments
@@ -169,12 +176,13 @@ def test_config_threadsafe():
 def test_config_array_api_dispatch_error_scipy(monkeypatch):
     """Check error when SciPy is too old"""
     monkeypatch.setattr(sklearn.utils._array_api.scipy, "__version__", "1.13.0")
+    err_msg = r"SciPy must be 1.14.0 or newer \(found 1.13.0\)"
 
-    with pytest.raises(ImportError, match="SciPy must be 1.14.0 or newer"):
+    with pytest.raises(ImportError, match=err_msg):
         with config_context(array_api_dispatch=True):
             pass
 
-    with pytest.raises(ImportError, match="SciPy must be 1.14.0 or newer"):
+    with pytest.raises(ImportError, match=err_msg):
         set_config(array_api_dispatch=True)
 
 

@@ -434,7 +434,7 @@ class RocCurveDisplay(_BinaryClassifierCurveDisplayMixin):
     def from_predictions(
         cls,
         y_true,
-        y_score=None,
+        y_score,
         *,
         sample_weight=None,
         drop_intermediate=True,

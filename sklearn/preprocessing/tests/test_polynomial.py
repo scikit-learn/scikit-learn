@@ -43,12 +43,9 @@ def test_polynomial_and_spline_array_order(est):
     """Test that output array has the given order."""
     X = np.arange(10).reshape(5, 2)
 
-    def is_c_contiguous(a):
-        return np.isfortran(a.T)
-
-    assert is_c_contiguous(est().fit_transform(X))
-    assert is_c_contiguous(est(order="C").fit_transform(X))
-    assert np.isfortran(est(order="F").fit_transform(X))
+    assert est().fit_transform(X).flags.c_contiguous
+    assert est(order="C").fit_transform(X).flags.c_contiguous
+    assert est(order="F").fit_transform(X).flags.f_contiguous
 
 
 @pytest.mark.parametrize(

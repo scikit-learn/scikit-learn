@@ -20,7 +20,6 @@ def _callbacks_by_default():
         A list with the callbacks to attach by default to estimators, it
         defaults to an empty list.
     """
-    from sklearn.callback import ProgressBar
 
     callbacks = []
 
@@ -40,9 +39,17 @@ def _callbacks_by_default():
 
 
 def validate_callbacks(callbacks):
-    """Validate that callbacks follow the protocol and correctly implement hooks."""
-    for callback in callbacks:
+    """Validate that callbacks follow the protocol and correctly implement hooks.
+
+    Also check that the same callback instance is not provided multiple times.
+    """
+    for i, callback in enumerate(callbacks):
         callback_name = callback.__class__.__name__
+        if callback in callbacks[i + 1 :]:
+            raise ValueError(
+                "The same instance was provided multiple times for the callback "
+                f"{callback_name}. An instance can only be registered once."
+            )
 
         # isinstance for a Protocol returns True for classes too (not only instances).
         # Hence the additional check for classes.
@@ -91,12 +98,6 @@ class CallbackSupportMixin:
     .. automethod:: _init_callback_context
     """
 
-    def __new__(cls, *args, **kwargs):
-        instance = super().__new__(cls)
-        if default_callbacks := _callbacks_by_default():
-            instance._skl_default_callbacks = default_callbacks
-        return instance
-
     def set_callbacks(self, *callbacks):
         """Set callbacks for the estimator.
 
@@ -116,7 +117,6 @@ class CallbackSupportMixin:
     def _set_callbacks(self, callbacks):
         """set_callbacks without validation."""
         if callbacks:
-            self.__dict__.pop("_skl_default_callbacks", None)
             self._skl_callbacks = list(callbacks)
         else:
             self.__dict__.pop("_skl_callbacks", None)
@@ -156,30 +156,36 @@ class CallbackSupportMixin:
             The root callback context for the estimator.
         """
 
-        self._callback_fit_ctx = CallbackContext._from_estimator(
-            estimator=self,
-            task_name=task_name,
-            task_id=task_id,
-            max_subtasks=max_subtasks,
-            sequential_subtasks=sequential_subtasks,
-        )
-
         # Setup callbacks. We store callbacks for which setup has started in order to
         # only tear those down after fit.
         self._skl_callbacks_to_teardown = []
 
-        callbacks = getattr(self, "_skl_callbacks", [])
-
-        default_callbacks = getattr(self, "_skl_default_callbacks", [])
+        default_callbacks = [
+            cb
+            for cb in _callbacks_by_default()
+            if cb not in getattr(self, "_skl_callbacks", [])
+        ]
         if hasattr(self, "_parent_callback_ctx"):
             default_callbacks = [
                 cb
                 for cb in default_callbacks
                 if not isinstance(cb, AutoPropagatedCallback)
             ]
-        callbacks += default_callbacks
+        if default_callbacks:
+            self._skl_default_callbacks = default_callbacks
+        callbacks = getattr(self, "_skl_default_callbacks", []) + getattr(
+            self, "_skl_callbacks", []
+        )
 
-        has_progressbar = False
+        self._callback_fit_ctx = CallbackContext._from_estimator(
+            estimator=self,
+            task_name=task_name,
+            task_id=task_id,
+            max_subtasks=max_subtasks,
+            sequential_subtasks=sequential_subtasks,
+            callbacks=callbacks,
+            default_callbacks=default_callbacks,
+        )
 
         for callback in callbacks:
             # Only call the setup hook of callbacks that are not propagated from a
@@ -188,11 +194,6 @@ class CallbackSupportMixin:
                 isinstance(callback, AutoPropagatedCallback)
                 and hasattr(self, "_parent_callback_ctx")
             ) and not getattr(callback, "_deactivated", False):
-                if isinstance(callback, ProgressBar):
-                    if has_progressbar:
-                        continue  # only one progressbar can be active at a time
-                    else:
-                        has_progressbar = True
                 self._skl_callbacks_to_teardown.append(callback)
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 

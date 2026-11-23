@@ -21,7 +21,7 @@ from sklearn.utils._testing import assert_allclose
 def test_validate_plot_params(pyplot, ax, name, expected_name_out):
     """Check `_validate_plot_params` returns the correct values."""
     display = _BinaryClassifierCurveDisplayMixin()
-    display.estimator_name = "TestEstimator"
+    display.name = "TestEstimator"
     if ax:
         _, ax = pyplot.subplots()
     ax_out, _, name_out = display._validate_plot_params(ax=ax, name=name)

@@ -68,7 +68,14 @@ class CallbackContext:
 
     @classmethod
     def _from_estimator(
-        cls, estimator, task_name, task_id, max_subtasks, sequential_subtasks
+        cls,
+        estimator,
+        task_name,
+        task_id,
+        max_subtasks,
+        sequential_subtasks,
+        callbacks,
+        default_callbacks,
     ):
         """Private constructor to create a root context.
 
@@ -92,16 +99,19 @@ class CallbackContext:
             Whether the root context has sequential subtasks. If True, children contexts
             created via `subcontext` will have automatically assigned consecutive
             integer task_ids starting from 0.
+
+        callbacks : list of callback instances
+            The callbacks to be used in this context.
+
+        default_callbacks : list of callback instances
+            The list of the callbacks that are default callbacks.
         """
         new_ctx = cls.__new__(cls)
 
         # We don't store the estimator in the context to avoid circular references
         # because the estimator already holds a reference to the context.
-        new_ctx._callbacks = []
-        if hasattr(estimator, "_skl_callbacks"):
-            new_ctx._callbacks = estimator._skl_callbacks
-        elif not hasattr(estimator, "_parent_callback_ctx"):
-            new_ctx._callbacks = getattr(estimator, "_skl_default_callbacks", [])
+        new_ctx._callbacks = callbacks
+        new_ctx._default_callbacks = default_callbacks
         new_ctx.estimator_name = estimator.__class__.__name__
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
@@ -110,7 +120,7 @@ class CallbackContext:
         new_ctx.parent = None
         new_ctx.root_uuid = uuid.uuid4()
         new_ctx.init_time = datetime.now(timezone.utc)
-        new_ctx._children_map = {}
+        new_ctx._children_ids = tuple()
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
         new_ctx._subestimator_support_warnings = set()
@@ -159,6 +169,7 @@ class CallbackContext:
         new_ctx = cls.__new__(cls)
 
         new_ctx._callbacks = parent_context._callbacks
+        new_ctx._default_callbacks = parent_context._default_callbacks
         new_ctx.estimator_name = parent_context.estimator_name
         new_ctx._propagation_depth = parent_context._propagation_depth
         new_ctx.task_name = task_name
@@ -168,7 +179,7 @@ class CallbackContext:
         new_ctx.root_uuid = parent_context.root_uuid
         new_ctx.init_time = datetime.now(timezone.utc)
         new_ctx.parent = None
-        new_ctx._children_map = {}
+        new_ctx._children_ids = tuple()
         new_ctx.source_estimator_name = None
         new_ctx.source_task_name = None
 
@@ -176,12 +187,6 @@ class CallbackContext:
         parent_context._add_child(new_ctx)
 
         return new_ctx
-
-    def __iter__(self):
-        """Pre-order depth-first traversal of the task tree."""
-        yield self
-        for context in self._children_map.values():
-            yield from context
 
     def __repr__(self):
         return (
@@ -193,7 +198,7 @@ class CallbackContext:
 
     def _add_child(self, child_context):
         """Add `child_context` as a child of this context."""
-        if child_context.task_id in self._children_map:
+        if child_context.task_id in self._children_ids:
             raise ValueError(
                 f"Callback context {self.task_name} of estimator "
                 f"{self.estimator_name} already has a child with "
@@ -202,7 +207,7 @@ class CallbackContext:
 
         if (
             self.max_subtasks is not None
-            and len(self._children_map) >= self.max_subtasks
+            and len(self._children_ids) >= self.max_subtasks
         ):
             raise ValueError(
                 f"Cannot add child to callback context {self.task_name} of estimator "
@@ -210,7 +215,7 @@ class CallbackContext:
                 f"number of children ({self.max_subtasks})."
             )
 
-        self._children_map[child_context.task_id] = child_context
+        self._children_ids = (*self._children_ids, child_context.task_id)
         child_context.parent = self
 
     def _merge_with(self, other_context):
@@ -235,7 +240,6 @@ class CallbackContext:
         self.parent = other_context.parent
         self.task_id = other_context.task_id
         self.root_uuid = other_context.root_uuid
-        other_context.parent._children_map[self.task_id] = self
 
         # Keep information about the context it was merged with
         self.source_task_name = other_context.task_name
@@ -277,7 +281,7 @@ class CallbackContext:
                 f"if sequential_subtasks is False for {self.task_name}."
             )
         if task_id is None:
-            task_id = len(self._children_map)
+            task_id = len(self._children_ids)
 
         return CallbackContext._from_parent(
             parent_context=self,
@@ -498,20 +502,24 @@ class CallbackContext:
                 or self._propagation_depth < callback.max_propagation_depth
             )
         ]
-        if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
-            sub_estimator_name = sub_estimator.__class__.__name__
-            warning_message = (
-                f"The auto-propagated callbacks attached to {self.estimator_name} will "
-                f"not be propagated to {sub_estimator_name} because the latter does "
-                "not support callbacks."
-            )
-            # Check on the root context not to repeat the same warning.
-            root_context = get_context_path(self)[0]
-            key = (self.estimator_name, sub_estimator_name)
-            if key not in root_context._subestimator_support_warnings:
-                warnings.warn(warning_message)
-                root_context._subestimator_support_warnings.add(key)
+        non_default_callbacks_to_propagate = [
+            cb for cb in callbacks_to_propagate if cb not in self._default_callbacks
+        ]
+        if not hasattr(sub_estimator, "set_callbacks"):
             callbacks_to_propagate = []
+            if non_default_callbacks_to_propagate:
+                sub_estimator_name = sub_estimator.__class__.__name__
+                warning_message = (
+                    f"The auto-propagated callbacks attached to {self.estimator_name} "
+                    f"will not be propagated to {sub_estimator_name} because the latter"
+                    " does not support callbacks."
+                )
+                # Check on the root context not to repeat the same warning.
+                root_context = get_context_path(self)[0]
+                key = (self.estimator_name, sub_estimator_name)
+                if key not in root_context._subestimator_support_warnings:
+                    warnings.warn(warning_message)
+                    root_context._subestimator_support_warnings.add(key)
 
         if callbacks_to_propagate:
             self._propagated_callbacks = callbacks_to_propagate

@@ -9,12 +9,12 @@ import pytest
 from sklearn.base import clone
 from sklearn.callback import ScoringMonitor
 from sklearn.callback._scoring_monitor import ScoringMonitorLog
-from sklearn.callback._transport import _listeners, _message_consumers
-from sklearn.callback.tests._common.estimators import (
+from sklearn.callback._testing.estimators import (
     MaxIterEstimator,
     MetaEstimator,
     WhileEstimator,
 )
+from sklearn.callback._transport import _listeners
 from sklearn.datasets import make_regression
 from sklearn.metrics import check_scoring, make_scorer
 from sklearn.utils._testing import assert_allclose
@@ -412,9 +412,8 @@ def test_scoring_monitor_no_callback_support(backend):
 def test_scoring_monitor_listener_closed_on_gc():
     """Check that listener is closed when callback is garbage collected."""
     callback = ScoringMonitor(scoring="r2")
-    listener_address = callback._listener_handle.address
+    listener_address = callback._channel._listener_address
     assert listener_address in _listeners
-    assert listener_address in _message_consumers
 
     MaxIterEstimator().set_callbacks(callback).fit()
 
@@ -422,4 +421,3 @@ def test_scoring_monitor_listener_closed_on_gc():
     gc.collect()
 
     assert listener_address not in _listeners
-    assert listener_address not in _message_consumers

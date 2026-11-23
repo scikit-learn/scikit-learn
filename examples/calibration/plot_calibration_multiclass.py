@@ -334,12 +334,12 @@ base_classifiers = {
     "Polynomial classifier (low reg)": make_pipeline(
         SplineTransformer(),
         PolynomialFeatures(interaction_only=True, include_bias=False),
-        LogisticRegression(C=1e6, max_iter=1_000),
+        LogisticRegression(alpha=1e-6, max_iter=1_000),
     ),
     "Polynomial classifier (high reg)": make_pipeline(
         SplineTransformer(),
         PolynomialFeatures(interaction_only=True, include_bias=False),
-        LogisticRegression(C=1e-1, max_iter=1_000),
+        LogisticRegression(alpha=10.0, max_iter=1_000),
     ),
     "Gaussian Naive Bayes": GaussianNB(),
 }

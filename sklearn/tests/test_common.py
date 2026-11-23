@@ -16,7 +16,7 @@ import pytest
 from scipy.linalg import LinAlgWarning
 
 import sklearn
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.compose import ColumnTransformer
 from sklearn.exceptions import ConvergenceWarning
 
@@ -34,15 +34,19 @@ from sklearn.utils import all_estimators
 from sklearn.utils._test_common.instance_generator import (
     _get_check_estimator_ids,
     _get_expected_failed_checks,
+    _skip_if_threaded_parallelism,
     _tested_estimators,
     _yield_instances_for_check,
 )
 from sklearn.utils._testing import (
     SkipTest,
+    assert_run_python_script_without_output,
     ignore_warnings,
+    skip_callback_test_if_wasm,
 )
 from sklearn.utils.estimator_checks import (
     check_all_zero_sample_weights_error,
+    check_callback_support,
     check_dataframe_column_names_consistency,
     check_estimator,
     check_get_feature_names_out_error,
@@ -57,6 +61,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     parametrize_with_checks,
 )
+from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.validation import has_fit_parameter
 
 
@@ -90,7 +95,10 @@ class CallableEstimator(BaseEstimator):
         (partial(_sample_func, y=1), "_sample_func(y=1)"),
         (_sample_func, "_sample_func"),
         (partial(_sample_func, "world"), "_sample_func"),
-        (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
+        (
+            LogisticRegression(alpha=0.5),
+            "LogisticRegression(alpha=0.5)",
+        ),
         (
             LogisticRegression(
                 solver="newton-cg",
@@ -114,6 +122,7 @@ def test_get_check_estimator_ids(val, expected):
     list(_tested_estimators()), expected_failed_checks=_get_expected_failed_checks
 )
 def test_estimators(estimator, check, request):
+    _skip_if_threaded_parallelism(estimator, check)
     # Common tests for estimator instances
     with ignore_warnings(
         category=(FutureWarning, ConvergenceWarning, UserWarning, LinAlgWarning)
@@ -155,12 +164,36 @@ def test_import_all_consistency():
 def test_root_import_all_completeness():
     sklearn_path = [os.path.dirname(sklearn.__file__)]
     EXCEPTIONS = ("utils", "tests", "base", "conftest")
-    for _, modname, _ in pkgutil.walk_packages(
-        path=sklearn_path, onerror=lambda _: None
-    ):
-        if "." in modname or modname.startswith("_") or modname in EXCEPTIONS:
+    for _, modname, _ in pkgutil.iter_modules(sklearn_path):
+        if modname.startswith("_") or modname in EXCEPTIONS:
             continue
         assert modname in sklearn.__all__
+
+
+@pytest.mark.xfail(_IS_WASM, reason="cannot start subprocess")
+def test_wildcard_import_for_public_modules():
+    sklearn_path = [os.path.dirname(sklearn.__file__)]
+    modules = [
+        name
+        for _, name, _ in pkgutil.iter_modules(sklearn_path)
+        if not name.startswith("_") and name not in {"tests", "conftest"}
+    ]
+    # Run in a fresh interpreter: this test module imports
+    # sklearn.experimental.enable_halving_search_cv, which could hide wildcard
+    # import failures, see for example
+    # https://github.com/scikit-learn/scikit-learn/pull/35038
+    code = "\n".join(f"from sklearn.{name} import *" for name in modules)
+    # sanity check to make sure that nothing is imported from deeper than
+    # sklearn.experimental as an import side-effect
+    code += """
+import sys
+
+experimental_modules = [
+    name for name in sys.modules if name.startswith("sklearn.experimental.")
+]
+assert not experimental_modules, experimental_modules
+"""
+    assert_run_python_script_without_output(code)
 
 
 @pytest.mark.thread_unsafe  # import side-effects
@@ -238,7 +271,7 @@ def _estimators_that_predict_in_fit():
 column_name_estimators = list(
     chain(
         _tested_estimators(),
-        [make_pipeline(LogisticRegression(C=1))],
+        [make_pipeline(LogisticRegression())],
         _estimators_that_predict_in_fit(),
     )
 )
@@ -343,6 +376,16 @@ SET_OUTPUT_ESTIMATORS = list(
 )
 def test_set_output_transform(estimator_orig):
     name = estimator_orig.__class__.__name__
+    if (
+        name == "LatentDirichletAllocation"
+        and os.environ.get("SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM")
+        == "1"
+    ):
+        pytest.skip(
+            "When threading+parallelism are enabled this fails intermittently,"
+            " see https://github.com/scikit-learn/scikit-learn/issues/35313"
+        )
+
     if not hasattr(estimator_orig, "set_output"):
         pytest.skip(
             f"Skipping check_set_output_transform for {name}: Does not support"
@@ -374,6 +417,17 @@ def test_set_output_transform_configured(estimator_orig, check_func):
             f"Skipping {check_func.__name__} for {name}: Does not support"
             " set_output API yet"
         )
+    if (
+        name in "LatentDirichletAllocation"
+        and "pandas" in check_func.__name__
+        and os.environ.get("SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM")
+        == "1"
+    ):
+        pytest.skip(
+            "When threading+parallelism are enabled these fail intermittently,"
+            " see https://github.com/scikit-learn/scikit-learn/issues/35313"
+        )
+
     for estimator in _yield_instances_for_check(check_func, estimator_orig):
         with ignore_warnings(category=(FutureWarning)):
             check_func(estimator.__class__.__name__, estimator)
@@ -383,6 +437,7 @@ def test_set_output_transform_configured(estimator_orig, check_func):
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
 def test_check_inplace_ensure_writeable(estimator):
+    estimator = clone(estimator)
     name = estimator.__class__.__name__
 
     if hasattr(estimator, "copy"):
@@ -417,3 +472,226 @@ def test_check_all_zero_sample_weights_error(estimator):
     name = estimator.__class__.__name__
 
     check_all_zero_sample_weights_error(name, estimator)
+
+
+# TODO: As more estimators support callbacks they should be removed from this
+# list so that the common callback checks run against them.
+NO_CALLBACK_SUPPORT = {
+    "ARDRegression",
+    "AdaBoostClassifier",
+    "AdaBoostRegressor",
+    "AdditiveChi2Sampler",
+    "AffinityPropagation",
+    "AgglomerativeClustering",
+    "BaggingClassifier",
+    "BaggingRegressor",
+    "BayesianGaussianMixture",
+    "BayesianRidge",
+    "BernoulliNB",
+    "BernoulliRBM",
+    "Binarizer",
+    "Birch",
+    "BisectingKMeans",
+    "CCA",
+    "CalibratedClassifierCV",
+    "CategoricalNB",
+    "ClassicalMDS",
+    "ClassifierChain",
+    "ColumnTransformer",
+    "ComplementNB",
+    "CountVectorizer",
+    "DBSCAN",
+    "DecisionTreeClassifier",
+    "DecisionTreeRegressor",
+    "DictVectorizer",
+    "DictionaryLearning",
+    "DummyClassifier",
+    "DummyRegressor",
+    "ElasticNet",
+    "ElasticNetCV",
+    "EllipticEnvelope",
+    "EmpiricalCovariance",
+    "ExtraTreeClassifier",
+    "ExtraTreeRegressor",
+    "ExtraTreesClassifier",
+    "ExtraTreesRegressor",
+    "FactorAnalysis",
+    "FastICA",
+    "FeatureAgglomeration",
+    "FeatureHasher",
+    "FeatureUnion",
+    "FixedThresholdClassifier",
+    "FunctionTransformer",
+    "GammaRegressor",
+    "GaussianMixture",
+    "GaussianNB",
+    "GaussianProcessClassifier",
+    "GaussianProcessRegressor",
+    "GaussianRandomProjection",
+    "GenericUnivariateSelect",
+    "GradientBoostingClassifier",
+    "GradientBoostingRegressor",
+    "GraphicalLasso",
+    "GraphicalLassoCV",
+    "HDBSCAN",
+    "HashingVectorizer",
+    "HistGradientBoostingClassifier",
+    "HistGradientBoostingRegressor",
+    "HuberRegressor",
+    "IncrementalPCA",
+    "IsolationForest",
+    "Isomap",
+    "IsotonicRegression",
+    "IterativeImputer",
+    "KBinsDiscretizer",
+    "KMeans",
+    "KNNImputer",
+    "KNeighborsClassifier",
+    "KNeighborsRegressor",
+    "KNeighborsTransformer",
+    "KernelCenterer",
+    "KernelDensity",
+    "KernelPCA",
+    "KernelRidge",
+    "LabelBinarizer",
+    "LabelEncoder",
+    "LabelPropagation",
+    "LabelSpreading",
+    "Lars",
+    "LarsCV",
+    "Lasso",
+    "LassoCV",
+    "LassoLars",
+    "LassoLarsCV",
+    "LassoLarsIC",
+    "LatentDirichletAllocation",
+    "LedoitWolf",
+    "LinearDiscriminantAnalysis",
+    "LinearRegression",
+    "LinearSVC",
+    "LinearSVR",
+    "LocalOutlierFactor",
+    "LocallyLinearEmbedding",
+    "LogisticRegressionCV",
+    "MDS",
+    "MLPClassifier",
+    "MLPRegressor",
+    "MaxAbsScaler",
+    "MeanShift",
+    "MinCovDet",
+    "MinMaxScaler",
+    "MiniBatchDictionaryLearning",
+    "MiniBatchKMeans",
+    "MiniBatchNMF",
+    "MiniBatchSparsePCA",
+    "MissingIndicator",
+    "MultiLabelBinarizer",
+    "MultiOutputClassifier",
+    "MultiOutputRegressor",
+    "MultiTaskElasticNet",
+    "MultiTaskElasticNetCV",
+    "MultiTaskLasso",
+    "MultiTaskLassoCV",
+    "MultinomialNB",
+    "NMF",
+    "NearestCentroid",
+    "NearestNeighbors",
+    "NeighborhoodComponentsAnalysis",
+    "Normalizer",
+    "NuSVC",
+    "NuSVR",
+    "Nystroem",
+    "OAS",
+    "OPTICS",
+    "OneClassSVM",
+    "OneHotEncoder",
+    "OneVsOneClassifier",
+    "OneVsRestClassifier",
+    "OrdinalEncoder",
+    "OrthogonalMatchingPursuit",
+    "OrthogonalMatchingPursuitCV",
+    "OutputCodeClassifier",
+    "PCA",
+    "PLSCanonical",
+    "PLSRegression",
+    "PLSSVD",
+    "PassiveAggressiveClassifier",
+    "PassiveAggressiveRegressor",
+    "PatchExtractor",
+    "Perceptron",
+    "PoissonRegressor",
+    "PolynomialCountSketch",
+    "PolynomialFeatures",
+    "PowerTransformer",
+    "QuadraticDiscriminantAnalysis",
+    "QuantileRegressor",
+    "QuantileTransformer",
+    "RANSACRegressor",
+    "RBFSampler",
+    "RFE",
+    "RFECV",
+    "RadiusNeighborsClassifier",
+    "RadiusNeighborsRegressor",
+    "RadiusNeighborsTransformer",
+    "RandomForestClassifier",
+    "RandomForestRegressor",
+    "RandomTreesEmbedding",
+    "RegressorChain",
+    "Ridge",
+    "RidgeCV",
+    "RidgeClassifier",
+    "RidgeClassifierCV",
+    "RobustScaler",
+    "SGDClassifier",
+    "SGDOneClassSVM",
+    "SGDRegressor",
+    "SVC",
+    "SVR",
+    "SelectFdr",
+    "SelectFpr",
+    "SelectFromModel",
+    "SelectFwe",
+    "SelectKBest",
+    "SelectPercentile",
+    "SelfTrainingClassifier",
+    "SequentialFeatureSelector",
+    "ShrunkCovariance",
+    "SimpleImputer",
+    "SkewedChi2Sampler",
+    "SparseCoder",
+    "SparsePCA",
+    "SparseRandomProjection",
+    "SpectralBiclustering",
+    "SpectralClustering",
+    "SpectralCoclustering",
+    "SpectralEmbedding",
+    "SplineTransformer",
+    "StackingClassifier",
+    "StackingRegressor",
+    "TSNE",
+    "TargetEncoder",
+    "TfidfTransformer",
+    "TfidfVectorizer",
+    "TheilSenRegressor",
+    "TransformedTargetRegressor",
+    "TruncatedSVD",
+    "TunedThresholdClassifierCV",
+    "TweedieRegressor",
+    "VarianceThreshold",
+    "VotingClassifier",
+    "VotingRegressor",
+}
+
+
+@pytest.mark.parametrize(
+    "estimator", list(_tested_estimators()), ids=_get_check_estimator_ids
+)
+@skip_callback_test_if_wasm
+def test_callback_support(estimator):
+    name = estimator.__class__.__name__
+    if name in NO_CALLBACK_SUPPORT:
+        pytest.skip(f"{name} does not support callbacks yet")
+
+    for est in _yield_instances_for_check(check_callback_support, estimator):
+        with ignore_warnings(category=(ConvergenceWarning, FutureWarning, UserWarning)):
+            check_callback_support(name, est)

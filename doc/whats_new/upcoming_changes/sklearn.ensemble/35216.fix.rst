@@ -1,0 +1,4 @@
+- Fixed a regression in :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` where fitting failed when a
+  feature had only missing values (or only zero-weighted non-missing values).
+  By :user:`Arthur Lacote <cakedev0>`.

@@ -41,12 +41,14 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._param_validation import (
     HasMethods,
+    Hidden,
     Interval,
     StrOptions,
     validate_params,
 )
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
+    _deprecate_estimator_name,
     _validate_style_kwargs,
 )
 from sklearn.utils._response import _get_response_values, _process_predict_proba
@@ -1305,6 +1307,8 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         return tags
 
 
+# TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
+# TODO(1.12): change default strategy to 'quantile', see PR #33908.
 @validate_params(
     {
         "y_true": ["array-like"],
@@ -1313,8 +1317,12 @@ class _TemperatureScaling(RegressorMixin, BaseEstimator):
         "n_bins": [
             Interval(Integral, 1, None, closed="left"),
             StrOptions({"cube_root"}),
+            Hidden(StrOptions({"warn"})),
         ],
-        "strategy": [StrOptions({"uniform", "quantile"})],
+        "strategy": [
+            StrOptions({"uniform", "quantile"}),
+            Hidden(StrOptions({"warn"})),
+        ],
     },
     prefer_skip_nested_validation=True,
 )
@@ -1323,8 +1331,8 @@ def calibration_curve(
     y_prob,
     *,
     pos_label=None,
-    n_bins=5,
-    strategy="uniform",
+    n_bins="warn",
+    strategy="warn",
 ):
     """Compute true and predicted probabilities for a calibration curve.
 
@@ -1404,7 +1412,8 @@ def calibration_curve(
     >>> from sklearn.calibration import calibration_curve
     >>> y_true = np.array([0, 0, 0, 0, 1, 1, 1, 1, 1])
     >>> y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.65, 0.7, 0.8, 0.9,  1.])
-    >>> prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=3)
+    >>> prob_true, prob_pred = calibration_curve(
+    ...     y_true, y_pred, n_bins=3, strategy='uniform')
     >>> prob_true
     array([0. , 0.5, 1. ])
     >>> prob_pred
@@ -1425,8 +1434,25 @@ def calibration_curve(
         )
     y_true = y_true == pos_label
 
+    # TODO(1.12): remove block, see PR #34326.
+    if n_bins == "warn":
+        warnings.warn(
+            "The default value of `n_bins` will change from 5 to 'cube_root' in 1.12.",
+            FutureWarning,
+        )
+        n_bins = 5
+
     if n_bins == "cube_root":
         n_bins = ceil(len(y_true) ** (1 / 3))
+
+    # TODO(1.12): remove with change of default strategy.
+    if strategy == "warn":
+        warnings.warn(
+            "The default value of `strategy` will change "
+            "from 'uniform' to 'quantile' in 1.12",
+            FutureWarning,
+        )
+        strategy = "uniform"
 
     if strategy == "quantile":  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)
@@ -1480,14 +1506,24 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     y_prob : ndarray of shape (n_samples,)
         Probability estimates for the positive class, for each sample.
 
-    estimator_name : str, default=None
-        Name of estimator. If None, the estimator name is not shown.
+    name : str, default=None
+        Name for labeling the legend entry. If `None`, no name is shown in the legend.
+
+        .. versionchanged:: 1.10
+            `estimator_name` was deprecated in favor of `name`.
 
     pos_label : int, float, bool or str, default=None
         The positive class when calibration curve computed.
         If not `None`, this value is displayed in the x- and y-axes labels.
 
         .. versionadded:: 1.1
+
+    estimator_name : str, default=None
+        Name of estimator. If None, the estimator name is not shown.
+
+        .. deprecated:: 1.10
+            `estimator_name` is deprecated and will be removed in 1.12. Use `name`
+            instead.
 
     Attributes
     ----------
@@ -1522,19 +1558,27 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
     >>> clf.fit(X_train, y_train)
     LogisticRegression()
     >>> y_prob = clf.predict_proba(X_test)[:, 1]
-    >>> prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
+    >>> prob_true, prob_pred = calibration_curve(
+    ...     y_test, y_prob, n_bins=10, strategy='uniform')
     >>> disp = CalibrationDisplay(prob_true, prob_pred, y_prob)
     >>> disp.plot()
     <...>
     """
 
     def __init__(
-        self, prob_true, prob_pred, y_prob, *, estimator_name=None, pos_label=None
+        self,
+        prob_true,
+        prob_pred,
+        y_prob,
+        *,
+        name=None,
+        pos_label=None,
+        estimator_name="deprecated",
     ):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
-        self.estimator_name = estimator_name
+        self.name = _deprecate_estimator_name(estimator_name, name, "1.10")
         self.pos_label = pos_label
 
     def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
@@ -1550,8 +1594,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             created.
 
         name : str, default=None
-            Name for labeling curve. If `None`, use `estimator_name` if
-            not `None`, otherwise no labeling is shown.
+            Name for labeling curve. If `None`, use `name` provided at
+            `CalibrationDisplay` initialization if not `None`, otherwise no
+            labeling is shown.
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
@@ -1591,6 +1636,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
 
         return self
 
+    # TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
+    # TODO(1.12): change default strategy to 'quantile', see PR #33908.
     @classmethod
     def from_estimator(
         cls,
@@ -1598,8 +1645,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         X,
         y,
         *,
-        n_bins=5,
-        strategy="uniform",
+        n_bins="warn",
+        strategy="warn",
         pos_label=None,
         name=None,
         ax=None,
@@ -1697,7 +1744,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf = LogisticRegression()
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
-        >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
+        >>> disp = CalibrationDisplay.from_estimator(
+        ...     clf, X_test, y_test, n_bins='cube_root', strategy='quantile')
         >>> plt.show()
         """
         y_prob, pos_label, name = cls._validate_and_get_response_values(
@@ -1721,14 +1769,16 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             **kwargs,
         )
 
+    # TODO(1.12): change default n_bins to 'cube_root', see PR #34326.
+    # TODO(1.12): change default strategy to 'quantile', see PR #33908.
     @classmethod
     def from_predictions(
         cls,
         y_true,
         y_prob,
         *,
-        n_bins=5,
-        strategy="uniform",
+        n_bins="warn",
+        strategy="warn",
         pos_label=None,
         name=None,
         ax=None,
@@ -1776,6 +1826,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
 
+            .. versionchanged:: 1.12
+                The default value will change from 'uniform' to 'quantile' in 1.12.
+
         pos_label : int, float, bool or str, default=None
             The positive class when computing the calibration curve.
             When `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1},
@@ -1821,7 +1874,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> clf.fit(X_train, y_train)
         LogisticRegression()
         >>> y_prob = clf.predict_proba(X_test)[:, 1]
-        >>> disp = CalibrationDisplay.from_predictions(y_test, y_prob)
+        >>> disp = CalibrationDisplay.from_predictions(
+        ...     y_test, y_prob, n_bins='cube_root', strategy='quantile')
         >>> plt.show()
         """
         pos_label_validated, name = cls._validate_from_predictions_params(
@@ -1836,7 +1890,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             prob_true=prob_true,
             prob_pred=prob_pred,
             y_prob=y_prob,
-            estimator_name=name,
+            name=name,
             pos_label=pos_label_validated,
         )
         return disp.plot(ax=ax, ref_line=ref_line, **kwargs)

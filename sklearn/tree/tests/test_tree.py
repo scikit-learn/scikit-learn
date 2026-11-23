@@ -2623,6 +2623,7 @@ def test_missing_values_best_splitter_missing_both_classes_has_nan(criterion):
 )
 def test_missing_value_errors(sparse_container, tree):
     """Check unsupported configurations for missing values."""
+    tree = clone(tree)
 
     X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
     y = np.array([0] * 5 + [1] * 5)
