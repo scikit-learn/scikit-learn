@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#172b2a">
+    <title>Raaga Swara — Record &amp; practice</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <p class="eyebrow">A personal listening practice</p>
+        <h1>Raaga <span>Swara</span></h1>
+        <p class="intro">
+          Record short musical phrases, build your own raaga library, and
+          practice recognizing what you hear.
+        </p>
+      </header>
+
+      <section class="panel recorder-panel" aria-labelledby="record-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 / Add to your library</p>
+            <h2 id="record-heading">Record a phrase</h2>
+          </div>
+          <span class="duration-badge">30-second clips</span>
+        </div>
+        <p class="muted">
+          Each recording stops automatically after 30 seconds and is saved in
+          this browser.
+        </p>
+
+        <label for="raga-input">Raaga name</label>
+        <input
+          id="raga-input"
+          name="raga"
+          list="raga-suggestions"
+          maxlength="60"
+          autocomplete="off"
+          placeholder="For example, Yaman"
+          required
+        >
+        <datalist id="raga-suggestions">
+          <option value="Bhairavi"></option>
+          <option value="Darbari Kanada"></option>
+          <option value="Hamsadhwani"></option>
+          <option value="Kalyani"></option>
+          <option value="Mohanam"></option>
+          <option value="Yaman"></option>
+        </datalist>
+
+        <div class="record-controls">
+          <button id="record-button" class="button button-primary" type="button">
+            <span class="record-dot" aria-hidden="true"></span>
+            Start recording
+          </button>
+          <p id="record-status" class="status" role="status" aria-live="polite">
+            Allow microphone access when your browser asks.
+          </p>
+        </div>
+        <progress id="record-progress" max="30" value="0" aria-label="Recording progress"></progress>
+      </section>
+
+      <section class="panel quiz-panel" aria-labelledby="quiz-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">02 / Train your ear</p>
+            <h2 id="quiz-heading">Guess the raaga</h2>
+          </div>
+          <span id="quiz-count" class="count-badge">Add at least two raagas</span>
+        </div>
+        <p class="muted">
+          Listen to a saved clip, then choose the raaga you think it is.
+        </p>
+        <div id="quiz-content" class="quiz-content">
+          <p class="empty-state">Your quiz will be ready when your library has clips from at least two raagas.</p>
+        </div>
+      </section>
+
+      <section class="panel library-panel" aria-labelledby="library-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">03 / Your collection</p>
+            <h2 id="library-heading">Raaga repository</h2>
+          </div>
+          <span id="library-count" class="count-badge">0 clips</span>
+        </div>
+        <p class="muted">
+          Clips are stored on this device in this browser. Clearing browser
+          site data will remove them.
+        </p>
+        <div id="library-list" class="library-list">
+          <p class="empty-state">No recordings yet. Your saved clips will appear here.</p>
+        </div>
+      </section>
+
+      <footer>
+        <p>Made for learning by listening. Recordings stay in your browser.</p>
+      </footer>
+    </main>
+  </body>
+</html>

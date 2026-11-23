@@ -1,0 +1,381 @@
+:root {
+  color-scheme: light;
+  font-family: "Avenir Next", Avenir, sans-serif;
+  color: #172b2a;
+  background: #f3f5ef;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(ellipse at 85% 4%, rgb(216 230 208 / 75%), transparent 34rem),
+    #f3f5ef;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.app-shell {
+  width: min(100% - 2rem, 820px);
+  margin: 0 auto;
+  padding: 3.75rem 0 2rem;
+}
+
+.hero {
+  margin: 0 auto 2.5rem;
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 0.55rem;
+  color: #648179;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+}
+
+h1 {
+  font-size: clamp(2.8rem, 9vw, 4.5rem);
+  letter-spacing: -0.055em;
+  line-height: 1.1;
+}
+
+h1 span {
+  color: #b66b45;
+}
+
+.intro {
+  max-width: 510px;
+  margin: 1rem auto 0;
+  color: #62706b;
+  line-height: 1.65;
+}
+
+.panel {
+  margin: 1rem 0;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  border: 1px solid #e3e8df;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 90%);
+  box-shadow: 0 10px 32px rgb(34 54 46 / 5%);
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+h2 {
+  font-size: 1.65rem;
+  letter-spacing: -0.025em;
+}
+
+.muted {
+  margin: 0.65rem 0 1.25rem;
+  color: #697670;
+  font-size: 0.91rem;
+  line-height: 1.6;
+}
+
+.duration-badge,
+.count-badge {
+  flex: 0 0 auto;
+  padding: 0.42rem 0.72rem;
+  border-radius: 999px;
+  background: #eef4ed;
+  color: #527060;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #d6ded6;
+  border-radius: 9px;
+  outline: none;
+  background: #fff;
+  color: #172b2a;
+}
+
+input:focus,
+select:focus,
+button:focus-visible {
+  outline: 3px solid rgb(182 107 69 / 25%);
+  outline-offset: 2px;
+}
+
+.record-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.72rem 1rem;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.button-primary {
+  background: #1f4840;
+  color: white;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: #173a33;
+}
+
+.button-secondary {
+  border: 1px solid #d6ded6;
+  background: #fff;
+  color: #25473e;
+}
+
+.record-dot {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: #e9876a;
+}
+
+.is-recording .record-dot {
+  animation: pulse 1s infinite alternate;
+  background: #f5b22f;
+}
+
+.status {
+  margin: 0;
+  color: #697670;
+  font-size: 0.82rem;
+}
+
+.status.is-error,
+.feedback.is-wrong {
+  color: #a63d35;
+}
+
+.status.is-success,
+.feedback.is-correct {
+  color: #26734b;
+}
+
+progress {
+  display: block;
+  width: 100%;
+  height: 7px;
+  margin-top: 1.2rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: #edf0ea;
+  color: #b66b45;
+}
+
+progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: #edf0ea;
+}
+
+progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: #b66b45;
+}
+
+progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: #b66b45;
+}
+
+.quiz-content {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.quiz-audio {
+  width: 100%;
+}
+
+.quiz-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.quiz-form label {
+  grid-column: 1 / -1;
+  margin-bottom: -0.45rem;
+}
+
+.feedback {
+  min-height: 1.35rem;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.library-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.clip-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  padding: 1rem;
+  border: 1px solid #e6eae4;
+  border-radius: 12px;
+  background: #fcfdfb;
+}
+
+.clip-details {
+  min-width: 0;
+}
+
+.clip-title {
+  overflow: hidden;
+  margin: 0;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clip-meta {
+  margin: 0.28rem 0 0;
+  color: #79837e;
+  font-size: 0.76rem;
+}
+
+.clip-audio {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 38px;
+}
+
+.delete-button {
+  padding: 0.45rem 0.65rem;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #9c5145;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.delete-button:hover {
+  background: #fbefec;
+}
+
+.empty-state {
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed #dce3db;
+  border-radius: 10px;
+  color: #75817b;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+footer {
+  padding-top: 1rem;
+  color: #85908a;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+@keyframes pulse {
+  to {
+    box-shadow: 0 0 0 5px rgb(245 178 47 / 22%);
+  }
+}
+
+@media (max-width: 560px) {
+  .app-shell {
+    padding-top: 2rem;
+  }
+
+  .record-controls,
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  .record-controls {
+    flex-direction: column;
+  }
+
+  .section-heading {
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .quiz-form {
+    grid-template-columns: 1fr;
+  }
+
+  .quiz-form label {
+    grid-column: auto;
+    margin-bottom: -0.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
