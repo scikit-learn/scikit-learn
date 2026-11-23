@@ -88,10 +88,6 @@ class MaxIterEstimator(CallbackSupportMixin, BaseEstimator):
     def predict(self, X):
         return np.mean(X, axis=1) * self.n_iter_
 
-    def get_metadata_routing(self):
-        router = MetadataRouter(owner=self).add_self_request(self)
-        return self._add_callback_routing(router)
-
 
 class WhileEstimator(CallbackSupportMixin, BaseEstimator):
     """A class that mimics the behavior of an estimator.

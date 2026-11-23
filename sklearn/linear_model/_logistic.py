@@ -1848,23 +1848,6 @@ class LogisticRegression(
 
         return tags
 
-    def get_metadata_routing(self):
-        """Get metadata routing of this object.
-
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
-
-        .. versionadded:: 1.10
-
-        Returns
-        -------
-        routing : MetadataRouter
-            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
-            routing information.
-        """
-        router = MetadataRouter(owner=self).add_self_request(self)
-        return self._add_callback_routing(router)
-
 
 class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstimator):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.

@@ -177,7 +177,7 @@ class CallbackSupportMixin:
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self)
+        router = MetadataRouter(owner=self).add_self_request(self)
         return self._add_callback_routing(router)
 
     def _get_manual_callback_params(self, sample_weight):
