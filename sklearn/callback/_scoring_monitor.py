@@ -1,6 +1,7 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import copy
 import datetime
 import uuid
 import warnings
@@ -13,7 +14,6 @@ from sklearn.callback._transport import Channel
 from sklearn.utils._metadata_requests import (
     _auto_requests_enabled,
     _routing_enabled,
-    request_is_alias,
 )
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
@@ -181,7 +181,10 @@ class ScoringMonitor(FitCallback):
         # Turn the scorers into MultimetricScorer for convenience
         self._scorers = {
             "train": _convert_to_multiscorer(scoring_train),
-            "val": _convert_to_multiscorer(scoring_val),
+            # The callback sets a metadata request on the validation scorer (see
+            # `get_metadata_routing`). It works on a copy to leave the scorer objects
+            # of the user, which can be shared with other objects, untouched.
+            "val": copy.deepcopy(_convert_to_multiscorer(scoring_val)),
         }
 
         self._log = []
@@ -329,13 +332,14 @@ class ScoringMonitor(FitCallback):
             if _auto_requests_enabled():
                 for scorer in self._scorers["val"]._scorers.values():
                     # Automatically add a request for "sample_weight_val" if the scorer
-                    # accepts sample weight and there is not already an alias request
-                    # for "sample_weight".
+                    # accepts sample weight and the user did not set any request for
+                    # "sample_weight" (an unset request is None). Requests explicitly
+                    # set by the user are never overridden.
                     if scorer._accept_sample_weight():
                         sw_request = scorer.get_metadata_routing().score.requests.get(
                             "sample_weight"
                         )
-                        if not request_is_alias(sw_request):
+                        if sw_request is None:
                             scorer.set_score_request(sample_weight="sample_weight_val")
 
         router = MetadataRouter(owner=self).add_self_request(self_request)

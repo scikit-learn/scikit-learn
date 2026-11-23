@@ -687,6 +687,45 @@ def test_val_scorer_with_aliased_sample_weight_request():
     assert not np.allclose(alias_score_values, no_alias_score_values)
 
 
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
+def test_scoring_monitor_does_not_modify_scorers():
+    """Check that the scorers given to the callback are not modified.
+
+    The validation scorer automatically requests `sample_weight_val`. This must not
+    leak to the user's scorer object, nor to the training scorer when both are the same
+    object.
+    """
+
+    def max_sample_weight(y_true, y_pred, sample_weight):
+        """Score function revealing the sample weights it received."""
+        return np.max(sample_weight)
+
+    scorer = make_scorer(max_sample_weight)
+    requests_before = dict(scorer.get_metadata_routing().score.requests)
+
+    cb = ScoringMonitor(scoring_train=scorer, scoring_val=scorer)
+
+    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
+    X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=1)
+    MaxIterEstimator().set_callbacks(cb).fit(
+        X,
+        y,
+        sample_weight=1,
+        X_val=X_val,
+        y_val=y_val,
+        sample_weight_val=2,
+    )
+
+    # The original scorer object is untouched.
+    assert scorer.get_metadata_routing().score.requests == requests_before
+
+    # The training scorer used `sample_weight` and the validation scorer used
+    # `sample_weight_val`, although they come from the same scorer object.
+    logs = cb.get_logs()
+    assert all(row["score"] == 1.0 for row in logs.train_scores)
+    assert all(row["score"] == 2.0 for row in logs.val_scores)
+
+
 @config_context(enable_metadata_routing=True)
 def test_val_scorer_only_X():
     """Smoke test for the validation scorer on a scorer that only requires X."""
