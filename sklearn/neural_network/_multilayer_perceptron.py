@@ -473,9 +473,15 @@ class BaseMultilayerPerceptron(BaseEstimator, ABC):
         )
 
         X, y = self._validate_input(X, y, incremental, reset=first_pass)
-        n_samples, n_features = X.shape
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
+            nonzero_mask = sample_weight != 0
+            if not np.all(nonzero_mask):
+                X = _safe_indexing(X, nonzero_mask)
+                y = y[nonzero_mask]
+                sample_weight = sample_weight[nonzero_mask]
+
+        _, n_features = X.shape
 
         # Ensure y is 2D
         if y.ndim == 1:
