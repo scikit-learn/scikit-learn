@@ -1953,10 +1953,9 @@ See concept :term:`sample property`.
         These callables are said to *consume* the sample weights while other components
         of scikit-learn can *route*  the weights to the underlying estimators or scorers
         (see :ref:`glossary_metadata_routing`). When :ref:`metadata routing
-        <metadata_routing>` is enabled together with
-        `enable_metadata_auto_requests=True` (see :func:`~sklearn.set_config`),
-        estimators, meta-estimators that also consume weights, and scorers that accept
-        `sample_weight` **auto-request** it. You then do not need
+        <metadata_routing>` is enabled, estimators, meta-estimators that also
+        consume weights, and scorers that accept `sample_weight`
+        **auto-request** it. You then do not need
         `set_fit_request(sample_weight=True)` or
         `set_score_request(sample_weight=True)`. See
         :ref:`metadata_routing_auto_request_user`.

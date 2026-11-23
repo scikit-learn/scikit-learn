@@ -21,7 +21,7 @@ from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from dataclasses import dataclass
 from difflib import context_diff
-from functools import wraps
+from functools import partial, wraps
 from inspect import signature
 from itertools import chain, groupby
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
@@ -333,6 +333,31 @@ try:
         not ARRAY_API_COMPAT_FUNCTIONAL,
         reason="SCIPY_ARRAY_API not set, or versions of NumPy/SciPy too old.",
     )
+
+    # This is for tests that are known to fail when run with n_jobs > 1 and
+    # backend="threading". The failures don't always happen, so it's a skip
+    # instead of xfail. The plan for this to remove it from each test as fixes
+    # are merged; once all fixes are merged it can be deleted. See
+    # https://github.com/scikit-learn/scikit-learn/issues/35313 for details.
+    #
+    # Structured as an explicit decorator because pytest.mark.skipif checks too
+    # early: at import instead of at runtime.
+    def skip_if_use_threading_backend_with_high_parallelism(func):
+        @functools.wraps(func)
+        def test(*args, **kwargs):
+            if (
+                os.environ.get(
+                    "SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM"
+                )
+                == "1"
+            ):
+                pytest.skip(
+                    "Known intermittent failure that needs to be fixed; see "
+                    + "https://github.com/scikit-learn/scikit-learn/issues/35313"
+                )
+            return func(*args, **kwargs)
+
+        return test
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #
@@ -1540,3 +1565,11 @@ def turn_warnings_into_errors():
             message=warning_info.message,
             category=warning_info.category,
         )
+
+
+def _check_name(check):
+    if hasattr(check, "__wrapped__"):
+        return _check_name(check.__wrapped__)
+    if isinstance(check, partial):
+        return check.keywords.get("check_name", check.func.__name__)
+    return check.__name__

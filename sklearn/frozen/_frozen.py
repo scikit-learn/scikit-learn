@@ -141,6 +141,7 @@ class FrozenEstimator(BaseEstimator):
                 "`frozenestimator.estimator.set_params` to set parameters of the inner "
                 "estimator."
             )
+        return self
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

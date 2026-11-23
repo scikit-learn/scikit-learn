@@ -262,6 +262,9 @@ class TreeGrower:
         rng=np.random.default_rng(),
         shrinkage=1.0,
         n_threads=None,
+        partition_buffer=None,
+        left_indices_buffer=None,
+        right_indices_buffer=None,
     ):
         self._validate_parameters(
             X_binned,
@@ -329,6 +332,9 @@ class TreeGrower:
             feature_fraction_per_split=feature_fraction_per_split,
             rng=rng,
             n_threads=n_threads,
+            partition_buffer=partition_buffer,
+            left_indices_buffer=left_indices_buffer,
+            right_indices_buffer=right_indices_buffer,
         )
         self.X_binned = X_binned
         self.max_leaf_nodes = max_leaf_nodes
