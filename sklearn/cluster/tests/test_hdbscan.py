@@ -607,3 +607,27 @@ def test_hdbscan_cosine_metric_invalid_algorithm(invalid_algo):
     hdbscan = HDBSCAN(metric="cosine", algorithm=invalid_algo)
     with pytest.raises(ValueError, match="cosine is not a valid metric"):
         hdbscan.fit_predict(X)
+
+
+@pytest.mark.parametrize("method", ["eom", "leaf"])
+@pytest.mark.parametrize("allow_single_cluster", [False, True])
+def test_hdbscan_cluster_selection_epsilon_large(method, allow_single_cluster):
+    """Test that HDBSCAN does not raise TypeError in traverse_upwards when
+    cluster_selection_epsilon >= top-level merge distance.
+
+    Non-regression test for issue #35473.
+    """
+    X_small = np.array([[0.0], [0.01], [0.02], [1.0], [1.01], [1.02]])
+    for eps in (0.5, 1.0, 2.0):
+        labels = HDBSCAN(
+            min_cluster_size=2,
+            cluster_selection_epsilon=eps,
+            cluster_selection_method=method,
+            allow_single_cluster=allow_single_cluster,
+        ).fit_predict(X_small)
+        assert labels.shape == (6,)
+        assert np.all(labels >= 0)
+        if allow_single_cluster and eps >= 1.0:
+            assert len(np.unique(labels)) == 1
+        elif not allow_single_cluster:
+            assert len(np.unique(labels)) == 2
