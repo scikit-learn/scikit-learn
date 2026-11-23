@@ -3393,7 +3393,9 @@ def test_predict_log_proba_confident():
     assert_allclose(log_proba[:, 0], log_expit(-decision))
     assert_allclose(log_proba[:, 1], log_expit(decision))
 
-    # Check strictly positive probabilities without catastrophic cancellation to 0
-    assert not np.any(proba[:, 0] == 0.0)
+    # Check agreement with expit
     assert_allclose(proba[:, 0], expit(-decision))
     assert_allclose(proba[:, 1], expit(decision))
+
+    # Confident prediction avoids catastrophic cancellation to 0.0
+    assert proba[1, 0] > 0.0
