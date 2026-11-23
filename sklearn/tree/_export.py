@@ -9,7 +9,6 @@ from collections.abc import Iterable
 from html import escape
 from io import StringIO
 from numbers import Integral
-from typing import NamedTuple
 
 import numpy as np
 
@@ -30,29 +29,6 @@ from sklearn.utils._param_validation import (
     validate_params,
 )
 from sklearn.utils.validation import check_array, check_is_fitted
-
-
-class _SplitInfo(NamedTuple):
-    """Unformatted split data shared by tree exporters (internal nodes only)."""
-
-    feature: int
-    threshold: float
-    categories_left: np.ndarray | None
-    missing_go_to_left: bool
-
-
-def _get_split_info(tree, node_id):
-    """Read a split without imposing an export format or rounding its values."""
-    return _SplitInfo(
-        feature=int(tree.feature[node_id]),
-        threshold=float(tree.threshold[node_id]),
-        categories_left=(
-            None
-            if tree.split_kind[node_id] == SPLIT_NUMERIC
-            else tree._get_left_categories(node_id)
-        ),
-        missing_go_to_left=bool(tree.missing_go_to_left[node_id]),
-    )
 
 
 def _get_categorical_features(decision_tree):
@@ -330,7 +306,6 @@ class _BaseTreeExporter:
         self.fontsize = fontsize
         self.colors = {"bounds": None}
         self.fill_colors = fill_colors
-        self.categorical_features = {}
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -415,30 +390,29 @@ class _BaseTreeExporter:
         # Write decision criteria
         if tree.children_left[node_id] != _tree.TREE_LEAF:
             # Always write node decision criteria, except for leaves
-            split = _get_split_info(tree, node_id)
             if self.feature_names is not None:
-                feature = self.feature_names[split.feature]
+                feature = self.feature_names[tree.feature[node_id]]
                 feature = self.str_escape(feature)
             else:
                 feature = "x%s%s%s" % (
                     characters[1],
-                    split.feature,
+                    tree.feature[node_id],
                     characters[2],
                 )
-            if split.categories_left is None:
+            if tree.split_kind[node_id] == SPLIT_NUMERIC:
                 node_string += "%s %s %s%s" % (
                     feature,
                     characters[3],
-                    round(split.threshold, self.precision),
+                    round(tree.threshold[node_id], self.precision),
                     characters[4],
                 )
             else:
-                categories = self.categorical_features[split.feature]
-                categories_left = categories[split.categories_left]
+                categories = self.categorical_features[tree.feature[node_id]]
+                categories_left = categories[tree._get_left_categories(node_id)]
                 category_set = self.category_escape(
                     _format_category_set(categories_left)
                 )
-                direction = "left" if split.missing_go_to_left else "right"
+                direction = "left" if tree.missing_go_to_left[node_id] else "right"
                 node_string += (
                     f"{feature} in {category_set} "
                     f"(missing/unknown: {direction}){characters[4]}"
@@ -1298,21 +1272,20 @@ def export_text(
             info_fmt_right = info_fmt
 
             if tree_.feature[node] != _tree.TREE_UNDEFINED:
-                split = _get_split_info(tree_, node)
                 name = feature_names_[node]
-                if split.categories_left is None:
-                    threshold = "{1:.{0}f}".format(decimals, split.threshold)
+                if tree_.split_kind[node] == SPLIT_NUMERIC:
+                    threshold = "{1:.{0}f}".format(decimals, tree_.threshold[node])
                     left_rule = right_child_fmt.format(indent, name, threshold)
                     right_rule = left_child_fmt.format(indent, name, threshold)
                 else:
-                    categories = categorical_features[split.feature]
+                    categories = categorical_features[tree_.feature[node]]
                     left_mask = np.zeros(len(categories), dtype=bool)
-                    left_mask[split.categories_left] = True
+                    left_mask[tree_._get_left_categories(node)] = True
                     left_categories = _format_category_set(categories[left_mask])
                     left_rule = f"{indent} {name} in {left_categories}"
                     right_categories = _format_category_set(categories[~left_mask])
                     right_rule = f"{indent} {name} in {right_categories}"
-                    if split.missing_go_to_left:
+                    if tree_.missing_go_to_left[node]:
                         left_rule += " or missing/unknown"
                     else:
                         right_rule += " or missing/unknown"

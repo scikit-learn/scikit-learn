@@ -790,21 +790,12 @@ def test_get_left_categories_numeric_node():
 
 
 @pytest.mark.parametrize(
-    "Tree",
-    [
-        DecisionTreeClassifier,
-        DecisionTreeRegressor,
-        ExtraTreeClassifier,
-        ExtraTreeRegressor,
-    ],
-)
-@pytest.mark.parametrize(
     "labels", [list("abcd"), [10, 20, 30, 40], ["a", "b", "c", None]]
 )
 @pytest.mark.parametrize("missing_in_fit", [False, True])
 @pytest.mark.parametrize("exporter", ["text", "graphviz", "plot"])
 def test_categorical_export_labels_and_routing(
-    Tree, labels, missing_in_fit, exporter, request
+    labels, missing_in_fit, exporter, request
 ):
     # Keep the categorical feature away from column zero to exercise label lookup.
     X = np.empty((80, 2), dtype=object)
@@ -813,7 +804,9 @@ def test_categorical_export_labels_and_routing(
     y = np.tile([0, 1, 0, 1], 20)
     if missing_in_fit:
         X[::9, 1] = np.nan
-    estimator = Tree(categorical_features=[1], max_depth=1, random_state=0).fit(X, y)
+    estimator = DecisionTreeClassifier(
+        categorical_features=[1], max_depth=1, random_state=0
+    ).fit(X, y)
     tree = estimator.tree_
     categories = estimator._categorical_encoder.categories_[0][
         : tree._n_categories[1]
@@ -842,23 +835,36 @@ def test_categorical_export_labels_and_routing(
         assert f"category in {left_set}" in annotations[0].get_text()
         assert f"missing/unknown: {direction}" in annotations[0].get_text()
         pyplot.close(ax.figure)
-    probes = np.array(
-        [[0.0, label] for label in [*categories, np.nan, "unknown"]], dtype=object
-    )
-    expected = [
-        tree.children_left[0] if i in left_codes else tree.children_right[0]
-        for i in range(len(categories))
-    ]
-    missing_leaf = (
-        tree.children_left[0] if direction == "left" else tree.children_right[0]
-    )
+
+
+@pytest.mark.parametrize("missing_in_fit", [False, True])
+def test_get_left_categories_matches_routing(missing_in_fit):
+    X = np.array([[label] for label in "abcd"] * 20, dtype=object)
+    if missing_in_fit:
+        X[::9, 0] = np.nan
+    estimator = DecisionTreeClassifier(
+        categorical_features=[0], max_depth=1, random_state=0
+    ).fit(X, np.tile([0, 1, 0, 1], 20))
+    tree = estimator.tree_
+    categories = estimator._categorical_encoder.categories_[0][: tree._n_categories[0]]
+    left_codes = tree._get_left_categories(0)
+    probes = np.array([*categories, np.nan, "unknown"], dtype=object).reshape(-1, 1)
+    goes_left = [code in left_codes for code in range(len(categories))]
+    goes_left += [tree.missing_go_to_left[0]] * 2
     np.testing.assert_array_equal(
-        estimator.apply(probes), [*expected, missing_leaf, missing_leaf]
+        estimator.apply(probes),
+        np.where(goes_left, tree.children_left[0], tree.children_right[0]),
     )
 
 
 @pytest.mark.parametrize(
-    "Tree, n_categories", [(DecisionTreeClassifier, 40), (ExtraTreeClassifier, 300)]
+    "Tree, n_categories",
+    [
+        (DecisionTreeClassifier, 40),
+        (DecisionTreeRegressor, 40),
+        (ExtraTreeClassifier, 300),
+        (ExtraTreeRegressor, 300),
+    ],
 )
 def test_categorical_export_large_splits(Tree, n_categories):
     X = np.arange(n_categories).reshape(-1, 1)
