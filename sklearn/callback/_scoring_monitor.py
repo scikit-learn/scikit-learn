@@ -308,7 +308,7 @@ class ScoringMonitor(FitCallback):
                 data_y,
                 **scorer_routed_params,
             )
-            self._channel.send((run_id, run_info, task_info_path, scores))
+            self._channel.send((run_id, run_info, task_info_path, dataset, scores))
 
     def __getstate__(self):
         # `_log` is grown by a background thread, which can run while this callback is
