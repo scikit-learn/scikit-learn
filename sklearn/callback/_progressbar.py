@@ -37,7 +37,7 @@ class ProgressBar:
         When the progressbar should be displayed. Possible values are:
           - 'always': Always show the progressbar.
           - 'interactive_only': Only show the progressbar in ineractive environments,
-          such as a python shell or a jupyter notebook.
+            such as a python shell or a jupyter notebook.
 
     Notes
     -----

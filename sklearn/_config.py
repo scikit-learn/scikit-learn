@@ -248,8 +248,9 @@ def set_config(
         each estimator.
         The possible string values are:
 
-        - "progressbar": A `~skleanr.callback.ProgressBar(min_duration=1,
-        show="interactive_only")` callback instance is generated.
+        - "progressbar": A
+            `~sklearn.callback.ProgressBar(min_duration=1, show="interactive_only")`
+            callback instance is generated.
 
         .. versionadded:: 1.10
 
@@ -465,8 +466,9 @@ def config_context(
         each estimator.
         The possible string values are:
 
-        - "progressbar": A `~skleanr.callback.ProgressBar(min_duration=1,
-        show="interactive_only")` callback instance is generated.
+        - "progressbar": A
+            `~sklearn.callback.ProgressBar(min_duration=1, show="interactive_only")`
+            callback instance is generated.
 
         .. versionadded:: 1.10
 
