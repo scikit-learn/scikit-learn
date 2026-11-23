@@ -93,16 +93,22 @@ def test_min_norm_subgradient():
     assert mnsg is grad
 
 
-def _newton_solver_before_line_search(coef_newton):
-    """Return a tiny Poisson problem and its solver, ready to call line_search."""
+def _newton_solver_before_line_search(coef_newton, coef=None, tol=1e-4):
+    """Return a tiny Poisson problem and its solver, ready to call line_search.
+
+    The loss is 1/2 * sum(exp(coef) - y * coef) with minimum at coef = log(y).
+    """
     y, X = np.array([1.0, 2.0]), np.eye(2)
     linear_loss = LinearModelLoss(base_loss=HalfPoissonLoss(), fit_intercept=False)
+    if coef is None:
+        coef = linear_loss.init_zero_coef(X)
     sol = NewtonCholeskySolver(
-        coef=linear_loss.init_zero_coef(X), linear_loss=linear_loss, l2_reg_strength=0
+        coef=coef, linear_loss=linear_loss, l2_reg_strength=0, tol=tol
     )
     sol.setup(X=X, y=y, sample_weight=None)
     sol.iteration = 1
     sol.use_fallback_lbfgs_solve = False
+    # For coef = 0:
     # loss = 0.5, gradient = [0, -0.5], hessian = [[0.5, 0], [0, 0.5]]
     sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
     sol.coef_newton = np.asarray(coef_newton, dtype=float)
@@ -131,6 +137,45 @@ def test_newton_solver_line_search_huge_step():
     assert sol.loss_value < loss_old
     # The largest step size 1/2**k that satisfies the Armijo condition is k=10.
     assert_allclose(sol.coef, coef_newton / 2**10)
+
+
+def test_newton_solver_line_search_inexact_step_at_machine_precision():
+    """Test line search for an inexact Newton step very close to the minimum.
+
+    Close to the minimum, the change of the loss can be smaller than what floating
+    point numbers can resolve. On top, an inexact Newton step, e.g. from an inner
+    coordinate descent solver that stopped early, might decrease the loss without
+    decreasing the norm of the gradient. The line search must then rely on the
+    directional derivative and accept the step.
+    """
+    # At coef = log(y), the hessian is diag(y) / 2 = diag([0.5, 1]). We set the
+    # gradient to g = [eps, 0].
+    eps = 1e-9
+    y = np.array([1.0, 2.0])
+    coef = np.log(y) + np.array([2 * eps, 0])
+    # The exact Newton step is [-2 * eps, 0]. Our inexact step has
+    #   gradient @ coef_newton = -eps**2
+    #   coef_newton @ hessian @ coef_newton = 1.0625 * eps**2
+    # The quadratic approximation of the loss, which is very good for such tiny steps,
+    # decreases by (-1 + 1.0625 / 2) * eps**2 ~ -0.47e-18. This is far below the
+    # resolution of the loss value of about 0.8.
+    # The gradient at coef + alpha * coef_newton is eps * [1 - alpha/2, 3/4 * alpha].
+    # Its 1-norm, eps * (1 + alpha / 4), increases for all step sizes alpha > 0.
+    coef_newton = np.array([-eps, 0.75 * eps])
+    # We set a tiny tol to avoid that the line search stops because of
+    # max|gradient| <= tol.
+    X, y, sol = _newton_solver_before_line_search(
+        coef_newton=coef_newton, coef=coef, tol=1e-12
+    )
+    assert_allclose(sol.gradient, [eps, 0], rtol=1e-6, atol=1e-15)
+    coef_old = sol.coef.copy()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        sol.line_search(X=X, y=y, sample_weight=None)
+
+    assert not sol.use_fallback_lbfgs_solve
+    # The full step is accepted.
+    assert_array_equal(sol.coef, coef_old + coef_newton)
 
 
 @pytest.mark.parametrize(

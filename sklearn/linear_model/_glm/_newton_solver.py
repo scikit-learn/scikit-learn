@@ -427,7 +427,10 @@ class NewtonSolver(ABC):
                     ls_converged = True
                     break
             # 3. Deal with differences around machine precision.
+            #    Hager & Zhang (2005) "A New Conjugate Gradient Method with Guaranteed
+            #    Descent and an Efficient Line Search".
             # 3.1 Check relative loss difference ~ machine precision
+            #     Hager & Zhang (2005) Eq. 4.2
             tiny_loss = np.abs(self.loss_value_old * eps)
             check = np.abs(loss_improvement) <= tiny_loss
             if is_verbose:
@@ -458,6 +461,28 @@ class NewtonSolver(ABC):
                 if check:
                     ls_converged = True
                     break
+                # 3.3 Check the approximate Armijo condition, i.e. the first inequality
+                # of Eq. 4.1 of Hager & Zhang (2005):
+                #   phi'(alpha) <= (2 * sigma - 1) * phi'(0)
+                # (our sigma is their delta). It is the Armijo condition with phi
+                # replaced by its quadratic interpolant, and phi'(alpha) can be
+                # computed much more precisely than differences of phi.
+                # An inexact Newton step, e.g. from an inner solver that stopped early,
+                # may decrease the loss without decreasing the norm of the gradient.
+                # Note that phi(alpha) is not differentiable with an L1 penalty.
+                if self.l1_reg_strength == 0 and self.gradient_times_newton < 0:
+                    phi_prime = self.gradient.ravel() @ self.coef_newton.ravel()
+                    phi_prime_max = (2 * sigma - 1) * self.gradient_times_newton
+                    check = phi_prime <= phi_prime_max
+                    if is_verbose:
+                        print(
+                            "      check gradient @ newton step <= (2 * sigma - 1) *"
+                            " gradient_old @ newton step: "
+                            f"{phi_prime} <= {phi_prime_max} {check}"
+                        )
+                    if check:
+                        ls_converged = True
+                        break
 
             # Decrease the step size.
             # Note: Quadratic and cubic interpolation of phi to find the next step size
