@@ -75,6 +75,8 @@ thread_unsafe_fixtures = [
 # The second option requires pytest 9.0+ to be active.
 faulthandler_timeout = 600
 faulthandler_exit_on_timeout = true
+# Custom markers
+markers = ["no_check_spmatrix:do not apply the check_spmatrix scipy patch as it breaks this test"]
 
 
 [tool.ruff]
