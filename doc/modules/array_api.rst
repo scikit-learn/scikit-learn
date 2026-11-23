@@ -449,4 +449,8 @@ Note on Intel GPU support
 
 PyTorch XPU support is only available in PyTorch >= 2.12. For detailed compatibility
 information and setup instructions, see the `PyTorch XPU documentation
-<https://docs.pytorch.org/docs/2.12/notes/get_start_xpu.html>`__.
+<https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html>`__.
+
+PyTorch 2.15 or later is strongly recommended since previous versions
+are known to suffer from serious correctness or performance bugs when
+using the XPU device on scikit-learn related workloads.
