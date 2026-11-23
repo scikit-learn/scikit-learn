@@ -158,6 +158,8 @@ Estimators and other tools in scikit-learn that support array API compatible inp
 Estimators
 ----------
 
+- :class:`cluster.KMeans` (with `algorithm="lloyd"` and `init="k-means++"` or
+  `init="random"`)
 - :class:`covariance.LedoitWolf` (see :ref:`device_support_for_float64`)
 - :class:`covariance.OAS` (see :ref:`device_support_for_float64`)
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
