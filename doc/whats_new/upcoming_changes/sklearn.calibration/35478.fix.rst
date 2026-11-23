@@ -1,0 +1,8 @@
+- :class:`calibration.CalibratedClassifierCV` with ``method="temperature"`` now
+  gives correct probabilities when the class labels are numbers other than
+  `0, ..., n_classes - 1`, for example `{-1, 1}`. Previously the fitted
+  temperature was wrong, without any error or warning; predicted labels were
+  not affected. With array API inputs, :term:`predict_proba` now returns the
+  dtype of the calibrated probabilities instead of the default floating point
+  dtype of the array namespace.
+  By :user:`Tim Head <betatim>`.

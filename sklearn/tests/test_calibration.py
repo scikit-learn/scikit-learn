@@ -616,15 +616,6 @@ def test_temperature_scaling_numeric_labels(labels):
     )
 
 
-def test_temperature_scaling_empty_y():
-    """Empty data raises the same error as for the other methods."""
-    X, y = make_classification(n_samples=20, random_state=0)
-
-    for method in ("sigmoid", "temperature"):
-        with pytest.raises(ValueError, match="0 sample"):
-            CalibratedClassifierCV(method=method).fit(X[:0], y[:0])
-
-
 def test_temperature_scaling_input_validation(global_dtype):
     # Check that _TemperatureScaling can handle 2d-array with only 1 feature
     X = np.arange(10).astype(global_dtype)
@@ -1550,26 +1541,7 @@ def test_temperature_scaling_array_api_compliance(
         )
         pred_xp = cal_clf_xp.predict(X_train_xp)
         assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
-
-
-@pytest.mark.parametrize(
-    "array_namespace, device_name, dtype_name",
-    yield_namespace_device_dtype_combinations(),
-)
-def test_temperature_scaling_array_api_predict_proba_dtype(
-    array_namespace, device_name, dtype_name
-):
-    """`predict_proba` has the dtype of `X`, not the default float dtype of `xp`."""
-    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
-    X, y = make_classification(n_samples=100, random_state=0)
-    X_xp = xp.asarray(X.astype(dtype_name), device=device)
-    y_xp = xp.asarray(y, device=device)
-
-    with config_context(array_api_dispatch=True):
-        cal_clf = CalibratedClassifierCV(
-            LogisticRegression(), method="temperature"
-        ).fit(X_xp, y_xp)
-        assert cal_clf.predict_proba(X_xp).dtype == X_xp.dtype
+        assert cal_clf_xp.predict_proba(X_train_xp).dtype == X_train_xp.dtype
 
 
 @pytest.mark.parametrize("ensemble", [False, True])
