@@ -1,6 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import gc
+import os
+import pickle
+import sys
 import threading
 import time
 from collections import Counter
@@ -10,8 +14,8 @@ import pytest
 
 from sklearn.callback._transport import (
     _TRANSPORT_THREAD_NAME_PREFIX,
-    close_listener,
-    open_listener,
+    Channel,
+    _listeners,
 )
 
 
@@ -66,41 +70,259 @@ def _assert_no_leftover_threads(baseline, timeout=1):
 
 
 @pytest.mark.thread_unsafe  # module-level listener registries
+def test_no_leftover_connection_threads_after_worker_copy_is_dropped():
+    """Check that dropping a worker copy of a channel frees its connection.
+
+    The copy a worker unpickles opens a connection on first `send`. That connection is
+    held by the copy, so collecting the copy closes it, which makes the handler thread
+    on the listening side exit.
+    """
+    channel = Channel(lambda message: None)
+
+    # Snapshot after initializing the channel so the listener's accept thread is
+    # part of the baseline.
+    baseline = _snapshot_transport_threads()
+
+    copy = pickle.loads(pickle.dumps(channel))
+    copy.send(None)
+
+    assert _new_transport_threads(baseline)
+
+    del copy
+    gc.collect()
+
+    _assert_no_leftover_threads(baseline)
+
+    channel.close()
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
+def test_disconnect_frees_connection_while_copy_is_alive():
+    """Check that `disconnect` closes the connection before the copy is collected.
+
+    Simulates a non-propagated callback (e.g. `ScoringMonitor`) running in a loky
+    worker: `teardown` calls `disconnect` to free the socket and the main-process
+    handler thread right away, without relying on the unpickled copy being collected.
+    """
+    channel = Channel(lambda message: None)
+    # Snapshot after initializing the channel so the listener's accept thread is
+    # part of the baseline.
+    baseline = _snapshot_transport_threads()
+
+    copy = pickle.loads(pickle.dumps(channel))
+    copy.send(None)
+    assert _new_transport_threads(baseline)
+
+    copy.disconnect()
+    _assert_no_leftover_threads(baseline)
+    assert copy._connection is None
+
+    channel.close()
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
+def test_concurrent_send_and_disconnect_on_worker_copy():
+    """Check that concurrent threads in a worker can share an unpickled channel.
+
+    Nested thread parallelism inside a loky worker shares a single unpickled callback
+    and channel across threads (`clone` copies `_skl_callbacks` by reference), so
+    sibling threads concurrently call `send` and `disconnect`.
+    """
+    received = []
+    channel = Channel(received.append)
+    baseline = _snapshot_transport_threads()
+
+    copy = pickle.loads(pickle.dumps(channel))
+    n_threads = 4
+    n_tasks = 5
+    n_steps = 10
+    barrier = threading.Barrier(n_threads)
+    errors = []
+
+    def worker_thread(thread_id):
+        try:
+            barrier.wait()
+            for task_id in range(n_tasks):
+                for step_id in range(n_steps):
+                    copy.send((thread_id, task_id, step_id))
+                copy.disconnect()
+        except BaseException as exc:  # pragma: no cover
+            errors.append(exc)
+
+    threads = [
+        threading.Thread(target=worker_thread, args=(tid,)) for tid in range(n_threads)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
+    try:
+        assert not errors, errors
+        expected = [
+            (tid, task_id, step_id)
+            for tid in range(n_threads)
+            for task_id in range(n_tasks)
+            for step_id in range(n_steps)
+        ]
+        assert sorted(received) == expected
+        assert copy._connection is None
+        _assert_no_leftover_threads(baseline)
+    finally:
+        channel.close()
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
+def test_failed_send_drops_connection_and_next_send_reconnects():
+    """Check that a `send` whose exchange fails leaves the copy usable.
+
+    The main-process consumer raises, so the handler closes the connection without
+    acknowledging the message. The worker-side `send` then fails, and must drop its
+    connection so that the next `send` opens a fresh one.
+    """
+    received = []
+
+    def consumer(message):
+        if message == "boom":
+            raise OSError("consumer failed")
+        received.append(message)
+
+    channel = Channel(consumer)
+    baseline = _snapshot_transport_threads()
+
+    copy = pickle.loads(pickle.dumps(channel))
+    try:
+        with pytest.raises(EOFError):
+            copy.send("boom")
+        assert copy._connection is None
+
+        copy.send("ok")
+        assert received == ["ok"]
+    finally:
+        copy.disconnect()
+        channel.close()
+
+    _assert_no_leftover_threads(baseline)
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
+def test_failed_send_is_not_masked_by_failure_to_close_connection():
+    """Check that the error of a failed exchange is the one that `send` raises.
+
+    Closing the connection of a failed exchange can fail too, e.g. if it was already
+    closed, which must not replace the original error.
+    """
+
+    class BrokenConnection:
+        def send(self, message):
+            raise EOFError("exchange failed")
+
+        def close(self):
+            raise OSError("close failed")
+
+    channel = Channel(lambda message: None)
+    copy = pickle.loads(pickle.dumps(channel))
+    copy._connection = BrokenConnection()
+    try:
+        with pytest.raises(EOFError, match="exchange failed"):
+            copy.send("message")
+        assert copy._connection is None
+    finally:
+        channel.close()
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
+def test_close_on_copy_in_owner_process_keeps_listener_open():
+    """Check that only the channel that opened the listener closes it.
+
+    A copy unpickled in the process that owns the listener, e.g. by a `deepcopy`, must
+    not cut off the original channel when it is closed.
+    """
+    received = []
+    channel = Channel(received.append)
+    baseline = _snapshot_transport_threads()
+
+    copy = pickle.loads(pickle.dumps(channel))
+    copy.send("through the socket")
+    assert received == ["through the socket"]
+
+    copy.close()
+    assert copy._connection is None
+    assert channel._listener_address in _listeners
+
+    other_copy = pickle.loads(pickle.dumps(channel))
+    other_copy.send("still reachable")
+    assert received == ["through the socket", "still reachable"]
+    other_copy.disconnect()
+
+    channel.close()
+    assert channel._listener_address not in _listeners
+    _assert_no_leftover_threads(baseline)
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
+def test_is_reusable_depends_on_owner_and_reachability(tmp_path):
+    """Check when an unpickled channel can be reused as is.
+
+    A reachable listener that this process did not open is reusable. Connecting to a
+    listener that cannot be reached fails with an `OSError`, which must be reported as
+    "not reusable" rather than propagated, so that the callback opens a fresh channel.
+    """
+    baseline = _snapshot_transport_threads()
+    channel = Channel(lambda message: None)
+    copy = pickle.loads(pickle.dumps(channel))
+
+    # Drop this process's registration, as if another process had opened the listener.
+    # Connecting makes the accept thread exit, so it must not be left behind.
+    _listeners.pop(channel._listener_address)
+    assert copy.is_reusable() is True
+    _assert_no_leftover_threads(baseline)
+
+    channel.close()
+    if sys.platform == "win32":
+        copy._listener_address = rf"\\.\pipe\sklearn-missing-{os.getpid()}"
+    else:
+        copy._listener_address = str(tmp_path / "missing.sock")
+
+    assert copy.is_reusable() is False
+
+
+@pytest.mark.thread_unsafe  # module-level listener registries
 def test_close_listener_stops_accept_thread():
-    """Check that closing a listener doesn't leave its accept thread behind.
+    """Check that closing a channel doesn't leave its accept thread behind.
 
     An accept thread that is left behind also holds on to the last connection it
     accepted, because its frame keeps a reference to it. Both ends of that socket then
     stay open even though nothing reads from them anymore.
     """
     baseline = _snapshot_transport_threads()
-    listener_handle = open_listener(lambda message: None)
+    channel = Channel(lambda message: None)
     _assert_accept_thread_running(baseline)
 
-    close_listener(listener_handle)
-    close_listener(listener_handle)  # closing twice must be harmless.
+    channel.close()
+    channel.close()  # closing twice must be harmless.
 
     _assert_no_leftover_threads(baseline)
 
 
 @pytest.mark.thread_unsafe  # module-level listener registries
 def test_close_listener_whose_accept_thread_is_already_gone():
-    """Check that closing a listener that failed on its own is harmless.
+    """Check that closing a channel whose accept thread already exited is harmless.
 
     An accept thread that stops because `accept` failed closes its listener on the way
-    out, and the address stays registered until someone closes it, so `close_listener`
-    then has an address it cannot connect to.
+    out, and the address stays registered until someone closes it, so `close` then has
+    an address it cannot connect to.
     """
     baseline = _snapshot_transport_threads()
-    listener_handle = open_listener(lambda message: None)
+    channel = Channel(lambda message: None)
     _assert_accept_thread_running(baseline)
 
     # Connecting without the authkey makes `accept` fail, which is how the accept thread
     # is stopped, here without unregistering the listener first.
-    Client(listener_handle.address).close()
+    Client(channel._listener_address).close()
     _assert_no_leftover_threads(baseline)
 
-    close_listener(listener_handle)
+    channel.close()
 
 
 @pytest.mark.thread_unsafe  # module-level listener registries
@@ -118,10 +340,10 @@ def test_handle_thread_is_named_and_exits():
         release.wait()
 
     baseline = _snapshot_transport_threads()
-    listener_handle = open_listener(consumer)
+    channel = Channel(consumer)
 
     def send_one():
-        client = Client(listener_handle.address, authkey=listener_handle.authkey)
+        client = Client(channel._listener_address, authkey=channel._authkey)
         try:
             client.send(None)
             client.recv()
@@ -142,7 +364,7 @@ def test_handle_thread_is_named_and_exits():
     finally:
         release.set()
         sender.join(timeout=2)
-        close_listener(listener_handle)
+        channel.close()
 
     assert not sender.is_alive()
     _assert_no_leftover_threads(baseline)
@@ -152,17 +374,17 @@ def test_handle_thread_is_named_and_exits():
 def test_rejected_handshake_keeps_accept_thread():
     """A wrong auth digest does not stop the accept thread.
 
-    `AuthenticationError` is not an `OSError`. `close_listener` wakes the accept
-    thread by closing without answering, which raises `EOFError`. A peer that
-    answers and is rejected must leave the listener open.
+    `AuthenticationError` is not an `OSError`. `close` wakes the accept thread by
+    closing without answering, which raises `EOFError`. A peer that answers and is
+    rejected must leave the listener open.
     """
     received = []
     baseline = _snapshot_transport_threads()
-    listener_handle = open_listener(received.append)
+    channel = Channel(received.append)
     try:
         _assert_accept_thread_running(baseline)
 
-        client = Client(listener_handle.address)  # no authkey: handshake is manual
+        client = Client(channel._listener_address)  # no authkey: handshake is manual
         try:
             client.recv_bytes(256)  # the challenge
             client.send_bytes(b"not-a-valid-mac")
@@ -173,7 +395,7 @@ def test_rejected_handshake_keeps_accept_thread():
         finally:
             client.close()
 
-        good = Client(listener_handle.address, authkey=listener_handle.authkey)
+        good = Client(channel._listener_address, authkey=channel._authkey)
         try:
             good.send("ok")
             good.recv()
@@ -194,6 +416,6 @@ def test_rejected_handshake_keeps_accept_thread():
             assert timeout > 0, names
             time.sleep(0.05)
     finally:
-        close_listener(listener_handle)
+        channel.close()
 
     _assert_no_leftover_threads(baseline)

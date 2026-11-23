@@ -2603,7 +2603,7 @@ class SGDOneClassSVM(OutlierMixin, BaseSGD):
         Returns
         -------
         score_samples : array-like, shape (n_samples,)
-            Unshiffted scoring function values of the samples.
+            Unshifted scoring function values of the samples.
         """
         score_samples = self.decision_function(X) + self.offset_
         return score_samples
