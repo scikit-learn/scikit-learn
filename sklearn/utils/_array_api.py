@@ -673,14 +673,7 @@ def _log_expit(x, out=None, xp=None):
 
         return log_expit(x, out=out)
 
-    neg_mask = x < 0
-    res = xp.zeros_like(x)
-    if xp.any(neg_mask):
-        res[neg_mask] = x[neg_mask] - xp.log1p(xp.exp(x[neg_mask]))
-    pos_mask = xp.logical_not(neg_mask)
-    if xp.any(pos_mask):
-        res[pos_mask] = -xp.log1p(xp.exp(-x[pos_mask]))
-    return res
+    return xp.minimum(x, xp.asarray(0, dtype=x.dtype)) - xp.log1p(xp.exp(-xp.abs(x)))
 
 
 def _logit(x, out=None, xp=None):

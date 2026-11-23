@@ -6,7 +6,7 @@ import pytest
 import scipy
 import scipy.sparse as sp
 from numpy.testing import assert_allclose
-from scipy.special import expit, logit
+from scipy.special import expit, log_expit, logit
 
 from sklearn._config import config_context
 from sklearn.base import BaseEstimator, is_classifier
@@ -27,6 +27,7 @@ from sklearn.utils._array_api import (
     _fill_diagonal,
     _interp,
     _is_numpy_namespace,
+    _log_expit,
     _logit,
     _logsumexp,
     _matching_numpy_dtype,
@@ -880,6 +881,11 @@ def test_expit_logit(namespace, device_name, dtype_name):
         assert_allclose(
             move_to(_expit(x_xp), xp=numpy, device="cpu"),
             expit(x_np),
+            rtol=rtol,
+        )
+        assert_allclose(
+            move_to(_log_expit(x_xp), xp=numpy, device="cpu"),
+            log_expit(x_np),
             rtol=rtol,
         )
 
