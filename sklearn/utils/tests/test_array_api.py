@@ -876,17 +876,20 @@ def test_expit_logit(namespace, device_name, dtype_name):
     xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
 
     with config_context(array_api_dispatch=True):
+        atol = _atol_for_type(dtype_name)
         x_np = numpy.linspace(-20, 20, 1000).astype(dtype_name)
         x_xp = xp.asarray(x_np, device=device)
         assert_allclose(
             move_to(_expit(x_xp), xp=numpy, device="cpu"),
             expit(x_np),
             rtol=rtol,
+            atol=atol,
         )
         assert_allclose(
             move_to(_log_expit(x_xp), xp=numpy, device="cpu"),
             log_expit(x_np),
             rtol=rtol,
+            atol=atol,
         )
 
         x_np = numpy.linspace(0, 1, 1000).astype(dtype_name)

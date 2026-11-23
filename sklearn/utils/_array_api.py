@@ -667,13 +667,15 @@ def _expit(x, out=None, xp=None):
 def _log_expit(x, out=None, xp=None):
     # The out argument for log_expit is only supported for numpy,
     # but not in the Array API specification.
-    xp, _ = get_namespace(x, xp=xp)
+    xp, _, device = get_namespace_and_device(x, xp=xp)
     if _is_numpy_namespace(xp):
         from scipy.special import log_expit  # lazy import, speeds up `import sklearn`
 
         return log_expit(x, out=out)
 
-    return xp.minimum(x, xp.asarray(0, dtype=x.dtype)) - xp.log1p(xp.exp(-xp.abs(x)))
+    return xp.minimum(x, xp.asarray(0, dtype=x.dtype, device=device)) - xp.log1p(
+        xp.exp(-xp.abs(x))
+    )
 
 
 def _logit(x, out=None, xp=None):
