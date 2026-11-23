@@ -36,6 +36,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 
 # Load datasets
@@ -731,6 +732,7 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
     est.get_metadata_routing()
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "Estimator, Child",
     [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
@@ -774,7 +776,7 @@ def test_metadata_routing_for_voting_estimators(Estimator, Child, prop):
     "Estimator, Child",
     [(VotingClassifier, ConsumingClassifier), (VotingRegressor, ConsumingRegressor)],
 )
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_routing_error_for_voting_estimators(Estimator, Child):
     """Test that the right error is raised when metadata is not requested."""
     X = np.array([[0, 1], [2, 2], [4, 6]])

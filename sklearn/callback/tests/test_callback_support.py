@@ -4,7 +4,7 @@
 import pytest
 
 from sklearn.base import clone
-from sklearn.callback.tests._common.callbacks import (
+from sklearn.callback._testing.callbacks import (
     FailingCallback,
     NotValidCallback,
     NotValidFitTaskBeginCallback,
@@ -13,7 +13,7 @@ from sklearn.callback.tests._common.callbacks import (
     RecordingAutoPropagatedCallback,
     RecordingCallback,
 )
-from sklearn.callback.tests._common.estimators import MaxIterEstimator
+from sklearn.callback._testing.estimators import MaxIterEstimator
 from sklearn.utils.parallel import Parallel, delayed
 
 
