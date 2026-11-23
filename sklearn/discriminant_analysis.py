@@ -22,6 +22,7 @@ from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._array_api import (
     _expit,
+    _log_expit,
     array_device,
     check_same_namespace,
     get_namespace,
@@ -794,8 +795,7 @@ class LinearDiscriminantAnalysis(
         xp, _ = get_namespace(X)
         decision = self.decision_function(X)
         if size(self.classes_) == 2:
-            proba = _expit(decision, xp=xp)
-            return xp.stack([1 - proba, proba], axis=1)
+            return xp.stack([_expit(-decision, xp=xp), _expit(decision, xp=xp)], axis=1)
         else:
             return softmax(decision)
 
@@ -812,13 +812,20 @@ class LinearDiscriminantAnalysis(
         C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
+        check_is_fitted(self)
         check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
-        prediction = self.predict_proba(X)
+        decision = self.decision_function(X)
 
-        smallest_normal = xp.finfo(prediction.dtype).smallest_normal
-        prediction[prediction == 0.0] += smallest_normal
-        return xp.log(prediction)
+        if size(self.classes_) == 2:
+            return xp.stack(
+                [_log_expit(-decision, xp=xp), _log_expit(decision, xp=xp)], axis=1
+            )
+        else:
+            prediction = softmax(decision)
+            smallest_normal = xp.finfo(prediction.dtype).smallest_normal
+            prediction[prediction == 0.0] += smallest_normal
+            return xp.log(prediction)
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.

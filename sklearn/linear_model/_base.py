@@ -434,11 +434,11 @@ class LinearClassifierMixin(ClassifierMixin):
         multiclass is handled by normalizing that over all classes.
         """
         xp, _ = get_namespace(X)
-        prob = self.decision_function(X)
-        prob = _expit(prob, out=prob, xp=xp)
-        if prob.ndim == 1:
-            return xp.stack([1 - prob, prob], axis=1)
+        decision = self.decision_function(X)
+        if decision.ndim == 1:
+            return xp.stack([_expit(-decision, xp=xp), _expit(decision, xp=xp)], axis=1)
         else:
+            prob = _expit(decision, out=decision, xp=xp)
             # OvR normalization, like LibLinear's predict_probability
             prob_sum = prob.sum(axis=1)
             all_zero = prob_sum == 0

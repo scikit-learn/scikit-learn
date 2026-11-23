@@ -3369,3 +3369,31 @@ def test_intercept_scaling_deprecated(est, intercept_scaling):
     msg = "The parameter 'intercept_scaling' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
+
+
+def test_predict_log_proba_confident():
+    """Verify predict_log_proba produces finite, numerically stable values
+    for confident binary predictions without underflowing to -inf (#35490).
+    """
+    from scipy.special import expit, log_expit
+
+    X = np.array([[-3.0], [-2.0], [-1.0], [1.0], [2.0], [3.0]])
+    y = np.array([0, 0, 0, 1, 1, 1])
+
+    clf = LogisticRegression()
+    clf.fit(X, y)
+
+    X_test = np.array([[5.0], [20.0], [200.0]])
+    decision = clf.decision_function(X_test)
+    log_proba = clf.predict_log_proba(X_test)
+    proba = clf.predict_proba(X_test)
+
+    # Check finite log probabilities and exact agreement with log_expit
+    assert not np.any(np.isneginf(log_proba))
+    assert_allclose(log_proba[:, 0], log_expit(-decision))
+    assert_allclose(log_proba[:, 1], log_expit(decision))
+
+    # Check strictly positive probabilities without catastrophic cancellation to 0
+    assert not np.any(proba[:, 0] == 0.0)
+    assert_allclose(proba[:, 0], expit(-decision))
+    assert_allclose(proba[:, 1], expit(decision))

@@ -46,6 +46,7 @@ from sklearn.utils import (
 )
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
+    _log_expit,
     _matching_numpy_dtype,
     _ravel,
     _swapaxes,
@@ -1818,7 +1819,14 @@ class LogisticRegression(
         """
         check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
-        return xp.log(self.predict_proba(X))
+
+        if size(self.classes_) <= 2:
+            decision = self.decision_function(X)
+            return xp.stack(
+                [_log_expit(-decision, xp=xp), _log_expit(decision, xp=xp)], axis=1
+            )
+        else:
+            return xp.log(self.predict_proba(X))
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

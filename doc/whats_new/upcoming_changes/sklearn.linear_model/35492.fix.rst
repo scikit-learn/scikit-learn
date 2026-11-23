@@ -1,0 +1,4 @@
+- Fix numerical underflow in :meth:`linear_model.LogisticRegression.predict_log_proba`
+  and :meth:`discriminant_analysis.LinearDiscriminantAnalysis.predict_log_proba` for binary
+  classification where confident predictions resulted in `-inf` or clipping.
+  By :user:`Prashik Humane <prashik24>`.
