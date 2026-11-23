@@ -872,6 +872,15 @@ def test_display_estimator_name_deprecation(pyplot, Display, display_kwargs):
             DetCurveDisplay,
             {"fpr": np.array([0, 0.5, 1]), "fnr": np.array([1, 0.5, 0])},
         ),
+        # TODO(1.12): Remove
+        (
+            CalibrationDisplay,
+            {
+                "prob_true": np.array([0, 0.5, 1]),
+                "prob_pred": np.array([0, 0.5, 1]),
+                "y_prob": np.array([0, 0.5, 1]),
+            },
+        ),
     ],
 )
 @pytest.mark.parametrize(
