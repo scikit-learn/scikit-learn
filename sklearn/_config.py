@@ -7,6 +7,8 @@ import os
 import threading
 from contextlib import contextmanager as contextmanager
 
+from sklearn.utils.fixes import _IS_WASM
+
 try:
     import rich  # noqa: F401
 
@@ -29,7 +31,7 @@ _global_config = {
     "enable_metadata_auto_requests": True,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
-    "default_callbacks": ("progressbar",) if _rich_available else (),
+    "default_callbacks": ("progressbar",) if _rich_available and not _IS_WASM else (),
 }
 _threadlocal = threading.local()
 
@@ -43,10 +45,7 @@ def _get_threadlocal_config():
 
 
 def _validate_default_callbacks(callbacks):
-    """Utility to validate the callbacks to be set as default callbacks.
-
-    Returns the callbacks as a tuple.
-    """
+    """Utility to validate the callbacks to be set as default callbacks."""
     from sklearn.callback._base import _BaseCallback
 
     if not isinstance(callbacks, (tuple, list)):
