@@ -35,9 +35,10 @@ class ProgressBar:
 
     show : {'always', 'interactive_only'}, default='always'
         When the progressbar should be displayed. Possible values are:
-          - 'always': Always show the progressbar.
-          - 'interactive_only': Only show the progressbar in ineractive environments,
-            such as a python shell or a jupyter notebook.
+
+        - 'always': Always show the progressbar.
+        - 'interactive_only': Only show the progressbar in interactive environments,
+          such as a python shell or a jupyter notebook.
 
     Notes
     -----
@@ -59,21 +60,28 @@ class ProgressBar:
         self.min_duration = min_duration
         self.show = show
 
-        self._deactivated = show == "interactive_only" and not hasattr(sys, "ps1")
         self._disabled_runs = set()
 
         # Per-fit channels, keyed by `root_uuid`.
         self._channels = {}
 
+    def _is_active(self):
+        """Whether the progressbar should be displayed in the current environment.
+
+        Evaluated at the beginning of each fit, so that the answer reflects the
+        environment the fit runs in rather than the one the instance was created in.
+        """
+        return self.show == "always" or hasattr(sys, "ps1")
+
     def setup(self, estimator, context):
-        # Disable for current fit run if another ProgressBar is attached, except for the
-        # last one in the callback list.
+        # Disable for current fit run if another active ProgressBar is attached, except
+        # for the last one in the callback list.
         callbacks = getattr(estimator, "_skl_default_callbacks", []) + getattr(
             estimator, "_skl_callbacks", []
         )
         id_in_cb_list = callbacks.index(self)
         for cb in callbacks[id_in_cb_list + 1 :]:
-            if isinstance(cb, ProgressBar):
+            if isinstance(cb, ProgressBar) and cb._is_active():
                 # This callback is not the last `ProgressBar` instance in the
                 # list of registered callbacks for this estimator, therefore,
                 # it disables its own execution in the context of the current
@@ -82,7 +90,6 @@ class ProgressBar:
                 # different contexts, so the disabling mechanism is scoped by
                 # by the active context.
                 self._disabled_runs.add(context.root_uuid)
-                print("yo")
                 return
 
         # Lazily create the per-fit transport state. `setup` runs on the main

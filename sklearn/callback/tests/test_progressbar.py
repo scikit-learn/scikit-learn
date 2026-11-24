@@ -244,7 +244,7 @@ def test_two_progressbars(capsys):
 
 
 def test_progressbar_by_default(monkeypatch, capsys):
-    """Test that the progressbar by default."""
+    """Test that the progressbar by default is displayed in a mocked interactive env."""
     pytest.importorskip("rich")
 
     monkeypatch.setattr("sys.ps1", ">>> ", raising=False)
@@ -267,3 +267,24 @@ def test_progressbar_min_duration(capsys):
     MaxIterEstimator(computation_intensity=0.06).set_callbacks(cb).fit()
     captured = capsys.readouterr()
     assert re.search(r"MaxIterEstimator - fit ━+ 100%", captured.out)
+
+
+def test_progressbar_interactive_only(monkeypatch, capsys):
+    """Check that `show="interactive_only"` only displays the progressbar
+    in interactive environments."""
+    pytest.importorskip("rich")
+
+    monkeypatch.delattr("sys.ps1", raising=False)
+    cb = ProgressBar(show="interactive_only")
+    est = MaxIterEstimator(computation_intensity=0.06).set_callbacks(cb)
+
+    est.fit()
+    assert capsys.readouterr().out == ""
+
+    monkeypatch.setattr("sys.ps1", ">>> ", raising=False)
+    est.fit()
+    assert re.search(r"MaxIterEstimator - fit ━+ 100%", capsys.readouterr().out)
+
+    monkeypatch.delattr("sys.ps1")
+    est.fit()
+    assert capsys.readouterr().out == ""

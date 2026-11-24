@@ -43,18 +43,31 @@ def _get_threadlocal_config():
 
 
 def _validate_default_callbacks(callbacks):
-    """Utility to validate the callbacks to be set as default callbacks."""
+    """Utility to validate the callbacks to be set as default callbacks.
+
+    Returns the callbacks as a tuple.
+    """
     from sklearn.callback._base import _BaseCallback
 
+    if not isinstance(callbacks, (tuple, list)):
+        raise TypeError(
+            "default_callbacks must be a tuple of callback instances or str, got "
+            f"{type(callbacks).__name__} instead."
+        )
+
     for cb in callbacks:
-        if cb != "progressbar" and not (
-            isinstance(cb, _BaseCallback) and not isinstance(cb, type)
-        ):
+        if isinstance(cb, str):
+            is_valid = cb == "progressbar"
+        else:
+            # isinstance for a Protocol returns True for classes too.
+            is_valid = isinstance(cb, _BaseCallback) and not isinstance(cb, type)
+
+        if not is_valid:
             raise ValueError(
                 "Default callbacks must be callback instances or str in "
-                f"['progressbar'], got {cb} instead."
+                f"['progressbar'], got {cb!r} instead."
             )
-    return callbacks
+    return tuple(callbacks)
 
 
 def get_config():
@@ -241,16 +254,14 @@ def set_config(
         .. versionadded:: 1.9
 
     default_callbacks : tuple of str or callback instances, default=None
-        Default callbacks to attach to callback compatible estimators by default. These
-        callbacks are ignored if the estimator has callbacks manually registered.
+        Default callbacks to attach to callback compatible estimators by default.
         Callback instances are shared by all estimators they are registered on. String
         valued will generate a new callback instance with pre-defined parameters for
         each estimator.
         The possible string values are:
 
-        - "progressbar": A
-            `~sklearn.callback.ProgressBar(min_duration=1, show="interactive_only")`
-            callback instance is generated.
+        - "progressbar": A :class:`~sklearn.callback.ProgressBar` with `min_duration=1`
+            and `show="interactive_only"` is generated.
 
         .. versionadded:: 1.10
 
@@ -459,16 +470,14 @@ def config_context(
         .. versionadded:: 1.8
 
     default_callbacks : tuple of str or callback instances, default=None
-        Default callbacks to attach to callback compatible estimators by default. These
-        callbacks are ignored if the estimator has callbacks manually registered.
+        Default callbacks to attach to callback compatible estimators by default.
         Callback instances are shared by all estimators they are registered on. String
         valued will generate a new callback instance with pre-defined parameters for
         each estimator.
         The possible string values are:
 
-        - "progressbar": A
-            `~sklearn.callback.ProgressBar(min_duration=1, show="interactive_only")`
-            callback instance is generated.
+        - "progressbar": A :class:`~sklearn.callback.ProgressBar` with `min_duration=1`
+            and `show="interactive_only"` is generated.
 
         .. versionadded:: 1.10
 

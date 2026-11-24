@@ -181,7 +181,7 @@ def test_same_callback_multiple_times_error():
         MaxIterEstimator().set_callbacks(callback, callback)
 
 
-def test_defaut_callbacks():
+def test_default_callbacks():
     """Test that default callbacks get attached to compatible estimators."""
 
     default_callback = RecordingCallback()

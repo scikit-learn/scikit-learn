@@ -38,6 +38,15 @@ def _callbacks_by_default():
     return callbacks
 
 
+def _is_active(callback):
+    """Whether a callback should run during the current fit.
+
+    Callbacks can opt out of a fit by defining an optional private `_is_active` method
+    returning a boolean. Callbacks that don't define it are always active.
+    """
+    return getattr(callback, "_is_active", lambda: True)()
+
+
 def validate_callbacks(callbacks):
     """Validate that callbacks follow the protocol and correctly implement hooks.
 
@@ -173,9 +182,14 @@ class CallbackSupportMixin:
             ]
         if default_callbacks:
             self._skl_default_callbacks = default_callbacks
-        callbacks = getattr(self, "_skl_default_callbacks", []) + getattr(
-            self, "_skl_callbacks", []
-        )
+        # Inactive callbacks are left out of the context, they are neither set up nor
+        # called for this fit.
+        callbacks = [
+            cb
+            for cb in getattr(self, "_skl_default_callbacks", [])
+            + getattr(self, "_skl_callbacks", [])
+            if _is_active(cb)
+        ]
 
         self._callback_fit_ctx = CallbackContext._from_estimator(
             estimator=self,
@@ -189,11 +203,11 @@ class CallbackSupportMixin:
 
         for callback in callbacks:
             # Only call the setup hook of callbacks that are not propagated from a
-            # meta-estimator and are not deactivated.
+            # meta-estimator.
             if not (
                 isinstance(callback, AutoPropagatedCallback)
                 and hasattr(self, "_parent_callback_ctx")
-            ) and not getattr(callback, "_deactivated", False):
+            ):
                 self._skl_callbacks_to_teardown.append(callback)
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 
