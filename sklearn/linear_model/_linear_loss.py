@@ -402,11 +402,14 @@ class LinearModelLoss:
 
         grad_pointwise /= sw_sum
 
-        # TODO: The lbfgs solver currently only works with numpy arrays and expects
-        # both the coef argument and the result to be in numpy. So, for the time
-        # being, we stick with a mix of numpy and array API. We could consider
-        # moving coef to the device of X if lbgfs also becomes compatible with the
-        # array API.
+        # L-BFGS passes NumPy coefficients and needs a NumPy gradient. Newton
+        # passes backend-native coefficients and can keep the gradient on device.
+        coef_xp, _ = get_namespace(coef)
+        if not _is_numpy_namespace(coef_xp):
+            return loss, self._assemble_gradient(
+                coef, X, grad_pointwise, weights, l2_reg_strength, xp
+            )
+
         if not self.base_loss.is_multiclass:
             grad = np.empty_like(coef, dtype=weights.dtype)
             X_grad = X.T @ grad_pointwise
@@ -416,9 +419,6 @@ class LinearModelLoss:
             if self.fit_intercept:
                 grad[-1] = xp.sum(grad_pointwise)
         else:
-            # The final value of `grad` needs to be in the `numpy` namespace
-            # because the relevant `scipy.optimize` functions do not currently
-            # support the array API.
             grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
             # grad_pointwise.shape = (n_samples, n_classes)
             grad_X = grad_pointwise.T @ X
@@ -433,6 +433,19 @@ class LinearModelLoss:
                 grad = grad.ravel(order="F")
 
         return loss, grad
+
+    def _assemble_gradient(self, coef, X, grad_pointwise, weights, l2_reg_strength, xp):
+        if not self.base_loss.is_multiclass:
+            grad = xp.empty_like(coef, dtype=weights.dtype)
+            grad[: X.shape[1]] = X.T @ grad_pointwise + l2_reg_strength * weights
+            if self.fit_intercept:
+                grad[-1] = xp.sum(grad_pointwise)
+            return grad
+
+        grad = grad_pointwise.T @ X + l2_reg_strength * weights
+        if self.fit_intercept:
+            grad = xp.concat((grad, xp.sum(grad_pointwise, axis=0)[:, None]), axis=1)
+        return _ravel(grad.T, xp=xp) if coef.ndim == 1 else grad
 
     # Note: From here on, l1_reg_strength is unused. But we still want to ensure the
     # same function signature across all related functions.
@@ -496,28 +509,22 @@ class LinearModelLoss:
         sw_sum = n_samples if sample_weight is None else xp.sum(sample_weight)
         grad_pointwise /= sw_sum
 
+        if not _is_numpy_namespace(xp):
+            return self._assemble_gradient(
+                coef, X, grad_pointwise, weights, l2_reg_strength, xp
+            )
         if not self.base_loss.is_multiclass:
             grad = xp.empty_like(coef, dtype=weights.dtype, device=device)
             grad[:n_features] = X.T @ grad_pointwise + l2_reg_strength * weights
             if self.fit_intercept:
                 grad[-1] = xp.sum(grad_pointwise)
             return grad
-        else:
-            if _is_numpy_namespace(xp):
-                grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
-            else:
-                grad = xp.empty((n_classes, n_dof), dtype=weights.dtype, device=device)
-            # gradient.shape = (n_samples, n_classes)
-            grad[:, :n_features] = grad_pointwise.T @ X + l2_reg_strength * weights
-            if self.fit_intercept:
-                grad[:, -1] = xp.sum(grad_pointwise, axis=0)
-            if coef.ndim == 1:
-                if _is_numpy_namespace(xp):
-                    return grad.ravel(order="F")
-                else:
-                    return _ravel(grad.T, xp=xp)
-            else:
-                return grad
+
+        grad = np.empty((n_classes, n_dof), dtype=weights.dtype, order="F")
+        grad[:, :n_features] = grad_pointwise.T @ X + l2_reg_strength * weights
+        if self.fit_intercept:
+            grad[:, -1] = xp.sum(grad_pointwise, axis=0)
+        return grad.ravel(order="F") if coef.ndim == 1 else grad
 
     def gradient_hessian(
         self,
