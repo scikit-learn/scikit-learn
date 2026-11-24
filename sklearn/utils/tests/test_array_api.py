@@ -1426,6 +1426,23 @@ def test_fitted_attrs_like_is_read_only():
         fitted.does_not_exist_
 
 
+def test_fitted_attrs_like_refuses_classes():
+    """`classes_` is not read through the view, which would cast float labels.
+
+    The error is not an `AttributeError`, so that `hasattr` and `getattr` with a
+    default do not silently report `classes_` as missing.
+    """
+    X = numpy.asarray([[1.3, 4.5]])
+    est = MixedAttributesEstimator().fit(X)
+    est.classes_ = numpy.asarray([0.5, 1.5])
+    fitted = _fitted_attrs_like(est, X)
+
+    with pytest.raises(TypeError, match="_take_classes"):
+        fitted.classes_
+    with pytest.raises(TypeError, match="_take_classes"):
+        hasattr(fitted, "classes_")
+
+
 @skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize(
     "namespace, device_name, dtype_name",

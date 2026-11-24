@@ -1256,7 +1256,9 @@ class _FittedAttrsLike:
     (``self.coef_.ndim``, ``self.classes_.shape[0]``), since metadata is the same
     either way and reading it here would trigger a pointless transfer.
 
-    When `dtype` is given, floating point attributes are also cast to it.
+    When `dtype` is given, floating point attributes are also cast to it. Reading
+    `classes_` raises a `TypeError`, because class labels must not be cast; see
+    `_take_classes`.
     """
 
     def __init__(self, estimator, xp, device, dtype=None):
@@ -1266,6 +1268,16 @@ class _FittedAttrsLike:
         self._dtype = dtype
 
     def __getattr__(self, name):
+        if name == "classes_":
+            # Not an `AttributeError`: `hasattr` and `getattr(..., default)` would
+            # swallow it and report the attribute as missing.
+            raise TypeError(
+                "Read `classes_` from the estimator, not from a fitted attribute "
+                "view: the view casts floating point attributes to the dtype of "
+                "`X`, but labels are compared by value. Use `_take_classes` to turn "
+                "predicted indices into labels, and `move_to(self.classes_, ...)` "
+                "to compare `classes_` with labels."
+            )
         value = _move_state(
             getattr(self._estimator, name),
             xp=self._xp,

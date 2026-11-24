@@ -172,9 +172,18 @@ labels, compute the indices in the namespace of ``X`` and pass them to
     indices = xp.argmax(scores, axis=1)
     return _take_classes(self.classes_, indices, xp=xp, device=device)
 
-Code that combines ``classes_`` with arrays that follow ``X``, for example
-predictions or ``labels=estimator.classes_`` passed to a metric, has to convert
-one of them explicitly.
+To compare labels with ``classes_``, for example to encode ``y`` or to check that
+its labels are known, move ``classes_`` to the namespace and device of the labels
+with ``move_to(self.classes_, xp=xp, device=device)``. Code outside the estimator
+that combines ``classes_`` with labels, for example a metric called with
+``labels=estimator.classes_``, does the same.
+
+Labels are compared by value, so in both directions they keep the dtype of
+``classes_``: they are never cast to the dtype of ``X`` or ``y``. The only
+exception is a device without float64 support, to which ``move_to`` moves
+float64 ``classes_`` as float32. For the same reason ``classes_`` cannot be read
+through ``_fitted_attrs_like``, which casts floating point attributes: doing so
+raises a ``TypeError``.
 
 Meta-estimators and nested fits
 ===============================
