@@ -171,7 +171,7 @@ class CallbackSupportMixin:
                 caller="partial_fit", callee="on_fit_task_end"
             )
         router.add(
-            callback=getattr(self, "_skl_callbacks", None),
+            callback=getattr(self, "_skl_callbacks", MultiCallback()),
             method_mapping=method_mapping,
         )
         return router
