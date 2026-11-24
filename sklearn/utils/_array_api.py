@@ -1216,11 +1216,18 @@ def _move_state(*values, xp, device, dtype=None):
         of the stored state, for example for accumulators that are kept in a
         higher precision than `X`. Arrays of other dtypes are never cast.
 
+        `dtype` is ignored when `xp` is NumPy, like `_fitted_attrs_like` does not
+        cast for NumPy `X`: NumPy promotes mixed float dtypes, so NumPy inputs
+        keep the behaviour they have without array API dispatch. Cast explicitly
+        where a NumPy computation needs a specific dtype.
+
     Returns
     -------
     moved : object or tuple of objects
         The moved values, a single one if a single value was passed.
     """
+    if _is_numpy_namespace(xp):
+        dtype = None
 
     def convert(array):
         array = move_to(array, xp=xp, device=device)

@@ -141,9 +141,16 @@ arrays unchanged. Pass ``dtype`` to cast real floating point arrays: use the
 dtype that the estimator would use for this computation in a fresh fit, which is
 usually the floating dtype of ``X``. Leave it out to keep the stored dtype, for
 example for accumulators that the estimator deliberately keeps in a higher
-precision than ``X``. The target is where the computation happens, which is not
-always the namespace of ``X``: ``LogisticRegression`` moves its stored
-coefficients to NumPy for its solvers, and ``classes_`` is combined with ``y``.
+precision than ``X``. ``dtype`` is ignored when the target namespace is NumPy, for
+the same reason that ``_fitted_attrs_like`` does not cast for NumPy ``X``: NumPy
+promotes mixed float dtypes, so NumPy inputs keep the behaviour they have without
+array API dispatch. Call sites can therefore always pass the dtype of a fresh fit,
+for example ``dtype=X.dtype``, without checking the namespace. Cast explicitly
+where a NumPy computation needs a specific dtype.
+
+The target is where the computation happens, which is not always the namespace
+of ``X``: ``LogisticRegression`` moves its stored coefficients to NumPy for its
+solvers, and ``classes_`` is combined with ``y``.
 
 Use ``_fitted_attrs_like`` to read attributes that an inference method computes
 with, and ``_move_state`` for arrays whose results are written back to the

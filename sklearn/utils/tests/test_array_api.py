@@ -1483,6 +1483,21 @@ def test_move_state_dtype(namespace, device_name, dtype_name):
         assert xp.isdtype(ints.dtype, "integral")
 
 
+@pytest.mark.parametrize("dispatch", [False, True])
+def test_move_state_ignores_dtype_for_numpy(dispatch):
+    """NumPy promotes mixed float dtypes, so arrays moved to NumPy are not cast.
+
+    This keeps the behaviour of NumPy inputs the same with and without array API
+    dispatch, like `_fitted_attrs_like` does.
+    """
+    array = numpy.asarray([1.0, 2.0])
+
+    with config_context(array_api_dispatch=dispatch):
+        moved = _move_state(array, xp=np_compat, device="cpu", dtype=numpy.float32)
+
+    assert moved is array
+
+
 def test_move_state_single_value_and_no_op():
     """A single value is returned on its own, and nothing is copied when the
     arrays are already in the target namespace and device."""
