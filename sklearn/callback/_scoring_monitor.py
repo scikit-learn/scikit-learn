@@ -349,7 +349,7 @@ class ScoringMonitor(FitCallback):
             self._channel = Channel(message_consumer=self._log.append)
 
     def get_metadata_routing(self):
-        self_request = self._get_metadata_request()
+        self_request = super().get_metadata_routing()
         if self._scorers["val"] != "no_val_score":
             self_request.on_fit_task_end.add_auto_request("X_val", "y_val")
             if _auto_requests_enabled():

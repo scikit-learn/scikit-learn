@@ -80,7 +80,6 @@ automatically requested for the `on_fit_task_end` hook in the following example:
 .. code-block:: python
 
     from sklearn.callback import FitCallback
-    from sklearn.utils.metadata_routing import MetadataRouter
 
     class MyCallback(FitCallback):
 
@@ -88,10 +87,9 @@ automatically requested for the `on_fit_task_end` hook in the following example:
             ...
 
         def get_metadata_routing(self):
-            self_request = self._get_metadata_request()
-            self_request.on_fit_task_end.add_auto_request("sample_weight")
-            router = MetadataRouter(owner=self).add_self_request(self_request)
-            return router
+            requests = super().get_metadata_routing()
+            requests.on_fit_task_end.add_auto_request("sample_weight")
+            return requests
 
 
 .. dropdown:: Manually requesting metadata
