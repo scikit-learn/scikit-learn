@@ -118,6 +118,8 @@ def test_newton_cg_verbosity(capsys, verbose):
         # position. This should trigger 2nd line search check
         A = np.array([[1.0, 2], [2, 4]]) * 1e30  # collinear columns
         b = np.array([1.0, 2.0])
+        # Solutions are [1e-30, 0] + c * [-2, 1] for any c, min func value is -0.5e-30.
+        # The starting point is the null space of the hessian with func value 0.
         # Note that scipy.optimize._linesearch LineSearchWarning inherits from
         # RuntimeWarning, but we do not want to import from non public APIs.
         with pytest.warns((RuntimeWarning, UserWarning)):
@@ -127,12 +129,13 @@ def test_newton_cg_verbosity(capsys, verbose):
                 grad=lambda x: A @ x - b,
                 x0=np.array([-2.0, 1]),  # null space of hessian
                 verbose=verbose,
+                maxiter=10,
             )
         captured = capsys.readouterr()
         msg = [
             "wolfe1 line search was not successful",
             "check loss |improvement| <= eps * |loss_old|:",
-            "check sum(|gradient|) < sum(|gradient_old|):",
+            "<= (2 * c1 - 1) * gradient_old @ newton",
             "last resort: try line search wolfe2",
         ]
         for m in msg:

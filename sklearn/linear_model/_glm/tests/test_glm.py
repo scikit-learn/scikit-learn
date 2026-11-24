@@ -1280,7 +1280,7 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
             "check loss improvement <= armijo term:",
             "check max |gradient| <= tol:",
             "check loss |improvement| <= eps * |loss_old|:",
-            "check gradient @ newton step <= (2 * sigma - 1) *",
+            "<= (2 * sigma - 1) * gradient_old @ newton",
         ]
         for m in msg:
             assert m in captured.out

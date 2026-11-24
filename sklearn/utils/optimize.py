@@ -132,9 +132,11 @@ def _line_search_wolfe12(
         args = kwargs.get("args", tuple())
         fval = f(xk + pk, *args)
         grad = fprime(xk + pk, *args)
-        gradient_times_newton = grad @ pk
-        sigma = 0.00048828125  # 1/2**11, sometimes called c1
-        armijo_term = sigma * gradient_times_newton
+        # With phi(alpha) = f(xk + alpha * pk), we have phi'(alpha) = grad @ pk.
+        phi_prime_0 = float(gfk @ pk)  # phi'(0)
+        c1 = kwargs.get("c1", 1e-4)  # same default as _line_search_wolfe1
+        c2 = kwargs.get("c2", 0.9)  # same default as _line_search_wolfe1
+        armijo_term = c1 * phi_prime_0
 
         # 2. Tiny gradient / Armijo term.
         # If we are already close to the minimum, gradient and Armijo term are
@@ -169,25 +171,35 @@ def _line_search_wolfe12(
                 f" {abs(loss_improvement)} <= {tiny_loss} {check}"
             )
         if check:
-            # TODO: use xp.linalg.vector_norm(gfk, axis=None, ord=1) if available
-            sum_abs_grad_old = xp.sum(xp.abs(gfk))
-            # 3.2 Check sum of absolute gradients as alternative condition.
-            sum_abs_grad = xp.sum(xp.abs(grad))
-            check = sum_abs_grad < sum_abs_grad_old
-            if is_verbose:
-                print(
-                    "    check sum(|gradient|) < sum(|gradient_old|): "
-                    f"{float(sum_abs_grad)} < {float(sum_abs_grad_old)} {bool(check)}"
-                )
-            if check:
-                ret = (
-                    1.0,  # step size
-                    ret[1] + 1,  # number of function evaluations
-                    ret[2] + 1,  # number of gradient evaluations
-                    fval,
-                    old_fval,
-                    grad,
-                )
+            # 3.2 Check the approximate Wolfe conditions, Eq. 4.1 of Hager & Zhang
+            # (2005) "A New Conjugate Gradient Method with Guaranteed Descent and an
+            # Efficient Line Search":
+            #   c2 * phi'(0) <= phi'(alpha) <= (2 * c1 - 1) * phi'(0)
+            # (our c1 is their delta, c2 their sigma, 3.1 is their Eq. 4.2), and
+            #   phi(alpha) = f(xk + alpha * pk)
+            # The upper bound is the approximate Armijo condition and rejects too
+            # long steps. The lower bound rejects too short steps, in particular
+            # steps that do not change xk at all, i.e. xk + pk == xk.
+            if phi_prime_0 < 0:
+                phi_prime = float(grad @ pk)  # phi'(1)
+                phi_prime_min = c2 * phi_prime_0
+                phi_prime_max = (2 * c1 - 1) * phi_prime_0
+                check = phi_prime_min <= phi_prime <= phi_prime_max
+                if is_verbose:
+                    print(
+                        "      check c2 * gradient_old @ newton step <= gradient @"
+                        " newton step <= (2 * c1 - 1) * gradient_old @ newton step:"
+                        f" {phi_prime_min} <= {phi_prime} <= {phi_prime_max} {check}"
+                    )
+                if check:
+                    ret = (
+                        1.0,  # step size
+                        ret[1] + 1,  # number of function evaluations
+                        ret[2] + 1,  # number of gradient evaluations
+                        fval,
+                        old_fval,
+                        grad,
+                    )
 
     if ret[0] is None:
         # line search failed: try different one.
