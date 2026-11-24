@@ -326,6 +326,9 @@ class CallbackContext:
             )
 
             hook = getattr(callback, hook_name)
+            # Cache the signature of the underlying function rather than that of the
+            # bound method, which would make the cache hold references to the callbacks
+            # themselves and keep the resources they own alive.
             signature = _cached_signature(getattr(hook, "__func__", hook))
             kwarg_names = {
                 p.name
