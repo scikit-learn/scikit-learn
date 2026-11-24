@@ -17,6 +17,7 @@ from sklearn.utils._array_api import (
     move_to,
 )
 from sklearn.utils.multiclass import type_of_target, unique_labels
+from sklearn.utils.validation import _check_sample_weight
 
 
 def _average_binary_score(
@@ -83,6 +84,10 @@ def _average_binary_score(
     y_true_encoded, sample_weight = move_to(
         y_true_encoded, sample_weight, xp=xp, device=device
     )
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_score, force_float_dtype=False
+        )
 
     not_average_axis = 1
     score_weight = sample_weight
