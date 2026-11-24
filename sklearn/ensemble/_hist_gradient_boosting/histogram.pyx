@@ -585,9 +585,10 @@ cdef class VectorHistogramBuilder:
             self.n_stats = self.n_outputs + 1
         else:
             self.n_stats = 2 * self.n_outputs + 1
-        # for root node, gradients and hessians are already ordered
-        self.ordered_gradients = np.array(gradients, copy=True)
-        self.ordered_hessians = np.array(hessians, copy=True)
+        # The root node directly reads gradients and hessians: the ordered
+        # buffers are only filled for the other nodes.
+        self.ordered_gradients = np.empty_like(gradients)
+        self.ordered_hessians = np.empty_like(hessians)
         self.n_threads = n_threads
 
     def compute_histograms_brute(
@@ -674,11 +675,18 @@ cdef class VectorHistogramBuilder:
         memset(&histograms[feature_idx, 0, 0], 0,
                self.n_bins * self.n_stats * sizeof(Y_DTYPE_C))
 
-        _build_histogram_vector(
-            feature_idx, sample_indices, X_binned, self.ordered_gradients,
-            self.ordered_hessians, self.hessians_are_constant, root_node,
-            histograms
-        )
+        if root_node:
+            _build_histogram_vector(
+                feature_idx, sample_indices, X_binned, self.gradients,
+                self.hessians, self.hessians_are_constant, root_node,
+                histograms
+            )
+        else:
+            _build_histogram_vector(
+                feature_idx, sample_indices, X_binned, self.ordered_gradients,
+                self.ordered_hessians, self.hessians_are_constant, root_node,
+                histograms
+            )
 
     def compute_histograms_subtraction(
         VectorHistogramBuilder self,

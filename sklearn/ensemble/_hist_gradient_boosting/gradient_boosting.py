@@ -31,6 +31,7 @@ from sklearn.base import (
 )
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble._hist_gradient_boosting._gradient_boosting import (
+    _compute_quantile_leaves_values,
     _update_raw_predictions,
     _update_raw_predictions_vector,
 )
@@ -176,7 +177,9 @@ class _MultiOutputLoss:
         return self.link.inverse(raw_prediction)
 
 
-def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
+def _update_leaves_values(
+    loss, grower, y_true, raw_prediction, sample_weight, n_threads=1
+):
     """Update the leaf values to be predicted by the tree.
 
     Update equals:
@@ -200,12 +203,29 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     non-smooth losses arbitrarily set hessians to 1 and effectively use the standard
     gradient descent method with line search.
     """
-    # TODO: Ideally this should be computed in parallel over the leaves using something
-    # similar to _update_raw_predictions(), but this requires a cython version of
-    # median().
     # For trees with vector leaves, raw_prediction has shape (n_samples, n_outputs)
     # and loss is a _MultiOutputLoss: the residuals are of the same shape and the
     # updates are of shape (n_outputs,).
+    quantiles = _get_pinball_quantiles(loss) if sample_weight is None else None
+    if quantiles is not None:
+        # Fast path computed in parallel over the leaves and outputs.
+        values = _compute_quantile_leaves_values(
+            y_true=np.asfortranarray(y_true.reshape(y_true.shape[0], -1)),
+            raw_predictions=np.asfortranarray(
+                raw_prediction.reshape(raw_prediction.shape[0], -1)
+            ),
+            grower=grower,
+            quantiles=quantiles,
+            n_threads=n_threads,
+        )
+        if raw_prediction.ndim == 1:
+            values = values[:, 0]
+        for leaf, value in zip(grower.finalized_leaves, values):
+            leaf.value = grower.shrinkage * value
+        return
+
+    # TODO: Ideally the weighted percentiles should also be computed in parallel
+    # over the leaves, but this requires a cython version of _weighted_percentile().
     for leaf in grower.finalized_leaves:
         indices = leaf.sample_indices
         if sample_weight is None:
@@ -222,6 +242,21 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
         )
         leaf.value = grower.shrinkage * update
         # Note that the regularization is ignored here
+
+
+def _get_pinball_quantiles(loss):
+    """Return the quantile levels if loss only involves pinball losses, else None.
+
+    The levels are returned as np.percentile sees them (percent / 100) so that the
+    fast path matches PinballLoss.fit_intercept_only.
+    """
+    losses = loss.losses if isinstance(loss, _MultiOutputLoss) else [loss]
+    if not all(isinstance(loss_k, PinballLoss) for loss_k in losses):
+        return None
+    return (
+        np.array([100 * loss_k.closs.quantile for loss_k in losses], dtype=Y_DTYPE)
+        / 100
+    )
 
 
 @contextmanager
@@ -939,8 +974,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # initialize gradients and hessians (empty arrays).
         # shape = (n_samples, n_outputs).
+        # Trees with vector leaves need C-contiguous gradients and hessians. The
+        # multinomial loss can directly write them in C order while the per-output
+        # losses of _MultiOutputLoss write to contiguous columns.
+        if self._use_vector_leaves and not isinstance(self._loss, _MultiOutputLoss):
+            gradient_order = "C"
+        else:
+            gradient_order = "F"
         gradient, hessian = self._loss.init_gradient_and_hessian(
-            n_samples=n_samples, dtype=G_H_DTYPE, order="F"
+            n_samples=n_samples, dtype=G_H_DTYPE, order=gradient_order
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
@@ -1033,6 +1075,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         y_true=y_k,
                         raw_prediction=raw_k,
                         sample_weight=sample_weight_train,
+                        n_threads=n_threads,
                     )
 
                 predictor = grower.make_predictor(

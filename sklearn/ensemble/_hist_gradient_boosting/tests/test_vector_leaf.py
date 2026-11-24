@@ -16,6 +16,7 @@ from sklearn.ensemble import (
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor,
 )
+from sklearn.ensemble._hist_gradient_boosting import gradient_boosting as gb
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE, X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
@@ -594,3 +595,25 @@ def test_multilabel_sample_and_class_weight():
     )
     assert_allclose(clf.decision_function(X), clf_sw.decision_function(X))
     HistGradientBoostingClassifier(class_weight="balanced", **params).fit(X, Y)
+
+
+@pytest.mark.parametrize("vector_leaf", [False, True])
+@pytest.mark.parametrize("quantile", [0.3, [0.05, 0.31, 0.5, 0.9]])
+def test_quantile_leaves_values_fast_path(monkeypatch, vector_leaf, quantile):
+    # The parallel computation of the unweighted leaf quantiles matches the
+    # generic line search based on PinballLoss.fit_intercept_only.
+    rng = np.random.RandomState(0)
+    X = rng.randn(1000, 3)
+    y = X[:, 0] + 0.3 * rng.standard_cauchy(1000)
+    params = dict(
+        loss="quantile",
+        quantile=quantile,
+        vector_leaf=vector_leaf,
+        max_iter=10,
+        min_samples_leaf=1,
+        random_state=0,
+    )
+    pred_fast = HistGradientBoostingRegressor(**params).fit(X, y).predict(X)
+    monkeypatch.setattr(gb, "_get_pinball_quantiles", lambda loss: None)
+    pred_slow = HistGradientBoostingRegressor(**params).fit(X, y).predict(X)
+    assert_allclose(pred_fast, pred_slow, rtol=1e-12, atol=1e-12)

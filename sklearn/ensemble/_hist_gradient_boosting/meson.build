@@ -6,7 +6,7 @@ hist_gradient_boosting_cython_tree = [
 ]
 
 hist_gradient_boosting_extension_metadata = {
-  '_gradient_boosting': {'sources': [cython_gen.process('_gradient_boosting.pyx')],
+  '_gradient_boosting': {'sources': [cython_gen_cpp.process('_gradient_boosting.pyx')],
                          'dependencies': [openmp_dep]},
   'histogram': {'sources': [cython_gen.process('histogram.pyx')], 'dependencies': [openmp_dep]},
   'splitting': {'sources': [cython_gen.process('splitting.pyx')], 'dependencies': [openmp_dep]},
