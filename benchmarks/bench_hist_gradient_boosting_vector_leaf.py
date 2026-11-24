@@ -6,7 +6,7 @@ iteration and per output) for multiclass classification, multilabel
 classification and multi-quantile regression, on a grid of hyper-parameters.
 
 Each configuration is scored on the training set and on a held-out test set
-of ``TEST_SIZE`` samples (fewer than 1000). Lower is better:
+of ``TEST_SIZE`` samples (at least 1000). Lower is better:
 
 - multiclass: log loss;
 - multilabel: binary log loss averaged over the labels;
@@ -44,7 +44,7 @@ from sklearn.ensemble import (
 from sklearn.metrics import log_loss, mean_pinball_loss
 from sklearn.model_selection import train_test_split
 
-TEST_SIZE = 900
+TEST_SIZE = 1000
 
 GRID = {
     "max_iter": [30, 100, 300],
