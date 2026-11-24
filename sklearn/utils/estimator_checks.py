@@ -933,6 +933,7 @@ def check_estimator(
                 )
         except Exception as e:
             if on_fail == "raise" and not test_can_fail:
+                e.add_note(f"Raised in check {_check_name(check)!r} for {name}")
                 raise
 
             if test_can_fail:
