@@ -384,10 +384,8 @@ The parameter `deep` controls whether or not the parameters of the
     subestimator__intercept_scaling -> deprecated
     subestimator__l1_ratio -> 0.0
     subestimator__max_iter -> 100
-    subestimator__n_jobs -> None
-    subestimator__penalty -> deprecated
     subestimator__random_state -> None
-    subestimator__solver -> lbfgs
+    subestimator__solver -> auto
     subestimator__tol -> 0.0001
     subestimator__verbose -> 0
     subestimator__warm_start -> False

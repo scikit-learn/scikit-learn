@@ -51,6 +51,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_allclose_dense_sparse,
     ignore_warnings,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
@@ -635,6 +636,7 @@ def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y
 def test_stacking_prefit_error(stacker, X, y):
     # check that NotFittedError is raised
     # if base estimators are not fitted when cv="prefit"
+    stacker = clone(stacker)
     with pytest.raises(NotFittedError):
         stacker.fit(X, y)
 
@@ -936,6 +938,7 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
     est.get_metadata_routing()
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "Estimator, Child",
     [
@@ -999,7 +1002,7 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
         (StackingRegressor, ConsumingRegressor),
     ],
 )
-@config_context(enable_metadata_routing=True)
+@config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_metadata_routing_error_for_stacking_estimators(Estimator, Child):
     """Test that the right error is raised when metadata is not requested."""
     sample_weight, metadata = np.ones(X_iris.shape[0]), "a"

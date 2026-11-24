@@ -1298,6 +1298,7 @@ def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype, warning_expected)
 def test_vectorizers_invalid_ngram_range(vec):
     # vectorizers could be initialized with invalid ngram range
     # test for raising error message
+    vec = clone(vec)
     invalid_range = vec.ngram_range
     message = re.escape(
         f"Invalid value for ngram_range={invalid_range} "

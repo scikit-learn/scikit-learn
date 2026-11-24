@@ -11,7 +11,7 @@ from scipy import sparse, stats
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
-from sklearn.callback.tests._common.callbacks import RecordingCallback
+from sklearn.callback._testing.callbacks import RecordingCallback
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
@@ -811,6 +811,7 @@ def test_preprocessing_array_api_compliance(
     ids=_get_check_estimator_ids,
 )
 def test_preprocessing_integer_array_api_on_float32_only_device(estimator):
+    estimator = clone(estimator)
     xp, device = _array_api_for_tests("torch", device_name="mps", dtype_name="float32")
 
     # TODO: replace this torch/MPS-specific coverage by array-api-strict once

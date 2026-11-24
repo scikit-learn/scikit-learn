@@ -6,16 +6,35 @@ Linear Models
 
 .. currentmodule:: sklearn.linear_model
 
-The following are a set of methods intended for regression in which
-the target value is expected to be a linear combination of the features.
-In mathematical notation, the predicted value :math:`\hat{y}` can be
-written as:
-
+Linear models cover a wide range of different models, most of them regressors but
+also some important classifiers. What they all have in common is that their predictions
+are a linear combination of the :math:`p=n_{\text{features}}` features, or a function
+thereof. This linear combination is learned from the data and parametrized by
+coefficients :math:`w`. In mathematical notation, the predicted value :math:`\hat{y}`
+can be written as
 
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + ... + w_p x_p
 
-Across the module, we designate the vector :math:`w = (w_1,
-..., w_p)` as ``coef_`` and :math:`w_0` as ``intercept_``.
+or, more generally, :math:`\hat{y}(w, x) = h(w_0 + w_1 x_1 + ...)` with some inverse
+link or response function :math:`h`.
+Across the module, we designate the vector :math:`w = (w_1, ..., w_p)` as ``coef_`` and
+:math:`w_0` as ``intercept_``. For brevity, we denote the linear predictor as
+
+.. math:: Xw = w_0 + X \cdot w \,,
+
+such that it includes the intercept :math:`w_0`. You might also think of :math:`X` as
+the data matrix extended by a column of ones. In the implementation, scikit-learn
+tries to avoid as much as possible to build this extended matrix explicitly which would
+double the memory consumption. For norms of the coefficients as used in penalties, the
+intercept is always excluded, for example:
+
+.. math:: ||w||_2^2 = w_1^2 + ... + w_p^2 \,.
+
+A consequence of the common linear predictor for all linear models is that each feature
+in `X` as passed to `fit` contributes a separate additive linear term. Non-linear terms
+and interactions of features must be added in the preprocessing as shown further down
+in :ref:`Polynomial regression <polynomial_regression>`. On top, it is considered good
+practice to standardize `X` before fitting a linear model.
 
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
@@ -25,11 +44,11 @@ To perform classification with generalized linear models, see
 Ordinary Least Squares
 =======================
 
-:class:`LinearRegression` fits a linear model with coefficients
-:math:`w = (w_1, ..., w_p)` to minimize the residual sum
-of squares between the observed targets in the dataset, and the
-targets predicted by the linear approximation. Mathematically it
-solves a problem of the form:
+:class:`LinearRegression` predicts the conditional expectation :math:`E(y|X)` by the
+linear predictor :math:`Xw`. The coefficients and the intercept are fitted to minimize
+the residual sum of squares between the observed targets in the dataset, and the
+targets predicted by the linear approximation. Mathematically, it solves the least
+squares problem:
 
 .. math:: \min_{w} || X w - y||_2^2
 
@@ -42,8 +61,8 @@ solves a problem of the form:
 ``sample_weight`` and stores the coefficients :math:`w` of the linear model in its
 ``coef_`` and ``intercept_`` attributes::
 
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.LinearRegression()
+    >>> from sklearn.linear_model import LinearRegression
+    >>> reg = LinearRegression()
     >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
     LinearRegression()
     >>> reg.coef_
@@ -51,14 +70,33 @@ solves a problem of the form:
     >>> reg.intercept_
     0.0
 
-The coefficient estimates for Ordinary Least Squares rely on the
-independence of the features. When features are correlated and some
-columns of the design matrix :math:`X` have an approximately linear
-dependence, the design matrix becomes close to singular
-and as a result, the least-squares estimate becomes highly sensitive
-to random errors in the observed target, producing a large
-variance. This situation of *multicollinearity* can arise, for
-example, when data are collected without an experimental design.
+When features are correlated, e.g. some columns of the design matrix :math:`X` have an
+approximately linear dependence, the design matrix becomes ill-conditioned (close to
+singular) and as a result, the least squares estimate becomes highly sensitive
+to random errors or small changes in the observed target :math:`y`, leading to a large
+inflation of the variance of the estimated coefficients. This situation of
+*multicollinearity* can arise, for example, when data are collected without an
+experimental design like in an observational study.
+
+One possible remedy is to add a penalty for the size of the coefficients as in
+:ref:`Ridge regression <ridge_regression>`.
+
+.. dropdown:: Weighted Least Squares
+
+  With sample weights :math:`s=\text{sample_weight}`, :class:`LinearRegression`
+  minimizes the weighted squared error:
+
+  .. math:: \min_{w} \sum_i s_i (X_i w - y_i)^2
+
+.. dropdown:: Complexity of OLS
+
+  For dense `X`, the least squares solution is computed using the singular value
+  decomposition of :math:`X` via :func:`SciPy lstsq <scipy:scipy.linalg.lstsq>`.
+  For a matrix :math:`X` of shape `(n, p)=(n_samples, n_features)` this method has a
+  cost of :math:`O(\max(n, p)\min(n, p)^2)`.
+
+  For sparse `X`, the least squares problem is solved by the iterative solver
+  :func:`SciPy lsqr <scipy:scipy.sparse.linalg.lsqr>`.
 
 .. rubric:: Examples
 
@@ -71,21 +109,14 @@ It is possible to constrain all the coefficients to be non-negative, which may
 be useful when they represent some physical or naturally non-negative
 quantities (e.g., frequency counts or prices of goods).
 :class:`LinearRegression` accepts a boolean ``positive``
-parameter: when set to `True` `Non-Negative Least Squares
-<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied.
+parameter: when set to `True`, `Non-Negative Least Squares
+<https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied via
+:func:`SciPy nnls <scipy:scipy.optimize.nnls>`.
 
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_nnls.py`
 
-Ordinary Least Squares Complexity
----------------------------------
-
-The least squares solution is computed using the singular value
-decomposition of :math:`X`. If :math:`X` is a matrix of shape `(n_samples, n_features)`
-this method has a cost of
-:math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
-:math:`n_{\text{samples}} \geq n_{\text{features}}`.
 
 .. _ridge_regression:
 
@@ -97,18 +128,42 @@ Regression
 
 :class:`Ridge` regression addresses some of the problems of
 :ref:`ordinary_least_squares` by imposing a penalty on the size of the
-coefficients. The ridge coefficients minimize a penalized residual sum
-of squares:
-
+coefficients in the form of an :math:`\ell_2`-norm. The ridge coefficients minimize a
+penalized residual sum of squares
 
 .. math::
 
    \min_{w} || X w - y||_2^2 + \alpha ||w||_2^2
 
+The penalty strength :math:`\alpha \geq 0` controls the amount of shrinkage of the
+estimated coefficients: the larger the value of :math:`\alpha`, the greater the amount
+of shrinkage toward zero. This shrinkage causes a bias of the estimated coefficients
+but it offers at least two advantages w.r.t. ordinary least squares, see
+[HK1970]_:
 
-The complexity parameter :math:`\alpha \geq 0` controls the amount
-of shrinkage: the larger the value of :math:`\alpha`, the greater the amount
-of shrinkage and thus the coefficients become more robust to collinearity.
+- The estimated coefficients become more robust to collinearity and ill-conditioning.
+- For an appropriate choice of `alpha`, the expected out-of-sample squared error
+  (*risk*) is lower, i.e. the expected prediction accuracy is better.
+
+.. note:: **Penalty and feature standardization**
+
+  Because Ridge penalizes coefficient magnitudes, feature scales matter: for a
+  comparable effect on the target, a feature with larger values can have a smaller
+  coefficient and be penalized less. :ref:`Standardizing <preprocessing_scaler>`
+  features makes the penalty more comparable across them.
+
+  .. dropdown:: Example
+
+    If distances of cities of a country (in meters, typically several thousands) and
+    travel times between cities (in hours, typically smaller 24) have similar effect on
+    the target, Ridge will tend to shrink the travel time coefficient more when the
+    features are unstandardized.
+
+.. dropdown:: Weighted Ridge regression
+
+  With sample weights :math:`s=\text{sample_weight}`, :class:`Ridge` minimizes:
+
+  .. math:: \min_{w} \sum_i s_i (X_i w - y_i)^2 + \alpha ||w||_2^2
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ridge_path_001.png
    :target: ../auto_examples/linear_model/plot_ridge_path.html
@@ -116,12 +171,12 @@ of shrinkage and thus the coefficients become more robust to collinearity.
    :scale: 50%
 
 
-As with other linear models, :class:`Ridge` will take in its ``fit`` method
-arrays ``X``, ``y`` and will store the coefficients :math:`w` of the linear model in
-its ``coef_`` member::
+As with other linear models, :class:`Ridge` takes the arrays ``X`` and ``y`` in its
+``fit`` methods and stores the coefficients :math:`w` in its attribute ``coef_`` and
+:math:`w_0` as ``intercept_``::
 
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.Ridge(alpha=.5)
+    >>> from sklearn.linear_model import Ridge
+    >>> reg = Ridge(alpha=.5)
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
     Ridge(alpha=0.5)
     >>> reg.coef_
@@ -129,11 +184,12 @@ its ``coef_`` member::
     >>> reg.intercept_
     np.float64(0.13636)
 
-Note that the class :class:`Ridge` allows for the user to specify that the
-solver be automatically chosen by setting `solver="auto"`. When this option
-is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"cholesky"`,
-and `"sparse_cg"` solvers. :class:`Ridge` will begin checking the conditions
-shown in the following table from top to bottom. If the condition is true,
+Note that the class :class:`Ridge` implements different algorithms, all with different
+strengths and weaknesses, to solve the minimization problem. They are exposed as
+parameter `solver`. To ease this choice, the option `solver="auto"` automatically
+selects a suitable solver for the data and settings at hand. It will choose between the
+`"lbfgs"`, `"cholesky"`, and `"sparse_cg"` solvers. :class:`Ridge` will begin checking
+the conditions shown in the following table from top to bottom. If the condition is true,
 the corresponding solver is chosen.
 
 +-------------+----------------------------------------------------+
@@ -146,6 +202,41 @@ the corresponding solver is chosen.
 | 'sparse_cg' | None of the above conditions are fulfilled.        |
 +-------------+----------------------------------------------------+
 
+.. dropdown:: Details on Ridge solvers
+
+  The ``"cholesky"`` and ``"sparse_cg"`` solvers use the primal formulation as given
+  above when ``n_samples >= n_features``. This means solving a system with
+  ``n_features`` unknowns:
+
+  .. math::
+
+    (X^T X + \alpha I) w = X^T y.
+
+  When ``n_samples < n_features``, they use the dual formulation, solving a system
+  with ``n_samples`` unknowns and recovering the coefficients as follows:
+
+  .. math::
+
+    (X X^T + \alpha I) c = y, \qquad w = X^T c.
+
+  Here, :math:`I` is the identity matrix of the appropriate size, :math:`c` denotes the
+  dual coefficients, and :math:`X` and :math:`y` denote the data after mean centering
+  and sample-weight rescaling, when applicable.
+
+  The ``"cholesky"`` solver explicitly forms the corresponding Gram matrix ``X.T @ X``.
+  Storing the Gram matrix requires memory proportional to
+  :math:`n_{\text{features}}^2` in the primal formulation and
+  :math:`n_{\text{samples}}^2` in the dual formulation. In contrast, ``"sparse_cg"``
+  uses matrix-vector products without forming the Gram matrix.
+
+.. dropdown:: Complexity of Ridge
+
+  Ridge solvers have the same order of complexity as :ref:`ordinary_least_squares`.
+  For a matrix :math:`X` of shape `(n, p)=(n_samples, n_features)` the cost is
+  :math:`O(\max(n, p)\min(n, p)^2)`. But depending on the selected solver, the constant
+  factor, that is the effective numbers of flops, can be (significantly) smaller than
+  the one of OLS.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_ols_ridge.py`
@@ -156,8 +247,8 @@ the corresponding solver is chosen.
 Classification
 --------------
 
-The :class:`Ridge` regressor has a classifier variant:
-:class:`RidgeClassifier`. This classifier first converts binary targets to
+The :class:`Ridge` regressor has the classifier variant :class:`RidgeClassifier`.
+This classifier first converts binary targets to
 ``{-1, 1}`` and then treats the problem as a regression task, optimizing the
 same objective as above. The predicted class corresponds to the sign of the
 regressor's prediction. For multiclass classification, the problem is
@@ -167,17 +258,16 @@ the output with the highest value.
 It might seem questionable to use a (penalized) Least Squares loss to fit a
 classification model instead of the more traditional logistic or hinge
 losses. However, in practice, all those models can lead to similar
-cross-validation scores in terms of accuracy or precision/recall, while the
-penalized least squares loss used by the :class:`RidgeClassifier` allows for
-a very different choice of the numerical solvers with distinct computational
-performance profiles.
+cross-validation scores in terms of accuracy or precision/recall on data with a good
+(and linear) class separation. The advantage with the penalized least squares loss used
+by the :class:`RidgeClassifier` is that it allows for a very different choice of the
+numerical solvers with distinct computational performance profiles.
 
 The :class:`RidgeClassifier` can be significantly faster than e.g.
-:class:`LogisticRegression` with a high number of classes because it can
+:class:`LogisticRegression` with a high number of classes because it needs to
 compute the projection matrix :math:`(X^T X)^{-1} X^T` only once.
 
-This classifier is sometimes referred to as a `Least Squares Support Vector
-Machine
+This classifier is sometimes referred to as a `Least Squares Support Vector Machine
 <https://en.wikipedia.org/wiki/Least-squares_support-vector_machine>`_ with
 a linear kernel.
 
@@ -185,34 +275,21 @@ a linear kernel.
 
 * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
-
-Ridge Complexity
-----------------
-
-This method has the same order of complexity as
-:ref:`ordinary_least_squares`.
-
-.. FIXME:
-.. Not completely true: OLS is solved by an SVD, while Ridge is solved by
-.. the method of normal equations (Cholesky), there is a big flop difference
-.. between these
-
-
 Setting the regularization parameter: leave-one-out Cross-Validation
 --------------------------------------------------------------------
 
 :class:`RidgeCV` and :class:`RidgeClassifierCV` implement ridge
-regression/classification with built-in cross-validation of the alpha parameter.
+regression/classification with built-in cross-validation of the `alpha` parameter.
 They work in the same way as :class:`~sklearn.model_selection.GridSearchCV` except
-that it defaults to efficient Leave-One-Out :term:`cross-validation`.
-When using the default :term:`cross-validation`, alpha cannot be 0 due to the
+that they default to efficient Leave-One-Out :term:`cross-validation`.
+When using the default :term:`cross-validation`, `alpha` cannot be 0 due to the
 formulation used to calculate Leave-One-Out error. See [RL2007]_ for details.
 
 Usage example::
 
     >>> import numpy as np
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
+    >>> from sklearn.linear_model import RidgeCV
+    >>> reg = RidgeCV(alphas=np.logspace(-6, 6, 13))
     >>> reg.fit([[0, 0], [0, 0.1], [1, 1]], [0, -0.1, 1])
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
           1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
@@ -226,8 +303,12 @@ Cross-Validation.
 
 .. dropdown:: References
 
+  .. [HK1970] :doi:`Hoerl, A. E., & Kennard, R. W. (1970). Ridge Regression: Biased
+    Estimation for Nonorthogonal Problems. Technometrics, 12(1), 55-67.
+    <10.2307/1267351>`
+
   .. [RL2007] "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-    <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+    <http://hdl.handle.net/1721.1/37318>`_,
     `course slides <https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
 .. _lasso:
@@ -235,30 +316,51 @@ Cross-Validation.
 Lasso
 =====
 
-The :class:`Lasso` is a linear model that estimates sparse coefficients, i.e., it is
-able to set coefficients exactly to zero.
-It is useful in some contexts due to its tendency to prefer solutions
+The :class:`Lasso` is a linear model that estimates sparse coefficients, meaning that
+it is able to set coefficients exactly to zero. A feature with a zero coefficient
+could be excluded from the model.
+Lasso is useful in some contexts due to its tendency to prefer solutions
 with fewer non-zero coefficients, effectively reducing the number of
 features upon which the given solution is dependent. For this reason,
 Lasso and its variants are fundamental to the field of compressed sensing.
 Under certain conditions, it can recover the exact set of non-zero coefficients (see
 :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`).
 
-Mathematically, it consists of a linear model with an added regularization term.
+Mathematically, it consists of a linear model with an additional regularization term in
+the form of the :math:`\ell_1`-norm of the coefficients.
 The objective function to minimize is:
 
-.. math::  \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
+.. math::  \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2^2 + \alpha ||w||_1}
 
 The lasso estimate thus solves the least-squares with added penalty
 :math:`\alpha ||w||_1`, where :math:`\alpha` is a constant and :math:`||w||_1` is the
 :math:`\ell_1`-norm of the coefficient vector.
 
-The implementation in the class :class:`Lasso` uses coordinate descent as
-the algorithm to fit the coefficients. See :ref:`least_angle_regression`
-for another implementation::
+.. note:: **Different scaling of penalty** ``alpha``
 
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.Lasso(alpha=0.1)
+  The objective function of the Lasso has a different normalization with
+  ``1/n_samples`` in front of the squared error. The Ridge objective can be expressed
+  in the same way and then reads
+
+  .. math:: \min_{w} P(w) = {\frac{1}{2n_{\text{samples}}} ||X w - y||_2^2
+                            + \frac{\alpha}{2n_{\text{samples}}} ||w||_2^2}
+
+  This shows that different estimators use a different scaling behaviour of the penalty
+  parameter ``alpha`` with the sample size ``n_samples``. Thus the influence of
+  ``alpha`` fades with increasing ``n_samples`` for Ridge but not for Lasso.
+
+.. dropdown:: Weighted Lasso
+
+  With sample weights :math:`s=\text{sample_weight}`, :class:`Lasso` minimizes:
+
+  .. math:: \min_{w} \frac{1}{\sum_i s_i}\sum_i s_i (X_i w - y_i)^2 + \alpha ||w||_1^2
+
+The implementation of the class :class:`Lasso` uses
+:ref:`coordinate descent <coordinate_descent>` as the algorithm to fit the
+coefficients. See :ref:`least_angle_regression` for another implementation::
+
+    >>> from sklearn.linear_model import Lasso
+    >>> reg = Lasso(alpha=0.1)
     >>> reg.fit([[0, 0], [1, 1]], [0, 1])
     Lasso(alpha=0.1)
     >>> reg.predict([[1, 1]])
@@ -296,18 +398,18 @@ computes the coefficients along the full path of possible values.
 
 .. _coordinate_descent:
 
-Coordinate Descent with Gap Safe Screening Rules
+Coordinate descent with gap safe screening rules
 ------------------------------------------------
 
 Coordinate descent (CD) is a strategy to solve a minimization problem that considers a
 single feature :math:`j` at a time. This way, the optimization problem is reduced to a
 1-dimensional problem which is easier to solve:
 
-.. math::  \min_{w_j} {\frac{1}{2n_{\text{samples}}} ||x_j w_j + X_{-j}w_{-j} - y||_2 ^ 2 + \alpha |w_j|}
+.. math::  \min_{w_j} {\frac{1}{2n_{\text{samples}}} ||x_j w_j + X_{-j}w_{-j} - y||_2^2 + \alpha |w_j|}
 
 with index :math:`-j` meaning all features but :math:`j`. The solution is
 
-.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), \alpha)}{||x_j||_2^2}
+.. math:: w_j = \frac{S(x_j^T (y - X_{-j}w_{-j}), n_{\text{samples}}\alpha)}{||x_j||_2^2}
 
 with the soft-thresholding function
 :math:`S(z, \alpha) = \operatorname{sign}(z) \max(0, |z|-\alpha)`.
@@ -320,14 +422,17 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
 
 .. dropdown:: Mathematical details
 
+  To simplify the math, we assume here no intercept, and ``y`` and ``X`` are mean
+  centered.
+
   The duality gap :math:`G(w, v)` is an upper bound of the difference between the
   current primal objective function of the Lasso, :math:`P(w)`, and its minimum
   :math:`P(w^\star)`, i.e. :math:`G(w, v) \geq P(w) - P(w^\star)`. It is given by
   :math:`G(w, v) = P(w) - D(v)` with dual objective function
 
-  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(y^Tv - ||v||_2^2)
+  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
 
-  subject to :math:`v \in ||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
+  subject to :math:`||X^Tv||_{\infty} \leq n_{\text{samples}}\alpha`.
   At optimum, the duality gap is zero, :math:`G(w^\star, v^\star) = 0` (a property
   called strong duality).
   With (scaled) dual variable :math:`v = c r`, current residual :math:`r = y - Xw` and
@@ -341,12 +446,15 @@ It stops if the duality gap is smaller than the provided tolerance `tol`.
 
   the stopping criterion is
 
-  .. math:: \text{tol} \frac{||y||_2^2}{n_{\text{samples}}} < G(w, cr)\,.
+  .. math:: \text{tol} \frac{||y||_2^2}{n_{\text{samples}}} \leq G(w, cr)\,.
 
-A clever method to speedup the coordinate descent algorithm is to screen features such
-that at optimum :math:`w_j = 0`. Gap safe screening rules are such a
-tool. Anywhere during the optimization algorithm, they can tell which feature we can
-safely exclude, i.e., set to zero with certainty.
+A clever method to speedup the coordinate descent algorithm is to screen features. The
+idea is to identify and exclude features with solution :math:`w_j = 0` as early as
+possible. Gap safe screening rules are such a tool. At any point during the
+optimization, they can tell if a feature can be safely excluded from further
+optimization and set to zero with certainty. The price for the certainty is that this
+rule does not identify all of them, but the closer to the optimum the more it
+identifies.
 
 .. dropdown:: References
 
@@ -365,22 +473,27 @@ safely exclude, i.e., set to zero with certainty.
     Journal of Machine Learning Research 18(128):1-33, 2017.
     <1611.05780>`
 
-Setting regularization parameter
---------------------------------
+Setting the regularization parameter
+------------------------------------
 
 The ``alpha`` parameter controls the degree of sparsity of the estimated
-coefficients.
+coefficients. In contrast to :class:`Ridge`, there is no computational shortcut for
+leave-one-out cross-validation. At least two good options remain to select ``alpha``,
+both faster than a plain :class:`~sklearn.model_selection.GridSearchCV`:
+either compute cross-validation, which still benefits from fast ``alpha``-path
+computations, or use information based selection criteria.
 
 Using cross-validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-scikit-learn exposes objects that set the Lasso ``alpha`` parameter by
-cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
-:class:`LassoLarsCV` is based on the :ref:`least_angle_regression` algorithm
-explained below.
+Scikit-learn exposes estimators that select the Lasso ``alpha`` parameter by
+:term:`cross-validation`: :class:`LassoCV` and :class:`LassoLarsCV`. Both estimators
+exploit the fact that computing a full path of ``alpha`` values over a single fold is
+relatively cheap.
 
-For high-dimensional datasets with many collinear features,
-:class:`LassoCV` is most often preferable. However, :class:`LassoLarsCV` has
+For high-dimensional datasets with many collinear features, :class:`LassoCV` with its
+coordinate descent solver is most often preferable. However, :class:`LassoLarsCV` with
+its :ref:`least angle algorithm <least_angle_regression>` has
 the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
 features, it is often faster than :class:`LassoCV`.
@@ -401,19 +514,23 @@ Information-criteria based model selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Alternatively, the estimator :class:`LassoLarsIC` proposes to use the
-Akaike information criterion (AIC) and the Bayes Information criterion (BIC).
-It is a computationally cheaper alternative to find the optimal value of alpha
+Akaike information criterion (AIC) or the Bayesian information criterion (BIC).
+It is a computationally cheaper alternative to find the optimal value of ``alpha``
 as the regularization path is computed only once instead of k+1 times
 when using k-fold cross-validation.
 
 Indeed, these criteria are computed on the in-sample training set. In short,
 they penalize the over-optimistic scores of the different Lasso models by
-their flexibility (cf. to "Mathematical details" section below).
+their flexibility, see the *Mathematical details* of :ref:`aic_bic`.
 
 However, such criteria need a proper estimation of the degrees of freedom of
 the solution, are derived for large samples (asymptotic results) and assume the
-correct model is candidates under investigation. They also tend to break when
+correct model is among the candidates under investigation. They also tend to break when
 the problem is badly conditioned (e.g. more features than samples).
+
+If the assumptions are met, AIC tends to select the model with optimal prediction
+performance, while BIC tends to identify the true sparse model if the true model is
+in the candidate list.
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lars_ic_001.png
     :target: ../auto_examples/linear_model/plot_lasso_lars_ic.html
@@ -430,41 +547,44 @@ the problem is badly conditioned (e.g. more features than samples).
 AIC and BIC criteria
 ^^^^^^^^^^^^^^^^^^^^
 
-The definition of AIC (and thus BIC) might differ in the literature. In this
-section, we give more information regarding the criterion computed in
-scikit-learn.
+The definition of AIC, and thus BIC, may differ across the literature. In this section,
+we give more information regarding the criterion computed in scikit-learn.
 
 .. dropdown:: Mathematical details
 
   The AIC criterion is defined as:
 
   .. math::
-      AIC = -2 \log(\hat{L}) + 2 d
+      AIC = -2 \log(\mathcal{L}) + 2 \mathrm{df}
 
-  where :math:`\hat{L}` is the maximum likelihood of the model and
-  :math:`d` is the number of parameters (as well referred to as degrees of
-  freedom in the previous section).
+  where :math:`\mathcal{L}` is the maximum likelihood of the model and
+  :math:`\mathrm{df}` is the effective number of degrees of freedom. For the Lasso,
+  :math:`\mathrm{df}` is the number of non-zero coefficients (without penalty,
+  ``alpha=0``, we would simply have ``df=n_features`` or ``n_features + 1`` if the
+  intercept is included).
 
-  The definition of BIC replaces the constant :math:`2` by :math:`\log(N)`:
+  The definition of BIC replaces the constant :math:`2` by :math:`\log(n)`:
 
   .. math::
-      BIC = -2 \log(\hat{L}) + \log(N) d
+      BIC = -2 \log(\mathcal{L}) + \log(n) \mathrm{df}
 
-  where :math:`N` is the number of samples.
+  where :math:`n` is the number of samples.
 
   For a linear Gaussian model, the maximum log-likelihood is defined as:
 
   .. math::
-      \log(\hat{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log(\sigma^2) - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
+      \log(\mathcal{L}) = - \frac{n}{2} \log(2 \pi) - \frac{n}{2} \log(\sigma^2)
+                          - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{2\sigma^2}
 
-  where :math:`\sigma^2` is an estimate of the noise variance,
+  where :math:`\sigma^2` is the noise variance and is estimated from the given ``y``,
   :math:`y_i` and :math:`\hat{y}_i` are respectively the true and predicted
   targets, and :math:`n` is the number of samples.
 
   Plugging the maximum log-likelihood in the AIC formula yields:
 
   .. math::
-      AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2} + 2 d
+      AIC = n \log(2 \pi \sigma^2) + \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sigma^2}
+            + 2 \mathrm{df}
 
   The first term of the above expression is sometimes discarded since it is a
   constant when :math:`\sigma^2` is provided. In addition,
@@ -475,14 +595,15 @@ scikit-learn.
   At last, we mentioned above that :math:`\sigma^2` is an estimate of the
   noise variance. In :class:`LassoLarsIC` when the parameter `noise_variance` is
   not provided (default), the noise variance is estimated via the unbiased
-  estimator [13]_ defined as:
+  estimator of the variance of the corresponding Ordinary Least Squares (OLS) model
+  defined as:
 
   .. math::
-      \sigma^2 = \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{n - p}
+      \sigma^2 = \frac{\sum_{i=1}^{n} (y_i - \tilde{y}_i)^2}{n - p}
 
-  where :math:`p` is the number of features and :math:`\hat{y}_i` is the
-  predicted target using an ordinary least squares regression. Note, that this
-  formula is valid only when `n_samples > n_features`.
+  where :math:`\tilde{y}_i` are the predictions of the OLS regression with :math:`p`
+  number of coefficients (also counting the intercept). Note that this formula is
+  valid only when :math:`n > p`.
 
   .. rubric:: References
 
@@ -491,31 +612,30 @@ scikit-learn.
           The Annals of Statistics 35.5 (2007): 2173-2192.
           <0712.0881.pdf>`
 
-  .. [13] :doi:`Cherkassky, Vladimir, and Yunqian Ma.
-          "Comparison of model selection for regression."
-          Neural computation 15.7 (2003): 1691-1714.
-          <10.1162/089976603321891864>`
-
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The equivalence between ``alpha`` and the regularization parameter ``C`` of SVM
-is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``,
-depending on the estimator and the exact objective function optimized by the
-model.
+The equivalence between ``alpha`` and the regularization parameter ``C`` of
+:ref:`Support Vector Machines <svm>` is given by ``alpha = 1 / C`` or
+``alpha = 1 / (n_samples * C)``, depending on the estimator and the exact objective
+function optimized by the model.
 
 .. _multi_task_lasso:
 
 Multi-task Lasso
 ================
 
-The :class:`MultiTaskLasso` is a linear model that estimates sparse
-coefficients for multiple regression problems jointly: ``y`` is a 2D array,
-of shape ``(n_samples, n_tasks)``. The constraint is that the selected
-features are the same for all the regression problems, also called tasks.
+The :class:`MultiTaskLasso` is a linear model that estimates sparse coefficients for
+multiple regression problems, or tasks, jointly: ``y`` is a 2-dimensional array of
+shape ``(n_samples, n_targets)``, in maths often expressed as capital letter :math:`Y`.
+The coefficients are also 2-dimensional, :math:`W` is of shape
+``(n_features, n_targets)`` and accessible as the transpose of the coefficient
+attribute, ``coef_.T``. The constraint is that the selected features are the same for
+all the regression problems. This is enforced by the penalty, which couples each
+feature's coefficients across all tasks.
 
 The following figure compares the location of the non-zero entries in the
-coefficient matrix W obtained with a simple Lasso or a MultiTaskLasso.
+coefficient matrix :math:`W` obtained with a simple Lasso or a MultiTaskLasso.
 The Lasso estimates yield scattered non-zeros while the non-zeros of
 the MultiTaskLasso are full columns.
 
@@ -542,7 +662,7 @@ the MultiTaskLasso are full columns.
   :math:`\ell_1` :math:`\ell_2`-norm for regularization.
   The objective function to minimize is:
 
-  .. math::  \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}} ^ 2 + \alpha ||W||_{21}}
+  .. math::  \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}}^2 + \alpha ||W||_{21}}
 
   where :math:`\text{Fro}` indicates the Frobenius norm
 
@@ -552,6 +672,7 @@ the MultiTaskLasso are full columns.
 
   .. math:: ||A||_{2 1} = \sum_i \sqrt{\sum_j a_{ij}^2}.
 
+  In both above norms, the index :math:`j` is for the dimension of tasks.
   The implementation in the class :class:`MultiTaskLasso` uses
   coordinate descent as the algorithm to fit the coefficients.
 
@@ -559,27 +680,24 @@ the MultiTaskLasso are full columns.
 
 Elastic-Net
 ===========
-:class:`ElasticNet` is a linear regression model trained with both
-:math:`\ell_1` and :math:`\ell_2`-norm regularization of the coefficients.
-This combination  allows for learning a sparse model where few of
-the weights are non-zero like :class:`Lasso`, while still maintaining
-the regularization properties of :class:`Ridge`. We control the convex
-combination of :math:`\ell_1` and :math:`\ell_2` using the ``l1_ratio``
-parameter.
+:class:`ElasticNet` is a linear regression model that combines the :math:`\ell_2`-norm
+penalty of :class:`Ridge` with the :math:`\ell_1`-norm penalty of :class:`Lasso`.
+This combines the strengths of both: :math:`\ell_1` is able to produce sparse models
+with only a few non-zero coefficients while :math:`\ell_2` guards against numerical
+instabilities and can potentially achieve a better out-of-sample squared error loss.
+The convex combination of :math:`\ell_1` and :math:`\ell_2` is called elastic-net
+penalty. This mixing is controlled by the ``l1_ratio`` parameter.
 
 Elastic-net is useful when there are multiple features that are
 correlated with one another. Lasso is likely to pick one of these
 at random, while elastic-net is likely to pick both.
 
-A practical advantage of trading-off between Lasso and Ridge is that it
-allows Elastic-Net to inherit some of Ridge's stability under rotation.
-
-The objective function to minimize is in this case
+With :math:`\rho=\text{l1_ratio}`, the objective function to minimize is
 
 .. math::
 
-    \min_{w} { \frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha \rho ||w||_1 +
-    \frac{\alpha(1-\rho)}{2} ||w||_2 ^ 2}
+    \min_{w} { \frac{1}{2n_{\text{samples}}} ||X w - y||_2^2 + \alpha \rho ||w||_1 +
+    \frac{\alpha(1-\rho)}{2} ||w||_2^2}
 
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_lasso_lars_elasticnet_path_002.png
@@ -596,37 +714,82 @@ The class :class:`ElasticNetCV` can be used to set the parameters
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
 * :ref:`sphx_glr_auto_examples_linear_model_plot_elastic_net_precomputed_gram_matrix_with_weighted_samples.py`
 
+.. dropdown:: Mathematical details
+
+  To simplify the math, we assume here no intercept, and ``y`` and ``X`` are mean
+  centered.
+
+  Interestingly, there are two different dual formulations for Elastic-Net. The
+  first one can be derived by starting with the Lasso and adding ``n_features``
+  artificial observations to ``X`` and ``y`` to incorporate the :math:`\ell_2` penalty.
+  The artificial observations come with ``n_features`` additional dual variables
+  :math:`u`, and the dual objective function reads
+
+  .. math:: D(v, u) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
+                    - \frac{\alpha(1-\rho)}{2} ||u||_2^2
+
+  with the dual feasible set
+  :math:`\{(v, u): ||X^Tv - n_{\text{samples}}\alpha (1-\rho)u||_{\infty}
+  \leq n_{\text{samples}}\alpha \rho\}`.
+  At the optimum, :math:`v^\star = y - Xw^\star` and :math:`u^\star = w^\star`.
+  As for the Lasso, a dual feasible point is obtained by rescaling the current
+  residual and coefficients, :math:`(v, u) = c \cdot (y - Xw, w)`.
+  The disadvantage is that for pure Ridge regression with
+  :math:`\rho = \text{l1_ratio} = 0`, this constraint becomes an equality and
+  this simple rescaling does not yield a dual feasible point anymore.
+
+  The alternative formulation is derived by a direct computation of the dual and
+  results in
+
+  .. math:: D(v) = \frac{1}{2n_{\text{samples}}}(2 y^Tv - ||v||_2^2)
+                 - \frac{1}{2n_{\text{samples}}^2 \alpha(1-\rho)}
+                   \sum_j (\left|x_j \cdot v \right| - n_{\text{samples}}\alpha\rho)_+^2
+
+  Here, :math:`(x)_+= \max(x, 0)` denotes the positive part and :math:`x_j` the
+  :math:`j`-th column of ``X``. Surprisingly, the dual feasible set equals the whole of
+  :math:`\mathbb{R}^{n_{\text{samples}}}`, i.e. there are no restrictions on :math:`v`.
+  The disadvantage is that this formulation only holds for :math:`\alpha(1-\rho) > 0`
+  (in particular ``l1_ratio`` must be smaller than 1). This second formulation is used
+  in case of pure Ridge with ``l1_ratio=0`` where the first dual version breaks down.
+
 .. dropdown:: References
 
-  The following two references explain the iterations
-  used in the coordinate descent solver of scikit-learn, as well as
-  the duality gap computation used for convergence control.
+  The first reference is the one that introduced the elastic-net, the second provides
+  the alternative dual objective function. For references on the coordinate descent
+  algorithm that underlies this estimator, see
+  :ref:`coordinate descent <coordinate_descent>` above.
 
-  * "Regularization Path For Generalized linear Models by Coordinate Descent",
-    Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-    <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
-  * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
-    S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
-    in IEEE Journal of Selected Topics in Signal Processing, 2007
-    (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
+  * :doi:`Zou, H., & Hastie, T. (2005).
+    Regularization and variable selection via the elastic net.
+    Journal of the Royal Statistical Society Series B: Statistical Methodology, 67(2), 301-320.
+    <10.1111/j.1467-9868.2005.00503.x>`
+  * :arxiv:`Dünner, C., Forte, S., Takáč, M., & Jaggi, M. (2016).
+    Primal-Dual Rates and Certificates. International Conference on Machine Learning.
+    <1602.05205>`
 
 .. _multi_task_elastic_net:
 
 Multi-task Elastic-Net
 ======================
 
-The :class:`MultiTaskElasticNet` is an elastic-net model that estimates sparse
-coefficients for multiple regression problems jointly: ``Y`` is a 2D array
-of shape ``(n_samples, n_tasks)``. The constraint is that the selected
-features are the same for all the regression problems, also called tasks.
+The :class:`MultiTaskElasticNet` is the multi-task counterpart of :class:`ElasticNet`:
+it fits multiple regression problems (tasks) jointly, with ``Y`` being a 2D array of
+shape ``(n_samples, n_tasks)``.
+It extends :class:`MultiTaskLasso` in the same way that :class:`ElasticNet` extends
+:class:`Lasso`, i.e. by adding a Ridge-like penalty.
+The mixed :math:`\ell_1` :math:`\ell_2`-norm couples each feature's coefficients across
+all tasks such that the selected features are the same for all tasks.
+The additional squared Frobenius norm has the same beneficial properties as the
+:math:`\ell_2` penalty of :class:`ElasticNet`. As it is a plain sum of squares
+over all coefficients, it does not couple the tasks.
 
-Mathematically, it consists of a linear model trained with a mixed
-:math:`\ell_1` :math:`\ell_2`-norm and :math:`\ell_2`-norm for regularization.
-The objective function to minimize is:
+Mathematically, the multi-task elastic-net penalty is a convex combination of the
+:math:`\ell_1` :math:`\ell_2`-norm and the squared Frobenius norm, controlled by
+:math:`\rho=\text{l1_ratio}`. The objective function to minimize is:
 
 .. math::
 
-    \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}}^2 + \alpha \rho ||W||_{2 1} +
+    \min_{W} { \frac{1}{2n_{\text{samples}}} ||X W - Y||_{\text{Fro}}^2 + \alpha \rho ||W||_{21} +
     \frac{\alpha(1-\rho)}{2} ||W||_{\text{Fro}}^2}
 
 The implementation in the class :class:`MultiTaskElasticNet` uses coordinate descent as
@@ -694,8 +857,8 @@ function of the norm of its coefficients.
 
 ::
 
-   >>> from sklearn import linear_model
-   >>> reg = linear_model.LassoLars(alpha=.1)
+   >>> from sklearn.linear_model import LassoLars
+   >>> reg = LassoLars(alpha=.1)
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
    LassoLars(alpha=0.1)
    >>> reg.coef_
@@ -852,10 +1015,10 @@ There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 
 Bayesian Ridge Regression is used for regression::
 
-    >>> from sklearn import linear_model
+    >>> from sklearn.linear_model import BayesianRidge
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
-    >>> reg = linear_model.BayesianRidge()
+    >>> reg = BayesianRidge()
     >>> reg.fit(X, Y)
     BayesianRidge()
 
@@ -981,7 +1144,7 @@ Once fitted, the :meth:`~sklearn.linear_model.LogisticRegression.predict_proba`
 method of :class:`~sklearn.linear_model.LogisticRegression` predicts
 the probability of the positive class :math:`P(y_i=1|X_i)` as
 
-.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w + w_0) = \frac{1}{1 + \exp(-X_i w - w_0)}.
+.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w) = \frac{1}{1 + \exp(-X_i w)}.
 
 
 As an optimization problem, binary
@@ -1431,9 +1594,9 @@ The ``partial_fit`` method allows online/out-of-core learning.
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
 using different (convex) loss functions and different penalties.
-E.g., with ``loss="log"``, :class:`SGDClassifier`
+For instance, :class:`SGDClassifier` with `loss="log_loss"`
 fits a logistic regression model,
-while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
+while with `loss="hinge"` it fits a linear support vector machine (SVM).
 
 You can refer to the dedicated :ref:`sgd` documentation section for more details.
 
@@ -1479,9 +1642,10 @@ eta0=1.0)` can be used for PA-I or with ``learning_rate="pa2"`` for PA-II.
 
 .. dropdown:: References
 
-  * `"Online Passive-Aggressive Algorithms"
-    <https://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
-    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
+  * Crammer, K., Dekel, O., Keshet, J., Shalev-Shwartz, S. and Singer, Y. (2006).
+    `"Online Passive-Aggressive Algorithms"
+    <https://jmlr.org/papers/volume7/crammer06a/crammer06a.pdf>`_
+    JMLR, 7(19), 551-585
 
 Robustness regression: outliers and modeling errors
 =====================================================
