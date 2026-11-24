@@ -5,7 +5,6 @@ import os
 import re
 import sys
 import warnings
-from contextlib import suppress
 from functools import partial
 from inspect import isfunction
 
@@ -823,9 +822,8 @@ def _tested_estimators(type_filter=None):
         if Estimator in SKIPPED_ESTIMATORS:
             # _construct_instances would raise SkipTest and a SkipTestWarning.
             continue
-        with suppress(SkipTest):
-            for estimator in _construct_instances(Estimator):
-                yield estimator
+        for estimator in _construct_instances(Estimator):
+            yield estimator
 
 
 try:
