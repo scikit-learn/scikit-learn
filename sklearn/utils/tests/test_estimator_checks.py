@@ -53,6 +53,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import (
     _check_name,
+    _check_pickle_without_array_libraries,
     _non_numpy_array_paths,
     _NotAnArray,
     _yield_all_checks,
@@ -626,6 +627,36 @@ class NestedArraysEstimator(BaseEstimator):
         self.nested_ = _NestedEstimator().fit(X)
         self.cycle_ = self
         return self
+
+
+def test_check_pickle_without_array_libraries():
+    """References to the array library used to fit are found, arrays or not."""
+    try:
+        xp = importlib.import_module("array_api_strict")
+    except ModuleNotFoundError:  # pragma: nocover
+        raise SkipTest("array-api-strict is required to run this test")
+
+    X = xp.asarray([[1.0, 2.0]])
+    est = NestedArraysEstimator().fit(np.asarray([[1.0, 2.0]]))
+    _check_pickle_without_array_libraries(est, X)
+
+    est.helpers_ = [_Helper({"a": X})]
+    # The message points at the attribute that holds the array.
+    with raises(AssertionError, match=r"references array_api_strict.*helpers_\[0\]"):
+        _check_pickle_without_array_libraries(est, X)
+
+    # Not an array: the recursive array walk does not see a device object.
+    est = NestedArraysEstimator().fit(np.asarray([[1.0, 2.0]]))
+    est._device = X.device
+    assert _non_numpy_array_paths(est, "est") == []
+    with raises(AssertionError, match="references array_api_strict"):
+        _check_pickle_without_array_libraries(est, X)
+
+    # A module cannot be pickled at all.
+    est = NestedArraysEstimator().fit(np.asarray([[1.0, 2.0]]))
+    est._xp = xp
+    with raises(AssertionError, match="cannot pickle 'module' object"):
+        _check_pickle_without_array_libraries(est, X)
 
 
 def test_non_numpy_array_paths():

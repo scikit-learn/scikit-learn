@@ -209,7 +209,10 @@ tests. They verify that:
   when using NumPy and array API inputs, including inputs where ``y`` and
   ``sample_weight`` use a different namespace or device than ``X``, and string
   ``y``;
-- all fitted attributes that are arrays are NumPy arrays;
+- all fitted attributes that are arrays are NumPy arrays, and the fitted
+  estimator does not refer to the array library it was fitted with, for example
+  through a module or device object, so that it can be pickled and loaded where
+  that library is not available;
 - the outputs of the inference methods are in the namespace and on the device of
   their input;
 - an estimator fitted with one namespace can be used for inference with another,

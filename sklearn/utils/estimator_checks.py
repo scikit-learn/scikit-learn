@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 from __future__ import annotations
 
+import io
 import pickle
 import re
 import textwrap
@@ -1113,14 +1114,58 @@ def check_supervised_y_no_nan(name, estimator_orig):
             estimator.fit(X, y)
 
 
+class _LibraryRefusingUnpickler(pickle.Unpickler):
+    """Unpickler that fails on any reference to one of `libraries`.
+
+    Every module, class or function that a pickle refers to goes through
+    `find_class`, so this also catches objects that are not arrays, for example a
+    reference to an array library module or a device object.
+    """
+
+    def __init__(self, file, libraries):
+        super().__init__(file)
+        self.libraries = libraries
+
+    def find_class(self, module, name):
+        if module.split(".")[0] in self.libraries:
+            raise AssertionError(f"the pickled estimator references {module}.{name}")
+        return super().find_class(module, name)
+
+
+def _check_pickle_without_array_libraries(estimator, *arrays):
+    """Check that `estimator` can be unpickled without the libraries of `arrays`.
+
+    A fitted estimator that stores its attributes as NumPy should not depend on
+    the array library it was fitted with, so that it can be loaded where that
+    library or its device is not available. This covers arrays as well as other
+    references to the library, for example modules or device objects. On failure,
+    the attributes that hold arrays which are not NumPy arrays are listed.
+    """
+    libraries = {type(array).__module__.split(".")[0] for array in arrays} - {"numpy"}
+    try:
+        data = pickle.dumps(estimator)
+        _LibraryRefusingUnpickler(io.BytesIO(data), libraries).load()
+    except Exception as e:
+        paths = _non_numpy_array_paths(estimator, type(estimator).__name__)
+        location = (
+            f" Attributes holding arrays that are not NumPy arrays: {', '.join(paths)}."
+            if paths
+            else ""
+        )
+        raise AssertionError(
+            "A fitted estimator that stores its attributes as NumPy should not "
+            f"depend on {', '.join(sorted(libraries))}: {e}.{location}"
+        ) from e
+
+
 def _non_numpy_array_paths(obj, path="", seen=None):
     """Return the paths of all arrays inside `obj` that are not NumPy arrays.
 
     Walks containers and the attributes of scikit-learn objects, including
     nested estimators and private helper objects, but not the constructor
     parameters of estimators. A fitted estimator that stores its attributes as
-    NumPy should hold no other arrays, for example so that it can be unpickled
-    without the array library it was fitted with.
+    NumPy should hold no other arrays. Used by
+    `_check_pickle_without_array_libraries` to point at the offending attributes.
     """
     if isinstance(obj, (np.ndarray, np.generic)):
         return []
@@ -1229,10 +1274,8 @@ def _check_array_api_core(
     stores_numpy = type(est_xp).__name__ in _NUMPY_FITTED_ATTRS
 
     if stores_numpy:
-        non_numpy_paths = _non_numpy_array_paths(est_xp, type(est_xp).__name__)
-        assert not non_numpy_paths, (
-            "Fitted estimators should only hold NumPy arrays, found other arrays "
-            f"at: {', '.join(non_numpy_paths)}"
+        _check_pickle_without_array_libraries(
+            est_xp, X_xp, y_xp, *fit_kwargs_xp.values()
         )
 
     # Fitted attributes which are arrays must have the same namespace as `X`,
