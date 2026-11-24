@@ -187,7 +187,7 @@ cdef inline floating gap_safe_radius(
 ) noexcept nogil:
     """Compute the radius of the gap safe sphere: sqrt(2 * gap) / alpha.
 
-    The dual gap is computed as the difference of primal and dual objective. In
+    The dual gap is computed as the difference of primal and dual objectives. In
     floating point arithmetic, it is therefore only accurate up to an error of the
     order of eps * y_norm2. Close to the optimum, e.g. with a very good warm start,
     this error dominates and the computed gap might even be exactly zero or negative.
