@@ -38,7 +38,7 @@ from sklearn.utils._testing import (
     _convert_container,
     assert_array_equal,
 )
-from sklearn.utils.metadata_routing import get_routing_for_object
+from sklearn.utils.metadata_routing import AutoRequestMixin, get_routing_for_object
 from sklearn.utils.validation import _check_n_features, validate_data
 
 
@@ -1133,43 +1133,59 @@ def test_param_is_default(default_value, test_value):
     assert "param" not in non_default
 
 
-def test_baseestimator_sample_weight_auto_request():
-    """Test that sklearn estimators auto-request `sample_weight`."""
+@pytest.mark.parametrize(
+    "enabled, expected_value",
+    [(True, True), (False, None)],
+    ids=["enabled", "disabled"],
+)
+def test_baseestimator_auto_request(enabled, expected_value):
+    """Test that sklearn estimators auto-request `sample_weight` and validation sets."""
 
     class MyEstimator(BaseEstimator):
         """This class lives in a sklearn module and therefore creates the
-        `_auto_request_sample_weight` class attribute in `__init_subclass__`."""
+        `_auto_request_sample_weight` and `_auto_request_validation_set` class
+        attributes during `__init_subclass__`."""
 
-        def fit(self, X, y, sample_weight=None):
+        def fit(
+            self,
+            X,
+            y,
+            sample_weight=None,
+            X_val=None,
+            y_val=None,
+            sample_weight_val=None,
+        ):
             return self  # pragma: no cover
 
         def predict(self, X, y=None):
             return y  # pragma: no cover
 
     assert MyEstimator._auto_request_sample_weight
-    est = MyEstimator()
+    assert MyEstimator._auto_request_validation_set
 
-    with config_context(enable_metadata_auto_requests=True):
-        routing = get_routing_for_object(est)
-        assert routing.fit.requests.get("sample_weight") is True
-        methods = [m for m in SIMPLE_METHODS if m != "fit"]
-        for method in methods:
-            assert getattr(routing, method).requests.get("sample_weight") is None
+    with config_context(enable_metadata_auto_requests=enabled):
+        routing = get_routing_for_object(MyEstimator())
 
-    with config_context(enable_metadata_auto_requests=False):
-        routing = get_routing_for_object(est)
-        assert routing.fit.requests.get("sample_weight") is None
+    # metadata should be requested (True) only for methods that have them in their
+    # signature and if auto-request are enabled; with auto-requests off, they are known
+    # but have no request set (None).
+    metadata = ["sample_weight", "X_val", "y_val", "sample_weight_val"]
+    for method in SIMPLE_METHODS:
+        expected = dict.fromkeys(metadata, expected_value) if method == "fit" else {}
+        assert getattr(routing, method).requests == expected
 
 
-def test_third_party_baseestimator_no_sample_weight_auto_request():
+def test_third_party_baseestimator_no_auto_request():
     # Test that third-party subclasses of `BaseEstimator` do not auto-request
-    # sample_weight.
+    # `sample_weight` or validation sets.
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(
+        self, X, y, sample_weight=None, X_val=None, y_val=None, sample_weight_val=None
+    ):
         return self  # pragma: no cover
 
-    # This class lives in 'third_party.pkg' and therefore doesn't have a
-    # `_auto_request_sample_weight` class attribute.
+    # This class lives in 'third_party.pkg' and therefore doesn't have
+    # `_auto_request_sample_weight` or `_auto_request_validation_set` class attributes.
     ThirdPartyEstimator = type(
         "ThirdPartyEstimator",
         (BaseEstimator,),
@@ -1177,17 +1193,21 @@ def test_third_party_baseestimator_no_sample_weight_auto_request():
     )
 
     assert "_auto_request_sample_weight" not in ThirdPartyEstimator.__dict__
+    assert "_auto_request_validation_set" not in ThirdPartyEstimator.__dict__
 
     with config_context(enable_metadata_auto_requests=True):
         routing = get_routing_for_object(ThirdPartyEstimator())
-        assert routing.fit.requests.get("sample_weight") is None
+        for metadata in ["sample_weight", "X_val", "y_val", "sample_weight_val"]:
+            assert routing.fit.requests.get(metadata) is None
 
 
-def test_auto_request_mixin_opts_in_sample_weight():
-    """AutoRequestMixin opts third-party estimators into sample_weight auto-requests."""
-    from sklearn.utils.metadata_routing import AutoRequestMixin
+def test_third_party_auto_request_mixin():
+    """AutoRequestMixin opts third-party estimators into auto-requesting `sample_weight`
+    and/or validation sets."""
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(
+        self, X, y, sample_weight=None, X_val=None, y_val=None, sample_weight_val=None
+    ):
         return self  # pragma: no cover
 
     ThirdPartyEstimator = type(
@@ -1196,7 +1216,18 @@ def test_auto_request_mixin_opts_in_sample_weight():
         {"__module__": "third_party.pkg", "fit": fit},
     )
     assert ThirdPartyEstimator._auto_request_sample_weight
+    assert ThirdPartyEstimator._auto_request_validation_set
 
-    with config_context(enable_metadata_auto_requests=True):
-        routing = get_routing_for_object(ThirdPartyEstimator())
-        assert routing.fit.requests.get("sample_weight") is True
+    est = ThirdPartyEstimator()
+
+    routing = get_routing_for_object(est)
+    for metadata in ["sample_weight", "X_val", "y_val", "sample_weight_val"]:
+        assert routing.fit.requests.get(metadata) is True
+
+    # Third parties and their users should be able to opt out of either one of the
+    # auto-requested metadata options:
+    est._auto_request_validation_set = False
+    routing = get_routing_for_object(est)
+    assert routing.fit.requests.get("sample_weight") is True
+    for metadata in ["X_val", "y_val", "sample_weight_val"]:
+        assert routing.fit.requests.get(metadata) is None
