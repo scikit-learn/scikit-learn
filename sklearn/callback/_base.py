@@ -41,15 +41,6 @@ class BaseCallback:
             sub-estimator of a meta-estimator.
         """
 
-    def _accept_sample_weight(self, hook_name):
-        """Method to check if the instance accepts sample_weight for a given hook.
-
-        Callbacks that can use sample_weight must overwrite this method to signal if
-        a hook can be forwarded sample_weight when metadata routing is disabled.
-        """
-        # TODO(slep006): remove when metadata routing is always enabled.
-        return False
-
 
 class FitCallback(BaseCallback, _MetadataRequester):
     """Base class for the callbacks evaluated during the fit of an estimator."""
@@ -121,6 +112,15 @@ class FitCallback(BaseCallback, _MetadataRequester):
         stop : bool
             Whether or not to stop the current level of iterations at this task.
         """
+
+    def _accept_sample_weight(self, hook_name):
+        """Method to check if the instance accepts sample_weight for a given hook.
+
+        Callbacks that can use sample_weight must overwrite this method to signal if
+        a hook can be forwarded sample_weight when metadata routing is disabled.
+        """
+        # TODO(slep006): remove when metadata routing is always enabled.
+        return False
 
 
 class AutoPropagatedCallbackMixin:
