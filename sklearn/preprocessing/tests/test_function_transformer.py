@@ -122,8 +122,8 @@ def test_inverse_transform():
 
 
 @pytest.mark.parametrize("sparse_container", [None] + CSC_CONTAINERS + CSR_CONTAINERS)
-def test_check_inverse(sparse_container):
-    X = np.array([1, 4, 9, 16], dtype=np.float64).reshape((2, 2))
+def test_check_inverse(sparse_container, global_dtype):
+    X = np.array([1, 4, 9, 16], dtype=global_dtype).reshape((2, 2))
     if sparse_container is not None:
         X = sparse_container(X)
 
@@ -154,7 +154,10 @@ def test_check_inverse(sparse_container):
         warnings.simplefilter("error", UserWarning)
         Xt = trans.fit_transform(X)
 
-    assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))
+    X_round_trip = trans.inverse_transform(Xt)
+    assert Xt.dtype == global_dtype
+    assert X_round_trip.dtype == global_dtype
+    assert_allclose_dense_sparse(X, X_round_trip)
 
 
 def test_check_inverse_func_or_inverse_not_provided():
