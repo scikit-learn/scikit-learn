@@ -68,7 +68,7 @@ class ProgressBar:
 
     def _is_active(self):
         """Whether the progressbar should be displayed in the current environment."""
-        return self.show == "always" or hasattr(sys, "ps1") or _IS_WASM
+        return (self.show == "always" or hasattr(sys, "ps1")) and not _IS_WASM
 
     def setup(self, estimator, context):
         # Disable for current fit run if another active ProgressBar is attached, except
