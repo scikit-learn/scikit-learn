@@ -344,7 +344,10 @@ INIT_PARAMS = {
     HDBSCAN: dict(min_samples=1),
     # The default min_samples_leaf (20) isn't appropriate for small
     # datasets (only very shallow trees are built) that the checks use.
-    HistGradientBoostingClassifier: dict(max_iter=5, min_samples_leaf=5),
+    HistGradientBoostingClassifier: [
+        dict(max_iter=5, min_samples_leaf=5),
+        dict(max_iter=5, min_samples_leaf=5, vector_leaf=True),
+    ],
     HistGradientBoostingRegressor: dict(max_iter=5, min_samples_leaf=5),
     HuberRegressor: dict(max_iter=5),
     IncrementalPCA: dict(batch_size=10),

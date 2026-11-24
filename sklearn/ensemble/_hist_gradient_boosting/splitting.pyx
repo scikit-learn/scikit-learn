@@ -1269,7 +1269,7 @@ cdef class Splitter:
             unsigned int s
             unsigned int k
             unsigned int c
-            unsigned int it
+            unsigned int _
             unsigned int best_c
             const Y_DTYPE_C * hist_bin
             Y_DTYPE_C h_bin
@@ -1362,7 +1362,7 @@ cdef class Splitter:
             for k in range(n_outputs):
                 direction_vec[k] = cat_values[best_c * n_outputs + k]
 
-            for it in range(N_POWER_ITERATIONS):
+            for _ in range(N_POWER_ITERATIONS):
                 memset(new_direction_vec, 0, n_outputs * sizeof(Y_DTYPE_C))
                 for c in range(n_used_bins):
                     tmp = 0.

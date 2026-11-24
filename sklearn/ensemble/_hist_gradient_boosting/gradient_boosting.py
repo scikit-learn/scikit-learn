@@ -684,6 +684,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         else:
             self.do_early_stopping_ = self.early_stopping
 
+        if (
+            self.do_early_stopping_
+            and not is_classifier(self)
+            and isinstance(self._loss, _MultiOutputLoss)
+            and not (self.scoring == "loss" or callable(self.scoring))
+        ):
+            raise ValueError(
+                "When estimating several quantiles with early stopping, scoring "
+                f"must be 'loss' or a callable, got {self.scoring!r}."
+            )
+
         # create validation data if needed
         self._use_validation_data = (
             self.validation_fraction is not None or validation_data_provided
@@ -696,7 +707,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # stratify for classification
             # instead of checking predict_proba, loss.n_classes >= 2 would also work
             stratify = (
-                y if hasattr(self._loss, "predict_proba") and y.ndim == 1 else None
+                y
+                if hasattr(self._loss, "predict_proba")
+                and not isinstance(self._loss, _MultiOutputLoss)
+                else None
             )
 
             # Save the state of the RNG for the training and validation split.
@@ -1733,6 +1747,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           (:math:`R^2`) is used.
         - 'loss': early stopping is checked w.r.t the loss value.
 
+        When several quantiles are estimated, only 'loss' and callables are
+        supported.
+
     validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
@@ -2474,10 +2491,16 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
     def _check_y_fit(self, y):
         try:
-            is_multilabel = type_of_target(y, input_name="y") == "multilabel-indicator"
+            target_type = type_of_target(y, input_name="y")
         except (ValueError, TypeError):
-            is_multilabel = False
-        if not is_multilabel:
+            target_type = None
+        if target_type == "multiclass-multioutput":
+            raise ValueError(
+                f"{self.__class__.__name__} only supports binary, multiclass and "
+                "multilabel (binary indicator matrix) targets, got a "
+                "multiclass-multioutput target."
+            )
+        if target_type != "multilabel-indicator":
             return _check_y(y, estimator=self)
         y = _check_y(y, multi_output=True, estimator=self)
         if sp.issparse(y):
@@ -2493,11 +2516,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         # and _n_outputs
         check_classification_targets(y)
         if y.ndim == 2:
-            if type_of_target(y, input_name="y") != "multilabel-indicator":
-                raise ValueError(
-                    f"{self.__class__.__name__} only supports binary, multiclass "
-                    "and multilabel (binary indicator matrix) targets."
-                )
+            # multilabel-indicator, as validated by _check_y_fit
             self._multilabel = True
             self._label_encoder = None
             self.classes_ = np.arange(y.shape[1])
