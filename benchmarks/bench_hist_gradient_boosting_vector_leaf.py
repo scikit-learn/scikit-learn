@@ -175,7 +175,7 @@ def run(datasets, output):
                     tic = perf_counter()
                     estimator.fit(X_train, y_train)
                     row["fit_time"] = perf_counter() - tic
-                    row["loss"] = score(task, estimator, X_test, y_test, params)
+                    row["loss"] = float(score(task, estimator, X_test, y_test, params))
                     writer.writerow(row)
                     f.flush()
                     print(row, flush=True)
