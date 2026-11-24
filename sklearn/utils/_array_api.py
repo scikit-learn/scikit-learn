@@ -403,7 +403,7 @@ def get_namespace(
     always returned irrespective of the fact that arrays implement the
     `__array_namespace__` protocol or not.
 
-    Note that if no arrays pass the set filters, ``_NUMPY_API_WRAPPER_INSTANCE, False``
+    Note that if no arrays pass the set filters, ``array_api_compat.numpy, False``
     is returned.
 
     Parameters

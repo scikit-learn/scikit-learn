@@ -391,6 +391,7 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 check_name="check_array_api_mixed_inputs",
                 X_ns_and_device=X_ns_and_device,
                 other_ns_and_device=other_ns_and_device,
+                check_sample_weight=True,
             )
         # 3. String `y` and numeric `X` from all supported namespace/devices
         if is_classifier(estimator):
