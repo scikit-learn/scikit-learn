@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import defusedxml.ElementTree as ET
-from github import Github
+from github import Auth, Github
 
 parser = argparse.ArgumentParser(
     description="Create or update issue from JUnit test results from pytest"
@@ -65,7 +65,7 @@ if args.junit_file is None and args.tests_passed is None:
     print("Either --junit-file or --test-passed must be passed in")
     sys.exit(1)
 
-gh = Github(args.bot_github_token)
+gh = Github(auth=Auth.Token(args.bot_github_token))
 issue_repo = gh.get_repo(args.issue_repo)
 dt_now = datetime.now(tz=timezone.utc)
 date_str = dt_now.strftime("%b %d, %Y")

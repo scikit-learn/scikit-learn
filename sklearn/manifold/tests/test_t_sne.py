@@ -11,9 +11,7 @@ from scipy.spatial.distance import pdist, squareform
 
 from sklearn import config_context
 from sklearn.datasets import make_blobs
-
-# mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
-from sklearn.manifold import (  # type: ignore[attr-defined]
+from sklearn.manifold import (
     TSNE,
     _barnes_hut_tsne,
 )
@@ -38,6 +36,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     skip_if_32bit,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import CSR_CONTAINERS, LIL_CONTAINERS
 
@@ -1001,6 +1000,7 @@ def test_gradient_bh_multithread_match_sequential():
         assert_allclose(grad_multithread, grad_multithread)
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "metric, dist_func",
     [("manhattan", manhattan_distances), ("cosine", cosine_distances)],
@@ -1051,6 +1051,7 @@ def test_tsne_with_different_distance_metrics(metric, dist_func, method):
     assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("method", ["exact", "barnes_hut"])
 def test_tsne_n_jobs(method):
     """Make sure that the n_jobs parameter doesn't impact the output"""
@@ -1081,6 +1082,7 @@ def test_tsne_n_jobs(method):
     assert_allclose(X_tr_ref, X_tr)
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 def test_tsne_with_mahalanobis_distance():
     """Make sure that method_parameters works with mahalanobis distance."""
     random_state = check_random_state(0)
@@ -1137,3 +1139,38 @@ def test_tsne_works_with_pandas_output():
     with config_context(transform_output="pandas"):
         arr = np.arange(35 * 4).reshape(35, 4)
         TSNE(n_components=2).fit_transform(arr)
+
+
+@pytest.mark.parametrize("method", ["barnes_hut", "exact"])
+@pytest.mark.parametrize(
+    "X",
+    [
+        np.ones((10, 5)),
+        np.zeros((10, 5)),
+        np.ones((10, 5)) + 1e-14 * np.arange(50).reshape(10, 5),
+    ],
+)
+def test_tsne_pca_init_constant_data(method, X):
+    # Non-regression test for issue #28368.
+    # PCA init on constant or near-constant data must trigger a warning,
+    # fall back to random initialization, and not crash.
+    tsne1 = TSNE(init="pca", method=method, perplexity=5, random_state=42)
+    tsne2 = TSNE(init="pca", method=method, perplexity=5, random_state=42)
+
+    with pytest.warns(RuntimeWarning, match="PCA initialization is not meaningful"):
+        X_embedded1 = tsne1.fit_transform(X)
+
+    with pytest.warns(RuntimeWarning, match="PCA initialization is not meaningful"):
+        X_embedded2 = tsne2.fit_transform(X)
+
+    # Result must be finite
+    assert np.all(np.isfinite(X_embedded1))
+
+    # Shape must remain correct
+    assert X_embedded1.shape == (10, 2)
+
+    # Fallback to random initialization produces non-constant embedding
+    assert np.std(X_embedded1) > 0
+
+    # Fallback with identical random_state must be reproducible
+    assert_allclose(X_embedded1, X_embedded2)

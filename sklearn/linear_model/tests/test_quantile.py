@@ -7,7 +7,6 @@ from pytest import approx
 from scipy.optimize import minimize
 
 from sklearn.datasets import make_regression
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, QuantileRegressor
 from sklearn.metrics import mean_pinball_loss
 from sklearn.utils._testing import assert_allclose
@@ -15,8 +14,6 @@ from sklearn.utils.fixes import (
     COO_CONTAINERS,
     CSC_CONTAINERS,
     CSR_CONTAINERS,
-    parse_version,
-    sp_version,
 )
 
 
@@ -26,20 +23,14 @@ def X_y_data():
     return X, y
 
 
-@pytest.mark.skipif(
-    parse_version(sp_version.base_version) >= parse_version("1.11"),
-    reason="interior-point solver is not available in SciPy 1.11",
-)
-@pytest.mark.parametrize("solver", ["interior-point", "revised simplex"])
 @pytest.mark.parametrize("csc_container", CSC_CONTAINERS)
-def test_incompatible_solver_for_sparse_input(X_y_data, solver, csc_container):
+def test_incompatible_solver_for_sparse_input(X_y_data, csc_container):
     X, y = X_y_data
     X_sparse = csc_container(X)
-    err_msg = (
-        f"Solver {solver} does not support sparse X. Use solver 'highs' for example."
-    )
+    err_msg = "Solver revised simplex does not support sparse X."
+
     with pytest.raises(ValueError, match=err_msg):
-        QuantileRegressor(solver=solver).fit(X_sparse, y)
+        QuantileRegressor(solver="revised simplex").fit(X_sparse, y)
 
 
 @pytest.mark.parametrize(
@@ -215,24 +206,6 @@ def test_equivariance(quantile):
     assert_allclose(model2.coef_, np.linalg.solve(A, model1.coef_), rtol=1e-5)
 
 
-@pytest.mark.skipif(
-    parse_version(sp_version.base_version) >= parse_version("1.11"),
-    reason="interior-point solver is not available in SciPy 1.11",
-)
-@pytest.mark.filterwarnings("ignore:`method='interior-point'` is deprecated")
-def test_linprog_failure():
-    """Test that linprog fails."""
-    X = np.linspace(0, 10, num=10).reshape(-1, 1)
-    y = np.linspace(0, 10, num=10)
-    reg = QuantileRegressor(
-        alpha=0, solver="interior-point", solver_options={"maxiter": 1}
-    )
-
-    msg = "Linear programming for QuantileRegressor did not succeed."
-    with pytest.warns(ConvergenceWarning, match=msg):
-        reg.fit(X, y)
-
-
 @pytest.mark.parametrize(
     "sparse_container", CSC_CONTAINERS + CSR_CONTAINERS + COO_CONTAINERS
 )
@@ -267,17 +240,3 @@ def test_sparse_input(sparse_container, solver, fit_intercept, global_random_see
         # check that we still predict fraction
         empirical_coverage = np.mean(y < quant_sparse.predict(X_sparse))
         assert empirical_coverage == approx(quantile_level, abs=3e-2)
-
-
-def test_error_interior_point_future(X_y_data, monkeypatch):
-    """Check that we will raise a proper error when requesting
-    `solver='interior-point'` in SciPy >= 1.11.
-    """
-    X, y = X_y_data
-    import sklearn.linear_model._quantile
-
-    with monkeypatch.context() as m:
-        m.setattr(sklearn.linear_model._quantile, "sp_version", parse_version("1.11.0"))
-        err_msg = "Solver interior-point is not anymore available in SciPy >= 1.11.0."
-        with pytest.raises(ValueError, match=err_msg):
-            QuantileRegressor(solver="interior-point").fit(X, y)

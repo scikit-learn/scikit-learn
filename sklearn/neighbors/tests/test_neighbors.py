@@ -45,6 +45,7 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
     ignore_warnings,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import (
     BSR_CONTAINERS,
@@ -565,7 +566,7 @@ def test_sort_graph_by_row_values_warning(csr_container):
 
     # no warning
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", category=EfficiencyWarning)
         sort_graph_by_row_values(X, copy=True, warn_when_not_sorted=False)
 
 
@@ -1639,6 +1640,7 @@ def test_nearest_neighbors_validate_params():
         nbrs.radius_neighbors_graph(X, mode="blah")
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "metric",
     sorted(
@@ -2097,6 +2099,22 @@ def test_same_radius_neighbors_parallel(algorithm):
         assert_allclose(dist[i], dist_parallel[i])
         assert_array_equal(ind[i], ind_parallel[i])
     assert_allclose(graph, graph_parallel)
+
+
+@pytest.mark.parametrize("algorithm", ["ball_tree", "kd_tree"])
+def test_radius_neighbors_parallel_array_radius(algorithm):
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 3)
+    radius = np.full(len(X), 0.4)
+
+    nn = neighbors.NearestNeighbors(algorithm=algorithm).fit(X)
+    ind = nn.radius_neighbors(X, radius=radius, return_distance=False)
+
+    nn_parallel = neighbors.NearestNeighbors(algorithm=algorithm, n_jobs=2).fit(X)
+    ind_parallel = nn_parallel.radius_neighbors(X, radius=radius, return_distance=False)
+
+    for i in range(len(ind)):
+        assert_array_equal(np.sort(ind[i]), np.sort(ind_parallel[i]))
 
 
 # TODO: remove mark once loky bug is fixed:

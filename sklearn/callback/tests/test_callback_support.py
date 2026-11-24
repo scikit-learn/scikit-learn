@@ -4,9 +4,8 @@
 import pytest
 
 from sklearn.base import clone
-from sklearn.callback.tests._utils import (
+from sklearn.callback._testing.callbacks import (
     FailingCallback,
-    MaxIterEstimator,
     NotValidCallback,
     NotValidFitTaskBeginCallback,
     NotValidSetupKwargOnlyCallback,
@@ -14,6 +13,7 @@ from sklearn.callback.tests._utils import (
     RecordingAutoPropagatedCallback,
     RecordingCallback,
 )
+from sklearn.callback._testing.estimators import MaxIterEstimator
 from sklearn.utils.parallel import Parallel, delayed
 
 
@@ -169,3 +169,12 @@ def test_set_callback_empty():
     # calling again doesn't raise
     estimator.set_callbacks()
     assert not hasattr(estimator, "_skl_callbacks")
+
+
+def test_same_callback_multiple_times_error():
+    """Test the error for setting the same callback instance multiple times."""
+    callback = RecordingCallback()
+    with pytest.raises(
+        ValueError, match="The same instance was provided multiple times"
+    ):
+        MaxIterEstimator().set_callbacks(callback, callback)

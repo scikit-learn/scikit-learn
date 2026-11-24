@@ -8,6 +8,8 @@ must be picklable, and that an estimator pickled after a successful fit can be
 unpickled in a fresh Python interpreter.
 """
 
+import functools
+import io
 import pickle
 import re
 import subprocess
@@ -17,7 +19,8 @@ import textwrap
 import pytest
 
 from sklearn.callback import ProgressBar, ScoringMonitor
-from sklearn.callback.tests._utils import MaxIterEstimator
+from sklearn.callback._testing.estimators import MaxIterEstimator
+from sklearn.callback._transport import Channel
 from sklearn.datasets import make_regression
 
 
@@ -139,3 +142,78 @@ def test_callbacks_refit_after_load_in_fresh_process(tmp_path, capsys):
     stdout = result.stdout.decode()
     assert re.search(r"MaxIterEstimator - fit", stdout)
     assert re.search(r"100%", stdout)
+
+
+class _TraversalRecorder(pickle.Pickler):
+    """A pickler that records the id of every object it walks through.
+
+    `persistent_id` is called for every object the pickler encounters, so an object is
+    recorded whichever path leads to it, not only when it is a direct attribute of the
+    object being pickled,
+    see https://docs.python.org/3/library/pickle.html#pickle.Pickler.persistent_id.
+    """
+
+    def __init__(self):
+        super().__init__(io.BytesIO(), protocol=pickle.HIGHEST_PROTOCOL)
+        self.walked_through = set()
+
+    def persistent_id(self, obj):
+        self.walked_through.add(id(obj))
+        return None  # pickle `obj` as usual
+
+
+@pytest.mark.parametrize("factory", CALLBACK_FACTORIES)
+def test_channel_state_is_not_walked_by_the_pickler(factory, monkeypatch):
+    """Check that pickling a callback never traverses state its channels write to.
+
+    An estimator carrying a callback can be pickled by a background thread, e.g. loky's
+    queue feeder dispatching a task to a worker, while a channel thread of that same
+    callback mutates the callback's state as messages come in. Pickling a container that
+    another thread mutates breaks the dump, which joblib reports as "Could not pickle
+    the task to send it to the workers".
+
+    The check runs from a hook, i.e. while the channels are up, which is when such a
+    dispatch would happen.
+    """
+    # Modify Channel.__init__ to record the objects that the message consumers mutate.
+    # A message consumer is normally a method bound to the container it mutates, e.g.
+    # `self._log.append` for ScoringMonitor or `queue.put` for ProgressBar, so the
+    # container is what it is bound to. A consumer bound to nothing, e.g. a closure, is
+    # skipped, since there is then no way to tell what it mutates.
+
+    watched = []
+    channel_init = Channel.__init__
+
+    def recording_init(channel, message_consumer):
+        if hasattr(message_consumer, "__self__"):
+            watched.append(message_consumer.__self__)
+        channel_init(channel, message_consumer)
+
+    monkeypatch.setattr(Channel, "__init__", recording_init)
+
+    # Modify callback hooks so that they first check that the pickler does not walk
+    # through the objects that channel threads mutate.
+    def checked(hook):
+        # `functools.wraps` because callbacks are validated against the hook signature
+        @functools.wraps(hook)
+        def checked_hook(self, *args, **kwargs):
+            recorder = _TraversalRecorder()
+            recorder.dump(self)
+            offenders = recorder.walked_through & {id(obj) for obj in watched}
+            assert not offenders, (
+                f"Pickling {type(self).__name__} walks through a container that a"
+                " channel thread mutates concurrently. Keep it away from the pickler,"
+                " either by handing over a copy of it in the callback's `__getstate__`,"
+                " or by storing it outside of the callback instance."
+            )
+            return hook(self, *args, **kwargs)
+
+        return checked_hook
+
+    callback = factory()
+
+    for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
+        hook = getattr(callback.__class__, hook_name)
+        monkeypatch.setattr(callback.__class__, hook_name, checked(hook))
+
+    MaxIterEstimator(max_iter=3).set_callbacks(callback).fit()

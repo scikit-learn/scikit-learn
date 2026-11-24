@@ -1,0 +1,7 @@
+- Fixed a leak of file descriptors and background threads in
+  :class:`callback.ScoringMonitor` and :class:`callback.ProgressBar` across
+  parallel `fit` calls (`n_jobs > 1`), as well as crashes and hangs under nested
+  process and thread parallelism (e.g. :func:`model_selection.cross_validate`
+  wrapping :class:`model_selection.GridSearchCV` with `n_jobs > 1`).
+  By :user:`Jérémie du Boisberranger <jeremiedbb>` and
+  :user:`Olivier Grisel <ogrisel>`. :pr:`34856` and

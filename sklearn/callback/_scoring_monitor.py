@@ -7,7 +7,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from sklearn.callback._callback_context import get_context_path
-from sklearn.callback._transport import can_reuse_listener, open_listener, send
+from sklearn.callback._transport import Channel
 from sklearn.utils._optional_dependencies import check_pandas_support
 from sklearn.utils._param_validation import StrOptions, validate_params
 
@@ -82,15 +82,13 @@ class ScoringMonitor:
 
     Parameters
     ----------
-    scoring : str, callable, list, tuple, dict or None
+    scoring : str, callable, list, tuple, or dict
         The scoring method to use to monitor the model.
 
         If `scoring` represents a single score, one can use:
 
         - a single string (see :ref:`scoring_string_names`);
         - a callable (see :ref:`scoring_callable`) that returns a single value;
-        - `None`, the `estimator`'s
-          :ref:`default evaluation criterion <scoring_api_overview>` is used.
 
         If `scoring` represents multiple scores, one can use:
 
@@ -101,38 +99,36 @@ class ScoringMonitor:
     """
 
     @validate_params(
-        {"scoring": [str, callable, list, tuple, dict, None]},
+        {"scoring": [str, callable, list, tuple, dict]},
         prefer_skip_nested_validation=True,
     )
     def __init__(self, *, scoring):
+        from sklearn.metrics import check_scoring
         from sklearn.metrics._scorer import _BaseScorer
 
-        self._scoring = scoring
         # Turn the scorer into a MultimetricScorer for convenience
         if isinstance(scoring, str):
-            self._scoring = [scoring]
+            self._scorer = check_scoring(scoring=[scoring])
         elif callable(scoring) and isinstance(scoring, _BaseScorer):
-            self._scoring = {"score": scoring}
+            self._scorer = check_scoring(scoring={"score": scoring})
+        else:
+            self._scorer = check_scoring(scoring=scoring)
 
         self._log = []
-        self._estimator_scorers = {}
 
-        # Handle to the main-process listener, opened eagerly so that any worker that
-        # receives a pickled copy of this callback can send data to the main process.
-        # `self._log.append` is the message consumer that `send` calls will use to
-        # to grow the main process's log.
-        self._listener_handle = open_listener(self._log.append, owner=self)
+        # Opened eagerly so that a worker that receives a pickled copy of this callback
+        # can send data to the main process. `self._log.append` is the message consumer
+        # that grows the log in the main process.
+        self._channel = Channel(message_consumer=self._log.append)
 
     def setup(self, estimator, context):
-        # A scorer per estimator is needed to avoid race conditions when the callback is
-        # set on different estimators and the scorer is the estimator's default scorer.
-        if estimator not in self._estimator_scorers:
-            from sklearn.metrics import check_scoring
-
-            self._estimator_scorers[estimator] = check_scoring(estimator, self._scoring)
+        pass
 
     def teardown(self, estimator, context):
-        self._estimator_scorers.pop(estimator, None)
+        # Nothing more will be sent for this fit. The channel itself outlives the fit,
+        # since this callback keeps logging across fits, but the connection a worker
+        # copy holds is released here rather than whenever that copy is collected.
+        self._channel.disconnect()
 
     def on_fit_task_begin(self, estimator, context):
         pass
@@ -172,16 +168,21 @@ class ScoringMonitor:
         scores = {}
         metadata = {} if metadata is None else metadata
         if X is not None and y is not None:
-            scorer = self._estimator_scorers[estimator]
-            scores.update(scorer(fitted_estimator, X, y, **metadata))
+            scores.update(self._scorer(fitted_estimator, X, y, **metadata))
 
-        send(self._listener_handle, (run_id, run_info, task_info_path, scores))
+        self._channel.send((run_id, run_info, task_info_path, scores))
+
+    def __getstate__(self):
+        # `_log` is grown by a background thread, which can run while this callback is
+        # being pickled by another thread, e.g. loky's queue feeder when a task is
+        # dispatched to a worker. The pickler must therefore never walk the live list.
+        return {**self.__dict__, "_log": list(self._log)}
 
     def __setstate__(self, state):
-        """Restore state, opening a fresh listener if the inherited one is unusable."""
+        """Restore state, opening a fresh channel if the inherited one is unusable."""
         self.__dict__.update(state)
-        if not can_reuse_listener(self._listener_handle):
-            self._listener_handle = open_listener(self._log.append, owner=self)
+        if not self._channel.is_reusable():
+            self._channel = Channel(message_consumer=self._log.append)
 
     @validate_params(
         {

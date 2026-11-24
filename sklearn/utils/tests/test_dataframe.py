@@ -3,7 +3,6 @@
 import numpy as np
 import pytest
 
-from sklearn._min_dependencies import dependent_packages
 from sklearn.utils._dataframe import is_df_or_series, is_polars_df
 from sklearn.utils._testing import _convert_container
 
@@ -16,20 +15,9 @@ def test_is_df_or_series(constructor_name):
     assert not is_df_or_series(np.asarray([1, 2, 3]))
 
 
-@pytest.mark.parametrize(
-    "constructor_name, minversion",
-    [
-        ("pyarrow", dependent_packages["pyarrow"][0]),
-        ("pandas", dependent_packages["pandas"][0]),
-        ("polars", dependent_packages["polars"][0]),
-    ],
-)
-def test_is_polars_df_other_libraries(constructor_name, minversion):
-    df = _convert_container(
-        [[1, 4, 2], [3, 3, 6]],
-        constructor_name,
-        minversion=minversion,
-    )
+@pytest.mark.parametrize("constructor_name", ["pyarrow", "pandas", "polars"])
+def test_is_polars_df_other_libraries(constructor_name):
+    df = _convert_container([[1, 4, 2], [3, 3, 6]], constructor_name)
     if constructor_name in ("pyarrow", "pandas"):
         assert not is_polars_df(df)
     else:

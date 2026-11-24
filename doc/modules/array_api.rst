@@ -46,13 +46,13 @@ devices might also work out of the box.
        see :ref:`device_support_for_float64`
    * - `CuPy <https://cupy.dev/>`__
      - `Install <https://docs.cupy.dev/en/stable/install.html>`__
-     - CUDA
+     - NVIDIA GPU (CUDA)
      -
    * - `dpnp <https://intelpython.github.io/dpnp/>`__
      - `Install <https://intelpython.github.io/dpnp/quick_start_guide.html>`__
      - CPU, Intel GPU (SYCL)
-     - See install link for driver setup; see :ref:`xpu_support`;
-       see :ref:`device_support_for_float64`
+     - :ref:`device_support_for_float64`
+
 
 Coverage is expected to grow over time.
 
@@ -69,9 +69,9 @@ not affect the rest of the documentation.
 Scikit-learn's support for the array API standard requires the environment variable
 `SCIPY_ARRAY_API` to be set to `1` before importing `scipy` and `scikit-learn`:
 
-.. prompt:: bash $
+.. code-block:: console
 
-   export SCIPY_ARRAY_API=1
+   $ export SCIPY_ARRAY_API=1
 
 Please note that this environment variable is intended for temporary use.
 For more details, refer to SciPy's `Array API documentation
@@ -159,15 +159,16 @@ Estimators
 ----------
 
 - :class:`covariance.LedoitWolf` (see :ref:`device_support_for_float64`)
+- :class:`covariance.OAS` (see :ref:`device_support_for_float64`)
 - :class:`decomposition.PCA` (with `svd_solver="full"`, `svd_solver="covariance_eigh"`, or
   `svd_solver="randomized"` (`svd_solver="randomized"` only if `power_iteration_normalizer="QR"`))
 - :class:`kernel_approximation.Nystroem`
 - :class:`linear_model.LogisticRegression` (with `solver="lbfgs"` and `solver="newton-cg"`)
 - :class:`linear_model.LogisticRegressionCV` (with `solver="lbfgs"` and `solver="newton-cg"`)
-- :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"`)
-- :class:`linear_model.Ridge` (with `solver="svd"`)
+- :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"` and `solver="newton-cg"`)
+- :class:`linear_model.Ridge` (with `solver="cholesky"` and `solver="svd"`)
 - :class:`linear_model.RidgeCV` (see :ref:`device_support_for_float64`)
-- :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
+- :class:`linear_model.RidgeClassifier` (with `solver="cholesky"` and `solver="svd"`)
 - :class:`linear_model.RidgeClassifierCV` (see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`naive_bayes.GaussianNB`
@@ -200,12 +201,15 @@ Metrics
 -------
 
 - :func:`sklearn.metrics.accuracy_score`
+- :func:`sklearn.metrics.auc`
 - :func:`sklearn.metrics.average_precision_score`
 - :func:`sklearn.metrics.balanced_accuracy_score`
 - :func:`sklearn.metrics.brier_score_loss`
 - :func:`sklearn.metrics.calinski_harabasz_score`
+- :func:`sklearn.metrics.cluster.contingency_matrix`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
+- :func:`sklearn.metrics.coverage_error`
 - :func:`sklearn.metrics.d2_absolute_error_score`
 - :func:`sklearn.metrics.d2_brier_score`
 - :func:`sklearn.metrics.d2_log_loss_score`
@@ -252,6 +256,7 @@ Metrics
 - :func:`sklearn.metrics.precision_recall_fscore_support`
 - :func:`sklearn.metrics.r2_score`
 - :func:`sklearn.metrics.recall_score`
+- :func:`sklearn.metrics.roc_auc_score` (see :ref:`device_support_for_float64`)
 - :func:`sklearn.metrics.roc_curve`
 - :func:`sklearn.metrics.root_mean_squared_error`
 - :func:`sklearn.metrics.root_mean_squared_log_error`
@@ -376,10 +381,10 @@ not be executed or have missing dependencies will be automatically skipped.
 Therefore it's important to run the tests with the `-v` flag to see which
 checks are skipped:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    pip install array-api-strict  # and other libraries as needed
-    pytest -k "array_api" -v
+    $ pip install array-api-strict  # and other libraries as needed
+    $ pytest -k "array_api" -v
 
 Running the scikit-learn tests against `array-api-strict` should help reveal
 most code problems related to handling multiple device inputs via the use of
@@ -414,9 +419,9 @@ writing. See the following github issue for more details:
 To enable the MPS support in PyTorch, set the environment variable
 `PYTORCH_ENABLE_MPS_FALLBACK=1` before running the tests:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
+    $ PYTORCH_ENABLE_MPS_FALLBACK=1 pytest -k "array_api" -v
 
 At the time of writing all scikit-learn tests should pass, however, the
 computational speed is not necessarily better than with the CPU device.
@@ -439,9 +444,18 @@ with `float64` support.
 
 .. _xpu_support:
 
-Note on Intel GPU support
--------------------------
+Note on XPU device support
+--------------------------
 
+XPU is PyTorch's device name for Intel GPUs.
 PyTorch XPU support is only available in PyTorch >= 2.12. For detailed compatibility
 information and setup instructions, see the `PyTorch XPU documentation
-<https://docs.pytorch.org/docs/2.12/notes/get_start_xpu.html>`__.
+<https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html>`__.
+
+PyTorch 2.15 or later is strongly recommended since previous versions
+are known to suffer from serious correctness or performance bugs when
+using the XPU device on scikit-learn related workloads.
+
+`dpnp <https://intelpython.github.io/dpnp/>`__ also runs on Intel GPUs, through
+SYCL, independently of PyTorch. See the dpnp install link in the table above for
+its driver setup.

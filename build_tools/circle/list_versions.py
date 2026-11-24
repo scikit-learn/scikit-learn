@@ -85,8 +85,12 @@ for path_details in root_listing:
     if not (name[:1].isdigit() or name in NAMED_DIRS):
         continue
     if path_details["type"] == "dir":
-        html = urlopen(RAW_FMT % name).read().decode("utf8")
-        version_num = VERSION_RE.search(html).group(1)
+        url = RAW_FMT % name
+        html = urlopen(url).read().decode("utf8")
+        regex_match = VERSION_RE.search(html)
+        if regex_match is None:
+            raise ValueError(f"Could not find scikit-learn version in {url}")
+        version_num = regex_match.group(1)
         file_size = get_file_size(name)
         dirs[name] = (version_num, file_size)
 

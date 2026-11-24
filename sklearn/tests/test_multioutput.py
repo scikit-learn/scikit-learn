@@ -46,6 +46,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import (
     BSR_CONTAINERS,
@@ -195,6 +196,7 @@ n_classes = len(np.unique(y1))
 classes = list(map(np.unique, (y1, y2, y3)))
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 # TODO: remove mark once loky bug is fixed:
 # https://github.com/joblib/loky/issues/458
 @pytest.mark.thread_unsafe
@@ -308,6 +310,7 @@ def test_multi_output_classification_partial_fit_no_first_classes_exception():
         multi_target_linear.partial_fit(X, y)
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 def test_multi_output_classification():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict, prodict_proba and score
@@ -741,6 +744,8 @@ def test_regressor_chain_w_fit_params():
         assert est.sample_weight_ is weight
 
 
+# TODO(1.14): remove filterwarnings with deprecation period of C and Cs
+@pytest.mark.filterwarnings("ignore:.*'C.*?' was deprecated.*:FutureWarning")
 @pytest.mark.parametrize(
     "MultiOutputEstimator, Estimator",
     [(MultiOutputClassifier, LogisticRegression), (MultiOutputRegressor, Ridge)],

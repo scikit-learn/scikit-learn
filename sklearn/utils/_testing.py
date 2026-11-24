@@ -21,7 +21,7 @@ from collections import defaultdict, namedtuple
 from collections.abc import Iterable
 from dataclasses import dataclass
 from difflib import context_diff
-from functools import wraps
+from functools import partial, wraps
 from inspect import signature
 from itertools import chain, groupby
 from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
@@ -29,6 +29,7 @@ from subprocess import STDOUT, CalledProcessError, TimeoutExpired, check_output
 import joblib
 import numpy as np
 import scipy as sp
+from numpy.exceptions import VisibleDeprecationWarning
 from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import (
     assert_almost_equal,
@@ -51,7 +52,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils.fixes import (
     _IS_32BIT,
-    VisibleDeprecationWarning,
+    _IS_WASM,
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils.multiclass import check_classification_targets
@@ -333,6 +334,31 @@ try:
         reason="SCIPY_ARRAY_API not set, or versions of NumPy/SciPy too old.",
     )
 
+    # This is for tests that are known to fail when run with n_jobs > 1 and
+    # backend="threading". The failures don't always happen, so it's a skip
+    # instead of xfail. The plan for this to remove it from each test as fixes
+    # are merged; once all fixes are merged it can be deleted. See
+    # https://github.com/scikit-learn/scikit-learn/issues/35313 for details.
+    #
+    # Structured as an explicit decorator because pytest.mark.skipif checks too
+    # early: at import instead of at runtime.
+    def skip_if_use_threading_backend_with_high_parallelism(func):
+        @functools.wraps(func)
+        def test(*args, **kwargs):
+            if (
+                os.environ.get(
+                    "SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM"
+                )
+                == "1"
+            ):
+                pytest.skip(
+                    "Known intermittent failure that needs to be fixed; see "
+                    + "https://github.com/scikit-learn/scikit-learn/issues/35313"
+                )
+            return func(*args, **kwargs)
+
+        return test
+
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #
     #  Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction
@@ -358,6 +384,9 @@ try:
     skip_if_no_numpydoc = pytest.mark.skipif(
         not _is_numpydoc(),
         reason="numpydoc is required to test the docstrings",
+    )
+    skip_callback_test_if_wasm = pytest.mark.skipif(
+        _IS_WASM, reason="callback tests are skipped on WASM/Pyodide"
     )
 except ImportError:
     pass
@@ -1314,6 +1343,9 @@ def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
         The importable name of the array namespace module.
     device_name : str or None, default=None
         The device name for array allocation. Can be None for default device.
+    dtype_name : str or None, default=None
+        The name of the data type. If passed, used to skip the test if
+        dtype not supported for a specific namespace and device.
 
     Returns
     -------
@@ -1412,9 +1444,9 @@ def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
 def _get_warnings_filters_info_list():
     @dataclass
     class WarningInfo:
-        action: "warnings._ActionKind"  # type: ignore[annotation-unchecked]
-        message: str = ""  # type: ignore[annotation-unchecked]
-        category: type[Warning] = Warning  # type: ignore[annotation-unchecked]
+        action: "warnings._ActionKind"
+        message: str = ""
+        category: type[Warning] = Warning
 
         def to_filterwarning_str(self):
             if self.category.__module__ == "builtins":
@@ -1428,18 +1460,6 @@ def _get_warnings_filters_info_list():
         WarningInfo("error", category=DeprecationWarning),
         WarningInfo("error", category=FutureWarning),
         WarningInfo("error", category=VisibleDeprecationWarning),
-        # TODO: remove when pyamg > 5.0.1
-        # Avoid a deprecation warning due pkg_resources usage in pyamg.
-        WarningInfo(
-            "ignore",
-            message="pkg_resources is deprecated as an API",
-            category=DeprecationWarning,
-        ),
-        WarningInfo(
-            "ignore",
-            message="Deprecated call to `pkg_resources",
-            category=DeprecationWarning,
-        ),
         # pytest-cov issue https://github.com/pytest-dev/pytest-cov/issues/557 not
         # fixed although it has been closed. https://github.com/pytest-dev/pytest-cov/pull/623
         # would probably fix it.
@@ -1518,18 +1538,12 @@ def _get_warnings_filters_info_list():
             message="vert. bool was deprecated in Matplotlib",
             category=DeprecationWarning,
         ),
-        # TODO(1.10): remove PassiveAggressive
-        WarningInfo(
-            "ignore",
-            message="Class PassiveAggressive.+is deprecated",
-            category=FutureWarning,
-        ),
         # TODO: remove once the version where scipy has removed all the sparse matrix
         # classes is our min version; note that scipy did not yet announce when this
         # will happen, only that it won't be earlier than v2.2.
         WarningInfo(
             "ignore",
-            message=r"(?s).*All sparse matrix classes",
+            message=r"(?s).*All sparse matrix classes.+deprecated",
             category=DeprecationWarning,
         ),
     ]
@@ -1551,3 +1565,11 @@ def turn_warnings_into_errors():
             message=warning_info.message,
             category=warning_info.category,
         )
+
+
+def _check_name(check):
+    if hasattr(check, "__wrapped__"):
+        return _check_name(check.__wrapped__)
+    if isinstance(check, partial):
+        return check.keywords.get("check_name", check.func.__name__)
+    return check.__name__

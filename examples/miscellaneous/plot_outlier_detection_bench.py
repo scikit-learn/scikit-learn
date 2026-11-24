@@ -209,7 +209,7 @@ y = y.div(X["Lot_Area"])
 X["Misc_Feature"] = X["Misc_Feature"].cat.add_categories("NoInfo").fillna("NoInfo")
 X["Mas_Vnr_Type"] = X["Mas_Vnr_Type"].cat.add_categories("NoInfo").fillna("NoInfo")
 
-X.drop(columns="Lot_Area", inplace=True)
+X = X.drop(columns="Lot_Area")
 mask = (y < 40) | (y > 70)
 X = X.loc[mask]
 y = y.loc[mask]
@@ -257,7 +257,7 @@ for model_name in model_names:
 # %%
 X, y = fetch_openml(name="cardiotocography", version=1, return_X_y=True, as_frame=False)
 X_cardiotocography = X  # save X for later use
-s = y == "3"
+s = y.astype(str) == "3"
 y = s.astype(np.int32)
 
 n_samples, anomaly_frac = X.shape[0], y.mean()

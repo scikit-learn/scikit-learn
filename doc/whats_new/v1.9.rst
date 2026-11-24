@@ -15,6 +15,152 @@ For a short description of the main highlights of the release, please refer to
 
 .. towncrier release notes start
 
+.. _changes_1_9_1:
+
+Version 1.9.1
+=============
+
+**September 2026**
+
+Support for Array API
+---------------------
+
+- |Fix| Fixed classification metrics to accept pandas labels when array API dispatch
+  is enabled and predictions are from a different array API namespace or
+  device.
+  By :user:`Olivier Grisel <ogrisel>`. :pr:`34779`
+
+Metadata routing
+----------------
+
+Refer to the :ref:`Metadata Routing User Guide <metadata_routing>` for
+more details.
+
+- |Fix| Metadata is now correctly routed to the sub-estimator of meta-estimators such as
+  :class:`feature_selection.SelectFromModel`, :class:`feature_selection.RFE`,
+  :class:`feature_selection.RFECV`, :class:`feature_selection.SequentialFeatureSelector`,
+  and :class:`impute.IterativeImputer` when they are used as an intermediate step of a
+  :class:`pipeline.Pipeline`, i.e. when their composite ``fit_transform`` method is the
+  target of the routing. Previously, metadata such as ``sample_weight`` was silently
+  dropped in this case.
+  By :user:`Adrin Jalali <adrinjalali>` and :user:`Kyle Schluns <kschluns>`. :pr:`30869`
+
+- |Fix| :class:`ensemble.BaggingClassifier` now correctly routes metadata via `predict` and
+  `predict_proba` dynamically to the corresponding method on the sub-estimator.
+  By :user:`Stefanie Senger <StefanieSenger>`. :pr:`34188`
+
+- |Fix| :class:`pipeline.Pipeline`'s :meth:`~pipeline.Pipeline.fit_transform` and
+  :meth:`~pipeline.Pipeline.fit_predict` now correctly apply ``transform_input`` to
+  metadata routed to intermediate steps, matching :meth:`~pipeline.Pipeline.fit`.
+  By :user:`Stefanie Senger <StefanieSenger>`. :pr:`34201`
+
+- |Fix| :class:`compose.TransformedTargetRegressor` now correctly routes metadata such as
+  ``sample_weight`` to its default regressor (:class:`~linear_model.LinearRegression`)
+  when metadata routing is enabled.
+  By :user:`Stefanie Senger <StefanieSenger>`. :pr:`34224`
+
+Callbacks
+---------
+
+- |Fix| Fixed a bug where fitting an estimator with a :class:`callback.ScoringMonitor` and a
+  parallel backend using multi-processing could fail with "Could not pickle the task to
+  send it to the workers".
+  By :user:`Jérémie du Boisberranger <jeremiedbb>`. :pr:`34821`
+
+:mod:`sklearn.cluster`
+----------------------
+
+- |Fix| :class:`cluster.DBSCAN` and :func:`cluster.dbscan` no longer raise a
+  spurious :class:`~sklearn.exceptions.EfficiencyWarning` when given a
+  precomputed sparse distance matrix.
+  By :user:`Vadim <Tweezky66>`. :pr:`34399`
+
+- |Fix| :class:`cluster.OPTICS` no longer raises a
+  :class:`~sklearn.exceptions.EfficiencyWarning` when fitted on a
+  precomputed sparse distance matrix.
+  By :user:`Dea María Léon <deamarialeon>`. :pr:`34692`
+
+:mod:`sklearn.datasets`
+-----------------------
+
+- |Fix| :func:`datasets.fetch_openml` now correctly recovers from a corrupted
+  download by re-downloading it, instead of raising an error.
+  By :user:`Roman Yurchak <rth>`. :pr:`34262`
+
+- |Fix| :func:`datasets.fetch_file` now raises a `ValueError` when `local_filename`
+  is a path instead of a plain filename.
+  By :user:`Dea María Léon <DeaMariaLeon>`. :pr:`34815`
+
+:mod:`sklearn.discriminant_analysis`
+------------------------------------
+
+- |Fix| :class:`discriminant_analysis.LinearDiscriminantAnalysis` and
+  :class:`discriminant_analysis.QuadraticDiscriminantAnalysis` now return the same results
+  when using `solver="svd"` and `solver="eigen"`. The normalization for `solver="svd"`
+  is changed to `1/n_samples` instead of `1/(n_samples - n_classes)` and `1/(n_samples - 1)`,
+  respectively, which is consistent with the maximum likelihood covariance estimator
+  (same as the `solver="eigen"` default).
+  By :user:`Daniel Herrera-Esposito <dherrera1911>`. :pr:`33626`
+
+:mod:`sklearn.metrics`
+----------------------
+
+- |Efficiency| Scorers created with :func:`~metrics.make_scorer` no longer deep-copy metadata
+  kwargs on each call, reducing memory usage during model selection and
+  cross-validation.
+  By :user:`Stefanie Senger <StefanieSenger>`. :pr:`34236`
+
+:mod:`sklearn.neighbors`
+------------------------
+
+- |Fix| :meth:`neighbors.NearestNeighbors.radius_neighbors` now correctly handles an
+  array-like ``radius`` when ``n_jobs > 1`` with the ``ball_tree`` and
+  ``kd_tree`` algorithms.
+  By :user:`Nicolas Salvy <nicolassalvy>`. :pr:`34341`
+
+:mod:`sklearn.preprocessing`
+----------------------------
+
+- |Fix| Fixed a bug in :class:`preprocessing.QuantileTransformer` where fitting on
+  sparse data with `ignore_implicit_zeros=True` and subsampling could compute
+  degenerate quantiles for some features.
+  By :user:`Arthur Lacote <cakedev0>`. :pr:`32587`
+
+:mod:`sklearn.svm`
+------------------
+
+- |Fix| Fixed a memory leak when calling the `fit` method of :class:`svm.LinearSVR`.
+  By :user:`Jake VanderPlas <jakevdp>`. :pr:`34256`
+
+- |Fix| Fixed an out-of-bound write in the ``fit`` method of :class:`svm.LinearSVC` memory
+  when using ``multi_class="crammer_singer"``.  By :user:`Jake VanderPlas <jakevdp>`. :pr:`34273`
+
+:mod:`sklearn.utils`
+--------------------
+
+- |Fix| The HTML representation of estimators now truncates the output feature list
+  to 100 entries to improve rendering performance for estimators with many
+  output features.
+  By :user:`Dea María Léon <deamarialeon>`. :pr:`34362`
+
+- |Fix| Array API supporting functions and estimators that handle mixed input
+  namespaces now make negative-stride NumPy arrays contiguous before
+  transferring them to PyTorch through DLPack, avoiding a Python process
+  abort in ``torch.from_dlpack``.
+  By :user:`Yin Li <Kevin-Li-2025>`. :pr:`34380`
+
+- |Fix| The copy-to-clipboard icons in the HTML representation of estimators are
+  now rendered as ``<button>`` elements with an ``aria-label`` and a visible
+  focus outline, instead of non-interactive ``<i>`` elements, so they are
+  reachable and usable with a keyboard and screen readers.
+  By :user:`Dea María Léon <deamarialeon>`. :pr:`34429`
+
+- |Fix| ``set_output(transform="polars")`` no longer emits a
+  ``DeprecationWarning`` with ``polars>=1.42.1`` by using
+  ``how="horizontal_extend"`` instead of the deprecated
+  ``how="horizontal"`` when concatenating polars dataframes.
+  By :user:`Felix Hoehle <fhoehle>`. :pr:`34447`
+
 .. _changes_1_9_0:
 
 Version 1.9.0
@@ -806,26 +952,32 @@ Callbacks
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.8, including:
 
-AAAZZZR, ABHISHEK, Adrin Jalali, Agnus Paul, Albert Dorador Chalar, Alex
-Kuleshov, alexshacked, ANAND VENUGOPAL, Andres Nayeem Mejia, Andy, Anne Beyer,
-antoinebaker, Anvay, Arthur, Arthur Lacote, Arturo Amor, Ashutosh Devpura,
-Auguste Baum, Balaji Seshadri, baynecheke, Ben Pedigo, Bharat Raghunathan,
-Bodhi Russell Silberling, Bodhi Silberling, Chaitanya Dasari, Chani Fainendler,
-Charlie Tonneslan, Christian Lorentzen, Christian Veenhuis, Christine P. Chai,
-CipherCat, clijo, Copilot, C. Titus Brown, cui, Daniel Agyapong,
+AAAZZZR, ABHISHEK, Adrin Jalali, Agnus Paul, Ajay Raj, Akshita Sure, Albert
+Dorador Chalar, Alex Kuleshov, alexshacked, Alireza, Amine Abdellaziz, ANAND
+VENUGOPAL, Andres Nayeem Mejia, Andy, Anne Beyer, antoinebaker, Anton Karpov,
+Anvay, Arthur, Arthur Lacote, Arturo Amor, Ashutosh Devpura, Auguste Baum,
+Balaji Seshadri, baynecheke, Ben Pedigo, Bharat Raghunathan, Bodhi Russell
+Silberling, Bodhi Silberling, Bora Yongacoglu, camxx44, Chaitanya Dasari, Chani
+Fainendler, Charlie Tonneslan, Christian Lorentzen, Christian Veenhuis,
+Christian Yoon, Christine P. Chai, CipherCat, clijo, Colin Watson, C. Titus Brown, cui,
+Daniel Agyapong, Daniel Herrera-Esposito, Daniel R. Cassar,
 danilo-silva-ufsc, Dan Schult, david-cortes-intel, Dea María Léon, Dhruv Sharma,
 DhyeyTeraiya, Dimitri Papadopoulos Orfanos, Dmitry Kobak, EdenRochmanSharabi,
-Emily (Xinyi) Chen, Eric Prestat, fabianhenning, Florian Bourgey, François Paugam,
-Gaetan, GarimaGarg222, GAUTAM V DATLA, Guillaume Lemaitre, holodata-ej, Ho Yin Chau,
-Isaacc, Itamar Turner-Trauring, Jake Blitch, James Dean, James Lamb, Jérémie du
-Boisberranger, Jim Crist-Harif, John Hendricks, Junteng Li, Karthik, Kiyarash
-Fazeli, Kunle, Lev, Levente Csibi, Loic Esteve, Lucas Colley, Lucas Oliveira,
-Lucy Liu, Marco Edward Gorelli, marikabergengren, Matthias De Lozzo, Mohammad
-Ahmadullah Khan, Nguyen Cat Luong, Nikita, Nithurshen, Olivier Grisel, Omar
-Salman, pavitra danappa byali, pomrakna, prakritim01, Quentin Barthélemy, Ralf
-Gommers, Ram, Remi Gau, Reshama Shaikh, Riya Jha, Robert Pollak, Rudrendu Paul,
-Samuel O. Ronsin, Sarvesh V, sauravyadav1008, Seyi Kuforiji,
-shifanaaaa, Shruti Nath, Shyan Paul, Simon-Martin Schröder, Sophia Houhamdi,
-Stanislav Terliakov, Stefanie Senger, Taoufik KEHAL, Tejas, TejasAnalyst,
-Thomas Moreau, Thomas S., Tim Head, Unique Shrestha, Varun Agnihotri, Virgil
-Chan, Wiktor Olszowy, Xiao Yuan, Yann Lechelle
+eeshsaxena, Elizabeth DuPre, Emily (Xinyi) Chen, Eric Prestat, ethanglaser,
+fabianhenning, fhoehle, Florian Bourgey, François Paugam, Gaetan, Gaétan de Castellane,
+GarimaGarg222, GAUTAM V DATLA, Guillaume Lemaitre, Harsh Kumar Singh, Hashirama Senju,
+holodata-ej, Ho Yin Chau, imKartik5451, Isaacc, Itamar Turner-Trauring, Jake Blitch,
+Jake Vanderplas, James Dean, James Lamb, Jérémie du Boisberranger, Jim
+Crist-Harif, John Hendricks, Junteng Li, Karthik, Kiyarash  Fazeli, Kropiunig,
+Kunle, Lev, Levente Csibi, Lisa, Loic Esteve, Lucas Colley, Lucas Oliveira,
+Lucy Liu, Luke Brace, Marco Edward Gorelli, marikabergengren, Martina
+Cvincekova, Matthias De Lozzo, Mohammad Ahmadullah Khan, Nguyen Cat Luong,
+Nicolas Salvy, Nikita, Nithurshen, Olivier Grisel, Omar Salman, pavitra danappa
+byali, pomrakna, prakritim01, Quentin Barthélemy, Ralf Gommers, Ram, Remi Gau,
+Reshama Shaikh, Riya Jha, Robert Pollak, Roman Yurchak, Rudrendu Paul, Samuel
+O. Ronsin, Sarvesh V, sauravyadav1008, Sepuri Sai Krishna, Seyi Kuforiji, Shadow_Lu,
+shifanaaaa, Shruti Nath, Shubhan Chari, Shyan Paul, Simon-Martin Schröder,
+Sophia Houhamdi, Stanislav Terliakov, Stefanie Senger, Taoufik KEHAL, Tejas,
+TejasAnalyst, Thomas J. Fan, Thomas Moreau, Thomas S., Tim Head, Tweezky66,
+Unique Shrestha, Varun Agnihotri, Vashita, vashita-pandey, Veer Tiwari, Virgil Chan,
+Wiktor Olszowy, Xiao Yuan, Yann Lechelle, Yin Li

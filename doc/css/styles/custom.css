@@ -305,6 +305,9 @@ div.sk-text-image-grid-large {
     height: auto !important;
     width: auto;
     display: inline-block;
+    /* The wordmark is near-black, so keep it on white in dark mode. */
+    background-color: white;
+    border-radius: 3px;
   }
 }
 

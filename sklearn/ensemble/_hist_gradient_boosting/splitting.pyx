@@ -166,6 +166,7 @@ cdef class Splitter:
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
+        unsigned int [::1] all_features
         const unsigned int [::1] n_bins_non_missing
         uint8_t missing_values_bin_idx
         const uint8_t [::1] has_missing_values
@@ -184,24 +185,32 @@ cdef class Splitter:
         unsigned int [::1] right_indices_buffer
         int n_threads
 
-    def __init__(self,
-                 const X_BINNED_DTYPE_C [::1, :] X_binned,
-                 const unsigned int [::1] n_bins_non_missing,
-                 const uint8_t missing_values_bin_idx,
-                 const uint8_t [::1] has_missing_values,
-                 const uint8_t [::1] is_categorical,
-                 const signed char [::1] monotonic_cst,
-                 Y_DTYPE_C l2_regularization,
-                 Y_DTYPE_C min_hessian_to_split=1e-3,
-                 unsigned int min_samples_leaf=20,
-                 Y_DTYPE_C min_gain_to_split=0.,
-                 uint8_t hessians_are_constant=False,
-                 Y_DTYPE_C feature_fraction_per_split=1.0,
-                 rng=np.random.RandomState(),
-                 unsigned int n_threads=1):
+    def __init__(
+        self,
+        const X_BINNED_DTYPE_C [::1, :] X_binned,
+        const unsigned int [::1] n_bins_non_missing,
+        const uint8_t missing_values_bin_idx,
+        const uint8_t [::1] has_missing_values,
+        const uint8_t [::1] is_categorical,
+        const signed char [::1] monotonic_cst,
+        Y_DTYPE_C l2_regularization,
+        Y_DTYPE_C min_hessian_to_split=1e-3,
+        unsigned int min_samples_leaf=20,
+        Y_DTYPE_C min_gain_to_split=0.,
+        uint8_t hessians_are_constant=False,
+        Y_DTYPE_C feature_fraction_per_split=1.0,
+        rng=np.random.RandomState(),
+        unsigned int n_threads=1,
+        unsigned int [::1] partition_buffer=None,
+        unsigned int [::1] left_indices_buffer=None,
+        unsigned int [::1] right_indices_buffer=None,
+    ):
+        cdef:
+            int i
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
+        self.all_features = np.arange(self.n_features, dtype=np.uint32)
         self.n_bins_non_missing = n_bins_non_missing
         self.missing_values_bin_idx = missing_values_bin_idx
         self.has_missing_values = has_missing_values
@@ -225,10 +234,21 @@ cdef class Splitter:
         # partition = [cef|abdghijkl]
         # we have 2 leaves, the left one is at position 0 and the second one at
         # position 3. The order of the samples is irrelevant.
-        self.partition = np.arange(X_binned.shape[0], dtype=np.uint32)
+        if partition_buffer is None:
+            self.partition = np.arange(X_binned.shape[0], dtype=np.uint32)
+        else:
+            for i in range(X_binned.shape[0]):
+                partition_buffer[i] = i
+            self.partition = partition_buffer
         # buffers used in split_indices to support parallel splitting.
-        self.left_indices_buffer = np.empty_like(self.partition)
-        self.right_indices_buffer = np.empty_like(self.partition)
+        if left_indices_buffer is None:
+            self.left_indices_buffer = np.empty_like(self.partition)
+        else:
+            self.left_indices_buffer = left_indices_buffer
+        if right_indices_buffer is None:
+            self.right_indices_buffer = np.empty_like(self.partition)
+        else:
+            self.right_indices_buffer = right_indices_buffer
 
     def split_indices(Splitter self, split_info, unsigned int [::1]
                       sample_indices):
@@ -478,51 +498,46 @@ cdef class Splitter:
             int feature_idx
             int split_info_idx
             int best_split_info_idx
-            int n_allowed_features
+            int n_split_candidates
             split_info_struct split_info
             split_info_struct * split_infos
             const uint8_t [::1] has_missing_values = self.has_missing_values
             const uint8_t [::1] is_categorical = self.is_categorical
             const signed char [::1] monotonic_cst = self.monotonic_cst
             int n_threads = self.n_threads
-            bint has_interaction_cst = False
             Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
-            uint8_t [:] subsample_mask  # same as npy_bool
-            int n_subsampled_features
+            const unsigned int [:] split_features
             uint8_t missing_go_to_left
 
-        has_interaction_cst = allowed_features is not None
-        if has_interaction_cst:
-            n_allowed_features = allowed_features.shape[0]
+        if allowed_features is None:
+            split_features = self.all_features
         else:
-            n_allowed_features = self.n_features
+            split_features = allowed_features
+
+        n_split_candidates = split_features.shape[0]
 
         if feature_fraction_per_split < 1.0:
             # We do all random sampling before the nogil and make sure that we sample
-            # exactly n_subsampled_features >= 1 features.
-            n_subsampled_features = max(
+            # exactly n_split_candidates >= 1 features.
+            n_split_candidates = max(
                 1,
-                int(ceil(feature_fraction_per_split * n_allowed_features)),
+                int(ceil(feature_fraction_per_split * n_split_candidates)),
             )
-            subsample_mask_arr = np.full(n_allowed_features, False)
-            subsample_mask_arr[:n_subsampled_features] = True
-            self.rng.shuffle(subsample_mask_arr)
-            # https://github.com/numpy/numpy/issues/18273
-            subsample_mask = subsample_mask_arr
+            split_features = self.rng.choice(
+                split_features, n_split_candidates, replace=False,
+            )
+            split_features = np.sort(split_features)
 
         with nogil:
 
             split_infos = <split_info_struct *> malloc(
-                n_allowed_features * sizeof(split_info_struct))
+                n_split_candidates * sizeof(split_info_struct))
 
-            # split_info_idx is index of split_infos of size n_allowed_features.
+            # split_info_idx is index of split_infos of size n_split_candidates.
             # features_idx is the index of the feature column in X.
-            for split_info_idx in prange(n_allowed_features, schedule='static',
+            for split_info_idx in prange(n_split_candidates, schedule='static',
                                          num_threads=n_threads):
-                if has_interaction_cst:
-                    feature_idx = allowed_features[split_info_idx]
-                else:
-                    feature_idx = split_info_idx
+                feature_idx = split_features[split_info_idx]
 
                 split_infos[split_info_idx].feature_idx = feature_idx
 
@@ -533,13 +548,6 @@ cdef class Splitter:
                 # node into a leaf.
                 split_infos[split_info_idx].gain = -1
                 split_infos[split_info_idx].is_categorical = is_categorical[feature_idx]
-
-                # Note that subsample_mask is indexed by split_info_idx and not by
-                # feature_idx because we only need to exclude the same features again
-                # and again. We do NOT need to access the features directly by using
-                # allowed_features.
-                if feature_fraction_per_split < 1.0 and not subsample_mask[split_info_idx]:
-                    continue
 
                 if is_categorical[feature_idx]:
                     self._find_best_bin_to_split_category(
@@ -570,7 +578,7 @@ cdef class Splitter:
             # then compute best possible split among all features
             # split_info is set to the best of split_infos
             best_split_info_idx = self._find_best_feature_to_split_helper(
-                split_infos, n_allowed_features
+                split_infos, n_split_candidates
             )
             split_info = split_infos[best_split_info_idx]
 
@@ -600,14 +608,14 @@ cdef class Splitter:
     cdef int _find_best_feature_to_split_helper(
         self,
         split_info_struct * split_infos,  # IN
-        int n_allowed_features,
+        int n_split_candidates,
     ) noexcept nogil:
         """Return the index of split_infos with the best feature split."""
         cdef:
             int split_info_idx
             int best_split_info_idx = 0
 
-        for split_info_idx in range(1, n_allowed_features):
+        for split_info_idx in range(1, n_split_candidates):
             if (split_infos[split_info_idx].gain > split_infos[best_split_info_idx].gain):
                 best_split_info_idx = split_info_idx
         return best_split_info_idx

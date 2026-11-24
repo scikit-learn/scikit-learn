@@ -22,7 +22,7 @@ from sklearn.utils._array_api import (
     move_to,
     xpx,
 )
-from sklearn.utils._encode import _encode, _unique
+from sklearn.utils._encode import _encode_labels, _unique
 from sklearn.utils._param_validation import Interval, validate_params
 from sklearn.utils.multiclass import type_of_target, unique_labels
 from sklearn.utils.sparsefuncs import min_max_axis
@@ -43,8 +43,6 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
     not the input `X`.
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
-
-    .. versionadded:: 0.12
 
     Attributes
     ----------
@@ -140,7 +138,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
         if _num_samples(y) == 0:
             return xp.asarray([])
 
-        return _encode(y, uniques=self.classes_)
+        return _encode_labels(y, uniques=self.classes_)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
@@ -456,6 +454,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.array_api_support = not self.sparse_output
         tags.input_tags.two_d_array = False
         tags.target_tags.one_d_labels = True
         return tags

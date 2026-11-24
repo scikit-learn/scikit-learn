@@ -1532,6 +1532,7 @@ def test_ridge_array_api_compliance(
 def test_ridge_classifier_multilabel_array_api(
     estimator, array_namespace, device_name, dtype_name
 ):
+    estimator = clone(estimator)
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X, y = make_multilabel_classification(random_state=0)
     X_np = X.astype(dtype_name)
@@ -1594,11 +1595,11 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
     y_iris_xp = xp.asarray(y_iris[:5])
 
     available_solvers = Ridge._parameter_constraints["solver"][0].options
-    for solver in available_solvers - {"auto", "svd"}:
+    for solver in available_solvers - {"auto", "svd", "cholesky"}:
         ridge = Ridge(solver=solver, positive=solver == "lbfgs")
         expected_msg = (
             f"Array API dispatch to namespace {xp.__name__} only supports "
-            f"solver 'svd'. Got '{solver}'."
+            f"solvers 'svd' and 'cholesky'. Got '{solver}'."
         )
 
         with pytest.raises(ValueError, match=expected_msg):
@@ -1617,16 +1618,111 @@ def test_array_api_error_and_warnings_for_solver_parameter(array_namespace):
         with config_context(array_api_dispatch=True):
             ridge.fit(X_iris_xp, y_iris_xp)
 
-    ridge = Ridge()
-    expected_msg = (
-        f"Using Array API dispatch to namespace {xp.__name__} with `solver='auto'` "
-        "will result in using the solver 'svd'. The results may differ from those "
-        "when using a Numpy array, because in that case the preferred solver would "
-        "be cholesky. Set `solver='svd'` to suppress this warning."
-    )
-    with pytest.warns(UserWarning, match=expected_msg):
+    # solver="auto" resolves to "cholesky", like for NumPy inputs.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         with config_context(array_api_dispatch=True):
-            ridge.fit(X_iris_xp, y_iris_xp)
+            ridge = Ridge().fit(X_iris_xp, y_iris_xp)
+    assert ridge.solver_ == "cholesky"
+
+
+@pytest.mark.parametrize("Estimator", [Ridge, RidgeClassifier])
+def test_ridge_array_api_support_tag(Estimator):
+    """Check that the array API support tag depends on the solver."""
+    available_solvers = Estimator._parameter_constraints["solver"][0].options
+    for solver in available_solvers:
+        tags = Estimator(solver=solver).__sklearn_tags__()
+        assert tags.array_api_support is (solver in ("auto", "svd", "cholesky"))
+
+    for solver in ["auto", "lbfgs"]:
+        tags = Estimator(solver=solver, positive=True).__sklearn_tags__()
+        assert tags.array_api_support is False
+
+
+# One case per code path of the solver. `fit_intercept` and `sample_weight` are
+# handled before the solver, so they are not crossed with the code paths.
+@pytest.mark.parametrize(
+    "n_samples, n_features, alpha, fit_intercept, with_sample_weight",
+    [
+        (40, 10, 1.0, True, False),  # primal, one alpha
+        (40, 10, [1e-2, 0.1, 1.0], False, True),  # primal, one alpha per target
+        (10, 40, 1.0, False, True),  # dual, one alpha
+        (10, 40, [1e-2, 0.1, 1.0], True, False),  # dual, one alpha per target
+    ],
+)
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_ridge_cholesky_array_api(
+    n_samples,
+    n_features,
+    fit_intercept,
+    alpha,
+    with_sample_weight,
+    array_namespace,
+    device_name,
+    dtype_name,
+):
+    """Check the cholesky solver against NumPy, for tall and wide data."""
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    X, y = make_regression(
+        n_samples=n_samples, n_features=n_features, n_targets=3, random_state=0
+    )
+    X_np, y_np = X.astype(dtype_name), y.astype(dtype_name)
+    sw_np = None
+    if with_sample_weight:
+        sw_np = np.random.RandomState(0).uniform(0.5, 2, n_samples).astype(dtype_name)
+    ridge = Ridge(alpha=alpha, solver="cholesky", fit_intercept=fit_intercept)
+
+    with config_context(array_api_dispatch=False):
+        ridge_np = clone(ridge).fit(X_np, y_np, sample_weight=sw_np)
+
+    with config_context(array_api_dispatch=True):
+        X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)
+        sw_xp = None if sw_np is None else xp.asarray(sw_np, device=device)
+        ridge_xp = clone(ridge).fit(X_xp, y_xp, sample_weight=sw_xp)
+
+    assert ridge_xp.solver_ == "cholesky"
+    assert ridge_xp.coef_.dtype == X_xp.dtype
+    rtol = 1e-3 if dtype_name == "float32" else 1e-7
+    assert_allclose(
+        move_to(ridge_xp.coef_, xp=np, device="cpu"),
+        ridge_np.coef_,
+        rtol=rtol,
+        atol=_atol_for_type(dtype_name),
+    )
+    assert_allclose(
+        move_to(ridge_xp.intercept_, xp=np, device="cpu"),
+        ridge_np.intercept_,
+        rtol=rtol,
+        atol=_atol_for_type(dtype_name),
+    )
+
+
+@pytest.mark.parametrize("n_samples, n_features", [(40, 10), (10, 40)])
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_ridge_cholesky_singular_array_api(
+    n_samples, n_features, array_namespace, device_name, dtype_name
+):
+    """Check the fallback to the SVD solver on a singular system."""
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+    # Integer-valued duplicated features and samples: the Gram matrix is
+    # exactly singular.
+    rng = np.random.RandomState(0)
+    X_np = rng.randint(-3, 4, size=(n_samples // 2, n_features // 2))
+    X_np = np.tile(X_np, (2, 2)).astype(dtype_name)
+    y_np = rng.randint(-3, 4, size=n_samples).astype(dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        X_xp, y_xp = xp.asarray(X_np, device=device), xp.asarray(y_np, device=device)
+        ridge = Ridge(alpha=0.0, solver="cholesky", fit_intercept=False)
+        ridge.fit(X_xp, y_xp)
+        assert ridge.solver_ == "svd"
+        assert bool(xp.all(xp.isfinite(ridge.coef_)))
 
 
 @pytest.mark.parametrize("array_namespace", sorted(_NUMPY_NAMESPACE_NAMES))

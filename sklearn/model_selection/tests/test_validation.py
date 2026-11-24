@@ -95,6 +95,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_array_equal,
+    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
@@ -906,6 +907,25 @@ def test_permutation_test_score_params():
     permutation_test_score(clf, X, y, params={"sample_weight": np.ones(10)})
 
 
+def test_permutation_test_score_warns_when_y_constant_within_groups():
+    """Permuting within groups leaves y unchanged when each group has one value."""
+    rng = np.random.RandomState(0)
+    groups = np.repeat(np.arange(6), 5)
+    y = np.repeat([0, 1, 0, 1, 1, 0], 5)
+    X = rng.normal(size=(y.shape[0], 3))
+    with pytest.warns(UserWarning, match="single value of `y`"):
+        score, permutation_scores, pvalue = permutation_test_score(
+            LogisticRegression(),
+            X,
+            y,
+            groups=groups,
+            cv=GroupKFold(3),
+            n_permutations=5,
+        )
+    assert_array_equal(permutation_scores, np.full(5, score))
+    assert pvalue == 1.0
+
+
 def test_cross_val_score_allow_nans():
     # Check that cross_val_score allows input data with NaNs
     X = np.arange(200, dtype=np.float64).reshape(10, -1)
@@ -999,7 +1019,7 @@ def test_cross_val_predict(coo_container):
     )
     with pytest.warns(RuntimeWarning, match=warning_message):
         cross_val_predict(
-            LogisticRegression(solver="liblinear"),
+            LogisticRegression(),
             X,
             y,
             method="predict_proba",
@@ -1007,6 +1027,7 @@ def test_cross_val_predict(coo_container):
         )
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
@@ -1523,6 +1544,7 @@ def test_learning_curve_with_shuffle():
     )
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 def test_learning_curve_params():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
@@ -1869,7 +1891,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(LogisticRegression(), {"C": [0.1, 1]}, cv=2)
+    est = GridSearchCV(LogisticRegression(), {"alpha": [0.1, 1]}, cv=2)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
         check_cross_val_predict_multiclass(est, X, y, method)
 
@@ -1883,7 +1905,7 @@ def test_cross_val_predict_with_method_multilabel_ovr():
     X, y = make_multilabel_classification(
         n_samples=n_samp, n_labels=3, n_classes=n_classes, n_features=5, random_state=42
     )
-    est = OneVsRestClassifier(LogisticRegression(solver="liblinear", random_state=0))
+    est = OneVsRestClassifier(LogisticRegression())
     for method in ["predict_proba", "decision_function"]:
         check_cross_val_predict_binary(est, X, y, method=method)
 
@@ -2522,6 +2544,7 @@ def test_passed_unrequested_metadata(func, extra_args):
         )
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "func, extra_args",
     [
@@ -2630,6 +2653,7 @@ def test_validation_functions_routing(func, extra_args):
         )
 
 
+@skip_if_use_threading_backend_with_high_parallelism
 @config_context(enable_metadata_routing=True)
 def test_learning_curve_exploit_incremental_learning_routing():
     """Test that learning_curve routes metadata to the estimator correctly while

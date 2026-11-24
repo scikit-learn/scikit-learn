@@ -38,6 +38,11 @@ def _realloc_test():
         assert False
 
 
+def _py_mix_uint32(uint32_t x):
+    """Python wrapper for mix_uint32 for testing."""
+    return mix_uint32(x)
+
+
 cdef class WeightedFenwickTree:
     """
     Fenwick tree (Binary Indexed Tree) specialized for maintaining:

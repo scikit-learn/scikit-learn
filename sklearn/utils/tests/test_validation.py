@@ -61,6 +61,7 @@ from sklearn.utils.fixes import (
     DIA_CONTAINERS,
     DOK_CONTAINERS,
     _sparse_random_array,
+    parse_version,
 )
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -140,7 +141,7 @@ def test_as_float_array():
     assert as_float_array(X, copy=False) is X
     # Test that if X is fortran ordered it stays
     X = np.asfortranarray(X)
-    assert np.isfortran(as_float_array(X, copy=True))
+    assert as_float_array(X, copy=True).flags.f_contiguous
 
     # Test the copy parameter with some matrices
     matrices = [
@@ -556,10 +557,6 @@ def test_check_array_pandas_string_dtype_numeric_error():
 def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     # Test pandas numerical extension arrays with pd.NA
     pd = pytest.importorskip("pandas")
-
-    if pd_dtype in {"Float32", "Float64"}:
-        # Extension dtypes with Floats was added in 1.2
-        pd = pytest.importorskip("pandas", minversion="1.2")
 
     X_np = np.array(
         [[1, 2, 3, np.nan, np.nan], [np.nan, np.nan, 8, 4, 6], [1, 2, 3, 4, 5]]
@@ -2088,17 +2085,12 @@ def test_get_feature_names_pandas_with_ints_no_warning(names):
     assert names is None
 
 
-@pytest.mark.parametrize(
-    "constructor_name, minversion",
-    [("pyarrow", "13.0.0"), ("pandas", "1.5.0"), ("polars", "0.18.2")],
-)
-def test_get_feature_names_4_dataframes(constructor_name, minversion):
+@pytest.mark.parametrize("constructor_name", ["pyarrow", "pandas", "polars"])
+def test_get_feature_names_4_dataframes(constructor_name):
     """Test _get_features_names on dataframes."""
     data = [[1, 4, 2], [3, 3, 6]]
     columns = ["col_0", "col_1", "col_2"]
-    df = _convert_container(
-        data, constructor_name, column_names=columns, minversion=minversion
-    )
+    df = _convert_container(data, constructor_name, column_names=columns)
     feature_names = _get_feature_names(df)
 
     assert_array_equal(feature_names, columns)
@@ -2415,9 +2407,19 @@ def test_check_array_writeable_df():
     df = pd.DataFrame(X, copy=False)
 
     out = check_array(df, copy=False, force_writeable=True)
-    # df is backed by a writeable array, no copy is needed
-    assert np.may_share_memory(out, df)
     assert out.flags.writeable
+    copy_on_write = (
+        parse_version(pd.__version__).major >= 3
+        or pd.options.mode.copy_on_write is True
+    )
+    if not copy_on_write:
+        # without Copy-on-Write, df is backed by a writeable array, no copy is needed
+        assert np.may_share_memory(out, df)
+    else:
+        # with Copy-on-Write (default in pandas >= 3 or
+        # pd.options.mode.copy_on_write == True), np.asarray(df) is read-only to
+        # protect other DataFrames that may share its memory, a copy is made
+        assert not np.may_share_memory(out, df)
 
     X.flags.writeable = False
     df = pd.DataFrame(X, copy=False)
@@ -2426,6 +2428,21 @@ def test_check_array_writeable_df():
     # df is backed by a read-only array, a copy is made
     assert not np.may_share_memory(out, df)
     assert out.flags.writeable
+
+
+def test_check_array_writeable_df_copy_on_write():
+    """Check that writing to the output of check_array does not modify another
+    DataFrame sharing memory with the input under pandas Copy-on-Write.
+    """
+    pd = pytest.importorskip("pandas", minversion="3")
+
+    df = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
+    view = df[:]
+    assert not np.asarray(view).flags.writeable
+
+    out = check_array(view, copy=False, force_writeable=True)
+    out[0, 0] = 100.0
+    assert df["a"].iloc[0] == 1.0
 
 
 @skip_if_array_api_compat_not_configured
@@ -2567,3 +2584,84 @@ def test_indexable_return_type(constructor_name):
         expected_type = type(X)
     X = indexable(X)[0]
     assert isinstance(X, expected_type)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize("label_dtype", ["uint8", "uint16", "uint32", "uint64"])
+@pytest.mark.parametrize("values", [[0], [1], [0, 1], [1, 1, 1]])
+def test_check_pos_label_consistency_unsigned_array_api(
+    array_namespace, device_name, dtype_name, label_dtype, values
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        y_true = xp.asarray(values, dtype=getattr(xp, label_dtype), device=device)
+        assert _check_pos_label_consistency(1, y_true) == 1
+        assert _check_pos_label_consistency(0, y_true) == 0
+        assert _check_pos_label_consistency(None, y_true) == 1
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize("label_dtype", ["int8", "int16", "int32", "int64"])
+@pytest.mark.parametrize("values", [[0], [1], [-1], [0, 1], [-1, 1], [1, 1, 1]])
+def test_check_pos_label_consistency_signed_array_api(
+    array_namespace, device_name, dtype_name, label_dtype, values
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        y_true = xp.asarray(values, dtype=getattr(xp, label_dtype), device=device)
+        assert _check_pos_label_consistency(1, y_true) == 1
+        assert _check_pos_label_consistency(0, y_true) == 0
+        assert _check_pos_label_consistency(None, y_true) == 1
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+@pytest.mark.parametrize("unsigned", [True, False])
+@pytest.mark.parametrize(
+    "label_dtype",
+    ["int8", "int16", "int32", "int64"],
+)
+@pytest.mark.parametrize("values", [[0, 1, 2], [1, 2]])
+def test_check_pos_label_consistency_integer_raises(
+    array_namespace, device_name, dtype_name, unsigned, label_dtype, values
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    if unsigned:
+        label_dtype = "u" + label_dtype
+
+    with config_context(array_api_dispatch=True):
+        y_true = xp.asarray(values, dtype=getattr(xp, label_dtype), device=device)
+        with pytest.raises(ValueError, match="y_true takes value in"):
+            _check_pos_label_consistency(None, y_true)
+
+
+@pytest.mark.parametrize(
+    "array_namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(),
+)
+def test_check_pos_label_consistency_bool_array_api(
+    array_namespace, device_name, dtype_name
+):
+    xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        y_true = xp.asarray([False, True], device=device)
+        assert _check_pos_label_consistency(True, y_true) is True
+        assert _check_pos_label_consistency(False, y_true) is False
+        assert _check_pos_label_consistency(None, y_true) is True
+
+        y_true = xp.ones(3, dtype=xp.bool, device=device)
+        assert _check_pos_label_consistency(True, y_true) is True
+        assert _check_pos_label_consistency(False, y_true) is False
+        assert _check_pos_label_consistency(None, y_true) is True
