@@ -2049,11 +2049,9 @@ def test_ndcg_negative_ndarray_error():
         ndcg_score(y_true, y_score)
 
 
-def test_ndcg_invariant(global_random_seed):
+def test_ndcg_invariant():
     y_true = np.arange(70).reshape(7, 10)
-    y_score = y_true + np.random.RandomState(global_random_seed).uniform(
-        -0.2, 0.2, size=y_true.shape
-    )
+    y_score = y_true + np.random.RandomState(0).uniform(-0.2, 0.2, size=y_true.shape)
     ndcg = ndcg_score(y_true, y_score)
     ndcg_no_ties = ndcg_score(y_true, y_score, ignore_ties=True)
     assert ndcg == pytest.approx(ndcg_no_ties)
@@ -2063,10 +2061,10 @@ def test_ndcg_invariant(global_random_seed):
 
 
 @pytest.mark.parametrize("ignore_ties", [True, False])
-def test_ndcg_toy_examples(ignore_ties, global_random_seed):
+def test_ndcg_toy_examples(ignore_ties):
     y_true = 3 * np.eye(7)[:5]
     y_score = np.tile(np.arange(6, -1, -1), (5, 1))
-    y_score_noisy = y_score + np.random.RandomState(global_random_seed).uniform(
+    y_score_noisy = y_score + np.random.RandomState(0).uniform(
         -0.2, 0.2, size=y_score.shape
     )
     assert _dcg_sample_scores(
