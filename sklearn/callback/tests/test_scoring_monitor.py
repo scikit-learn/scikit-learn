@@ -627,7 +627,7 @@ def test_accept_sample_weight():
         )
 
     # True with a warning when a multiscorer with at least one scorer that accepts
-    # sample_weiht but at least one that does not.
+    # sample_weight but at least one that does not.
     with pytest.warns(UserWarning, match="does not support sample_weight"):
         assert ScoringMonitor(scoring_train=["r2", "rand_score"])._accept_sample_weight(
             "on_fit_task_end"
@@ -769,7 +769,11 @@ def test_scoring_monitor_does_not_modify_scorers():
 
 @config_context(enable_metadata_routing=True)
 def test_val_scorer_only_X():
-    """Smoke test for the validation scorer on a scorer that only requires X."""
+    """Check the validation scorer on a scorer that only requires X.
+
+    The scores must be the same whether `X_val` is passed under its own name or under
+    an alias.
+    """
 
     def score_func(y_true, y_pred):
         return y_pred.sum()
@@ -781,7 +785,11 @@ def test_val_scorer_only_X():
 
     # without alias
     MaxIterEstimator().set_callbacks(cb).fit(X, X_val=X_val)
+    scores = [row["score"] for row in cb.get_logs().val_scores]
 
     # with alias
     cb.set_on_fit_task_end_request(X_val="X_val_alias")
     MaxIterEstimator().set_callbacks(cb).fit(X, X_val_alias=X_val)
+    scores_alias = [row["score"] for row in cb.get_logs().val_scores]
+
+    assert scores_alias == scores
