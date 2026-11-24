@@ -10,7 +10,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallbackMixin
-from sklearn.utils.metadata_routing import _routing_enabled, process_routing
+from sklearn.utils.metadata_routing import _routing_enabled, get_routing_for_object
 
 # Set of the hook parameters that do not come from metadata routing
 HOOK_NOT_ROUTED_PARAMS = {"X", "y", "fitted_estimator"}
@@ -102,6 +102,11 @@ class CallbackContext:
         # We don't store the estimator in the context to avoid circular references
         # because the estimator already holds a reference to the context.
         new_ctx._callbacks = getattr(estimator, "_skl_callbacks", [])
+        new_ctx._callbacks_routing = (
+            get_routing_for_object(new_ctx._callbacks)
+            if new_ctx._callbacks and _routing_enabled()
+            else None
+        )
         new_ctx.estimator_name = estimator.__class__.__name__
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
@@ -159,6 +164,7 @@ class CallbackContext:
         new_ctx = cls.__new__(cls)
 
         new_ctx._callbacks = parent_context._callbacks
+        new_ctx._callbacks_routing = parent_context._callbacks_routing
         new_ctx.estimator_name = parent_context.estimator_name
         new_ctx._propagation_depth = parent_context._propagation_depth
         new_ctx.task_name = task_name
@@ -386,10 +392,10 @@ class CallbackContext:
             stopped at the beginning of this task. The `fitted_estimator` is the
             object that will be passed to the callbacks, if required.
         """
-        if metadata is None:
+        if not metadata:
             metadata = {}
         elif _routing_enabled():
-            metadata = process_routing(self._callbacks, "on_fit_task_begin", **metadata)
+            metadata = self._route_metadata(metadata, "on_fit_task_begin")
         else:
             metadata = self._get_manual_routing_params(metadata, "on_fit_task_begin")
         self._call_hooks(
@@ -443,10 +449,10 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
-        if metadata is None:
+        if not metadata:
             metadata = {}
         elif _routing_enabled():
-            metadata = process_routing(self._callbacks, "on_fit_task_end", **metadata)
+            metadata = self._route_metadata(metadata, "on_fit_task_end")
         else:
             metadata = self._get_manual_routing_params(metadata, "on_fit_task_end")
         return self._call_hooks(
@@ -457,6 +463,29 @@ class CallbackContext:
             metadata=metadata,
             reconstruction_attributes=reconstruction_attributes,
         )
+
+    def _route_metadata(self, metadata, hook_name):
+        """Route one hook's metadata to the callbacks, when routing is enabled.
+
+        Equivalent to `process_routing(self._callbacks, hook_name, **metadata)`, except
+        that the routing of the callbacks is built only once, when the root context is
+        created, since their requests do not change during the context tree's lifetime.
+
+        Parameters
+        ----------
+        metadata : dict or Bunch
+            Non-empty params for this hook.
+
+        hook_name : {"on_fit_task_begin", "on_fit_task_end"}
+            Hook these params are routed to.
+
+        Returns
+        -------
+        routed_params : Bunch
+            ``{"callback_{i}": {hook_name: {param: value}}}`` for each callback.
+        """
+        self._callbacks_routing.validate_metadata(params=metadata, method=hook_name)
+        return self._callbacks_routing.route_params(params=metadata, caller=hook_name)
 
     def _get_manual_routing_params(self, metadata, hook_name):
         # TODO(slep006): remove when metadata routing is the only way
