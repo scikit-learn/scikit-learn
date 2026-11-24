@@ -1027,7 +1027,7 @@ def test_method_generation():
             *,
             X=None,
             y=None,
-            metadata=None,
+            sample_weight=None,
             fitted_estimator=None,
         ):
             pass  # pragma: no cover
@@ -1039,7 +1039,7 @@ def test_method_generation():
             *,
             X=None,
             y=None,
-            metadata=None,
+            sample_weight=None,
             fitted_estimator=None,
         ):
             pass  # pragma: no cover
