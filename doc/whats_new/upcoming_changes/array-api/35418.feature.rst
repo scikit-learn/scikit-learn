@@ -1,0 +1,5 @@
+- :class:`linear_model.Ridge` and :class:`linear_model.RidgeClassifier` now support
+  `solver="cholesky"` with array API compatible inputs. `solver="auto"` now resolves
+  to `"cholesky"` for these inputs, like for NumPy inputs, instead of `"svd"` with a
+  warning.
+  By :user:`Arthur Lacote <cakedev0>`.
