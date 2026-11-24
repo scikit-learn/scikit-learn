@@ -57,3 +57,56 @@ cdef inline void _update_raw_predictions_helper(
                            num_threads=n_threads):
         for position in range(starts[leaf_idx], stops[leaf_idx]):
             raw_predictions[partition[position]] += values[leaf_idx]
+
+
+def _update_raw_predictions_vector(
+        Y_DTYPE_C [::1, :] raw_predictions,  # OUT
+        grower,
+        n_threads,
+):
+    """Update raw_predictions with the predictions of the newest vector tree.
+
+    Vector leaves counterpart of `_update_raw_predictions`: raw_predictions
+    has shape (n_samples, n_outputs) and each leaf value is an array of shape
+    (n_outputs,).
+    """
+    cdef:
+        unsigned int [::1] starts  # start of each leaf in partition
+        unsigned int [::1] stops  # end of each leaf in partition
+        Y_DTYPE_C [:, ::1] values  # values of each leaf
+        const unsigned int [::1] partition = grower.splitter.partition
+        list leaves
+
+    leaves = grower.finalized_leaves
+    starts = np.array([leaf.partition_start for leaf in leaves],
+                      dtype=np.uint32)
+    stops = np.array([leaf.partition_stop for leaf in leaves],
+                     dtype=np.uint32)
+    values = np.array([leaf.value for leaf in leaves], dtype=Y_DTYPE)
+    _update_raw_predictions_vector_helper(raw_predictions, starts, stops,
+                                          partition, values, n_threads)
+
+
+cdef inline void _update_raw_predictions_vector_helper(
+        Y_DTYPE_C [::1, :] raw_predictions,  # OUT
+        const unsigned int [::1] starts,
+        const unsigned int [::1] stops,
+        const unsigned int [::1] partition,
+        const Y_DTYPE_C [:, ::1] values,
+        int n_threads,
+):
+
+    cdef:
+        unsigned int position
+        unsigned int sample_idx
+        unsigned int k
+        unsigned int n_outputs = values.shape[1]
+        int leaf_idx
+        int n_leaves = starts.shape[0]
+
+    for leaf_idx in prange(n_leaves, schedule='static', nogil=True,
+                           num_threads=n_threads):
+        for position in range(starts[leaf_idx], stops[leaf_idx]):
+            sample_idx = partition[position]
+            for k in range(n_outputs):
+                raw_predictions[sample_idx, k] += values[leaf_idx, k]

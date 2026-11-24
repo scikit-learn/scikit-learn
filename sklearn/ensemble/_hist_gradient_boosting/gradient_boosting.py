@@ -11,6 +11,7 @@ from numbers import Integral, Real
 from time import time
 
 import numpy as np
+import scipy.sparse as sp
 
 from sklearn._loss.loss import (
     _LOSSES,
@@ -31,6 +32,7 @@ from sklearn.base import (
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble._hist_gradient_boosting._gradient_boosting import (
     _update_raw_predictions,
+    _update_raw_predictions_vector,
 )
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE, X_DTYPE, Y_DTYPE
@@ -43,7 +45,7 @@ from sklearn.utils import check_random_state, compute_sample_weight, resample
 from sklearn.utils._missing import is_scalar_nan
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 from sklearn.utils._param_validation import Interval, RealNotInt, StrOptions
-from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.multiclass import check_classification_targets, type_of_target
 from sklearn.utils.validation import (
     _check_categorical_features,
     _check_monotonic_cst,
@@ -63,6 +65,115 @@ _LOSSES.update(
         "quantile": PinballLoss,
     }
 )
+
+
+class _MultiOutputLoss:
+    """Loss of several outputs, each one with its own univariate loss.
+
+    The loss is the sum over the outputs of the univariate losses. This is
+    used for multilabel classification (one binomial loss per label) and for
+    the estimation of several quantiles at once (one pinball loss per
+    quantile level). It implements the subset of the `BaseLoss` API used by
+    the histogram gradient boosting estimators, with raw predictions,
+    gradients and hessians of shape (n_samples, n_outputs).
+
+    Parameters
+    ----------
+    losses : list of BaseLoss
+        The univariate loss of each output. They must share the same link.
+
+    Notes
+    -----
+    y_true is either of shape (n_samples, n_outputs), one target per output,
+    or of shape (n_samples,) when the target is shared by all the outputs
+    (e.g. several quantiles of the same target).
+    """
+
+    def __init__(self, losses):
+        self.losses = losses
+        self.n_outputs = len(losses)
+        self.link = losses[0].link
+        self.constant_hessian = all(loss.constant_hessian for loss in losses)
+        self.differentiable = all(loss.differentiable for loss in losses)
+
+    @staticmethod
+    def target_column(y_true, k):
+        """Return the target of the k-th output."""
+        if y_true.ndim == 1:
+            return y_true
+        return np.ascontiguousarray(y_true[:, k])
+
+    def init_gradient_and_hessian(self, n_samples, dtype=np.float64, order="F"):
+        gradient = np.empty((n_samples, self.n_outputs), dtype=dtype, order=order)
+        if self.constant_hessian:
+            hessian = np.ones((1, self.n_outputs), dtype=dtype)
+        else:
+            hessian = np.empty((n_samples, self.n_outputs), dtype=dtype, order=order)
+        return gradient, hessian
+
+    def gradient(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        gradient_out=None,
+        n_threads=1,
+    ):
+        for k, loss in enumerate(self.losses):
+            loss.gradient(
+                y_true=self.target_column(y_true, k),
+                raw_prediction=np.ascontiguousarray(raw_prediction[:, k]),
+                sample_weight=sample_weight,
+                gradient_out=gradient_out[:, k],
+                n_threads=n_threads,
+            )
+        return gradient_out
+
+    def gradient_hessian(
+        self,
+        y_true,
+        raw_prediction,
+        sample_weight=None,
+        gradient_out=None,
+        hessian_out=None,
+        n_threads=1,
+    ):
+        for k, loss in enumerate(self.losses):
+            loss.gradient_hessian(
+                y_true=self.target_column(y_true, k),
+                raw_prediction=np.ascontiguousarray(raw_prediction[:, k]),
+                sample_weight=sample_weight,
+                gradient_out=gradient_out[:, k],
+                hessian_out=hessian_out[:, k],
+                n_threads=n_threads,
+            )
+        return gradient_out, hessian_out
+
+    def __call__(self, y_true, raw_prediction, sample_weight=None, n_threads=1):
+        return sum(
+            loss(
+                y_true=self.target_column(y_true, k),
+                raw_prediction=np.ascontiguousarray(raw_prediction[:, k]),
+                sample_weight=sample_weight,
+                n_threads=n_threads,
+            )
+            for k, loss in enumerate(self.losses)
+        )
+
+    def fit_intercept_only(self, y_true, sample_weight=None):
+        return np.array(
+            [
+                loss.fit_intercept_only(
+                    y_true=self.target_column(y_true, k), sample_weight=sample_weight
+                )
+                for k, loss in enumerate(self.losses)
+            ],
+            dtype=np.float64,
+        )
+
+    def predict_proba(self, raw_prediction):
+        """Per-output probability of the positive class (binomial losses)."""
+        return self.link.inverse(raw_prediction)
 
 
 def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
@@ -92,14 +203,21 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     # TODO: Ideally this should be computed in parallel over the leaves using something
     # similar to _update_raw_predictions(), but this requires a cython version of
     # median().
+    # For trees with vector leaves, raw_prediction has shape (n_samples, n_outputs)
+    # and loss is a _MultiOutputLoss: the residuals are of the same shape and the
+    # updates are of shape (n_outputs,).
     for leaf in grower.finalized_leaves:
         indices = leaf.sample_indices
         if sample_weight is None:
             sw = None
         else:
             sw = sample_weight[indices]
+        y_leaf = y_true[indices]
+        raw_leaf = raw_prediction[indices]
+        if raw_leaf.ndim == 2 and y_leaf.ndim == 1:
+            y_leaf = y_leaf[:, np.newaxis]
         update = loss.fit_intercept_only(
-            y_true=y_true[indices] - raw_prediction[indices],
+            y_true=y_leaf - raw_leaf,
             sample_weight=sw,
         )
         leaf.value = grower.shrinkage * update
@@ -173,6 +291,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "scoring": [str, callable, None],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
+        "vector_leaf": ["boolean"],
     }
 
     @abstractmethod
@@ -199,6 +318,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         tol,
         verbose,
         random_state,
+        vector_leaf,
     ):
         self.loss = loss
         self.learning_rate = learning_rate
@@ -220,16 +340,23 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.tol = tol
         self.verbose = verbose
         self.random_state = random_state
+        self.vector_leaf = vector_leaf
 
     def _validate_parameters(self):
         """Validate parameters passed to __init__.
 
         The parameters that are directly passed to the grower are checked in
         TreeGrower."""
-        if self.monotonic_cst is not None and self.n_trees_per_iteration_ != 1:
+        if self.monotonic_cst is not None and self._n_outputs != 1:
             raise ValueError(
-                "monotonic constraints are not supported for multiclass classification."
+                "monotonic constraints are not supported for multiclass "
+                "classification, multilabel classification or the estimation of "
+                "several quantiles."
             )
+
+    def _check_y_fit(self, y):
+        """Validate the target passed to fit (training or validation data)."""
+        return _check_y(y, estimator=self)
 
     def _finalize_sample_weight(self, sample_weight, y):
         """Finalize sample weight.
@@ -408,8 +535,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         X : array-like of shape (n_samples, n_features)
             The input samples.
 
-        y : array-like of shape (n_samples,)
-            Target values.
+        y : array-like of shape (n_samples,) or (n_samples, n_labels)
+            Target values. A binary indicator matrix of shape
+            (n_samples, n_labels) is only supported by
+            :class:`HistGradientBoostingClassifier` for multilabel
+            classification.
 
         sample_weight : array-like of shape (n_samples,) default=None
             Weights of training data.
@@ -448,9 +578,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.0
         X, known_categories = self._preprocess_X(X, reset=True)
-        y = _check_y(y, estimator=self)
+        y = self._check_y_fit(y)
         y = self._encode_y(y)
         check_consistent_length(X, y)
+
+        # With several outputs (multiclass or multilabel classification,
+        # several quantiles), either fit one tree per output at each iteration
+        # or a single tree with vector leaves storing the values of all outputs.
+        use_vector_leaves = bool(self.vector_leaf) and self._n_outputs > 1
+        if (
+            self.warm_start
+            and self._is_fitted()
+            and use_vector_leaves != getattr(self, "_use_vector_leaves", False)
+        ):
+            raise ValueError(
+                "vector_leaf cannot be changed between calls to fit when "
+                "warm_start=True."
+            )
+        self._use_vector_leaves = use_vector_leaves
+        self.n_trees_per_iteration_ = 1 if use_vector_leaves else self._n_outputs
         # Do not create unit sample weights by default to later skip some
         # computation
         if sample_weight is not None:
@@ -467,7 +613,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if X_val is None:
                 raise ValueError("y_val is provided, but X_val was not provided.")
             X_val = self._preprocess_X(X_val, reset=False)
-            y_val = _check_y(y_val, estimator=self)
+            y_val = self._check_y_fit(y_val)
             y_val = self._encode_y_val(y_val)
             check_consistent_length(X_val, y_val)
             if sample_weight_val is not None:
@@ -549,7 +695,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         ):
             # stratify for classification
             # instead of checking predict_proba, loss.n_classes >= 2 would also work
-            stratify = y if hasattr(self._loss, "predict_proba") else None
+            stratify = (
+                y if hasattr(self._loss, "predict_proba") and y.ndim == 1 else None
+            )
 
             # Save the state of the RNG for the training and validation split.
             # This is needed in order to have the same split when using
@@ -635,22 +783,23 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # initialize raw_predictions: those are the accumulated values
             # predicted by the trees for the training data. raw_predictions has
-            # shape (n_samples, n_trees_per_iteration) where
-            # n_trees_per_iterations is n_classes in multiclass classification,
-            # else 1.
-            # self._baseline_prediction has shape (1, n_trees_per_iteration)
+            # shape (n_samples, n_outputs) where n_outputs is n_classes in
+            # multiclass classification, n_labels in multilabel classification,
+            # the number of quantiles when estimating several quantiles, else 1.
+            # self._baseline_prediction has shape (1, n_outputs)
             self._baseline_prediction = self._loss.fit_intercept_only(
                 y_true=y_train, sample_weight=sample_weight_train
             ).reshape((1, -1))
             raw_predictions = np.zeros(
-                shape=(n_samples, self.n_trees_per_iteration_),
+                shape=(n_samples, self._n_outputs),
                 dtype=self._baseline_prediction.dtype,
                 order="F",
             )
             raw_predictions += self._baseline_prediction
 
             # predictors is a matrix (list of lists) of TreePredictor objects
-            # with shape (n_iter_, n_trees_per_iteration)
+            # with shape (n_iter_, n_trees_per_iteration). With vector leaves,
+            # n_trees_per_iteration is 1 and each tree predicts all outputs.
             self._predictors = predictors = []
 
             # Initialize structures and attributes related to early stopping
@@ -667,7 +816,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # the validation data.
                 if need_raw_predictions_val:
                     raw_predictions_val = np.zeros(
-                        shape=(X_binned_val.shape[0], self.n_trees_per_iteration_),
+                        shape=(X_binned_val.shape[0], self._n_outputs),
                         dtype=self._baseline_prediction.dtype,
                         order="F",
                     )
@@ -775,7 +924,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             begin_at_stage = self.n_iter_
 
         # initialize gradients and hessians (empty arrays).
-        # shape = (n_samples, n_trees_per_iteration).
+        # shape = (n_samples, n_outputs).
         gradient, hessian = self._loss.init_gradient_and_hessian(
             n_samples=n_samples, dtype=G_H_DTYPE, order="F"
         )
@@ -789,7 +938,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Update gradients and hessians, inplace
             # Note that self._loss expects shape (n_samples,) for
-            # n_trees_per_iteration = 1 else shape (n_samples, n_trees_per_iteration).
+            # n_outputs = 1 else shape (n_samples, n_outputs).
             if self._loss.constant_hessian:
                 self._loss.gradient(
                     y_true=y_train,
@@ -811,8 +960,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Append a list since there may be more than 1 predictor per iter
             predictors.append([])
 
-            # 2-d views of shape (n_samples, n_trees_per_iteration_) or (n_samples, 1)
-            # on gradient and hessian to simplify the loop over n_trees_per_iteration_.
+            # 2-d views of shape (n_samples, n_outputs) or (n_samples, 1)
+            # on gradient and hessian to simplify the loop over n_outputs.
             if gradient.ndim == 1:
                 g_view = gradient.reshape((-1, 1))
                 h_view = hessian.reshape((-1, 1))
@@ -820,12 +969,20 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 g_view = gradient
                 h_view = hessian
 
-            # Build `n_trees_per_iteration` trees.
-            for k in range(self.n_trees_per_iteration_):
+            # Build `n_trees_per_iteration` trees: either one tree per output or
+            # a single tree with vector leaves fitted on the 2d gradients and
+            # hessians.
+            if self._use_vector_leaves:
+                tree_targets = [(None, g_view, h_view)]
+            else:
+                tree_targets = [
+                    (k, g_view[:, k], h_view[:, k]) for k in range(self._n_outputs)
+                ]
+            for k, gradients_k, hessians_k in tree_targets:
                 grower = TreeGrower(
                     X_binned=X_binned_train,
-                    gradients=g_view[:, k],
-                    hessians=h_view[:, k],
+                    gradients=gradients_k,
+                    hessians=hessians_k,
                     n_bins=n_bins,
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
@@ -848,11 +1005,19 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_compute_hist_time += grower.total_compute_hist_time
 
                 if not self._loss.differentiable:
+                    if k is None:
+                        loss_k, y_k, raw_k = self._loss, y_train, raw_predictions
+                    elif isinstance(self._loss, _MultiOutputLoss):
+                        loss_k = self._loss.losses[k]
+                        y_k = self._loss.target_column(y_train, k)
+                        raw_k = raw_predictions[:, k]
+                    else:
+                        loss_k, y_k, raw_k = self._loss, y_train, raw_predictions[:, k]
                     _update_leaves_values(
-                        loss=self._loss,
+                        loss=loss_k,
                         grower=grower,
-                        y_true=y_train,
-                        raw_prediction=raw_predictions[:, k],
+                        y_true=y_k,
+                        raw_prediction=raw_k,
                         sample_weight=sample_weight_train,
                     )
 
@@ -864,7 +1029,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # Update raw_predictions with the predictions of the newly
                 # created tree.
                 tic_pred = time()
-                _update_raw_predictions(raw_predictions[:, k], grower, n_threads)
+                if k is None:
+                    _update_raw_predictions_vector(raw_predictions, grower, n_threads)
+                else:
+                    _update_raw_predictions(raw_predictions[:, k], grower, n_threads)
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
 
@@ -872,12 +1040,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if self.do_early_stopping_:
                 # Update raw_predictions_val with the newest tree(s)
                 if need_raw_predictions_val:
-                    for k, pred in enumerate(self._predictors[-1]):
-                        raw_predictions_val[:, k] += pred.predict_binned(
-                            X_binned_val,
-                            self._bin_mapper.missing_values_bin_idx_,
-                            n_threads,
-                        )
+                    self._predict_iterations(
+                        X_binned_val,
+                        self._predictors[-1:],
+                        raw_predictions_val,
+                        is_binned=True,
+                        n_threads=n_threads,
+                    )
 
                 if self.scoring == "loss":
                     should_early_stop = self._check_early_stopping_loss(
@@ -977,7 +1146,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         subsample_size = 10000
         if X_binned_train.shape[0] > subsample_size:
             indices = np.arange(X_binned_train.shape[0])
-            stratify = y_train if is_classifier(self) else None
+            stratify = y_train if is_classifier(self) and y_train.ndim == 1 else None
             indices = resample(
                 indices,
                 n_samples=subsample_size,
@@ -1195,7 +1364,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Returns
         -------
-        raw_predictions : array, shape (n_samples, n_trees_per_iteration)
+        raw_predictions : array, shape (n_samples, n_outputs)
             The raw predicted values.
         """
         check_is_fitted(self)
@@ -1205,7 +1374,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
-            shape=(n_samples, self.n_trees_per_iteration_),
+            shape=(n_samples, self._baseline_prediction.shape[1]),
             dtype=self._baseline_prediction.dtype,
             order="F",
         )
@@ -1243,7 +1412,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         f_idx_map=f_idx_map,
                         n_threads=n_threads,
                     )
-                raw_predictions[:, k] += predict(X)
+                if predictor.n_outputs is None:
+                    raw_predictions[:, k] += predict(X)
+                else:
+                    # Trees with vector leaves add their values to all the
+                    # outputs in place.
+                    predict(X, out=raw_predictions)
 
     def _staged_raw_predict(self, X):
         """Compute raw predictions of ``X`` for each iteration.
@@ -1272,7 +1446,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
-            shape=(n_samples, self.n_trees_per_iteration_),
+            shape=(n_samples, self._baseline_prediction.shape[1]),
             dtype=self._baseline_prediction.dtype,
             order="F",
         )
@@ -1306,8 +1480,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Returns
         -------
-        averaged_predictions : ndarray, shape \
-                (n_trees_per_iteration, n_samples)
+        averaged_predictions : ndarray, shape (n_outputs, n_samples)
             The value of the partial dependence function on each grid point.
         """
 
@@ -1321,15 +1494,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         grid = np.asarray(grid, dtype=X_DTYPE, order="C")
         averaged_predictions = np.zeros(
-            (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE
+            (self._baseline_prediction.shape[1], grid.shape[0]), dtype=Y_DTYPE
         )
         target_features = np.asarray(target_features, dtype=np.intp, order="C")
 
         for predictors_of_ith_iteration in self._predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
-                predictor.compute_partial_dependence(
-                    grid, target_features, averaged_predictions[k]
-                )
+                if predictor.n_outputs is None:
+                    out = averaged_predictions[k]
+                else:
+                    out = averaged_predictions
+                predictor.compute_partial_dependence(grid, target_features, out)
         # Note that the learning rate is already accounted for in the leaves
         # values.
 
@@ -1415,9 +1590,17 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.3
            Added option 'gamma'.
 
-    quantile : float, default=None
+    quantile : float or list or tuple of float, default=None
         If loss is "quantile", this parameter specifies which quantile to be estimated
-        and must be between 0 and 1.
+        and must be between 0 and 1. If a list or tuple of quantile levels is
+        passed, all of them are estimated jointly: `predict` then returns an
+        array of shape (n_samples, n_quantiles) and `vector_leaf` controls
+        whether a single tree with vector leaves or one tree per quantile level
+        is built at each iteration. Note that nothing prevents the estimated
+        quantiles from crossing.
+
+        .. versionchanged:: 1.10
+           Added support for a list or tuple of quantile levels.
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
@@ -1576,6 +1759,15 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         is enabled.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+    vector_leaf : bool, default=False
+        Only used when estimating several quantiles, i.e. when `quantile` is a
+        list or tuple. If True, a single tree with vector leaves is built at
+        each boosting iteration: all the quantiles share the same tree
+        structure and each leaf stores one value per quantile level. If
+        False, one tree per quantile level is built at each boosting
+        iteration.
+
+        .. versionadded:: 1.10
 
     Attributes
     ----------
@@ -1585,8 +1777,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         The number of iterations as selected by early stopping, depending on
         the `early_stopping` parameter. Otherwise it corresponds to max_iter.
     n_trees_per_iteration_ : int
-        The number of tree that are built at each iteration. For regressors,
-        this is always 1.
+        The number of tree that are built at each iteration. This is equal to
+        the number of quantile levels when several quantiles are estimated
+        with `vector_leaf=False`, else 1.
     train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
@@ -1649,7 +1842,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             ),
             BaseLoss,
         ],
-        "quantile": [Interval(Real, 0, 1, closed="both"), None],
+        "quantile": [Interval(Real, 0, 1, closed="both"), list, tuple, None],
     }
 
     def __init__(
@@ -1676,6 +1869,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         tol=1e-7,
         verbose=0,
         random_state=None,
+        vector_leaf=False,
     ):
         super().__init__(
             loss=loss,
@@ -1698,6 +1892,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             tol=tol,
             verbose=verbose,
             random_state=random_state,
+            vector_leaf=vector_leaf,
         )
         self.quantile = quantile
 
@@ -1711,13 +1906,17 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         Returns
         -------
-        y : ndarray, shape (n_samples,)
-            The predicted values.
+        y : ndarray, shape (n_samples,) or (n_samples, n_quantiles)
+            The predicted values. 2-dimensional when several quantiles are
+            estimated, i.e. when `quantile` is a list or tuple.
         """
         check_is_fitted(self)
+        raw_predictions = self._raw_predict(X)
+        if isinstance(self._loss, _MultiOutputLoss):
+            return self._loss.link.inverse(raw_predictions)
         # Return inverse link of raw predictions after converting
         # shape (n_samples, 1) to (n_samples,)
-        return self._loss.link.inverse(self._raw_predict(X).ravel())
+        return self._loss.link.inverse(raw_predictions.ravel())
 
     def staged_predict(self, X):
         """Predict regression target for each iteration.
@@ -1732,15 +1931,26 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         Yields
         ------
-        y : generator of ndarray of shape (n_samples,)
+        y : generator of ndarray of shape (n_samples,) or (n_samples, n_quantiles)
             The predicted values of the input samples, for each iteration.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            yield self._loss.link.inverse(raw_predictions.ravel())
+            if isinstance(self._loss, _MultiOutputLoss):
+                yield self._loss.link.inverse(raw_predictions)
+            else:
+                yield self._loss.link.inverse(raw_predictions.ravel())
+
+    def _has_multiple_quantiles(self):
+        return self.loss == "quantile" and isinstance(self.quantile, (list, tuple))
 
     def _encode_y(self, y):
         # Just convert y to the expected dtype
-        self.n_trees_per_iteration_ = 1
+        if self._has_multiple_quantiles():
+            if len(self.quantile) == 0:
+                raise ValueError("quantile must be a non-empty list or tuple.")
+            self._n_outputs = len(self.quantile)
+        else:
+            self._n_outputs = 1
         y = y.astype(Y_DTYPE, copy=False)
         if self.loss == "gamma":
             # Ensure y > 0
@@ -1758,6 +1968,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return self._encode_y(y)
 
     def _get_loss(self, sample_weight):
+        if self._has_multiple_quantiles():
+            return _MultiOutputLoss(
+                [
+                    _LOSSES[self.loss](sample_weight=sample_weight, quantile=q)
+                    for q in self.quantile
+                ]
+            )
         if self.loss == "quantile":
             return _LOSSES[self.loss](
                 sample_weight=sample_weight, quantile=self.quantile
@@ -1798,8 +2015,16 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         For multiclass classification problems, 'log_loss' is also known as multinomial
         deviance or categorical crossentropy. Internally, the model fits one tree per
-        boosting iteration and per class and uses the softmax function as inverse link
-        function to compute the predicted probabilities of the classes.
+        boosting iteration and per class (or a single tree with vector leaves if
+        `vector_leaf=True`) and uses the softmax function as inverse link function to
+        compute the predicted probabilities of the classes.
+
+        For multilabel classification problems (`y` is a binary indicator matrix of
+        shape (n_samples, n_labels)), 'log_loss' is the sum over the labels of the
+        binary log losses. Internally, the model fits one tree per boosting iteration
+        and per label (or a single tree with vector leaves if `vector_leaf=True`) and
+        uses the logistic sigmoid function as inverse link function to compute the
+        predicted probability of each label.
 
     learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
@@ -1971,10 +2196,20 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 1.2
 
+    vector_leaf : bool, default=False
+        Only used for multiclass and multilabel classification. If True, a
+        single tree with vector leaves is built at each boosting iteration:
+        all the classes (or labels) share the same tree structure and each
+        leaf stores one raw value (logit) per class (or label). If False, one
+        tree per class (or label) is built at each boosting iteration.
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     classes_ : array, shape = (n_classes,)
-        Class labels.
+        Class labels. For multilabel classification, this is
+        `np.arange(n_labels)`.
     do_early_stopping_ : bool
         Indicates whether early stopping is used during training.
     n_iter_ : int
@@ -1982,7 +2217,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         the `early_stopping` parameter. Otherwise it corresponds to max_iter.
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. This is equal to 1
-        for binary classification, and to ``n_classes`` for multiclass
+        for binary classification or when `vector_leaf=True`, to ``n_classes``
+        for multiclass classification and to ``n_labels`` for multilabel
         classification.
     train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
@@ -2061,6 +2297,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         verbose=0,
         random_state=None,
         class_weight=None,
+        vector_leaf=False,
     ):
         super().__init__(
             loss=loss,
@@ -2083,6 +2320,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             tol=tol,
             verbose=verbose,
             random_state=random_state,
+            vector_leaf=vector_leaf,
         )
         self.class_weight = class_weight
 
@@ -2108,11 +2346,14 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         Returns
         -------
-        y : ndarray, shape (n_samples,)
-            The predicted classes.
+        y : ndarray, shape (n_samples,) or (n_samples, n_labels)
+            The predicted classes, or the binary indicator matrix of the
+            predicted labels for multilabel classification.
         """
         # TODO: This could be done in parallel
         raw_predictions = self._raw_predict(X)
+        if self._is_multilabel():
+            return (raw_predictions > 0).astype(int)
         if raw_predictions.shape[1] == 1:
             # np.argmax([0.5, 0.5]) is 0, not 1. Therefore "> 0" not ">= 0" to be
             # consistent with the multiclass case.
@@ -2138,6 +2379,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             The predicted classes of the input samples, for each iteration.
         """
         for raw_predictions in self._staged_raw_predict(X):
+            if self._is_multilabel():
+                yield (raw_predictions > 0).astype(int)
+                continue
             if raw_predictions.shape[1] == 1:
                 # np.argmax([0, 0]) is 0, not 1, therefore "> 0" not ">= 0"
                 encoded_classes = (raw_predictions.ravel() > 0).astype(int)
@@ -2155,8 +2399,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         Returns
         -------
-        p : ndarray, shape (n_samples, n_classes)
-            The class probabilities of the input samples.
+        p : ndarray, shape (n_samples, n_classes) or (n_samples, n_labels)
+            The class probabilities of the input samples. For multilabel
+            classification, the probability of each label.
         """
         raw_predictions = self._raw_predict(X)
         return self._loss.predict_proba(raw_predictions)
@@ -2192,10 +2437,11 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Returns
         -------
         decision : ndarray, shape (n_samples,) or \
-                (n_samples, n_trees_per_iteration)
+                (n_samples, n_outputs)
             The raw predicted values (i.e. the sum of the trees leaves) for
-            each sample. n_trees_per_iteration is equal to the number of
-            classes in multiclass classification.
+            each sample. n_outputs is equal to the number of classes in
+            multiclass classification and to the number of labels in
+            multilabel classification.
         """
         decision = self._raw_predict(X)
         if decision.shape[1] == 1:
@@ -2226,33 +2472,79 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
                 staged_decision = staged_decision.ravel()
             yield staged_decision
 
+    def _check_y_fit(self, y):
+        try:
+            is_multilabel = type_of_target(y, input_name="y") == "multilabel-indicator"
+        except (ValueError, TypeError):
+            is_multilabel = False
+        if not is_multilabel:
+            return _check_y(y, estimator=self)
+        y = _check_y(y, multi_output=True, estimator=self)
+        if sp.issparse(y):
+            y = y.toarray()
+        return y
+
+    def _is_multilabel(self):
+        return getattr(self, "_multilabel", False)
+
     def _encode_y(self, y):
         """Create self._label_encoder and encode y correspondingly."""
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
-        # and n_trees_per_iteration_
+        # and _n_outputs
         check_classification_targets(y)
+        if y.ndim == 2:
+            if type_of_target(y, input_name="y") != "multilabel-indicator":
+                raise ValueError(
+                    f"{self.__class__.__name__} only supports binary, multiclass "
+                    "and multilabel (binary indicator matrix) targets."
+                )
+            self._multilabel = True
+            self._label_encoder = None
+            self.classes_ = np.arange(y.shape[1])
+            self._n_outputs = y.shape[1]
+            return np.asfortranarray(y, dtype=Y_DTYPE)
 
         # We need to store the label encoder in case y_val needs to be label encoded,
         # too.
+        self._multilabel = False
         self._label_encoder = LabelEncoder()
         encoded_y = self._label_encoder.fit_transform(y)
         self.classes_ = self._label_encoder.classes_
         n_classes = self.classes_.shape[0]
-        # only 1 tree for binary classification. For multiclass classification,
-        # we build 1 tree per class.
-        self.n_trees_per_iteration_ = 1 if n_classes <= 2 else n_classes
+        # only 1 output for binary classification. For multiclass
+        # classification, there is 1 output per class.
+        self._n_outputs = 1 if n_classes <= 2 else n_classes
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
     def _encode_y_val(self, y):
+        if self._is_multilabel():
+            if y.ndim != 2 or y.shape[1] != self._n_outputs:
+                raise ValueError(
+                    f"y_val must be a binary indicator matrix with {self._n_outputs} "
+                    "columns."
+                )
+            return np.asfortranarray(y, dtype=Y_DTYPE)
         encoded_y = self._label_encoder.transform(y)
         return encoded_y.astype(Y_DTYPE, copy=False)
 
     def _get_loss(self, sample_weight):
         # At this point self.loss == "log_loss"
-        if self.n_trees_per_iteration_ == 1:
+        if self._is_multilabel():
+            return _MultiOutputLoss(
+                [
+                    HalfBinomialLoss(sample_weight=sample_weight)
+                    for _ in range(self._n_outputs)
+                ]
+            )
+        if self._n_outputs == 1:
             return HalfBinomialLoss(sample_weight=sample_weight)
         else:
             return HalfMultinomialLoss(
-                sample_weight=sample_weight, n_classes=self.n_trees_per_iteration_
+                sample_weight=sample_weight, n_classes=self._n_outputs
             )
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.classifier_tags.multi_label = True
+        return tags

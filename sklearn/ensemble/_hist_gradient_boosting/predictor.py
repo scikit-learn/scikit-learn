@@ -10,7 +10,9 @@ import numpy as np
 from sklearn.ensemble._hist_gradient_boosting._predictor import (
     _compute_partial_dependence,
     _predict_from_binned_data,
+    _predict_from_binned_data_vector,
     _predict_from_raw_data,
+    _predict_from_raw_data_vector,
 )
 from sklearn.ensemble._hist_gradient_boosting.common import (
     PREDICTOR_RECORD_DTYPE,
@@ -31,12 +33,26 @@ class TreePredictor:
     raw_left_cat_bitsets : ndarray of shape (n_categorical_splits, 8), dtype=uint32
         Array of bitsets for raw categories used in predict when a split is
         categorical.
+    node_values : ndarray of shape (n_nodes, n_outputs), dtype=float64, \
+            default=None
+        The values of the nodes of a tree with vector leaves. If None, the
+        tree has scalar leaves whose values are stored in ``nodes["value"]``.
     """
 
-    def __init__(self, nodes, binned_left_cat_bitsets, raw_left_cat_bitsets):
+    def __init__(
+        self, nodes, binned_left_cat_bitsets, raw_left_cat_bitsets, node_values=None
+    ):
         self.nodes = nodes
         self.binned_left_cat_bitsets = binned_left_cat_bitsets
         self.raw_left_cat_bitsets = raw_left_cat_bitsets
+        self.node_values = node_values
+
+    @property
+    def n_outputs(self):
+        """Number of outputs of a tree with vector leaves, None otherwise."""
+        if self.node_values is None:
+            return None
+        return self.node_values.shape[1]
 
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
@@ -46,7 +62,7 @@ class TreePredictor:
         """Return maximum depth among all leaves."""
         return int(self.nodes["depth"].max())
 
-    def predict(self, X, known_cat_bitsets, f_idx_map, n_threads):
+    def predict(self, X, known_cat_bitsets, f_idx_map, n_threads, out=None):
         """Predict raw values for non-binned data.
 
         Parameters
@@ -64,11 +80,31 @@ class TreePredictor:
         n_threads : int
             Number of OpenMP threads to use.
 
+        out : ndarray of shape (n_samples, n_outputs), default=None
+            Only for trees with vector leaves: if not None, the predicted
+            values are added to ``out`` in place.
+
         Returns
         -------
-        y : ndarray, shape (n_samples,)
-            The raw predicted values.
+        y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
+            The raw predicted values. For trees with vector leaves, this is
+            ``out`` if it is not None.
         """
+        if self.node_values is not None:
+            if out is None:
+                out = np.zeros((X.shape[0], self.n_outputs), dtype=Y_DTYPE)
+            _predict_from_raw_data_vector(
+                self.nodes,
+                self.node_values,
+                X,
+                self.raw_left_cat_bitsets,
+                known_cat_bitsets,
+                f_idx_map,
+                n_threads,
+                out,
+            )
+            return out
+
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
 
         _predict_from_raw_data(
@@ -82,7 +118,7 @@ class TreePredictor:
         )
         return out
 
-    def predict_binned(self, X, missing_values_bin_idx, n_threads):
+    def predict_binned(self, X, missing_values_bin_idx, n_threads, out=None):
         """Predict raw values for binned data.
 
         Parameters
@@ -95,12 +131,30 @@ class TreePredictor:
             to the GBDT classes), or equivalently to n_bins - 1.
         n_threads : int
             Number of OpenMP threads to use.
+        out : ndarray of shape (n_samples, n_outputs), default=None
+            Only for trees with vector leaves: if not None, the predicted
+            values are added to ``out`` in place.
 
         Returns
         -------
-        y : ndarray, shape (n_samples,)
-            The raw predicted values.
+        y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
+            The raw predicted values. For trees with vector leaves, this is
+            ``out`` if it is not None.
         """
+        if self.node_values is not None:
+            if out is None:
+                out = np.zeros((X.shape[0], self.n_outputs), dtype=Y_DTYPE)
+            _predict_from_binned_data_vector(
+                self.nodes,
+                self.node_values,
+                X,
+                self.binned_left_cat_bitsets,
+                missing_values_bin_idx,
+                n_threads,
+                out,
+            )
+            return out
+
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
         _predict_from_binned_data(
             self.nodes,
@@ -123,11 +177,20 @@ class TreePredictor:
         target_features : ndarray, shape (n_target_features)
             The set of target features for which the partial dependence
             should be evaluated.
-        out : ndarray, shape (n_samples)
+        out : ndarray, shape (n_samples) or (n_outputs, n_samples)
             The value of the partial dependence function on each grid
-            point.
+            point. 2-dimensional for trees with vector leaves. Values are
+            added to ``out`` in place.
         """
-        _compute_partial_dependence(self.nodes, grid, target_features, out)
+        if self.node_values is None:
+            node_values = np.ascontiguousarray(self.nodes["value"]).reshape(-1, 1)
+            out_2d = out.reshape(1, -1)
+        else:
+            node_values = self.node_values
+            out_2d = out
+        _compute_partial_dependence(
+            self.nodes, node_values, grid, target_features, out_2d
+        )
 
     def __setstate__(self, state):
         try:
@@ -147,3 +210,7 @@ class TreePredictor:
         # scikit-learn along with a common test.
         if self.nodes.dtype != PREDICTOR_RECORD_DTYPE:
             self.nodes = self.nodes.astype(PREDICTOR_RECORD_DTYPE, casting="same_kind")
+
+        # Predictors pickled before vector leaves were introduced.
+        if not hasattr(self, "node_values"):
+            self.node_values = None

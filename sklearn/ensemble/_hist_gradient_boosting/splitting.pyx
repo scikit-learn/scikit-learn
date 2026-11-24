@@ -14,7 +14,7 @@ from cython.parallel import prange
 import numpy as np
 from libc.math cimport INFINITY, ceil
 from libc.stdlib cimport malloc, free, qsort
-from libc.string cimport memcpy
+from libc.string cimport memcpy, memset
 
 from sklearn.utils._bitset cimport BITSET_DTYPE_C, BITSET_INNER_DTYPE_C
 from sklearn.utils._bitset cimport in_bitset, init_bitset, set_bitset
@@ -40,6 +40,17 @@ cdef struct split_info_struct:
     unsigned int n_samples_right
     Y_DTYPE_C value_left
     Y_DTYPE_C value_right
+    uint8_t is_categorical
+    BITSET_DTYPE_C left_cat_bitset
+
+
+cdef struct vector_split_info_struct:
+    # Per-feature best split for trees with vector leaves. The per-output sums
+    # of the left child are stored in a separate buffer.
+    Y_DTYPE_C gain
+    int feature_idx
+    unsigned int bin_idx
+    uint8_t missing_go_to_left
     uint8_t is_categorical
     BITSET_DTYPE_C left_cat_bitset
 
@@ -965,6 +976,542 @@ cdef class Splitter:
                     split_info.left_cat_bitset, missing_values_bin_idx)
 
         free(cat_infos)
+
+    def find_node_split_vector(
+            Splitter self,
+            unsigned int n_samples,
+            const Y_DTYPE_C [:, :, ::1] histograms,  # IN
+            const Y_DTYPE_C [::1] sum_gradients,
+            const Y_DTYPE_C [::1] sum_hessians,
+            const Y_DTYPE_C [::1] value,
+            const unsigned int [:] allowed_features=None,
+            ):
+        """Find the best split of a node of a tree with vector leaves.
+
+        The gain of a split is the sum over the outputs of the per-output
+        gains (see `_split_gain`), so that a single tree structure is shared
+        by all the outputs while each leaf stores one value per output.
+
+        Monotonic constraints are not supported.
+
+        Parameters
+        ----------
+        n_samples : int
+            The number of samples at the node.
+        histograms : ndarray of float64 of shape (n_features, n_bins, n_stats)
+            The histograms of the current node, as computed by
+            `VectorHistogramBuilder`.
+        sum_gradients : ndarray of shape (n_outputs,)
+            The per-output sum of the gradients of the samples at the node.
+        sum_hessians : ndarray of shape (n_outputs,)
+            The per-output sum of the hessians of the samples at the node.
+        value : ndarray of shape (n_outputs,)
+            The values of the current node.
+        allowed_features : None or ndarray, dtype=np.uint32
+            Indices of the features that are allowed by interaction constraints to be
+            split.
+
+        Returns
+        -------
+        best_split_info : SplitInfo
+            The info about the best possible split among all features. The
+            sums of gradients / hessians and the children values are arrays
+            of shape (n_outputs,).
+        """
+        cdef:
+            int feature_idx
+            int split_info_idx
+            int best_split_info_idx
+            int n_split_candidates
+            unsigned int k
+            unsigned int n_outputs = sum_gradients.shape[0]
+            unsigned int n_stats = histograms.shape[2]
+            vector_split_info_struct split_info
+            vector_split_info_struct * split_infos
+            Y_DTYPE_C [:, ::1] left_stats
+            Y_DTYPE_C [:, ::1] best_left_stats
+            Y_DTYPE_C loss_current_node = 0.
+            const uint8_t [::1] has_missing_values = self.has_missing_values
+            const uint8_t [::1] is_categorical = self.is_categorical
+            int n_threads = self.n_threads
+            Y_DTYPE_C feature_fraction_per_split = self.feature_fraction_per_split
+            const unsigned int [:] split_features
+            uint8_t missing_go_to_left
+
+        if allowed_features is None:
+            split_features = self.all_features
+        else:
+            split_features = allowed_features
+
+        n_split_candidates = split_features.shape[0]
+
+        if feature_fraction_per_split < 1.0:
+            n_split_candidates = max(
+                1,
+                int(ceil(feature_fraction_per_split * n_split_candidates)),
+            )
+            split_features = self.rng.choice(
+                split_features, n_split_candidates, replace=False,
+            )
+            split_features = np.sort(split_features)
+
+        for k in range(n_outputs):
+            loss_current_node += _loss_from_value(value[k], sum_gradients[k])
+
+        # Per-candidate scratch buffer for the running sums of the left child
+        # and per-candidate statistics of the left child of the best split.
+        left_stats = np.empty((n_split_candidates, n_stats), dtype=np.float64)
+        best_left_stats = np.zeros((n_split_candidates, n_stats), dtype=np.float64)
+
+        with nogil:
+            split_infos = <vector_split_info_struct *> malloc(
+                n_split_candidates * sizeof(vector_split_info_struct))
+
+            for split_info_idx in prange(n_split_candidates, schedule='static',
+                                         num_threads=n_threads):
+                feature_idx = split_features[split_info_idx]
+                split_infos[split_info_idx].feature_idx = feature_idx
+                split_infos[split_info_idx].gain = -1
+                split_infos[split_info_idx].is_categorical = is_categorical[feature_idx]
+
+                if is_categorical[feature_idx]:
+                    self._find_best_bin_to_split_category_vector(
+                        feature_idx, has_missing_values[feature_idx],
+                        histograms, n_samples, &sum_gradients[0],
+                        &sum_hessians[0], n_outputs, loss_current_node,
+                        &split_infos[split_info_idx],
+                        &left_stats[split_info_idx, 0],
+                        &best_left_stats[split_info_idx, 0])
+                else:
+                    for missing_go_to_left in range(has_missing_values[feature_idx] + 1):
+                        self._find_best_bin_to_split_numerical_vector(
+                            feature_idx, has_missing_values[feature_idx],
+                            histograms, n_samples, &sum_gradients[0],
+                            &sum_hessians[0], n_outputs, loss_current_node,
+                            missing_go_to_left, &split_infos[split_info_idx],
+                            &left_stats[split_info_idx, 0],
+                            &best_left_stats[split_info_idx, 0])
+
+            best_split_info_idx = 0
+            for split_info_idx in range(1, n_split_candidates):
+                if split_infos[split_info_idx].gain > split_infos[best_split_info_idx].gain:
+                    best_split_info_idx = split_info_idx
+            split_info = split_infos[best_split_info_idx]
+
+        left = np.asarray(best_left_stats[best_split_info_idx])
+        n_samples_left = int(left[n_stats - 1])
+        sum_gradient_left = left[:n_outputs].copy()
+        if self.hessians_are_constant:
+            sum_hessian_left = np.full(n_outputs, left[n_stats - 1])
+        else:
+            sum_hessian_left = left[n_outputs:2 * n_outputs].copy()
+        sum_gradient_right = np.asarray(sum_gradients) - sum_gradient_left
+        sum_hessian_right = np.asarray(sum_hessians) - sum_hessian_left
+        l2_regularization = self.l2_regularization
+        value_left = -sum_gradient_left / (sum_hessian_left + l2_regularization + 1e-15)
+        value_right = -sum_gradient_right / (
+            sum_hessian_right + l2_regularization + 1e-15
+        )
+
+        out = SplitInfo(
+            split_info.gain,
+            split_info.feature_idx,
+            split_info.bin_idx,
+            split_info.missing_go_to_left,
+            sum_gradient_left,
+            sum_hessian_left,
+            sum_gradient_right,
+            sum_hessian_right,
+            n_samples_left,
+            n_samples - n_samples_left,
+            value_left,
+            value_right,
+            split_info.is_categorical,
+            None,  # left_cat_bitset will only be set if the split is categorical
+        )
+        if split_info.is_categorical:
+            out.left_cat_bitset = np.asarray(split_info.left_cat_bitset, dtype=np.uint32)
+
+        free(split_infos)
+        return out
+
+    cdef void _find_best_bin_to_split_numerical_vector(
+            Splitter self,
+            unsigned int feature_idx,
+            uint8_t has_missing_values,
+            const Y_DTYPE_C [:, :, ::1] histograms,  # IN
+            unsigned int n_samples,
+            const Y_DTYPE_C * sum_gradients,
+            const Y_DTYPE_C * sum_hessians,
+            unsigned int n_outputs,
+            Y_DTYPE_C loss_current_node,
+            uint8_t missing_go_to_left,
+            vector_split_info_struct * split_info,  # OUT
+            Y_DTYPE_C * left_stats,  # scratch buffer of size n_stats
+            Y_DTYPE_C * best_left_stats) noexcept nogil:  # OUT
+        """Vector leaves counterpart of _find_best_bin_to_split_numerical."""
+        cdef:
+            int bin_idx
+            unsigned int hist_bin_idx
+            unsigned int s
+            unsigned int k
+            unsigned int n_stats = histograms.shape[2]
+            unsigned int count_idx = n_stats - 1
+            int n_bins_non_missing = self.n_bins_non_missing[feature_idx]
+            uint8_t hessians_are_constant = self.hessians_are_constant
+            unsigned int n_samples_left
+            unsigned int n_samples_right
+            int start
+            int end
+            Y_DTYPE_C total_sum_hessians = 0.
+            Y_DTYPE_C sum_hessian_left
+            Y_DTYPE_C sum_hessian_right
+            Y_DTYPE_C gain
+            Y_DTYPE_C best_gain = split_info.gain
+            uint8_t found_better_split = False
+            unsigned int best_bin_idx
+            const Y_DTYPE_C * hist_bin
+
+        memset(left_stats, 0, n_stats * sizeof(Y_DTYPE_C))
+        for k in range(n_outputs):
+            total_sum_hessians += sum_hessians[k]
+
+        start = -missing_go_to_left
+        end = n_bins_non_missing - 1 + has_missing_values * (1 - missing_go_to_left)
+
+        for bin_idx in range(start, end):
+            if bin_idx == -1:
+                hist_bin_idx = self.missing_values_bin_idx
+            else:
+                hist_bin_idx = bin_idx
+
+            hist_bin = &histograms[feature_idx, hist_bin_idx, 0]
+            for s in range(n_stats):
+                left_stats[s] += hist_bin[s]
+
+            if bin_idx == -1:
+                continue
+
+            n_samples_left = <unsigned int> left_stats[count_idx]
+            n_samples_right = n_samples - n_samples_left
+
+            if n_samples_left < self.min_samples_leaf:
+                continue
+            if n_samples_right < self.min_samples_leaf:
+                break
+
+            sum_hessian_left = _total_hessian(
+                left_stats, n_outputs, hessians_are_constant)
+            sum_hessian_right = total_sum_hessians - sum_hessian_left
+            if sum_hessian_left < self.min_hessian_to_split:
+                continue
+            if sum_hessian_right < self.min_hessian_to_split:
+                break
+
+            gain = _vector_split_gain(
+                left_stats, sum_gradients, sum_hessians, n_outputs,
+                hessians_are_constant, loss_current_node,
+                self.l2_regularization)
+
+            if gain > best_gain and gain > self.min_gain_to_split:
+                found_better_split = True
+                best_gain = gain
+                best_bin_idx = bin_idx
+                memcpy(best_left_stats, left_stats, n_stats * sizeof(Y_DTYPE_C))
+
+        if found_better_split:
+            split_info.gain = best_gain
+            split_info.bin_idx = best_bin_idx
+            split_info.missing_go_to_left = missing_go_to_left
+
+    cdef void _find_best_bin_to_split_category_vector(
+            Splitter self,
+            unsigned int feature_idx,
+            uint8_t has_missing_values,
+            const Y_DTYPE_C [:, :, ::1] histograms,  # IN
+            unsigned int n_samples,
+            const Y_DTYPE_C * sum_gradients,
+            const Y_DTYPE_C * sum_hessians,
+            unsigned int n_outputs,
+            Y_DTYPE_C loss_current_node,
+            vector_split_info_struct * split_info,  # OUT
+            Y_DTYPE_C * left_stats,  # scratch buffer of size n_stats
+            Y_DTYPE_C * best_left_stats) noexcept nogil:  # OUT
+        """Vector leaves counterpart of _find_best_bin_to_split_category.
+
+        With a single output, categories are sorted by their value as in the
+        scalar case. With several outputs, there is no natural ordering of
+        the categories: they are sorted by the projection of their
+        (smoothed) value vectors onto the first principal direction of these
+        vectors (weighted by the hessians), computed by power iteration. A
+        Fisher-style scan is then performed over this ordering.
+        """
+        cdef:
+            unsigned int bin_idx
+            unsigned int n_bins_non_missing = self.n_bins_non_missing[feature_idx]
+            unsigned int missing_values_bin_idx = self.missing_values_bin_idx
+            unsigned int n_candidate_bins = n_bins_non_missing + has_missing_values
+            unsigned int n_stats = histograms.shape[2]
+            unsigned int count_idx = n_stats - 1
+            uint8_t hessians_are_constant = self.hessians_are_constant
+            categorical_info * cat_infos
+            Y_DTYPE_C * cat_values
+            Y_DTYPE_C * cat_weights
+            Y_DTYPE_C * direction_vec
+            Y_DTYPE_C * new_direction_vec
+            unsigned int sorted_cat_idx
+            unsigned int n_used_bins = 0
+            int [2] scan_direction
+            int direction = 0
+            int best_direction = 0
+            unsigned int middle
+            unsigned int i
+            unsigned int s
+            unsigned int k
+            unsigned int c
+            unsigned int it
+            unsigned int best_c
+            const Y_DTYPE_C * hist_bin
+            Y_DTYPE_C h_bin
+            Y_DTYPE_C sum_hessians_bin
+            Y_DTYPE_C total_sum_hessians = 0.
+            Y_DTYPE_C sum_hessian_left, sum_hessian_right
+            unsigned int n_samples_left, n_samples_right
+            Y_DTYPE_C gain
+            Y_DTYPE_C best_gain = -1.0
+            Y_DTYPE_C tmp
+            Y_DTYPE_C norm
+            Y_DTYPE_C total_weight
+            uint8_t found_better_split = False
+            unsigned int best_cat_infos_thresh
+            Y_DTYPE_C MIN_CAT_SUPPORT = 10.
+            Y_DTYPE_C support_factor
+            unsigned int N_POWER_ITERATIONS = 10
+
+        for k in range(n_outputs):
+            total_sum_hessians += sum_hessians[k]
+        support_factor = n_samples / total_sum_hessians
+
+        cat_infos = <categorical_info *> malloc(
+            n_candidate_bins * sizeof(categorical_info))
+        cat_values = <Y_DTYPE_C *> malloc(
+            n_candidate_bins * n_outputs * sizeof(Y_DTYPE_C))
+        cat_weights = <Y_DTYPE_C *> malloc(n_candidate_bins * sizeof(Y_DTYPE_C))
+        direction_vec = <Y_DTYPE_C *> malloc(n_outputs * sizeof(Y_DTYPE_C))
+        new_direction_vec = <Y_DTYPE_C *> malloc(n_outputs * sizeof(Y_DTYPE_C))
+
+        # fill cat_infos while filtering out categories based on MIN_CAT_SUPPORT
+        for i in range(n_candidate_bins):
+            if i < n_bins_non_missing:
+                bin_idx = i
+            else:
+                bin_idx = missing_values_bin_idx
+            hist_bin = &histograms[feature_idx, bin_idx, 0]
+            sum_hessians_bin = _total_hessian(
+                hist_bin, n_outputs, hessians_are_constant)
+            if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
+                cat_infos[n_used_bins].bin_idx = bin_idx
+                cat_weights[n_used_bins] = sum_hessians_bin
+                for k in range(n_outputs):
+                    if hessians_are_constant:
+                        h_bin = hist_bin[count_idx]
+                    else:
+                        h_bin = hist_bin[n_outputs + k]
+                    cat_values[n_used_bins * n_outputs + k] = (
+                        hist_bin[k] / (h_bin + MIN_CAT_SUPPORT)
+                    )
+                n_used_bins += 1
+
+        if n_used_bins <= 1:
+            free(cat_infos)
+            free(cat_values)
+            free(cat_weights)
+            free(direction_vec)
+            free(new_direction_vec)
+            return
+
+        if n_outputs == 1:
+            for c in range(n_used_bins):
+                cat_infos[c].value = cat_values[c]
+        else:
+            # Center the category values (weighted by their hessians).
+            total_weight = 0.
+            for c in range(n_used_bins):
+                total_weight += cat_weights[c]
+            for k in range(n_outputs):
+                tmp = 0.
+                for c in range(n_used_bins):
+                    tmp += cat_weights[c] * cat_values[c * n_outputs + k]
+                tmp /= total_weight
+                for c in range(n_used_bins):
+                    cat_values[c * n_outputs + k] -= tmp
+
+            # Initialize the direction with the category of largest weighted
+            # squared norm and run a few power iterations on the weighted
+            # covariance matrix of the centered values.
+            best_c = 0
+            norm = -1.
+            for c in range(n_used_bins):
+                tmp = 0.
+                for k in range(n_outputs):
+                    tmp += cat_values[c * n_outputs + k] ** 2
+                tmp *= cat_weights[c]
+                if tmp > norm:
+                    norm = tmp
+                    best_c = c
+            for k in range(n_outputs):
+                direction_vec[k] = cat_values[best_c * n_outputs + k]
+
+            for it in range(N_POWER_ITERATIONS):
+                memset(new_direction_vec, 0, n_outputs * sizeof(Y_DTYPE_C))
+                for c in range(n_used_bins):
+                    tmp = 0.
+                    for k in range(n_outputs):
+                        tmp += cat_values[c * n_outputs + k] * direction_vec[k]
+                    tmp *= cat_weights[c]
+                    for k in range(n_outputs):
+                        new_direction_vec[k] += tmp * cat_values[c * n_outputs + k]
+                norm = 0.
+                for k in range(n_outputs):
+                    norm += new_direction_vec[k] ** 2
+                if norm <= 0.:
+                    break
+                norm = norm ** 0.5
+                for k in range(n_outputs):
+                    direction_vec[k] = new_direction_vec[k] / norm
+
+            for c in range(n_used_bins):
+                tmp = 0.
+                for k in range(n_outputs):
+                    tmp += cat_values[c * n_outputs + k] * direction_vec[k]
+                cat_infos[c].value = tmp
+
+        qsort(cat_infos, n_used_bins, sizeof(categorical_info),
+              compare_cat_infos)
+
+        scan_direction[0], scan_direction[1] = 1, -1
+        for direction in scan_direction:
+            if direction == 1:
+                middle = (n_used_bins + 1) // 2
+            else:
+                middle = (n_used_bins + 1) // 2 - 1
+
+            memset(left_stats, 0, n_stats * sizeof(Y_DTYPE_C))
+
+            for i in range(middle):
+                sorted_cat_idx = i if direction == 1 else n_used_bins - 1 - i
+                bin_idx = cat_infos[sorted_cat_idx].bin_idx
+                hist_bin = &histograms[feature_idx, bin_idx, 0]
+                for s in range(n_stats):
+                    left_stats[s] += hist_bin[s]
+
+                n_samples_left = <unsigned int> left_stats[count_idx]
+                n_samples_right = n_samples - n_samples_left
+                sum_hessian_left = _total_hessian(
+                    left_stats, n_outputs, hessians_are_constant)
+                sum_hessian_right = total_sum_hessians - sum_hessian_left
+
+                if (
+                    n_samples_left < self.min_samples_leaf or
+                    sum_hessian_left < self.min_hessian_to_split
+                ):
+                    continue
+                if (
+                    n_samples_right < self.min_samples_leaf or
+                    sum_hessian_right < self.min_hessian_to_split
+                ):
+                    break
+
+                gain = _vector_split_gain(
+                    left_stats, sum_gradients, sum_hessians, n_outputs,
+                    hessians_are_constant, loss_current_node,
+                    self.l2_regularization)
+                if gain > best_gain and gain > self.min_gain_to_split:
+                    found_better_split = True
+                    best_gain = gain
+                    best_cat_infos_thresh = sorted_cat_idx
+                    best_direction = direction
+                    memcpy(best_left_stats, left_stats, n_stats * sizeof(Y_DTYPE_C))
+
+        if found_better_split:
+            split_info.gain = best_gain
+            # bin_idx is unused for categorical splits: left_cat_bitset is used
+            split_info.bin_idx = 0
+
+            init_bitset(split_info.left_cat_bitset)
+            if best_direction == 1:
+                for sorted_cat_idx in range(best_cat_infos_thresh + 1):
+                    bin_idx = cat_infos[sorted_cat_idx].bin_idx
+                    set_bitset(split_info.left_cat_bitset, bin_idx)
+            else:
+                for sorted_cat_idx in range(n_used_bins - 1, best_cat_infos_thresh - 1, -1):
+                    bin_idx = cat_infos[sorted_cat_idx].bin_idx
+                    set_bitset(split_info.left_cat_bitset, bin_idx)
+
+            if has_missing_values:
+                split_info.missing_go_to_left = in_bitset(
+                    split_info.left_cat_bitset, missing_values_bin_idx)
+
+        free(cat_infos)
+        free(cat_values)
+        free(cat_weights)
+        free(direction_vec)
+        free(new_direction_vec)
+
+
+cdef inline Y_DTYPE_C _total_hessian(
+        const Y_DTYPE_C * stats,
+        unsigned int n_outputs,
+        uint8_t hessians_are_constant) noexcept nogil:
+    """Sum over the outputs of the hessians stored in a vector histogram bin.
+
+    With constant hessians (equal to 1), this is n_outputs * count.
+    """
+    cdef:
+        unsigned int k
+        Y_DTYPE_C total = 0.
+    if hessians_are_constant:
+        return n_outputs * stats[n_outputs]
+    for k in range(n_outputs):
+        total += stats[n_outputs + k]
+    return total
+
+
+cdef inline Y_DTYPE_C _vector_split_gain(
+        const Y_DTYPE_C * left_stats,
+        const Y_DTYPE_C * sum_gradients,
+        const Y_DTYPE_C * sum_hessians,
+        unsigned int n_outputs,
+        uint8_t hessians_are_constant,
+        Y_DTYPE_C loss_current_node,
+        Y_DTYPE_C l2_regularization) noexcept nogil:
+    """Loss reduction of a split, summed over the outputs.
+
+    With a single output, this performs exactly the same floating point
+    operations as `_split_gain` without monotonic constraints.
+    """
+    cdef:
+        unsigned int k
+        Y_DTYPE_C gain = loss_current_node
+        Y_DTYPE_C sum_gradient_left, sum_gradient_right
+        Y_DTYPE_C sum_hessian_left, sum_hessian_right
+        Y_DTYPE_C value_left, value_right
+
+    for k in range(n_outputs):
+        sum_gradient_left = left_stats[k]
+        sum_gradient_right = sum_gradients[k] - sum_gradient_left
+        if hessians_are_constant:
+            sum_hessian_left = left_stats[n_outputs]
+        else:
+            sum_hessian_left = left_stats[n_outputs + k]
+        sum_hessian_right = sum_hessians[k] - sum_hessian_left
+        value_left = compute_node_value(sum_gradient_left, sum_hessian_left,
+                                        -INFINITY, INFINITY, l2_regularization)
+        value_right = compute_node_value(sum_gradient_right, sum_hessian_right,
+                                         -INFINITY, INFINITY, l2_regularization)
+        gain -= _loss_from_value(value_left, sum_gradient_left)
+        gain -= _loss_from_value(value_right, sum_gradient_right)
+    return gain
 
 
 cdef int compare_cat_infos(const void * a, const void * b) noexcept nogil:

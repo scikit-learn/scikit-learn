@@ -27,13 +27,39 @@ def _predict_from_raw_data(  # raw data = non-binned data
 
     for i in prange(numeric_data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
-        out[i] = _predict_one_from_raw_data(
+        out[i] = nodes[_predict_leaf_idx_from_raw_data(
+            nodes, numeric_data, raw_left_cat_bitsets,
+            known_cat_bitsets,
+            f_idx_map, i)].value
+
+
+def _predict_from_raw_data_vector(  # raw data = non-binned data
+        const node_struct [:] nodes,
+        const Y_DTYPE_C [:, ::1] node_values,
+        const X_DTYPE_C [:, :] numeric_data,
+        const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
+        const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
+        const unsigned int [::1] f_idx_map,
+        int n_threads,
+        Y_DTYPE_C [:, :] out):
+    """Add the vector leaf values of the tree to out, in place."""
+    cdef:
+        int i
+        unsigned int k
+        unsigned int leaf_idx
+        unsigned int n_outputs = node_values.shape[1]
+
+    for i in prange(numeric_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
+        leaf_idx = _predict_leaf_idx_from_raw_data(
             nodes, numeric_data, raw_left_cat_bitsets,
             known_cat_bitsets,
             f_idx_map, i)
+        for k in range(n_outputs):
+            out[i, k] += node_values[leaf_idx, k]
 
 
-cdef inline Y_DTYPE_C _predict_one_from_raw_data(
+cdef inline unsigned int _predict_leaf_idx_from_raw_data(
         const node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
         const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
@@ -50,7 +76,7 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
 
     while True:
         if node.is_leaf:
-            return node.value
+            return node_idx
 
         data_val = numeric_data[row, node.feature_idx]
 
@@ -82,9 +108,9 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
 
 
 def _predict_from_binned_data(
-        node_struct [:] nodes,
+        const node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
-        BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
+        const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const uint8_t missing_values_bin_idx,
         int n_threads,
         Y_DTYPE_C [:] out):
@@ -94,14 +120,37 @@ def _predict_from_binned_data(
 
     for i in prange(binned_data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
-        out[i] = _predict_one_from_binned_data(nodes,
-                                               binned_data,
-                                               binned_left_cat_bitsets, i,
-                                               missing_values_bin_idx)
+        out[i] = nodes[_predict_leaf_idx_from_binned_data(
+            nodes, binned_data, binned_left_cat_bitsets, i,
+            missing_values_bin_idx)].value
 
 
-cdef inline Y_DTYPE_C _predict_one_from_binned_data(
-        node_struct [:] nodes,
+def _predict_from_binned_data_vector(
+        const node_struct [:] nodes,
+        const Y_DTYPE_C [:, ::1] node_values,
+        const X_BINNED_DTYPE_C [:, :] binned_data,
+        const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
+        const uint8_t missing_values_bin_idx,
+        int n_threads,
+        Y_DTYPE_C [:, :] out):
+    """Add the vector leaf values of the tree to out, in place."""
+    cdef:
+        int i
+        unsigned int k
+        unsigned int leaf_idx
+        unsigned int n_outputs = node_values.shape[1]
+
+    for i in prange(binned_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
+        leaf_idx = _predict_leaf_idx_from_binned_data(
+            nodes, binned_data, binned_left_cat_bitsets, i,
+            missing_values_bin_idx)
+        for k in range(n_outputs):
+            out[i, k] += node_values[leaf_idx, k]
+
+
+cdef inline unsigned int _predict_leaf_idx_from_binned_data(
+        const node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const int row,
@@ -116,7 +165,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 
     while True:
         if node.is_leaf:
-            return node.value
+            return node_idx
 
         data_val = binned_data[row, node.feature_idx]
 
@@ -143,9 +192,10 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 
 def _compute_partial_dependence(
     node_struct [:] nodes,
+    const Y_DTYPE_C [:, :] node_values,
     const X_DTYPE_C [:, ::1] X,
     const intp_t [:] target_features,
-    Y_DTYPE_C [:] out
+    Y_DTYPE_C [:, :] out
 ):
     """Partial dependence of the response on the ``target_features`` set.
 
@@ -166,15 +216,17 @@ def _compute_partial_dependence(
     ----------
     nodes : view on array of PREDICTOR_RECORD_DTYPE, shape (n_nodes)
         The array representing the predictor tree.
+    node_values : view on 2d ndarray, shape (n_nodes, n_outputs)
+        The values of the nodes, for each output.
     X : view on 2d ndarray, shape (n_samples, n_target_features)
         The grid points on which the partial dependence should be
         evaluated.
     target_features : view on 1d ndarray of intp_t, shape (n_target_features)
         The set of target features for which the partial dependence
         should be evaluated.
-    out : view on 1d ndarray, shape (n_samples)
+    out : view on 2d ndarray, shape (n_outputs, n_samples)
         The value of the partial dependence function on each grid
-        point.
+        point, for each output.
     """
 
     cdef:
@@ -192,6 +244,8 @@ def _compute_partial_dependence(
         Y_DTYPE_C current_weight
         Y_DTYPE_C total_weight  # used for sanity check only
         bint is_target_feature
+        unsigned int k
+        unsigned int n_outputs = node_values.shape[1]
 
     for sample_idx in range(X.shape[0]):
         # init stacks for current sample
@@ -208,8 +262,9 @@ def _compute_partial_dependence(
             current_node = &nodes[current_node_idx]
 
             if current_node.is_leaf:
-                out[sample_idx] += (weight_stack[stack_size] *
-                                    current_node.value)
+                for k in range(n_outputs):
+                    out[k, sample_idx] += (weight_stack[stack_size] *
+                                           node_values[current_node_idx, k])
                 total_weight += weight_stack[stack_size]
             else:
                 # determine if the split feature is a target feature

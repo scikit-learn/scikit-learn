@@ -9,10 +9,11 @@ from libc.string cimport memset
 
 import numpy as np
 
-from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE, Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common cimport hist_struct
 from sklearn.ensemble._hist_gradient_boosting.common cimport X_BINNED_DTYPE_C
 from sklearn.ensemble._hist_gradient_boosting.common cimport G_H_DTYPE_C
+from sklearn.ensemble._hist_gradient_boosting.common cimport Y_DTYPE_C
 from sklearn.utils._typedefs cimport uint8_t
 
 
@@ -518,3 +519,245 @@ cpdef void _build_histogram_root_no_hessian(
         bin_idx = binned_feature[i]
         out[feature_idx, bin_idx].sum_gradients += all_gradients[i]
         out[feature_idx, bin_idx].count += 1
+
+
+@cython.final
+cdef class VectorHistogramBuilder:
+    """Histogram builder for vector-valued gradients and hessians.
+
+    Used to grow trees with vector leaves, i.e. trees that model all the
+    outputs (e.g. the classes of a multiclass problem) at once.
+
+    A histogram is a float64 array of shape (n_features, n_bins, n_stats).
+    For each feature and bin, the last axis stores the per-output sums of
+    gradients, followed by the per-output sums of hessians (only if hessians
+    are not constant) and finally the number of samples in the bin::
+
+        [sum_gradients[0], ..., sum_gradients[n_outputs - 1],
+         sum_hessians[0], ..., sum_hessians[n_outputs - 1],
+         count]
+
+    so that ``n_stats = 2 * n_outputs + 1``, or ``n_stats = n_outputs + 1``
+    when hessians are constant.
+
+    Parameters
+    ----------
+    X_binned : ndarray of int, shape (n_samples, n_features)
+        The binned input samples. Must be Fortran-aligned.
+    n_bins : int
+        The total number of bins, including the bin for missing values.
+    gradients : ndarray, shape (n_samples, n_outputs)
+        The gradients of each training sample. Must be C-contiguous.
+    hessians : ndarray, shape (n_samples, n_outputs) or (1, n_outputs)
+        The hessians of each training sample. Must be C-contiguous.
+    hessians_are_constant : bool
+        Whether hessians are constant (and equal to 1).
+    n_threads : int
+        Number of OpenMP threads to use.
+    """
+    cdef public:
+        const X_BINNED_DTYPE_C [::1, :] X_binned
+        unsigned int n_features
+        unsigned int n_bins
+        unsigned int n_outputs
+        unsigned int n_stats
+        const G_H_DTYPE_C [:, ::1] gradients
+        const G_H_DTYPE_C [:, ::1] hessians
+        G_H_DTYPE_C [:, ::1] ordered_gradients
+        G_H_DTYPE_C [:, ::1] ordered_hessians
+        uint8_t hessians_are_constant
+        int n_threads
+
+    def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
+                 unsigned int n_bins, const G_H_DTYPE_C [:, ::1] gradients,
+                 const G_H_DTYPE_C [:, ::1] hessians,
+                 uint8_t hessians_are_constant,
+                 int n_threads):
+
+        self.X_binned = X_binned
+        self.n_features = X_binned.shape[1]
+        self.n_bins = n_bins
+        self.n_outputs = gradients.shape[1]
+        self.gradients = gradients
+        self.hessians = hessians
+        self.hessians_are_constant = hessians_are_constant
+        if hessians_are_constant:
+            self.n_stats = self.n_outputs + 1
+        else:
+            self.n_stats = 2 * self.n_outputs + 1
+        # for root node, gradients and hessians are already ordered
+        self.ordered_gradients = np.array(gradients, copy=True)
+        self.ordered_hessians = np.array(hessians, copy=True)
+        self.n_threads = n_threads
+
+    def compute_histograms_brute(
+        VectorHistogramBuilder self,
+        const unsigned int [::1] sample_indices,       # IN
+        const unsigned int [:] allowed_features=None,  # IN
+    ):
+        """Compute the histograms of the node by scanning through all the data.
+
+        Parameters
+        ----------
+        sample_indices : array of int, shape (n_samples_at_node,)
+            The indices of the samples at the node to split.
+        allowed_features : None or ndarray, dtype=np.uint32
+            Indices of the features that are allowed by interaction constraints to be
+            split.
+
+        Returns
+        -------
+        histograms : ndarray of float64, shape (n_features, n_bins, n_stats)
+            The computed histograms of the current node.
+        """
+        cdef:
+            int n_samples
+            int feature_idx
+            int f_idx
+            int i
+            unsigned int k
+            unsigned int n_outputs = self.n_outputs
+            uint8_t hessians_are_constant = self.hessians_are_constant
+            int n_allowed_features = self.n_features
+            G_H_DTYPE_C [:, ::1] ordered_gradients = self.ordered_gradients
+            const G_H_DTYPE_C [:, ::1] gradients = self.gradients
+            G_H_DTYPE_C [:, ::1] ordered_hessians = self.ordered_hessians
+            const G_H_DTYPE_C [:, ::1] hessians = self.hessians
+            # Histograms will be initialized to zero later within a prange
+            Y_DTYPE_C [:, :, ::1] histograms = np.empty(
+                shape=(self.n_features, self.n_bins, self.n_stats),
+                dtype=Y_DTYPE
+            )
+            bint has_interaction_cst = allowed_features is not None
+            int n_threads = self.n_threads
+
+        if has_interaction_cst:
+            n_allowed_features = allowed_features.shape[0]
+
+        with nogil:
+            n_samples = sample_indices.shape[0]
+
+            if sample_indices.shape[0] != gradients.shape[0]:
+                for i in prange(n_samples, schedule='static',
+                                num_threads=n_threads):
+                    for k in range(n_outputs):
+                        ordered_gradients[i, k] = gradients[sample_indices[i], k]
+                    if not hessians_are_constant:
+                        for k in range(n_outputs):
+                            ordered_hessians[i, k] = hessians[sample_indices[i], k]
+
+            for f_idx in prange(
+                n_allowed_features, schedule='static', num_threads=n_threads
+            ):
+                if has_interaction_cst:
+                    feature_idx = allowed_features[f_idx]
+                else:
+                    feature_idx = f_idx
+
+                self._compute_histogram_brute_single_feature(
+                    feature_idx, sample_indices, histograms
+                )
+
+        return np.asarray(histograms)
+
+    cdef void _compute_histogram_brute_single_feature(
+            VectorHistogramBuilder self,
+            const int feature_idx,
+            const unsigned int [::1] sample_indices,  # IN
+            Y_DTYPE_C [:, :, ::1] histograms) noexcept nogil:  # OUT
+        cdef:
+            unsigned int n_samples = sample_indices.shape[0]
+            const X_BINNED_DTYPE_C [::1] X_binned = \
+                self.X_binned[:, feature_idx]
+            uint8_t root_node = X_binned.shape[0] == n_samples
+
+        memset(&histograms[feature_idx, 0, 0], 0,
+               self.n_bins * self.n_stats * sizeof(Y_DTYPE_C))
+
+        _build_histogram_vector(
+            feature_idx, sample_indices, X_binned, self.ordered_gradients,
+            self.ordered_hessians, self.hessians_are_constant, root_node,
+            histograms
+        )
+
+    def compute_histograms_subtraction(
+        VectorHistogramBuilder self,
+        Y_DTYPE_C [:, :, ::1] parent_histograms,         # IN and OUT
+        const Y_DTYPE_C [:, :, ::1] sibling_histograms,  # IN
+        const unsigned int [:] allowed_features=None,    # IN
+    ):
+        """Compute the histograms of the node using the subtraction trick.
+
+        hist(parent) = hist(left_child) + hist(right_child)
+
+        Returns
+        -------
+        histograms : ndarray of float64, shape(n_features, n_bins, n_stats)
+            The computed histograms of the current node. We repurpose
+            parent_histograms for this and don't need to allocate new memory.
+        """
+        cdef:
+            int feature_idx
+            int f_idx
+            unsigned int i
+            unsigned int n_values = self.n_bins * self.n_stats
+            int n_allowed_features = self.n_features
+            bint has_interaction_cst = allowed_features is not None
+            int n_threads = self.n_threads
+            Y_DTYPE_C * hist_a
+            const Y_DTYPE_C * hist_b
+
+        if has_interaction_cst:
+            n_allowed_features = allowed_features.shape[0]
+
+        for f_idx in prange(n_allowed_features, schedule='static', nogil=True,
+                            num_threads=n_threads):
+            if has_interaction_cst:
+                feature_idx = allowed_features[f_idx]
+            else:
+                feature_idx = f_idx
+            hist_a = &parent_histograms[feature_idx, 0, 0]
+            hist_b = &sibling_histograms[feature_idx, 0, 0]
+            for i in range(n_values):
+                hist_a[i] -= hist_b[i]
+        return np.asarray(parent_histograms)
+
+
+cdef inline void _build_histogram_vector(
+        const int feature_idx,
+        const unsigned int [::1] sample_indices,  # IN
+        const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+        const G_H_DTYPE_C [:, ::1] ordered_gradients,  # IN
+        const G_H_DTYPE_C [:, ::1] ordered_hessians,  # IN
+        const uint8_t hessians_are_constant,
+        const uint8_t root_node,
+        Y_DTYPE_C [:, :, ::1] out) noexcept nogil:  # OUT
+    """Accumulate vector gradients (and hessians) of a node for one feature.
+
+    For the root node, binned_feature and the ordered gradients / hessians
+    already have a consistent ordering and sample_indices is not used.
+    """
+    cdef:
+        unsigned int i
+        unsigned int k
+        unsigned int bin_idx
+        unsigned int n_node_samples = sample_indices.shape[0]
+        unsigned int n_outputs = ordered_gradients.shape[1]
+        unsigned int count_idx = out.shape[2] - 1
+        Y_DTYPE_C * hist_bin
+        Y_DTYPE_C * hist_feature = &out[feature_idx, 0, 0]
+        const G_H_DTYPE_C * g = &ordered_gradients[0, 0]
+        const G_H_DTYPE_C * h = &ordered_hessians[0, 0]
+
+    for i in range(n_node_samples):
+        if root_node:
+            bin_idx = binned_feature[i]
+        else:
+            bin_idx = binned_feature[sample_indices[i]]
+        hist_bin = hist_feature + bin_idx * (count_idx + 1)
+        for k in range(n_outputs):
+            hist_bin[k] += g[i * n_outputs + k]
+        if not hessians_are_constant:
+            for k in range(n_outputs):
+                hist_bin[n_outputs + k] += h[i * n_outputs + k]
+        hist_bin[count_idx] += 1.

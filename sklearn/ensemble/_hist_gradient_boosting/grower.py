@@ -17,9 +17,13 @@ import numpy as np
 from sklearn.ensemble._hist_gradient_boosting.common import (
     PREDICTOR_RECORD_DTYPE,
     X_BITSET_INNER_DTYPE,
+    Y_DTYPE,
     MonotonicConstraint,
 )
-from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
+from sklearn.ensemble._hist_gradient_boosting.histogram import (
+    HistogramBuilder,
+    VectorHistogramBuilder,
+)
 from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
 from sklearn.utils._bitset import set_raw_bitset_from_binned_bitset
@@ -42,10 +46,12 @@ class TreeNode:
         start position of the node's sample_indices in splitter.partition.
     partition_stop : int
         stop position of the node's sample_indices in splitter.partition.
-    sum_gradients : float
-        The sum of the gradients of the samples at the node.
-    sum_hessians : float
-        The sum of the hessians of the samples at the node.
+    sum_gradients : float or ndarray of shape (n_outputs,)
+        The sum of the gradients of the samples at the node. An array for
+        trees with vector leaves.
+    sum_hessians : float or ndarray of shape (n_outputs,)
+        The sum of the hessians of the samples at the node. An array for
+        trees with vector leaves.
 
     Attributes
     ----------
@@ -65,9 +71,9 @@ class TreeNode:
         The left child of the node. None for leaves.
     right_child : TreeNode or None
         The right child of the node. None for leaves.
-    value : float or None
+    value : float or ndarray of shape (n_outputs,) or None
         The value of the leaf, as computed in finalize_leaf(). None for
-        non-leaf nodes.
+        non-leaf nodes. An array for trees with vector leaves.
     partition_start : int
         start position of the node's sample_indices in splitter.partition.
     partition_stop : int
@@ -155,12 +161,17 @@ class TreeGrower:
     ----------
     X_binned : ndarray of shape (n_samples, n_features), dtype=np.uint8
         The binned input samples. Must be Fortran-aligned.
-    gradients : ndarray of shape (n_samples,)
+    gradients : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         The gradients of each training sample. Those are the gradients of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
-    hessians : ndarray of shape (n_samples,)
+        If 2-dimensional, a tree with vector leaves is grown: the tree
+        structure is shared by all outputs and each leaf stores one value per
+        output.
+    hessians : ndarray of shape (n_samples,) or (n_samples, n_outputs)
         The hessians of each training sample. Those are the hessians of the
-        loss w.r.t the predictions, evaluated at iteration ``i - 1``.
+        loss w.r.t the predictions, evaluated at iteration ``i - 1``. Must
+        have the same number of dimensions as ``gradients``. A first
+        dimension of size 1 indicates constant hessians.
     max_leaf_nodes : int, default=None
         The maximum number of leaves for each tree. If None, there is no
         maximum limit.
@@ -239,6 +250,9 @@ class TreeGrower:
     with_monotonic_cst : bool
         Whether there are monotonic constraints that apply. False iff monotonic_cst is
         None.
+    n_outputs : int or None
+        The number of outputs of a tree with vector leaves, None for a tree
+        with scalar leaves.
     """
 
     def __init__(
@@ -310,9 +324,26 @@ class TreeGrower:
             raise ValueError("Categorical features cannot have monotonic constraints.")
 
         hessians_are_constant = hessians.shape[0] == 1
-        self.histogram_builder = HistogramBuilder(
-            X_binned, n_bins, gradients, hessians, hessians_are_constant, n_threads
-        )
+        if gradients.ndim == 2:
+            if self.with_monotonic_cst:
+                raise ValueError(
+                    "Monotonic constraints are not supported for trees with vector "
+                    "leaves."
+                )
+            self.n_outputs = gradients.shape[1]
+            self.histogram_builder = VectorHistogramBuilder(
+                X_binned,
+                n_bins,
+                np.ascontiguousarray(gradients),
+                np.ascontiguousarray(hessians),
+                hessians_are_constant,
+                n_threads,
+            )
+        else:
+            self.n_outputs = None
+            self.histogram_builder = HistogramBuilder(
+                X_binned, n_bins, gradients, hessians, hessians_are_constant, n_threads
+            )
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
             X_binned=X_binned,
@@ -397,7 +428,7 @@ class TreeGrower:
         value needed to enforce the monotonic constraints.
         """
         for leaf in self.finalized_leaves:
-            leaf.value *= self.shrinkage
+            leaf.value = leaf.value * self.shrinkage
 
     def _initialize_root(self):
         """Initialize root node and finalize it if needed."""
@@ -426,11 +457,21 @@ class TreeGrower:
         n_samples = self.X_binned.shape[0]
         depth = 0
         histogram_array = np.asarray(histograms[arbitrary_feature])
-        sum_gradients = histogram_array["sum_gradients"].sum()
-        if self.histogram_builder.hessians_are_constant:
-            sum_hessians = self.histogram_builder.hessians[0] * n_samples
+        if self.n_outputs is None:
+            sum_gradients = histogram_array["sum_gradients"].sum()
+            if self.histogram_builder.hessians_are_constant:
+                sum_hessians = self.histogram_builder.hessians[0] * n_samples
+            else:
+                sum_hessians = histogram_array["sum_hessians"].sum()
+            value = 0
         else:
-            sum_hessians = histogram_array["sum_hessians"].sum()
+            k = self.n_outputs
+            sum_gradients = histogram_array[:, :k].sum(axis=0)
+            if self.histogram_builder.hessians_are_constant:
+                sum_hessians = np.full(k, float(n_samples))
+            else:
+                sum_hessians = histogram_array[:, k : 2 * k].sum(axis=0)
+            value = np.zeros(k)
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,
@@ -438,14 +479,14 @@ class TreeGrower:
             partition_stop=n_samples,
             sum_gradients=sum_gradients,
             sum_hessians=sum_hessians,
-            value=0,
+            value=value,
         )
 
         if self.root.n_samples < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
             self._finalize_leaf(self.root)
             return
-        if sum_hessians < self.splitter.min_hessian_to_split:
+        if np.sum(sum_hessians) < self.splitter.min_hessian_to_split:
             self._finalize_leaf(self.root)
             return
 
@@ -467,16 +508,26 @@ class TreeGrower:
         (min_hessians_to_split, min_gain_to_split, min_samples_leaf)
         """
 
-        node.split_info = self.splitter.find_node_split(
-            n_samples=node.n_samples,
-            histograms=node.histograms,
-            sum_gradients=node.sum_gradients,
-            sum_hessians=node.sum_hessians,
-            value=node.value,
-            lower_bound=node.children_lower_bound,
-            upper_bound=node.children_upper_bound,
-            allowed_features=node.allowed_features,
-        )
+        if self.n_outputs is None:
+            node.split_info = self.splitter.find_node_split(
+                n_samples=node.n_samples,
+                histograms=node.histograms,
+                sum_gradients=node.sum_gradients,
+                sum_hessians=node.sum_hessians,
+                value=node.value,
+                lower_bound=node.children_lower_bound,
+                upper_bound=node.children_upper_bound,
+                allowed_features=node.allowed_features,
+            )
+        else:
+            node.split_info = self.splitter.find_node_split_vector(
+                n_samples=node.n_samples,
+                histograms=node.histograms,
+                sum_gradients=node.sum_gradients,
+                sum_hessians=node.sum_hessians,
+                value=node.value,
+                allowed_features=node.allowed_features,
+            )
 
         if node.split_info.gain <= 0:  # no valid split
             self._finalize_leaf(node)
@@ -723,6 +774,10 @@ class TreeGrower:
         A TreePredictor object.
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
+        if self.n_outputs is None:
+            node_values = None
+        else:
+            node_values = np.zeros((self.n_nodes, self.n_outputs), dtype=Y_DTYPE)
         binned_left_cat_bitsets = np.zeros(
             (self.n_categorical_splits, 8), dtype=X_BITSET_INNER_DTYPE
         )
@@ -736,9 +791,13 @@ class TreeGrower:
             self.root,
             binning_thresholds,
             self.n_bins_non_missing,
+            node_values=node_values,
         )
         return TreePredictor(
-            predictor_nodes, binned_left_cat_bitsets, raw_left_cat_bitsets
+            predictor_nodes,
+            binned_left_cat_bitsets,
+            raw_left_cat_bitsets,
+            node_values=node_values,
         )
 
 
@@ -751,6 +810,7 @@ def _fill_predictor_arrays(
     n_bins_non_missing,
     next_free_node_idx=0,
     next_free_bitset_idx=0,
+    node_values=None,
 ):
     """Helper used in make_predictor to set the TreePredictor fields."""
     node = predictor_nodes[next_free_node_idx]
@@ -761,7 +821,10 @@ def _fill_predictor_arrays(
     else:
         node["gain"] = -1
 
-    node["value"] = grower_node.value
+    if node_values is None:
+        node["value"] = grower_node.value
+    else:
+        node_values[next_free_node_idx] = grower_node.value
 
     if grower_node.is_leaf:
         # Leaf node
@@ -805,6 +868,7 @@ def _fill_predictor_arrays(
         n_bins_non_missing=n_bins_non_missing,
         next_free_node_idx=next_free_node_idx,
         next_free_bitset_idx=next_free_bitset_idx,
+        node_values=node_values,
     )
 
     node["right"] = next_free_node_idx
@@ -817,4 +881,5 @@ def _fill_predictor_arrays(
         n_bins_non_missing=n_bins_non_missing,
         next_free_node_idx=next_free_node_idx,
         next_free_bitset_idx=next_free_bitset_idx,
+        node_values=node_values,
     )
