@@ -784,7 +784,7 @@ def _kmeans_single_elkan(
 
 # Threadpoolctl context to limit the number of threads in second level of
 # nested parallelism (i.e. BLAS) to avoid oversubscription.
-@_threadpool_controller_decorator(limits="sequential_blas_under_openmp")
+@_threadpool_controller_decorator(limits=1, user_api="blas")
 def _kmeans_single_lloyd(
     X,
     sample_weight,
@@ -984,7 +984,7 @@ def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True)
 
 # Same as _labels_inertia but in a threadpool_limits context.
 _labels_inertia_threadpool_limit = _threadpool_controller_decorator(
-    limits="sequential_blas_under_openmp"
+    limits=1, user_api="blas"
 )(_labels_inertia)
 
 
@@ -2316,7 +2316,7 @@ class MiniBatchKMeans(_BaseKMeans):
         normalized_sample_weight = sample_weight / sum_of_weights
         unit_sample_weight = np.ones_like(sample_weight, shape=(self._batch_size,))
 
-        with _get_threadpool_controller().limit(limits="sequential_blas_under_openmp"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
             for i in range(n_steps):
                 # Sample a minibatch from the full dataset
@@ -2454,7 +2454,7 @@ class MiniBatchKMeans(_BaseKMeans):
             # Initialize number of samples seen since last reassignment
             self._n_since_last_reassign = 0
 
-        with _get_threadpool_controller().limit(limits="sequential_blas_under_openmp"):
+        with _get_threadpool_controller().limit(limits=1, user_api="blas"):
             _mini_batch_step(
                 X,
                 sample_weight=sample_weight,
