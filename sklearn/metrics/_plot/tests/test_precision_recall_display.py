@@ -542,7 +542,9 @@ def test_default_labels(pyplot, average_precision, name, expected_label):
     assert display.line_.get_label() == expected_label
 
 
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
+@pytest.mark.parametrize(
+    "constructor_name", ["from_estimator", "from_predictions", "from_cv_results"]
+)
 @pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
 def test_plot_precision_recall_pos_label(pyplot, constructor_name, response_method):
     """Check switching `pos_label` give correct statistics, using imbalanced data."""
