@@ -10,7 +10,6 @@ to ``fit``. The wrapper requests nothing itself.
 
 import numpy as np
 from joblib import parallel_config
-from numpy.testing import assert_array_equal
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, clone
@@ -19,6 +18,7 @@ from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.model_selection import GridSearchCV, KFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
@@ -112,7 +112,7 @@ class RecordFitSampleWeight(BaseEstimator):
 def _assert_weights(records, expected):
     assert len(records) == len(expected)
     for recorded, target in zip(records, expected):
-        assert_array_equal(recorded, target)
+        assert_allclose(recorded, target)
 
 
 @config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
@@ -151,6 +151,9 @@ def test_pipeline_gridsearch_passes_split_sample_weight():
     with parallel_config(backend="threading", n_jobs=1):
         search.fit(X, y, sample_weight=sample_weight)
 
+    # One candidate, so each split is fitted once. Both steps receive that
+    # split's train weights, in split order, and ``refit`` then fits them on
+    # the full ``sample_weight``.
     fit_weights = [sample_weight[train] for train, _ in splits]
     fit_weights.append(sample_weight)
     _assert_weights(scaler_records, fit_weights)
@@ -184,4 +187,6 @@ def test_calibrated_classifier_passes_train_sample_weight():
     with parallel_config(backend="threading", n_jobs=1):
         calibrated.fit(X, y, sample_weight=sample_weight)
 
+    # ``ensemble=True`` fits the base estimator once per split, on that split's
+    # train weights, and does not refit it on the full sample.
     _assert_weights(records, [sample_weight[train] for train, _ in splits])
