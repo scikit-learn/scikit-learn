@@ -750,9 +750,8 @@ def _fit_and_score(
     callback_ctx : `CallbackContext` object or None, default=None
         Callback context for the evaluation task.
 
-    callback_params : dict or None
-        Parameters that will be passed to the callbacks' on_fit_task_begin and
-        on_fit_task_end hooks.
+    callback_params : dict or None, default=None
+        Metadata routed to the callbacks.
 
     Returns
     -------
@@ -805,12 +804,13 @@ def _fit_and_score(
     score_params = score_params if score_params is not None else {}
     score_params_train = _check_method_params(X, params=score_params, indices=train)
     score_params_test = _check_method_params(X, params=score_params, indices=test)
-    # Adjust length of callbacks metadata
-    if callback_params is not None:
+    if callback_ctx is not None:
+        # Adjust length of callbacks metadata
+        callback_params = callback_params or {}
         callback_params_checked = {}
         for hook_name in CALLBACK_METHODS:
             callback_params_checked[hook_name] = _check_method_params(
-                X, params=callback_params[hook_name] or {}, indices=train
+                X, params=callback_params.get(hook_name) or {}, indices=train
             )
         callback_params = Bunch(**callback_params_checked)
 
