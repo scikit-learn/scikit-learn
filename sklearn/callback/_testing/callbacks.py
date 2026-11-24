@@ -183,7 +183,7 @@ class NotValidSetupKwargOnlyCallback(RecordingCallback):
 
 
 class NotValidFitTaskBeginCallback(RecordingCallback):
-    """Invalid callback since it has invalid keyword-only parameters."""
+    """Invalid callback since it has invalid keyword parameters."""
 
     def on_fit_task_begin(self, estimator, context, not_valid_kwarg=None):
         pass  # pragma: no cover
