@@ -428,6 +428,45 @@ means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
     <10.3390/jrfm15050193>`.
     Journal of Risk and Financial Management 15, no. 5: 193
 
+.. _vector_leaf_hgbt:
+
+Vector leaves
+^^^^^^^^^^^^^
+
+Some problems require to model several outputs at once:
+
+- multiclass classification, with one raw prediction (logit) per class,
+  normalized with the softmax function;
+- multilabel classification (when ``y`` is a binary indicator matrix), with
+  one logit per label, mapped to probabilities with the logistic sigmoid;
+- the estimation of several quantiles of the same target at once, when a list
+  of quantile levels is passed to the ``quantile`` parameter of
+  :class:`HistGradientBoostingRegressor`.
+
+By default (``vector_leaf=False``), each boosting iteration builds one tree
+per output. With ``vector_leaf=True``, each boosting iteration builds a single
+tree whose leaves store a vector of values, one per output. The split gain of
+such trees is the sum over the outputs of the usual split gains, and the
+value of each output in a leaf is computed as for single output trees.
+
+Trees with vector leaves are much faster to fit when the number of outputs is
+large because the cost of finding and applying the splits does not grow with
+the number of outputs. Sharing the tree structure across the outputs also acts
+as a regularization: it typically helps when the outputs are related (e.g. the
+quantiles of the same target) or when few samples are available, but limits
+the flexibility of the model when each output depends on different features.
+
+>>> from sklearn.ensemble import HistGradientBoostingRegressor
+>>> from sklearn.datasets import make_regression
+>>> X, y = make_regression(random_state=0)
+>>> est = HistGradientBoostingRegressor(
+...     loss="quantile", quantile=[0.1, 0.5, 0.9], vector_leaf=True
+... ).fit(X, y)
+>>> est.predict(X[:2]).shape
+(2, 3)
+
+Monotonic constraints are not supported with several outputs.
+
 Low-level parallelism
 ^^^^^^^^^^^^^^^^^^^^^
 
