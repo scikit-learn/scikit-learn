@@ -141,6 +141,6 @@ class AutoPropagatedCallbackMixin:
     def max_propagation_depth(self, value):
         if (not isinstance(value, int) or value < 0) and value is not None:
             raise ValueError(
-                "max_propagation_depth must be a positive integer or None."
+                "max_propagation_depth must be a non-negative integer or None."
             )
         self._max_propagation_depth = value
