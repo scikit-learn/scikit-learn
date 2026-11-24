@@ -22,6 +22,11 @@ _WAIT_POLICY_ENV_VAR = "SKLEARN_OMP_WAIT_POLICY"
 # prints on stderr when OMP_DISPLAY_ENV=VERBOSE. Each pattern matches a value
 # meaning that idle threads sleep right away instead of spinning, e.g.
 # "[host] KMP_BLOCKTIME='0ms'" (libomp) or "GOMP_SPINCOUNT = '1'" (libgomp).
+# Users rarely set these values, but recent runtimes default to them on hybrid
+# CPUs (performance + efficiency cores, as in many recent laptops): libgomp
+# since GCC 14 (https://gcc.gnu.org/git/?p=gcc.git;a=commit;h=e1e127de18) and
+# libomp since LLVM 14 (https://reviews.llvm.org/D113012). Older runtimes, such
+# as the ones bundled in scikit-learn's PyPI wheels, still spin on these CPUs.
 # OMP_WAIT_POLICY is not checked: libgomp can report it as PASSIVE while
 # a large GOMP_SPINCOUNT still makes threads spin.
 _PASSIVE_WAIT_PATTERNS = tuple(
