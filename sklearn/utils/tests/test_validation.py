@@ -2266,6 +2266,7 @@ def test_check_array_array_api_has_non_finite():
             check_array(X_inf)
 
 
+@pytest.mark.parametrize("convert_to_narwhals", [False, True])
 @pytest.mark.parametrize(
     "extension_dtype, regular_dtype",
     [
@@ -2277,7 +2278,7 @@ def test_check_array_array_api_has_non_finite():
 )
 @pytest.mark.parametrize("include_object", [True, False])
 def test_check_array_multiple_extensions(
-    extension_dtype, regular_dtype, include_object
+    convert_to_narwhals, extension_dtype, regular_dtype, include_object
 ):
     """Check pandas extension arrays give the same result as non-extension arrays."""
     pd = pytest.importorskip("pandas")
@@ -2291,6 +2292,8 @@ def test_check_array_multiple_extensions(
         X_regular["b"] = pd.Series(["a", "b", "c", "d"], dtype="object")
 
     X_extension = X_regular.assign(a=X_regular["a"].astype(extension_dtype))
+    if convert_to_narwhals:
+        X_extension = nw.from_native(X_extension)
 
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)
