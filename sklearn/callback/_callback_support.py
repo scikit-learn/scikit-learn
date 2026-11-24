@@ -29,16 +29,15 @@ def _callbacks_by_default():
     callbacks = []
 
     for cb in get_config().get("default_callbacks", []):
-        if cb == "progressbar":
-            cb = ProgressBar(min_duration=1)
-        # Do not use progress bars on WASM or in non-interactive environments
-        if isinstance(cb, ProgressBar) and (
+        # Do not use progress bars on WASM, in non-interactive environments, or if rich
+        # is not available
+        if (isinstance(cb, ProgressBar) or cb == "progressbar") and (
             _IS_WASM or not hasattr(sys, "ps1") or not _RICH_AVAILABLE
         ):
             continue
+        if cb == "progressbar":
+            cb = ProgressBar(min_duration=1)
 
-        # If default callbacks are callback instances, these will be shared by all
-        # estimators they will be registered on.
         callbacks.append(cb)
 
     return callbacks
