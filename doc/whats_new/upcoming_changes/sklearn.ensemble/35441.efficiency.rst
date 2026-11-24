@@ -1,0 +1,6 @@
+- Fitting :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` is faster for data with features
+  that have few or unevenly populated bins, e.g. binary features or categorical
+  features with a few very frequent categories. For instance, fit time is reduced by
+  about 20% on the covertype dataset.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

@@ -18,6 +18,7 @@ API or give up cross-process capabilities.
 
 import os
 import weakref
+from multiprocessing import AuthenticationError
 from multiprocessing.connection import Client, Connection, Listener
 from threading import Thread
 from typing import Callable, NamedTuple
@@ -63,6 +64,10 @@ _message_consumers: dict[str, Callable] = {}
 # listener address. The first cross-process send opens a client. Subsequent sends to the
 # same listener reuse the cached connection.
 _worker_connections: dict[str, Connection] = {}
+
+# Names need not be unique. The shared prefix lets tests and debuggers tell these
+# threads apart from unrelated ones (joblib, pytest plugins, ...).
+_TRANSPORT_THREAD_NAME_PREFIX = "sklearn_callback_transport_"
 
 
 def open_listener(message_consumer, *, owner=None):
@@ -114,23 +119,46 @@ def open_listener(message_consumer, *, owner=None):
             return
 
     def _accept():
-        while True:
-            try:
-                conn = listener.accept()
-            except OSError:
-                return
-            Thread(target=_handle, args=(conn,), daemon=True).start()
+        try:
+            while listener_handle.address in _listeners:
+                try:
+                    conn = listener.accept()
+                except AuthenticationError:
+                    # Rejected handshake. The listening socket is still open.
+                    continue
+                except (OSError, EOFError):
+                    break  # woken up by `close_listener`, or the listener failed
+                Thread(
+                    target=_handle,
+                    args=(conn,),
+                    name=f"{_TRANSPORT_THREAD_NAME_PREFIX}handle",
+                    daemon=True,
+                ).start()
+        finally:
+            listener.close()
 
-    Thread(target=_accept, daemon=True).start()
+    Thread(
+        target=_accept, name=f"{_TRANSPORT_THREAD_NAME_PREFIX}accept", daemon=True
+    ).start()
     return listener_handle
 
 
 def close_listener(listener_handle):
     """Stop listening for `listener_handle` and free its background threads."""
-    _message_consumers.pop(listener_handle.address, None)
-    listener = _listeners.pop(listener_handle.address, None)
-    if listener is not None:
-        listener.close()
+    address = listener_handle.address
+    _message_consumers.pop(address, None)
+
+    if _listeners.pop(address, None) is None:
+        return  # already closed
+
+    try:
+        # The accept thread is waiting in `accept`, and closing the listener would not
+        # interrupt that call. Connecting to it does: we connect without the authkey so
+        # that the authentication handshake fails, and that failure is what makes the
+        # accept thread break out of its loop.
+        Client(address).close()
+    except OSError:
+        pass  # the accept thread is already gone, e.g. its listener failed
 
 
 def can_reuse_listener(listener_handle):
