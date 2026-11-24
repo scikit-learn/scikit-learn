@@ -1,0 +1,8 @@
+- :func:`metrics.hinge_loss`, :func:`metrics.top_k_accuracy_score`,
+  :func:`metrics.coverage_error`, :func:`metrics.label_ranking_loss`,
+  :func:`metrics.label_ranking_average_precision_score`, :func:`metrics.dcg_score`
+  and :func:`metrics.ndcg_score`, as well as :func:`metrics.roc_auc_score` and
+  :func:`metrics.average_precision_score` with `average="samples"` or
+  `average="weighted"`, now validate `sample_weight` and raise a `ValueError` for
+  non-finite, complex, non-1D or all-zero weights, like the other metrics.
+  By :user:`Jeremy Hsu <Jeremy891102>`.
