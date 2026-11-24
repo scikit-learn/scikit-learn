@@ -2433,9 +2433,6 @@ def test_check_array_writeable_df():
 def test_check_array_writeable_df_copy_on_write():
     """Check that writing to the output of check_array does not modify another
     DataFrame sharing memory with the input under pandas Copy-on-Write.
-
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/35440
     """
     pd = pytest.importorskip("pandas", minversion="3")
 
