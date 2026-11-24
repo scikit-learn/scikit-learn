@@ -611,6 +611,19 @@ def test_kmeans_copyx():
     assert_allclose(my_X, X)
 
 
+@pytest.mark.parametrize("array_constr", data_containers, ids=data_containers_ids)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_kmeans_tol_scaled_by_mean_feature_variance(array_constr, dtype):
+    # Check that the tolerance is tol times the mean variance of the features,
+    # also for data far from the origin.
+    X_shifted = (X + 1e3).astype(dtype)
+    km = KMeans(n_clusters=n_clusters, tol=1e-3, random_state=0)
+    km.fit(array_constr(X_shifted))
+
+    expected = 1e-3 * np.var(X_shifted.astype(np.float64), axis=0).mean()
+    assert km._tol == pytest.approx(expected, rel=1e-4)
+
+
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_score_max_iter(Estimator, global_random_seed):
     # Check that fitting KMeans or MiniBatchKMeans with more iterations gives
