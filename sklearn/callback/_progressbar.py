@@ -12,6 +12,7 @@ from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import Channel
 from sklearn.utils._optional_dependencies import check_rich_support
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
+from sklearn.utils.fixes import _IS_WASM
 
 # Per-fit local queues and monitors, keyed by the run's `root_uuid`. Both are not
 # picklable so they live here rather than on the callback instance. Entries are added in
@@ -66,12 +67,8 @@ class ProgressBar:
         self._channels = {}
 
     def _is_active(self):
-        """Whether the progressbar should be displayed in the current environment.
-
-        Evaluated at the beginning of each fit, so that the answer reflects the
-        environment the fit runs in rather than the one the instance was created in.
-        """
-        return self.show == "always" or hasattr(sys, "ps1")
+        """Whether the progressbar should be displayed in the current environment."""
+        return self.show == "always" or hasattr(sys, "ps1") or _IS_WASM
 
     def setup(self, estimator, context):
         # Disable for current fit run if another active ProgressBar is attached, except

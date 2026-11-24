@@ -7,8 +7,6 @@ import os
 import threading
 from contextlib import contextmanager as contextmanager
 
-from sklearn.utils.fixes import _IS_WASM
-
 try:
     import rich  # noqa: F401
 
@@ -31,7 +29,7 @@ _global_config = {
     "enable_metadata_auto_requests": True,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
-    "default_callbacks": ("progressbar",) if _rich_available and not _IS_WASM else (),
+    "default_callbacks": ("progressbar",) if _rich_available else (),
 }
 _threadlocal = threading.local()
 
