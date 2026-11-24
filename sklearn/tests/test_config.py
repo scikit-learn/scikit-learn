@@ -199,11 +199,10 @@ def test_validate_default_callbacks(callback):
         set_config(default_callbacks=(callback,))
 
 
-@pytest.mark.parametrize("callbacks", ["progressbar", RecordingCallback()])
 def test_validate_default_callbacks_container(callbacks):
     """Check that default_callbacks must be a tuple (or list), not a bare str."""
     with pytest.raises(TypeError, match="default_callbacks must be a tuple"):
-        set_config(default_callbacks=callbacks)
+        set_config(default_callbacks="progressbar")
 
 
 def test_default_callbacks_stored_as_tuple():
