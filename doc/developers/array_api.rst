@@ -102,14 +102,55 @@ Keep the following in mind:
   twice.
 - The view cannot be assigned to. Assign to the estimator instead.
 
-State that must follow ``X``
-============================
+Code shared between fitting and inference
+-----------------------------------------
+
+Some computations that read fitted attributes run both during fitting, when the
+attributes are still in the namespace of ``X``, and in inference methods, when
+they are NumPy arrays. Do not pass "the estimator or a view of it" around to
+handle both cases. Instead:
+
+- Where possible, write the computation as a function of arrays, and let each
+  caller pass the arrays: ``self.precision_`` from fit or from a method without
+  ``X`` such as ``get_precision``, ``fitted.precision_`` from an inference
+  method.
+- Otherwise, for example in a method that subclasses override, let the method
+  build its own view from the ``X`` it computes with,
+  ``fitted = _fitted_attrs_like(self, X)``. During fitting the attributes
+  already follow ``X``, so the view passes them through unchanged.
+
+Arrays used during fitting
+==========================
 
 Fitted state that is read back during fitting is a NumPy array, even if the
 previous fit was done with a different namespace. With ``warm_start=True`` or in
 ``partial_fit``, move the stored state to the namespace and device used for the
-computation before using it, for example with
-``move_to(self.coef_, xp=xp, device=device)``.
+computation with ``_move_state`` before using it. The same applies to other
+arrays that a fit method computes with and writes back to the estimator, for
+example array-valued constructor parameters used as initial values::
+
+    from sklearn.utils._array_api import _move_state
+
+    # Running statistics, kept in a higher precision than `X`.
+    self.mean_, self.var_ = _move_state(self.mean_, self.var_, xp=xp, device=device)
+    # Parameters that are combined with `X` in the dtype of `X`.
+    means = _move_state(self.means_init, xp=xp, device=device, dtype=X.dtype)
+
+``_move_state`` accepts containers of arrays and leaves values that are not
+arrays unchanged. Pass ``dtype`` to cast real floating point arrays: use the
+dtype that the estimator would use for this computation in a fresh fit, which is
+usually the floating dtype of ``X``. Leave it out to keep the stored dtype, for
+example for accumulators that the estimator deliberately keeps in a higher
+precision than ``X``. The target is where the computation happens, which is not
+always the namespace of ``X``: ``LogisticRegression`` moves its stored
+coefficients to NumPy for its solvers, and ``classes_`` is combined with ``y``.
+
+Use ``_fitted_attrs_like`` to read attributes that an inference method computes
+with, and ``_move_state`` for arrays whose results are written back to the
+estimator. The view casts with a fixed rule that is right for outputs that follow
+``X`` but not for every kind of state, and it caches the arrays it moved, so
+reading an attribute through the same view after assigning to the estimator
+returns the old value.
 
 ``classes_`` is a NumPy array, which allows it to hold string class labels that
 cannot be represented in every namespace. Predicted labels follow ``X``, unless

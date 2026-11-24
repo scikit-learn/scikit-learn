@@ -1184,6 +1184,60 @@ def move_estimator_to(estimator, xp, device):
     )
 
 
+def _move_state(*values, xp, device, dtype=None):
+    """Move arrays to the namespace and device where a computation happens.
+
+    Use this for arrays that a fit method computes with and writes back to the
+    estimator: fitted state read back by `partial_fit` or with `warm_start=True`,
+    array-valued constructor parameters used as initial values, `classes_`
+    combined with `y`. Read fitted attributes for an inference method with
+    `_fitted_attrs_like` instead.
+
+    Unlike `move_to`, this accepts containers (`dict`, `list`, `tuple`, ...) of
+    arrays, which are walked like `_fitted_attrs_as_numpy` walks fitted
+    attributes, and leaves values that are not arrays, such as Python scalars,
+    unchanged.
+
+    Parameters
+    ----------
+    *values : arrays, containers of arrays or other objects
+        The values to move.
+
+    xp : array namespace
+        Array API namespace to move the arrays to.
+
+    device : device
+        Array API device to move the arrays to.
+
+    dtype : dtype, default=None
+        If given, real floating point arrays are also cast to `dtype`. Pass the
+        dtype that the estimator would use for this computation in a fresh fit,
+        for example the floating dtype of `X`. Leave it as None to keep the dtype
+        of the stored state, for example for accumulators that are kept in a
+        higher precision than `X`. Arrays of other dtypes are never cast.
+
+    Returns
+    -------
+    moved : object or tuple of objects
+        The moved values, a single one if a single value was passed.
+    """
+
+    def convert(array):
+        array = move_to(array, xp=xp, device=device)
+        if (
+            dtype is not None
+            and array.dtype != dtype
+            and xp.isdtype(array.dtype, "real floating")
+        ):
+            array = xp.astype(array, dtype)
+        return array
+
+    moved = tuple(
+        _convert_arrays(value, convert, recurse_estimators=False) for value in values
+    )
+    return moved[0] if len(moved) == 1 else moved
+
+
 class _FittedAttrsLike:
     """Read-only view of an estimator's fitted attributes in `xp` on `device`.
 
@@ -1204,21 +1258,12 @@ class _FittedAttrsLike:
         self._device = device
         self._dtype = dtype
 
-    def _convert(self, array):
-        array = move_to(array, xp=self._xp, device=self._device)
-        if (
-            self._dtype is not None
-            and array.dtype != self._dtype
-            and self._xp.isdtype(array.dtype, "real floating")
-        ):
-            array = self._xp.astype(array, self._dtype)
-        return array
-
     def __getattr__(self, name):
-        # Walk containers the same way `_fitted_attrs_as_numpy` does, so that
-        # every array it stored as NumPy is moved back here.
-        value = _convert_arrays(
-            getattr(self._estimator, name), self._convert, recurse_estimators=False
+        value = _move_state(
+            getattr(self._estimator, name),
+            xp=self._xp,
+            device=self._device,
+            dtype=self._dtype,
         )
         # `__getattr__` is only consulted for names that are not already in the
         # instance dict, so writing to it makes the next access "cached".

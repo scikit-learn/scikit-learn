@@ -35,6 +35,7 @@ from sklearn.utils._array_api import (
     _matching_numpy_dtype,
     _max_precision_float_dtype,
     _median,
+    _move_state,
     _ravel,
     _swapaxes,
     _take_classes,
@@ -1423,6 +1424,73 @@ def test_fitted_attrs_like_is_read_only():
 
     with pytest.raises(AttributeError):
         fitted.does_not_exist_
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_move_state(namespace, device_name, dtype_name):
+    """Arrays, containers of arrays and scalars are moved; other values are kept."""
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        reference = xp.asarray([0.0], device=device)
+        floats = numpy.asarray([1.0, 2.0])
+        ints = numpy.asarray([1, 2])
+        moved_floats, moved_ints, (container, scalar), python_int, none = _move_state(
+            floats,
+            ints,
+            (floats, numpy.float64(3.0)),
+            3,
+            None,
+            xp=xp,
+            device=device,
+        )
+
+        for array in (moved_floats, moved_ints, container[0], scalar):
+            assert get_namespace(array)[0] == xp
+            assert array_device(array) == array_device(reference)
+        # Without `dtype` the arrays keep their dtype, apart from the downcast of
+        # float64 that `move_to` does on devices without float64.
+        assert moved_floats.dtype == move_to(floats, xp=xp, device=device).dtype
+        assert xp.isdtype(moved_ints.dtype, "integral")
+        assert python_int == 3
+        assert none is None
+
+
+@skip_if_array_api_compat_not_configured
+@pytest.mark.parametrize(
+    "namespace, device_name, dtype_name",
+    yield_namespace_device_dtype_combinations(include_numpy_namespaces=False),
+)
+def test_move_state_dtype(namespace, device_name, dtype_name):
+    """With `dtype`, real floating arrays are cast to it and other arrays are not."""
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    dtype = getattr(xp, dtype_name)
+
+    with config_context(array_api_dispatch=True):
+        floats, ints = _move_state(
+            numpy.asarray([1.0, 2.0]),
+            numpy.asarray([1, 2]),
+            xp=xp,
+            device=device,
+            dtype=dtype,
+        )
+
+        assert floats.dtype == dtype
+        assert xp.isdtype(ints.dtype, "integral")
+
+
+def test_move_state_single_value_and_no_op():
+    """A single value is returned on its own, and nothing is copied when the
+    arrays are already in the target namespace and device."""
+    array = numpy.asarray([1.0, 2.0])
+
+    moved = _move_state(array, xp=np_compat, device="cpu")
+
+    assert moved is array
 
 
 @skip_if_array_api_compat_not_configured
