@@ -3,12 +3,18 @@
 
 import functools
 import inspect
+import sys
 from contextlib import contextmanager
 
 from sklearn import get_config
-from sklearn.callback._base import AutoPropagatedCallback, FitCallback
+from sklearn.callback._base import (
+    AutoPropagatedCallback,
+    FitCallback,
+)
 from sklearn.callback._callback_context import CallbackContext
 from sklearn.callback._progressbar import ProgressBar
+from sklearn.utils._optional_dependencies import _RICH_AVAILABLE
+from sklearn.utils.fixes import _IS_WASM
 
 
 def _callbacks_by_default():
@@ -20,31 +26,19 @@ def _callbacks_by_default():
         A list with the callbacks to attach by default to estimators, it
         defaults to an empty list.
     """
-
     callbacks = []
 
     for cb in get_config().get("default_callbacks", []):
         if cb == "progressbar":
-            callbacks.append(
-                ProgressBar(show="interactive_only", min_duration=1),
-            )
-        else:
-            # If default callbacks are callback instances, these will be shared by all
-            # estimators they will be registered on. To have clones of these instances
-            # registered instead, the `_skl_default_callbacks` attribute will need to be
-            # made public.
-            callbacks.append(cb)
+            # Do not attach the progressbar on WASM or in non-interactive environments
+            if _IS_WASM or not hasattr(sys, "ps1") or not _RICH_AVAILABLE:
+                continue
+            cb = ProgressBar(min_duration=1)
+        # If default callbacks are callback instances, these will be shared by all
+        # estimators they will be registered on.
+        callbacks.append(cb)
 
     return callbacks
-
-
-def _is_active(callback):
-    """Whether a callback should run during the current fit.
-
-    Callbacks can opt out of a fit by defining an optional private `_is_active` method
-    returning a boolean. Callbacks that don't define it are always active.
-    """
-    return getattr(callback, "_is_active", lambda: True)()
 
 
 def validate_callbacks(callbacks):
@@ -121,6 +115,7 @@ class CallbackSupportMixin:
             The estimator instance itself.
         """
         validate_callbacks(callbacks)
+        self.__dict__.pop("_skl_default_callbacks", None)
         return self._set_callbacks(callbacks)
 
     def _set_callbacks(self, callbacks):
@@ -164,15 +159,26 @@ class CallbackSupportMixin:
         callback_fit_ctx : CallbackContext
             The root callback context for the estimator.
         """
-
         # Setup callbacks. We store callbacks for which setup has started in order to
         # only tear those down after fit.
         self._skl_callbacks_to_teardown = []
 
-        default_callbacks = [
+        # Default callbacks are registered along with the other callbacks, but they are
+        # re-evaluated from the configuration at each fit: the ones registered by a
+        # previous fit, tracked in `_skl_default_callbacks`, are dropped first.
+        # Callbacks propagated from a meta-estimator are kept, even if they are default
+        # callbacks of the meta-estimator.
+        previous_default_callbacks = getattr(self, "_skl_default_callbacks", [])
+        propagated_callbacks = getattr(
+            getattr(self, "_parent_callback_ctx", None), "_propagated_callbacks", []
+        )
+        registered_callbacks = [
             cb
-            for cb in _callbacks_by_default()
-            if cb not in getattr(self, "_skl_callbacks", [])
+            for cb in getattr(self, "_skl_callbacks", [])
+            if cb not in previous_default_callbacks or cb in propagated_callbacks
+        ]
+        default_callbacks = [
+            cb for cb in _callbacks_by_default() if cb not in registered_callbacks
         ]
         if hasattr(self, "_parent_callback_ctx"):
             default_callbacks = [
@@ -180,16 +186,13 @@ class CallbackSupportMixin:
                 for cb in default_callbacks
                 if not isinstance(cb, AutoPropagatedCallback)
             ]
+        # Default callbacks come first so that the explicitly registered ones take
+        # precedence when the order matters, e.g. for the progress bar.
         if default_callbacks:
             self._skl_default_callbacks = default_callbacks
-        # Inactive callbacks are left out of the context, they are neither set up nor
-        # called for this fit.
-        callbacks = [
-            cb
-            for cb in getattr(self, "_skl_default_callbacks", [])
-            + getattr(self, "_skl_callbacks", [])
-            if _is_active(cb)
-        ]
+        else:
+            self.__dict__.pop("_skl_default_callbacks", None)
+        self._set_callbacks(default_callbacks + registered_callbacks)
 
         self._callback_fit_ctx = CallbackContext._from_estimator(
             estimator=self,
@@ -197,11 +200,9 @@ class CallbackSupportMixin:
             task_id=task_id,
             max_subtasks=max_subtasks,
             sequential_subtasks=sequential_subtasks,
-            callbacks=callbacks,
-            default_callbacks=default_callbacks,
         )
 
-        for callback in callbacks:
+        for callback in getattr(self, "_skl_callbacks", []):
             # Only call the setup hook of callbacks that are not propagated from a
             # meta-estimator.
             if not (

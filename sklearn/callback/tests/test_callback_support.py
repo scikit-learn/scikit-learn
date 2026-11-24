@@ -188,4 +188,107 @@ def test_default_callbacks():
     with config_context(default_callbacks=(default_callback,)):
         estimator = MaxIterEstimator().fit()
 
+    assert estimator._skl_callbacks == [default_callback]
     assert estimator._skl_default_callbacks == [default_callback]
+    assert default_callback.count_hooks("setup") == 1
+
+
+def test_default_callbacks_with_registered_callbacks():
+    """Check that default callbacks come first, before the registered callbacks."""
+    default_callback = RecordingCallback()
+    callback = RecordingCallback()
+    estimator = MaxIterEstimator().set_callbacks(callback)
+
+    with config_context(default_callbacks=(default_callback,)):
+        estimator.fit()
+
+    assert estimator._skl_callbacks == [default_callback, callback]
+    assert estimator._skl_default_callbacks == [default_callback]
+
+
+def test_default_callbacks_shared_instance_registered_explicitly():
+    """Check that an instance used as a default callback can also be explicitly
+    registered, and is then not dropped when it is removed from the config."""
+    callback = RecordingCallback()
+
+    # Used as a default callback on another estimator first.
+    with config_context(default_callbacks=(callback,)):
+        MaxIterEstimator().fit()
+
+    estimator = MaxIterEstimator().set_callbacks(callback)
+    with config_context(default_callbacks=()):
+        estimator.fit()
+    assert estimator._skl_callbacks == [callback]
+    assert callback.count_hooks("setup") == 2
+
+    # Both a default callback and explicitly registered: registered and called once.
+    with config_context(default_callbacks=(callback,)):
+        estimator.fit()
+    assert estimator._skl_callbacks == [callback]
+    assert not hasattr(estimator, "_skl_default_callbacks")
+    assert callback.count_hooks("setup") == 3
+
+    with config_context(default_callbacks=()):
+        estimator.fit()
+    assert estimator._skl_callbacks == [callback]
+
+
+def test_set_callbacks_resets_default_callbacks():
+    """Check that setting callbacks explicitly makes them non-default, even if they
+    were default callbacks of a previous fit."""
+    default_callback = RecordingCallback()
+    estimator = MaxIterEstimator()
+    with config_context(default_callbacks=(default_callback,)):
+        estimator.fit()
+    assert estimator._skl_default_callbacks == [default_callback]
+
+    estimator.set_callbacks(default_callback)
+    assert not hasattr(estimator, "_skl_default_callbacks")
+
+    with config_context(default_callbacks=()):
+        estimator.fit()
+    assert estimator._skl_callbacks == [default_callback]
+
+
+def test_default_callbacks_reevaluated_at_each_fit():
+    """Check that default callbacks are re-evaluated from the config at each fit."""
+    default_callback = RecordingCallback()
+    callback = RecordingCallback()
+    estimator = MaxIterEstimator().set_callbacks(callback)
+
+    with config_context(default_callbacks=(default_callback,)):
+        estimator.fit()
+        estimator.fit()
+    # default callbacks are not registered multiple times
+    assert estimator._skl_callbacks == [default_callback, callback]
+    assert default_callback.count_hooks("setup") == 2
+
+    # default callbacks are removed when they are no longer in the config
+    with config_context(default_callbacks=()):
+        estimator.fit()
+    assert estimator._skl_callbacks == [callback]
+    assert default_callback.count_hooks("setup") == 2
+
+    estimator = MaxIterEstimator()
+    with config_context(default_callbacks=(default_callback,)):
+        estimator.fit()
+    assert hasattr(estimator, "_skl_callbacks")
+    with config_context(default_callbacks=()):
+        estimator.fit()
+    assert not hasattr(estimator, "_skl_callbacks")
+
+
+def test_default_callbacks_cloned():
+    """Check that clones get the default callbacks of a fitted estimator re-evaluated
+    from the config at fit time."""
+    default_callback = RecordingCallback()
+    with config_context(default_callbacks=(default_callback,)):
+        estimator = MaxIterEstimator().fit()
+
+    cloned = clone(estimator)
+    assert cloned._skl_default_callbacks == [default_callback]
+    with config_context(default_callbacks=()):
+        cloned.fit()
+
+    assert not hasattr(cloned, "_skl_callbacks")
+    assert default_callback.count_hooks("setup") == 1

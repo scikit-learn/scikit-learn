@@ -7,13 +7,6 @@ import os
 import threading
 from contextlib import contextmanager as contextmanager
 
-try:
-    import rich  # noqa: F401
-
-    _rich_available = True
-except ImportError:
-    _rich_available = False
-
 _global_config = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
     "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
@@ -29,7 +22,7 @@ _global_config = {
     "enable_metadata_auto_requests": True,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
-    "default_callbacks": ("progressbar",) if _rich_available else (),
+    "default_callbacks": ("progressbar",),
 }
 _threadlocal = threading.local()
 
@@ -258,7 +251,7 @@ def set_config(
         The possible string values are:
 
         - "progressbar": A :class:`~sklearn.callback.ProgressBar` with `min_duration=1`
-            and `show="interactive_only"` is generated.
+            is generated.
 
         .. versionadded:: 1.10
 
@@ -474,7 +467,7 @@ def config_context(
         The possible string values are:
 
         - "progressbar": A :class:`~sklearn.callback.ProgressBar` with `min_duration=1`
-            and `show="interactive_only"` is generated.
+            is generated.
 
         .. versionadded:: 1.10
 

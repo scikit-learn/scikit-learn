@@ -85,7 +85,8 @@ def test_clone_after_fit():
     pb = ProgressBar()
     est = MaxIterEstimator().set_callbacks(pb).fit()
     cloned = clone(est)
-    assert cloned._skl_callbacks[0] is pb
+    # Default callbacks, if any, come first in the list of callbacks.
+    assert cloned._skl_callbacks[-1] is pb
 
 
 # This test inspects the global _run_queues/monitors registries which is not thread-safe
@@ -267,24 +268,3 @@ def test_progressbar_min_duration(capsys):
     MaxIterEstimator(computation_intensity=0.06).set_callbacks(cb).fit()
     captured = capsys.readouterr()
     assert re.search(r"MaxIterEstimator - fit ━+ 100%", captured.out)
-
-
-def test_progressbar_interactive_only(monkeypatch, capsys):
-    """Check that `show="interactive_only"` only displays the progressbar
-    in interactive environments."""
-    pytest.importorskip("rich")
-
-    monkeypatch.delattr("sys.ps1", raising=False)
-    cb = ProgressBar(show="interactive_only")
-    est = MaxIterEstimator(computation_intensity=0.06).set_callbacks(cb)
-
-    est.fit()
-    assert capsys.readouterr().out == ""
-
-    monkeypatch.setattr("sys.ps1", ">>> ", raising=False)
-    est.fit()
-    assert re.search(r"MaxIterEstimator - fit ━+ 100%", capsys.readouterr().out)
-
-    monkeypatch.delattr("sys.ps1")
-    est.fit()
-    assert capsys.readouterr().out == ""

@@ -1,6 +1,13 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+try:
+    import rich  # noqa: F401
+
+    _RICH_AVAILABLE = True
+except ImportError:
+    _RICH_AVAILABLE = False
+
 
 def check_matplotlib_support(caller_name):
     """Raise ImportError with detailed error message if mpl is not installed.

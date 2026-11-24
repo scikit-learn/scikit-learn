@@ -18,6 +18,7 @@ import textwrap
 
 import pytest
 
+from sklearn import config_context
 from sklearn.callback import ProgressBar, ScoringMonitor
 from sklearn.callback._testing.estimators import MaxIterEstimator
 from sklearn.callback._transport import Channel
@@ -48,6 +49,7 @@ def test_estimator_with_callback_pickle_roundtrip_pre_fit(factory):
     assert len(restored._skl_callbacks) == 1
 
 
+@config_context(default_callbacks=[])
 @pytest.mark.parametrize("factory", CALLBACK_FACTORIES)
 def test_estimator_with_callback_pickle_roundtrip_post_fit(factory):
     """An estimator with the callback registered and fitted is picklable."""
@@ -59,6 +61,7 @@ def test_estimator_with_callback_pickle_roundtrip_post_fit(factory):
     assert len(restored._skl_callbacks) == 1
 
 
+@config_context(default_callbacks=[])
 def test_callbacks_refit_after_pickle_in_same_process(capsys):
     """An estimator with callbacks survives an in-process pickle round-trip.
 
@@ -92,6 +95,7 @@ def test_callbacks_refit_after_pickle_in_same_process(capsys):
     assert restored_logs[0].data == original_logs[0].data
 
 
+@config_context(default_callbacks=[])
 def test_callbacks_refit_after_load_in_fresh_process(tmp_path, capsys):
     """An estimator with callbacks survives unpickling in a fresh interpreter.
 
