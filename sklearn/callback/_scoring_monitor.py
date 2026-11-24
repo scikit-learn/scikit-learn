@@ -381,7 +381,6 @@ class ScoringMonitor(FitCallback):
     @validate_params(
         {
             "select": [StrOptions({"all", "most_recent"})],
-            "as_frame": ["boolean"],
             "include_lineage": ["boolean"],
         },
         prefer_skip_nested_validation=True,
@@ -426,8 +425,8 @@ class ScoringMonitor(FitCallback):
             If set to True, the log contains extra rows for each task that is an
             ancestor of a task for which the score was computed. These extra rows can
             be used to retrieve the context of all ancestor tasks of a given task for
-            which the score was computed. For these extra rows, there are no score
-            entries if `as_frame` is False, or NaN values if `as_frame` is True.
+            which the score was computed. These extra rows have no score entries, which
+            appear as NaN values in `train_scores_as_pandas` and `val_scores_as_pandas`.
 
         Returns
         -------
