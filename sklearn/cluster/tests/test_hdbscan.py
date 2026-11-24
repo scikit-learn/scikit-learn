@@ -612,8 +612,8 @@ def test_hdbscan_cosine_metric_invalid_algorithm(invalid_algo):
 @pytest.mark.parametrize("method", ["eom", "leaf"])
 @pytest.mark.parametrize("allow_single_cluster", [False, True])
 def test_hdbscan_cluster_selection_epsilon_large(method, allow_single_cluster):
-    """Check that HDBSCAN works when cluster_selection_epsilon is greater than
-    or equal to the top-level merge distance.
+    """Check that HDBSCAN works when cluster_selection_epsilon is large enough
+    to merge clusters.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/35473
@@ -626,4 +626,5 @@ def test_hdbscan_cluster_selection_epsilon_large(method, allow_single_cluster):
         allow_single_cluster=allow_single_cluster,
     )
     labels = model.fit_predict(X)
-    assert labels.shape == (4,)
+    expected = [0, 0, 0, 0] if allow_single_cluster else [0, 0, 1, 1]
+    assert_array_equal(labels, expected)

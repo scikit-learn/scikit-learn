@@ -1,4 +1,4 @@
-- Fix a bug in :class:`cluster.HDBSCAN` where setting `cluster_selection_epsilon`
-  greater than or equal to the top-level merge distance raised a `TypeError` on
-  NumPy >= 2.4.
+- Fix :class:`cluster.HDBSCAN` raising a `TypeError` with NumPy >= 2.4 whenever
+  `cluster_selection_epsilon` was large enough to merge clusters, which made the
+  parameter unusable.
   By :user:`Prashik Humane <prashik24>`.
