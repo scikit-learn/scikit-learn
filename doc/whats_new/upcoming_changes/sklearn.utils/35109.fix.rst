@@ -2,4 +2,4 @@
   with non-numeric and non-boolean data types (such as string or object arrays,
   e.g. ``classes_`` or ``feature_names_in_``). Such attributes are now preserved
   as-is instead of being converted to the target array namespace.
-  :pr:`35109` by :user:`Alok Yadav <Alok-Yadav25>`.
+  :pr:`35481` by :user:`Alok Yadav <Alok-Yadav25>`.
