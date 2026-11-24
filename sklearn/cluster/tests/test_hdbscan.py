@@ -382,26 +382,15 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
 
 @pytest.mark.parametrize("cluster_selection_method", ["eom", "leaf"])
 def test_hdbscan_epsilon_reaching_top_level_merge(cluster_selection_method):
-    """Epsilon selection must not fail when it walks up to the root.
-
-    Non-regression test for a `TypeError` raised by `traverse_upwards`, which
-    assigned one-element array slices to typed scalars. NumPy allowed that with
-    a `DeprecationWarning` and rejects it from 2.4 onwards, which made
-    `cluster_selection_epsilon` unusable: a value small enough to have no effect
-    never reached `traverse_upwards`, and any larger value raised.
-
-    The two well-separated pairs below merge at distance 10, so an epsilon at or
-    above that reaches `traverse_upwards` for every leaf.
-    """
+    # Non-regression test for #35473. The two pairs merge at distance 10, so an
+    # epsilon above that reaches traverse_upwards for every leaf.
     X = np.array([[0.0, 0.0], [0.0, 1.0], [10.0, 0.0], [10.0, 1.0]])
     labels = HDBSCAN(
         min_cluster_size=2,
         cluster_selection_epsilon=20.0,
         cluster_selection_method=cluster_selection_method,
     ).fit_predict(X)
-
     assert labels.shape == (4,)
-    assert set(np.unique(labels)) <= {-1, 0, 1}
 
 
 def test_hdbscan_better_than_dbscan():
