@@ -369,10 +369,7 @@ class ScoringMonitor(FitCallback):
 
         router = MetadataRouter(owner=self).add_self_request(self_request)
         for dataset in ("train", "val"):
-            if (
-                self._scorers[dataset] is not None
-                and self._scorers[dataset] != f"no_{dataset}_score"
-            ):
+            if self._scorers[dataset] != f"no_{dataset}_score":
                 router.add(
                     **{f"scorer_{dataset}": self._scorers[dataset]},
                     method_mapping=MethodMapping().add(
