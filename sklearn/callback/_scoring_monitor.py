@@ -359,8 +359,7 @@ class ScoringMonitor(FitCallback):
                         continue
                     # Automatically add a request for "sample_weight_val" if the scorer
                     # accepts sample weight and the user did not set any request for
-                    # "sample_weight" (an unset request is None). Requests explicitly
-                    # set by the user are never overridden.
+                    # "sample_weight" (an unset or auto request is None).
                     if scorer._accept_sample_weight():
                         sw_request = scorer.get_metadata_routing().score.requests.get(
                             "sample_weight"
