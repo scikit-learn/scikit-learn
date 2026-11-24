@@ -118,6 +118,19 @@ def _convert_to_multiscorer(scoring):
     return check_scoring(scoring=scoring)
 
 
+def _get_scorers(scoring):
+    """Return the individual scorers of a converted scoring, by name.
+
+    `scoring` is either a MultimetricScorer or a plain callable, which can return a
+    single value or a dict of values, and for which the name is not known.
+    """
+    from sklearn.metrics._scorer import _MultimetricScorer
+
+    if isinstance(scoring, _MultimetricScorer):
+        return scoring._scorers
+    return {"score": scoring}
+
+
 class ScoringMonitor(FitCallback):
     """Callback that monitors a score for each iterative step of an estimator.
 
@@ -202,14 +215,21 @@ class ScoringMonitor(FitCallback):
 
         # Only check train scorers because val scorers cannot be used with metadata
         # routing disabled anyway.
-        for name, scorer in self._scorers["train"]._scorers.items():
-            if not scorer._accept_sample_weight():
+        accept_sample_weight = False
+        for name, scorer in _get_scorers(self._scorers["train"]).items():
+            accepts_sample_weight = (
+                hasattr(scorer, "_accept_sample_weight")
+                and scorer._accept_sample_weight()
+            )
+            if accepts_sample_weight:
+                accept_sample_weight = True
+            else:
                 warnings.warn(
                     f"The scoring {name}={scorer} does not support sample_weight, "
                     "which may lead to statistically incorrect results when "
                     "evaluating estimators using sample_weight in fit."
                 )
-        return self._scorers["train"]._accept_sample_weight()
+        return accept_sample_weight
 
     def teardown(self, estimator, context):
         # Nothing more will be sent for this fit. The channel itself outlives the fit,
@@ -311,6 +331,9 @@ class ScoringMonitor(FitCallback):
                 data_y,
                 **scorer_routed_params,
             )
+            if not isinstance(scores, dict):
+                # A plain callable returning a single value.
+                scores = {"score": scores}
             self._channel.send((run_id, run_info, task_info_path, dataset, scores))
 
     def __getstate__(self):
@@ -330,7 +353,10 @@ class ScoringMonitor(FitCallback):
         if self._scorers["val"] != "no_val_score":
             self_request.on_fit_task_end.add_auto_request("X_val", "y_val")
             if _auto_requests_enabled():
-                for scorer in self._scorers["val"]._scorers.values():
+                for scorer in _get_scorers(self._scorers["val"]).values():
+                    # Plain callables cannot request metadata.
+                    if not hasattr(scorer, "set_score_request"):
+                        continue
                     # Automatically add a request for "sample_weight_val" if the scorer
                     # accepts sample weight and the user did not set any request for
                     # "sample_weight" (an unset request is None). Requests explicitly

@@ -171,7 +171,7 @@ def _make_expected_output_MetaEstimator(
 
 
 def _custom_score_func(y_true, y_pred):
-    """Custom score to test the ScoringMonitor with a callable."""
+    """Custom score to test the ScoringMonitor with a scorer made by `make_scorer`."""
     return 0
 
 
@@ -632,6 +632,47 @@ def test_accept_sample_weight():
         assert ScoringMonitor(scoring_train=["r2", "rand_score"])._accept_sample_weight(
             "on_fit_task_end"
         )
+
+    # False with a warning for a callable, even if it has a sample_weight parameter,
+    # because it cannot be routed any metadata.
+    scoring = lambda estimator, X, y, sample_weight=None: 1.0
+    with pytest.warns(UserWarning, match="does not support sample_weight"):
+        assert not ScoringMonitor(scoring_train=scoring)._accept_sample_weight(
+            "on_fit_task_end"
+        )
+
+
+@pytest.mark.parametrize(
+    "scoring, expected_scores",
+    [
+        (lambda estimator, X, y: 1.0, {"score": 1.0}),
+        (lambda estimator, X, y: {"a": 1.0, "b": 2.0}, {"a": 1.0, "b": 2.0}),
+    ],
+)
+@pytest.mark.parametrize("dataset", ["train", "val"])
+def test_callable_scoring(scoring, expected_scores, dataset):
+    """Check that a callable (not made by `make_scorer`) can be used as scorer.
+
+    It can return either a single value or a dict of values, and be used on the
+    training or the validation data.
+    """
+    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
+    fit_params = {}
+    if dataset == "val":
+        X_val, y_val = make_regression(n_samples=10, n_features=2, random_state=1)
+        fit_params = {"X_val": X_val, "y_val": y_val}
+
+    # Scoring on the validation data requires metadata routing.
+    with config_context(
+        enable_metadata_routing=dataset == "val", enable_metadata_auto_requests=True
+    ):
+        cb = ScoringMonitor(**{f"scoring_{dataset}": scoring})
+        MaxIterEstimator().set_callbacks(cb).fit(X, y, **fit_params)
+
+    scores = getattr(cb.get_logs(), f"{dataset}_scores")
+    assert scores
+    for row in scores:
+        assert {k: row[k] for k in expected_scores} == expected_scores
 
 
 @config_context(enable_metadata_routing=True)
