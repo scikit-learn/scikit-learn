@@ -6,7 +6,8 @@ iteration and per output) for multiclass classification, multilabel
 classification and multi-quantile regression, on a grid of hyper-parameters.
 
 Each configuration is scored on the training set and on a held-out test set
-of ``TEST_SIZE`` samples (at least 1000). Lower is better:
+of at least 1000 samples (``TEST_SIZE`` for most datasets, 1000 for yeast whose
+size is limited). Lower is better:
 
 - multiclass: log loss;
 - multilabel: binary log loss averaged over the labels;
@@ -44,7 +45,8 @@ from sklearn.ensemble import (
 from sklearn.metrics import log_loss, mean_pinball_loss
 from sklearn.model_selection import train_test_split
 
-TEST_SIZE = 1000
+TEST_SIZE = 10_000
+YEAST_TEST_SIZE = 1000
 
 GRID = {
     "max_iter": [30, 100, 300],
@@ -80,7 +82,7 @@ def synthetic_multiclass():
 def yeast():
     X, y = fetch_openml("yeast", version=4, return_X_y=True, as_frame=False)
     y = y.astype(np.float64)
-    split = train_test_split(X, y, test_size=TEST_SIZE, random_state=0)
+    split = train_test_split(X, y, test_size=YEAST_TEST_SIZE, random_state=0)
     return "multilabel", *split, {}
 
 
@@ -273,7 +275,7 @@ if __name__ == "__main__":
             args.output,
             f"{args.figure_prefix}_test.png",
             "test_loss",
-            f"held-out test (n={TEST_SIZE})",
+            "held-out test set",
         )
     else:
         run(args.datasets, args.output)
