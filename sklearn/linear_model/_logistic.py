@@ -1556,6 +1556,8 @@ class LogisticRegression(
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
+        _raise_for_params(params, self, "fit")
+
         depr_msg = (
             "'C' was deprecated in version 1.10 and will be removed in 1.14. "
             "Use alpha instead. "

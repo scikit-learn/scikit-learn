@@ -40,6 +40,7 @@ from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
 from sklearn.utils.metadata_routing import (
     _manual_routing,
+    _raise_for_params,
     _routing_enabled,
     process_routing,
 )
@@ -882,7 +883,8 @@ class StandardScaler(
             del self.mean_
             del self.var_
 
-    def fit(self, X, y=None, sample_weight=None):
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y=None, sample_weight=None, **params):
         """Compute the mean and std to be used for later scaling.
 
         Parameters
@@ -897,14 +899,19 @@ class StandardScaler(
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample.
 
+        **params : dict
+            Parameters safely routed to the callbacks if `enable_metadata_routing=True`.
+
         Returns
         -------
         self : object
             Fitted scaler.
         """
+        _raise_for_params(params, self, "fit")
+
         # Reset internal state before fitting
         self._reset()
-        return self.partial_fit(X, y, sample_weight)
+        return self._partial_fit(X, y, sample_weight, "fit", **params)
 
     @_fit_context(prefer_skip_nested_validation=True)
     def partial_fit(self, X, y=None, sample_weight=None, **params):
@@ -932,12 +939,21 @@ class StandardScaler(
             Individual weights for each sample.
 
         **params : dict
-            Routed params.
+            Parameters safely routed to the callbacks if `enable_metadata_routing=True`.
 
         Returns
         -------
         self : object
             Fitted scaler.
+        """
+        _raise_for_params(params, self, "partial_fit")
+        return self._partial_fit(X, y, sample_weight, "partial_fit", **params)
+
+    def _partial_fit(self, X, y, sample_weight, routing_method, **params):
+        """Implementation of `fit` and `partial_fit`.
+
+        `routing_method` is the public method which was called, `"fit"` or
+        `"partial_fit"`, used to route the metadata.
         """
         xp, _, X_device = get_namespace_and_device(X)
         first_call = not hasattr(self, "n_samples_seen_")
@@ -957,7 +973,7 @@ class StandardScaler(
         callback_ctx = self._init_callback_context()
         if _routing_enabled():
             routed_params = process_routing(
-                self, "fit", sample_weight=sample_weight, **params
+                self, routing_method, sample_weight=sample_weight, **params
             )
         else:
             routed_params = _manual_routing(

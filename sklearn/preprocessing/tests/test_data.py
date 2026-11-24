@@ -3009,3 +3009,15 @@ def test_standard_scaler_callbacks_receive_sample_weight(fit_method):
             assert_array_equal(rec["kwargs"]["requested_arg_begin"], sample_weight)
         elif rec["name"] == "on_fit_task_end":
             assert_array_equal(rec["kwargs"]["requested_arg_end"], sample_weight)
+
+
+@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
+def test_standard_scaler_passing_params_without_enabling_metadata_routing(fit_method):
+    """Test that the right error message is raised when metadata params
+    are passed while not supported when `enable_metadata_routing=False`."""
+    X = np.random.RandomState(0).random_sample((10, 2))
+    msg = "is only supported if enable_metadata_routing=True"
+
+    with config_context(enable_metadata_routing=False):
+        with pytest.raises(ValueError, match=msg):
+            getattr(StandardScaler(), fit_method)(X, extra_param=1.0)

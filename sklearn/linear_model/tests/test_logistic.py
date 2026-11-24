@@ -2708,6 +2708,18 @@ def test_passing_params_without_enabling_metadata_routing():
             lr_cv.score(X, y, **params)
 
 
+def test_logistic_regression_passing_params_without_enabling_metadata_routing():
+    """Test that the right error message is raised when metadata params
+    are passed to `LogisticRegression.fit` while not supported when
+    `enable_metadata_routing=False`."""
+    X, y = make_classification(n_samples=10, random_state=0)
+    msg = "is only supported if enable_metadata_routing=True"
+
+    with config_context(enable_metadata_routing=False):
+        with pytest.raises(ValueError, match=msg):
+            LogisticRegression().fit(X, y, extra_param=1.0)
+
+
 def test_newton_cholesky_fallback_to_lbfgs():
     # Wide data matrix should lead to a rank-deficient Hessian matrix
     # hence make the Newton-Cholesky solver raise a warning and fallback to
