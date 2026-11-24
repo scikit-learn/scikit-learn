@@ -422,6 +422,8 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             for name, step in self.steps
             if step is not None
         }
+        # No metadata for the callbacks when routing is disabled.
+        per_step["callback"] = {"on_fit_task_begin": {}, "on_fit_task_end": {}}
         for pname, pval in props.items():
             if "__" not in pname:
                 raise ValueError(
@@ -471,11 +473,11 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         if (
             self.transform_input is None
             or not all_params
-            or not step_params
+            or not any(step_params.values())
             or step_idx == 0
         ):
             # we only need to process step_params if transform_input is set
-            # and metadata is given by the user.
+            # and metadata is given by the user and routed to the step.
             return step_params
 
         sub_pipeline = self[:step_idx]
@@ -531,21 +533,36 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
 
         fit_transform_one_cached = memory.cache(
             _fit_transform_one_with_callbacks,
-            # caller and callback_ctx are not part of the transformer's fit result.
-            # hashing them would break cache hits (Pipeline state / context changes
-            # across fit calls).
-            ignore=["caller", "callback_ctx"],
+            # caller, callback_ctx and callback_params are not part of the transformer's
+            # fit result. hashing them would break cache hits (Pipeline state / context
+            # changes across fit calls).
+            ignore=["caller", "callback_ctx", "callback_params"],
         )
 
         for step_idx, name, transformer in self._iter(
             with_final=False, filter_passthrough=False
         ):
             subcontext = callback_ctx.subcontext(task_name=f"fit-transform-{name}")
+            callback_params = self._get_metadata_for_step(
+                step_idx=step_idx,
+                step_params=routed_params["callback"],
+                all_params=raw_params,
+            )
 
             if transformer is None or transformer == "passthrough":
                 with _print_elapsed_time("Pipeline", self._log_message(step_idx)):
-                    subcontext.call_on_fit_task_begin(estimator=self, X=X, y=y)
-                    subcontext.call_on_fit_task_end(estimator=self, X=X, y=y)
+                    subcontext.call_on_fit_task_begin(
+                        estimator=self,
+                        X=X,
+                        y=y,
+                        metadata=callback_params["on_fit_task_begin"],
+                    )
+                    subcontext.call_on_fit_task_end(
+                        estimator=self,
+                        X=X,
+                        y=y,
+                        metadata=callback_params["on_fit_task_end"],
+                    )
                     continue
 
             if hasattr(memory, "location") and memory.location is None:
@@ -571,6 +588,7 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
                 params=step_params,
                 caller=self,
                 callback_ctx=subcontext,
+                callback_params=callback_params,
             )
             # Replace the transformer of the step with the fitted
             # transformer. This is necessary when loading the transformer
@@ -622,7 +640,6 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             Pipeline with fitted steps.
         """
         callback_ctx = self._init_callback_context(max_subtasks=len(self.steps))
-        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
         if (
             not _routing_enabled()
@@ -636,26 +653,59 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             )
 
         routed_params = self._check_method_params(method="fit", props=params)
+        root_callback_params = self._get_metadata_for_step(
+            step_idx=0, step_params=routed_params["callback"], all_params=params
+        )
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, metadata=root_callback_params["on_fit_task_begin"]
+        )
         Xt = self._fit(
             X, y, routed_params, raw_params=params, callback_ctx=callback_ctx
         )
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
             subcontext = callback_ctx.subcontext(task_name="fit-final-estimator")
+            callback_params = self._get_metadata_for_step(
+                step_idx=len(self) - 1,
+                step_params=routed_params["callback"],
+                all_params=params,
+            )
             if self._final_estimator != "passthrough":
                 with subcontext.propagate_callback_context(self._final_estimator):
-                    subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
+                    subcontext.call_on_fit_task_begin(
+                        estimator=self,
+                        X=Xt,
+                        y=y,
+                        metadata=callback_params["on_fit_task_begin"],
+                    )
                     last_step_params = self._get_metadata_for_step(
                         step_idx=len(self) - 1,
                         step_params=routed_params[self.steps[-1][0]],
                         all_params=params,
                     )
                     self._final_estimator.fit(Xt, y, **last_step_params["fit"])
-                    subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+                    subcontext.call_on_fit_task_end(
+                        estimator=self,
+                        X=Xt,
+                        y=y,
+                        metadata=callback_params["on_fit_task_end"],
+                    )
             else:
-                subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
-                subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+                subcontext.call_on_fit_task_begin(
+                    estimator=self,
+                    X=Xt,
+                    y=y,
+                    metadata=callback_params["on_fit_task_begin"],
+                )
+                subcontext.call_on_fit_task_end(
+                    estimator=self,
+                    X=Xt,
+                    y=y,
+                    metadata=callback_params["on_fit_task_end"],
+                )
 
-        callback_ctx.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+        callback_ctx.call_on_fit_task_end(
+            estimator=self, X=Xt, y=y, metadata=root_callback_params["on_fit_task_end"]
+        )
 
         return self
 
@@ -713,9 +763,14 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         callback_ctx = self._init_callback_context(
             task_name="fit-transform", max_subtasks=len(self.steps)
         )
-        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
         routed_params = self._check_method_params(method="fit_transform", props=params)
+        root_callback_params = self._get_metadata_for_step(
+            step_idx=0, step_params=routed_params["callback"], all_params=params
+        )
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, metadata=root_callback_params["on_fit_task_begin"]
+        )
         Xt = self._fit(
             X, y, routed_params, raw_params=params, callback_ctx=callback_ctx
         )
@@ -725,9 +780,19 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             subcontext = callback_ctx.subcontext(
                 task_name="fit-transform-final-estimator"
             )
+            callback_params = self._get_metadata_for_step(
+                step_idx=len(self) - 1,
+                step_params=routed_params["callback"],
+                all_params=params,
+            )
             if last_step != "passthrough":
                 with subcontext.propagate_callback_context(self._final_estimator):
-                    subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
+                    subcontext.call_on_fit_task_begin(
+                        estimator=self,
+                        X=Xt,
+                        y=y,
+                        metadata=callback_params["on_fit_task_begin"],
+                    )
                     last_step_params = self._get_metadata_for_step(
                         step_idx=len(self) - 1,
                         step_params=routed_params[self.steps[-1][0]],
@@ -741,12 +806,29 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
                         Xt = last_step.fit(Xt, y, **last_step_params["fit"]).transform(
                             Xt, **last_step_params["transform"]
                         )
-                    subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+                    subcontext.call_on_fit_task_end(
+                        estimator=self,
+                        X=Xt,
+                        y=y,
+                        metadata=callback_params["on_fit_task_end"],
+                    )
             else:
-                subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
-                subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+                subcontext.call_on_fit_task_begin(
+                    estimator=self,
+                    X=Xt,
+                    y=y,
+                    metadata=callback_params["on_fit_task_begin"],
+                )
+                subcontext.call_on_fit_task_end(
+                    estimator=self,
+                    X=Xt,
+                    y=y,
+                    metadata=callback_params["on_fit_task_end"],
+                )
 
-        callback_ctx.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+        callback_ctx.call_on_fit_task_end(
+            estimator=self, X=Xt, y=y, metadata=root_callback_params["on_fit_task_end"]
+        )
 
         return Xt
 
@@ -857,16 +939,31 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
         callback_ctx = self._init_callback_context(
             task_name="fit-predict", max_subtasks=len(self.steps)
         )
-        callback_ctx.call_on_fit_task_begin(estimator=self, X=X, y=y)
 
         routed_params = self._check_method_params(method="fit_predict", props=params)
+        root_callback_params = self._get_metadata_for_step(
+            step_idx=0, step_params=routed_params["callback"], all_params=params
+        )
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=X, y=y, metadata=root_callback_params["on_fit_task_begin"]
+        )
         Xt = self._fit(
             X, y, routed_params, raw_params=params, callback_ctx=callback_ctx
         )
 
         subcontext = callback_ctx.subcontext(task_name="fit-predict-final-estimator")
+        callback_params = self._get_metadata_for_step(
+            step_idx=len(self) - 1,
+            step_params=routed_params["callback"],
+            all_params=params,
+        )
         with subcontext.propagate_callback_context(self._final_estimator):
-            subcontext.call_on_fit_task_begin(estimator=self, X=Xt, y=y)
+            subcontext.call_on_fit_task_begin(
+                estimator=self,
+                X=Xt,
+                y=y,
+                metadata=callback_params["on_fit_task_begin"],
+            )
 
             params_last_step = routed_params[self.steps[-1][0]]
             with _print_elapsed_time(
@@ -876,9 +973,16 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
                     Xt, y, **params_last_step.get("fit_predict", {})
                 )
 
-            subcontext.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+            subcontext.call_on_fit_task_end(
+                estimator=self,
+                X=Xt,
+                y=y,
+                metadata=callback_params["on_fit_task_end"],
+            )
 
-        callback_ctx.call_on_fit_task_end(estimator=self, X=Xt, y=y)
+        callback_ctx.call_on_fit_task_end(
+            estimator=self, X=Xt, y=y, metadata=root_callback_params["on_fit_task_end"]
+        )
 
         return y_pred
 
@@ -1369,6 +1473,9 @@ class Pipeline(CallbackSupportMixin, _BaseComposition):
             routing information.
         """
         router = MetadataRouter(owner=self)
+        self._add_callback_routing(
+            router, callers=("fit", "fit_transform", "fit_predict")
+        )
 
         # first we add all steps except the last one
         for _, name, trans in self._iter(with_final=False, filter_passthrough=True):
@@ -1590,15 +1697,26 @@ def _fit_transform_one_with_callbacks(
     *,
     caller,
     callback_ctx,
+    callback_params,
 ):
     with callback_ctx.propagate_callback_context(transformer):
-        callback_ctx.call_on_fit_task_begin(estimator=caller, X=X, y=y)
+        callback_ctx.call_on_fit_task_begin(
+            estimator=caller,
+            X=X,
+            y=y,
+            metadata=callback_params["on_fit_task_begin"],
+        )
 
         Xt, transformer = _fit_transform_one(
             transformer, X, y, weight, message_clsname, message, params
         )
 
-        callback_ctx.call_on_fit_task_end(estimator=caller, X=Xt, y=y)
+        callback_ctx.call_on_fit_task_end(
+            estimator=caller,
+            X=Xt,
+            y=y,
+            metadata=callback_params["on_fit_task_end"],
+        )
 
     return Xt, transformer
 

@@ -155,13 +155,17 @@ class CallbackSupportMixin:
 
         return self._callback_fit_ctx
 
-    def _add_callback_routing(self, router):
-        """Utility method to add the routing to callbacks to the estimator's router."""
-        method_mapping = (
-            MethodMapping()
-            .add(caller="fit", callee="on_fit_task_begin")
-            .add(caller="fit", callee="on_fit_task_end")
-        )
+    def _add_callback_routing(self, router, callers=("fit",)):
+        """Utility method to add the routing to callbacks to the estimator's router.
+
+        `callers` are the methods of the estimator that call the callback hooks. The
+        `partial_fit` method is added if the estimator has one.
+        """
+        method_mapping = MethodMapping()
+        for caller in callers:
+            method_mapping.add(caller=caller, callee="on_fit_task_begin").add(
+                caller=caller, callee="on_fit_task_end"
+            )
         if hasattr(self, "partial_fit"):
             method_mapping.add(caller="partial_fit", callee="on_fit_task_begin").add(
                 caller="partial_fit", callee="on_fit_task_end"
