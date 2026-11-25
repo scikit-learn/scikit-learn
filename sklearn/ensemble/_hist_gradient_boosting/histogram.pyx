@@ -77,7 +77,7 @@ cdef enum:
     # - The node has at least PREFETCH_MIN_NODE_SAMPLES samples as the last
     #   PREFETCH_DISTANCE samples of a node are neither prefetched nor unrolled.
     PREFETCH_MIN_SAMPLES = 131072  # 2**17
-    PREFETCH_MIN_SPARSITY = 4
+    PREFETCH_MIN_SPARSITY = 16
     PREFETCH_MIN_NODE_SAMPLES = 1024
 
 

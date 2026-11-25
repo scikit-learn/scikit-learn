@@ -192,10 +192,10 @@ def test_unrolled_equivalent_to_naive(constant_hessian, n_samples, n_bins):
         assert_array_equal(hist["sum_hessians"], np.zeros(n_bins))
 
 
-@pytest.mark.parametrize("n_node_samples", [1023, 1024, 1027, 5000, 75_000, 75_001])
+@pytest.mark.parametrize("n_node_samples", [1023, 1024, 1027, 5000, 18_750, 18_751])
 def test_prefetch_equivalent_to_naive(n_node_samples):
     # For large data (n_samples >= 2**17), the histograms of nodes with at least
-    # 1024 samples and at most a quarter of all samples are computed with software
+    # 1024 samples and at most 1/16 of all samples are computed with software
     # prefetching of the bins. Make sure this gives the same results as the naive
     # implementation.
     rng = np.random.RandomState(42)
