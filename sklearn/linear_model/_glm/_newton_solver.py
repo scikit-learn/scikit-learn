@@ -5,7 +5,6 @@
 Newton solver for Generalized Linear Models
 """
 
-import math
 import warnings
 from abc import ABC, abstractmethod
 
@@ -344,46 +343,44 @@ class NewtonSolver(ABC):
         """
         # line search parameters
         ls_converged = False
-        sigma = 0.00048828125  # 1/2**11, sometimes called c1
-        min_step_reduction = 1e-2  # minimum factor of decrease of alpha per step
-        min_step_length = 1e-12  # absolute minimum value of alpha
+        sigma = 0.00048828125  # 1/2**11, also called c1
         # Remember: dtype follows X, also the dtype of self.loss_value. For Array API
         # support, self.loss_value might be float instead of np.floatXX.
         eps = 16 * np.finfo(X.dtype).eps
         alpha = 1  # initial step size, Newton methods should always try 1 first.
-        alpha_old = 1
 
         self.coef_old = self.coef
         self.loss_value_old = self.loss_value
         self.gradient_old = self.gradient
-        phi_0 = phi_old = self.loss_value_old  # phi(0)
-        phi_prime_0 = self.gradient_times_newton  # phi'(0) = gradient @ coef_newton
 
-        # gradient_times_newton = self.gradient @ self.coef_newton
+        # phi'(0) = gradient_times_newton = self.gradient @ self.coef_newton
         # was computed in inner_solve.
         armijo_term = sigma * self.gradient_times_newton
+        l1_term = 0
         if self.l1_reg_strength > 0:
-            # Add ||coef||_1 - ||coef_old||_1, see Eq. 2.19 and 2.14 of
-            # Lee, Sun, Saunder (2012) "Proximal Newton-Type Methods".
-            L1 = self.linear_loss.l1_penalty(
-                self.coef + self.coef_newton, self.l1_reg_strength
+            # Add ||coef_old + coef_newton||_1 - ||coef_old||_1, see Eq. 2.19 and 2.14
+            # of Lee, Sun, Saunder (2012) "Proximal Newton-Type Methods".
+            # Note that the L1 penalty does not include the intercept.
+            # To avoid cancellation errors for tiny steps, we use, with s = sign(w),
+            #   |w + d| - |w| = max(s * d, -s * d - 2 * |w|)
+            w, _ = self.linear_loss.weight_intercept(self.coef_old)
+            d, _ = self.linear_loss.weight_intercept(self.coef_newton)
+            sd = np.where(w < 0, -d, d)
+            l1_term = self.l1_reg_strength * float(
+                np.sum(np.maximum(sd, -sd - 2 * np.abs(w)))
             )
-            L1_old = self.linear_loss.l1_penalty(self.coef_old, self.l1_reg_strength)
-            armijo_term += sigma * (L1 - L1_old)
+            armijo_term += sigma * l1_term
 
         _, _, raw_prediction_newton = self.linear_loss.weight_intercept_raw(
             self.coef_newton, X
         )
-
-        # np.sum(np.abs(self.gradient_old))
-        sum_abs_grad_old = -1
 
         is_verbose = self.verbose >= 2
         if is_verbose:
             print("  Backtracking Line Search")
             print(f"    eps=16 * finfo.eps={eps}")
 
-        for i in range(21):
+        for i in range(21):  # until and including alpha = 1/2**20 ~ 1e-6
             self.coef = self.coef_old + alpha * self.coef_newton
             raw = self.raw_prediction + alpha * raw_prediction_newton
             self.loss_value, self.gradient = self.linear_loss.loss_gradient(
@@ -441,65 +438,38 @@ class NewtonSolver(ABC):
                     f" {np.abs(loss_improvement)} <= {tiny_loss} {check}"
                 )
             if check:
-                if sum_abs_grad_old < 0:
-                    mnsg_old = min_norm_subgradient(
-                        self.l1_reg_strength,
-                        self.gradient_old,
-                        self.coef_old,
-                        self.linear_loss,
-                    )
-                    sum_abs_grad_old = np.linalg.norm(mnsg_old.ravel(), ord=1)
-                # 3.2 Check sum of absolute gradients as alternative condition.
-                mnsg = min_norm_subgradient(
-                    self.l1_reg_strength, self.gradient, self.coef, self.linear_loss
-                )  # equals gradient if l1_reg_strength = 0.
-                sum_abs_grad = np.linalg.norm(mnsg.ravel(), ord=1)
-                check = sum_abs_grad < sum_abs_grad_old
-                if is_verbose:
-                    print(
-                        "      check sum(|gradient|) < sum(|gradient_old|): "
-                        f"{sum_abs_grad} < {sum_abs_grad_old} {check}"
-                    )
-                if check:
-                    ls_converged = True
-                    break
+                # 3.2 Check the approximate Armijo condition, i.e. the first inequality
+                # of Eq. 4.1 of Hager & Zhang (2005) "A New Conjugate Gradient Method
+                # with Guaranteed Descent and an Efficient Line Search":
+                #   phi'(alpha) <= (2 * sigma - 1) * phi'(0)
+                # (our sigma is their delta, 3.1 is their Eq. 4.2). It is the Armijo
+                # condition with phi replaced by its quadratic interpolant, and
+                # phi'(alpha) can be computed much more precisely than differences of
+                # phi.
+                # With an L1 penalty, phi is not differentiable. We then interpolate
+                # only the smooth part of phi and use the convexity of the L1 norm,
+                # ||w + alpha * d||_1 - ||w||_1 <= alpha * (||w + d||_1 - ||w||_1).
+                # This gives the same condition as above with phi'(alpha) replaced by
+                #   gradient(alpha) @ coef_newton + l1_term
+                # which equals armijo_term / sigma for alpha = 0.
+                if armijo_term < 0:
+                    phi_prime = self.gradient.ravel() @ self.coef_newton.ravel()
+                    phi_prime += l1_term
+                    phi_prime_max = (2 * sigma - 1) * armijo_term / sigma
+                    check = phi_prime <= phi_prime_max
+                    if is_verbose:
+                        print(
+                            "      check gradient @ newton step <= (2 * sigma - 1) *"
+                            " gradient_old @ newton step: "
+                            f"{phi_prime} <= {phi_prime_max} {check}"
+                        )
+                    if check:
+                        ls_converged = True
+                        break
 
-            # Set a smart new value of alpha, smaller than previous one, larger than 0.
-            # We know that
-            #   - phi(0) = phi_0
-            #   - phi(alpha) = phi_1
-            #   - phi'(0) = phi_prime_0
-            # We fit a quadratic polynomial through those 3 points and take the minimum
-            # alpha as next trial step length.
-            # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, Eq 3.58.
-            phi_1 = self.loss_value
-            alpha_trial = (
-                -phi_prime_0 * alpha**2 / (2 * (phi_1 - phi_0 - phi_prime_0 * alpha))
-            )
-            if i > 0:
-                # We additionally know phi(alpha_old) = phi_old and use cubic
-                # interpolation.
-                # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, below Eq 3.58.
-                denom = (alpha_old * alpha) ** 2 * (alpha - alpha_old)
-                vec0 = phi_1 - phi_0 - phi_prime_0 * alpha
-                vec1 = phi_old - phi_0 - phi_prime_0 * alpha_old
-                a = (alpha_old**2 * vec0 - alpha**2 * vec1) / denom
-                b = (alpha**3 * vec1 - alpha_old**3 * vec0) / denom
-                if a != 0 and b**2 - 3 * a * phi_prime_0 >= 0:
-                    alpha_trial = (-b + math.sqrt(b**2 - 3 * a * phi_prime_0)) / (3 * a)
-                # else we keep the quadratic alpha_trial from above
-
-            alpha_old = alpha
-            phi_old = phi_1
-            # Safeguards
-            if alpha_trial >= alpha or alpha_trial <= min_step_length:
-                alpha_trial = 0.5 * alpha
-            # Avoid too large a reduction of alpha.
-            alpha = max(alpha_trial, min_step_reduction * alpha, min_step_length)
-            if alpha == alpha_old:
-                # For example if alpha = alpha_old = min_step_length.
-                # The early exit avoids dividing by denom = 0 in the next iteration.
-                break
+            # Halve the step size. Polynomial interpolation was found to be no better,
+            # see https://github.com/scikit-learn/scikit-learn/issues/35483.
+            alpha *= 0.5
 
         if not ls_converged:
             warnings.warn(
@@ -512,6 +482,11 @@ class NewtonSolver(ABC):
             )
             if self.verbose:
                 print("  Line search did not converge and resorts to lbfgs instead.")
+            # Restore the state before the line search. The last trial point did not
+            # pass the checks above and might even be non-finite.
+            self.coef = self.coef_old
+            self.loss_value = self.loss_value_old
+            self.gradient = self.gradient_old
             self.use_fallback_lbfgs_solve = True
             return
 

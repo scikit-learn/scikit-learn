@@ -61,6 +61,7 @@ from sklearn.utils.fixes import (
     DIA_CONTAINERS,
     DOK_CONTAINERS,
     _sparse_random_array,
+    parse_version,
 )
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
@@ -2265,6 +2266,7 @@ def test_check_array_array_api_has_non_finite():
             check_array(X_inf)
 
 
+@pytest.mark.parametrize("convert_to_narwhals", [False, True])
 @pytest.mark.parametrize(
     "extension_dtype, regular_dtype",
     [
@@ -2276,7 +2278,7 @@ def test_check_array_array_api_has_non_finite():
 )
 @pytest.mark.parametrize("include_object", [True, False])
 def test_check_array_multiple_extensions(
-    extension_dtype, regular_dtype, include_object
+    convert_to_narwhals, extension_dtype, regular_dtype, include_object
 ):
     """Check pandas extension arrays give the same result as non-extension arrays."""
     pd = pytest.importorskip("pandas")
@@ -2290,6 +2292,8 @@ def test_check_array_multiple_extensions(
         X_regular["b"] = pd.Series(["a", "b", "c", "d"], dtype="object")
 
     X_extension = X_regular.assign(a=X_regular["a"].astype(extension_dtype))
+    if convert_to_narwhals:
+        X_extension = nw.from_native(X_extension)
 
     X_regular_checked = check_array(X_regular, dtype=None)
     X_extension_checked = check_array(X_extension, dtype=None)
@@ -2406,9 +2410,19 @@ def test_check_array_writeable_df():
     df = pd.DataFrame(X, copy=False)
 
     out = check_array(df, copy=False, force_writeable=True)
-    # df is backed by a writeable array, no copy is needed
-    assert np.may_share_memory(out, df)
     assert out.flags.writeable
+    copy_on_write = (
+        parse_version(pd.__version__).major >= 3
+        or pd.options.mode.copy_on_write is True
+    )
+    if not copy_on_write:
+        # without Copy-on-Write, df is backed by a writeable array, no copy is needed
+        assert np.may_share_memory(out, df)
+    else:
+        # with Copy-on-Write (default in pandas >= 3 or
+        # pd.options.mode.copy_on_write == True), np.asarray(df) is read-only to
+        # protect other DataFrames that may share its memory, a copy is made
+        assert not np.may_share_memory(out, df)
 
     X.flags.writeable = False
     df = pd.DataFrame(X, copy=False)
@@ -2417,6 +2431,21 @@ def test_check_array_writeable_df():
     # df is backed by a read-only array, a copy is made
     assert not np.may_share_memory(out, df)
     assert out.flags.writeable
+
+
+def test_check_array_writeable_df_copy_on_write():
+    """Check that writing to the output of check_array does not modify another
+    DataFrame sharing memory with the input under pandas Copy-on-Write.
+    """
+    pd = pytest.importorskip("pandas", minversion="3")
+
+    df = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
+    view = df[:]
+    assert not np.asarray(view).flags.writeable
+
+    out = check_array(view, copy=False, force_writeable=True)
+    out[0, 0] = 100.0
+    assert df["a"].iloc[0] == 1.0
 
 
 @skip_if_array_api_compat_not_configured

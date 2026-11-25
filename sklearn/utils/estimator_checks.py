@@ -98,6 +98,7 @@ from sklearn.utils._test_common.instance_generator import (
 from sklearn.utils._testing import (
     SkipTest,
     _array_api_for_tests,
+    _check_name,
     _get_args,
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -352,9 +353,11 @@ def _yield_array_api_checks(estimator, only_numpy=False):
         # For estimators without explicit array API support; check that enabling
         # array API dispatch and using NumPy inputs does not change results.
         # Output checks are looser (expect_only_array_outputs=False).
+        X_ns_and_device = NamespaceAndDevice("numpy", None)
         yield partial(
             check_array_api_input,
-            array_namespace="numpy",
+            X_ns_and_device=X_ns_and_device,
+            other_ns_and_device=X_ns_and_device,
             expect_only_array_outputs=False,
         )
     else:
@@ -366,10 +369,11 @@ def _yield_array_api_checks(estimator, only_numpy=False):
             device_name,
             dtype_name,
         ) in yield_namespace_device_dtype_combinations():
+            X_ns_and_device = NamespaceAndDevice(array_namespace, device_name)
             yield partial(
                 check_array_api_input,
-                array_namespace=array_namespace,
-                device_name=device_name,
+                X_ns_and_device=X_ns_and_device,
+                other_ns_and_device=X_ns_and_device,
                 dtype_name=dtype_name,
             )
         # 2. Mixed namespace/device inputs: X uses one namespace/device
@@ -383,9 +387,11 @@ def _yield_array_api_checks(estimator, only_numpy=False):
             _,
         ) in yield_mixed_namespace_input_permutations():
             yield partial(
-                check_array_api_mixed_inputs,
-                other_ns_and_device=other_ns_and_device,
+                check_array_api_input,
+                check_name="check_array_api_mixed_inputs",
                 X_ns_and_device=X_ns_and_device,
+                other_ns_and_device=other_ns_and_device,
+                check_sample_weight=True,
             )
         # 3. String `y` and numeric `X` from all supported namespace/devices
         if is_classifier(estimator):
@@ -394,10 +400,12 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 device_name,
                 dtype_name,
             ) in yield_namespace_device_dtype_combinations():
+                X_ns_and_device = NamespaceAndDevice(array_namespace, device_name)
                 yield partial(
-                    check_array_api_string_and_numeric_inputs,
-                    array_namespace=array_namespace,
-                    device_name=device_name,
+                    check_array_api_input,
+                    check_name="check_array_api_string_and_numeric_inputs",
+                    X_ns_and_device=X_ns_and_device,
+                    other_ns_and_device="string",
                     dtype_name=dtype_name,
                 )
         # 4. Namespace/device consistency between fit and predict/transform
@@ -469,12 +477,6 @@ def _yield_all_checks(estimator, legacy: bool):
             yield check_requires_y_none
     if tags.input_tags.positive_only:
         yield check_fit_non_negative
-
-
-def _check_name(check):
-    if hasattr(check, "__wrapped__"):
-        return _check_name(check.__wrapped__)
-    return check.func.__name__ if isinstance(check, partial) else check.__name__
 
 
 def _maybe_mark(
@@ -932,6 +934,7 @@ def check_estimator(
                 )
         except Exception as e:
             if on_fail == "raise" and not test_can_fail:
+                e.add_note(f"Raised in check {_check_name(check)!r} for {name}")
                 raise
 
             if test_can_fail:
@@ -1096,7 +1099,8 @@ def check_supervised_y_no_nan(name, estimator_orig):
             estimator.fit(X, y)
 
 
-def _check_array_api_core(
+def check_array_api_input(
+    name,
     estimator_orig,
     X_ns_and_device,
     other_ns_and_device,
@@ -1104,8 +1108,53 @@ def _check_array_api_core(
     check_values=False,
     check_sample_weight=False,
     expect_only_array_outputs=True,
+    *,
+    check_name=None,
 ):
-    """Helper to check estimator attributes and method outputs."""
+    """Check that the estimator can work consistently with the Array API.
+
+    By default, this checks that the types and shapes of the arrays are
+    consistent with calling the same estimator with numpy arrays.
+
+    Parameters
+    ----------
+    name : str
+        The name of the estimator. Used in error messages but ignored here.
+
+    estimator_orig : estimator
+        Original (uncloned) estimator instance.
+
+    X_ns_and_device : NamedTuple
+        Namespace and device of reference array API input: `X` as "everything
+        follows X".
+
+    other_ns_and_device : NamedTuple
+        Namespace and device of other array API inputs. Used for `y` and
+        `sample_weight`.
+
+    dtype_name : str, default=None
+        The name of the data type to use for all arrays. If `None`,
+        `_max_precision_float_dtype` of namespace and device of
+        `X_ns_and_device` used.
+
+    check_values : bool, default=False
+        Whether to check the values of attributes, method outputs (including
+        `inverse_transform`) obtained with array API inputs match that of all-NumPy
+        inputs. If `False` only the namespace, device, shape and dtype of attributes
+        and method outputs are checked.
+
+    check_sample_weight : bool, default=False
+        Whether to pass dummy weights to the fit call.
+
+    expect_only_array_outputs : bool, default=True
+        Whether to expect non-array outputs such as sparse data structures and lists.
+        If `False` the checks are looser; device, shape and dtype checks for method
+        outputs are skipped and only a smoke test is performed for `inverse_transform`.
+
+    check_name : str, default=None
+        Name used to identify this check (e.g. in `expected_failed_checks`)
+        when it is yielded as a partial. Not used by the check itself.
+    """
     xp_X, device_X = _array_api_for_tests(
         X_ns_and_device.xp, X_ns_and_device.device, dtype_name
     )
@@ -1329,70 +1378,6 @@ def _check_array_api_core(
                     assert inverse_result.dtype == inverse_result_xp_np.dtype
 
 
-def check_array_api_input(
-    name,
-    estimator_orig,
-    array_namespace,
-    device_name=None,
-    dtype_name=None,
-    check_values=False,
-    check_sample_weight=False,
-    expect_only_array_outputs=True,
-):
-    """Check that the estimator can work consistently with the Array API.
-
-    All inputs are of the same namespace/device. See `check_array_api_mixed_inputs`
-    for testing of inputs from different namespaces/devices.
-
-    By default, this just checks that the types and shapes of the arrays are
-    consistent with calling the same estimator with numpy arrays.
-
-    Parameters
-    ----------
-    name : str
-        The name of the estimator. Used in error messages but ignored here.
-
-    estimator_orig : estimator
-        Original (uncloned) estimator instance.
-
-    array_namespace : str
-        The name of the Array API namespace of all estimator inputs.
-
-    device_name : str, default=None
-        The name of the device on which to allocate the estimator input arrays.
-
-    dtype_name : str, default=None
-        The name of the data type to use for arrays. If `None`,
-        `_max_precision_float_dtype` of namespace and device of
-        `X_ns_and_device` used.
-
-    check_values : bool, default=False
-        Whether to check the values of attributes, method outputs (including
-        `inverse_transform`) obtained with array API inputs match that of all-NumPy
-        inputs. If `False` only the namespace, device, shape and dtype of attributes
-        and method outputs are checked.
-
-    check_sample_weight : bool, default=False
-        Whether to pass dummy weights to the fit call.
-
-    expect_only_array_outputs : bool, default=True
-        Whether to expect non-array outputs such as sparse data structures and lists.
-        If `False` the checks are looser; device, shape and dtype checks for method
-        outputs are skipped and only a smoke test is performed for `inverse_transform`.
-    """
-    X_ns_and_device = NamespaceAndDevice(array_namespace, device_name)
-    _check_array_api_core(
-        estimator_orig,
-        X_ns_and_device=X_ns_and_device,
-        # Make all array inputs of the same namespace/device
-        other_ns_and_device=X_ns_and_device,
-        dtype_name=dtype_name,
-        check_values=check_values,
-        check_sample_weight=check_sample_weight,
-        expect_only_array_outputs=expect_only_array_outputs,
-    )
-
-
 def check_array_api_input_and_values(
     name,
     estimator_orig,
@@ -1401,140 +1386,15 @@ def check_array_api_input_and_values(
     dtype_name="float64",
     check_sample_weight=False,
 ):
+    X_ns_and_device = NamespaceAndDevice(array_namespace, device_name)
     return check_array_api_input(
         name,
         estimator_orig,
-        array_namespace=array_namespace,
-        device_name=device_name,
+        X_ns_and_device=X_ns_and_device,
+        other_ns_and_device=X_ns_and_device,
         dtype_name=dtype_name,
         check_values=True,
         check_sample_weight=check_sample_weight,
-    )
-
-
-def check_array_api_mixed_inputs(
-    name,
-    estimator_orig,
-    X_ns_and_device,
-    other_ns_and_device,
-    check_values=False,
-    check_sample_weight=True,
-    expect_only_array_outputs=True,
-):
-    """Check `estimator_orig` works with mixed namespace/device array API inputs.
-
-    For this check the input `X` uses one namespace/device, and the other inputs
-    (`y` and `sample_weight`) use another namespace/device. The tested namespace
-    combinations are generated by `yield_mixed_namespace_input_permutations`.
-    The goal of the check is to make sure estimators move `y` and `sample_weight`
-    to the namespace/device of `X` when needed.
-
-    See `check_array_api_input` for testing of inputs from the same
-    namespaces/devices.
-
-    Note that the default of `check_sample_weight` is `True`, unlike
-    `check_array_api_input`.
-
-    Parameters
-    ----------
-    name : str
-        The name of the estimator. Used in error messages but ignored here.
-
-    estimator_orig : estimator
-        Original (uncloned) estimator instance.
-
-    X_ns_and_device : NamedTuple
-        Namespace and device of reference array API input: `X` as "everything
-        follows X".
-
-    other_ns_and_device : NamedTuple
-        Namespace and device of other array API inputs. Used for `y` and
-        `sample_weight`.
-
-    check_values : bool, default=False
-        Whether to check the values of attributes, method outputs (including
-        `inverse_transform`) obtained with array API inputs match that of all-NumPy
-        inputs. If `False` only the namespace, device, shape and dtype of attributes
-        and method outputs are checked.
-
-    check_sample_weight : bool, default=True
-        Whether to pass dummy weights to the fit call.
-
-    expect_only_array_outputs : bool, default=True
-        Whether to expect non-array outputs such as sparse data structures and lists.
-        If `False` the checks are looser; device, shape and dtype checks for method
-        outputs are skipped and only a smoke test is performed for `inverse_transform`.
-    """
-    _check_array_api_core(
-        estimator_orig,
-        X_ns_and_device=X_ns_and_device,
-        other_ns_and_device=other_ns_and_device,
-        dtype_name=None,
-        check_values=check_values,
-        check_sample_weight=check_sample_weight,
-        expect_only_array_outputs=expect_only_array_outputs,
-    )
-
-
-def check_array_api_string_and_numeric_inputs(
-    name,
-    estimator_orig,
-    array_namespace,
-    device_name=None,
-    dtype_name=None,
-    check_values=False,
-    expect_only_array_outputs=True,
-):
-    """Check `estimator_orig` works with string `y` and array API `X`.
-
-    For this check `y` is always a NumPy array of strings and `X` is an array
-    with namespace and device combinations generated by
-    `yield_namespace_device_dtype_combinations`.
-
-    Note `sample_weight` is never checked.
-
-    See `check_array_api_input` and `check_array_api_mixed_inputs` for similar
-    tests.
-
-    Parameters
-    ----------
-    name : str
-        The name of the estimator. Used in error messages but ignored here.
-
-    estimator_orig : estimator
-        Original (uncloned) estimator instance.
-
-    array_namespace : str
-        The name of the Array API namespace of all estimator inputs.
-
-    device_name : str, default=None
-        The name of the device on which to allocate the estimator input arrays.
-
-    dtype_name : str, default=None
-        The name of the data type to use for arrays. If `None`,
-        `_max_precision_float_dtype` of namespace and device of
-        `X_ns_and_device` is used.
-
-    check_values : bool, default=False
-        Whether to check the values of attributes, method outputs (including
-        `inverse_transform`) obtained with array API inputs match that of all-NumPy
-        inputs. If `False` only the namespace, device, shape and dtype of attributes
-        and method outputs are checked.
-
-    expect_only_array_outputs : bool, default=True
-        Whether to expect non-array outputs such as sparse data structures and lists.
-        If `False` the checks are looser; device, shape and dtype checks for method
-        outputs are skipped and only a smoke test is performed for `inverse_transform`.
-    """
-    X_ns_and_device = NamespaceAndDevice(array_namespace, device_name)
-    _check_array_api_core(
-        estimator_orig,
-        X_ns_and_device=X_ns_and_device,
-        other_ns_and_device="string",
-        dtype_name=dtype_name,
-        check_values=check_values,
-        check_sample_weight=False,
-        expect_only_array_outputs=expect_only_array_outputs,
     )
 
 
