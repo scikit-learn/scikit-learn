@@ -110,6 +110,10 @@ from sklearn.utils._bunch import Bunch
 
 CALLBACK_METHODS = ["on_fit_task_begin", "on_fit_task_end"]
 
+# Parameters of the callback hooks that are provided by the estimator or by the callback
+# context, and not by metadata routing. They can't be requested.
+CALLBACK_NOT_ROUTED_PARAMS = {"estimator", "context", "X", "y", "fitted_estimator"}
+
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.
 # Note that if this list is changed or monkeypatched, the corresponding method
@@ -1822,8 +1826,8 @@ class _MetadataRequester:
 
         ignore_params = set() if ignore_params is None else set(ignore_params)
         ignore_params.update({"X", "y", "Y", "Xt", "yt"})
-        # Parameters that callbacks receive from the estimator, not as metadata.
-        ignore_params.update(getattr(cls, "_ignored_callback_params", ()))
+        if method_name in CALLBACK_METHODS:
+            ignore_params.update(CALLBACK_NOT_ROUTED_PARAMS)
 
         params: defaultdict[str, Optional[Union[bool, str]]] = defaultdict(
             str,

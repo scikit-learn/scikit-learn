@@ -45,9 +45,6 @@ class BaseCallback:
 class FitCallback(BaseCallback, _MetadataRequester):
     """Base class for the callbacks evaluated during the fit of an estimator."""
 
-    # Parameters of the hooks that are passed by the estimator, not routed metadata.
-    _ignored_callback_params = {"estimator", "context", "fitted_estimator"}
-
     def on_fit_task_begin(
         self,
         estimator,

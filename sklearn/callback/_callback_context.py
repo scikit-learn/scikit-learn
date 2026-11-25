@@ -10,10 +10,11 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 
 from sklearn.callback._base import AutoPropagatedCallbackMixin
-from sklearn.utils.metadata_routing import _routing_enabled, get_routing_for_object
-
-# Set of the hook parameters that do not come from metadata routing
-HOOK_NOT_ROUTED_PARAMS = {"X", "y", "fitted_estimator"}
+from sklearn.utils.metadata_routing import (
+    CALLBACK_NOT_ROUTED_PARAMS,
+    _routing_enabled,
+    get_routing_for_object,
+)
 
 _cached_signature = functools.lru_cache()(inspect.signature)
 
@@ -335,7 +336,7 @@ class CallbackContext:
                 for p in signature.parameters.values()
                 if p.kind == p.KEYWORD_ONLY
             }
-            for param_name in HOOK_NOT_ROUTED_PARAMS & kwarg_names:
+            for param_name in CALLBACK_NOT_ROUTED_PARAMS & kwarg_names:
                 if param_name not in evaluated_args:
                     # Special case: "reconstruction_attributes" is not directly passed
                     # to the hook. A ready to predict/transform estimator is created
