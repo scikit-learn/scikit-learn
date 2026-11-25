@@ -776,6 +776,45 @@ def test_calibration_less_classes(ensemble):
         assert_array_almost_equal(proba.sum(axis=1), np.ones(proba.shape[0]))
 
 
+@pytest.mark.parametrize("method", ["sigmoid", "isotonic"])
+@pytest.mark.parametrize(
+    "estimator", [DecisionTreeClassifier(random_state=0), LinearSVC(random_state=0)]
+)
+@pytest.mark.parametrize("classes", [[2, 7, 42], ["ant", "bee", "cat"]])
+@pytest.mark.parametrize("unseen_idx", [0, 1, 2, None])
+def test_calibration_binary_fold_in_multiclass(method, estimator, classes, unseen_idx):
+    """A binary score represents the second of the two trained classes."""
+    centers = np.eye(3)
+    X = np.repeat(centers, 4, axis=0)
+    y = np.repeat(classes, 4)
+    train_mask = np.tile([True, True, False, False], len(classes))
+    if unseen_idx is not None:
+        train_mask &= y != classes[unseen_idx]
+    cv = [(np.flatnonzero(train_mask), np.flatnonzero(~train_mask))]
+    # The validation split contains all classes, including both trained classes.
+    clf = CalibratedClassifierCV(estimator, method=method, cv=cv, ensemble=True).fit(
+        X, y
+    )
+
+    proba = clf.predict_proba(centers)
+    assert_allclose(proba.sum(axis=1), 1)
+    if unseen_idx is None:
+        assert_array_equal(clf.predict(centers), classes)
+        return
+
+    neg_idx, pos_idx = np.delete(np.arange(len(classes)), unseen_idx)
+    assert_array_equal(proba[:, unseen_idx], np.zeros(len(centers)))
+
+    # Ordinary binary calibration of the same positive label is a reference
+    # for the two trained columns, including how it treats validation labels
+    # that do not match the positive class.
+    binary = CalibratedClassifierCV(estimator, method=method, cv=cv, ensemble=True)
+    binary.fit(X, y == classes[pos_idx])
+    assert_allclose(proba[:, [neg_idx, pos_idx]], binary.predict_proba(centers))
+    assert proba[neg_idx, neg_idx] > proba[pos_idx, neg_idx]
+    assert proba[pos_idx, pos_idx] > proba[neg_idx, pos_idx]
+
+
 @pytest.mark.parametrize(
     "X",
     [
