@@ -1580,7 +1580,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         self.name = _deprecate_estimator_name(estimator_name, name, "1.10")
         self.pos_label = pos_label
 
-    def plot(self, *, ax=None, name=None, ref_line=True, curve_kwargs=None, **kwargs):
+    def plot(self, *, ax=None, name=None, curve_kwargs=None, ref_line=True, **kwargs):
         """Plot visualization.
 
         Parameters
@@ -1594,14 +1594,14 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             `CalibrationDisplay` initialization if not `None`, otherwise no
             labeling is shown.
 
-        ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly
-            calibrated classifier.
-
         curve_kwargs : dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function.
 
             .. versionadded:: 1.11
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -1662,8 +1662,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
-        ref_line=True,
         curve_kwargs=None,
+        ref_line=True,
         **kwargs,
     ):
         """Plot calibration curve using a binary classifier and data.
@@ -1724,14 +1724,14 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly
-            calibrated classifier.
-
         curve_kwargs : dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function.
 
             .. versionadded:: 1.11
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -1783,9 +1783,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             strategy=strategy,
             pos_label=pos_label,
             name=name,
-            ref_line=ref_line,
             ax=ax,
             curve_kwargs=curve_kwargs,
+            ref_line=ref_line,
             **kwargs,
         )
 
@@ -1802,8 +1802,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
-        ref_line=True,
         curve_kwargs=None,
+        ref_line=True,
         **kwargs,
     ):
         """Plot calibration curve using true labels and predicted probabilities.
@@ -1861,14 +1861,14 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        ref_line : bool, default=True
-            If `True`, plots a reference line representing a perfectly
-            calibrated classifier.
-
         curve_kwargs : dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function.
 
             .. versionadded:: 1.11
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
@@ -1920,4 +1920,4 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             pos_label=pos_label_validated,
         )
-        return disp.plot(ax=ax, ref_line=ref_line, curve_kwargs=curve_kwargs, **kwargs)
+        return disp.plot(ax=ax, curve_kwargs=curve_kwargs, ref_line=ref_line, **kwargs)
