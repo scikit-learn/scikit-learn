@@ -2,6 +2,7 @@
 
 import pickle
 import re
+import warnings
 
 import numpy as np
 import pytest
@@ -313,7 +314,10 @@ def test_verbose(assign_labels, capsys):
 def test_spectral_clustering_np_matrix_raises():
     """Check that spectral_clustering raises an informative error when passed
     an np.matrix. See #10993"""
-    X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
+    with warnings.catch_warnings():
+        # numpy emits a PendingDeprecationWarning when creating an np.matrix
+        warnings.simplefilter("ignore", PendingDeprecationWarning)
+        X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
 
     msg = r"np\.matrix is not supported. Please convert to a numpy array"
     with pytest.raises(TypeError, match=msg):
