@@ -7,6 +7,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 from sklearn.utils._metadata_requests import (  # noqa: F401
     CALLBACK_METHODS,
+    CALLBACK_NOT_ROUTED_PARAMS,
     UNCHANGED,
     UNUSED,
     WARN,
