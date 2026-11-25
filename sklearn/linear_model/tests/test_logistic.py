@@ -40,6 +40,7 @@ from sklearn.svm import l1_min_c
 from sklearn.utils import compute_class_weight, shuffle
 from sklearn.utils._array_api import (
     _atol_for_type,
+    _convert_to_numpy,
     array_device,
     move_to,
     yield_namespace_device_dtype_combinations,
@@ -3370,3 +3371,127 @@ def test_intercept_scaling_deprecated(est, intercept_scaling):
     msg = "The parameter 'intercept_scaling' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name",
+    [("torch", "cpu"), ("torch", "cuda"), ("array_api_strict", "device1")],
+)
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("dtype_name", ["float32", "float64"])
+def test_newton_cholesky_array_api_binary(
+    namespace, device_name, fit_intercept, dtype_name
+):
+    """Check weighted binary fits against NumPy with and without an intercept."""
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    X, y = make_classification(
+        n_samples=200, n_features=5, n_redundant=2, random_state=42
+    )
+    X = X.astype(dtype_name)
+    sample_weight = np.linspace(0, 2, len(y), dtype=dtype_name)
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+    weights_xp = xp.asarray(sample_weight, device=device)
+    options = {
+        "solver": "newton-cholesky",
+        "alpha": 1,
+        "fit_intercept": fit_intercept,
+        "tol": 1e-7,
+    }
+    reference = LogisticRegression(**options).fit(X, y, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=True):
+        fitted = LogisticRegression(**options).fit(X_xp, y_xp, sample_weight=weights_xp)
+        probabilities = fitted.predict_proba(X_xp)
+    for result in (fitted.coef_, fitted.intercept_, probabilities):
+        assert type(result) is type(X_xp)
+        assert array_device(result) == array_device(X_xp)
+    assert_allclose(
+        _convert_to_numpy(fitted.coef_, xp), reference.coef_, rtol=1e-4, atol=2e-5
+    )
+    assert_allclose(
+        _convert_to_numpy(probabilities, xp),
+        reference.predict_proba(X),
+        rtol=1e-4,
+        atol=2e-5,
+    )
+
+
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_newton_cholesky_array_api_singular(n_classes):
+    """Check that an exactly singular Hessian triggers the L-BFGS fallback."""
+    xp, device = _array_api_for_tests("torch", "cpu", "float64")
+    X, y = make_classification(
+        n_samples=100,
+        n_features=4,
+        n_informative=3,
+        n_redundant=0,
+        n_classes=n_classes,
+        random_state=42,
+    )
+    X = np.column_stack((X, X[:, 0], np.zeros(len(y))))
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+    reference = LogisticRegression(solver="lbfgs", alpha=0, tol=1e-8).fit(X, y)
+    with config_context(array_api_dispatch=True):
+        with pytest.warns(LinAlgWarning, match="singular or very ill-conditioned"):
+            fitted = LogisticRegression(
+                solver="newton-cholesky", alpha=0, tol=1e-8
+            ).fit(X_xp, y_xp)
+        probabilities = fitted.predict_proba(X_xp)
+    assert type(probabilities) is type(X_xp)
+    assert_allclose(probabilities, reference.predict_proba(X), atol=2e-6, rtol=0)
+
+
+@pytest.mark.parametrize(
+    "namespace, device_name",
+    [("torch", "cpu"), ("torch", "cuda"), ("array_api_strict", "device1")],
+)
+@pytest.mark.parametrize("dtype_name", ["float32", "float64"])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("alpha", [0.0, 1.0])
+def test_newton_cholesky_array_api_multinomial(
+    namespace, device_name, dtype_name, fit_intercept, alpha
+):
+    """Check weighted multiclass fits with and without L2 or an intercept."""
+    xp, device = _array_api_for_tests(namespace, device_name, dtype_name)
+    X, y = make_classification(
+        n_samples=240,
+        n_features=6,
+        n_informative=4,
+        n_redundant=0,
+        n_classes=3,
+        random_state=42,
+    )
+    X = X.astype(dtype_name)
+    sample_weight = np.linspace(0, 2, len(y), dtype=dtype_name)
+    X_xp = xp.asarray(X, device=device)
+    y_xp = xp.asarray(y, device=device)
+    weights_xp = xp.asarray(sample_weight, device=device)
+    options = {
+        "solver": "newton-cholesky",
+        "alpha": alpha,
+        "fit_intercept": fit_intercept,
+        "tol": 1e-6 if dtype_name == "float32" else 1e-9,
+    }
+    reference = LogisticRegression(**options).fit(X, y, sample_weight=sample_weight)
+    with config_context(array_api_dispatch=True):
+        fitted = LogisticRegression(**options).fit(X_xp, y_xp, sample_weight=weights_xp)
+        probabilities = fitted.predict_proba(X_xp)
+    for result in (fitted.coef_, fitted.intercept_, probabilities):
+        assert type(result) is type(X_xp)
+        assert array_device(result) == array_device(X_xp)
+    assert_allclose(
+        _convert_to_numpy(fitted.coef_, xp), reference.coef_, atol=2e-5, rtol=1e-4
+    )
+    assert_allclose(
+        _convert_to_numpy(fitted.intercept_, xp),
+        reference.intercept_,
+        atol=2e-5,
+        rtol=1e-4,
+    )
+    assert_allclose(
+        _convert_to_numpy(probabilities, xp),
+        reference.predict_proba(X),
+        atol=2e-5,
+        rtol=1e-4,
+    )
