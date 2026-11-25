@@ -1603,7 +1603,6 @@ class LogisticRegression(
         )
         xp, _, device = get_namespace_and_device(X)
         sample_weight = move_to(sample_weight, xp=xp, device=device)
-        xp_y, _ = get_namespace(y)
 
         X, y = validate_data(
             self,
