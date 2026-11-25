@@ -541,6 +541,39 @@ def test_permutation_importance_max_samples_error():
         permutation_importance(clf, X, y, max_samples=5)
 
 
+@pytest.mark.parametrize("max_samples", [0.1, 0.2, 0.5])
+def test_permutation_importance_max_samples_unused_feature_is_zero(max_samples):
+    """Check that subsampling does not leak into importances.
+
+    Non-regression test for #35027: the baseline score must be computed on
+    the same subsample as the permuted scores, so shuffling a column the
+    model never reads gives an importance of exactly 0.
+    """
+    rng = np.random.RandomState(0)
+    n_samples = 200
+    X = rng.randn(n_samples, 3)
+    y = 3 * X[:, 0] + rng.randn(n_samples)
+    X[:, 1:] = rng.randn(n_samples, 2)
+
+    model = LinearRegression().fit(X[:, :1], y)
+
+    class OnlyFirst:
+        def fit(self, X, y):
+            return self
+
+        def predict(self, X):
+            return model.predict(X[:, :1])
+
+        def score(self, X, y):
+            return r2_score(y, self.predict(X))
+
+    result = permutation_importance(
+        OnlyFirst(), X, y, n_repeats=5, max_samples=max_samples, random_state=0
+    )
+    assert_allclose(result.importances_mean[1:], 0.0, atol=0.0)
+    assert_allclose(result.importances[1:], 0.0, atol=0.0)
+
+
 def test_permutation_importance_array_function_not_called():
     """Check that `__array_function__` (NEP18) is not called."""
     X = _NotAnArray([[1, 1], [1, 2], [1, 3], [1, 4], [2, 1], [2, 2], [2, 3], [2, 4]])
