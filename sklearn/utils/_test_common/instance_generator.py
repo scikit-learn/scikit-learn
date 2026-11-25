@@ -836,15 +836,10 @@ try:
             return
         # Once this is empty, can delete this function:
         skips = {
-            (DictionaryLearning, "check_transformer_preserve_dtypes"),
             (LatentDirichletAllocation, "check_transformer_data_not_an_array"),
             (LatentDirichletAllocation, "check_transformer_general"),
             (LatentDirichletAllocation, "check_pipeline_consistency"),
             (LatentDirichletAllocation, "check_fit_idempotent"),
-            (MiniBatchDictionaryLearning, "check_transformer_preserve_dtypes"),
-            (MiniBatchSparsePCA, "check_transformer_preserve_dtypes"),
-            (SparseCoder, "check_transformer_preserve_dtypes"),
-            (SparsePCA, "check_transformer_preserve_dtypes"),
             (SpectralClustering, "check_estimator_sparse_matrix"),
         }
         if (type(estimator), check.func.__name__) in skips:
