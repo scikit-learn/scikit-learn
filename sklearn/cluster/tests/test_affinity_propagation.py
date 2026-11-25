@@ -317,5 +317,7 @@ def test_affinity_propagation_equal_points():
     https://github.com/scikit-learn/scikit-learn/pull/20043
     """
     X = np.zeros((8, 1))
-    af = AffinityPropagation(affinity="euclidean", damping=0.5, random_state=42).fit(X)
+    af = AffinityPropagation(affinity="euclidean", damping=0.5, random_state=42)
+    with pytest.warns(UserWarning, match="mutually equal similarities"):
+        af.fit(X)
     assert np.all(af.labels_ == 0)
