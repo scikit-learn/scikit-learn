@@ -1,0 +1,3 @@
+- Fix incorrect density estimates and NaN results in :class:`~sklearn.neighbors.KernelDensity`
+  when a :class:`~sklearn.neighbors.BallTree` node contains only zero-weight samples.
+  By :user:`Ge Li <galleonli>`.
