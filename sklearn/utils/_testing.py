@@ -39,6 +39,7 @@ from numpy.testing import (
 )
 
 from sklearn import __file__ as sklearn_path
+from sklearn.datasets import make_classification
 from sklearn.utils import (
     ClassifierTags,
     RegressorTags,
@@ -56,7 +57,12 @@ from sklearn.utils.fixes import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
+from sklearn.utils.validation import (
+    check_array,
+    check_is_fitted,
+    check_X_y,
+    has_fit_parameter,
+)
 
 __all__ = [
     "SkipTest",
@@ -1439,6 +1445,85 @@ def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
         raise SkipTest(skip_msg)
 
     return xp, device
+
+
+def _make_array_api_inputs(
+    estimator,
+    X_ns_and_device,
+    other_ns_and_device,
+    dtype_name=None,
+    check_sample_weight=False,
+    y_kind="numeric",
+):
+    """Generate data for testing Array API consistency of estimators.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Estimator to be checked.
+
+    X_ns_and_device : NamespaceAndDevice
+        Namespace and device of reference array API input: `X` as "everything
+        follows X".
+
+    other_ns_and_device : NamespaceAndDevice
+        Namespace and device of other array API inputs. Used for `y` (unless
+        `y_kind` is "str" or "str_list") and `sample_weight`.
+
+    dtype_name : str, default=None
+        The name of the data type to use for all arrays, except `y` when `y_kind` is
+        "str" or "str_list". If `None`, `_max_precision_float_dtype` of namespace and
+        device of `X_ns_and_device` used.
+
+    check_sample_weight : bool, default=False
+        Whether to include unit sample weights.
+
+    y_kind : {"numeric", "str", "str_list"}, default="numeric"
+        Representation of `y_xp`. `"numeric"` uses an array in the requested
+        namespace and device. `"str"` uses a NumPy string array, and
+        `"str_list"` uses a Python list of strings. The NumPy reference
+        target `y` is a NumPy string array for both string options.
+    """
+    from sklearn.utils.estimator_checks import (
+        _enforce_estimator_tags_X,
+        _enforce_estimator_tags_y,
+    )
+
+    xp_X, device_X = _array_api_for_tests(
+        X_ns_and_device.xp, X_ns_and_device.device, dtype_name
+    )
+
+    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
+    if dtype_name is None:
+        max_float_dtype = _max_precision_float_dtype(xp_X, device_X)
+        dtype_name = "float32" if max_float_dtype == xp_X.float32 else "float64"
+    X = X.astype(dtype_name, copy=False)
+
+    X = _enforce_estimator_tags_X(estimator, X)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    X_xp = xp_X.asarray(X, device=device_X)
+
+    xp_other, device_other = _array_api_for_tests(
+        other_ns_and_device.xp, other_ns_and_device.device
+    )
+
+    if y_kind == "numeric":
+        y_xp = xp_other.asarray(y, device=device_other)
+    else:
+        y = np.array(["a", "b"])[y]
+        y_xp = y.tolist() if y_kind == "str_list" else y
+
+    fit_kwargs, fit_kwargs_xp = {}, {}
+    if check_sample_weight and has_fit_parameter(estimator, "sample_weight"):
+        max_dtype_other = _max_precision_float_dtype(xp_other, device_other)
+        dtype_other = "float32" if max_dtype_other == xp_other.float32 else "float64"
+        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=dtype_other)
+        fit_kwargs_xp["sample_weight"] = xp_other.asarray(
+            fit_kwargs["sample_weight"], device=device_other
+        )
+
+    return X, y, X_xp, y_xp, fit_kwargs, fit_kwargs_xp
 
 
 def _get_warnings_filters_info_list():

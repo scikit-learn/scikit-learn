@@ -100,6 +100,7 @@ from sklearn.utils._testing import (
     _array_api_for_tests,
     _check_name,
     _get_args,
+    _make_array_api_inputs,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_array_almost_equal,
@@ -1104,6 +1105,7 @@ def check_array_api_input(
     X_ns_and_device,
     other_ns_and_device,
     dtype_name=None,
+    y_kind="numeric",
     check_values=False,
     check_sample_weight=False,
     expect_only_array_outputs=True,
@@ -1131,6 +1133,12 @@ def check_array_api_input(
         Namespace and device of other array API inputs. Used for `y` and
         `sample_weight`.
 
+    y_kind : {"numeric", "str", "str_list"}, default="numeric"
+        Representation of `y_xp`. `"numeric"` uses an array in the requested
+        namespace and device. `"str"` uses a NumPy string array, and
+        `"str_list"` uses a Python list of strings. The NumPy reference
+        target `y` is a NumPy string array for both string options.
+
     dtype_name : str, default=None
         The name of the data type to use for all arrays. If `None`,
         `_max_precision_float_dtype` of namespace and device of
@@ -1154,6 +1162,14 @@ def check_array_api_input(
         Name used to identify this check (e.g. in `expected_failed_checks`)
         when it is yielded as a partial. Not used by the check itself.
     """
+    X, y, X_xp, y_xp, fit_kwargs, fit_kwargs_xp = _make_array_api_inputs(
+        estimator_orig,
+        X_ns_and_device,
+        other_ns_and_device,
+        dtype_name=None,
+        check_sample_weight=False,
+        y_kind="numeric",
+    )
     xp_X, device_X = _array_api_for_tests(
         X_ns_and_device.xp, X_ns_and_device.device, dtype_name
     )
@@ -1167,9 +1183,6 @@ def check_array_api_input(
 
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
-
-    est = clone(estimator_orig)
-    set_random_state(est)
 
     X_xp = xp_X.asarray(X, device=device_X)
 
@@ -1194,6 +1207,8 @@ def check_array_api_input(
             fit_kwargs["sample_weight"], device=device_other
         )
 
+    est = clone(estimator_orig)
+    set_random_state(est)
     with config_context(array_api_dispatch=False):
         est.fit(X, y, **fit_kwargs)
 
