@@ -4,8 +4,8 @@
   :class:`callback.ScoringMonitor` can now score on a validation set via ``scoring_val``
   when metadata routing is enabled. It routes metadata to the training and validation
   scorers. It requests ``X_val`` and ``y_val`` automatically and makes the validation
-  scorer automatically request ``sample_weight_val`` (if that scorer accepts sample
-  weight). While routing is disabled, ``sample_weight`` is still forwarded to hooks that
-  accept it for all callbacks. Callbacks indicate which hooks accept ``sample_weight``
-  by overriding the ``_accept_sample_weight`` method. By :user:`François Paugam
-  <FrancoisPgm>`.
+  scorer automatically request ``sample_weight_val`` (if that scorer accepts
+  sample_weight). When routing is disabled, ``sample_weight`` is still forwarded to
+  hooks that accept it for all callbacks. Callbacks indicate which hooks accept
+  ``sample_weight`` by overriding the ``_accept_sample_weight`` method.
+  By :user:`François Paugam <FrancoisPgm>`.
