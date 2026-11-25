@@ -1580,7 +1580,9 @@ def check_array_api_cross_namespace_inference(
             f"{name}.{method_name}() called with a NumPy input returned a "
             f"{result_ns.__name__} array, the output should follow the input"
         )
-        assert_allclose(result, expected, atol=atol, err_msg=method_name)
+        # `est_xp` and `est_np` are separate fits, so they only agree up to
+        # rounding differences between the namespaces.
+        assert_allclose(result, expected, rtol=1e-6, atol=atol, err_msg=method_name)
 
         # Fitted on NumPy, called with `xp`.
         with config_context(array_api_dispatch=True):
@@ -1604,6 +1606,14 @@ def check_array_api_cross_namespace_inference_mixed_dtypes(
     float32. Some namespaces, for example PyTorch, do not promote mixed float
     dtypes in operations like `matmul`, so the attributes have to follow the
     dtype of the input. Floating point outputs have the dtype of the input.
+
+    This checks that inference does not raise, and that outputs are on the
+    device of the input and floating point outputs have its dtype. It does not
+    check numerical accuracy: the expected values come from NumPy, which
+    promotes mixed float dtypes and so always computes in the higher precision.
+    Values are only compared coarsely, to catch gross errors such as a fitted
+    attribute that was cast to the wrong dtype. Accurate values are checked at a
+    single dtype by `check_array_api_cross_namespace_inference`.
     """
     xp, device = _array_api_for_tests(array_namespace, device_name, "float32")
     fit_and_predict_dtypes = [("float64", "float32")]
@@ -1625,9 +1635,10 @@ def check_array_api_cross_namespace_inference_mixed_dtypes(
         "predict_proba",
         "transform",
     )
+    # One side of the comparison is computed in float32 and the other in float64,
+    # so the tolerances are loose on purpose. They are not a statement about
+    # the accuracy of the estimator.
     atol = _atol_for_type("float32")
-    # The result is computed in float32 and the expected value in float64, for
-    # example `predict_log_proba` of tiny probabilities differs by ~2e-4.
     rtol = 1e-3
 
     for fit_dtype, predict_dtype in fit_and_predict_dtypes:
@@ -1660,6 +1671,11 @@ def check_array_api_cross_namespace_inference_mixed_dtypes(
                         "outputs should have the dtype of the input"
                     )
                 result = move_to(result, xp=np, device="cpu")
+            if method_name == "predict_log_proba":
+                # The log of a probability close to 1 is not representable in
+                # float32, for example -8e-10 rounds to 0 and values around -14
+                # are off by ~0.07. `predict_proba` is compared instead.
+                continue
             assert_allclose(result, expected, rtol=rtol, atol=atol, err_msg=err_msg)
 
 

@@ -1500,6 +1500,7 @@ def test_move_state_dtype(namespace, device_name, dtype_name):
         assert xp.isdtype(ints.dtype, "integral")
 
 
+@skip_if_array_api_compat_not_configured
 @pytest.mark.parametrize("dispatch", [False, True])
 def test_move_state_ignores_dtype_for_numpy(dispatch):
     """NumPy promotes mixed float dtypes, so arrays moved to NumPy are not cast.
