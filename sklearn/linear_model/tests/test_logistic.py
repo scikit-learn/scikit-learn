@@ -3369,3 +3369,45 @@ def test_intercept_scaling_deprecated(est, intercept_scaling):
     msg = "The parameter 'intercept_scaling' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
         lr.fit(X, y)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
+def test_predict_log_proba_underflow(dtype, est):
+    # Non-regression test for #35490:
+    # predict_log_proba should not underflow to -inf for confident predictions
+    from scipy.special import log_expit
+
+    X = np.array([[-3.0], [-2.0], [-1.0], [1.0], [2.0], [3.0]], dtype=dtype)
+    y = np.array([0, 0, 0, 1, 1, 1])
+    X = np.repeat(X, 3, axis=0)
+    y = np.repeat(y, 3)
+
+    clf = est().fit(X, y)
+    X_test = np.array([[5.0], [20.0], [200.0]], dtype=dtype)
+    decision = clf.decision_function(X_test)
+
+    log_p = clf.predict_log_proba(X_test)
+    assert np.all(np.isfinite(log_p))
+    expected_log_p0 = log_expit(-decision)
+    expected_log_p1 = log_expit(decision)
+    assert_allclose(log_p[:, 0], expected_log_p0, rtol=1e-5, atol=1e-5)
+    assert_allclose(log_p[:, 1], expected_log_p1, rtol=1e-5, atol=1e-5)
+
+
+@pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
+def test_predict_log_proba_multiclass_underflow(est):
+    # Non-regression test for #35490:
+    # multiclass predict_log_proba should match log_softmax and stay finite
+    from scipy.special import log_softmax
+
+    rng = np.random.RandomState(0)
+    X = np.vstack([c + rng.randn(30, 2) for c in [[-10, 0], [10, 0], [0, 10]]])
+    y = np.repeat([0, 1, 2], 30)
+    X_test = np.array([[-10, 0], [-100, 0], [-1000, 0]], dtype=float)
+
+    clf = est().fit(X, y)
+    log_p = clf.predict_log_proba(X_test)
+    assert np.all(np.isfinite(log_p))
+    expected = log_softmax(clf.decision_function(X_test), axis=1)
+    assert_allclose(log_p, expected, rtol=1e-5, atol=1e-5)

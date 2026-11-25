@@ -918,3 +918,44 @@ def test_predict_proba_lr_large_values():
 
     proba = clf._predict_proba_lr(np.ones(5))
     assert_allclose(np.sum(proba, axis=1), 1)
+
+
+def test_predict_log_proba_lr_large_values():
+    """Test that _predict_log_proba_lr of LinearClassifierMixin deals with large
+    negative and positive values without underflowing to -inf or emitting warnings.
+    """
+
+    class MockClassifier(LinearClassifierMixin, BaseEstimator):
+        def __init__(self):
+            pass
+
+        def fit(self, X, y):
+            self.__sklearn_is_fitted__ = True
+
+        def decision_function(self, X):
+            n_samples = X.shape[0]
+            return np.tile([-1000.0, -100.0, 100.0, 1000.0], [n_samples, 1])
+
+    clf = MockClassifier()
+    clf.fit(X=None, y=None)
+
+    log_proba = clf._predict_log_proba_lr(np.ones(5))
+    assert np.all(np.isfinite(log_proba))
+    assert_allclose(np.sum(np.exp(log_proba), axis=1), 1.0)
+
+    # Binary case (1D decision function)
+    class MockBinaryClassifier(LinearClassifierMixin, BaseEstimator):
+        def __init__(self):
+            pass
+
+        def fit(self, X, y):
+            self.__sklearn_is_fitted__ = True
+
+        def decision_function(self, X):
+            return np.array([1000.0, -1000.0])
+
+    clf_bin = MockBinaryClassifier()
+    clf_bin.fit(X=None, y=None)
+    log_proba_bin = clf_bin._predict_log_proba_lr(np.ones(2))
+    assert np.all(np.isfinite(log_proba_bin))
+    assert_allclose(np.sum(np.exp(log_proba_bin), axis=1), 1.0)

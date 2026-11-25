@@ -26,6 +26,8 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
     _expit,
+    _log_expit,
+    _logsumexp,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -449,6 +451,25 @@ class LinearClassifierMixin(ClassifierMixin):
                 prob_sum[all_zero] = prob.shape[1]  # n_classes
             prob /= xp.reshape(prob_sum, (prob.shape[0], -1))
             return prob
+
+    def _predict_log_proba_lr(self, X):
+        """Log probability estimation for OvR logistic regression.
+
+        Positive class log probabilities are computed as
+        log(1. / (1. + np.exp(-self.decision_function(X))));
+        multiclass is handled by normalizing that over all classes.
+        """
+        xp, _ = get_namespace(X)
+        prob = self.decision_function(X)
+        if prob.ndim == 1:
+            return xp.stack(
+                [_log_expit(-prob, xp=xp), _log_expit(prob, xp=xp)], axis=1
+            )
+        else:
+            # OvR normalization in log space
+            log_prob = _log_expit(prob, xp=xp)
+            log_prob_sum = _logsumexp(log_prob, axis=1, xp=xp)
+            return log_prob - xp.reshape(log_prob_sum, (prob.shape[0], -1))
 
 
 class SparseCoefMixin:

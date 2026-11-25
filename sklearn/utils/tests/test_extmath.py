@@ -37,6 +37,7 @@ from sklearn.utils.extmath import (
     _safe_accumulator_op,
     cartesian,
     density,
+    log_softmax,
     randomized_range_finder,
     randomized_svd,
     row_norms,
@@ -992,6 +993,19 @@ def test_softmax():
     exp_X = np.exp(X)
     sum_exp_X = np.sum(exp_X, axis=1).reshape((-1, 1))
     assert_array_almost_equal(softmax(X), exp_X / sum_exp_X)
+
+
+def test_log_softmax():
+    from scipy.special import log_softmax as scipy_log_softmax
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(3, 5)
+    assert_allclose(log_softmax(X), scipy_log_softmax(X, axis=1))
+
+    # Test numerical stability with large inputs
+    X_large = np.array([[-1000.0, 0.0, 1000.0], [10.0, 20.0, 30.0]])
+    assert np.all(np.isfinite(log_softmax(X_large)))
+    assert_allclose(log_softmax(X_large), scipy_log_softmax(X_large, axis=1))
 
 
 @pytest.mark.parametrize(

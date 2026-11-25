@@ -59,7 +59,7 @@ from sklearn.utils._array_api import (
 from sklearn.utils._indexing import _array_indexing
 from sklearn.utils._param_validation import Hidden, Interval, StrOptions
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.extmath import row_norms, softmax
+from sklearn.utils.extmath import log_softmax, row_norms, softmax
 from sklearn.utils.fixes import (
     _get_additional_lbfgs_options_dict,
     _is_gil_enabled,
@@ -1815,9 +1815,16 @@ class LogisticRegression(
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
+        check_is_fitted(self)
         check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
-        return xp.log(self.predict_proba(X))
+
+        is_binary = size(self.classes_) <= 2
+        if is_binary:
+            return super()._predict_log_proba_lr(X)
+        else:
+            decision_2d = self.decision_function(X)
+            return log_softmax(decision_2d, copy=False)
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()

@@ -885,3 +885,41 @@ def test_qda_solver_agreement():
     decision_eigen = qda_eigen.decision_function(X6)
 
     assert_allclose(decision_svd, decision_eigen)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_lda_predict_log_proba_underflow(dtype):
+    # Non-regression test for #35490:
+    # LDA predict_log_proba should not clamp to smallest_normal for confident predictions
+    from scipy.special import log_expit
+
+    X = np.array([[-3.0], [-2.0], [-1.0], [1.0], [2.0], [3.0]], dtype=dtype)
+    y = np.array([0, 0, 0, 1, 1, 1])
+
+    clf = LinearDiscriminantAnalysis().fit(X, y)
+    X_test = np.array([[5.0], [20.0], [200.0]], dtype=dtype)
+    decision = clf.decision_function(X_test)
+
+    log_p = clf.predict_log_proba(X_test)
+    assert np.all(np.isfinite(log_p))
+    expected_log_p0 = log_expit(-decision)
+    expected_log_p1 = log_expit(decision)
+    assert_allclose(log_p[:, 0], expected_log_p0, rtol=1e-5, atol=1e-5)
+    assert_allclose(log_p[:, 1], expected_log_p1, rtol=1e-5, atol=1e-5)
+
+
+def test_lda_predict_log_proba_multiclass_underflow():
+    # Non-regression test for #35490:
+    # LDA multiclass predict_log_proba should match log_softmax and stay finite
+    from scipy.special import log_softmax
+
+    rng = np.random.RandomState(0)
+    X = np.vstack([c + rng.randn(30, 2) for c in [[-10, 0], [10, 0], [0, 10]]])
+    y = np.repeat([0, 1, 2], 30)
+    X_test = np.array([[-10, 0], [-100, 0], [-1000, 0]], dtype=float)
+
+    clf = LinearDiscriminantAnalysis().fit(X, y)
+    log_p = clf.predict_log_proba(X_test)
+    assert np.all(np.isfinite(log_p))
+    expected = log_softmax(clf.decision_function(X_test), axis=1)
+    assert_allclose(log_p, expected, rtol=1e-5, atol=1e-5)

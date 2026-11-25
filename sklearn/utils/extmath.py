@@ -15,6 +15,7 @@ from scipy import linalg, sparse
 from sklearn.utils._array_api import (
     _average,
     _is_numpy_namespace,
+    _logsumexp,
     _max_precision_float_dtype,
     array_device,
     get_namespace,
@@ -1010,6 +1011,36 @@ def softmax(X, copy=True):
     sum_prob = xp.reshape(xp.sum(X, axis=1), (-1, 1))
     X /= sum_prob
     return X
+
+
+def log_softmax(X, copy=True):
+    """Calculate the log-softmax function.
+
+    The log-softmax function is calculated by:
+    np.log(softmax(X)) = X - logsumexp(X, axis=1)
+
+    Parameters
+    ----------
+    X : array-like of float of shape (M, N)
+        Argument to the log-softmax function.
+
+    copy : bool, default=True
+        Copy X or not.
+
+    Returns
+    -------
+    out : ndarray of shape (M, N)
+        Log-softmax function evaluated at every point in X.
+    """
+    xp, _ = get_namespace(X)
+    if _is_numpy_namespace(xp):
+        from scipy.special import log_softmax as scipy_log_softmax  # lazy import
+
+        return scipy_log_softmax(X, axis=1)
+
+    if copy:
+        X = xp.asarray(X, copy=True)
+    return X - xp.reshape(_logsumexp(X, axis=1, xp=xp), (-1, 1))
 
 
 def make_nonnegative(X, min_value=0):

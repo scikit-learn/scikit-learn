@@ -1406,7 +1406,10 @@ class SGDClassifier(BaseSGDClassifier):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
-        return np.log(self.predict_proba(X))
+        if self.loss == "log_loss":
+            return self._predict_log_proba_lr(X)
+        else:
+            return np.log(self.predict_proba(X))
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):

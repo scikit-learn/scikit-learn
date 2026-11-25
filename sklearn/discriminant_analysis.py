@@ -22,6 +22,7 @@ from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils._array_api import (
     _expit,
+    _log_expit,
     array_device,
     check_same_namespace,
     get_namespace,
@@ -30,7 +31,7 @@ from sklearn.utils._array_api import (
 )
 from sklearn.utils._encode import _encode
 from sklearn.utils._param_validation import HasMethods, Interval, StrOptions
-from sklearn.utils.extmath import softmax
+from sklearn.utils.extmath import log_softmax, softmax
 from sklearn.utils.multiclass import check_classification_targets, unique_labels
 from sklearn.utils.validation import check_is_fitted, validate_data
 
@@ -812,13 +813,16 @@ class LinearDiscriminantAnalysis(
         C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
+        check_is_fitted(self)
         check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
-        prediction = self.predict_proba(X)
-
-        smallest_normal = xp.finfo(prediction.dtype).smallest_normal
-        prediction[prediction == 0.0] += smallest_normal
-        return xp.log(prediction)
+        decision = self.decision_function(X)
+        if size(self.classes_) == 2:
+            return xp.stack(
+                [_log_expit(-decision, xp=xp), _log_expit(decision, xp=xp)], axis=1
+            )
+        else:
+            return log_softmax(decision)
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.

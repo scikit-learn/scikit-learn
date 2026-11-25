@@ -664,6 +664,18 @@ def _expit(x, out=None, xp=None):
     return 1.0 / (1.0 + xp.exp(-x))
 
 
+def _log_expit(x, out=None, xp=None):
+    # The out argument for log_expit is only supported for numpy,
+    # but not in the Array API specification.
+    xp, _, device = get_namespace_and_device(x, xp=xp)
+    if _is_numpy_namespace(xp):
+        from scipy.special import log_expit  # lazy import, speeds up `import sklearn`
+
+        return log_expit(x, out=out)
+
+    return -xp.logaddexp(xp.asarray(0.0, dtype=x.dtype, device=device), -x)
+
+
 def _logit(x, out=None, xp=None):
     # The out argument for log and hence logit is only supported for numpy,
     # but not in the Array API specification.
