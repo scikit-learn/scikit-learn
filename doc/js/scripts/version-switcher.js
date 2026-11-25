@@ -22,7 +22,7 @@ function addVersionSwitcherAvailDocsLink() {
               var availDocsLink = document.createElement("a");
               availDocsLink.setAttribute(
                 "href",
-                "https://scikit-learn.org/dev/versions.html"
+                "https://scikit-learn.org/dev/versions.html",
               );
               availDocsLink.innerHTML = "More";
               // We use the same class as the last entry to be safe
