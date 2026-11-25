@@ -85,7 +85,7 @@ iris = datasets.load_iris()
 X_iris, y_iris = iris.data, iris.target
 
 
-def _accuracy_callable(y_test, y_pred, **kwargs):
+def _accuracy_callable(y_test, y_pred, sample_weight=None, **kwargs):
     return np.mean(y_test == y_pred)
 
 
@@ -324,7 +324,14 @@ def test_ridge_regression_unpenalized(
         coef = coef[:-1]
     else:
         intercept = 0
-    model.fit(X, y)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            action="ignore",
+            message="Singular matrix in solving dual problem. Using least-squares "
+            "solution instead.",
+            category=UserWarning,
+        )
+        model.fit(X, y)
 
     # FIXME: `assert_allclose(model.coef_, coef)` should work for all cases but fails
     # for the wide/fat case with n_features > n_samples. The current Ridge solvers do
@@ -479,7 +486,14 @@ def test_ridge_regression_unpenalized_vstacked_X(
     X = np.concatenate((X, X), axis=0)
     assert np.linalg.matrix_rank(X) <= min(n_samples, n_features)
     y = np.r_[y, y]
-    model.fit(X, y)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            action="ignore",
+            message="Singular matrix in solving dual problem. Using least-squares "
+            "solution instead.",
+            category=UserWarning,
+        )
+        model.fit(X, y)
 
     if n_samples > n_features or not fit_intercept:
         assert model.intercept_ == pytest.approx(intercept)
@@ -564,8 +578,8 @@ def test_primal_dual_relationship():
 
 def test_ridge_regression_convergence_fail():
     rng = np.random.RandomState(0)
-    y = rng.randn(5)
-    X = rng.randn(5, 10)
+    y = rng.randn(15)
+    X = rng.randn(15, 10)
     warning_message = r"sparse_cg did not converge after [0-9]+ iterations."
     with pytest.warns(ConvergenceWarning, match=warning_message):
         ridge_regression(
@@ -952,7 +966,13 @@ def test_regularization_limits_ridge(
     )
     X = X_container(X)
     ridge = Ridge(alpha=alpha, solver=solver, fit_intercept=fit_intercept, tol=1e-12)
-    ridge.fit(X, y)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            action="ignore",
+            message="An ill-conditioned matrix detected",
+            category=linalg.LinAlgWarning,
+        )
+        ridge.fit(X, y)
     assert_allclose(ridge.coef_, expected_coef, atol=1e-10)
     assert_allclose(ridge.intercept_, expected_intercept, atol=1e-10)
 
@@ -1045,7 +1065,13 @@ def test_regularization_limits_ridge_gcv(
         with pytest.warns(FutureWarning, match=expected_msg):
             gcv_ridge.fit(X, y)
     else:
-        gcv_ridge.fit(X, y)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                action="ignore",
+                message="divide by zero encountered in divide",
+                category=RuntimeWarning,
+            )
+            gcv_ridge.fit(X, y)
 
     atol = 1e-5 if dtype == np.float32 else 1e-10
     assert_allclose(gcv_ridge.coef_, expected_coef, atol=atol)
@@ -1423,7 +1449,7 @@ def test_ridge_regression_custom_scoring(sparse_container, cv):
     # check that custom scoring is working as expected
     # check the tie breaking strategy (keep the first alpha tried)
 
-    def _dummy_score(y_test, y_pred, **kwargs):
+    def _dummy_score(y_test, y_pred, sample_weight=None, **kwargs):
         return 0.42
 
     X = X_iris if sparse_container is None else sparse_container(X_iris)
@@ -1939,7 +1965,7 @@ def test_ridgecv_alphas_zero(cv, Estimator):
     rng = np.random.RandomState(0)
     alphas = (0.0, 1.0, 10.0)
 
-    n_samples, n_features = 5, 5
+    n_samples, n_features = 15, 5
     if Estimator is RidgeCV:
         y = rng.randn(n_samples)
     else:
@@ -1960,12 +1986,12 @@ def test_ridgecv_sample_weight():
 
     # There are different algorithms for n_samples > n_features
     # and the opposite, so test them both.
-    for n_samples, n_features in ((6, 5), (5, 10)):
+    for n_samples, n_features in ((9, 5), (9, 12)):
         y = rng.randn(n_samples)
         X = rng.randn(n_samples, n_features)
         sample_weight = 1.0 + rng.rand(n_samples)
 
-        cv = KFold(5)
+        cv = KFold(3)
         ridgecv = RidgeCV(alphas=alphas, cv=cv)
         ridgecv.fit(X, y, sample_weight=sample_weight)
 
@@ -2609,7 +2635,16 @@ def test_ridge_sample_weight_consistency(
     # 3) scaling of sample_weight should have no effect
     # Note: For models with penalty, scaling the penalty term might work.
     reg2 = Ridge(**params).set_params(alpha=np.pi * params["alpha"])
-    reg2.fit(X, y, sample_weight=np.pi * sample_weight)
+    # TODO: Remove filterwarning once
+    # https://github.com/scikit-learn/scikit-learn/pull/35417 is merged.
+    with warnings.catch_warnings():
+        # This only applies for sag solver by the message
+        warnings.filterwarnings(
+            action="ignore",
+            message="The max_iter was reached which means the coef_ did not converge",
+            category=ConvergenceWarning,
+        )
+        reg2.fit(X, y, sample_weight=np.pi * sample_weight)
     if solver in ("sag", "saga") and not fit_intercept:
         pytest.xfail(f"Solver {solver} does fail test for scaling of sample_weight.")
     assert_allclose(reg2.coef_, coef, rtol=1e-6)
