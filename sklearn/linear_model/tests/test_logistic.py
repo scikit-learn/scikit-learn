@@ -2770,7 +2770,7 @@ def test_use_legacy_attributes_deprecated(value):
         lr.fit(X, y)
 
 
-@pytest.mark.parametrize("solver", ["auto", "lbfgs", "newton-cg"])
+@pytest.mark.parametrize("solver", ["auto", "lbfgs", "newton-cg", "newton-cholesky"])
 @pytest.mark.parametrize("binary", [False, True])
 @pytest.mark.parametrize("use_str_y", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
@@ -2789,6 +2789,7 @@ def test_logistic_regression_array_api_compliance(
     device_name,
     dtype_name,
 ):
+    """Check fitted attributes and predictions against NumPy across backends."""
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     n_samples, _ = X_np.shape
