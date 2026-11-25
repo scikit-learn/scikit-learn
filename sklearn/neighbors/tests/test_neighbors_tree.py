@@ -123,7 +123,7 @@ def test_kernel_density_sample_weights(Cls, kernel, breadth_first, with_zeros, r
     X = rng.normal(scale=0.2, size=(80, 2)).astype(dtype)
     X[:40, 0] += 4
     Y = X[::7].copy()
-    weights = rng.integers(1, 5, size=len(X))
+    weights = rng.integers(1, 5, size=len(X), dtype=np.intp)
     if with_zeros:
         weights[:40] = 0
     tree = Cls(X, leaf_size=4, sample_weight=weights)
