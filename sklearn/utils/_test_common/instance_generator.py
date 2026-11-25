@@ -380,7 +380,10 @@ INIT_PARAMS = {
     MLPClassifier: dict(max_iter=100),
     MLPRegressor: dict(max_iter=100),
     MultiOutputClassifier: dict(estimator=LogisticRegression()),
-    MultiOutputRegressor: dict(estimator=Ridge()),
+    MultiOutputRegressor: [
+        dict(estimator=Ridge()),
+        dict(estimator=SVR(kernel="precomputed")),
+    ],
     MultiTaskElasticNetCV: dict(max_iter=5, cv=3),
     MultiTaskElasticNet: dict(max_iter=5),
     MultiTaskLassoCV: dict(max_iter=5, cv=3),
