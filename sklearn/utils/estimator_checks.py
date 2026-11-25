@@ -1103,7 +1103,7 @@ def check_array_api_input(
     name,
     estimator_orig,
     X_ns_and_device,
-    other_ns_and_device,
+    other_ns_and_device=None,
     dtype_name=None,
     check_values=False,
     check_sample_weight=False,
@@ -1128,9 +1128,9 @@ def check_array_api_input(
         Namespace and device of reference array API input: `X` as "everything
         follows X".
 
-    other_ns_and_device : NamedTuple
+    other_ns_and_device : NamedTuple, default=None
         Namespace and device of other array API inputs. Used for `y` and
-        `sample_weight`.
+        `sample_weight`. If `None, `X_ns_and_device` is used.
 
     dtype_name : str, default=None
         The name of the data type to use for all arrays. If `None`,
@@ -1173,6 +1173,9 @@ def check_array_api_input(
     set_random_state(est)
 
     X_xp = xp_X.asarray(X, device=device_X)
+
+    if other_ns_and_device is None:
+        other_ns_and_device = X_ns_and_device
 
     if other_ns_and_device == "string":
         xp_other, device_other = _array_api_for_tests("numpy", "cpu")
@@ -1391,7 +1394,6 @@ def check_array_api_input_and_values(
         name,
         estimator_orig,
         X_ns_and_device=X_ns_and_device,
-        other_ns_and_device=X_ns_and_device,
         dtype_name=dtype_name,
         check_values=True,
         check_sample_weight=check_sample_weight,
