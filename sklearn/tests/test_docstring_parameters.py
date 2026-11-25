@@ -53,6 +53,7 @@ _DOCSTRING_IGNORES = [
     "sklearn.pipeline.make_union",
     "HalfBinomialLoss",
     "ScoringMonitorLog",  # dataclass
+    "RecordingCallback",  # private callback for testing
 ]
 
 # Methods where y param should be ignored if y=None by default

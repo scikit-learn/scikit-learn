@@ -43,30 +43,6 @@ class RecordingCallback(FitCallback):
         fitted_estimator=None,
         requested_arg_begin=None,
     ):
-        """Method called at the beginning of each fit task of the estimator, which
-        records the arguments passed to the hook.
-
-        Parameters
-        ----------
-        estimator : estimator instance
-            The estimator calling this callback hook.
-
-        context : `sklearn.callback.CallbackContext` instance
-            Context of the corresponding task.
-
-        X : array-like
-            The training data at this task.
-
-        y : array-like
-            The training target values at this task.
-
-        fitted_estimator : estimator instance
-            A new instance of the estimator that is ready to predict, transform, etc ...
-            as if fit had stopped at the beginning of this task.
-
-        requested_arg_begin : object
-            An argument that can be requested by the callback for this hook.
-        """
         self._channel.send(
             {
                 "name": "on_fit_task_begin",
@@ -91,30 +67,6 @@ class RecordingCallback(FitCallback):
         fitted_estimator=None,
         requested_arg_end=None,
     ):
-        """Method called at the beginning of each fit task of the estimator, which
-        records the arguments passed to the hook.
-
-        Parameters
-        ----------
-        estimator : estimator instance
-            The estimator calling this callback hook.
-
-        context : `sklearn.callback.CallbackContext` instance
-            Context of the corresponding task.
-
-        X : array-like
-            The training data at this task.
-
-        y : array-like
-            The training target values at this task.
-
-        fitted_estimator : estimator instance
-            A new instance of the estimator that is ready to predict, transform, etc ...
-            as if fit had stopped at the beginning of this task.
-
-        requested_arg_end : object
-            An argument that can be requested by the callback for this hook.
-        """
         self._channel.send(
             {
                 "name": "on_fit_task_end",
