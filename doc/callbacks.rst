@@ -39,7 +39,7 @@ The examples in this section require the following imports and data::
 
 The examples will use the :class:`~ScoringMonitor` callback with a scorer on the
 validation data, which requires the :ref:`Metadata Routing API <metadata_routing>` to be
-enabled.
+enabled::
 
     >>> import sklearn
     >>> sklearn.set_config(enable_metadata_routing=True)
@@ -141,7 +141,8 @@ the grid search::
                  param_grid={'alpha': [10, 1, 0.1]})
     >>> log = scoring_monitor.get_logs().val_scores_as_pandas
     >>> # show the scores at the end of each fit of the search
-    >>> log[log["parent_task_id_path"] == (0,0)][["task_name", "task_id", "roc_auc_ovr", "accuracy"]]
+    >>> fit_scores = log[log["parent_task_id_path"] == (0, 0)]
+    >>> fit_scores[["task_name", "task_id", "roc_auc_ovr", "accuracy"]]
        task_name  task_id  roc_auc_ovr  accuracy
     1        fit        0          1.0  0.97...
     2        fit        1          1.0  1.00...

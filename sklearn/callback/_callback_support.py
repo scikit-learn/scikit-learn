@@ -26,7 +26,7 @@ class MultiCallback(UserList):
 
 
 def validate_callbacks(callbacks):
-    """Validate that callbacks follow the protocol and correctly implement hooks.
+    """Validate that callbacks inherit from `FitCallback` and implement valid hooks.
 
     Also check that the same callback instance is not provided multiple times.
     """
@@ -40,8 +40,7 @@ def validate_callbacks(callbacks):
 
         if not isinstance(callback, FitCallback):
             raise TypeError(
-                f"Callbacks must be instances following the FitCallback protocol. "
-                f"Got {callback_name}."
+                f"Callbacks must be instances of FitCallback. Got {callback_name}."
             )
 
         for hook_name in ("setup", "teardown", "on_fit_task_begin", "on_fit_task_end"):
