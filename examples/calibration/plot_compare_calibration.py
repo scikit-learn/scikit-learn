@@ -142,8 +142,7 @@ for i, (clf, name) in enumerate(clf_list):
         strategy="uniform",
         name=name,
         ax=ax_calibration_curve,
-        color=colors(i),
-        marker=markers[i],
+        curve_kwargs={"color": colors(i), "marker": markers[i]},
     )
     calibration_displays[name] = display
 
