@@ -50,14 +50,17 @@ def _get_categorical_features(decision_tree):
     }
 
 
-def _format_category_set(categories):
+def _format_category_set(categories, max_categories=None):
     """Use original labels and distinguish strings from numeric categories."""
+    displayed = categories if max_categories is None else categories[:max_categories]
+    omitted = len(categories) - len(displayed)
     return (
         "{"
         + ", ".join(
             repr(value.item() if isinstance(value, np.generic) else value)
-            for value in categories
+            for value in displayed
         )
+        + (f", ... (+{omitted} more)" if omitted else "")
         + "}"
     )
 
@@ -410,7 +413,7 @@ class _BaseTreeExporter:
                 categories = self.categorical_features[tree.feature[node_id]]
                 categories_left = categories[tree._get_left_categories(node_id)]
                 category_set = self.category_escape(
-                    _format_category_set(categories_left)
+                    _format_category_set(categories_left, max_categories=3)
                 )
                 direction = "left" if tree.missing_go_to_left[node_id] else "right"
                 node_string += (

@@ -880,18 +880,24 @@ def test_categorical_export_large_splits(Tree, n_categories):
     left_leaves = estimator.apply(X) == estimator.tree_.children_left[0]
     left_set = "{" + ", ".join(repr(int(v)) for v in X[left_leaves, 0]) + "}"
     assert f"feature_0 in {left_set}" in export_text(estimator)
-    assert f"x[0] in {left_set}" in export_graphviz(estimator)
+    displayed = ", ".join(repr(int(v)) for v in X[left_leaves, 0][:3])
+    omitted = int(left_leaves.sum()) - 3
+    assert f"x[0] in {{{displayed}, ... (+{omitted} more)}}" in export_graphviz(
+        estimator
+    )
 
 
 @pytest.mark.parametrize("special_characters", [False, True])
-def test_categorical_graphviz_escape(special_characters):
+@pytest.mark.parametrize("start", [0, 3])
+def test_categorical_graphviz_escape(special_characters, start):
     from html import unescape
     from xml.etree import ElementTree
 
     labels = ['a"b', "c'd", "<tag>&", r"back\slash", "line\nbreak", "plain"]
+    labels = labels[start : start + 3] + ["zz_other"]
     X = np.array(labels * 4, dtype=object).reshape(-1, 1)
     estimator = DecisionTreeClassifier(categorical_features=[0], max_depth=1).fit(
-        X, np.tile([0, 0, 0, 0, 0, 1], 4)
+        X, np.tile([0, 0, 0, 1], 4)
     )
     contents = export_graphviz(estimator, special_characters=special_characters)
     if special_characters:
@@ -981,3 +987,23 @@ def test_categorical_forest_tree_export(Forest, min_samples_split, exporter, req
     else:
         assert estimator.tree_.node_count == 1
         assert " in {" not in result
+
+
+@pytest.mark.parametrize("n_left", [2, 3, 4])
+def test_categorical_plot_category_limit(pyplot, n_left):
+    labels = [f"$cat{i}$" for i in range(n_left)] + ["other"]
+    X = np.array(labels * 4, dtype=object).reshape(-1, 1)
+    estimator = DecisionTreeClassifier(categorical_features=[0], max_depth=1).fit(
+        X, ([0] * n_left + [1]) * 4
+    )
+    _, ax = pyplot.subplots()
+    label = plot_tree(estimator, ax=ax)[0].get_text()
+    for i in range(min(n_left, 3)):
+        assert rf"'\$cat{i}\$'" in label
+    assert ("... (+1 more)" in label) == (n_left > 3)
+    assert "cat3" not in label
+    assert "missing/unknown:" in label
+    if n_left > 3:
+        assert "cat3" in export_text(estimator)
+    ax.figure.canvas.draw()
+    pyplot.close(ax.figure)
