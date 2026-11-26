@@ -1060,6 +1060,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "partial_fit does not yet store its state as NumPy and move it to "
             "the namespace and device of X"
         ),
+        "check_array_api_cross_namespace_partial_fit_mixed_dtypes": (
+            "partial_fit does not yet store its state as NumPy and move it to "
+            "the namespace and device of X"
+        ),
     },
     GradientBoostingClassifier: {
         # TODO: investigate failure see meta-issue #16298
@@ -1220,6 +1224,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "partial_fit does not yet store its state as NumPy and move it to "
             "the namespace and device of X"
         ),
+        "check_array_api_cross_namespace_partial_fit_mixed_dtypes": (
+            "partial_fit does not yet store its state as NumPy and move it to "
+            "the namespace and device of X"
+        ),
     },
     MiniBatchKMeans: {
         # TODO: replace by a statistical test, see meta-issue #16298
@@ -1240,6 +1248,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "namespace and device of X"
         ),
         "check_array_api_cross_namespace_partial_fit": (
+            "partial_fit does not yet store its state as NumPy and move it to "
+            "the namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_partial_fit_mixed_dtypes": (
             "partial_fit does not yet store its state as NumPy and move it to "
             "the namespace and device of X"
         ),
@@ -1464,6 +1476,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "namespace and device of X"
         ),
         "check_array_api_cross_namespace_partial_fit": (
+            "partial_fit does not yet store its state as NumPy and move it to "
+            "the namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_partial_fit_mixed_dtypes": (
             "partial_fit does not yet store its state as NumPy and move it to "
             "the namespace and device of X"
         ),

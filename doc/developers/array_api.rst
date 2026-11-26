@@ -225,7 +225,9 @@ tests. They verify that:
   tests are only needed for other methods;
 - ``partial_fit`` accepts a batch from one namespace after a batch from another,
   and gives the same fitted attributes as two NumPy batches
-  (``check_array_api_cross_namespace_partial_fit``).
+  (``check_array_api_cross_namespace_partial_fit``), and likewise for a fit with
+  ``warm_start=True`` after a fit with inputs from another namespace
+  (``check_array_api_cross_namespace_warm_start``).
 
 To run these checks you need to install
 `array-api-strict <https://data-apis.org/array-api-strict/>`__ in your

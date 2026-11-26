@@ -1823,6 +1823,9 @@ def test_estimator_with_set_output():
                 "check_array_api_cross_namespace_partial_fit": (
                     "StandardScaler.partial_fit does not yet store its state as NumPy"
                 ),
+                "check_array_api_cross_namespace_partial_fit_mixed_dtypes": (
+                    "StandardScaler.partial_fit does not yet store its state as NumPy"
+                ),
             },
         )
 

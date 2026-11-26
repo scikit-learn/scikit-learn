@@ -433,13 +433,40 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 array_namespace=array_namespace,
                 device_name=device_name,
             )
-        # 6. `partial_fit` with batches from different namespaces. As for 4., one
-        # namespace is enough.
+        # 6. `partial_fit` with batches from different namespaces, and a
+        # `warm_start` fit after a fit in another namespace. As for 4. and 5., one
+        # namespace is enough for the same dtype, mixed dtypes need all of them.
+        two_fit_checks = []
         if hasattr(estimator, "partial_fit"):
-            yield partial(
-                check_array_api_cross_namespace_partial_fit,
-                array_namespace="array_api_strict",
+            two_fit_checks.append(
+                (
+                    check_array_api_cross_namespace_partial_fit,
+                    check_array_api_cross_namespace_partial_fit_mixed_dtypes,
+                )
             )
+        if "warm_start" in estimator.get_params():
+            two_fit_checks.append(
+                (
+                    check_array_api_cross_namespace_warm_start,
+                    check_array_api_cross_namespace_warm_start_mixed_dtypes,
+                )
+            )
+        for check, check_mixed_dtypes in two_fit_checks:
+            yield partial(check, array_namespace="array_api_strict")
+            for (
+                array_namespace,
+                device_name,
+                dtype_name,
+            ) in yield_namespace_device_dtype_combinations(
+                include_numpy_namespaces=False
+            ):
+                if dtype_name != "float32":
+                    continue
+                yield partial(
+                    check_mixed_dtypes,
+                    array_namespace=array_namespace,
+                    device_name=device_name,
+                )
 
 
 def _yield_all_checks(estimator, legacy: bool):
@@ -1727,6 +1754,165 @@ def check_array_api_cross_namespace_inference_mixed_dtypes(
             assert_allclose(result, expected, rtol=rtol, atol=atol, err_msg=err_msg)
 
 
+def _partial_fit_step(estimator, step, X, y, convert):
+    """Make `partial_fit` call number `step` (0 or 1), on half of the data."""
+    batch = slice(None, X.shape[0] // 2) if step == 0 else slice(X.shape[0] // 2, None)
+    kwargs = {}
+    if step == 0 and is_classifier(estimator):
+        # `classes` is only needed in the first call, and follows `y`.
+        kwargs["classes"] = convert(np.unique(y))
+    estimator.partial_fit(convert(X[batch]), convert(y[batch]), **kwargs)
+
+
+def _warm_start_step(estimator, step, X, y, convert):
+    """Make fit call number `step` (0 or 1) with `warm_start=True`, on all data."""
+    estimator.set_params(warm_start=True)
+    estimator.fit(convert(X), convert(y))
+
+
+def _fit_in_two_steps(estimator_orig, fit_step, X, y, converters):
+    """Fit a clone of `estimator_orig` with two calls to `fit_step`.
+
+    Call number `step` passes its arrays through `converters[step]`.
+    """
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    for step, convert in enumerate(converters):
+        fit_step(estimator, step, X, y, convert)
+    return estimator
+
+
+def _check_two_fits_result(name, estimator, expected, err_msg, X_xp, rtol, atol):
+    """Compare the fitted array attributes of `estimator` with `expected`.
+
+    Estimators that store their fitted attributes as NumPy must also leave no
+    reference to the array library of `X_xp` behind.
+    """
+    if type(estimator).__name__ in _NUMPY_FITTED_ATTRS:
+        _check_pickle_without_array_libraries(estimator, X_xp)
+    for key, value in expected.items():
+        assert_allclose(
+            move_to(getattr(estimator, key), xp=np, device="cpu"),
+            value,
+            rtol=rtol,
+            atol=atol,
+            err_msg=f"{name}.{key} after {err_msg}",
+        )
+
+
+def _fitted_numpy_arrays(estimator):
+    return {
+        key: value
+        for key, value in vars(estimator).items()
+        if isinstance(value, np.ndarray)
+    }
+
+
+def _cast_floating(array, dtype):
+    """Cast `array` to `dtype` if it is floating point, leave labels unchanged."""
+    array = np.asarray(array)
+    if np.issubdtype(array.dtype, np.floating):
+        return array.astype(dtype)
+    return array
+
+
+def _check_two_fits_across_namespaces(
+    name, estimator_orig, array_namespace, device_name, fit_step, description
+):
+    """Check that state carried from one fit call to the next can change namespace.
+
+    `fit_step(estimator, step, X, y, convert)` makes fit call number `step` (0 or
+    1), passing its arrays through `convert`. The two calls are made with NumPy
+    and then `xp` inputs, and the other way around. Both orders have to give the
+    same fitted array attributes as two calls with NumPy inputs.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name, "float64")
+
+    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
+    X = X.astype("float64", copy=False)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    def to_xp(array):
+        return xp.asarray(array, device=device)
+
+    with config_context(array_api_dispatch=False):
+        est_np = _fit_in_two_steps(
+            estimator_orig, fit_step, X, y, [np.asarray, np.asarray]
+        )
+    expected = _fitted_numpy_arrays(est_np)
+
+    for converters, order in [
+        ([np.asarray, to_xp], f"NumPy and then {xp.__name__} inputs"),
+        ([to_xp, np.asarray], f"{xp.__name__} and then NumPy inputs"),
+    ]:
+        with config_context(array_api_dispatch=True):
+            est = _fit_in_two_steps(estimator_orig, fit_step, X, y, converters)
+        _check_two_fits_result(
+            name,
+            est,
+            expected,
+            f"{description} with {order}",
+            to_xp(X),
+            rtol=1e-6,
+            atol=_atol_for_type(X.dtype),
+        )
+
+
+def _check_two_fits_across_namespaces_mixed_dtypes(
+    name, estimator_orig, array_namespace, device_name, fit_step, description
+):
+    """Same as `_check_two_fits_across_namespaces`, with mixed float dtypes.
+
+    The first call has NumPy inputs of one float dtype, the second `xp` inputs of
+    the other. Some namespaces, for example PyTorch, do not promote mixed float
+    dtypes, so the state from the first call has to be cast to the dtype of the
+    second call's input. As in `check_array_api_cross_namespace_inference_mixed_dtypes`
+    the reference, two NumPy calls with the same dtypes, promotes, so values are
+    only compared coarsely.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name, "float32")
+    dtype_pairs = [("float64", "float32")]
+    try:
+        _array_api_for_tests(array_namespace, device_name, "float64")
+        dtype_pairs.append(("float32", "float64"))
+    except SkipTest:
+        # The device does not support float64, for example MPS.
+        pass
+
+    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    for first_dtype, second_dtype in dtype_pairs:
+
+        def first(array, dtype=first_dtype):
+            return _cast_floating(array, dtype)
+
+        def second_np(array, dtype=second_dtype):
+            return _cast_floating(array, dtype)
+
+        def second_xp(array, dtype=second_dtype):
+            return xp.asarray(_cast_floating(array, dtype), device=device)
+
+        with config_context(array_api_dispatch=False):
+            est_np = _fit_in_two_steps(
+                estimator_orig, fit_step, X, y, [first, second_np]
+            )
+        with config_context(array_api_dispatch=True):
+            est = _fit_in_two_steps(estimator_orig, fit_step, X, y, [first, second_xp])
+        _check_two_fits_result(
+            name,
+            est,
+            _fitted_numpy_arrays(est_np),
+            f"{description} with {first_dtype} NumPy and then {second_dtype} "
+            f"{xp.__name__} inputs",
+            second_xp(X),
+            rtol=1e-3,
+            atol=_atol_for_type("float32"),
+        )
+
+
 def check_array_api_cross_namespace_partial_fit(
     name, estimator_orig, array_namespace, device_name=None
 ):
@@ -1737,55 +1923,70 @@ def check_array_api_cross_namespace_partial_fit(
     `partial_fit` with a NumPy batch and then a batch from `xp`, or the other way
     around, gives the same fitted attributes as two NumPy batches.
     """
-    xp, device = _array_api_for_tests(array_namespace, device_name, "float64")
+    _check_two_fits_across_namespaces(
+        name,
+        estimator_orig,
+        array_namespace,
+        device_name,
+        _partial_fit_step,
+        "partial_fit",
+    )
 
-    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
-    X = X.astype("float64", copy=False)
-    X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = _enforce_estimator_tags_y(estimator_orig, y)
-    batches = [(X[:15], y[:15]), (X[15:], y[15:])]
 
-    def to_xp(array):
-        return xp.asarray(array, device=device)
+def check_array_api_cross_namespace_partial_fit_mixed_dtypes(
+    name, estimator_orig, array_namespace, device_name=None
+):
+    """Check `partial_fit` with a batch whose float dtype differs from the first.
 
-    def partial_fit(estimator, convert):
-        for i, (X_batch, y_batch) in enumerate(batches):
-            X_batch, y_batch = convert[i](X_batch), convert[i](y_batch)
-            kwargs = {}
-            if i == 0 and is_classifier(estimator):
-                # `classes` is only needed in the first call, and follows `y`.
-                kwargs["classes"] = convert[i](np.unique(y))
-            estimator.partial_fit(X_batch, y_batch, **kwargs)
-        return estimator
+    Same as `check_array_api_cross_namespace_partial_fit`, with a NumPy batch of
+    one float dtype followed by an `xp` batch of the other.
+    """
+    _check_two_fits_across_namespaces_mixed_dtypes(
+        name,
+        estimator_orig,
+        array_namespace,
+        device_name,
+        _partial_fit_step,
+        "partial_fit",
+    )
 
-    est_np = clone(estimator_orig)
-    set_random_state(est_np)
-    with config_context(array_api_dispatch=False):
-        partial_fit(est_np, convert=[np.asarray, np.asarray])
-    expected = {
-        key: value
-        for key, value in vars(est_np).items()
-        if isinstance(value, np.ndarray)
-    }
 
-    for convert, order in [
-        ([np.asarray, to_xp], f"a NumPy batch and then a {xp.__name__} batch"),
-        ([to_xp, np.asarray], f"a {xp.__name__} batch and then a NumPy batch"),
-    ]:
-        est = clone(estimator_orig)
-        set_random_state(est)
-        with config_context(array_api_dispatch=True):
-            partial_fit(est, convert=convert)
+def check_array_api_cross_namespace_warm_start(
+    name, estimator_orig, array_namespace, device_name=None
+):
+    """Check that a `warm_start` fit can start from a fit in another namespace.
 
-        _check_pickle_without_array_libraries(est, to_xp(X))
-        for key, value in expected.items():
-            assert_allclose(
-                getattr(est, key),
-                value,
-                rtol=1e-6,
-                atol=_atol_for_type(X.dtype),
-                err_msg=f"{name}.{key} after partial_fit with {order}",
-            )
+    With `warm_start=True`, `fit` starts from the fitted attributes of the
+    previous fit, which are stored as NumPy, so it moves them to the namespace
+    and device of its input. Fitting with NumPy and then `xp` inputs, or the
+    other way around, gives the same fitted attributes as two NumPy fits.
+    """
+    _check_two_fits_across_namespaces(
+        name,
+        estimator_orig,
+        array_namespace,
+        device_name,
+        _warm_start_step,
+        "warm_start",
+    )
+
+
+def check_array_api_cross_namespace_warm_start_mixed_dtypes(
+    name, estimator_orig, array_namespace, device_name=None
+):
+    """Check a `warm_start` fit whose float dtype differs from the previous fit.
+
+    Same as `check_array_api_cross_namespace_warm_start`, with a NumPy fit of one
+    float dtype followed by an `xp` fit of the other.
+    """
+    _check_two_fits_across_namespaces_mixed_dtypes(
+        name,
+        estimator_orig,
+        array_namespace,
+        device_name,
+        _warm_start_step,
+        "warm_start",
+    )
 
 
 def check_estimator_sparse_tag(name, estimator_orig):
