@@ -218,7 +218,11 @@ tests. They verify that:
 - an estimator fitted with one namespace can be used for inference with another,
   and the other way around (``check_array_api_cross_namespace_inference``),
   also when the input has a different floating point dtype than the data used
-  to fit (``check_array_api_cross_namespace_inference_mixed_dtypes``).
+  to fit (``check_array_api_cross_namespace_inference_mixed_dtypes``). These
+  checks call ``predict``, ``predict_proba``, ``predict_log_proba``,
+  ``predict_joint_log_proba``, ``decision_function``, ``transform``,
+  ``inverse_transform``, ``score`` and ``score_samples``, so estimator-specific
+  tests are only needed for other methods.
 
 To run these checks you need to install
 `array-api-strict <https://data-apis.org/array-api-strict/>`__ in your

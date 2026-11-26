@@ -1525,6 +1525,37 @@ def check_array_api_input_and_values(
     )
 
 
+# Methods called by the cross-namespace inference checks. They all take `X` (or,
+# for `inverse_transform`, the output of `transform`) and return an array that
+# follows their input, except `score`, which returns a Python float.
+_CROSS_NAMESPACE_INFERENCE_METHODS = (
+    "decision_function",
+    "inverse_transform",
+    "predict",
+    "predict_joint_log_proba",
+    "predict_log_proba",
+    "predict_proba",
+    "score",
+    "score_samples",
+    "transform",
+)
+
+
+def _call_inference_method(estimator, method_name, X, y, Xt):
+    """Call `method_name` of `estimator` with the arguments it takes.
+
+    `score` gets `X` and `y` (unsupervised estimators ignore `y`),
+    `inverse_transform` gets `Xt`, an output of `transform` in the namespace of
+    `X`, and all other methods get `X`.
+    """
+    method = getattr(estimator, method_name)
+    if method_name == "score":
+        return method(X, y)
+    if method_name == "inverse_transform":
+        return method(Xt)
+    return method(X)
+
+
 def check_array_api_cross_namespace_inference(
     name, estimator_orig, array_namespace, device_name=None
 ):
@@ -1555,45 +1586,51 @@ def check_array_api_cross_namespace_inference(
 
     with config_context(array_api_dispatch=False):
         est_np.fit(X, y)
+        # Input for `inverse_transform`, computed once so that `inverse_transform`
+        # is checked independently of `transform`.
+        Xt = est_np.transform(X) if hasattr(est_np, "inverse_transform") else None
 
-    methods = (
-        "decision_function",
-        "predict",
-        "predict_log_proba",
-        "predict_proba",
-        "transform",
-    )
+    with config_context(array_api_dispatch=True):
+        Xt_xp = None if Xt is None else xp.asarray(Xt, device=device)
+
     atol = _atol_for_type(X.dtype)
 
-    for method_name in methods:
+    for method_name in _CROSS_NAMESPACE_INFERENCE_METHODS:
         if getattr(est_np, method_name, None) is None:
             continue
 
         with config_context(array_api_dispatch=False):
-            expected = getattr(est_np, method_name)(X)
+            expected = _call_inference_method(est_np, method_name, X, y, Xt)
 
         # Fitted on `xp`, called with NumPy.
         with config_context(array_api_dispatch=True):
-            result = getattr(est_xp, method_name)(X)
-            result_ns = get_namespace(result)[0]
-        assert _is_numpy_namespace(result_ns), (
-            f"{name}.{method_name}() called with a NumPy input returned a "
-            f"{result_ns.__name__} array, the output should follow the input"
-        )
+            result = _call_inference_method(est_xp, method_name, X, y, Xt)
+            if method_name == "score":
+                assert isinstance(result, float), method_name
+            else:
+                result_ns = get_namespace(result)[0]
+                assert _is_numpy_namespace(result_ns), (
+                    f"{name}.{method_name}() called with a NumPy input returned a "
+                    f"{result_ns.__name__} array, the output should follow the input"
+                )
         # `est_xp` and `est_np` are separate fits, so they only agree up to
         # rounding differences between the namespaces.
         assert_allclose(result, expected, rtol=1e-6, atol=atol, err_msg=method_name)
 
         # Fitted on NumPy, called with `xp`.
         with config_context(array_api_dispatch=True):
-            result = getattr(est_np, method_name)(X_xp)
-            result_ns = get_namespace(result)[0]
-            assert array_device(result) == array_device(X_xp)
-            result = move_to(result, xp=np, device="cpu")
-        assert result_ns.__name__ == xp.__name__, (
-            f"{name}.{method_name}() called with a {xp.__name__} input returned "
-            f"a {result_ns.__name__} array, the output should follow the input"
-        )
+            result = _call_inference_method(est_np, method_name, X_xp, y_xp, Xt_xp)
+            if method_name == "score":
+                assert isinstance(result, float), method_name
+            else:
+                result_ns = get_namespace(result)[0]
+                assert array_device(result) == array_device(X_xp)
+                assert result_ns.__name__ == xp.__name__, (
+                    f"{name}.{method_name}() called with a {xp.__name__} input "
+                    f"returned a {result_ns.__name__} array, the output should "
+                    "follow the input"
+                )
+                result = move_to(result, xp=np, device="cpu")
         assert_allclose(result, expected, atol=atol, err_msg=method_name)
 
 
@@ -1628,13 +1665,6 @@ def check_array_api_cross_namespace_inference_mixed_dtypes(
     X = _enforce_estimator_tags_X(estimator_orig, X)
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
-    methods = (
-        "decision_function",
-        "predict",
-        "predict_log_proba",
-        "predict_proba",
-        "transform",
-    )
     # One side of the comparison is computed in float32 and the other in float64,
     # so the tolerances are loose on purpose. They are not a statement about
     # the accuracy of the estimator.
@@ -1648,10 +1678,18 @@ def check_array_api_cross_namespace_inference_mixed_dtypes(
         X_predict = X.astype(predict_dtype)
         with config_context(array_api_dispatch=False):
             est.fit(X_fit, y)
+            # Input for `inverse_transform`, in the dtype used for prediction.
+            Xt = (
+                est.transform(X_predict).astype(predict_dtype)
+                if hasattr(est, "inverse_transform")
+                else None
+            )
         with config_context(array_api_dispatch=True):
             X_xp = xp.asarray(X_predict, device=device)
+            y_xp = xp.asarray(y, device=device)
+            Xt_xp = None if Xt is None else xp.asarray(Xt, device=device)
 
-        for method_name in methods:
+        for method_name in _CROSS_NAMESPACE_INFERENCE_METHODS:
             if getattr(est, method_name, None) is None:
                 continue
             err_msg = (
@@ -1660,17 +1698,20 @@ def check_array_api_cross_namespace_inference_mixed_dtypes(
             )
 
             with config_context(array_api_dispatch=False):
-                expected = getattr(est, method_name)(X_predict)
+                expected = _call_inference_method(est, method_name, X_predict, y, Xt)
 
             with config_context(array_api_dispatch=True):
-                result = getattr(est, method_name)(X_xp)
-                assert array_device(result) == array_device(X_xp), err_msg
-                if xp.isdtype(result.dtype, "real floating"):
-                    assert result.dtype == X_xp.dtype, (
-                        f"{err_msg} returned {result.dtype}, floating point "
-                        "outputs should have the dtype of the input"
-                    )
-                result = move_to(result, xp=np, device="cpu")
+                result = _call_inference_method(est, method_name, X_xp, y_xp, Xt_xp)
+                if method_name == "score":
+                    assert isinstance(result, float), err_msg
+                else:
+                    assert array_device(result) == array_device(X_xp), err_msg
+                    if xp.isdtype(result.dtype, "real floating"):
+                        assert result.dtype == X_xp.dtype, (
+                            f"{err_msg} returned {result.dtype}, floating point "
+                            "outputs should have the dtype of the input"
+                        )
+                    result = move_to(result, xp=np, device="cpu")
             if method_name == "predict_log_proba":
                 # The log of a probability close to 1 is not representable in
                 # float32, for example -8e-10 rounds to 0 and values around -14

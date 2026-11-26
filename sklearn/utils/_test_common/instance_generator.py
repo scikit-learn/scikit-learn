@@ -27,7 +27,7 @@ from sklearn.cluster import (
     SpectralCoclustering,
 )
 from sklearn.compose import ColumnTransformer
-from sklearn.covariance import GraphicalLasso, GraphicalLassoCV
+from sklearn.covariance import OAS, GraphicalLasso, GraphicalLassoCV, LedoitWolf
 from sklearn.cross_decomposition import CCA, PLSSVD, PLSCanonical, PLSRegression
 from sklearn.decomposition import (
     NMF,
@@ -1153,6 +1153,16 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
     KNeighborsTransformer: {
         "check_methods_sample_order_invariance": "check is not applicable."
     },
+    LedoitWolf: {
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
+    },
     LinearDiscriminantAnalysis: {
         "check_array_api_cross_namespace_inference": (
             "inference methods do not yet move fitted attributes to the "
@@ -1257,6 +1267,16 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         ),
         "check_transformer_preserve_dtypes": (
             "dtypes are preserved but not at a close enough precision"
+        ),
+    },
+    OAS: {
+        "check_array_api_cross_namespace_inference": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_inference_mixed_dtypes": (
+            "inference methods do not yet move fitted attributes to the "
+            "namespace and device of X"
         ),
     },
     OneClassSVM: {
