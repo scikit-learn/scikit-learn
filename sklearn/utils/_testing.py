@@ -57,12 +57,7 @@ from sklearn.utils.fixes import (
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import (
-    check_array,
-    check_is_fitted,
-    check_X_y,
-    has_fit_parameter,
-)
+from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
 
 __all__ = [
     "SkipTest",
@@ -1455,7 +1450,6 @@ def _make_array_api_inputs(
     device_other=None,
     y_kind="numeric",
     dtype_name=None,
-    sample_weight=False,
 ):
     """Generate data for testing Array API consistency of estimators.
 
@@ -1474,12 +1468,12 @@ def _make_array_api_inputs(
 
     xp_other : namespace, default=None
         Namespace of other array API inputs. Used for `y` (unless
-        `y_kind` is "str" or "str_list") and `sample_weight`.
+        `y_kind` is "str" or "str_list").
         If `None`, `xp_X` used.
 
     device_other : device, default=None
         Device of other array API inputs. Used for `y` (unless
-        `y_kind` is "str" or "str_list") and `sample_weight`.
+        `y_kind` is "str" or "str_list").
         If `xp_other=None`, `device_X` used.
 
     y_kind : {"numeric", "str", "str_list"}, default="numeric"
@@ -1491,9 +1485,6 @@ def _make_array_api_inputs(
         The name of the data type to use for all arrays, except `y` when `y_kind` is
         "str" or "str_list". If `None`, `_max_precision_float_dtype` of namespace and
         device of `X_ns_and_device` used.
-
-    sample_weight : bool, default=False
-        Whether to include unit sample weights in kwargs.
     """
     from sklearn.utils.estimator_checks import (
         _enforce_estimator_tags_X,
@@ -1521,16 +1512,7 @@ def _make_array_api_inputs(
         y = np.array(["a", "b"])[y]
         y_xp = y.tolist() if y_kind == "str_list" else y
 
-    fit_kwargs, fit_kwargs_xp = {}, {}
-    if sample_weight and has_fit_parameter(estimator, "sample_weight"):
-        max_dtype_other = _max_precision_float_dtype(xp_other, device_other)
-        dtype_other = "float32" if max_dtype_other == xp_other.float32 else "float64"
-        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=dtype_other)
-        fit_kwargs_xp["sample_weight"] = xp_other.asarray(
-            fit_kwargs["sample_weight"], device=device_other
-        )
-
-    return X, y, X_xp, y_xp, fit_kwargs, fit_kwargs_xp
+    return X, y, X_xp, y_xp
 
 
 def _get_warnings_filters_info_list():

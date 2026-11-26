@@ -100,7 +100,6 @@ from sklearn.utils._testing import (
     _array_api_for_tests,
     _check_name,
     _get_args,
-    _make_array_api_inputs,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_array_almost_equal,
@@ -404,7 +403,7 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                     check_array_api_input,
                     check_name="check_array_api_string_and_numeric_inputs",
                     X_ns_and_device=X_ns_and_device,
-                    other_ns_and_device="string",
+                    y_kind="str",
                     dtype_name=dtype_name,
                 )
         # 4. Namespace/device consistency between fit and predict/transform
@@ -1098,6 +1097,79 @@ def check_supervised_y_no_nan(name, estimator_orig):
             estimator.fit(X, y)
 
 
+def _make_array_api_inputs(
+    estimator,
+    xp_X,
+    device_X,
+    xp_other=None,
+    device_other=None,
+    y_kind="numeric",
+    dtype_name=None,
+):
+    """Generate data for testing Array API consistency of estimators.
+
+    Parameters
+    ----------
+    estimator : estimator instance
+        Estimator to be checked.
+
+    xp_X : namespace
+        Namespace of reference array API input: `X` as "everything
+        follows X".
+
+    device_X : device or None
+        Device of reference array API input: `X` as "everything
+        follows X".
+
+    xp_other : namespace, default=None
+        Namespace of other array API inputs. Used for `y` (unless
+        `y_kind` is "str" or "str_list").
+        If `None`, `xp_X` used.
+
+    device_other : device, default=None
+        Device of other array API inputs. Used for `y` (unless
+        `y_kind` is "str" or "str_list").
+        If `xp_other=None`, `device_X` used.
+
+    y_kind : {"numeric", "str", "str_list"}, default="numeric"
+        Representation of `y`. `"numeric"` uses array in the requested
+        namespace, device and dtype. `"str"` uses a NumPy string array, and
+        `"str_list"` uses a Python list of strings.
+
+    dtype_name : str, default=None
+        The name of the data type to use for all arrays, except `y` when `y_kind` is
+        "str" or "str_list". If `None`, `_max_precision_float_dtype` of namespace and
+        device of `X_ns_and_device` used.
+    """
+    from sklearn.utils.estimator_checks import (
+        _enforce_estimator_tags_X,
+        _enforce_estimator_tags_y,
+    )
+
+    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
+    if dtype_name is None:
+        max_float_dtype = _max_precision_float_dtype(xp_X, device_X)
+        dtype_name = "float32" if max_float_dtype == xp_X.float32 else "float64"
+    X = X.astype(dtype_name, copy=False)
+
+    X = _enforce_estimator_tags_X(estimator, X)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    X_xp = xp_X.asarray(X, device=device_X)
+
+    if xp_other is None:
+        xp_other = xp_X
+        device_other = device_X
+
+    if y_kind == "numeric":
+        y_xp = xp_other.asarray(y, device=device_other)
+    else:
+        y = np.array(["a", "b"])[y]
+        y_xp = y.tolist() if y_kind == "str_list" else y
+
+    return X, y, X_xp, y_xp
+
+
 def check_array_api_input(
     name,
     estimator_orig,
@@ -1169,7 +1241,7 @@ def check_array_api_input(
         other_ns_and_device.xp, other_ns_and_device.device
     )
 
-    X, y, X_xp, y_xp, fit_kwargs, fit_kwargs_xp = _make_array_api_inputs(
+    X, y, X_xp, y_xp = _make_array_api_inputs(
         estimator_orig,
         xp_X,
         device_X,
@@ -1177,8 +1249,16 @@ def check_array_api_input(
         device_other,
         y_kind=y_kind,
         dtype_name=dtype_name,
-        sample_weight=check_sample_weight,
     )
+
+    fit_kwargs, fit_kwargs_xp = {}, {}
+    if check_sample_weight and has_fit_parameter(estimator_orig, "sample_weight"):
+        max_dtype_other = _max_precision_float_dtype(xp_other, device_other)
+        dtype_other = "float32" if max_dtype_other == xp_other.float32 else "float64"
+        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=dtype_other)
+        fit_kwargs_xp["sample_weight"] = xp_other.asarray(
+            fit_kwargs["sample_weight"], device=device_other
+        )
 
     est = clone(estimator_orig)
     set_random_state(est)
@@ -1309,7 +1389,7 @@ def check_array_api_input(
             result_ns = get_namespace(result_xp)[0].__name__
         # `predict` would be string when `y` is string
         expected_ns = X_ns
-        if other_ns_and_device == "string" and method_name == "predict":
+        if y_kind == "str" and method_name == "predict":
             expected_ns = y_ns
         assert result_ns == expected_ns, (
             f"'{method}' output is in wrong namespace, expected {expected_ns}, "
@@ -1319,7 +1399,7 @@ def check_array_api_input(
         if expect_only_array_outputs:
             # `predict` would be string and on same device as `y`
             expected_xp = X_xp
-            if other_ns_and_device == "string" and method_name == "predict":
+            if y_kind == "str" and method_name == "predict":
                 expected_xp = y_xp
             with config_context(array_api_dispatch=True):
                 assert array_device(result_xp) == array_device(expected_xp)
@@ -1396,7 +1476,7 @@ def check_array_api_same_namespace(
     """
     xp, device = _array_api_for_tests(array_namespace, device_name, "float64")
 
-    X, _, X_xp, y_xp, _, _ = _make_array_api_inputs(
+    X, _, X_xp, y_xp = _make_array_api_inputs(
         estimator_orig,
         xp,
         device,
