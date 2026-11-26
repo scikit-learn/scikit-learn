@@ -12,6 +12,7 @@ from scipy import sparse
 
 from sklearn.externals import array_api_compat
 from sklearn.utils._array_api import (
+    _add_to_diagonal,
     _is_numpy_namespace,
     _ravel,
     get_namespace,
@@ -543,6 +544,8 @@ class LinearModelLoss:
     ):
         """Computes gradient and hessian w.r.t. coef.
 
+        Output buffers are only supported for NumPy inputs.
+
         Parameters
         ----------
         coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
@@ -586,9 +589,10 @@ class LinearModelLoss:
         gradient : ndarray of shape coef.shape
              The gradient of the loss.
 
-        hessian : ndarray of shape (n_dof, n_dof) or \
-            (n_classes, n_dof, n_dof, n_classes)
-            Hessian matrix.
+        hessian : array of shape (n_dof, n_dof) or \
+            (n_classes * n_dof, n_classes * n_dof), or None
+            Hessian matrix. For non-NumPy inputs, None is returned if
+            hessian_warning is True.
 
         hessian_warning : bool
             True if pointwise hessian has more than 25% of its elements non-positive.
@@ -599,6 +603,30 @@ class LinearModelLoss:
             weights, intercept, raw_prediction = self.weight_intercept_raw(coef, X)
         else:
             weights, intercept = self.weight_intercept(coef)
+        xp, _, device = get_namespace_and_device(X)
+        if not _is_numpy_namespace(xp):
+            if any(
+                out is not None
+                for out in (
+                    gradient_out,
+                    hessian_out,
+                    grad_pointwise_out,
+                    hess_pointwise_out,
+                )
+            ):
+                raise ValueError("Output buffers are only supported for NumPy inputs.")
+            return self._gradient_hessian_array_api(
+                coef,
+                X,
+                y,
+                sample_weight,
+                l2_reg_strength,
+                raw_prediction,
+                weights,
+                xp,
+                device,
+            )
+
         sw_sum = n_samples if sample_weight is None else np.sum(sample_weight)
 
         # Allocate gradient.
@@ -798,6 +826,96 @@ class LinearModelLoss:
             hessian_warning = False
 
         return grad, hess, hessian_warning
+
+    def _gradient_hessian_array_api(
+        self,
+        coef,
+        X,
+        y,
+        sample_weight,
+        l2_reg_strength,
+        raw_prediction,
+        weights,
+        xp,
+        device,
+    ):
+        weight_sum = X.shape[0] if sample_weight is None else xp.sum(sample_weight)
+        if self.base_loss.is_multiclass:
+            grad_pointwise, probabilities = self.base_loss.gradient_proba(
+                y_true=y, raw_prediction=raw_prediction, sample_weight=sample_weight
+            )
+            grad = self._assemble_gradient(
+                coef, X, grad_pointwise / weight_sum, weights, l2_reg_strength, xp
+            )
+            hess = self._multinomial_hessian_array_api(
+                X, probabilities, sample_weight, weight_sum, l2_reg_strength, xp, device
+            )
+            return grad, hess, False
+
+        grad_pointwise, curvature = self.base_loss.gradient_hessian(
+            y_true=y, raw_prediction=raw_prediction, sample_weight=sample_weight
+        )
+        grad = self._assemble_gradient(
+            coef, X, grad_pointwise / weight_sum, weights, l2_reg_strength, xp
+        )
+
+        nonpositive = xp.astype(curvature <= 0, X.dtype)
+        if sample_weight is not None:
+            nonpositive = nonpositive * sample_weight
+        if xp.sum(nonpositive) / weight_sum > 0.25:
+            return grad, None, True
+
+        curvature = xp.abs(curvature) / weight_sum
+        hess = sandwich_dot(X, curvature)
+        if l2_reg_strength > 0:
+            _add_to_diagonal(hess, l2_reg_strength, xp)
+        if self.fit_intercept:
+            cross = X.T @ curvature
+            last_row = xp.concat((cross, xp.reshape(xp.sum(curvature), (1,))))
+            hess = xp.concat(
+                (xp.concat((hess, cross[:, None]), axis=1), last_row[None, :]),
+                axis=0,
+            )
+        return grad, hess, False
+
+    def _multinomial_hessian_array_api(
+        self, X, probabilities, sample_weight, weight_sum, l2_reg_strength, xp, device
+    ):
+        design = X
+        if self.fit_intercept:
+            ones = xp.ones((X.shape[0], 1), dtype=X.dtype, device=device)
+            design = xp.concat((X, ones), axis=1)
+        n_classes = probabilities.shape[1]
+        weighted_probabilities = probabilities / weight_sum
+        if sample_weight is not None:
+            weighted_probabilities = weighted_probabilities * sample_weight[:, None]
+
+        # Each block is a weighted Gram matrix of the design. For classes k and l,
+        # the weights are w * p_k * (delta_kl - p_l) / sum(w).
+        blocks = []
+        for k in range(n_classes):
+            row = []
+            for l in range(n_classes):
+                if l < k:
+                    block = blocks[l][k]
+                else:
+                    curvature = weighted_probabilities[:, k] * (
+                        (1 if k == l else 0) - probabilities[:, l]
+                    )
+                    block = sandwich_dot(design, curvature)
+                row.append(block)
+            blocks.append(row)
+        # Stack as (feature, class, feature, class) so flattening each axis
+        # pair matches the coefficient order, with class varying fastest.
+        hess = xp.stack([xp.stack(row, axis=2) for row in blocks], axis=1)
+        size = design.shape[1] * n_classes
+        hess = xp.reshape(hess, (size, size))
+        if l2_reg_strength > 0:
+            penalty = xp.full((size,), l2_reg_strength, dtype=X.dtype, device=device)
+            if self.fit_intercept:
+                penalty[-n_classes:] = 0
+            _add_to_diagonal(hess, penalty, xp)
+        return hess
 
     def gradient_hessian_product(
         self,

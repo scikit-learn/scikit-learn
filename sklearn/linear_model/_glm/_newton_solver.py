@@ -22,13 +22,9 @@ from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent_multinomial,
     enet_coordinate_descent_sparse,
 )
-from sklearn.linear_model._linear_loss import (
-    LinearModelLoss,
-    sandwich_dot,
-)
+from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.linear_model._ridge import _SingularMatrixError, _solve_spd
 from sklearn.utils._array_api import (
-    _add_to_diagonal,
     _is_numpy_namespace,
     _ravel,
     get_namespace_and_device,
@@ -754,105 +750,26 @@ class NewtonCholeskySolver(NewtonSolver):
 
     def update_gradient_hessian(self, X, y, sample_weight):
         xp, _, _ = get_namespace_and_device(X)
-        if not _is_numpy_namespace(xp):
-            if self.linear_loss.base_loss.is_multiclass:
-                self._update_multinomial_gradient_hessian(X, y, sample_weight, xp)
-                return
-            gradient, curvature = self.linear_loss.base_loss.gradient_hessian(
-                y_true=y,
-                raw_prediction=self.raw_prediction,
+        buffers = {}
+        if _is_numpy_namespace(xp):
+            buffers = {
+                "gradient_out": self.gradient,
+                "hessian_out": self.hessian,
+                "grad_pointwise_out": self.grad_pointwise,
+                "hess_pointwise_out": self.hess_pointwise,
+            }
+        self.gradient, self.hessian, self.hessian_warning = (
+            self.linear_loss.gradient_hessian(
+                coef=self.coef,
+                X=X,
+                y=y,
                 sample_weight=sample_weight,
+                l2_reg_strength=self.l2_reg_strength,
+                n_threads=self.n_threads,
+                raw_prediction=self.raw_prediction,  # this was updated in line_search
+                **buffers,
             )
-            weight_sum = X.shape[0] if sample_weight is None else xp.sum(sample_weight)
-            nonpositive = xp.astype(curvature <= 0, X.dtype)
-            if sample_weight is not None:
-                nonpositive = nonpositive * sample_weight
-            self.hessian_warning = bool(xp.sum(nonpositive) / weight_sum > 0.25)
-            weights, _ = self.linear_loss.weight_intercept(self.coef)
-            self.gradient = self.linear_loss._assemble_gradient(
-                self.coef, X, gradient / weight_sum, weights, self.l2_reg_strength, xp
-            )
-
-            if self.hessian_warning:
-                return
-
-            curvature = xp.abs(curvature) / weight_sum
-            self.hessian = sandwich_dot(X, curvature)
-            if self.l2_reg_strength > 0:
-                _add_to_diagonal(self.hessian, self.l2_reg_strength, xp)
-            if self.linear_loss.fit_intercept:
-                cross = X.T @ curvature
-                last_row = xp.concat((cross, xp.reshape(xp.sum(curvature), (1,))))
-                self.hessian = xp.concat(
-                    (
-                        xp.concat((self.hessian, cross[:, None]), axis=1),
-                        last_row[None, :],
-                    ),
-                    axis=0,
-                )
-            return
-
-        _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
-            coef=self.coef,
-            X=X,
-            y=y,
-            sample_weight=sample_weight,
-            l2_reg_strength=self.l2_reg_strength,
-            n_threads=self.n_threads,
-            gradient_out=self.gradient,
-            hessian_out=self.hessian,
-            raw_prediction=self.raw_prediction,  # this was updated in line_search
-            grad_pointwise_out=self.grad_pointwise,
-            hess_pointwise_out=self.hess_pointwise,
         )
-
-    def _update_multinomial_gradient_hessian(self, X, y, sample_weight, xp):
-        gradient, probabilities = self.linear_loss.base_loss.gradient_proba(
-            y_true=y,
-            raw_prediction=self.raw_prediction,
-            sample_weight=sample_weight,
-        )
-        weight_sum = X.shape[0] if sample_weight is None else xp.sum(sample_weight)
-        weights, _ = self.linear_loss.weight_intercept(self.coef)
-        self.gradient = self.linear_loss._assemble_gradient(
-            self.coef, X, gradient / weight_sum, weights, self.l2_reg_strength, xp
-        )
-        self.hessian_warning = False
-
-        design = X
-        if self.linear_loss.fit_intercept:
-            design = xp.concat((X, xp.ones_like(X[:, :1])), axis=1)
-        n_classes = probabilities.shape[1]
-        n_dof = design.shape[1]
-        weighted_probabilities = probabilities / weight_sum
-        if sample_weight is not None:
-            weighted_probabilities = weighted_probabilities * sample_weight[:, None]
-
-        # Each block is a weighted Gram matrix of the design. For classes k and l,
-        # the weights are w * p_k * (delta_kl - p_l) / sum(w).
-        blocks = []
-        for k in range(n_classes):
-            row = []
-            for l in range(n_classes):
-                if l < k:
-                    block = blocks[l][k]
-                else:
-                    curvature = weighted_probabilities[:, k] * (
-                        (1 if k == l else 0) - probabilities[:, l]
-                    )
-                    block = sandwich_dot(design, curvature)
-                row.append(block)
-            blocks.append(row)
-        # Stack as (feature, class, feature, class) so flattening each axis
-        # pair matches the coefficient order, with class varying fastest.
-        hessian = xp.stack([xp.stack(row, axis=2) for row in blocks], axis=1)
-        size = n_dof * n_classes
-        self.hessian = xp.reshape(hessian, (size, size))
-        if self.l2_reg_strength > 0:
-            penalty = xp.full_like(self.coef, self.l2_reg_strength)
-            if self.linear_loss.fit_intercept:
-                penalty[-n_classes:] = 0
-            _add_to_diagonal(self.hessian, penalty, xp)
 
     def prepare_gradient_hessian(self):
         """Prepare gradient and hessian, in particular for the multiclass case.
