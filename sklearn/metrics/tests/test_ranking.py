@@ -652,7 +652,7 @@ def test_multiclass_ovr_roc_auc_zero_sample_weight(
 ):
     """Check that OvR roc_auc_score(average="weighted") raises an informative
     error with all-zero sample weights. See:
-    https://github.com/scikit-learn/scikit-learn/pull/33200#discussion_r4315296397
+    https://github.com/scikit-learn/scikit-learn/pull/35512#issuecomment-7144202367
     """
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
 
