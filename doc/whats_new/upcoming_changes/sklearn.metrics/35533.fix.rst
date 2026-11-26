@@ -1,0 +1,4 @@
+- Fixed a bug in multimetric scoring where cached estimator responses were keyed only by
+  `response_method` and ignored `pos_label`, causing scorers with different `pos_label`
+  values to silently reuse another class's predictions.
+  By :user:`Nikhil Tamvada <Nikhilodeon1>`.
