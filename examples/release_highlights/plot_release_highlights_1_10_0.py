@@ -24,26 +24,22 @@ or with conda::
 # %%
 # Native categorical support in decision trees and random forests
 # ----------------------------------------------------------------
-# The following tree-based models now accept a `categorical_features` parameter,
-# like :class:`~ensemble.HistGradientBoostingClassifier` already does:
+# Decision trees, random forests and their extra-trees variants now handle categorical
+# features natively, like :class:`~ensemble.HistGradientBoostingClassifier` already
+# does. The new `categorical_features` parameter is available in
+# :class:`~tree.DecisionTreeClassifier`, :class:`~tree.ExtraTreeClassifier`,
+# :class:`~ensemble.RandomForestClassifier`, :class:`~ensemble.ExtraTreesClassifier`
+# and their regressor counterparts.
 #
-# - :class:`~tree.DecisionTreeClassifier`
-# - :class:`~tree.DecisionTreeRegressor`
-# - :class:`~tree.ExtraTreeClassifier`
-# - :class:`~tree.ExtraTreeRegressor`
-# - :class:`~ensemble.RandomForestClassifier`
-# - :class:`~ensemble.RandomForestRegressor`
-# - :class:`~ensemble.ExtraTreesClassifier`
-# - :class:`~ensemble.ExtraTreesRegressor`
+# No encoder is needed: with `categorical_features="from_dtype"`, the categorical
+# columns of a pandas or polars dataframe are detected automatically, even if they
+# contain strings. A split can then send any group of categories to each child,
+# instead of being limited to a threshold on an arbitrary ordering of the categories,
+# such as ordinal codes.
 #
-# A split on a categorical feature can send any group of categories to each
-# child, instead of being limited to a threshold on an arbitrary encoding of the
-# categories (such as ordinal codes).
-#
-# With `categorical_features="from_dtype"`, columns with a categorical dtype in a
-# pandas or polars dataframe are detected automatically. In the toy example below,
-# the target is 1 for three of six colors. A single native categorical split
-# separates them perfectly, while a split on the ordinal codes cannot.
+# In the toy example below, the target is 1 for three of six colors. A single native
+# categorical split separates them perfectly. On ordinal codes, one split is not
+# enough: here the tree needs three.
 import numpy as np
 import pandas as pd
 
@@ -53,23 +49,24 @@ rng = np.random.default_rng(0)
 colors = ["red", "green", "blue", "yellow", "purple", "orange"]
 X = pd.DataFrame({"color": pd.Categorical(rng.choice(colors, size=1_000))})
 y = X["color"].isin(["red", "blue", "purple"]).astype(int)
-
-native = DecisionTreeClassifier(max_depth=1, categorical_features="from_dtype")
-ordinal = DecisionTreeClassifier(max_depth=1)
-
 X_codes = X["color"].cat.codes.to_frame()
 
-native.fit(X, y)
-ordinal.fit(X_codes, y)
-print(f"Native categorical split accuracy: {native.score(X, y):.2f}")
-print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
+native = DecisionTreeClassifier(max_depth=1, categorical_features="from_dtype")
+print(f"One native categorical split: accuracy {native.fit(X, y).score(X, y):.2f}")
+
+ordinal = DecisionTreeClassifier(max_depth=1).fit(X_codes, y)
+print(f"One split on ordinal codes:   accuracy {ordinal.score(X_codes, y):.2f}")
+
+ordinal_deep = DecisionTreeClassifier().fit(X_codes, y)
+n_splits = ordinal_deep.get_n_leaves() - 1
+print(f"Splits needed on ordinal codes for accuracy 1.00: {n_splits}")
 
 # %%
 # Decision trees (with the default `splitter="best"`) and random forests support
-# categorical features for binary classification and single-output regression,
-# with up to 255 categories per feature. Extra trees use random splits and also
-# support multiclass and multi-output targets, with up to ``2**24 - 1`` categories
-# per feature.
+# categorical features for binary classification and single-output regression, with
+# up to 255 categories per feature. Extra trees use random splits and also support
+# multiclass and multi-output targets, with up to ``2**24 - 1`` categories per
+# feature.
 
 # %%
 # Lasso and Elastic-Net penalties for GLMs and new solvers
