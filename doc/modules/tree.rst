@@ -230,11 +230,13 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       |   |--- class: 1
       <BLANKLINE>
 
-  Graphviz and plotted nodes show the left-category membership condition and
+  Graphviz and plotted nodes describe the left branch using ``in`` for its
+  categories or ``not in`` for the right categories, whichever set is smaller, and
   a parenthesized ``missing/unknown: left`` or ``missing/unknown: right`` annotation.
-  Graphviz and plots show at most three categories per split by default, followed
-  by ``... (+N more)`` when categories are omitted. Set ``max_categories`` to change
-  this limit, or to ``None`` to display all categories. Text reports always list
+  Plots show at most three categories per split by default, followed by
+  ``... (+N more)`` when categories are omitted. Graphviz displays the complete
+  smaller set by default. Set ``max_categories`` to change the limit, or to
+  ``None`` to display all categories in that set. Text reports always list
   all categories.
   Category labels are not rounded.
 

@@ -243,9 +243,9 @@ def plot_tree(
         Ignored if ``filled=False``.
 
     max_categories : int or None, default=3
-        Maximum number of categories displayed in each split condition. If more
-        categories are present, their count is shown as ``... (+N more)``.
-        Use None to display all categories. Must be at least 1.
+        Maximum number of categories displayed from the smaller side of a split.
+        Omitted categories are counted as ``... (+N more)``. Use None to display
+        the complete smaller set. Must be at least 1.
 
         .. versionadded:: 1.10
 
@@ -423,15 +423,23 @@ class _BaseTreeExporter:
                 )
             else:
                 categories = self.categorical_features[tree.feature[node_id]]
-                categories_left = categories[tree._get_left_categories(node_id)]
+                left_codes = tree._get_left_categories(node_id)
+                operator = "in"
+                if len(left_codes) > len(categories) / 2:
+                    mask = np.ones(len(categories), dtype=bool)
+                    mask[left_codes] = False
+                    displayed_categories = categories[mask]
+                    operator = "not in"
+                else:
+                    displayed_categories = categories[left_codes]
                 category_set = self.category_escape(
                     _format_category_set(
-                        categories_left, max_categories=self.max_categories
+                        displayed_categories, max_categories=self.max_categories
                     )
                 )
                 direction = "left" if tree.missing_go_to_left[node_id] else "right"
                 node_string += (
-                    f"{feature} in {category_set} "
+                    f"{feature} {operator} {category_set} "
                     f"(missing/unknown: {direction}){characters[4]}"
                 )
 
@@ -536,7 +544,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         precision=3,
         fontname="helvetica",
         fill_colors=None,
-        max_categories=3,
+        max_categories=None,
     ):
         super().__init__(
             max_depth=max_depth,
@@ -933,7 +941,7 @@ def export_graphviz(
     precision=3,
     fontname="helvetica",
     fill_colors=None,
-    max_categories=3,
+    max_categories=None,
 ):
     """Export a decision tree in DOT format.
 
@@ -1021,10 +1029,10 @@ def export_graphviz(
         If None, colors with equally spaced hues are generated automatically.
         Ignored if ``filled=False``.
 
-    max_categories : int or None, default=3
-        Maximum number of categories displayed in each split condition. If more
-        categories are present, their count is shown as ``... (+N more)``.
-        Use None to display all categories. Must be at least 1.
+    max_categories : int or None, default=None
+        Maximum number of categories displayed from the smaller side of a split.
+        Omitted categories are counted as ``... (+N more)``. Use None to display
+        the complete smaller set. Must be at least 1.
 
         .. versionadded:: 1.10
 

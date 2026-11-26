@@ -823,6 +823,9 @@ def test_categorical_export_labels_and_routing(
     left_set = "{" + ", ".join(repr(label) for label in left) + "}"
     right_set = "{" + ", ".join(repr(label) for label in right) + "}"
     direction = "left" if tree.missing_go_to_left[0] else "right"
+    displayed_rule = (
+        f"in {left_set}" if len(left) <= len(right) else f"not in {right_set}"
+    )
     feature_names = ["constant", "category"]
     if exporter == "text":
         result = export_text(estimator, feature_names=feature_names)
@@ -832,13 +835,13 @@ def test_categorical_export_labels_and_routing(
         assert f"category in {missing_set} or missing/unknown" in result
     elif exporter == "graphviz":
         result = export_graphviz(estimator, feature_names=feature_names)
-        assert f"category in {left_set}" in result
+        assert f"category {displayed_rule}" in result
         assert f"missing/unknown: {direction}" in result
     else:
         pyplot = request.getfixturevalue("pyplot")
         _, ax = pyplot.subplots()
         annotations = plot_tree(estimator, feature_names=feature_names, ax=ax)
-        assert f"category in {left_set}" in annotations[0].get_text()
+        assert f"category {displayed_rule}" in annotations[0].get_text()
         assert f"missing/unknown: {direction}" in annotations[0].get_text()
         pyplot.close(ax.figure)
 
@@ -880,11 +883,12 @@ def test_categorical_export_large_splits(Tree, n_categories):
     left_leaves = estimator.apply(X) == estimator.tree_.children_left[0]
     left_set = "{" + ", ".join(repr(int(v)) for v in X[left_leaves, 0]) + "}"
     assert f"feature_0 in {left_set}" in export_text(estimator)
-    displayed = ", ".join(repr(int(v)) for v in X[left_leaves, 0][:3])
-    omitted = int(left_leaves.sum()) - 3
-    assert f"x[0] in {{{displayed}, ... (+{omitted} more)}}" in export_graphviz(
-        estimator
-    )
+    operator = "in"
+    if left_leaves.sum() > n_categories / 2:
+        left_leaves = ~left_leaves
+        operator = "not in"
+    displayed = ", ".join(str(int(v)) for v in X[left_leaves, 0])
+    assert f"x[0] {operator} {{{displayed}}}" in export_graphviz(estimator)
 
 
 @pytest.mark.parametrize("special_characters", [False, True])
@@ -894,10 +898,10 @@ def test_categorical_graphviz_escape(special_characters, start):
     from xml.etree import ElementTree
 
     labels = ['a"b', "c'd", "<tag>&", r"back\slash", "line\nbreak", "plain"]
-    labels = labels[start : start + 3] + ["zz_other"]
+    labels = labels[start : start + 3] + ["zz_other1", "zz_other2", "zz_other3"]
     X = np.array(labels * 4, dtype=object).reshape(-1, 1)
     estimator = DecisionTreeClassifier(categorical_features=[0], max_depth=1).fit(
-        X, np.tile([0, 0, 0, 1], 4)
+        X, np.tile([0, 0, 0, 1, 1, 1], 4)
     )
     contents = export_graphviz(estimator, special_characters=special_characters)
     if special_characters:
@@ -922,7 +926,7 @@ def test_categorical_export_truncation_and_mixed_splits(exporter):
     )
     result = exporter(estimator, feature_names=["number", "category"])
     assert "number <= " in result
-    assert "category in {" in result
+    assert "category in {" in result or "category not in {" in result
     truncated = exporter(estimator, max_depth=0)
     assert (
         "truncated branch" in truncated
@@ -932,9 +936,9 @@ def test_categorical_export_truncation_and_mixed_splits(exporter):
 
 
 def test_categorical_plot_literal_dollar_labels(pyplot):
-    X = np.array([["$a$"], ["$b$"], ["other"]] * 4, dtype=object)
+    X = np.array([["$a$"], ["$b$"], ["other1"], ["other2"]] * 4, dtype=object)
     estimator = DecisionTreeClassifier(categorical_features=[0], max_depth=1).fit(
-        X, np.tile([0, 0, 1], 4)
+        X, np.tile([0, 0, 1, 1], 4)
     )
     _, ax = pyplot.subplots()
     annotations = plot_tree(estimator, ax=ax)
@@ -993,10 +997,10 @@ def test_categorical_forest_tree_export(Forest, min_samples_split, exporter, req
 @pytest.mark.parametrize("max_categories", [1, 3, 5, None])
 @pytest.mark.parametrize("exporter", [export_graphviz, plot_tree])
 def test_categorical_plot_category_limit(pyplot, n_left, max_categories, exporter):
-    labels = [f"$cat{i}$" for i in range(n_left)] + ["other"]
+    labels = [f"$cat{i}$" for i in range(n_left)] + [f"other{i}" for i in range(n_left)]
     X = np.array(labels * 4, dtype=object).reshape(-1, 1)
     estimator = DecisionTreeClassifier(categorical_features=[0], max_depth=1).fit(
-        X, ([0] * n_left + [1]) * 4
+        X, ([0] * n_left + [1] * n_left) * 4
     )
     if exporter is plot_tree:
         _, ax = pyplot.subplots()
@@ -1023,3 +1027,30 @@ def test_categorical_export_invalid_max_categories(exporter, max_categories):
     estimator = DecisionTreeClassifier().fit([[0], [1]], [0, 1])
     with pytest.raises(ValueError, match="max_categories"):
         exporter(estimator, max_categories=max_categories)
+
+
+@pytest.mark.parametrize("exporter", [export_graphviz, plot_tree])
+@pytest.mark.parametrize("n_left", [1, 4, 7])
+def test_categorical_smaller_side_and_defaults(pyplot, exporter, n_left):
+    X = np.array(list("abcdefgh") * 4, dtype=object).reshape(-1, 1)
+    estimator = DecisionTreeClassifier(categorical_features=[0], max_depth=1).fit(
+        X, ([0] * n_left + [1] * (8 - n_left)) * 4
+    )
+    tree = estimator.tree_
+    left = estimator.apply(X[:8]) == tree.children_left[0]
+    operator = "in" if left.sum() <= 4 else "not in"
+    shown = X[:8, 0][left if operator == "in" else ~left]
+    if exporter is plot_tree:
+        _, ax = pyplot.subplots()
+        result = plot_tree(estimator, ax=ax)[0].get_text()
+        expected = ", ".join(repr(v) for v in shown[:3].tolist())
+        if len(shown) > 3:
+            expected += f", ... (+{len(shown) - 3} more)"
+        pyplot.close(ax.figure)
+    else:
+        result = export_graphviz(estimator)
+        expected = ", ".join(repr(v) for v in shown.tolist())
+        assert "... (+" not in result
+    assert f"x[0] {operator} {{{expected}}}" in result
+    direction = "left" if tree.missing_go_to_left[0] else "right"
+    assert f"missing/unknown: {direction}" in result
