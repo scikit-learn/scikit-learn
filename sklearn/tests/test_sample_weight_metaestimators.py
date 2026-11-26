@@ -49,14 +49,11 @@ def _calibrated_logistic():
     )
 
 
-EQUIVALENCE_ESTIMATORS = [
-    pytest.param(_pipeline_logistic(), id="pipeline-logistic"),
-    pytest.param(_grid_search_ridge(), id="gridsearch-pipeline-ridge"),
-    pytest.param(_calibrated_logistic(), id="calibrated-logistic"),
-]
-
-
-@pytest.mark.parametrize("estimator", EQUIVALENCE_ESTIMATORS)
+@pytest.mark.parametrize(
+    "estimator",
+    [_pipeline_logistic(), _grid_search_ridge(), _calibrated_logistic()],
+    ids=["pipeline-logistic", "gridsearch-pipeline-ridge", "calibrated-logistic"],
+)
 @config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
 def test_integer_sample_weight_equivalence(estimator):
     """Integer weights and repeated rows agree on the meta-estimator's outputs.
