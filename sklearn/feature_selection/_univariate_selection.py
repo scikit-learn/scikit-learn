@@ -16,6 +16,7 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 
@@ -167,6 +168,7 @@ def f_classif(X, y):
            3.87e-01, 7.66e-01])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"])
+    check_classification_targets(y)
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
     return f_oneway(*args)
 

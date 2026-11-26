@@ -1,0 +1,4 @@
+- :func:`feature_selection.f_classif` now raises an informative :class:`ValueError`
+  via :func:`utils.multiclass.check_classification_targets` when ``y`` has a
+  continuous target type.
+  By :user:`Aditya Shinde <adityashinde0>`.

@@ -849,6 +849,15 @@ def test_f_classif_constant_feature():
         f_classif(X, y)
 
 
+def test_f_classif_continuous_target():
+    # test that f_classif raises valueerror when target is continuous
+    X = np.arange(20).reshape(10, 2)
+    y = np.linspace(0.1, 1.0, 10)
+    msg = "Unknown label type: continuous"
+    with pytest.raises(ValueError, match=msg):
+        f_classif(X, y)
+
+
 def test_no_feature_selected():
     rng = np.random.RandomState(0)
 
