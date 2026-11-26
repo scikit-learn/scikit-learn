@@ -3451,8 +3451,10 @@ def test_newton_cholesky_array_api_near_singular(array_namespace):
     X = rng.normal(size=(240, 4))
     perturbation = rng.normal(size=X.shape[0])
     y = (X[:, 0] + rng.normal(size=X.shape[0]) > 0).astype(int)
-    # Keep the design full rank, but make the Hessian ill-conditioned in float64.
-    X = np.column_stack((X, X[:, 0] + 3e-8 * perturbation))
+    # Scale the near-duplicate so the Hessian is well past the warning
+    # threshold while the perturbation remains resolvable in the Gram matrix.
+    near_duplicate = 1e-4 * X[:, 0] + 1e-9 * perturbation
+    X = np.column_stack((X, near_duplicate))
     _check_newton_cholesky_fallback(X, y, array_namespace)
 
 
