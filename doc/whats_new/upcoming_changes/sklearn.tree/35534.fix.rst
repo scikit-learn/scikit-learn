@@ -1,0 +1,4 @@
+- :func:`tree.export_text`, :func:`tree.export_graphviz` and :func:`tree.plot_tree`
+  now display native categorical splits as the set of categories sent to the left
+  child, e.g. ``color in {red, blue}``, instead of ``color <= -inf``.
+  By :user:`Dishan18`.

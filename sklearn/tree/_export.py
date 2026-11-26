@@ -19,6 +19,11 @@ from sklearn.tree import (
     _tree,
 )
 from sklearn.tree._reingold_tilford import Tree, buchheim
+from sklearn.tree._utils import (
+    SPLIT_CATEGORICAL_BITSET,
+    SPLIT_CATEGORICAL_HASH,
+    _py_mix_uint32,
+)
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._param_validation import (
     HasMethods,
@@ -84,6 +89,54 @@ def _color_brew(n):
         color_list.append(rgb)
 
     return color_list
+
+
+def _is_categorical_split(tree, node_id):
+    return tree.split_kind[node_id] in (
+        SPLIT_CATEGORICAL_BITSET,
+        SPLIT_CATEGORICAL_HASH,
+    )
+
+
+def _left_category_codes(tree, node_id):
+    """Return the encoded categories sent to the left child of `node_id`."""
+    n_categories = tree._n_categories[tree.feature[node_id]]
+    codes = np.arange(n_categories)
+    bitset = tree._left_cat_bitset[node_id]
+    if tree.split_kind[node_id] == SPLIT_CATEGORICAL_BITSET:
+        n_bits = bitset.dtype.itemsize * 8
+        goes_left = (bitset[codes // n_bits] >> (codes % n_bits)) & 1
+    else:  # SPLIT_CATEGORICAL_HASH: bitset[0] holds the hash seed
+        seed = int(bitset[0])
+        goes_left = np.array([_py_mix_uint32(seed ^ int(c)) & 1 for c in codes])
+    return codes[goes_left.astype(bool)]
+
+
+def _get_categories(decision_tree):
+    """Map each feature index to its fitted categories (None if unavailable)."""
+    is_categorical = getattr(decision_tree, "is_categorical_", None)
+    encoder = getattr(decision_tree, "_categorical_encoder", None)
+    if is_categorical is None or encoder is None:
+        return None
+    categories = [None] * is_categorical.shape[0]
+    for feature, feature_categories in zip(
+        np.flatnonzero(is_categorical), encoder.categories_
+    ):
+        categories[feature] = feature_categories
+    return categories
+
+
+def _format_left_categories(tree, node_id, categories):
+    """Format the set of categories sent to the left child, e.g. '{a, b}'."""
+    codes = _left_category_codes(tree, node_id)
+    feature_categories = (
+        None if categories is None else categories[tree.feature[node_id]]
+    )
+    if feature_categories is not None:
+        labels = [str(feature_categories[c]) for c in codes]
+    else:
+        labels = [str(c) for c in codes]
+    return "{" + ", ".join(labels) + "}"
 
 
 class Sentinel:
@@ -270,6 +323,7 @@ class _BaseTreeExporter:
         self.fontsize = fontsize
         self.colors = {"bounds": None}
         self.fill_colors = fill_colors
+        self.categories = None
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -363,12 +417,22 @@ class _BaseTreeExporter:
                     tree.feature[node_id],
                     characters[2],
                 )
-            node_string += "%s %s %s%s" % (
-                feature,
-                characters[3],
-                round(tree.threshold[node_id], self.precision),
-                characters[4],
-            )
+            if _is_categorical_split(tree, node_id):
+                left_categories = _format_left_categories(
+                    tree, node_id, self.categories
+                )
+                node_string += "%s in %s%s" % (
+                    feature,
+                    self.str_escape(left_categories),
+                    characters[4],
+                )
+            else:
+                node_string += "%s %s %s%s" % (
+                    feature,
+                    characters[3],
+                    round(tree.threshold[node_id], self.precision),
+                    characters[4],
+                )
 
         # Write impurity
         if self.impurity:
@@ -509,6 +573,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
                     "Length of feature_names, %d does not match number of features, %d"
                     % (len(self.feature_names), decision_tree.n_features_in_)
                 )
+        self.categories = _get_categories(decision_tree)
         # each part writes to out_file
         self.head()
         # Now recurse the tree and add node & edge attributes
@@ -699,6 +764,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax = plt.gca()
         ax.clear()
         ax.set_axis_off()
+        self.categories = _get_categories(decision_tree)
         my_tree = self._make_tree(0, decision_tree.tree_, decision_tree.criterion)
         draw_tree = buchheim(my_tree)
 
@@ -1163,6 +1229,7 @@ def export_text(
     else:
         feature_names_ = ["feature_{}".format(i) for i in tree_.feature]
 
+    categories = _get_categories(decision_tree)
     report = StringIO()
 
     def _add_leaf(value, weighted_n_node_samples, class_name, indent):
@@ -1204,13 +1271,20 @@ def export_text(
 
             if tree_.feature[node] != _tree.TREE_UNDEFINED:
                 name = feature_names_[node]
-                threshold = tree_.threshold[node]
-                threshold = "{1:.{0}f}".format(decimals, threshold)
-                report.write(right_child_fmt.format(indent, name, threshold))
+                if _is_categorical_split(tree_, node):
+                    left_categories = _format_left_categories(tree_, node, categories)
+                    left_rule = f"{indent} {name} in {left_categories}\n"
+                    right_rule = f"{indent} {name} not in {left_categories}\n"
+                else:
+                    threshold = tree_.threshold[node]
+                    threshold = "{1:.{0}f}".format(decimals, threshold)
+                    left_rule = right_child_fmt.format(indent, name, threshold)
+                    right_rule = left_child_fmt.format(indent, name, threshold)
+                report.write(left_rule)
                 report.write(info_fmt_left)
                 print_tree_recurse(report, tree_.children_left[node], depth + 1)
 
-                report.write(left_child_fmt.format(indent, name, threshold))
+                report.write(right_rule)
                 report.write(info_fmt_right)
                 print_tree_recurse(report, tree_.children_right[node], depth + 1)
             else:  # leaf

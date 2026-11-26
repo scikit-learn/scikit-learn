@@ -15,11 +15,13 @@ from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
     DecisionTreeRegressor,
+    ExtraTreeClassifier,
     export_graphviz,
     export_text,
     plot_tree,
 )
 from sklearn.tree._export import _rgb_to_hexstring
+from sklearn.tree._utils import SPLIT_CATEGORICAL_BITSET, SPLIT_CATEGORICAL_HASH
 
 CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "poisson")
@@ -771,3 +773,72 @@ def test_not_fitted_tree(pyplot):
     clf = DecisionTreeRegressor()
     with pytest.raises(NotFittedError):
         plot_tree(clf)
+
+
+def _categorical_tree(estimator):
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"color": pd.Categorical(["red", "green", "blue", "yellow"] * 5)})
+    y = X["color"].isin(["red", "blue"]).astype(int)
+    tree = estimator.set_params(categorical_features="from_dtype", max_depth=1)
+    return tree.fit(X, y), X
+
+
+def _left_categories(tree, X):
+    """Categories of the samples that the root sends to its left child."""
+    goes_left = tree.apply(X) == tree.tree_.children_left[0]
+    return set(X["color"][goes_left].astype(str))
+
+
+def _parse_category_set(text):
+    match = search(r"color in \{([^}]*)\}", text)
+    assert match is not None, text
+    return set(match.group(1).split(", "))
+
+
+@pytest.mark.parametrize(
+    "estimator, split_kind",
+    [
+        (DecisionTreeClassifier(), SPLIT_CATEGORICAL_BITSET),
+        (ExtraTreeClassifier(random_state=0), SPLIT_CATEGORICAL_HASH),
+    ],
+)
+def test_export_text_categorical_split(estimator, split_kind):
+    """Check that categorical splits are shown as sets of categories.
+
+    Non-regression test for #35534.
+    """
+    tree, X = _categorical_tree(estimator)
+    assert tree.tree_.split_kind[0] == split_kind
+
+    text = export_text(tree, feature_names=["color"])
+    assert "-inf" not in text
+    left = _parse_category_set(text)
+    assert left == _left_categories(tree, X)
+    assert 0 < len(left) < 4
+
+    left_set = search(r"color in (\{[^}]*\})", text).group(1)
+    assert f"color not in {left_set}" in text
+
+
+def test_export_graphviz_categorical_split():
+    tree, X = _categorical_tree(DecisionTreeClassifier())
+    dot = export_graphviz(tree, out_file=None, feature_names=["color"])
+    assert "-inf" not in dot
+    assert _parse_category_set(dot) == _left_categories(tree, X)
+
+
+def test_plot_tree_categorical_split(pyplot):
+    tree, X = _categorical_tree(DecisionTreeClassifier())
+    root_text = plot_tree(tree, feature_names=["color"])[0].get_text()
+    assert "-inf" not in root_text
+    assert _parse_category_set(root_text) == _left_categories(tree, X)
+
+
+def test_export_text_categorical_split_without_dataframe():
+    """Check that the original category values are shown for array inputs."""
+    X = np.array([[0], [1], [2], [3]] * 5)
+    y = np.isin(X[:, 0], [0, 2]).astype(int)
+    tree = DecisionTreeClassifier(categorical_features=[0], max_depth=1).fit(X, y)
+    text = export_text(tree)
+    assert "-inf" not in text
+    assert search(r"feature_0 in \{(0, 2|1, 3)\}", text), text
