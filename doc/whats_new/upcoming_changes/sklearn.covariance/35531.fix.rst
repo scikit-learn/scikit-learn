@@ -1,0 +1,4 @@
+- :class:`covariance.MinCovDet` no longer raises a spurious `RuntimeWarning`
+  "Determinant has increased" when the support does not change during the
+  C-step, for instance if `n_samples == n_features`.
+  By :user:`Christian Lorentzen <lorentzenchr>`.
