@@ -912,7 +912,7 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     lr = LogisticRegression().fit(X, y)
 
     viz = CalibrationDisplay.from_estimator(
-        lr, X, y, n_bins=n_bins, strategy=strategy, alpha=0.8
+        lr, X, y, n_bins=n_bins, strategy=strategy, curve_kwargs={"alpha": 0.8}
     )
 
     y_prob = lr.predict_proba(X)[:, 1]
@@ -1136,7 +1136,7 @@ def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
     X, y = iris_data_binary
 
     lr = LogisticRegression().fit(X, y)
-    viz = CalibrationDisplay.from_estimator(lr, X, y, **kwargs)
+    viz = CalibrationDisplay.from_estimator(lr, X, y, curve_kwargs=kwargs)
 
     assert viz.line_.get_color() == "red"
     assert viz.line_.get_linewidth() == 2
