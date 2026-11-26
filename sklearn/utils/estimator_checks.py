@@ -403,7 +403,7 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                     check_array_api_input,
                     check_name="check_array_api_string_and_numeric_inputs",
                     X_ns_and_device=X_ns_and_device,
-                    y_kind="str",
+                    other_ns_and_device="str",
                     dtype_name=dtype_name,
                 )
         # 4. Namespace/device consistency between fit and predict/transform
@@ -1175,7 +1175,6 @@ def check_array_api_input(
     estimator_orig,
     X_ns_and_device,
     other_ns_and_device=None,
-    y_kind="numeric",
     dtype_name=None,
     check_values=False,
     check_sample_weight=False,
@@ -1200,14 +1199,11 @@ def check_array_api_input(
         Namespace and device of reference array API input: `X` as "everything
         follows X".
 
-    other_ns_and_device : NamedTuple, default=None
+    other_ns_and_device : NamedTuple, {"str", "str_list"} or None, default=None
         Namespace and device of other array API inputs. Used for `y` and
-        `sample_weight`. If `None, `X_ns_and_device` is used.
-
-    y_kind : {"numeric", "str", "str_list"}, default="numeric"
-        Representation of `y`. `"numeric"` uses array in the requested
-        namespace, device and dtype. `"str"` uses a NumPy string array, and
-        `"str_list"` uses a Python list of strings.
+        `sample_weight`. If `None`, `X_ns_and_device` is used. If "str" or
+        "str_list", `y` is a NumPy string array or a Python list of strings
+        respectively, and `sample_weight` is a NumPy array.
 
     dtype_name : str, default=None
         The name of the data type to use for all arrays. If `None`,
@@ -1232,15 +1228,20 @@ def check_array_api_input(
         Name used to identify this check (e.g. in `expected_failed_checks`)
         when it is yielded as a partial. Not used by the check itself.
     """
+    if other_ns_and_device in ("str", "str_list"):
+        y_kind = other_ns_and_device
+        xp_other, device_other = _array_api_for_tests("numpy", "cpu")
+    else:
+        y_kind = "numeric"
+        if other_ns_and_device is None:
+            other_ns_and_device = X_ns_and_device
+        xp_other, device_other = _array_api_for_tests(
+            other_ns_and_device.xp, other_ns_and_device.device
+        )
+
     xp_X, device_X = _array_api_for_tests(
         X_ns_and_device.xp, X_ns_and_device.device, dtype_name
     )
-    if other_ns_and_device is None:
-        other_ns_and_device = X_ns_and_device
-    xp_other, device_other = _array_api_for_tests(
-        other_ns_and_device.xp, other_ns_and_device.device
-    )
-
     X, y, X_xp, y_xp = _make_array_api_inputs(
         estimator_orig,
         xp_X,
