@@ -143,59 +143,59 @@ print(f"LogisticRegression selected solver: {clf.solver_}")
 print(f"Non-zero coefficients: {np.flatnonzero(clf.coef_)}")
 
 # %%
-# Easier metadata routing
-# ------------------------
-# Metadata routing is now much easier to use. It is still experimental and still off by
-# default, but once you enable it, scikit-learn estimators auto-request `sample_weight`
-# and, where they use a validation set, they also auto-request `X_val`, `y_val`, and
-# `sample_weight_val`. You no longer need to call `set_fit_request` or
-# `set_score_request` for that metadata.
-# Other metadata (except for `groups`) still needs an explicit request.
+# Easier metadata routing through auto-requests
+# ---------------------------------------------
+# Metadata routing no longer needs boilerplate. Once it is enabled, scikit-learn
+# estimators and scorers auto-request `sample_weight`, and estimators that use a
+# validation set also auto-request `X_val`, `y_val` and `sample_weight_val`. Calls to
+# `set_fit_request` or `set_score_request` are only needed to opt out or for other
+# metadata. Metadata routing itself is still experimental and off by default.
 #
-# In the example below, `sample_weight` is auto-requested on estimator methods that
-# accept it (typically `fit` and `score`) and on scorers whose metric accepts it. The
-# same weights are used to fit :class:`~linear_model.LogisticRegression` and to score
-# each candidate, with no explicit request.
+# In the example below, 30% of the labels are flipped and those samples get zero
+# weight. A single `sample_weight` argument reaches the scaler, the classifier and the
+# scorer, so the corrupted samples are ignored everywhere. Without metadata routing,
+# the weighted call fails because a :class:`~pipeline.Pipeline` does not know which
+# step should receive the weights.
 import numpy as np
 
-from sklearn import set_config
+from sklearn import config_context
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
-set_config(enable_metadata_routing=True)
+X, y = make_classification(n_samples=500, random_state=0)
+flipped = np.random.default_rng(0).random(len(y)) < 0.3
+y_noisy = np.where(flipped, 1 - y, y)
+sample_weight = np.where(flipped, 0.0, 1.0)
 
-X, y = make_classification(n_samples=150, random_state=0)
-sample_weight = np.ones(len(y))
-sample_weight[:15] = 2
+pipe = make_pipeline(StandardScaler(), LogisticRegression())
+search = GridSearchCV(pipe, param_grid={"logisticregression__alpha": [0.1, 1, 10]})
 
-search = GridSearchCV(LogisticRegression(), param_grid={"alpha": [0.01, 0.1, 1]})
-search.fit(X, y, sample_weight=sample_weight)
-print(f"Best parameters: {search.best_params_}")
-set_config(enable_metadata_routing=False)
+with config_context(enable_metadata_routing=True):
+    search.fit(X, y_noisy)
+    print(f"Accuracy without weights: {search.best_score_:.2f}")
+    search.fit(X, y_noisy, sample_weight=sample_weight)
+    print(f"Accuracy with weights:    {search.best_score_:.2f}")
 
 # %%
-# A request set with `set_{method}_request` still takes precedence
-# over the auto-requests.
-#
+# An explicit `set_{method}_request` still takes precedence over the auto-requests:
 # `set_fit_request(sample_weight=False)` opts out of receiving `sample_weight`.
-# `set_config(enable_metadata_auto_requests=False)` restores the previous behaviour:
-# passing metadata that was not explicitly requested raises `UnsetMetadataPassedError`.
+# `set_config(enable_metadata_auto_requests=False)` restores the previous behaviour,
+# where passing metadata that was not explicitly requested raises an
+# `UnsetMetadataPassedError`.
 #
+# A validation set for the early stopping of
 # :class:`~ensemble.HistGradientBoostingClassifier` and
-# :class:`~ensemble.HistGradientBoostingRegressor` now also auto-request a validation
-# set (`X_val`, `y_val`, and `sample_weight_val`) for early stopping. See
+# :class:`~ensemble.HistGradientBoostingRegressor` travels the same way: pass `X_val`
+# and `y_val` to `fit`. Inside a :class:`~pipeline.Pipeline`, `X_val` is now
+# transformed by the preceding steps by default (`transform_input=("X_val",)`). See
 # :ref:`sphx_glr_auto_examples_compose_plot_metadata_routing_validation_set.py`.
-# In a :class:`~pipeline.Pipeline`, the default of `transform_input` changed to
-# `("X_val",)`, so that a validation set passed to `fit` is always transformed by the
-# preceding steps alongside `X`.
 #
-# For more information about this new feature, see
-# :ref:`auto-requested metadata <metadata_routing_auto_request_user>`.
-#
-# Estimators outside scikit-learn do not follow this policy unless they implement it
-# themselves. For information on the developer API we provide for that purpose, see
-# :ref:`metadata_routing_auto_request`.
+# For more details, see :ref:`auto-requested metadata
+# <metadata_routing_auto_request_user>`. Third-party estimators do not auto-request
+# metadata unless they implement it; see :ref:`metadata_routing_auto_request`.
 
 # %%
 # Performance update
