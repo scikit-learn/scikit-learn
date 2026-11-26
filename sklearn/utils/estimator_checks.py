@@ -1141,11 +1141,6 @@ def _make_array_api_inputs(
         "str" or "str_list". If `None`, `_max_precision_float_dtype` of namespace and
         device of `X_ns_and_device` used.
     """
-    from sklearn.utils.estimator_checks import (
-        _enforce_estimator_tags_X,
-        _enforce_estimator_tags_y,
-    )
-
     X, y = make_classification(n_samples=30, n_features=10, random_state=42)
     if dtype_name is None:
         max_float_dtype = _max_precision_float_dtype(xp_X, device_X)
