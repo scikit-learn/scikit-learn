@@ -990,20 +990,36 @@ def test_categorical_forest_tree_export(Forest, min_samples_split, exporter, req
 
 
 @pytest.mark.parametrize("n_left", [2, 3, 4])
-def test_categorical_plot_category_limit(pyplot, n_left):
+@pytest.mark.parametrize("max_categories", [1, 3, 5, None])
+@pytest.mark.parametrize("exporter", [export_graphviz, plot_tree])
+def test_categorical_plot_category_limit(pyplot, n_left, max_categories, exporter):
     labels = [f"$cat{i}$" for i in range(n_left)] + ["other"]
     X = np.array(labels * 4, dtype=object).reshape(-1, 1)
     estimator = DecisionTreeClassifier(categorical_features=[0], max_depth=1).fit(
         X, ([0] * n_left + [1]) * 4
     )
-    _, ax = pyplot.subplots()
-    label = plot_tree(estimator, ax=ax)[0].get_text()
-    for i in range(min(n_left, 3)):
-        assert rf"'\$cat{i}\$'" in label
-    assert ("... (+1 more)" in label) == (n_left > 3)
-    assert "cat3" not in label
+    if exporter is plot_tree:
+        _, ax = pyplot.subplots()
+        label = plot_tree(estimator, ax=ax, max_categories=max_categories)[0].get_text()
+        ax.figure.canvas.draw()
+        pyplot.close(ax.figure)
+    else:
+        label = export_graphviz(estimator, max_categories=max_categories)
+    shown = n_left if max_categories is None else min(n_left, max_categories)
+    for i in range(n_left):
+        category = rf"'\$cat{i}\$'" if exporter is plot_tree else f"'$cat{i}$'"
+        assert (category in label) == (i < shown)
+    if shown < n_left:
+        assert f"... (+{n_left - shown} more)" in label
+    else:
+        assert "... (+" not in label
     assert "missing/unknown:" in label
-    if n_left > 3:
-        assert "cat3" in export_text(estimator)
-    ax.figure.canvas.draw()
-    pyplot.close(ax.figure)
+    assert all(repr(category) in export_text(estimator) for category in labels[:-1])
+
+
+@pytest.mark.parametrize("exporter", [export_graphviz, plot_tree])
+@pytest.mark.parametrize("max_categories", [0, -1, 1.5, "3"])
+def test_categorical_export_invalid_max_categories(exporter, max_categories):
+    estimator = DecisionTreeClassifier().fit([[0], [1]], [0, 1])
+    with pytest.raises(ValueError, match="max_categories"):
+        exporter(estimator, max_categories=max_categories)

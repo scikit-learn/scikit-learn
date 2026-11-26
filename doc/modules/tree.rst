@@ -232,8 +232,10 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
 
   Graphviz and plotted nodes show the left-category membership condition and
   a parenthesized ``missing/unknown: left`` or ``missing/unknown: right`` annotation.
-  Graphviz and plots show at most three categories per split, followed by
-  ``... (+N more)`` when categories are omitted. Text reports list all categories.
+  Graphviz and plots show at most three categories per split by default, followed
+  by ``... (+N more)`` when categories are omitted. Set ``max_categories`` to change
+  this limit, or to ``None`` to display all categories. Text reports always list
+  all categories.
   Category labels are not rounded.
 
   Individual trees from a random forest or extra-trees ensemble do not retain
