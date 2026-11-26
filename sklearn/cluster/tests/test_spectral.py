@@ -117,17 +117,15 @@ def test_precomputed_nearest_neighbors_filtering(global_random_seed):
     for additional_neighbors in [0, 10]:
         nn = NearestNeighbors(n_neighbors=n_neighbors + additional_neighbors).fit(X)
         graph = nn.kneighbors_graph(X, mode="distance")
-        labels = (
-            SpectralClustering(
-                random_state=global_random_seed,
-                n_clusters=2,
-                affinity="precomputed_nearest_neighbors",
-                n_neighbors=n_neighbors,
-            )
-            .fit(graph)
-            .labels_
+        sp = SpectralClustering(
+            random_state=global_random_seed,
+            n_clusters=2,
+            affinity="precomputed_nearest_neighbors",
+            n_neighbors=n_neighbors,
         )
-        results.append(labels)
+        with pytest.warns(UserWarning, match="Graph is not fully connected"):
+            sp.fit(graph)
+        results.append(sp.labels_)
 
     assert_array_equal(results[0], results[1])
 
