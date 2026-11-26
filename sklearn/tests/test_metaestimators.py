@@ -411,8 +411,6 @@ def _construct_pairwise_meta_estimator(Estimator, sub_estimator):
             else {"param_distributions": {"C": [1.0]}}
         )
         return Estimator(sub_estimator, **param_kw)
-    if "regressor" in sig:
-        return Estimator(regressor=sub_estimator)
     return Estimator(sub_estimator)
 
 
