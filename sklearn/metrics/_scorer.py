@@ -91,15 +91,16 @@ from sklearn.utils.validation import _check_response_method, _deprecate_position
 
 def _cached_call(cache, estimator, response_method, *args, **kwargs):
     """Call estimator with method and args and kwargs."""
-    if cache is not None and response_method in cache:
-        return cache[response_method]
+    cache_key = (response_method, kwargs.get("pos_label"))
+    if cache is not None and cache_key in cache:
+        return cache[cache_key]
 
     result, _ = _get_response_values(
         estimator, *args, response_method=response_method, **kwargs
     )
 
     if cache is not None:
-        cache[response_method] = result
+        cache[cache_key] = result
 
     return result
 
@@ -201,7 +202,10 @@ class _MultimetricScorer:
 
         counter = Counter(
             [
-                _check_response_method(estimator, scorer._response_method).__name__
+                (
+                    _check_response_method(estimator, scorer._response_method).__name__,
+                    None if is_regressor(estimator) else scorer._get_pos_label(),
+                )
                 for scorer in self._scorers.values()
                 if isinstance(scorer, _BaseScorer)
             ]

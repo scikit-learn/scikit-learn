@@ -890,6 +890,47 @@ def test_multimetric_scorer_sanity_check():
         assert_allclose(value, separate_scores[score_name])
 
 
+@pytest.mark.parametrize("response_method", ["predict_proba", "decision_function"])
+def test_multimetric_scorer_different_pos_labels(response_method):
+    """Check that `_MultimetricScorer` caches responses per
+    `(response_method, pos_label)`.
+    """
+    X, y = make_classification(n_samples=100, random_state=0)
+    clf = LogisticRegression().fit(X, y)
+
+    # Custom scorers sharing the same response_method with different pos_label values.
+    # Include a duplicate pos_label=0 scorer so `_use_cache` is True.
+    scorers = {
+        "ap_0": make_scorer(
+            average_precision_score, response_method=response_method, pos_label=0
+        ),
+        "ap_0_dup": make_scorer(
+            average_precision_score, response_method=response_method, pos_label=0
+        ),
+        "ap_1": make_scorer(
+            average_precision_score, response_method=response_method, pos_label=1
+        ),
+    }
+    multi_scorer = _MultimetricScorer(scorers=scorers)
+    assert multi_scorer._use_cache(clf)
+
+    result = multi_scorer(clf, X, y)
+    for name, scorer in scorers.items():
+        assert_allclose(result[name], scorer(clf, X, y))
+
+    # Built-in string scorers on {1, 2} labels: roc_auc uses pos_label=None (class 2)
+    # while average_precision defaults to pos_label=1 (class 1).
+    y_12 = y + 1
+    clf_12 = LogisticRegression().fit(X, y_12)
+    builtin_names = ["roc_auc", "neg_log_loss", "average_precision"]
+    builtin_scorer = check_scoring(clf_12, builtin_names)
+    builtin_result = builtin_scorer(clf_12, X, y_12)
+    for name in builtin_names:
+        assert_allclose(
+            builtin_result[name], check_scoring(clf_12, name)(clf_12, X, y_12)
+        )
+
+
 @pytest.mark.parametrize("raise_exc", [True, False])
 def test_multimetric_scorer_exception_handling(raise_exc):
     """Check that the calling of the `_MultimetricScorer` returns
