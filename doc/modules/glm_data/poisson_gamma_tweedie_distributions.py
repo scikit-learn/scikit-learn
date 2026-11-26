@@ -19,13 +19,12 @@ x = np.linspace(0.01, 10, 1000)
 
 # Tweedie
 for mu in mu_grid:
-    color = next(ax[1]._get_lines.prop_cycler)["color"]
-    ax[1].plot(
+    (line,) = ax[1].plot(
         x,
         tweedie.tweedie.pdf(x, mu=mu, p=1.5, phi=1.0),
         label=rf"$\mu$={mu:.1f}",
-        color=color,
     )
+    color = line.get_color()
     # point measure at 0 for 1<=p<2
     ax[1].plot(
         0,
