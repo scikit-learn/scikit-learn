@@ -78,7 +78,7 @@ print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 # :class:`~linear_model.GammaRegressor` and :class:`~linear_model.TweedieRegressor`
 # can now fit :math:`\ell_1` (Lasso) and Elastic-Net penalties with the new `l1_ratio`
 # parameter. This brings feature selection to models for counts and for positive,
-# skewed targets. On top, you no longer need to pick a solver yourself.
+# skewed targets. On top of that, you no longer need to pick a solver yourself.
 #
 # **Two new solvers.** `"newton-cd"` and `"newton-cd-gram"` support :math:`\ell_1` and
 # Elastic-Net penalties. They are available for the three models above as well as for
@@ -87,10 +87,21 @@ print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 # coordinate descent solver of :class:`~linear_model.ElasticNet`, and so benefit from
 # its large speed-ups over the last two releases.
 #
-# - Prefer `"newton-cd-gram"` when `n_samples > n_features`. It builds the full
-#   Hessian matrix of size `(n_features, n_features)`.
-# - Prefer `"newton-cd"` when `n_features > n_samples`. It avoids building that
-#   matrix.
+# - Prefer `"newton-cd-gram"` when `n_samples > n_features`. It builds the full Hessian
+#   matrix, which is square with `n_features` rows.
+# - Prefer `"newton-cd"` when `n_features > n_samples`. It never builds that matrix.
+#
+# For multiclass problems, replace `n_features` by `n_features * n_classes` in the
+# two points above (binary classification effectively has `n_classes = 1`).
+#
+# **Multiclass included.** Both solvers fit the full multinomial loss of
+# :class:`~linear_model.LogisticRegression`. Until now, `"saga"` was the only solver
+# for a multinomial model with an :math:`\ell_1` or Elastic-Net penalty. Getting
+# coordinate descent there was by far the hardest part of this work, because the
+# Hessian is not diagonal across classes. For instance, `"newton-cd"` uses an
+# analytical :math:`LDL^\top` decomposition of the per-sample Hessian (see
+# :doi:`Tanabe & Sagae (1992) <10.1111/J.2517-6161.1992.TB01875.X>`) to avoid
+# constructing the full Hessian matrix.
 #
 # **No need to choose a solver.** The new default `solver="auto"` always selects a
 # solver that works with the chosen `l1_ratio` (or `l1_ratios` in
@@ -101,7 +112,7 @@ print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 # stored in the new `solver_` attribute. The selection rule may change in future
 # versions without deprecation.
 #
-# **`alpha` instead of `C`.** The penalty strength of
+# **Penalty strength alpha instead of C.** The penalty strength of
 # :class:`~linear_model.LogisticRegression` is now set by `alpha = 1 / C`, as in
 # :class:`~linear_model.Ridge`, :class:`~linear_model.Lasso` and almost all other
 # penalized linear models: the larger `alpha`, the stronger the penalty. The default
@@ -111,7 +122,7 @@ print(f"Ordinal-encoded split accuracy:    {ordinal.score(X_codes, y):.2f}")
 # In the example below, the :math:`\ell_1` penalty sets the coefficients of the
 # features that do not influence the target to exactly zero, for a Poisson regression
 # on counts and for a logistic regression on whether the count is positive. Only
-# `l1_ratio` is set, the solver is selected automatically.
+# `l1_ratio` is set; the solver is selected automatically.
 import numpy as np
 
 from sklearn.linear_model import LogisticRegression, PoissonRegressor
