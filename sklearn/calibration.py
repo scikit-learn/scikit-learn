@@ -480,10 +480,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         # Set `classes_` using all `y`
         label_encoder_ = LabelEncoder().fit(y)
         self.classes_ = label_encoder_.classes_
-        if self.method == "temperature" and isinstance(y[0], str):
-            # for temperature scaling if `y` contains strings then encode it
-            # right here to avoid fitting LabelEncoder again within the
-            # `_fit_calibrator` function.
+        if self.method == "temperature":
+            # Temperature scaling needs `y` encoded as 0, ..., n_classes - 1,
+            # whether the labels are strings or not. Encode it right here to avoid
+            # fitting LabelEncoder again within the `_fit_calibrator` function.
             y = label_encoder_.transform(y=y)
 
         if _routing_enabled():
@@ -639,10 +639,15 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         check_is_fitted(self)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
-        xp, _, device = get_namespace_and_device(X)
-        mean_proba = xp.zeros((_num_samples(X), self.classes_.shape[0]), device=device)
+        xp, _ = get_namespace(X)
+        mean_proba = None
         for calibrated_classifier in self.calibrated_classifiers_:
             proba = calibrated_classifier.predict_proba(X)
+            if mean_proba is None:
+                # Follow the dtype of the calibrated probabilities rather than
+                # the default floating point dtype of `xp`, which is float32
+                # for PyTorch.
+                mean_proba = xp.zeros_like(proba)
             mean_proba += proba
 
         mean_proba /= len(self.calibrated_classifiers_)
