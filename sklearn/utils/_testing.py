@@ -1449,11 +1449,13 @@ def _array_api_for_tests(array_namespace, device_name=None, dtype_name=None):
 
 def _make_array_api_inputs(
     estimator,
-    X_ns_and_device,
-    other_ns_and_device,
-    dtype_name=None,
-    check_sample_weight=False,
+    xp_X,
+    device_X,
+    xp_other=None,
+    device_other=None,
     y_kind="numeric",
+    dtype_name=None,
+    sample_weight=False,
 ):
     """Generate data for testing Array API consistency of estimators.
 
@@ -1462,35 +1464,40 @@ def _make_array_api_inputs(
     estimator : estimator instance
         Estimator to be checked.
 
-    X_ns_and_device : NamespaceAndDevice
-        Namespace and device of reference array API input: `X` as "everything
+    xp_X : namespace
+        Namespace of reference array API input: `X` as "everything
         follows X".
 
-    other_ns_and_device : NamespaceAndDevice
-        Namespace and device of other array API inputs. Used for `y` (unless
+    device_X : device or None
+        Device of reference array API input: `X` as "everything
+        follows X".
+
+    xp_other : namespace, default=None
+        Namespace of other array API inputs. Used for `y` (unless
         `y_kind` is "str" or "str_list") and `sample_weight`.
+        If `None`, `xp_X` used.
+
+    device_other : device, default=None
+        Device of other array API inputs. Used for `y` (unless
+        `y_kind` is "str" or "str_list") and `sample_weight`.
+        If `xp_other=None`, `device_X` used.
+
+    y_kind : {"numeric", "str", "str_list"}, default="numeric"
+        Representation of `y`. `"numeric"` uses array in the requested
+        namespace, device and dtype. `"str"` uses a NumPy string array, and
+        `"str_list"` uses a Python list of strings.
 
     dtype_name : str, default=None
         The name of the data type to use for all arrays, except `y` when `y_kind` is
         "str" or "str_list". If `None`, `_max_precision_float_dtype` of namespace and
         device of `X_ns_and_device` used.
 
-    check_sample_weight : bool, default=False
-        Whether to include unit sample weights.
-
-    y_kind : {"numeric", "str", "str_list"}, default="numeric"
-        Representation of `y_xp`. `"numeric"` uses an array in the requested
-        namespace and device. `"str"` uses a NumPy string array, and
-        `"str_list"` uses a Python list of strings. The NumPy reference
-        target `y` is a NumPy string array for both string options.
+    sample_weight : bool, default=False
+        Whether to include unit sample weights in kwargs.
     """
     from sklearn.utils.estimator_checks import (
         _enforce_estimator_tags_X,
         _enforce_estimator_tags_y,
-    )
-
-    xp_X, device_X = _array_api_for_tests(
-        X_ns_and_device.xp, X_ns_and_device.device, dtype_name
     )
 
     X, y = make_classification(n_samples=30, n_features=10, random_state=42)
@@ -1504,9 +1511,9 @@ def _make_array_api_inputs(
 
     X_xp = xp_X.asarray(X, device=device_X)
 
-    xp_other, device_other = _array_api_for_tests(
-        other_ns_and_device.xp, other_ns_and_device.device
-    )
+    if xp_other is None:
+        xp_other = xp_X
+        device_other = device_X
 
     if y_kind == "numeric":
         y_xp = xp_other.asarray(y, device=device_other)
@@ -1515,7 +1522,7 @@ def _make_array_api_inputs(
         y_xp = y.tolist() if y_kind == "str_list" else y
 
     fit_kwargs, fit_kwargs_xp = {}, {}
-    if check_sample_weight and has_fit_parameter(estimator, "sample_weight"):
+    if sample_weight and has_fit_parameter(estimator, "sample_weight"):
         max_dtype_other = _max_precision_float_dtype(xp_other, device_other)
         dtype_other = "float32" if max_dtype_other == xp_other.float32 else "float64"
         fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=dtype_other)

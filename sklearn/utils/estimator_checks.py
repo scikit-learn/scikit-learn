@@ -358,7 +358,6 @@ def _yield_array_api_checks(estimator, only_numpy=False):
         yield partial(
             check_array_api_input,
             X_ns_and_device=X_ns_and_device,
-            other_ns_and_device=X_ns_and_device,
             expect_only_array_outputs=False,
         )
     else:
@@ -374,7 +373,6 @@ def _yield_array_api_checks(estimator, only_numpy=False):
             yield partial(
                 check_array_api_input,
                 X_ns_and_device=X_ns_and_device,
-                other_ns_and_device=X_ns_and_device,
                 dtype_name=dtype_name,
             )
         # 2. Mixed namespace/device inputs: X uses one namespace/device
@@ -1105,8 +1103,8 @@ def check_array_api_input(
     estimator_orig,
     X_ns_and_device,
     other_ns_and_device=None,
-    dtype_name=None,
     y_kind="numeric",
+    dtype_name=None,
     check_values=False,
     check_sample_weight=False,
     expect_only_array_outputs=True,
@@ -1135,10 +1133,9 @@ def check_array_api_input(
         `sample_weight`. If `None, `X_ns_and_device` is used.
 
     y_kind : {"numeric", "str", "str_list"}, default="numeric"
-        Representation of `y_xp`. `"numeric"` uses an array in the requested
-        namespace and device. `"str"` uses a NumPy string array, and
-        `"str_list"` uses a Python list of strings. The NumPy reference
-        target `y` is a NumPy string array for both string options.
+        Representation of `y`. `"numeric"` uses array in the requested
+        namespace, device and dtype. `"str"` uses a NumPy string array, and
+        `"str_list"` uses a Python list of strings.
 
     dtype_name : str, default=None
         The name of the data type to use for all arrays. If `None`,
@@ -1163,53 +1160,25 @@ def check_array_api_input(
         Name used to identify this check (e.g. in `expected_failed_checks`)
         when it is yielded as a partial. Not used by the check itself.
     """
-    X, y, X_xp, y_xp, fit_kwargs, fit_kwargs_xp = _make_array_api_inputs(
-        estimator_orig,
-        X_ns_and_device,
-        other_ns_and_device,
-        dtype_name=None,
-        check_sample_weight=False,
-        y_kind="numeric",
-    )
     xp_X, device_X = _array_api_for_tests(
         X_ns_and_device.xp, X_ns_and_device.device, dtype_name
     )
-
-    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
-    if dtype_name is None:
-        max_float_dtype = _max_precision_float_dtype(xp_X, device_X)
-        # Convert to string, so it is accepted by NumPy (`X` is NumPy array)
-        dtype_name = "float32" if max_float_dtype == xp_X.float32 else "float64"
-    X = X.astype(dtype_name, copy=False)
-
-    X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = _enforce_estimator_tags_y(estimator_orig, y)
-
-    X_xp = xp_X.asarray(X, device=device_X)
-
     if other_ns_and_device is None:
         other_ns_and_device = X_ns_and_device
+    xp_other, device_other = _array_api_for_tests(
+        other_ns_and_device.xp, other_ns_and_device.device
+    )
 
-    if other_ns_and_device == "string":
-        xp_other, device_other = _array_api_for_tests("numpy", "cpu")
-        # Convert binary `y` to string
-        y_xp = np.array(["a", "b"])[y]
-        y = y_xp
-    else:
-        xp_other, device_other = _array_api_for_tests(
-            other_ns_and_device.xp, other_ns_and_device.device
-        )
-        y_xp = xp_other.asarray(y, device=device_other)
-
-    fit_kwargs = {}
-    fit_kwargs_xp = {}
-    if check_sample_weight and has_fit_parameter(estimator_orig, "sample_weight"):
-        max_dtype_other = _max_precision_float_dtype(xp_other, device_other)
-        dtype_other = "float32" if max_dtype_other == xp_other.float32 else "float64"
-        fit_kwargs["sample_weight"] = np.ones(X.shape[0], dtype=dtype_other)
-        fit_kwargs_xp["sample_weight"] = xp_other.asarray(
-            fit_kwargs["sample_weight"], device=device_other
-        )
+    X, y, X_xp, y_xp, fit_kwargs, fit_kwargs_xp = _make_array_api_inputs(
+        estimator_orig,
+        xp_X,
+        device_X,
+        xp_other,
+        device_other,
+        y_kind=y_kind,
+        dtype_name=dtype_name,
+        sample_weight=check_sample_weight,
+    )
 
     est = clone(estimator_orig)
     set_random_state(est)
@@ -1427,18 +1396,15 @@ def check_array_api_same_namespace(
     """
     xp, device = _array_api_for_tests(array_namespace, device_name, "float64")
 
-    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
-    X = X.astype("float64", copy=False)
-
-    X = _enforce_estimator_tags_X(estimator_orig, X)
-    y = _enforce_estimator_tags_y(estimator_orig, y)
+    X, _, X_xp, y_xp, _, _ = _make_array_api_inputs(
+        estimator_orig,
+        xp,
+        device,
+        dtype_name="float64",
+    )
 
     est = clone(estimator_orig)
     set_random_state(est)
-
-    X_xp = xp.asarray(X, device=device)
-    y_xp = xp.asarray(y, device=device)
-
     with config_context(array_api_dispatch=True):
         est.fit(X_xp, y_xp)
 
