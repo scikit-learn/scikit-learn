@@ -4190,10 +4190,9 @@ def _enforce_estimator_tags_X(estimator, X, X_test=None, kernel=linear_kernel):
         if X_test is not None:
             X_test = X_test - X_test.min()  # pragma: no cover
     if get_tags(estimator).input_tags.categorical:
-        dtype = np.float64 if get_tags(estimator).input_tags.allow_nan else np.int32
-        X = np.round((X - X.min())).astype(dtype)
+        X = np.round((X - X.min()))
         if X_test is not None:
-            X_test = np.round((X_test - X_test.min())).astype(dtype)  # pragma: no cover
+            X_test = np.round((X_test - X_test.min()))  # pragma: no cover
 
     if estimator.__class__.__name__ == "SkewedChi2Sampler":
         # SkewedChi2Sampler requires X > -skewdness in transform
