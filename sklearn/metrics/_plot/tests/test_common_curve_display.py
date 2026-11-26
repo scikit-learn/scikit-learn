@@ -880,7 +880,7 @@ def test_display_estimator_name_deprecation(pyplot, Display, display_kwargs):
             DetCurveDisplay,
             {"fpr": np.array([0, 0.5, 1]), "fnr": np.array([1, 0.5, 0])},
         ),
-        # TODO(1.13): Remove
+        # TODO(1.12): Remove
         (
             CalibrationDisplay,
             {

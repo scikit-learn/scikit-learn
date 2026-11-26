@@ -1597,7 +1597,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         curve_kwargs : dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function.
 
-            .. versionadded:: 1.11
+            .. versionadded:: 1.10
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
@@ -1606,7 +1606,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
 
-            .. deprecated:: 1.11
+            .. deprecated:: 1.10
                 `**kwargs` is deprecated and will be removed in 1.13. Pass matplotlib
                 arguments to `curve_kwargs` as a dictionary instead.
 
@@ -1629,7 +1629,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             "",
             curve_kwargs=curve_kwargs,
             default_curve_kwargs={"marker": "s", "linestyle": "-"},
-            removed_version="1.13",
+            removed_version="1.12",
             **kwargs,
         )
 
@@ -1727,7 +1727,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         curve_kwargs : dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function.
 
-            .. versionadded:: 1.11
+            .. versionadded:: 1.10
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
@@ -1736,8 +1736,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
 
-            .. deprecated:: 1.11
-                `**kwargs` is deprecated and will be removed in 1.13. Pass matplotlib
+            .. deprecated:: 1.10
+                `**kwargs` is deprecated and will be removed in 1.12. Pass matplotlib
                 arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
@@ -1864,7 +1864,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         curve_kwargs : dict, default=None
             Keywords arguments to be passed to matplotlib's `plot` function.
 
-            .. versionadded:: 1.11
+            .. versionadded:: 1.10
 
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
@@ -1873,8 +1873,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         **kwargs : dict
             Additional keywords arguments passed to matplotlib `plot` function.
 
-            .. deprecated:: 1.11
-                `**kwargs` is deprecated and will be removed in 1.13. Pass matplotlib
+            .. deprecated:: 1.10
+                `**kwargs` is deprecated and will be removed in 1.12. Pass matplotlib
                 arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
