@@ -1103,7 +1103,6 @@ def _make_array_api_inputs(
     device_X,
     xp_other=None,
     device_other=None,
-    y_kind="numeric",
     dtype_name=None,
 ):
     """Generate data for testing Array API consistency of estimators.
@@ -1131,11 +1130,6 @@ def _make_array_api_inputs(
         `y_kind` is "str" or "str_list").
         If `xp_other=None`, `device_X` used.
 
-    y_kind : {"numeric", "str", "str_list"}, default="numeric"
-        Representation of `y`. `"numeric"` uses array in the requested
-        namespace, device and dtype. `"str"` uses a NumPy string array, and
-        `"str_list"` uses a Python list of strings.
-
     dtype_name : str, default=None
         The name of the data type to use for all arrays, except `y` when `y_kind` is
         "str" or "str_list". If `None`, `_max_precision_float_dtype` of namespace and
@@ -1156,11 +1150,7 @@ def _make_array_api_inputs(
         xp_other = xp_X
         device_other = device_X
 
-    if y_kind == "numeric":
-        y_xp = xp_other.asarray(y, device=device_other)
-    else:
-        y = np.array(["a", "b"])[y]
-        y_xp = y.tolist() if y_kind == "str_list" else y
+    y_xp = xp_other.asarray(y, device=device_other)
 
     return X, y, X_xp, y_xp
 
@@ -1224,10 +1214,8 @@ def check_array_api_input(
         when it is yielded as a partial. Not used by the check itself.
     """
     if other_ns_and_device in ("str", "str_list"):
-        y_kind = other_ns_and_device
         xp_other, device_other = _array_api_for_tests("numpy", "cpu")
     else:
-        y_kind = "numeric"
         if other_ns_and_device is None:
             other_ns_and_device = X_ns_and_device
         xp_other, device_other = _array_api_for_tests(
@@ -1243,9 +1231,11 @@ def check_array_api_input(
         device_X,
         xp_other,
         device_other,
-        y_kind=y_kind,
         dtype_name=dtype_name,
     )
+    if other_ns_and_device in ("str", "str_list"):
+        y = np.array(["a", "b"])[y]
+        y_xp = y.tolist() if other_ns_and_device == "str_list" else y
 
     fit_kwargs, fit_kwargs_xp = {}, {}
     if check_sample_weight and has_fit_parameter(estimator_orig, "sample_weight"):
@@ -1385,7 +1375,7 @@ def check_array_api_input(
             result_ns = get_namespace(result_xp)[0].__name__
         # `predict` would be string when `y` is string
         expected_ns = X_ns
-        if y_kind == "str" and method_name == "predict":
+        if other_ns_and_device == "str" and method_name == "predict":
             expected_ns = y_ns
         assert result_ns == expected_ns, (
             f"'{method}' output is in wrong namespace, expected {expected_ns}, "
@@ -1395,7 +1385,7 @@ def check_array_api_input(
         if expect_only_array_outputs:
             # `predict` would be string and on same device as `y`
             expected_xp = X_xp
-            if y_kind == "str" and method_name == "predict":
+            if other_ns_and_device == "str" and method_name == "predict":
                 expected_xp = y_xp
             with config_context(array_api_dispatch=True):
                 assert array_device(result_xp) == array_device(expected_xp)
