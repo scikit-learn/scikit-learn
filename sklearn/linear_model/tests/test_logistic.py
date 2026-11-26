@@ -3259,6 +3259,7 @@ def test_logistic_regression_callback_fitted_estimator(n_classes, fit_intercept)
 
 
 # TODO(callbacks): also test for other solvers when they get supported.
+@skip_callback_test_if_wasm
 def test_logistic_regression_fit_stopped_by_callback():
     """Test that a callback can interrupt the fit.
 
@@ -3272,9 +3273,14 @@ def test_logistic_regression_fit_stopped_by_callback():
         warnings.simplefilter("error", ConvergenceWarning)
         lr.fit(X, y)
     assert lr.n_iter_ == 1
+    # Every task that was begun is ended exactly once.
+    begins = [rec["context"] for rec in cb.record if rec["name"] == "on_fit_task_begin"]
+    ends = [rec["context"] for rec in cb.record if rec["name"] == "on_fit_task_end"]
+    assert sorted(map(id, begins)) == sorted(map(id, ends))
 
 
 # TODO(callbacks): also test for other solvers when they get supported.
+@skip_callback_test_if_wasm
 def test_logistic_regression_callback_max_iter_convergence_warning():
     """Test that a ConvergenceWarning is still raised when callbacks are set but
     don't stop the fit and max_iter is reached before convergence."""
@@ -3329,7 +3335,7 @@ def test_newton_cd_scipy_below_1_16_raises(csr_container):
 @pytest.mark.parametrize("est", [LogisticRegression, LogisticRegressionCV])
 def test_liblinear_deprecated(est):
     """Check that solver liblinear emits a deprecattion warning."""
-    X, y = make_classification(n_classes=2, n_samples=20)
+    X, y = make_classification(n_classes=2, n_samples=20, random_state=0)
     lr = est(solver="liblinear")
     msg = "The solver 'liblinear' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
@@ -3344,7 +3350,7 @@ def test_liblinear_deprecated(est):
 @pytest.mark.parametrize("dual", [True, False])
 def test_dual_deprecated(est, dual):
     """Check that setting dual to a value emits a deprecation warning."""
-    X, y = make_classification(n_classes=2, n_samples=20)
+    X, y = make_classification(n_classes=2, n_samples=20, random_state=0)
     lr = est(solver="liblinear", dual=dual)
     msg = "The parameter 'dual' was deprecated"
     with pytest.warns(FutureWarning, match=msg):
@@ -3358,7 +3364,7 @@ def test_dual_deprecated(est, dual):
 @pytest.mark.parametrize("intercept_scaling", [1.0, 2])
 def test_intercept_scaling_deprecated(est, intercept_scaling):
     """Check that setting intercept_scaling to a value emits a deprecation warning."""
-    X, y = make_classification(n_classes=2, n_samples=20)
+    X, y = make_classification(n_classes=2, n_samples=20, random_state=0)
     lr = est(intercept_scaling=intercept_scaling)
     msg = "The parameter 'intercept_scaling' was deprecated"
     with pytest.warns(FutureWarning, match=msg):

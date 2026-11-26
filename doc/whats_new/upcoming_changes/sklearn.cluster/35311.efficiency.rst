@@ -1,0 +1,4 @@
+- :class:`cluster.KMeans` and :func:`cluster.k_means` are now faster and use
+  half as much peak memory on dense data: the tolerance is computed without an
+  extra pass over `X`. :class:`cluster.BisectingKMeans` also skips this pass.
+  By :user:`Arthur Lacote <cakedev0>`.

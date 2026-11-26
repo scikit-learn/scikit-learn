@@ -172,7 +172,8 @@ class _LbfgsCallbackBridge:
 
     If a callback requests to stop the fit, ``__call__`` raises ``StopIteration``
     which makes ``scipy.optimize.minimize`` return early, and ``stopped_by_callback``
-    is set to True.
+    is set to True. In that case ``__call__`` has already ended the last subcontext
+    and ``close`` does nothing.
     """
 
     def __init__(
@@ -232,6 +233,8 @@ class _LbfgsCallbackBridge:
             reconstruction_attributes={"coef_": coef, "intercept_": intercept},
         ):
             self.stopped_by_callback = True
+            # The subcontext has been ended, there is nothing left for close.
+            self._iter_ctx = None
             raise StopIteration()
 
         # Begin hook for the next iteration's subcontext.
@@ -244,7 +247,12 @@ class _LbfgsCallbackBridge:
         that ``scipy.optimize.minimize`` did not actually run. It corresponds to
         an empty task so we don't forward anything to the ``on_fit_task_end``
         hooks.
+
+        If the fit was stopped by a callback, the last subcontext was already
+        ended by ``__call__`` and there is nothing to do.
         """
+        if self._iter_ctx is None:
+            return
         self._iter_ctx.call_on_fit_task_end(estimator=self._estimator)
 
 
@@ -1595,7 +1603,6 @@ class LogisticRegression(
         )
         xp, _, device = get_namespace_and_device(X)
         sample_weight = move_to(sample_weight, xp=xp, device=device)
-        xp_y, _ = get_namespace(y)
 
         X, y = validate_data(
             self,

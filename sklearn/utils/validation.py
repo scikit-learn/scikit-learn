@@ -30,7 +30,6 @@ from sklearn.utils._array_api import (
     get_namespace_and_device,
     move_to,
 )
-from sklearn.utils._dataframe import is_pandas_df_or_series
 from sklearn.utils._isfinite import FiniteStatus, cy_isfinite
 from sklearn.utils._tags import get_tags
 from sklearn.utils.fixes import _object_dtype_isnan, _preserve_dia_indices_dtype
@@ -898,8 +897,8 @@ def check_array(
         def is_pd_sparse(dtype):
             return isinstance(dtype, SparseDtype)
 
-        # Note that array may be a narhwals.DataFrame backed by a pandas.DataFrame.
-        df_pandas = array_df.to_native()
+        # Note that array may be a narwhals.DataFrame backed by a pandas.DataFrame.
+        array = df_pandas = array_df.to_native()
         if hasattr(df_pandas, "sparse") and df_pandas.dtypes.apply(is_pd_sparse).all():
             # All columns of the pandas.DataFrame are sparse. Note that the `sparse`
             # attribute is not a guaranteed detection for all sparse columns.
@@ -1135,22 +1134,9 @@ def check_array(
         if not getattr(flags, "writeable", True):
             # This situation can only happen when copy=False, the array is read-only and
             # a writeable output is requested. This is an ambiguous setting so we chose
-            # to always (except for one specific setting, see below) make a copy to
-            # ensure that the output is writeable, even if avoidable, to not overwrite
-            # the user's data by surprise.
-
-            if is_pandas_df_or_series(array_orig):
-                try:
-                    # In pandas >= 3, np.asarray(df), called earlier in check_array,
-                    # returns a read-only intermediate array. It can be made writeable
-                    # safely without copy because if the original DataFrame was backed
-                    # by a read-only array, trying to change the flag would raise an
-                    # error, in which case we make a copy.
-                    array_data.flags.writeable = True
-                except ValueError:
-                    array = array.copy(**copy_params)
-            else:
-                array = array.copy(**copy_params)
+            # to always make a copy to ensure that the output is writeable, even if
+            # avoidable, to not overwrite the user's data by surprise.
+            array = array.copy(**copy_params)
 
     return array
 
