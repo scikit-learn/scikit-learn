@@ -185,7 +185,7 @@ def test_graphical_lasso_iris_singular(method):
 def test_graphical_lasso_cv(global_random_seed):
     # Sample data from a sparse multivariate normal
     dim = 5
-    n_samples = 6
+    n_samples = 20
     random_state = np.random.RandomState(global_random_seed)
     prec = make_sparse_spd_matrix(dim, alpha=0.96, random_state=random_state)
     cov = linalg.inv(prec)

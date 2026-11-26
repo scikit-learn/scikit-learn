@@ -175,7 +175,13 @@ def _c_step(
     if np.isinf(det):
         results = location, covariance, det, support_indices, dist
     # Check convergence
-    if np.allclose(det, previous_det):
+    # If the support did not change, the estimates are mathematically the same and
+    # any difference of the determinants is numerical noise, e.g. for singular
+    # covariance matrices.
+    support_unchanged = np.isfinite(previous_det) and np.array_equal(
+        np.sort(support_indices), np.sort(previous_support_indices)
+    )
+    if np.allclose(det, previous_det) or support_unchanged:
         # c_step procedure converged
         if verbose:
             print(
