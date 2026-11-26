@@ -1056,6 +1056,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_array_api_mixed_inputs": (
             "PyTorch bug when asarray used on array-api-strict boolean array"
         ),
+        "check_array_api_cross_namespace_partial_fit": (
+            "partial_fit does not yet store its state as NumPy and move it to "
+            "the namespace and device of X"
+        ),
     },
     GradientBoostingClassifier: {
         # TODO: investigate failure see meta-issue #16298
@@ -1212,6 +1216,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
         ),
+        "check_array_api_cross_namespace_partial_fit": (
+            "partial_fit does not yet store its state as NumPy and move it to "
+            "the namespace and device of X"
+        ),
     },
     MiniBatchKMeans: {
         # TODO: replace by a statistical test, see meta-issue #16298
@@ -1230,6 +1238,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_array_api_cross_namespace_inference_mixed_dtypes": (
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_partial_fit": (
+            "partial_fit does not yet store its state as NumPy and move it to "
+            "the namespace and device of X"
         ),
     },
     NuSVC: {
@@ -1450,6 +1462,10 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_array_api_cross_namespace_inference_mixed_dtypes": (
             "inference methods do not yet move fitted attributes to the "
             "namespace and device of X"
+        ),
+        "check_array_api_cross_namespace_partial_fit": (
+            "partial_fit does not yet store its state as NumPy and move it to "
+            "the namespace and device of X"
         ),
     },
     SVC: {

@@ -433,6 +433,13 @@ def _yield_array_api_checks(estimator, only_numpy=False):
                 array_namespace=array_namespace,
                 device_name=device_name,
             )
+        # 6. `partial_fit` with batches from different namespaces. As for 4., one
+        # namespace is enough.
+        if hasattr(estimator, "partial_fit"):
+            yield partial(
+                check_array_api_cross_namespace_partial_fit,
+                array_namespace="array_api_strict",
+            )
 
 
 def _yield_all_checks(estimator, legacy: bool):
@@ -1718,6 +1725,67 @@ def check_array_api_cross_namespace_inference_mixed_dtypes(
                 # are off by ~0.07. `predict_proba` is compared instead.
                 continue
             assert_allclose(result, expected, rtol=rtol, atol=atol, err_msg=err_msg)
+
+
+def check_array_api_cross_namespace_partial_fit(
+    name, estimator_orig, array_namespace, device_name=None
+):
+    """Check that `partial_fit` accepts batches from different namespaces.
+
+    The state that `partial_fit` keeps between calls is stored as NumPy, and the
+    next call moves it to the namespace and device of its input. Calling
+    `partial_fit` with a NumPy batch and then a batch from `xp`, or the other way
+    around, gives the same fitted attributes as two NumPy batches.
+    """
+    xp, device = _array_api_for_tests(array_namespace, device_name, "float64")
+
+    X, y = make_classification(n_samples=30, n_features=10, random_state=42)
+    X = X.astype("float64", copy=False)
+    X = _enforce_estimator_tags_X(estimator_orig, X)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+    batches = [(X[:15], y[:15]), (X[15:], y[15:])]
+
+    def to_xp(array):
+        return xp.asarray(array, device=device)
+
+    def partial_fit(estimator, convert):
+        for i, (X_batch, y_batch) in enumerate(batches):
+            X_batch, y_batch = convert[i](X_batch), convert[i](y_batch)
+            kwargs = {}
+            if i == 0 and is_classifier(estimator):
+                # `classes` is only needed in the first call, and follows `y`.
+                kwargs["classes"] = convert[i](np.unique(y))
+            estimator.partial_fit(X_batch, y_batch, **kwargs)
+        return estimator
+
+    est_np = clone(estimator_orig)
+    set_random_state(est_np)
+    with config_context(array_api_dispatch=False):
+        partial_fit(est_np, convert=[np.asarray, np.asarray])
+    expected = {
+        key: value
+        for key, value in vars(est_np).items()
+        if isinstance(value, np.ndarray)
+    }
+
+    for convert, order in [
+        ([np.asarray, to_xp], f"a NumPy batch and then a {xp.__name__} batch"),
+        ([to_xp, np.asarray], f"a {xp.__name__} batch and then a NumPy batch"),
+    ]:
+        est = clone(estimator_orig)
+        set_random_state(est)
+        with config_context(array_api_dispatch=True):
+            partial_fit(est, convert=convert)
+
+        _check_pickle_without_array_libraries(est, to_xp(X))
+        for key, value in expected.items():
+            assert_allclose(
+                getattr(est, key),
+                value,
+                rtol=1e-6,
+                atol=_atol_for_type(X.dtype),
+                err_msg=f"{name}.{key} after partial_fit with {order}",
+            )
 
 
 def check_estimator_sparse_tag(name, estimator_orig):

@@ -222,7 +222,10 @@ tests. They verify that:
   checks call ``predict``, ``predict_proba``, ``predict_log_proba``,
   ``predict_joint_log_proba``, ``decision_function``, ``transform``,
   ``inverse_transform``, ``score`` and ``score_samples``, so estimator-specific
-  tests are only needed for other methods.
+  tests are only needed for other methods;
+- ``partial_fit`` accepts a batch from one namespace after a batch from another,
+  and gives the same fitted attributes as two NumPy batches
+  (``check_array_api_cross_namespace_partial_fit``).
 
 To run these checks you need to install
 `array-api-strict <https://data-apis.org/array-api-strict/>`__ in your

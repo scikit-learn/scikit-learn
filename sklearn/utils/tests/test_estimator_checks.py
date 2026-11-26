@@ -1818,6 +1818,11 @@ def test_estimator_with_set_output():
                     "this check is expected to fail because pandas and polars"
                     " are not compatible with the array api."
                 ),
+                # TODO: remove once StandardScaler stores its fitted attributes as
+                # NumPy, see https://github.com/betatim/scikit-learn/pull/4
+                "check_array_api_cross_namespace_partial_fit": (
+                    "StandardScaler.partial_fit does not yet store its state as NumPy"
+                ),
             },
         )
 
