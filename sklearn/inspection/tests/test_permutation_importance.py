@@ -567,11 +567,28 @@ def test_permutation_importance_max_samples_unused_feature_is_zero(max_samples):
         def score(self, X, y):
             return r2_score(y, self.predict(X))
 
+    est = OnlyFirst().fit(X, y)
     result = permutation_importance(
-        OnlyFirst(), X, y, n_repeats=5, max_samples=max_samples, random_state=0
+        est, X, y, n_repeats=5, max_samples=max_samples, random_state=0
     )
     assert_allclose(result.importances_mean[1:], 0.0, atol=0.0)
     assert_allclose(result.importances[1:], 0.0, atol=0.0)
+
+
+def test_permutation_importance_max_samples_unsupervised():
+    """Check that subsampling works when y is None."""
+
+    class DummyUnsupervised:
+        def fit(self, X, y=None):
+            return self
+
+        def score(self, X, y=None):
+            return float(np.mean(X[:, 0]))
+
+    X = np.ones((20, 2))
+    est = DummyUnsupervised().fit(X)
+    result = permutation_importance(est, X, None, max_samples=0.5, random_state=0)
+    assert result.importances.shape == (2, 5)
 
 
 def test_permutation_importance_array_function_not_called():
