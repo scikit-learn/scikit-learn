@@ -3416,10 +3416,10 @@ def test_newton_cholesky_array_api_binary(
     )
 
 
+@pytest.mark.parametrize("array_namespace", ["numpy", "torch"])
 @pytest.mark.parametrize("n_classes", [2, 3])
-def test_newton_cholesky_array_api_singular(n_classes):
+def test_newton_cholesky_array_api_singular(array_namespace, n_classes):
     """Check that an exactly singular Hessian triggers the L-BFGS fallback."""
-    xp, device = _array_api_for_tests("torch", "cpu", "float64")
     X, y = make_classification(
         n_samples=100,
         n_features=4,
@@ -3429,16 +3429,51 @@ def test_newton_cholesky_array_api_singular(n_classes):
         random_state=42,
     )
     X = np.column_stack((X, X[:, 0], np.zeros(len(y))))
-    X_xp = xp.asarray(X, device=device)
-    y_xp = xp.asarray(y, device=device)
+    _check_newton_cholesky_fallback(X, y, array_namespace)
+
+
+@pytest.mark.parametrize(
+    "array_namespace",
+    [
+        "numpy",
+        pytest.param(
+            "torch",
+            marks=pytest.mark.xfail(
+                raises=pytest.fail.Exception,
+                reason="The Array API solve can miss nearly singular Hessians.",
+            ),
+        ),
+    ],
+)
+def test_newton_cholesky_array_api_near_singular(array_namespace):
+    """Check the fallback when the design has two nearly collinear features."""
+    rng = np.random.default_rng(42)
+    X = rng.normal(size=(240, 4))
+    perturbation = rng.normal(size=X.shape[0])
+    y = (X[:, 0] + rng.normal(size=X.shape[0]) > 0).astype(int)
+    # Keep the design full rank, but make the Hessian ill-conditioned in float64.
+    X = np.column_stack((X, X[:, 0] + 3e-8 * perturbation))
+    _check_newton_cholesky_fallback(X, y, array_namespace)
+
+
+def _check_newton_cholesky_fallback(X, y, array_namespace):
+    array_api_dispatch = array_namespace != "numpy"
+    if array_api_dispatch:
+        xp, device = _array_api_for_tests(array_namespace, "cpu", "float64")
+        X_input, y_input = xp.asarray(X, device=device), xp.asarray(y, device=device)
+    else:
+        X_input, y_input = X, y
+
     reference = LogisticRegression(solver="lbfgs", alpha=0, tol=1e-8).fit(X, y)
-    with config_context(array_api_dispatch=True):
+    with config_context(array_api_dispatch=array_api_dispatch):
         with pytest.warns(LinAlgWarning, match="singular or very ill-conditioned"):
             fitted = LogisticRegression(
                 solver="newton-cholesky", alpha=0, tol=1e-8
-            ).fit(X_xp, y_xp)
-        probabilities = fitted.predict_proba(X_xp)
-    assert type(probabilities) is type(X_xp)
+            ).fit(X_input, y_input)
+        probabilities = fitted.predict_proba(X_input)
+
+    assert type(probabilities) is type(X_input)
+    assert array_device(probabilities) == array_device(X_input)
     assert_allclose(probabilities, reference.predict_proba(X), atol=2e-6, rtol=0)
 
 
