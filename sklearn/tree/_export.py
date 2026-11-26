@@ -33,14 +33,14 @@ from sklearn.utils.validation import check_array, check_is_fitted
 
 def _get_categorical_features(decision_tree):
     """Map original feature indices to known labels in their encoded order."""
-    if isinstance(decision_tree, _tree.Tree):
-        return {
-            feature: np.arange(count)
-            for feature, count in enumerate(decision_tree._n_categories)
-            if count
-        }
     if decision_tree.is_categorical_ is None:
         return {}
+    if decision_tree._categorical_encoder is None:
+        return {
+            feature: np.arange(count)
+            for feature, count in enumerate(decision_tree.tree_._n_categories)
+            if count
+        }
     return {
         feature: categories[: decision_tree.tree_._n_categories[feature]]
         for feature, categories in zip(

@@ -12,6 +12,12 @@ import pytest
 from numpy.random import RandomState
 
 from sklearn.base import is_classifier
+from sklearn.ensemble import (
+    ExtraTreesClassifier,
+    ExtraTreesRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+)
 from sklearn.exceptions import NotFittedError
 from sklearn.tree import (
     DecisionTreeClassifier,
@@ -931,3 +937,47 @@ def test_categorical_plot_literal_dollar_labels(pyplot):
     assert r"'\$b\$'" in label
     ax.figure.canvas.draw()
     pyplot.close(ax.figure)
+
+
+@pytest.mark.parametrize(
+    "Forest",
+    [
+        RandomForestClassifier,
+        RandomForestRegressor,
+        ExtraTreesClassifier,
+        ExtraTreesRegressor,
+    ],
+)
+@pytest.mark.parametrize("min_samples_split", [2, 100])
+@pytest.mark.parametrize("exporter", [export_text, export_graphviz, plot_tree])
+def test_categorical_forest_tree_export(Forest, min_samples_split, exporter, request):
+    X = np.array([[0, "a"], [0, "b"]] * 20, dtype=object)
+    estimator = (
+        Forest(
+            categorical_features=[1],
+            n_estimators=1,
+            max_depth=1,
+            min_samples_split=min_samples_split,
+            bootstrap=False,
+            random_state=0,
+        )
+        .fit(X, [0, 1] * 20)
+        .estimators_[0]
+    )
+    assert estimator._categorical_encoder is None
+    if exporter is plot_tree:
+        pyplot = request.getfixturevalue("pyplot")
+        _, ax = pyplot.subplots()
+        result = plot_tree(estimator, ax=ax)[0].get_text()
+        ax.figure.canvas.draw()
+        pyplot.close(ax.figure)
+    else:
+        result = exporter(estimator)
+    if min_samples_split == 2:
+        codes = np.array([[0, 0], [0, 1]], dtype=np.float32)
+        left = estimator.tree_.apply(codes) == estimator.tree_.children_left[0]
+        expected = "{" + ", ".join(str(i) for i in np.flatnonzero(left)) + "}"
+        assert f"in {expected}" in result
+    else:
+        assert estimator.tree_.node_count == 1
+        assert " in {" not in result

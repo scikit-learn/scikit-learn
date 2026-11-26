@@ -231,9 +231,13 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       <BLANKLINE>
 
   Graphviz and plotted nodes show the left-category membership condition and
-  a separate ``missing/unknown: left`` or ``missing/unknown: right`` annotation.
+  a parenthesized ``missing/unknown: left`` or ``missing/unknown: right`` annotation.
   Category labels are not rounded. Large categorical splits can produce long
   labels, including when the tree uses random categorical splits.
+
+  Individual trees from a random forest or extra-trees ensemble do not retain
+  the category encoder. Their exports show encoded integer category IDs rather
+  than the original labels.
 
 .. rubric:: Examples
 
