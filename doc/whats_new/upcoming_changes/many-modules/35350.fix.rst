@@ -1,0 +1,4 @@
+- :meth:`multioutput.MultiOutputRegressor.partial_fit` and
+  :meth:`neural_network.BernoulliRBM.partial_fit` now return `self`, as their
+  docstrings state, instead of `None`.
+  By :user:`lau0708`.
