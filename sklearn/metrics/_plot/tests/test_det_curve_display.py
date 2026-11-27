@@ -130,8 +130,10 @@ def test_det_curve_display_from_cv_results(pyplot, data_binary):
             drop_intermediate=False,
             pos_label="c",
         )
-        assert_allclose(fpr, expected_fpr)
-        assert_allclose(fnr, expected_fnr)
+        # `plot` stores the rates clipped to [eps, 1 - eps]
+        eps = np.finfo(expected_fpr.dtype).eps
+        assert_allclose(fpr, expected_fpr.clip(eps, 1 - eps))
+        assert_allclose(fnr, expected_fnr.clip(eps, 1 - eps))
 
     assert display.pos_label == "c"
     assert [line.get_label() for line in display.line_] == [
@@ -140,6 +142,17 @@ def test_det_curve_display_from_cv_results(pyplot, data_binary):
         "_child2",
     ]
     assert display.line_[0].get_linestyle() == "--"
+
+
+def test_det_curve_display_clips_fpr_fnr(pyplot):
+    """Check `plot` stores the clipped `fpr` and `fnr` it draws."""
+    display = DetCurveDisplay(
+        fpr=np.array([0.0, 0.5, 1.0]), fnr=np.array([1.0, 0.5, 0.0])
+    ).plot()
+
+    eps = np.finfo(np.float64).eps
+    assert_allclose(display.fpr, [eps, 0.5, 1 - eps])
+    assert_allclose(display.fnr, [1 - eps, 0.5, eps])
 
 
 @pytest.mark.parametrize(

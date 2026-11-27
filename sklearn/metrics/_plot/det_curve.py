@@ -629,13 +629,22 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         # sp.stats.norm.ppf(0.0) = -np.inf
         # sp.stats.norm.ppf(1.0) = np.inf
         # We therefore clip to eps and 1 - eps to not provide infinity to matplotlib.
+        fpr = [
+            np.clip(f, np.finfo(f.dtype).eps, 1 - np.finfo(f.dtype).eps) for f in fpr
+        ]
+        fnr = [
+            np.clip(f, np.finfo(f.dtype).eps, 1 - np.finfo(f.dtype).eps) for f in fnr
+        ]
+        single_curve = not isinstance(self.fpr, list)
+        self.fpr = fpr[0] if single_curve else fpr
+        self.fnr = fnr[0] if single_curve else fnr
+
         self.line_ = []
         for fpr_curve, fnr_curve, line_kw in zip(fpr, fnr, curve_kwargs):
-            eps = np.finfo(fpr_curve.dtype).eps
             self.line_.extend(
                 self.ax_.plot(
-                    sp.stats.norm.ppf(np.clip(fpr_curve, eps, 1 - eps)),
-                    sp.stats.norm.ppf(np.clip(fnr_curve, eps, 1 - eps)),
+                    sp.stats.norm.ppf(fpr_curve),
+                    sp.stats.norm.ppf(fnr_curve),
                     **line_kw,
                 )
             )
