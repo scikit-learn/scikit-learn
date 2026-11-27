@@ -103,6 +103,18 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.1
 
+    handle_missing : {'error', 'zeros'}, default='error'
+        Specifies the way missing values are handled.
+
+        - `'error'` : Raise a ValueError if `np.nan` values are present during
+          :meth:`fit` or :meth:`transform`.
+        - `'zeros'` : Ignore `np.nan` values when computing bin edges in
+          :meth:`fit`. During :meth:`transform`, `np.nan` values are encoded as
+          all zeros when `encode` is `'onehot'` or `'onehot-dense'`, and
+          preserved as `np.nan` when `encode='ordinal'`.
+
+        .. versionadded:: 1.10
+
     Attributes
     ----------
     bin_edges_ : ndarray of ndarray of shape (n_features,)
@@ -214,6 +226,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         "dtype": [Options(type, {np.float64, np.float32}), None],
         "subsample": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
+        "handle_missing": [StrOptions({"error", "zeros"})],
     }
 
     def __init__(
@@ -226,6 +239,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         dtype=None,
         subsample=200_000,
         random_state=None,
+        handle_missing="error",
     ):
         self.n_bins = n_bins
         self.encode = encode
@@ -234,6 +248,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.dtype = dtype
         self.subsample = subsample
         self.random_state = random_state
+        self.handle_missing = handle_missing
 
     @_fit_context(prefer_skip_nested_validation=True)
     def fit(self, X, y=None, sample_weight=None):
@@ -262,7 +277,22 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = validate_data(self, X, dtype="numeric")
+        try:
+            X = validate_data(
+                self,
+                X,
+                dtype="numeric",
+                ensure_all_finite=(self.handle_missing != "zeros"),
+            )
+        except ValueError as e:
+            if "Input X contains NaN." in str(e) and self.handle_missing == "error":
+                raise ValueError(
+                    "Input X contains NaN values and `KBinsDiscretizer` is configured "
+                    "to error in this case (handle_missing='error'). To avoid this "
+                    "error, set handle_missing='zeros' or ensure no missing values "
+                    "in X."
+                ) from e
+            raise
 
         if self.dtype in (np.float64, np.float32):
             output_dtype = self.dtype
@@ -318,14 +348,24 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             # "uniform" and "kmeans" strategies.
             nnz_weight_mask = sample_weight != 0
         else:
-            # Otherwise, all samples are used. Use a slice to avoid creating a
-            # new array.
-            nnz_weight_mask = slice(None)
+            # Otherwise, all samples are used.
+            nnz_weight_mask = np.ones(X.shape[0], dtype=bool)
 
         for jj in range(n_features):
             column = X[:, jj]
-            col_min = column[nnz_weight_mask].min()
-            col_max = column[nnz_weight_mask].max()
+            valid_mask = ~np.isnan(column)
+            fit_mask = valid_mask & nnz_weight_mask
+
+            if not np.any(fit_mask):
+                warnings.warn(
+                    f"Feature {jj} has only missing values and will be replaced with 0."
+                )
+                n_bins[jj] = 1
+                bin_edges[jj] = np.array([-np.inf, np.inf])
+                continue
+
+            col_min = column[fit_mask].min()
+            col_max = column[fit_mask].max()
 
             if col_min == col_max:
                 warnings.warn(
@@ -334,6 +374,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 n_bins[jj] = 1
                 bin_edges[jj] = np.array([-np.inf, np.inf])
                 continue
+
+            col_valid = column[valid_mask]
+            sw_valid = None if sample_weight is None else sample_weight[valid_mask]
 
             if self.strategy == "uniform":
                 bin_edges[jj] = np.linspace(col_min, col_max, n_bins[jj] + 1)
@@ -345,12 +388,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 # version. So we keep it version independent in that case by
                 # using an empty param dict.
                 percentile_kwargs = {}
-                if quantile_method != "linear" and sample_weight is None:
+                if quantile_method != "linear" and sw_valid is None:
                     percentile_kwargs["method"] = quantile_method
 
-                if sample_weight is None:
+                if sw_valid is None:
                     bin_edges[jj] = np.asarray(
-                        np.percentile(column, percentile_levels, **percentile_kwargs),
+                        np.percentile(
+                            col_valid, percentile_levels, **percentile_kwargs
+                        ),
                         dtype=np.float64,
                     )
                 else:
@@ -358,7 +403,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         True if quantile_method == "averaged_inverted_cdf" else False
                     )
                     bin_edges[jj] = _weighted_percentile(
-                        column, sample_weight, percentile_levels, average=average
+                        col_valid, sw_valid, percentile_levels, average=average
                     )
             elif self.strategy == "kmeans":
                 from sklearn.cluster import KMeans  # fixes import loops
@@ -370,7 +415,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 # 1D k-means procedure
                 km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)
                 centers = km.fit(
-                    column[:, None], sample_weight=sample_weight
+                    col_valid[:, None], sample_weight=sw_valid
                 ).cluster_centers_[:, 0]
                 # Must sort, centers may be unsorted even with sorted init
                 centers.sort()
@@ -397,6 +442,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 categories=[np.arange(i) for i in self.n_bins_],
                 sparse_output=self.encode == "onehot",
                 dtype=output_dtype,
+                handle_unknown="ignore" if self.handle_missing == "zeros" else "error",
             )
             # Fit the OneHotEncoder with toy datasets
             # so that it's ready for use after the KBinsDiscretizer is fitted
@@ -448,11 +494,22 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # check input and attribute dtypes
         dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
-        Xt = validate_data(self, X, copy=True, dtype=dtype, reset=False)
+        Xt = validate_data(
+            self,
+            X,
+            copy=True,
+            dtype=dtype,
+            reset=False,
+            ensure_all_finite=(self.handle_missing != "zeros"),
+        )
 
         bin_edges = self.bin_edges_
+        missing_fill = np.nan if self.encode == "ordinal" else -1
         for jj in range(Xt.shape[1]):
+            nan_mask = np.isnan(Xt[:, jj])
             Xt[:, jj] = np.searchsorted(bin_edges[jj][1:-1], Xt[:, jj], side="right")
+            if np.any(nan_mask):
+                Xt[nan_mask, jj] = missing_fill
 
         if self.encode == "ordinal":
             return Xt
@@ -491,7 +548,12 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if "onehot" in self.encode:
             X = self._encoder.inverse_transform(X)
 
-        Xinv = check_array(X, copy=True, dtype=(np.float64, np.float32))
+        Xinv = check_array(
+            X,
+            copy=True,
+            dtype=(np.float64, np.float32),
+            ensure_all_finite=(self.handle_missing != "zeros"),
+        )
         n_features = self.n_bins_.shape[0]
         if Xinv.shape[1] != n_features:
             raise ValueError(
@@ -501,9 +563,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             )
 
         for jj in range(n_features):
+            nan_mask = np.isnan(Xinv[:, jj])
+            if np.all(nan_mask):
+                continue
+            nan_mask = np.isnan(Xinv[:, jj])
             bin_edges = self.bin_edges_[jj]
             bin_centers = (bin_edges[1:] + bin_edges[:-1]) * 0.5
-            Xinv[:, jj] = bin_centers[(Xinv[:, jj]).astype(np.int64)]
+            Xinv[~nan_mask, jj] = bin_centers[Xinv[~nan_mask, jj].astype(np.int64)]
 
         return Xinv
 
@@ -534,3 +600,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         # ordinal encoding
         return input_features
+
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        tags.input_tags.allow_nan = self.handle_missing == "zeros"
+        return tags

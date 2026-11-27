@@ -339,6 +339,10 @@ INIT_PARAMS = {
     HuberRegressor: dict(max_iter=5),
     IncrementalPCA: dict(batch_size=10),
     IsolationForest: dict(n_estimators=5),
+    # KBinsDiscretizer supports NaN only with handle_missing="zeros", so we need
+    # this additional parameter set for the allow_nan_estimators Sphinx
+    # directive to detect it.
+    KBinsDiscretizer: [dict(), dict(handle_missing="zeros")],
     KMeans: dict(n_init=2, n_clusters=2, max_iter=5),
     KNeighborsClassifier: [dict(n_neighbors=2), dict(metric="precomputed")],
     KNeighborsRegressor: [dict(n_neighbors=2), dict(metric="precomputed")],
