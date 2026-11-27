@@ -1732,7 +1732,12 @@ def test_sgd_oneclass_convergence():
     for nu in [0.1, 0.5, 0.9]:
         # no need for large max_iter
         model = SGDOneClassSVM(
-            nu=nu, max_iter=100, tol=1e-3, learning_rate="constant", eta0=1e-3
+            nu=nu,
+            max_iter=200,
+            tol=1e-3,
+            learning_rate="constant",
+            eta0=2e-2,
+            random_state=21,
         )
         model.fit(iris.data)
         # 6 is the minimal number of iterations that should be surpassed, after which

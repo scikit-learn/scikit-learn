@@ -584,6 +584,38 @@ def test_temperature_scaling(n_classes, ensemble):
         assert_allclose(ts.beta_, 1.0, atol=1e-6, rtol=0)
 
 
+@pytest.mark.parametrize("labels", [[-1, 1], [1, 2], [1, 5, 7], [0, 2, 4]], ids=str)
+def test_temperature_scaling_numeric_labels(labels):
+    """Labels other than 0, ..., n_classes - 1 give the same calibration.
+
+    Temperature scaling uses the encoded labels as indices into the predicted
+    probabilities, so numeric labels have to be encoded like string labels.
+    """
+    X, y = make_classification(
+        n_samples=200,
+        n_classes=len(labels),
+        n_informative=3,
+        random_state=0,
+    )
+    y_relabeled = np.asarray(labels)[y]
+    params = dict(estimator=LogisticRegression(), method="temperature")
+
+    cal_clf = CalibratedClassifierCV(**params).fit(X, y)
+    cal_clf_relabeled = CalibratedClassifierCV(**params).fit(X, y_relabeled)
+
+    for calibrated, calibrated_relabeled in zip(
+        cal_clf.calibrated_classifiers_, cal_clf_relabeled.calibrated_classifiers_
+    ):
+        assert_allclose(
+            calibrated_relabeled.calibrators[0].beta_,
+            calibrated.calibrators[0].beta_,
+        )
+    assert_allclose(cal_clf_relabeled.predict_proba(X), cal_clf.predict_proba(X))
+    assert_array_equal(
+        cal_clf_relabeled.predict(X), np.asarray(labels)[cal_clf.predict(X)]
+    )
+
+
 def test_temperature_scaling_input_validation(global_dtype):
     # Check that _TemperatureScaling can handle 2d-array with only 1 feature
     X = np.arange(10).astype(global_dtype)
@@ -912,7 +944,7 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     lr = LogisticRegression().fit(X, y)
 
     viz = CalibrationDisplay.from_estimator(
-        lr, X, y, n_bins=n_bins, strategy=strategy, alpha=0.8
+        lr, X, y, n_bins=n_bins, strategy=strategy, curve_kwargs={"alpha": 0.8}
     )
 
     y_prob = lr.predict_proba(X)[:, 1]
@@ -1136,7 +1168,7 @@ def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
     X, y = iris_data_binary
 
     lr = LogisticRegression().fit(X, y)
-    viz = CalibrationDisplay.from_estimator(lr, X, y, **kwargs)
+    viz = CalibrationDisplay.from_estimator(lr, X, y, curve_kwargs=kwargs)
 
     assert viz.line_.get_color() == "red"
     assert viz.line_.get_linewidth() == 2
@@ -1509,6 +1541,7 @@ def test_temperature_scaling_array_api_compliance(
         )
         pred_xp = cal_clf_xp.predict(X_train_xp)
         assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
+        assert cal_clf_xp.predict_proba(X_train_xp).dtype == X_train_xp.dtype
 
 
 @pytest.mark.parametrize("ensemble", [False, True])

@@ -1184,7 +1184,7 @@ def check_array_api_input(
         Namespace and device of reference array API input: `X` as "everything
         follows X".
 
-    other_ns_and_device : NamedTuple, {"str", "str_list"} or None, default=None
+    other_ns_and_device : NamedTuple, {"str", "str_list"}, default=None
         Namespace and device of other array API inputs. Used for `y` and
         `sample_weight`. If `None`, `X_ns_and_device` is used. If "str" or
         "str_list", `y` is a NumPy string array or a Python list of strings
@@ -1213,6 +1213,9 @@ def check_array_api_input(
         Name used to identify this check (e.g. in `expected_failed_checks`)
         when it is yielded as a partial. Not used by the check itself.
     """
+    xp_X, device_X = _array_api_for_tests(
+        X_ns_and_device.xp, X_ns_and_device.device, dtype_name
+    )
     if other_ns_and_device in ("str", "str_list"):
         xp_other, device_other = _array_api_for_tests("numpy", "cpu")
     else:
@@ -1222,9 +1225,6 @@ def check_array_api_input(
             other_ns_and_device.xp, other_ns_and_device.device
         )
 
-    xp_X, device_X = _array_api_for_tests(
-        X_ns_and_device.xp, X_ns_and_device.device, dtype_name
-    )
     X, y, X_xp, y_xp = _make_array_api_inputs(
         estimator_orig,
         xp_X,
@@ -4239,10 +4239,9 @@ def _enforce_estimator_tags_X(estimator, X, X_test=None, kernel=linear_kernel):
         if X_test is not None:
             X_test = X_test - X_test.min()  # pragma: no cover
     if get_tags(estimator).input_tags.categorical:
-        dtype = np.float64 if get_tags(estimator).input_tags.allow_nan else np.int32
-        X = np.round((X - X.min())).astype(dtype)
+        X = np.round((X - X.min()))
         if X_test is not None:
-            X_test = np.round((X_test - X_test.min())).astype(dtype)  # pragma: no cover
+            X_test = np.round((X_test - X_test.min()))  # pragma: no cover
 
     if estimator.__class__.__name__ == "SkewedChi2Sampler":
         # SkewedChi2Sampler requires X > -skewdness in transform
