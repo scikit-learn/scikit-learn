@@ -216,7 +216,12 @@ class TreeGrower:
         Number of OpenMP threads to use. `_openmp_effective_n_threads` is called
         to determine the effective number of threads use, which takes cgroups CPU
         quotes into account. See the docstring of `_openmp_effective_n_threads`
-        for details.
+        for details. HGB's `fit` passes a thread count already sized down to the
+        data, see `_get_heuristic_optimal_n_threads`.
+    active_wait : bool, default=False
+        Whether idle OpenMP threads spin rather than sleep while waiting for
+        work (see `_openmp_uses_active_wait`), which makes multi-threading
+        worth it on smaller workloads.
 
     Attributes
     ----------
@@ -262,6 +267,7 @@ class TreeGrower:
         rng=np.random.default_rng(),
         shrinkage=1.0,
         n_threads=None,
+        active_wait=False,
         partition_buffer=None,
         left_indices_buffer=None,
         right_indices_buffer=None,
@@ -332,6 +338,7 @@ class TreeGrower:
             feature_fraction_per_split=feature_fraction_per_split,
             rng=rng,
             n_threads=n_threads,
+            active_wait=active_wait,
             partition_buffer=partition_buffer,
             left_indices_buffer=left_indices_buffer,
             right_indices_buffer=right_indices_buffer,

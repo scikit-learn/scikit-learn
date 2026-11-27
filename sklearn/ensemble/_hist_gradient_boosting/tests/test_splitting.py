@@ -325,6 +325,65 @@ def test_split_indices():
     assert samples_right.shape[0] == si_root.n_samples_right
 
 
+@pytest.mark.parametrize("is_categorical", [False, True])
+def test_split_indices_single_threaded_matches_multi_threaded(is_categorical):
+    # split_indices partitions the samples serially when there are too few of
+    # them per thread: both paths should give the same children, in the same
+    # order, for a node in the middle of the partition and for the root.
+    rng = np.random.RandomState(0)
+    n_samples, n_features, n_bins = 10_000, 3, 32
+    missing_values_bin_idx = n_bins - 1
+
+    X_binned = rng.randint(0, n_bins, size=(n_samples, n_features))
+    X_binned = np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
+    all_gradients = np.where(X_binned[:, 0] < n_bins // 2, -1.0, 1.0)
+    all_gradients = (all_gradients + 0.1 * rng.randn(n_samples)).astype(G_H_DTYPE)
+    all_hessians = np.ones(1, dtype=G_H_DTYPE)
+    sample_indices = np.arange(n_samples, dtype=np.uint32)
+    builder = HistogramBuilder(X_binned, n_bins, all_gradients, all_hessians, True, 1)
+    histograms = builder.compute_histograms_brute(sample_indices)
+
+    def make_splitter(n_threads, active_wait):
+        return Splitter(
+            X_binned,
+            n_bins_non_missing=np.full(n_features, n_bins - 1, dtype=np.uint32),
+            missing_values_bin_idx=missing_values_bin_idx,
+            has_missing_values=np.ones(n_features, dtype=np.uint8),
+            is_categorical=np.full(n_features, is_categorical, dtype=np.uint8),
+            monotonic_cst=np.zeros(n_features, dtype=np.int8),
+            l2_regularization=0.0,
+            min_hessian_to_split=1e-3,
+            min_samples_leaf=1,
+            min_gain_to_split=0.0,
+            hessians_are_constant=True,
+            n_threads=n_threads,
+            active_wait=active_wait,
+        )
+
+    # With 4 threads and active wait, 10_000 samples are enough to use threads.
+    single_threaded = make_splitter(n_threads=1, active_wait=False)
+    multi_threaded = make_splitter(n_threads=4, active_wait=True)
+
+    sum_gradients = all_gradients.sum()
+    value = compute_node_value(sum_gradients, n_samples, -np.inf, np.inf, 0.0)
+    split_info = single_threaded.find_node_split(
+        n_samples, histograms, sum_gradients, n_samples, value
+    )
+    assert split_info.gain > 0
+    assert bool(split_info.is_categorical) == is_categorical
+
+    for start, stop in [(1_000, 9_000), (0, n_samples)]:
+        results = [
+            splitter.split_indices(split_info, splitter.partition[start:stop])
+            for splitter in (single_threaded, multi_threaded)
+        ]
+        assert results[0][2] == results[1][2]
+        assert 0 < results[0][2] < stop - start
+        assert_array_equal(results[0][0], results[1][0])
+        assert_array_equal(results[0][1], results[1][1])
+        assert_array_equal(single_threaded.partition, multi_threaded.partition)
+
+
 def test_min_gain_to_split():
     # Try to split a pure node (all gradients are equal, same for hessians)
     # with min_gain_to_split = 0 and make sure that the node is not split (best
