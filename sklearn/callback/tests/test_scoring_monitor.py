@@ -793,3 +793,34 @@ def test_val_scorer_only_X():
     scores_alias = [row["score"] for row in cb.get_logs().val_scores]
 
     assert scores_alias == scores
+
+
+@config_context(enable_metadata_routing=True)
+def test_routing_built_once_per_run(monkeypatch):
+    """Check that the routing of the callback is not rebuilt at each hook call."""
+    from sklearn.callback import _scoring_monitor
+
+    n_calls = 0
+    get_routing = _scoring_monitor.get_routing_for_object
+
+    def counting_get_routing(obj):
+        nonlocal n_calls
+        n_calls += 1
+        return get_routing(obj)
+
+    monkeypatch.setattr(
+        _scoring_monitor, "get_routing_for_object", counting_get_routing
+    )
+
+    X, y = make_regression(n_samples=20, n_features=2, random_state=0)
+    sample_weight = np.ones(X.shape[0])
+    cb = ScoringMonitor(scoring_train="r2")
+    est = MaxIterEstimator(max_iter=5).set_callbacks(cb)
+
+    est.fit(X, y, sample_weight=sample_weight)
+    assert n_calls == 1
+    assert len(cb.get_logs().train_scores) == 6
+    # The cache is released at the end of the run, and the next run builds it again.
+    assert not cb._routing_cache
+    est.fit(X, y, sample_weight=sample_weight)
+    assert n_calls == 2

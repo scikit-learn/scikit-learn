@@ -6,7 +6,7 @@ from numbers import Integral
 from queue import Queue
 from threading import Thread
 
-from sklearn.callback import AutoPropagatedCallbackMixin, FitCallback
+from sklearn.callback._base import AutoPropagatedCallbackMixin, FitCallback
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import Channel
 from sklearn.utils._optional_dependencies import check_rich_support

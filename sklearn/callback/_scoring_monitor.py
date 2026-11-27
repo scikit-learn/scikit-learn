@@ -8,7 +8,7 @@ import warnings
 from collections import defaultdict
 from dataclasses import dataclass
 
-from sklearn.callback import FitCallback
+from sklearn.callback._base import FitCallback
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import Channel
 from sklearn.utils._metadata_requests import (
@@ -20,6 +20,7 @@ from sklearn.utils._param_validation import StrOptions, validate_params
 from sklearn.utils.metadata_routing import (
     MetadataRouter,
     MethodMapping,
+    get_routing_for_object,
     process_routing,
 )
 
@@ -202,6 +203,11 @@ class ScoringMonitor(FitCallback):
 
         self._log = []
 
+        # Routing of this callback, by run (root task uuid). Building it is costly and
+        # it does not change during a run, hence it is built once per run, on the first
+        # hook call that needs it, and released in `teardown`.
+        self._routing_cache = {}
+
         # Opened eagerly so that a worker that receives a pickled copy of this callback
         # can send data to the main process. `self._log.append` is the message consumer
         # that grows the log in the main process.
@@ -236,6 +242,25 @@ class ScoringMonitor(FitCallback):
         # since this callback keeps logging across fits, but the connection a worker
         # copy holds is released here rather than whenever that copy is collected.
         self._channel.disconnect()
+        # If several sub-estimators of a same run share this callback, the entry may
+        # already be gone. The routing is then simply rebuilt by the remaining ones.
+        self._routing_cache.pop(context.root_uuid, None)
+
+    def _route_score_params(self, root_uuid, score_params):
+        """Route the params received by `on_fit_task_end` to the scorers.
+
+        Equivalent to `process_routing(self, "on_fit_task_end", **score_params)`,
+        except that the routing is built once per run instead of at each call.
+        """
+        if not score_params:
+            # Nothing to route: `process_routing` returns an empty routing at no cost.
+            return process_routing(self, "on_fit_task_end")
+
+        routing = self._routing_cache.get(root_uuid)
+        if routing is None:
+            routing = self._routing_cache[root_uuid] = get_routing_for_object(self)
+        routing.validate_metadata(params=score_params, method="on_fit_task_end")
+        return routing.route_params(params=score_params, caller="on_fit_task_end")
 
     def setup(self, estimator, context):
         if self._scorers["val"] != "no_val_score" and not _routing_enabled():
@@ -317,7 +342,7 @@ class ScoringMonitor(FitCallback):
             for ctx in context_path
         ]
 
-        routed_params = process_routing(self, "on_fit_task_end", **score_params)
+        routed_params = self._route_score_params(run_id, score_params)
         for dataset in ("train", "val"):
             data_X, data_y = (X, y) if dataset == "train" else (X_val, y_val)
             if self._scorers[dataset] == f"no_{dataset}_score" or data_X is None:
@@ -340,7 +365,8 @@ class ScoringMonitor(FitCallback):
         # `_log` is grown by a background thread, which can run while this callback is
         # being pickled by another thread, e.g. loky's queue feeder when a task is
         # dispatched to a worker. The pickler must therefore never walk the live list.
-        return {**self.__dict__, "_log": list(self._log)}
+        # The routing cache is not shipped: it is rebuilt on demand in the worker.
+        return {**self.__dict__, "_log": list(self._log), "_routing_cache": {}}
 
     def __setstate__(self, state):
         """Restore state, opening a fresh channel if the inherited one is unusable."""
