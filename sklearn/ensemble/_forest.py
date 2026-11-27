@@ -396,7 +396,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         # will raise an error if the underlying tree base estimator can't handle missing
         # values. Only the criterion is required to determine if the tree supports
         # missing values.
-        estimator = type(self.estimator)(criterion=self.criterion)
+        estimator = type(self.estimator)(**self._get_criterion_kwargs())
         missing_values_in_feature_mask = (
             estimator._compute_missing_values_in_feature_mask(
                 X, estimator_name=self.__class__.__name__
@@ -780,11 +780,23 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         return [sample_indices for sample_indices in self._get_estimators_indices()]
 
+    def _get_criterion_kwargs(self):
+        """Keyword arguments needed to construct an unfitted base estimator.
+
+        Only the ``criterion`` (and, when relevant, ``quantile``) are needed
+        to determine tree properties such as whether missing values are
+        supported, without fitting the estimator.
+        """
+        estimator_kwargs = {"criterion": self.criterion}
+        if self.criterion == "quantile":
+            estimator_kwargs["quantile"] = self.quantile
+        return estimator_kwargs
+
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
         # Only the criterion is required to determine if the tree supports
         # missing values
-        estimator = type(self.estimator)(criterion=self.criterion)
+        estimator = type(self.estimator)(**self._get_criterion_kwargs())
         tags.input_tags.allow_nan = get_tags(estimator).input_tags.allow_nan
         return tags
 
@@ -1710,20 +1722,25 @@ class RandomForestRegressor(ForestRegressor):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "quantile", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, and "poisson" which uses reduction in Poisson deviance to find splits,
-        also using the mean of each terminal node.
+        node, "quantile" which minimizes the pinball loss using the quantile of each
+        terminal node (controlled by ``quantile``), and "poisson" which uses reduction
+        in Poisson deviance to find splits, also using the mean of each terminal node.
 
         .. versionadded:: 1.0
            Poisson criterion.
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
+
+        .. versionadded:: 1.10
+           Quantile/Pinball loss criterion
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1871,6 +1888,20 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 1.4
 
+    quantile : float, default=0.5
+        The quantile to predict when ``criterion="quantile"``. It must be strictly
+        between 0 and 1.
+
+        As a rule of thumb, use ``min_samples_leaf >= 1 / min(quantile, 1 -
+        quantile)`` otherwise quantile estimates are likely to be biased.
+
+        Beyond that, calibration of the predicted quantile is sensitive to the
+        tree-growth parameters (``max_depth``, ``min_samples_leaf``, etc.),
+        especially for quantiles far from 0.5; see
+        :ref:`sphx_glr_auto_examples_ensemble_plot_quantile_regression_forest.py`
+        for a discussion and tune these by cross-validation on the pinball
+        loss for the target quantile level.
+
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
         (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
@@ -1893,7 +1924,8 @@ class RandomForestRegressor(ForestRegressor):
 
         Trees in the forest use the best split strategy, so categorical
         features are only supported for single-output regression.
-        Categorical features are not supported with `criterion="absolute_error"`.
+        Categorical features are not supported with `criterion="absolute_error"`
+        or `criterion="quantile"`.
 
         ``warm_start`` is not supported when categorical features are used.
 
@@ -2030,6 +2062,7 @@ class RandomForestRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        quantile=0.5,
         categorical_features=None,  # TODO(1.13): change default to "from_dtype"
     ):
         super().__init__(
@@ -2047,6 +2080,7 @@ class RandomForestRegressor(ForestRegressor):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "quantile",
                 "categorical_features",
             ),
             bootstrap=bootstrap,
@@ -2078,6 +2112,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.quantile = quantile
         self.categorical_features = categorical_features
 
 
@@ -2511,17 +2546,22 @@ class ExtraTreesRegressor(ForestRegressor):
     n_estimators : int, default=100
         The number of trees in the forest.
 
-    criterion : {"squared_error", "absolute_error", "poisson"}, default="squared_error"
+    criterion : {"squared_error", "absolute_error", "quantile", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
         variance reduction as feature selection criterion and minimizes the L2
         loss using the mean of each terminal node, "absolute_error" for the mean
         absolute error, which minimizes the L1 loss using the median of each terminal
-        node, and "poisson" which uses reduction in Poisson deviance to find splits,
-        also using the mean of each terminal node.
+        node, "quantile" which minimizes the pinball loss using the quantile of each
+        terminal node (controlled by ``quantile``), and "poisson" which uses reduction
+        in Poisson deviance to find splits, also using the mean of each terminal node.
 
         .. versionchanged:: 1.9
             Criterion `"friedman_mse"` was deprecated.
+
+        .. versionadded:: 1.10
+           Quantile/Pinball loss criterion
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -2673,6 +2713,20 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 1.4
 
+    quantile : float, default=0.5
+        The quantile to predict when ``criterion="quantile"``. It must be strictly
+        between 0 and 1.
+
+        As a rule of thumb, use ``min_samples_leaf >= 1 / min(quantile, 1 -
+        quantile)`` otherwise quantile estimates are likely to be biased.
+
+        Beyond that, calibration of the predicted quantile is sensitive to the
+        tree-growth parameters (``max_depth``, ``min_samples_leaf``, etc.),
+        especially for quantiles far from 0.5; see
+        :ref:`sphx_glr_auto_examples_ensemble_plot_quantile_regression_forest.py`
+        for a discussion and tune these by cross-validation on the pinball
+        loss for the target quantile level.
+
     categorical_features : array-like of {bool, int, str} of shape (n_features,) or \
         (n_categorical_features,), or "from_dtype", default=None
         Indicates which features are treated as categorical.
@@ -2695,7 +2749,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
         Trees in the forest use the random split strategy, including
         multi-output targets.
-        Categorical features are not supported with `criterion="absolute_error"`.
+        Categorical features are not supported with `criterion="absolute_error"`
+        or `criterion="quantile"`.
 
         ``warm_start`` is not supported when categorical features are used.
 
@@ -2816,6 +2871,7 @@ class ExtraTreesRegressor(ForestRegressor):
         ccp_alpha=0.0,
         max_samples=None,
         monotonic_cst=None,
+        quantile=0.5,
         categorical_features=None,  # TODO(1.13): change default to "from_dtype"
     ):
         super().__init__(
@@ -2833,6 +2889,7 @@ class ExtraTreesRegressor(ForestRegressor):
                 "random_state",
                 "ccp_alpha",
                 "monotonic_cst",
+                "quantile",
                 "categorical_features",
             ),
             bootstrap=bootstrap,
@@ -2864,6 +2921,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_impurity_decrease = min_impurity_decrease
         self.ccp_alpha = ccp_alpha
         self.monotonic_cst = monotonic_cst
+        self.quantile = quantile
         self.categorical_features = categorical_features
 
 
