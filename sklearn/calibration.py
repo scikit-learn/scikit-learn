@@ -572,7 +572,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
                 cv=cv,
                 method=method_name,
                 n_jobs=self.n_jobs,
-                params=routed_params.estimator.fit,
+                params=routed_params.estimator.fit | routed_params.splitter.split,
             )
             classes = self.classes_
             if (
