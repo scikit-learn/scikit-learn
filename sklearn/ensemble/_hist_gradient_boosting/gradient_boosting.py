@@ -28,6 +28,7 @@ from sklearn.base import (
     _fit_context,
     is_classifier,
 )
+from sklearn.callback import CallbackSupportMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble._hist_gradient_boosting._gradient_boosting import (
     _update_raw_predictions,
@@ -130,6 +131,7 @@ def _patch_raw_predict(estimator, raw_predictions):
     used by the estimator which is typically private API for now, hence the need
     for this patching mechanism.
     """
+    had_instance_attr = "_raw_predict" in vars(estimator)
     orig_raw_predict = estimator._raw_predict
 
     def _patched_raw_predicts(*args, **kwargs):
@@ -137,10 +139,16 @@ def _patch_raw_predict(estimator, raw_predictions):
 
     estimator._raw_predict = _patched_raw_predicts
     yield estimator
-    estimator._raw_predict = orig_raw_predict
+    if had_instance_attr:
+        estimator._raw_predict = orig_raw_predict
+    else:
+        # Remove the patch instead of storing the bound method on the instance: a
+        # shallow copy of the estimator (e.g. the `fitted_estimator` passed to
+        # callbacks) would otherwise keep calling the `_raw_predict` of the original.
+        del estimator._raw_predict
 
 
-class BaseHistGradientBoosting(BaseEstimator, ABC):
+class BaseHistGradientBoosting(CallbackSupportMixin, BaseEstimator, ABC):
     """Base class for histogram-based gradient boosting estimators."""
 
     _parameter_constraints: dict = {
@@ -447,6 +455,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_compute_hist_time = 0.0  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.0
+
+        # Keep references to the data as passed by the user, before any
+        # preprocessing (encoding of y, binning and reordering of X, ...). Callbacks
+        # may evaluate a fitted copy of the estimator on these data, so they must be
+        # in the same format as the data passed to predict.
+        callback_X, callback_y = X, y
+        callback_metadata = (
+            {"sample_weight": sample_weight} if sample_weight is not None else None
+        )
+
         X, known_categories = self._preprocess_X(X, reset=True)
         y = _check_y(y, estimator=self)
         y = self._encode_y(y)
@@ -774,6 +792,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             begin_at_stage = self.n_iter_
 
+        # The root task of fit has one subtask per boosting iteration. With
+        # warm_start, only the remaining iterations are performed.
+        callback_ctx = self._init_callback_context(
+            max_subtasks=self.max_iter - begin_at_stage
+        )
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self, X=callback_X, y=callback_y, metadata=callback_metadata
+        )
+
         # Allocate arrays only once for reuse in every boosting round. They are used in
         # Splitter, passed to it via TreeGrower.
         partition_buffer = np.empty(n_samples, dtype=np.uint32)
@@ -787,6 +814,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
 
         for iteration in range(begin_at_stage, self.max_iter):
+            # Each boosting iteration is a subtask (a leaf) of the fit task.
+            iter_ctx = callback_ctx.subcontext(task_name="boosting-iter")
+            iter_ctx.call_on_fit_task_begin(
+                estimator=self,
+                X=callback_X,
+                y=callback_y,
+                metadata=callback_metadata,
+                # Passed as a callable to only build the fitted estimator if a
+                # callback requires it.
+                reconstruction_attributes=self._get_callback_reconstruction_attributes,
+            )
+
             if self.verbose >= 2:
                 iteration_start_time = time()
                 print(
@@ -923,8 +962,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if self.verbose >= 2:
                 self._print_iteration_stats(iteration_start_time)
 
+            stopped_by_callback = iter_ctx.call_on_fit_task_end(
+                estimator=self,
+                X=callback_X,
+                y=callback_y,
+                metadata=callback_metadata,
+                reconstruction_attributes=self._get_callback_reconstruction_attributes,
+            )
+
             # maybe we could also early stop if all the trees are stumps?
-            if should_early_stop:
+            if should_early_stop or stopped_by_callback:
                 break
 
         if self.verbose:
@@ -965,7 +1012,35 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.train_score_ = np.asarray(self.train_score_)
         self.validation_score_ = np.asarray(self.validation_score_)
         del self._in_fit  # hard delete so we're sure it can't be used anymore
+
+        # The estimator is fully fitted at this point, so no additional attribute is
+        # needed to make it ready to predict.
+        callback_ctx.call_on_fit_task_end(
+            estimator=self,
+            X=callback_X,
+            y=callback_y,
+            metadata=callback_metadata,
+            reconstruction_attributes={},
+        )
         return self
+
+    def _get_callback_reconstruction_attributes(self):
+        """Attributes making a copy of the estimator ready to predict mid-fit.
+
+        The callback context sets these attributes on a copy of the estimator to build
+        the `fitted_estimator` passed to the callbacks, i.e. the model as if fit had
+        stopped after the boosting iterations done so far.
+        """
+        return {
+            # Copy the list: the original one keeps growing during fit.
+            "_predictors": list(self._predictors),
+            # Predictions must be made on raw (not binned) data.
+            "_in_fit": False,
+            # Snapshot as arrays, as in a fitted estimator. During fit these are lists
+            # that keep growing.
+            "train_score_": np.asarray(self.train_score_),
+            "validation_score_": np.asarray(self.validation_score_),
+        }
 
     def _is_fitted(self):
         return len(getattr(self, "_predictors", [])) > 0

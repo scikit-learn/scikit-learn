@@ -238,6 +238,8 @@ Callback Support Status
 The development of support for callbacks in estimators is in progress. Here is a list of
 the estimators that support callbacks:
 
+- :class:`sklearn.ensemble.HistGradientBoostingClassifier`
+- :class:`sklearn.ensemble.HistGradientBoostingRegressor`
 - :class:`sklearn.linear_model.LogisticRegression`
 - :class:`sklearn.model_selection.GridSearchCV`
 - :class:`sklearn.model_selection.HalvingGridSearchCV`

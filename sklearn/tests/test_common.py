@@ -535,8 +535,6 @@ NO_CALLBACK_SUPPORT = {
     "GraphicalLassoCV",
     "HDBSCAN",
     "HashingVectorizer",
-    "HistGradientBoostingClassifier",
-    "HistGradientBoostingRegressor",
     "HuberRegressor",
     "IncrementalPCA",
     "IsolationForest",
