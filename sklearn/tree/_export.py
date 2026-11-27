@@ -36,11 +36,16 @@ def _get_categorical_features(decision_tree):
     if decision_tree.is_categorical_ is None:
         return {}
     if decision_tree._categorical_encoder is None:
-        return {
-            feature: np.arange(count)
-            for feature, count in enumerate(decision_tree.tree_._n_categories)
-            if count
-        }
+        tree = decision_tree.tree_
+        if np.any(
+            (tree.children_left != _tree.TREE_LEAF) & (tree.split_kind != SPLIT_NUMERIC)
+        ):
+            raise ValueError(
+                "Exporting categorical splits requires a standalone tree fitted "
+                "with its own category encoder. Categorical forest sub-estimators "
+                "are not supported."
+            )
+        return {}
     return {
         feature: categories[: decision_tree.tree_._n_categories[feature]]
         for feature, categories in zip(
@@ -50,17 +55,14 @@ def _get_categorical_features(decision_tree):
     }
 
 
-def _format_category_set(categories, max_categories=None):
+def _format_category_set(categories):
     """Use original labels and distinguish strings from numeric categories."""
-    displayed = categories if max_categories is None else categories[:max_categories]
-    omitted = len(categories) - len(displayed)
     return (
         "{"
         + ", ".join(
             repr(value.item() if isinstance(value, np.generic) else value)
-            for value in displayed
+            for value in categories
         )
-        + (f", ... (+{omitted} more)" if omitted else "")
         + "}"
     )
 
@@ -146,7 +148,6 @@ SENTINEL = Sentinel()
         "ax": "no_validation",  # delegate validation to matplotlib
         "fontsize": [Interval(Integral, 0, None, closed="left"), None],
         "fill_colors": ["array-like", None],
-        "max_categories": [Interval(Integral, 1, None, closed="left"), None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -166,7 +167,6 @@ def plot_tree(
     ax=None,
     fontsize=None,
     fill_colors=None,
-    max_categories=3,
 ):
     """Plot a decision tree.
 
@@ -242,13 +242,6 @@ def plot_tree(
         If None, colors with equally spaced hues are generated automatically.
         Ignored if ``filled=False``.
 
-    max_categories : int or None, default=3
-        Maximum number of categories displayed from the smaller side of a split.
-        Omitted categories are counted as ``... (+N more)``. Use None to display
-        the complete smaller set. Must be at least 1.
-
-        .. versionadded:: 1.10
-
     Returns
     -------
     annotations : list of artists
@@ -285,7 +278,6 @@ def plot_tree(
         precision=precision,
         fontsize=fontsize,
         fill_colors=fill_colors,
-        max_categories=max_categories,
     )
     return exporter.export(decision_tree, ax=ax)
 
@@ -305,7 +297,6 @@ class _BaseTreeExporter:
         precision=3,
         fontsize=None,
         fill_colors=None,
-        max_categories=3,
     ):
         self.max_depth = max_depth
         self.feature_names = feature_names
@@ -320,7 +311,6 @@ class _BaseTreeExporter:
         self.fontsize = fontsize
         self.colors = {"bounds": None}
         self.fill_colors = fill_colors
-        self.max_categories = max_categories
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -423,23 +413,13 @@ class _BaseTreeExporter:
                 )
             else:
                 categories = self.categorical_features[tree.feature[node_id]]
-                left_codes = tree._get_left_categories(node_id)
-                operator = "in"
-                if len(left_codes) > len(categories) / 2:
-                    mask = np.ones(len(categories), dtype=bool)
-                    mask[left_codes] = False
-                    displayed_categories = categories[mask]
-                    operator = "not in"
-                else:
-                    displayed_categories = categories[left_codes]
+                categories_left = categories[tree._get_left_categories(node_id)]
                 category_set = self.category_escape(
-                    _format_category_set(
-                        displayed_categories, max_categories=self.max_categories
-                    )
+                    _format_category_set(categories_left)
                 )
                 direction = "left" if tree.missing_go_to_left[node_id] else "right"
                 node_string += (
-                    f"{feature} {operator} {category_set} "
+                    f"{feature} in {category_set} "
                     f"(missing/unknown: {direction}){characters[4]}"
                 )
 
@@ -544,7 +524,6 @@ class _DOTTreeExporter(_BaseTreeExporter):
         precision=3,
         fontname="helvetica",
         fill_colors=None,
-        max_categories=None,
     ):
         super().__init__(
             max_depth=max_depth,
@@ -558,7 +537,6 @@ class _DOTTreeExporter(_BaseTreeExporter):
             rounded=rounded,
             precision=precision,
             fill_colors=fill_colors,
-            max_categories=max_categories,
         )
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
@@ -728,7 +706,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
         precision=3,
         fontsize=None,
         fill_colors=None,
-        max_categories=3,
     ):
         super().__init__(
             max_depth=max_depth,
@@ -742,7 +719,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
             rounded=rounded,
             precision=precision,
             fill_colors=fill_colors,
-            max_categories=max_categories,
         )
         self.fontsize = fontsize
 
@@ -918,7 +894,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "fontname": [str],
         "fill_colors": ["array-like", None],
-        "max_categories": [Interval(Integral, 1, None, closed="left"), None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -941,7 +916,6 @@ def export_graphviz(
     precision=3,
     fontname="helvetica",
     fill_colors=None,
-    max_categories=None,
 ):
     """Export a decision tree in DOT format.
 
@@ -1029,13 +1003,6 @@ def export_graphviz(
         If None, colors with equally spaced hues are generated automatically.
         Ignored if ``filled=False``.
 
-    max_categories : int or None, default=None
-        Maximum number of categories displayed from the smaller side of a split.
-        Omitted categories are counted as ``... (+N more)``. Use None to display
-        the complete smaller set. Must be at least 1.
-
-        .. versionadded:: 1.10
-
     Returns
     -------
     dot_data : str
@@ -1097,7 +1064,6 @@ def export_graphviz(
             precision=precision,
             fontname=fontname,
             fill_colors=fill_colors,
-            max_categories=max_categories,
         )
         exporter.export(decision_tree)
 

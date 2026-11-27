@@ -230,19 +230,15 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       |   |--- class: 1
       <BLANKLINE>
 
-  Graphviz and plotted nodes describe the left branch using ``in`` for its
-  categories or ``not in`` for the right categories, whichever set is smaller, and
-  a parenthesized ``missing/unknown: left`` or ``missing/unknown: right`` annotation.
-  Plots show at most three categories per split by default, followed by
-  ``... (+N more)`` when categories are omitted. Graphviz displays the complete
-  smaller set by default. Set ``max_categories`` to change the limit, or to
-  ``None`` to display all categories in that set. Text reports always list
-  all categories.
-  Category labels are not rounded.
+  Graphviz and plotted nodes show the complete left-category set and a
+  parenthesized ``missing/unknown: left`` or ``missing/unknown: right`` annotation.
+  Category labels are not rounded. Large categorical splits can produce long
+  labels.
 
-  Individual trees from a random forest or extra-trees ensemble do not retain
-  the category encoder. Their exports show encoded integer category IDs rather
-  than the original labels.
+  Categorical split export requires a standalone tree fitted with its own category
+  encoder. Individual forest trees with categorical splits are not supported.
+  Forest trees containing only numerical splits or a single leaf can still be
+  exported.
 
 .. rubric:: Examples
 
