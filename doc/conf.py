@@ -460,7 +460,7 @@ redirects = {
         "auto_examples/model_selection/plot_train_error_vs_test_error"
     ),
     "auto_examples/datasets/plot_digits_last_image": (
-        "auto_examples/exercises/plot_digits_classification_exercises"
+        "auto_examples/classification/plot_digits_classification"
     ),
     "auto_examples/datasets/plot_random_dataset": (
         "auto_examples/classification/plot_classifier_comparison"
@@ -513,8 +513,8 @@ redirects = {
     "auto_examples/linear_model/plot_ols_ridge_variance": (
         "auto_examples/linear_model/plot_ols_ridge"
     ),
-    "auto_examples/cluster/plot_agglomerative_clustering.html": (
-        "auto_examples/cluster/plot_ward_structured_vs_unstructured.html"
+    "auto_examples/cluster/plot_agglomerative_clustering": (
+        "auto_examples/cluster/plot_ward_structured_vs_unstructured"
     ),
     "auto_examples/linear_model/plot_sgd_comparison": (
         "auto_examples/linear_model/plot_sgd_loss_functions"
