@@ -6,6 +6,7 @@
   scorers. It requests ``X_val`` and ``y_val`` automatically and makes the validation
   scorer automatically request ``sample_weight_val`` (if that scorer accepts
   sample_weight). When routing is disabled, ``sample_weight`` is still forwarded to
-  hooks that accept it for all callbacks. Callbacks indicate which hooks accept
+  any callback hook that accept it. Callbacks indicate which hooks accept
   ``sample_weight`` by overriding the ``_accept_sample_weight`` method.
-  By :user:`François Paugam <FrancoisPgm>`.
+  By :user:`François Paugam <FrancoisPgm>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
