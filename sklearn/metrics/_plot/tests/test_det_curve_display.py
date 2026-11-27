@@ -142,12 +142,41 @@ def test_det_curve_display_from_cv_results(pyplot, data_binary):
     assert display.line_[0].get_linestyle() == "--"
 
 
-def test_det_curve_plot_parameter_length_validation(pyplot):
-    """Check `plot` rejects `fpr`, `fnr`, and `name` lists of different lengths."""
-    fpr = [np.array([0.5, 0.5, 0.0])] * 2
-    with pytest.raises(ValueError, match="self.fpr and self.fnr"):
-        DetCurveDisplay(fpr=fpr, fnr=[np.array([0.0, 1.0, 1.0])]).plot()
-
-    fnr = [np.array([0.0, 1.0, 1.0])] * 2
-    with pytest.raises(ValueError, match="'name'"):
-        DetCurveDisplay(fpr=fpr, fnr=fnr, name=["a", "b", "c"]).plot()
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {
+                "fpr": [np.array([0.5, 0.5, 0.0])] * 2,
+                "fnr": [np.array([0.0, 1.0, 1.0])],
+            },
+            "self.fpr and self.fnr",
+        ),
+        (
+            {
+                "fpr": [np.array([0.5, 0.5, 0.0])] * 2,
+                "fnr": [np.array([0.0, 1.0, 1.0])] * 2,
+                "name": ["a", "b", "c"],
+            },
+            "'name'",
+        ),
+        (
+            {
+                "fpr": [np.array([0.5, 0.5, 0.0])] * 2,
+                "fnr": [np.array([0.0, 1.0, 1.0])] * 2,
+                # List of length 1 is always allowed
+                "name": ["a"],
+            },
+            None,
+        ),
+    ],
+)
+def test_det_curve_plot_parameter_length_validation(pyplot, params, err_msg):
+    """Check `plot` validates the lengths of `fpr`, `fnr`, and `name` lists."""
+    display = DetCurveDisplay(**params)
+    if err_msg:
+        with pytest.raises(ValueError, match=err_msg):
+            display.plot()
+    else:
+        # No error should be raised
+        display.plot()
