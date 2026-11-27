@@ -141,7 +141,7 @@ def _line_search_wolfe12(
         # 2. Tiny gradient / Armijo term.
         # If we are already close to the minimum, gradient and Armijo term are
         # tiny. It is best to use a Newton step length alpha = 1.
-        if xp.abs(armijo_term) <= tol:
+        if abs(armijo_term) <= tol:  # armijo_term is a Python float
             # Note that final convergence is checked with the infinity norm.
             g_max_abs = xp.max(xp.abs(grad))
             check = g_max_abs <= tol
