@@ -460,7 +460,7 @@ redirects = {
         "auto_examples/model_selection/plot_train_error_vs_test_error"
     ),
     "auto_examples/datasets/plot_digits_last_image": (
-        "auto_examples/exercises/plot_digits_classification_exercises"
+        "auto_examples/classification/plot_digits_classification"
     ),
     "auto_examples/datasets/plot_random_dataset": (
         "auto_examples/classification/plot_classifier_comparison"
