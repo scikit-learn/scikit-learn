@@ -1205,9 +1205,6 @@ def check_array_api_input(
     with config_context(array_api_dispatch=True):
         est_xp.fit(X_xp, y_xp, **fit_kwargs_xp)
 
-    X_ns = xp_X.__name__
-    y_ns = xp_other.__name__
-
     array_attributes = {
         key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
     }
@@ -1311,23 +1308,14 @@ def check_array_api_input(
             with config_context(array_api_dispatch=True):
                 result_xp = getattr(est_xp, method_name)(X_xp)
 
-        with config_context(array_api_dispatch=True):
-            result_ns = get_namespace(result_xp)[0].__name__
-        # `predict` would be string when `y` is string
-        expected_ns = X_ns
+        expected = X_xp
+        # `predict` would be string and on same device as `y`
         if other_ns_and_device == "string" and method_name == "predict":
-            expected_ns = y_ns
-        assert result_ns == expected_ns, (
-            f"'{method}' output is in wrong namespace, expected {expected_ns}, "
-            f"got {result_ns}."
-        )
+            expected = y_xp
 
+        # All other methods
         if expect_only_array_outputs:
-            # `predict` would be string and on same device as `y`
-            expected_xp = X_xp
-            if other_ns_and_device == "string" and method_name == "predict":
-                expected_xp = y_xp
-            assert_same_namespace_and_device(result_xp, expected_xp, name=method_name)
+            assert_same_namespace_and_device(result_xp, expected, name=method_name)
 
             result_xp_np = move_to(result_xp, xp=np, device="cpu")
             if check_values:
@@ -1340,6 +1328,15 @@ def check_array_api_input(
             elif hasattr(result, "shape"):
                 assert result.shape == result_xp_np.shape
                 assert result.dtype == result_xp_np.dtype
+        else:
+            # Output could be sparse or list, only check namespace
+            with config_context(array_api_dispatch=True):
+                result_ns = get_namespace(result_xp)[0].__name__
+                expected_ns = get_namespace(expected)[0].__name__
+            assert get_namespace(result_xp)[0] == get_namespace(expected)[0], (
+                f"'{method_name}' output is in wrong namespace, expected: "
+                f"{expected_ns}, got: {result_ns}"
+            )
 
         if method_name == "transform" and hasattr(est, "inverse_transform"):
             with config_context(array_api_dispatch=False):
