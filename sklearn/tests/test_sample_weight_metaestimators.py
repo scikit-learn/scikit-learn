@@ -15,8 +15,8 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics import make_scorer, mean_squared_error
 from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import FeatureUnion, Pipeline
+from sklearn.preprocessing import SplineTransformer, StandardScaler
 from sklearn.utils.estimator_checks import check_sample_weight_equivalence_on_dense_data
 
 
@@ -49,10 +49,45 @@ def _calibrated_logistic():
     )
 
 
+def _grid_search_spline_union_logistic():
+    # Same composition as the meta-estimator in
+    # https://github.com/scikit-learn/scikit-learn/pull/30887
+    return GridSearchCV(
+        Pipeline(
+            [
+                (
+                    "union",
+                    FeatureUnion(
+                        [
+                            ("scaler", StandardScaler()),
+                            ("spline", SplineTransformer(knots="quantile")),
+                        ]
+                    ),
+                ),
+                ("logistic", LogisticRegression(solver="lbfgs")),
+            ]
+        ),
+        param_grid={
+            "union__spline__n_knots": [5, 6],
+            "logistic__C": [0.1, 1.0],
+        },
+    )
+
+
 @pytest.mark.parametrize(
     "estimator",
-    [_pipeline_logistic(), _grid_search_ridge(), _calibrated_logistic()],
-    ids=["pipeline-logistic", "gridsearch-pipeline-ridge", "calibrated-logistic"],
+    [
+        _pipeline_logistic(),
+        _grid_search_ridge(),
+        _calibrated_logistic(),
+        _grid_search_spline_union_logistic(),
+    ],
+    ids=[
+        "pipeline-logistic",
+        "gridsearch-pipeline-ridge",
+        "calibrated-logistic",
+        "gridsearch-spline-union-logistic",
+    ],
 )
 @config_context(enable_metadata_routing=True, enable_metadata_auto_requests=True)
 def test_integer_sample_weight_equivalence(estimator):
