@@ -2673,13 +2673,12 @@ def _check_output(out_np, out_xp, xp_to, y2_xp, msg=""):
         assert hasattr(out_xp, "shape"), (
             f"{msg} Type mismatch; got {type(out_xp)}, expected array-like."
         )
-        with config_context(array_api_dispatch=True):
-            assert (out_xp_ns := get_namespace(out_xp)[0]) == xp_to, (
-                f"{msg} Namespace mismatch; got {out_xp_ns}, expected {xp_to}"
-            )
-            assert (out_xp_device := array_device(out_xp)) == (
-                y2_xp_device := array_device(y2_xp)
-            ), f"{msg} Device mismatch; got {out_xp_device}, expected {y2_xp_device}"
+        assert (out_xp_ns := get_namespace(out_xp)[0]) == xp_to, (
+            f"{msg} Namespace mismatch; got {out_xp_ns}, expected {xp_to}"
+        )
+        assert (out_xp_device := array_device(out_xp)) == (
+            y2_xp_device := array_device(y2_xp)
+        ), f"{msg} Device mismatch; got {out_xp_device}, expected {y2_xp_device}"
     # `classification_report` returns str (with default `output_dict=False`)
     elif isinstance(out_np, str):
         assert isinstance(out_xp, str), (
@@ -2844,7 +2843,8 @@ def test_array_api_classification_string_input(metric_name):
     with config_context(array_api_dispatch=False):
         metric_disabled = metric(y_true, y_pred, **kwargs)
 
-    _check_output(metric_enabled, metric_disabled, get_namespace(y_pred)[0], y_pred)
+    with config_context(array_api_dispatch=True):
+        _check_output(metric_enabled, metric_disabled, get_namespace(y_pred)[0], y_pred)
 
 
 @pytest.mark.parametrize(
@@ -2874,7 +2874,8 @@ def test_array_api_mixed_pandas_integer_input(metric_name):
     with config_context(array_api_dispatch=False):
         metric_disabled = metric(y_true, move_to(y_pred, xp=np, device="cpu"), **kwargs)
 
-    _check_output(metric_enabled, metric_disabled, get_namespace(y_pred)[0], y_pred)
+    with config_context(array_api_dispatch=True):
+        _check_output(metric_enabled, metric_disabled, get_namespace(y_pred)[0], y_pred)
 
 
 @pytest.mark.parametrize(
