@@ -42,6 +42,54 @@ from sklearn.utils._typedefs cimport uint8_t
 # - Samples at odd positions are accumulated in a temporary stack-allocated
 #   histogram. This avoids store-to-load stalls when 2 consecutive samples
 #   fall into the same bin.
+# - The samples of a small node are scattered over the whole column of
+#   X_binned, i.e. reading their bins is a gather with a cache miss for almost
+#   every sample. Hardware prefetchers do not detect this irregular pattern.
+#   For large X_binned, we therefore prefetch the bins PREFETCH_DISTANCE samples
+#   ahead. The distance must exceed what out-of-order execution already covers
+#   on its own.
+
+
+cdef extern from *:
+    """
+    #if defined(__GNUC__) || defined(__clang__)
+        /* x86: prefetcht0, ARM64: prfm pldl1keep */
+        #define SKLEARN_PREFETCH(x) __builtin_prefetch((x), 0, 3)
+    #elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+        #include <xmmintrin.h>
+        #define SKLEARN_PREFETCH(x) _mm_prefetch((const char*)(x), _MM_HINT_T0)
+    #else
+        #define SKLEARN_PREFETCH(x)
+    #endif
+    """
+    void prefetch "SKLEARN_PREFETCH"(const void* x) noexcept nogil
+
+
+cdef enum:
+    # Number of samples to prefetch ahead.
+    PREFETCH_DISTANCE = 128
+    # Software prefetching is used for a node if
+    # - X_binned has at least PREFETCH_MIN_SAMPLES rows. Smaller columns of
+    #   X_binned (1 byte per sample) fit into the CPU caches.
+    # - The node has at most 1 / PREFETCH_MIN_SPARSITY of all samples. Larger
+    #   nodes read a column nearly sequentially, which hardware prefetchers
+    #   handle well.
+    # - The node has at least PREFETCH_MIN_NODE_SAMPLES samples as the last
+    #   PREFETCH_DISTANCE samples of a node are neither prefetched nor unrolled.
+    PREFETCH_MIN_SAMPLES = 131072  # 2**17
+    PREFETCH_MIN_SPARSITY = 16
+    PREFETCH_MIN_NODE_SAMPLES = 1024
+
+
+cdef inline bint _use_prefetch(
+    Py_ssize_t n_node_samples, Py_ssize_t n_samples
+) noexcept nogil:
+    """Whether to use software prefetching of bins for a node."""
+    return (
+        n_samples >= PREFETCH_MIN_SAMPLES
+        and n_node_samples >= PREFETCH_MIN_NODE_SAMPLES
+        and PREFETCH_MIN_SPARSITY * n_node_samples <= n_samples
+    )
 
 
 @cython.final
@@ -353,6 +401,7 @@ cpdef void _build_histogram(
         unsigned int i = 0
         unsigned int n_node_samples = sample_indices.shape[0]
         unsigned int unrolled_upper = (n_node_samples // 4) * 4
+        bint use_prefetch = _use_prefetch(n_node_samples, binned_feature.shape[0])
 
         unsigned int bin_0
         unsigned int bin_1
@@ -371,7 +420,20 @@ cpdef void _build_histogram(
     # stack-allocated buffer. This way, 2 consecutive samples never write to the same
     # memory location, which prevents store-to-load stalls if they fall into the same
     # bin (often the case for features with few or unevenly populated bins).
+    if use_prefetch:
+        # The last samples, at least PREFETCH_DISTANCE many, are left to the loop
+        # without unrolling. This guarantees i + PREFETCH_DISTANCE + 3 < n_node_samples.
+        unrolled_upper = ((n_node_samples - PREFETCH_DISTANCE) // 4) * 4
+
     for i in range(0, unrolled_upper, 4):
+        # As use_prefetch is loop-invariant, compilers can hoist this check out of the
+        # loop (loop unswitching).
+        if use_prefetch:
+            prefetch(&binned_feature[sample_indices[i + PREFETCH_DISTANCE]])
+            prefetch(&binned_feature[sample_indices[i + PREFETCH_DISTANCE + 1]])
+            prefetch(&binned_feature[sample_indices[i + PREFETCH_DISTANCE + 2]])
+            prefetch(&binned_feature[sample_indices[i + PREFETCH_DISTANCE + 3]])
+
         bin_0 = binned_feature[sample_indices[i]]
         bin_1 = binned_feature[sample_indices[i + 1]]
         bin_2 = binned_feature[sample_indices[i + 2]]
@@ -421,6 +483,7 @@ cpdef void _build_histogram_no_hessian(
         unsigned int i = 0
         unsigned int n_node_samples = sample_indices.shape[0]
         unsigned int unrolled_upper = (n_node_samples // 4) * 4
+        bint use_prefetch = _use_prefetch(n_node_samples, binned_feature.shape[0])
 
         unsigned int bin_0
         unsigned int bin_1
@@ -434,7 +497,20 @@ cpdef void _build_histogram_no_hessian(
     # Initialize stack-allocated buffer with zero
     memset(hist, 0, n_bins * sizeof(hist_struct))
 
+    if use_prefetch:
+        # The last samples, at least PREFETCH_DISTANCE many, are left to the loop
+        # without unrolling. This guarantees i + PREFETCH_DISTANCE + 3 < n_node_samples.
+        unrolled_upper = ((n_node_samples - PREFETCH_DISTANCE) // 4) * 4
+
     for i in range(0, unrolled_upper, 4):
+        # As use_prefetch is loop-invariant, compilers can hoist this check out of the
+        # loop (loop unswitching).
+        if use_prefetch:
+            prefetch(&binned_feature[sample_indices[i + PREFETCH_DISTANCE]])
+            prefetch(&binned_feature[sample_indices[i + PREFETCH_DISTANCE + 1]])
+            prefetch(&binned_feature[sample_indices[i + PREFETCH_DISTANCE + 2]])
+            prefetch(&binned_feature[sample_indices[i + PREFETCH_DISTANCE + 3]])
+
         bin_0 = binned_feature[sample_indices[i]]
         bin_1 = binned_feature[sample_indices[i + 1]]
         bin_2 = binned_feature[sample_indices[i + 2]]

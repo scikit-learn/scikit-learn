@@ -1,0 +1,6 @@
+- Fitting :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` is faster on large datasets, i.e.
+  with more than about 130,000 samples. The histogram computation of small tree nodes
+  now uses software prefetching. For instance, fit time is reduced by about 15% on
+  the Higgs dataset with 8.8 million samples.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

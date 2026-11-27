@@ -192,6 +192,54 @@ def test_unrolled_equivalent_to_naive(constant_hessian, n_samples, n_bins):
         assert_array_equal(hist["sum_hessians"], np.zeros(n_bins))
 
 
+@pytest.mark.parametrize("n_node_samples", [1023, 1024, 1027, 5000, 18_750, 18_751])
+def test_prefetch_equivalent_to_naive(n_node_samples):
+    # For large data (n_samples >= 2**17), the histograms of nodes with at least
+    # 1024 samples and at most 1/16 of all samples are computed with software
+    # prefetching of the bins. Make sure this gives the same results as the naive
+    # implementation.
+    rng = np.random.RandomState(42)
+    n_samples = 300_000
+    n_bins = 256
+    binned_feature = rng.randint(0, n_bins, size=n_samples, dtype=X_BINNED_DTYPE)
+    sample_indices = np.sort(
+        rng.choice(n_samples, size=n_node_samples, replace=False)
+    ).astype(np.uint32)
+    ordered_gradients = rng.randn(n_node_samples).astype(G_H_DTYPE)
+    ordered_hessians = rng.lognormal(size=n_node_samples).astype(G_H_DTYPE)
+
+    hist_gc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_ghc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    hist_naive = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
+    _build_histogram_no_hessian(
+        0, n_bins, sample_indices, binned_feature, ordered_gradients, hist_gc
+    )
+    _build_histogram(
+        0,
+        n_bins,
+        sample_indices,
+        binned_feature,
+        ordered_gradients,
+        ordered_hessians,
+        hist_ghc,
+    )
+    _build_histogram_naive(
+        0,
+        n_bins,
+        sample_indices,
+        binned_feature,
+        ordered_gradients,
+        ordered_hessians,
+        hist_naive,
+    )
+
+    for hist in (hist_gc, hist_ghc):
+        assert_array_equal(hist["count"], hist_naive["count"])
+        assert_allclose(hist["sum_gradients"], hist_naive["sum_gradients"])
+    assert_allclose(hist_ghc["sum_hessians"], hist_naive["sum_hessians"])
+    assert_array_equal(hist_gc["sum_hessians"], 0)
+
+
 @pytest.mark.parametrize("constant_hessian", [True, False])
 def test_hist_subtraction(constant_hessian):
     # Make sure the histogram subtraction trick gives the same result as the
