@@ -192,7 +192,7 @@ PR-NEW: Better description and title
 
 ::
 
-    Thanks for the pull request! Please make the title of the PR more descriptive. The title will become the commit message when this is merged. You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](https://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests).
+    Thanks for the pull request! Please make the title of the PR more descriptive. The title will become the commit message when this is merged. You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](https://scikit-learn.org/dev/developers/contributing.html#pr-checklist).
 
 PR-NEW: Fix #
 
