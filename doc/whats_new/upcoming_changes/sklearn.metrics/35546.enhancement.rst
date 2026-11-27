@@ -1,0 +1,4 @@
+- :func:`metrics.det_curve` now emits an
+  :class:`~exceptions.UndefinedMetricWarning` when `y_true` contains no positive or
+  no negative samples.
+  By :user:`Anne Beyer <AnneBeyer>`.
