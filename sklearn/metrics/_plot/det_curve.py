@@ -503,14 +503,7 @@ class DetCurveDisplay(_BinaryClassifierCurveDisplayMixin):
         >>> cv_results = cross_validate(
         ...     clf, X, y, cv=3, return_estimator=True, return_indices=True)
         >>> n_splits = len(cv_results["estimator"])
-        >>> colors = ["#3f90da", "#ffa90e", "#bd1f01"]
-        >>> DetCurveDisplay.from_cv_results(
-        ...     cv_results,
-        ...     X,
-        ...     y,
-        ...     name=[f"SVC fold {idx}" for idx in range(n_splits)],
-        ...     curve_kwargs=[{"color": color} for color in colors],
-        ... )
+        >>> DetCurveDisplay.from_cv_results(cv_results, X, y)
         <...>
         >>> plt.show()
         """
