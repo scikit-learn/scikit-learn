@@ -56,7 +56,7 @@ def test_birch_predict(global_random_seed, global_dtype):
     shuffle_indices = np.arange(30)
     rng.shuffle(shuffle_indices)
     X_shuffle = X[shuffle_indices, :]
-    brc = Birch(n_clusters=4, threshold=1.0)
+    brc = Birch(n_clusters=4, threshold=0.6)
     brc.fit(X_shuffle)
 
     # Birch must preserve inputs' dtype

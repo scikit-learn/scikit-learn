@@ -3,8 +3,6 @@ Testing for mean shift clustering methods
 
 """
 
-import warnings
-
 import numpy as np
 import pytest
 
@@ -166,7 +164,7 @@ def test_bin_seeds(global_dtype):
 
     # With a bin size of 0.01 and min_bin_freq of 1, 6 bins should be found
     # we bail and use the whole data here.
-    with warnings.catch_warnings(record=True):
+    with pytest.warns(UserWarning, match="Binning data failed"):
         test_bins = get_bin_seeds(X, 0.01, 1)
     assert_allclose(test_bins, X)
 

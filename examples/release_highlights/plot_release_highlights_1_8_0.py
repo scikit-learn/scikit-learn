@@ -164,7 +164,7 @@ for i, c in enumerate(ts.classes_):
         strategy="uniform",
         name="Uncalibrated",
         ax=axes[i],
-        marker="s",
+        curve_kwargs={"marker": "s"},
     )
     CalibrationDisplay.from_predictions(
         y == c,
@@ -173,7 +173,7 @@ for i, c in enumerate(ts.classes_):
         strategy="uniform",
         name="Temperature scaling",
         ax=axes[i],
-        marker="o",
+        curve_kwargs={"marker": "o"},
     )
     CalibrationDisplay.from_predictions(
         y == c,
@@ -182,7 +182,7 @@ for i, c in enumerate(ts.classes_):
         strategy="uniform",
         name="Sigmoid",
         ax=axes[i],
-        marker="v",
+        curve_kwargs={"marker": "v"},
     )
     axes[i].set_title(f"Class {c}")
     axes[i].set_xlabel(None)

@@ -101,7 +101,7 @@ for i, (clf, name) in enumerate(clf_list):
         strategy="quantile",
         name=name,
         ax=ax_calibration_curve,
-        color=colors(i),
+        curve_kwargs={"color": colors(i)},
     )
     calibration_displays[name] = display
 
@@ -275,7 +275,7 @@ for i, (clf, name) in enumerate(clf_list):
         name=name,
         strategy="quantile",
         ax=ax_calibration_curve,
-        color=colors(i),
+        curve_kwargs={"color": colors(i)},
     )
     calibration_displays[name] = display
 
