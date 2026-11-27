@@ -2635,18 +2635,7 @@ def test_ridge_sample_weight_consistency(
     # 3) scaling of sample_weight should have no effect
     # Note: For models with penalty, scaling the penalty term might work.
     reg2 = Ridge(**params).set_params(alpha=np.pi * params["alpha"])
-    # TODO: Remove filterwarning once
-    # https://github.com/scikit-learn/scikit-learn/pull/35417 is merged.
-    with warnings.catch_warnings():
-        # This only applies for sag solver by the message
-        warnings.filterwarnings(
-            action="ignore",
-            message="The max_iter was reached which means the coef_ did not converge",
-            category=ConvergenceWarning,
-        )
-        reg2.fit(X, y, sample_weight=np.pi * sample_weight)
-    if solver in ("sag", "saga") and not fit_intercept:
-        pytest.xfail(f"Solver {solver} does fail test for scaling of sample_weight.")
+    reg2.fit(X, y, sample_weight=np.pi * sample_weight)
     assert_allclose(reg2.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg2.intercept_, intercept)
@@ -2667,7 +2656,7 @@ def test_ridge_sample_weight_consistency(
         X2 = sparse_container(X2)
     reg1 = Ridge(**params).fit(X, y, sample_weight=sample_weight_1)
     reg2 = Ridge(**params).fit(X2, y2, sample_weight=sample_weight_2)
-    assert_allclose(reg1.coef_, reg2.coef_)
+    assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg1.intercept_, reg2.intercept_)
 

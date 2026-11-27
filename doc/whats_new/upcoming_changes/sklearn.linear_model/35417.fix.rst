@@ -1,0 +1,9 @@
+- The solvers `"sag"` and `"saga"` of :class:`linear_model.LogisticRegression`,
+  :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge` and
+  :class:`linear_model.RidgeClassifier` now take `sample_weight` into account for
+  their step size. Before, large sample weights could lead to non-convergence or
+  overflow errors and small sample weights to slow convergence. Fitted models are
+  now invariant under a rescaling of `sample_weight` together with the penalty.
+  As a consequence, results of fits with `sample_weight` may change. Fits without
+  `sample_weight` are not affected.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

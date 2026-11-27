@@ -63,13 +63,7 @@ from sklearn.utils.fixes import CSR_CONTAINERS
         LassoLarsCV(),
         LassoLarsIC(),
         LinearRegression(),
-        # TODO: FIx SAGA which fails badly with sample_weights.
-        # This is a known limitation, see:
-        # https://github.com/scikit-learn/scikit-learn/issues/21305
-        pytest.param(
-            LogisticRegression(l1_ratio=0.5, solver="saga", tol=1e-15),
-            marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
-        ),
+        LogisticRegression(l1_ratio=0.5, solver="saga", tol=1e-15),
         LogisticRegressionCV(
             alphas=10,
             tol=1e-6,

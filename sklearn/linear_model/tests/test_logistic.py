@@ -735,7 +735,6 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
                 alphas=[1.0],
                 Cs=None,
                 scoring=scorer,
-                max_squared_sum=None,
                 sample_weight=None,
                 score_params=None,
                 **params,
