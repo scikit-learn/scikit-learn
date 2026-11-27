@@ -2078,11 +2078,15 @@ def test_ranking_loss_ties_handling():
     assert_almost_equal(label_ranking_loss([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 1)
 
 
-def test_dcg_score():
-    _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
+def test_dcg_score(global_random_seed):
+    _, y_true = make_multilabel_classification(
+        random_state=global_random_seed, n_classes=10
+    )
     y_score = -y_true + 1
     _test_dcg_score_for(y_true, y_score)
-    y_true, y_score = np.random.RandomState(0).random_sample((2, 100, 10))
+    y_true, y_score = np.random.RandomState(global_random_seed).random_sample(
+        (2, 100, 10)
+    )
     _test_dcg_score_for(y_true, y_score)
 
 
@@ -2317,15 +2321,20 @@ def test_top_k_accuracy_score_multiclass_with_labels(
     assert score == pytest.approx(true_score)
 
 
-def test_top_k_accuracy_score_increasing():
-    # Make sure increasing k leads to a higher score
+def test_top_k_accuracy_score_increasing(global_random_seed):
+    # Make sure increasing k does not lower the score.
     X, y = datasets.make_classification(
-        n_classes=10, n_samples=1000, n_informative=10, random_state=0
+        n_classes=10,
+        n_samples=1000,
+        n_informative=10,
+        random_state=global_random_seed,
     )
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=global_random_seed
+    )
 
-    clf = LogisticRegression()
+    clf = LogisticRegression(random_state=global_random_seed)
     clf.fit(X_train, y_train)
 
     for X, y in zip((X_train, X_test), (y_train, y_test)):
@@ -2333,7 +2342,8 @@ def test_top_k_accuracy_score_increasing():
             top_k_accuracy_score(y, clf.predict_proba(X), k=k) for k in range(2, 10)
         ]
 
-        assert np.all(np.diff(scores) > 0)
+        assert np.all(np.diff(scores) >= 0)
+        assert scores[-1] > scores[0]
 
 
 @pytest.mark.parametrize(
