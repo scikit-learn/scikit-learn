@@ -260,5 +260,5 @@ Then run the tests with the `pytest` command as follows:
     pytest sklearn/tests/test_common.py -k "check_callback_support and ClassName"
 
 To add callback support for a class outside of scikit-learn, see
-:ref:`_rolling_your_own_estimator` to learn how to run the
+:ref:`rolling_your_own_estimator` to learn how to run the
 `check_callback_support` as part of your test suite.
