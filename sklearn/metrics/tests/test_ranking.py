@@ -1627,6 +1627,16 @@ def test_det_curve_no_positive_samples():
     assert_allclose(fnr, [np.nan])
 
 
+def test_det_curve_no_negative_samples():
+    """Check the warning and `fpr` when all negative samples have zero weight."""
+    msg = "No negative samples in y_true, false positive value should be meaningless"
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        fpr, fnr, _ = det_curve([0, 1], [0.25, 0.75], sample_weight=[0, 1])
+
+    assert_allclose(fpr, [np.nan])
+    assert_allclose(fnr, [0])
+
+
 def test_det_curve_pos_label():
     y_true = ["cancer"] * 3 + ["not cancer"] * 7
     y_pred_pos_not_cancer = np.array([0.1, 0.4, 0.6, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9])

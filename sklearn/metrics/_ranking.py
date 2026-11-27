@@ -458,6 +458,15 @@ def det_curve(
     last_ind = xp.searchsorted(tps, tps[-1]) + 1
     sl = slice(first_ind, last_ind)
 
+    if n_count <= 0:
+        warnings.warn(
+            "No negative samples in y_true, false positive value should be meaningless",
+            UndefinedMetricWarning,
+        )
+        fpr = xp.full(fps.shape, xp.nan, device=device)
+    else:
+        fpr = fps / n_count
+
     if p_count <= 0:
         warnings.warn(
             "No positive samples in y_true, false negative value should be meaningless",
@@ -469,7 +478,7 @@ def det_curve(
 
     # reverse the output such that list of false positives is decreasing
     return (
-        xp.flip(fps[sl]) / n_count,
+        xp.flip(fpr[sl]),
         xp.flip(fnr[sl]),
         xp.flip(thresholds[sl]),
     )
