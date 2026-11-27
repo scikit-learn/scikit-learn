@@ -21,7 +21,7 @@ def get_auto_step_size(
     """Compute automatic step size for SAG solver.
 
     The step size is set to 1 / L for SAG, where L = c * max_squared_sum + alpha_scaled
-    is the gradient Lipschitz constant of the loss of a single sample, with c = 1 for
+    is the maximum gradient Lipschitz constant of the loss of any sample, with c = 1 for
     the squared loss and c = 1/4 for the log and multinomial loss.
 
     Parameters
