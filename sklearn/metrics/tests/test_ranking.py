@@ -1617,6 +1617,16 @@ def test_det_curve_bad_input(y_true, y_pred, err_msg):
         det_curve(y_true, y_pred)
 
 
+def test_det_curve_no_positive_samples():
+    """Check the warning and `fnr` when `pos_label` is not in `y_true`."""
+    msg = "No positive samples in y_true, false negative value should be meaningless"
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        fpr, fnr, _ = det_curve([0, 2], [0.25, 0.75], pos_label=1)
+
+    assert_allclose(fpr, [0])
+    assert_allclose(fnr, [np.nan])
+
+
 def test_det_curve_pos_label():
     y_true = ["cancer"] * 3 + ["not cancer"] * 7
     y_pred_pos_not_cancer = np.array([0.1, 0.4, 0.6, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.9])
