@@ -105,7 +105,7 @@ class ParamsDict(ReprHTMLMixin, UserDict):
     params : dict, default=None
         The original dictionary of parameters and their values.
 
-    non_default : tuple, default=(,)
+    non_default : tuple, default=()
         The list of non-default parameters.
 
     estimator_class : type, default=None
