@@ -740,7 +740,8 @@ def test_affinity_passed_to_fix_connectivity():
 
     fa = FakeAffinity()
 
-    linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
+    with pytest.warns(UserWarning, match="number of connected components"):
+        linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
 
     assert fa.counter == 3
 

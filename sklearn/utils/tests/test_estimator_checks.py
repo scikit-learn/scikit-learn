@@ -603,7 +603,6 @@ def test_check_array_api_input():
             "BrokenArrayAPI",
             BrokenArrayAPI(),
             X_ns_and_device=X_ns_and_device,
-            other_ns_and_device=X_ns_and_device,
             check_values=True,
         )
 

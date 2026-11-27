@@ -50,7 +50,6 @@ from sklearn.utils._param_validation import (
 from sklearn.utils._plotting import (
     _BinaryClassifierCurveDisplayMixin,
     _deprecate_estimator_name,
-    _validate_style_kwargs,
 )
 from sklearn.utils._response import _get_response_values, _process_predict_proba
 from sklearn.utils.extmath import softmax
@@ -1585,11 +1584,8 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         self.name = _deprecate_estimator_name(estimator_name, name, "1.10")
         self.pos_label = pos_label
 
-    def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
+    def plot(self, *, ax=None, name=None, curve_kwargs=None, ref_line=True, **kwargs):
         """Plot visualization.
-
-        Extra keyword arguments will be passed to
-        :func:`matplotlib.pyplot.plot`.
 
         Parameters
         ----------
@@ -1602,12 +1598,21 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             `CalibrationDisplay` initialization if not `None`, otherwise no
             labeling is shown.
 
+        curve_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.10
+
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
             calibrated classifier.
 
         **kwargs : dict
-            Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
+            Additional keywords arguments passed to matplotlib `plot` function.
+
+            .. deprecated:: 1.10
+                `**kwargs` is deprecated and will be removed in 1.13. Pass matplotlib
+                arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -1620,16 +1625,23 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
         )
 
-        default_line_kwargs = {"marker": "s", "linestyle": "-"}
-        if name is not None:
-            default_line_kwargs["label"] = name
-        line_kwargs = _validate_style_kwargs(default_line_kwargs, kwargs)
+        _, legend_metric = self._get_legend_metric(curve_kwargs, 1, None)
+        (curve_kwargs,) = self._validate_curve_kwargs(
+            1,
+            name,
+            legend_metric,
+            "",
+            curve_kwargs=curve_kwargs,
+            default_curve_kwargs={"marker": "s", "linestyle": "-"},
+            removed_version="1.12",
+            **kwargs,
+        )
 
         ref_line_label = "Perfectly calibrated"
         existing_ref_line = ref_line_label in self.ax_.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
             self.ax_.plot([0, 1], [0, 1], "k:", label=ref_line_label)
-        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, **line_kwargs)[0]
+        self.line_ = self.ax_.plot(self.prob_pred, self.prob_true, **curve_kwargs)[0]
 
         # We always have to show the legend for at least the reference line
         self.ax_.legend(loc="lower right")
@@ -1654,6 +1666,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
+        curve_kwargs=None,
         ref_line=True,
         **kwargs,
     ):
@@ -1663,9 +1676,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         from a binary classifier and plots the average predicted probability
         for each bin against the fraction of positive classes, on the
         y-axis.
-
-        Extra keyword arguments will be passed to
-        :func:`matplotlib.pyplot.plot`.
 
         Read more about calibration in the :ref:`User Guide <calibration>` and
         more about the scikit-learn visualization API in :ref:`visualizations`.
@@ -1718,12 +1728,21 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
+        curve_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.10
+
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
             calibrated classifier.
 
         **kwargs : dict
-            Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
+            Additional keywords arguments passed to matplotlib `plot` function.
+
+            .. deprecated:: 1.10
+                `**kwargs` is deprecated and will be removed in 1.12. Pass matplotlib
+                arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -1768,8 +1787,9 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             strategy=strategy,
             pos_label=pos_label,
             name=name,
-            ref_line=ref_line,
             ax=ax,
+            curve_kwargs=curve_kwargs,
+            ref_line=ref_line,
             **kwargs,
         )
 
@@ -1786,6 +1806,7 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         pos_label=None,
         name=None,
         ax=None,
+        curve_kwargs=None,
         ref_line=True,
         **kwargs,
     ):
@@ -1795,9 +1816,6 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
         from a binary classifier and plots the average predicted probability
         for each bin against the fraction of positive classes, on the
         y-axis.
-
-        Extra keyword arguments will be passed to
-        :func:`matplotlib.pyplot.plot`.
 
         Read more about calibration in the :ref:`User Guide <calibration>` and
         more about the scikit-learn visualization API in :ref:`visualizations`.
@@ -1847,12 +1865,21 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
+        curve_kwargs : dict, default=None
+            Keywords arguments to be passed to matplotlib's `plot` function.
+
+            .. versionadded:: 1.10
+
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
             calibrated classifier.
 
         **kwargs : dict
-            Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
+            Additional keywords arguments passed to matplotlib `plot` function.
+
+            .. deprecated:: 1.10
+                `**kwargs` is deprecated and will be removed in 1.12. Pass matplotlib
+                arguments to `curve_kwargs` as a dictionary instead.
 
         Returns
         -------
@@ -1897,4 +1924,4 @@ class CalibrationDisplay(_BinaryClassifierCurveDisplayMixin):
             name=name,
             pos_label=pos_label_validated,
         )
-        return disp.plot(ax=ax, ref_line=ref_line, **kwargs)
+        return disp.plot(ax=ax, curve_kwargs=curve_kwargs, ref_line=ref_line, **kwargs)

@@ -582,28 +582,36 @@ def test_temperature_scaling(n_classes, ensemble):
         assert_allclose(ts.beta_, 1.0, atol=1e-6, rtol=0)
 
 
-@pytest.mark.parametrize("ensemble", [True, False])
-def test_temperature_scaling_numeric_labels(ensemble):
-    """Check that temperature scaling does not depend on the values of numeric
-    labels.
+@pytest.mark.parametrize("labels", [[-1, 1], [1, 2], [1, 5, 7], [0, 2, 4]], ids=str)
+def test_temperature_scaling_numeric_labels(labels):
+    """Labels other than 0, ..., n_classes - 1 give the same calibration.
 
-    Non-regression test: labels that are not 0, ..., n_classes - 1 used to be
-    passed to the calibrator without being encoded, which led to `beta_` = 0
-    and uniform probabilities.
+    Temperature scaling uses the encoded labels as indices into the predicted
+    probabilities, so numeric labels have to be encoded like string labels.
     """
     X, y = make_classification(
-        n_samples=300, n_classes=3, n_informative=4, random_state=0
+        n_samples=200,
+        n_classes=len(labels),
+        n_informative=3,
+        random_state=0,
     )
-    labels = np.asarray([1, 3, 5])
+    y_relabeled = np.asarray(labels)[y]
+    params = dict(estimator=LogisticRegression(), method="temperature")
 
-    cal_clf = CalibratedClassifierCV(
-        LogisticRegression(), method="temperature", ensemble=ensemble
+    cal_clf = CalibratedClassifierCV(**params).fit(X, y)
+    cal_clf_relabeled = CalibratedClassifierCV(**params).fit(X, y_relabeled)
+
+    for calibrated, calibrated_relabeled in zip(
+        cal_clf.calibrated_classifiers_, cal_clf_relabeled.calibrated_classifiers_
+    ):
+        assert_allclose(
+            calibrated_relabeled.calibrators[0].beta_,
+            calibrated.calibrators[0].beta_,
+        )
+    assert_allclose(cal_clf_relabeled.predict_proba(X), cal_clf.predict_proba(X))
+    assert_array_equal(
+        cal_clf_relabeled.predict(X), np.asarray(labels)[cal_clf.predict(X)]
     )
-    proba = cal_clf.fit(X, y).predict_proba(X)
-    proba_relabelled = cal_clf.fit(X, labels[y]).predict_proba(X)
-
-    assert_allclose(proba_relabelled, proba)
-    assert_array_equal(cal_clf.predict(X), labels[np.argmax(proba, axis=1)])
 
 
 def test_temperature_scaling_input_validation(global_dtype):
@@ -934,7 +942,7 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     lr = LogisticRegression().fit(X, y)
 
     viz = CalibrationDisplay.from_estimator(
-        lr, X, y, n_bins=n_bins, strategy=strategy, alpha=0.8
+        lr, X, y, n_bins=n_bins, strategy=strategy, curve_kwargs={"alpha": 0.8}
     )
 
     y_prob = lr.predict_proba(X)[:, 1]
@@ -1158,7 +1166,7 @@ def test_calibration_display_kwargs(pyplot, iris_data_binary, kwargs):
     X, y = iris_data_binary
 
     lr = LogisticRegression().fit(X, y)
-    viz = CalibrationDisplay.from_estimator(lr, X, y, **kwargs)
+    viz = CalibrationDisplay.from_estimator(lr, X, y, curve_kwargs=kwargs)
 
     assert viz.line_.get_color() == "red"
     assert viz.line_.get_linewidth() == 2
@@ -1526,6 +1534,7 @@ def test_temperature_scaling_array_api_compliance(
         assert_allclose(calibrator_xp.beta_, calibrator_np.beta_, rtol=rtol)
         pred_xp = cal_clf_xp.predict(X_train_xp)
         assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
+        assert cal_clf_xp.predict_proba(X_train_xp).dtype == X_train_xp.dtype
 
 
 @pytest.mark.parametrize("ensemble", [False, True])

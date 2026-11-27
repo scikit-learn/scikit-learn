@@ -66,7 +66,7 @@ def test_quantile_equals_huber_for_low_epsilon(fit_intercept):
     X, y = make_regression(n_samples=100, n_features=20, random_state=0, noise=1.0)
     alpha = 1e-4
     huber = HuberRegressor(
-        epsilon=1 + 1e-4, alpha=alpha, fit_intercept=fit_intercept
+        epsilon=1 + 1e-4, alpha=alpha, fit_intercept=fit_intercept, max_iter=300
     ).fit(X, y)
     quant = QuantileRegressor(alpha=alpha, fit_intercept=fit_intercept).fit(X, y)
     assert_allclose(huber.coef_, quant.coef_, atol=1e-1)

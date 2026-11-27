@@ -986,6 +986,7 @@ def check_estimator(
                 )
         except Exception as e:
             if on_fail == "raise" and not test_can_fail:
+                e.add_note(f"Raised in check {_check_name(check)!r} for {name}")
                 raise
 
             if test_can_fail:
@@ -1244,7 +1245,7 @@ def check_array_api_input(
     name,
     estimator_orig,
     X_ns_and_device,
-    other_ns_and_device,
+    other_ns_and_device=None,
     dtype_name=None,
     check_values=False,
     check_sample_weight=False,
@@ -1269,9 +1270,9 @@ def check_array_api_input(
         Namespace and device of reference array API input: `X` as "everything
         follows X".
 
-    other_ns_and_device : NamedTuple
+    other_ns_and_device : NamedTuple, default=None
         Namespace and device of other array API inputs. Used for `y` and
-        `sample_weight`.
+        `sample_weight`. If `None, `X_ns_and_device` is used.
 
     dtype_name : str, default=None
         The name of the data type to use for all arrays. If `None`,
@@ -1314,6 +1315,9 @@ def check_array_api_input(
     set_random_state(est)
 
     X_xp = xp_X.asarray(X, device=device_X)
+
+    if other_ns_and_device is None:
+        other_ns_and_device = X_ns_and_device
 
     if other_ns_and_device == "string":
         xp_other, device_other = _array_api_for_tests("numpy", "cpu")
@@ -1552,7 +1556,6 @@ def check_array_api_input_and_values(
         name,
         estimator_orig,
         X_ns_and_device=X_ns_and_device,
-        other_ns_and_device=X_ns_and_device,
         dtype_name=dtype_name,
         check_values=True,
         check_sample_weight=check_sample_weight,
@@ -4724,10 +4727,9 @@ def _enforce_estimator_tags_X(estimator, X, X_test=None, kernel=linear_kernel):
         if X_test is not None:
             X_test = X_test - X_test.min()  # pragma: no cover
     if get_tags(estimator).input_tags.categorical:
-        dtype = np.float64 if get_tags(estimator).input_tags.allow_nan else np.int32
-        X = np.round((X - X.min())).astype(dtype)
+        X = np.round((X - X.min()))
         if X_test is not None:
-            X_test = np.round((X_test - X_test.min())).astype(dtype)  # pragma: no cover
+            X_test = np.round((X_test - X_test.min()))  # pragma: no cover
 
     if estimator.__class__.__name__ == "SkewedChi2Sampler":
         # SkewedChi2Sampler requires X > -skewdness in transform
