@@ -424,9 +424,11 @@ html_context = {}
 # index.html
 release_highlights_dir = Path("..") / "examples" / "release_highlights"
 # Finds the highlight with the latest version number
-latest_highlights = sorted(release_highlights_dir.glob("plot_release_highlights_*.py"))[
-    -1
-]
+latest_highlights = max(
+    release_highlights_dir.glob("plot_release_highlights_*.py"),
+    # Compare version numbers as integers: "1_10_0" must come after "1_9_0".
+    key=lambda p: tuple(int(v) for v in p.stem.split("_")[-3:]),
+)
 latest_highlights = latest_highlights.with_suffix("").name
 html_context["release_highlights"] = (
     f"auto_examples/release_highlights/{latest_highlights}"
