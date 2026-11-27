@@ -77,7 +77,8 @@ print(f"Splits needed on ordinal codes for accuracy 1.00: {n_splits}")
 # parameter. This brings feature selection to models for counts and for positive,
 # skewed targets. On top of that, you no longer need to pick a solver yourself.
 #
-# **Two new solvers**
+# Two new solvers
+# ~~~~~~~~~~~~~~~
 # `"newton-cd"` and `"newton-cd-gram"` support :math:`\ell_1` and
 # Elastic-Net penalties. They are available for the three models above as well as for
 # :class:`~linear_model.LogisticRegression` and
@@ -92,7 +93,8 @@ print(f"Splits needed on ordinal codes for accuracy 1.00: {n_splits}")
 # For multiclass problems, replace `n_features` by `n_features * n_classes` in the
 # two points above (binary classification effectively has `n_classes = 1`).
 #
-# **Multiclass included**
+# Multiclass included
+# ~~~~~~~~~~~~~~~~~~~
 # Both solvers fit the full multinomial loss of
 # :class:`~linear_model.LogisticRegression`. Until now, `"saga"` was the only solver
 # for a multinomial model with an :math:`\ell_1` or Elastic-Net penalty. Getting
@@ -102,7 +104,8 @@ print(f"Splits needed on ordinal codes for accuracy 1.00: {n_splits}")
 # :doi:`Tanabe & Sagae (1992) <10.1111/J.2517-6161.1992.TB01875.X>`) to avoid
 # constructing the full Hessian matrix.
 #
-# **No need to choose a solver**
+# No need to choose a solver
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The new default `solver="auto"` always selects a
 # solver that works with the chosen `l1_ratio` (or `l1_ratios` in
 # :class:`~linear_model.LogisticRegressionCV`). Switching from an :math:`\ell_2` to an
@@ -112,7 +115,8 @@ print(f"Splits needed on ordinal codes for accuracy 1.00: {n_splits}")
 # stored in the new `solver_` attribute. The selection rule may change in future
 # versions without deprecation.
 #
-# **Penalty strength alpha instead of C**
+# Penalty strength alpha instead of C
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # The penalty strength of
 # :class:`~linear_model.LogisticRegression` is now set by `alpha = 1 / C`, as in
 # :class:`~linear_model.Ridge`, :class:`~linear_model.Lasso` and almost all other
@@ -120,6 +124,8 @@ print(f"Splits needed on ordinal codes for accuracy 1.00: {n_splits}")
 # `alpha=1.0` gives the same model as the previous default `C=1.0`. `C` is deprecated
 # and will be removed in 1.14.
 #
+# Example
+# ~~~~~~~
 # In the example below, the :math:`\ell_1` penalty sets the coefficients of the
 # features that do not influence the target to exactly zero, for a Poisson regression
 # on counts and for a logistic regression on whether the count is positive. Only
