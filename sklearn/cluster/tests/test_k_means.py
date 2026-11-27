@@ -10,7 +10,7 @@ import pytest
 from threadpoolctl import threadpool_info
 
 from sklearn.base import clone
-from sklearn.cluster import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
+from sklearn.cluster import KMeans, MiniBatchKMeans, _kmeans, k_means, kmeans_plusplus
 from sklearn.cluster._k_means_common import (
     CHUNK_SIZE,
     _euclidean_dense_dense_wrapper,
@@ -1012,6 +1012,35 @@ def test_result_equal_in_diff_n_threads(Estimator, global_random_seed):
             .labels_
         )
     assert_array_equal(result_1, result_2)
+
+
+@pytest.mark.skipif(
+    not any(i for i in threadpool_info() if i["user_api"] == "blas"),
+    reason="No BLAS library detected by threadpoolctl.",
+)
+def test_kmeans_blas_limited_in_openmp_loop(monkeypatch):
+    """Check that BLAS is limited to 1 thread in the OpenMP loop of Lloyd.
+
+    Non-regression test: `limits="sequential_blas_under_openmp"` left BLAS unlimited
+    with threadpoolctl < 3.8 as soon as OpenBLAS was loaded.
+    """
+    blas_n_threads = []
+    lloyd_iter_chunked_dense = _kmeans.lloyd_iter_chunked_dense
+
+    def spy_lloyd_iter(*args, **kwargs):
+        blas_n_threads.extend(
+            info["num_threads"]
+            for info in threadpool_info()
+            if info["user_api"] == "blas"
+        )
+        return lloyd_iter_chunked_dense(*args, **kwargs)
+
+    monkeypatch.setattr(_kmeans, "lloyd_iter_chunked_dense", spy_lloyd_iter)
+    X = np.random.RandomState(0).rand(100, 5)
+    KMeans(n_clusters=3, n_init=1, max_iter=2, random_state=0).fit(X)
+
+    assert blas_n_threads
+    assert set(blas_n_threads) == {1}
 
 
 def test_warning_elkan_1_cluster():
