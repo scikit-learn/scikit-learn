@@ -1,5 +1,7 @@
 import inspect
 from collections import defaultdict
+from contextlib import contextmanager
+from contextvars import ContextVar
 from functools import partial
 
 import numpy as np
@@ -26,6 +28,59 @@ from sklearn.utils.metadata_routing import (
     process_routing,
 )
 from sklearn.utils.multiclass import _check_partial_fit_first_call
+from sklearn.utils.parallel import __file__ as parallel_filename
+from sklearn.utils.parallel import _FuncWrapper
+
+_MetadataCaller = ContextVar("_MetadataCaller", default=None)
+
+
+_orig_funcwrapper_call = _FuncWrapper.__call__
+_orig_with_config_and_warning_filters = _FuncWrapper.with_config_and_warning_filters
+
+
+def _funcwrapper_with_config_and_warning_filters(self, config, warning_filters):
+    result = _orig_with_config_and_warning_filters(self, config, warning_filters)
+    result._metadata_caller = _MetadataCaller.get()
+    return result
+
+
+def _funcwrapper_call(self, *args, **kwargs):
+    token = _MetadataCaller.set(self._metadata_caller)
+    try:
+        return _orig_funcwrapper_call(self, *args, **kwargs)
+    finally:
+        _MetadataCaller.reset(token)
+
+
+@contextmanager
+def caller_context(caller):
+    """Set the caller so it is known to workers created via ``Parallel``."""
+    token = _MetadataCaller.set(caller)
+    try:
+        _FuncWrapper.__call__ = _funcwrapper_call
+        _FuncWrapper.with_config_and_warning_filters = (
+            _funcwrapper_with_config_and_warning_filters
+        )
+        yield
+    finally:
+        _FuncWrapper.__call__ = _orig_funcwrapper_call
+        _FuncWrapper.with_config_and_warning_filters = (
+            _orig_with_config_and_warning_filters
+        )
+        _MetadataCaller.reset(token)
+
+
+def run_routing_caller(func, *args, **kwargs):
+    """Wrapper for calling estimator methods for tests that check routing.
+
+    Instead of ``estimator.fit(X, y)`` in your test, you should do
+    ``run_routing_caller(estimator.fit, X, y)``.  And similarly for other
+    methods you expect to be callers in ``check_recorded_metadata()``, like
+    ``predict()`` and so on.  This ensures ``check_recorded_metadata()`` can
+    correctly identify callers in the face of parallelism.
+    """
+    with caller_context(func.__name__):
+        return func(*args, **kwargs)
 
 
 def record_metadata(obj, record_default=True, **kwargs):
@@ -45,18 +100,35 @@ def record_metadata(obj, record_default=True, **kwargs):
         "validation_curve",
     ]
     stack = inspect.stack()
-    # for callee, extract the innermost `function` (which is in METHODS) from the
-    # stack; for caller, extract the *outermost* matching function so the expected
-    # `parent` is the top-level public entry point (e.g. `cross_validate`) rather
-    # than an internal helper whose name may change. Fall back to positional frames:
-    callee = caller = None
+    # for callee, extract the innermost `function` (which is in METHODS) from
+    # the stack; for caller, rely on metadata available in _MetadataCaller,
+    # inserted via explicit use of run_routing_caller(), and fall back to the
+    # stack if that isn't available. The need for a special mechanism for
+    # callers is because of parallelism: when using threads or processes, the
+    # original caller may well be unreachable via the stack.
+    callee = None
+    caller = _MetadataCaller.get()
+    if caller is None:
+        # This means the caller was not set via run_routing_caller(). Which is
+        # fine, we can get it from the stack—but that is only consistently
+        # reliable if we're not going through a Parallel. So make sure we're
+        # not.
+        for frame in stack:
+            if frame.filename == parallel_filename:
+                raise RuntimeError(
+                    "In order to write metadata routing tests that work with"
+                    " parallelism, you need to "
+                    "use sklearn.tests.metadata_routing.run_routing_caller()"
+                )
+
     for i, frame in enumerate(stack):
         if frame.function in METHODS + ["consuming_metric"]:
             callee = frame.function
             break
-    for frame in stack[i + 1 :]:
-        if frame.function in METHODS + validation_functions:
-            caller = frame.function
+    if caller is None:
+        for frame in stack[i + 1 :]:
+            if frame.function in METHODS + validation_functions:
+                caller = frame.function
     callee = callee or stack[1].function
     caller = caller or stack[2].function
 
@@ -75,6 +147,9 @@ def check_recorded_metadata(
     obj, method, parent, split_params=tuple(), preserves_metadata=True, **kwargs
 ):
     """Check whether the expected metadata is passed to the object's method.
+
+    Estimator methods should be called with ``run_routing_caller``, otherwise
+    this might fail when parallelism is used.
 
     Parameters
     ----------

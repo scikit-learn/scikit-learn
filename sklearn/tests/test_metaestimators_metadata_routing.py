@@ -74,8 +74,8 @@ from sklearn.tests.metadata_routing_common import (
     _Registry,
     assert_request_is_empty,
     check_recorded_metadata,
+    run_routing_caller,
 )
-from sklearn.utils._testing import skip_if_use_threading_backend_with_high_parallelism
 from sklearn.utils.metadata_routing import MetadataRouter, get_routing_for_object
 
 rng = np.random.RandomState(42)
@@ -802,7 +802,7 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                         methods=["fit"],
                         metadata_name=key,
                     )
-                    instance.fit(X, y, **method_kwargs)
+                    run_routing_caller(instance.fit, X, y, **method_kwargs)
                 # making sure the requests are unset, in case they were set as a
                 # side effect of setting them for fit. For instance, if method
                 # mapping for fit is: `"fit": ["fit", "score"]`, that would mean
@@ -817,12 +817,11 @@ def test_error_on_missing_requests_for_sub_estimator(metaestimator):
                 )
                 try:
                     # `fit`, `partial_fit`, 'score' accept y, others don't.
-                    method(X, y, **method_kwargs)
+                    run_routing_caller(method, X, y, **method_kwargs)
                 except TypeError:
-                    method(X, **method_kwargs)
+                    run_routing_caller(method, X, **method_kwargs)
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True, enable_metadata_auto_requests=False)
 def test_setting_request_on_sub_estimator_removes_error(metaestimator):
@@ -872,12 +871,12 @@ def test_setting_request_on_sub_estimator_removes_error(metaestimator):
             )
             if "fit" not in method_name:
                 # fit before calling method
-                instance.fit(X, y)
+                run_routing_caller(instance.fit, X, y)
             try:
                 # `fit` and `partial_fit` accept y, others don't.
-                method(X, y, **method_kwargs, **extra_method_args)
+                run_routing_caller(method, X, y, **method_kwargs, **extra_method_args)
             except TypeError:
-                method(X, **method_kwargs, **extra_method_args)
+                run_routing_caller(method, X, **method_kwargs, **extra_method_args)
 
             # sanity check that registry is not empty, or else the test passes
             # trivially
@@ -958,16 +957,15 @@ def test_non_consuming_estimator_works(metaestimator):
         method = getattr(instance, method_name)
         extra_method_args = metaestimator.get("method_args", {}).get(method_name, {})
         if "fit" not in method_name:
-            instance.fit(X, y, **extra_method_args)
+            run_routing_caller(instance.fit, X, y, **extra_method_args)
         # The following should pass w/o raising a routing error.
         try:
             # `fit` and `partial_fit` accept y, others don't.
-            method(X, y, **extra_method_args)
+            run_routing_caller(method, X, y, **extra_method_args)
         except TypeError:
-            method(X, **extra_method_args)
+            run_routing_caller(method, X, **extra_method_args)
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_metadata_is_routed_correctly_to_scorer(metaestimator):
@@ -1002,8 +1000,8 @@ def test_metadata_is_routed_correctly_to_scorer(metaestimator):
         method = getattr(instance, method_name)
         method_kwargs = {"sample_weight": sample_weight}
         if "fit" not in method_name:
-            instance.fit(X, y)
-        method(X, y, **method_kwargs)
+            run_routing_caller(instance.fit, X, y)
+        run_routing_caller(method, X, y, **method_kwargs)
 
         assert registry
         for _scorer in registry:
@@ -1043,7 +1041,7 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
         instance = metaestimator_class(**kwargs)
         method_kwargs = {"groups": groups, "metadata": metadata}
         method = getattr(instance, method_name)
-        method(X_, y_, **method_kwargs)
+        run_routing_caller(method, X_, y_, **method_kwargs)
         assert registry
         for _splitter in registry:
             check_recorded_metadata(
@@ -1051,7 +1049,6 @@ def test_metadata_is_routed_correctly_to_splitter(metaestimator):
             )
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize("metaestimator", METAESTIMATORS, ids=METAESTIMATOR_IDS)
 @config_context(enable_metadata_routing=True)
 def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):
@@ -1090,7 +1087,7 @@ def test_metadata_routed_to_sub_estimator_in_pipeline(metaestimator):
     pipe = Pipeline(
         [("transformer", instance), ("final_estimator", NonConsumingClassifier())]
     )
-    pipe.fit(X, y, sample_weight=sample_weight)
+    run_routing_caller(pipe.fit, X, y, sample_weight=sample_weight)
 
     assert registry
     preserves_metadata = metaestimator.get("preserves_metadata", True)
@@ -1125,7 +1122,8 @@ def test_metadata_routed_to_group_splitter(metaestimator):
     # remove `ConsumingSplitter` from kwargs, so 'cv' param isn't passed twice:
     kwargs.pop("cv", None)
     instance = metaestimator_class(cv=GroupKFold(n_splits=2), **kwargs)
-    cross_validate(
+    run_routing_caller(
+        cross_validate,
         instance,
         X_,
         y_,

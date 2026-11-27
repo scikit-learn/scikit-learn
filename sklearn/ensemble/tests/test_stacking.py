@@ -45,13 +45,13 @@ from sklearn.tests.metadata_routing_common import (
     ConsumingRegressor,
     _Registry,
     check_recorded_metadata,
+    run_routing_caller,
 )
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import (
     assert_allclose,
     assert_allclose_dense_sparse,
     ignore_warnings,
-    skip_if_use_threading_backend_with_high_parallelism,
 )
 from sklearn.utils.fixes import COO_CONTAINERS, CSC_CONTAINERS, CSR_CONTAINERS
 
@@ -938,7 +938,6 @@ def test_get_metadata_routing_without_fit(Estimator, Child):
     est.get_metadata_routing()
 
 
-@skip_if_use_threading_backend_with_high_parallelism
 @pytest.mark.parametrize(
     "Estimator, Child",
     [
@@ -969,7 +968,7 @@ def test_metadata_routing_for_stacking_estimators(Estimator, Child, prop, prop_v
         final_estimator=Child(registry=_Registry()).set_predict_request(**{prop: True}),
     )
 
-    est.fit(X_iris, y_iris, **{prop: prop_value})
+    run_routing_caller(est.fit, X_iris, y_iris, **{prop: prop_value})
 
     for estimator in est.estimators_:
         registry = estimator.registry
