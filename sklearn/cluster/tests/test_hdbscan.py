@@ -403,7 +403,14 @@ def test_hdbscan_better_than_dbscan():
 @pytest.mark.parametrize(
     "kwargs, X",
     [
-        ({"metric": "precomputed"}, np.array([[1, np.inf], [np.inf, 1]])),
+        pytest.param(
+            {"metric": "precomputed"},
+            np.array([[1, np.inf], [np.inf, 1]]),
+            marks=pytest.mark.filterwarnings(
+                "ignore:The minimum spanning tree contains edge weights with value "
+                "infinity:UserWarning"
+            ),
+        ),
         ({"metric": "precomputed"}, [[1, 2], [2, 1]]),
         ({}, [[1, 2], [3, 4]]),
     ],

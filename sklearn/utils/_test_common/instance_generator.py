@@ -5,7 +5,6 @@ import os
 import re
 import sys
 import warnings
-from contextlib import suppress
 from functools import partial
 from inspect import isfunction
 
@@ -207,7 +206,10 @@ INIT_PARAMS = {
     BernoulliRBM: dict(n_iter=5, batch_size=10),
     Birch: dict(n_clusters=2),
     BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
-    CalibratedClassifierCV: dict(estimator=LogisticRegression(), cv=3),
+    CalibratedClassifierCV: [
+        dict(estimator=LogisticRegression(), cv=3),
+        dict(estimator=LogisticRegression(), cv=3, method="temperature"),
+    ],
     CCA: dict(n_components=1, max_iter=5),
     ClassifierChain: dict(estimator=LogisticRegression(), cv=3),
     ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0, 1])]),
@@ -821,9 +823,11 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
 
 def _tested_estimators(type_filter=None):
     for _, Estimator in all_estimators(type_filter=type_filter):
-        with suppress(SkipTest):
-            for estimator in _construct_instances(Estimator):
-                yield estimator
+        if Estimator in SKIPPED_ESTIMATORS:
+            # _construct_instances would raise SkipTest and a SkipTestWarning.
+            continue
+        for estimator in _construct_instances(Estimator):
+            yield estimator
 
 
 try:
@@ -1004,6 +1008,13 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    CalibratedClassifierCV: {
+        # Only run for method="temperature", the only method with array API support.
+        "check_array_api_mixed_inputs": (
+            "`classes_` follows the namespace and device of `y`, not `X`"
+        ),
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     ColumnTransformer: {
         "check_estimators_empty_data_messages": "FIXME",
