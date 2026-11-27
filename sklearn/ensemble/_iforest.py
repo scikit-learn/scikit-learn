@@ -74,8 +74,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <isolation_forest>`.
 
-    .. versionadded:: 0.18
-
     Parameters
     ----------
     n_estimators : int, default=100
@@ -99,10 +97,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         - If 'auto', the threshold is determined as in the
           original paper.
         - If float, the contamination should be in the range (0, 0.5].
-
-        .. versionchanged:: 0.22
-           The default value of ``contamination`` changed from 0.1
-           to ``'auto'``.
 
     max_features : int or float, default=1.0
         The number of features to draw from X to train each base estimator.
@@ -138,8 +132,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-        .. versionadded:: 0.21
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
@@ -172,12 +164,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
 
-        .. versionadded:: 0.20
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

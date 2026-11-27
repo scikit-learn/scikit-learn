@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from sklearn.datasets import make_sparse_coded_signal
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import (
     LinearRegression,
     OrthogonalMatchingPursuit,
@@ -77,20 +78,16 @@ def test_with_without_gram_tol():
     )
 
 
-def test_unreachable_accuracy():
-    assert_array_almost_equal(
-        orthogonal_mp(X, y, tol=0), orthogonal_mp(X, y, n_nonzero_coefs=n_features)
-    )
-    warning_message = (
-        "Orthogonal matching pursuit ended prematurely "
-        "due to linear dependence in the dictionary. "
-        "The requested precision might not have been met."
-    )
-    with pytest.warns(RuntimeWarning, match=warning_message):
-        assert_array_almost_equal(
-            orthogonal_mp(X, y, tol=0, precompute=True),
-            orthogonal_mp(X, y, precompute=True, n_nonzero_coefs=n_features),
+@pytest.mark.parametrize("precompute", [False, True])
+def test_unreachable_accuracy(precompute):
+    msg = "Orthogonal matching pursuit ended prematurely due to linear dependence"
+    with pytest.warns(ConvergenceWarning, match=msg):
+        coef_tol_0 = orthogonal_mp(X, y, tol=0, precompute=precompute)
+    with pytest.warns(ConvergenceWarning, match=msg):
+        coef_n_zero = orthogonal_mp(
+            X, y, n_nonzero_coefs=n_features, precompute=precompute
         )
+    assert_allclose(coef_tol_0, coef_n_zero)
 
 
 @pytest.mark.parametrize("positional_params", [(X, y), (G, Xy)])
@@ -179,7 +176,7 @@ def test_identical_regressors():
         "due to linear dependence in the dictionary. "
         "The requested precision might not have been met."
     )
-    with pytest.warns(RuntimeWarning, match=warning_message):
+    with pytest.warns(ConvergenceWarning, match=warning_message):
         orthogonal_mp(newX, newy, n_nonzero_coefs=2)
 
 
@@ -229,14 +226,15 @@ def test_omp_cv():
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
     ompcv = OrthogonalMatchingPursuitCV(fit_intercept=False, max_iter=10)
-    ompcv.fit(X, y_)
+    with ignore_warnings(category=ConvergenceWarning):
+        ompcv.fit(X, y_)
     assert ompcv.n_nonzero_coefs_ == n_nonzero_coefs
-    assert_array_almost_equal(ompcv.coef_, gamma_)
+    assert_allclose(ompcv.coef_, gamma_)
     omp = OrthogonalMatchingPursuit(
         fit_intercept=False, n_nonzero_coefs=ompcv.n_nonzero_coefs_
     )
     omp.fit(X, y_)
-    assert_array_almost_equal(ompcv.coef_, omp.coef_)
+    assert_allclose(ompcv.coef_, omp.coef_)
 
 
 def test_omp_reaches_least_squares():

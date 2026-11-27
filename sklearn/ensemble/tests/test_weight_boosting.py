@@ -540,6 +540,7 @@ def test_adaboost_consistent_predict():
     ],
 )
 def test_adaboost_negative_weight_error(model, X, y):
+    model = clone(model)
     sample_weight = np.ones_like(y)
     sample_weight[-1] = -10
 

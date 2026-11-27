@@ -171,9 +171,9 @@ def test_cython_solver_equivalence(sparse_csc_type):
 
 
 @pytest.mark.parametrize("cd", ["enet", "sparse_enet", "enet_gram", "enet_multi"])
-def test_cython_solver_early_stopping(cd):
+def test_cython_solver_early_stopping(cd, global_random_seed):
     """Test that early_stopping works correctly."""
-    X, y = make_regression()
+    X, y = make_regression(random_state=global_random_seed)
     X_mean = X.mean(axis=0)
     X_centered = np.asfortranarray(X - X_mean)
     y -= y.mean()
@@ -235,7 +235,8 @@ def test_cython_solver_early_stopping(cd):
     else:
         coef_1 = np.zeros(X.shape[1])
     _, gap_1, _, _ = cd_solve(w=coef_1)
-    assert np.sum(coef_1 != 0) > X.shape[1] / 4  # avoid all zeros
+    # Assert meaningful test setup by avoiding that all coef are zero.
+    assert np.sum(coef_1 != 0) > max(2, X.shape[1] / 10)
 
     # With early stopping, the coefficients should stay unchanged.
     coef_2 = coef_1.copy(order="F")
@@ -1229,6 +1230,50 @@ def test_warm_start_multitask_lasso():
     clf2 = MultiTaskLasso(alpha=0.1, max_iter=10)
     ignore_warnings(clf2.fit)(X, Y)
     assert_array_almost_equal(clf2.coef_, clf.coef_)
+
+
+@pytest.mark.parametrize("variant", ["dense", "sparse", "gram", "multi_task"])
+def test_enet_cd_screening_with_warm_start_at_optimum(variant):
+    """Test that gap safe screening keeps the active features of a perfect warm start.
+
+    With a warm start at the optimum, the dual gap is exactly zero. Calculated within
+    floating-point precision, the gap can be tiny, exactly zero or even negative. The
+    radius of the screening rule takes the square root of the gap and can result in nan
+    values (sqrt(-1) is nan). As a consequence, features with non-zero coefficients
+    could be screened out.
+
+    Note that early_stopping=False is needed to get to the screening with such a
+    small dual gap. This is the way the inner solvers of NewtonCDSolver and
+    NewtonCDGramSolver are called.
+    """
+    n_samples, n_features = 50, 8
+    # Whether features are wrongly screened out depends on rounding errors. We
+    # therefore test several datasets. Without accounting for floating point errors
+    # in the screening, roughly every 4th dataset fails.
+    for seed in range(30):
+        rng = np.random.RandomState(seed)
+        X = np.asfortranarray(rng.standard_normal((n_samples, n_features)))
+        y = X @ rng.standard_normal(n_features) + rng.standard_normal(n_samples)
+        params = dict(alphas=[1.0], l1_ratio=0.5, tol=1e-14, precompute=False)
+        if variant == "sparse":
+            X = sparse.csc_array(X)
+        elif variant == "gram":
+            params.update(precompute=X.T @ X, Xy=X.T @ y)
+        elif variant == "multi_task":
+            y = np.c_[y, X @ rng.standard_normal(n_features)]
+
+        _, coef, _ = enet_path(X, y, **params)
+        assert np.count_nonzero(coef) >= 1
+        _, coef_warm, _, n_iter = enet_path(
+            X,
+            y,
+            coef_init=coef[..., 0].copy(),
+            early_stopping=False,
+            return_n_iter=True,
+            **params,
+        )
+        assert_allclose(coef_warm, coef, rtol=1e-10, atol=1e-13)
+        assert n_iter[0] <= 2
 
 
 @pytest.mark.parametrize(

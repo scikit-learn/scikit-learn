@@ -1,0 +1,5 @@
+- :class:`preprocessing.MaxAbsScaler` and :class:`preprocessing.LabelBinarizer`
+  (with `sparse_output=False`) now set the `array_api_support` estimator tag.
+  Both already supported array API inputs, as documented in the user guide, but
+  their tags reported no support.
+  By :user:`Tim Head <betatim>`.

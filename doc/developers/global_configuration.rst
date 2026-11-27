@@ -100,9 +100,25 @@ When writing a new test function that uses this fixture, please use the
 following command to make sure that it passes deterministically for all
 admissible seeds on your local machine:
 
-.. prompt:: bash $
+.. code-block:: console
 
-    SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
+    $ SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all" pytest -v -k test_your_test_name
+
+`SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As background, scikit-learn uses joblib for parallelism. joblib supports
+multiple backends, and in many cases scikit-learn defaults to using a
+process-pool based backend, with parallelism disabled.
+
+When this environment variable is set to ``1``, joblib is globally configured
+with the ``"threading"`` backend, and joblib's ``n_jobs`` is set to a high
+number of threads compared to number of cores. This can catch parallelism bugs,
+and potentially some thread-safety bugs, in cases where by default no
+parallelism is used.
+
+Given the focus on threading, it's recommended that these be run on
+free-threaded Python builds.
 
 `SKLEARN_SKIP_NETWORK_TESTS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -123,7 +139,7 @@ float64 data.
 `SKLEARN_WARNINGS_AS_ERRORS`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This environment variable is used to turn warnings into errors in tests and
+This environment variable is used to turn Python warnings into errors in tests and
 documentation build.
 
 Some CI (Continuous Integration) builds set `SKLEARN_WARNINGS_AS_ERRORS=1`, for
@@ -141,10 +157,11 @@ since sometimes warnings originate from third-party libraries and there is not
 much we can do about it. You can see the warning filters in the
 `_get_warnings_filters_info_list` function in `sklearn/utils/_testing.py`.
 
-Note that for documentation build, `SKLEARN_WARNINGS_AS_ERRORS=1` is checking
-that the documentation build, in particular running examples, does not produce
-any warnings. This is different from the `-W` `sphinx-build` argument that
-catches syntax warnings in the rst files.
+Note that Sphinx warnings, like undefined references, documents missing from a toctree,
+etc., are handled separately and are not controlled by this environment variable. Pull
+requests fail if a Sphinx warning or error mentions a file changed in the PR. Pushes to
+`main` and maintenance branches turn all Sphinx warnings from the `doc` CircleCI job
+into errors.
 
 Build and debug
 ---------------

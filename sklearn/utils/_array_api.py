@@ -179,7 +179,7 @@ def _check_array_api_dispatch(array_api_dispatch):
     if scipy_version < parse_version(min_scipy_version):
         raise ImportError(
             f"SciPy must be {min_scipy_version} or newer"
-            " (found {scipy.__version__}) to dispatch array using"
+            f" (found {scipy.__version__}) to dispatch array using"
             " the array API specification"
         )
 
@@ -403,7 +403,7 @@ def get_namespace(
     always returned irrespective of the fact that arrays implement the
     `__array_namespace__` protocol or not.
 
-    Note that if no arrays pass the set filters, ``_NUMPY_API_WRAPPER_INSTANCE, False``
+    Note that if no arrays pass the set filters, ``array_api_compat.numpy, False``
     is returned.
 
     Parameters
@@ -721,11 +721,16 @@ def _fill_diagonal(array, value, xp):
 
     if _is_numpy_namespace(xp):
         xp.fill_diagonal(array, value, wrap=False)
-    else:
-        # TODO: when array libraries support `reshape(copy)`, use
-        # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
-        # `try/except`). This is faster than for loop, when no copy needs to be
-        # made within `reshape`. See #31445 for details.
+        return
+
+    diag_idx = xp.arange(min_rows_columns, device=array_device(array))
+    try:
+        # Setting items with integer arrays is not specified by the array API
+        # yet (see https://github.com/data-apis/array-api/issues/864), but most
+        # namespaces support it. It is a single operation, while the loop
+        # below costs one device write per diagonal element.
+        array[diag_idx, diag_idx] = value
+    except (IndexError, TypeError, NotImplementedError):
         if value.ndim == 0:
             for i in range(min_rows_columns):
                 array[i, i] = value
@@ -743,7 +748,7 @@ def _add_to_diagonal(array, value, xp):
 
     Note `array` is altered in place.
     """
-    value, min_rows_columns = _validate_diagonal_args(array, value, xp)
+    value, _ = _validate_diagonal_args(array, value, xp)
 
     if _is_numpy_namespace(xp):
         step = array.shape[1] + 1
@@ -752,13 +757,7 @@ def _add_to_diagonal(array, value, xp):
         array.flat[:end:step] += value
         return
 
-    # TODO: when array libraries support `reshape(copy)`, use
-    # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
-    # `try/except`). This is faster than for loop, when no copy needs to be
-    # made within `reshape`. See #31445 for details.
-    value = xp.linalg.diagonal(array) + value
-    for i in range(min_rows_columns):
-        array[i, i] = value[i]
+    _fill_diagonal(array, xp.linalg.diagonal(array) + value, xp)
 
 
 def _is_xp_namespace(xp, name):
@@ -951,74 +950,6 @@ def _xlogy(x, y, xp=None):
     with numpy.errstate(divide="ignore", invalid="ignore"):
         temp = x * xp.log(y)
     return xp.where(x == 0.0, xp.asarray(0.0, dtype=temp.dtype, device=device), temp)
-
-
-def _nanmin(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmin(X, axis=axis))
-
-    else:
-        mask = xp.isnan(X)
-        X = xp.min(
-            xp.where(mask, xp.asarray(+xp.inf, dtype=X.dtype, device=device), X),
-            axis=axis,
-        )
-        # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
-        if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device), X)
-        return X
-
-
-def _nanmax(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmax(X, axis=axis))
-
-    else:
-        mask = xp.isnan(X)
-        X = xp.max(
-            xp.where(mask, xp.asarray(-xp.inf, dtype=X.dtype, device=device), X),
-            axis=axis,
-        )
-        # Replace Infs from all NaN slices with NaN again
-        mask = xp.all(mask, axis=axis)
-        if xp.any(mask):
-            X = xp.where(mask, xp.asarray(xp.nan, dtype=X.dtype, device=device), X)
-        return X
-
-
-def _nanmean(X, axis=None, xp=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, device = get_namespace_and_device(X, xp=xp)
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nanmean(X, axis=axis))
-    else:
-        mask = xp.isnan(X)
-        total = xp.sum(
-            xp.where(mask, xp.asarray(0.0, dtype=X.dtype, device=device), X), axis=axis
-        )
-        count = xp.sum(xp.astype(xp.logical_not(mask), X.dtype), axis=axis)
-        return total / count
-
-
-def _nansum(X, axis=None, xp=None, keepdims=False, dtype=None):
-    # TODO: refactor once nan-aware reductions are standardized:
-    # https://github.com/data-apis/array-api/issues/621
-    xp, _, X_device = get_namespace_and_device(X, xp=xp)
-
-    if _is_numpy_namespace(xp):
-        return xp.asarray(numpy.nansum(X, axis=axis, keepdims=keepdims, dtype=dtype))
-
-    mask = xp.isnan(X)
-    masked_arr = xp.where(mask, xp.asarray(0, device=X_device, dtype=X.dtype), X)
-    return xp.sum(masked_arr, axis=axis, keepdims=keepdims, dtype=dtype)
 
 
 def _asarray_with_order(
@@ -1246,7 +1177,8 @@ def _atol_for_type(dtype_or_dtype_name):
         # expect the same floating precision level as NumPy's default floating
         # point dtype.
         dtype_or_dtype_name = numpy.float64
-    return numpy.finfo(dtype_or_dtype_name).eps * 1000
+    # Since pytest 9.2.0, pytest.approx rejects np.float32 as an absolute tolerance.
+    return float(numpy.finfo(dtype_or_dtype_name).eps * 1000)
 
 
 def indexing_dtype(xp):
@@ -1375,6 +1307,76 @@ def _matching_numpy_dtype(X, xp=None):
     reversed_dtypes_dict = {dtype: name for name, dtype in dtypes_dict.items()}
     dtype_name = reversed_dtypes_dict[X.dtype]
     return np_compat.__array_namespace_info__().dtypes()[dtype_name]
+
+
+def _interp(x, xp, fp, left=None, right=None):
+    """Partial port of `numpy.interp` for array API."""
+    # TODO: Replace with `scipy.interpolate` once it supports array API:
+    # https://scipy.github.io/devdocs/dev/api-dev/array_api_modules_tables/interpolate.html
+    xp_ns, _, device = get_namespace_and_device(xp, fp)
+    fp = move_to(fp, xp=xp_ns, device=device)
+
+    if xp.ndim != 1 or fp.ndim != 1:
+        raise ValueError("Data points must be 1-D sequences")
+    if xp.shape[0] != fp.shape[0]:
+        raise ValueError("fp and xp are not of the same length")
+
+    x = xp_ns.asarray(x, device=device)
+
+    # Complex floating-point dtypes are not supported. Here, we check `x`'s own dtype
+    # before casting to the floating dtype below. Otherwise, a complex `x` will not
+    # raise the `NotImplementedError`.
+    for dtype_to_check in (xp.dtype, fp.dtype, x.dtype):
+        if xp_ns.isdtype(dtype_to_check, "complex floating"):
+            raise NotImplementedError(
+                "Complex floating-point values are not supported by interp."
+            )
+
+    dtype = _find_matching_floating_dtype(xp, fp, xp=xp_ns)
+    x = xp_ns.astype(x, dtype)
+
+    # Match NumPy when `xp` or `fp` is empty
+    if xp.shape[0] == 0 or fp.shape[0] == 0:
+        if size(x) == 0:
+            return x
+        raise ValueError("array of sample points is empty")
+
+    if _is_numpy_namespace(xp_ns):
+        return xp_ns.interp(x, xp, fp, left, right)
+
+    left_value = (
+        fp[0] if left is None else xp_ns.asarray(left, dtype=dtype, device=device)
+    )
+    right_value = (
+        fp[-1] if right is None else xp_ns.asarray(right, dtype=dtype, device=device)
+    )
+
+    # A single sample point has no interval to interpolate within.
+    if xp.shape[0] == 1:
+        return xp_ns.where(
+            x < xp[0],
+            left_value,
+            xp_ns.where(x > xp[0], right_value, fp[0]),
+        )
+
+    # Clipping avoids out-of-bounds indexing when `x` is outside the range of `xp`.
+    stop = xp_ns.clip(xp_ns.searchsorted(xp, x, side="right"), 1, xp.shape[0] - 1)
+    x0 = xp[stop - 1]
+    x1 = xp[stop]
+    y0 = fp[stop - 1]
+    y1 = fp[stop]
+    denom = x1 - x0
+
+    interp_y = xp_ns.where(
+        x == x0,
+        y0,
+        xp_ns.where(x == x1, y1, y0 + (x - x0) * (y1 - y0) / denom),
+    )
+
+    interp_y = xp_ns.where(x < xp[0], left_value, interp_y)
+    interp_y = xp_ns.where(x > xp[-1], right_value, interp_y)
+
+    return interp_y
 
 
 def _swapaxes(array, axis1, axis2, /, xp=None):

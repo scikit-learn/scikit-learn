@@ -88,8 +88,6 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -310,6 +308,7 @@ class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstima
             self.h_samples_ = np.zeros((self.batch_size, self.n_components))
 
         self._fit(X, self.random_state_)
+        return self
 
     def _fit(self, v_pos, rng):
         """Inner fit for one mini-batch.

@@ -6,6 +6,7 @@ import pytest
 from scipy import optimize
 
 from sklearn.datasets import make_regression
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import HuberRegressor, LinearRegression, Ridge, SGDRegressor
 from sklearn.linear_model._huber import _huber_loss_and_gradient
 from sklearn.utils._testing import (
@@ -42,9 +43,11 @@ def test_huber_equals_lr_for_high_epsilon():
 
 
 def test_huber_max_iter():
+    # Test that the maximum number of iteration is reached
     X, y = make_regression_with_outliers()
     huber = HuberRegressor(max_iter=1)
-    huber.fit(X, y)
+    with pytest.warns(ConvergenceWarning, match="lbfgs failed to converge"):
+        huber.fit(X, y)
     assert huber.n_iter_ == huber.max_iter
 
 

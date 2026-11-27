@@ -2,6 +2,7 @@
 
 import pickle
 import re
+import warnings
 
 import numpy as np
 import pytest
@@ -116,17 +117,15 @@ def test_precomputed_nearest_neighbors_filtering(global_random_seed):
     for additional_neighbors in [0, 10]:
         nn = NearestNeighbors(n_neighbors=n_neighbors + additional_neighbors).fit(X)
         graph = nn.kneighbors_graph(X, mode="distance")
-        labels = (
-            SpectralClustering(
-                random_state=global_random_seed,
-                n_clusters=2,
-                affinity="precomputed_nearest_neighbors",
-                n_neighbors=n_neighbors,
-            )
-            .fit(graph)
-            .labels_
+        sp = SpectralClustering(
+            random_state=global_random_seed,
+            n_clusters=2,
+            affinity="precomputed_nearest_neighbors",
+            n_neighbors=n_neighbors,
         )
-        results.append(labels)
+        with pytest.warns(UserWarning, match="Graph is not fully connected"):
+            sp.fit(graph)
+        results.append(sp.labels_)
 
     assert_array_equal(results[0], results[1])
 
@@ -313,7 +312,10 @@ def test_verbose(assign_labels, capsys):
 def test_spectral_clustering_np_matrix_raises():
     """Check that spectral_clustering raises an informative error when passed
     an np.matrix. See #10993"""
-    X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
+    with warnings.catch_warnings():
+        # numpy emits a PendingDeprecationWarning when creating an np.matrix
+        warnings.simplefilter("ignore", PendingDeprecationWarning)
+        X = np.matrix([[0.0, 2.0], [2.0, 0.0]])
 
     msg = r"np\.matrix is not supported. Please convert to a numpy array"
     with pytest.raises(TypeError, match=msg):

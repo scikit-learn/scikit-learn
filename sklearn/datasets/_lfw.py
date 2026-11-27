@@ -30,7 +30,6 @@ from sklearn.utils._param_validation import (
     StrOptions,
     validate_params,
 )
-from sklearn.utils.fixes import tarfile_extractall
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +122,7 @@ def _check_fetch_lfw(
 
         logger.debug("Decompressing the data archive to %s", data_folder_path)
         with tarfile.open(archive_path, "r:gz") as fp:
-            tarfile_extractall(fp, path=lfw_home)
+            fp.extractall(path=lfw_home, filter="data")
 
         remove(archive_path)
 
@@ -329,8 +328,6 @@ def fetch_lfw_people(
         object. See below for more information about the `dataset.data` and
         `dataset.target` object.
 
-        .. versionadded:: 0.20
-
     n_retries : int, default=3
         Number of retries when HTTP errors are encountered.
 
@@ -369,8 +366,6 @@ def fetch_lfw_people(
         shape (n_samples, n_features) with each row representing one
         sample and each column representing the features. The second
         ndarray of shape (n_samples,) containing the target samples.
-
-        .. versionadded:: 0.20
 
     Examples
     --------

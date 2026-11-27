@@ -5,7 +5,6 @@
 Newton solver for Generalized Linear Models
 """
 
-import math
 import warnings
 from abc import ABC, abstractmethod
 
@@ -20,9 +19,12 @@ from sklearn.linear_model._base import _pre_fit
 from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent,
     enet_coordinate_descent_gram,
+    enet_coordinate_descent_multinomial,
     enet_coordinate_descent_sparse,
 )
-from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.linear_model._linear_loss import (
+    LinearModelLoss,
+)
 from sklearn.utils.fixes import _get_additional_lbfgs_options_dict
 from sklearn.utils.optimize import _check_optimize_result
 
@@ -126,6 +128,13 @@ class NewtonSolver(ABC):
     Usage pattern:
         - initialize solver: sol = NewtonSolver(...)
         - solve the problem: sol.solve(X, y, sample_weight)
+
+    Conventions:
+        - coef means all coefficients. If there is an intercept, it is at the end:
+        - intercept = coef[-1]; or intercept = coef[:, -1]
+        - raw_predictions = X @ coef
+          With intercept it means X @ coef[:-1] + coef[-1]
+        - penalties ||coef|| always exclude a possible intercept
 
     References
     ----------
@@ -333,46 +342,45 @@ class NewtonSolver(ABC):
             - self.raw_prediction
         """
         # line search parameters
-        sigma = 0.00048828125  # 1/2**11, sometimes called c1
-        min_step_reduction = 1e-2  # minimum factor of decrease of alpha per step
-        min_step_length = 1e-12  # absolute minimum value of alpha
+        ls_converged = False
+        sigma = 0.00048828125  # 1/2**11, also called c1
         # Remember: dtype follows X, also the dtype of self.loss_value. For Array API
         # support, self.loss_value might be float instead of np.floatXX.
         eps = 16 * np.finfo(X.dtype).eps
         alpha = 1  # initial step size, Newton methods should always try 1 first.
-        alpha_old = 1
 
         self.coef_old = self.coef
         self.loss_value_old = self.loss_value
         self.gradient_old = self.gradient
-        phi_0 = phi_old = self.loss_value_old  # phi(0)
-        phi_prime_0 = self.gradient_times_newton  # phi'(0) = gradient @ coef_newton
 
-        # gradient_times_newton = self.gradient @ self.coef_newton
+        # phi'(0) = gradient_times_newton = self.gradient @ self.coef_newton
         # was computed in inner_solve.
         armijo_term = sigma * self.gradient_times_newton
+        l1_term = 0
         if self.l1_reg_strength > 0:
-            # Add ||coef||_1 - ||coef_old||_1, see Eq. 2.19 and 2.14 of
-            # Lee, Sun, Saunder (2012) "Proximal Newton-Type Methods".
-            L1 = self.linear_loss.l1_penalty(
-                self.coef + self.coef_newton, self.l1_reg_strength
+            # Add ||coef_old + coef_newton||_1 - ||coef_old||_1, see Eq. 2.19 and 2.14
+            # of Lee, Sun, Saunder (2012) "Proximal Newton-Type Methods".
+            # Note that the L1 penalty does not include the intercept.
+            # To avoid cancellation errors for tiny steps, we use, with s = sign(w),
+            #   |w + d| - |w| = max(s * d, -s * d - 2 * |w|)
+            w, _ = self.linear_loss.weight_intercept(self.coef_old)
+            d, _ = self.linear_loss.weight_intercept(self.coef_newton)
+            sd = np.where(w < 0, -d, d)
+            l1_term = self.l1_reg_strength * float(
+                np.sum(np.maximum(sd, -sd - 2 * np.abs(w)))
             )
-            L1_old = self.linear_loss.l1_penalty(self.coef_old, self.l1_reg_strength)
-            armijo_term += sigma * (L1 - L1_old)
+            armijo_term += sigma * l1_term
 
         _, _, raw_prediction_newton = self.linear_loss.weight_intercept_raw(
             self.coef_newton, X
         )
-
-        # np.sum(np.abs(self.gradient_old))
-        sum_abs_grad_old = -1
 
         is_verbose = self.verbose >= 2
         if is_verbose:
             print("  Backtracking Line Search")
             print(f"    eps=16 * finfo.eps={eps}")
 
-        for i in range(21):
+        for i in range(21):  # until and including alpha = 1/2**20 ~ 1e-6
             self.coef = self.coef_old + alpha * self.coef_newton
             raw = self.raw_prediction + alpha * raw_prediction_newton
             self.loss_value, self.gradient = self.linear_loss.loss_gradient(
@@ -400,6 +408,7 @@ class NewtonSolver(ABC):
                     f"<= {alpha * armijo_term} {check}"
                 )
             if check:
+                ls_converged = True
                 break
             # 2. Tiny gradient / Armijo term.
             # If we are already close to the minimum, gradient and Armijo term are
@@ -417,6 +426,7 @@ class NewtonSolver(ABC):
                         f"{g_max_abs} <= {self.tol} {check}"
                     )
                 if check:
+                    ls_converged = True
                     break
             # 3. Deal with differences around machine precision.
             # 3.1 Check relative loss difference ~ machine precision
@@ -428,61 +438,40 @@ class NewtonSolver(ABC):
                     f" {np.abs(loss_improvement)} <= {tiny_loss} {check}"
                 )
             if check:
-                if sum_abs_grad_old < 0:
-                    mnsg_old = min_norm_subgradient(
-                        self.l1_reg_strength,
-                        self.gradient_old,
-                        self.coef_old,
-                        self.linear_loss,
-                    )
-                    sum_abs_grad_old = np.linalg.norm(mnsg_old.ravel(), ord=1)
-                # 3.2 Check sum of absolute gradients as alternative condition.
-                mnsg = min_norm_subgradient(
-                    self.l1_reg_strength, self.gradient, self.coef, self.linear_loss
-                )  # equals gradient if l1_reg_strength = 0.
-                sum_abs_grad = np.linalg.norm(mnsg.ravel(), ord=1)
-                check = sum_abs_grad < sum_abs_grad_old
-                if is_verbose:
-                    print(
-                        "      check sum(|gradient|) < sum(|gradient_old|): "
-                        f"{sum_abs_grad} < {sum_abs_grad_old} {check}"
-                    )
-                if check:
-                    break
+                # 3.2 Check the approximate Armijo condition, i.e. the first inequality
+                # of Eq. 4.1 of Hager & Zhang (2005) "A New Conjugate Gradient Method
+                # with Guaranteed Descent and an Efficient Line Search":
+                #   phi'(alpha) <= (2 * sigma - 1) * phi'(0)
+                # (our sigma is their delta, 3.1 is their Eq. 4.2). It is the Armijo
+                # condition with phi replaced by its quadratic interpolant, and
+                # phi'(alpha) can be computed much more precisely than differences of
+                # phi.
+                # With an L1 penalty, phi is not differentiable. We then interpolate
+                # only the smooth part of phi and use the convexity of the L1 norm,
+                # ||w + alpha * d||_1 - ||w||_1 <= alpha * (||w + d||_1 - ||w||_1).
+                # This gives the same condition as above with phi'(alpha) replaced by
+                #   gradient(alpha) @ coef_newton + l1_term
+                # which equals armijo_term / sigma for alpha = 0.
+                if armijo_term < 0:
+                    phi_prime = self.gradient.ravel() @ self.coef_newton.ravel()
+                    phi_prime += l1_term
+                    phi_prime_max = (2 * sigma - 1) * armijo_term / sigma
+                    check = phi_prime <= phi_prime_max
+                    if is_verbose:
+                        print(
+                            "      check gradient @ newton step <= (2 * sigma - 1) *"
+                            " gradient_old @ newton step: "
+                            f"{phi_prime} <= {phi_prime_max} {check}"
+                        )
+                    if check:
+                        ls_converged = True
+                        break
 
-            # Set a smart new value of alpha, smaller than previous one, larger than 0.
-            # We know that
-            #   - phi(0) = phi_0
-            #   - phi(alpha) = phi_1
-            #   - phi'(0) = phi_prime_0
-            # We fit a quadratic polynomial through those 3 points and take the minimum
-            # alpha as next trial step length.
-            # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, Eq 3.58.
-            phi_1 = self.loss_value
-            alpha_trial = (
-                -phi_prime_0 * alpha**2 / (2 * (phi_1 - phi_0 - phi_prime_0 * alpha))
-            )
-            if i > 0:
-                # We additionally know phi(alpha_old) = phi_old and use cubic
-                # interpolation.
-                # See Nocedal & Wright 2nd ed. Chapter 3.5, page 58, below Eq 3.58.
-                denom = (alpha_old * alpha) ** 2 * (alpha - alpha_old)
-                vec0 = phi_1 - phi_0 - phi_prime_0 * alpha
-                vec1 = phi_old - phi_0 - phi_prime_0 * alpha_old
-                a = (alpha_old**2 * vec0 - alpha**2 * vec1) / denom
-                b = (alpha**3 * vec1 - alpha_old**3 * vec0) / denom
-                if a != 0 and b**2 - 3 * a * phi_prime_0 >= 0:
-                    alpha_trial = (-b + math.sqrt(b**2 - 3 * a * phi_prime_0)) / (3 * a)
-                # else we keep the quadratic alpha_trial from above
+            # Halve the step size. Polynomial interpolation was found to be no better,
+            # see https://github.com/scikit-learn/scikit-learn/issues/35483.
+            alpha *= 0.5
 
-            alpha_old = alpha
-            phi_old = phi_1
-            # Safeguards
-            if alpha_trial >= alpha or alpha_trial <= min_step_length:
-                alpha_trial = 0.5 * alpha
-            # Avoid too large a reduction of alpha.
-            alpha = max(alpha_trial, min_step_reduction * alpha, min_step_length)
-        else:
+        if not ls_converged:
             warnings.warn(
                 (
                     f"Line search of Newton solver {self.__class__.__name__} at"
@@ -493,6 +482,11 @@ class NewtonSolver(ABC):
             )
             if self.verbose:
                 print("  Line search did not converge and resorts to lbfgs instead.")
+            # Restore the state before the line search. The last trial point did not
+            # pass the checks above and might even be non-finite.
+            self.coef = self.coef_old
+            self.loss_value = self.loss_value_old
+            self.gradient = self.gradient_old
             self.use_fallback_lbfgs_solve = True
             return
 
@@ -660,8 +654,11 @@ class NewtonSolver(ABC):
 class NewtonCholeskySolver(NewtonSolver):
     """Cholesky based Newton solver.
 
-    Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
-    solver.
+    The inner solver for finding the Newton step
+
+        H @ coef_newton = -g
+
+    uses Cholesky based linear solver.
     """
 
     def __init__(
@@ -899,11 +896,11 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
 
     This solver can deal with L1 and L2 penalties.
 
-    The inner solver for finding the Newton step H w_newton = -g uses coordinate
-    descent:
+    The inner solver for finding the Newton step
 
         H @ coef_newton = -G
 
+    uses coordinate descent.
     With an L1 penalty, it is better to write down the minimization problem and use
     the 2nd order Taylor approximation only on the smooth parts (loss and L2), see
     Eq. 13 of Yuan, Ho, Lin (2011)
@@ -1027,6 +1024,7 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
 
         n_samples, n_features = X.shape
         gradient, hessian = self.prepare_gradient_hessian()
+        # TODO: Pass correct y=b (see NewtonCDSolver), or at least y=||b||_2^2.
 
         if self.linear_loss.base_loss.is_multiclass:
             # Often needed variables for the multinomial.
@@ -1132,8 +1130,8 @@ class NewtonCDGramSolver(NewtonCholeskySolver):
             y_cd = np.ones(shape=n_samples, dtype=X.dtype)
         else:
             y_cd = self.raw_prediction.copy()
-            h_zero = self.hess_pointwise != 0
-            y_cd[h_zero] -= self.grad_pointwise[h_zero] / self.hess_pointwise[h_zero]
+            mask = self.hess_pointwise != 0
+            y_cd[mask] -= self.grad_pointwise[mask] / self.hess_pointwise[mask]
             if self.linear_loss.fit_intercept:
                 # As if applying _pre_fit(X, y_cd, ..).
                 y_cd -= np.average(y_cd, axis=0, weights=self.hess_pointwise)
@@ -1238,11 +1236,11 @@ class NewtonCDSolver(NewtonSolver):
     a good choice for use cases with n_features > n_samples (saves computation and
     saves large memory allocation of H).
 
-    The inner solver for finding the Newton step H w_newton = -g uses coordinate
-    descent:
+    Inner solver for finding the Newton step
 
-        H @ coef_newton = -G
+            H @ coef_newton = -G
 
+    uses coordinate descent.
     With an L1 penalty, it is better to write down the minimization problem and use
     the 2nd order Taylor approximation only on the smooth parts (loss and L2), see
     Eq. 13 of Yuan, Ho, Lin (2011)
@@ -1339,11 +1337,6 @@ class NewtonCDSolver(NewtonSolver):
                 raise ValueError(
                     f"X must be a CSC array/matrix for {self.__class__.__name__}"
                 )
-            if self.linear_loss.base_loss.is_multiclass:
-                raise ValueError(
-                    f"Solver {self.__class__.__name__} does not support multiclass "
-                    "settings (n_classes >= 3)."
-                )
         elif not X.flags.f_contiguous:
             raise ValueError(f"X must be F-contiguous for {self.__class__.__name__}")
 
@@ -1409,8 +1402,8 @@ class NewtonCDSolver(NewtonSolver):
         if not self.linear_loss.base_loss.is_multiclass:
             # z = self.raw_prediction - self.grad_pointwise / self.hess_pointwise
             z = self.raw_prediction.copy()
-            h_zero = self.hess_pointwise != 0
-            z[h_zero] -= self.grad_pointwise[h_zero] / self.hess_pointwise[h_zero]
+            mask = self.hess_pointwise != 0
+            z[mask] -= self.grad_pointwise[mask] / self.hess_pointwise[mask]
 
             X, z, X_offset, z_offset, X_scale, _, _ = _pre_fit(
                 X=X,
@@ -1478,7 +1471,7 @@ class NewtonCDSolver(NewtonSolver):
                 self.coef_newton = np.r_[w, w0] - self.coef
             else:
                 self.coef_newton = w - self.coef
-        else:  # pragma: no cover
+        else:
             # Multinomial multiclass.
             # Unfortunately, the pointwise hessian h is not diagonal and we can't write
             # this as least squares plus penalties:
@@ -1496,14 +1489,50 @@ class NewtonCDSolver(NewtonSolver):
             # middle loop over classes and optimized only for that class. This is
             # the same as using the diagonal majorization above and additionally
             # updating gradient and hessian in this middle loop.
-            #
-            # Unfortunately, all these strategies fail even for simple datasets such as
+            # Unfortunately, these strategies fail even for simple datasets such as
             #     X, y = make_classification(n_samples=20, n_features=20,
             #         n_informative=10, n_classes=3)
-            #     LogisticRegression(C=1).fit(X, y)
-            # Therefore, for the time being, we honestly fail.
-            msg = "Multinomial (n_classes >= 3) is not supported by NewtonCDSolver."
-            raise ValueError(msg)
+            #     LogisticRegression(alpha=1).fit(X, y)
+            # Therefore, we take a more sophisticated approach:
+            # Tanabe & Sagae (1992) https://doi.org/10.1111/J.2517-6161.1992.TB01875.X
+            # derive an analytical LDL' decomposition for the matrix
+            # h = diag(p) - p p' = LDL', L lower triangular, D diagonal.
+            # Defining
+            #   A = sqrt(D) L' X
+            #   b = (L sqrt(D))^-1 (LDL' X coef - g) = A coef - (L sqrt(D))^-1 g
+            # we can now write
+            #     1/2 c' H c + (G' - coef' H) c + alpha ||c||_1 + beta/2 ||c||_2^2
+            #   = 1/2 ||A c - b||_2^2 + alpha ||c||_1 + beta/2 ||c||_2^2 + const
+            #
+            # Note that
+            #   A' A = H
+            #   G = X' g
+            #   A' b = H coef - G
+            proba = self.hess_pointwise
+            w = np.copy(self.coef, order="F")
+
+            with warnings.catch_warnings():
+                # Ignore warnings that add little information for users.
+                warnings.simplefilter("ignore", ConvergenceWarning)
+                _, gap, inner_tol, n_inner_iter = enet_coordinate_descent_multinomial(
+                    W=w,
+                    alpha=self.l1_reg_strength,
+                    beta=self.l2_reg_strength,
+                    X=X,
+                    sample_weight=sample_weight,
+                    raw_prediction=self.raw_prediction,
+                    grad_pointwise=self.grad_pointwise,
+                    proba=proba,
+                    fit_intercept=self.linear_loss.fit_intercept,
+                    max_iter=1000,  # TODO(newton-cd): improve
+                    tol=self.inner_tol,
+                    do_screening=True,
+                    early_stopping=False,
+                    verbose=self.verbose >= 4,
+                )
+
+            # Set self.coef_newton.
+            self.coef_newton = w - self.coef
 
         # Tighten inner stopping criterion, see Chapter 6.1 of "An Improved GLMNET".
         if n_inner_iter == 0:

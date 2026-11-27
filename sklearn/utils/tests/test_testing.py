@@ -1108,7 +1108,9 @@ def test_convert_container_sparse_to_sparse(constructor_name):
 
 def check_warnings_as_errors(warning_info, warnings_as_errors):
     if warning_info.action == "error" and warnings_as_errors:
-        with pytest.raises(warning_info.category, match=warning_info.message):
+        # An empty message means "match any message": pass None to pytest.raises
+        # because matching against an empty string emits a PytestWarning.
+        with pytest.raises(warning_info.category, match=warning_info.message or None):
             warnings.warn(
                 message=warning_info.message,
                 category=warning_info.category,

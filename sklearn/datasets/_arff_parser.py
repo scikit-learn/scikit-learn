@@ -432,6 +432,9 @@ def _pandas_arff_parser(
     single_quote_pattern = re.compile(r"^'(?P<contents>.*)'$")
 
     def strip_single_quotes(input_string):
+        if not isinstance(input_string, str):
+            return input_string
+
         match = re.search(single_quote_pattern, input_string)
         if match is None:
             return input_string

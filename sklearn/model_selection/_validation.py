@@ -180,9 +180,6 @@ def cross_validate(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
         the score are parallelized over the cross-validation splits.
@@ -216,15 +213,8 @@ def cross_validate(
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-        .. versionadded:: 0.19
-
-        .. versionchanged:: 0.21
-            Default value was changed from ``True`` to ``False``
-
     return_estimator : bool, default=False
         Whether to return the estimators fitted on each split.
-
-        .. versionadded:: 0.20
 
     return_indices : bool, default=False
         Whether to return the train-test indices selected for each split.
@@ -235,8 +225,6 @@ def cross_validate(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
@@ -583,9 +571,6 @@ def cross_val_score(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            `cv` default value if `None` changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
         the score are parallelized over the cross-validation splits.
@@ -618,8 +603,6 @@ def cross_val_score(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
@@ -1090,9 +1073,6 @@ def cross_val_predict(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and
         predicting are parallelized over the cross-validation splits.
@@ -1290,9 +1270,6 @@ def _fit_and_predict(estimator, X, y, train, test, fit_params, method):
 
     X : array-like of shape (n_samples, n_features)
         The data to fit.
-
-        .. versionchanged:: 0.20
-            X is only required to be an object with finite length or shape now
 
     y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         The target variable to try to predict in the case of
@@ -1514,6 +1491,9 @@ def permutation_test_score(
         are permuted among samples with the same group identifier.
         When not specified, ``y`` values are permuted among all samples.
 
+        A warning is raised if each group has a single value of ``y``, because
+        permuting within groups then leaves ``y`` unchanged.
+
         When a grouped cross-validator is used, the group labels are
         also passed on to the ``split`` method of the cross-validator. The
         cross-validator uses them for grouping the samples  while splitting
@@ -1542,9 +1522,6 @@ def permutation_test_score(
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
-
-        .. versionchanged:: 0.22
-            `cv` default value if `None` changed from 3-fold to 5-fold.
 
     n_permutations : int, default=100
         Number of times to permute ``y``.
@@ -1641,6 +1618,16 @@ def permutation_test_score(
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
 
+    if groups is not None and _y_constant_within_groups(y, groups):
+        warnings.warn(
+            "Each group in `groups` has a single value of `y`, so permuting `y` "
+            "within groups leaves `y` unchanged and permutation_test_score "
+            "is not meaningful: the p-value is 1 with a deterministic estimator "
+            "and CV, and otherwise only reflects randomness in the CV splits or "
+            "the estimator.",
+            UserWarning,
+        )
+
     if _routing_enabled():
         router = (
             MetadataRouter(owner="permutation_test_score")
@@ -1731,6 +1718,15 @@ def _permutation_test_score(
         estimator.fit(X_train, y_train, **fit_params_train)
         avg_score.append(scorer(estimator, X_test, y_test, **score_params_test))
     return np.mean(avg_score)
+
+
+def _y_constant_within_groups(y, groups):
+    """Return True if every group holds a single value of y."""
+    y = np.asarray(y)
+    _, first_sample, group_index = np.unique(
+        np.asarray(groups), return_index=True, return_inverse=True
+    )
+    return np.array_equal(y, y[first_sample][group_index.ravel()])
 
 
 def _shuffle(y, groups, random_state):
@@ -1852,9 +1848,6 @@ def learning_curve(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     scoring : str or callable, default=None
         Scoring method to use to evaluate the training and test sets.
 
@@ -1896,8 +1889,6 @@ def learning_curve(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     return_times : bool, default=False
         Whether to return the fit and score times.
@@ -2350,9 +2341,6 @@ def validation_curve(
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     scoring : str or callable, default=None
         Scoring method to use to evaluate the training and test sets.
 
@@ -2382,8 +2370,6 @@ def validation_curve(
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
-
-        .. versionadded:: 0.20
 
     params : dict, default=None
         Parameters to pass to the estimator, scorer and cross-validation object.
@@ -2422,7 +2408,7 @@ def validation_curve(
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = make_classification(n_samples=1_000, random_state=0)
     >>> logistic_regression = LogisticRegression()
-    >>> param_name, param_range = "C", np.logspace(-8, 3, 10)
+    >>> param_name, param_range = "alpha", np.logspace(8, -3, 10)
     >>> train_scores, test_scores = validation_curve(
     ...     logistic_regression, X, y, param_name=param_name, param_range=param_range
     ... )

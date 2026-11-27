@@ -363,7 +363,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
 
         if _routing_enabled():
-            if params["groups"] is not None:
+            if params.get("groups") is not None:
                 X, y, params["groups"] = indexable(X, y, params["groups"])
             routed_params = process_routing(self, "fit_transform", **params)
         else:

@@ -241,9 +241,6 @@ def affinity_propagation(
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
 
-        .. versionadded:: 0.23
-            this parameter was previously hardcoded as 0.
-
     Returns
     -------
     cluster_centers_indices : ndarray of shape (n_clusters,)
@@ -353,9 +350,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
 
-        .. versionadded:: 0.23
-            this parameter was previously hardcoded as 0.
-
     Attributes
     ----------
     cluster_centers_indices_ : ndarray of shape (n_clusters,)
@@ -375,8 +369,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

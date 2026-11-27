@@ -695,11 +695,6 @@ class HashingVectorizer(
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
-        .. versionchanged:: 0.21
-            Since v0.21, if ``input`` is ``'filename'`` or ``'file'``, the data
-            is first read from the file and then passed to the given callable
-            analyzer.
-
     n_features : int, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
@@ -717,8 +712,6 @@ class HashingVectorizer(
         When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
-
-        .. versionadded:: 0.19
 
     dtype : type, default=np.float64
         Type of the matrix returned by fit_transform() or transform().
@@ -1037,8 +1030,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
-
-        .. versionchanged:: 0.21
 
         Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
         first read from the file and then passed to the given callable
@@ -1577,8 +1568,6 @@ class TfidfTransformer(
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
 
-        .. versionadded:: 0.20
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1809,11 +1798,6 @@ class TfidfVectorizer(CountVectorizer):
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
-
-        .. versionchanged:: 0.21
-            Since v0.21, if ``input`` is ``'filename'`` or ``'file'``, the data
-            is first read from the file and then passed to the given callable
-            analyzer.
 
     stop_words : {'english'}, list, default=None
         If a string, it is passed to _check_stop_list and the appropriate stop

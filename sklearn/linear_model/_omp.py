@@ -12,6 +12,7 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from sklearn.base import RegressorMixin, _fit_context
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._base import LinearModel, MultiOutputLinearModel, _pre_fit
 from sklearn.model_selection import check_cv
 from sklearn.utils import as_float_array, check_array
@@ -103,7 +104,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True, return_path=Fals
         lam = np.argmax(np.abs(np.dot(X.T, residual)))
         if lam < n_active or alpha[lam] ** 2 < min_float:
             # atom already selected or inner product too small
-            warnings.warn(premature, RuntimeWarning, stacklevel=2)
+            warnings.warn(premature, ConvergenceWarning, stacklevel=2)
             break
 
         if n_active > 0:
@@ -120,7 +121,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True, return_path=Fals
             v = nrm2(L[n_active, :n_active]) ** 2
             Lkk = linalg.norm(X[:, lam]) ** 2 - v
             if Lkk <= min_float:  # selected atoms are dependent
-                warnings.warn(premature, RuntimeWarning, stacklevel=2)
+                warnings.warn(premature, ConvergenceWarning, stacklevel=2)
                 break
             L[n_active, n_active] = sqrt(Lkk)
         else:
@@ -239,7 +240,7 @@ def _gram_omp(
         lam = np.argmax(np.abs(alpha))
         if lam < n_active or alpha[lam] ** 2 < min_float:
             # selected same atom twice, or inner product too small
-            warnings.warn(premature, RuntimeWarning, stacklevel=3)
+            warnings.warn(premature, ConvergenceWarning, stacklevel=3)
             break
         if n_active > 0:
             L[n_active, :n_active] = Gram[lam, :n_active]
@@ -254,7 +255,7 @@ def _gram_omp(
             v = nrm2(L[n_active, :n_active]) ** 2
             Lkk = Gram[lam, lam] - v
             if Lkk <= min_float:  # selected atoms are dependent
-                warnings.warn(premature, RuntimeWarning, stacklevel=3)
+                warnings.warn(premature, ConvergenceWarning, stacklevel=3)
                 break
             L[n_active, n_active] = sqrt(Lkk)
         else:
@@ -712,8 +713,6 @@ class OrthogonalMatchingPursuit(RegressorMixin, MultiOutputLinearModel):
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
-        .. versionadded:: 0.24
-
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
@@ -961,9 +960,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.22
-            ``cv`` default value if None changed from 3-fold to 5-fold.
-
     n_jobs : int, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -991,8 +987,6 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
-
-        .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`

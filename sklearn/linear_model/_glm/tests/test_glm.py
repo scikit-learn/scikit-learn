@@ -671,6 +671,7 @@ def test_glm_wrong_y_range(glm):
     non-negative. This test ensures that passing a `y` array containing
     negative values triggers the expected ValueError with the correct message.
     """
+    glm = clone(glm)
     y = np.array([-1, 2])
     X = np.array([[1], [1]])
     msg = r"Some value\(s\) of y are out of the valid range of the loss"
@@ -973,7 +974,6 @@ def test_poisson_glmnet_enet(solver):
         solver=solver,
     )
     glm.fit(X, y)
-    print(glm.coef_)
     assert_allclose(glm.intercept_, -0.03550976074, rtol=1e-6)
     assert_allclose(glm.coef_, [0.16936420181, 0], rtol=1e-6)
 
@@ -1027,18 +1027,40 @@ def test_tweedie_score(regression_data, power, link):
     )
 
 
+@pytest.mark.parametrize("l1_ratio", [0, 0.5, 1])
+@pytest.mark.parametrize("long_data", [True, False])
+def test_solver_auto(l1_ratio, long_data):
+    """Test that solver='auto' works for all penalties."""
+    X, y = make_regression(
+        n_samples=20 if long_data else 5,
+        n_features=5 if long_data else 20,
+        random_state=42,
+    )
+    y = np.abs(y)  # make it non-negative
+    PoissonRegressor(solver="auto", l1_ratio=l1_ratio).fit(X, y)
+
+
 @pytest.mark.parametrize(
-    "estimator, value",
+    "estimator, positive_tag, array_api_tag",
     [
-        (PoissonRegressor(), True),
-        (GammaRegressor(), True),
-        (TweedieRegressor(power=1.5), True),
-        (TweedieRegressor(power=0), False),
+        (PoissonRegressor(), True, True),
+        (GammaRegressor(), True, False),
+        (TweedieRegressor(power=1.5), True, False),
+        (TweedieRegressor(power=0), False, False),
     ],
 )
-def test_tags(estimator, value):
-    """Test that `positive_only` tag is correctly set for different estimators."""
-    assert estimator.__sklearn_tags__().target_tags.positive_only is value
+def test_tags(estimator, positive_tag, array_api_tag):
+    """Test that tags are set correctly for different estimators."""
+    estimator = clone(estimator)
+    # positive_only
+    assert estimator.__sklearn_tags__().target_tags.positive_only is positive_tag
+
+    # array_api_support
+    for solver in ["auto", "lbfgs"]:
+        estimator.set_params(solver=solver, l1_ratio=0)
+        assert estimator.__sklearn_tags__().array_api_support is array_api_tag
+    estimator.set_params(solver="auto", l1_ratio=1)
+    assert estimator.__sklearn_tags__().array_api_support is False
 
 
 def test_linalg_warning_with_newton_solver(global_random_seed):
@@ -1134,6 +1156,48 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     )
 
 
+@pytest.mark.parametrize("Estimator", [GammaRegressor, PoissonRegressor])
+@pytest.mark.parametrize("n_features, max_n_iter", [(10, 14), (20, 10)])
+def test_newton_cholesky_heavy_tailed_features(Estimator, n_features, max_n_iter):
+    """Test newton-cholesky on data where the line search needs to backtrack a lot.
+
+    With heavy-tailed features and a log link, the loss along the first Newton
+    directions grows extremely fast and can overflow. Line search should cope
+    with this.
+    """
+    # We do not use global_random_seed because the expected number of iterations
+    # depends on the data.
+    rng = np.random.RandomState(4)
+    n_samples = 1000
+    X = rng.lognormal(0, 1.5, size=(n_samples, n_features))
+    X_scaled = (X - X.mean(axis=0)) / X.std(axis=0)
+    mu = np.exp(X_scaled @ rng.standard_normal(n_features) / np.sqrt(n_features))
+    if Estimator is PoissonRegressor:
+        y = rng.poisson(mu).astype(np.float64)
+    else:
+        y = rng.gamma(2.0, mu / 2.0)
+
+    alpha = 1e-2
+    model = Estimator(solver="newton-cholesky", alpha=alpha, max_iter=100)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
+        # Non-finite pointwise gradients in the line search may trigger "invalid
+        # value encountered in matmul".
+        warnings.simplefilter("ignore", RuntimeWarning)
+        model.fit(X, y)
+
+    # The objective is strictly convex. Therefore, a vanishing gradient is a
+    # sufficient condition for having found the minimum.
+    linear_loss = LinearModelLoss(base_loss=model._get_loss(), fit_intercept=True)
+    gradient = linear_loss.gradient(
+        coef=np.r_[model.coef_, model.intercept_], X=X, y=y, l2_reg_strength=alpha
+    )
+    assert_allclose(gradient, 0, atol=model.tol)
+    # At the time of writing this test, n_iter_ is 11 (Gamma and Poisson) for
+    # n_features=10, and 8 (Gamma) and 7 (Poisson) for n_features=20.
+    assert model.n_iter_ <= max_n_iter
+
+
 @pytest.mark.parametrize("solver", [NewtonCholeskySolver, NewtonCDGramSolver])
 @pytest.mark.parametrize("l1_reg", [0, 1e-10])
 @pytest.mark.parametrize("verbose", [0, 1, 2])
@@ -1192,7 +1256,7 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
     # Set the Newton solver to a state with bad Newton step such that the loss
     # improvement in line search is tiny.
     sol = solver(
-        coef=np.array([1e-12, 0.69314758]),
+        coef=np.array([4e-8, 0.69314758]),
         linear_loss=linear_loss,
         tol=1e-12,
         **params,
@@ -1200,8 +1264,11 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
     sol.setup(X=X, y=y, sample_weight=None)
     sol.iteration = 1
     sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
-    # gradient = [5.00044450e-13, 3.99440135e-07], hessian = [[0.5, 0], [0, 1.0000004]]
-    sol.coef_newton = np.array([1e-7, 0])
+    # gradient = [2e-08, 3.99440135e-07], hessian = [[0.5, 0], [0, 1.0000004]]
+    # The Newton step is 3 times too large for the first coefficient. This increases
+    # the loss by 0.75 * 4e-8**2 = 1.2e-15, which is about 10 times the spacing of
+    # floating point numbers around the loss value of 0.8.
+    sol.coef_newton = np.array([-12e-8, 0])
     sol.gradient_times_newton = sol.gradient @ sol.coef_newton
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", ConvergenceWarning)
@@ -1213,7 +1280,7 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
             "check loss improvement <= armijo term:",
             "check max |gradient| <= tol:",
             "check loss |improvement| <= eps * |loss_old|:",
-            "check sum(|gradient|) < sum(|gradient_old|):",
+            "check gradient @ newton step <= (2 * sigma - 1) *",
         ]
         for m in msg:
             assert m in captured.out
@@ -1241,6 +1308,8 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
             assert msg in captured.out
 
 
+@pytest.mark.parametrize("solver", ["auto", "lbfgs", "newton-cg"])
+@pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("use_sample_weight", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
@@ -1248,6 +1317,8 @@ def test_newton_solver_verbosity(capsys, solver, l1_reg, verbose):
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_poisson_regressor_array_api_compliance(
+    solver,
+    fit_intercept,
     use_sample_weight,
     array_namespace,
     device_name,
@@ -1260,7 +1331,7 @@ def test_poisson_regressor_array_api_compliance(
     n_features = 3
     X_np = rng.normal(size=(n_samples, n_features))
     beta = np.array([0.5, -0.3, 0.8])  # true coefficients
-    intercept = 1.0
+    intercept = 1.0 if fit_intercept else 0.0
     mu = np.exp(X_np @ beta + intercept)  # Poisson mean with log-link.
     y_np = rng.poisson(mu)
     # Ensure that we have non-zero targets for meaningful testing:
@@ -1280,7 +1351,7 @@ def test_poisson_regressor_array_api_compliance(
     else:
         sample_weight = None
 
-    params = dict(alpha=1, solver="lbfgs", max_iter=500)
+    params = dict(alpha=1, fit_intercept=fit_intercept, solver=solver, max_iter=500)
     params["tol"] = 3e-6 if dtype_name == "float32" else 1e-13
     with config_context(array_api_dispatch=False):
         glm_np = PoissonRegressor(**params).fit(X_np, y_np, sample_weight=sample_weight)
@@ -1319,12 +1390,16 @@ def test_poisson_regressor_array_api_compliance(
         assert array_device(predict_xp) == array_device(X_xp)
 
 
+@pytest.mark.parametrize("solver", ["auto", "lbfgs", "newton-cg"])
+@pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
 @pytest.mark.filterwarnings("error::sklearn.exceptions.ConvergenceWarning")
 def test_poisson_regressor_array_api_warm_start(
+    solver,
+    fit_intercept,
     array_namespace,
     device_name,
     dtype_name,
@@ -1340,7 +1415,11 @@ def test_poisson_regressor_array_api_warm_start(
     y_xp = xp.asarray(y, device=device)
     with config_context(array_api_dispatch=True):
         reg_xp = PoissonRegressor(
-            alpha=1.0, solver="lbfgs", max_iter=300, warm_start=True
+            alpha=1.0,
+            fit_intercept=fit_intercept,
+            solver=solver,
+            max_iter=300,
+            warm_start=True,
         )
         reg_xp.fit(X_xp, y_xp)
         reg_xp.predict(X_xp)

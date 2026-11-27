@@ -44,8 +44,6 @@ class LabelEncoder(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
 
-    .. versionadded:: 0.12
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -456,6 +454,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.array_api_support = not self.sparse_output
         tags.input_tags.two_d_array = False
         tags.target_tags.one_d_labels = True
         return tags

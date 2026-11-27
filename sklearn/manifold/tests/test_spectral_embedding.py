@@ -7,6 +7,7 @@ from scipy import sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh, lobpcg
 
+import sklearn
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
 from sklearn.manifold import SpectralEmbedding, _spectral_embedding, spectral_embedding
@@ -25,8 +26,6 @@ from sklearn.utils.fixes import (
     CSR_CONTAINERS,
     _sparse_diags_array,
     _sparse_random_array,
-    parse_version,
-    sp_version,
 )
 from sklearn.utils.fixes import laplacian as csgraph_laplacian
 
@@ -343,15 +342,7 @@ def test_spectral_embedding_amg_solver(dtype, coo_container, seed=36):
     affinity.indptr = affinity.indptr.astype(np.int64)
     affinity.indices = affinity.indices.astype(np.int64)
 
-    # PR: https://github.com/scipy/scipy/pull/18913
-    # First integration in 1.11.3: https://github.com/scipy/scipy/pull/19279
-    scipy_graph_traversal_supports_int64_index = sp_version >= parse_version("1.11.3")
-    if scipy_graph_traversal_supports_int64_index:
-        se_amg.fit_transform(affinity)
-    else:
-        err_msg = "Only sparse matrices with 32-bit integer indices are accepted"
-        with pytest.raises(ValueError, match=err_msg):
-            se_amg.fit_transform(affinity)
+    se_amg.fit_transform(affinity)
 
 
 @pytest.mark.skipif(
@@ -555,3 +546,24 @@ def test_spectral_eigen_tol_auto(monkeypatch, solver, csr_container):
 
     _, kwargs = mocked_solver.call_args
     assert kwargs["tol"] == default_value
+
+
+def test_spectral_embedding_sparse_interface_sparray():
+    """Non-regression test: fitting under `sparse_interface="sparray"` used to
+    raise a ValueError from the `eigen_solver="arpack"` code path's
+    `check_array(accept_large_sparse=False)` call, because sparse arrays (unlike
+    sparse matrices) never downcast indices to 32-bit based on content.
+    """
+    X, _ = make_blobs(n_samples=30, n_features=4, random_state=0)
+
+    with sklearn.config_context(sparse_interface="spmatrix"):
+        embedding_spmatrix = SpectralEmbedding(
+            n_components=1, eigen_tol=1e-5, random_state=0
+        ).fit_transform(X)
+
+    with sklearn.config_context(sparse_interface="sparray"):
+        embedding_sparray = SpectralEmbedding(
+            n_components=1, eigen_tol=1e-5, random_state=0
+        ).fit_transform(X)
+
+    _assert_equal_with_sign_flipping(embedding_spmatrix, embedding_sparray, tol=1e-5)

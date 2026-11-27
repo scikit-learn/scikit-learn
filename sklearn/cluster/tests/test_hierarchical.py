@@ -24,6 +24,7 @@ from sklearn.cluster._agglomerative import (
     linkage_tree,
 )
 from sklearn.cluster._hierarchical_fast import (
+    PytestUnionFind,
     average_merge,
     max_merge,
     mst_linkage_core,
@@ -387,6 +388,36 @@ def test_vector_scikit_single_vs_scipy_single(global_random_seed):
     assess_same_labelling(cut, cut_scipy)
 
 
+def test_union_find_fast_find_compresses_path():
+    """Check that fast_find compresses the queried path to its root."""
+    union_find = PytestUnionFind(5)
+
+    node_5 = union_find.py_union(0, 1)
+    node_6 = union_find.py_union(node_5, 2)
+    root = union_find.py_union(node_6, 3)
+
+    assert union_find.py_fast_find(0) == root
+
+    parent = union_find.py_get_parent()
+    assert_array_equal(
+        parent[[0, node_5, node_6]],
+        np.full(3, root, dtype=np.intp),
+    )
+    assert parent[root] == -1
+
+
+def test_union_find_fast_find_on_root_is_noop():
+    """Check that fast_find does not mutate state when called on a root.
+
+    Non-regression test for issue #34626.
+    """
+    union_find = PytestUnionFind(3)
+    parent_before = union_find.py_get_parent()
+
+    assert union_find.py_fast_find(0) == 0
+    assert_array_equal(union_find.py_get_parent(), parent_before)
+
+
 @pytest.mark.parametrize("metric_param_grid", METRICS_DEFAULT_PARAMS)
 def test_mst_linkage_core_memory_mapped(metric_param_grid):
     """The MST-LINKAGE-CORE algorithm must work on mem-mapped dataset.
@@ -709,7 +740,8 @@ def test_affinity_passed_to_fix_connectivity():
 
     fa = FakeAffinity()
 
-    linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
+    with pytest.warns(UserWarning, match="number of connected components"):
+        linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
 
     assert fa.counter == 3
 
