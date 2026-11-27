@@ -243,3 +243,22 @@ Here is a typical implementation of callback support in a custom estimator:
 For a more detailed example of how to make a custom estimator or meta-estimator
 compatible with scikit-learn's callback API, you can refer to this example :
 :ref:`sphx_glr_auto_examples_callbacks_plot_callback_support.py`.
+
+Testing
+-------
+
+To add callback support for a scikit-learn estimator, you need to make sure
+that the common tests run the `check_callback_support` check for your class.
+
+To do so, remove the class name from the `NO_CALLBACK_SUPPORT` set in
+`sklearn/tests/test_common.py`.
+
+Then run the tests with the `pytest` command as follows:
+
+.. code-block:: bash
+
+    pytest sklearn/tests/test_common.py -k "check_callback_support and ClassName"
+
+To add callback support for a class outside of scikit-learn, see
+:ref:`_rolling_your_own_estimator` to learn how to run the
+`check_callback_support` as part of your test suite.
