@@ -67,7 +67,7 @@ from sklearn.utils._array_api import (
     NamespaceAndDevice,
     _atol_for_type,
     _max_precision_float_dtype,
-    array_device,
+    assert_same_namespace_and_device,
     get_namespace,
     move_to,
     yield_mixed_namespace_input_permutations,
@@ -1212,21 +1212,11 @@ def check_array_api_input(
         key: value for key, value in vars(est).items() if isinstance(value, np.ndarray)
     }
 
-    # Fitted attributes which are arrays must have the same namespace as `X`,
-    # except `classes_`, to allow it to be string when `y` is string.
+    # Fitted array attributes follow `X`, except `classes_`, which follows `y`.
     for attribute_name, attribute_value in array_attributes.items():
         est_xp_attr = getattr(est_xp, attribute_name)
-        # `classes_` should be in same ns and device as `y`
-        expected_xp, expected_ns = (
-            (y_xp, y_ns) if attribute_name == "classes_" else (X_xp, X_ns)
-        )
-        with config_context(array_api_dispatch=True):
-            attribute_ns = get_namespace(est_xp_attr)[0].__name__
-            assert array_device(est_xp_attr) == array_device(expected_xp)
-        assert attribute_ns == expected_ns, (
-            f"'{attribute_name}' attribute is in wrong namespace, expected "
-            f"{expected_ns} got {attribute_ns}"
-        )
+        expected = y_xp if attribute_name == "classes_" else X_xp
+        assert_same_namespace_and_device(est_xp_attr, expected, name=attribute_name)
 
         est_xp_attr_np = move_to(est_xp_attr, xp=np, device="cpu")
         if check_values:
@@ -1337,8 +1327,7 @@ def check_array_api_input(
             expected_xp = X_xp
             if other_ns_and_device == "string" and method_name == "predict":
                 expected_xp = y_xp
-            with config_context(array_api_dispatch=True):
-                assert array_device(result_xp) == array_device(expected_xp)
+            assert_same_namespace_and_device(result_xp, expected_xp, name=method_name)
 
             result_xp_np = move_to(result_xp, xp=np, device="cpu")
             if check_values:
@@ -1359,14 +1348,9 @@ def check_array_api_input(
                 inverse_result_xp = est_xp.inverse_transform(result_xp)
 
             if expect_only_array_outputs:
-                with config_context(array_api_dispatch=True):
-                    inverse_result_ns = get_namespace(inverse_result_xp)[0].__name__
-                assert inverse_result_ns == X_ns, (
-                    "'inverse_transform' output is in wrong namespace, expected"
-                    f" {X_ns}, got {inverse_result_ns}."
+                assert_same_namespace_and_device(
+                    inverse_result_xp, X_xp, name="inverse_transform"
                 )
-                with config_context(array_api_dispatch=True):
-                    assert array_device(result_xp) == array_device(X_xp)
 
                 inverse_result_xp_np = move_to(inverse_result_xp, xp=np, device="cpu")
                 if check_values:
@@ -1376,7 +1360,7 @@ def check_array_api_input(
                         err_msg="inverse_transform did not the return the same result",
                         atol=_atol_for_type(X.dtype),
                     )
-                elif hasattr(result, "shape"):
+                elif hasattr(inverse_result, "shape"):
                     assert inverse_result.shape == inverse_result_xp_np.shape
                     assert inverse_result.dtype == inverse_result_xp_np.dtype
 
