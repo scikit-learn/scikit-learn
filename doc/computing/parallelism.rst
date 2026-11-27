@@ -198,3 +198,20 @@ in `joblib documentation
 
 You will find additional details about parallelism in numerical python libraries
 in `this document from Thomas J. Fan <https://thomasjpfan.github.io/parallelism-python-libraries-design/>`_.
+
+Thread safety
+-------------
+
+Calling prediction methods such as ``predict``, ``predict_proba`` or
+``transform`` on a fitted estimator from multiple threads at the same time is
+generally safe: these methods only read the fitted attributes and do not
+modify the estimator's state. Note that this is not formally guaranteed for
+every estimator, and thread safety cannot be verified exhaustively.
+
+Methods that change the estimator's state are **not** thread-safe. In
+particular, ``fit``, ``partial_fit`` and ``set_params`` must not be called
+concurrently with prediction methods or with each other: for example, calling
+``set_params`` in one thread while another thread calls ``predict`` leads to
+undefined behavior. If you need to run predictions in parallel, fit the
+estimator first, then share the fitted estimator across threads for
+prediction only.
