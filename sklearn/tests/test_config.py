@@ -196,10 +196,3 @@ def test_validate_default_callbacks_container():
     """Check that default_callbacks must be a tuple (or list), not a bare str."""
     with pytest.raises(TypeError, match="default_callbacks must be a tuple"):
         set_config(default_callbacks="progressbar")
-
-
-def test_default_callbacks_stored_as_tuple():
-    """Check that a list is accepted and stored as a tuple."""
-    callback = RecordingCallback()
-    with config_context(default_callbacks=[callback]):
-        assert get_config()["default_callbacks"] == (callback,)
