@@ -30,7 +30,13 @@ from sklearn.linear_model import (
     SGDRegressor,
 )
 from sklearn.metrics import jaccard_score, mean_squared_error
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.metrics.pairwise import linear_kernel
+from sklearn.model_selection import (
+    GridSearchCV,
+    cross_val_score,
+    cross_validate,
+    train_test_split,
+)
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import (
     ClassifierChain,
@@ -39,7 +45,7 @@ from sklearn.multioutput import (
     RegressorChain,
 )
 from sklearn.pipeline import make_pipeline
-from sklearn.svm import LinearSVC
+from sklearn.svm import SVC, SVR, LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import shuffle
 from sklearn.utils._testing import (
@@ -871,3 +877,62 @@ def test_multioutput_regressor_has_partial_fit():
     msg = "This 'MultiOutputRegressor' has no attribute 'partial_fit'"
     with pytest.raises(AttributeError, match=msg):
         getattr(est, "partial_fit")
+
+
+@pytest.mark.parametrize(
+    "MultiOutputEstimator, Estimator, ChainEstimator",
+    [
+        (MultiOutputClassifier, SVC, ClassifierChain),
+        (MultiOutputRegressor, SVR, RegressorChain),
+    ],
+)
+def test_pairwise_tag(MultiOutputEstimator, Estimator, ChainEstimator):
+    """Check that MultiOutput* delegates the pairwise tag, while Chains do not."""
+    est_not_precomputed = MultiOutputEstimator(Estimator())
+    assert not est_not_precomputed.__sklearn_tags__().input_tags.pairwise
+
+    est_precomputed = MultiOutputEstimator(Estimator(kernel="precomputed"))
+    assert est_precomputed.__sklearn_tags__().input_tags.pairwise
+
+    # Chain estimators augment X with output columns, making it non-square
+    chain_precomputed = ChainEstimator(Estimator(kernel="precomputed"))
+    assert not chain_precomputed.__sklearn_tags__().input_tags.pairwise
+
+
+@pytest.mark.parametrize(
+    "MultiOutputEstimator, Estimator, is_classification",
+    [
+        (MultiOutputClassifier, SVC, True),
+        (MultiOutputRegressor, SVR, False),
+    ],
+)
+def test_pairwise_cross_val_score(MultiOutputEstimator, Estimator, is_classification):
+    """Non-regression test for #29016: precomputed kernels work in CV."""
+    if is_classification:
+        X, y = make_multilabel_classification(
+            n_samples=60, n_features=6, n_classes=3, n_labels=2, random_state=0
+        )
+    else:
+        X, y = make_regression(n_samples=60, n_features=6, n_targets=3, random_state=0)
+
+    K = linear_kernel(X)
+    est_linear = MultiOutputEstimator(Estimator(kernel="linear"))
+    est_precomputed = MultiOutputEstimator(Estimator(kernel="precomputed"))
+
+    scores_linear = cross_val_score(est_linear, X, y, cv=3, error_score="raise")
+    scores_precomputed = cross_val_score(
+        est_precomputed, K, y, cv=3, error_score="raise"
+    )
+    assert_array_almost_equal(scores_precomputed, scores_linear)
+
+    cv_results = cross_validate(est_precomputed, K, y, cv=3, error_score="raise")
+    assert_array_almost_equal(cv_results["test_score"], scores_linear)
+
+    search = GridSearchCV(
+        est_precomputed,
+        param_grid={"estimator__C": [0.5, 1.0]},
+        cv=3,
+        error_score="raise",
+    )
+    search.fit(K, y)
+    assert search.best_estimator_.__sklearn_tags__().input_tags.pairwise

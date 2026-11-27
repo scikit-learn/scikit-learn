@@ -6,7 +6,13 @@ from inspect import signature
 import numpy as np
 import pytest
 
-from sklearn.base import BaseEstimator, clone, is_regressor
+from sklearn.base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+    clone,
+    is_regressor,
+)
 from sklearn.datasets import make_classification
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
@@ -359,3 +365,94 @@ def test_meta_estimators_delegate_data_validation(estimator):
 
     # n_features_in_ should not be defined since data is not tabular data.
     assert not hasattr(estimator, "n_features_in_")
+
+
+# Meta-estimators that either alter input dimensionality/features, expect
+# multiple estimators, or do not yet propagate `input_tags.pairwise`.
+PAIRWISE_META_ESTIMATORS_TO_IGNORE = [
+    # Structurally incompatible with precomputed square pairwise matrices
+    "AdaBoostClassifier",
+    "AdaBoostRegressor",
+    "BaggingClassifier",
+    "BaggingRegressor",
+    "ClassifierChain",  # augments X with previous target predictions
+    "IterativeImputer",  # predicts missing features from remaining columns
+    "RANSACRegressor",
+    "RFE",
+    "RFECV",
+    "RegressorChain",  # augments X with previous target predictions
+    "SelectFromModel",
+    "SequentialFeatureSelector",
+    # Multi-estimator / column-routing containers
+    "FeatureUnion",
+    "StackingClassifier",
+    "StackingRegressor",
+    "VotingClassifier",
+    "VotingRegressor",
+    # TODO: single-estimator wrappers that do not yet delegate pairwise
+    "CalibratedClassifierCV",
+    "FixedThresholdClassifier",
+    "OutputCodeClassifier",
+    "SelfTrainingClassifier",
+    "TransformedTargetRegressor",
+    "TunedThresholdClassifierCV",
+]
+
+
+def _construct_pairwise_meta_estimator(Estimator, sub_estimator):
+    """Build a meta-estimator instance wrapping `sub_estimator`."""
+    sig = set(signature(Estimator).parameters)
+    if Estimator is Pipeline:
+        return Pipeline([("est", sub_estimator)])
+    if sig.intersection({"param_grid", "param_distributions"}):
+        param_kw = (
+            {"param_grid": {"C": [1.0]}}
+            if "param_grid" in sig
+            else {"param_distributions": {"C": [1.0]}}
+        )
+        return Estimator(sub_estimator, **param_kw)
+    return Estimator(sub_estimator)
+
+
+def _pairwise_delegating_meta_estimators():
+    for _, Estimator in sorted(all_estimators()):
+        if Estimator.__name__ in PAIRWISE_META_ESTIMATORS_TO_IGNORE:
+            continue
+        sig = set(signature(Estimator).parameters)
+        if Estimator is not Pipeline and not sig.intersection(
+            {"estimator", "regressor"}
+        ):
+            continue
+        yield Estimator
+
+
+@pytest.mark.parametrize(
+    "MetaEstimator",
+    list(_pairwise_delegating_meta_estimators()),
+    ids=lambda est_cls: est_cls.__name__,
+)
+@pytest.mark.parametrize("pairwise", [False, True])
+def test_meta_estimators_delegate_pairwise_tag(MetaEstimator, pairwise):
+    """Check that meta-estimators delegate `input_tags.pairwise`."""
+    mixin = (
+        RegressorMixin if issubclass(MetaEstimator, RegressorMixin) else ClassifierMixin
+    )
+
+    class _PairwiseSubEstimator(mixin, BaseEstimator):
+        def __init__(self, pairwise=False):
+            self.pairwise = pairwise
+
+        def fit(self, X, y=None):
+            return self
+
+        def predict(self, X):
+            return np.zeros(len(X))
+
+        def __sklearn_tags__(self):
+            tags = super().__sklearn_tags__()
+            tags.input_tags.pairwise = self.pairwise
+            return tags
+
+    sub_estimator = _PairwiseSubEstimator(pairwise=pairwise)
+    meta_estimator = _construct_pairwise_meta_estimator(MetaEstimator, sub_estimator)
+    assert meta_estimator.__sklearn_tags__().input_tags.pairwise is pairwise

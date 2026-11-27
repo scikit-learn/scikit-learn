@@ -1,0 +1,5 @@
+- :class:`multioutput.MultiOutputClassifier` and
+  :class:`multioutput.MultiOutputRegressor` now delegate the
+  `input_tags.pairwise` tag to the wrapped estimator, allowing precomputed
+  kernels to be used in cross-validation and hyperparameter searches.
+  By :user:`Umar Farooq <umaarzaman>`.

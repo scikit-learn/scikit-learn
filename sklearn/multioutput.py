@@ -306,6 +306,7 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
     def __sklearn_tags__(self):
         tags = super().__sklearn_tags__()
+        tags.input_tags.pairwise = get_tags(self.estimator).input_tags.pairwise
         tags.input_tags.sparse = get_tags(self.estimator).input_tags.sparse
         tags.target_tags.single_output = False
         tags.target_tags.multi_output = True
