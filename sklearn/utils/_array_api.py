@@ -403,7 +403,7 @@ def get_namespace(
     always returned irrespective of the fact that arrays implement the
     `__array_namespace__` protocol or not.
 
-    Note that if no arrays pass the set filters, ``_NUMPY_API_WRAPPER_INSTANCE, False``
+    Note that if no arrays pass the set filters, ``array_api_compat.numpy, False``
     is returned.
 
     Parameters
@@ -721,11 +721,16 @@ def _fill_diagonal(array, value, xp):
 
     if _is_numpy_namespace(xp):
         xp.fill_diagonal(array, value, wrap=False)
-    else:
-        # TODO: when array libraries support `reshape(copy)`, use
-        # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
-        # `try/except`). This is faster than for loop, when no copy needs to be
-        # made within `reshape`. See #31445 for details.
+        return
+
+    diag_idx = xp.arange(min_rows_columns, device=array_device(array))
+    try:
+        # Setting items with integer arrays is not specified by the array API
+        # yet (see https://github.com/data-apis/array-api/issues/864), but most
+        # namespaces support it. It is a single operation, while the loop
+        # below costs one device write per diagonal element.
+        array[diag_idx, diag_idx] = value
+    except (IndexError, TypeError, NotImplementedError):
         if value.ndim == 0:
             for i in range(min_rows_columns):
                 array[i, i] = value
@@ -743,7 +748,7 @@ def _add_to_diagonal(array, value, xp):
 
     Note `array` is altered in place.
     """
-    value, min_rows_columns = _validate_diagonal_args(array, value, xp)
+    value, _ = _validate_diagonal_args(array, value, xp)
 
     if _is_numpy_namespace(xp):
         step = array.shape[1] + 1
@@ -752,13 +757,7 @@ def _add_to_diagonal(array, value, xp):
         array.flat[:end:step] += value
         return
 
-    # TODO: when array libraries support `reshape(copy)`, use
-    # `reshape(array, (-1,), copy=False)`, then fill with `[:end:step]` (within
-    # `try/except`). This is faster than for loop, when no copy needs to be
-    # made within `reshape`. See #31445 for details.
-    value = xp.linalg.diagonal(array) + value
-    for i in range(min_rows_columns):
-        array[i, i] = value[i]
+    _fill_diagonal(array, xp.linalg.diagonal(array) + value, xp)
 
 
 def _is_xp_namespace(xp, name):

@@ -1,11 +1,10 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
-
+import os
 import re
 import sys
 import warnings
-from contextlib import suppress
 from functools import partial
 from inspect import isfunction
 
@@ -165,6 +164,7 @@ from sklearn.preprocessing import (
     KBinsDiscretizer,
     KernelCenterer,
     LabelEncoder,
+    MaxAbsScaler,
     MinMaxScaler,
     Normalizer,
     OneHotEncoder,
@@ -184,7 +184,7 @@ from sklearn.svm import SVC, SVR, LinearSVC, LinearSVR, NuSVC, NuSVR, OneClassSV
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import all_estimators
 from sklearn.utils._tags import get_tags
-from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import SkipTest, _check_name
 from sklearn.utils.fixes import _IS_32BIT, parse_version, sp_base_version
 
 CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
@@ -206,7 +206,10 @@ INIT_PARAMS = {
     BernoulliRBM: dict(n_iter=5, batch_size=10),
     Birch: dict(n_clusters=2),
     BisectingKMeans: dict(n_init=2, n_clusters=2, max_iter=5),
-    CalibratedClassifierCV: dict(estimator=LogisticRegression(), cv=3),
+    CalibratedClassifierCV: [
+        dict(estimator=LogisticRegression(), cv=3),
+        dict(estimator=LogisticRegression(), cv=3, method="temperature"),
+    ],
     CCA: dict(n_components=1, max_iter=5),
     ClassifierChain: dict(estimator=LogisticRegression(), cv=3),
     ColumnTransformer: dict(transformers=[("trans1", StandardScaler(), [0, 1])]),
@@ -639,13 +642,15 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
     },
     LocallyLinearEmbedding: {"check_dict_unchanged": dict(max_iter=5, n_components=1)},
     LogisticRegression: {
+        # TODO(callbacks): extend to other solvers once they support callbacks.
+        "check_callback_support": dict(solver="lbfgs"),
         "check_sample_weight_equivalence_on_dense_data": [
             dict(solver="lbfgs"),
             dict(solver="newton-cd-gram"),
             dict(solver="newton-cg"),
             dict(solver="newton-cholesky"),
             dict(solver="newton-cholesky", class_weight="balanced"),
-        ]
+        ],
     },
     LogisticRegressionCV: {
         "check_sample_weight_equivalence": [
@@ -818,9 +823,43 @@ PER_ESTIMATOR_CHECK_PARAMS: dict = {
 
 def _tested_estimators(type_filter=None):
     for _, Estimator in all_estimators(type_filter=type_filter):
-        with suppress(SkipTest):
-            for estimator in _construct_instances(Estimator):
-                yield estimator
+        if Estimator in SKIPPED_ESTIMATORS:
+            # _construct_instances would raise SkipTest and a SkipTestWarning.
+            continue
+        for estimator in _construct_instances(Estimator):
+            yield estimator
+
+
+try:
+    import pytest
+
+    def _skip_if_threaded_parallelism(estimator, check):
+        if (
+            os.environ.get("SKLEARN_TESTS_USE_THREADING_BACKEND_WITH_HIGH_PARALLELISM")
+            != "1"
+        ):
+            return
+        # Once this is empty, can delete this function:
+        skips = {
+            (DictionaryLearning, "check_transformer_preserve_dtypes"),
+            (LatentDirichletAllocation, "check_transformer_data_not_an_array"),
+            (LatentDirichletAllocation, "check_transformer_general"),
+            (LatentDirichletAllocation, "check_pipeline_consistency"),
+            (LatentDirichletAllocation, "check_fit_idempotent"),
+            (MiniBatchDictionaryLearning, "check_transformer_preserve_dtypes"),
+            (MiniBatchSparsePCA, "check_transformer_preserve_dtypes"),
+            (SparseCoder, "check_transformer_preserve_dtypes"),
+            (SparsePCA, "check_transformer_preserve_dtypes"),
+            (SpectralClustering, "check_estimator_sparse_matrix"),
+        }
+        if (type(estimator), _check_name(check)) in skips:
+            pytest.skip(
+                "May fail intermittently with threaded parallelism; "
+                "see https://github.com/scikit-learn/scikit-learn/issues/35313"
+            )
+except ImportError:
+    # The only user is test_common.py, which also imports pytest
+    pass
 
 
 SKIPPED_ESTIMATORS = [FrozenEstimator]
@@ -876,10 +915,12 @@ def _get_check_estimator_ids(obj):
     if isfunction(obj):
         return obj.__name__
     if isinstance(obj, partial):
-        if not obj.keywords:
-            return obj.func.__name__
-        kwstring = ",".join(["{}={}".format(k, v) for k, v in obj.keywords.items()])
-        return "{}({})".format(obj.func.__name__, kwstring)
+        kwargs = dict(obj.keywords)
+        name = kwargs.pop("check_name", obj.func.__name__)
+        if not kwargs:
+            return name
+        kwstring = ",".join(f"{k}={v}" for k, v in kwargs.items())
+        return f"{name}({kwstring})"
     if hasattr(obj, "get_params"):
         with config_context(print_changed_only=True):
             return re.sub(r"\s", "", str(obj))
@@ -899,12 +940,7 @@ def _yield_instances_for_check(check, estimator_orig):
         return
 
     check_params = PER_ESTIMATOR_CHECK_PARAMS[type(estimator_orig)]
-
-    try:
-        check_name = check.__name__
-    except AttributeError:
-        # partial tests
-        check_name = check.func.__name__
+    check_name = _check_name(check)
 
     if check_name not in check_params:
         yield estimator_orig
@@ -972,6 +1008,13 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    CalibratedClassifierCV: {
+        # Only run for method="temperature", the only method with array API support.
+        "check_array_api_mixed_inputs": (
+            "`classes_` follows the namespace and device of `y`, not `X`"
+        ),
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     ColumnTransformer: {
         "check_estimators_empty_data_messages": "FIXME",
@@ -1134,6 +1177,9 @@ PER_ESTIMATOR_XFAIL_CHECKS: dict[type, dict[str, str]] = {
         "check_sample_weight_equivalence_on_sparse_data": (
             "sample_weight is not equivalent to removing/repeating samples."
         ),
+    },
+    MaxAbsScaler: {
+        "check_array_api_same_namespace": "check_same_namespace not yet added",
     },
     MinMaxScaler: {
         "check_array_api_same_namespace": "check_same_namespace not yet added",

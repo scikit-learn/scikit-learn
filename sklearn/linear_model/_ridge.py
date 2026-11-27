@@ -41,6 +41,7 @@ from sklearn.utils import (
     compute_sample_weight,
 )
 from sklearn.utils._array_api import (
+    _add_to_diagonal,
     _is_numpy_namespace,
     _max_precision_float_dtype,
     _ravel,
@@ -212,38 +213,70 @@ def _solve_lsqr(
     return coefs, n_iter
 
 
-def _solve_cholesky(X, y, alpha):
+class _SingularMatrixError(Exception):
+    """Raised by `_solve_spd` for a singular matrix in a non-NumPy namespace.
+
+    Caught in `_ridge_regression` to fall back to the SVD solver.
+    """
+
+
+def _solve_spd(A, b, xp, overwrite_a=False):
+    """Solve `A @ x = b` for a symmetric positive definite `A`.
+
+    When `A` is singular, raise SciPy's `LinAlgError` for NumPy inputs and
+    `_SingularMatrixError` for the other namespaces.
+    """
+    if _is_numpy_namespace(xp):
+        return linalg.solve(A, b, assume_a="pos", overwrite_a=overwrite_a)
+
+    # The array API has no solver dedicated to positive definite matrices:
+    # `xp.linalg.solve` relies on a LU decomposition instead of a Cholesky one.
+    # It has no standard exception for singular matrices either: namespaces
+    # raise NumPy's `LinAlgError` or their own `xp.linalg.LinAlgError`.
+    xp_linalg_error = getattr(xp.linalg, "LinAlgError", linalg.LinAlgError)
+    try:
+        x = xp.linalg.solve(A, b)
+    except (linalg.LinAlgError, xp_linalg_error) as exc:
+        raise _SingularMatrixError(str(exc)) from exc
+    if not bool(xp.all(xp.isfinite(x))):
+        # Some namespaces (CuPy) return non-finite values instead of raising.
+        raise _SingularMatrixError("Singular matrix.")
+    return x
+
+
+def _solve_cholesky(X, y, alpha, xp=None):
     # w = inv(X^t X + alpha*Id) * X.T y
+    xp, _ = get_namespace(X, xp=xp)
     n_features = X.shape[1]
     n_targets = y.shape[1]
 
     A = safe_sparse_dot(X.T, X, dense_output=True)
     Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
-    one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
+    one_alpha = bool(xp.all(alpha == alpha[0]))
 
     if one_alpha:
-        A.flat[:: n_features + 1] += alpha[0]
-        return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
+        _add_to_diagonal(A, alpha[0], xp)
+        return _solve_spd(A, Xy, xp, overwrite_a=True).T
     else:
-        coefs = np.empty([n_targets, n_features], dtype=X.dtype)
-        for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
-            A.flat[:: n_features + 1] += current_alpha
-            coef[:] = linalg.solve(A, target, assume_a="pos", overwrite_a=False).ravel()
-            A.flat[:: n_features + 1] -= current_alpha
+        coefs = xp.empty((n_targets, n_features), dtype=X.dtype, device=array_device(X))
+        for i in range(n_targets):
+            _add_to_diagonal(A, alpha[i], xp)
+            coefs[i, :] = _solve_spd(A, Xy[:, i : i + 1], xp)[:, 0]
+            _add_to_diagonal(A, -alpha[i], xp)
         return coefs
 
 
-def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
+def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False, xp=None):
     # dual_coef = inv(X X^t + alpha*Id) y
+    xp, _ = get_namespace(K, xp=xp)
     n_samples = K.shape[0]
     n_targets = y.shape[1]
 
     if copy:
         K = K.copy()
 
-    alpha = np.atleast_1d(alpha)
-    one_alpha = (alpha == alpha[0]).all()
+    one_alpha = bool(xp.all(alpha == alpha[0]))
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight not in [1.0, None]
 
     if has_sw:
@@ -255,13 +288,13 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
 
     if one_alpha:
         # Only one penalty, we can solve multi-target problems in one time.
-        K.flat[:: n_samples + 1] += alpha[0]
+        _add_to_diagonal(K, alpha[0], xp)
 
         try:
             # Note: we must use overwrite_a=False in order to be able to
             #       use the fall-back solution below in case a LinAlgError
             #       is raised
-            dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
+            dual_coef = _solve_spd(K, y, xp, overwrite_a=False)
         except np.linalg.LinAlgError:
             warnings.warn(
                 "Singular matrix in solving dual problem. Using "
@@ -271,7 +304,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
 
         # K is expensive to compute and store in memory so change it back in
         # case it was user-given.
-        K.flat[:: n_samples + 1] -= alpha[0]
+        _add_to_diagonal(K, -alpha[0], xp)
 
         if has_sw:
             dual_coef *= sw[:, np.newaxis]
@@ -279,16 +312,14 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         return dual_coef
     else:
         # One penalty per target. We need to solve each target separately.
-        dual_coefs = np.empty([n_targets, n_samples], K.dtype)
+        dual_coefs = xp.empty(
+            (n_targets, n_samples), dtype=K.dtype, device=array_device(K)
+        )
 
-        for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
-            K.flat[:: n_samples + 1] += current_alpha
-
-            dual_coef[:] = linalg.solve(
-                K, target, assume_a="pos", overwrite_a=False
-            ).ravel()
-
-            K.flat[:: n_samples + 1] -= current_alpha
+        for i in range(n_targets):
+            _add_to_diagonal(K, alpha[i], xp)
+            dual_coefs[i, :] = _solve_spd(K, y[:, i : i + 1], xp)[:, 0]
+            _add_to_diagonal(K, -alpha[i], xp)
 
         if has_sw:
             dual_coefs *= sw[np.newaxis, :]
@@ -474,7 +505,9 @@ def ridge_regression(
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution via a Cholesky decomposition. It solves
           the primal problem involving `X.T @ X` when `n_samples >= n_features`,
-          and the dual problem involving `X @ X.T` otherwise.
+          and the dual problem involving `X @ X.T` otherwise. With non-NumPy
+          array API inputs, the system is solved with `xp.linalg.solve`, which
+          uses a LU decomposition instead (see :ref:`array_api`).
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
@@ -632,10 +665,10 @@ def _ridge_regression(
     if is_numpy_namespace and not X_is_sparse:
         X = np.asarray(X)
 
-    if not is_numpy_namespace and solver != "svd":
+    if not is_numpy_namespace and solver not in ("svd", "cholesky"):
         raise ValueError(
             f"Array API dispatch to namespace {xp.__name__} only supports "
-            f"solver 'svd'. Got '{solver}'."
+            f"solvers 'svd' and 'cholesky'. Got '{solver}'."
         )
 
     if positive and solver != "lbfgs":
@@ -736,16 +769,16 @@ def _ridge_regression(
         if n_features > n_samples:
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
-                dual_coef = _solve_cholesky_kernel(K, y, alpha)
+                dual_coef = _solve_cholesky_kernel(K, y, alpha, xp=xp)
 
                 coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
-            except linalg.LinAlgError:
+            except (linalg.LinAlgError, _SingularMatrixError):
                 # use SVD solver if matrix is singular
                 solver = "svd"
         else:
             try:
-                coef = _solve_cholesky(X, y, alpha)
-            except linalg.LinAlgError:
+                coef = _solve_cholesky(X, y, alpha, xp=xp)
+            except (linalg.LinAlgError, _SingularMatrixError):
                 # use SVD solver if matrix is singular
                 solver = "svd"
 
@@ -835,18 +868,7 @@ def resolve_solver(solver, positive, return_intercept, is_sparse, xp):
             "namespace, or set `positive=False`."
         )
 
-    # At the moment, Array API dispatch only supports the "svd" solver.
-    solver = "svd"
-    if solver != auto_solver_np:
-        warnings.warn(
-            f"Using Array API dispatch to namespace {xp.__name__} with "
-            f"`solver='auto'` will result in using the solver '{solver}'. "
-            "The results may differ from those when using a Numpy array, "
-            f"because in that case the preferred solver would be {auto_solver_np}. "
-            f"Set `solver='{solver}'` to suppress this warning."
-        )
-
-    return solver
+    return auto_solver_np
 
 
 def resolve_solver_for_numpy(positive, return_intercept, is_sparse):
@@ -1003,6 +1025,17 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         return self
 
+    def __sklearn_tags__(self):
+        tags = super().__sklearn_tags__()
+        # With `positive=True`, "auto" resolves to "lbfgs", which does not support
+        # array API inputs.
+        supported_solver = self.solver in ("auto", "svd", "cholesky")
+        tags.array_api_support = supported_solver and not self.positive
+        tags.input_tags.sparse = (self.solver != "svd") and (
+            self.solver != "cholesky" or not self.fit_intercept
+        )
+        return tags
+
 
 class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     """Linear least squares with l2 regularization.
@@ -1086,7 +1119,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
           obtain a closed-form solution via a Cholesky decomposition. It solves
           the primal problem involving `X.T @ X` when `n_samples >= n_features`,
-          and the dual problem involving `X @ X.T` otherwise.
+          and the dual problem involving `X @ X.T` otherwise. With non-NumPy
+          array API inputs, the system is solved with `xp.linalg.solve`, which
+          uses a LU decomposition instead (see :ref:`array_api`).
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
@@ -1253,14 +1288,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             Predicted values.
         """
         return super().predict(X)
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.array_api_support = True
-        tags.input_tags.sparse = (self.solver != "svd") and (
-            self.solver != "cholesky" or not self.fit_intercept
-        )
-        return tags
 
 
 class _RidgeClassifierMixin(LinearClassifierMixin):
@@ -1439,7 +1466,9 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         - 'cholesky' uses the standard :func:`scipy.linalg.solve` function to
           obtain a closed-form solution via a Cholesky decomposition. It solves
           the primal problem involving `X.T @ X` when `n_samples >= n_features`,
-          and the dual problem involving `X @ X.T` otherwise.
+          and the dual problem involving `X @ X.T` otherwise. With non-NumPy
+          array API inputs, the system is solved with `xp.linalg.solve`, which
+          uses a LU decomposition instead (see :ref:`array_api`).
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           :func:`scipy.sparse.linalg.cg`. It solves the same primal or dual problem
@@ -1581,13 +1610,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
         super().fit(X, Y, sample_weight=sample_weight)
         return self
-
-    def __sklearn_tags__(self):
-        tags = super().__sklearn_tags__()
-        tags.input_tags.sparse = (self.solver != "svd") and (
-            self.solver != "cholesky" or not self.fit_intercept
-        )
-        return tags
 
 
 def _check_gcv_mode(X, gcv_mode):

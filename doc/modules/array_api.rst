@@ -46,13 +46,13 @@ devices might also work out of the box.
        see :ref:`device_support_for_float64`
    * - `CuPy <https://cupy.dev/>`__
      - `Install <https://docs.cupy.dev/en/stable/install.html>`__
-     - CUDA
+     - NVIDIA GPU (CUDA)
      -
    * - `dpnp <https://intelpython.github.io/dpnp/>`__
      - `Install <https://intelpython.github.io/dpnp/quick_start_guide.html>`__
      - CPU, Intel GPU (SYCL)
-     - See install link for driver setup; see :ref:`xpu_support`;
-       see :ref:`device_support_for_float64`
+     - :ref:`device_support_for_float64`
+
 
 Coverage is expected to grow over time.
 
@@ -166,9 +166,9 @@ Estimators
 - :class:`linear_model.LogisticRegression` (with `solver="lbfgs"` and `solver="newton-cg"`)
 - :class:`linear_model.LogisticRegressionCV` (with `solver="lbfgs"` and `solver="newton-cg"`)
 - :class:`linear_model.PoissonRegressor` (with `solver="lbfgs"` and `solver="newton-cg"`)
-- :class:`linear_model.Ridge` (with `solver="svd"`)
+- :class:`linear_model.Ridge` (with `solver="cholesky"` and `solver="svd"`)
 - :class:`linear_model.RidgeCV` (see :ref:`device_support_for_float64`)
-- :class:`linear_model.RidgeClassifier` (with `solver="svd"`)
+- :class:`linear_model.RidgeClassifier` (with `solver="cholesky"` and `solver="svd"`)
 - :class:`linear_model.RidgeClassifierCV` (see :ref:`device_support_for_float64`)
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` (with `solver="svd"`)
 - :class:`naive_bayes.GaussianNB`
@@ -209,6 +209,7 @@ Metrics
 - :func:`sklearn.metrics.cluster.contingency_matrix`
 - :func:`sklearn.metrics.cohen_kappa_score`
 - :func:`sklearn.metrics.confusion_matrix`
+- :func:`sklearn.metrics.coverage_error`
 - :func:`sklearn.metrics.d2_absolute_error_score`
 - :func:`sklearn.metrics.d2_brier_score`
 - :func:`sklearn.metrics.d2_log_loss_score`
@@ -443,9 +444,18 @@ with `float64` support.
 
 .. _xpu_support:
 
-Note on Intel GPU support
--------------------------
+Note on XPU device support
+--------------------------
 
+XPU is PyTorch's device name for Intel GPUs.
 PyTorch XPU support is only available in PyTorch >= 2.12. For detailed compatibility
 information and setup instructions, see the `PyTorch XPU documentation
-<https://docs.pytorch.org/docs/2.12/notes/get_start_xpu.html>`__.
+<https://docs.pytorch.org/docs/stable/notes/get_start_xpu.html>`__.
+
+PyTorch 2.15 or later is strongly recommended since previous versions
+are known to suffer from serious correctness or performance bugs when
+using the XPU device on scikit-learn related workloads.
+
+`dpnp <https://intelpython.github.io/dpnp/>`__ also runs on Intel GPUs, through
+SYCL, independently of PyTorch. See the dpnp install link in the table above for
+its driver setup.
