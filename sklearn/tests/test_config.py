@@ -10,13 +10,6 @@ from sklearn.callback._testing.callbacks import RecordingCallback
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 
-try:
-    import rich  # noqa: F401
-
-    default_callbacks = ("progressbar",)
-except ImportError:
-    default_callbacks = ()
-
 
 def test_config_context():
     assert get_config() == {
@@ -32,7 +25,7 @@ def test_config_context():
         "enable_metadata_auto_requests": True,
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
-        "default_callbacks": default_callbacks,
+        "default_callbacks": ("progressbar",),
     }
 
     # Not using as a context manager affects nothing
@@ -53,7 +46,7 @@ def test_config_context():
             "enable_metadata_auto_requests": True,
             "skip_parameter_validation": False,
             "sparse_interface": "spmatrix",
-            "default_callbacks": default_callbacks,
+            "default_callbacks": ("progressbar",),
         }
     assert get_config()["assume_finite"] is False
 
@@ -91,7 +84,7 @@ def test_config_context():
         "enable_metadata_auto_requests": True,
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
-        "default_callbacks": default_callbacks,
+        "default_callbacks": ("progressbar",),
     }
 
     # No positional arguments
