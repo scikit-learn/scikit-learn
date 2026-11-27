@@ -804,8 +804,8 @@ Least Angle Regression
 ======================
 
 Least-angle regression (LARS) is a regression algorithm for
-high-dimensional data, developed by Bradley Efron, Trevor Hastie, Iain
-Johnstone and Robert Tibshirani. LARS is similar to forward stepwise
+high-dimensional data, developed by Bradley Efron, Trevor Hastie, Iain Johnstone and
+Robert Tibshirani, see References below. LARS is similar to forward stepwise
 regression. At each step, it finds the feature most correlated with the
 target. When there are multiple features having equal correlation, instead
 of continuing along the same feature, it proceeds in a direction equiangular
@@ -832,6 +832,11 @@ The advantages of LARS are:
 
 The disadvantages of the LARS method include:
 
+- Unlike most other linear models, the LARS estimate is defined by the algorithm
+  itself and not as the minimizer of an objective function. Only the modified
+  algorithm, see :ref:`LARS Lasso <lars_lasso>` below, solves a well defined
+  optimization problem, the Lasso.
+
 - Because LARS is based upon an iterative refitting of the
   residuals, it would appear to be especially sensitive to the
   effects of noise. This problem is discussed in detail by Weisberg
@@ -841,6 +846,20 @@ The disadvantages of the LARS method include:
 The LARS model can be used via the estimator :class:`Lars`, or its
 low-level implementation :func:`lars_path` or :func:`lars_path_gram`.
 
+.. dropdown:: References
+
+  The first reference is the original paper introducing LARS and its Lasso
+  modification. The second one shows that the closely related forward stagewise
+  regression solves a monotone version of the Lasso.
+
+  * :doi:`Efron, B., Hastie, T.J., Johnstone, I.M., & Tibshirani, R. (2004).
+    Least angle regression. The Annals of Statistics, 32(2), 407-499.
+    <10.1214/009053604000000067>`
+  * :doi:`Hastie, T.J., Taylor, J., Tibshirani, R., & Walther, G. (2007).
+    Forward stagewise regression and the monotone lasso. Electron. J. Statist. 1, 1-29.
+    <10.1214/07-EJS004>`
+
+.. _lars_lasso:
 
 LARS Lasso
 ==========
@@ -855,23 +874,25 @@ function of the norm of its coefficients.
    :align: center
    :scale: 50%
 
-::
+The LARS algorithm provides the full path of the coefficients along
+the regularization parameter almost for free. After fitting, the path up to the
+given ``alpha`` is available as the attribute ``coef_path_``. Alternatively, it can be
+computed directly with one of the functions :func:`lars_path` or
+:func:`lars_path_gram`::
 
-   >>> from sklearn.linear_model import LassoLars
-   >>> reg = LassoLars(alpha=.1)
-   >>> reg.fit([[0, 0], [1, 1]], [0, 1])
-   LassoLars(alpha=0.1)
-   >>> reg.coef_
-   array([0.6, 0.        ])
+  >>> from sklearn.linear_model import LassoLars
+  >>> reg = LassoLars(alpha=0.1)
+  >>> reg.fit([[0, 0], [1, 1]], [0, 1])
+  LassoLars(alpha=0.1)
+  >>> reg.coef_
+  array([0.6, 0. ])
+  >>> reg.coef_path_
+  array([[0. , 0.6],
+         [0. , 0. ]])
 
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py`
-
-The LARS algorithm provides the full path of the coefficients along
-the regularization parameter almost for free, thus a common operation
-is to retrieve the path with one of the functions :func:`lars_path`
-or :func:`lars_path_gram`.
 
 .. dropdown:: Mathematical formulation
 
@@ -883,14 +904,8 @@ or :func:`lars_path_gram`.
   Instead of giving a vector result, the LARS solution consists of a
   curve denoting the solution for each value of the :math:`\ell_1` norm of the
   parameter vector. The full coefficients path is stored in the array
-  ``coef_path_`` of shape `(n_features, max_features + 1)`. The first
+  ``coef_path_`` of shape `(n_features, n_alphas + 1)`. The first
   column is always zero.
-
-  .. rubric:: References
-
-  * Original Algorithm is detailed in the paper `Least Angle Regression
-    <https://hastie.su.domains/Papers/LARS/LeastAngle_2002.pdf>`_
-    by Hastie et al.
 
 .. _omp:
 
