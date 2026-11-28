@@ -338,6 +338,69 @@ def test_quantile_asymmetric_error(quantile):
     assert loss_pred_quantile <= loss_true_quantile
 
 
+@pytest.mark.parametrize(
+    "loss",
+    [
+        AbsoluteError(),
+        PinballLoss(quantile=0.1),
+        PinballLoss(quantile=0.5),
+        PinballLoss(quantile=0.9),
+        PinballLoss(quantile=1 / 3),
+    ],
+)
+@pytest.mark.parametrize("target", ["continuous", "ties"])
+@pytest.mark.parametrize("n_threads", [1, 4])
+def test_update_leaves_values_matches_numpy(
+    loss, target, n_threads, global_random_seed
+):
+    """Check the parallel leaf update against loss.fit_intercept_only per leaf.
+
+    Without sample weights, _update_leaves_values computes the median or quantile
+    of the residuals of all leaves in Cython. It must give the same values as
+    np.median / np.percentile, which loss.fit_intercept_only uses. They are
+    bitwise identical on x86-64, but the interpolation may differ by a few ULPs
+    on platforms that fuse the multiply-add (ARM) or compute in extended
+    precision (32-bit x86), hence the small tolerance.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_bins = 2_000, 32
+    X_binned = rng.randint(0, n_bins - 1, size=(n_samples, 3), dtype=np.uint8)
+    X_binned = np.asfortranarray(X_binned)
+    if target == "continuous":
+        y = rng.normal(size=n_samples)
+    else:
+        # Many tied values, like intermittent count data.
+        y = rng.poisson(0.3, size=n_samples).astype(np.float64)
+    raw_prediction = rng.normal(scale=0.1, size=n_samples)
+    gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
+    hessians = np.ones(shape=1, dtype=G_H_DTYPE)
+    grower = TreeGrower(
+        X_binned,
+        gradients,
+        hessians,
+        n_bins=n_bins,
+        shrinkage=0.1,
+        max_leaf_nodes=31,
+        min_samples_leaf=1,
+    )
+    grower.grow()
+
+    hgb_module._update_leaves_values(
+        loss, grower, y, raw_prediction, sample_weight=None, n_threads=n_threads
+    )
+    values = [leaf.value for leaf in grower.finalized_leaves]
+
+    expected = [
+        grower.shrinkage
+        * loss.fit_intercept_only(
+            y[leaf.sample_indices] - raw_prediction[leaf.sample_indices]
+        )
+        for leaf in grower.finalized_leaves
+    ]
+    assert len(values) > 2
+    assert_allclose(values, expected, rtol=1e-12, atol=1e-15)
+
+
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 0.0, 0.0])])
 def test_poisson_y_positive(y):
     # Test that ValueError is raised if either one y_i < 0 or sum(y_i) <= 0.

@@ -14,6 +14,7 @@ import numpy as np
 
 from sklearn._loss.loss import (
     _LOSSES,
+    AbsoluteError,
     BaseLoss,
     HalfBinomialLoss,
     HalfGammaLoss,
@@ -30,6 +31,7 @@ from sklearn.base import (
 )
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble._hist_gradient_boosting._gradient_boosting import (
+    _update_leaves_values_quantile,
     _update_raw_predictions,
 )
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
@@ -65,7 +67,9 @@ _LOSSES.update(
 )
 
 
-def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
+def _update_leaves_values(
+    loss, grower, y_true, raw_prediction, sample_weight, n_threads
+):
     """Update the leaf values to be predicted by the tree.
 
     Update equals:
@@ -89,9 +93,19 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
     non-smooth losses arbitrarily set hessians to 1 and effectively use the standard
     gradient descent method with line search.
     """
-    # TODO: Ideally this should be computed in parallel over the leaves using something
-    # similar to _update_raw_predictions(), but this requires a cython version of
-    # median().
+    if sample_weight is None and isinstance(loss, (AbsoluteError, PinballLoss)):
+        # Fast path: compute the (unweighted) median or quantile of the residuals
+        # of all leaves in parallel in Cython, with the same results as numpy.
+        _update_leaves_values_quantile(
+            grower,
+            y_true,
+            raw_prediction,
+            quantile=0.5 if isinstance(loss, AbsoluteError) else loss.closs.quantile,
+            is_median=isinstance(loss, AbsoluteError),
+            n_threads=n_threads,
+        )
+        return
+
     for leaf in grower.finalized_leaves:
         indices = leaf.sample_indices
         if sample_weight is None:
@@ -863,6 +877,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         y_true=y_train,
                         raw_prediction=raw_predictions[:, k],
                         sample_weight=sample_weight_train,
+                        n_threads=n_threads,
                     )
 
                 predictor = grower.make_predictor(
