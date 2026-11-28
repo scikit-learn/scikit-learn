@@ -257,9 +257,9 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         density : ndarray of shape (n_samples,)
-            Log-likelihood of each sample in `X`. These are normalized to be
-            probability densities, so values will be low for high-dimensional
-            data.
+            Log-density evaluations for each sample in `X`. Unlike discrete
+            probabilities, continuous probability densities can exceed 1,
+            so log-density values can be positive or negative.
         """
         check_is_fitted(self)
         # The returned density is normalized to the number of points.
@@ -299,9 +299,8 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         logprob : float
-            Total log-likelihood of the data in X. This is normalized to be a
-            probability density, so the value will be low for high-dimensional
-            data.
+            Total log-likelihood of the data in `X`, computed as the sum of
+            `score_samples(X)`.
         """
         return np.sum(self.score_samples(X))
 
