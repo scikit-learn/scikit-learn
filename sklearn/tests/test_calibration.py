@@ -1615,3 +1615,21 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
         )
         pred_xp = cal_clf_xp.predict(X_xp)
         assert_array_equal(pred_xp, pred_np)
+
+
+def test_calibration_metadata_routing_ensemble_false_splitter():
+    """Check splitter metadata (e.g. groups) is routed when ensemble=False."""
+    from sklearn.model_selection import GroupKFold
+
+    X, y = make_classification(n_samples=20, n_features=4, random_state=0)
+    groups = np.repeat(np.arange(4), 5)
+
+    with config_context(enable_metadata_routing=True):
+        cv = GroupKFold(n_splits=2).set_split_request(groups=True)
+        clf = CalibratedClassifierCV(
+            LogisticRegression(),
+            cv=cv,
+            ensemble=False,
+        )
+        clf.fit(X, y, groups=groups)
+        check_is_fitted(clf)
