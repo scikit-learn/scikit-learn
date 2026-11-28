@@ -1,0 +1,8 @@
+- :class:`neural_network.MLPRegressor` with `loss="squared_error"` and more than one
+  output now computes a loss that matches the gradient used to minimise it. The loss
+  was averaged over outputs while the gradient was not, so it was `n_outputs` times
+  smaller than the objective the optimiser was actually following. Only `solver="lbfgs"`
+  is affected, as it is the only solver that consumes the loss value; `sgd` and `adam`
+  are unchanged. Note that `loss_`, `loss_curve_` and `best_loss_` now scale with
+  `n_outputs`, which makes the `tol` convergence check correspondingly stricter.
+  By :user:`Akshath <akshath-raj>`.
