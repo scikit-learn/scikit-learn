@@ -1,0 +1,4 @@
+- Fixed a bug in :class:`pipeline.Pipeline` where :attr:`~pipeline.Pipeline.n_features_in_`
+  and :attr:`~pipeline.Pipeline.feature_names_in_` raised an `AttributeError` when
+  the first step is `'passthrough'` or `None`.
+  By :user:`buildwithneel <buildwithneel>`.
