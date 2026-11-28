@@ -22,6 +22,7 @@ from sklearn._loss.loss import (
     PinballLoss,
 )
 from sklearn.base import BaseEstimator, TransformerMixin, clone, is_regressor
+from sklearn.callback._testing.callbacks import RecordingCallback, StopFitCallback
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import make_classification, make_low_rank_matrix, make_regression
 from sklearn.dummy import DummyRegressor
@@ -40,7 +41,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
 from sklearn.utils import check_random_state, shuffle
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
-from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import _convert_container, skip_callback_test_if_wasm
 from sklearn.utils.fixes import _IS_32BIT
 from sklearn.utils.metadata_routing import get_routing_for_object
 
@@ -1807,3 +1808,162 @@ def test_early_stopping_auto_with_explicit_validation_data(Estimator, y_func):
     est = Estimator(**params).fit(X_train, y_train, X_val=X_val, y_val=y_val)
     assert est.do_early_stopping_
     assert est.validation_score_.shape == (est.n_iter_ + 1,)
+
+
+def _get_iter_records(callback, hook_name):
+    """Records of a given hook for the boosting iteration tasks."""
+    return [
+        rec
+        for rec in callback.record
+        if rec["name"] == hook_name and rec["context"].task_name == "boosting-iter"
+    ]
+
+
+@skip_callback_test_if_wasm
+@pytest.mark.parametrize(
+    "Estimator, X, y",
+    [
+        (HistGradientBoostingClassifier, X_classification, y_classification),
+        (HistGradientBoostingRegressor, X_regression, y_regression),
+    ],
+)
+@pytest.mark.parametrize("early_stopping", [False, True])
+def test_callback_support(Estimator, X, y, early_stopping):
+    """Check the hooks called and the task tree built during fit."""
+    cb = RecordingCallback()
+    est = Estimator(
+        max_iter=10, early_stopping=early_stopping, n_iter_no_change=2, random_state=0
+    )
+    est.set_callbacks(cb).fit(X, y)
+
+    assert cb.count_hooks("setup") == 1
+    assert cb.count_hooks("teardown") == 1
+    # 1 root task for fit + 1 task per boosting iteration.
+    assert cb.count_hooks("on_fit_task_begin") == 1 + est.n_iter_
+    assert cb.count_hooks("on_fit_task_end") == 1 + est.n_iter_
+
+    root_ctx = cb.record[0]["context"]
+    assert root_ctx.task_name == "fit"
+    assert root_ctx.max_subtasks == 10
+
+    for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
+        records = _get_iter_records(cb, hook_name)
+        task_ids = [rec["context"].task_id for rec in records]
+        assert task_ids == list(range(est.n_iter_))
+
+    # The callbacks receive the data as passed by the user, not the preprocessed data.
+    for rec in cb.record:
+        if "kwargs" in rec:
+            assert rec["kwargs"]["X"] is X
+            assert rec["kwargs"]["y"] is y
+
+
+@skip_callback_test_if_wasm
+@pytest.mark.parametrize(
+    "Estimator, X, y, method",
+    [
+        (HistGradientBoostingRegressor, X_regression, y_regression, "predict"),
+        (
+            HistGradientBoostingClassifier,
+            X_classification,
+            y_classification,
+            "predict_proba",
+        ),
+        (
+            HistGradientBoostingClassifier,
+            X_multi_classification,
+            y_multi_classification,
+            "predict_proba",
+        ),
+    ],
+)
+@pytest.mark.parametrize("scoring", [None, "loss", "predefined_scorer"])
+def test_callback_fitted_estimator(Estimator, X, y, method, scoring):
+    """Check the fitted_estimator passed to the callbacks at each boosting iteration.
+
+    It must be identical to an estimator fitted with the number of iterations done so
+    far, and must not change when the fit continues.
+    """
+    if scoring is None:
+        es_params = {"early_stopping": False}
+    else:
+        if scoring == "predefined_scorer":
+            # Early stopping with a predefined scorer relies on _patch_raw_predict.
+            scoring = "r2" if is_regressor(Estimator()) else "accuracy"
+        es_params = {"early_stopping": True, "scoring": scoring}
+    params = {"max_iter": 5, "n_iter_no_change": 2, "random_state": 0, **es_params}
+
+    cb = RecordingCallback()
+    Estimator(**params).set_callbacks(cb).fit(X, y)
+
+    # The records are inspected after the end of fit, to check that the fitted
+    # estimators are snapshots that are not affected by the following iterations.
+    records = _get_iter_records(cb, "on_fit_task_begin") + _get_iter_records(
+        cb, "on_fit_task_end"
+    )
+    for rec in records:
+        fitted_est = rec["kwargs"]["fitted_estimator"]
+        # At the beginning of iteration i, i iterations are done. At the end, i + 1.
+        n_iter = rec["context"].task_id + int(rec["name"] == "on_fit_task_end")
+        assert fitted_est.n_iter_ == n_iter
+        assert isinstance(fitted_est.train_score_, np.ndarray)
+        assert isinstance(fitted_est.validation_score_, np.ndarray)
+        if n_iter == 0:
+            continue
+
+        expected_est = Estimator(**{**params, "max_iter": n_iter}).fit(X, y)
+        assert_allclose(
+            getattr(fitted_est, method)(X), getattr(expected_est, method)(X)
+        )
+        assert_allclose(fitted_est.train_score_, expected_est.train_score_)
+        assert_allclose(fitted_est.validation_score_, expected_est.validation_score_)
+
+
+@skip_callback_test_if_wasm
+@pytest.mark.parametrize(
+    "Estimator, X, y",
+    [
+        (HistGradientBoostingClassifier, X_classification, y_classification),
+        (HistGradientBoostingRegressor, X_regression, y_regression),
+    ],
+)
+def test_fit_stopped_by_callback(Estimator, X, y):
+    """Check that a callback can interrupt the fit."""
+    cb = StopFitCallback()
+    est = Estimator(max_iter=10).set_callbacks(cb).fit(X, y)
+
+    assert est.n_iter_ == 1
+    # Every task that was begun is ended exactly once.
+    begins = [rec["context"] for rec in cb.record if rec["name"] == "on_fit_task_begin"]
+    ends = [rec["context"] for rec in cb.record if rec["name"] == "on_fit_task_end"]
+    assert sorted(map(id, begins)) == sorted(map(id, ends))
+
+
+@skip_callback_test_if_wasm
+def test_callback_warm_start():
+    """Check that only the remaining iterations are subtasks when warm starting."""
+    X, y = X_classification, y_classification
+    cb = RecordingCallback()
+    est = HistGradientBoostingClassifier(max_iter=3, warm_start=True, random_state=0)
+    est.set_callbacks(cb).fit(X, y)
+
+    cb.record.clear()
+    est.set_params(max_iter=5).fit(X, y)
+
+    assert cb.record[0]["context"].max_subtasks == 2
+    ends = _get_iter_records(cb, "on_fit_task_end")
+    assert [rec["context"].task_id for rec in ends] == [0, 1]
+    # The fitted estimators include the iterations of the previous fit.
+    assert [rec["kwargs"]["fitted_estimator"].n_iter_ for rec in ends] == [4, 5]
+
+
+def test_patch_raw_predict_restores_estimator():
+    """Check that _patch_raw_predict leaves no _raw_predict attribute on the instance.
+
+    Otherwise, a shallow copy of the estimator, e.g. the fitted_estimator passed to
+    the callbacks, would call the _raw_predict method of the original estimator.
+    """
+    est = HistGradientBoostingClassifier(
+        max_iter=3, early_stopping=True, scoring="accuracy", random_state=0
+    ).fit(X_classification, y_classification)
+    assert "_raw_predict" not in vars(est)

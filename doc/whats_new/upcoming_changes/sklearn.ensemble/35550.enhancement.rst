@@ -1,0 +1,4 @@
+- :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now support callbacks. Each boosting
+  iteration is a task on which callbacks are invoked, and a callback can stop the fit.
+  By :user:`Clara Petrescu Stompor <clarapetrescustompor>`.
