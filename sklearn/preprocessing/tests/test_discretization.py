@@ -1,3 +1,4 @@
+import re
 import warnings
 
 import numpy as np
@@ -6,6 +7,7 @@ import scipy.sparse as sp
 
 from sklearn import clone
 from sklearn.preprocessing import KBinsDiscretizer, OneHotEncoder
+from sklearn.utils._mask import _get_mask
 from sklearn.utils._testing import (
     assert_allclose,
     assert_allclose_dense_sparse,
@@ -702,3 +704,197 @@ def test_invalid_quantile_method_with_sample_weight():
             X,
             sample_weight=[1, 1, 2, 2],
         )
+
+
+@pytest.mark.parametrize("strategy", ["uniform", "quantile", "kmeans"])
+@pytest.mark.parametrize("encode", ["onehot", "onehot-dense", "ordinal"])
+def test_kbinsdiscretizer_handle_missing_error(strategy, encode):
+    """Check that handle_missing='error' raises clear ValueError on NaNs."""
+    X_clean = np.array([[1.0, 10.0], [2.0, 20.0], [3.0, 30.0], [4.0, 40.0]])
+    X_nan = X_clean.copy()
+    X_nan[1, 0] = np.nan
+
+    msg = "Input X contains NaN values and `KBinsDiscretizer` is configured to error"
+    kbd = KBinsDiscretizer(
+        n_bins=2, encode=encode, strategy=strategy, handle_missing="error"
+    )
+    with pytest.raises(ValueError, match=re.escape(msg)):
+        kbd.fit(X_nan)
+
+    kbd.fit(X_clean)
+    with pytest.raises(ValueError, match="Input X contains NaN"):
+        kbd.transform(X_nan)
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        kbd.inverse_transform(X_nan)
+
+
+@pytest.mark.parametrize("strategy", ["uniform", "quantile", "kmeans"])
+@pytest.mark.parametrize("encode", ["onehot", "onehot-dense", "ordinal"])
+def test_kbinsdiscretizer_handle_missing_zeros(strategy, encode):
+    """Check NaNs are ignored in fit and encoded as zeros (onehot) or NaN (ordinal)."""
+    rng = np.random.RandomState(42)
+    X_clean = rng.uniform(0.0, 10.0, size=(30, 3))
+    X_nan = X_clean.copy()
+    for row, col in [(0, 0), (5, 0), (12, 1), (20, 1), (29, 2)]:
+        X_nan[row, col] = np.nan
+
+    kbd = KBinsDiscretizer(
+        n_bins=3,
+        encode=encode,
+        strategy=strategy,
+        handle_missing="zeros",
+        subsample=None,
+    )
+    Xt = kbd.fit_transform(X_nan)
+    assert_allclose_dense_sparse(Xt, clone(kbd).fit(X_nan).transform(X_nan))
+
+    # Bin edges must match fitting each feature on its non-NaN values alone.
+    for jj in range(X_nan.shape[1]):
+        valid = ~np.isnan(X_nan[:, jj])
+        kbd_col = (
+            clone(kbd).set_params(handle_missing="error").fit(X_nan[valid, jj : jj + 1])
+        )
+        assert_allclose(kbd.bin_edges_[jj], kbd_col.bin_edges_[0])
+
+    # Transform on new data must use the test-time NaN mask, not the fit-time mask.
+    X_test = X_clean[:10].copy()
+    X_test[2, 2] = np.nan
+    X_test[7, 0] = np.nan
+    Xt_test = kbd.transform(X_test)
+
+    nan_mask = _get_mask(X_nan, np.nan)
+    if encode == "ordinal":
+        assert_array_equal(np.isnan(Xt), nan_mask)
+        assert_array_equal(np.isnan(Xt_test), _get_mask(X_test, np.nan))
+        for jj in range(X_nan.shape[1]):
+            valid_bins = Xt[~nan_mask[:, jj], jj]
+            assert np.all((valid_bins >= 0) & (valid_bins < kbd.n_bins_[jj]))
+    else:
+        Xt_dense = Xt.toarray() if sp.issparse(Xt) else Xt
+        offset = 0
+        for jj, n_b in enumerate(kbd.n_bins_):
+            block = Xt_dense[:, offset : offset + n_b]
+            assert_array_equal(block[nan_mask[:, jj]], 0.0)
+            assert_allclose(block[~nan_mask[:, jj]].sum(axis=1), 1.0)
+            offset += n_b
+
+    # inverse_transform must preserve NaNs and recover bin centers elsewhere.
+    X_inv = kbd.inverse_transform(Xt)
+    assert_array_equal(np.isnan(X_inv), nan_mask)
+    for jj in range(X_nan.shape[1]):
+        centers = (kbd.bin_edges_[jj][1:] + kbd.bin_edges_[jj][:-1]) * 0.5
+        assert np.all(np.isin(X_inv[~nan_mask[:, jj], jj], centers))
+
+
+@pytest.mark.parametrize(
+    "strategy, quantile_method",
+    [
+        ("uniform", "averaged_inverted_cdf"),
+        ("quantile", "averaged_inverted_cdf"),
+        ("quantile", "inverted_cdf"),
+        ("kmeans", "averaged_inverted_cdf"),
+    ],
+)
+def test_kbinsdiscretizer_handle_missing_sample_weight_and_subsample(
+    strategy, quantile_method, global_random_seed
+):
+    """Check sample_weight (including zero weights) and subsample with NaNs."""
+    rng = np.random.RandomState(global_random_seed)
+    X_nan = rng.normal(size=(40, 2))
+    X_nan[[0, 3, 15, 27], 0] = np.nan
+    X_nan[[1, 8, 19], 1] = np.nan
+
+    # Unit weights must match unweighted fit exactly.
+    ones_w = np.ones(X_nan.shape[0])
+    kbd_unweighted = KBinsDiscretizer(
+        n_bins=4,
+        encode="ordinal",
+        strategy=strategy,
+        quantile_method=quantile_method,
+        handle_missing="zeros",
+        subsample=None,
+    ).fit(X_nan)
+    kbd_unit_w = clone(kbd_unweighted).fit(X_nan, sample_weight=ones_w)
+    for jj in range(2):
+        assert_allclose(kbd_unweighted.bin_edges_[jj], kbd_unit_w.bin_edges_[jj])
+
+    # Non-uniform weights with zeros must match fitting on non-NaN rows with weights.
+    weights = rng.choice([0.0, 1.0, 3.0], size=X_nan.shape[0])
+    weights[weights == 0.0][:1] = 1.0  # ensure non-zero total weight
+    kbd_weighted = clone(kbd_unweighted).fit(X_nan, sample_weight=weights)
+    for jj in range(2):
+        valid = ~np.isnan(X_nan[:, jj])
+        kbd_col = clone(kbd_unweighted).fit(
+            X_nan[valid, jj : jj + 1], sample_weight=weights[valid]
+        )
+        assert_allclose(kbd_weighted.bin_edges_[jj], kbd_col.bin_edges_[0])
+
+    # Subsampling with NaNs and weights must run cleanly and preserve NaN masking.
+    kbd_sub = KBinsDiscretizer(
+        n_bins=4,
+        encode="onehot-dense",
+        strategy=strategy,
+        quantile_method=quantile_method,
+        handle_missing="zeros",
+        subsample=20,
+        random_state=global_random_seed,
+    )
+    Xt_sub = kbd_sub.fit_transform(X_nan, sample_weight=weights)
+    assert Xt_sub.shape[0] == X_nan.shape[0]
+    assert not np.any(np.isnan(Xt_sub))
+
+
+@pytest.mark.parametrize("strategy", ["uniform", "quantile", "kmeans"])
+@pytest.mark.parametrize("encode", ["onehot", "onehot-dense", "ordinal"])
+def test_kbinsdiscretizer_handle_missing_all_nan_feature(strategy, encode):
+    """Check all-NaN columns emit a warning and fall back to 1-bin encoding."""
+    X_all_nan = np.array([[np.nan, 1.0], [np.nan, 2.0], [np.nan, 3.0], [np.nan, 4.0]])
+    kbd = KBinsDiscretizer(
+        n_bins=2, encode=encode, strategy=strategy, handle_missing="zeros"
+    )
+    with pytest.warns(UserWarning, match="Feature 0 has only missing values"):
+        Xt = kbd.fit_transform(X_all_nan)
+
+    assert kbd.n_bins_[0] == 1
+    assert_array_equal(kbd.bin_edges_[0], [-np.inf, np.inf])
+
+    if encode == "ordinal":
+        assert np.all(np.isnan(Xt[:, 0]))
+        assert not np.any(np.isnan(Xt[:, 1]))
+    else:
+        Xt_dense = Xt.toarray() if sp.issparse(Xt) else Xt
+        assert_array_equal(Xt_dense[:, 0], 0.0)
+        assert_allclose(Xt_dense[:, 1:].sum(axis=1), 1.0)
+
+    # A non-NaN test value in the all-NaN feature falls into its single bin (0).
+    Xt_new = kbd.transform(np.array([[10.0, 2.5]]))
+    if encode == "ordinal":
+        assert Xt_new[0, 0] == 0.0
+    else:
+        Xt_new_dense = Xt_new.toarray() if sp.issparse(Xt_new) else Xt_new
+        assert Xt_new_dense[0, 0] == 1.0
+
+
+@pytest.mark.parametrize("encode", ["onehot-dense", "ordinal"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_kbinsdiscretizer_handle_missing_pandas_output_and_dtype(encode, dtype):
+    """Check pandas set_output, get_feature_names_out, and dtype with NaNs."""
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(
+        {"a": [1.0, np.nan, 3.0, 4.0], "b": [10.0, 20.0, np.nan, 40.0]}, dtype=dtype
+    )
+    kbd = KBinsDiscretizer(n_bins=2, encode=encode, handle_missing="zeros").set_output(
+        transform="pandas"
+    )
+    Xt = kbd.fit_transform(df)
+
+    assert isinstance(Xt, pd.DataFrame)
+    assert list(Xt.columns) == list(kbd.get_feature_names_out())
+    assert Xt.dtypes.iloc[0] == dtype
+    if encode == "ordinal":
+        assert np.isnan(Xt.loc[1, "a"])
+        assert np.isnan(Xt.loc[2, "b"])
+    else:
+        assert_array_equal(Xt.loc[1, ["a_0.0", "a_1.0"]], [0.0, 0.0])
+        assert_array_equal(Xt.loc[2, ["b_0.0", "b_1.0"]], [0.0, 0.0])

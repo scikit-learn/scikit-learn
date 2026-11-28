@@ -1,0 +1,4 @@
+- :class:`preprocessing.KBinsDiscretizer` now supports missing values
+  (``np.nan``) via the new ``handle_missing`` parameter (``'error'`` or
+  ``'zeros'``).
+  By :user:`Kaynup <Kaynup>`.
