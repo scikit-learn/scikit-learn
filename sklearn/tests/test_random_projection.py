@@ -458,8 +458,9 @@ def test_johnson_lindenstrauss_min_dim():
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
 @pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+@pytest.mark.parametrize("n_components", [2, "auto"])
 def test_random_projection_feature_names_out(
-    coo_container, random_projection_cls, global_random_seed
+    coo_container, random_projection_cls, n_components, global_random_seed
 ):
     data = make_sparse_random_data(
         coo_container,
@@ -469,7 +470,9 @@ def test_random_projection_feature_names_out(
         random_state=global_random_seed,
         sparse_format=None,
     )
-    random_projection = random_projection_cls(n_components=2)
+    # eps is only used when n_components="auto". It is chosen large enough for
+    # the Johnson-Lindenstrauss bound to be smaller than n_features.
+    random_projection = random_projection_cls(n_components=n_components, eps=0.5)
     random_projection.fit(data)
     names_out = random_projection.get_feature_names_out()
     class_name_lower = random_projection_cls.__name__.lower()
@@ -479,6 +482,25 @@ def test_random_projection_feature_names_out(
     )
 
     assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("random_projection_cls", all_RandomProjection)
+def test_random_projection_auto_n_components_pandas_output(random_projection_cls):
+    """Check pandas output when `n_components` is inferred from the data.
+
+    Non-regression test for the `TypeError` raised by `get_feature_names_out`
+    when `n_components="auto"`, which also broke `set_output(transform="pandas")`.
+    """
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
+    X = rng.rand(n_samples, n_features)
+    random_projection = random_projection_cls(eps=0.5, random_state=0)
+    random_projection.set_output(transform="pandas")
+    X_trans = random_projection.fit_transform(X)
+
+    assert isinstance(X_trans, pd.DataFrame)
+    assert X_trans.shape == (n_samples, random_projection.n_components_)
+    assert_array_equal(X_trans.columns, random_projection.get_feature_names_out())
 
 
 @pytest.mark.parametrize("coo_container", COO_CONTAINERS)
