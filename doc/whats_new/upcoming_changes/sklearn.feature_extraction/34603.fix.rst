@@ -1,0 +1,7 @@
+- :class:`feature_extraction.text.CountVectorizer`,
+  :class:`feature_extraction.text.HashingVectorizer` and
+  :class:`feature_extraction.text.TfidfVectorizer` now raise a clear error
+  message when given a 2-dimensional array-like (e.g. a single-column
+  ``DataFrame``) instead of an iterable of raw documents, rather than
+  silently producing a nonsensical result.
+  By :user:`Arthur Lacote <cakedev0>`.
