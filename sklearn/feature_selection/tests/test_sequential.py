@@ -2,15 +2,17 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.cluster import KMeans
+from sklearn.compose import make_column_selector, make_column_transformer
 from sklearn.datasets import make_blobs, make_classification, make_regression
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.feature_selection import SequentialFeatureSelector
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.model_selection import LeaveOneGroupOut, cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.utils.fixes import CSR_CONTAINERS
 
 
@@ -330,3 +332,76 @@ def test_fit_rejects_params_with_no_routing_enabled():
 
     with pytest.raises(ValueError, match="is only supported if"):
         sfs.fit(X, y, sample_weight=np.ones_like(y))
+
+
+@pytest.mark.parametrize("direction", ["forward", "backward"])
+def test_dataframe_column_transformer_support(direction):
+    """Check that a pipeline containing a `ColumnTransformer` with callable column
+    selectors can be used as the estimator when fitting on a pandas dataframe.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/25711
+    """
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
+    n_samples = 50
+    X = pd.DataFrame(
+        {
+            "num_1": rng.randn(n_samples),
+            "num_2": rng.randn(n_samples),
+            "cat_1": rng.choice(["a", "b"], size=n_samples),
+            "cat_2": rng.choice(["c", "d"], size=n_samples),
+        }
+    )
+    y = rng.randint(0, 2, size=n_samples)
+
+    ct = make_column_transformer(
+        (StandardScaler(), make_column_selector(dtype_include=np.number)),
+        (OneHotEncoder(), make_column_selector(dtype_exclude=np.number)),
+    )
+    pipeline = make_pipeline(ct, LogisticRegression())
+    sfs = SequentialFeatureSelector(
+        pipeline, n_features_to_select=2, direction=direction
+    )
+    sfs.fit(X, y)
+
+    assert_array_equal(sfs.feature_names_in_, X.columns)
+    assert sfs.get_support().sum() == 2
+    assert sfs.transform(X).shape == (n_samples, 2)
+
+
+def test_dataframe_passed_through_to_estimator():
+    """Check that pandas dataframes are passed to the underlying estimator with
+    their original column names.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/25711
+    """
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
+    n_samples = 50
+    X = pd.DataFrame(
+        {
+            "num_1": rng.randn(n_samples),
+            "num_2": rng.randn(n_samples),
+            "cat_1": rng.choice(["a", "b"], size=n_samples),
+        }
+    )
+    y = rng.randint(0, 2, size=n_samples)
+    seen_columns = []
+
+    class ColumnRecordingClassifier(ClassifierMixin, BaseEstimator):
+        def fit(self, X, y):
+            assert isinstance(X, pd.DataFrame)
+            seen_columns.append(tuple(X.columns))
+            self.classes_ = np.unique(y)
+            return self
+
+        def predict(self, X):
+            return np.full(shape=len(X), fill_value=self.classes_[0])
+
+    sfs = SequentialFeatureSelector(ColumnRecordingClassifier(), n_features_to_select=1)
+    sfs.fit(X, y)
+
+    # Each candidate subset is a single column, evaluated with its original name.
+    assert set(seen_columns) == {("num_1",), ("num_2",), ("cat_1",)}
