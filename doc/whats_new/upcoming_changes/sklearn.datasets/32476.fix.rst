@@ -1,0 +1,3 @@
+- Fix in :func:`~sklearn.datasets.make_classification` to ensure that for a given
+  ``random_state``, the generated distribution's underlying parameters are
+  consistent regardless of ``n_samples``. :issue:`32405` by :user:`KoolDrip`.
