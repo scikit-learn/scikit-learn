@@ -1,0 +1,5 @@
+- In :func:`inspection.permutation_importance`, baseline score is now evaluated
+  on the same subsample as permuted scores when ``max_samples < 1.0``, preventing
+  the subsampling offset from leaking into feature importances and assigning non-zero
+  importance to unused features.
+  By :user:`Ansh Rohilla <ansh-rohilla>`.
