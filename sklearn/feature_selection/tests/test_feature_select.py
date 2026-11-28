@@ -850,7 +850,11 @@ def test_f_classif_constant_feature():
 
 
 def test_f_classif_continuous_target():
-    # test that f_classif raises valueerror when target is continuous
+    """Check that f_classif raises an error for a continuous target.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/11331
+    """
     X = np.arange(20).reshape(10, 2)
     y = np.linspace(0.1, 1.0, 10)
     msg = "Unknown label type: continuous"
