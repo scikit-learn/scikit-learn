@@ -1,0 +1,7 @@
+extends: occurrence
+message: "Sentence has more than 40 words. Consider splitting it."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-concise
+level: suggestion
+scope: sentence
+max: 40
+token: \b(\w+)\b

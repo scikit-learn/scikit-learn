@@ -1,0 +1,25 @@
+extends: substitution
+message: "Use '%s' instead of '%s' (the form used in the glossary and most of the docs)."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-terminology
+level: warning
+ignorecase: true
+swap:
+  data sets?: dataset(s)
+  multi-class: multiclass
+  multi-label: multilabel
+  multi-output: multioutput
+  hyper[- ]parameters?: hyperparameter(s)
+  cross validation: cross-validation
+  cross validated: cross-validated
+  pre-process(ing|ed|or|ors)?: preprocess
+  pre-computed: precomputed
+  sub-sampl(e|es|ed|ing): subsample
+  over-fit(s|ting|ted)?: overfit
+  under-fit(s|ting|ted)?: underfit
+  meta estimators?: meta-estimator(s)
+  metaestimators?: meta-estimator(s)
+  out-perform(s|ed|ing)?: outperform
+  hyper-planes?: hyperplane(s)
+  co-linearity: collinearity
+  can not: cannot
+  datapoints?: data point(s)

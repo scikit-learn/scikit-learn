@@ -1,0 +1,7 @@
+extends: consistency
+message: "Inconsistent use of '%s' and '%s' in this file."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-terminology
+level: suggestion
+ignorecase: true
+either:
+  mini-batch: minibatch

@@ -1,0 +1,16 @@
+extends: substitution
+message: "Use American spelling '%s' instead of '%s'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-spelling
+level: warning
+ignorecase: true
+swap:
+  behaviours?: behavior(s)
+  neighbours?: neighbor(s)
+  neighbourhoods?: neighborhood(s)
+  colours?: color(s)
+  favou?rs?: favor(s)
+  centres?: center(s)
+  learnt: learned
+  modell(ing|ed): modeling/modeled  # codespell:ignore
+  labell(ing|ed): labeling/labeled
+  (minimi|maximi|optimi|normali|regulari|initiali|parameteri|generali|visuali|penali|categori|summari|standardi|vectori|tokeni|binari|discreti|randomi|recogni|organi|utili|reali|characteri)s(e|es|ed|ing|ation|ations|er|ers): the -ize form

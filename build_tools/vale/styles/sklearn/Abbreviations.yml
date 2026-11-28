@@ -1,0 +1,10 @@
+extends: substitution
+message: "Use '%s' instead of '%s'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-abbreviations
+level: warning
+ignorecase: true
+nonword: true
+swap:
+  '\baka\b': also known as
+  '\bw\.r\.t\.?': with respect to
+  '\bwrt\b': with respect to

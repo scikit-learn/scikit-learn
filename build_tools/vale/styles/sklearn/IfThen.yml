@@ -1,0 +1,7 @@
+extends: existence
+message: "Add a comma: '%s' -> 'If ..., then' (the form used in most docstrings)."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-idioms
+level: warning
+nonword: true
+tokens:
+  - '\bIf (True|False|None|int|float|str) then\b'

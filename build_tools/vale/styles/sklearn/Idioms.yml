@@ -1,0 +1,20 @@
+extends: substitution
+message: "Use '%s' instead of '%s'."
+link: https://scikit-learn.org/dev/developers/writing_style.html#writing-style-idioms
+level: warning
+ignorecase: true
+swap:
+  depending of: depending on
+  with regards to: with regard to
+  in average: on average
+  compatible to: compatible with
+  the both: both
+  as other (classifiers|regressors|estimators|models|methods): like other
+  amount of (samples|candidates|points|features|clusters|iterations|estimators|classes): number of
+  less (samples|features|components|iterations|candidates|clusters): fewer
+  he/she|she/he: they
+  keywords arguments: keyword arguments
+  parameters names: parameter names
+  features names: feature names
+  same than: same as
+  in details: in detail
