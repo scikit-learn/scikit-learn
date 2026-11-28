@@ -264,8 +264,11 @@ def assert_same_namespace_and_device(array, expected, name=None):
         # Non-local variables (e.g., `.classes_`) get named "array"
         name = next((k for k, v in caller_locals.items() if v is array), "array")
 
+    prefix = f"{array_api_compat.__name__}."
+    expected_ns = xp_expected.__name__.removeprefix(prefix)
+    actual_ns = xp_array.__name__.removeprefix(prefix)
     assert xp_array == xp_expected, (
-        f"`{name}` is in the wrong namespace, expected: {xp_expected}, got: {xp_array}"
+        f"`{name}` is in the wrong namespace, expected: {expected_ns}, got: {actual_ns}"
     )
     assert device_array == device_expected, (
         f"`{name}` is in the wrong device, expected: {device_expected}, got: "
