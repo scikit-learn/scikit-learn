@@ -2440,6 +2440,12 @@ cdef inline void update_LD_R(
     cdef unsigned int n_samples = LD_R.shape[0]
     cdef unsigned int n_classes = LD_R.shape[1]
     cdef int32_t i, l, i_ind
+    cdef int32_t startptr
+    cdef int32_t endptr
+
+    if X_is_sparse:
+        startptr = X_indptr[j]
+        endptr = X_indptr[j + 1]
 
     # L sqrt(D) R += w * LDL[:, k] * X[:, j]
     # numpy:
@@ -2452,7 +2458,7 @@ cdef inline void update_LD_R(
             LD_R[i, k] += (1 - proba[i, k]) * x_k[i]
     else:
         memset(&x_k[0], 0, n_samples * sizeof(floating))
-        for i_ind in range(X_indptr[j], X_indptr[j + 1]):
+        for i_ind in range(startptr, endptr):
             i = X_indices[i_ind]
             x_k[i] = X_data[i_ind] * w_kj * sw_proba[i, k]
             LD_R[i, k] += (1 - proba[i, k]) * x_k[i]
@@ -2580,11 +2586,13 @@ def enet_coordinate_descent_multinomial(
 
         X[:, j] e_k' - 1 c_kj'    with c_kj = (H00^(-1) H0)[:, kj]
 
-    where e_k is the k-th unit vector. The second term means that each coordinate
-    update changes the intercepts by
+    where e_k is the k-th unit vector. The second term is the effect of the
+    intercepts w0 = H00^(-1) (q0 - H0 w), which change with each coordinate update.
+    We define d_w0 as the change of the intercepts that is not yet applied to LD_R
 
-        d_w0 -= (w_new_kj - w_old_kj) * c_kj
+        d_w0 = w0_new - w0_old = -sum_kj (w_new_kj - w_old_kj) * c_kj
 
+    i.e. each coordinate update gives d_w0 -= (w_new_kj - w_old_kj) * c_kj.
     Applying this to the rotated residual
 
         L sqrt(D) R -= LDL d_w0
@@ -3050,6 +3058,7 @@ def enet_coordinate_descent_multinomial(
                 if fit_intercept:
                     # Apply the postponed intercept updates:
                     # LD_R -= LDL @ d_w0 = sw_proba * (d_w0 - proba @ d_w0)
+                    # x_k = proba[:, :-1] @ d_w0[:-1]
                     _gemv(
                         ColMajor, NoTrans, n_samples, n_classes - 1,
                         1.0, &proba_[0, 0], n_samples, &d_w0_[0], 1, 0.0, &x_k_[0], 1,
