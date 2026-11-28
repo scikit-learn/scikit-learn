@@ -5,7 +5,7 @@ import numbers
 
 import numpy as np
 
-from sklearn.utils import _safe_indexing, check_random_state
+from sklearn.utils import check_random_state, safe_indexing
 from sklearn.utils._optional_dependencies import check_matplotlib_support
 from sklearn.utils._plotting import _validate_style_kwargs
 
@@ -397,8 +397,8 @@ class PredictionErrorDisplay:
 
         if subsample is not None and subsample < n_samples:
             indices = random_state.choice(np.arange(n_samples), size=subsample)
-            y_true = _safe_indexing(y_true, indices, axis=0)
-            y_pred = _safe_indexing(y_pred, indices, axis=0)
+            y_true = safe_indexing(y_true, indices, axis=0)
+            y_pred = safe_indexing(y_pred, indices, axis=0)
 
         viz = cls(
             y_true=y_true,

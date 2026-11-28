@@ -9,7 +9,7 @@ from contextlib import suppress
 import numpy as np
 
 from sklearn.base import BaseEstimator
-from sklearn.utils import _safe_indexing
+from sklearn.utils import safe_indexing
 from sklearn.utils._available_if import available_if
 from sklearn.utils._tags import get_tags
 
@@ -167,10 +167,10 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         else:
             X_subset = X[np.ix_(indices, train_indices)]
     else:
-        X_subset = _safe_indexing(X, indices)
+        X_subset = safe_indexing(X, indices)
 
     if y is not None:
-        y_subset = _safe_indexing(y, indices)
+        y_subset = safe_indexing(y, indices)
     else:
         y_subset = None
 

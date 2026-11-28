@@ -21,7 +21,7 @@ from sklearn.feature_selection._base import SelectorMixin, _get_feature_importan
 from sklearn.metrics import get_scorer
 from sklearn.model_selection import check_cv
 from sklearn.model_selection._validation import _score
-from sklearn.utils import _safe_indexing, metadata_routing
+from sklearn.utils import metadata_routing, safe_indexing
 from sklearn.utils._dataframe import is_df_or_series
 from sklearn.utils._metadata_requests import (
     MetadataRouter,
@@ -61,7 +61,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, routed_params):
         y_train,
         lambda estimator, features: _score(
             estimator,
-            _safe_indexing(X_test, features, axis=1),
+            safe_indexing(X_test, features, axis=1),
             y_test,
             scorer,
             score_params=score_params,
@@ -328,7 +328,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             if self.verbose > 0:
                 print(f"Fitting estimator with {np.sum(support_)} features.")
 
-            estimator.fit(_safe_indexing(X, features, axis=1), y, **fit_params)
+            estimator.fit(safe_indexing(X, features, axis=1), y, **fit_params)
 
             # Compute step values on the previous selection iteration because
             # 'estimator' must use features that have not been eliminated yet
@@ -358,7 +358,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # Set final attributes
         features = np.arange(n_features)[support_]
         self.estimator_ = clone(self.estimator)
-        self.estimator_.fit(_safe_indexing(X, features, axis=1), y, **fit_params)
+        self.estimator_.fit(safe_indexing(X, features, axis=1), y, **fit_params)
 
         # Compute step values when only n_features_to_select features left
         if step_score:

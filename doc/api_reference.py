@@ -1180,7 +1180,6 @@ API_REFERENCE = {
                 "title": None,
                 "autosummary": [
                     "Bunch",
-                    "_safe_indexing",
                     "as_float_array",
                     "assert_all_finite",
                     "deprecated",
@@ -1190,6 +1189,7 @@ API_REFERENCE = {
                     "indexable",
                     "murmurhash3_32",
                     "resample",
+                    "safe_indexing",
                     "safe_mask",
                     "safe_sqr",
                     "shuffle",

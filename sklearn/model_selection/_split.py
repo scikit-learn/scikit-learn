@@ -19,10 +19,10 @@ import numpy as np
 from scipy.special import comb
 
 from sklearn.utils import (
-    _safe_indexing,
     check_random_state,
     indexable,
     metadata_routing,
+    safe_indexing,
 )
 from sklearn.utils._array_api import (
     get_namespace,
@@ -2941,7 +2941,7 @@ def train_test_split(
 
     return list(
         chain.from_iterable(
-            (_safe_indexing(a, train), _safe_indexing(a, test)) for a in arrays
+            (safe_indexing(a, train), safe_indexing(a, test)) for a in arrays
         )
     )
 
