@@ -1126,20 +1126,54 @@ class TimeSeriesSplit(_BaseKFold):
 
     Parameters
     ----------
-    n_splits : int, default=5
-        Number of splits. Must be at least 2.
+    n_splits : int or "walk_forward", default=5
+        Number of splits. Must be at least 2 when passed as an integer.
+
+        If set to ``"walk_forward"``, the number of splits is derived from the
+        data instead: the first test window starts right after the initial
+        training window (`min_train_size` for an expanding window or
+        `max_train_size` for a rolling window) and `gap`, and successive test
+        windows advance by `step` samples until the end of the data. Trailing
+        samples that do not fill a complete test window are not used.
+
+        .. versionchanged:: 1.10
+            Added the ``"walk_forward"`` option.
 
     max_train_size : int, default=None
         Maximum size for a single training set.
+
+        If set with ``n_splits="walk_forward"``, every training window has
+        exactly `max_train_size` samples (rolling window). Cannot be combined
+        with `min_train_size`.
 
     test_size : int, default=None
         Used to limit the size of the test set. Defaults to
         ``n_samples // (n_splits + 1)``, which is the maximum allowed value
         with ``gap=0``.
 
+        Must be a positive integer when ``n_splits="walk_forward"``.
+
     gap : int, default=0
         Number of samples to exclude from the end of each train set before
-        the test set.
+        the test set. Must be a non-negative integer when
+        ``n_splits="walk_forward"``.
+
+    step : int, default=None
+        Only used when ``n_splits="walk_forward"``. Number of samples by which
+        successive test windows advance. If None, defaults to `test_size` so
+        that test windows are contiguous and do not overlap. A smaller `step`
+        produces overlapping test windows, in which case a sample can belong to
+        several test sets. A larger `step` leaves the samples between two test
+        windows unused for testing.
+
+        .. versionadded:: 1.10
+
+    min_train_size : int, default=None
+        Only used when ``n_splits="walk_forward"``. Size of the training window
+        of the first split. The training window then expands by `step` samples
+        at each split. Cannot be combined with `max_train_size`.
+
+        .. versionadded:: 1.10
 
     Examples
     --------
@@ -1149,7 +1183,8 @@ class TimeSeriesSplit(_BaseKFold):
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> tscv = TimeSeriesSplit()
     >>> print(tscv)
-    TimeSeriesSplit(gap=0, max_train_size=None, n_splits=5, test_size=None)
+    TimeSeriesSplit(gap=0, max_train_size=None, min_train_size=None, n_splits=5,
+            step=None, test_size=None)
     >>> for i, (train_index, test_index) in enumerate(tscv.split(X)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -1201,6 +1236,22 @@ class TimeSeriesSplit(_BaseKFold):
     Fold 2:
       Train: index=[0 1 2 3 4 5 6 7]
       Test:  index=[10 11]
+    >>> # Walk-forward mode: the number of splits is derived from the data
+    >>> tscv = TimeSeriesSplit(
+    ...     n_splits="walk_forward", min_train_size=5, test_size=3, gap=1
+    ... )
+    >>> tscv.get_n_splits(X)
+    2
+    >>> for i, (train_index, test_index) in enumerate(tscv.split(X)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[0 1 2 3 4]
+      Test:  index=[6 7 8]
+    Fold 1:
+      Train: index=[0 1 2 3 4 5 6 7]
+      Test:  index=[ 9 10 11]
 
     For a more extended example see
     :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.
@@ -1213,13 +1264,124 @@ class TimeSeriesSplit(_BaseKFold):
     where ``n_samples`` is the number of samples. Note that this
     formula is only valid when ``test_size`` and ``max_train_size`` are
     left to their default values.
+
+    When ``n_splits="walk_forward"``, the number of splits is
+    ``len(range(train_size + gap, n_samples - test_size + 1, step))`` where
+    ``train_size`` is `min_train_size` (expanding window) or `max_train_size`
+    (rolling window). :meth:`get_n_splits` returns it when called with `X`.
     """
 
-    def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
-        super().__init__(n_splits, shuffle=False, random_state=None)
+    def __init__(
+        self,
+        n_splits=5,
+        *,
+        max_train_size=None,
+        test_size=None,
+        gap=0,
+        step=None,
+        min_train_size=None,
+    ):
+        if isinstance(n_splits, str):
+            if n_splits != "walk_forward":
+                raise ValueError(
+                    "n_splits must be an integer or 'walk_forward'. "
+                    f"Got n_splits={n_splits!r}."
+                )
+            # _BaseKFold.__init__ only accepts an integer n_splits. Call it
+            # with a placeholder to reuse its handling of `shuffle` and
+            # `random_state`, then store the sentinel value.
+            super().__init__(2, shuffle=False, random_state=None)
+            self.n_splits = n_splits
+            self._check_walk_forward_params(
+                max_train_size=max_train_size,
+                test_size=test_size,
+                gap=gap,
+                step=step,
+                min_train_size=min_train_size,
+            )
+        else:
+            super().__init__(n_splits, shuffle=False, random_state=None)
+            if step is not None:
+                raise ValueError(
+                    "`step` can only be used when n_splits='walk_forward'."
+                )
+            if min_train_size is not None:
+                raise ValueError(
+                    "`min_train_size` can only be used when n_splits='walk_forward'."
+                )
+
         self.max_train_size = max_train_size
         self.test_size = test_size
         self.gap = gap
+        self.step = step
+        self.min_train_size = min_train_size
+
+    @staticmethod
+    def _check_walk_forward_params(
+        *, max_train_size, test_size, gap, step, min_train_size
+    ):
+        """Validate the parameters that drive the walk-forward mode."""
+        if test_size is None:
+            raise ValueError(
+                "`test_size` must be provided when n_splits='walk_forward'."
+            )
+        if max_train_size is None and min_train_size is None:
+            raise ValueError(
+                "`min_train_size` must be provided when n_splits='walk_forward' "
+                "and max_train_size=None."
+            )
+        if max_train_size is not None and min_train_size is not None:
+            raise ValueError(
+                "Only one of `max_train_size` and `min_train_size` can be "
+                "provided when n_splits='walk_forward'."
+            )
+        for name, value in (
+            ("test_size", test_size),
+            ("step", step),
+            ("min_train_size", min_train_size),
+            ("max_train_size", max_train_size),
+        ):
+            if value is None:
+                continue
+            if not isinstance(value, numbers.Integral):
+                raise ValueError(
+                    f"`{name}` must be of Integral type when "
+                    f"n_splits='walk_forward'. {value!r} of type {type(value)} "
+                    "was passed."
+                )
+            if value <= 0:
+                raise ValueError(
+                    f"`{name}` must be > 0 when n_splits='walk_forward'. "
+                    f"Got {name}={value}."
+                )
+        if not isinstance(gap, numbers.Integral) or gap < 0:
+            raise ValueError(
+                "`gap` must be a non-negative integer when "
+                f"n_splits='walk_forward'. Got gap={gap!r}."
+            )
+
+    def _walk_forward_test_starts(self, n_samples):
+        """Start index of each test window in walk-forward mode.
+
+        Returns a ``range`` so that `split` and `get_n_splits` derive the
+        splits from the same arithmetic. Raises a ValueError when `n_samples`
+        is too small for a single split.
+        """
+        if self.max_train_size is None:
+            train_size = self.min_train_size
+        else:
+            train_size = self.max_train_size
+        test_size = self.test_size
+        step = test_size if self.step is None else self.step
+
+        min_required = train_size + self.gap + test_size
+        if n_samples < min_required:
+            raise ValueError(
+                "Not enough samples for a single walk-forward split: "
+                f"n_samples={n_samples}, but at least "
+                f"train_size + gap + test_size = {min_required} are required."
+            )
+        return range(train_size + self.gap, n_samples - test_size + 1, step)
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -1270,6 +1432,22 @@ class TimeSeriesSplit(_BaseKFold):
         """
         (X,) = indexable(X)
         n_samples = _num_samples(X)
+
+        if self.n_splits == "walk_forward":
+            indices = np.arange(n_samples)
+            test_size = self.test_size
+            for test_start in self._walk_forward_test_starts(n_samples):
+                train_end = test_start - self.gap
+                if self.max_train_size is None:
+                    train_start = 0
+                else:
+                    train_start = train_end - self.max_train_size
+                yield (
+                    indices[train_start:train_end],
+                    indices[test_start : test_start + test_size],
+                )
+            return
+
         n_splits = self.n_splits
         n_folds = n_splits + 1
         gap = self.gap
@@ -1304,6 +1482,35 @@ class TimeSeriesSplit(_BaseKFold):
                     indices[:train_end],
                     indices[test_start : test_start + test_size],
                 )
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        """Returns the number of splitting iterations in the cross-validator.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features), default=None
+            Input data. Ignored when `n_splits` is an integer. Required when
+            ``n_splits="walk_forward"``, because the number of splits then
+            depends on `n_samples`.
+
+        y : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
+
+        groups : array-like of shape (n_samples,), default=None
+            Always ignored, exists for API compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
+        """
+        if self.n_splits != "walk_forward":
+            return self.n_splits
+
+        if X is None:
+            raise ValueError("The 'X' parameter should not be None.")
+        (X,) = indexable(X)
+        return len(self._walk_forward_test_starts(_num_samples(X)))
 
 
 class LeaveOneGroupOut(GroupsConsumerMixin, BaseCrossValidator):
