@@ -1,0 +1,2 @@
+- The `"gini"` criterion is now ~15% faster.
+  By :user:`Itamar Turner-Trauring <itamarst>`.
