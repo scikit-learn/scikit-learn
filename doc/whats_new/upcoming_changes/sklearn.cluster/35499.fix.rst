@@ -1,0 +1,4 @@
+- Fix :class:`cluster.HDBSCAN` raising a `TypeError` with NumPy >= 2.4 whenever
+  `cluster_selection_epsilon` was large enough to merge clusters, which made the
+  parameter unusable.
+  By :user:`Prashik Humane <prashik24>`.

@@ -614,3 +614,24 @@ def test_hdbscan_cosine_metric_invalid_algorithm(invalid_algo):
     hdbscan = HDBSCAN(metric="cosine", algorithm=invalid_algo)
     with pytest.raises(ValueError, match="cosine is not a valid metric"):
         hdbscan.fit_predict(X)
+
+
+@pytest.mark.parametrize("method", ["eom", "leaf"])
+@pytest.mark.parametrize("allow_single_cluster", [False, True])
+def test_hdbscan_cluster_selection_epsilon_large(method, allow_single_cluster):
+    """Check that HDBSCAN works when cluster_selection_epsilon is large enough
+    to merge clusters.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/35473
+    """
+    X = np.array([[0.0], [0.01], [1.0], [1.01]])
+    model = HDBSCAN(
+        min_cluster_size=2,
+        cluster_selection_epsilon=2.0,
+        cluster_selection_method=method,
+        allow_single_cluster=allow_single_cluster,
+    )
+    labels = model.fit_predict(X)
+    expected = [0, 0, 0, 0] if allow_single_cluster else [0, 0, 1, 1]
+    assert_array_equal(labels, expected)
