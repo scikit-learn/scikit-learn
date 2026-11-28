@@ -12,6 +12,10 @@ X_BINNED_DTYPE = np.uint8  # hence max_bins == 256
 # dtype for gradients and hessians arrays
 G_H_DTYPE = np.float32
 X_BITSET_INNER_DTYPE = np.uint32
+# Number of X_BITSET_INNER_DTYPE words in a category bitset: one bit per
+# possible binned value (X_BINNED_DTYPE is uint8, hence 256 of them), 32 bits
+# per word. Mirrors BITSET_LENGTH in sklearn/utils/_bitset.pxd.
+X_BITSET_LENGTH = 8
 
 # Note that we use Y_DTYPE=float64 to avoid issues with floating point precision when
 # summing gradients and hessians (both float32). Those are difficult to protect via

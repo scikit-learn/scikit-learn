@@ -4,6 +4,7 @@
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
 from libc.math cimport INFINITY
+from libc.stdlib cimport calloc
 from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.string cimport memset
@@ -909,6 +910,39 @@ cdef class Tree:
         memcpy(self.value, cnp.PyArray_DATA(value_ndarray),
                self.capacity * self.value_stride * sizeof(float64_t))
 
+    def check_state(self):
+        """Check that the node array is consistent and safe to traverse.
+
+        The traversals in `apply`, `decision_path` and
+        `compute_feature_importances` read `left_child`, `right_child` and
+        `feature` without bounds checking. This raises a `ValueError` if a
+        corrupted node array (for instance loaded from a damaged persisted
+        model) would make them access memory out of bounds or loop forever.
+        See `_check_node_ndarray_values` for the exact invariants.
+        """
+        cdef:
+            intp_t depth = 0
+            int status
+
+        # Only the first `node_count` nodes are checked below, whereas the
+        # traversals start at the first node whatever `node_count` is and the
+        # loops over all nodes run up to `node_count`. It therefore has to
+        # cover the root and stay within the allocated nodes.
+        if not 0 < self.node_count <= self.capacity:
+            raise ValueError(
+                f"node array has an inconsistent node_count: it must be "
+                f"positive and at most the number of allocated nodes "
+                f"({self.capacity}), got {self.node_count}"
+            )
+
+        # The nodes are read in place: wrapping them in an array is only needed
+        # for the error message.
+        status = _scan_nodes(self.nodes, self.node_count, self.n_features, &depth)
+        if status != _NODES_VALID or self.max_depth < depth:
+            _raise_invalid_nodes(
+                status, self._get_node_ndarray(), self.n_features, self.max_depth, depth
+            )
+
     cdef int _resize(self, intp_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
@@ -1659,6 +1693,148 @@ def _check_node_ndarray(node_ndarray, expected_dtype):
         )
 
     return node_ndarray.astype(expected_dtype, casting="same_kind")
+
+
+def _check_node_ndarray_values(node_ndarray, n_features, max_depth):
+    """Validate the values of a node array.
+
+    `_check_node_ndarray` only validates the structure of the array; this
+    function validates the node values so that a corrupted node array cannot
+    make the cython traversals access memory out of bounds or loop forever
+    (see `Tree.check_state`).
+
+    The traversals treat a node as a leaf iff `left_child == TREE_LEAF`, and
+    only dereference `left_child` / `right_child` (as node ids) and `feature`
+    (as a column index into `X` and into the feature importances) for the
+    remaining, internal nodes. We therefore only check those fields on
+    internal nodes, and require each child to be strictly greater than the
+    node's own index: this keeps children in `[0, n_nodes)` and, matching the
+    `children_left[i] > i` invariant documented on `Tree`, rules out cycles
+    that would make the traversal loop forever. Requiring on top of that that
+    a node is the child of at most one node makes the array a tree rather
+    than a DAG, which bounds the number of paths the traversals that visit
+    both children have to walk.
+
+    `max_depth` is not a node value, but it sizes a buffer that
+    `decision_path` writes node ids into, so it is checked against the node
+    array here as well: `decision_path` sizes its `indices` buffer as
+    `n_samples * (1 + max_depth)` and writes one entry per node it walks
+    through, without bounds checking.
+    """
+    cdef:
+        # `_scan_nodes` reads the buffer as `Node` structs
+        cnp.ndarray nodes = _check_node_ndarray(
+            node_ndarray, expected_dtype=NODE_DTYPE
+        )
+        intp_t depth = 0
+        int status = _scan_nodes(
+            <const Node*> cnp.PyArray_DATA(nodes), nodes.shape[0], n_features, &depth
+        )
+
+    if status != _NODES_VALID or max_depth < depth:
+        _raise_invalid_nodes(status, nodes, n_features, max_depth, depth)
+
+
+cdef enum:
+    _NODES_VALID = 0
+    _NODES_LEFT_CHILD = 1
+    _NODES_RIGHT_CHILD = 2
+    _NODES_FEATURE = 3
+    _NODES_SHARED_CHILD = 4
+    _NODES_NO_MEMORY = 5
+
+
+cdef int _scan_nodes(
+    const Node* nodes, intp_t n_nodes, intp_t n_features, intp_t* depth
+) noexcept nogil:
+    """Check the node values in a single pass over the nodes.
+
+    Returns `_NODES_VALID`, or the code of the first invariant of
+    `_check_node_ndarray_values` an internal node violates. `depth` is set to
+    the depth of the node array, which is only meaningful for a valid one.
+    """
+    cdef:
+        intp_t* node_depth
+        intp_t i, left, right
+        int status = _NODES_VALID
+
+    depth[0] = 0
+    if n_nodes == 0:
+        return _NODES_VALID
+
+    # Children are strictly greater than their parent, so every node comes
+    # after its parent and has its final depth when the loop reaches it. Only
+    # the first node of a valid array has no parent, hence a non-zero depth
+    # also tells that a node already is the child of a node.
+    node_depth = <intp_t*> calloc(n_nodes, sizeof(intp_t))
+    if node_depth == NULL:
+        return _NODES_NO_MEMORY
+
+    for i in range(n_nodes):
+        if node_depth[i] > depth[0]:
+            depth[0] = node_depth[i]
+
+        # A node is internal iff its `left_child` is not the `TREE_LEAF`
+        # sentinel; only internal nodes have the fields below dereferenced.
+        left = nodes[i].left_child
+        if left == _TREE_LEAF:
+            continue
+        right = nodes[i].right_child
+
+        # Each child must be a node id strictly greater than the own index.
+        if left <= i or left >= n_nodes:
+            status = _NODES_LEFT_CHILD
+        elif right <= i or right >= n_nodes:
+            status = _NODES_RIGHT_CHILD
+        # `feature` is dereferenced as a column index into `X` and into the
+        # feature importances.
+        elif nodes[i].feature < 0 or nodes[i].feature >= n_features:
+            status = _NODES_FEATURE
+        # `compute_partial_dependence` visits both children of an internal
+        # node and sizes its stacks from the node count, so a node reachable
+        # through several paths makes it do work exponential in the number of
+        # nodes.
+        elif left == right or node_depth[left] != 0 or node_depth[right] != 0:
+            status = _NODES_SHARED_CHILD
+
+        if status != _NODES_VALID:
+            break
+        node_depth[left] = node_depth[i] + 1
+        node_depth[right] = node_depth[i] + 1
+
+    free(node_depth)
+    return status
+
+
+def _raise_invalid_nodes(status, node_ndarray, n_features, max_depth, depth):
+    """Raise the error for what `_scan_nodes` found in `node_ndarray`."""
+    n_nodes = node_ndarray.shape[0]
+    if status == _NODES_NO_MEMORY:
+        raise MemoryError()
+    if status in (_NODES_LEFT_CHILD, _NODES_RIGHT_CHILD):
+        field = "left_child" if status == _NODES_LEFT_CHILD else "right_child"
+        raise ValueError(
+            f"node array has out-of-bounds '{field}' values: every internal "
+            f"node's '{field}' must be a node id greater than the node's own "
+            f"index and less than {n_nodes} (or {TREE_LEAF} for a leaf), got "
+            f"{node_ndarray[field]}"
+        )
+    if status == _NODES_FEATURE:
+        raise ValueError(
+            f"node array has out-of-bounds 'feature' values: every internal "
+            f"node's 'feature' must be in [0, {n_features}), got "
+            f"{node_ndarray['feature']}"
+        )
+    if status == _NODES_SHARED_CHILD:
+        raise ValueError(
+            "node array is inconsistent: expected each node to be the child of "
+            "at most one node, got several nodes sharing a child"
+        )
+    raise ValueError(
+        f"node array is inconsistent: max_depth "
+        f"({max_depth}) is smaller than the depth of the node array "
+        f"({depth})"
+    )
 
 
 # =============================================================================

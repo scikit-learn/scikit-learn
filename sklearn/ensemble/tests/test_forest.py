@@ -44,6 +44,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import GridSearchCV, cross_val_score, train_test_split
 from sklearn.svm import LinearSVC
 from sklearn.tree._classes import SPARSE_SPLITTERS
+from sklearn.utils import validate_model
 from sklearn.utils._testing import (
     _convert_container,
     assert_allclose,
@@ -2122,3 +2123,21 @@ def test_warm_start_with_categorical_features_raises(name):
     est.set_params(warm_start=False)
     est.fit(X, y)
     assert len(est.estimators_) == 4
+
+
+def test_validate_model_rejects_n_features_in_mismatch():
+    """``validate_model`` raises when a tree disagrees with the forest on features.
+
+    ``X`` is checked against the forest's ``n_features_in_`` at prediction
+    time, so every tree must expect that many features.
+    """
+    X, y = make_classification(n_samples=50, n_features=4, random_state=0)
+    forest = RandomForestClassifier(n_estimators=3, random_state=0).fit(X, y)
+    validate_model(forest)
+    validate_model(pickle.loads(pickle.dumps(forest)))
+
+    forest.estimators_[1].n_features_in_ = 10
+    with pytest.raises(ValueError, match="one of its estimators expects 10"):
+        forest.__sklearn_validate_model__()
+    with pytest.raises(ValueError, match="features"):
+        validate_model(forest)
