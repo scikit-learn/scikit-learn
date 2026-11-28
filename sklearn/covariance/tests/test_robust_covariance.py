@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import itertools
+import warnings
 
 import numpy as np
 import pytest
@@ -118,7 +119,8 @@ def test_mcd_issue3367(global_random_seed):
     # Do note that there is floating point error associated with this, so it's
     # best to subtract the two and then compare some small tolerance (e.g.
     # 1e-12).
-    MinCovDet(random_state=rand_gen).fit(data)
+    with pytest.warns(UserWarning, match="The covariance matrix.*is not full rank"):
+        MinCovDet(random_state=rand_gen).fit(data)
 
 
 def test_mcd_support_covariance_is_zero():
@@ -169,6 +171,19 @@ def test_mcd_increasing_det_warning(global_random_seed):
     warn_msg = "Determinant has increased"
     with pytest.warns(RuntimeWarning, match=warn_msg):
         mcd.fit(X)
+
+
+def test_mcd_no_increasing_det_warning_singular_covariance(global_random_seed):
+    # Check that no warning about increasing determinants is raised when the
+    # support does not change in the c_step. With n_samples == n_features, the
+    # support always contains all samples and its covariance matrix is singular.
+    # The determinants are then pure numerical noise.
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randn(20, 20)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        MinCovDet(random_state=global_random_seed).fit(X)
 
 
 @pytest.mark.parametrize("n_samples,n_features", [(2000, 10)])
