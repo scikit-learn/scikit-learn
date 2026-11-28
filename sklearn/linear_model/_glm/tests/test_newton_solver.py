@@ -10,7 +10,6 @@ import pytest
 from scipy import sparse
 
 from sklearn._loss import HalfMultinomialLoss, HalfPoissonLoss, HalfSquaredError
-from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model._cd_fast import (
@@ -424,16 +423,13 @@ def test_cd_multinomial_screening(sparse_X, fit_intercept):
     We start close to the solution, but with a non-zero value for a coefficient that
     is zero at the solution. This coefficient gets screened right at the start.
     """
-    n_samples, n_features, n_classes = 50, 6, 3
-    alpha, l1_ratio = 5, 0.9
-    X, y = make_classification(
-        n_samples=n_samples,
-        n_features=n_features,
-        n_informative=3,
-        n_classes=n_classes,
-        random_state=0,
-    )
-    X = np.asfortranarray(X)
+    n_samples, n_features, n_classes = 10, 3, 4
+    alpha, l1_ratio = 0.5, 0.9
+    y = np.arange(n_samples) % n_classes
+    X = np.zeros((n_samples, n_features), order="F")
+    X[:, 0] = np.arange(n_samples) / n_samples
+    X[:, 1] = np.arange(n_samples) % 3
+    X[:, 2] = np.arange(n_samples) % 2
     clf = LogisticRegression(
         solver="newton-cd-gram",
         alpha=alpha,
@@ -441,7 +437,8 @@ def test_cd_multinomial_screening(sparse_X, fit_intercept):
         fit_intercept=fit_intercept,
         tol=1e-10,
     ).fit(X, y)
-    k, j = np.argwhere(clf.coef_ == 0)[0]
+    k, j = 0, 0
+    assert clf.coef_[k, j] == 0
     W = np.c_[clf.coef_, clf.intercept_] if fit_intercept else clf.coef_
     W = np.asfortranarray(W)
     W[k, j] = 1e-4
