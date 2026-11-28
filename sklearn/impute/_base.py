@@ -17,12 +17,15 @@ from sklearn.utils._mask import _get_mask
 from sklearn.utils._missing import is_pandas_na, is_scalar_nan
 from sklearn.utils._param_validation import MissingValues, StrOptions
 from sklearn.utils._sparse import _align_api_if_sparse
+from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.fixes import SCIPY_VERSION_BELOW_1_12
 from sklearn.utils.sparsefuncs import _get_median
+from sklearn.utils.stats import _weighted_percentile
 from sklearn.utils.validation import (
     FLOAT_DTYPES,
     _check_feature_names_in,
     _check_n_features,
+    _check_sample_weight,
     check_is_fitted,
     validate_data,
 )
@@ -54,16 +57,23 @@ def _safe_min(items):
         raise  # pragma: no cover
 
 
-def _most_frequent(array, extra_value, n_repeat):
+def _most_frequent(array, extra_value, n_repeat, sample_weight=None):
     """Compute the most frequent value in a 1d array extended with
     [extra_value] * n_repeat, where extra_value is assumed to be not part
     of the array."""
+    if sample_weight is not None and n_repeat != 0:
+        raise ValueError("n_repeat cannot be used with sample_weight")
     # Compute the most frequent value in array only
     if array.size > 0:
         if array.dtype == object:
             # scipy.stats.mode is slow with object dtype array.
             # Python Counter is more efficient
-            counter = Counter(array)
+            if sample_weight is not None:
+                counter = Counter()
+                for x, c in zip(array, sample_weight):
+                    counter[x] += c
+            else:
+                counter = Counter(array)
             most_frequent_count = counter.most_common(1)[0][1]
             # tie breaking similarly to scipy.stats.mode
             most_frequent_value = _safe_min(
@@ -74,7 +84,15 @@ def _most_frequent(array, extra_value, n_repeat):
                 ]
             )
         else:
-            most_frequent_value, most_frequent_count = stats.mode(array)
+            if sample_weight is not None:
+                most_frequent_value, most_frequent_count = weighted_mode(
+                    array, sample_weight
+                )
+                # keep same shape and dtype as stats.mode
+                most_frequent_value = most_frequent_value[0].astype(array.dtype)
+                most_frequent_count = most_frequent_count[0]
+            else:
+                most_frequent_value, most_frequent_count = stats.mode(array)
     else:
         most_frequent_value = 0
         most_frequent_count = 0
@@ -418,7 +436,7 @@ class SimpleImputer(_BaseImputer):
         return X
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit the imputer on `X`.
 
         Parameters
@@ -430,12 +448,26 @@ class SimpleImputer(_BaseImputer):
         y : Ignored
             Not used, present here for API consistency by convention.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Per-sample weights used to compute descriptive statistics
+            used to fill missing values.  If not provided, then each
+            sample is given unit weight.  Ignored for the "constant"
+            strategy.
+
         Returns
         -------
         self : object
             Fitted estimator.
         """
         X = self._validate_input(X, in_fit=True)
+
+        if sample_weight is not None:
+            if self.strategy not in {"mean", "median", "most_frequent", "constant"}:
+                raise ValueError(
+                    "sample_weight can only be used with mean, median,"
+                    " most_frequent, and constant strategies"
+                )
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         # default fill_value is 0 for numerical input and "missing_value"
         # otherwise
@@ -450,12 +482,17 @@ class SimpleImputer(_BaseImputer):
         self._fill_dtype = X.dtype
 
         if sp.issparse(X):
-            self.statistics_ = self._sparse_fit(
-                X, self.strategy, self.missing_values, fill_value
-            )
+            if sample_weight is None:
+                self.statistics_ = self._sparse_fit(
+                    X, self.strategy, self.missing_values, fill_value
+                )
+            else:
+                self.statistics_ = self._sparse_weighted_fit(
+                    X, self.strategy, self.missing_values, fill_value, sample_weight
+                )
         else:
             self.statistics_ = self._dense_fit(
-                X, self.strategy, self.missing_values, fill_value
+                X, self.strategy, self.missing_values, fill_value, sample_weight
             )
 
         return self
@@ -516,16 +553,57 @@ class SimpleImputer(_BaseImputer):
 
         return statistics
 
-    def _dense_fit(self, X, strategy, missing_values, fill_value):
+    def _sparse_weighted_fit(
+        self, X, strategy, missing_values, fill_value, sample_weight
+    ):
+        if strategy == "constant":
+            # constant strategy is not affected by weights
+            return self._sparse_fit(X, strategy, missing_values, fill_value)
+
+        statistics = np.empty(X.shape[1])
+
+        # Do a dense fit on each column separately.  Delegate each
+        # column to dense fit: sample_weight is dense and its values
+        # over all records need to be taken into account negating
+        # benefits of a sparse fit.
+        for i in range(X.shape[1]):
+            Xi_dense = X[:, [i]].toarray()
+            statistics[i] = self._dense_fit(
+                Xi_dense,
+                strategy,
+                missing_values,
+                fill_value,
+                sample_weight,
+                fit_indicator=False,
+            ).item()
+        if self.add_indicator:
+            missing_mask = _get_mask(X, missing_values)
+            super()._fit_indicator(missing_mask)
+
+        return statistics
+
+    def _dense_fit(
+        self,
+        X,
+        strategy,
+        missing_values,
+        fill_value,
+        sample_weight=None,
+        fit_indicator=True,
+    ):
         """Fit the transformer on dense data."""
         missing_mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=missing_mask)
 
-        super()._fit_indicator(missing_mask)
+        if fit_indicator:
+            super()._fit_indicator(missing_mask)
 
         # Mean
         if strategy == "mean":
-            mean_masked = np.ma.mean(masked_X, axis=0)
+            if sample_weight is not None:
+                mean_masked = np.ma.average(masked_X, axis=0, weights=sample_weight)
+            else:
+                mean_masked = np.ma.mean(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             mean = np.ma.getdata(mean_masked)
             mean[np.ma.getmask(mean_masked)] = 0 if self.keep_empty_features else np.nan
@@ -534,7 +612,17 @@ class SimpleImputer(_BaseImputer):
 
         # Median
         elif strategy == "median":
-            median_masked = np.ma.median(masked_X, axis=0)
+            if sample_weight is not None:
+                # only float arrays can be filled with nans
+                if not masked_X.dtype.kind == "f":
+                    masked_X = masked_X.astype(float)
+                # use average=True for agreement with unweighted version
+                weighted_median = _weighted_percentile(
+                    masked_X.filled(np.nan), sample_weight, average=True
+                )
+                median_masked = np.ma.masked_invalid(weighted_median)
+            else:
+                median_masked = np.ma.median(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)
             median[np.ma.getmaskarray(median_masked)] = (
@@ -561,10 +649,14 @@ class SimpleImputer(_BaseImputer):
             for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
                 row_mask = np.logical_not(row_mask).astype(bool)
                 row = row[row_mask]
+                if sample_weight is not None:
+                    sw = sample_weight[row_mask.flat]
+                else:
+                    sw = sample_weight
                 if len(row) == 0 and self.keep_empty_features:
                     most_frequent[i] = 0
                 else:
-                    most_frequent[i] = _most_frequent(row, np.nan, 0)
+                    most_frequent[i] = _most_frequent(row, np.nan, 0, sw)
 
             return most_frequent
 

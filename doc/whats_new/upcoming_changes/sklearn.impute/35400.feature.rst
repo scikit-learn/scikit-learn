@@ -1,0 +1,2 @@
+- :class:`impute.SimpleImputer` now supports ``sample_weight`` argument.
+  By :user:`Szymon Jaroszewicz <jszymon>`.
