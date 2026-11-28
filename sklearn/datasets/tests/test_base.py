@@ -312,12 +312,12 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
 @pytest.mark.parametrize(
     "loader_func, data_dtype, target_dtype",
     [
-        (load_breast_cancer, np.float64, int),
+        (load_breast_cancer, np.float64, "category"),
         (load_diabetes, np.float64, np.float64),
-        (load_digits, np.float64, int),
-        (load_iris, np.float64, int),
+        (load_digits, np.float64, "category"),
+        (load_iris, np.float64, "category"),
         (load_linnerud, np.float64, np.float64),
-        (load_wine, np.float64, int),
+        (load_wine, np.float64, "category"),
     ],
 )
 def test_toy_dataset_frame_dtype(loader_func, data_dtype, target_dtype):
