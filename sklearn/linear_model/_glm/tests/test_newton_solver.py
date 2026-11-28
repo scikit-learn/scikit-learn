@@ -10,7 +10,9 @@ import pytest
 from scipy import sparse
 
 from sklearn._loss import HalfMultinomialLoss, HalfPoissonLoss, HalfSquaredError
+from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model._cd_fast import (
     enet_coordinate_descent_gram,
     enet_coordinate_descent_multinomial,
@@ -258,8 +260,8 @@ def test_newton_solver_line_search_failure_restores_state(coef_newton):
 )
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("sparse_X", [False, True])
-@pytest.mark.parametrize("alpha", [0, 1])
-@pytest.mark.parametrize("max_iter", [1, 5])
+@pytest.mark.parametrize("alpha", [0, 0.1, 1])
+@pytest.mark.parametrize("max_iter", [1, 5, 20])
 def test_cd_multinomial(sparse_X, alpha, max_iter):
     """Test that enet_coordinate_descent_multinomial is equivalent to
     enet_coordinate_descent_gram."""
@@ -412,3 +414,62 @@ def test_cd_multinomial(sparse_X, alpha, max_iter):
     )
     assert_allclose(w_cd[:, :-1], w_gram.reshape(n_classes, -1, order="F"))
     assert gap_cd == pytest.approx(gap_gram, abs=5e-9)
+
+
+@pytest.mark.parametrize("sparse_X", [False, True])
+@pytest.mark.parametrize("fit_intercept", [False, True])
+def test_cd_multinomial_screening(sparse_X, fit_intercept):
+    """Test that screening does not change enet_coordinate_descent_multinomial.
+
+    We start close to the solution, but with a non-zero value for a coefficient that
+    is zero at the solution. This coefficient gets screened right at the start.
+    """
+    n_samples, n_features, n_classes = 50, 6, 3
+    alpha, l1_ratio = 5, 0.9
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=3,
+        n_classes=n_classes,
+        random_state=0,
+    )
+    X = np.asfortranarray(X)
+    clf = LogisticRegression(
+        solver="newton-cd-gram",
+        alpha=alpha,
+        l1_ratio=l1_ratio,
+        fit_intercept=fit_intercept,
+        tol=1e-10,
+    ).fit(X, y)
+    k, j = np.argwhere(clf.coef_ == 0)[0]
+    W = np.c_[clf.coef_, clf.intercept_] if fit_intercept else clf.coef_
+    W = np.asfortranarray(W)
+    W[k, j] = 1e-4
+    raw = X @ W[:, :n_features].T
+    if fit_intercept:
+        raw += W[:, -1]
+    raw = np.asfortranarray(raw)
+    grad_pointwise, proba = HalfMultinomialLoss(n_classes=n_classes).gradient_proba(
+        y_true=y.astype(np.float64), raw_prediction=raw
+    )
+    grad_pointwise /= n_samples
+
+    w = {}
+    for do_screening in [False, True]:
+        w[do_screening], _, _, _ = enet_coordinate_descent_multinomial(
+            W=W.copy(order="F"),
+            alpha=l1_ratio * alpha / n_samples,
+            beta=(1 - l1_ratio) * alpha / n_samples,
+            X=sparse.csc_array(X) if sparse_X else X,
+            sample_weight=None,
+            raw_prediction=raw,
+            grad_pointwise=grad_pointwise.copy(),
+            proba=np.asfortranarray(proba),
+            fit_intercept=fit_intercept,
+            max_iter=100,
+            tol=1e-12,
+            do_screening=do_screening,
+            early_stopping=False,
+        )
+    assert w[True][k, j] == 0
+    assert_allclose(w[True], w[False], atol=1e-12)
