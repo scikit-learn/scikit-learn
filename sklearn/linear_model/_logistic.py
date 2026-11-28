@@ -47,10 +47,10 @@ from sklearn.utils import (
 from sklearn.utils._array_api import (
     _is_numpy_namespace,
     _matching_numpy_dtype,
+    _move_state,
     _ravel,
     _swapaxes,
     _unravel_index,
-    check_same_namespace,
     get_namespace,
     get_namespace_and_device,
     move_to,
@@ -1683,9 +1683,12 @@ class LogisticRegression(
         else:
             warm_start_coef = None
         if warm_start_coef is not None:
-            warm_start_coef = move_to(warm_start_coef, xp=np, device="cpu")
+            # `_logistic_regression_path` takes the initial coefficients as NumPy and
+            # moves them where its solver needs them, keep their dtype.
+            warm_start_coef, intercept_np = _move_state(
+                warm_start_coef, self.intercept_, xp=np, device="cpu"
+            )
             if self.fit_intercept:
-                intercept_np = move_to(self.intercept_, xp=np, device="cpu")
                 warm_start_coef = np.concatenate(
                     [warm_start_coef, intercept_np[:, None]], axis=1
                 )
@@ -1767,7 +1770,6 @@ class LogisticRegression(
             where classes are ordered as they are in ``self.classes_``.
         """
         check_is_fitted(self)
-        check_same_namespace(X, self, attribute="coef_", method="predict_proba")
 
         is_binary = size(self.classes_) <= 2
         if is_binary:
@@ -1795,7 +1797,6 @@ class LogisticRegression(
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
-        check_same_namespace(X, self, attribute="coef_", method="predict_log_proba")
         xp, _ = get_namespace(X)
         return xp.log(self.predict_proba(X))
 

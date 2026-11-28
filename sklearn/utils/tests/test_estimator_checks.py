@@ -53,6 +53,8 @@ from sklearn.utils._testing import (
     raises,
 )
 from sklearn.utils.estimator_checks import (
+    _check_pickle_without_array_libraries,
+    _non_numpy_array_paths,
     _NotAnArray,
     _yield_all_checks,
     check_array_api_input,
@@ -603,6 +605,78 @@ def test_check_array_api_input():
             X_ns_and_device=X_ns_and_device,
             check_values=True,
         )
+
+
+class _Helper:
+    def __init__(self, value):
+        self.value = value
+
+
+class _NestedEstimator(BaseEstimator):
+    def fit(self, X, y=None):
+        self.X_ = X
+        return self
+
+
+class NestedArraysEstimator(BaseEstimator):
+    def __init__(self, init=None):
+        self.init = init
+
+    def fit(self, X, y=None):
+        self.coef_ = np.asarray([1.0])
+        self.helpers_ = [_Helper({"a": X})]
+        self.nested_ = _NestedEstimator().fit(X)
+        self.cycle_ = self
+        return self
+
+
+def test_check_pickle_without_array_libraries():
+    """References to the array library used to fit are found, arrays or not."""
+    try:
+        xp = importlib.import_module("array_api_strict")
+    except ModuleNotFoundError:  # pragma: nocover
+        raise SkipTest("array-api-strict is required to run this test")
+
+    X = xp.asarray([[1.0, 2.0]])
+    est = NestedArraysEstimator().fit(np.asarray([[1.0, 2.0]]))
+    _check_pickle_without_array_libraries(est, X)
+
+    est.helpers_ = [_Helper({"a": X})]
+    # The message points at the attribute that holds the array.
+    with raises(AssertionError, match=r"references array_api_strict.*helpers_\[0\]"):
+        _check_pickle_without_array_libraries(est, X)
+
+    # Not an array: the recursive array walk does not see a device object.
+    est = NestedArraysEstimator().fit(np.asarray([[1.0, 2.0]]))
+    est._device = X.device
+    assert _non_numpy_array_paths(est, "est") == []
+    with raises(AssertionError, match="references array_api_strict"):
+        _check_pickle_without_array_libraries(est, X)
+
+    # A module cannot be pickled at all.
+    est = NestedArraysEstimator().fit(np.asarray([[1.0, 2.0]]))
+    est._xp = xp
+    with raises(AssertionError, match="cannot pickle 'module' object"):
+        _check_pickle_without_array_libraries(est, X)
+
+
+def test_non_numpy_array_paths():
+    """Arrays are found in containers, helper objects and nested estimators."""
+    try:
+        xp = importlib.import_module("array_api_strict")
+    except ModuleNotFoundError:  # pragma: nocover
+        raise SkipTest("array-api-strict is required to run this test")
+
+    X = xp.asarray([[1.0, 2.0]])
+    est = NestedArraysEstimator(init=xp.asarray([0.0])).fit(X)
+
+    assert sorted(_non_numpy_array_paths(est, "est")) == [
+        "est.helpers_[0].value['a']",
+        "est.nested_.X_",
+    ]
+
+    est = NestedArraysEstimator().fit(np.asarray([[1.0, 2.0]]))
+    assert _non_numpy_array_paths(est, "est") == []
 
 
 def test_not_an_array_array_function():
@@ -1735,9 +1809,21 @@ def test_estimator_with_set_output():
                     "this check is expected to fail because pandas and polars"
                     " are not compatible with the array api."
                 ),
-                "check_array_api_same_namespace": (
+                "check_array_api_cross_namespace_inference": (
                     "this check is expected to fail because pandas and polars"
                     " are not compatible with the array api."
+                ),
+                "check_array_api_cross_namespace_inference_mixed_dtypes": (
+                    "this check is expected to fail because pandas and polars"
+                    " are not compatible with the array api."
+                ),
+                # TODO: remove once StandardScaler stores its fitted attributes as
+                # NumPy, see https://github.com/betatim/scikit-learn/pull/4
+                "check_array_api_cross_namespace_partial_fit": (
+                    "StandardScaler.partial_fit does not yet store its state as NumPy"
+                ),
+                "check_array_api_cross_namespace_partial_fit_mixed_dtypes": (
+                    "StandardScaler.partial_fit does not yet store its state as NumPy"
                 ),
             },
         )

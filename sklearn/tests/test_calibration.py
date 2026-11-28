@@ -54,8 +54,6 @@ from sklearn.preprocessing import (
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._array_api import (
-    array_device,
-    get_namespace,
     move_to,
     yield_namespace_device_dtype_combinations,
 )
@@ -1531,14 +1529,9 @@ def test_temperature_scaling_array_api_compliance(
 
         calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
         rtol = 2e-3 if dtype_name == "float32" else 1e-7
-        assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
-        assert calibrator_xp.beta_.dtype == X_cal_xp.dtype
-        assert array_device(calibrator_xp.beta_) == array_device(X_cal_xp)
-        assert_allclose(
-            move_to(calibrator_xp.beta_, xp=np, device="cpu"),
-            calibrator_np.beta_,
-            rtol=rtol,
-        )
+        assert isinstance(cal_clf_xp.classes_, np.ndarray)
+        assert isinstance(calibrator_xp.beta_, float)
+        assert_allclose(calibrator_xp.beta_, calibrator_np.beta_, rtol=rtol)
         pred_xp = cal_clf_xp.predict(X_train_xp)
         assert_allclose(move_to(pred_xp, xp=np, device="cpu"), pred_np)
         assert cal_clf_xp.predict_proba(X_train_xp).dtype == X_train_xp.dtype
@@ -1605,13 +1598,8 @@ def test_temperature_scaling_array_api_with_str_y_estimator_not_prefit(
 
         calibrator_xp = cal_clf_xp.calibrated_classifiers_[0].calibrators[0]
         rtol = 2e-3 if dtype_name == "float32" else 1e-7
-        assert get_namespace(calibrator_xp.beta_)[0].__name__ == xp.__name__
-        assert calibrator_xp.beta_.dtype == X_xp.dtype
-        assert array_device(calibrator_xp.beta_) == array_device(X_xp)
-        assert_allclose(
-            move_to(calibrator_xp.beta_, xp=np, device="cpu"),
-            calibrator_np.beta_,
-            rtol=rtol,
-        )
+        assert isinstance(cal_clf_xp.classes_, np.ndarray)
+        assert isinstance(calibrator_xp.beta_, float)
+        assert_allclose(calibrator_xp.beta_, calibrator_np.beta_, rtol=rtol)
         pred_xp = cal_clf_xp.predict(X_xp)
         assert_array_equal(pred_xp, pred_np)

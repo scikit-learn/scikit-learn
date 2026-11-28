@@ -549,6 +549,16 @@ def move_to(*arrays, xp, device):
         Tuple of arrays with the same namespace and device as reference. Single array
         returned if only one `arrays` input.
     """
+    # Short cut for the common case of source and target being Numpy
+    if _is_numpy_namespace(xp) and (device is None or device == "cpu"):
+        if all(isinstance(array, (numpy.ndarray, numpy.generic)) for array in arrays):
+            # NumPy arrays are already where they need to be.
+            # The general path below is lossy for `ndarray` subclasses because
+            # it round trips through dlpack. A masked array would
+            # come back as a plain `ndarray` with its mask silently dropped, which
+            # matters for e.g. `GridSearchCV.cv_results_["param_*"]`.
+            return arrays[0] if len(arrays) == 1 else arrays
+
     if isinstance(device, str) and device == "xpu":  # pragma: nocover
         # XXX: Workaround for PyTorch XPU bug for `from_dlpack` calls with
         # device strings that do not include any device number suffix.
@@ -1018,6 +1028,68 @@ def _convert_to_numpy(array, xp):
     return numpy.asarray(array)
 
 
+def _convert_arrays(obj, converter, recurse_estimators=True):
+    """Apply `converter` to every array reachable from `obj`.
+
+    Containers are recursed into. Estimators are cloned and recursed into via
+    their ``vars()``, so an array nested in e.g. a dict attribute of a
+    sub-estimator is converted too. Anything that is not an array, a container or
+    an estimator is left unchanged.
+
+    Objects defining ``__sklearn_array_api_convert__`` are asked to convert
+    themselves. This is the escape hatch for objects that hold arrays but are
+    neither containers nor estimators.
+
+    Parameters
+    ----------
+    obj : object
+        Estimator, container or array to convert.
+
+    converter : callable
+        Callable that takes an array and returns the converted array.
+
+    recurse_estimators : bool, default=True
+        Whether to descend into nested estimators. Callers that run after every
+        fit pass False, because each nested estimator converts itself when its
+        own fit returns and descending would repeat that work once per
+        sub-estimator.
+
+    Returns
+    -------
+    converted : object
+        `obj` with its arrays converted.
+    """
+    # Inline import to avoid circular import
+    from sklearn.base import clone
+
+    if hasattr(obj, "__sklearn_array_api_convert__") and not inspect.isclass(obj):
+        return obj.__sklearn_array_api_convert__(converter)
+
+    obj_type = type(obj)
+
+    if obj_type is dict:
+        return {
+            k: _convert_arrays(v, converter, recurse_estimators) for k, v in obj.items()
+        }
+
+    if obj_type in (list, tuple, set, frozenset):
+        return obj_type(_convert_arrays(v, converter, recurse_estimators) for v in obj)
+
+    if hasattr(obj, "__dlpack__") or isinstance(obj, (numpy.ndarray, numpy.generic)):
+        return converter(obj)
+
+    if not hasattr(obj, "get_params") or isinstance(obj, type):
+        return obj
+
+    if not recurse_estimators:
+        return obj
+
+    new_obj = clone(obj)
+    for key, attribute in vars(obj).items():
+        setattr(new_obj, key, _convert_arrays(attribute, converter, recurse_estimators))
+    return new_obj
+
+
 def _estimator_with_converted_arrays(estimator, converter):
     """Create a new estimator with converted array attributes.
 
@@ -1036,42 +1108,54 @@ def _estimator_with_converted_arrays(estimator, converter):
     new_estimator : Estimator
         A clone of the estimator with converted array attributes.
     """
-    # Inline import to avoid circular import
-    from sklearn.base import clone
+    return _convert_arrays(estimator, converter)
 
-    # Because we call this function recursively `estimator` might actually be an
-    # attribute of an estimator and not an actual estimator object.
-    estimator_type = type(estimator)
 
-    if hasattr(estimator, "__sklearn_array_api_convert__") and not inspect.isclass(
-        estimator
-    ):
-        return estimator.__sklearn_array_api_convert__(converter)
+# TODO(#34604): delete this, and the check that reads it, once every array API
+# estimator's inference methods have been moved onto `_fitted_attrs_like`. Until
+# then converting unconditionally would break the estimators whose inference
+# still reads fitted attributes straight off `self`.
+_NUMPY_FITTED_ATTRS = frozenset(
+    {"CalibratedClassifierCV", "LogisticRegression", "LogisticRegressionCV"}
+)
 
-    if estimator_type is dict:
-        return {
-            k: _estimator_with_converted_arrays(v, converter)
-            for k, v in estimator.items()
-        }
 
-    if estimator_type in (list, tuple, set, frozenset):
-        return estimator_type(
-            _estimator_with_converted_arrays(v, converter) for v in estimator
-        )
+def _fitted_attrs_as_numpy(estimator):
+    """Convert `estimator`'s fitted arrays to NumPy arrays, in place.
 
-    if hasattr(estimator, "__dlpack__") or isinstance(
-        estimator, (numpy.ndarray, numpy.generic)
-    ):
-        return converter(estimator)
+    Called at the end of every fit method so that the arrays an estimator exposes
+    do not depend on the namespace and device of the data it was fitted on.
+    Inference still happens in the namespace and device of `X`, see
+    `_fitted_attrs_like`.
 
-    if not hasattr(estimator, "get_params") or isinstance(estimator, type):
-        return estimator
+    Nested estimators are left alone: each one converts itself when its own fit
+    returns, so descending into them would re-walk every sub-estimator of an
+    ensemble on top of the walks they already did. Constructor parameters are left
+    alone as well, even when they are arrays.
 
-    new_estimator = clone(estimator)
-    for key, attribute in vars(estimator).items():
-        attribute = _estimator_with_converted_arrays(attribute, converter)
-        setattr(new_estimator, key, attribute)
-    return new_estimator
+    Parameters
+    ----------
+    estimator : estimator object
+        The estimator to convert. Modified in place.
+    """
+    if type(estimator).__name__ not in _NUMPY_FITTED_ATTRS:
+        return
+
+    if not get_config()["array_api_dispatch"]:
+        # Without dispatch every input has already been converted to NumPy by
+        # `check_array`, so there is nothing to do and no reason to pay for a walk.
+        return
+
+    converter = partial(move_to, xp=np_compat, device="cpu")
+    # Fit must not change constructor parameters, which also live in `vars()`.
+    params = estimator.get_params(deep=False)
+    # `vars()` is a live view, so materialise it before assigning back into it.
+    for name, value in list(vars(estimator).items()):
+        if name in params:
+            continue
+        converted = _convert_arrays(value, converter, recurse_estimators=False)
+        if converted is not value:
+            setattr(estimator, name, converted)
 
 
 def move_estimator_to(estimator, xp, device):
@@ -1098,6 +1182,193 @@ def move_estimator_to(estimator, xp, device):
     return _estimator_with_converted_arrays(
         estimator, partial(move_to, xp=xp, device=device)
     )
+
+
+def _move_state(*values, xp, device, dtype=None):
+    """Move arrays to the namespace and device where a computation happens.
+
+    Use this for arrays that a fit method computes with and writes back to the
+    estimator: fitted state read back by `partial_fit` or with `warm_start=True`,
+    array-valued constructor parameters used as initial values, `classes_`
+    combined with `y`. Read fitted attributes for an inference method with
+    `_fitted_attrs_like` instead.
+
+    Unlike `move_to`, this accepts containers (`dict`, `list`, `tuple`, ...) of
+    arrays, which are walked like `_fitted_attrs_as_numpy` walks fitted
+    attributes, and leaves values that are not arrays, such as Python scalars,
+    unchanged.
+
+    Parameters
+    ----------
+    *values : arrays, containers of arrays or other objects
+        The values to move.
+
+    xp : array namespace
+        Array API namespace to move the arrays to.
+
+    device : device
+        Array API device to move the arrays to.
+
+    dtype : dtype, default=None
+        If given, real floating point arrays are also cast to `dtype`. Pass the
+        dtype that the estimator would use for this computation in a fresh fit,
+        for example the floating dtype of `X`. Leave it as None to keep the dtype
+        of the stored state, for example for accumulators that are kept in a
+        higher precision than `X`. Arrays of other dtypes are never cast.
+
+        `dtype` is ignored when `xp` is NumPy, like `_fitted_attrs_like` does not
+        cast for NumPy `X`: NumPy promotes mixed float dtypes, so NumPy inputs
+        keep the behaviour they have without array API dispatch. Cast explicitly
+        where a NumPy computation needs a specific dtype.
+
+    Returns
+    -------
+    moved : object or tuple of objects
+        The moved values, a single one if a single value was passed.
+    """
+    if _is_numpy_namespace(xp):
+        dtype = None
+
+    def convert(array):
+        array = move_to(array, xp=xp, device=device)
+        if (
+            dtype is not None
+            and array.dtype != dtype
+            and xp.isdtype(array.dtype, "real floating")
+        ):
+            array = xp.astype(array, dtype)
+        return array
+
+    moved = tuple(
+        _convert_arrays(value, convert, recurse_estimators=False) for value in values
+    )
+    return moved[0] if len(moved) == 1 else moved
+
+
+class _FittedAttrsLike:
+    """Read-only view of an estimator's fitted attributes in `xp` on `device`.
+
+    Attributes are moved when they are first read and the result is remembered, so
+    a method that uses the same attribute twice only pays for one transfer.
+
+    Read attributes through this view when they take part in a computation, and
+    through the estimator itself when only their metadata is needed
+    (``self.coef_.ndim``, ``self.classes_.shape[0]``), since metadata is the same
+    either way and reading it here would trigger a pointless transfer.
+
+    When `dtype` is given, floating point attributes are also cast to it. Reading
+    `classes_` raises a `TypeError`, because class labels must not be cast; see
+    `_take_classes`.
+    """
+
+    def __init__(self, estimator, xp, device, dtype=None):
+        self._estimator = estimator
+        self._xp = xp
+        self._device = device
+        self._dtype = dtype
+
+    def __getattr__(self, name):
+        if name == "classes_":
+            # Not an `AttributeError`: `hasattr` and `getattr(..., default)` would
+            # swallow it and report the attribute as missing.
+            raise TypeError(
+                "Read `classes_` from the estimator, not from a fitted attribute "
+                "view: the view casts floating point attributes to the dtype of "
+                "`X`, but labels are compared by value. Use `_take_classes` to turn "
+                "predicted indices into labels, and `move_to(self.classes_, ...)` "
+                "to compare `classes_` with labels."
+            )
+        value = _move_state(
+            getattr(self._estimator, name),
+            xp=self._xp,
+            device=self._device,
+            dtype=self._dtype,
+        )
+        # `__getattr__` is only consulted for names that are not already in the
+        # instance dict, so writing to it makes the next access "cached".
+        self.__dict__[name] = value
+        return value
+
+    def __setattr__(self, name, value):
+        if name not in ("_estimator", "_xp", "_device", "_dtype"):
+            raise AttributeError(
+                "Fitted attribute views are read-only, assign to the estimator instead."
+            )
+        object.__setattr__(self, name, value)
+
+
+def _fitted_attrs_like(estimator, X, *, xp=None, device=None):
+    """Return `estimator`'s fitted attributes in the namespace and device of `X`.
+
+    For non-NumPy `X` with a real floating dtype, floating point attributes are
+    also cast to the dtype of `X`.
+
+    Pass `xp` and `device` directly when the caller has already resolved them, to
+    avoid inspecting `X` twice.
+
+    Parameters
+    ----------
+    estimator : estimator object
+        The fitted estimator.
+
+    X : array
+        The validated data the method was called with.
+
+    xp : namespace, default=None
+        Array API namespace to move attributes to. Resolved from `X` when None.
+
+    device : device, default=None
+        Array API device to move attributes to. Resolved from `X` when `xp` is None.
+
+    Returns
+    -------
+    fitted : _FittedAttrsLike
+        Read-only view of the fitted attributes.
+    """
+    if xp is None:
+        xp, _, device = get_namespace_and_device(X)
+    # NumPy promotes mixed float dtypes, so NumPy inputs keep the output dtype they
+    # had before fitted attributes were stored as NumPy, with or without dispatch.
+    # Other namespaces, for example PyTorch, refuse to mix float dtypes in `matmul`.
+    dtype = None
+    if not _is_numpy_namespace(xp) and xp.isdtype(X.dtype, "real floating"):
+        dtype = X.dtype
+    return _FittedAttrsLike(estimator, xp, device, dtype)
+
+
+def _take_classes(classes, indices, *, xp, device):
+    """Return the class labels at `indices`, for use in `predict`.
+
+    Numeric labels are returned in `xp` on `device`, the namespace and device of
+    `indices`. Labels that cannot be represented there, for example strings, are
+    returned as a NumPy array.
+
+    Parameters
+    ----------
+    classes : array of shape (n_classes,)
+        The class labels, usually the fitted `classes_` attribute.
+
+    indices : array of shape (n_samples,)
+        Integer indices into `classes`, in `xp` on `device`.
+
+    xp : namespace
+        Array API namespace of `indices`.
+
+    device : device
+        Array API device of `indices`.
+
+    Returns
+    -------
+    y_pred : array of shape (n_samples,)
+        The labels at `indices`.
+    """
+    if isinstance(classes, numpy.ndarray) and classes.dtype.kind not in "biuf":
+        indices = move_to(indices, xp=np_compat, device="cpu")
+        return classes[indices]
+    # `classes` is small, moving it is cheaper than moving `indices` to the CPU
+    # and the labels back.
+    classes = move_to(classes, xp=xp, device=device)
+    return xp.take(classes, indices, axis=0)
 
 
 def check_same_namespace(X, estimator, *, attribute, method):

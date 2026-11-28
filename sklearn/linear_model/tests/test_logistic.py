@@ -2881,8 +2881,10 @@ def test_logistic_regression_array_api_compliance(
             assert_allclose(
                 move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
             )
-            assert attr_xp.dtype == X_xp.dtype
-            assert array_device(attr_xp) == array_device(X_xp)
+            # Fitted arrays are NumPy whatever the namespace of `X` was. Only
+            # their dtype follows the data the estimator was fitted on.
+            assert isinstance(attr_xp, np.ndarray)
+            assert attr_xp.dtype == attr_np.dtype
 
         predict_proba_xp = lr_xp.predict_proba(X_xp)
         assert_allclose(
@@ -3011,7 +3013,7 @@ def test_logistic_regression_cv_array_api_compliance(
             X_xp, y_xp_or_np, sample_weight=sample_weight
         )
         assert lr_cv_xp.n_iter_.shape == lr_cv_np.n_iter_.shape
-        assert xp.max(lr_cv_xp.n_iter_) < lr_cv_xp.max_iter
+        assert np.max(lr_cv_xp.n_iter_) < lr_cv_xp.max_iter
 
         for attr_name in ("scores_", "coefs_paths_", "coef_", "intercept_"):
             attr_xp = getattr(lr_cv_xp, attr_name)
@@ -3019,8 +3021,10 @@ def test_logistic_regression_cv_array_api_compliance(
             assert_allclose(
                 move_to(attr_xp, xp=np, device="cpu"), attr_np, rtol=rtol, atol=atol
             )
-            assert attr_xp.dtype == X_xp.dtype
-            assert array_device(attr_xp) == array_device(X_xp)
+            # Fitted arrays are NumPy whatever the namespace of `X` was. Only
+            # their dtype follows the data the estimator was fitted on.
+            assert isinstance(attr_xp, np.ndarray)
+            assert attr_xp.dtype == attr_np.dtype
 
         prediction_xp = lr_cv_xp.predict(X_xp)
         if not use_str_y:
@@ -3145,19 +3149,26 @@ def test_Cs_deprecated():
         lr.fit(X, y)
 
 
+@pytest.mark.parametrize("first_fit_on_numpy", [False, True])
 @pytest.mark.parametrize("binary", [True, False])
 @pytest.mark.parametrize(
     "array_namespace, device_name, dtype_name",
     yield_namespace_device_dtype_combinations(),
 )
 def test_logistic_regression_array_api_warm_start(
+    first_fit_on_numpy,
     binary,
     array_namespace,
     device_name,
     dtype_name,
 ):
     """Test that warm_start=True works with array API inputs across
-    multiple fit calls for both binary and multiclass classification."""
+    multiple fit calls for both binary and multiclass classification.
+
+    The fitted attributes are NumPy arrays between the fits, also when the first
+    fit used NumPy data. Refitting on the same data starts from the converged
+    solution, so it needs no iterations and leaves the coefficients unchanged.
+    """
     xp, device = _array_api_for_tests(array_namespace, device_name, dtype_name)
     X_np = iris.data.astype(dtype_name, copy=True)
     if binary:
@@ -3172,9 +3183,21 @@ def test_logistic_regression_array_api_warm_start(
         lr = LogisticRegression(
             alpha=1e-1, solver="lbfgs", max_iter=300, warm_start=True
         )
-        lr.fit(X_xp, y_xp)
+        if first_fit_on_numpy:
+            lr.fit(X_np, y_np)
+        else:
+            lr.fit(X_xp, y_xp)
         lr.predict(X_xp)
+        coef = lr.coef_.copy()
+        intercept = lr.intercept_.copy()
         lr.fit(X_xp, y_xp)
+
+    assert isinstance(lr.coef_, np.ndarray)
+    assert isinstance(lr.intercept_, np.ndarray)
+    assert_array_equal(lr.n_iter_, 0)
+    atol = _atol_for_type(dtype_name)
+    assert_allclose(lr.coef_, coef, atol=atol)
+    assert_allclose(lr.intercept_, intercept, atol=atol)
 
 
 # TODO(callbacks): also test for other solvers when they get supported.

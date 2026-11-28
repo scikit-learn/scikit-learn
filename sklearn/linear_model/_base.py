@@ -26,11 +26,11 @@ from sklearn.utils._array_api import (
     _asarray_with_order,
     _average,
     _expit,
-    check_same_namespace,
+    _fitted_attrs_like,
+    _take_classes,
     get_namespace,
     get_namespace_and_device,
     indexing_dtype,
-    move_to,
     supported_float_dtypes,
 )
 from sklearn.utils._param_validation import Interval
@@ -292,11 +292,12 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         X = validate_data(self, X, accept_sparse=["csr", "csc", "coo"], reset=False)
-        coef_ = self.coef_
+        fitted = _fitted_attrs_like(self, X)
+        coef_ = fitted.coef_
         if coef_.ndim == 1:
-            return X @ coef_ + self.intercept_
+            return X @ coef_ + fitted.intercept_
         else:
-            return X @ coef_.T + self.intercept_
+            return X @ coef_.T + fitted.intercept_
 
     def predict(self, X):
         """
@@ -312,7 +313,6 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         C : ndarray of shape (n_samples,)
             Predicted values.
         """
-        check_same_namespace(X, self, attribute="coef_", method="predict")
         return self._decision_function(X)
 
     def _set_intercept(self, X_offset, y_offset, X_scale=None):
@@ -383,12 +383,13 @@ class LinearClassifierMixin(ClassifierMixin):
             this class would be predicted.
         """
         check_is_fitted(self)
-        xp, _ = get_namespace(X)
-        check_same_namespace(X, self, attribute="coef_", method="decision_function")
+        xp, _, device = get_namespace_and_device(X)
 
         X = validate_data(self, X, accept_sparse="csr", reset=False)
-        coef_T = self.coef_.T if self.coef_.ndim == 2 else self.coef_
-        scores = safe_sparse_dot(X, coef_T, dense_output=True) + self.intercept_
+        fitted = _fitted_attrs_like(self, X, xp=xp, device=device)
+        coef_ = fitted.coef_
+        coef_T = coef_.T if coef_.ndim == 2 else coef_
+        scores = safe_sparse_dot(X, coef_T, dense_output=True) + fitted.intercept_
         return (
             xp.reshape(scores, (-1,))
             if (scores.ndim > 1 and scores.shape[1] == 1)
@@ -409,7 +410,6 @@ class LinearClassifierMixin(ClassifierMixin):
         y_pred : ndarray of shape (n_samples,)
             Vector containing the class labels for each sample.
         """
-        check_same_namespace(X, self, attribute="coef_", method="predict")
         xp, _, device = get_namespace_and_device(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
@@ -417,14 +417,7 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             indices = xp.argmax(scores, axis=1)
 
-        xp_classes, _, device_classes = get_namespace_and_device(self.classes_)
-        indices = move_to(indices, xp=xp_classes, device=device_classes)
-
-        y_pred = xp_classes.take(self.classes_, indices, axis=0)
-        if isinstance(y_pred[0], str):
-            return y_pred
-        else:
-            return move_to(y_pred, xp=xp, device=device)
+        return _take_classes(self.classes_, indices, xp=xp, device=device)
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
