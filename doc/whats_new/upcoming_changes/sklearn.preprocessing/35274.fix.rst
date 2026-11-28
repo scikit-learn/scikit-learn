@@ -1,0 +1,3 @@
+- :class:`preprocessing.QuantileTransformer` now preserves the distribution of
+  implicit zeros when subsampling sparse input data, avoiding an excessive
+  reduction in the number of sampled non-zero values for very sparse features.

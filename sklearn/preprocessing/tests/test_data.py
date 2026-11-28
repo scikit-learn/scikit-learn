@@ -1733,6 +1733,30 @@ def test_quantile_transformer_sparse_subsampling():
     assert np.isclose(quantiles, 0).mean() > 0.9
 
 
+def test_quantile_transformer_sparse_subsampling_with_implicit_zeros():
+    n_samples = 100_000
+    n_nonzero = 10_001
+    n_quantiles = 1_001
+    subsample = 10_000
+    data = np.linspace(1, 2, n_nonzero)
+    X = sparse.csc_array(
+        (data, (np.arange(n_nonzero), np.zeros(n_nonzero, dtype=int))),
+        shape=(n_samples, 1),
+    )
+
+    transformer = QuantileTransformer(
+        n_quantiles=n_quantiles,
+        subsample=subsample,
+        random_state=0,
+    ).fit(X)
+    expected = QuantileTransformer(
+        n_quantiles=n_quantiles,
+        subsample=None,
+    ).fit(X)
+
+    assert_allclose(transformer.quantiles_, expected.quantiles_, atol=0.02)
+
+
 def test_robust_scaler_invalid_range():
     for range_ in [
         (-1, 90),
