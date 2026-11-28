@@ -304,7 +304,6 @@ def _encode(values, *, uniques, return_diff=False):
         else:
             matches = xp.zeros_like(encoded, dtype=xp.bool)
         encoded[~matches] = -1
-
     if return_diff:
         diff = _unique(values[encoded == -1])
         return encoded, diff
