@@ -7,6 +7,7 @@ from scipy import linalg
 from sklearn import manifold, neighbors
 from sklearn.datasets import make_blobs
 from sklearn.manifold._locally_linear import barycenter_kneighbors_graph
+from sklearn.metrics._pairwise_distances_reduction import ArgKmin
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
@@ -169,3 +170,25 @@ def test_get_feature_names_out():
     assert_array_equal(
         [f"locallylinearembedding{i}" for i in range(n_components)], names
     )
+
+
+# Non-regression test for #29798
+def test_transform_equals_fit_transform():
+    # Create a dataset for which t[i] = lle.transform(X)[i] can not be resolved
+    # as the nearest neighbor of e[i] = lle.embedding_[i] because
+    # d(t[i],e[i])> d(t[i],e[j]) with i != j.
+    logspace = np.logspace(0, 1, 9, base=15)
+    x, y = np.meshgrid(logspace, logspace)
+    X = np.vstack([x.ravel(), y.ravel()]).T
+
+    lle = manifold.LocallyLinearEmbedding(n_neighbors=4, reg=1e-3)
+    ft = lle.fit_transform(X)
+    t = lle.transform(X)
+
+    ft = np.ascontiguousarray(ft)  # Required for ArgKmin.
+
+    argkmin_indices = ArgKmin.compute(
+        ft, t, k=1, return_distance=False  # Should not be lle.embedding_
+    )
+    resolution = np.all(argkmin_indices[:, 0] == range(X.shape[0]))
+    assert resolution
