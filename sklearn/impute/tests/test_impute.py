@@ -495,6 +495,23 @@ def test_imputation_constant_object(marker, keep_empty_features):
     assert_array_equal(X_trans, X_true)
 
 
+@pytest.mark.parametrize(
+    "strategy, expected",
+    [
+        ("constant", [["a", "z"], ["a", "z"], ["z", "b"], ["c", "b"]]),
+        ("most_frequent", [["a", "b"], ["a", "b"], ["a", "b"], ["c", "b"]]),
+    ],
+)
+def test_simple_imputer_object_none_treated_as_nan(strategy, expected):
+    """Check that None and np.nan are both treated as missing for object dtype.
+
+    Non-regression test for gh-17625.
+    """
+    X = np.array([["a", np.nan], ["a", None], [None, "b"], ["c", "b"]], dtype=object)
+    X_trans = SimpleImputer(strategy=strategy, fill_value="z").fit_transform(X)
+    assert_array_equal(X_trans, np.array(expected, dtype=object))
+
+
 @pytest.mark.parametrize("dtype", [object, "category"])
 @pytest.mark.parametrize("keep_empty_features", [True, False])
 def test_imputation_constant_pandas(dtype, keep_empty_features):
@@ -1316,6 +1333,16 @@ def test_missing_indicator_with_imputer(X, missing_values, X_trans_exp):
     )
     X_trans = trans.fit_transform(X)
     assert_array_equal(X_trans, X_trans_exp)
+
+
+def test_missing_indicator_object_none_treated_as_nan():
+    """Check that MissingIndicator flags None as missing when missing_values=np.nan.
+
+    Non-regression test for gh-17625.
+    """
+    X = np.array([["a", np.nan], [None, "b"]], dtype=object)
+    mask = MissingIndicator(features="all").fit_transform(X)
+    assert_array_equal(mask, [[False, True], [True, False]])
 
 
 @pytest.mark.parametrize("imputer_constructor", [SimpleImputer, IterativeImputer])
