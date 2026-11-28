@@ -1868,6 +1868,63 @@ def test_regression_sample_weight_invariance(name):
 @pytest.mark.thread_unsafe
 @pytest.mark.parametrize(
     "name",
+    sorted(set(CONTINUOUS_CLASSIFICATION_METRICS) - METRICS_WITHOUT_SAMPLE_WEIGHT),
+)
+def test_continuous_classification_with_invalid_sample_weight(name):
+    # Check that invalid `sample_weight` raises the same errors as for the
+    # other classification metrics.
+    random_state = check_random_state(0)
+    n_samples = 20
+    if name in CONTINUOUS_MULTILABEL_METRICS:
+        _, y_true = make_multilabel_classification(
+            n_features=1,
+            n_classes=3,
+            n_samples=n_samples,
+            allow_unlabeled=False,
+            random_state=0,
+        )
+        y_score = random_state.uniform(size=y_true.shape)
+        y_score /= y_score.sum(axis=1, keepdims=True)
+    else:
+        y_true = np.arange(n_samples) % 3
+        y_score = random_state.uniform(size=(n_samples, 3))
+        y_score /= y_score.sum(axis=1, keepdims=True)
+    metric = ALL_METRICS[name]
+
+    sample_weight = random_state.random_sample(size=(n_samples - 1,))
+    with pytest.raises(ValueError, match="Found input variables with inconsistent"):
+        metric(y_true, y_score, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples,))
+    sample_weight[0] = np.inf
+    with pytest.raises(ValueError, match="Input sample_weight contains infinity"):
+        metric(y_true, y_score, sample_weight=sample_weight)
+
+    sample_weight[0] = np.nan
+    with pytest.raises(ValueError, match="Input sample_weight contains NaN"):
+        metric(y_true, y_score, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples,)) + 1j
+    with pytest.raises(ValueError, match="Complex data not supported"):
+        metric(y_true, y_score, sample_weight=sample_weight)
+
+    sample_weight = random_state.random_sample(size=(n_samples, 2))
+    msg = "Sample weights must be 1D array or scalar|y should be a 1d array"
+    with pytest.raises(ValueError, match=msg):
+        metric(y_true, y_score, sample_weight=sample_weight)
+
+    sample_weight = np.zeros(n_samples)
+    with pytest.raises(
+        ValueError, match="Sample weights must contain at least one non-zero number"
+    ):
+        metric(y_true, y_score, sample_weight=sample_weight)
+
+
+# XXX: ValueError("Complex data not supported") propagates via the warnings
+# machinery which is not thread-safe (at the time of CPython 3.13 at least).
+@pytest.mark.thread_unsafe
+@pytest.mark.parametrize(
+    "name",
     sorted(
         set(ALL_METRICS).intersection(set(REGRESSION_METRICS))
         - METRICS_WITHOUT_SAMPLE_WEIGHT

@@ -1463,6 +1463,10 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     0.416
     """
     check_consistent_length(y_true, y_score, sample_weight)
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_score, force_float_dtype=False
+        )
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
 
@@ -1572,6 +1576,10 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     y_true = check_array(y_true, ensure_2d=True)
     y_score = check_array(y_score, ensure_2d=True)
     check_consistent_length(y_true, y_score, sample_weight)
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_score, force_float_dtype=False
+        )
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type != "multilabel-indicator":
@@ -1648,6 +1656,10 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_score, force_float_dtype=False
+        )
 
     y_type = type_of_target(y_true, input_name="y_true")
     if y_type not in ("multilabel-indicator",):
@@ -1921,6 +1933,10 @@ def dcg_score(
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_score, force_float_dtype=False
+        )
     _check_dcg_target_type(y_true)
     return float(
         np.average(
@@ -2092,6 +2108,10 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_score, force_float_dtype=False
+        )
 
     if y_true.min() < 0:
         raise ValueError("ndcg_score should not be used on negative y_true values.")
@@ -2222,6 +2242,10 @@ def top_k_accuracy_score(
             )
 
     check_consistent_length(y_true, y_score, sample_weight)
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(
+            sample_weight, y_score, force_float_dtype=False
+        )
     y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2
 
     if labels is None:
