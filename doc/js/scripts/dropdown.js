@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     newStateMarker.classList.add(
       "sd-summary-state-marker",
       "sd-summary-chevron-right",
-      "sk-toggle-all"
+      "sk-toggle-all",
     );
 
     // Bootstrap tooltip configurations

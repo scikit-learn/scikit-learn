@@ -41,8 +41,8 @@ repos:
     rev: v1.0.2
     hooks:
     -   id: sphinx-lint
--   repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.7.1
+-   repo: https://github.com/rbubley/mirrors-prettier
+    rev: v3.4.2
     hooks:
     -   id: prettier
         files: ^doc/css/styles/|^doc/js/scripts/

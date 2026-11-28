@@ -33,7 +33,9 @@ dl.py.method:first-of-type {
 }
 
 /* https://github.com/pydata/pydata-sphinx-theme/blob/8cf45f835bfdafc5f3821014a18f3b7e0fc2d44b/src/pydata_sphinx_theme/assets/styles/content/_api.scss */
-dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple) {
+dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(
+    .simple
+  ) {
   margin-bottom: 1.5rem;
 
   dd {
