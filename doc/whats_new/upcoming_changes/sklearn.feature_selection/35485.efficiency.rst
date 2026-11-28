@@ -1,0 +1,6 @@
+- :func:`feature_selection.f_classif` no longer copies `X` class by class: the
+  ANOVA F-statistic is now computed from per-class aggregates in a single pass
+  over `X`, which greatly reduces memory usage on large inputs. This also
+  benefits :class:`feature_selection.SelectKBest` and the other univariate
+  selectors when used with `f_classif`.
+  By :user:`Mruthunjai Govindaraju <n-o-t-mugen>`.

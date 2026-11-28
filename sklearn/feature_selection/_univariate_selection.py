@@ -8,12 +8,12 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import special, stats
-from scipy.sparse import issparse
+from scipy.sparse import csr_array, issparse
 
 from sklearn.base import BaseEstimator, _fit_context
 from sklearn.feature_selection._base import SelectorMixin
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils import as_float_array, check_array, check_X_y, safe_mask, safe_sqr
+from sklearn.utils import as_float_array, check_array, check_X_y
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
 from sklearn.utils.validation import check_is_fitted, validate_data
@@ -33,6 +33,65 @@ def _clean_nans(scores):
 
 ######################################################################
 # Scoring functions
+
+
+def _column_sum_of_squares(X):
+    """Sum of squares of X along axis 0, accumulated in float64.
+
+    Does not create an X-sized temporary: for dense X the squares are computed
+    in buffers by `np.einsum`, for sparse X only the non-zero values are
+    squared.
+    """
+    if issparse(X):
+        if X.format not in ("csr", "csc"):
+            X = X.tocsr()
+        # Reuse the index arrays of X, only the squared data is allocated.
+        X_sq = X.__class__(
+            (np.square(X.data, dtype=np.float64), X.indices, X.indptr), shape=X.shape
+        )
+        return np.asarray(X_sq.sum(axis=0)).ravel()
+    return np.einsum("i...,i...->...", X, X, dtype=np.float64)
+
+
+def _f_oneway_from_aggregates(sums_per_class, n_samples_per_class, ss_alldata):
+    """Compute the one-way ANOVA F-statistic from per-class aggregates.
+
+    Parameters
+    ----------
+    sums_per_class : ndarray of shape (n_classes, n_features)
+        Sum of the samples of each class.
+
+    n_samples_per_class : ndarray of shape (n_classes,)
+        Number of samples in each class.
+
+    ss_alldata : ndarray of shape (n_features,)
+        Sum of squares of all the samples.
+
+    Returns
+    -------
+    f_statistic : ndarray of shape (n_features,)
+        The computed F-value of the test.
+    p_value : ndarray of shape (n_features,)
+        The associated p-value from the F-distribution.
+    """
+    n_classes = sums_per_class.shape[0]
+    n_samples = np.sum(n_samples_per_class)
+    square_of_sums_alldata = sums_per_class.sum(axis=0) ** 2
+    sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
+    ssbn = (sums_per_class**2 / n_samples_per_class[:, np.newaxis]).sum(axis=0)
+    ssbn -= square_of_sums_alldata / float(n_samples)
+    sswn = sstot - ssbn
+    dfbn = n_classes - 1
+    dfwn = n_samples - n_classes
+    msb = ssbn / float(dfbn)
+    msw = sswn / float(dfwn)
+    constant_features_idx = np.where(msw == 0.0)[0]
+    if np.nonzero(msb)[0].size != msb.size and constant_features_idx.size:
+        warnings.warn("Features %s are constant." % constant_features_idx, UserWarning)
+    f = msb / msw
+    f = np.asarray(f).ravel()
+    prob = special.fdtrc(dfbn, dfwn, f)
+    return f, prob
 
 
 # The following function is a rewriting of scipy.stats.f_oneway
@@ -87,32 +146,23 @@ def f_oneway(*args):
 
     .. [2] Heiman, G.W.  Research Methods in Statistics. 2002.
     """
-    n_classes = len(args)
-    args = [as_float_array(a) for a in args]
+    args = [
+        check_array(
+            as_float_array(a, copy=False),
+            accept_sparse=["csr", "csc", "coo"],
+            ensure_2d=False,
+        )
+        for a in args
+    ]
     n_samples_per_class = np.array([a.shape[0] for a in args])
-    n_samples = np.sum(n_samples_per_class)
-    ss_alldata = sum(safe_sqr(a).sum(axis=0) for a in args)
-    sums_args = [np.asarray(a.sum(axis=0)) for a in args]
-    square_of_sums_alldata = sum(sums_args) ** 2
-    square_of_sums_args = [s**2 for s in sums_args]
-    sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
-    ssbn = 0.0
-    for k, _ in enumerate(args):
-        ssbn += square_of_sums_args[k] / n_samples_per_class[k]
-    ssbn -= square_of_sums_alldata / float(n_samples)
-    sswn = sstot - ssbn
-    dfbn = n_classes - 1
-    dfwn = n_samples - n_classes
-    msb = ssbn / float(dfbn)
-    msw = sswn / float(dfwn)
-    constant_features_idx = np.where(msw == 0.0)[0]
-    if np.nonzero(msb)[0].size != msb.size and constant_features_idx.size:
-        warnings.warn("Features %s are constant." % constant_features_idx, UserWarning)
-    f = msb / msw
-    # flatten matrix to vector in sparse case
-    f = np.asarray(f).ravel()
-    prob = special.fdtrc(dfbn, dfwn, f)
-    return f, prob
+    # Broadcast so that 1D samples can be mixed with 2D samples.
+    sums_per_class = np.stack(
+        np.broadcast_arrays(
+            *[np.asarray(a.sum(axis=0, dtype=np.float64)).ravel() for a in args]
+        )
+    )
+    ss_alldata = sum(_column_sum_of_squares(a) for a in args)
+    return _f_oneway_from_aggregates(sums_per_class, n_samples_per_class, ss_alldata)
 
 
 @validate_params(
@@ -167,8 +217,29 @@ def f_classif(X, y):
            3.87e-01, 7.66e-01])
     """
     X, y = check_X_y(X, y, accept_sparse=["csr", "csc", "coo"])
-    args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
-    return f_oneway(*args)
+    if issparse(X) and X.format == "coo":
+        X = X.tocsr()
+    X = as_float_array(X, copy=False)
+    n_samples = X.shape[0]
+
+    # Compute the per-class aggregates in a single pass over X instead of
+    # copying X class by class.
+    classes, y_encoded = np.unique(y, return_inverse=True)
+    n_samples_per_class = np.bincount(y_encoded, minlength=classes.shape[0])
+    # Sparse one-hot encoding of y of shape (n_classes, n_samples). It has the
+    # dtype of X so that the product below does not upcast (i.e. copy) X.
+    Y = csr_array(
+        (np.ones(n_samples, dtype=X.dtype), (y_encoded, np.arange(n_samples))),
+        shape=(classes.shape[0], n_samples),
+    )
+    if issparse(X) and X.format == "csc":
+        # X.T is CSR: this avoids converting X to CSR.
+        sums_per_class = safe_sparse_dot(X.T, Y.T, dense_output=True).T
+    else:
+        sums_per_class = safe_sparse_dot(Y, X, dense_output=True)
+    sums_per_class = np.asarray(sums_per_class, dtype=np.float64)
+    ss_alldata = _column_sum_of_squares(X)
+    return _f_oneway_from_aggregates(sums_per_class, n_samples_per_class, ss_alldata)
 
 
 def _chisquare(f_obs, f_exp):
