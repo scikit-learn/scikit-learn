@@ -49,6 +49,12 @@ SUPERVISED_METRICS = {
     "fowlkes_mallows_score": fowlkes_mallows_score,
 }
 
+# Separate as `contingency_matrix` is only metric that returns array instead of float
+SUPERVISED_METRICS_CONTINGENCY = {
+    **SUPERVISED_METRICS,
+    "contingency_matrix": contingency_matrix,
+}
+
 UNSUPERVISED_METRICS = {
     "silhouette_score": silhouette_score,
     "silhouette_manhattan": partial(silhouette_score, metric="manhattan"),
@@ -88,6 +94,21 @@ NORMALIZED_METRICS = [
     "fowlkes_mallows_score",
     "normalized_mutual_info_score",
 ]
+
+# Metrics yet supporting Array API
+METRICS_NOT_SUPPORTING_ARRAY_API = {
+    "adjusted_mutual_info_score",
+    "adjusted_rand_score",
+    "completeness_score",
+    "fowlkes_mallows_score",
+    "homogeneity_score",
+    "mutual_info_score",
+    "normalized_mutual_info_score",
+    "rand_score",
+    "silhouette_manhattan",
+    "silhouette_score",
+    "v_measure_score",
+}
 
 
 rng = np.random.RandomState(0)
@@ -276,23 +297,14 @@ def check_array_api_supervised_metric(metric, array_namespace, device, dtype_nam
         )
 
 
-array_api_metric_checkers = {
-    calinski_harabasz_score: [
-        check_array_api_unsupervised_metric,
-    ],
-    davies_bouldin_score: [
-        check_array_api_unsupervised_metric,
-    ],
-    contingency_matrix: [
-        check_array_api_supervised_metric,
-    ],
-}
-
-
-def yield_metric_checker_combinations(metric_checkers=array_api_metric_checkers):
-    for metric, checkers in metric_checkers.items():
-        for checker in checkers:
-            yield metric, checker
+def yield_metric_checker_combinations():
+    all_metrics = {**SUPERVISED_METRICS_CONTINGENCY, **UNSUPERVISED_METRICS}
+    for name in sorted(all_metrics.keys() - METRICS_NOT_SUPPORTING_ARRAY_API):
+        if name in SUPERVISED_METRICS_CONTINGENCY:
+            checker = check_array_api_supervised_metric
+        else:
+            checker = check_array_api_unsupervised_metric
+        yield pytest.param(all_metrics[name], checker, id=name)
 
 
 @pytest.mark.parametrize(
