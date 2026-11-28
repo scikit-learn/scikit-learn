@@ -31,6 +31,7 @@ from sklearn.utils._testing import (
     assert_allclose_dense_sparse,
     assert_array_almost_equal,
 )
+from sklearn.utils._testing import assert_allclose as assert_allclose_dtype
 from sklearn.utils.fixes import (
     CSC_CONTAINERS,
     CSR_CONTAINERS,
@@ -156,14 +157,16 @@ def test_split_transform_feature_names_extrapolation_degree(extrapolation, degre
 @pytest.mark.parametrize("n_knots", range(3, 5))
 @pytest.mark.parametrize("knots", ["uniform", "quantile"])
 @pytest.mark.parametrize("extrapolation", ["constant", "periodic"])
-def test_spline_transformer_unity_decomposition(degree, n_knots, knots, extrapolation):
+def test_spline_transformer_unity_decomposition(
+    degree, n_knots, knots, extrapolation, global_dtype
+):
     """Test that B-splines are indeed a decomposition of unity.
 
     Splines basis functions must sum up to 1 per row, if we stay in between boundaries.
     """
-    X = np.linspace(0, 1, 100)[:, None]
+    X = np.linspace(0, 1, 100, dtype=global_dtype)[:, None]
     # make the boundaries 0 and 1 part of X_train, for sure.
-    X_train = np.r_[[[0]], X[::2, :], [[1]]]
+    X_train = np.concatenate((X[:1], X[::2], X[-1:]))
     X_test = X[1::2, :]
 
     if extrapolation == "periodic":
@@ -178,7 +181,9 @@ def test_spline_transformer_unity_decomposition(degree, n_knots, knots, extrapol
     )
     splt.fit(X_train)
     for X in [X_train, X_test]:
-        assert_allclose(np.sum(splt.transform(X), axis=1), 1)
+        X_trans = splt.transform(X)
+        assert X_trans.dtype == global_dtype
+        assert_allclose_dtype(X_trans.sum(axis=1), global_dtype(1))
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
