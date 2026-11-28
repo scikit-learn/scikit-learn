@@ -61,8 +61,8 @@ class IncrementalPCA(_BasePCA):
         making data respect some hard-wired assumptions.
 
     copy : bool, default=True
-        If False, X will be overwritten. ``copy=False`` can be used to
-        save memory but is unsafe for general use.
+        If :term:`copy` is False, X will be overwritten. ``copy=False`` can
+        be used to save memory but is unsafe for general use.
 
     batch_size : int, default=None
         The number of samples to use for each batch. Only used when calling

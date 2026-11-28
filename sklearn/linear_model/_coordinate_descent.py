@@ -314,7 +314,7 @@ def lasso_path(
         only when the Gram matrix is precomputed.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     coef_init : array-like of shape (n_features, ), default=None
         The initial values of the coefficients.
@@ -562,7 +562,7 @@ def enet_path(
         only when the Gram matrix is precomputed.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     coef_init : array-like of shape (n_features, ), default=None
         The initial values of the coefficients.
@@ -979,7 +979,7 @@ class ElasticNet(RegressorMixin, MultiOutputLinearModel):
         The maximum number of iterations.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     tol : float, default=1e-4
         The tolerance for the optimization: if the updates are smaller or equal to
@@ -1391,7 +1391,7 @@ class Lasso(ElasticNet):
         For sparse input this option is always ``False`` to preserve sparsity.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -2096,7 +2096,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
         until it is smaller or equal to ``tol``.
 
     copy_X : bool, default=True
-        If ``True``, `X` will be copied; otherwise, it may be overwritten.
+        If ``True``, `X` will be :term:`copied <copy_X>`; otherwise, it may be
+        overwritten.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -2364,7 +2365,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         cross-validation strategies that can be used here.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     verbose : bool or int, default=0
         Amount of verbosity.
@@ -2606,7 +2607,7 @@ class MultiTaskElasticNet(ElasticNet):
         (i.e. data is expected to be centered).
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -2898,7 +2899,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         (i.e. data is expected to be centered).
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -3086,7 +3087,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         cross-validation strategies that can be used here.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     verbose : bool or int, default=0
         Amount of verbosity.
@@ -3271,7 +3272,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         until it is smaller or equal to ``tol``.
 
     copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
+        If ``True``, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     cv : int, cross-validation generator or iterable, default=None
         Determines the cross-validation splitting strategy.

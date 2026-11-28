@@ -227,8 +227,8 @@ def affinity_propagation(
         Damping factor between 0.5 and 1.
 
     copy : bool, default=True
-        If copy is False, the affinity matrix is modified inplace by the
-        algorithm, for memory efficiency.
+        If :term:`copy` is False, the affinity matrix is modified inplace by
+        the algorithm, for memory efficiency.
 
     verbose : bool, default=False
         The verbosity level.
@@ -328,7 +328,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         of estimated clusters that stops the convergence.
 
     copy : bool, default=True
-        Make a copy of input data.
+        Make a :term:`copy` of input data.
 
     preference : array-like of shape (n_samples,) or float, default=None
         Preferences for each point - points with larger values of

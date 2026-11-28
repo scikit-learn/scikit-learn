@@ -82,7 +82,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         (i.e. data is expected to be centered).
 
     copy_X : bool, default=True
-        If True, X will be copied; else, it may be overwritten.
+        If True, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     verbose : bool, default=False
         Verbose mode when fitting the model.
@@ -505,7 +505,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         (i.e. data is expected to be centered).
 
     copy_X : bool, default=True
-        If True, X will be copied; else, it may be overwritten.
+        If True, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     verbose : bool, default=False
         Verbose mode when fitting the model.

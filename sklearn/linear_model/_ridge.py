@@ -1075,7 +1075,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         (i.e. ``X`` and ``y`` are expected to be centered).
 
     copy_X : bool, default=True
-        If True, X will be copied; else, it may be overwritten.
+        If True, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     max_iter : int, default=None
         Maximum number of iterations for conjugate gradient solver.
@@ -1416,7 +1416,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         already centered).
 
     copy_X : bool, default=True
-        If True, X will be copied; else, it may be overwritten.
+        If True, X will be :term:`copied <copy_X>`; else, it may be overwritten.
 
     max_iter : int, default=None
         Maximum number of iterations for conjugate gradient solver.
