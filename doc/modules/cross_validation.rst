@@ -23,11 +23,17 @@ Here is a flowchart of typical cross validation workflow in model training.
 The best parameters can be determined by
 :ref:`grid search <grid_search>` techniques.
 
-.. image:: ../images/grid_search_workflow.png
+.. figure:: ../images/grid_search_workflow.png
    :width: 400px
    :height: 240px
    :alt: Grid Search Workflow
    :align: center
+
+   Here, "parameters" are the :term:`parameters <parameter>` passed to an
+   estimator's constructor. They include what are often called hyperparameters,
+   such as the ``max_depth`` of a decision tree, as well as other configuration
+   choices, such as which estimator to use in a pipeline step. They are not the
+   values learned from the data during :term:`fit`.
 
 In scikit-learn a random split into training and test sets
 can be quickly computed with the :func:`train_test_split` helper function.
