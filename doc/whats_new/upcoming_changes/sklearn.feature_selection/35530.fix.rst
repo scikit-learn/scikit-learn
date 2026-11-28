@@ -1,4 +1,5 @@
-- :func:`feature_selection.f_classif` now raises an informative :class:`ValueError`
-  via :func:`utils.multiclass.check_classification_targets` when ``y`` has a
-  continuous target type.
+- :func:`feature_selection.f_classif` now raises a `ValueError` for
+  non-classification targets, such as a continuous `y`, instead of returning NaN
+  or meaningless scores. This also affects :class:`feature_selection.SelectKBest`
+  and the other univariate selectors that use `f_classif` by default.
   By :user:`Aditya Shinde <adityashinde0>`.
