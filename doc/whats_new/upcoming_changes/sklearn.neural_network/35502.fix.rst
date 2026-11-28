@@ -1,0 +1,6 @@
+- :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
+  now drop zero-weight samples in `_fit`, avoiding a `ZeroDivisionError` when a
+  minibatch or early-stopping validation split contains only zero weights (for
+  example when used with :class:`ensemble.BaggingClassifier` and a small
+  `max_samples`).
+  By :user:`José Vinícius <viniciusscience>`.

@@ -19,6 +19,7 @@ from sklearn.datasets import (
     make_multilabel_classification,
     make_regression,
 )
+from sklearn.ensemble import BaggingClassifier, BaggingRegressor
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import PoissonRegressor
 from sklearn.metrics import roc_auc_score
@@ -30,7 +31,7 @@ from sklearn.utils._testing import (
     assert_array_equal,
     ignore_warnings,
 )
-from sklearn.utils.fixes import CSR_CONTAINERS
+from sklearn.utils.fixes import CSC_CONTAINERS, CSR_CONTAINERS
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
@@ -1127,3 +1128,149 @@ def test_minimum_input_sample_size():
     model = MLPRegressor(early_stopping=True, random_state=0)
     with pytest.raises(ValueError, match="The validation set is too small"):
         model.fit(X, y)
+
+
+@pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
+@pytest.mark.parametrize("solver", ["adam", "sgd", "lbfgs"])
+@pytest.mark.parametrize("sparse_container", [None, *CSR_CONTAINERS, *CSC_CONTAINERS])
+def test_mlp_zero_sample_weight_dropped(Estimator, solver, sparse_container):
+    """Check that zero-weight samples are dropped before fitting (no ZeroDivisionError).
+
+    Non-regression test for #35381.
+    """
+    if Estimator is MLPClassifier:
+        X, y = make_classification(
+            n_samples=40, n_features=4, n_informative=4, n_redundant=0, random_state=0
+        )
+    else:
+        X, y = make_regression(n_samples=40, n_features=4, random_state=0)
+
+    # First 30 samples have weight 0, guaranteeing all-zero minibatches with
+    # batch_size=5 unless zero-weight rows are dropped.
+    sample_weight = np.zeros(len(y), dtype=float)
+    sample_weight[30:] = np.linspace(0.5, 2.0, 10)
+    nonzero_mask = sample_weight != 0
+
+    X_in = sparse_container(X) if sparse_container is not None else X
+    X_nz = (
+        sparse_container(X[nonzero_mask])
+        if sparse_container is not None
+        else X[nonzero_mask]
+    )
+
+    params = {
+        "hidden_layer_sizes": (5,),
+        "solver": solver,
+        "batch_size": 5,
+        "shuffle": False,
+        "max_iter": 5,
+        "random_state": 0,
+    }
+    est_with_zeros = Estimator(**params)
+    est_filtered = Estimator(**params)
+    with ignore_warnings(category=ConvergenceWarning):
+        est_with_zeros.fit(X_in, y, sample_weight=sample_weight)
+        est_filtered.fit(
+            X_nz, y[nonzero_mask], sample_weight=sample_weight[nonzero_mask]
+        )
+
+    for coef_z, coef_f in zip(est_with_zeros.coefs_, est_filtered.coefs_):
+        assert_allclose(coef_z, coef_f)
+    if Estimator is MLPClassifier:
+        assert_allclose(
+            est_with_zeros.predict_proba(X_in), est_filtered.predict_proba(X_in)
+        )
+    else:
+        assert_allclose(est_with_zeros.predict(X_in), est_filtered.predict(X_in))
+
+
+def test_mlp_zero_sample_weight_preserves_classes_and_bagging():
+    """Check zero-weight rows preserve `classes_` and work with Bagging.
+
+    Non-regression test for #35381.
+    """
+    # Class 2 appears only in zero-weight rows; classes_ and predict_proba shape must
+    # still include all 3 classes.
+    X, y = X_digits_multi[:30], y_digits_multi[:30]
+    sample_weight = (y != 2).astype(float)
+    clf = MLPClassifier(
+        hidden_layer_sizes=(5,), batch_size=5, max_iter=5, random_state=0
+    )
+    with ignore_warnings(category=ConvergenceWarning):
+        clf.fit(X, y, sample_weight=sample_weight)
+    assert_array_equal(clf.classes_, np.unique(y))
+    assert clf.predict_proba(X).shape == (len(X), 3)
+
+    # Exact Bagging scenario from #35381: large dataset with small max_samples makes
+    # Bagging pass a sample_weight array with almost all zeros.
+    X_full, y_full = load_digits(return_X_y=True)
+    bag_clf = BaggingClassifier(
+        estimator=MLPClassifier(hidden_layer_sizes=(10,), max_iter=5, random_state=0),
+        n_estimators=2,
+        max_samples=10,
+        random_state=0,
+    )
+    with ignore_warnings(category=ConvergenceWarning):
+        bag_clf.fit(X_full, y_full)
+    assert bag_clf.predict_proba(X_full[:5]).shape == (5, 10)
+
+    bag_reg = BaggingRegressor(
+        estimator=MLPRegressor(hidden_layer_sizes=(10,), max_iter=5, random_state=0),
+        n_estimators=2,
+        max_samples=10,
+        random_state=0,
+    )
+    with ignore_warnings(category=ConvergenceWarning):
+        bag_reg.fit(X_reg, y_reg)
+    assert bag_reg.predict(X_reg[:5]).shape == (5,)
+
+
+@pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
+def test_mlp_zero_sample_weight_early_stopping_and_partial_fit(Estimator):
+    """Check zero-weight rows with `early_stopping=True` and `partial_fit`."""
+    if Estimator is MLPClassifier:
+        X, y = make_classification(
+            n_samples=200, n_features=4, n_informative=4, n_redundant=0, random_state=0
+        )
+        partial_fit_kwargs = {"classes": np.unique(y)}
+    else:
+        X, y = make_regression(n_samples=200, n_features=4, random_state=0)
+        partial_fit_kwargs = {}
+
+    sample_weight = np.zeros(len(y), dtype=float)
+    sample_weight[:30] = 1.0
+    nonzero_mask = sample_weight != 0
+
+    es_params = {
+        "hidden_layer_sizes": (5,),
+        "early_stopping": True,
+        "validation_fraction": 0.2,
+        "batch_size": 5,
+        "max_iter": 5,
+        "random_state": 0,
+    }
+    est_es_zero = Estimator(**es_params)
+    est_es_filt = Estimator(**es_params)
+    with ignore_warnings(category=ConvergenceWarning):
+        est_es_zero.fit(X, y, sample_weight=sample_weight)
+        est_es_filt.fit(
+            X[nonzero_mask], y[nonzero_mask], sample_weight=sample_weight[nonzero_mask]
+        )
+    assert_allclose(est_es_zero.predict(X), est_es_filt.predict(X))
+
+    pf_params = {
+        "hidden_layer_sizes": (5,),
+        "batch_size": 5,
+        "shuffle": False,
+        "random_state": 0,
+    }
+    est_pf_zero = Estimator(**pf_params).partial_fit(
+        X, y, sample_weight=sample_weight, **partial_fit_kwargs
+    )
+    est_pf_filt = Estimator(**pf_params).partial_fit(
+        X[nonzero_mask],
+        y[nonzero_mask],
+        sample_weight=sample_weight[nonzero_mask],
+        **partial_fit_kwargs,
+    )
+    assert_allclose(est_pf_zero.predict(X), est_pf_filt.predict(X))
