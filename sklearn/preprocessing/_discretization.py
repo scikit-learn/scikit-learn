@@ -107,7 +107,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
     n_bins_ : ndarray of shape (n_features,), dtype=np.int64
         Number of bins per feature. Bins whose width are too small
-        (i.e., <= 1e-8) are removed with a warning.
+        (i.e., smaller than the floating point precision of their edges) are
+        removed with a warning.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -293,6 +294,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         bin_edges = np.zeros(n_features, dtype=object)
 
+        # Relative tolerance used to remove the bins whose width are too small.
+        # Integer data is binned with float64 edges.
+        float_dtype = X.dtype if X.dtype.kind == "f" else np.float64
+        rtol = np.finfo(float_dtype).eps
+
         quantile_method = self.quantile_method
 
         if (
@@ -371,20 +377,27 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
                 bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
 
-            # Remove bins whose width are too small (i.e., <= 1e-8)
+            # Remove bins whose width are too small, i.e. smaller than the
+            # floating point precision of their edges
             if self.strategy in ("quantile", "kmeans"):
                 # The last edge (the max) is left out of the deduplication:
                 # transform treats it as +inf, so an inner edge equal to the max
                 # is a real boundary that isolates the samples at the max. The
                 # resulting zero-width last bin is kept.
                 inner_edges = bin_edges[jj][:-1]
-                mask = np.diff(inner_edges, prepend=-np.inf) > 1e-8
+                # The tolerance is relative to the two edges of each bin, and not
+                # to the range or the max of the feature: it does not depend on
+                # the scale of the feature, and a large value does not cause the
+                # removal of the narrow bins that are far below it.
+                abs_edges = np.abs(inner_edges)
+                tol = rtol * np.maximum(abs_edges[1:], abs_edges[:-1])
+                mask = np.r_[True, np.diff(inner_edges) > tol]
                 bin_edges[jj] = np.r_[inner_edges[mask], bin_edges[jj][-1]]
                 if len(bin_edges[jj]) - 1 != n_bins[jj]:
                     warnings.warn(
-                        "Bins whose width are too small (i.e., <= "
-                        "1e-8) in feature %d are removed. Consider "
-                        "decreasing the number of bins." % jj
+                        "Bins whose width are too small (i.e., smaller than the "
+                        "floating point precision of their edges) in feature %d "
+                        "are removed. Consider decreasing the number of bins." % jj
                     )
                     n_bins[jj] = len(bin_edges[jj]) - 1
 

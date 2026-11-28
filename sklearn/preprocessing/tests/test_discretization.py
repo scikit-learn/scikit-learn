@@ -510,14 +510,66 @@ def test_quantile_ties_at_max(quantile_method, n_bins):
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_near_constant_feature(encode):
     """Test that a non-constant feature narrower than the tolerance gets one bin."""
-    eps = 1e-10  # smaller than the 1e-8 tolerance on the bin width
-    X = np.array([[1.0], [1.0 + eps], [1.0 + 2 * eps]])
+    # two consecutive floats: narrower than the tolerance on the bin width
+    X = np.array([[1.0], [np.nextafter(1.0, 2.0)], [np.nextafter(1.0, 2.0)]])
     kbd = KBinsDiscretizer(n_bins=3, encode=encode)
     with pytest.warns(UserWarning, match="Consider decreasing the number of bins"):
         Xt = kbd.fit_transform(X)
     assert kbd.n_bins_[0] == 1
     assert Xt.shape == (3, 1)
-    assert_allclose(kbd.inverse_transform(Xt), np.full((3, 1), 1.0 + eps))
+    assert_allclose(kbd.inverse_transform(Xt), np.ones((3, 1)))
+
+
+@pytest.mark.parametrize("strategy", ["quantile", "kmeans"])
+@pytest.mark.parametrize("scale", [1e-12, 1e-8, 1.0, 1e8])
+def test_bin_removal_does_not_depend_on_scale(strategy, scale):
+    """Check that the removal of too narrow bins does not depend on the scale of X.
+
+    Non-regression test for gh-19416.
+    """
+    X = scale * np.linspace(-1, 1, 100).reshape(-1, 1)
+    kbd = KBinsDiscretizer(n_bins=5, encode="ordinal", strategy=strategy)
+    Xt = kbd.fit_transform(X)
+    assert kbd.n_bins_[0] == 5
+    assert_array_equal(np.unique(Xt), np.arange(5))
+
+
+def test_small_scale_feature_with_ties():
+    """Check that only the duplicated bin edge of a small scale feature is removed.
+
+    Non-regression test for gh-19416.
+    """
+    X = 1e-9 * np.array([-3, -2, -1, 0, 0, 0, 0, 0, 0, 1, 2, 3]).reshape(-1, 1)
+    kbd = KBinsDiscretizer(n_bins=3, encode="ordinal")
+    with pytest.warns(UserWarning, match="Consider decreasing the number of bins"):
+        Xt = kbd.fit_transform(X)
+    assert_allclose(kbd.bin_edges_[0], [-3e-9, 0, 3e-9])
+    assert_array_equal(Xt.ravel(), [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_large_value_does_not_remove_narrow_bins(dtype):
+    """Check that a large value does not cause the removal of the bins far below it.
+
+    The tolerance on the bin width is relative to the edges of each bin, and not to
+    the max of the feature.
+    """
+    X = np.r_[np.linspace(0, 1, 100), 1e16].astype(dtype).reshape(-1, 1)
+    kbd = KBinsDiscretizer(n_bins=5, encode="ordinal").fit(X)
+    assert kbd.n_bins_[0] == 5
+
+
+def test_float32_feature_with_small_relative_range():
+    """Check that the bins of a float32 feature far from zero are not removed.
+
+    The bin edges are only a few float32 steps apart, but they are distinct.
+    """
+    step = np.spacing(np.float32(1000))
+    X = (1000 + 2 * step * np.arange(20)).astype(np.float32).reshape(-1, 1)
+    kbd = KBinsDiscretizer(n_bins=5, encode="ordinal")
+    Xt = kbd.fit_transform(X)
+    assert kbd.n_bins_[0] == 5
+    assert_array_equal(np.unique(Xt), np.arange(5))
 
 
 def test_percentile_numeric_stability():
