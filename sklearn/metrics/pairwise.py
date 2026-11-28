@@ -1979,7 +1979,9 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     return ret.T
 
 
-def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
+def _pairwise_callable(
+    X, Y, metric, ensure_all_finite=True, assume_symmetric=True, **kwds
+):
     """Handle the callable case for pairwise_{distances,kernels}."""
     xp, _, device = get_namespace_and_device(X)
     X, Y = check_pairwise_arrays(
@@ -2005,7 +2007,7 @@ def _pairwise_callable(X, Y, metric, ensure_all_finite=True, **kwds):
         else:
             return array[index, ...]
 
-    if X is Y:
+    if X is Y and assume_symmetric:
         # Only calculate metric for upper triangle
         out = xp.zeros((X.shape[0], Y.shape[0]), dtype=dtype_float, device=device)
         iterator = itertools.combinations(range(X.shape[0]), 2)
@@ -2271,6 +2273,7 @@ def pairwise_distances_chunked(
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "n_jobs": [Integral, None],
         "ensure_all_finite": ["boolean", StrOptions({"allow-nan"})],
+        "assume_symmetric": ["boolean"],
     },
     prefer_skip_nested_validation=True,
 )
@@ -2281,6 +2284,7 @@ def pairwise_distances(
     *,
     n_jobs=None,
     ensure_all_finite=True,
+    assume_symmetric=True,
     **kwds,
 ):
     """Compute the distance matrix from a feature array X and optional Y.
@@ -2375,6 +2379,11 @@ def pairwise_distances(
         .. versionadded:: 1.6
            `force_all_finite` was renamed to `ensure_all_finite`.
 
+    assume_symmetric : bool, default=True
+        Whether to assume that a callable distance metric is symmetric.
+        If False, compute each ordered pair independently, allowing
+        asymmetric distances. Only applies to callable metrics.
+
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
@@ -2429,6 +2438,7 @@ def pairwise_distances(
             _pairwise_callable,
             metric=metric,
             ensure_all_finite=ensure_all_finite,
+            assume_symmetric=assume_symmetric,
             **kwds,
         )
     else:
