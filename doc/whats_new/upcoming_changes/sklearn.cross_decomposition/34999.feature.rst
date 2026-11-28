@@ -1,0 +1,3 @@
+- :class:`cross_decomposition.PLSRegression` now exposes the :attr:`~cross_decomposition.PLSRegression.vip_` attribute,
+  which computes Variable Importance in Projection (VIP) scores for each feature.
+  By :user:`Shikhar Kesharwani <Shikhar-Kesharwani>`.
