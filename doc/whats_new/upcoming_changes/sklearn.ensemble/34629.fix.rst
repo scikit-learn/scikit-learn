@@ -1,0 +1,7 @@
+- :class:`ensemble.IsolationForest` now computes the exact expected path length
+  ``c(n) = 2 H(n-1) - 2 (n-1)/n`` (using ``scipy.special.digamma``) instead of the
+  logarithmic approximation from the original paper, which was inaccurate for small
+  subsample sizes (about 30% too low at ``n = 3``). This slightly changes the anomaly
+  scores, and can change the predicted label of points that lie on the decision
+  boundary.
+  By :user:`Jayesh Suryavanshi <JayeshSuryavanshi>`.
