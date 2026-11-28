@@ -216,7 +216,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel for ``fit``.
+        The number of jobs to run in parallel when fitting the member
+        estimators.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -554,7 +555,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         predicted values before averaging. Uses uniform weights if `None`.
 
     n_jobs : int, default=None
-        The number of jobs to run in parallel for ``fit``.
+        The number of jobs to run in parallel when fitting the member
+        estimators.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
