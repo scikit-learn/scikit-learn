@@ -896,6 +896,20 @@ def test_min_max_scaler_iris():
         scaler.fit(X)
 
 
+@pytest.mark.parametrize("feature_range", [(-5, -1), (-1, 1), (2, 5)])
+def test_min_max_scaler_feature_range_roundtrip(feature_range):
+    # Check scaling to non-default (incl. fully negative) feature ranges and
+    # that inverse_transform recovers the original data.
+    X = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
+
+    scaler = MinMaxScaler(feature_range=feature_range)
+    X_trans = scaler.fit_transform(X)
+
+    assert_allclose(X_trans.min(axis=0), feature_range[0])
+    assert_allclose(X_trans.max(axis=0), feature_range[1])
+    assert_allclose(scaler.inverse_transform(X_trans), X)
+
+
 def test_min_max_scaler_zero_variance_features():
     # Check min max scaler on toy data with zero variance features
     X = [[0.0, 1.0, +0.5], [0.0, 1.0, -0.1], [0.0, 1.0, +1.1]]
