@@ -1,0 +1,6 @@
+- :class:`preprocessing.RobustScaler` and :func:`preprocessing.robust_scale` now
+  compute the quantiles used for `scale_` with the `averaged_inverted_cdf` method
+  instead of linear interpolation, consistently with
+  :class:`preprocessing.QuantileTransformer`. This may slightly change `scale_`,
+  in particular for small samples. `center_` is unchanged.
+  By :user:`Arthur Lacote <cakedev0>`.
