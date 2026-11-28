@@ -17,6 +17,7 @@ from sklearn.cluster._bicluster import SpectralBiclustering, SpectralCoclusterin
 from sklearn.cluster._birch import Birch
 from sklearn.cluster._bisect_k_means import BisectingKMeans
 from sklearn.cluster._dbscan import DBSCAN, dbscan
+from sklearn.cluster._fcm import FuzzyCMeans, fuzzy_c_means
 from sklearn.cluster._hdbscan.hdbscan import HDBSCAN
 from sklearn.cluster._kmeans import KMeans, MiniBatchKMeans, k_means, kmeans_plusplus
 from sklearn.cluster._mean_shift import (
@@ -42,6 +43,7 @@ __all__ = [
     "Birch",
     "BisectingKMeans",
     "FeatureAgglomeration",
+    "FuzzyCMeans",
     "KMeans",
     "MeanShift",
     "MiniBatchKMeans",
@@ -54,6 +56,7 @@ __all__ = [
     "compute_optics_graph",
     "dbscan",
     "estimate_bandwidth",
+    "fuzzy_c_means",
     "get_bin_seeds",
     "k_means",
     "kmeans_plusplus",
