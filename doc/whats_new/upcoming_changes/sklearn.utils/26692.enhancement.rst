@@ -1,0 +1,6 @@
+- :func:`utils.check_array` and :func:`utils.check_X_y` now accept complex data
+  when `dtype` is, or contains, a complex type such as `np.complex128`. This
+  lets third-party estimators opt in to complex inputs and targets through
+  :func:`utils.validation.validate_data`. The default `dtype="numeric"` still
+  rejects complex data.
+  By :user:`Miles Cranmer <MilesCranmer>`.
