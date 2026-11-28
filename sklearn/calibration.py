@@ -842,6 +842,13 @@ def _fit_calibrator(clf, predictions, y, classes, method, xp, sample_weight=None
         Y = label_binarize(y, classes=classes)
         label_encoder = LabelEncoder().fit(classes)
         pos_class_indices = label_encoder.transform(clf.classes_)
+        if (
+            len(classes) > 2
+            and len(pos_class_indices) == 2
+            and predictions.shape[1] == 1
+        ):
+            # The single score belongs to the second class of the binary estimator.
+            pos_class_indices = pos_class_indices[1:]
         for class_idx, this_pred in zip(pos_class_indices, predictions.T):
             if method == "isotonic":
                 calibrator = IsotonicRegression(out_of_bounds="clip")
@@ -920,7 +927,11 @@ class _CalibratedClassifier:
 
         if self.method in ("sigmoid", "isotonic"):
             label_encoder = LabelEncoder().fit(self.classes)
-            pos_class_indices = label_encoder.transform(self.estimator.classes_)
+            class_indices = label_encoder.transform(self.estimator.classes_)
+            binary_fold = (
+                n_classes > 2 and len(class_indices) == 2 and predictions.shape[1] == 1
+            )
+            pos_class_indices = class_indices[1:] if binary_fold else class_indices
             for class_idx, this_pred, calibrator in zip(
                 pos_class_indices, predictions.T, self.calibrators
             ):
@@ -930,7 +941,11 @@ class _CalibratedClassifier:
                     class_idx += 1
                 proba[:, class_idx] = calibrator.predict(this_pred)
             # Normalize the probabilities
-            if n_classes == 2:
+            if binary_fold:
+                # Fill the other trained class while leaving unseen classes at zero.
+                neg_class_idx, pos_class_idx = class_indices
+                proba[:, neg_class_idx] = 1.0 - proba[:, pos_class_idx]
+            elif n_classes == 2:
                 proba[:, 0] = 1.0 - proba[:, 1]
             else:
                 denominator = np.sum(proba, axis=1)[:, np.newaxis]
