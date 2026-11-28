@@ -1,0 +1,3 @@
+- The solver `"newton-cd"` of :class:`linear_model.LogisticRegression` is now faster
+  for multiclass problems with `fit_intercept=True`, in particular for sparse `X`.
+  By :user:`Christian Lorentzen <lorentzenchr>`.

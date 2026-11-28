@@ -18,5 +18,4 @@
     `ElasticNet(precompute=False)` on it. It is a good choice for
     `n_features > n_samples` (at least whenever `l1_ratio > 0`).
 
-    By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`34561`, :pr:`34377`,
-    :pr:`34523`, :pr:`35558`.
+    By :user:`Christian Lorentzen <lorentzenchr>`. :pr:`34561`, :pr:`34377`, :pr:`34523`.
