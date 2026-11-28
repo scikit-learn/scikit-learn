@@ -68,7 +68,12 @@ class CallbackContext:
 
     @classmethod
     def _from_estimator(
-        cls, estimator, task_name, task_id, max_subtasks, sequential_subtasks
+        cls,
+        estimator,
+        task_name,
+        task_id,
+        max_subtasks,
+        sequential_subtasks,
     ):
         """Private constructor to create a root context.
 
@@ -98,6 +103,9 @@ class CallbackContext:
         # We don't store the estimator in the context to avoid circular references
         # because the estimator already holds a reference to the context.
         new_ctx._callbacks = getattr(estimator, "_skl_callbacks", [])
+        new_ctx._default_callbacks = list(
+            getattr(estimator, "_skl_default_callbacks", [])
+        )
         new_ctx.estimator_name = estimator.__class__.__name__
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
@@ -118,6 +126,9 @@ class CallbackContext:
             # attaching the task tree of the sub-estimator to the task tree of
             # the meta-estimator on the way.
             parent_ctx = estimator._parent_callback_ctx
+            # Callbacks propagated from the meta-estimator can be its default
+            # callbacks, they must still be recognised as such by this context.
+            new_ctx._default_callbacks += parent_ctx._default_callbacks
             new_ctx._merge_with(parent_ctx)
             new_ctx._propagation_depth = parent_ctx._propagation_depth + 1
         else:
@@ -155,6 +166,7 @@ class CallbackContext:
         new_ctx = cls.__new__(cls)
 
         new_ctx._callbacks = parent_context._callbacks
+        new_ctx._default_callbacks = parent_context._default_callbacks
         new_ctx.estimator_name = parent_context.estimator_name
         new_ctx._propagation_depth = parent_context._propagation_depth
         new_ctx.task_name = task_name
@@ -441,24 +453,31 @@ class CallbackContext:
     def propagate_callback_context(self, sub_estimator):
         """Propagate the context and callbacks to a sub-estimator.
 
-        Clear the propagated callbacks from the sub-estimator on exit.
+        Only the auto-propagated callbacks are propagated, including the default ones,
+        up to their maximum propagation depth. The propagated callbacks are removed from
+        the sub-estimator on exit.
 
-        Only auto-propagated callbacks are propagated to the sub-estimator. An error is
-        raised if the sub-estimator already holds auto-propagated callbacks.
+        A `TypeError` is raised if the sub-estimator holds explicitly registered
+        auto-propagated callbacks. Default callbacks left on the sub-estimator by a
+        previous fit are ignored by this check, and they are not removed here: they will
+        be updated according to the config when the sub-estimator is next fitted.
 
-        The sub-estimator receives this context as an attribute named
-        `_parent_callback_ctx` so that the meta-estimator's task tree can be merged with
-        the sub-estimator's one.
+        If the sub-estimator does not support callbacks, a warning is raised for the
+        explicitly registered auto-propagated callbacks, which are not propagated.
 
         Parameters
         ----------
         sub_estimator : estimator instance
             The estimator to propagate the callbacks and context to.
         """
+        # Default callbacks registered on the sub-estimator by a previous fit are not
+        # considered: they are re-evaluated at the next fit of the sub-estimator.
+        sub_default_callbacks = getattr(sub_estimator, "_skl_default_callbacks", [])
         bad_callbacks = [
             callback.__class__.__name__
             for callback in getattr(sub_estimator, "_skl_callbacks", [])
             if isinstance(callback, AutoPropagatedCallback)
+            and callback not in sub_default_callbacks
         ]
         if bad_callbacks:
             raise TypeError(
@@ -484,24 +503,34 @@ class CallbackContext:
                 or self._propagation_depth < callback.max_propagation_depth
             )
         ]
-        if callbacks_to_propagate and not hasattr(sub_estimator, "set_callbacks"):
-            sub_estimator_name = sub_estimator.__class__.__name__
-            warning_message = (
-                f"The auto-propagated callbacks attached to {self.estimator_name} will "
-                f"not be propagated to {sub_estimator_name} because the latter does "
-                "not support callbacks."
-            )
-            # Check on the root context not to repeat the same warning.
-            root_context = get_context_path(self)[0]
-            key = (self.estimator_name, sub_estimator_name)
-            if key not in root_context._subestimator_support_warnings:
-                warnings.warn(warning_message)
-                root_context._subestimator_support_warnings.add(key)
+        non_default_callbacks_to_propagate = [
+            cb for cb in callbacks_to_propagate if cb not in self._default_callbacks
+        ]
+        if not hasattr(sub_estimator, "set_callbacks"):
             callbacks_to_propagate = []
+            if non_default_callbacks_to_propagate:
+                sub_estimator_name = sub_estimator.__class__.__name__
+                warning_message = (
+                    f"The auto-propagated callbacks attached to {self.estimator_name} "
+                    f"will not be propagated to {sub_estimator_name} because the latter"
+                    " does not support callbacks."
+                )
+                # Check on the root context not to repeat the same warning.
+                root_context = get_context_path(self)[0]
+                key = (self.estimator_name, sub_estimator_name)
+                if key not in root_context._subestimator_support_warnings:
+                    warnings.warn(warning_message)
+                    root_context._subestimator_support_warnings.add(key)
 
         if callbacks_to_propagate:
             self._propagated_callbacks = callbacks_to_propagate
-            curr_callbacks = getattr(sub_estimator, "_skl_callbacks", [])
+            # A default callback left on the sub-estimator by a previous fit can be the
+            # same instance as a propagated one: it must not be registered twice.
+            curr_callbacks = [
+                cb
+                for cb in getattr(sub_estimator, "_skl_callbacks", [])
+                if not any(cb is propagated for propagated in callbacks_to_propagate)
+            ]
             sub_estimator._set_callbacks(curr_callbacks + callbacks_to_propagate)
 
         try:

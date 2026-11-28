@@ -1,0 +1,7 @@
+- Added the `default_callbacks` parameter to :func:`set_config` and
+  :func:`config_context`. Callbacks listed there are attached to every
+  callback-compatible estimator. By default, a :class:`callback.ProgressBar`
+  is shown for fits that last more than one second in interactive environments
+  (Python shell, Jupyter notebook, ...) when `rich` is installed.
+  :class:`callback.ProgressBar` also gained the `min_duration` and `show` parameters.
+  By :user:`François Paugam <FrancoisPgm>`.

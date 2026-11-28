@@ -1,11 +1,13 @@
 # Authors: The scikit-learn developers
 # SPDX-License-Identifier: BSD-3-Clause
 
+import warnings
 from functools import partial
 
 import numpy as np
 import pytest
 
+from sklearn import config_context
 from sklearn.callback import CallbackSupportMixin, with_callbacks
 from sklearn.callback._callback_context import (
     CallbackContext,
@@ -37,7 +39,11 @@ def _make_callback_ctx(
     the context tree (without callbacks).
     """
     return CallbackContext._from_estimator(
-        estimator, task_name, task_id, max_subtasks, sequential_subtasks
+        estimator,
+        task_name,
+        task_id,
+        max_subtasks,
+        sequential_subtasks,
     )
 
 
@@ -83,6 +89,7 @@ def test_propagate_callback_context_clean_up():
     assert not hasattr(estimator, "_parent_callback_ctx")
 
 
+@config_context(default_callbacks=[])
 def test_propagate_callback_context_no_callback():
     """Check that no callback is propagated if there's no callback."""
     estimator = MaxIterEstimator()
@@ -402,6 +409,37 @@ def test_autopropagation_to_callback_agnostic_subestimator():
     assert callback.count_hooks("on_fit_task_begin") == expected_n_tasks
     assert callback.count_hooks("on_fit_task_end") == expected_n_tasks
     assert callback.count_hooks("teardown") == 1
+
+
+def test_default_callbacks_no_warning_for_callback_agnostic_subestimator():
+    """Check that no warning is raised for default callbacks that can't be propagated
+    to a sub-estimator that doesn't support callbacks."""
+    callback = RecordingAutoPropagatedCallback()
+    meta_estimator = MetaEstimator(NoCallbackEstimator())
+
+    with config_context(default_callbacks=(callback,)):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            meta_estimator.fit()
+
+    assert callback.count_hooks("setup") == 1
+
+
+def test_propagation_with_default_callbacks_on_sub_estimator():
+    """Check that default callbacks left on a sub-estimator by a previous fit are
+    neither considered as registered auto-propagated callbacks nor called."""
+    previous_default_callback = RecordingAutoPropagatedCallback()
+    with config_context(default_callbacks=(previous_default_callback,)):
+        sub_estimator = MaxIterEstimator().fit()
+    assert sub_estimator._skl_callbacks == [previous_default_callback]
+
+    callback = RecordingAutoPropagatedCallback()
+    meta_estimator = MetaEstimator(sub_estimator).set_callbacks(callback)
+    with config_context(default_callbacks=()):
+        meta_estimator.fit()
+
+    assert callback.count_hooks("setup") == 1
+    assert previous_default_callback.count_hooks("setup") == 1
 
 
 def test_hook_calling_return_value():

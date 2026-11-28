@@ -3,10 +3,44 @@
 
 import functools
 import inspect
+import sys
 from contextlib import contextmanager
 
-from sklearn.callback._base import AutoPropagatedCallback, FitCallback
+from sklearn import get_config
+from sklearn.callback._base import (
+    AutoPropagatedCallback,
+    FitCallback,
+)
 from sklearn.callback._callback_context import CallbackContext
+from sklearn.callback._progressbar import ProgressBar
+from sklearn.utils._optional_dependencies import _RICH_AVAILABLE
+from sklearn.utils.fixes import _IS_WASM
+
+
+def _callbacks_by_default():
+    """Return the callbacks to attach by default to compatible estimators.
+
+    Returns
+    -------
+    callbacks : list of callbacks
+        A list with the callbacks to attach by default to estimators, it
+        defaults to an empty list.
+    """
+    callbacks = []
+
+    for cb in get_config().get("default_callbacks", []):
+        # Do not use progress bars on WASM, in non-interactive environments, or if rich
+        # is not available
+        if (isinstance(cb, ProgressBar) or cb == "progressbar") and (
+            _IS_WASM or not hasattr(sys, "ps1") or not _RICH_AVAILABLE
+        ):
+            continue
+        if cb == "progressbar":
+            cb = ProgressBar(min_duration=1)
+
+        callbacks.append(cb)
+
+    return callbacks
 
 
 def validate_callbacks(callbacks):
@@ -83,6 +117,7 @@ class CallbackSupportMixin:
             The estimator instance itself.
         """
         validate_callbacks(callbacks)
+        self.__dict__.pop("_skl_default_callbacks", None)
         return self._set_callbacks(callbacks)
 
     def _set_callbacks(self, callbacks):
@@ -126,6 +161,41 @@ class CallbackSupportMixin:
         callback_fit_ctx : CallbackContext
             The root callback context for the estimator.
         """
+        # Setup callbacks. We store callbacks for which setup has started in order to
+        # only tear those down after fit.
+        self._skl_callbacks_to_teardown = []
+
+        # Default callbacks are registered along with the other callbacks, but they are
+        # re-evaluated from the configuration at each fit: the ones registered by a
+        # previous fit, tracked in `_skl_default_callbacks`, are dropped first.
+        # Callbacks propagated from a meta-estimator are kept, even if they are default
+        # callbacks of the meta-estimator.
+        previous_default_callbacks = getattr(self, "_skl_default_callbacks", [])
+        propagated_callbacks = getattr(
+            getattr(self, "_parent_callback_ctx", None), "_propagated_callbacks", []
+        )
+        registered_callbacks = [
+            cb
+            for cb in getattr(self, "_skl_callbacks", [])
+            if cb not in previous_default_callbacks or cb in propagated_callbacks
+        ]
+        default_callbacks = [
+            cb for cb in _callbacks_by_default() if cb not in registered_callbacks
+        ]
+        if hasattr(self, "_parent_callback_ctx"):
+            default_callbacks = [
+                cb
+                for cb in default_callbacks
+                if not isinstance(cb, AutoPropagatedCallback)
+            ]
+        # Default callbacks come first so that the explicitly registered ones take
+        # precedence when the order matters, e.g. for the progress bar.
+        if default_callbacks:
+            self._skl_default_callbacks = default_callbacks
+        else:
+            self.__dict__.pop("_skl_default_callbacks", None)
+        self._set_callbacks(default_callbacks + registered_callbacks)
+
         self._callback_fit_ctx = CallbackContext._from_estimator(
             estimator=self,
             task_name=task_name,
@@ -134,9 +204,6 @@ class CallbackSupportMixin:
             sequential_subtasks=sequential_subtasks,
         )
 
-        # Setup callbacks. We store callbacks for which setup has started in order to
-        # only tear those down after fit.
-        self._skl_callbacks_to_teardown = []
         for callback in getattr(self, "_skl_callbacks", []):
             # Only call the setup hook of callbacks that are not propagated from a
             # meta-estimator.

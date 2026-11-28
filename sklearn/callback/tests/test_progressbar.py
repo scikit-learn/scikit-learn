@@ -85,7 +85,8 @@ def test_clone_after_fit():
     pb = ProgressBar()
     est = MaxIterEstimator().set_callbacks(pb).fit()
     cloned = clone(est)
-    assert cloned._skl_callbacks[0] is pb
+    # Default callbacks, if any, come first in the list of callbacks.
+    assert cloned._skl_callbacks[-1] is pb
 
 
 # This test inspects the global _run_queues/monitors registries which is not thread-safe
@@ -153,8 +154,8 @@ def test_progress_during_fit():
     records = []
     orig_on_task_end = RichProgressMonitor._on_task_end
 
-    def recording_on_task_end(self, task_info):
-        orig_on_task_end(self, task_info)
+    def recording_on_task_end(self, task_info, visible):
+        orig_on_task_end(self, task_info, visible)
         records.append(self.root_rich_task.progress)
 
     max_iter = 7
@@ -194,9 +195,9 @@ def test_progress_during_fit_composition(meta_estimator):
                 check_progress(child)
         assert_allclose(task.progress, expected)
 
-    def recording_on_task_end(self, task_info):
+    def recording_on_task_end(self, task_info, visible):
         path = task_info["path"]
-        orig_on_task_end(self, task_info)
+        orig_on_task_end(self, task_info, visible)
         records.append([path, self.root_rich_task.progress])
         check_progress(self.root_rich_task)
 
@@ -241,3 +242,29 @@ def test_two_progressbars(capsys):
     # "MaxIterEstimator - fit" should not be displayed as the first progressbar should
     # be disabled.
     assert not re.search(r"MaxIterEstimator - fit", captured.out)
+
+
+def test_progressbar_by_default(monkeypatch, capsys):
+    """Test that the progressbar by default is displayed in a mocked interactive env."""
+    pytest.importorskip("rich")
+
+    monkeypatch.setattr("sys.ps1", ">>> ", raising=False)
+
+    MaxIterEstimator(computation_intensity=0.06).fit()
+
+    captured = capsys.readouterr()
+    assert re.search(r"MaxIterEstimator - fit ━+ 100%", captured.out)
+
+
+def test_progressbar_min_duration(capsys):
+    """Test that min_duration enables the hiding of fast estimators' progress bars."""
+    pytest.importorskip("rich")
+    cb = ProgressBar(min_duration=1)
+    # Fast estimator
+    MaxIterEstimator().set_callbacks(cb).fit()
+    captured = capsys.readouterr()
+    assert captured.out == "\n"
+    # Slow estimator
+    MaxIterEstimator(computation_intensity=0.06).set_callbacks(cb).fit()
+    captured = capsys.readouterr()
+    assert re.search(r"MaxIterEstimator - fit ━+ 100%", captured.out)

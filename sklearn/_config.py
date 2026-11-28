@@ -22,6 +22,7 @@ _global_config = {
     "enable_metadata_auto_requests": True,
     "skip_parameter_validation": False,
     "sparse_interface": "spmatrix",
+    "default_callbacks": ("progressbar",),
 }
 _threadlocal = threading.local()
 
@@ -32,6 +33,31 @@ def _get_threadlocal_config():
     if not hasattr(_threadlocal, "global_config"):
         _threadlocal.global_config = _global_config.copy()
     return _threadlocal.global_config
+
+
+def _validate_default_callbacks(callbacks):
+    """Utility to validate the callbacks to be set as default callbacks."""
+    from sklearn.callback._base import _BaseCallback
+
+    if not isinstance(callbacks, (tuple, list)):
+        raise TypeError(
+            "default_callbacks must be a tuple of callback instances or str, got "
+            f"{type(callbacks).__name__} instead."
+        )
+
+    for cb in callbacks:
+        if isinstance(cb, str):
+            is_valid = cb == "progressbar"
+        else:
+            # isinstance for a Protocol returns True for classes too.
+            is_valid = isinstance(cb, _BaseCallback) and not isinstance(cb, type)
+
+        if not is_valid:
+            raise ValueError(
+                "Default callbacks must be callback instances or str in "
+                f"['progressbar'], got {cb!r} instead."
+            )
+    return tuple(callbacks)
 
 
 def get_config():
@@ -75,6 +101,7 @@ def set_config(
     enable_metadata_auto_requests=None,
     skip_parameter_validation=None,
     sparse_interface=None,
+    default_callbacks=None,
 ):
     """Set global scikit-learn configuration.
 
@@ -216,6 +243,18 @@ def set_config(
 
         .. versionadded:: 1.9
 
+    default_callbacks : tuple of str or callback instances, default=None
+        Default callbacks to attach to callback compatible estimators by default.
+        Callback instances are shared by all estimators they are registered on. String
+        valued will generate a new callback instance with pre-defined parameters for
+        each estimator.
+        The possible string values are:
+
+        - "progressbar": A :class:`~sklearn.callback.ProgressBar` with `min_duration=1`
+            is generated.
+
+        .. versionadded:: 1.10
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -255,6 +294,10 @@ def set_config(
         local_config["skip_parameter_validation"] = skip_parameter_validation
     if sparse_interface is not None:
         local_config["sparse_interface"] = sparse_interface
+    if default_callbacks is not None:
+        local_config["default_callbacks"] = _validate_default_callbacks(
+            default_callbacks
+        )
 
 
 @contextmanager
@@ -272,6 +315,7 @@ def config_context(
     enable_metadata_auto_requests=None,
     skip_parameter_validation=None,
     sparse_interface=None,
+    default_callbacks=None,
 ):
     """Context manager to temporarily change the global scikit-learn configuration.
 
@@ -415,6 +459,18 @@ def config_context(
 
         .. versionadded:: 1.8
 
+    default_callbacks : tuple of str or callback instances, default=None
+        Default callbacks to attach to callback compatible estimators by default.
+        Callback instances are shared by all estimators they are registered on. String
+        valued will generate a new callback instance with pre-defined parameters for
+        each estimator.
+        The possible string values are:
+
+        - "progressbar": A :class:`~sklearn.callback.ProgressBar` with `min_duration=1`
+            is generated.
+
+        .. versionadded:: 1.10
+
     Yields
     ------
     None.
@@ -456,6 +512,7 @@ def config_context(
         enable_metadata_auto_requests=enable_metadata_auto_requests,
         skip_parameter_validation=skip_parameter_validation,
         sparse_interface=sparse_interface,
+        default_callbacks=default_callbacks,
     )
 
     try:

@@ -1,10 +1,12 @@
 import time
 from concurrent.futures import ThreadPoolExecutor
 
+import numpy as np
 import pytest
 
 import sklearn
 from sklearn import config_context, get_config, set_config
+from sklearn.callback._testing.callbacks import RecordingCallback
 from sklearn.utils.fixes import _IS_WASM
 from sklearn.utils.parallel import Parallel, delayed
 
@@ -23,6 +25,7 @@ def test_config_context():
         "enable_metadata_auto_requests": True,
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
+        "default_callbacks": ("progressbar",),
     }
 
     # Not using as a context manager affects nothing
@@ -43,6 +46,7 @@ def test_config_context():
             "enable_metadata_auto_requests": True,
             "skip_parameter_validation": False,
             "sparse_interface": "spmatrix",
+            "default_callbacks": ("progressbar",),
         }
     assert get_config()["assume_finite"] is False
 
@@ -80,6 +84,7 @@ def test_config_context():
         "enable_metadata_auto_requests": True,
         "skip_parameter_validation": False,
         "sparse_interface": "spmatrix",
+        "default_callbacks": ("progressbar",),
     }
 
     # No positional arguments
@@ -173,3 +178,21 @@ def test_config_array_api_dispatch_error_scipy(monkeypatch):
 
     with pytest.raises(ImportError, match=err_msg):
         set_config(array_api_dispatch=True)
+
+
+@pytest.mark.parametrize(
+    "callback", ["wrong_string", RecordingCallback, np.array([1, 2])]
+)
+def test_validate_default_callbacks(callback):
+    """Test the callback validation function."""
+
+    with pytest.raises(
+        ValueError, match="Default callbacks must be callback instances or str"
+    ):
+        set_config(default_callbacks=(callback,))
+
+
+def test_validate_default_callbacks_container():
+    """Check that default_callbacks must be a tuple (or list), not a bare str."""
+    with pytest.raises(TypeError, match="default_callbacks must be a tuple"):
+        set_config(default_callbacks="progressbar")
