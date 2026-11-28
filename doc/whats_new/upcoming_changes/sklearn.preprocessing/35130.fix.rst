@@ -1,0 +1,5 @@
+- Fix a bug in :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder` to correctly handle ``pandas.NA``
+  missing values in object-dtype and string columns without raising a
+  ``TypeError``.
+  By :user:`Johnny Wilson <JohnnyWilson16>`.
