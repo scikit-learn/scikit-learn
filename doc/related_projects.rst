@@ -228,6 +228,11 @@ Note scikit-learn own modern gradient boosting estimators
 - `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for
   categorical data, and several of its variations.
 
+- `fuzzyclust <https://github.com/ComplexSystemsIntelligence/fuzzyclust>`_ Fuzzy
+  clustering (fuzzy c-means, Gustafson-Kessel, Gath-Geva, possibilistic and kernel
+  variants), cluster validity indices and fuzzy model identification with
+  scikit-learn compatible estimators.
+
 - `hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ HDBSCAN and Robust Single
   Linkage clustering algorithms for robust variable density clustering.
   As of scikit-learn version 1.3.0, there is :class:`~sklearn.cluster.HDBSCAN`.
