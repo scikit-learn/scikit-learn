@@ -211,7 +211,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.random_state = random_state
         self.n_threads = n_threads
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None, sample_weight=None, sample_indices=None):
         """Fit data X by computing the binning thresholds.
 
         The last bin is reserved for missing values, whether missing values
@@ -223,6 +223,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             The data to bin.
         y: None
             Ignored.
+        sample_weight : ndarray of shape (n_samples,), default=None
+            Sample weights.
+        sample_indices : ndarray of shape (n_fit_samples,), default=None
+            Indices of the samples of X used to compute the thresholds. This
+            avoids copying X to fit on a subset of its samples. If None, all
+            samples are used.
 
         Returns
         -------
@@ -239,7 +245,13 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X = check_array(X, dtype=[X_DTYPE], ensure_all_finite=False)
         max_bins = self.n_bins - 1
         rng = check_random_state(self.random_state)
-        if self.subsample is not None and X.shape[0] > self.subsample:
+        if sample_indices is None:
+            n_fit_samples = X.shape[0]
+        else:
+            n_fit_samples = sample_indices.shape[0]
+            if sample_weight is not None:
+                sample_weight = sample_weight[sample_indices]
+        if self.subsample is not None and n_fit_samples > self.subsample:
             subsampling_probabilities = None
             if sample_weight is not None:
                 subsampling_probabilities = sample_weight / np.sum(sample_weight)
@@ -248,14 +260,18 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             # `sample_weight is None` to make sure that passing no weights is
             # statistically equivalent to passing unit weights.
             subset = rng.choice(
-                X.shape[0], self.subsample, p=subsampling_probabilities, replace=True
+                n_fit_samples, self.subsample, p=subsampling_probabilities, replace=True
             )
+            if sample_indices is not None:
+                subset = sample_indices[subset]
             X = X.take(subset, axis=0)
 
             # Add a switch to replace sample weights with None
             # since sample weights were already used in subsampling
             # and should not then be propagated to _find_binning_thresholds
             sample_weight = None
+        elif sample_indices is not None:
+            X = X.take(sample_indices, axis=0)
 
         if self.is_categorical is None:
             self.is_categorical_ = np.zeros(X.shape[1], dtype=np.uint8)
