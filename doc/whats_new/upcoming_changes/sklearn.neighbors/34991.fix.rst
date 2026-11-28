@@ -1,0 +1,5 @@
+- :class:`neighbors.KernelDensity` now validates `X` before estimating the
+  bandwidth when `bandwidth` is `"scott"` or `"silverman"`. Fitting a 1d array
+  now raises the usual input validation error instead of an `IndexError`, and
+  fitting a list of lists now works.
+  By :user:`区梓灏 <Nicholas022400701>`.
