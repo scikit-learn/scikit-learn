@@ -450,9 +450,8 @@ def _logistic_regression_path(
         alphas = [None] * len(Cs)  # to ease ignoring it
 
     xp, _, device = get_namespace_and_device(X)
-    # Only newton-cg has complete support of the array API, lbfgs still needs
-    # coef / w0 as numpy arrays.
-    coef_as_xp = solver == "newton-cg"
+    # L-BFGS still needs coef / w0 as NumPy arrays.
+    coef_as_xp = solver in ("newton-cg", "newton-cholesky")
 
     # Preprocessing.
     if check_input:
@@ -1806,9 +1805,11 @@ class LogisticRegression(
             l1_penalty = False
         else:
             l1_penalty = self.l1_ratio > 0
-        tags.array_api_support = self.solver in ("lbfgs", "newton-cg") or (
-            self.solver == "auto" and not l1_penalty
-        )
+        tags.array_api_support = self.solver in (
+            "lbfgs",
+            "newton-cg",
+            "newton-cholesky",
+        ) or (self.solver == "auto" and not l1_penalty)
         if self.solver == "liblinear":
             tags.classifier_tags.multi_class = False
 

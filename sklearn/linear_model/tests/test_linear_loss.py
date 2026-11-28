@@ -15,6 +15,7 @@ from sklearn import config_context
 from sklearn._loss.loss import (
     HalfBinomialLoss,
     HalfMultinomialLoss,
+    HalfMultinomialLossArrayAPI,
     HalfPoissonLoss,
 )
 from sklearn.datasets import make_low_rank_matrix
@@ -513,6 +514,39 @@ def test_multinomial_hessian_3_classes(sample_weight, global_random_seed):
     )
     assert_allclose(hess_expected, hess_expected.T)
     assert_allclose(hess, hess_expected)
+
+
+@pytest.mark.parametrize("flatten_coef", [False, True])
+def test_multinomial_gradient_hessian_array_api(flatten_coef):
+    """Match NumPy for both coefficient layouts, including the L2 diagonal."""
+    xp, device = _array_api_for_tests("array_api_strict", "device1", "float64")
+    n_classes = 3
+    loss = LinearModelLoss(HalfMultinomialLoss(n_classes=n_classes), fit_intercept=True)
+    X, y, coef = random_X_y_coef(loss, n_samples=15, n_features=4)
+    if flatten_coef:
+        coef = coef.ravel(order="F")
+    sample_weight = np.linspace(0, 2, num=X.shape[0])
+    expected_grad, expected_hess, _ = loss.gradient_hessian(
+        coef, X, y, sample_weight=sample_weight, l2_reg_strength=0.5
+    )
+
+    loss_xp = LinearModelLoss(
+        HalfMultinomialLossArrayAPI(n_classes=n_classes, xp=xp, device=device),
+        fit_intercept=True,
+    )
+    with config_context(array_api_dispatch=True):
+        grad, hess, warning = loss_xp.gradient_hessian(
+            xp.asarray(coef, device=device),
+            xp.asarray(X, device=device),
+            xp.asarray(y, device=device),
+            sample_weight=xp.asarray(sample_weight, device=device),
+            l2_reg_strength=0.5,
+        )
+
+    assert not warning
+    assert grad.device == hess.device == device
+    assert_allclose(_convert_to_numpy(grad, xp), expected_grad, atol=1e-14)
+    assert_allclose(_convert_to_numpy(hess, xp), expected_hess, atol=1e-14)
 
 
 def test_linear_loss_gradient_hessian_raises_wrong_out_parameters():
