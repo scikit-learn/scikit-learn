@@ -7,6 +7,7 @@ import inspect
 import itertools
 import math
 import os
+import sys
 from collections import namedtuple
 from functools import partial
 
@@ -14,7 +15,7 @@ import numpy
 import scipy
 import scipy.sparse as sp
 
-from sklearn._config import get_config
+from sklearn._config import config_context, get_config
 from sklearn.externals import array_api_compat
 from sklearn.externals import array_api_extra as xpx
 from sklearn.externals.array_api_compat import numpy as np_compat
@@ -250,6 +251,29 @@ def array_device(*array_list, remove_none=True, remove_types=REMOVE_TYPES_DEFAUL
             )
 
     return device
+
+
+def assert_same_namespace_and_device(array, expected, name=None):
+    """Assert `array` has the namespace and device of `expected`."""
+    with config_context(array_api_dispatch=True):
+        xp_array, _, device_array = get_namespace_and_device(array)
+        xp_expected, _, device_expected = get_namespace_and_device(expected)
+
+    if name is None:
+        caller_locals = sys._getframe(1).f_locals
+        # Non-local variables (e.g., `.classes_`) get named "array"
+        name = next((k for k, v in caller_locals.items() if v is array), "array")
+
+    prefix = f"{array_api_compat.__name__}."
+    expected_ns = xp_expected.__name__.removeprefix(prefix)
+    actual_ns = xp_array.__name__.removeprefix(prefix)
+    assert xp_array == xp_expected, (
+        f"`{name}` is in the wrong namespace, expected: {expected_ns}, got: {actual_ns}"
+    )
+    assert device_array == device_expected, (
+        f"`{name}` is in the wrong device, expected: {device_expected}, got: "
+        f"{device_array}"
+    )
 
 
 def size(x):
