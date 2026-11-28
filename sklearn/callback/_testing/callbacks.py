@@ -3,16 +3,19 @@
 
 """Callbacks used to test the callback machinery."""
 
+import copy
+
+from sklearn.callback import AutoPropagatedCallbackMixin, FitCallback
 from sklearn.callback._transport import Channel
 
 
-class RecordingCallback:
+class RecordingCallback(FitCallback):
     """A minimal callback used for smoke testing purposes.
 
     This callback keeps a record of the hooks called for introspection.
 
     This callback doesn't define `max_propagation_depth` and is therefore not an
-    `AutoPropagatedCallback`: it should not be propagated to sub-estimators.
+    auto-propagated callback: it should not be propagated to sub-estimators.
     """
 
     def __init__(self):
@@ -37,8 +40,8 @@ class RecordingCallback:
         *,
         X=None,
         y=None,
-        metadata=None,
         fitted_estimator=None,
+        requested_arg_begin=None,
     ):
         self._channel.send(
             {
@@ -48,8 +51,8 @@ class RecordingCallback:
                 "kwargs": {
                     "X": X,
                     "y": y,
-                    "metadata": metadata,
                     "fitted_estimator": fitted_estimator,
+                    "requested_arg_begin": copy.copy(requested_arg_begin),
                 },
             },
         )
@@ -61,8 +64,8 @@ class RecordingCallback:
         *,
         X=None,
         y=None,
-        metadata=None,
         fitted_estimator=None,
+        requested_arg_end=None,
     ):
         self._channel.send(
             {
@@ -72,8 +75,8 @@ class RecordingCallback:
                 "kwargs": {
                     "X": X,
                     "y": y,
-                    "metadata": metadata,
                     "fitted_estimator": fitted_estimator,
+                    "requested_arg_end": copy.copy(requested_arg_end),
                 },
             },
         )
@@ -100,27 +103,21 @@ class RecordingCallback:
         return len([rec for rec in self.record if rec["name"] == hook_name])
 
 
-class RecordingAutoPropagatedCallback(RecordingCallback):
+class RecordingAutoPropagatedCallback(AutoPropagatedCallbackMixin, RecordingCallback):
     """A minimal auto-propagated callback used for smoke testing purposes.
 
     This callback keeps a record of the hooks called for introspection.
 
     This callback defines `max_propagation_depth` and is therefore an
-    `AutoPropagatedCallback`: it should be set on a top-level estimator and propagated
+    auto-propagated callback: it should be set on a top-level estimator and propagated
     to sub-estimators.
     """
 
-    max_propagation_depth = None
+    _max_propagation_depth = None
 
 
 class NotValidCallback:
-    """Invalid callback since it's missing methods from the protocol."""
-
-    def setup(self, estimator, context):
-        pass  # pragma: no cover
-
-    def on_fit_task_end(self, estimator, context):
-        pass  # pragma: no cover
+    """Invalid callback since it's not inheriting from FitCallback."""
 
 
 class NotValidSetupPositionalCallback(RecordingCallback):
@@ -138,9 +135,9 @@ class NotValidSetupKwargOnlyCallback(RecordingCallback):
 
 
 class NotValidFitTaskBeginCallback(RecordingCallback):
-    """Invalid callback since it has invalid keyword-only parameters."""
+    """Invalid callback since it has invalid keyword parameters."""
 
-    def on_fit_task_begin(self, estimator, context, *, not_valid_kwarg=None):
+    def on_fit_task_begin(self, estimator, context, not_valid_kwarg=None):
         pass  # pragma: no cover
 
 
@@ -185,3 +182,24 @@ class NotRequiredKwargsCallback(RecordingCallback):
 
     def on_fit_task_end(self, estimator, context, *, X=None, y=None):
         super().on_fit_task_end(estimator, context, X=X, y=y)
+
+
+class SampleWeightCallback(RecordingCallback):
+    """A callback that accepts sample_weight in its hooks."""
+
+    def on_fit_task_begin(
+        self, estimator, context, *, X=None, y=None, sample_weight=None
+    ):
+        super().on_fit_task_begin(
+            estimator, context, X=X, y=y, requested_arg_begin=sample_weight
+        )
+
+    def on_fit_task_end(
+        self, estimator, context, *, X=None, y=None, sample_weight=None
+    ):
+        super().on_fit_task_end(
+            estimator, context, X=X, y=y, requested_arg_end=sample_weight
+        )
+
+    def _accept_sample_weight(self, hook_name):
+        return hook_name in ("on_fit_task_begin", "on_fit_task_end")

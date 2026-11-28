@@ -38,6 +38,12 @@ from sklearn.utils._param_validation import (
 )
 from sklearn.utils._sparse import _align_api_if_sparse
 from sklearn.utils.extmath import _incremental_mean_and_var, row_norms
+from sklearn.utils.metadata_routing import (
+    _manual_routing,
+    _raise_for_params,
+    _routing_enabled,
+    process_routing,
+)
 from sklearn.utils.sparsefuncs import (
     incr_mean_variance_axis,
     inplace_column_scale,
@@ -877,7 +883,8 @@ class StandardScaler(
             del self.mean_
             del self.var_
 
-    def fit(self, X, y=None, sample_weight=None):
+    @_fit_context(prefer_skip_nested_validation=True)
+    def fit(self, X, y=None, sample_weight=None, **params):
         """Compute the mean and std to be used for later scaling.
 
         Parameters
@@ -892,17 +899,22 @@ class StandardScaler(
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample.
 
+        **params : dict
+            Parameters safely routed to the callbacks if `enable_metadata_routing=True`.
+
         Returns
         -------
         self : object
             Fitted scaler.
         """
+        _raise_for_params(params, self, "fit")
+
         # Reset internal state before fitting
         self._reset()
-        return self.partial_fit(X, y, sample_weight)
+        return self._partial_fit(X, y, sample_weight, "fit", **params)
 
     @_fit_context(prefer_skip_nested_validation=True)
-    def partial_fit(self, X, y=None, sample_weight=None):
+    def partial_fit(self, X, y=None, sample_weight=None, **params):
         """Online computation of mean and std on X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
@@ -926,10 +938,22 @@ class StandardScaler(
         sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample.
 
+        **params : dict
+            Parameters safely routed to the callbacks if `enable_metadata_routing=True`.
+
         Returns
         -------
         self : object
             Fitted scaler.
+        """
+        _raise_for_params(params, self, "partial_fit")
+        return self._partial_fit(X, y, sample_weight, "partial_fit", **params)
+
+    def _partial_fit(self, X, y, sample_weight, routing_method, **params):
+        """Implementation of `fit` and `partial_fit`.
+
+        `routing_method` is the public method which was called, `"fit"` or
+        `"partial_fit"`, used to route the metadata.
         """
         xp, _, X_device = get_namespace_and_device(X)
         first_call = not hasattr(self, "n_samples_seen_")
@@ -943,13 +967,24 @@ class StandardScaler(
         )
         n_features = X.shape[1]
 
-        callback_ctx = self._init_callback_context()
-        callback_ctx.call_on_fit_task_begin(
-            estimator=self, X=X, y=y, metadata={"sample_weight": sample_weight}
-        )
-
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+
+        callback_ctx = self._init_callback_context()
+        if _routing_enabled():
+            routed_params = process_routing(
+                self, routing_method, sample_weight=sample_weight, **params
+            )
+        else:
+            routed_params = _manual_routing(
+                {"callback": self._get_manual_callback_params(sample_weight)}
+            )
+        callback_ctx.call_on_fit_task_begin(
+            estimator=self,
+            X=X,
+            y=y,
+            metadata=routed_params.callback.on_fit_task_begin,
+        )
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -1054,8 +1089,8 @@ class StandardScaler(
             estimator=self,
             X=X,
             y=y,
-            metadata={"sample_weight": sample_weight},
             reconstruction_attributes={},
+            metadata=routed_params.callback.on_fit_task_end,
         )
 
         return self

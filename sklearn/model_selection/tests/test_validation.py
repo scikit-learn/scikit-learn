@@ -13,6 +13,7 @@ from scipy.sparse import issparse
 
 from sklearn import config_context
 from sklearn.base import BaseEstimator, ClassifierMixin, clone, is_classifier
+from sklearn.callback._testing.callbacks import RecordingCallback
 from sklearn.cluster import KMeans
 from sklearn.datasets import (
     load_diabetes,
@@ -99,6 +100,7 @@ from sklearn.utils._testing import (
 )
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.utils.fixes import COO_CONTAINERS, CSR_CONTAINERS
+from sklearn.utils.metadata_routing import process_routing
 from sklearn.utils.validation import _num_samples
 
 
@@ -2103,6 +2105,84 @@ def test_fit_and_score_working():
     )
     result = _fit_and_score(**fit_and_score_args)
     assert result["parameters"] == fit_and_score_args["parameters"]
+
+
+@config_context(enable_metadata_routing=True)
+@pytest.mark.parametrize("callbacks_owner", ["meta-estimator", "sub-estimator"])
+def test_fit_and_score_with_callback_metadata(callbacks_owner):
+    """Test _fit_and_score with callbacks metadata.
+
+    Test with X_val and y_val metadata having the same length as X, to verify that it
+    does not get split like sample_weights or other metadata with the same length as X.
+    Also add another callback metadata with X's length to verify it does get split.
+    """
+    X, y = make_classification(n_samples=30, random_state=0)
+    X_val, y_val = make_classification(n_samples=30, random_state=0)
+    arg_to_split = np.ones(len(X))
+
+    cb_no_split = (
+        RecordingCallback()
+        .set_on_fit_task_begin_request(requested_arg_begin="X_val")
+        .set_on_fit_task_end_request(requested_arg_end="y_val")
+    )
+    cb_split = (
+        RecordingCallback()
+        .set_on_fit_task_begin_request(requested_arg_begin="arg_to_split")
+        .set_on_fit_task_end_request(requested_arg_end="arg_to_split")
+    )
+
+    est = LogisticRegression(solver="lbfgs")
+    search = GridSearchCV(est, {"alpha": [1]})
+    owner = search if callbacks_owner == "meta-estimator" else est
+    owner.set_callbacks(cb_no_split, cb_split)
+
+    # Route the metadata, as a meta-estimator does before calling `_fit_and_score`.
+    routed_params = process_routing(
+        search, "fit", X_val=X_val, y_val=y_val, arg_to_split=arg_to_split
+    )
+
+    train, test = next(ShuffleSplit().split(X))
+    _fit_and_score(
+        estimator=est,
+        X=X,
+        y=y,
+        scorer=make_scorer(accuracy_score),
+        train=train,
+        test=test,
+        verbose=0,
+        parameters={"max_iter": 100, "tol": 0.1},
+        fit_params=routed_params.estimator.fit,
+        score_params=routed_params.scorer.score,
+        caller=search,
+        callback_ctx=search._init_callback_context(),
+        callback_params=routed_params.callback,
+        error_score="raise",
+    )
+
+    # The last lbfgs task of LogisticRegression is a fake task: its on_fit_task_end
+    # hook does not get metadata.
+    n_fake_tasks = 1 if callbacks_owner == "sub-estimator" else 0
+
+    for callback, expected_n_samples in ((cb_no_split, len(X)), (cb_split, len(train))):
+        begin_args = [
+            rec["kwargs"]["requested_arg_begin"]
+            for rec in callback.record
+            if rec["name"] == "on_fit_task_begin"
+        ]
+        end_args = [
+            rec["kwargs"]["requested_arg_end"]
+            for rec in callback.record
+            if rec["name"] == "on_fit_task_end"
+        ]
+        assert begin_args
+        assert [arg.shape[0] for arg in begin_args] == [expected_n_samples] * len(
+            begin_args
+        )
+        assert end_args
+        assert sum(arg is None for arg in end_args) == n_fake_tasks
+        assert [arg.shape[0] for arg in end_args if arg is not None] == [
+            expected_n_samples
+        ] * (len(end_args) - n_fake_tasks)
 
 
 class DataDependentFailingClassifier(BaseEstimator):

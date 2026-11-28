@@ -6,46 +6,16 @@ Developing callbacks
 
 .. currentmodule:: sklearn.callback
 
-The callback protocol
----------------------
+The callback class
+------------------
 
-To be compatible with scikit-learn estimators, :term:`callbacks` must implement the
-:class:`FitCallback` `protocol
-<https://typing.python.org/en/latest/spec/protocol.html>`__:
+To be compatible with scikit-learn estimators, :term:`callbacks` must inherit from the
+:class:`FitCallback` class.
 
-.. code-block:: python
-
-    class FitCallback(Protocol):
-
-        def setup(self, estimator, context) -> None: ...
-
-        def on_fit_task_begin(
-            self,
-            estimator,
-            context,
-            *,
-            X=None,
-            y=None,
-            metadata=None,
-            fitted_estimator=None
-        ) -> None: ...
-
-        def on_fit_task_end(
-            self,
-            estimator,
-            context,
-            *,
-            X=None,
-            y=None,
-            metadata=None,
-            fitted_estimator=None
-        ) -> bool: ...
-
-        def teardown(self, estimator, context) -> None: ...
-
-The methods of the protocol, referred to as callback :term:`hooks`, will be called at
-specific steps during the fitting process of the estimator the callback is registered
-on:
+The following 4 methods provided by that class are referred to as callback
+:term:`hooks`. They will be called at specific steps during the fitting process of the
+estimator the callback is registered on. A callback class has to overwrite the ones it
+needs.
 
 - :meth:`~FitCallback.setup` and :meth:`~FitCallback.teardown`
 
@@ -94,20 +64,96 @@ attributes. See :class:`~CallbackContext` for more details.
     Callbacks should not rely on it to :term:`predict`, :term:`transform`, etc ... but
     rather use the `fitted_estimator` when available.
 
+Requesting metadata
+-------------------
+
+In addition to values produced by the estimator (such as `X`, `y`, and
+`fitted_estimator`), callbacks can receive routed metadata (e.g. `sample_weight`). To be
+requestable, parameters must be declared as keyword-only parameters of the hook. The
+routed metadata reach a hook only when :ref:`metadata routing <metadata_routing>` is
+enabled and the callback requested it for that hook. Commonly used metadata such as
+`sample_weight`, `X_val`, `y_val` and `sample_weight_val` are expected to be
+automatically requested by the callback, see :ref:`auto-requested metadata
+<metadata_routing_auto_request_user>`. For example, the `sample_weight` metadata is
+automatically requested for the `on_fit_task_end` hook in the following example:
+
+.. code-block:: python
+
+    from sklearn.callback import FitCallback
+
+    class MyCallback(FitCallback):
+
+        def on_fit_task_end(self, estimator, context, *, sample_weight=None):
+            ...
+
+        def get_metadata_routing(self):
+            requests = super().get_metadata_routing()
+            requests.on_fit_task_end.add_auto_request("sample_weight")
+            return requests
+
+
+.. dropdown:: Manually requesting metadata
+
+    When auto-requests are disabled or if the metadata must be requested under
+    different names, manual requests can be made using the
+    `set_on_fit_task_begin_request` or `set_on_fit_task_end_request` methods.
+    For example:
+
+    .. code-block:: python
+
+        from sklearn.callback import FitCallback
+
+        class MyCallback(FitCallback):
+
+            def on_fit_task_end(self, estimator, context, *, sample_weight=None):
+                ...
+
+        callback = MyCallback().set_on_fit_task_end_request(sample_weight=True)
+
+    `True` requests the parameter under its own name. A string requests a `fit` argument
+    under a different name, for example
+    `set_on_fit_task_end_request(sample_weight="sw_val")`.
+
+
+.. dropdown:: Forwarding `sample_weight` while metadata routing is disabled
+
+    Until metadata routing is always enabled, `sample_weight` can still be forwarded
+    while routing is disabled. Override `_accept_sample_weight` and return `True` for
+    each hook that should receive it. For example, to have a callback accepting
+    `sample_weight` only for the `on_fit_task_end` hook while routing is disabled, the
+    `_accept_sample_weight` method should look like this:
+
+    .. code-block:: python
+
+        class MyCallback(FitCallback):
+
+            def _accept_sample_weight(self, hook_name):
+                """Whether the callback accepts sample_weight for a given hook."""
+                if hook_name == "on_fit_task_end":
+                    return True
+                return False
+
+
 Auto-propagated callbacks
 -------------------------
 
 :term:`Auto-propagated <auto-propagated>` callbacks, i.e. callbacks that are expected to
-be propagated from meta-estimators to their sub-estimators, must implement the
-:class:`~AutoPropagatedCallback` protocol, an extension of the :class:`~FitCallback`
-protocol:
+be propagated from meta-estimators to their sub-estimators, must inherit from the
+:class:`~AutoPropagatedCallbackMixin` class in addition to the :class:`~FitCallback`
+class. They must also set the `max_propagation_depth` property to indicate the maximum
+depth of the propagation. For example:
 
 .. code-block:: python
 
-    class AutoPropagatedCallback(FitCallback, Protocol):
+    class MyAutopropagatedCallback(AutoPropagatedCallbackMixin, FitCallback):
+        def __init__(self, max_propagation_depth=2):
+            self.max_propagation_depth = max_propagation_depth
 
-        @property
-        def max_propagation_depth(self) -> int | None: ...
+        def on_fit_task_begin(self, estimator, context, *, X=None, y=None):
+            ...
+
+        def on_fit_task_end(self, estimator, context, *, X=None, y=None):
+            ...
 
 By contrast with regular callbacks that are only invoked at the tasks of the estimator
 on which they are registered, auto-propagated callbacks are invoked at the tasks of
@@ -147,7 +193,9 @@ every time it is invoked:
 
 .. code-block:: python
 
-    class MyCallback:
+    from sklearn.callback import FitCallback
+
+    class MyCallback(FitCallback):
 
         def setup(self, estimator, context):
             print(f"Setup hook is being called in the {context.task_name} task.")
@@ -165,8 +213,9 @@ every time it is invoked:
             self, estimator, context, *, X=None, y=None, fitted_estimator=None
         ):
             msg = f"{context.task_name} task is ending."
-            mean_squared_error = ((y - fitted_estimator.predict(X))**2).mean()
-            msg += f" With a mean squared error of {mean_squared_error}."
+            if y is not None and X is not None and fitted_estimator is not None:
+                mean_squared_error = ((y - fitted_estimator.predict(X))**2).mean()
+                msg += f" With a mean squared error of {mean_squared_error}."
             print(msg)
 
 

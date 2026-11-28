@@ -11,7 +11,7 @@ from scipy import sparse, stats
 
 from sklearn import config_context, datasets
 from sklearn.base import clone
-from sklearn.callback._testing.callbacks import RecordingCallback
+from sklearn.callback._testing.callbacks import RecordingCallback, SampleWeightCallback
 from sklearn.exceptions import NotFittedError
 from sklearn.externals._packaging.version import parse as parse_version
 from sklearn.metrics.pairwise import linear_kernel
@@ -2991,3 +2991,33 @@ def test_standard_scaler_callback_support(fit_method):
     task_end_record = [rec for rec in cb.record if rec["name"] == "on_fit_task_end"][0]
     fitted_scaler = task_end_record["kwargs"]["fitted_estimator"]
     assert_allclose(fitted_scaler.transform(X), Xt)
+
+
+@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
+@skip_callback_test_if_wasm
+def test_standard_scaler_callbacks_receive_sample_weight(fit_method):
+    """Test that sample_weight is forwarded to callbacks even if routing is disabled."""
+
+    cb = SampleWeightCallback()
+    scaler = StandardScaler().set_callbacks(cb)
+    X = np.random.RandomState(0).random_sample((10, 2))
+    sample_weight = np.random.RandomState(0).randint(0, 5, size=X.shape[0])
+    getattr(scaler, fit_method)(X, sample_weight=sample_weight)
+
+    for rec in cb.record:
+        if rec["name"] == "on_fit_task_begin":
+            assert_array_equal(rec["kwargs"]["requested_arg_begin"], sample_weight)
+        elif rec["name"] == "on_fit_task_end":
+            assert_array_equal(rec["kwargs"]["requested_arg_end"], sample_weight)
+
+
+@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
+def test_standard_scaler_passing_params_without_enabling_metadata_routing(fit_method):
+    """Test that the right error message is raised when metadata params
+    are passed while not supported when `enable_metadata_routing=False`."""
+    X = np.random.RandomState(0).random_sample((10, 2))
+    msg = "is only supported if enable_metadata_routing=True"
+
+    with config_context(enable_metadata_routing=False):
+        with pytest.raises(ValueError, match=msg):
+            getattr(StandardScaler(), fit_method)(X, extra_param=1.0)

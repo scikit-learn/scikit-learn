@@ -2463,9 +2463,12 @@ class SimpleEstimator(BaseEstimator):
         return X - 1
 
 
-# split and partial_fit not relevant for pipelines
+# split, partial_fit, on_fit_task_begin and on_fit_task_end not relevant for pipelines
 @pytest.mark.parametrize(
-    "parent_method", sorted(set(METHODS) - {"split", "partial_fit"})
+    "parent_method",
+    sorted(
+        set(METHODS) - {"split", "partial_fit", "on_fit_task_begin", "on_fit_task_end"}
+    ),
 )
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_for_pipeline(parent_method):
@@ -2549,10 +2552,15 @@ def test_metadata_routing_for_pipeline(parent_method):
     )
 
 
-# split and partial_fit not relevant for pipelines
+# split, partial_fit, on_fit_task_begin and on_fit_task_end not relevant for pipelines
 # sorted is here needed to make `pytest -nX` work. W/o it, tests are collected
 # in different orders between workers and that makes it fail.
-@pytest.mark.parametrize("method", sorted(set(METHODS) - {"split", "partial_fit"}))
+@pytest.mark.parametrize(
+    "method",
+    sorted(
+        set(METHODS) - {"split", "partial_fit", "on_fit_task_begin", "on_fit_task_end"}
+    ),
+)
 @config_context(enable_metadata_routing=True)
 def test_metadata_routing_error_for_pipeline(method):
     """Test that metadata is not routed for pipelines when not requested."""
@@ -2618,7 +2626,7 @@ def test_sample_weight_routing_auto_request():
         assert est_routing.fit.requests.get("sample_weight") is True
         assert est_routing.transform.requests.get("sample_weight") is True
         assert est_routing.predict.requests.get("sample_weight") is True
-        assert scaler_routing.fit.requests.get("sample_weight") is True
+        assert scaler_routing._self_request.fit.requests.get("sample_weight") is True
 
         pipe.fit(X, y, sample_weight=sample_weight)
         assert_allclose(pipe[-1].sample_weight_, sample_weight)
@@ -2633,7 +2641,7 @@ def test_sample_weight_routing_auto_request():
         assert est_routing.fit.requests.get("sample_weight") is None
         assert est_routing.transform.requests.get("sample_weight") is None
         assert est_routing.predict.requests.get("sample_weight") is None
-        assert scaler_routing.fit.requests.get("sample_weight") is None
+        assert scaler_routing._self_request.fit.requests.get("sample_weight") is None
 
         with pytest.raises(UnsetMetadataPassedError):
             pipe.fit(X, y, sample_weight=sample_weight)
@@ -2868,6 +2876,73 @@ def test_pipeline_with_callbacks_on_steps():
     assert est_callback.count_hooks("teardown") == 1
     assert est_callback.count_hooks("on_fit_task_begin") == 1 + max_iter
     assert est_callback.count_hooks("on_fit_task_end") == 1 + max_iter
+
+
+@skip_callback_test_if_wasm
+@config_context(enable_metadata_routing=True)
+@pytest.mark.parametrize(
+    "callback_class", [RecordingCallback, RecordingAutoPropagatedCallback]
+)
+def test_pipeline_callbacks_metadata_routing(callback_class):
+    """Check that a callback set on a pipeline can request metadata and receives it
+    in the hooks of the tasks of the pipeline.
+    """
+    X, y = load_iris(return_X_y=True)
+    my_arg = np.arange(X.shape[0])
+
+    callback = callback_class().set_on_fit_task_end_request(requested_arg_end="my_arg")
+    pipe = Pipeline(
+        [("sc", StandardScaler()), ("est", MaxIterEstimator(max_iter=2))]
+    ).set_callbacks(callback)
+    pipe.fit(X, y, my_arg=my_arg)
+
+    pipe_task_ends = {
+        rec["context"].task_name: rec
+        for rec in callback.record
+        if rec["name"] == "on_fit_task_end" and rec["estimator"] is pipe
+    }
+    if callback_class is RecordingCallback:
+        # root task + task of "sc" + task of the final estimator "est"
+        expected_tasks = {"fit", "fit-transform-sc", "fit-final-estimator"}
+    else:
+        # The tasks of the steps are handled by the steps' own hooks, as the callback
+        # is propagated to them.
+        expected_tasks = {"fit"}
+    assert set(pipe_task_ends) == expected_tasks
+    for rec in pipe_task_ends.values():
+        assert_array_equal(rec["kwargs"]["requested_arg_end"], my_arg)
+
+
+@skip_callback_test_if_wasm
+@config_context(enable_metadata_routing=True)
+def test_pipeline_callbacks_metadata_transform_input():
+    """Check that the metadata of the callbacks listed in `transform_input` is
+    transformed by the previous steps, like the metadata of the steps.
+    """
+    X, y = load_iris(return_X_y=True)
+    my_arg = X + 1
+
+    callback = RecordingCallback().set_on_fit_task_end_request(
+        requested_arg_end="my_arg"
+    )
+    pipe = Pipeline(
+        [("sc", StandardScaler()), ("est", MaxIterEstimator(max_iter=2))],
+        transform_input=["my_arg"],
+    ).set_callbacks(callback)
+    pipe.fit(X, y, my_arg=my_arg)
+
+    pipe_task_ends = {
+        rec["context"].task_name: rec["kwargs"]["requested_arg_end"]
+        for rec in callback.record
+        if rec["name"] == "on_fit_task_end" and rec["estimator"] is pipe
+    }
+    # The data is not transformed for the first task, and transformed by "sc" for the
+    # final estimator's task.
+    assert_array_equal(pipe_task_ends["fit"], my_arg)
+    assert_array_equal(pipe_task_ends["fit-transform-sc"], my_arg)
+    assert_allclose(
+        pipe_task_ends["fit-final-estimator"], pipe.named_steps["sc"].transform(my_arg)
+    )
 
 
 @skip_callback_test_if_wasm

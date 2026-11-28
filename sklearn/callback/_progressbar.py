@@ -6,6 +6,7 @@ from numbers import Integral
 from queue import Queue
 from threading import Thread
 
+from sklearn.callback._base import AutoPropagatedCallbackMixin, FitCallback
 from sklearn.callback._callback_context import get_context_path
 from sklearn.callback._transport import Channel
 from sklearn.utils._optional_dependencies import check_rich_support
@@ -18,7 +19,7 @@ _run_queues = {}
 _run_monitors = {}
 
 
-class ProgressBar:
+class ProgressBar(AutoPropagatedCallbackMixin, FitCallback):
     """Callback that displays progress bars for each iterative step of an estimator.
 
     Parameters
@@ -81,6 +82,16 @@ class ProgressBar:
         _run_monitors[context.root_uuid] = progress_monitor
 
     def on_fit_task_begin(self, estimator, context):
+        """Method called at the beginning of each fit task of the estimator.
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
+        context : `sklearn.callback.CallbackContext` instance
+            Context of the corresponding task.
+        """
         # A new progress bar is created at the beginning of each task that is not a
         # leaf, except if it's also the root task of an estimator.
         if context.root_uuid not in self._disabled_runs and (
@@ -106,6 +117,16 @@ class ProgressBar:
             )
 
     def on_fit_task_end(self, estimator, context):
+        """Method called at the end of each fit task of the estimator.
+
+        Parameters
+        ----------
+        estimator : estimator instance
+            The estimator calling this callback hook.
+
+        context : `sklearn.callback.CallbackContext` instance
+            Context of the corresponding task.
+        """
         # The path is enough to update the progress of the task and its ancestors.
         if context.root_uuid in self._disabled_runs:
             return

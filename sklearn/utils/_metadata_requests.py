@@ -108,6 +108,12 @@ from sklearn import get_config
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.utils._bunch import Bunch
 
+CALLBACK_METHODS = ["on_fit_task_begin", "on_fit_task_end"]
+
+# Parameters of the callback hooks that are provided by the estimator or by the callback
+# context, and not by metadata routing. They can't be requested.
+CALLBACK_NOT_ROUTED_PARAMS = {"estimator", "context", "X", "y", "fitted_estimator"}
+
 # Only the following methods are supported in the routing mechanism. Adding new
 # methods at the moment involves monkeypatching this list.
 # Note that if this list is changed or monkeypatched, the corresponding method
@@ -124,7 +130,8 @@ SIMPLE_METHODS = [
     "split",
     "transform",
     "inverse_transform",
-]
+] + CALLBACK_METHODS
+
 
 # These methods are a composite of other methods and one cannot set their
 # requests directly. Instead they should be set by setting the requests of the
@@ -1440,7 +1447,7 @@ def get_routing_for_object(obj=None):
     >>> type(get_routing_for_object(pipe))
     <class 'sklearn.utils._metadata_requests.MetadataRouter'>
     >>> type(get_routing_for_object(pipe.named_steps.scaler))
-    <class 'sklearn.utils._metadata_requests.MetadataRequest'>
+    <class 'sklearn.utils._metadata_requests.MetadataRouter'>
     >>> type(get_routing_for_object(pipe.named_steps.lr_cv))
     <class 'sklearn.utils._metadata_requests.MetadataRouter'>
     """
@@ -1689,6 +1696,8 @@ class _MetadataRequester:
         def set_split_request(self, **kwargs): pass
         def set_transform_request(self, **kwargs): pass
         def set_inverse_transform_request(self, **kwargs): pass
+        def set_on_fit_task_begin_request(self, **kwargs): pass
+        def set_on_fit_task_end_request(self, **kwargs): pass
         # fmt: on
 
     def __init_subclass__(cls, **kwargs):
@@ -1817,6 +1826,8 @@ class _MetadataRequester:
 
         ignore_params = set() if ignore_params is None else set(ignore_params)
         ignore_params.update({"X", "y", "Y", "Xt", "yt"})
+        if method_name in CALLBACK_METHODS:
+            ignore_params.update(CALLBACK_NOT_ROUTED_PARAMS)
 
         params: defaultdict[str, Optional[Union[bool, str]]] = defaultdict(
             str,

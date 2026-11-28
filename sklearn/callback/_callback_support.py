@@ -3,14 +3,30 @@
 
 import functools
 import inspect
+from collections import UserList
 from contextlib import contextmanager
 
-from sklearn.callback._base import AutoPropagatedCallback, FitCallback
+from sklearn.callback._base import AutoPropagatedCallbackMixin, FitCallback
 from sklearn.callback._callback_context import CallbackContext
+from sklearn.utils import Bunch
+from sklearn.utils.metadata_routing import MetadataRouter, MethodMapping
+
+
+class MultiCallback(UserList):
+    """A class wrapping the callback list, to make the metadata routing cleaner."""
+
+    def get_metadata_routing(self):
+        router = MetadataRouter(owner=self).add(
+            **{f"callback_{i}": callback for i, callback in enumerate(self.data)},
+            method_mapping=MethodMapping()
+            .add(caller="on_fit_task_begin", callee="on_fit_task_begin")
+            .add(caller="on_fit_task_end", callee="on_fit_task_end"),
+        )
+        return router
 
 
 def validate_callbacks(callbacks):
-    """Validate that callbacks follow the protocol and correctly implement hooks.
+    """Validate that callbacks inherit from `FitCallback` and implement valid hooks.
 
     Also check that the same callback instance is not provided multiple times.
     """
@@ -22,20 +38,18 @@ def validate_callbacks(callbacks):
                 f"{callback_name}. An instance can only be registered once."
             )
 
-        # isinstance for a Protocol returns True for classes too (not only instances).
-        # Hence the additional check for classes.
-        if not isinstance(callback, FitCallback) or isinstance(callback, type):
+        if not isinstance(callback, FitCallback):
             raise TypeError(
-                f"Callbacks must be instances following the FitCallback protocol. "
-                f"Got {callback_name}."
+                f"Callbacks must be instances of FitCallback. Got {callback_name}."
             )
 
-        # isinstance for Protocols does not verify the methods' signatures.
         for hook_name in ("setup", "teardown", "on_fit_task_begin", "on_fit_task_end"):
             hook = getattr(callback, hook_name)
             params = list(inspect.signature(hook).parameters.values())
 
-            positional = [p.name for p in params if p.kind != p.KEYWORD_ONLY]
+            positional = [
+                p.name for p in params if p.kind not in (p.KEYWORD_ONLY, p.VAR_KEYWORD)
+            ]
             expected_positional = ["estimator", "context"]
             if positional != expected_positional:
                 raise TypeError(
@@ -51,15 +65,6 @@ def validate_callbacks(callbacks):
                         f"{callback_name} must be {hook_name}(self, estimator, context)"
                     )
                 continue
-
-            kwarg_only = {p.name for p in params if p.kind == p.KEYWORD_ONLY}
-            valid_kwargs = {"X", "y", "metadata", "fitted_estimator"}
-            if invalid := kwarg_only - valid_kwargs:
-                raise TypeError(
-                    f"Hook {hook_name!r} of the callback {callback_name} has "
-                    f"parameters that are not valid: {invalid}. The valid parameters "
-                    f"are: {valid_kwargs}."
-                )
 
 
 class CallbackSupportMixin:
@@ -88,7 +93,7 @@ class CallbackSupportMixin:
     def _set_callbacks(self, callbacks):
         """set_callbacks without validation."""
         if callbacks:
-            self._skl_callbacks = list(callbacks)
+            self._skl_callbacks = MultiCallback(list(callbacks))
         else:
             self.__dict__.pop("_skl_callbacks", None)
 
@@ -141,13 +146,84 @@ class CallbackSupportMixin:
             # Only call the setup hook of callbacks that are not propagated from a
             # meta-estimator.
             if not (
-                isinstance(callback, AutoPropagatedCallback)
+                isinstance(callback, AutoPropagatedCallbackMixin)
                 and hasattr(self, "_parent_callback_ctx")
             ):
                 self._skl_callbacks_to_teardown.append(callback)
                 callback.setup(estimator=self, context=self._callback_fit_ctx)
 
         return self._callback_fit_ctx
+
+    def _add_callback_routing(self, router, callers=("fit",)):
+        """Utility method to add the routing to callbacks to the estimator's router.
+
+        `callers` are the methods of the estimator that call the callback hooks. The
+        `partial_fit` method is added if the estimator has one.
+        """
+        method_mapping = MethodMapping()
+        for caller in callers:
+            method_mapping.add(caller=caller, callee="on_fit_task_begin").add(
+                caller=caller, callee="on_fit_task_end"
+            )
+        if hasattr(self, "partial_fit"):
+            method_mapping.add(caller="partial_fit", callee="on_fit_task_begin").add(
+                caller="partial_fit", callee="on_fit_task_end"
+            )
+        router.add(
+            callback=getattr(self, "_skl_callbacks", MultiCallback()),
+            method_mapping=method_mapping,
+        )
+        return router
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self).add_self_request(self)
+        return self._add_callback_routing(router)
+
+    def _get_manual_callback_params(self, sample_weight):
+        # TODO(slep006): remove when metadata routing is the only way
+        """Build the shared callback params used when metadata routing is disabled.
+
+        This is used to forward sample_weight to callback hooks that accept them even
+        if metadata routing is disabled.
+
+        This is the first of the two manual-routing steps. Pass the result to
+        `_manual_routing` as the ``callback`` child::
+
+            params = self._get_manual_callback_params(sample_weight)
+            routed_params = _manual_routing({"callback": params})
+
+        Parameters
+        ----------
+        sample_weight : array-like or None
+            Sample weights passed to `fit`. ``None`` forwards nothing.
+
+        Returns
+        -------
+        callback_params : dict
+            ``{"on_fit_task_begin": params, "on_fit_task_end": params}``. ``params``
+            is empty, or ``{"sample_weight": sample_weight}`` when some callback
+            accepts it on that hook.
+        """
+        callback_params = {"on_fit_task_begin": Bunch(), "on_fit_task_end": Bunch()}
+        if sample_weight is None:
+            return callback_params
+        for hook_name in ("on_fit_task_begin", "on_fit_task_end"):
+            for cb in getattr(self, "_skl_callbacks", []):
+                if cb._accept_sample_weight(hook_name):
+                    callback_params[hook_name] = {"sample_weight": sample_weight}
+                    break
+        return callback_params
 
 
 @contextmanager

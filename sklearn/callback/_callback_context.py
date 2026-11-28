@@ -9,7 +9,12 @@ import warnings
 from contextlib import contextmanager
 from datetime import datetime, timezone
 
-from sklearn.callback._base import AutoPropagatedCallback
+from sklearn.callback._base import AutoPropagatedCallbackMixin
+from sklearn.utils.metadata_routing import (
+    CALLBACK_NOT_ROUTED_PARAMS,
+    _routing_enabled,
+    get_routing_for_object,
+)
 
 _cached_signature = functools.lru_cache()(inspect.signature)
 
@@ -98,6 +103,11 @@ class CallbackContext:
         # We don't store the estimator in the context to avoid circular references
         # because the estimator already holds a reference to the context.
         new_ctx._callbacks = getattr(estimator, "_skl_callbacks", [])
+        new_ctx._callbacks_routing = (
+            get_routing_for_object(new_ctx._callbacks)
+            if new_ctx._callbacks and _routing_enabled()
+            else None
+        )
         new_ctx.estimator_name = estimator.__class__.__name__
         new_ctx.task_name = task_name
         new_ctx.task_id = task_id
@@ -155,6 +165,7 @@ class CallbackContext:
         new_ctx = cls.__new__(cls)
 
         new_ctx._callbacks = parent_context._callbacks
+        new_ctx._callbacks_routing = parent_context._callbacks_routing
         new_ctx.estimator_name = parent_context.estimator_name
         new_ctx._propagation_depth = parent_context._propagation_depth
         new_ctx.task_name = task_name
@@ -304,26 +315,28 @@ class CallbackContext:
         # Keep a cache of the evaluated args to evaluate them only once.
         evaluated_args = {}
 
-        for callback in self._callbacks:
+        for i, callback in enumerate(self._callbacks):
             if callback in getattr(self, "_propagated_callbacks", []):
-                # Only call the `on_fit_task_end` hook of callbacks that are not
-                # propagated. For propagated callbacks, the hook will be called by the
+                # Only call the `on_fit_task_...` hooks of callbacks that are not
+                # propagated. For propagated callbacks, the hooks will be called by the
                 # sub-estimator's root context (both represent the same task).
                 continue
+
+            args_to_pass = (
+                kwargs["metadata"].get(f"callback_{i}", {}).get(hook_name, {})
+            )
 
             hook = getattr(callback, hook_name)
             # Cache the signature of the underlying function rather than that of the
             # bound method, which would make the cache hold references to the callbacks
             # themselves and keep the resources they own alive.
             signature = _cached_signature(getattr(hook, "__func__", hook))
-            params_names = {
+            kwarg_names = {
                 p.name
                 for p in signature.parameters.values()
                 if p.kind == p.KEYWORD_ONLY
             }
-
-            args_to_pass = {}
-            for param_name in params_names:
+            for param_name in CALLBACK_NOT_ROUTED_PARAMS & kwarg_names:
                 if param_name not in evaluated_args:
                     # Special case: "reconstruction_attributes" is not directly passed
                     # to the hook. A ready to predict/transform estimator is created
@@ -370,8 +383,11 @@ class CallbackContext:
         y : array-like or None, default=None
             The training targets of the current task.
 
-        metadata : dict or None, default=None
-            A dictionary containing training metadata for the current task.
+        metadata : dict , Bunch or None, default=None
+            If `enable_metadata_routing=True`: Parameters requested and accepted by
+            callbacks.
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
         reconstruction_attributes : dict or None, default=None
             A dictionary of the sufficient fitted attributes needed to construct a
@@ -380,6 +396,12 @@ class CallbackContext:
             stopped at the beginning of this task. The `fitted_estimator` is the
             object that will be passed to the callbacks, if required.
         """
+        if not metadata:
+            metadata = {}
+        elif _routing_enabled():
+            metadata = self._route_metadata(metadata, "on_fit_task_begin")
+        else:
+            metadata = self._get_manual_routing_params(metadata, "on_fit_task_begin")
         self._call_hooks(
             estimator,
             hook_name="on_fit_task_begin",
@@ -412,8 +434,11 @@ class CallbackContext:
         y : array-like or None, default=None
             The training targets of the current task.
 
-        metadata : dict or None, default=None
-            A dictionary containing training metadata of the current task.
+        metadata : dict, Bunch or None, default=None
+            If `enable_metadata_routing=True`: Parameters requested and accepted by
+            callbacks.
+            See :ref:`Metadata Routing User Guide <metadata_routing>` for more
+            details.
 
         reconstruction_attributes : dict or None, default=None
             A dictionary of the sufficient fitted attributes needed to construct a
@@ -428,6 +453,12 @@ class CallbackContext:
             Whether or not to stop the current level of iterations at this end of this
             task.
         """
+        if not metadata:
+            metadata = {}
+        elif _routing_enabled():
+            metadata = self._route_metadata(metadata, "on_fit_task_end")
+        else:
+            metadata = self._get_manual_routing_params(metadata, "on_fit_task_end")
         return self._call_hooks(
             estimator,
             hook_name="on_fit_task_end",
@@ -436,6 +467,68 @@ class CallbackContext:
             metadata=metadata,
             reconstruction_attributes=reconstruction_attributes,
         )
+
+    def _route_metadata(self, metadata, hook_name):
+        """Route one hook's metadata to the callbacks, when routing is enabled.
+
+        Equivalent to `process_routing(self._callbacks, hook_name, **metadata)`, except
+        that the routing of the callbacks is built only once, when the root context is
+        created, since their requests do not change during the context tree's lifetime.
+
+        Parameters
+        ----------
+        metadata : dict or Bunch
+            Non-empty params for this hook.
+
+        hook_name : {"on_fit_task_begin", "on_fit_task_end"}
+            Hook these params are routed to.
+
+        Returns
+        -------
+        routed_params : Bunch
+            ``{"callback_{i}": {hook_name: {param: value}}}`` for each callback.
+        """
+        self._callbacks_routing.validate_metadata(params=metadata, method=hook_name)
+        return self._callbacks_routing.route_params(params=metadata, caller=hook_name)
+
+    def _get_manual_routing_params(self, metadata, hook_name):
+        # TODO(slep006): remove when metadata routing is the only way
+        """Split one hook's shared params into per-callback params.
+
+        This is the second manual-routing step, used when metadata routing is
+        disabled. ``metadata`` is one hook entry from
+        `CallbackSupportMixin._get_manual_callback_params`, after `_manual_routing`,
+        for example ``{"sample_weight": weights}``.
+
+        The result is what `_call_hooks` indexes. Key ``callback_{i}`` holds the
+        kwargs for the callback at position ``i``. Only callbacks that accept
+        ``sample_weight`` on ``hook_name`` get an entry. The others are omitted and
+        receive no routed kwargs.
+
+        Parameters
+        ----------
+        metadata : dict or Bunch
+            Params for this hook, shared by all callbacks.
+
+        hook_name : {"on_fit_task_begin", "on_fit_task_end"}
+            Hook these params are routed to.
+
+        Returns
+        -------
+        params : dict
+            ``{"callback_{i}": {hook_name: {"sample_weight": value}}}`` for each
+            callback that accepts ``sample_weight``. Empty when ``sample_weight``
+            is not in ``metadata``.
+        """
+        params = {}
+        if "sample_weight" not in metadata:
+            return params
+        for i, cb in enumerate(self._callbacks):
+            if cb._accept_sample_weight(hook_name):
+                params[f"callback_{i}"] = {
+                    hook_name: {"sample_weight": metadata["sample_weight"]}
+                }
+        return params
 
     @contextmanager
     def propagate_callback_context(self, sub_estimator):
@@ -458,7 +551,7 @@ class CallbackContext:
         bad_callbacks = [
             callback.__class__.__name__
             for callback in getattr(sub_estimator, "_skl_callbacks", [])
-            if isinstance(callback, AutoPropagatedCallback)
+            if isinstance(callback, AutoPropagatedCallbackMixin)
         ]
         if bad_callbacks:
             raise TypeError(
@@ -478,7 +571,7 @@ class CallbackContext:
         callbacks_to_propagate = [
             callback
             for callback in self._callbacks
-            if isinstance(callback, AutoPropagatedCallback)
+            if isinstance(callback, AutoPropagatedCallbackMixin)
             and (
                 callback.max_propagation_depth is None
                 or self._propagation_depth < callback.max_propagation_depth

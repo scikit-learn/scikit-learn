@@ -1,0 +1,12 @@
+- Callbacks can now receive routed metadata such as ``sample_weight``.
+  :class:`callback.FitCallback` requests it per hook with
+  ``set_on_fit_task_begin_request`` and ``set_on_fit_task_end_request``.
+  :class:`callback.ScoringMonitor` can now score on a validation set via ``scoring_val``
+  when metadata routing is enabled. It routes metadata to the training and validation
+  scorers. It requests ``X_val`` and ``y_val`` automatically and makes the validation
+  scorer automatically request ``sample_weight_val`` (if that scorer accepts
+  sample_weight). When routing is disabled, ``sample_weight`` is still forwarded to
+  any callback hook that accepts it. Callbacks indicate which hooks accept
+  ``sample_weight`` by overriding the ``_accept_sample_weight`` method.
+  By :user:`François Paugam <FrancoisPgm>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.

@@ -2286,6 +2286,7 @@ def _check_method_params(X, params, indices=None):
 
     indices : array-like of shape (n_samples,), default=None
         Indices to be selected if the parameter has the same size as `X`.
+        ``X_val``, ``y_val`` and ``sample_weight_val`` are never resampled.
 
     Returns
     -------
@@ -2296,6 +2297,14 @@ def _check_method_params(X, params, indices=None):
 
     method_params_validated = {}
     for param_key, param_value in params.items():
+        # Validation data, i.e. `X_val`, `y_val` and `sample_weight_val` are not
+        # resampled with `indices`.
+        # TODO XXX: a more general solution for this problem is still needed, as
+        # aliased validation data would still get resampled.
+        if param_key in ("X_val", "y_val", "sample_weight_val"):
+            method_params_validated[param_key] = param_value
+            continue
+
         if (
             not _is_arraylike(param_value) and not sp.issparse(param_value)
         ) or _num_samples(param_value) != _num_samples(X):

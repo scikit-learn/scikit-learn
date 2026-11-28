@@ -27,6 +27,23 @@ be registered on an estimator to insert custom logic like monitoring progress or
 metrics, without modifying the underlying learning algorithm. The registered callbacks
 are invoked at specific steps of the :term:`fitting` process.
 
+The examples in this section require the following imports and data::
+
+    >>> from sklearn.callback import ProgressBar, ScoringMonitor
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X, X_val, y, y_val = train_test_split(X, y, test_size=0.25, random_state=42)
+
+The examples will use the :class:`~ScoringMonitor` callback with a scorer on the
+validation data, which requires the :ref:`Metadata Routing API <metadata_routing>` to be
+enabled::
+
+    >>> import sklearn
+    >>> sklearn.set_config(enable_metadata_routing=True)
+
 Registering callbacks
 *********************
 
@@ -34,30 +51,25 @@ Estimators that support callbacks expose a :meth:`~CallbackSupportMixin.set_call
 method to register callbacks on them. The following example shows how to register a
 :class:`~ProgressBar` callback on a :class:`~sklearn.linear_model.LogisticRegression`::
 
-    >>> from sklearn.callback import ProgressBar
-    >>> from sklearn.linear_model import LogisticRegression
     >>> progress_bar = ProgressBar()
-    >>> logreg = LogisticRegression(max_iter=200)
+    >>> logreg = LogisticRegression(max_iter=200, solver="lbfgs")
     >>> logreg.set_callbacks(progress_bar)
-    LogisticRegression(max_iter=200)
+    LogisticRegression(max_iter=200, solver='lbfgs')
 
 Now that the progress bar is registered on the estimator, calling its `fit` method will
 display a progress bar::
 
-    >>> from sklearn.datasets import load_iris
-    >>> X, y = load_iris(return_X_y=True)
     >>> logreg.fit(X, y)
     LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-    LogisticRegression(max_iter=200)
+    LogisticRegression(max_iter=200, solver='lbfgs')
 
 Multiple callbacks can be registered on the same estimator, for example a
 :class:`~ScoringMonitor` callback can be registered in addition to the
 :class:`~ProgressBar`::
 
-    >>> from sklearn.callback import ScoringMonitor
-    >>> scoring_monitor = ScoringMonitor(scoring="accuracy")
+    >>> scoring_monitor = ScoringMonitor(scoring_val=("roc_auc_ovr", "accuracy"))
     >>> logreg.set_callbacks(progress_bar, scoring_monitor)
-    LogisticRegression(max_iter=200)
+    LogisticRegression(max_iter=200, solver='lbfgs')
 
 Callback invocation
 *******************
@@ -77,16 +89,17 @@ ids are consecutive integers starting from 0. Some callbacks may provide additio
 contextual information about the tasks. Here's an example of the logs of the
 :class:`~ScoringMonitor`::
 
-    >>> logreg.fit(X, y)
+    >>> logreg.fit(X, y, X_val=X_val, y_val=y_val)
     LogisticRegression - fit ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-    LogisticRegression(max_iter=200)
-    >>> scoring_monitor.get_logs().data_as_pandas[["task_name", "task_id", "accuracy"]]
-          task_name  task_id  accuracy
-    0           fit        0  0.973...
-    1    lbfgs-iter        0  0.333...
-    2    lbfgs-iter        1  0.333...
-    3    lbfgs-iter        2  0.666...
-    4    lbfgs-iter        3  0.926...
+    LogisticRegression(max_iter=200, solver='lbfgs')
+    >>> log = scoring_monitor.get_logs().val_scores_as_pandas
+    >>> log[["task_name", "task_id", "roc_auc_ovr", "accuracy"]]
+         task_name  task_id  roc_auc_ovr  accuracy
+    0          fit        0     1.00...   1.00...
+    1   lbfgs-iter        0     0.82...   0.31...
+    2   lbfgs-iter        1     0.92...   0.31...
+    3   lbfgs-iter        2     0.85...   0.68...
+    4   lbfgs-iter        3     0.87...   0.68...
     ...
 
 .. The number of rows can vary depending on numerical specificities of the platform, so
@@ -118,32 +131,34 @@ registered on the :class:`~sklearn.linear_model.LogisticRegression` to monitor t
 scores of the logistic regression model for each parameter combination and each fold of
 the grid search::
 
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> scoring_monitor = ScoringMonitor(scoring="accuracy")
-    >>> logreg = LogisticRegression(max_iter=200).set_callbacks(scoring_monitor)
-    >>> grid_search = GridSearchCV(logreg, {"C": [10, 1, 0.1]})
-    >>> grid_search.fit(X, y)
-    GridSearchCV(estimator=LogisticRegression(max_iter=200),
-                 param_grid={'C': [10, 1, 0.1]})
-    >>> log = scoring_monitor.get_logs().data_as_pandas
+    >>> scoring_monitor = ScoringMonitor(scoring_val=("roc_auc_ovr", "accuracy"))
+    >>> logreg = LogisticRegression(max_iter=200, solver="lbfgs")
+    >>> logreg.set_callbacks(scoring_monitor)
+    LogisticRegression(max_iter=200, solver='lbfgs')
+    >>> grid_search = GridSearchCV(logreg, {"alpha": [10, 1, 0.1]})
+    >>> grid_search.fit(X, y, X_val=X_val, y_val=y_val)
+    GridSearchCV(estimator=LogisticRegression(max_iter=200, solver='lbfgs'),
+                 param_grid={'alpha': [10, 1, 0.1]})
+    >>> log = scoring_monitor.get_logs().val_scores_as_pandas
     >>> # show the scores at the end of each fit of the search
-    >>> log[log["parent_task_id_path"] == (0,0)][["task_name", "task_id", "accuracy"]]
-       task_name  task_id  accuracy
-    1        fit        0  0.975...
-    2        fit        1  0.975...
-    3        fit        2  0.991...
-    4        fit        3  0.991...
-    5        fit        4  0.975...
-    6        fit        5  0.966...
-    7        fit        6  0.966...
-    8        fit        7  0.983...
-    9        fit        8  0.983...
-    10       fit        9  0.975...
-    11       fit       10  0.958...
-    12       fit       11  0.958...
-    13       fit       12  0.958...
-    14       fit       13  0.958...
-    15       fit       14  0.941...
+    >>> fit_scores = log[log["parent_task_id_path"] == (0, 0)]
+    >>> fit_scores[["task_name", "task_id", "roc_auc_ovr", "accuracy"]]
+       task_name  task_id  roc_auc_ovr  accuracy
+    1        fit        0          1.0  0.97...
+    2        fit        1          1.0  1.00...
+    3        fit        2          1.0  0.97...
+    4        fit        3          1.0  0.97...
+    5        fit        4          1.0  0.97...
+    6        fit        5          1.0  1.00...
+    7        fit        6          1.0  1.00...
+    8        fit        7          1.0  1.00...
+    9        fit        8          1.0  1.00...
+    10       fit        9          1.0  1.00...
+    11       fit       10          1.0  1.00...
+    12       fit       11          1.0  1.00...
+    13       fit       12          1.0  1.00...
+    14       fit       13          1.0  1.00...
+    15       fit       14          1.0  1.00...
 
 See :ref:`sphx_glr_auto_examples_callbacks_plot_scoring_monitor.py` for an
 example of how to use and plot the scores from the logs.
@@ -175,8 +190,8 @@ hyperparameters of a :class:`~sklearn.linear_model.LogisticRegression`. The
 :class:`~ProgressBar` callback needs to be registered on the grid search::
 
     >>> grid_search.set_callbacks(ProgressBar())
-    GridSearchCV(estimator=LogisticRegression(max_iter=200),
-                 param_grid={'C': [10, 1, 0.1]})
+    GridSearchCV(estimator=LogisticRegression(max_iter=200, solver='lbfgs'),
+                 param_grid={'alpha': [10, 1, 0.1]})
     >>> grid_search.fit(X, y) # doctest: +SKIP
     GridSearchCV - fit                                                           ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
       GridSearchCV - search #0                                                   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
@@ -196,8 +211,8 @@ hyperparameters of a :class:`~sklearn.linear_model.LogisticRegression`. The
         GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #11 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
         GridSearchCV - candidate-split-evaluation | LogisticRegression - fit #14 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
       GridSearchCV - refit-with-best-params | LogisticRegression - fit #1        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:00
-    GridSearchCV(estimator=LogisticRegression(max_iter=200),
-                 param_grid={'C': [10, 1, 0.1]})
+    GridSearchCV(estimator=LogisticRegression(max_iter=200, solver='lbfgs'),
+                 param_grid={'alpha': [10, 1, 0.1]})
 
 .. The doctest skip is here because the CI uses much shorter lines which produces an
    output that crops out the progress bars.
@@ -214,6 +229,10 @@ hyperparameters of a :class:`~sklearn.linear_model.LogisticRegression`. The
     sub-estimators and will only be invoked for the (meta-)estimator it is registered
     on. If it is set to `None`, it will be propagated to all nested levels of the
     estimator composition.
+
+Finally, we disable the configuration flag for metadata routing::
+
+    >>> sklearn.set_config(enable_metadata_routing=False)
 
 Scikit-learn's built-in callbacks
 *********************************

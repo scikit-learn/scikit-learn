@@ -41,7 +41,7 @@ def test_validate_callbacks_invalid_callback(callback):
     """Check the error message when not passing a valid callback to `set_callbacks`."""
     estimator = MaxIterEstimator()
 
-    msg = "Callbacks must be instances following the FitCallback protocol"
+    msg = "Callbacks must be instances of FitCallback"
     with pytest.raises(TypeError, match=msg):
         estimator.set_callbacks(callback)
 
@@ -63,9 +63,9 @@ def test_validate_callbacks_invalid_setup_kwarg():
 
 
 def test_validate_callbacks_invalid_hook_kwargs():
-    """Check that a callback with invalid keyword-only parameters raises an error."""
+    """Check that a callback with invalid keyword parameters raises an error."""
     estimator = MaxIterEstimator()
-    msg = r"'on_fit_task_begin' .* has parameters that are not valid"
+    msg = r"'on_fit_task_begin' .* must have exactly the positional parameters"
     with pytest.raises(TypeError, match=msg):
         estimator.set_callbacks(NotValidFitTaskBeginCallback())
 
