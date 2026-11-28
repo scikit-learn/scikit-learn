@@ -448,9 +448,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
                     (n_samples, (n_features * n_classes))
             Transformed input.
         """
-        X_ordinal, X_known_mask = self._transform(
-            X, handle_unknown="ignore", ensure_all_finite="allow-nan"
-        )
+        X_ordinal, X_known_mask = self._transform(X, handle_unknown="ignore")
 
         # If 'multiclass' multiply axis=1 by num of classes else keep shape the same
         if self.target_type_ == "multiclass":
@@ -478,7 +476,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         from sklearn.preprocessing import LabelBinarizer, LabelEncoder
 
         check_consistent_length(X, y)
-        self._fit(X, handle_unknown="ignore", ensure_all_finite="allow-nan")
+        self._fit(X, handle_unknown="ignore")
 
         if self.target_type == "auto":
             accepted_target_types = ("binary", "multiclass", "continuous")
@@ -507,9 +505,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         self.target_mean_ = np.mean(y, axis=0)
 
-        X_ordinal, X_known_mask = self._transform(
-            X, handle_unknown="ignore", ensure_all_finite="allow-nan"
-        )
+        X_ordinal, X_known_mask = self._transform(X, handle_unknown="ignore")
         n_categories = np.fromiter(
             (len(category_for_feature) for category_for_feature in self.categories_),
             dtype=np.int64,
