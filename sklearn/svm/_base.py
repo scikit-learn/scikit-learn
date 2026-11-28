@@ -480,12 +480,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         kernel = self.kernel
         if callable(self.kernel):
             kernel = "precomputed"
-            if X.shape[1] != self.shape_fit_[0]:
-                raise ValueError(
-                    "X.shape[1] = %d should be equal to %d, "
-                    "the number of samples at training time"
-                    % (X.shape[1], self.shape_fit_[0])
-                )
+            self._check_callable_kernel_shape(X)
 
         svm_type = LIBSVM_IMPL.index(self._impl)
 
@@ -553,6 +548,16 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             X = np.asarray(kernel, dtype=np.float64, order="C")
         return X
 
+    def _check_callable_kernel_shape(self, K):
+        """Check the width of the matrix returned by a callable kernel in predict."""
+        # libsvm indexes the columns of `K` with `support_`.
+        if K.ndim == 2 and K.shape[1] != self.shape_fit_[0]:
+            raise ValueError(
+                "X.shape[1] = %d should be equal to %d, "
+                "the number of samples at training time"
+                % (K.shape[1], self.shape_fit_[0])
+            )
+
     def _decision_function(self, X):
         """Evaluates the decision function for the samples in X.
 
@@ -589,6 +594,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         kernel = self.kernel
         if callable(kernel):
             kernel = "precomputed"
+            self._check_callable_kernel_shape(X)
 
         return libsvm.decision_function(
             X,
@@ -682,6 +688,116 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                 f"The internal representation of {self.__class__.__name__} was altered"
             )
         return X
+
+    def __sklearn_validate_model__(self):
+        """Check that the fitted arrays are consistent and safe to pass to libsvm.
+
+        See :func:`~sklearn.utils.validate_model`.
+        """
+        if not hasattr(self, "support_"):
+            return
+        name = self.__class__.__name__
+        precomputed = callable(self.kernel) or self.kernel == "precomputed"
+        # The sparse kernels of libsvm do not bound the indices they read from
+        # a precomputed kernel.
+        if self._sparse and precomputed:
+            raise ValueError(
+                f"{name} is inconsistent: _sparse is set but the kernel is "
+                "precomputed or callable."
+            )
+
+        # libsvm takes the number of support vectors from the size of
+        # `support_`, or of `support_vectors_.indptr` on sparse data, and the
+        # number of classes from the size of `_n_support`, which is 2 for
+        # regression and one-class models. It reads the other arrays
+        # accordingly, without looking at their shapes.
+        classification = self._impl in ["c_svc", "nu_svc"]
+        n_SV = self.support_.shape[0]
+        n_class = self._n_support.shape[0]
+        if n_class < 2 or (not classification and n_class != 2):
+            expected = "one entry per class" if classification else "(2,)"
+            raise ValueError(
+                f"{name} is inconsistent: _n_support has shape "
+                f"{self._n_support.shape}, expected {expected}."
+            )
+        # The pairs of classes and the dual coefficients are indexed with C
+        # ints.
+        if max(n_class * (n_class - 1), (n_class - 1) * n_SV) > np.iinfo(np.intc).max:
+            raise ValueError(
+                f"{name} is inconsistent: {n_class} classes and {n_SV} support "
+                "vectors are more than libsvm can index."
+            )
+        n_pairs = n_class * (n_class - 1) // 2
+
+        if classification:
+            # The support vectors of a class are located by adding up the
+            # counts of the previous classes. `_n_support` is not read
+            # otherwise.
+            n_support = self._n_support.astype(np.int64)
+            if (n_support < 0).any() or n_support.sum() != n_SV:
+                raise ValueError(
+                    f"{name} is inconsistent: _n_support holds negative values "
+                    f"or does not add up to {n_SV}, the size of support_."
+                )
+
+        # A precomputed kernel has `shape_fit_[0]` columns at prediction time
+        # and is indexed with `support_`.
+        n_samples_fit = self.shape_fit_[0]
+        if n_SV > 0 and not (
+            self.support_.min() >= 0 and self.support_.max() < n_samples_fit
+        ):
+            raise ValueError(
+                f"{name} is inconsistent: support_ holds indices outside of the "
+                f"{n_samples_fit} samples seen during fit."
+            )
+
+        sv = self.support_vectors_
+        if self._sparse:
+            # Row `i` of the support vectors is read as the next
+            # `indptr[i + 1] - indptr[i]` values of `data` and `indices`.
+            if not (
+                sp.issparse(sv)
+                and sv.format == "csr"
+                and sv.indptr.shape == (n_SV + 1,)
+                and sv.indptr[0] == 0
+                and not (sv.indptr[1:] < sv.indptr[:-1]).any()
+                and sv.indptr[-1] <= min(sv.data.shape[0], sv.indices.shape[0])
+            ):
+                raise ValueError(
+                    f"{name} is inconsistent: support_vectors_ is not a valid "
+                    f"CSR array with {n_SV} rows."
+                )
+            dual_coef_shape = self._dual_coef_.data.shape
+            expected_dual_coef_shape = ((n_class - 1) * n_SV,)
+        else:
+            # `support_vectors_` is not read with a precomputed kernel.
+            if not precomputed and sv.shape[0] != n_SV:
+                raise ValueError(
+                    f"{name} is inconsistent: support_vectors_ has {sv.shape[0]} "
+                    f"rows but support_ has {n_SV} entries."
+                )
+            dual_coef_shape = self._dual_coef_.shape
+            expected_dual_coef_shape = (n_class - 1, n_SV)
+
+        if dual_coef_shape != expected_dual_coef_shape:
+            raise ValueError(
+                f"{name} is inconsistent: the dual coefficients have shape "
+                f"{dual_coef_shape}, expected {expected_dual_coef_shape}."
+            )
+        if self._intercept_.shape != (n_pairs,):
+            raise ValueError(
+                f"{name} is inconsistent: _intercept_ has shape "
+                f"{self._intercept_.shape}, expected {(n_pairs,)}."
+            )
+        # `_probA` and `_probB` are read by `predict_proba` when they are not
+        # empty, and by the sparse code whenever `_effective_probability` is set.
+        n_prob = n_pairs if self._effective_probability else 0
+        if self._probA.shape != (n_prob,) or self._probB.shape != (n_prob,):
+            raise ValueError(
+                f"{name} is inconsistent: _probA and _probB have shapes "
+                f"{self._probA.shape} and {self._probB.shape}, expected "
+                f"{(n_prob,)}."
+            )
 
     @property
     def coef_(self):
@@ -943,6 +1059,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         kernel = self.kernel
         if callable(kernel):
             kernel = "precomputed"
+            self._check_callable_kernel_shape(X)
 
         svm_type = LIBSVM_IMPL.index(self._impl)
         pprob = libsvm.predict_proba(
