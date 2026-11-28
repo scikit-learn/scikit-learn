@@ -252,6 +252,28 @@ def test_newton_solver_line_search_failure_restores_state(coef_newton):
     assert_allclose(sol.coef, np.log(y), atol=1e-3)
 
 
+@pytest.mark.parametrize("l1_reg_strength", [0, 0.25])
+def test_newton_solver_line_search_rejects_null_step(l1_reg_strength):
+    """Test that the line search does not accept a step that leaves coef unchanged.
+
+    If the Newton step is below the floating point resolution of coef, loss and
+    gradient do not change at all. Far away from the optimum, such a step must not
+    pass as converged line search.
+    """
+    coef = np.array([3.0, 3.0])  # far away from the minimum
+    X, y, sol = _newton_solver_before_line_search(
+        coef_newton=[0, 0], coef=coef.copy(), l1_reg_strength=l1_reg_strength
+    )
+    sol.coef_newton = -1e-30 * sol.gradient
+    sol.gradient_times_newton = sol.gradient @ sol.coef_newton
+    assert_array_equal(coef + sol.coef_newton, coef)
+    # The line search stops early, smaller step sizes are not tried.
+    msg = "Line search of Newton solver .* did not converge after 1 line search"
+    with pytest.warns(ConvergenceWarning, match=msg):
+        sol.line_search(X=X, y=y, sample_weight=None)
+    assert sol.use_fallback_lbfgs_solve
+
+
 @pytest.mark.skipif(
     sp_version < parse_version("1.17"),
     reason="scipy version 1.17 required for sparse slicing",

@@ -155,6 +155,10 @@ class NewtonSolver(ABC):
       logistic regression." Journal of machine learning research.
       https://doi.org/10.1145/2020408.2020421
 
+    - Hager, W.W., & Zhang, H. (2005). "A New Conjugate Gradient Method with Guaranteed
+      Descent and an Efficient Line Search." SIAM J. Optim., 16, 170-192.
+      https://doi.org/10.1137/030601880
+
     Parameters
     ----------
     coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
@@ -429,6 +433,14 @@ class NewtonSolver(ABC):
                     ls_converged = True
                     break
             # 3. Deal with differences around machine precision.
+            # First, catch null steps: If the step is below the floating point
+            # resolution of coef, then coef, loss and gradient do not change at all.
+            # As the checks above did not pass and smaller step sizes do not change
+            # that, the line search has failed.
+            if np.array_equal(self.coef, self.coef_old):
+                if is_verbose:
+                    print("      step does not change coef, stop line search")
+                break
             # 3.1 Check relative loss difference ~ machine precision
             tiny_loss = np.abs(self.loss_value_old * eps)
             check = np.abs(loss_improvement) <= tiny_loss
@@ -452,10 +464,18 @@ class NewtonSolver(ABC):
                 # This gives the same condition as above with phi'(alpha) replaced by
                 #   gradient(alpha) @ coef_newton + l1_term
                 # which equals armijo_term / sigma for alpha = 0.
+                # Note that we do not use the second inequality of Eq. 4.1,
+                #   c2 * phi'(0) <= phi'(alpha),
+                # which rejects too short steps. An inexact inner solver, in particular
+                # coordinate descent, may return a Newton step that is much shorter
+                # than optimal, and a backtracking line search could never recover from
+                # such a rejection. Steps that do not change coef at all are caught
+                # above.
                 if armijo_term < 0:
+                    phi_prime_0 = armijo_term / sigma
                     phi_prime = self.gradient.ravel() @ self.coef_newton.ravel()
                     phi_prime += l1_term
-                    phi_prime_max = (2 * sigma - 1) * armijo_term / sigma
+                    phi_prime_max = (2 * sigma - 1) * phi_prime_0
                     check = phi_prime <= phi_prime_max
                     if is_verbose:
                         print(
@@ -475,8 +495,9 @@ class NewtonSolver(ABC):
             warnings.warn(
                 (
                     f"Line search of Newton solver {self.__class__.__name__} at"
-                    f" iteration #{self.iteration} did not converge after 21 line "
-                    "search refinement iterations. It will now resort to lbfgs instead."
+                    f" iteration #{self.iteration} did not converge after {i + 1} line"
+                    " search refinement iterations. It will now resort to lbfgs"
+                    " instead."
                 ),
                 ConvergenceWarning,
             )
