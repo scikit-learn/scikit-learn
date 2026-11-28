@@ -440,7 +440,7 @@ def _sparse_encode(
     # Enter parallel code block
     n_samples = X.shape[0]
     n_components = dictionary.shape[0]
-    code = np.empty((n_samples, n_components))
+    code = np.empty((n_samples, n_components), dtype=X.dtype)
     slices = list(gen_even_slices(n_samples, effective_n_jobs(n_jobs)))
 
     code_views = Parallel(n_jobs=n_jobs, verbose=verbose)(
