@@ -366,6 +366,11 @@ def lasso_path(
     :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
 
+    For multi-output targets, this function optimizes the multi-task objective
+    above, as :class:`~sklearn.linear_model.MultiTaskLasso` does. This differs from
+    :meth:`Lasso.fit <sklearn.linear_model.Lasso.fit>`, which solves an independent
+    problem for each target.
+
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
 
@@ -615,6 +620,13 @@ def enet_path(
     For an example, see
     :ref:`examples/linear_model/plot_lasso_lasso_lars_elasticnet_path.py
     <sphx_glr_auto_examples_linear_model_plot_lasso_lasso_lars_elasticnet_path.py>`.
+
+    For multi-output targets, this function optimizes the multi-task objective
+    above, as :class:`~sklearn.linear_model.MultiTaskElasticNet` does. This differs
+    from :meth:`ElasticNet.fit <sklearn.linear_model.ElasticNet.fit>` and
+    :meth:`Lasso.fit <sklearn.linear_model.Lasso.fit>`, which solve an independent
+    problem for each target. Since :meth:`ElasticNet.path` and :meth:`Lasso.path`
+    are this function, they also differ from the `fit` method of their estimator.
 
     The underlying coordinate descent solver uses gap safe screening rules to speedup
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
@@ -1054,6 +1066,12 @@ class ElasticNet(RegressorMixin, MultiOutputLinearModel):
     :math:`\\max_j |w_j|`. If so, then additionally check whether the dual gap is
     smaller or equal to `tol` times :math:`||y||_2^2 / n_{\\text{samples}}`.
 
+    For a 2-dimensional target, :meth:`fit` solves an independent problem for each
+    target. This differs from the :meth:`path` method, which is
+    :func:`~sklearn.linear_model.enet_path` and optimizes a joint multi-task
+    objective (see :class:`~sklearn.linear_model.MultiTaskElasticNet`), so the two
+    give different coefficients for multi-output data.
+
     The underlying coordinate descent solver uses gap safe screening rules to speedup
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
 
@@ -1486,6 +1504,13 @@ class Lasso(ElasticNet):
     It should not be confused with :class:`~sklearn.linear_model.MultiTaskLasso` which
     instead penalizes the :math:`L_{2,1}` norm of the coefficients, yielding row-wise
     sparsity in the coefficients.
+
+    Note that the :meth:`path` method of this class is
+    :func:`~sklearn.linear_model.enet_path`. For a 2-dimensional target, it
+    optimizes the joint multi-task objective described in
+    :class:`~sklearn.linear_model.MultiTaskLasso`, whereas :meth:`fit` solves an
+    independent problem for each target. The two therefore give different
+    coefficients for multi-output data.
 
     The underlying coordinate descent solver uses gap safe screening rules to speedup
     fitting time, see :ref:`User Guide on coordinate descent <coordinate_descent>`.
