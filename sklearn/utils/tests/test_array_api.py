@@ -36,6 +36,7 @@ from sklearn.utils._array_api import (
     _swapaxes,
     _validate_diagonal_args,
     array_device,
+    assert_same_namespace_and_device,
     check_same_namespace,
     get_namespace,
     get_namespace_and_device,
@@ -408,6 +409,25 @@ def test_device_inspection():
         assert array1.device == array_device(array1)
         assert array1.device == array_device(array1, array2)
         assert array1.device == array_device(array1, array1, array2)
+
+
+def test_assert_same_namespace_and_device():
+    xp, cpu = _array_api_for_tests("array_api_strict", "CPU_DEVICE")
+    _, device1 = _array_api_for_tests("array_api_strict", "device1")
+    X_np = numpy.asarray([1.0, 2.0])
+    X_xp = xp.asarray(X_np, device=cpu)
+
+    assert_same_namespace_and_device(X_xp, X_xp)
+
+    # Name taken from the caller's local variable
+    msg = "`X_np` is in the wrong namespace, expected: array_api_strict, got: numpy"
+    with pytest.raises(AssertionError, match=msg):
+        assert_same_namespace_and_device(X_np, X_xp)
+
+    X_device1 = xp.asarray(X_np, device=device1)
+    msg = "`my_name` is in the wrong device, expected:"
+    with pytest.raises(AssertionError, match=msg):
+        assert_same_namespace_and_device(X_device1, X_xp, name="my_name")
 
 
 @pytest.mark.parametrize(
