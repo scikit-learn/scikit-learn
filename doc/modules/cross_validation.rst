@@ -1009,6 +1009,19 @@ corresponding permutated datasets there is absolutely no structure. This
 test is therefore only able to show whether the model reliably outperforms
 random guessing.
 
+When all samples of a group share one target value, for example several
+recordings per subject with one diagnosis per subject, pass ``groups`` with
+``permutation="blocks"``. The target values are then permuted between groups,
+and every sample of a group receives the permuted value of its group. The test
+assumes that the target values are exchangeable between groups. This holds by
+design if they were assigned to the groups at random, but not, for example, if
+the groups follow a fixed order in time and the features drift over time. With
+few groups there are few distinct assignments of the target values to the
+groups (20 for six groups with three per class), so small p-values cannot be
+reached reliably. Use a group-aware cross-validator such as
+:class:`~sklearn.model_selection.GroupKFold` so that the score estimates the
+performance on new groups.
+
 Finally, :func:`~sklearn.model_selection.permutation_test_score` is computed
 using brute force and internally fits ``(n_permutations + 1) * n_cv`` models.
 It is therefore only tractable with small datasets for which fitting an
@@ -1024,3 +1037,6 @@ computation and thus speeds it up.
   * Ojala and Garriga. `Permutation Tests for Studying Classifier Performance
     <https://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
     J. Mach. Learn. Res. 2010.
+  * Winkler, Ridgway, Webster, Smith and Nichols. `Permutation inference for
+    the general linear model <https://doi.org/10.1016/j.neuroimage.2014.01.060>`_.
+    NeuroImage 2014.
