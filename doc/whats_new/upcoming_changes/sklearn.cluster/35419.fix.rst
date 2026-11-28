@@ -1,0 +1,4 @@
+- :class:`cluster.AgglomerativeClustering` with ``linkage="single"`` now
+  supports the ``"mahalanobis"`` and ``"seuclidean"`` metrics, matching the
+  other linkages.
+  By :user:`Tabish Ahmad <ThebishAhmad>`.
