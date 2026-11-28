@@ -681,6 +681,17 @@ def test_standard_scaler_partial_fit_numerical_stability(sparse_container):
     assert_allclose(scaler_incr.scale_, scaler.scale_, rtol=tol)
 
 
+@pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
+def test_standard_scaler_partial_fit_sparse_float32_no_overflow(sparse_container):
+    # The variance (2.5e37) fits in float32, but the intermediate statistics of
+    # the incremental update don't.
+    scaler = StandardScaler(with_mean=False)
+    for value in (1, 1e19):
+        X = sparse_container(np.full((4, 1), value, dtype=np.float32))
+        scaler.partial_fit(X)
+    assert_allclose(scaler.var_, [np.var([1] * 4 + [1e19] * 4)], rtol=1e-6)
+
+
 @pytest.mark.parametrize("sample_weight", [True, None])
 @pytest.mark.parametrize("sparse_container", CSC_CONTAINERS + CSR_CONTAINERS)
 def test_partial_fit_sparse_input(sample_weight, sparse_container):
