@@ -1,0 +1,8 @@
+- The k-means++ initialization of :class:`cluster.KMeans`,
+  :class:`cluster.MiniBatchKMeans`, :class:`cluster.BisectingKMeans` and
+  :func:`cluster.kmeans_plusplus` now accumulates the sampling probabilities in
+  float64 for float32 data. For float32 data and a fixed `random_state`, the
+  selected initial centers, and hence the fitted clusters, may differ from
+  previous versions. On float64 data, they are unchanged up to rare rounding
+  differences.
+  By :user:`Arthur Lacote <cakedev0>`.

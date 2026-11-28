@@ -12,14 +12,14 @@
   - `alpha=1.0` for `LogisticRegression`, meaning it is the same default as `C=1.0`.
   - `alphas=10` for `LogisticRegressionCV`, meaning it is the same default as `Cs=10`.
 
-  This means that the defaults result in the same models as before (up to floating point
+  This means that the defaults result in the same models as before (up to floating-point
   precision).
 
-  With this change the penalty parameter of most linear models is `alpha`, the larger
-  its value the stronger the penalty. For L2-penalties, the parametrization is
+  With this change, the penalty parameter of most linear models is `alpha`: the larger
+  its value, the stronger the penalty. For L2-penalties, the parametrization is
   similar to :class:`linear_model.Ridge` where the penalty gets weaker the larger the
   training dataset (by a factor of `1/n_samples`).
 
-  For :class:`linear_model.LogisticRegressionCV`, also the attributes `C_` and `Cs_`
-  are deprecated. Use the new attributes `alpha_` and `alphas_` instead.
+  For :class:`linear_model.LogisticRegressionCV`, the attributes `C_` and `Cs_`
+  are deprecated as well. Use the new attributes `alpha_` and `alphas_` instead.
   By :user:`Christian Lorentzen <lorentzenchr>`.

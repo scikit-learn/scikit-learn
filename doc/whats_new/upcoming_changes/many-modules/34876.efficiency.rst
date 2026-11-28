@@ -1,8 +1,7 @@
-- Hot-loop NaN checks in :mod:`sklearn.tree` and
-  :mod:`sklearn.ensemble` (histogram gradient boosting) now use a
-  scikit-learn-local, always-inlined `isnan` helper instead of
-  `libc.math.isnan()`, avoiding a non-inlined libm call on platforms/libc
-  versions where the compiler cannot inline it (notably affecting fit
-  performance of :class:`ensemble.ExtraTreesRegressor` and
-  :class:`ensemble.ExtraTreesClassifier` on some conda-forge builds).
+- The checks for missing values (NaN) in the inner loops of :mod:`sklearn.tree` and
+  of the tree-based estimators of :mod:`sklearn.ensemble` are now always inlined.
+  This makes these estimators faster on builds where the `isnan` function of the
+  C library was not inlined by the compiler, e.g. the Linux packages of conda-forge.
+  The speed-up is most notable when fitting :class:`ensemble.ExtraTreesRegressor`
+  and :class:`ensemble.ExtraTreesClassifier`.
   By :user:`Arthur Lacote <cakedev0>`.

@@ -3,4 +3,4 @@
   `<summary>` elements, so they can be reached and toggled with a keyboard.
   They are announced as disclosure widgets by screen readers. The element with
   keyboard focus is now shown with a visible outline.
-  By :user:`Dea María Léon <deamarialeon>`.
+  By :user:`Dea María Léon <DeaMariaLeon>`.

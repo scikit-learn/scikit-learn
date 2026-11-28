@@ -1,2 +1,4 @@
-* :class:`sklearn.neighbors.KDTree` is now faster for most distance metrics, so for example :class:`sklearn.neighbors.KNeighborsClassifier` has faster fitting and prediction when using kdtrees.
+- :class:`sklearn.neighbors.KDTree` is now faster for most distance metrics. For
+  example, :class:`sklearn.neighbors.KNeighborsClassifier` has faster fitting and
+  prediction when using a KD-tree.
   By :user:`Itamar Turner-Trauring <itamarst>`.
