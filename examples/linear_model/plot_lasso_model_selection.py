@@ -148,6 +148,25 @@ _ = ax.set_title(
 # In the remainder of this section, we will present both approaches. For both
 # algorithms, we will use a 20-fold cross-validation strategy.
 #
+# .. warning::
+#     Nesting :class:`~sklearn.preprocessing.StandardScaler` *outside*
+#     :class:`~sklearn.linear_model.LassoCV` or
+#     :class:`~sklearn.linear_model.LassoLarsCV` (as done below) fits the
+#     scaler on the full training set before the estimator's internal
+#     cross-validation. Fold-wise standardization therefore leaks
+#     information across CV folds.
+#
+#     This pattern is acceptable when all features already share comparable
+#     units and scaling is mainly a numerical convenience. When features have
+#     different units or scales and you need fold-wise standardization, prefer
+#     selecting ``alpha`` with
+#     :class:`~sklearn.model_selection.GridSearchCV` or
+#     :class:`~sklearn.model_selection.RandomizedSearchCV` over a pipeline of
+#     :class:`~sklearn.preprocessing.StandardScaler` and
+#     :class:`~sklearn.linear_model.Lasso` (or another non-CV estimator) so
+#     the scaler is refit inside each outer fold. See also
+#     :ref:`lasso_cv_preproc_leakage`.
+#
 # Lasso via coordinate descent
 # ............................
 # Let's start by making the hyperparameter tuning using
