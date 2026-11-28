@@ -120,9 +120,16 @@ cdef int init_node{{name_suffix}}(
             for j from 0 <= j < n_features:
                 centroid[j] += this_pt[j] * sample_weight[idx_array[i]]
 
-        for j in range(n_features):
-            centroid[j] /= sum_weight_node
-    else:
+        if sum_weight_node != 0:
+            for j in range(n_features):
+                centroid[j] /= sum_weight_node
+        else:
+            # Zero-weight nodes still need finite bounds for tree queries.
+            with_sample_weight = False
+            for j in range(n_features):
+                centroid[j] = 0
+
+    if not with_sample_weight:
         for i in range(idx_start, idx_end):
             this_pt = data + n_features * idx_array[i]
             for j from 0 <= j < n_features:

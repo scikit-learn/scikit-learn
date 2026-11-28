@@ -10,6 +10,7 @@ from numpy.testing import assert_allclose, assert_array_almost_equal
 from sklearn.metrics import DistanceMetric
 from sklearn.neighbors._ball_tree import (
     BallTree,
+    BallTree32,
     kernel_norm,
 )
 from sklearn.neighbors._ball_tree import (
@@ -23,6 +24,7 @@ from sklearn.neighbors._ball_tree import (
 )
 from sklearn.neighbors._kd_tree import (
     KDTree,
+    KDTree32,
 )
 from sklearn.neighbors._kd_tree import (
     NeighborsHeap64 as NeighborsHeapKDT,
@@ -106,6 +108,49 @@ def test_kernel_density(
         Y, h, atol=atol, rtol=rtol, kernel=kernel, breadth_first=breadth_first
     )
     assert_allclose(dens, dens_true, atol=atol, rtol=max(rtol, 1e-7))
+
+
+@pytest.mark.parametrize("Cls", [KDTree, BallTree, KDTree32, BallTree32])
+@pytest.mark.parametrize(
+    "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]
+)
+@pytest.mark.parametrize("breadth_first", [True, False])
+@pytest.mark.parametrize("with_zeros", [True, False])
+@pytest.mark.parametrize("rtol", [0, 1e-5])
+def test_kernel_density_sample_weights(Cls, kernel, breadth_first, with_zeros, rtol):
+    rng = np.random.default_rng(0)
+    dtype = np.float32 if Cls.__name__.endswith("32") else np.float64
+    X = rng.normal(scale=0.2, size=(80, 2)).astype(dtype)
+    X[:40, 0] += 4
+    Y = X[::7].copy()
+    weights = rng.integers(1, 5, size=len(X), dtype=np.intp)
+    if with_zeros:
+        weights[:40] = 0
+    tree = Cls(X, leaf_size=4, sample_weight=weights)
+    expected = compute_kernel_slow(Y, np.repeat(X, weights, axis=0), kernel, h=0.5)
+
+    with np.errstate(divide="ignore"):
+        actual = tree.kernel_density(
+            Y, h=0.5, kernel=kernel, breadth_first=breadth_first, rtol=rtol
+        )
+    assert_allclose(actual, expected, rtol=2e-5, atol=1e-5)
+
+
+@pytest.mark.parametrize("Cls", [BallTree, BallTree32])
+@pytest.mark.parametrize("all_zero", [True, False])
+@pytest.mark.parametrize("metric", ["euclidean", "manhattan", "chebyshev"])
+def test_ball_tree_zero_weight_bounds(Cls, all_zero, metric):
+    X = np.column_stack((np.arange(16, dtype=float), np.arange(16) % 3))
+    weights = np.zeros(len(X))
+    if not all_zero:
+        weights[8:] = 1
+    tree = Cls(X, leaf_size=1, sample_weight=weights, metric=metric)
+    assert np.isfinite(tree.get_arrays()[3]).all()
+
+    Y = np.array([[2.2, 0.3], [7.3, 1.1], [11.4, 2.2]])
+    distances, _ = tree.query(Y, k=3)
+    expected, _ = Cls(X, leaf_size=1, metric=metric).query(Y, k=3)
+    assert_allclose(distances, expected, rtol=1e-6)
 
 
 @pytest.mark.parametrize("Cls", [KDTree, BallTree])
