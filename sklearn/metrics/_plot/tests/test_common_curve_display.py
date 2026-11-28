@@ -279,7 +279,7 @@ def test_display_curve_name_overwritten_by_plot_multiple_calls(
     elif constructor_name == "from_predictions":
         disp = Display.from_predictions(y, y_score, name=clf_name)
     else:  # constructor_name = "from_cv_results"
-        if Display in (RocCurveDisplay, PrecisionRecallDisplay):
+        if Display in (DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay):
             disp = Display.from_cv_results(cv_results, X, y, name=clf_name)
         else:
             pytest.skip(f"`from_cv_results` not implemented in {Display}")
@@ -432,7 +432,7 @@ def test_classifier_display_curve_named_constructor_return_type(
     elif constructor == "from_estimator":
         curve = SubclassOfDisplay.from_estimator(classifier, X, y)
     else:  # `from_cv_results`
-        if Display in (RocCurveDisplay, PrecisionRecallDisplay):
+        if Display in (DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay):
             curve = SubclassOfDisplay.from_cv_results(cv_results, X, y)
         else:
             pytest.skip(f"`from_cv_results` not implemented in {Display}")
@@ -451,6 +451,14 @@ def test_classifier_display_curve_named_constructor_return_type(
                 "average_precision": None,
                 "name": "test_curve",
                 "prevalence_pos_label": 0.5,
+            },
+        ),
+        (
+            DetCurveDisplay,
+            {
+                "fpr": np.array([0, 0.5, 1]),
+                "fnr": [np.array([1, 0.5, 0])],
+                "name": "test_curve",
             },
         ),
         (
@@ -516,6 +524,17 @@ auc_metrics = [[1.0, 1.0, 1.0], None]
             },
         )
         for auc_metric in auc_metrics
+    ]
+    + [
+        pytest.param(
+            DetCurveDisplay,
+            None,
+            None,
+            {
+                "fpr": [np.array([0, 0.5, 1])] * 3,
+                "fnr": [np.array([1, 0.5, 0])] * 3,
+            },
+        )
     ],
 )
 @pytest.mark.parametrize(
@@ -538,7 +557,8 @@ def test_display_plot_legend_label(
 
     display = Display(**display_args).plot(name=name, curve_kwargs=curve_kwargs)
     legend = display.ax_.get_legend()
-    auc_metric = display_args[auc_arg_name]
+    # DetCurveDisplay has no AUC metric
+    auc_metric = display_args.get(auc_arg_name)
 
     if legend is None:
         # No legend is created, exit test early
@@ -588,7 +608,9 @@ def test_display_plot_legend_label(
     pyplot.close("all")
 
 
-@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+@pytest.mark.parametrize(
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+)
 @pytest.mark.parametrize(
     "constructor_name, expected_clf_name",
     [
@@ -689,7 +711,9 @@ def test_display_from_cv_results_legend_label(
     pyplot.close("all")
 
 
-@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+@pytest.mark.parametrize(
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+)
 def test_display_from_cv_results_param_validation(pyplot, data_binary, Display):
     """Check parameter validation is correct."""
     X, y = data_binary
@@ -730,13 +754,20 @@ def test_display_from_cv_results_param_validation(pyplot, data_binary, Display):
 
     # `pos_label` inconsistency
     y_multi[y_multi == 1] = 2
-    with suppress(ValueError):  # ignore any `pos_label` side errors
-        with pytest.warns(
-            # Also captures subclass warnings e.g., `UndefinedMetricWarning`
-            UserWarning,
-            match="No positive .* in y_true",
-        ):
+    if Display is DetCurveDisplay:
+        # `det_curve` does not emit the positive-class warning used by the ROC
+        # and precision-recall curves. With no positive samples the rates are
+        # undefined and NumPy warns about the division.
+        with pytest.warns(RuntimeWarning, match="invalid value encountered in divide"):
             Display.from_cv_results(cv_results, X, y_multi)
+    else:
+        with suppress(ValueError):  # ignore any `pos_label` side errors
+            with pytest.warns(
+                # Also captures subclass warnings e.g., `UndefinedMetricWarning`
+                UserWarning,
+                match="No positive .* in y_true",
+            ):
+                Display.from_cv_results(cv_results, X, y_multi)
 
     # `name` is list while `curve_kwargs` is None or dict
     for curve_kwargs in (None, {"alpha": 0.2}):
@@ -760,7 +791,9 @@ def test_display_from_cv_results_param_validation(pyplot, data_binary, Display):
         )
 
 
-@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+@pytest.mark.parametrize(
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+)
 def test_display_from_cv_results_pos_label_inferred(pyplot, data_binary, Display):
     """Check `pos_label` inferred correctly by `from_cv_results(pos_label=None)`."""
     X, y = data_binary
@@ -773,7 +806,9 @@ def test_display_from_cv_results_pos_label_inferred(pyplot, data_binary, Display
     assert disp.pos_label == 1
 
 
-@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+@pytest.mark.parametrize(
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+)
 @pytest.mark.parametrize(
     "curve_kwargs",
     [None, {"alpha": 0.2}, [{"alpha": 0.2}, {"alpha": 0.3}, {"alpha": 0.4}]],
@@ -806,7 +841,9 @@ def test_display_from_cv_results_curve_kwargs(
         )
 
 
-@pytest.mark.parametrize("Display", [PrecisionRecallDisplay, RocCurveDisplay])
+@pytest.mark.parametrize(
+    "Display", [DetCurveDisplay, PrecisionRecallDisplay, RocCurveDisplay]
+)
 @pytest.mark.parametrize(
     "curve_kwargs",
     [None, {"color": "red"}, [{"c": "red"}, {"c": "green"}, {"c": "yellow"}]],
