@@ -1,0 +1,8 @@
+- :meth:`decomposition.PCA.score` and :meth:`decomposition.PCA.score_samples` now
+  return `-inf` and raise a `UserWarning` when `n_components` is at least the rank of
+  the training data. Previously these methods returned arbitrary values, or raised a
+  `LinAlgError` depending on the LAPACK implementation.
+  :meth:`decomposition.PCA.get_precision` and
+  :meth:`decomposition.IncrementalPCA.get_precision` now return the pseudo-inverse of
+  the covariance in this case.
+  By :user:`Tim Head <betatim>`.
