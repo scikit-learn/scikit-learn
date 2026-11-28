@@ -50,6 +50,11 @@ enhance the functionality of scikit-learn's estimators.
   A Python package for AutoML on Tabular Data with Feature Engineering,
   Hyper-Parameters Tuning, Explanations and Automatic Documentation.
 
+- `sklearn-genetic-opt <https://github.com/rodrigo-arenas/Sklearn-genetic-opt>`_
+  An AutoML toolkit for cross-validated hyperparameter tuning and feature
+  selection for scikit-learn estimators. Search methods include genetic
+  algorithms, differential evolution, and CatCMA with Margin.
+
 **Experimentation and model registry frameworks**
 
 - `MLFlow <https://mlflow.org/>`_ An open source platform to manage the ML
