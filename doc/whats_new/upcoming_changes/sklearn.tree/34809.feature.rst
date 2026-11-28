@@ -1,0 +1,3 @@
+- :func:`tree.export_text`, :func:`tree.export_graphviz`, and :func:`tree.plot_tree`
+  display categorical splits with their original labels and indicate the
+  routing of missing values and unknown categories. By :user:`lcrmorin`.

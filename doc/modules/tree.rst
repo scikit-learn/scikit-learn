@@ -213,6 +213,33 @@ Once trained, you can plot the tree with the :func:`plot_tree` function::
       |   |   |--- class: 2
       <BLANKLINE>
 
+  :func:`export_text`, :func:`export_graphviz`, and :func:`plot_tree`
+  show categorical splits using the original labels. Text reports list the
+  known categories on each branch and mark the branch taken by missing values
+  and unknown categories::
+
+      >>> import numpy as np
+      >>> X_cat = np.array([["blue"], ["green"], ["red"], ["blue"]], dtype=object)
+      >>> cat_tree = tree.DecisionTreeClassifier(
+      ...     categorical_features=[0], random_state=0
+      ... ).fit(X_cat, [0, 1, 0, 0])
+      >>> print(export_text(cat_tree, feature_names=["color"]))
+      |--- color in {'blue', 'red'} or missing/unknown
+      |   |--- class: 0
+      |--- color in {'green'}
+      |   |--- class: 1
+      <BLANKLINE>
+
+  Graphviz and plotted nodes show the complete left-category set and a
+  parenthesized ``missing/unknown: left`` or ``missing/unknown: right`` annotation.
+  Category labels are not rounded. Large categorical splits can produce long
+  labels.
+
+  Categorical split export requires a standalone tree fitted with its own category
+  encoder. Individual forest trees with categorical splits are not supported.
+  Forest trees containing only numerical splits or a single leaf can still be
+  exported.
+
 .. rubric:: Examples
 
 * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
