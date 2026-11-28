@@ -1,7 +1,8 @@
 import numpy as np
 from sklearn.cluster._hierarchical_fast import _single_linkage_label
 
-from sklearn.cluster import KMeans, MiniBatchKMeans
+from sklearn.cluster import HDBSCAN, KMeans, MiniBatchKMeans
+from sklearn.datasets import make_blobs
 
 from .common import Benchmark, Estimator, Predictor, Transformer
 from .datasets import _20newsgroups_highdim_dataset, _blobs_dataset
@@ -129,3 +130,29 @@ class MiniBatchKMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
             self.estimator.predict(self.X_val),
             self.estimator.cluster_centers_,
         )
+
+
+class HDBSCANMSTBenchmark:
+    """Benchmark Prim's and Boruvka MST backends in HDBSCAN."""
+
+    param_names = ["mst_algorithm"]
+    params = (["prims", "boruvka_exact"],)
+    timeout = 180.0
+
+    def setup(self, mst_algorithm):
+        self.X, _ = make_blobs(
+            n_samples=10000,
+            n_features=20,
+            centers=5,
+            cluster_std=0.6,
+            random_state=0,
+        )
+        self.estimator = HDBSCAN(
+            algorithm="auto",
+            mst_algorithm=mst_algorithm,
+            n_jobs=-1,
+            copy=False,
+        )
+
+    def time_fit(self, mst_algorithm):
+        self.estimator.fit(self.X)

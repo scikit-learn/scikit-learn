@@ -1,0 +1,6 @@
+- :class:`cluster.HDBSCAN` now supports configurable minimum-spanning-tree backends via ``mst_algorithm`` and uses a dual-tree Boruvka backend by default on dense tree-compatible inputs, significantly improving fit-time performance on larger datasets.
+  This Boruvka backend builds on earlier scikit-learn work in :pr:`27572`.
+  That earlier work was attributed as an adaptation of the original implementation in
+  `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_,
+  by :user:`Leland McInnes <lmcinnes>` et al.
+  By :user:`gustavorubim`.
